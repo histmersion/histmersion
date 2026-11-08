@@ -48,7 +48,9 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   private def sourceUrl(name: Registries.GazetteerSourcesKey): String =
     val asked = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val probe = new HttpTransport:
-      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = { asked.add(url.value); Left(HttpTransport.Problem("probe")) }
+      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = {
+        asked.add(url.value); Left(HttpTransport.Problem("probe"))
+      }
     val _ = ImportRunner.places(sources(name), PluginGazetteers.http(probe))
     asked.peek()
 
@@ -58,14 +60,22 @@ class GazetteerTrafficSuite extends munit.FunSuite:
   private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
-      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = wire.get(HttpTransport.Url(loop.local(url.value)), headers))
+      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
+        wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
   /** Every place a download of `name` makes, in the order the runner upserts them. */
   private def places(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, List[Place.Input]] =
     ImportRunner.places(sources(name), http).map(_._1)
 
   private def dryRun(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
-    ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = GazetteerControllers.DryRun(true), GeocodeSettings.ToleranceKm(0.0))
+    ImportRunner.fetchAndImport(
+      sources(name),
+      http,
+      null,
+      null,
+      dryRun = GazetteerControllers.DryRun(true),
+      GeocodeSettings.ToleranceKm(0.0)
+    )
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 

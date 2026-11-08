@@ -13,7 +13,12 @@ import com.histmersion.api.library.Citekey
 
 class JobKindsRegistrySuite extends munit.FunSuite:
   private val a =
-    JobKindEntry(JobInfo.Kind("alpha"), JobKindName("Alpha"), JobKindMeaning("Does alpha."), stoppable = JobKindEntry.Stoppable(true))
+    JobKindEntry(
+      JobInfo.Kind("alpha"),
+      JobKindName("Alpha"),
+      JobKindMeaning("Does alpha."),
+      stoppable = JobKindEntry.Stoppable(true)
+    )
   private val b =
     JobKindEntry(
       JobInfo.Kind("beta-run"),
@@ -30,11 +35,20 @@ class JobKindsRegistrySuite extends munit.FunSuite:
     assertEquals(kinds.parse(JobKinds.Wire("gamma")), None)
 
   test("which kinds a person may stop"):
-    assert(kinds.stoppable(JobKinds.Wire("alpha")) && !kinds.stoppable(JobKinds.Wire("beta-run")) && !kinds.stoppable(JobKinds.Wire("gamma")))
+    assert(
+      kinds.stoppable(JobKinds.Wire("alpha")) && !kinds.stoppable(JobKinds.Wire("beta-run")) && !kinds.stoppable(
+        JobKinds.Wire("gamma")
+      )
+    )
     assertEquals(kinds.stoppableKinds, Set("alpha"))
 
   test("what a job is about: its source first, else the first registered reading of its detail"):
-    val job = JobInfo(SpatialHierarchyResult.Job.Id("j"), JobKinds.Wire("alpha"), JobInfo.Status("done"), detail = Some(JobDetail.Purpose(Some(JobKinds.Subject("the map")))))
+    val job = JobInfo(
+      SpatialHierarchyResult.Job.Id("j"),
+      JobKinds.Wire("alpha"),
+      JobInfo.Status("done"),
+      detail = Some(JobDetail.Purpose(Some(JobKinds.Subject("the map"))))
+    )
     assertEquals(kinds.subject(job), Some("the map"))
     assertEquals(kinds.subject(job.modify(_.citekey).setTo(Some(Citekey("ck")))), Some("ck"))
     assertEquals(kinds.subject(job.modify(_.detail).setTo(None)), None)

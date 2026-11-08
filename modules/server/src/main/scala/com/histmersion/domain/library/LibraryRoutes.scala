@@ -3,11 +3,11 @@ package domain.library
 
 import com.histmersion.api.Api
 import com.histmersion.api.library.{Citekey as ApiCitekey, Facet, Filter, Source}
-import com.histmersion.domain.library.citations.{CitationService, CitationsControllers}
+import com.histmersion.domain.library.citations.{CitationsControllers, CitationService}
 import com.histmersion.domain.library.findings.FindingsControllers
 import com.histmersion.domain.library.labels.LabelsControllers
 import com.histmersion.domain.library.search.{FilterSql, Search, SearchControllers}
-import com.histmersion.domain.library.sources.{SourceService, SourcesControllers}
+import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
@@ -36,10 +36,12 @@ object LibraryRoutes:
       ck.fold[Either[Api.Error, Option[Citekey]]](Right(None))(c => citekey(c).map(Some(_)))
     List(
       Api.search.serverLogicSuccess[Identity]((q, limit) =>
-        search.search(q.map(t => Search.Query(t.value)), limit.map(l => Filter.Limit(l.value)))),
+        search.search(q.map(t => Search.Query(t.value)), limit.map(l => Filter.Limit(l.value)))
+      ),
       Api.sources.serverLogicSuccess[Identity](f => search.sources(f)),
       Api.facets.serverLogic[Identity]((field, prefix, f) =>
-        labels.facets(Facet.Field.Wire(field.value), prefix.map(p => FilterSql.FacetPrefix(p.value)), f)),
+        labels.facets(Facet.Field.Wire(field.value), prefix.map(p => FilterSql.FacetPrefix(p.value)), f)
+      ),
       sourceArticles,
       Api.lintSource.serverLogic[Identity](ck => citekey(ck).flatMap(sources.lint)),
       Api.fixSourceFormat.serverLogic[Identity](ck => citekey(ck).flatMap(sources.fix)),
@@ -61,7 +63,8 @@ object LibraryRoutes:
       Api.passages.serverLogic[Identity](q => sources.passages(q)),
       resolveId,
       Api.getSource.serverLogic[Identity]((ck, body) =>
-        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.value)))),
+        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.value)))
+      ),
       Api.findingsPage.serverLogicSuccess[Identity](q => findings.page(q)),
       Api.findings.serverLogicSuccess[Identity](q => findings.feed(q)),
       Api.aggregate.serverLogic[Identity](q => search.aggregate(q)),
@@ -77,9 +80,11 @@ object LibraryRoutes:
       seed,
       exportSource,
       Api.putSource.serverLogic[Identity]((ck, in, strict) =>
-        citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.value)))),
+        citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.value)))
+      ),
       Api.patchSource.serverLogic[Identity]((ck, p, strict) =>
-        citekey(ck).flatMap(sources.patch(_, p, SourcesControllers.PatchStrict(strict.value)))),
+        citekey(ck).flatMap(sources.patch(_, p, SourcesControllers.PatchStrict(strict.value)))
+      ),
       Api.renameSource.serverLogic[Identity]((ck, req) => citekey(ck).flatMap(sources.rename(_, req))),
       Api.deleteSource.serverLogic[Identity]((ck, req) => citekey(ck).flatMap(sources.delete(_, req))),
       Api.sourceAliases.serverLogicSuccess[Identity](_ => sources.aliases),

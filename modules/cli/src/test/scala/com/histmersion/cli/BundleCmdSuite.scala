@@ -40,13 +40,18 @@ class BundleCmdSuite extends munit.FunSuite:
       None,
       Nil,
       Bundle.Blobs(Bundle.Blobs.Count(0), ByteCount(0)),
-      Bundle.Reference(Bundle.Reference.Places(0), Bundle.Reference.PlacesDigest(""), Bundle.Reference.Periods(0), Bundle.Reference.PeriodsDigest(""))
+      Bundle.Reference(
+        Bundle.Reference.Places(0),
+        Bundle.Reference.PlacesDigest(""),
+        Bundle.Reference.Periods(0),
+        Bundle.Reference.PeriodsDigest("")
+      )
     )
     val f = Files.createTempFile("bundle", ".hmx")
     val out = Files.newOutputStream(f)
     try
       val w = BundleTar.Writer(out)
-      val _ = w.bytes(BundleTar.Entry.Name(Bundle.ManifestPath),BundleFormat.manifestBytes(m))
+      val _ = w.bytes(BundleTar.Entry.Name(Bundle.ManifestPath), BundleFormat.manifestBytes(m))
       w.finish()
     finally out.close()
     assertEquals(BundleCmd.manifestOf(f), Right(m))

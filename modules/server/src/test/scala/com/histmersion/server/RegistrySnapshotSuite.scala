@@ -84,10 +84,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
       s"manager kind\t${k.kind.wire}\titems=${k.items.mkString(",")}\tcron=${k.cron.getOrElse("-")}"
     )
     val objectives = s"objectives\t${reg.objectives.size}"
-    val effects = ServerEngineSite(deps, h)
-      .approvalEffects
-      .subjectKinds
-      .toList
+    val effects = ServerEngineSite(deps, h).approvalEffects.subjectKinds.toList
       .map(_.toString)
       .sorted
       .mkString(",")

@@ -19,4 +19,3 @@ object Period:
 
     def message: Problem = this match
       case EndsBeforeStart(s, e) => Problem(s"the period ends (${e.value}) before it starts (${s.value})")
-

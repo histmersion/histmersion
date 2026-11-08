@@ -17,5 +17,4 @@ object SidebarTab:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
-
   def of(key: Option[Key]): SidebarTab = key.flatMap(k => values.find(_.key == k)).getOrElse(Sources)

@@ -40,7 +40,10 @@ final class RunTokens(using wallClock: java.time.Clock):
   def revoke(token: RunTokens.Token): Unit = { val _ = grants.remove(token) }
 
   /** The grant of a live token; an expired one is dropped. */
-  def check(token: RunTokens.Token, now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Option[RunGrant] =
+  def check(
+      token: RunTokens.Token,
+      now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
+  ): Option[RunGrant] =
     Option(grants.get(token)).flatMap { g =>
       if g.expiresAt.value > now.value then Some(g)
       else
@@ -49,8 +52,15 @@ final class RunTokens(using wallClock: java.time.Clock):
     }
 
   /** The grant a `Bearer <token>` header carries. */
-  def bearer(header: String, now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Option[RunGrant] =
-    Option(header).map(_.trim).filter(_.startsWith("Bearer ")).map(_.stripPrefix("Bearer ").trim).flatMap(t => check(RunGrant.Token(t), now))
+  def bearer(
+      header: String,
+      now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
+  ): Option[RunGrant] =
+    Option(header)
+      .map(_.trim)
+      .filter(_.startsWith("Bearer "))
+      .map(_.stripPrefix("Bearer ").trim)
+      .flatMap(t => check(RunGrant.Token(t), now))
 
   private def prune(now: PlanQuotaRepo.EpochMillis): Unit = grants.values().removeIf(_.expiresAt.value <= now.value)
 
@@ -59,6 +69,7 @@ object RunTokens:
   val Token: RunGrant.Token.type = RunGrant.Token
   type TtlMillis = TtlMillis.T
   object TtlMillis extends Newtype[Long, Pure]
+
   /** The agent MCP endpoint: `/mcp/agent` (the run token picks the agent) and `/mcp/agent/<agent>`. */
 
   val Path = "/mcp/agent"

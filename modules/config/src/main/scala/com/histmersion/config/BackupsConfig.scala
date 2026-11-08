@@ -10,8 +10,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   * is keg-only).
   */
 /** @param keep how many archives a finished dump leaves in `dir` (the newest); `0` keeps them all. */
-final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.PgBinDir, timeoutSeconds: BackupsConfig.TimeoutSeconds, requestWaitSeconds: BackupsConfig.RequestWaitSeconds, keep: BackupsConfig.Keep)
-    derives ConfigReader
+final case class BackupsConfig(
+    dir: BackupsConfig.Dir,
+    pgBinDir: BackupsConfig.PgBinDir,
+    timeoutSeconds: BackupsConfig.TimeoutSeconds,
+    requestWaitSeconds: BackupsConfig.RequestWaitSeconds,
+    keep: BackupsConfig.Keep
+) derives ConfigReader
 
 object BackupsConfig:
   type Dir = Dir.T

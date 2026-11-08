@@ -67,7 +67,10 @@ object Lightbox:
       case _                                    => None
     val lic = i.license.map(l => LicenseName.html(l, i.licenseUrl))
     val page = i.sourceUrl.map { u =>
-      val where = i.provider.map(p => MediaProvider.title(MediaProvider.Id(p)).value).filter(_.nonEmpty).fold("the source")(p => p)
+      val where = i.provider
+        .map(p => MediaProvider.title(MediaProvider.Id(p)).value)
+        .filter(_.nonEmpty)
+        .fold("the source")(p => p)
       s"""<a class="lightbox-source" href="${Fmt.esc(u)}" target="_blank" rel="noopener">view on ${Fmt.esc(
           where
         )} ↗</a>"""

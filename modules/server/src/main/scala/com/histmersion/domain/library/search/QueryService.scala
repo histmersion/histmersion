@@ -14,7 +14,12 @@ import com.histmersion.util.time.Timer
   * pool (`schema`). A mechanism over JDBC, so it has no in-memory twin.
   */
 trait QueryService:
-  def run(statement: QueryRepo.Statement, timeoutMs: Transactor.TimeoutMs, maxRows: QueryRepo.MaxRows, maxCellChars: QueryRepo.MaxCellChars): Either[QueryService.Problem, QueryResult]
+  def run(
+      statement: QueryRepo.Statement,
+      timeoutMs: Transactor.TimeoutMs,
+      maxRows: QueryRepo.MaxRows,
+      maxCellChars: QueryRepo.MaxCellChars
+  ): Either[QueryService.Problem, QueryResult]
   def tables: List[SchemaTable]
 
 object QueryService:
@@ -25,8 +30,16 @@ object QueryService:
     Implementation(Transactor(queries), Transactor(schema))
 
   final private class Implementation(queries: Transactor, schema: Transactor)(using timer: Timer) extends QueryService:
-    def run(statement: QueryRepo.Statement, timeoutMs: Transactor.TimeoutMs, maxRows: QueryRepo.MaxRows, maxCellChars: QueryRepo.MaxCellChars): Either[Problem, QueryResult] =
-      try queries.readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars)).left.map(p => Problem(p.value))
+    def run(
+        statement: QueryRepo.Statement,
+        timeoutMs: Transactor.TimeoutMs,
+        maxRows: QueryRepo.MaxRows,
+        maxCellChars: QueryRepo.MaxCellChars
+    ): Either[Problem, QueryResult] =
+      try
+        queries
+          .readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
+          .left
+          .map(p => Problem(p.value))
       catch case error: java.sql.SQLException => Left(Problem(QueryRepo.message(error).value))
     def tables: List[SchemaTable] = schema.read(QueryRepo.tables)
-

@@ -8,4 +8,3 @@ import com.histmersion.plugin.Plugin
 final class EuropeanaPlugin extends KeyedPlugin(KeyedPlugin.Id("media-europeana"), KeyedPlugin.Name("europeana")):
   protected def collection(c: KeyedPlugin.Config, key: Option[KeyedCollection.Key], ctx: Plugin.Context) =
     EuropeanaCollection(c.media.europeana, key, ctx.licences)
-

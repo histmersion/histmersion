@@ -57,7 +57,10 @@ class ContractSnapshotSuite extends munit.FunSuite:
       assert(Files.exists(file), s"$file is missing; write it with HISTMERSION_UPDATE_CONTRACT=1")
       val expected = Files.readString(file, UTF_8)
       if expected != text then
-        val firstDiff = expected.lines.toArray(new Array[String](_)).zip(text.lines.toArray(new Array[String](_))).indexWhere((a, b) => a != b)
+        val firstDiff = expected.lines
+          .toArray(new Array[String](_))
+          .zip(text.lines.toArray(new Array[String](_)))
+          .indexWhere((a, b) => a != b)
         fail(
           s"$name differs from the snapshot (first differing line ${firstDiff + 1}); if the change is intended, " +
             "rewrite it with HISTMERSION_UPDATE_CONTRACT=1"
@@ -124,7 +127,8 @@ class ContractSnapshotSuite extends munit.FunSuite:
     check("toolbox.json", Json.obj("tools" -> tools, "roles" -> roles).spaces2)
 
   test("plugins.json: the plugin report of a stock generation"):
-    val report: PluginsReport = ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).report
+    val report: PluginsReport =
+      ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).report
     check("plugins.json", report.asJson.spaces2)
 
   test("settings.json: the settings view of reference.conf"):

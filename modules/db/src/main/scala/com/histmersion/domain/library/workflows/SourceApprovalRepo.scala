@@ -5,7 +5,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
-import com.histmersion.domain.library.{Source, Edge}
+import com.histmersion.domain.library.{Edge, Source}
 import com.histmersion.util.jobs.Job
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.ManagerPolicy

@@ -15,7 +15,6 @@ object Indexes:
     * `core` the server's CORE budget.
     */
 
-
   def of(
       cfg: AcquireConfig,
       http: Http,

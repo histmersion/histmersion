@@ -7,8 +7,10 @@ import com.histmersion.web.ui.Layout
 class ArticleOpeningSuite extends munit.FunSuite:
 
   test("the first paragraph of prose, past the title, lists and quotations"):
-    val body = Article.Body("# The Sea Peoples\n\n- a list\n- of points\n\n> a quotation\n\nThe **Sea Peoples** raided the coast " +
-      "[[cline2014_year]], as the [Medinet Habu reliefs](https://example.org) show.\n\n## Next\n\nMore.")
+    val body = Article.Body(
+      "# The Sea Peoples\n\n- a list\n- of points\n\n> a quotation\n\nThe **Sea Peoples** raided the coast " +
+        "[[cline2014_year]], as the [Medinet Habu reliefs](https://example.org) show.\n\n## Next\n\nMore."
+    )
     assertEquals(
       ArticleOpening.of(body, Layout.ReadingOpening(600)),
       Some("The Sea Peoples raided the coast, as the Medinet Habu reliefs show.")

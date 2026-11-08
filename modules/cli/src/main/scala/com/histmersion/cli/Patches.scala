@@ -67,9 +67,29 @@ object Patches:
       tags = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
       finds = mergeFindings(base.findings, adds, removeFindings)
       edges = mergeEdges(base.edges, eAdd, eRem)
-    yield base.modify(
-      _.metadata).setTo(meta).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.notes).setTo(notes).modify(_.body).setTo(body).modify(_.topics).setTo(topics.map(csv(_).map(Source.Topics(_))).orElse(base.topics)).modify(_.regions).setTo(regions.map(csv(_).map(Source.Regions(_))).orElse(base.regions)).modify(_.period).setTo(p).modify(_.tags).setTo(tags).modify(_.findings).setTo(finds).modify(_.edges).setTo(edges).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
-    )
+    yield base
+      .modify(_.metadata)
+      .setTo(meta)
+      .modify(_.summary)
+      .setTo(summary.orElse(base.summary))
+      .modify(_.notes)
+      .setTo(notes)
+      .modify(_.body)
+      .setTo(body)
+      .modify(_.topics)
+      .setTo(topics.map(csv(_).map(Source.Topics(_))).orElse(base.topics))
+      .modify(_.regions)
+      .setTo(regions.map(csv(_).map(Source.Regions(_))).orElse(base.regions))
+      .modify(_.period)
+      .setTo(p)
+      .modify(_.tags)
+      .setTo(tags)
+      .modify(_.findings)
+      .setTo(finds)
+      .modify(_.edges)
+      .setTo(edges)
+      .modify(_.ifUpdatedAt)
+      .setTo(ifUpdatedAt.orElse(base.ifUpdatedAt))
 
   // ── part merges: a flag wins over the same part of --json, absent parts stay absent ────────────
   private def mergeMetadata(base: Option[MetadataPatch], title: Option[Title], status: Option[Source.Status]) =
@@ -118,7 +138,10 @@ object Patches:
 
   private def parse[A: io.circe.Decoder](flag: String, s: String): Either[Cli.Error, A] =
     decode[A](s).left.map(e =>
-      Cli.Error(Cli.Error.Message(s"$flag: not valid JSON for this option (${e.getMessage})"), exitCode = ExitCode.Usage)
+      Cli.Error(
+        Cli.Error.Message(s"$flag: not valid JSON for this option (${e.getMessage})"),
+        exitCode = ExitCode.Usage
+      )
     )
 
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
@@ -147,7 +170,13 @@ object Patches:
   private def parsePeriod(s: String): Either[Cli.Error, Period.Input] =
     csv(s).map(_.toLongOption) match
       case List(Some(a), Some(b)) => Right(Period.Input(Year(a), Year(b)))
-      case _ => Left(Cli.Error(Cli.Error.Message(s"--period: expected 'start,end' as signed years, got '$s'"), exitCode = ExitCode.Usage))
+      case _                      =>
+        Left(
+          Cli.Error(
+            Cli.Error.Message(s"--period: expected 'start,end' as signed years, got '$s'"),
+            exitCode = ExitCode.Usage
+          )
+        )
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
   private def readFile(flag: String, file: String): Either[Cli.Error, String] =

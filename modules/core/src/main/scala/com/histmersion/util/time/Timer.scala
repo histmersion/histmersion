@@ -20,4 +20,3 @@ object Timer:
   trait Deadline:
     def reached: Boolean
     def exceeded: Boolean
-

@@ -29,7 +29,8 @@ final class PluginOps(using console: Console)(
     confirm: Cli.Question => Boolean = PluginOps.ask
 ):
 
-  private def err(msg: String, code: Cli.Error.ExitCode = ExitCode.Refused) = Cli.Error(Cli.Error.Message(msg), exitCode = code)
+  private def err(msg: String, code: Cli.Error.ExitCode = ExitCode.Refused) =
+    Cli.Error(Cli.Error.Message(msg), exitCode = code)
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
 
@@ -74,7 +75,8 @@ final class PluginOps(using console: Console)(
     * a relink links besides the jars.
     */
   def dependencyEntries: List[(PluginFile.File, Sha256)] =
-    val poms = jars.map(pomOf).filter(Files.isRegularFile(_)).map(p => PluginFile.File(p.getFileName.toString) -> sha256(p))
+    val poms =
+      jars.map(pomOf).filter(Files.isRegularFile(_)).map(p => PluginFile.File(p.getFileName.toString) -> sha256(p))
     val listed = scala.util
       .Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.toList)
       .getOrElse(Nil)
@@ -109,7 +111,7 @@ final class PluginOps(using console: Console)(
 
   private def curl(url: String, to: Path): Either[String, Unit] =
     run.capture(List(cfg.curl.value, "-fsSL", "--retry", "2", "-o", to.toString, url)) match
-      case Right(_)      => Right(())
+      case Right(_)                        => Right(())
       case Left((rc, _)) if rc.value == 22 => Left(s"$url: not found (HTTP error)")
       case Left((rc, e)) => Left(s"$url: curl exited $rc ${e.linesIterator.toList.lastOption.getOrElse("")}".trim)
 
@@ -134,7 +136,8 @@ final class PluginOps(using console: Console)(
       case Origin.Url(url) =>
         curl(url.value, to).left.map(err(_)).map { _ =>
           if wantAsc then curl(url.value + ".asc", Path.of(to.toString + ".asc")).left.foreach(_ => ())
-          if url.value.endsWith(".jar") then curl(url.value.stripSuffix(".jar") + ".pom", pomOf(to)).left.foreach(_ => ())
+          if url.value.endsWith(".jar") then
+            curl(url.value.stripSuffix(".jar") + ".pom", pomOf(to)).left.foreach(_ => ())
           url.value
         }
       case Origin.Maven(c) => maven(c, to, wantAsc, repos)
@@ -193,7 +196,7 @@ final class PluginOps(using console: Console)(
       install.relink.toString :: "--resolve" :: "--lib" :: lib.toString :: repoArgs(repos) ::: List(jar.toString),
       install.env
     ) match
-      case Right(report) => Right(report.linesIterator.map(_.trim).filter(_.nonEmpty).toList)
+      case Right(report)                  => Right(report.linesIterator.map(_.trim).filter(_.nonEmpty).toList)
       case Left((rc, e)) if rc.value == 2 =>
         val reasons =
           e.linesIterator.map(_.trim).filter(_.startsWith("refused:")).map(_.stripPrefix("refused:").trim).toList
@@ -269,10 +272,14 @@ final class PluginOps(using console: Console)(
         _ <- PluginKit.refusals(jar.modify(_.file).setTo(name), spi, taken) match
           case Nil      => Right(())
           case problems => Left(err(s"refused:\n${problems.map("  - " + _).mkString("\n")}"))
-        _ <- signer.fold(Right(()))(fpr => PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(p => err(p.value)))
+        _ <- signer.fold(Right(()))(fpr =>
+          PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(p => err(p.value))
+        )
         _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
-          o.yes.value || confirm(Cli.Question(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?")),
+          o.yes.value || confirm(
+            Cli.Question(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?")
+          ),
           (),
           err("not installed (answer y, or pass --yes when there is no terminal)", ExitCode.Usage)
         )
@@ -453,10 +460,12 @@ final class PluginOps(using console: Console)(
   def rebuild(args: List[String]): Either[Cli.Error, Unit] =
     run.interactive(install.relink.toString :: args, install.env) match
       case rc if rc.value == 0 => Right(())
-      case rc =>
+      case rc                  =>
         Left(
           Cli.Error(
-            Cli.Error.Message(s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})"),
+            Cli.Error.Message(
+              s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})"
+            ),
             exitCode = if rc.value == 1 then ExitCode.Usage else ExitCode.Refused
           )
         )
@@ -464,4 +473,7 @@ final class PluginOps(using console: Console)(
 object PluginOps:
   /** Ask on the terminal; no terminal = no. */
   def ask(question: Cli.Question)(using console: Console): Boolean =
-    console.readTerminalLine(Console.Prompt(s"$question [y/N] ")).map(_.value.trim.toLowerCase).exists(a => a == "y" || a == "yes")
+    console
+      .readTerminalLine(Console.Prompt(s"$question [y/N] "))
+      .map(_.value.trim.toLowerCase)
+      .exists(a => a == "y" || a == "yes")

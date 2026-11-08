@@ -37,7 +37,12 @@ object TreeTab:
     div(
       cls := "tree-pane",
       idAttr := "tree-pane",
-      ResultsPaging.countBar(countText.signal, loading.signal.map(ResultsPaging.Loading(_)), failed.signal.map(ResultsPaging.Failed(_)), id = Some("tree-count")),
+      ResultsPaging.countBar(
+        countText.signal,
+        loading.signal.map(ResultsPaging.Loading(_)),
+        failed.signal.map(ResultsPaging.Failed(_)),
+        id = Some("tree-count")
+      ),
       div(idAttr := "tree-list", cls := "tree-list", children <-- treeContent.signal)
     )
 
@@ -87,7 +92,8 @@ object TreeTab:
     val by = axis.getOrElse(Api.AggregateQuery.By("time"))
     val f = UiState.toFilter()
     val asOf =
-      if by.value == "region" then for a <- UiState.from.now(); b <- UiState.to.now() yield Api.AggregateQuery.AsOf((a + b) / 2)
+      if by.value == "region" then
+        for a <- UiState.from.now(); b <- UiState.to.now() yield Api.AggregateQuery.AsOf((a + b) / 2)
       else None
 
     ApiClient
@@ -103,7 +109,11 @@ object TreeTab:
       .onComplete { r =>
         if latest.isCurrent(mine) then
           loading.set(false)
-          latest.answer(r, showTree, m => { failed.set(true); countText.set(UiLabels.Text(s"Could not group the sources: $m")) })
+          latest.answer(
+            r,
+            showTree,
+            m => { failed.set(true); countText.set(UiLabels.Text(s"Could not group the sources: $m")) }
+          )
       }
 
   private def showTree(data: TimeHistogram): Unit =
@@ -131,7 +141,8 @@ object TreeTab:
     */
   def countLine(data: TimeHistogram, roots: RowCount, from: Years.Astronomical, to: Years.Astronomical): UiLabels.Text =
     val groups =
-      if data.by.value == "region" then Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("region")) else Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("period"))
+      if data.by.value == "region" then Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("region"))
+      else Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("period"))
     ResultsPaging.countLine(
       Paging.Shown(data.total.value),
       Paging.Page.Total(data.total.value),
@@ -142,7 +153,8 @@ object TreeTab:
       ) ++ data.asOf.map(a => UiLabels.Text(s"as of ${Fmt.yr(a)}"))
     )
 
-  private def unitWord(n: Bucket.Count): Plural.Phrase = if n.value == 1 then Plural.Phrase("1 source") else Plural.Phrase(s"${n.value} sources")
+  private def unitWord(n: Bucket.Count): Plural.Phrase =
+    if n.value == 1 then Plural.Phrase("1 source") else Plural.Phrase(s"${n.value} sources")
 
   private def renderNode(b: Bucket, depth: Int, data: TimeHistogram): HtmlElement =
     val expanded = Var(false)
@@ -274,7 +286,12 @@ object TreeTab:
     if b.kind.value == "time" then
       val narrowed = f.modify(_.period).setTo(for a <- b.start; b2 <- b.end yield Period(a, b2))
       ApiClient.aggregate(
-        Api.AggregateQuery.tree(Api.AggregateQuery.By("time"), narrowed, depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)), samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value)))
+        Api.AggregateQuery.tree(
+          Api.AggregateQuery.By("time"),
+          narrowed,
+          depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)),
+          samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value))
+        )
       )
     else
       val narrowed = f.modify(_.places).setTo(b.placeId.toList.map(p => Filter.Places(p.value)))
@@ -294,5 +311,8 @@ object TreeTab:
       for a <- b.start; b2 <- b.end do UiState.set(UiState.from := Some(a.value), UiState.to := Some(b2.value))()
     else
       b.placeId.foreach { pid =>
-        PlacesInput.preview(PlacesInput.PlaceId(pid.value), lastData.flatMap(_.asOf).map(y => Years.Astronomical(y.value)))
+        PlacesInput.preview(
+          PlacesInput.PlaceId(pid.value),
+          lastData.flatMap(_.asOf).map(y => Years.Astronomical(y.value))
+        )
       }

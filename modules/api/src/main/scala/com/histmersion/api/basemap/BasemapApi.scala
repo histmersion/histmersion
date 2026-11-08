@@ -24,8 +24,6 @@ object BasemapApi:
   type TileTemplate = TileTemplate.T
   object TileTemplate extends Newtype[String, Pure]
 
-
-
   private lazy val base = endpoint.in("api" / "basemap").errorOut(jsonBody[Api.Error])
 
   lazy val status: PublicEndpoint[Unit, Api.Error, Basemap.Status, Any] =
@@ -43,7 +41,27 @@ object BasemapApi:
           .and(query[Boolean]("dryRun").default(false))
           .and(query[Boolean]("keepAll").default(false))
           .and(query[Option[String]]("focus"))
-          .map { case (layer, maxZoom, terrainMaxZoom, bbox, dryRun, keepAll, focus) => Basemap.FetchQuery(Basemap.FetchQuery.Layer(layer), maxZoom.map(Basemap.FetchQuery.MaxZoom(_)), terrainMaxZoom.map(Basemap.FetchQuery.TerrainMaxZoom(_)), bbox.map(Basemap.FetchQuery.Bbox(_)), Basemap.FetchQuery.DryRun(dryRun), Basemap.FetchQuery.KeepAll(keepAll), focus.map(Basemap.FetchQuery.Focus(_))) }(v => (v.layer.value, v.maxZoom.map(_.value), v.terrainMaxZoom.map(_.value), v.bbox.map(_.value), v.dryRun.value, v.keepAll.value, v.focus.map(_.value)))
+          .map { case (layer, maxZoom, terrainMaxZoom, bbox, dryRun, keepAll, focus) =>
+            Basemap.FetchQuery(
+              Basemap.FetchQuery.Layer(layer),
+              maxZoom.map(Basemap.FetchQuery.MaxZoom(_)),
+              terrainMaxZoom.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
+              bbox.map(Basemap.FetchQuery.Bbox(_)),
+              Basemap.FetchQuery.DryRun(dryRun),
+              Basemap.FetchQuery.KeepAll(keepAll),
+              focus.map(Basemap.FetchQuery.Focus(_))
+            )
+          }(v =>
+            (
+              v.layer.value,
+              v.maxZoom.map(_.value),
+              v.terrainMaxZoom.map(_.value),
+              v.bbox.map(_.value),
+              v.dryRun.value,
+              v.keepAll.value,
+              v.focus.map(_.value)
+            )
+          )
       )
       .errorOut(fetchErrors)
       .out(jsonBody[JobInfo])
@@ -56,13 +74,26 @@ object BasemapApi:
           .default("all")
           .and(query[Option[String]]("focus"))
           .and(query[Boolean]("cache").default(false))
-          .map { case (layer, focus, cache) => Basemap.RemoveQuery(Basemap.RemoveQuery.Layer(layer), focus.map(Basemap.RemoveQuery.Focus(_)), Basemap.RemoveQuery.Cache(cache)) }(v => (v.layer.value, v.focus.map(_.value), v.cache.value))
+          .map { case (layer, focus, cache) =>
+            Basemap.RemoveQuery(
+              Basemap.RemoveQuery.Layer(layer),
+              focus.map(Basemap.RemoveQuery.Focus(_)),
+              Basemap.RemoveQuery.Cache(cache)
+            )
+          }(v => (v.layer.value, v.focus.map(_.value), v.cache.value))
       )
       .errorOut(fetchErrors)
       .out(jsonBody[Basemap.Removed])
 
   lazy val tile: PublicEndpoint[
-    (Basemap.Layer.Wire, Basemap.Zoom, Basemap.Tile.Column, Basemap.Tile.Row, Option[Basemap.LayerInfo.Version], Option[Tile.Format]),
+    (
+        Basemap.Layer.Wire,
+        Basemap.Zoom,
+        Basemap.Tile.Column,
+        Basemap.Tile.Row,
+        Option[Basemap.LayerInfo.Version],
+        Option[Tile.Format]
+    ),
     Api.Error,
     (Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode),
     Any
@@ -77,14 +108,72 @@ object BasemapApi:
       .out(header[String](HeaderNames.ContentType))
       .out(header[Option[String]](HeaderNames.ContentEncoding))
       .out(header[String](HeaderNames.CacheControl))
-      .out(statusCode)).mapIn[(Basemap.Layer.Wire, Basemap.Zoom, Basemap.Tile.Column, Basemap.Tile.Row, Option[Basemap.LayerInfo.Version], Option[Tile.Format])]((refactorDecoded3: (String, Int, Long, Long, Option[String], Option[String])) => (Basemap.Layer.Wire((refactorDecoded3)._1), Basemap.Zoom((refactorDecoded3)._2), Basemap.Tile.Column((refactorDecoded3)._3), Basemap.Tile.Row((refactorDecoded3)._4), ((refactorDecoded3)._5).map(refactorElement7 => Basemap.LayerInfo.Version(refactorElement7)), ((refactorDecoded3)._6).map(refactorElement8 => Tile.Format(refactorElement8))))((refactorEncoded3: (Basemap.Layer.Wire, Basemap.Zoom, Basemap.Tile.Column, Basemap.Tile.Row, Option[Basemap.LayerInfo.Version], Option[Tile.Format])) => (((refactorEncoded3)._1).value, ((refactorEncoded3)._2).value, ((refactorEncoded3)._3).value, ((refactorEncoded3)._4).value, ((refactorEncoded3)._5).map(refactorElement9 => (refactorElement9).value), ((refactorEncoded3)._6).map(refactorElement10 => (refactorElement10).value))).mapOut[(Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode)]((refactorDecoded4: (Array[Byte], String, Option[String], String, StatusCode)) => (Tile.Bytes((refactorDecoded4)._1), Tile.ContentType((refactorDecoded4)._2), ((refactorDecoded4)._3).map(refactorElement11 => Tile.Etag(refactorElement11)), Tile.Encoding((refactorDecoded4)._4), (refactorDecoded4)._5))((refactorEncoded4: (Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode)) => (((refactorEncoded4)._1).value, ((refactorEncoded4)._2).value, ((refactorEncoded4)._3).map(refactorElement12 => (refactorElement12).value), ((refactorEncoded4)._4).value, (refactorEncoded4)._5))
+      .out(statusCode))
+      .mapIn[
+        (
+            Basemap.Layer.Wire,
+            Basemap.Zoom,
+            Basemap.Tile.Column,
+            Basemap.Tile.Row,
+            Option[Basemap.LayerInfo.Version],
+            Option[Tile.Format]
+        )
+      ]((refactorDecoded3: (String, Int, Long, Long, Option[String], Option[String])) =>
+        (
+          Basemap.Layer.Wire((refactorDecoded3)._1),
+          Basemap.Zoom((refactorDecoded3)._2),
+          Basemap.Tile.Column((refactorDecoded3)._3),
+          Basemap.Tile.Row((refactorDecoded3)._4),
+          ((refactorDecoded3)._5).map(refactorElement7 => Basemap.LayerInfo.Version(refactorElement7)),
+          ((refactorDecoded3)._6).map(refactorElement8 => Tile.Format(refactorElement8))
+        )
+      )(
+        (refactorEncoded3: (
+            Basemap.Layer.Wire,
+            Basemap.Zoom,
+            Basemap.Tile.Column,
+            Basemap.Tile.Row,
+            Option[Basemap.LayerInfo.Version],
+            Option[Tile.Format]
+        )) =>
+          (
+            ((refactorEncoded3)._1).value,
+            ((refactorEncoded3)._2).value,
+            ((refactorEncoded3)._3).value,
+            ((refactorEncoded3)._4).value,
+            ((refactorEncoded3)._5).map(refactorElement9 => (refactorElement9).value),
+            ((refactorEncoded3)._6).map(refactorElement10 => (refactorElement10).value)
+          )
+      )
+      .mapOut[(Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode)](
+        (refactorDecoded4: (Array[Byte], String, Option[String], String, StatusCode)) =>
+          (
+            Tile.Bytes((refactorDecoded4)._1),
+            Tile.ContentType((refactorDecoded4)._2),
+            ((refactorDecoded4)._3).map(refactorElement11 => Tile.Etag(refactorElement11)),
+            Tile.Encoding((refactorDecoded4)._4),
+            (refactorDecoded4)._5
+          )
+      )((refactorEncoded4: (Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode)) =>
+        (
+          ((refactorEncoded4)._1).value,
+          ((refactorEncoded4)._2).value,
+          ((refactorEncoded4)._3).map(refactorElement12 => (refactorElement12).value),
+          ((refactorEncoded4)._4).value,
+          (refactorEncoded4)._5
+        )
+      )
 
   private def fetchErrors =
     oneOf[Api.Error](
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        (Api.Error.hasCode(Api.Error.Code(Backup.CodeMaintenance))).andThen(refactorResult => ((refactorResult) == (true)))
+        (Api.Error
+          .hasCode(Api.Error.Code(Backup.CodeMaintenance)))
+          .andThen(refactorResult => ((refactorResult) == (true)))
       ),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])((Api.Error.hasCode(Api.Error.Code(Busy))).andThen(refactorResult2 => ((refactorResult2) == (true)))),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(
+        (Api.Error.hasCode(Api.Error.Code(Busy))).andThen(refactorResult2 => ((refactorResult2) == (true)))
+      ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 

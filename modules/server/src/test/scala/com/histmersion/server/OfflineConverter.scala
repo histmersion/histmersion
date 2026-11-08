@@ -25,7 +25,9 @@ final class OfflineConverter extends ConverterClient:
     import scala.jdk.CollectionConverters.*
     seen.asScala.toList
 
-  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
+  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+    ConverterClient.HealthSummary("ok")
+  )
   def convert(
       file: Blob,
       filename: ConverterClient.Filename,

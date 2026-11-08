@@ -122,7 +122,14 @@ class DataTreeOracleSuite extends DbSuite:
           ServerConfig.Host("127.0.0.1"),
           ServerConfig.Port(0),
           OfflineConverter(),
-          source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => ConfigSource.Problem(p.value)))))
+          source = Some(
+            (
+              l,
+              ConfigSource(() =>
+                AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => ConfigSource.Problem(p.value))
+              )
+            )
+          )
         )
         .start()
       try
@@ -154,17 +161,81 @@ class DataTreeOracleSuite extends DbSuite:
     )
     val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), PmTiles.Zoom(5)))
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
-    val cfg = base.modify(
-      _.basemap).setTo(base.basemap.modify(
-        _.requestGapMs).setTo(BasemapConfig.RequestGapMs(0)).modify(_.bbox).setTo(BasemapConfig.Bbox("22,35,29,41")).modify(_.vector).setTo(base.basemap.vector.modify(
-          _.url).setTo(BasemapVectorConfig.Url("fake://v/{build}")).modify(_.maxZoom).setTo(BasemapVectorConfig.MaxZoom(4)).modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(true)).modify(_.maxZoom).setTo(BasemapOnDemandConfig.MaxZoom(5)).modify(_.requestsPerSecond).setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))
-        )).modify(_.terrain).setTo(base.basemap.terrain.modify(
-          _.url).setTo(BasemapTerrainConfig.Url("fake://t")).modify(_.maxZoom).setTo(BasemapTerrainConfig.MaxZoom(3)).modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.maxZoom).setTo(BasemapOnDemandConfig.MaxZoom(5)).modify(_.requestsPerSecond).setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))).modify(_.focusRegions).setTo(List(BasemapTerrainConfig.FocusRegions("crete 23,34.8,26.5,35.7"))
-        )).modify(_.labels).setTo(base.basemap.labels.modify(_.url).setTo(BasemapLabelsConfig.Url("fake://ne/{file}.geojson")).modify(_.files).setTo(List("ranges", "rivers").map(BasemapLabelsConfig.Files(_))).modify(_.maxZoom).setTo(BasemapLabelsConfig.MaxZoom(6))).modify(_.bathymetry).setTo(base.basemap.bathymetry.modify(
-          _.url).setTo(BasemapBathymetryConfig.Url("fake://sea/{z}/{x}/{y}.png")).modify(_.maxZoom).setTo(BasemapGebcoConfig.MaxZoom(3)).modify(_.requestGapMs).setTo(BasemapBathymetryConfig.RequestGapMs(0)).modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(true)).modify(_.maxZoom).setTo(BasemapOnDemandConfig.MaxZoom(3)).modify(_.requestsPerSecond).setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))
-        )
+    val cfg = base
+      .modify(_.basemap)
+      .setTo(
+        base.basemap
+          .modify(_.requestGapMs)
+          .setTo(BasemapConfig.RequestGapMs(0))
+          .modify(_.bbox)
+          .setTo(BasemapConfig.Bbox("22,35,29,41"))
+          .modify(_.vector)
+          .setTo(
+            base.basemap.vector
+              .modify(_.url)
+              .setTo(BasemapVectorConfig.Url("fake://v/{build}"))
+              .modify(_.maxZoom)
+              .setTo(BasemapVectorConfig.MaxZoom(4))
+              .modify(_.onDemand)
+              .setTo(
+                base.basemap.vector.onDemand
+                  .modify(_.enabled)
+                  .setTo(BasemapOnDemandConfig.Enabled(true))
+                  .modify(_.maxZoom)
+                  .setTo(BasemapOnDemandConfig.MaxZoom(5))
+                  .modify(_.requestsPerSecond)
+                  .setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))
+              )
+          )
+          .modify(_.terrain)
+          .setTo(
+            base.basemap.terrain
+              .modify(_.url)
+              .setTo(BasemapTerrainConfig.Url("fake://t"))
+              .modify(_.maxZoom)
+              .setTo(BasemapTerrainConfig.MaxZoom(3))
+              .modify(_.onDemand)
+              .setTo(
+                base.basemap.terrain.onDemand
+                  .modify(_.maxZoom)
+                  .setTo(BasemapOnDemandConfig.MaxZoom(5))
+                  .modify(_.requestsPerSecond)
+                  .setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))
+              )
+              .modify(_.focusRegions)
+              .setTo(List(BasemapTerrainConfig.FocusRegions("crete 23,34.8,26.5,35.7")))
+          )
+          .modify(_.labels)
+          .setTo(
+            base.basemap.labels
+              .modify(_.url)
+              .setTo(BasemapLabelsConfig.Url("fake://ne/{file}.geojson"))
+              .modify(_.files)
+              .setTo(List("ranges", "rivers").map(BasemapLabelsConfig.Files(_)))
+              .modify(_.maxZoom)
+              .setTo(BasemapLabelsConfig.MaxZoom(6))
+          )
+          .modify(_.bathymetry)
+          .setTo(
+            base.basemap.bathymetry
+              .modify(_.url)
+              .setTo(BasemapBathymetryConfig.Url("fake://sea/{z}/{x}/{y}.png"))
+              .modify(_.maxZoom)
+              .setTo(BasemapGebcoConfig.MaxZoom(3))
+              .modify(_.requestGapMs)
+              .setTo(BasemapBathymetryConfig.RequestGapMs(0))
+              .modify(_.onDemand)
+              .setTo(
+                base.basemap.bathymetry.onDemand
+                  .modify(_.enabled)
+                  .setTo(BasemapOnDemandConfig.Enabled(true))
+                  .modify(_.maxZoom)
+                  .setTo(BasemapOnDemandConfig.MaxZoom(3))
+                  .modify(_.requestsPerSecond)
+                  .setTo(BasemapOnDemandConfig.RequestsPerSecond((1000: Double)))
+              )
+          )
       )
-    )
     val router = new RangeHttp:
       private def pick(url: RangeHttp.Url) = if url.value.startsWith("fake://v") then v else t
       def text(url: RangeHttp.Url) =
@@ -190,7 +261,13 @@ class DataTreeOracleSuite extends DbSuite:
       assert(j.succeeded, j.toString)
     fetched(Basemap.FetchQuery())
     fetched(Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete"))))
-    fetched(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("terrain"), maxZoom = Some(Basemap.Focus.MaxZoom(4)), bbox = Some(BBox.Text("22.5,37.4,23.2,37.9"))))
+    fetched(
+      Basemap.FetchQuery(
+        layer = Basemap.FetchQuery.Layer("terrain"),
+        maxZoom = Some(Basemap.Focus.MaxZoom(4)),
+        bbox = Some(BBox.Text("22.5,37.4,23.2,37.9"))
+      )
+    )
     List(
       (Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9L), Basemap.Tile.Row(6L)),
       (Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(0L), Basemap.Tile.Row(0L)),
@@ -200,16 +277,20 @@ class DataTreeOracleSuite extends DbSuite:
     )
       .foreach((layer, z, x, y) => assert(svc.tile(layer, z, x, y).isRight, s"$layer $z/$x/$y"))
     assert(svc.status.available.value)
-    assert(svc.remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("crete")))).isRight)
+    assert(
+      svc
+        .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("crete"))))
+        .isRight
+    )
 
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
     assert(
       Spool(
-          Storage
-            .at(Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
-        )
+        Storage
+          .at(Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
+      )
         .write(Citekey("zz_data_tree"), Spool.Extension("pdf"), Spool.Bytes("%PDF-1.4 spooled".getBytes(UTF_8)))
         .isRight
     )

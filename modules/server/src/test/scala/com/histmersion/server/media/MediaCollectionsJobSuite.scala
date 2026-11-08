@@ -99,11 +99,25 @@ class MediaCollectionsJobSuite extends DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(base.media.modify(
-        _.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)).modify(_.aic).setTo(base.media.aic.modify(_.apiUrl).setTo(MediaCollectionConfig.ApiUrl(s"$providerUrl/api")).modify(_.imageUrl).setTo(MediaCollectionConfig.ImageUrl(s"$providerUrl/iiif")).modify(_.requestIntervalMs).setTo(MediaCollectionConfig.RequestIntervalMs(0))
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.media)
+      .setTo(
+        base.media
+          .modify(_.requestIntervalMs)
+          .setTo(MediaConfig.RequestIntervalMs(0))
+          .modify(_.aic)
+          .setTo(
+            base.media.aic
+              .modify(_.apiUrl)
+              .setTo(MediaCollectionConfig.ApiUrl(s"$providerUrl/api"))
+              .modify(_.imageUrl)
+              .setTo(MediaCollectionConfig.ImageUrl(s"$providerUrl/iiif"))
+              .modify(_.requestIntervalMs)
+              .setTo(MediaCollectionConfig.RequestIntervalMs(0))
+          )
       )
-    )
 
   /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
   private lazy val plugins = ServerPlugins.offlineWith(
@@ -139,15 +153,30 @@ class MediaCollectionsJobSuite extends DbSuite:
         ds,
         List(
           Place.Input(
-            Place(Place.Id("zqmc_site"), Place.Label("Zqmcenae"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(140.0))),
+            Place(
+              Place.Id("zqmc_site"),
+              Place.Label("Zqmcenae"),
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              pt(Longitude(140.0))
+            ),
             List(Place.Name(Place.Name.Value("Zqmcenae")), Place.Name(Place.Name.Value("Zqmcenai")))
           ),
           Place.Input(
-            Place(Place.Id("zqmc_thebai_a"), Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(141.0))),
+            Place(
+              Place.Id("zqmc_thebai_a"),
+              Place.Label("Zqmc Thebai"),
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              pt(Longitude(141.0))
+            ),
             List(Place.Name(Place.Name.Value("Zqmc Thebai")))
           ),
           Place.Input(
-            Place(Place.Id("zqmc_thebai_b"), Place.Label("Zqmc Thebai"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(150.0))),
+            Place(
+              Place.Id("zqmc_thebai_b"),
+              Place.Label("Zqmc Thebai"),
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              pt(Longitude(150.0))
+            ),
             List(Place.Name(Place.Name.Value("Zqmc Thebai")))
           )
         )
@@ -169,26 +198,55 @@ class MediaCollectionsJobSuite extends DbSuite:
       providerServer.stop(0)
 
   test("the places as a match reads them: every name's key, the findings' span, and what a name names on the map"):
-    val f = ImportFixtures.placeFacts(ds, List(com.histmersion.domain.catalogue.Place.Id("zqmc_site")))(com.histmersion.domain.catalogue.Place.Id("zqmc_site"))
+    val f = ImportFixtures.placeFacts(ds, List(com.histmersion.domain.catalogue.Place.Id("zqmc_site")))(
+      com.histmersion.domain.catalogue.Place.Id("zqmc_site")
+    )
     assertEquals(f.keys, Set("zqmcenae", "zqmcenai"))
     assertEquals(f.period, Some((-1600L, -1100L)))
-    val named = ImportFixtures.mapPlacesNamed(ds, List(ImportFixtures.NameKey("zqmcenai"), ImportFixtures.NameKey("zqmc thebai"), ImportFixtures.NameKey("zqmc nowhere")))
+    val named = ImportFixtures.mapPlacesNamed(
+      ds,
+      List(
+        ImportFixtures.NameKey("zqmcenai"),
+        ImportFixtures.NameKey("zqmc thebai"),
+        ImportFixtures.NameKey("zqmc nowhere")
+      )
+    )
     assertEquals(
       named.view.mapValues(_.map(_.id.value).sorted).toMap,
       Map("zqmcenai" -> List("zqmc_site"), "zqmc thebai" -> List("zqmc_thebai_a", "zqmc_thebai_b"))
     )
     val ts = ImportFixtures
-      .collectionTargets(ds, MediaItemRow.Provider(MediaProvider.ArtInstitute), places = ImportFixtures.Places(true), None, None, ImportFixtures.Limit(10_000), refresh = ImportFixtures.Refresh(false))
+      .collectionTargets(
+        ds,
+        MediaItemRow.Provider(MediaProvider.ArtInstitute),
+        places = ImportFixtures.Places(true),
+        None,
+        None,
+        ImportFixtures.Limit(10_000),
+        refresh = ImportFixtures.Refresh(false)
+      )
       .fold(p => fail(p.value), identity)
     assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id.value).toSet), ts.toString)
     assert(
-      ImportFixtures.collectionTargets(ds, MediaItemRow.Provider(MediaProvider.ArtInstitute), places = ImportFixtures.Places(true), None, Some(Event.Id("e")), ImportFixtures.Limit(1), ImportFixtures.Refresh(false)).isLeft,
+      ImportFixtures
+        .collectionTargets(
+          ds,
+          MediaItemRow.Provider(MediaProvider.ArtInstitute),
+          places = ImportFixtures.Places(true),
+          None,
+          Some(Event.Id("e")),
+          ImportFixtures.Limit(1),
+          ImportFixtures.Refresh(false)
+        )
+        .isLeft,
       "a collection is about places"
     )
 
   test("dry run, a job, the link's reason and the check — through the server"):
     supervised {
-      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition
+        .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins)
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val (us, ub) = post(s"$url/api/media/import", """{"provider":"rijks","dryRun":true}""")

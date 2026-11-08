@@ -12,5 +12,4 @@ object TargetKind:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[TargetKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

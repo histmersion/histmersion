@@ -60,18 +60,37 @@ class GeoTiffSuite extends munit.FunSuite:
     assertEquals(g.pixelAt(Degrees(10.75), Degrees(49.25)), (1.5, 1.5))
 
   test("pixel-is-point grids are shifted half a pixel to their area"):
-    val g = parsed(tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5), point = true)).fold(e => fail(e.value), identity)
+    val g = parsed(
+      tiff(
+        PixelCount(8),
+        PixelCount(6),
+        west = Degrees(10),
+        north = Degrees(50),
+        step = Degrees.PerPixel(0.5),
+        point = true
+      )
+    ).fold(e => fail(e.value), identity)
     assertEquals((g.west.value, g.north.value), (9.75, 50.25))
 
   test("the window of a box, half-open on the east and south; none for a box that only touches the grid"):
-    val g = parsed(tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))).fold(e => fail(e.value), identity)
-    assertEquals(g.window(BBox(Longitude(10.6), Latitude(48.1), Longitude(11.4), Latitude(49.9))), Some(GridWindow(GridWindow.First(0), GridWindow.Last(3), GridWindow.FirstCol(1), GridWindow.LastCol(2))))
-    assertEquals(g.window(BBox(Longitude(0), Latitude(0), Longitude(100), Latitude(80))), Some(GridWindow(GridWindow.First(0), GridWindow.Last(5), GridWindow.FirstCol(0), GridWindow.LastCol(7))))
+    val g = parsed(
+      tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))
+    ).fold(e => fail(e.value), identity)
+    assertEquals(
+      g.window(BBox(Longitude(10.6), Latitude(48.1), Longitude(11.4), Latitude(49.9))),
+      Some(GridWindow(GridWindow.First(0), GridWindow.Last(3), GridWindow.FirstCol(1), GridWindow.LastCol(2)))
+    )
+    assertEquals(
+      g.window(BBox(Longitude(0), Latitude(0), Longitude(100), Latitude(80))),
+      Some(GridWindow(GridWindow.First(0), GridWindow.Last(5), GridWindow.FirstCol(0), GridWindow.LastCol(7)))
+    )
     assertEquals(g.window(BBox(Longitude(14), Latitude(40), Longitude(20), Latitude(45))), None)
     assertEquals(g.window(BBox(Longitude(0), Latitude(50), Longitude(20), Latitude(60))), None)
 
   test("row runs: whole rows that follow each other share a request, at most the size asked"):
-    val g = parsed(tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))).fold(e => fail(e.value), identity)
+    val g = parsed(
+      tiff(PixelCount(8), PixelCount(6), west = Degrees(10), north = Degrees(50), step = Degrees.PerPixel(0.5))
+    ).fold(e => fail(e.value), identity)
     val w = GridWindow(GridWindow.First(1), GridWindow.Last(5), GridWindow.FirstCol(2), GridWindow.LastCol(3))
     assertEquals(
       g.runs(w, ByteCount.applyUnsafe(1L << 20)).map(r => (r.firstRow, r.rows, r.offset.value, r.length)),
@@ -123,7 +142,8 @@ object GeoTiffSuite:
     val scale = array(b => { b.putDouble(step.value); b.putDouble(step.value); b.putDouble(0) }, 24)
     val tie = array(
       b => {
-        b.putDouble(0); b.putDouble(0); b.putDouble(0); b.putDouble(west.value); b.putDouble(north.value); b.putDouble(0)
+        b.putDouble(0); b.putDouble(0); b.putDouble(0); b.putDouble(west.value); b.putDouble(north.value);
+        b.putDouble(0)
       },
       48
     )

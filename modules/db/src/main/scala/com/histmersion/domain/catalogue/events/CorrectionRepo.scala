@@ -32,7 +32,14 @@ private[events] object CorrectionRepo:
     * correction is needed (one there goes); otherwise it is recorded, or updated — the upstream value then is what
     * upstream says NOW, and the status starts `active` again.
     */
-  def record(kind: Correction.TargetKind, id: Correction.TargetId, field: Correction.Field, value: Json, upstreamValue: Json, upstream: Option[BCatalogueRow.Provider])(using
+  def record(
+      kind: Correction.TargetKind,
+      id: Correction.TargetId,
+      field: Correction.Field,
+      value: Json,
+      upstreamValue: Json,
+      upstream: Option[BCatalogueRow.Provider]
+  )(using
       DbCon
   ): Unit =
     if value == upstreamValue then
@@ -53,7 +60,8 @@ private[events] object CorrectionRepo:
   def reconcile(kind: Correction.TargetKind, id: Correction.TargetId, now: Map[Correction.Field, Json])(using
       DbCon
   ): (Map[Correction.Field, Json], List[Corrections.Outcome]) =
-    val applied = of(kind, id).filter(c => Correction.Status.applied.contains(Correction.Status.Applied(c.status.value)))
+    val applied =
+      of(kind, id).filter(c => Correction.Status.applied.contains(Correction.Status.Applied(c.status.value)))
     val results = applied.flatMap { c =>
       now.get(c.field).map { up =>
         val o = Corrections.reconcile(c.valueJson, c.upstreamValueJson, up)
@@ -69,14 +77,25 @@ private[events] object CorrectionRepo:
   /** `histmersion events corrections`: the corrections of `kind` (one target's with `id`), the ones in `status`
     * (default: all but the retired), conflicts first, with each event's label.
     */
-  def list(kind: Correction.TargetKind, id: Option[Correction.TargetId], status: Option[Correction.StatusValue], limit: PageSize, offset: Offset)(using
+  def list(
+      kind: Correction.TargetKind,
+      id: Option[Correction.TargetId],
+      status: Option[Correction.StatusValue],
+      limit: PageSize,
+      offset: Offset
+  )(using
       DbCon
   ): Correction.List =
     val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val where = Sql.of(Sql.OfText("c.target_kind = ?"), Param.S(Param.S.V(kind.value))) ++
-      id.map(_.value.trim).filter(_.nonEmpty).fold(Sql.empty)(i => Sql.of(Sql.OfText(" AND c.target_id = ?"), Param.S(Param.S.V(i)))) ++
-      st.fold(Sql.raw(Sql.RawText(" AND c.status <> 'agreed'")))(s => Sql.of(Sql.OfText(" AND c.status = ?"), Param.S(Param.S.V(s))))
-    val count = (Sql.raw(Sql.RawText("SELECT count(*)::int FROM corrections c WHERE ")) ++ where).frag.query[Int].run().head
+      id.map(_.value.trim)
+        .filter(_.nonEmpty)
+        .fold(Sql.empty)(i => Sql.of(Sql.OfText(" AND c.target_id = ?"), Param.S(Param.S.V(i)))) ++
+      st.fold(Sql.raw(Sql.RawText(" AND c.status <> 'agreed'")))(s =>
+        Sql.of(Sql.OfText(" AND c.status = ?"), Param.S(Param.S.V(s)))
+      )
+    val count =
+      (Sql.raw(Sql.RawText("SELECT count(*)::int FROM corrections c WHERE ")) ++ where).frag.query[Int].run().head
     val rows = (Sql.raw(
       Sql.RawText(
         s"SELECT $Cols, e.label FROM corrections c " +
@@ -84,7 +103,11 @@ private[events] object CorrectionRepo:
       )
     ) ++ where ++
       Sql.raw(Sql.RawText(" ORDER BY c.status = 'conflict' DESC, c.target_id, c.field")) ++
-      Sql.of(Sql.OfText(" LIMIT ? OFFSET ?"), Param.I(Param.I.V(limit.value.max(1))), Param.I(Param.I.V(offset.value.max(0))))).frag
+      Sql.of(
+        Sql.OfText(" LIMIT ? OFFSET ?"),
+        Param.I(Param.I.V(limit.value.max(1))),
+        Param.I(Param.I.V(offset.value.max(0)))
+      )).frag
       .query[(CorrectionRow, Option[Correction.Label])]
       .run()
       .toList

@@ -211,7 +211,9 @@ object MergeText:
     */
   def givenCompatible(a: List[Token], b: List[Token]): Boolean =
     a.zip(b).forall { (x, y) =>
-      x.value.head == y.value.head && (x.value.length == 1 || y.value.length == 1 || x.value.startsWith(y.value) || y.value.startsWith(x.value))
+      x.value.head == y.value.head && (x.value.length == 1 || y.value.length == 1 || x.value.startsWith(
+        y.value
+      ) || y.value.startsWith(x.value))
     }
 
   /** Two names the same person: the surnames agree (for a guessed surname, any trailing run of its words may be the

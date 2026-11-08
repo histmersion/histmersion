@@ -21,7 +21,10 @@ class ListQueriesSuite extends munit.FunSuite:
 
   test("approvals: no state is the open ones, `all` every state; kinds and deciders are checked"):
     assertEquals(ListQueries.approvals(ApprovalFilter()).map(_.state), Right(Some(ApprovalState.Open)))
-    assertEquals(ListQueries.approvals(ApprovalFilter(state = Some(Approval.State.Wire("all")))).map(_.state), Right(None))
+    assertEquals(
+      ListQueries.approvals(ApprovalFilter(state = Some(Approval.State.Wire("all")))).map(_.state),
+      Right(None)
+    )
     val q = ListQueries
       .approvals(
         ApprovalFilter(
@@ -97,15 +100,30 @@ class ListQueriesSuite extends munit.FunSuite:
       (q.since, q.until),
       (Some(Instant.parse("2026-10-16T12:00:00Z")), Some(Instant.parse("2026-10-24T00:00:00Z")))
     )
-    assert(ListQueries.runs(RunFilter(status = List(RunFilter.Status("stuck"))), now).left.exists(_.message.value.contains("unknown status")))
+    assert(
+      ListQueries
+        .runs(RunFilter(status = List(RunFilter.Status("stuck"))), now)
+        .left
+        .exists(_.message.value.contains("unknown status"))
+    )
     assert(
       ListQueries
         .runs(RunFilter(pipeline = List(RunFilter.Pipeline("write-novel"))), now)
         .left
         .exists(_.message.value.contains("unknown pipeline"))
     )
-    assert(ListQueries.runs(RunFilter(origin = List(Agents.Origin.Wire("cron"))), now).left.exists(_.message.value.contains("unknown origin")))
-    assert(ListQueries.runs(RunFilter(since = Some(RunFilter.Since("last week"))), now).left.exists(_.message.value.startsWith("since:")))
+    assert(
+      ListQueries
+        .runs(RunFilter(origin = List(Agents.Origin.Wire("cron"))), now)
+        .left
+        .exists(_.message.value.contains("unknown origin"))
+    )
+    assert(
+      ListQueries
+        .runs(RunFilter(since = Some(RunFilter.Since("last week"))), now)
+        .left
+        .exists(_.message.value.startsWith("since:"))
+    )
 
   test("jobs: states are checked, any kind passes (plugins add their own)"):
     val q = JobListView

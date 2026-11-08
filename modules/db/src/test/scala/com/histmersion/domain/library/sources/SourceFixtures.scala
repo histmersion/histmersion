@@ -34,7 +34,7 @@ import com.histmersion.domain.automation.worklists.WorkListSourceReferrer
   * registers.
   */
 object SourceFixtures:
-  export SourceRepo.{Name, Limit}
+  export SourceRepo.{Limit, Name}
 
   private def db(ds: DataSource): Transactor = Transactor(ds)
 
@@ -50,16 +50,22 @@ object SourceFixtures:
       ds: DataSource,
       s: Source,
       chunkChars: Limits.ChunkChars,
-      toleranceKm: PlacesConfig.PointToleranceKm = PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
+      toleranceKm: PlacesConfig.PointToleranceKm =
+        PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
   ): Source.UpdatedAt = db(ds).transact(
-    SourceRepo.putIn(s, Chunker.ChunkMaxChars(chunkChars.value), FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
+    SourceRepo.putIn(
+      s,
+      Chunker.ChunkMaxChars(chunkChars.value),
+      FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
+    )
   )
 
   def upsert(
       ds: DataSource,
       s: Source,
       chunkChars: Limits.ChunkChars,
-      toleranceKm: PlacesConfig.PointToleranceKm = PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
+      toleranceKm: PlacesConfig.PointToleranceKm =
+        PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
   ): Unit =
     val _ = put(ds, s, chunkChars, toleranceKm)
 
@@ -68,9 +74,15 @@ object SourceFixtures:
       requested: Citekey,
       p: Source.Patch,
       chunkChars: Limits.ChunkChars,
-      toleranceKm: PlacesConfig.PointToleranceKm = PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
+      toleranceKm: PlacesConfig.PointToleranceKm =
+        PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
   ): Either[Api.Error, Source.UpdatedAt] = db(ds).transact(
-    SourceRepo.patchIn(requested, p, Chunker.ChunkMaxChars(chunkChars.value), FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
+    SourceRepo.patchIn(
+      requested,
+      p,
+      Chunker.ChunkMaxChars(chunkChars.value),
+      FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
+    )
   )
 
   def reindexChunks(
@@ -110,8 +122,12 @@ object SourceFixtures:
   def bodyText(ds: DataSource, ck: Citekey): FullSourceRow.OcrMarkdown = connect(ds)(SourceRepo.bodyText(ck))
   def bodyChunks(ds: DataSource, ck: Citekey): List[Chunk] = connect(ds)(SourceRepo.bodyChunks(ck))
   def markdown(ds: DataSource, ck: Citekey): FullSourceRow.OcrMarkdown = connect(ds)(SourceRepo.markdown(ck))
-  def resolveAliases(ds: DataSource, targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey] =
+  def resolveAliases(
+      ds: DataSource,
+      targets: List[WikiLinks.Occurrence.Target]
+  ): Map[WikiLinks.Occurrence.Target, Citekey] =
     connect(ds)(SourceRepo.resolveAliases(targets))
-  def naming(ds: DataSource, name: SourceRepo.Name, limit: SourceRepo.Limit): List[Citekey] = connect(ds)(SourceRepo.naming(name, limit))
+  def naming(ds: DataSource, name: SourceRepo.Name, limit: SourceRepo.Limit): List[Citekey] =
+    connect(ds)(SourceRepo.naming(name, limit))
   def plan(ds: DataSource, ck: Citekey): Either[Api.Error, SourceDeletePlan] =
     connect(ds)(SourceDeleteRepo.planIn(ck, referrers))

@@ -12,9 +12,10 @@ final case class ArchiveImportRequest(
     citekey: Option[Citekey] = None,
     format: Option[ArchiveImportRequest.Format] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ArchiveImportRequest:
-  export com.histmersion.api.library.{ArchiveId as Id}
+  export com.histmersion.api.library.ArchiveId as Id
   type Format = Format.T
   object Format extends Newtype[String, Pure]

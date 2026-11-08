@@ -8,17 +8,33 @@ class SettingValueSuite extends munit.FunSuite:
       SettingValue.parse(SettingValue.Typed("a b # not a comment"), SettingKind.Text),
       Right(SettingValue.Text(SettingValue.Text.Value("a b # not a comment")))
     )
-    assertEquals(SettingValue.parse(SettingValue.Typed(" 12 "), SettingKind.Number), Right(SettingValue.Number(BigDecimal(12))))
-    assertEquals(SettingValue.parse(SettingValue.Typed("-3.5"), SettingKind.Number), Right(SettingValue.Number(BigDecimal("-3.5"))))
+    assertEquals(
+      SettingValue.parse(SettingValue.Typed(" 12 "), SettingKind.Number),
+      Right(SettingValue.Number(BigDecimal(12)))
+    )
+    assertEquals(
+      SettingValue.parse(SettingValue.Typed("-3.5"), SettingKind.Number),
+      Right(SettingValue.Number(BigDecimal("-3.5")))
+    )
     assert(SettingValue.parse(SettingValue.Typed("twelve"), SettingKind.Number).isLeft)
-    assertEquals(SettingValue.parse(SettingValue.Typed("yes"), SettingKind.Flag), Right(SettingValue.Flag(SettingValue.Flag.Value(true))))
-    assertEquals(SettingValue.parse(SettingValue.Typed("Off"), SettingKind.Flag), Right(SettingValue.Flag(SettingValue.Flag.Value(false))))
+    assertEquals(
+      SettingValue.parse(SettingValue.Typed("yes"), SettingKind.Flag),
+      Right(SettingValue.Flag(SettingValue.Flag.Value(true)))
+    )
+    assertEquals(
+      SettingValue.parse(SettingValue.Typed("Off"), SettingKind.Flag),
+      Right(SettingValue.Flag(SettingValue.Flag.Value(false)))
+    )
     assert(SettingValue.parse(SettingValue.Typed("maybe"), SettingKind.Flag).isLeft)
     assertEquals(
       SettingValue.parse(SettingValue.Typed("[openalex, \"cross ref\", 3]"), SettingKind.Items),
       Right(
         SettingValue.Items(
-          List(SettingValue.Text(SettingValue.Text.Value("openalex")), SettingValue.Text(SettingValue.Text.Value("cross ref")), SettingValue.Number(BigDecimal(3)))
+          List(
+            SettingValue.Text(SettingValue.Text.Value("openalex")),
+            SettingValue.Text(SettingValue.Text.Value("cross ref")),
+            SettingValue.Number(BigDecimal(3))
+          )
         )
       )
     )
@@ -27,13 +43,25 @@ class SettingValueSuite extends munit.FunSuite:
       Right(SettingValue.Items(List("a", "b", "c").map(t => SettingValue.Text(SettingValue.Text.Value(t)))))
     )
     assertEquals(SettingValue.parse(SettingValue.Typed(""), SettingKind.Items), Right(SettingValue.Items(Nil)))
-    assert(SettingValue.parse(SettingValue.Typed("[a, {b = 1}]"), SettingKind.Items).isLeft, "an object in a list is no plain value")
+    assert(
+      SettingValue.parse(SettingValue.Typed("[a, {b = 1}]"), SettingKind.Items).isLeft,
+      "an object in a list is no plain value"
+    )
     assert(SettingValue.parse(SettingValue.Typed("x"), SettingKind.Block).isLeft)
 
   test("an open block's key guesses the kind"):
-    assertEquals(SettingValue.parse(SettingValue.Typed("true"), SettingKind.Any), Right(SettingValue.Flag(SettingValue.Flag.Value(true))))
-    assertEquals(SettingValue.parse(SettingValue.Typed("7"), SettingKind.Any), Right(SettingValue.Number(BigDecimal(7))))
-    assertEquals(SettingValue.parse(SettingValue.Typed("env:X"), SettingKind.Any), Right(SettingValue.Text(SettingValue.Text.Value("env:X"))))
+    assertEquals(
+      SettingValue.parse(SettingValue.Typed("true"), SettingKind.Any),
+      Right(SettingValue.Flag(SettingValue.Flag.Value(true)))
+    )
+    assertEquals(
+      SettingValue.parse(SettingValue.Typed("7"), SettingKind.Any),
+      Right(SettingValue.Number(BigDecimal(7)))
+    )
+    assertEquals(
+      SettingValue.parse(SettingValue.Typed("env:X"), SettingKind.Any),
+      Right(SettingValue.Text(SettingValue.Text.Value("env:X")))
+    )
 
   test("rendered as HOCON reads back the same"):
     val vs = List(

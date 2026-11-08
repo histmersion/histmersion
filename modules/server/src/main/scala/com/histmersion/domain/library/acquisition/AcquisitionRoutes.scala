@@ -37,7 +37,7 @@ final class AcquisitionRoutes(
     AcquireApi.retractionsStatus.serverLogicSuccess[Identity](_ => h.retractionsStatus),
     AcquireApi.followups.serverLogic[Identity](req => h.followups(req)),
     AcquireApi.ingest.serverLogic[Identity](req => h.ingest(req)),
-    AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) => 
+    AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) =>
       collections.archiveSearch(
         Caller.Local,
         Search.Query(q.value),
@@ -46,7 +46,9 @@ final class AcquisitionRoutes(
     ),
     AcquireApi.archiveInfo.serverLogic[Identity](id => collections.archiveInfo(Caller.Local, ArchiveId(id.value))),
     AcquireApi.archiveImport.serverLogic[Identity](req => collections.archiveImport(Caller.Local, req)),
-    AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit => gaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))),
+    AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit =>
+      gaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))
+    ),
     AcquireApi.calibreMeta.serverLogic[Identity](ck =>
       Citekey
         .parse(ck.value)

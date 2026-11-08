@@ -59,10 +59,12 @@ object BackgroundJob:
     private[BackgroundJob] def note(what: Work): Unit = held.set(Some(what))
     private[BackgroundJob] def free(): Unit = held.set(None)
 
-
   /** The answer for a job asked for while its slot is held: names the running one. Pure. */
   def busy(what: Work, current: Option[Work], code: Option[Api.Error.Code] = None): Api.Error =
-    Api.Error(Api.Error.Message(s"$what is already running (${current.fold("?")(_.value)}) — see `histmersion jobs`"), code)
+    Api.Error(
+      Api.Error.Message(s"$what is already running (${current.fold("?")(_.value)}) — see `histmersion jobs`"),
+      code
+    )
 
   /** What a thrown exception tells a job's error line. Pure. */
   def describe(e: Throwable): Outcome.Error = e match
@@ -168,7 +170,9 @@ object BackgroundJob:
           case Right(o) =>
             o.error match
               case None =>
-                Transactor(ds).transact(JobRepo.transition(id, JobState.Running, JobState.Done, o.summary.map(m => JobRow.Progress(m.value))))
+                Transactor(ds).transact(
+                  JobRepo.transition(id, JobState.Running, JobState.Done, o.summary.map(m => JobRow.Progress(m.value)))
+                )
               case Some(e) =>
                 Transactor(ds).transact(
                   JobRepo.transition(

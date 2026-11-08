@@ -19,7 +19,8 @@ final case class CollectionImportRequest(
     cover: CollectionImportRequest.Cover = CollectionImportRequest.Cover(true),
     acquireItem: Option[CollectionImportRequest.AcquireItem] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionImportRequest:
   type Id = Id.T

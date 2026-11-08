@@ -8,7 +8,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** One LLM step's loop: iterations of the tool loop, output tokens per call, and how often a typed answer that fails
   * code validation is retried with the validator's errors appended.
   */
-final case class AgentStepConfig(maxIterations: AgentStepConfig.MaxIterations, maxTokens: AgentStepConfig.MaxTokens, maxRetries: AgentStepConfig.MaxRetries) derives ConfigReader
+final case class AgentStepConfig(
+    maxIterations: AgentStepConfig.MaxIterations,
+    maxTokens: AgentStepConfig.MaxTokens,
+    maxRetries: AgentStepConfig.MaxRetries
+) derives ConfigReader
 
 object AgentStepConfig:
   type MaxIterations = MaxIterations.T

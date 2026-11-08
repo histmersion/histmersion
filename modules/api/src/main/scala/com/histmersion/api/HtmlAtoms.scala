@@ -9,7 +9,6 @@ import com.histmersion.api.research.ReviewGoal
 /** Cross-platform (no JVM `URLEncoder`): the web UI runs it under Scala.js too. */
 object HtmlAtoms:
 
-
   def esc(s: String): String =
     ((s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;"))
 
@@ -22,12 +21,16 @@ object HtmlAtoms:
 
   def sourceLink(citekey: Citekey, doi: Option[Doi], label: String): String =
     val doiAttr = doi.map((_).value.trim).filter(_.nonEmpty).fold("")(d => s""" data-doi="${esc((d))}"""")
-    (s"""<a class="src-ref" data-ck="${esc(((citekey).value))}"$doiAttr href="/source/${esc(((segment(((citekey).value)))))}">${esc(
+    (s"""<a class="src-ref" data-ck="${esc(((citekey).value))}"$doiAttr href="/source/${esc(
+        ((segment(((citekey).value))))
+      )}">${esc(
         ((label))
       )}</a>""")
 
   def articleLink(slug: ReviewGoal.Slug, label: String): String =
-    (s"""<a class="art-ref" data-slug="${esc(((slug).value))}" href="/article/${esc(((segment(((slug).value)))))}">${esc(((label)))}</a>""")
+    (s"""<a class="art-ref" data-slug="${esc(((slug).value))}" href="/article/${esc(
+        ((segment(((slug).value))))
+      )}">${esc(((label)))}</a>""")
 
   def confidenceBadge(c: Confidence): String =
     val wire = c.toString.toLowerCase

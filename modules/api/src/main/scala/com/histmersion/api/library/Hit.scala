@@ -9,7 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Hit(source: SearchHit, matched: List[Finding.Match], why: List[Hit.Why])
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object Hit:
   type Why = Why.T

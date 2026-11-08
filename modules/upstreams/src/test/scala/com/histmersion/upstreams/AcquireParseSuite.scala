@@ -107,10 +107,20 @@ class AcquireParseSuite extends munit.FunSuite:
 
   test("Unpaywall → whether a free copy exists, its status and the best location (#599)"):
     val a = AcquireParse.unpaywallAccess(fixture("unpaywall.json"))
-    assertEquals(a, OaAccess(isOa = OaAccess.IsOa(true), status = Some(OaAccess.Status("green")), url = Some(OaAccess.Url("https://arxiv.org/pdf/1502.02783"))))
+    assertEquals(
+      a,
+      OaAccess(
+        isOa = OaAccess.IsOa(true),
+        status = Some(OaAccess.Status("green")),
+        url = Some(OaAccess.Url("https://arxiv.org/pdf/1502.02783"))
+      )
+    )
     val closed =
       io.circe.parser.parse("""{"is_oa": false, "oa_status": "closed", "best_oa_location": null}""").toOption.get
-    assertEquals(AcquireParse.unpaywallAccess(closed), OaAccess(isOa = OaAccess.IsOa(false), status = Some(OaAccess.Status("closed")), url = None))
+    assertEquals(
+      AcquireParse.unpaywallAccess(closed),
+      OaAccess(isOa = OaAccess.IsOa(false), status = Some(OaAccess.Status("closed")), url = None)
+    )
 
   // ── Semantic Scholar ────────────────────────────────────────────────────────────────────────
   test("S2 citations carry intents, influence and contexts"):
@@ -141,12 +151,19 @@ class AcquireParseSuite extends munit.FunSuite:
 
   test("file choice prefers clean text (epub / OCR _text.pdf) over the raw image scan"):
     val files = List(
-      ArchiveFile(ArchiveFile.Name("book.pdf"), Some(ArchiveFile.Format("Image Container PDF")), ArchiveFile.Megabytes(400.0)),
+      ArchiveFile(
+        ArchiveFile.Name("book.pdf"),
+        Some(ArchiveFile.Format("Image Container PDF")),
+        ArchiveFile.Megabytes(400.0)
+      ),
       ArchiveFile(ArchiveFile.Name("book_text.pdf"), Some(ArchiveFile.Format("Text PDF")), ArchiveFile.Megabytes(12.0)),
       ArchiveFile(ArchiveFile.Name("book.epub"), Some(ArchiveFile.Format("EPUB")), ArchiveFile.Megabytes(3.0))
     )
     assertEquals(AcquireParse.pickArchiveFile(files, None).map(_.name), Some("book.epub"))
-    assertEquals(AcquireParse.pickArchiveFile(files, Some(AcquireParse.WantedFileKind("pdf"))).map(_.name), Some("book_text.pdf"))
+    assertEquals(
+      AcquireParse.pickArchiveFile(files, Some(AcquireParse.WantedFileKind("pdf"))).map(_.name),
+      Some("book_text.pdf")
+    )
     assertEquals(AcquireParse.pickArchiveFile(Nil, None), None)
 
   // ── Wikipedia ───────────────────────────────────────────────────────────────────────────────
@@ -193,8 +210,13 @@ class AcquireParseSuite extends munit.FunSuite:
 
   test("the page title is taken from an article URL"):
     assertEquals(
-      AcquireParse.wikiPageTitle(RepositoryLanding.Candidate.Url("https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse")),
+      AcquireParse.wikiPageTitle(
+        RepositoryLanding.Candidate.Url("https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse")
+      ),
       Some("Late_Bronze_Age_collapse")
     )
-    assertEquals(AcquireParse.wikiPageTitle(RepositoryLanding.Candidate.Url("https://en.wikipedia.org/wiki/Hittites#History")), Some("Hittites"))
+    assertEquals(
+      AcquireParse.wikiPageTitle(RepositoryLanding.Candidate.Url("https://en.wikipedia.org/wiki/Hittites#History")),
+      Some("Hittites")
+    )
     assertEquals(AcquireParse.wikiPageTitle(RepositoryLanding.Candidate.Url("Hittites")), Some("Hittites"))

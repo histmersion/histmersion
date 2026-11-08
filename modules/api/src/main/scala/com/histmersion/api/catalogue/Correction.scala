@@ -22,9 +22,9 @@ final case class Correction(
     createdAt: Correction.CreatedAt = Correction.CreatedAt(""),
     checkedAt: Option[Correction.CheckedAt] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object Correction:
-
 
   type Id = Id.T
   object Id extends Newtype[Long, Pure]
@@ -50,11 +50,19 @@ object Correction:
   type CheckedAt = CheckedAt.T
   object CheckedAt extends Newtype[String, Pure]
 
-  final case class Counts(kept: Counts.Kept = Counts.Kept(0), retired: Counts.Retired = Counts.Retired(0), conflicts: Counts.Conflicts = Counts.Conflicts(0))
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+  final case class Counts(
+      kept: Counts.Kept = Counts.Kept(0),
+      retired: Counts.Retired = Counts.Retired(0),
+      conflicts: Counts.Conflicts = Counts.Conflicts(0)
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
-      Counts(Counts.Kept((kept).value + (o.kept).value), Counts.Retired((retired).value + (o.retired).value), Counts.Conflicts((conflicts).value + (o.conflicts).value))
+      Counts(
+        Counts.Kept((kept).value + (o.kept).value),
+        Counts.Retired((retired).value + (o.retired).value),
+        Counts.Conflicts((conflicts).value + (o.conflicts).value)
+      )
     def isEmpty: Boolean = (kept == Counts.Kept(0) && retired == Counts.Retired(0) && conflicts == Counts.Conflicts(0))
 
     def summary: Option[String] =
@@ -71,13 +79,14 @@ object Correction:
     type Conflicts = Conflicts.T
     object Conflicts extends Newtype[Int, Pure]
 
-
-  final case class List(total: List.Total, corrections: scala.List[Correction]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class List(total: List.Total, corrections: scala.List[Correction])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object List:
     type Total = Total.T
     object Total extends Newtype[Int, Pure]
-
 
   object Status:
     type All = All.T

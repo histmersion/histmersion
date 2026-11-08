@@ -16,7 +16,6 @@ final case class UnreadItem(
     periodEnd: Option[Year] = None
 )
 
-
 object UnreadItem:
 
   type Status = Status.T

@@ -51,5 +51,3 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
       .query[AssetLink.Id]
       .run()
       .toList
-
-

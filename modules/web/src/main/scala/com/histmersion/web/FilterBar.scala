@@ -38,15 +38,40 @@ object FilterBar:
   type Folded = Folded.T
   object Folded extends Newtype[Boolean, Pure]
 
-  final private case class ChipField(state: Field[List[String]], facet: ChipInput.Config.Field, label: ChipInput.Config.Label, placeholder: ChipInput.Config.Placeholder)
+  final private case class ChipField(
+      state: Field[List[String]],
+      facet: ChipInput.Config.Field,
+      label: ChipInput.Config.Label,
+      placeholder: ChipInput.Config.Placeholder
+  )
 
-  private val topicField = ChipField(UiState.topics, ChipInput.Config.Field("topics"), ChipInput.Config.Label("Topic"), ChipInput.Config.Placeholder("e.g. bronze age collapse"))
+  private val topicField = ChipField(
+    UiState.topics,
+    ChipInput.Config.Field("topics"),
+    ChipInput.Config.Label("Topic"),
+    ChipInput.Config.Placeholder("e.g. bronze age collapse")
+  )
 
   /** Behind "More filters", in this order (then "Published between"). */
   private val moreFields = List(
-    ChipField(UiState.authors, ChipInput.Config.Field("authors"), ChipInput.Config.Label("Authors"), ChipInput.Config.Placeholder("e.g. Reich")),
-    ChipField(UiState.status, ChipInput.Config.Field("status"), ChipInput.Config.Label("Status"), ChipInput.Config.Placeholder("e.g. foundational")),
-    ChipField(UiState.tags, ChipInput.Config.Field("tags"), ChipInput.Config.Label("Tags"), ChipInput.Config.Placeholder("e.g. sea peoples"))
+    ChipField(
+      UiState.authors,
+      ChipInput.Config.Field("authors"),
+      ChipInput.Config.Label("Authors"),
+      ChipInput.Config.Placeholder("e.g. Reich")
+    ),
+    ChipField(
+      UiState.status,
+      ChipInput.Config.Field("status"),
+      ChipInput.Config.Label("Status"),
+      ChipInput.Config.Placeholder("e.g. foundational")
+    ),
+    ChipField(
+      UiState.tags,
+      ChipInput.Config.Field("tags"),
+      ChipInput.Config.Label("Tags"),
+      ChipInput.Config.Placeholder("e.g. sea peoples")
+    )
   )
 
   private val moreKey = StorageKey("histmersion.moreFilters")
@@ -95,18 +120,29 @@ object FilterBar:
           )
           .map(_.take(config.facetSuggestions.value)),
       onChange = values => UiState.set(c.state := values.map(_.value))(),
-      onPreview = v => UiState.setPreview(v.map(x => UiState.Preview(UiState.Preview.Key(c.state.key.value), UiState.Preview.Value(x.value)))),
+      onPreview = v =>
+        UiState.setPreview(
+          v.map(x => UiState.Preview(UiState.Preview.Key(c.state.key.value), UiState.Preview.Value(x.value)))
+        ),
       // a status reads as the status code: its mark and its word
       display =
-        if c.state.key == UiState.status.key then wire => ChipInput.Config.DisplayResult(Wording.statusOf(Api.GoalQuery.Status(wire.value)))
+        if c.state.key == UiState.status.key then
+          wire => ChipInput.Config.DisplayResult(Wording.statusOf(Api.GoalQuery.Status(wire.value)))
         else v => ChipInput.Config.DisplayResult(Label.display(Label.Text(v.value)).value),
-      mark = v => Option.when(c.state.key == UiState.status.key)(ChipInput.Config.MarkResult(s"st-${v.value.trim.toLowerCase}"))
+      mark = v =>
+        Option.when(c.state.key == UiState.status.key)(ChipInput.Config.MarkResult(s"st-${v.value.trim.toLowerCase}"))
     )
     div(cls := "f", label(c.label.value), ChipInput.ofStrings(chipConfig, c.state.signal))
 
   /** The period's two ends: the timeline's span, written as years (`500 BCE`, `-500`, `1200`). */
   private def periodField(config: UiConfig): HtmlElement =
-    def end(name: FieldName, field: Field[Option[Long]], dflt: Long, other: () => Long, valid: (Long, Long) => Boolean) =
+    def end(
+        name: FieldName,
+        field: Field[Option[Long]],
+        dflt: Long,
+        other: () => Long,
+        valid: (Long, Long) => Boolean
+    ) =
       val bad = Var(false)
       input(
         typ := "text",
@@ -207,7 +243,10 @@ object FilterBar:
             idAttr := "f-words",
             placeholder := "words in the sources",
             // the same state as the top bar's search: typing in either is typing in both
-            controlled(value <-- UiState.q.signal.map(_.getOrElse("")), onInput.mapToValue --> (t => UiState.setSearch(Api.Search.Text(t))))
+            controlled(
+              value <-- UiState.q.signal.map(_.getOrElse("")),
+              onInput.mapToValue --> (t => UiState.setSearch(Api.Search.Text(t)))
+            )
           )
         ),
         div(cls := "f f-gazetteer", label(forId := "f-place-search", "Place"), PlacesInput.init(config)),
@@ -250,7 +289,10 @@ object FilterBar:
               "Clear all",
               onClick --> { _ =>
                 UiState.clearFilters()
-                UiState.set(UiState.from := Some(config.time.defaultFrom.value), UiState.to := Some(config.time.defaultTo.value))()
+                UiState.set(
+                  UiState.from := Some(config.time.defaultFrom.value),
+                  UiState.to := Some(config.time.defaultTo.value)
+                )()
                 PlacesInput.sync()
               }
             )

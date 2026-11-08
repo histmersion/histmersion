@@ -7,9 +7,13 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply = AssessRequest.Apply(false), forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false))
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class AssessRequest(
+    id: AssessRequest.Id,
+    apply: AssessRequest.Apply = AssessRequest.Apply(false),
+    forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false)
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AssessRequest:
   type Id = Id.T

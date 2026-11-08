@@ -108,7 +108,13 @@ class RepoDetailsSuite extends DbSuite:
 
   // ── 21 + 22: the assets contract ─────────────────────────────────────────────────────────────
 
-  private def png(byte: Byte) = NewFigure(NewFigure.Name("fig1.png"), NewFigure.Mime("image/png"), NewFigure.Bytes(Array[Byte](1, 2, 3, byte)), None, None)
+  private def png(byte: Byte) = NewFigure(
+    NewFigure.Name("fig1.png"),
+    NewFigure.Mime("image/png"),
+    NewFigure.Bytes(Array[Byte](1, 2, 3, byte)),
+    None,
+    None
+  )
 
   private def updatedAt: Source.UpdatedAt = SourceFixtures.load(ds, ck).get.updatedAt.get
 
@@ -136,7 +142,19 @@ class RepoDetailsSuite extends DbSuite:
     val afterReplace = updatedAt
     assertNotEquals(afterReplace, before, "replace() must invalidate the concurrency token")
     Thread.sleep(5)
-    val _ = AssetFixtures.add(ds, ck, List(NewFigure(NewFigure.Name("fig2.png"), NewFigure.Mime("image/png"), NewFigure.Bytes(Array[Byte](9, 9)), None, None)))
+    val _ = AssetFixtures.add(
+      ds,
+      ck,
+      List(
+        NewFigure(
+          NewFigure.Name("fig2.png"),
+          NewFigure.Mime("image/png"),
+          NewFigure.Bytes(Array[Byte](9, 9)),
+          None,
+          None
+        )
+      )
+    )
     assertNotEquals(updatedAt, afterReplace, "add() must too")
 
   // ── 23: findings_flat's inclusive upper bound ────────────────────────────────────────────────

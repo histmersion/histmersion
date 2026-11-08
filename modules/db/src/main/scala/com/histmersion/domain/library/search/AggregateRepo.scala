@@ -150,11 +150,13 @@ private[search] object AggregateRepo:
         )
       ) ++
         FilterSql.findingPeriodWhere(filter) ++
-        Sql.raw(Sql.Text(
-          ") AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids" +
-            " FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id" +
-            " WHERE f.citekey = s.citekey AND "
-        )) ++
+        Sql.raw(
+          Sql.Text(
+            ") AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids" +
+              " FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id" +
+              " WHERE f.citekey = s.citekey AND "
+          )
+        ) ++
         FilterSql.findingPlaceWhere(filter, scope = scope) ++
         Sql.raw(Sql.Text(") fp ON true WHERE ")) ++ FilterSql.sourceWhere(filter) ++ gate ++
         Sql.raw(Sql.Text(" AND (")) ++ ownPeriod ++ Sql.raw(Sql.Text(" OR fp.in_window > 0) ")) ++

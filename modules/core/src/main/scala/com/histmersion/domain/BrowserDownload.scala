@@ -38,9 +38,11 @@ object BrowserDownload:
   object Citation extends Newtype[String, Pure]
   type Description = Description.T
   object Description extends Newtype[String, Pure]
+
   /** An open-access location of a work, as the work lists it. */
   type Location = Location.T
   object Location extends Newtype[String, Pure]
+
   /** The host of a location, as the configuration names it. */
   type Host = Host.T
   object Host extends Newtype[String, Pure]
@@ -67,7 +69,9 @@ object BrowserDownload:
     */
   def of(work: WorkRef, citekey: Citekey, refusingHost: Location => Option[Host]): Option[BrowserDownload] =
     val onRefusingHost =
-      (work.oaLocations.map(l => Location(l.value)) ++ work.oaUrl.map(u => Location(u.value)).toList).distinct.flatMap(url => refusingHost(url).map(url -> _))
+      (work.oaLocations.map(l => Location(l.value)) ++ work.oaUrl.map(u => Location(u.value)).toList).distinct.flatMap(
+        url => refusingHost(url).map(url -> _)
+      )
     for
       status <- work.oaStatus.flatMap(s => OaStatus.option(s.value.trim.toLowerCase(java.util.Locale.ROOT)))
       doi <- work.doi.flatMap(d => Doi.option(d.value.trim.toLowerCase(java.util.Locale.ROOT)))

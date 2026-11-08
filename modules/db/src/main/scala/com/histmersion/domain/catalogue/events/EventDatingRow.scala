@@ -23,4 +23,10 @@ final private[events] case class EventDatingRow(
 ) derives DbCodec:
   def toDto: EventDating =
     def year(y: Option[DeepTime.SignedYear]) = y.map(v => Year(v.value))
-    EventDating(com.histmersion.api.catalogue.Event.Id(eventId.value), com.histmersion.api.library.Citekey(citekey.value), TimeSpan(year(notBefore), year(beginBy), year(endFrom), year(notAfter)), method, note)
+    EventDating(
+      com.histmersion.api.catalogue.Event.Id(eventId.value),
+      com.histmersion.api.library.Citekey(citekey.value),
+      TimeSpan(year(notBefore), year(beginBy), year(endFrom), year(notAfter)),
+      method,
+      note
+    )

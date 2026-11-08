@@ -51,16 +51,33 @@ class FindingPlanSuite extends munit.FunSuite:
 
   test("findings: the same claim folds, a near duplicate is offered, the rest are new — one to one"):
     val lefts = List(
-      finding(Bundle.Finding.Id("h#1"), "h", Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"), tags = List(Bundle.Finding.Tags("home"))),
+      finding(
+        Bundle.Finding.Id("h#1"),
+        "h",
+        Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"),
+        tags = List(Bundle.Finding.Tags("home"))
+      ),
       finding(Bundle.Finding.Id("h#2"), "h", Bundle.Finding.Claim("The storm god Tarhunna ruled Hatti"))
     )
     val rights = List(
-      finding(Bundle.Finding.Id("w#1"), "w", Bundle.Finding.Claim("the storm god of Hatti is Tarhunna"), tags = List(Bundle.Finding.Tags("work")), confidence = Some(Confidence.Low)),
+      finding(
+        Bundle.Finding.Id("w#1"),
+        "w",
+        Bundle.Finding.Claim("the storm god of Hatti is Tarhunna"),
+        tags = List(Bundle.Finding.Tags("work")),
+        confidence = Some(Confidence.Low)
+      ),
       finding(Bundle.Finding.Id("w#2"), "w", Bundle.Finding.Claim("Tarhunna the storm god ruled Hatti and Arinna")),
       finding(Bundle.Finding.Id("w#3"), "w", Bundle.Finding.Claim("Hattusa burned around 1180 BC")),
-      finding(Bundle.Finding.Id("w#4"), "w", Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"), period = Some(Bundle.Range(Some(Year(-500)), Some(Year(-400)))))
+      finding(
+        Bundle.Finding.Id("w#4"),
+        "w",
+        Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"),
+        period = Some(Bundle.Range(Some(Year(-500)), Some(Year(-400))))
+      )
     )
-    val ms = FindingPlan.matches(lefts, rights, MergeSettings.FindingWithinKm(50), MergeSettings.FindingNearAtLeast(0.6))
+    val ms =
+      FindingPlan.matches(lefts, rights, MergeSettings.FindingWithinKm(50), MergeSettings.FindingNearAtLeast(0.6))
     assertEquals(ms.collect { case FindingPlan.Match.Same(r, l) => r.id -> l.id }, List("w#1" -> "h#1"))
     assertEquals(ms.collect { case FindingPlan.Match.Near(r, l, _) => r.id -> l.id }, List("w#2" -> "h#2"))
     // a different period is not the same finding
@@ -71,13 +88,29 @@ class FindingPlanSuite extends munit.FunSuite:
     assertEquals(f.confidence, Some(Confidence.Low)) // the more cautious
     // far apart, and in different regions: not the same place
     val far =
-      finding(Bundle.Finding.Id("w#5"), "w", Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"), lonLat = Some((Longitude(10.0), Latitude(50.0))), region = Some(Bundle.Finding.Region("Bavaria")))
+      finding(
+        Bundle.Finding.Id("w#5"),
+        "w",
+        Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"),
+        lonLat = Some((Longitude(10.0), Latitude(50.0))),
+        region = Some(Bundle.Finding.Region("Bavaria"))
+      )
     assert(!FindingPlan.samePlace(lefts.head, far, MergeSettings.FindingWithinKm(50)))
-    assert(FindingPlan.samePlace(lefts.head, far.modify(_.region).setTo(Some(Bundle.Finding.Region("anatolia"))), MergeSettings.FindingWithinKm(50)))
+    assert(
+      FindingPlan.samePlace(
+        lefts.head,
+        far.modify(_.region).setTo(Some(Bundle.Finding.Region("anatolia"))),
+        MergeSettings.FindingWithinKm(50)
+      )
+    )
 
   test("finding ids continue after the highest"):
     assertEquals(
-      FindingPlan.nextIds(Citekey("a2000_x"), Set(Finding.Id("a2000_x#1"), Finding.Id("a2000_x#7"), Finding.Id("b2000_y#9")), FindingPlan.IdCount(2)),
+      FindingPlan.nextIds(
+        Citekey("a2000_x"),
+        Set(Finding.Id("a2000_x#1"), Finding.Id("a2000_x#7"), Finding.Id("b2000_y#9")),
+        FindingPlan.IdCount(2)
+      ),
       List("a2000_x#8", "a2000_x#9")
     )
     assertEquals(FindingPlan.nextIds(Citekey("a2000_x"), Set.empty, FindingPlan.IdCount(1)), List("a2000_x#1"))

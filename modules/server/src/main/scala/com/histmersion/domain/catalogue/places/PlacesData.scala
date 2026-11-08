@@ -17,7 +17,9 @@ import com.augustnagro.magnum.DbCon
   * a point.
   */
 object PlacesData:
-  def figures(using DbCon): List[DataCount] = List(DataCount(DataCount.Noun("places"), DataCount.Count(PlaceRepo.count().value.toLong)))
+  def figures(using DbCon): List[DataCount] = List(
+    DataCount(DataCount.Noun("places"), DataCount.Count(PlaceRepo.count().value.toLong))
+  )
 
   def checks(owner: DataOwner): List[CheckRule] = List(Kind(owner), GridPoint(owner), PointArea(owner))
 
@@ -50,10 +52,13 @@ object PlacesData:
         FixWhen.WhenNamed,
         FixRank(50),
         c =>
-          val (reclassified, merged) = geometry(c).reclassify(GeocodeSettings.ToleranceKm(c.config.places.pointToleranceKm.value))
+          val (reclassified, merged) =
+            geometry(c).reclassify(GeocodeSettings.ToleranceKm(c.config.places.pointToleranceKm.value))
           LintFixResult(
             List(
-              LintFixResult.Applied(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement")
+              LintFixResult.Applied(
+                s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement"
+              )
             ),
             LintFixResult.EdgesResolved(0),
             LintFixResult.SourcesReindexed(0),
@@ -64,7 +69,6 @@ object PlacesData:
           )
       )
     )
-
 
   /** `place-grid-point`: a place at the centre of an atlas grid square whose linked record gives its point. */
   final private class GridPoint(val owner: DataOwner) extends CheckRule:
@@ -96,7 +100,6 @@ object PlacesData:
       )
     )
 
-
   /** `place-imported-point-area`: an imported region, polity or people stored with only a point. */
   final private class PointArea(val owner: DataOwner) extends CheckRule:
     val rule: Rule = ruleOf(PlaceImportedPointArea)
@@ -112,7 +115,14 @@ object PlacesData:
         FixRank(70),
         c =>
           val r = geometry(c).removePointAreas(pointAreaOf(c.config))
-          LintFixResult(List(LintFixResult.Applied(r.line.value)), LintFixResult.EdgesResolved(0), LintFixResult.SourcesReindexed(0), LintFixResult.ChunksWritten(0), LintFixResult.Remaining(0), pointAreasRemoved = LintFixResult.PointAreasRemoved(r.removed.value), pointAreasRemaining = LintFixResult.PointAreasRemaining(r.remaining.value))
+          LintFixResult(
+            List(LintFixResult.Applied(r.line.value)),
+            LintFixResult.EdgesResolved(0),
+            LintFixResult.SourcesReindexed(0),
+            LintFixResult.ChunksWritten(0),
+            LintFixResult.Remaining(0),
+            pointAreasRemoved = LintFixResult.PointAreasRemoved(r.removed.value),
+            pointAreasRemaining = LintFixResult.PointAreasRemaining(r.remaining.value)
+          )
       )
     )
-

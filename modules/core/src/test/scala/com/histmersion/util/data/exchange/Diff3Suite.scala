@@ -18,7 +18,11 @@ class Diff3Suite extends munit.FunSuite:
   private val baseRight = Diff3.MergeRight(baseText)
 
   test("changes in different places merge cleanly, both kept"):
-    val r = Diff3.merge(base, Diff3.MergeLeft("Intro (left).\n\nMiddle.\n\nEnd."), Diff3.MergeRight("Intro.\n\nMiddle.\n\nEnd (right)."))
+    val r = Diff3.merge(
+      base,
+      Diff3.MergeLeft("Intro (left).\n\nMiddle.\n\nEnd."),
+      Diff3.MergeRight("Intro.\n\nMiddle.\n\nEnd (right).")
+    )
     assert(r.clean)
     assertEquals(r.text, "Intro (left).\n\nMiddle.\n\nEnd (right).")
 
@@ -28,12 +32,20 @@ class Diff3Suite extends munit.FunSuite:
     val same = "Intro.\n\nMiddle, rewritten.\n\nEnd."
     assertEquals(Diff3.merge(base, Diff3.MergeLeft(same), Diff3.MergeRight(same)).text, same)
     val both =
-      Diff3.merge(base, Diff3.MergeLeft("Intro.\n\nMiddle, rewritten.\n\nEnd (left)."), Diff3.MergeRight("Intro (right).\n\nMiddle, rewritten.\n\nEnd."))
+      Diff3.merge(
+        base,
+        Diff3.MergeLeft("Intro.\n\nMiddle, rewritten.\n\nEnd (left)."),
+        Diff3.MergeRight("Intro (right).\n\nMiddle, rewritten.\n\nEnd.")
+      )
     assert(both.clean)
     assertEquals(both.text, "Intro (right).\n\nMiddle, rewritten.\n\nEnd (left).")
 
   test("one place changed differently on each side is a conflict, marked like git's"):
-    val r = Diff3.merge(base, Diff3.MergeLeft("Intro.\n\nMiddle (left).\n\nEnd."), Diff3.MergeRight("Intro.\n\nMiddle (right).\n\nEnd."))
+    val r = Diff3.merge(
+      base,
+      Diff3.MergeLeft("Intro.\n\nMiddle (left).\n\nEnd."),
+      Diff3.MergeRight("Intro.\n\nMiddle (right).\n\nEnd.")
+    )
     assert(!r.clean)
     assertEquals(r.conflicts, 1)
     val m = r.marked(Diff3.Result.MarkedLeftName("here"), Diff3.Result.MarkedRightName("bundle"))

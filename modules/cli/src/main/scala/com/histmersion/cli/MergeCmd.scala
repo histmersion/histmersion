@@ -17,10 +17,10 @@ import com.histmersion.api.exchange.{
   MergeApplyRequest,
   MergeApplyResult,
   MergeDecision,
-  MergeResolution,
   MergeJobState,
   MergeMarkdown,
   MergePolicy,
+  MergeResolution,
   MergeResolutions
 }
 import com.histmersion.api.exchange.Bundle
@@ -36,7 +36,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 object MergeCmd:
   /** `--resolutions`, `--resolve ID=decision`…, `--editions`, as given. */
 
-  final case class ResolutionFlags(file: Option[ResolutionFlags.File], resolve: List[MergeResolutions.Text.Flag], editions: Option[ResolutionFlags.Editions]):
+  final case class ResolutionFlags(
+      file: Option[ResolutionFlags.File],
+      resolve: List[MergeResolutions.Text.Flag],
+      editions: Option[ResolutionFlags.Editions]
+  ):
     def isEmpty: Boolean = file.isEmpty && resolve.isEmpty && editions.isEmpty
 
   object ResolutionFlags:
@@ -100,7 +104,11 @@ object MergeCmd:
     */
   def withTexts(r: MergeResolutions): Either[Cli.Error, MergeResolutions] =
     val read = r.resolve.map { x =>
-      MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption.filter(_.kind == MergeDecision.Kind.File).flatMap(_.argument) match
+      MergeDecision
+        .parse(MergeDecision.Wire(x.decision.value))
+        .toOption
+        .filter(_.kind == MergeDecision.Kind.File)
+        .flatMap(_.argument) match
         case None => Right(x)
         // the resolution file carries the text itself (`texts:`, written by the web review screen)
         case Some(_) if x.text.isDefined => Right(x)
@@ -126,7 +134,8 @@ object MergeCmd:
         Left(
           Cli.Error(
             Cli.Error.Message(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}"),
-            exitCode = ExitCode.Refused)
+            exitCode = ExitCode.Refused
+          )
         )
       else Right(u)
     }
@@ -149,7 +158,11 @@ object MergeCmd:
     ).mapN { (file, flags, template, all, json) => (c: Client) =>
       val p = Path.of(file)
       for
-        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+        _ <- Either.cond(
+          Files.isRegularFile(p),
+          (),
+          Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage)
+        )
         res <- resolutions(flags)
         u <- upload(c, p.toFile)
         plan <- c.mergePlan(MergePlan.Request(MergePlan.Request.Bundle(u.sha256.value), res))
@@ -166,7 +179,10 @@ object MergeCmd:
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty,
           (),
-          Cli.Error(Cli.Error.Message("the plan has problems or unusable resolutions (listed above)"), exitCode = ExitCode.Refused)
+          Cli.Error(
+            Cli.Error.Message("the plan has problems or unusable resolutions (listed above)"),
+            exitCode = ExitCode.Refused
+          )
         )
       yield ()
     }
@@ -189,7 +205,11 @@ object MergeCmd:
     ).mapN { (file, flags, expected, yes) => (c: Client) =>
       val p = Path.of(file)
       for
-        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+        _ <- Either.cond(
+          Files.isRegularFile(p),
+          (),
+          Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage)
+        )
         res0 <- resolutions(flags)
         res <- withTexts(res0)
         u <- upload(c, p.toFile)
@@ -199,7 +219,9 @@ object MergeCmd:
           (), {
             Cli.out.println(MergeMarkdown.plan(plan))
             Cli.Error(
-              Cli.Error.Message("the merge cannot be applied yet: decide what is open (listed above), then apply again"),
+              Cli.Error.Message(
+                "the merge cannot be applied yet: decide what is open (listed above), then apply again"
+              ),
               exitCode = ExitCode.Refused
             )
           }
@@ -219,7 +241,11 @@ object MergeCmd:
         job <- c.mergeApply(MergeApplyRequest(Bundle.Name(u.sha256.value), hash, res))
         r <- follow(c, job)
         _ = Cli.out.println(MergeMarkdown.applied(r))
-        _ <- Either.cond(r.applied.value, (), Cli.Error(Cli.Error.Message("the merge was not applied (see above)"), exitCode = ExitCode.Refused))
+        _ <- Either.cond(
+          r.applied.value,
+          (),
+          Cli.Error(Cli.Error.Message("the merge was not applied (see above)"), exitCode = ExitCode.Refused)
+        )
       yield ()
     }
   }
@@ -232,7 +258,9 @@ object MergeCmd:
   def follow(c: Client, j: MergeApplyJob)(using console: Console): Either[Cli.Error, MergeApplyResult] =
     j.state match
       case MergeJobState.Done =>
-        j.result.toRight(Cli.Error(Cli.Error.Message(s"merge apply ${j.job}: done, but no result"), exitCode = ExitCode.Refused))
+        j.result.toRight(
+          Cli.Error(Cli.Error.Message(s"merge apply ${j.job}: done, but no result"), exitCode = ExitCode.Refused)
+        )
       case MergeJobState.Failed =>
         Left(
           Cli.Error(
@@ -285,7 +313,8 @@ object MergeCmd:
       Opts.option[Int]("limit", "How many rows (default 200)").orNone,
       Output.jsonFlag
     ).mapN { (uid, merge, limit, json) => (c: Client) =>
-      c.mergeLedger(uid.map(Api.Merge.Id(_)), merge.map(Api.Merge.Entity(_)), limit.map(Paging.Limit(_))).map(l => Output.emit(json, l)(MergeMarkdown.ledger))
+      c.mergeLedger(uid.map(Api.Merge.Id(_)), merge.map(Api.Merge.Entity(_)), limit.map(Paging.Limit(_)))
+        .map(l => Output.emit(json, l)(MergeMarkdown.ledger))
     }
   }
 

@@ -11,10 +11,12 @@ import com.histmersion.api.library.Query
   */
 class QuerySuite extends munit.FunSuite:
 
-  private def row(vs: String*): List[Option[QueryResult.Rows]] = vs.toList.map(v => if v == null then None else Some(QueryResult.Rows(v)))
+  private def row(vs: String*): List[Option[QueryResult.Rows]] =
+    vs.toList.map(v => if v == null then None else Some(QueryResult.Rows(v)))
 
   test("a table renders header, rule and rows"):
-    val md = markdownTable(List(QueryResult.Columns("citekey"), QueryResult.Columns("n")), List(row("a", "1"), row("b", "2")))
+    val md =
+      markdownTable(List(QueryResult.Columns("citekey"), QueryResult.Columns("n")), List(row("a", "1"), row("b", "2")))
     assertEquals(md, "| citekey | n |\n|---|---|\n| a | 1 |\n| b | 2 |")
 
   test("NULL renders as NULL, not as an empty cell that reads like an empty string"):
@@ -29,19 +31,51 @@ class QuerySuite extends munit.FunSuite:
     assertEquals(markdownTable(List(QueryResult.Columns("t")), List(row("one\ntwo"))), "| t |\n|---|\n| one two |")
 
   test("a short row is padded rather than shifting the columns"):
-    assertEquals(markdownTable(List(QueryResult.Columns("a"), QueryResult.Columns("b")), List(List(Some(QueryResult.Rows("1"))))), "| a | b |\n|---|---|\n| 1 | NULL |")
+    assertEquals(
+      markdownTable(List(QueryResult.Columns("a"), QueryResult.Columns("b")), List(List(Some(QueryResult.Rows("1"))))),
+      "| a | b |\n|---|---|\n| 1 | NULL |"
+    )
 
   test("no columns is a note, not a broken table"):
     assertEquals(markdownTable(Nil, Nil), "_(no columns)_")
 
   test("the result header carries the row count, the truncation flag and the timing"):
-    val md = Query.markdown(QueryResult(List(QueryResult.Columns("n")), List(row("209")), QueryResult.RowCount(1), QueryResult.Truncated(false), QueryResult.ElapsedMs(7)))
+    val md = Query.markdown(
+      QueryResult(
+        List(QueryResult.Columns("n")),
+        List(row("209")),
+        QueryResult.RowCount(1),
+        QueryResult.Truncated(false),
+        QueryResult.ElapsedMs(7)
+      )
+    )
     assert(md.value.startsWith("### 1 row(s) · 7 ms"), md)
-    val cut = Query.markdown(QueryResult(List(QueryResult.Columns("n")), List(row("1")), QueryResult.RowCount(1), QueryResult.Truncated(true), QueryResult.ElapsedMs(7)))
+    val cut = Query.markdown(
+      QueryResult(
+        List(QueryResult.Columns("n")),
+        List(row("1")),
+        QueryResult.RowCount(1),
+        QueryResult.Truncated(true),
+        QueryResult.ElapsedMs(7)
+      )
+    )
     assert(cut.value.contains("truncated by the row cap"), cut)
 
   test("an empty result says 'no rows' instead of rendering an empty table"):
-    assert(Query.markdown(QueryResult(List(QueryResult.Columns("n")), Nil, QueryResult.RowCount(0), QueryResult.Truncated(false), QueryResult.ElapsedMs(1))).value.endsWith("_no rows_"))
+    assert(
+      Query
+        .markdown(
+          QueryResult(
+            List(QueryResult.Columns("n")),
+            Nil,
+            QueryResult.RowCount(0),
+            QueryResult.Truncated(false),
+            QueryResult.ElapsedMs(1)
+          )
+        )
+        .value
+        .endsWith("_no rows_")
+    )
 
   // ── the generated tool description ───────────────────────────────────────────────────────────
 
@@ -166,7 +200,21 @@ class QuerySuite extends munit.FunSuite:
       "/* /* */ */",
       "-- header\n/* outer /* middle /* inner */ middle */ outer */\n-- tail\n"
     )
-    val commands = List("COMMIT", "ROLLBACK", "BEGIN", "END", "ABORT", "START TRANSACTION", "SAVEPOINT s", "RELEASE SAVEPOINT s", "SET TRANSACTION READ WRITE", "RESET ALL", "DISCARD ALL", "DO $$ BEGIN END $$", "CALL something()")
+    val commands = List(
+      "COMMIT",
+      "ROLLBACK",
+      "BEGIN",
+      "END",
+      "ABORT",
+      "START TRANSACTION",
+      "SAVEPOINT s",
+      "RELEASE SAVEPOINT s",
+      "SET TRANSACTION READ WRITE",
+      "RESET ALL",
+      "DISCARD ALL",
+      "DO $$ BEGIN END $$",
+      "CALL something()"
+    )
     prefixes.foreach { prefix =>
       commands.foreach { command =>
         val sql = prefix + command

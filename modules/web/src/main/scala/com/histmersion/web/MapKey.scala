@@ -37,7 +37,9 @@ object MapKey:
         val items = EventTaxonomy.kinds
           .filter(_.group == g)
           .map(k =>
-            s"""<li><span class="hd-badge hd-badge--square hd-key-badge">${Glyphs.badge(Glyphs.Name(k.icon.value))}</span><span>${Fmt.esc(
+            s"""<li><span class="hd-badge hd-badge--square hd-key-badge">${Glyphs.badge(
+                Glyphs.Name(k.icon.value)
+              )}</span><span>${Fmt.esc(
                 k.label.value
               )}</span></li>"""
           )
@@ -52,7 +54,9 @@ object MapKey:
   def sitesHtml: SitesHtml =
     val items = (SiteTypes.all.map(t => t.icon.value -> t.label.value) :+ (CardIcons.Unknown -> "site of unknown type"))
       .map((icon, label) =>
-        s"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(Glyphs.Name(icon))}</span><span>${Fmt.esc(
+        s"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(
+            Glyphs.Name(icon)
+          )}</span><span>${Fmt.esc(
             label
           )}</span></li>"""
       )
@@ -70,28 +74,41 @@ object MapKey:
     // the same icons as the toolbar's layer switches
     val shapes = PointKinds.all.map(k => Icon.html(k.icon).value -> k.meaning.value) ++ List(
       Icon.html(Icon.Region).value -> "a region or polity (its boundary)",
-      DotCluster.bubbleHtml(DotCluster.Count(5), DotCluster.Size(20), (DotCluster.StartLabel("var(--accent)"), DotCluster.EndLabel("var(--accent)")), DotCluster.Id("hdb-key"), DotCluster.ExtraClass("hd-key-cluster"), None).value ->
+      DotCluster
+        .bubbleHtml(
+          DotCluster.Count(5),
+          DotCluster.Size(20),
+          (DotCluster.StartLabel("var(--accent)"), DotCluster.EndLabel("var(--accent)")),
+          DotCluster.Id("hdb-key"),
+          DotCluster.ExtraClass("hd-key-cluster"),
+          None
+        )
+        .value ->
         "several nearby (click to list)",
       // the clusters of events keep the event's square (#1647)
-      DotCluster.bubbleHtml(
-        DotCluster.Count(5),
-        DotCluster.Size(20),
-        (DotCluster.StartLabel("var(--accent)"), DotCluster.EndLabel("var(--accent)")),
-        DotCluster.Id("hdb-key-ev"),
-        DotCluster.ExtraClass("hd-key-cluster"),
-        None,
-        BubbleForm.Events
-      ).value ->
+      DotCluster
+        .bubbleHtml(
+          DotCluster.Count(5),
+          DotCluster.Size(20),
+          (DotCluster.StartLabel("var(--accent)"), DotCluster.EndLabel("var(--accent)")),
+          DotCluster.Id("hdb-key-ev"),
+          DotCluster.ExtraClass("hd-key-cluster"),
+          None,
+          BubbleForm.Events
+        )
+        .value ->
         "several events nearby",
-      DotCluster.bubbleHtml(
-        DotCluster.Count(5),
-        DotCluster.Size(20),
-        (DotCluster.StartLabel("var(--accent)"), DotCluster.EndLabel("var(--accent)")),
-        DotCluster.Id("hdb-key-mix"),
-        DotCluster.ExtraClass("hd-key-cluster"),
-        None,
-        BubbleForm.WithEvents
-      ).value ->
+      DotCluster
+        .bubbleHtml(
+          DotCluster.Count(5),
+          DotCluster.Size(20),
+          (DotCluster.StartLabel("var(--accent)"), DotCluster.EndLabel("var(--accent)")),
+          DotCluster.Id("hdb-key-mix"),
+          DotCluster.ExtraClass("hd-key-cluster"),
+          None,
+          BubbleForm.WithEvents
+        )
+        .value ->
         "several nearby, events among them"
     )
     val kinds = Source.Kinds.all.map(k =>
@@ -111,9 +128,11 @@ object MapKey:
 
   /** The key's markup: the shapes, then the icons of the layers on. */
   def html(events: Events, sites: Sites, undated: Undated = Undated(false)): Html =
-    val body = shapesHtml.value + (if events.value then eventsHtml.value else "") + (if sites.value then sitesHtml.value else "")
+    val body =
+      shapesHtml.value + (if events.value then eventsHtml.value else "") + (if sites.value then sitesHtml.value else "")
     Html(
-      (if undated.value then undatedHtml.value else "") + s"""<details class="hd-key"><summary>key</summary>$body</details>"""
+      (if undated.value then undatedHtml.value
+       else "") + s"""<details class="hd-key"><summary>key</summary>$body</details>"""
     )
 
   /** The legend's entry while the sites or events of no known date are drawn: their dashed outline. */

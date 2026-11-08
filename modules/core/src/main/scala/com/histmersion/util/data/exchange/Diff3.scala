@@ -24,7 +24,11 @@ object Diff3:
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
   enum Hunk derives CanEqual:
     case Agreed(lines: Vector[Hunk.Agreed.Lines])
-    case Conflict(base: Vector[Hunk.Conflict.Base], left: Vector[Hunk.Conflict.Left], right: Vector[Hunk.Conflict.Right])
+    case Conflict(
+        base: Vector[Hunk.Conflict.Base],
+        left: Vector[Hunk.Conflict.Left],
+        right: Vector[Hunk.Conflict.Right]
+    )
 
   object Hunk:
     object Agreed:
@@ -48,7 +52,9 @@ object Diff3:
     /** The merged text with git-style conflict markers around every conflict. */
     def marked(leftName: Result.MarkedLeftName, rightName: Result.MarkedRightName): Result.MarkedText =
       Result.MarkedText(render { case Hunk.Conflict(b, l, r) =>
-        (s"<<<<<<< $leftName" +: l.map(_.value)) ++ ("||||||| base" +: b.map(_.value)) ++ ("=======" +: r.map(_.value)) :+ s">>>>>>> $rightName"
+        (s"<<<<<<< $leftName" +: l.map(_.value)) ++ ("||||||| base" +: b.map(_.value)) ++ ("=======" +: r.map(
+          _.value
+        )) :+ s">>>>>>> $rightName"
       })
 
     private def render(conflict: Hunk.Conflict => Vector[String]): String =
@@ -97,7 +103,11 @@ object Diff3:
       else if ca == cb then agreed ++= ca
       else
         flushAgreed()
-        out += Hunk.Conflict(co.map(Hunk.Conflict.Base(_)), ca.map(Hunk.Conflict.Left(_)), cb.map(Hunk.Conflict.Right(_)))
+        out += Hunk.Conflict(
+          co.map(Hunk.Conflict.Base(_)),
+          ca.map(Hunk.Conflict.Left(_)),
+          cb.map(Hunk.Conflict.Right(_))
+        )
     // positions in base, left, right; each round consumes at least one line of one of them
     @annotation.tailrec
     def walk(io: Int, ia: Int, ib: Int): Unit =

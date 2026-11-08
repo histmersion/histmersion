@@ -12,9 +12,16 @@ final class CoreQuotaLend(budget: CoreBudget, limits: CoreQuota.Limits) extends 
   def take(purpose: UpstreamQuota.TakePurpose): Either[UpstreamQuota.TakeResultPart1, Unit] =
     CoreQuota.Purpose.values.find(_.wire.value == purpose.value) match
       case None =>
-        Left(UpstreamQuota.TakeResultPart1(s"CORE's budget has no purpose '$purpose' (${CoreQuota.Purpose.values.map(_.wire).mkString(", ")})"))
+        Left(
+          UpstreamQuota.TakeResultPart1(
+            s"CORE's budget has no purpose '$purpose' (${CoreQuota.Purpose.values.map(_.wire).mkString(", ")})"
+          )
+        )
       case Some(p) => budget.take(limits, p).left.map(r => UpstreamQuota.TakeResultPart1(r.describe.value))
-  def observe(status: UpstreamQuota.ObserveStatus, headers: Map[UpstreamQuota.ObserveHeadersPart1, UpstreamQuota.ObserveHeadersPart2]): Unit =
+  def observe(
+      status: UpstreamQuota.ObserveStatus,
+      headers: Map[UpstreamQuota.ObserveHeadersPart1, UpstreamQuota.ObserveHeadersPart2]
+  ): Unit =
     budget.observe(
       limits,
       CoreQuota.StatusCode(status.value),

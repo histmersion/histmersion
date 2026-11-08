@@ -39,7 +39,10 @@ object StartPlace:
   /** The centre and zoom of a place's geometry (GeoJSON), when it has one. */
   def viewOf(geometry: Place.Geometry): Option[(LatLon, MapSurface.Zoom)] =
     scala.util.Try(js.JSON.parse(geometry.value)).toOption.flatMap(GeoBounds.ofGeometry).filter(_.valid).map { b =>
-      (LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)), zoomFor(b))
+      (
+        LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)),
+        zoomFor(b)
+      )
     }
 
   /** The changes the choice writes (`ui.map-start.*`). Pure. */
@@ -62,14 +65,25 @@ object StartPlace:
     def search(q: String): Unit =
       query.set(q)
       if q.trim.length >= 2 then
-        ApiClient.places(Some(Api.Search.Text(q.trim)), None, Some(Paging.Limit(6))).foreach(hs => if query.now() == q then hits.set(hs))
+        ApiClient
+          .places(Some(Api.Search.Text(q.trim)), None, Some(Paging.Limit(6)))
+          .foreach(hs => if query.now() == q then hits.set(hs))
       else hits.set(Nil)
     def pick(h: Place.Hit): Unit =
       ApiClient.place(h.id, None).foreach { d =>
         d.geometry.flatMap(viewOf) match
           case Some((at, zoom)) =>
             choice.update(
-              _.modify(_.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(Latitude(at.lat.value)).modify(_.lon).setTo(Longitude(at.lon.value)).modify(_.zoom).setTo(MapStartConfig.Zoom(zoom.value)).modify(_.label).setTo(MapStartConfig.Label(h.label.value))
+              _.modify(_.mode)
+                .setTo(MapStartMode.Place.wire)
+                .modify(_.lat)
+                .setTo(Latitude(at.lat.value))
+                .modify(_.lon)
+                .setTo(Longitude(at.lon.value))
+                .modify(_.zoom)
+                .setTo(MapStartConfig.Zoom(zoom.value))
+                .modify(_.label)
+                .setTo(MapStartConfig.Label(h.label.value))
             )
             problem.set(None); hits.set(Nil); query.set(h.label.value)
           case None => problem.set(Some(s"${h.label} has no location on the map; choose another place."))
@@ -111,9 +125,16 @@ object StartPlace:
             onClick --> { _ =>
               val s = TheMap.surface
               choice.update(
-                _.modify(
-                  _.mode).setTo(MapStartMode.Place.wire).modify(_.lat).setTo(Latitude(s.center.lat.value)).modify(_.lon).setTo(Longitude(s.center.lon.value)).modify(_.zoom).setTo(MapStartConfig.Zoom(math.round(s.zoom.value * 10) / 10.0)).modify(_.label).setTo(MapStartConfig.Label("the view I chose")
-                )
+                _.modify(_.mode)
+                  .setTo(MapStartMode.Place.wire)
+                  .modify(_.lat)
+                  .setTo(Latitude(s.center.lat.value))
+                  .modify(_.lon)
+                  .setTo(Longitude(s.center.lon.value))
+                  .modify(_.zoom)
+                  .setTo(MapStartConfig.Zoom(math.round(s.zoom.value * 10) / 10.0))
+                  .modify(_.label)
+                  .setTo(MapStartConfig.Label("the view I chose"))
               )
             }
           )

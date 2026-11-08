@@ -71,31 +71,48 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assert(same(AuthorName("Lopez Ruiz, Carolina"), AuthorName("C. López-Ruiz")))
     assert(same(AuthorName("van der Toorn, Karel"), AuthorName("Karel van der Toorn")))
     assert(same(AuthorName("de Martino, Stefano"), AuthorName("Stefano de Martino")))
-    assert(!same(AuthorName("López-Ruiz, Carolina"), AuthorName("Carolina Ruiz")), "half a double surname is not the surname")
+    assert(
+      !same(AuthorName("López-Ruiz, Carolina"), AuthorName("Carolina Ruiz")),
+      "half a double surname is not the surname"
+    )
 
   test("surname blocking keys cover both halves of a double surname"):
     assert(MergeText.surnameKeys(AuthorName("López-Ruiz, Carolina")).contains(MergeText.SurnameKey("lopezruiz")))
     assert(MergeText.surnameKeys(AuthorName("Carolina Lopez Ruiz")).contains(MergeText.SurnameKey("ruiz")))
     assert(MergeText.surnameKeys(AuthorName("López-Ruiz, Carolina")).contains(MergeText.SurnameKey("ruiz")))
     assertEquals(
-      MergeText.surnameKeys(AuthorName("Güterbock, Hans G.")).intersect(MergeText.surnameKeys(AuthorName("H. G. Guterbock"))),
+      MergeText
+        .surnameKeys(AuthorName("Güterbock, Hans G."))
+        .intersect(MergeText.surnameKeys(AuthorName("H. G. Guterbock"))),
       Set("guterbock")
     )
 
   test("author lists: order, name forms, overlap and disjointness"):
     assertEquals(
-      MergeText.authors(List(AuthorName("H. G. Güterbock"), AuthorName("Harry A. Hoffner")), List(AuthorName("Hoffner, Harry A."), AuthorName("Guterbock, Hans G."))),
+      MergeText.authors(
+        List(AuthorName("H. G. Güterbock"), AuthorName("Harry A. Hoffner")),
+        List(AuthorName("Hoffner, Harry A."), AuthorName("Guterbock, Hans G."))
+      ),
       AuthorAgreement.Same
     )
     assertEquals(
-      MergeText.authors(List(AuthorName("Güterbock, Hans G."), AuthorName("Hoffner, Harry A.")), List(AuthorName("Hans G. Guterbock"))),
+      MergeText.authors(
+        List(AuthorName("Güterbock, Hans G."), AuthorName("Hoffner, Harry A.")),
+        List(AuthorName("Hans G. Guterbock"))
+      ),
       AuthorAgreement.FirstAuthor
     )
     assertEquals(
-      MergeText.authors(List(AuthorName("A. Kuhrt"), AuthorName("B. Bryce"), AuthorName("C. Cline")), List(AuthorName("D. Dodds"), AuthorName("Bryce, B."), AuthorName("Cline, C."))),
+      MergeText.authors(
+        List(AuthorName("A. Kuhrt"), AuthorName("B. Bryce"), AuthorName("C. Cline")),
+        List(AuthorName("D. Dodds"), AuthorName("Bryce, B."), AuthorName("Cline, C."))
+      ),
       AuthorAgreement.Overlap
     )
-    assertEquals(MergeText.authors(List(AuthorName("M. Smith")), List(AuthorName("Smith, J."))), AuthorAgreement.Disjoint)
+    assertEquals(
+      MergeText.authors(List(AuthorName("M. Smith")), List(AuthorName("Smith, J."))),
+      AuthorAgreement.Disjoint
+    )
     assertEquals(MergeText.authors(Nil, List(AuthorName("Smith, J."))), AuthorAgreement.Unknown)
 
   test("Jaro-Winkler: the textbook values"):
@@ -106,7 +123,10 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assertEquals(MergeText.jaroWinkler(MergeText.Words("same"), MergeText.Words("same")), 1.0)
 
   test("identifiers: a DOI key as V032 makes it; ISBN-10 to ISBN-13; a bad check digit is no ISBN"):
-    assertEquals(MergeText.doiKey(MergeText.WrittenDoi("https://doi.org/10.4324/9780203431566")), Some("10.4324/9780203431566"))
+    assertEquals(
+      MergeText.doiKey(MergeText.WrittenDoi("https://doi.org/10.4324/9780203431566")),
+      Some("10.4324/9780203431566")
+    )
     assertEquals(MergeText.doiKey(MergeText.WrittenDoi("doi: 10.1017/S0003")), Some("10.1017/s0003"))
     assertEquals(MergeText.doiKey(MergeText.WrittenDoi("  ")), None)
     assertEquals(MergeText.isbn13(Isbn("0-415-01353-4")), Some("9780415013536"))

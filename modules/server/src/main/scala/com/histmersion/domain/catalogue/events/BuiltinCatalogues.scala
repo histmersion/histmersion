@@ -48,19 +48,27 @@ object BuiltinCatalogues:
     CatalogProvider.all.filter(registered.contains) ++ registered.filterNot(CatalogProvider.all.contains)
 
   /** The catalogue `asked` names among the registered ones, or why none: unknown, or its plugin off. */
-  def resolve(asked: CatalogProviderInfo.Id, catalogues: ListMap[CatalogProviderInfo.Id, EventCatalogue]): Either[String, CatalogProviderInfo.Id] =
+  def resolve(
+      asked: CatalogProviderInfo.Id,
+      catalogues: ListMap[CatalogProviderInfo.Id, EventCatalogue]
+  ): Either[String, CatalogProviderInfo.Id] =
     val name = canonical(asked)
     if catalogues.contains(name) then Right(name)
     else
       entries.find(_.name == name) match
         case Some(e) => Left(s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)")
         case None    =>
-          Left(s"unknown event catalogue '${asked.value.trim}' (one of: ${ordered(catalogues.keys.toList).mkString(", ")})")
+          Left(
+            s"unknown event catalogue '${asked.value.trim}' (one of: ${ordered(catalogues.keys.toList).mkString(", ")})"
+          )
 
   /** A catalogue's terms as the card and the list show them: a registered one's, else a first-party one's (records of a
     * catalogue switched off since are still on the map).
     */
-  def info(name: CatalogProviderInfo.Id, catalogues: ListMap[CatalogProviderInfo.Id, EventCatalogue]): Option[CatalogProviderInfo] =
+  def info(
+      name: CatalogProviderInfo.Id,
+      catalogues: ListMap[CatalogProviderInfo.Id, EventCatalogue]
+  ): Option[CatalogProviderInfo] =
     catalogues.get(name) match
       case None    => CatalogProvider.info(name)
       case Some(c) =>

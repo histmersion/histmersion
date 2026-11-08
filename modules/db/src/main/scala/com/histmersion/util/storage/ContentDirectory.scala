@@ -48,4 +48,3 @@ final class ContentDirectory(dir: Path) extends ContentStore:
         .left
         .map(e => ContentStore.Problem(s"cannot store it in $dir: ${e.getMessage}"))
         .flatten
-

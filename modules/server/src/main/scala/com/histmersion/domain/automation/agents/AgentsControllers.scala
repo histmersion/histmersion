@@ -7,7 +7,12 @@ import com.histmersion.PageSize
 import com.histmersion.domain.automation.agents.AgentsControllers.{BudgetTokens, BudgetUsd, ModelName, PositiveAmount}
 import com.histmersion.domain.automation.approvals.{ApprovalDigestService, ApprovalQuery, Approvals, AutoApprovals}
 import com.histmersion.domain.automation.goals.BGoalLinkRow
-import com.histmersion.domain.automation.{Approval as DomainApproval, Goal as DomainGoal, Pipeline as DomainPipeline, Run as DomainRun}
+import com.histmersion.domain.automation.{
+  Approval as DomainApproval,
+  Goal as DomainGoal,
+  Pipeline as DomainPipeline,
+  Run as DomainRun
+}
 import com.histmersion.domain.automation.autopilot.AutopilotService
 import com.histmersion.domain.automation.goals.GoalFocusService
 import com.histmersion.domain.automation.managers.{DrainService, ManagersControllers, ManagerSupervisor, Zero}
@@ -74,7 +79,12 @@ final class AgentsControllers(
     * pool (a scripted model's test must never spend a real plan on a probe).
     */
   def this(site: EngineSite, clientFor: LlmClient.Factory) =
-    this(site, clientFor, CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome), PlanPools.Seams.Offline)
+    this(
+      site,
+      clientFor,
+      CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome),
+      PlanPools.Seams.Offline
+    )
 
   private def this(site: EngineSite, w: (LlmClient.Factory, CliRuntime)) =
     this(site, w._1, w._2, PlanPools.Seams.Real)
@@ -156,7 +166,12 @@ final class AgentsControllers(
   /** A `hint-effect` approval a person approves is applied by the managers (read when it happens, so the forward
     * reference to [[managing]] is safe).
     */
-  val approvals: Approvals = Approvals(approvalStore, cfg, site.approvalEffects, p => managing.applyProposal(p).left.map(ApprovalEffects.Problem(_)))
+  val approvals: Approvals = Approvals(
+    approvalStore,
+    cfg,
+    site.approvalEffects,
+    p => managing.applyProposal(p).left.map(ApprovalEffects.Problem(_))
+  )
 
   /** What the domains register into the engine: their workflows and agent tools. A registration the engine refuses (two
     * workflows with one identifier, a tool nobody contributes) stops the server here.
@@ -262,7 +277,10 @@ final class AgentsControllers(
               )
             )
           )
-      r <- cli.trees.generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths)).left.map(e => Api.Error(Api.Error.Message(e.value)))
+      r <- cli.trees
+        .generate(knownTools, rts, AgentTrees.out(req.out.map(_.value), site.userPaths))
+        .left
+        .map(e => Api.Error(Api.Error.Message(e.value)))
     yield r
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
@@ -271,7 +289,9 @@ final class AgentsControllers(
     case PlanQuota.PoolId.ClaudePlan  => List(PlanQuota.PoolStatus.Covers(s"${ProviderKind.ClaudeCode.wire}:*"))
     case PlanQuota.PoolId.ChatgptPlan =>
       PlanQuota.PoolStatus.Covers(s"${ProviderKind.Codex.wire}:*") :: Option
-        .when(cfg.providers.opencode.chatgptLogin.value)(PlanQuota.PoolStatus.Covers(s"${ProviderKind.Opencode.wire}:openai/*"))
+        .when(cfg.providers.opencode.chatgptLogin.value)(
+          PlanQuota.PoolStatus.Covers(s"${ProviderKind.Opencode.wire}:openai/*")
+        )
         .toList
 
   /** `GET /api/agents/quota` — readable with agents off. Nothing is spent: the ChatGPT pool is read from the app-server
@@ -346,7 +366,8 @@ final class AgentsControllers(
       .getOrElse(Right(PlanQuota.PoolId.values.toList))
       .map { ps =>
         val cooled = picker.cooldowns().map(_._1)
-        val done = ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = PlanPools.Force(true)))
+        val done =
+          ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = PlanPools.Force(true)))
         val after = pools.statuses(covers).map(st => st.pool -> st).toMap
         // a model parked after its plan's limit comes back as soon as a reading taken now says so (#1827)
         val still = picker.cooldowns().map(_._1).toSet
@@ -713,7 +734,12 @@ final class AgentsControllers(
         case (acc, (role, ref)) =>
           acc.flatMap(_ => runnable(role, Some(ref)).left.map(e => Api.Error(Api.Error.Message(e.value))))
       }
-      _ <- host.runOptions(p, req, ManagerContext.ItemTarget(target.value), AutomationHost.RunOptionsRoundsCap(roundsCap.value))
+      _ <- host.runOptions(
+        p,
+        req,
+        ManagerContext.ItemTarget(target.value),
+        AutomationHost.RunOptionsRoundsCap(roundsCap.value)
+      )
       goal <- goalOf(p, target, req.goal.orElse(parent.flatMap(_.goal)).map(_.value))
       usd <- positive(
         PositiveAmount(
@@ -722,7 +748,12 @@ final class AgentsControllers(
         "budget-usd"
       )
       tok <- positive(
-        PositiveAmount(req.budgetTokens.map(_.value).getOrElse(cfg.budgets.runTokensFor(DomainPipeline.Wire(p.wire.value)).value).toDouble),
+        PositiveAmount(
+          req.budgetTokens
+            .map(_.value)
+            .getOrElse(cfg.budgets.runTokensFor(DomainPipeline.Wire(p.wire.value)).value)
+            .toDouble
+        ),
         "budget-tokens"
       )
     yield
@@ -809,14 +840,16 @@ final class AgentsControllers(
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which must exist).
     */
-  private def goalOf(p: Pipeline, target: AgentsControllers.Target, named: Option[String]): Either[Api.Error, Option[DomainGoal.Slug]] =
+  private def goalOf(
+      p: Pipeline,
+      target: AgentsControllers.Target,
+      named: Option[String]
+  ): Either[Api.Error, Option[DomainGoal.Slug]] =
     def slug(raw: String): Either[Api.Error, DomainGoal.Slug] =
       DomainGoal.Slug
         .either(raw)
         .left
-        .map(_ =>
-          Api.Error(Api.Error.Message(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound)))
-        )
+        .map(_ => Api.Error(Api.Error.Message(s"No goal '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
     if p.targetKind == TargetKind.Goal then slug(target.value).map(Some(_))
     else
       named.map(_.trim).filter(_.nonEmpty) match
@@ -836,7 +869,11 @@ final class AgentsControllers(
 
   private def searchPage: PageSize = PageSize.applyUnsafe(math.max(1, site.config.limits.search.value))
 
-  def runs(status: Option[RunQuery.Status], limit: Option[PageSize], goal: Option[DomainGoal.Slug] = None): Either[Api.Error, List[RunInfo]] =
+  def runs(
+      status: Option[RunQuery.Status],
+      limit: Option[PageSize],
+      goal: Option[DomainGoal.Slug] = None
+  ): Either[Api.Error, List[RunInfo]] =
     status.map(st => RunQuery.Status(st.value.trim)).filter(_.value.nonEmpty) match
       case Some(st) if RunState.parse(RunState.Wire(st.value)).isEmpty =>
         Left(
@@ -898,9 +935,7 @@ final class AgentsControllers(
           facets.map((name, values) =>
             (
               Facet.Name(name),
-              values.map((v, n) =>
-                (Facet.Value(v), Facet.Count(n.value))
-              )
+              values.map((v, n) => (Facet.Value(v), Facet.Count(n.value)))
             )
           )
         )
@@ -913,7 +948,13 @@ final class AgentsControllers(
     runs
       .get(id)
       .toRight(notFound(s"No agent run '$id'"))
-      .map(r => RunDetail(r, runs.steps(Job.Id.assume(id.value), AgentRepo.OutputChars(cfg.trace.maxToolResultChars.value)), runs.messages(Job.Id.assume(id.value))))
+      .map(r =>
+        RunDetail(
+          r,
+          runs.steps(Job.Id.assume(id.value), AgentRepo.OutputChars(cfg.trace.maxToolResultChars.value)),
+          runs.messages(Job.Id.assume(id.value))
+        )
+      )
 
   /** `GET /api/agents/compare?id=…` (#992) — runs of one pipeline on one target side by side, from their recorded steps
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
@@ -968,8 +1009,15 @@ final class AgentsControllers(
   /** `GET /api/agents/approvals` — readable whether or not agents are on (a person can still decide what an earlier run
     * proposed).
     */
-  def approvalsList(state: Option[ApprovalQuery.State], limit: Option[PageSize]): Either[Api.Error, List[ApprovalInfo]] =
-    approvals.list(state, limit.map(l => ApprovalQuery.Limit(l.value)), ApprovalQuery.Limit(site.config.limits.page(limit, searchPage).value))
+  def approvalsList(
+      state: Option[ApprovalQuery.State],
+      limit: Option[PageSize]
+  ): Either[Api.Error, List[ApprovalInfo]] =
+    approvals.list(
+      state,
+      limit.map(l => ApprovalQuery.Limit(l.value)),
+      ApprovalQuery.Limit(site.config.limits.page(limit, searchPage).value)
+    )
 
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
   def approvalsPage(
@@ -1004,7 +1052,11 @@ final class AgentsControllers(
   /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only applies a change a
     * person accepts, through the ordinary patch.
     */
-  def decide(id: DomainApproval.Id, decision: DomainApproval.Outcome, req: DecisionRequest): Either[Api.Error, ApprovalInfo] =
+  def decide(
+      id: DomainApproval.Id,
+      decision: DomainApproval.Outcome,
+      req: DecisionRequest
+  ): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note.map(n => DomainApproval.Note(n.value))).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
       if a.approvalKind.exists(_.blocking.value) then a.runId.foreach(r => engine.wake(DomainRun.Id.assume(r.value)))
@@ -1036,8 +1088,10 @@ final class AgentsControllers(
     for
       _ <- host.goal(slug)
       r <- in.kind match
-        case LinkKind.Source    => host.linkRef(LinkKind.Source, AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
-        case LinkKind.Article   => host.linkRef(LinkKind.Article, AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
+        case LinkKind.Source =>
+          host.linkRef(LinkKind.Source, AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
+        case LinkKind.Article =>
+          host.linkRef(LinkKind.Article, AutomationHost.LinkRefRaw(ref)).map(x => GoalLink.Ref(x.value))
         case LinkKind.QueueItem =>
           ref.toIntOption
             .flatMap(i => site.queues.get(QueueItemId(i)))
@@ -1087,9 +1141,9 @@ final class AgentsControllers(
       )
 
   /** `PUT /api/goals/{slug}/schedules/{kind}` — a sweep of the goal's watcher since phase 3
-    * ([[ManagersControllers.setSchedule]]: created paused when it does not exist; the cron is checked, no more often than
-    * `agents.scheduler.min-interval-minutes`). Works with agents off: nothing fires until they are on and the watcher
-    * is resumed.
+    * ([[ManagersControllers.setSchedule]]: created paused when it does not exist; the cron is checked, no more often
+    * than `agents.scheduler.min-interval-minutes`). Works with agents off: nothing fires until they are on and the
+    * watcher is resumed.
     */
   def setSchedule(
       slug: DomainGoal.Slug,
@@ -1183,7 +1237,10 @@ final class AgentsControllers(
           if problems.nonEmpty && attempt < maxAttempts then
             go(
               attempt + 1,
-              ask + Prompt.retry(problems.map(Prompt.Problem(_)), answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)),
+              ask + Prompt.retry(
+                problems.map(Prompt.Problem(_)),
+                answer.map(a => io.circe.Encoder[ProbeAnswer].apply(a).noSpaces)
+              ),
               use,
               toolCalls
             )
@@ -1194,7 +1251,9 @@ final class AgentsControllers(
                 answer = answer,
                 rawAnswer = ProbeResult.RawAnswer(LlmClient.rawAnswer(res.finalAnswer).take(2000)),
                 matchesRecord = ProbeResult.MatchesRecord(
-                  problems.isEmpty && answer.exists(a => host.sameTitle(Title(a.title.value), Title(src.title.value)) && a.year == src.year)
+                  problems.isEmpty && answer.exists(a =>
+                    host.sameTitle(Title(a.title.value), Title(src.title.value)) && a.year == src.year
+                  )
                 ),
                 toolCalls = toolCalls.map(ProbeResult.ToolCalls(_)),
                 iterations = ProbeResult.Iterations(res.iterations),
@@ -1225,6 +1284,7 @@ object AgentsControllers:
   object SourcesCount extends Newtype[Int, Pure]
   type Target = Target.T
   object Target extends Newtype[String, Pure]
+
   /** A run id a request names: one that is not a run id names no run. */
   def runId(raw: String): Either[Api.Error, DomainRun.Id] =
     DomainRun.Id
@@ -1238,7 +1298,9 @@ object AgentsControllers:
       .flatMap(_.split(','))
       .map(_.trim)
       .filter(_.nonEmpty)
-      .foldLeft[Either[Api.Error, List[DomainRun.Id]]](Right(Nil))((acc, id) => acc.flatMap(xs => runId(id).map(xs :+ _)))
+      .foldLeft[Either[Api.Error, List[DomainRun.Id]]](Right(Nil))((acc, id) =>
+        acc.flatMap(xs => runId(id).map(xs :+ _))
+      )
 
   /** A goal slug a request names: one that is not a slug names no goal. */
   def goalSlug(raw: String): Either[Api.Error, DomainGoal.Slug] =
@@ -1250,7 +1312,8 @@ object AgentsControllers:
   /** The server's providers over one [[CliRuntime]]. */
 
   def serverWiring(site: EngineSite): (LlmClient.Factory, CliRuntime) =
-    val rt = CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome)
+    val rt =
+      CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome)
     (LlmClient.factory(rt, site.aiProviders), rt)
 
   /** [[attempt]], telling the plan's own usage limit (a model to pass over, [[ModelLimitReached]]) apart from a broken

@@ -15,8 +15,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * be a string: `roles.*` are `provider:model` references (`Agents.ModelRef`) and `prices` is a price table
   * (`Agents.Prices`).
   */
-final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKey: AgentProviderConfig.ApiKey, strictTools: AgentProviderConfig.StrictTools, timeoutSeconds: AgentProviderConfig.TimeoutSeconds)
-    derives ConfigReader:
+final case class AgentProviderConfig(
+    baseUrl: AgentProviderConfig.BaseUrl,
+    apiKey: AgentProviderConfig.ApiKey,
+    strictTools: AgentProviderConfig.StrictTools,
+    timeoutSeconds: AgentProviderConfig.TimeoutSeconds
+) derives ConfigReader:
   override def toString: String =
     s"AgentProviderConfig($baseUrl, apiKey=${if apiKey.value.isEmpty then "unset" else "<redacted>"}, " +
       s"strictTools=$strictTools, timeoutSeconds=$timeoutSeconds)"

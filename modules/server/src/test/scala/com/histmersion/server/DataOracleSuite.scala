@@ -99,9 +99,31 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
   // ── the servers ────────────────────────────────────────────────────────────────────────────
 
   private def cfgFor(name: String): AppConfig =
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s6o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString)).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(pgBinDir.getOrElse(""))).modify(_.keep).setTo(BackupsConfig.Keep(2))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s6o_${name}_test")))
+      .modify(_.backups)
+      .setTo(
+        base.backups
+          .modify(_.dir)
+          .setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))
+          .modify(_.pgBinDir)
+          .setTo(BackupsConfig.PgBinDir(pgBinDir.getOrElse("")))
+          .modify(_.keep)
+          .setTo(BackupsConfig.Keep(2))
+      )
+      .modify(_.bundles)
+      .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString)))
+      .modify(_.converter)
+      .setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString)))
+      .modify(_.acquire)
+      .setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString)))
+      .modify(_.init)
+      .setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false)))
+      .modify(_.runtime)
+      .setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString)))
+      .modify(_.basemap)
+      .setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString)))
 
   /** The servers' environment: a home and a cache directory of the suite's own (the cache holding a gazetteer folder),
     * so nothing of the machine's own directories reaches the record.
@@ -115,12 +137,19 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       "{}\n",
       UTF_8
     )
-    val env = Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue(home.toString), Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue(cache.toString)))
+    val env = Environment(
+      Map(
+        Environment.VariablesKey("HOME") -> Environment.VariablesValue(home.toString),
+        Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue(cache.toString)
+      )
+    )
     SystemContext(java.time.Clock.systemUTC(), env, UserPaths(env, UserPaths.OsName("")))
 
   private def withServer[A](name: String)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfgFor(name), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), system = system).start()
+      val b = Composition
+        .server(cfgFor(name), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), system = system)
+        .start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -198,7 +227,13 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       edges = edges.map((dst, kind) => Edge(ck, dst, kind))
     )
 
-  private def site(id: Place.Id, label: Place.Label, name: Place.Name.Value, lon: Longitude, lat: Latitude): Place.Input =
+  private def site(
+      id: Place.Id,
+      label: Place.Label,
+      name: Place.Name.Value,
+      lon: Longitude,
+      lat: Latitude
+  ): Place.Input =
     Place.Input(
       Place(
         id,
@@ -210,7 +245,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       List(Place.Name(name))
     )
 
-  private def png(n: Byte): NewFigure.Bytes = NewFigure.Bytes(Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n))
+  private def png(n: Byte): NewFigure.Bytes =
+    NewFigure.Bytes(Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10, n, n, n))
 
   /** Work's records: sources with findings, edges (one to a source nobody has), a body and a renamed citekey; two
     * articles; a goal; a place, a period and an event at the place; figures and a link; an attestation; work items.
@@ -223,8 +259,12 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
         Citekey("zzalpha2001_storm"),
         Title("The Storm God"),
         Year(2001),
-        findings = List(Finding.Claim("the storm god of Hatti is Tarhunna"), Finding.Claim("Hattusa burned around 1180 BC")),
-        edges = List(Citekey("zzbeta2005_kingdom") -> Edge.Kind.References, Citekey("zzunknown1900_lost") -> Edge.Kind.References),
+        findings =
+          List(Finding.Claim("the storm god of Hatti is Tarhunna"), Finding.Claim("Hattusa burned around 1180 BC")),
+        edges = List(
+          Citekey("zzbeta2005_kingdom") -> Edge.Kind.References,
+          Citekey("zzunknown1900_lost") -> Edge.Kind.References
+        ),
         body = Some(Source.OcrMarkdown("Alpha body. Tarhunna rules the storm. " * 20)),
         summary = Some(Source.Summary("as written at work"))
       ),
@@ -242,21 +282,72 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       chunk
     )
     SourceFixtures.upsert(ds, src(Citekey("zzgamma1903_old"), Title("An Old Book"), Year(1903)), chunk)
-    val _ = SourceFixtures.rename(ds, com.histmersion.domain.library.Citekey("zzgamma1903_old"), Citekeys.RenameToNewRaw("zzgamma1903_prolegomena"))
-    val _ = ArticleFixtures.put(
+    val _ = SourceFixtures.rename(
       ds,
-      Article(Article.Slug("zz_storm"), Article.Title("Storm gods"), Article.KindValue("concept"), Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle.\n\nEnd."))
+      com.histmersion.domain.library.Citekey("zzgamma1903_old"),
+      Citekeys.RenameToNewRaw("zzgamma1903_prolegomena")
     )
     val _ = ArticleFixtures.put(
       ds,
-      Article(Article.Slug("zz_storm"), Article.Title("Storm gods"), Article.KindValue("concept"), Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd."))
+      Article(
+        Article.Slug("zz_storm"),
+        Article.Title("Storm gods"),
+        Article.KindValue("concept"),
+        Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle.\n\nEnd.")
+      )
     )
-    val _ = ArticleFixtures.put(ds, Article(Article.Slug("zz_kingdom"), Article.Title("Kingdoms"), Article.KindValue("culture"), Article.Body("One [[zzbeta2005_kingdom]].\n\nTwo.")))
-    val _ = transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("Know the storm gods"))))
-    val _ = transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal_gone"), Goal.Put(Goal.Title("A goal deleted later"))))
-    val _ = PlaceFixtures.upsertPlaces(ds, List(site(Place.Id("zz_site"), Place.Label("Storm hill"), Place.Name.Value("Storm hill"), Longitude(34.6), Latitude(40.0))), Dataset.Local)
+    val _ = ArticleFixtures.put(
+      ds,
+      Article(
+        Article.Slug("zz_storm"),
+        Article.Title("Storm gods"),
+        Article.KindValue("concept"),
+        Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle part.\n\nEnd.")
+      )
+    )
+    val _ = ArticleFixtures.put(
+      ds,
+      Article(
+        Article.Slug("zz_kingdom"),
+        Article.Title("Kingdoms"),
+        Article.KindValue("culture"),
+        Article.Body("One [[zzbeta2005_kingdom]].\n\nTwo.")
+      )
+    )
+    val _ = transact(ds)(
+      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Goal.Put(Goal.Title("Know the storm gods")))
+    )
+    val _ = transact(ds)(
+      GoalRepo.put(
+        com.histmersion.domain.automation.Goal.Slug("zz_goal_gone"),
+        Goal.Put(Goal.Title("A goal deleted later"))
+      )
+    )
+    val _ = PlaceFixtures.upsertPlaces(
+      ds,
+      List(
+        site(
+          Place.Id("zz_site"),
+          Place.Label("Storm hill"),
+          Place.Name.Value("Storm hill"),
+          Longitude(34.6),
+          Latitude(40.0)
+        )
+      ),
+      Dataset.Local
+    )
     val _ = PeriodService(Transactor(ds))
-      .write(List(HistoricalPeriod(HistoricalPeriod.Id("zz_period"), HistoricalPeriod.Label("Storm period"), Some(HistoricalPeriod.Authority("oracle")), Period(Year(-1400), Year(-1200)))), Dataset.Local)
+      .write(
+        List(
+          HistoricalPeriod(
+            HistoricalPeriod.Id("zz_period"),
+            HistoricalPeriod.Label("Storm period"),
+            Some(HistoricalPeriod.Authority("oracle")),
+            Period(Year(-1400), Year(-1200))
+          )
+        ),
+        Dataset.Local
+      )
     EventFixtures.put(
       ds,
       BEventRow.Id("zz_event"),
@@ -270,7 +361,11 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     EventFixtures.put(
       ds,
       BEventRow.Id("zz_event_gone"),
-      EventPut(EventSummary.Label("An event deleted later"), EventSummary.Kind("battle"), TimeSpan(Some(Year(-1250)), None, None, None))
+      EventPut(
+        EventSummary.Label("An event deleted later"),
+        EventSummary.Kind("battle"),
+        TimeSpan(Some(Year(-1250)), None, None, None)
+      )
     )
     val _ = AssetFixtures.add(
       ds,
@@ -291,9 +386,21 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
           charEnd = Some(Attestation.CharEnd(10))
         )
       )
-    val _ = QueueRows.add(ds, Queue.Kind.Tasks, Queue.QueueAdd(Queue.QueueItem.Text("check the storm god"), topic = Some(Queue.QueueItem.Topic("oracle"))))
-    val _ = QueueRows.add(ds, Queue.Kind.Log, Queue.QueueAdd(Queue.QueueItem.Text("crafted the oracle"), topic = Some(Queue.QueueItem.Topic("oracle"))))
-    val _ = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Doe, The Lost Book (1900)"), topic = Some(Queue.QueueItem.Topic("oracle"))))
+    val _ = QueueRows.add(
+      ds,
+      Queue.Kind.Tasks,
+      Queue.QueueAdd(Queue.QueueItem.Text("check the storm god"), topic = Some(Queue.QueueItem.Topic("oracle")))
+    )
+    val _ = QueueRows.add(
+      ds,
+      Queue.Kind.Log,
+      Queue.QueueAdd(Queue.QueueItem.Text("crafted the oracle"), topic = Some(Queue.QueueItem.Topic("oracle")))
+    )
+    val _ = QueueRows.add(
+      ds,
+      Queue.Kind.Acquire,
+      Queue.QueueAdd(Queue.QueueItem.Text("Doe, The Lost Book (1900)"), topic = Some(Queue.QueueItem.Topic("oracle")))
+    )
 
   /** After home imported work once, both go on. */
   private def editBoth(work: DataSource, home: DataSource): Unit =
@@ -309,42 +416,82 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
           Finding.Claim("Hattusa burned around 1180 BC"),
           Finding.Claim("a third claim, work's")
         ),
-        edges = List(Citekey("zzbeta2005_kingdom") -> Edge.Kind.References, Citekey("zzunknown1900_lost") -> Edge.Kind.References),
+        edges = List(
+          Citekey("zzbeta2005_kingdom") -> Edge.Kind.References,
+          Citekey("zzunknown1900_lost") -> Edge.Kind.References
+        ),
         body = Some(Source.OcrMarkdown("Alpha body. Tarhunna rules the storm. " * 20)),
         summary = Some(Source.Summary("edited at work"))
       ),
       chunk
     )
     // the same summary edited at home: a conflict
-    val _ = SourceFixtures.patch(home, com.histmersion.domain.library.Citekey("zzalpha2001_storm"), Source.Patch(summary = Some(Source.Summary("edited at home"))), chunk)
+    val _ = SourceFixtures.patch(
+      home,
+      com.histmersion.domain.library.Citekey("zzalpha2001_storm"),
+      Source.Patch(summary = Some(Source.Summary("edited at home"))),
+      chunk
+    )
     // a renamed citekey at work
-    val _ = SourceFixtures.rename(work, com.histmersion.domain.library.Citekey("zzbeta2005_kingdom"), Citekeys.RenameToNewRaw("zzbeta2005_hittites"))
+    val _ = SourceFixtures.rename(
+      work,
+      com.histmersion.domain.library.Citekey("zzbeta2005_kingdom"),
+      Citekeys.RenameToNewRaw("zzbeta2005_hittites")
+    )
     // one paragraph both edited
     val _ = ArticleFixtures.put(
       work,
-      Article(Article.Slug("zz_storm"), Article.Title("Storm gods"), Article.KindValue("concept"), Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle part, at work.\n\nEnd."))
+      Article(
+        Article.Slug("zz_storm"),
+        Article.Title("Storm gods"),
+        Article.KindValue("concept"),
+        Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle part, at work.\n\nEnd.")
+      )
     )
     val _ = ArticleFixtures.put(
       home,
-      Article(Article.Slug("zz_storm"), Article.Title("Storm gods"), Article.KindValue("concept"), Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle part, at home.\n\nEnd."))
+      Article(
+        Article.Slug("zz_storm"),
+        Article.Title("Storm gods"),
+        Article.KindValue("concept"),
+        Article.Body("Intro [[zzalpha2001_storm]].\n\nMiddle part, at home.\n\nEnd.")
+      )
     )
     // edits in different places of the other article: a clean three-way merge
     val _ =
       ArticleFixtures.put(
         work,
-        Article(Article.Slug("zz_kingdom"), Article.Title("Kingdoms"), Article.KindValue("culture"), Article.Body("One (work) [[zzbeta2005_kingdom]].\n\nTwo."))
+        Article(
+          Article.Slug("zz_kingdom"),
+          Article.Title("Kingdoms"),
+          Article.KindValue("culture"),
+          Article.Body("One (work) [[zzbeta2005_kingdom]].\n\nTwo.")
+        )
       )
     val _ =
       ArticleFixtures.put(
         home,
-        Article(Article.Slug("zz_kingdom"), Article.Title("Kingdoms"), Article.KindValue("culture"), Article.Body("One [[zzbeta2005_kingdom]].\n\nTwo (home)."))
+        Article(
+          Article.Slug("zz_kingdom"),
+          Article.Title("Kingdoms"),
+          Article.KindValue("culture"),
+          Article.Body("One [[zzbeta2005_kingdom]].\n\nTwo (home).")
+        )
       )
     // a deleted event and a deleted goal at work
     val _ = EventFixtures.delete(work, BEventRow.Id("zz_event_gone"))
     val _ = Transactor(work).transact(GoalRepo.deleteIn(com.histmersion.domain.automation.Goal.Slug("zz_goal_gone")))
     // something new at work
-    SourceFixtures.upsert(work, src(Citekey("zzdelta2020_new"), Title("A New Book"), Year(2020), findings = List(Finding.Claim("new at work"))), chunk)
-    val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd(Queue.QueueItem.Text("a task work added"), topic = Some(Queue.QueueItem.Topic("oracle"))))
+    SourceFixtures.upsert(
+      work,
+      src(Citekey("zzdelta2020_new"), Title("A New Book"), Year(2020), findings = List(Finding.Claim("new at work"))),
+      chunk
+    )
+    val _ = QueueRows.add(
+      work,
+      Queue.Kind.Tasks,
+      Queue.QueueAdd(Queue.QueueItem.Text("a task work added"), topic = Some(Queue.QueueItem.Topic("oracle")))
+    )
 
   // ── normalisation ──────────────────────────────────────────────────────────────────────────
 
@@ -380,7 +527,9 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
       scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
-      dss.flatMap((n, ds) => run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n"))
+      dss.flatMap((n, ds) =>
+        run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n")
+      )
     val merges = dss.flatMap((n, ds) =>
       run(ds, Sql.Text("SELECT id::text, 'x' FROM merges ORDER BY created_at")).zipWithIndex.map { case ((id, _), i) =>
         id -> s"merge:$n#${i + 1}"
@@ -479,7 +628,8 @@ class DataOracleSuite extends DbSuite with com.histmersion.db.Bounded:
     )
     tables
       .map { t =>
-        val rs = connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
+        val rs =
+          connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
         val normed = rs.map(r => json(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
         if t == "flyway_schema_history" then s"## $t ${normed.size} rows"
         else if normed.size > 200 then

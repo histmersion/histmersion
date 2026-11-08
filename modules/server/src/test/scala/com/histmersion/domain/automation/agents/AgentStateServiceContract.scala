@@ -15,8 +15,14 @@ abstract class AgentStateServiceContract extends EngineStoreSuite:
     a(s).set(AgentStateRecord.Key("zz-b"), AgentStateService.SetValue("""{"zeta":1,"a":[1,2,{"bb":true,"c":null}]}"""))
     a(s).set(AgentStateRecord.Key("zz-a"), AgentStateService.SetValue("\"one\""))
     a(s).set(AgentStateRecord.Key("zz-a"), AgentStateService.SetValue("[1,  2]"))
-    assertEquals(a(s).get(AgentStateRecord.Key("zz-b")).map(_.value), Some("""{"a": [1, 2, {"c": null, "bb": true}], "zeta": 1}"""))
-    assertEquals(a(s).list().map(e => (e.key, e.value)), List(("zz-a", "[1, 2]"), ("zz-b", a(s).get(AgentStateRecord.Key("zz-b")).get.value)))
+    assertEquals(
+      a(s).get(AgentStateRecord.Key("zz-b")).map(_.value),
+      Some("""{"a": [1, 2, {"c": null, "bb": true}], "zeta": 1}""")
+    )
+    assertEquals(
+      a(s).list().map(e => (e.key, e.value)),
+      List(("zz-a", "[1, 2]"), ("zz-b", a(s).get(AgentStateRecord.Key("zz-b")).get.value))
+    )
     assert(a(s).get(AgentStateRecord.Key("zz-a")).flatMap(_.updatedAt).isDefined)
     assert(a(s).delete(AgentStateRecord.Key("zz-a")))
     assert(!a(s).delete(AgentStateRecord.Key("zz-a")))

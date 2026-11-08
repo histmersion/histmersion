@@ -30,8 +30,14 @@ class PersonalTypesSuite extends munit.FunSuite:
     val src = MarkTarget.Item(ref)
     def described(title: Option[String], key: String = "zz") =
       Map(ref -> Described(ItemKey(key), title.map(Title(_)), RecordState.Live))
-    assertEquals(src.shown(described(Some(" Now ")), TargetLabel.tidy(TargetLabel.Label("then")))._2.value: String, "Now")
-    assertEquals(src.shown(Map.empty, TargetLabel.tidy(TargetLabel.Label("then  and\nnow")))._2.value: String, "then and now")
+    assertEquals(
+      src.shown(described(Some(" Now ")), TargetLabel.tidy(TargetLabel.Label("then")))._2.value: String,
+      "Now"
+    )
+    assertEquals(
+      src.shown(Map.empty, TargetLabel.tidy(TargetLabel.Label("then  and\nnow")))._2.value: String,
+      "then and now"
+    )
     assertEquals(src.shown(described(Some(" ")), None)._2.value: String, "zz")
     val view = MarkTarget.View(None, None, None, None, None, None)
     assertEquals(view.shown(Map.empty, None)._2.value: String, "Saved view")
@@ -76,11 +82,17 @@ class PersonalTypesSuite extends munit.FunSuite:
       val c = TargetColumns.of(t)
       assertEquals(MarkTarget.ofColumns(c.kind, c.key, c.uid, c.lat, c.lon, c.zoom, c.from, c.to, c.view), Some(t))
     }
-    assertEquals(MarkTarget.fromWire(Target.item(MarkKind.Goal, com.histmersion.api.personal.ItemKey("g"))).map(_.kind), Some(MarkKind.Goal))
+    assertEquals(
+      MarkTarget.fromWire(Target.item(MarkKind.Goal, com.histmersion.api.personal.ItemKey("g"))).map(_.kind),
+      Some(MarkKind.Goal)
+    )
 
   test("a stored row read back: an unknown kind or a point without its position is dropped, not guessed"):
     assertEquals(MarkTarget.ofColumns(ItemKind.Wire("nonsense"), None, None, None, None, None, None, None, None), None)
-    assertEquals(MarkTarget.ofColumns(ItemKind.Wire("point"), None, None, None, Some(Longitude(22.0)), None, None, None, None), None)
+    assertEquals(
+      MarkTarget.ofColumns(ItemKind.Wire("point"), None, None, None, Some(Longitude(22.0)), None, None, None, None),
+      None
+    )
     assertEquals(MarkTarget.ofColumns(ItemKind.Wire("source"), None, None, None, None, None, None, None, None), None)
 
   test("wire coordinates are checked before becoming domain coordinates"):

@@ -56,26 +56,78 @@ abstract class RunServiceContract extends EngineStoreSuite:
       (fresh.pipeline, fresh.target, fresh.status, fresh.usage, fresh.costUsd, fresh.goal),
       ("enrich-source", "zz2020_a", "queued", Usage.Zero, 0.0, Some("zz-g"))
     )
-    assertEquals((r(s).attempts(id, AgentRepo.StepRecord.Seq(1)), r(s).checkpoint(id, AgentRepo.StepRecord.Seq(1))), (0, None))
-    r(s).record(
-      id,
-      step(AgentRepo.StepRecord.Seq(1), AgentRepo.StepRecord.Attempt(1), StepStatus.Failed, AgentRepo.StepRecord.Model("openai:gpt-5"), BigDecimal("0.10"), None),
-      List(AgentRepo.MessageRecord(AgentRepo.MessageRecord.N(1), AgentRepo.MessageRecord.Role("user"), Some(AgentRepo.MessageRecord.Content("hi")), None, None, None, None))
+    assertEquals(
+      (r(s).attempts(id, AgentRepo.StepRecord.Seq(1)), r(s).checkpoint(id, AgentRepo.StepRecord.Seq(1))),
+      (0, None)
     )
-    assertEquals((r(s).attempts(id, AgentRepo.StepRecord.Seq(1)), r(s).checkpoint(id, AgentRepo.StepRecord.Seq(1))), (1, None))
     r(s).record(
       id,
-      step(AgentRepo.StepRecord.Seq(1), AgentRepo.StepRecord.Attempt(2), StepStatus.Done, AgentRepo.StepRecord.Model("anthropic:claude"), BigDecimal("0.25"), Some(AgentRepo.StepRecord.Output("\"abcdef\""))),
+      step(
+        AgentRepo.StepRecord.Seq(1),
+        AgentRepo.StepRecord.Attempt(1),
+        StepStatus.Failed,
+        AgentRepo.StepRecord.Model("openai:gpt-5"),
+        BigDecimal("0.10"),
+        None
+      ),
       List(
-        AgentRepo.MessageRecord(AgentRepo.MessageRecord.N(2), AgentRepo.MessageRecord.Role("assistant"), Some(AgentRepo.MessageRecord.Content("done")), None, None, None, Some(AgentRepo.MessageRecord.LatencyMs(5))),
-        AgentRepo.MessageRecord(AgentRepo.MessageRecord.N(1), AgentRepo.MessageRecord.Role("user"), Some(AgentRepo.MessageRecord.Content("again")), Some(AgentRepo.MessageRecord.ToolName("t")), Some(AgentRepo.MessageRecord.ToolInput("{}")), Some(AgentRepo.MessageRecord.ToolResult("r")), None)
+        AgentRepo.MessageRecord(
+          AgentRepo.MessageRecord.N(1),
+          AgentRepo.MessageRecord.Role("user"),
+          Some(AgentRepo.MessageRecord.Content("hi")),
+          None,
+          None,
+          None,
+          None
+        )
+      )
+    )
+    assertEquals(
+      (r(s).attempts(id, AgentRepo.StepRecord.Seq(1)), r(s).checkpoint(id, AgentRepo.StepRecord.Seq(1))),
+      (1, None)
+    )
+    r(s).record(
+      id,
+      step(
+        AgentRepo.StepRecord.Seq(1),
+        AgentRepo.StepRecord.Attempt(2),
+        StepStatus.Done,
+        AgentRepo.StepRecord.Model("anthropic:claude"),
+        BigDecimal("0.25"),
+        Some(AgentRepo.StepRecord.Output("\"abcdef\""))
+      ),
+      List(
+        AgentRepo.MessageRecord(
+          AgentRepo.MessageRecord.N(2),
+          AgentRepo.MessageRecord.Role("assistant"),
+          Some(AgentRepo.MessageRecord.Content("done")),
+          None,
+          None,
+          None,
+          Some(AgentRepo.MessageRecord.LatencyMs(5))
+        ),
+        AgentRepo.MessageRecord(
+          AgentRepo.MessageRecord.N(1),
+          AgentRepo.MessageRecord.Role("user"),
+          Some(AgentRepo.MessageRecord.Content("again")),
+          Some(AgentRepo.MessageRecord.ToolName("t")),
+          Some(AgentRepo.MessageRecord.ToolInput("{}")),
+          Some(AgentRepo.MessageRecord.ToolResult("r")),
+          None
+        )
       )
     )
     assertEquals(r(s).attempts(id, AgentRepo.StepRecord.Seq(1)), 2)
     assertEquals(r(s).checkpoint(id, AgentRepo.StepRecord.Seq(1)), Some(("step1", "\"abcdef\"")))
     val run = r(s).get(runId).get
-    assertEquals((run.usage, run.costUsd), (Usage(Usage.Input(30), Usage.Output(4), Usage.CacheRead(2), Usage.CacheWrite(0)), 0.35))
-    assertEquals(r(s).runSpend(id), (Usage(Usage.Input(30), Usage.Output(4), Usage.CacheRead(2), Usage.CacheWrite(0)), BigDecimal("0.35")))
+    assertEquals(
+      (run.usage, run.costUsd),
+      (Usage(Usage.Input(30), Usage.Output(4), Usage.CacheRead(2), Usage.CacheWrite(0)), 0.35)
+    )
+    assertEquals(
+      r(s).runSpend(id),
+      (Usage(Usage.Input(30), Usage.Output(4), Usage.CacheRead(2), Usage.CacheWrite(0)), BigDecimal("0.35"))
+    )
     val steps = r(s).steps(id, AgentRepo.OutputChars(3))
     assertEquals(
       steps.map(x => (x.seq, x.attempt, x.status, x.output, x.error)),
@@ -100,18 +152,37 @@ abstract class RunServiceContract extends EngineStoreSuite:
     "lists: newest first by state and goal; a target's and a manager's runs; the unsettled ones; counts per state"
   ) { s =>
     val a = s.run(RunRow.Target("zz2020_a"), goal = Some(RunRow.Goal("zz-g")))
-    val b = s.run(RunRow.Target("zz2020_b"), manager = Some(RunRow.ManagerId("watch:zz-g")), item = Some(RunRow.ManagerItem(1L)))
-    val c = s.run(RunRow.Target("zz2020_a"), manager = Some(RunRow.ManagerId("watch:zz-g")), pipeline = RunRow.Pipeline("currency-check"))
+    val b = s.run(
+      RunRow.Target("zz2020_b"),
+      manager = Some(RunRow.ManagerId("watch:zz-g")),
+      item = Some(RunRow.ManagerItem(1L))
+    )
+    val c = s.run(
+      RunRow.Target("zz2020_a"),
+      manager = Some(RunRow.ManagerId("watch:zz-g")),
+      pipeline = RunRow.Pipeline("currency-check")
+    )
     move(s, b, RunRow.Status("queued"), RunRow.Status("running"))
     move(s, b, RunRow.Status("running"), RunRow.Status("done"))
     assertEquals(r(s).list(None, RunQuery.Limit(10)).map(_.id.value: String), Vector(c, b, a))
     assertEquals(r(s).list(Some(RunQuery.Status(" QUEUED ")), RunQuery.Limit(10)).map(_.id.value: String), Vector(c, a))
     assertEquals(r(s).list(None, RunQuery.Limit(10), Some(Goal.Slug("zz-g"))).map(_.id.value: String), Vector(a))
     assertEquals(r(s).list(None, RunQuery.Limit(1)).map(_.id.value: String), Vector(c))
-    assertEquals(r(s).forTarget(Pipeline.EnrichSource, AgentsControllers.Target("zz2020_a")).map(_.id.value: String), Vector(a))
+    assertEquals(
+      r(s).forTarget(Pipeline.EnrichSource, AgentsControllers.Target("zz2020_a")).map(_.id.value: String),
+      Vector(a)
+    )
     assertEquals(r(s).forManager(ManagerLight.Id("watch:zz-g")).map(_.id.value: String), Vector(c, b))
-    assertEquals(r(s).forManager(ManagerLight.Id("watch:zz-g"), active = RunService.Active(true)).map(_.id.value: String), Vector(c))
-    assertEquals(r(s).forManager(com.histmersion.domain.automation.managers.ManagerLight.Id("watch:zz-g"), limit = RunQuery.Limit(1)).map(_.id.value: String), Vector(c))
+    assertEquals(
+      r(s).forManager(ManagerLight.Id("watch:zz-g"), active = RunService.Active(true)).map(_.id.value: String),
+      Vector(c)
+    )
+    assertEquals(
+      r(s)
+        .forManager(com.histmersion.domain.automation.managers.ManagerLight.Id("watch:zz-g"), limit = RunQuery.Limit(1))
+        .map(_.id.value: String),
+      Vector(c)
+    )
     assertEquals(r(s).unsettledOn(AgentsControllers.Target("zz2020_a")).map(_.id.value: String).toSet, Set(a, c))
     assertEquals(r(s).unsettledOn(AgentsControllers.Target("zz2020_b")), Vector.empty)
     assertEquals(r(s).stateCounts(), List("queued" -> 2, "done" -> 1))
@@ -125,23 +196,53 @@ abstract class RunServiceContract extends EngineStoreSuite:
     val a = s.run(RunRow.Target("zz2020_tin"), goal = Some(RunRow.Goal("zz-g")))
     val b = s.run(RunRow.Target("zz2020_copper"), manager = Some(RunRow.ManagerId("watch:zz-g")))
     val c = s.run(RunRow.Target("zz2020_tin_b"), pipeline = RunRow.Pipeline("currency-check"))
-    r(s).record(jobOf(b), step(AgentRepo.StepRecord.Seq(1), AgentRepo.StepRecord.Attempt(1), StepStatus.Done, AgentRepo.StepRecord.Model("openai:gpt-5"), BigDecimal("0.01"), Some(AgentRepo.StepRecord.Output("1"))), Nil)
+    r(s).record(
+      jobOf(b),
+      step(
+        AgentRepo.StepRecord.Seq(1),
+        AgentRepo.StepRecord.Attempt(1),
+        StepStatus.Done,
+        AgentRepo.StepRecord.Model("openai:gpt-5"),
+        BigDecimal("0.01"),
+        Some(AgentRepo.StepRecord.Output("1"))
+      ),
+      Nil
+    )
     move(s, c, RunRow.Status("queued"), RunRow.Status("running"))
     val Right((first, more)) = r(s).page(None, RunQuery.Limit(2)): @unchecked
     assertEquals((first.map(_.id.value: String), more), (Vector(c, b), true))
-    val Right((rest, none)) = r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(2), before = Some(AgentRepo.PageCursor(b.value))): @unchecked
+    val Right((rest, none)) = r(s).page(
+      None,
+      com.histmersion.domain.automation.agents.RunQuery.Limit(2),
+      before = Some(AgentRepo.PageCursor(b.value))
+    ): @unchecked
     assertEquals((rest.map(_.id.value: String), none), (Vector(a), false))
-    val Right((upTo, older)) = r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(5), upTo = Some(RunQuery.UpTo(b.value))): @unchecked
+    val Right((upTo, older)) = r(s).page(
+      None,
+      com.histmersion.domain.automation.agents.RunQuery.Limit(5),
+      upTo = Some(RunQuery.UpTo(b.value))
+    ): @unchecked
     assertEquals((upTo.map(_.id.value: String), older), (Vector(c, b), true))
     assert(
-      r(s).page(None, com.histmersion.domain.automation.agents.RunQuery.Limit(2), before = Some(AgentRepo.PageCursor("00000000-0000-0000-0000-000000000000"))).left.exists(_.value.contains("No agent run"))
+      r(s)
+        .page(
+          None,
+          com.histmersion.domain.automation.agents.RunQuery.Limit(2),
+          before = Some(AgentRepo.PageCursor("00000000-0000-0000-0000-000000000000"))
+        )
+        .left
+        .exists(_.value.contains("No agent run"))
     )
     def page(q: RunQuery) = r(s).page(q, RunQuery.Limit(10), None, None).map(_._1.map(_.id.value: String))
     assertEquals(page(RunQuery(status = List(RunQuery.Status("running")))), Right(Vector(c)))
     assertEquals(page(RunQuery(pipelines = List(RunQuery.Pipelines("currency-check")))), Right(Vector(c)))
     assertEquals(page(RunQuery(managers = List(RunQuery.Managers("watch:zz-g")))), Right(Vector(b)))
     assertEquals(page(RunQuery(goal = Some(RunQuery.Goal("zz-g")))), Right(Vector(a)))
-    assertEquals(page(RunQuery(models = List(RunQuery.Models("openai:gpt-5")))), Right(Vector(b)), "a model one of its steps used")
+    assertEquals(
+      page(RunQuery(models = List(RunQuery.Models("openai:gpt-5")))),
+      Right(Vector(b)),
+      "a model one of its steps used"
+    )
     assertEquals(page(RunQuery(providers = List(RunQuery.Providers("local")))), Right(Vector(c, b, a)))
     assertEquals(page(RunQuery(providers = List(RunQuery.Providers("openai")))), Right(Vector(b)))
     assertEquals(page(RunQuery(q = Some(RunQuery.Q("TIN")))), Right(Vector(c, a)))

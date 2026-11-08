@@ -96,7 +96,8 @@ class HotReloadSuite extends DbSuite:
     )
 
   private def loaded: LoadedConfig = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.value), identity)
-  private val source = ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(p => ConfigSource.Problem(p.value)))
+  private val source =
+    ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(p => ConfigSource.Problem(p.value)))
 
   private val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
   private def send(req: HttpRequest): (Int, String) =
@@ -153,7 +154,14 @@ class HotReloadSuite extends DbSuite:
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       entered.release()
       gate.await(60, TimeUnit.SECONDS)
-      Right(ConvertedDoc(markdown = ConvertedDoc.Markdown(s"# Converted\n\n$filename\n"), pages = ConvertedDoc.Pages(1), images = Nil, filename = Some(ConvertedDoc.Filename(filename.value))))
+      Right(
+        ConvertedDoc(
+          markdown = ConvertedDoc.Markdown(s"# Converted\n\n$filename\n"),
+          pages = ConvertedDoc.Pages(1),
+          images = Nil,
+          filename = Some(ConvertedDoc.Filename(filename.value))
+        )
+      )
 
   private def pdf(marker: String): Path =
     val p = Files.createTempFile(dir, "hot-", ".pdf")
@@ -175,7 +183,9 @@ class HotReloadSuite extends DbSuite:
     val conv = GatedConverter()
     val l = loaded
     supervised {
-      val b = Composition.server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv, source = Some((l, source))).start()
+      val b = Composition
+        .server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv, source = Some((l, source)))
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbA)
 
@@ -236,7 +246,15 @@ class HotReloadSuite extends DbSuite:
     write(DbB)
     val l = loaded
     supervised {
-      val b = Composition.server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), source = Some((l, source))).start()
+      val b = Composition
+        .server(
+          l.config,
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
+          OfflineConverter(),
+          source = Some((l, source))
+        )
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbB)
 
@@ -271,7 +289,14 @@ class HotReloadSuite extends DbSuite:
     supervised {
       val b =
         Composition
-          .server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .server(
+            l.config,
+            ServerConfig.Host("127.0.0.1"),
+            ServerConfig.Port(0),
+            OfflineConverter(),
+            plugins = gen,
+            source = Some((l, source))
+          )
           .start()
       val url = s"http://127.0.0.1:${b.port}"
       write(DbB, "plugins.pmc.enabled = false\n  limits.search = 7\n  server.port = 1")
@@ -301,7 +326,14 @@ class HotReloadSuite extends DbSuite:
     supervised {
       val b =
         Composition
-          .server(l.config, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .server(
+            l.config,
+            ServerConfig.Host("127.0.0.1"),
+            ServerConfig.Port(0),
+            OfflineConverter(),
+            plugins = gen,
+            source = Some((l, source))
+          )
           .start()
       val url = s"http://127.0.0.1:${b.port}"
       val Off = "switched off (histmersion.plugins.ai-local.enabled = false)"

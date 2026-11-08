@@ -9,7 +9,12 @@ import com.histmersion.util.database.Transactor
   * surface, a shape cut to a compass part — with no in-memory twin.
   */
 trait Geocoding:
-  def resolve(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period], placeholderMin: GeocodeSettings.PlaceholderMin): Option[Geocode.Resolution]
+  def resolve(
+      name: Geocode.Attempt.Name,
+      hint: Geocode.KindHint,
+      at: Option[Period],
+      placeholderMin: GeocodeSettings.PlaceholderMin
+  ): Option[Geocode.Resolution]
 
 object Geocoding:
   def apply(db: Transactor): Geocoding = Implementation(db)

@@ -17,11 +17,12 @@ final case class CandidateWatch(
     lastError: Option[CandidateWatch.LastError] = None,
     lastFound: CandidateWatch.LastFound = CandidateWatch.LastFound(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CandidateWatch:
-  export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
-  export Candidates.WatchKind.{Wire as Kind}
+  export com.histmersion.api.research.ReviewGoal.Slug as Goal
+  export Candidates.WatchKind.Wire as Kind
   type Subject = Subject.T
   object Subject extends Newtype[String, Pure]
   export Candidates.Index

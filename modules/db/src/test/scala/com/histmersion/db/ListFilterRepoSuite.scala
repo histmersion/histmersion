@@ -110,7 +110,10 @@ class ListFilterRepoSuite extends DbSuite:
     val mine = ApprovalQuery(subject = Some(ApprovalQuery.Subject(tag)))
     assertEquals(ids(mine), Set(gp1, gp2, pub, edg, rej))
     assertEquals(ids(mine.modify(_.state).setTo(Some(ApprovalState.Open))), Set(gp1, pub))
-    assertEquals(ids(mine.modify(_.kinds).setTo(List(ApprovalKind.Edge, ApprovalKind.GoalPlan))), Set(gp1, gp2, edg, rej))
+    assertEquals(
+      ids(mine.modify(_.kinds).setTo(List(ApprovalKind.Edge, ApprovalKind.GoalPlan))),
+      Set(gp1, gp2, edg, rej)
+    )
     // goal: its own plan, and what a run for it proposed
     assertEquals(ids(ApprovalQuery(goal = Some(ApprovalQuery.Goal(g)))), Set(gp1, pub))
     // the decider
@@ -122,7 +125,9 @@ class ListFilterRepoSuite extends DbSuite:
     // the counts: per state over the kind filter; per kind over the state filter, not the kind filter
     val (states, facets) =
       connect(ds)(
-        AgentRepo.approvalFacets(mine.modify(_.state).setTo(Some(ApprovalState.Open)).modify(_.kinds).setTo(List(ApprovalKind.GoalPlan)))
+        AgentRepo.approvalFacets(
+          mine.modify(_.state).setTo(Some(ApprovalState.Open)).modify(_.kinds).setTo(List(ApprovalKind.GoalPlan))
+        )
       )
     assertEquals(states.toMap, Map("open" -> 1, "approved" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("goal-plan" -> 1, "article-publish" -> 1))
@@ -169,7 +174,10 @@ class ListFilterRepoSuite extends DbSuite:
     val mine = RunQuery(q = Some(RunQuery.Q(t)))
     assertEquals(ids(mine), Set(a, b, c))
     assertEquals(ids(mine.modify(_.pipelines).setTo(List(RunQuery.Pipelines("review-article")))), Set(a, c))
-    assertEquals(ids(mine.modify(_.status).setTo(List(RunQuery.Status("failed"), RunQuery.Status("cancelled")))), Set(b))
+    assertEquals(
+      ids(mine.modify(_.status).setTo(List(RunQuery.Status("failed"), RunQuery.Status("cancelled")))),
+      Set(b)
+    )
     assertEquals(ids(mine.modify(_.managers).setTo(List(RunQuery.Managers("seed:x")))), Set(c))
     // a run with no recorded origin was a person's
     assertEquals(ids(mine.modify(_.origins).setTo(List(RunQuery.Origins("person")))), Set(b))
@@ -177,8 +185,12 @@ class ListFilterRepoSuite extends DbSuite:
     assertEquals(ids(mine.modify(_.providers).setTo(List(RunQuery.Providers("claude-code")))), Set(b))
     val at = (s: String) => Some(Instant.parse(s))
     assertEquals(ids(mine.modify(_.since).setTo(at("2026-09-10T00:00:00Z"))), Set(b, c))
-    assertEquals(ids(mine.modify(_.since).setTo(at("2026-09-10T00:00:00Z")).modify(_.until).setTo(at("2026-10-01T00:00:00Z"))), Set(b))
-    val (states, facets) = connect(ds)(AgentRepo.runFacets(mine.modify(_.pipelines).setTo(List(RunQuery.Pipelines("review-article")))))
+    assertEquals(
+      ids(mine.modify(_.since).setTo(at("2026-09-10T00:00:00Z")).modify(_.until).setTo(at("2026-10-01T00:00:00Z"))),
+      Set(b)
+    )
+    val (states, facets) =
+      connect(ds)(AgentRepo.runFacets(mine.modify(_.pipelines).setTo(List(RunQuery.Pipelines("review-article")))))
     assertEquals(states.toMap, Map("done" -> 2))
     val f = facets.toMap
     assertEquals(f("pipeline"), List("review-article" -> 2, "enrich-source" -> 1))
@@ -208,14 +220,33 @@ class ListFilterRepoSuite extends DbSuite:
       Transactor(ds).read(JobRepo.page(q, PageSize(50), None, None)).toOption.get._1.map(_.id).toSet
     val mine = JobQuery(q = Some(JobQuery.Q(t)))
     assertEquals(ids(mine), Set(i1, i2, m1, r1))
-    assertEquals(ids(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"), JobQuery.Kinds("media-import")))), Set(i1, i2, m1))
+    assertEquals(
+      ids(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"), JobQuery.Kinds("media-import")))),
+      Set(i1, i2, m1)
+    )
     assertEquals(ids(mine.modify(_.status).setTo(List(JobQuery.Status("failed")))), Set(i2))
     assertEquals(ids(mine.modify(_.until).setTo(Some(Instant.parse("2026-09-03T00:00:00Z")))), Set(i1, i2))
     // the start of an id finds that job
     assertEquals(ids(JobQuery(q = Some(JobQuery.Q(s"$tag-j3")))), Set(m1))
     val (states, facets) =
-      Transactor(ds).read(JobRepo.facets(mine.modify(_.kinds).setTo(List(JobQuery.Kinds("ingest"))).modify(_.status).setTo(List(JobQuery.Status("done"))), PageSize(40)))
+      Transactor(ds).read(
+        JobRepo.facets(
+          mine
+            .modify(_.kinds)
+            .setTo(List(JobQuery.Kinds("ingest")))
+            .modify(_.status)
+            .setTo(List(JobQuery.Status("done"))),
+          PageSize(40)
+        )
+      )
     assertEquals(states.toMap, Map("done" -> 1, "failed" -> 1))
     assertEquals(facets.toMap.apply("kind").toMap, Map("ingest" -> 1, "media-import" -> 1, "agent" -> 1))
     // the old single-state page still reads through the same query
-    assert(Transactor(ds).read(JobRepo.page(Some(JobState.Wire("failed")), PageSize(500))).toOption.get._1.exists(_.id.value == i2))
+    assert(
+      Transactor(ds)
+        .read(JobRepo.page(Some(JobState.Wire("failed")), PageSize(500)))
+        .toOption
+        .get
+        ._1
+        .exists(_.id.value == i2)
+    )

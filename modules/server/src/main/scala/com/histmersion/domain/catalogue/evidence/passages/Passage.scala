@@ -29,4 +29,3 @@ object Passage:
 
     /** A reader of one source's text, read once however many searches are made in it. */
     def reader(citekey: Citekey): PassageReader
-

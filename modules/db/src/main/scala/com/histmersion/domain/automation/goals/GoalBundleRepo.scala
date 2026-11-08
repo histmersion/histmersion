@@ -23,8 +23,6 @@ import com.histmersion.domain.automation.Goal
   */
 private[goals] object GoalBundleRepo:
 
-
-
   def goals(scope: BundleScope)(using DbCon): Vector[Bundle.Goal] =
     val w = where(scope, "g.uid", "g.updated_at")
     val rows = (Sql.raw(Sql.RawText(s"""SELECT g.uid, g.origin, g.slug, g.title, g.status, g.notes, g.tags, g.regions,
@@ -123,12 +121,17 @@ private[goals] object GoalBundleRepo:
 
   def goalRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.goals, _.uid, _.slug, w.local.goals.map(g => g.uid -> g.slug).toMap, PlanQuestions.LabelTakenWhat("goal"))(
-      (old, now) =>
-        GoalRepo.renameIn(
-          Goal.Slug.assume(old.value),
-          Goal.Slug.assume(now.value)
-        )
+    w.followRenames(
+      w.es.goals,
+      _.uid,
+      _.slug,
+      w.local.goals.map(g => g.uid -> g.slug).toMap,
+      PlanQuestions.LabelTakenWhat("goal")
+    )((old, now) =>
+      GoalRepo.renameIn(
+        Goal.Slug.assume(old.value),
+        Goal.Slug.assume(now.value)
+      )
     )
 
   /** A goal's links (unioned with this collection's) and schedules (this collection's kept, #881). A linked record is

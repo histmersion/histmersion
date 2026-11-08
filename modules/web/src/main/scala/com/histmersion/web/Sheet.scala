@@ -23,7 +23,6 @@ object Sheet:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def fromWire(s: String): Option[Sheet] = values.find(_.wire == Wire(s.trim.toLowerCase))
 
   /** A tap on the handle: one step up, and from the top back down to the strip. */
@@ -36,4 +35,6 @@ object Sheet:
     * full sheet's fractions. Pure.
     */
   def nearest(fraction: Fraction, peek: Fraction, full: Fraction): Sheet =
-    List[(Sheet, Double)](Peek -> peek.value, Half -> 0.5, Full -> full.value).minBy((_, f) => math.abs(f - fraction.value))._1
+    List[(Sheet, Double)](Peek -> peek.value, Half -> 0.5, Full -> full.value)
+      .minBy((_, f) => math.abs(f - fraction.value))
+      ._1

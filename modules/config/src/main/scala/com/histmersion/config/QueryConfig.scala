@@ -13,8 +13,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** `user`/`password` are the DEDICATED read-only login (`histmersion_query`, created by migration V011), not the
   * application role — see the three layers documented on [[Query]].
   */
-final case class QueryConfig(user: QueryConfig.User, password: QueryConfig.Password, timeoutMs: QueryConfig.TimeoutMs, maxRows: QueryConfig.MaxRows, maxCellChars: QueryConfig.MaxCellChars)
-    derives ConfigReader
+final case class QueryConfig(
+    user: QueryConfig.User,
+    password: QueryConfig.Password,
+    timeoutMs: QueryConfig.TimeoutMs,
+    maxRows: QueryConfig.MaxRows,
+    maxCellChars: QueryConfig.MaxCellChars
+) derives ConfigReader
 
 object QueryConfig:
   type User = User.T

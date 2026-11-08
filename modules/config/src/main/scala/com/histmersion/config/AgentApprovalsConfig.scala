@@ -23,8 +23,8 @@ final case class AgentApprovalsConfig(
 object AgentApprovalsConfig:
   type Gate = Gate.T
   object Gate extends Newtype[String, Pure]
-  /** `auto` or `checked`, in any case. */
 
+  /** `auto` or `checked`, in any case. */
 
   def isChecked(raw: Gate): Boolean =
     val v = Option(raw).map(_.value).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT)

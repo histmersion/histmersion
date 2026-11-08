@@ -16,8 +16,9 @@ final case class AssetInfo(
     width: Option[AssetInfo.Width] = None,
     height: Option[AssetInfo.Height] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AssetInfo:
   export com.histmersion.api.exchange.Bundle.Asset.{FileName as Name, MimeText as Mime}
-  export ImageSize.{Width, Height}
+  export ImageSize.{Height, Width}

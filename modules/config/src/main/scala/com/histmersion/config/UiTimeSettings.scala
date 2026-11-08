@@ -6,7 +6,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The timeline's span (`ui.time`): the earliest and latest year it reaches, and the years it opens on. */
-final case class UiTimeSettings(min: UiTimeSettings.Min, max: UiTimeSettings.Max, defaultFrom: UiTimeSettings.DefaultFrom, defaultTo: UiTimeSettings.DefaultTo) derives ConfigReader
+final case class UiTimeSettings(
+    min: UiTimeSettings.Min,
+    max: UiTimeSettings.Max,
+    defaultFrom: UiTimeSettings.DefaultFrom,
+    defaultTo: UiTimeSettings.DefaultTo
+) derives ConfigReader
 
 object UiTimeSettings:
   type Min = Min.T

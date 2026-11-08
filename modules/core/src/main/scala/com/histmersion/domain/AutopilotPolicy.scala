@@ -97,7 +97,7 @@ object AutopilotPolicy:
     object Reject:
       export AutopilotPolicy.Reason
     object Leave:
-      export AutopilotPolicy.{Reason as Why}
+      export AutopilotPolicy.Reason as Why
 
   /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
   final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
@@ -114,7 +114,12 @@ object AutopilotPolicy:
     * least `minSources`, and the area's planned articles approved today stay within `cap`; a plan larger than the cap
     * is a person's.
     */
-  def articlePlan(articles: List[PlannedFacts], minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
+  def articlePlan(
+      articles: List[PlannedFacts],
+      minSources: MinSources,
+      approvedToday: ApprovedToday,
+      cap: Cap
+  ): Verdict =
     val n = articles.size
     val bad = articles.flatMap { a =>
       if !a.slugFree.value then Some(s"${a.slug}: the slug is taken now")
@@ -175,15 +180,20 @@ object AutopilotPolicy:
     if !d.filterRecorded.value then Verdict.Reject(Verdict.Reject.Reason("the run records no coverage filter"))
     else if d.hits.forall(_.value < minSources.value) then
       Verdict.Reject(
-        Reason(s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources")
+        Reason(
+          s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
+        )
       )
     else if d.problems.nonEmpty then
       Verdict.Reject(
-        Reason(s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}")
+        Reason(
+          s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
+        )
       )
     else if d.cited.value == 0 then Verdict.Reject(Verdict.Reject.Reason("the text cites no source"))
     else if d.create.value && !d.slugFree.value then Verdict.Reject(Reason(s"the slug ${d.slug} is taken now"))
-    else if approvedToday.value >= cap.value then Verdict.Leave(Reason(s"the daily cap of $cap drafts is reached; decided tomorrow"))
+    else if approvedToday.value >= cap.value then
+      Verdict.Leave(Reason(s"the daily cap of $cap drafts is reached; decided tomorrow"))
     else
       Verdict.Approve(
         Reason(
@@ -193,7 +203,13 @@ object AutopilotPolicy:
       )
 
   /** A goal's plan (plan-goal), as code reads it; `depth` = how far below a root goal it is (0 = a root). */
-  final case class GoalPlanFacts(goal: GoalPlanFacts.Goal, subGoals: GoalPlanFacts.SubGoals, queries: GoalPlanFacts.Queries, works: GoalPlanFacts.Works, depth: GoalPlanFacts.Depth)
+  final case class GoalPlanFacts(
+      goal: GoalPlanFacts.Goal,
+      subGoals: GoalPlanFacts.SubGoals,
+      queries: GoalPlanFacts.Queries,
+      works: GoalPlanFacts.Works,
+      depth: GoalPlanFacts.Depth
+  )
 
   object GoalPlanFacts:
     type Goal = Goal.T
@@ -211,7 +227,8 @@ object AutopilotPolicy:
     * within `cap` plans a day.
     */
   def goalPlan(p: GoalPlanFacts, maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if p.subGoals.value + p.queries.value + p.works.value == 0 then Verdict.Reject(Verdict.Reject.Reason("the plan proposes nothing"))
+    if p.subGoals.value + p.queries.value + p.works.value == 0 then
+      Verdict.Reject(Verdict.Reject.Reason("the plan proposes nothing"))
     else if p.subGoals.value > 0 && p.depth.value >= maxDepth.value then
       Verdict.Reject(
         Reason(
@@ -219,7 +236,8 @@ object AutopilotPolicy:
             s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
         )
       )
-    else if approvedToday.value >= cap.value then Verdict.Leave(Reason(s"the daily cap of $cap goal plans is reached; decided tomorrow"))
+    else if approvedToday.value >= cap.value then
+      Verdict.Leave(Reason(s"the daily cap of $cap goal plans is reached; decided tomorrow"))
     else
       Verdict.Approve(
         Reason(
@@ -232,8 +250,15 @@ object AutopilotPolicy:
     * when its goal is one of the active goals and its unfinished sub-goals (`openSubGoals`, every level below it) plus
     * the `proposed` new ones stay within `limit`; else why it waits for a person.
     */
-  def goalPlanFocus(goal: Goal.Slug, active: Boolean, openSubGoals: OpenCount, proposed: Proposed, limit: Limit): Option[Description] =
-    if !active then Some(Description(s"focus: goal $goal is not one of the active goals; its plan waits for a person or its turn"))
+  def goalPlanFocus(
+      goal: Goal.Slug,
+      active: Boolean,
+      openSubGoals: OpenCount,
+      proposed: Proposed,
+      limit: Limit
+  ): Option[Description] =
+    if !active then
+      Some(Description(s"focus: goal $goal is not one of the active goals; its plan waits for a person or its turn"))
     else if proposed.value > 0 && openSubGoals.value + proposed.value > math.max(0, limit.value) then
       Some(
         Description(
@@ -248,7 +273,12 @@ object AutopilotPolicy:
     * (`agents.autopilot.max-open-sub-goals`); else why it waits for a person. Queries and works alone are always within
     * it.
     */
-  def goalPlanSubGoals(goal: Goal.Slug, openSubGoals: OpenCount, proposed: Proposed, limit: Limit): Option[Description] =
+  def goalPlanSubGoals(
+      goal: Goal.Slug,
+      openSubGoals: OpenCount,
+      proposed: Proposed,
+      limit: Limit
+  ): Option[Description] =
     Option.when(proposed.value > 0 && openSubGoals.value + proposed.value > math.max(0, limit.value))(
       Description(
         s"goal $goal has ${counted(openSubGoals.value, "unfinished sub-goal")} and the plan adds $proposed; at most " +
@@ -270,7 +300,9 @@ object AutopilotPolicy:
     Option.when(limit.value > 0 && unfinished.value > limit.value)(
       Description(
         s"goal plans wait until the unfinished goals drop to $limit: ${counted(unfinished.value, "goal")} with an approved " +
-          s"plan ${if unfinished.value == 1 then "is" else "are"} not reviewed yet (the autopilot's limit on unfinished goals)"
+          s"plan ${
+              if unfinished.value == 1 then "is" else "are"
+            } not reviewed yet (the autopilot's limit on unfinished goals)"
       )
     )
 
@@ -289,7 +321,8 @@ object AutopilotPolicy:
     val n = scaledCap(base, backlog, share, ceiling)
     Description(
       if share.value <= 0 then s"$base a day"
-      else s"$base a day, $n today for a backlog of $backlog" + (if ceiling.value > 0 then s" (at most $ceiling)" else "")
+      else
+        s"$base a day, $n today for a backlog of $backlog" + (if ceiling.value > 0 then s" (at most $ceiling)" else "")
     )
 
   // ── the next article (#3763) ───────────────────────────────────────────────────────────────────
@@ -340,7 +373,8 @@ object AutopilotPolicy:
     */
   def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: CooldownHours): Option[Description] =
     val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
-    val cooled = f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours.value).toLong * 3600L).isAfter(now))
+    val cooled =
+      f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours.value).toLong * 3600L).isAfter(now))
     Option.when(
       cooldownHours.value > 0 && f.status.value != Goal.Status.Done && f.articles.value > 0 &&
         articlesInProgress(f.unreviewed, f.compileOpen).isEmpty && f.seedState.contains(
@@ -353,7 +387,8 @@ object AutopilotPolicy:
       )
     )
 
-  private def depthText(d: GoalPlanFacts.Depth): String = if d.value == 0 then "at the root" else s"$d level(s) below a root"
+  private def depthText(d: GoalPlanFacts.Depth): String =
+    if d.value == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps count).
     */
@@ -364,9 +399,16 @@ object AutopilotPolicy:
     case Verdict.Leave(_)   => None
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
-  def depth(slug: com.histmersion.domain.research.Slug, parentOf: com.histmersion.domain.research.Slug => Option[com.histmersion.domain.research.Slug]): GoalPlanFacts.Depth =
+  def depth(
+      slug: com.histmersion.domain.research.Slug,
+      parentOf: com.histmersion.domain.research.Slug => Option[com.histmersion.domain.research.Slug]
+  ): GoalPlanFacts.Depth =
     @annotation.tailrec
-    def go(s: com.histmersion.domain.research.Slug, seen: Set[com.histmersion.domain.research.Slug], n: Int): GoalPlanFacts.Depth = parentOf(s) match
+    def go(
+        s: com.histmersion.domain.research.Slug,
+        seen: Set[com.histmersion.domain.research.Slug],
+        n: Int
+    ): GoalPlanFacts.Depth = parentOf(s) match
       case Some(p) if !seen(p) && n < 64 => go(p, seen + p, n + 1)
       case _                             => GoalPlanFacts.Depth(n)
     go(slug, Set(slug), 0)
@@ -413,15 +455,17 @@ object AutopilotPolicy:
     else
       val kids = f.children.map(rank)
       val hasOwn = f.articles.value > 0
-      val compiled = (hasOwn || kids.nonEmpty) && !f.compileOpen.value && kids.forall(_ >= rank(Goal.Status.Wire(Goal.Status.Compiled)))
-      val reviewed = compiled && (!hasOwn || f.reviewed.value) && kids.forall(_ >= rank(Goal.Status.Wire(Goal.Status.Reviewed)))
+      val compiled = (hasOwn || kids.nonEmpty) && !f.compileOpen.value && kids.forall(
+        _ >= rank(Goal.Status.Wire(Goal.Status.Compiled))
+      )
+      val reviewed =
+        compiled && (!hasOwn || f.reviewed.value) && kids.forall(_ >= rank(Goal.Status.Wire(Goal.Status.Reviewed)))
       val (target, why) =
         if reviewed then
           (
             Goal.Status.Wire(Goal.Status.Reviewed),
             (if hasOwn then s"its ${counted(f.articles.value, "article")} passed review" else "") +
-              (if kids.nonEmpty then
-                 s"${if hasOwn then ", " else ""}its ${counted(kids.size, "sub-goal")} are reviewed"
+              (if kids.nonEmpty then s"${if hasOwn then ", " else ""}its ${counted(kids.size, "sub-goal")} are reviewed"
                else "")
           )
         else if compiled then
@@ -431,7 +475,8 @@ object AutopilotPolicy:
              else "nothing left to compile") +
               (if kids.nonEmpty then s", its ${counted(kids.size, "sub-goal")} are compiled" else "")
           )
-        else if f.managed.value then (Goal.Status.Wire(Goal.Status.Seeding), "its seeding manager and watcher are active")
+        else if f.managed.value then
+          (Goal.Status.Wire(Goal.Status.Seeding), "its seeding manager and watcher are active")
         else (f.status, "")
       Option.when(rank(target) > cur)((target, Reason(why)))
 
@@ -510,13 +555,13 @@ object AutopilotPolicy:
 
   object Step:
     object CreateSeed:
-      export com.histmersion.domain.automation.Goal.{Slug as Goal}
+      export com.histmersion.domain.automation.Goal.Slug as Goal
       export AutopilotPolicy.Cron
-      export GoalRow.{NeedsPlan as PlanFirst}
+      export GoalRow.NeedsPlan as PlanFirst
     object CreateWatch:
-      export com.histmersion.domain.automation.Goal.{Slug as Goal}
+      export com.histmersion.domain.automation.Goal.Slug as Goal
       export AutopilotPolicy.Cron
-      export Settings.{WatchIngestPerDay as PerDay}
+      export Settings.WatchIngestPerDay as PerDay
     object Resume:
       export ManagerRow.Id
     object SetCron:
@@ -524,18 +569,19 @@ object AutopilotPolicy:
       export AutopilotPolicy.Cron
     object AutoIngestOn:
       export ManagerRow.Id
-      export Settings.{WatchIngestPerDay as PerDay}
+      export Settings.WatchIngestPerDay as PerDay
     object AddPlanItem:
       export ManagerRow.Id
-      export com.histmersion.domain.automation.Goal.{Slug as Goal}
+      export com.histmersion.domain.automation.Goal.Slug as Goal
     object ExtendMinNew:
       export ManagerRow.Id
-      export Settings.{ExtendMinNew as N}
+      export Settings.ExtendMinNew as N
 
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.
     */
-  def finished(status: Goal.Status.Wire): Boolean = status.value == Goal.Status.Reviewed || status.value == Goal.Status.Done
+  def finished(status: Goal.Status.Wire): Boolean =
+    status.value == Goal.Status.Reviewed || status.value == Goal.Status.Done
 
   /** What must change so every goal has its managers (idempotent: nothing, when they are there). Library-wide: `review`
     * and `enrich` active (`review` with the extend threshold). Every unfinished goal: a seeding manager (a plan-goal
@@ -554,7 +600,9 @@ object AutopilotPolicy:
       byId.get(id).toList.flatMap { m =>
         Option.when(m.state == Manager.State.Paused.wire)(Step.Resume(id)).toList ++
           Option
-            .when(id.value == ReviewId && m.extendMinNew.isEmpty && s.extendMinNew.value > 0)(Step.ExtendMinNew(id, s.extendMinNew))
+            .when(id.value == ReviewId && m.extendMinNew.isEmpty && s.extendMinNew.value > 0)(
+              Step.ExtendMinNew(id, s.extendMinNew)
+            )
             .toList
       }
     }
@@ -573,7 +621,8 @@ object AutopilotPolicy:
               .toList
       val watchCron = if done then s.finishedWatchCron else s.watchCron
       val watch = byId.get(ManagerRow.Id.watch(g.slug)) match
-        case None    => List(Step.CreateWatch(g.slug, stagger(watchCron, ManagerRow.Id.watch(g.slug)), s.watchIngestPerDay))
+        case None =>
+          List(Step.CreateWatch(g.slug, stagger(watchCron, ManagerRow.Id.watch(g.slug)), s.watchIngestPerDay))
         case Some(m) =>
           Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
             Option.when(m.cron.isEmpty)(Step.SetCron(m.id, stagger(watchCron, m.id))).toList ++
@@ -607,8 +656,7 @@ object AutopilotPolicy:
       case "@daily"   => s"$min $hour * * *"
       case "@weekly"  => s"$min $hour * * ${day % 7}"
       case "@monthly" => s"$min $hour ${1 + day % 28} * *"
-      case _          => base.value.trim
-    )
+      case _          => base.value.trim)
 
   // ── new sources reaching an article ────────────────────────────────────────────────────────────
 
@@ -623,8 +671,14 @@ object AutopilotPolicy:
       now: Instant
   ): Option[Description] =
     if min.value <= 0 || newSources.value < min.value then None
-    else if lastExtend.exists(t => t.plus(Duration.ofDays(math.max(0, cooldownDays.value).toLong)).isAfter(now)) then None
-    else Some(Description(s"its filter returns ${counted(newSources.value, "source")} it neither cites nor gives a reason for"))
+    else if lastExtend.exists(t => t.plus(Duration.ofDays(math.max(0, cooldownDays.value).toLong)).isAfter(now)) then
+      None
+    else
+      Some(
+        Description(
+          s"its filter returns ${counted(newSources.value, "source")} it neither cites nor gives a reason for"
+        )
+      )
 
   // ── caps, housekeeping, throughput ─────────────────────────────────────────────────────────────
 
@@ -640,4 +694,6 @@ object AutopilotPolicy:
     * nothing was done.
     */
   def etaDays(open: OpenCount, doneLast7: DoneLast7): Option[Days] =
-    Option.when(open.value > 0 && doneLast7.value > 0)(Days(math.max(1, math.ceil(open.value * 7.0 / doneLast7.value).toInt)))
+    Option.when(open.value > 0 && doneLast7.value > 0)(
+      Days(math.max(1, math.ceil(open.value * 7.0 / doneLast7.value).toInt))
+    )

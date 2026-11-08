@@ -101,7 +101,12 @@ object BoundedCache:
   type ReweighW = ReweighW.T
   object ReweighW extends Newtype[Long, Pure]
 
-  final case class Stats(entries: Stats.Entries, maxEntries: Stats.MaxEntries, weight: Stats.Weight, maxWeight: Stats.MaxWeight)
+  final case class Stats(
+      entries: Stats.Entries,
+      maxEntries: Stats.MaxEntries,
+      weight: Stats.Weight,
+      maxWeight: Stats.MaxWeight
+  )
 
   object Stats:
     type Entries = Entries.T
@@ -113,4 +118,5 @@ object BoundedCache:
     type MaxWeight = MaxWeight.T
     object MaxWeight extends Newtype[Long, Pure]
 
-  def stats(c: BoundedCache[?, ?]): Stats = Stats(c.size, Stats.MaxEntries(c.maxEntries.value), c.weight, Stats.MaxWeight(c.maxWeight.value))
+  def stats(c: BoundedCache[?, ?]): Stats =
+    Stats(c.size, Stats.MaxEntries(c.maxEntries.value), c.weight, Stats.MaxWeight(c.maxWeight.value))

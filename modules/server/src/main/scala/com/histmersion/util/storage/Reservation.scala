@@ -35,5 +35,3 @@ trait Reservation extends AutoCloseable:
 
   /** The file itself, for a program the supporting areas hand it to (a dump, a settings check). */
   private[util] def onDisk: Either[Store.Error, java.nio.file.Path]
-
-

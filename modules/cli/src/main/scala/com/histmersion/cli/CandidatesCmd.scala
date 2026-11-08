@@ -16,7 +16,7 @@ import com.histmersion.api.library.Source
   */
 object CandidatesCmd:
 
-  private def listCmd (using console: Console) =
+  private def listCmd(using console: Console) =
     (
       Opts.option[String]("goal", "One goal's candidates (default: every goal)").orNone,
       Opts
@@ -36,33 +36,35 @@ object CandidatesCmd:
         ).map(l => Cli.out.println(CandidatesMarkdown.list(l)))
       }
 
-  private def sweepCmd (using console: Console) = Opts.subcommand(
+  private def sweepCmd(using console: Console) = Opts.subcommand(
     "sweep",
     "Read a goal's saved queries, citation and author alerts from their watermarks now (no model)"
   ) {
     (Opts.argument[String]("goal"), Opts.flag("dry-run", "Read, store nothing (no candidates, no watermarks)").orFalse)
       .mapN { (goal, dry) => (c: Client) =>
-        c.call(AcquireApi.sweepCandidates)(CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(dry)))
-          .map(s => Cli.out.println(CandidatesMarkdown.sweep(s)))
+        c.call(AcquireApi.sweepCandidates)(
+          CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(dry))
+        ).map(s => Cli.out.println(CandidatesMarkdown.sweep(s)))
       }
   }
 
-  private def markCmd (using console: Console) =
+  private def markCmd(using console: Console) =
     Opts.subcommand("mark", "Record a decision on candidates by id: seen, queued, dismissed (or new again)") {
       (
         Opts.arguments[Long]("id"),
         Opts.option[String]("as", "seen|queued|dismissed|new").withDefault(Candidates.State.Seen.wire.value)
       )
         .mapN { (ids, as) => (c: Client) =>
-          c.call(AcquireApi.markCandidates)(CandidateMark(
+          c.call(AcquireApi.markCandidates)(
+            CandidateMark(
               ids.toList.map(Source.Candidate.Id(_)),
               Source.Candidate.State(as)
-            ))
-            .map(m => Cli.out.println(CandidatesMarkdown.marked(m)))
+            )
+          ).map(m => Cli.out.println(CandidatesMarkdown.marked(m)))
         }
     }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("candidates", "New sources found for the research goals without a model: list, sweep, mark") {
       sweepCmd orElse markCmd orElse listCmd
     }

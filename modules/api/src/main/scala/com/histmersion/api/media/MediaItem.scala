@@ -33,7 +33,8 @@ final case class MediaItem(
     fileUrl: MediaItem.FileUrl = MediaItem.FileUrl(""),
     targets: List[MediaTarget] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MediaItem:
   type Uid = Uid.T

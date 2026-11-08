@@ -3,8 +3,6 @@ package util.data.exchange
 
 import com.histmersion.util.database.Transactor
 
-
-
 import com.histmersion.PageSize
 import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
@@ -49,14 +47,26 @@ trait BundleService:
   def importBundle(upload: ByteSource, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
   def keep(upload: ByteSource): Either[Api.Error, Bundle.Upload]
   def plan(bundle: Sha256, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
-  def importKept(bundle: Sha256, resolutions: MergeResolutions, dryRun: ImportOptions.DryRun): Either[Api.Error, Bundle.ImportResult]
-  def applyKept(bundle: Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob]
+  def importKept(
+      bundle: Sha256,
+      resolutions: MergeResolutions,
+      dryRun: ImportOptions.DryRun
+  ): Either[Api.Error, Bundle.ImportResult]
+  def applyKept(
+      bundle: Sha256,
+      planHash: MergeRow.PlanHash,
+      resolutions: MergeResolutions
+  ): Either[Api.Error, MergeApplyJob]
   def applyStatus(job: Job.Id): Option[MergeApplyJob]
   def session(bundle: Sha256): MergeSession
   def putSession(bundle: Sha256, resolutions: MergeResolutions): MergeSession
   def merges(limit: PageSize): List[MergeInfo]
   def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail]
-  def mergeLedger(uid: Option[MergeRepo.UidText], merge: Option[MergeRepo.MergeIdOrPrefix], limit: PageSize): Either[Api.Error, MergeLedger]
+  def mergeLedger(
+      uid: Option[MergeRepo.UidText],
+      merge: Option[MergeRepo.MergeIdOrPrefix],
+      limit: PageSize
+  ): Either[Api.Error, MergeLedger]
 
 object BundleService:
   final case class Wiring(
@@ -89,7 +99,8 @@ object BundleService:
 
     def instance: InstanceInfo = Transactor(w.ds).read(BundleRepo.instance)
 
-    def setLabel(label: Option[InstanceInfo.Label]): InstanceInfo = Transactor(w.ds).transact(BundleRepo.setLabel(label))
+    def setLabel(label: Option[InstanceInfo.Label]): InstanceInfo =
+      Transactor(w.ds).transact(BundleRepo.setLabel(label))
 
     def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
       val store = bundles
@@ -99,8 +110,14 @@ object BundleService:
         key = Store.Key.applyUnsafe(s"export-${UUID.randomUUID()}${Bundle.Extension}")
         part <- store.reserve(key).left.map(e => Api.Error(Api.Error.Message(s"bundle export failed: ${e.message}")))
         m <- write(part, since)
-        _ <- part.commit().left.map(e => Api.Error(Api.Error.Message(s"could not finish ${store.where(key)}: ${e.message}")))
-        file <- store.onDiskFile(key).left.map(e => Api.Error(Api.Error.Message(s"could not finish ${store.where(key)}: ${e.message}")))
+        _ <- part
+          .commit()
+          .left
+          .map(e => Api.Error(Api.Error.Message(s"could not finish ${store.where(key)}: ${e.message}")))
+        file <- store
+          .onDiskFile(key)
+          .left
+          .map(e => Api.Error(Api.Error.Message(s"could not finish ${store.where(key)}: ${e.message}")))
       yield file -> m
 
     private def usable(store: Store): Either[Api.Error, Unit] =
@@ -199,8 +216,12 @@ object BundleService:
         key = keyOf(sha)
         _ <- usable(store)
         _ = pruneStale(store)
-        _ <- copyIn(store, key, upload).left.map(e => Api.Error(Api.Error.Message(s"could not keep the bundle in ${store.where()}: $e")))
-        blob <- store.get(key).toRight(Api.Error(Api.Error.Message(s"could not keep the bundle in ${store.where()}: it is gone")))
+        _ <- copyIn(store, key, upload).left.map(e =>
+          Api.Error(Api.Error.Message(s"could not keep the bundle in ${store.where()}: $e"))
+        )
+        blob <- store
+          .get(key)
+          .toRight(Api.Error(Api.Error.Message(s"could not keep the bundle in ${store.where()}: it is gone")))
       yield
         val loaded = blob.asSource.read(BundleReader.read(_, hashBlobs = false))
         Bundle.Upload(
@@ -250,7 +271,11 @@ object BundleService:
     ): Either[Api.Error, Bundle.ImportResult] =
       kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun))
 
-    def applyKept(bundle: Sha256, planHash: MergeRow.PlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob] =
+    def applyKept(
+        bundle: Sha256,
+        planHash: MergeRow.PlanHash,
+        resolutions: MergeResolutions
+    ): Either[Api.Error, MergeApplyJob] =
       kept(bundle).flatMap { source =>
         w.applyJobs.start(bundle, planHash) { () =>
           BundleImporter
@@ -269,7 +294,8 @@ object BundleService:
               w.followUps
             )
             .map { r =>
-              if r.applied.value && r.mergeId.isDefined then Transactor(w.ds).transact(MergeRepo.dropSession(MergeRepo.BundleName(bundle.value)))
+              if r.applied.value && r.mergeId.isDefined then
+                Transactor(w.ds).transact(MergeRepo.dropSession(MergeRepo.BundleName(bundle.value)))
               r
             }
             .left
@@ -279,15 +305,20 @@ object BundleService:
 
     def applyStatus(job: Job.Id): Option[MergeApplyJob] = w.applyJobs.status(job)
 
-    def session(bundle: Sha256): MergeSession = Transactor(w.ds).read(MergeRepo.session(MergeRepo.BundleName(bundle.value)))
+    def session(bundle: Sha256): MergeSession =
+      Transactor(w.ds).read(MergeRepo.session(MergeRepo.BundleName(bundle.value)))
 
     def putSession(bundle: Sha256, resolutions: MergeResolutions): MergeSession =
       Transactor(w.ds).transact(MergeRepo.putSession(MergeRepo.BundleName(bundle.value), resolutions))
 
     def merges(limit: PageSize): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
 
-    def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] = Transactor(w.ds).read(MergeRepo.detail(id))
+    def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] =
+      Transactor(w.ds).read(MergeRepo.detail(id))
 
-    def mergeLedger(uid: Option[MergeRepo.UidText], merge: Option[MergeRepo.MergeIdOrPrefix], limit: PageSize): Either[Api.Error, MergeLedger] =
+    def mergeLedger(
+        uid: Option[MergeRepo.UidText],
+        merge: Option[MergeRepo.MergeIdOrPrefix],
+        limit: PageSize
+    ): Either[Api.Error, MergeLedger] =
       Transactor(w.ds).read(MergeRepo.ledger(uid, merge, limit, w.rules))
-

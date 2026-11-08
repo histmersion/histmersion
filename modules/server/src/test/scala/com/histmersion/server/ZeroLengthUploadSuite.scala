@@ -81,9 +81,15 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
 
   private def withServer(f: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool0").toString))
-    )
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.converter)
+      .setTo(
+        base.converter
+          .modify(_.spoolDir)
+          .setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool0").toString))
+      )
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), NoConverter).start()
       try f(s"http://127.0.0.1:${b.port}/api/ingest")
@@ -132,4 +138,6 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
   /** No sidecar is needed: the jobs never get to run in this suite. */
   private object NoConverter extends ConverterClient:
     def health = Right(ConverterClient.HealthSummary("ok"))
-    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) = Left(ConverterClient.Problem("not used"))
+    def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) = Left(
+      ConverterClient.Problem("not used")
+    )

@@ -11,7 +11,12 @@ import scala.jdk.CollectionConverters.*
   * `repositories` the repositories they were resolved from.
   */
 object LibDirectory:
-  export Resolver.{Problem as StoredRepositoriesResultPart1, FileName as WriteInputsPart1, Sha256 as WriteInputsPart2, Sha256 as Sha256Result}
+  export Resolver.{
+    FileName as WriteInputsPart1,
+    Problem as StoredRepositoriesResultPart1,
+    Sha256 as Sha256Result,
+    Sha256 as WriteInputsPart2
+  }
 
   val Classpath = "classpath"
   val Inputs = "inputs"

@@ -17,8 +17,8 @@ object Shell:
   object Problem extends Newtype[String, Pure]
   type ProcessMatch = ProcessMatch.T
   object ProcessMatch extends Newtype[String, Pure]
-  /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
 
+  /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
 
   def system(using processes: Processes): Shell = new Shell:
     def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
@@ -30,4 +30,6 @@ object Shell:
           if result.exit.value == 0 then Right(result.out)
           else Left(Problem(s"${cmd.head.value} exited ${result.exit.value}: ${result.err.value.trim.take(400)}"))
         )
-    def isRunning(processMatch: ProcessMatch): Boolean = run(List(Processes.RunArgv("pgrep"), Processes.RunArgv("-f"), Processes.RunArgv(processMatch.value))).exists(_.value.trim.nonEmpty)
+    def isRunning(processMatch: ProcessMatch): Boolean = run(
+      List(Processes.RunArgv("pgrep"), Processes.RunArgv("-f"), Processes.RunArgv(processMatch.value))
+    ).exists(_.value.trim.nonEmpty)

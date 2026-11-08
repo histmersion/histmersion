@@ -25,6 +25,10 @@ class RunBudgetTokensSuite extends munit.FunSuite:
   test("the reference config: review-article 1.2M, cache reads at 0.1"):
     val b = AppConfig.load().agents.budgets
     assertEquals(
-      (b.runTokensFor(Pipeline.Wire("review-article")), b.runTokensFor(Pipeline.Wire("enrich-source")), b.cacheReadWeight),
+      (
+        b.runTokensFor(Pipeline.Wire("review-article")),
+        b.runTokensFor(Pipeline.Wire("enrich-source")),
+        b.cacheReadWeight
+      ),
       (1200000L, 400000L, 0.1)
     )

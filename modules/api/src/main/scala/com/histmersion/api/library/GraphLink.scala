@@ -11,4 +11,5 @@ final case class GraphLink(
     target: Citekey,
     kind: Edge.Kind
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

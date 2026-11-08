@@ -35,8 +35,26 @@ object BasemapExtractTool:
   /** The keep list the extract used before the drop list (earth, water, natural land cover). */
   val OldKeep: Map[Mvt.LayerName, Mvt.Rule] = Map(
     Mvt.LayerName("earth") -> Mvt.Rule(),
-    Mvt.LayerName("water") -> Mvt.Rule(drop = Set(Mvt.Rule.Drop("canal"), Mvt.Rule.Drop("ditch"), Mvt.Rule.Drop("drain"), Mvt.Rule.Drop("dock"), Mvt.Rule.Drop("swimming_pool"), Mvt.Rule.Drop("fountain"), Mvt.Rule.Drop("basin"))),
-    Mvt.LayerName("landcover") -> Mvt.Rule(keep = Set(Mvt.Rule.Keep("forest"), Mvt.Rule.Keep("grassland"), Mvt.Rule.Keep("scrub"), Mvt.Rule.Keep("barren"), Mvt.Rule.Keep("glacier")))
+    Mvt.LayerName("water") -> Mvt.Rule(drop =
+      Set(
+        Mvt.Rule.Drop("canal"),
+        Mvt.Rule.Drop("ditch"),
+        Mvt.Rule.Drop("drain"),
+        Mvt.Rule.Drop("dock"),
+        Mvt.Rule.Drop("swimming_pool"),
+        Mvt.Rule.Drop("fountain"),
+        Mvt.Rule.Drop("basin")
+      )
+    ),
+    Mvt.LayerName("landcover") -> Mvt.Rule(keep =
+      Set(
+        Mvt.Rule.Keep("forest"),
+        Mvt.Rule.Keep("grassland"),
+        Mvt.Rule.Keep("scrub"),
+        Mvt.Rule.Keep("barren"),
+        Mvt.Rule.Keep("glacier")
+      )
+    )
   )
 
   /** The store of `p`'s directory and `p`'s name in it. */
@@ -70,8 +88,8 @@ object BasemapExtractTool:
         Path.of(out),
         rest.headOption.contains("keep-all")
       )
-    case "sizes" :: file :: Nil      => sizes(Path.of(file))
-    case "kinds" :: file :: z :: Nil => kinds(Path.of(file), Basemap.Zoom(z.toInt))
+    case "sizes" :: file :: Nil                     => sizes(Path.of(file))
+    case "kinds" :: file :: z :: Nil                => kinds(Path.of(file), Basemap.Zoom(z.toInt))
     case "relief" :: bbox :: z0 :: z1 :: out :: Nil =>
       relief(
         BBox.Text(bbox),
@@ -116,7 +134,8 @@ object BasemapExtractTool:
   ): Unit =
     val cfg = AppConfig.load().basemap
     val http = BasemapWiring.http(cfg)(using java.time.Clock.systemUTC())
-    val src = BasemapFetch.Source(RangeHttp.Url(cfg.terrain.url.value), BasemapFetch.Source.Label(cfg.terrain.url.value))
+    val src =
+      BasemapFetch.Source(RangeHttp.Url(cfg.terrain.url.value), BasemapFetch.Source.Label(cfg.terrain.url.value))
     val pace = paceOf(cfg)
     val note = (n: BasemapFetch.Note) => scribe.info(n.value)
     val plan =
@@ -274,7 +293,9 @@ object BasemapExtractTool:
             .foreach(k => keys(s"$l.$k") = keys.getOrElse(s"$l.$k", 0) + 1)
         }
       }
-    println(s"z${z.value} bytes per layer (gzip, alone): " + bytes.map((l, n) => f"$l ${n / 1e6}%.2f MB").mkString(", "))
+    println(
+      s"z${z.value} bytes per layer (gzip, alone): " + bytes.map((l, n) => f"$l ${n / 1e6}%.2f MB").mkString(", ")
+    )
     kinds.foreach((k, n) => println(f"$n%8d  $k"))
     keys.foreach((k, n) => println(f"$n%8d  key $k"))
     f.close()
@@ -282,11 +303,13 @@ object BasemapExtractTool:
   private def subset(in: Path, b: BBox, maxZoom: PmTiles.Zoom, out: Path): Unit =
     val f = orDie(BasemapFixtures.open(in))
     val w = BasemapFixtures.writer(out.toAbsolutePath)
-    val ids = (f.header.minZoom.value to maxZoom.value.min(f.header.maxZoom.value)).flatMap { z =>
-      val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
-      for x <- x0.value to x1.value; y <- y0.value to y1.value
-      yield PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y))
-    }.sortBy[Long](_.value)
+    val ids = (f.header.minZoom.value to maxZoom.value.min(f.header.maxZoom.value))
+      .flatMap { z =>
+        val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
+        for x <- x0.value to x1.value; y <- y0.value to y1.value
+        yield PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y))
+      }
+      .sortBy[Long](_.value)
     ids.foreach { id =>
       val (z, x, y) = PmTiles.zxy(id)
       f.tile(z, x, y).toOption.flatten.foreach(w.add(id, _))

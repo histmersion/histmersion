@@ -38,7 +38,6 @@ object AutomationState:
   type Timestamp = Timestamp.T
   object Timestamp extends Newtype[String, Pure]
 
-
   type GoalsKey = GoalsKey.T
   object GoalsKey extends Newtype[String, Pure]
   type FocusKey = FocusKey.T
@@ -56,7 +55,9 @@ object AutomationState:
 
   import hearth.kindlings.optics.syntax.*
 
-  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => Boolean)(make: Approval.Id => ApprovalRecord): Option[Approval.Id] =
+  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(
+      conflicts: ApprovalRecord => Boolean
+  )(make: Approval.Id => ApprovalRecord): Option[Approval.Id] =
     var made: Option[Approval.Id] = None
     val _ = state.updateAndGet { s =>
       if s.approvals.exists(conflicts) then { made = None; s }

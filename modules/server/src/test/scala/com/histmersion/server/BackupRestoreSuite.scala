@@ -89,9 +89,17 @@ class BackupRestoreSuite extends DbSuite:
     } finally c.close()
 
   private lazy val cfg: AppConfig =
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(scratchUrl))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(backupDir.toString)).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(pgBinDir.get))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(scratchUrl)))
+      .modify(_.backups)
+      .setTo(
+        base.backups
+          .modify(_.dir)
+          .setTo(BackupsConfig.Dir(backupDir.toString))
+          .modify(_.pgBinDir)
+          .setTo(BackupsConfig.PgBinDir(pgBinDir.get))
+      )
 
   private lazy val backupDir: Path = Files.createTempDirectory("histmersion-backup-e2e")
   private lazy val ds = testPool(cfg.db)
@@ -182,9 +190,14 @@ class BackupRestoreSuite extends DbSuite:
 
   test("backup → download → drop a source → restore --force → search finds it again"):
     val h = ServerWiring(Deps(cfg, ds))
-    assert(h.library.sources.put(Citekey("zz_backup_a"), fixture(Citekey("zz_backup_a"), Title("The Kept One"))).isRight)
-    assert(h.library.sources.put(Citekey("zz_backup_b"), fixture(Citekey("zz_backup_b"), Title("The Other One"))).isRight)
-    val before = h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10))).total
+    assert(
+      h.library.sources.put(Citekey("zz_backup_a"), fixture(Citekey("zz_backup_a"), Title("The Kept One"))).isRight
+    )
+    assert(
+      h.library.sources.put(Citekey("zz_backup_b"), fixture(Citekey("zz_backup_b"), Title("The Other One"))).isRight
+    )
+    val before =
+      h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10))).total
     assertEquals((before.value: Int), 2)
 
     supervised {
@@ -238,7 +251,13 @@ class BackupRestoreSuite extends DbSuite:
         // 6. lose a source
         sql("DELETE FROM sources WHERE citekey = 'zz_backup_a'")
         assert(h.library.sources.get(Citekey("zz_backup_a")).isLeft)
-        assertEquals((h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10))).total.value: Int), 1)
+        assertEquals(
+          (h.library.search
+            .sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10)))
+            .total
+            .value: Int),
+          1
+        )
 
         // 7. restore it
         val (fs, fb) = post(s"$url/api/restore", s"""{"file":"$file","force":true}""")
@@ -251,7 +270,8 @@ class BackupRestoreSuite extends DbSuite:
         Db.evict(ds)
 
         // 8. …and search finds it again, findings and all
-        val after = h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10)))
+        val after =
+          h.library.search.sources(Filter(tags = List(Filter.Tags("zz-backup-test")), limit = Filter.Limit(10)))
         assertEquals((after.total.value: Int), 2)
         assertEquals(after.hits.map(_.source.citekey).sorted, List("zz_backup_a", "zz_backup_b"))
         val got = h.library.sources.get(Citekey("zz_backup_a")).toOption.get
@@ -260,7 +280,11 @@ class BackupRestoreSuite extends DbSuite:
         assertEquals(got.source.periodStart, Some(-1300L))
 
         // 9. the maintenance lock was released — writes work again
-        assert(h.library.sources.put(Citekey("zz_backup_c"), fixture(Citekey("zz_backup_c"), Title("After The Restore"))).isRight)
+        assert(
+          h.library.sources
+            .put(Citekey("zz_backup_c"), fixture(Citekey("zz_backup_c"), Title("After The Restore")))
+            .isRight
+        )
       finally b.stop()
     }
 
@@ -284,7 +308,11 @@ class BackupRestoreSuite extends DbSuite:
   // A dump from another installation, whose roles are named differently, must still come back.
   test("a dump owned by and granted to roles this cluster no longer has restores cleanly"):
     val h = ServerWiring(Deps(cfg, ds))
-    assert(h.library.sources.put(Citekey("zz_backup_roles"), fixture(Citekey("zz_backup_roles"), Title("Under Old Names"))).isRight)
+    assert(
+      h.library.sources
+        .put(Citekey("zz_backup_roles"), fixture(Citekey("zz_backup_roles"), Title("Under Old Names")))
+        .isRight
+    )
     admin("DROP ROLE IF EXISTS zz_gone_owner"); admin("DROP ROLE IF EXISTS zz_gone_reader")
     admin("CREATE ROLE zz_gone_owner"); admin("CREATE ROLE zz_gone_reader")
     sql("ALTER TABLE articles OWNER TO zz_gone_owner")

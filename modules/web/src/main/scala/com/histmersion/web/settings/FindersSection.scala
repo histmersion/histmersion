@@ -33,7 +33,11 @@ object FindersSection:
           )
         ),
         List(
-          SettingsForm.Item(SettingsForm.Item.Key("acquire.contact-email"), Some(SettingsForm.Item.Name("E-mail address")), Some(SettingsForm.Item.Help("Leave it empty to stay anonymous.")))
+          SettingsForm.Item(
+            SettingsForm.Item.Key("acquire.contact-email"),
+            Some(SettingsForm.Item.Name("E-mail address")),
+            Some(SettingsForm.Item.Help("Leave it empty to stay anonymous."))
+          )
         )
       ),
       SettingsForm(

@@ -10,7 +10,8 @@ import com.histmersion.plugin.Registry
   */
 trait GazetteerPlugin(id: String, name: String, source: DownloadedGazetteer) extends Plugin:
   type Config = GazetteerSettings
-  val info: Plugin.Info = Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(GazetteerPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
+  val info: Plugin.Info =
+    Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(GazetteerPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
   def register(c: GazetteerSettings, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     ctx.gazetteerSources.add(Registry.AddId(name), source).left.map(e => Plugin.RegisterResultPart1(e.value))
 

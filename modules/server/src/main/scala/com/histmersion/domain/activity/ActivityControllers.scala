@@ -18,4 +18,3 @@ final class ActivityControllers(activity: ActivityService, now: () => Instant):
   ): Either[Api.Error, Activity.Page] =
     val at = now()
     ActivityRules.query(show, since, goal, limit, before, at).map(activity.page(_, at))
-

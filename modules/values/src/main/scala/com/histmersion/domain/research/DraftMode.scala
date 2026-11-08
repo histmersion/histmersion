@@ -11,7 +11,6 @@ object DraftMode:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[DraftMode] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given WireEnumValues[DraftMode]:
     def all: Array[DraftMode] = values

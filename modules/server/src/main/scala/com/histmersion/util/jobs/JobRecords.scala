@@ -22,7 +22,12 @@ import com.histmersion.api.automation.Queue
   */
 trait JobRecords:
   /** A new `queued` job; `acquireItem` is the acquisition item it ticks off when it succeeds. */
-  def create(kind: Job.Kind, citekey: Option[Citekey], sha256: Option[Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo
+  def create(
+      kind: Job.Kind,
+      citekey: Option[Citekey],
+      sha256: Option[Sha256],
+      acquireItem: Option[JobRow.AcquireItem]
+  ): JobInfo
 
   def get(id: Job.Id): Option[JobInfo]
 
@@ -44,7 +49,12 @@ object JobRecords:
   def apply(ds: () => DataSource): JobRecords = Implementation(ds)
 
   final private class Implementation(ds: () => DataSource) extends JobRecords:
-    def create(kind: Job.Kind, citekey: Option[Citekey], sha256: Option[Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo =
+    def create(
+        kind: Job.Kind,
+        citekey: Option[Citekey],
+        sha256: Option[Sha256],
+        acquireItem: Option[JobRow.AcquireItem]
+    ): JobInfo =
       Transactor(ds()).transact(JobRepo.create(kind, citekey, sha256, acquireItem))
     def get(id: Job.Id): Option[JobInfo] = Transactor(ds()).read(JobRepo.get(id))
     def transition(
@@ -56,10 +66,14 @@ object JobRecords:
     ): Option[JobState] = Transactor(ds()).transact(JobRepo.transition(id, from, to, progress, error))
     def progress(id: Job.Id, text: JobRow.Progress): Unit = Transactor(ds()).transact(JobRepo.progress(id, text))
 
-
   /** The jobs in memory, as the table holds them; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[Map[JobInfo.Id, JobInfo]], clock: Clock) extends JobRecords:
-    def create(kind: Job.Kind, citekey: Option[Citekey], sha256: Option[Sha256], acquireItem: Option[JobRow.AcquireItem]): JobInfo =
+    def create(
+        kind: Job.Kind,
+        citekey: Option[Citekey],
+        sha256: Option[Sha256],
+        acquireItem: Option[JobRow.AcquireItem]
+    ): JobInfo =
       val now = clock.instant().toString
       val job = JobInfo(
         SpatialHierarchyResult.Job.Id(UUID.randomUUID().toString),
@@ -112,7 +126,10 @@ object JobRecords:
           case Some(j) =>
             jobs.updated(
               key,
-              j.modify(_.progress).setTo(Some(JobInfo.Progress(text.value))).modify(_.updatedAt).setTo(JobInfo.UpdatedAt(now))
+              j.modify(_.progress)
+                .setTo(Some(JobInfo.Progress(text.value)))
+                .modify(_.updatedAt)
+                .setTo(JobInfo.UpdatedAt(now))
             )
-          case None    => jobs
+          case None => jobs
       )

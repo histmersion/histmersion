@@ -84,7 +84,10 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
     "title" -> Filter(title = Some(Filter.Title("zqtell"))),
     "goal" -> Filter(goal = Some(ReviewGoal.Slug("zq-goal"))),
     "q and tag" -> Filter(q = Some(Filter.Q("tin")), tags = List(Filter.Tags("zq-trade"))),
-    "period and place" -> Filter(period = Some(Period(Year(-1500), Year(-1200))), places = List(Filter.Places("zq_land"))),
+    "period and place" -> Filter(
+      period = Some(Period(Year(-1500), Year(-1200))),
+      places = List(Filter.Places("zq_land"))
+    ),
     "bbox and period" -> Filter(bbox = Some(Box), period = Some(Period(Year(-1600), Year(-1100)))),
     "tag and bbox" -> Filter(tags = List(Filter.Tags("zq-trade")), bbox = Some(Antimeridian)),
     "everything" -> Filter(
@@ -114,7 +117,11 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
     "limit" -> Filter(limit = Filter.Limit(2)),
     "limit offset" -> Filter(limit = Filter.Limit(2), offset = Filter.Offset(2)),
     "limit offset with q" -> Filter(q = Some(Filter.Q("tin")), limit = Filter.Limit(25), offset = Filter.Offset(50)),
-    "limit offset with period" -> Filter(period = Some(Period(Year(-1700), Year(-1100))), limit = Filter.Limit(10), offset = Filter.Offset(10))
+    "limit offset with period" -> Filter(
+      period = Some(Period(Year(-1700), Year(-1100))),
+      limit = Filter.Limit(10),
+      offset = Filter.Offset(10)
+    )
   )
 
   private val scopes: List[(String, PlaceScope)] = List("no scope" -> PlaceScope.empty, "scoped" -> scoped)
@@ -143,14 +150,27 @@ class SearchSqlSnapshotSuite extends munit.FunSuite:
       "periodsQuery findings" -> SearchFixtures.periodsQuery(SearchFixtures.AggregateUnit("findings"), f, scope),
       "treeRowsQuery sources" -> SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("sources"), f, scope),
       "treeRowsQuery findings" -> SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("findings"), f, scope)
-    ) ++ text.toList.map(q => "snippetsQuery" -> FilterSql.snippetsQuery(q, Search.SnippetWords(30), List(Citekey("zqa1990_a"), Citekey("zqb2001_b"))))
+    ) ++ text.toList.map(q =>
+      "snippetsQuery" -> FilterSql.snippetsQuery(
+        q,
+        Search.SnippetWords(30),
+        List(Citekey("zqa1990_a"), Citekey("zqb2001_b"))
+      )
+    )
 
   private def facets(f: Filter, scope: PlaceScope): List[(String, Sql)] =
     Facet.Field.values.toList.flatMap { ff =>
       List(
         s"facetsQuery ${Facet.Field.label(ff)}" -> FilterSql.facetsQuery(ff, None, f, PageSize(50), scope),
-        s"facetsQuery ${Facet.Field.label(ff)} prefix" -> FilterSql.facetsQuery(ff, Some(FilterSql.FacetPrefix("Zq-T")), f, PageSize(5), scope),
-        s"facetsQuery ${Facet.Field.label(ff)} blank prefix" -> FilterSql.facetsQuery(ff, Some(FilterSql.FacetPrefix("  ")), f, PageSize(5), scope)
+        s"facetsQuery ${Facet.Field.label(ff)} prefix" -> FilterSql
+          .facetsQuery(ff, Some(FilterSql.FacetPrefix("Zq-T")), f, PageSize(5), scope),
+        s"facetsQuery ${Facet.Field.label(ff)} blank prefix" -> FilterSql.facetsQuery(
+          ff,
+          Some(FilterSql.FacetPrefix("  ")),
+          f,
+          PageSize(5),
+          scope
+        )
       )
     }
 

@@ -22,9 +22,15 @@ final class ChatCompletionsProvider(
 ) extends AiProvider:
 
   override def capabilities: AiCapabilities =
-    AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(true), iterationMarkers = AiCapabilities.IterationMarkers(true), verbatimFailures = AiCapabilities.VerbatimFailures(true))
+    AiCapabilities(
+      tools = AiCapabilities.Tools(true),
+      structuredOutput = AiCapabilities.StructuredOutput(true),
+      iterationMarkers = AiCapabilities.IterationMarkers(true),
+      verbatimFailures = AiCapabilities.VerbatimFailures(true)
+    )
 
-  private def base: Either[BaseUrl.Problem, BaseUrl] = BaseUrl.parse(settings.baseUrl, BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
+  private def base: Either[BaseUrl.Problem, BaseUrl] =
+    BaseUrl.parse(settings.baseUrl, BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
 
   override def check(model: AiProvider.CheckModel): Either[AiProvider.CheckResultPart1, Unit] =
     base.left
@@ -32,11 +38,15 @@ final class ChatCompletionsProvider(
       .flatMap(_ =>
         keyed match
           case Some((label, variable)) if settings.apiKey.value.isEmpty =>
-            Left(AiProvider.CheckResultPart1(s"no ${label.value} API key — set ${variable.value} in the server's environment"))
+            Left(
+              AiProvider
+                .CheckResultPart1(s"no ${label.value} API key — set ${variable.value} in the server's environment")
+            )
           case _ => Right(())
       )
 
-  private def key: ProviderSettings.ApiKey = if settings.apiKey.value.isEmpty then ProviderSettings.ApiKey("none") else settings.apiKey
+  private def key: ProviderSettings.ApiKey =
+    if settings.apiKey.value.isEmpty then ProviderSettings.ApiKey("none") else settings.apiKey
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val sent: Either[String, AiTurn] = for
@@ -50,7 +60,11 @@ final class ChatCompletionsProvider(
           AiHttp.PostTimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
         )
         .left
-        .map(e => SendFailure(SendFailure.Reported(e.value)).describe(SendFailure.Method("POST"), AiHttp.GetUrl(url.value)).value)
+        .map(e =>
+          SendFailure(SendFailure.Reported(e.value))
+            .describe(SendFailure.Method("POST"), AiHttp.GetUrl(url.value))
+            .value
+        )
       turn <- ChatAnswer(ChatAnswer.Status(answer.status.value), ChatAnswer.Body(answer.body.value)).turn.left
         .map(why => s"RuntimeException: OpenAI API error: ${why.value}")
     yield turn
@@ -72,7 +86,12 @@ object ChatCompletionsProvider:
 
   /** The OpenAI API, keyed by `OPENAI_API_KEY`. */
   def openAi(settings: ProviderSettings): ChatCompletionsProvider =
-    ChatCompletionsProvider(Name("openai"), AiProvider.TitleResult("OpenAI API"), settings, Some((KeyLabel("OpenAI"), KeyVariable("OPENAI_API_KEY"))))
+    ChatCompletionsProvider(
+      Name("openai"),
+      AiProvider.TitleResult("OpenAI API"),
+      settings,
+      Some((KeyLabel("OpenAI"), KeyVariable("OPENAI_API_KEY")))
+    )
 
   /** Any OpenAI-compatible local server, with or without a key. */
   def local(settings: ProviderSettings): ChatCompletionsProvider =

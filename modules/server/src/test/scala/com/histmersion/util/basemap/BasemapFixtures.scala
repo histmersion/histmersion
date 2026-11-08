@@ -74,7 +74,10 @@ object BasemapFixtures:
             (Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("farmland")))
           )
         ),
-        Mvt.layer(Mvt.LayerName("landuse"), List((Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("residential"))))),
+        Mvt.layer(
+          Mvt.LayerName("landuse"),
+          List((Mvt.GeomType(3), square, Map(KindKey -> Mvt.PropText("residential"))))
+        ),
         Mvt.layer(
           Mvt.LayerName("pois"),
           List(
@@ -156,7 +159,10 @@ object BasemapFixtures:
       z <- 0 to maxZoom.value
       x <- 0L until (1L << z)
       y <- 0L until (1L << z)
-    yield (PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)), (PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)))
+    yield (
+      PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)),
+      (PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y))
+    )
     all.sortBy[Long](_._1.value).foreach { case (id, (z, x, y)) =>
       w.add(id, PmTiles.TileBytes(PmTiles.compress(tile(z, x, y), c).value))
     }

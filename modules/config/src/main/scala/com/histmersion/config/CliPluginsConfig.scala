@@ -10,8 +10,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   * default; `mavenRepos` is comma-separated (an env override is one string), tried in order for
   * `plugin add group:artifact:version`; `curl` downloads (`plugin add <url>`).
   */
-final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, mavenRepos: CliPluginsConfig.MavenRepos, curl: CliPluginsConfig.Curl) derives ConfigReader:
-  def repos: List[CliPluginsConfig.MavenRepo] = mavenRepos.value.split(",").toList.map(_.trim).filter(_.nonEmpty).map(CliPluginsConfig.MavenRepo(_))
+final case class CliPluginsConfig(
+    installDir: CliPluginsConfig.InstallDir,
+    mavenRepos: CliPluginsConfig.MavenRepos,
+    curl: CliPluginsConfig.Curl
+) derives ConfigReader:
+  def repos: List[CliPluginsConfig.MavenRepo] =
+    mavenRepos.value.split(",").toList.map(_.trim).filter(_.nonEmpty).map(CliPluginsConfig.MavenRepo(_))
 
 object CliPluginsConfig:
   type MavenRepo = MavenRepo.T

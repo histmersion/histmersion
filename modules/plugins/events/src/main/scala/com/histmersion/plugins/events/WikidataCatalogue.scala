@@ -19,21 +19,38 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
   def licence = Licence("CC0-1.0")
   def citation = EventCatalogue.CitationResult("Wikidata (CC0), https://www.wikidata.org")
   def home = EventCatalogue.HomeResult("https://www.wikidata.org")
-  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult = EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
+  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult =
+    EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
 
-  private def classes: List[(WikidataItem.Id, WikidataClasses.ClassLabel)] = WikidataClasses.parse(WikidataClasses.WikidataText(cfg.classes.value))
+  private def classes: List[(WikidataItem.Id, WikidataClasses.ClassLabel)] =
+    WikidataClasses.parse(WikidataClasses.WikidataText(cfg.classes.value))
 
-  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] = classes.map((qid, _) => EventCatalogue.PartsResult(s"class:$qid"))
+  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] =
+    classes.map((qid, _) => EventCatalogue.PartsResult(s"class:$qid"))
 
-  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
+  def read(
+      part: EventCatalogue.ReadPart,
+      query: CatalogueQuery,
+      http: Plugin.Http
+  ): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
     classes.find((qid, _) => part.value == s"class:$qid") match
-      case None              => Left(EventCatalogue.ReadResultPart1(s"'$part' is no class of the configured events.wikidata.classes"))
+      case None =>
+        Left(EventCatalogue.ReadResultPart1(s"'$part' is no class of the configured events.wikidata.classes"))
       case Some((qid, kind)) =>
-        val q = WikidataCatalogue.sparql(qid, query.from.map(y => CatalogDating.HistoricalYear(y.value.toLong)), CatalogDating.HistoricalYear(query.to.value.toLong), cfg.labelLanguages)
-        CatalogueJson(http)(WikidataCatalogue.sparqlUrl(cfg.sparqlUrl, q))
-          .left
+        val q = WikidataCatalogue.sparql(
+          qid,
+          query.from.map(y => CatalogDating.HistoricalYear(y.value.toLong)),
+          CatalogDating.HistoricalYear(query.to.value.toLong),
+          cfg.labelLanguages
+        )
+        CatalogueJson(http)(WikidataCatalogue.sparqlUrl(cfg.sparqlUrl, q)).left
           .map(e => EventCatalogue.ReadResultPart1(e.value))
-          .flatMap(j => WikidataCatalogue.parse(j, CatalogueEvent.Kind(kind.value)).left.map(e => EventCatalogue.ReadResultPart1(e.value)))
+          .flatMap(j =>
+            WikidataCatalogue
+              .parse(j, CatalogueEvent.Kind(kind.value))
+              .left
+              .map(e => EventCatalogue.ReadResultPart1(e.value))
+          )
           .map(CataloguePage(_))
 
   /** The item read again from its `raw` (its rows of the query's answer), in the kind it is stored with. */
@@ -66,11 +83,17 @@ object WikidataCatalogue:
     * `to`, with their precision, their own coordinates or their location's, whether they are legendary or mythical, and
     * the deaths.
     */
-  def sparql(qid: WikidataItem.Id, from: Option[CatalogDating.HistoricalYear], to: CatalogDating.HistoricalYear, lang: WikidataSettings.LabelLanguage): Query =
+  def sparql(
+      qid: WikidataItem.Id,
+      from: Option[CatalogDating.HistoricalYear],
+      to: CatalogDating.HistoricalYear,
+      lang: WikidataSettings.LabelLanguage
+  ): Query =
     // the query service compares astronomical years; `to`/`from` are historical
     val toA = CatalogDating.toAstronomical(to)
     val fromF = from.fold("")(f => s" && YEAR(?t) >= ${CatalogDating.toAstronomical(f)}")
-    Query(s"""SELECT ?item ?itemLabel ?itemDescription ?date ?datePrec ?start ?startPrec ?end ?endPrec ?coord ?locCoord ?legend ?deaths WHERE {
+    Query(
+      s"""SELECT ?item ?itemLabel ?itemDescription ?date ?datePrec ?start ?startPrec ?end ?endPrec ?coord ?locCoord ?legend ?deaths WHERE {
        |  ?item wdt:P31/wdt:P279* wd:$qid .
        |  OPTIONAL { ?item p:P585/psv:P585 [ wikibase:timeValue ?date ; wikibase:timePrecision ?datePrec ] }
        |  OPTIONAL { ?item p:P580/psv:P580 [ wikibase:timeValue ?start ; wikibase:timePrecision ?startPrec ] }
@@ -80,11 +103,12 @@ object WikidataCatalogue:
        |  OPTIONAL { ?item wdt:P625 ?coord }
        |  OPTIONAL { ?item wdt:P276/wdt:P625 ?locCoord }
        |  OPTIONAL { ?item wdt:P31 ?legend . VALUES ?legend { wd:$Mythical ${Legendary.toList.sorted
-        .map("wd:" + _)
-        .mkString(" ")} } }
+          .map("wd:" + _)
+          .mkString(" ")} } }
        |  OPTIONAL { ?item wdt:P1120 ?deaths }
        |  SERVICE wikibase:label { bd:serviceParam wikibase:language "$lang". }
-       |}""".stripMargin)
+       |}""".stripMargin
+    )
 
   def sparqlUrl(endpoint: WikidataSettings.SparqlUrl, query: Query): Plugin.Http.GetUrl =
     Plugin.Http.GetUrl(s"$endpoint?format=json&query=${URLEncoder.encode(query.value, UTF_8)}")
@@ -95,7 +119,8 @@ object WikidataCatalogue:
   /** Pure: `Point(4.5 47.53)` → (lat 47.53, lon 4.5). */
   def point(wkt: Wkt): Option[(JsonFields.Decimal, JsonFields.Decimal)] =
     "Point\\(\\s*([-0-9.eE]+)\\s+([-0-9.eE]+)\\s*\\)".r.findFirstMatchIn(wkt.value).flatMap { m =>
-      for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption yield (JsonFields.Decimal(lat), JsonFields.Decimal(lon))
+      for lon <- m.group(1).toDoubleOption; lat <- m.group(2).toDoubleOption
+      yield (JsonFields.Decimal(lat), JsonFields.Decimal(lon))
     }
 
   /** Pure: the events of one class's answer, one per item (its rows joined: the first coordinates, its own before its
@@ -115,7 +140,12 @@ object WikidataCatalogue:
               rs.flatMap(r =>
                 binding(r, dateKey)
                   .flatMap(d => CatalogDating.isoYear(CatalogDating.XsdYearText(d)))
-                  .map(y => CatalogDating.wikidata(y, CatalogDating.WikidataPrecision(binding(r, precKey).flatMap(_.toIntOption).getOrElse(9))))
+                  .map(y =>
+                    CatalogDating.wikidata(
+                      y,
+                      CatalogDating.WikidataPrecision(binding(r, precKey).flatMap(_.toIntOption).getOrElse(9))
+                    )
+                  )
               ).sortBy(b => b.hi.value - b.lo.value)
                 .headOption
             val at = bound("date", "datePrec")
@@ -142,7 +172,11 @@ object WikidataCatalogue:
                 lat = JsonFields.latitude(pos.map(_._1)),
                 lon = JsonFields.longitude(pos.map(_._2)),
                 historicity = CatalogueEvent.Historicity(hist),
-                deaths = rs.flatMap(binding(_, "deaths")).flatMap(d => d.toDoubleOption.map(_.toLong)).maxOption.map(n => CatalogueEvent.Deaths(n)),
+                deaths = rs
+                  .flatMap(binding(_, "deaths"))
+                  .flatMap(d => d.toDoubleOption.map(_.toLong))
+                  .maxOption
+                  .map(n => CatalogueEvent.Deaths(n)),
                 wikidata = Option.when(qid.matches("Q[1-9][0-9]*"))(WikidataId(qid)),
                 description = first("itemDescription").map(t => CatalogueEvent.Description(t)),
                 raw = Some(CatalogueEvent.Raw(Json.arr(rs.flatMap(_.focus)*).noSpaces))

@@ -44,11 +44,33 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       .copy(ocrMarkdown = body)
 
   stest("a check is replaced with its count kept; the open items' checks; counted since a time") { s =>
-    val open = AcquireCheckRow.Item(s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.a"))).id.value)
-    val done = AcquireCheckRow.Item(s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.b"))).id.value)
-    s.checks.record(open, T0, AcquireRecheck.LastCheck.Generation("g1"), AcquireRecheck.Outcome.NoCopy, AcquireCheckRow.Reason("no copy"))
-    s.checks.record(open, T0.plusSeconds(60), AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Fetched, AcquireCheckRow.Reason("fetched"))
-    s.checks.record(done, T0.plusSeconds(120), AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Closed, AcquireCheckRow.Reason("held"))
+    val open = AcquireCheckRow.Item(
+      s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.a"))).id.value
+    )
+    val done = AcquireCheckRow.Item(
+      s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(Queue.QueueItem.Text("Get 10.5555/zq.b"))).id.value
+    )
+    s.checks.record(
+      open,
+      T0,
+      AcquireRecheck.LastCheck.Generation("g1"),
+      AcquireRecheck.Outcome.NoCopy,
+      AcquireCheckRow.Reason("no copy")
+    )
+    s.checks.record(
+      open,
+      T0.plusSeconds(60),
+      AcquireRecheck.LastCheck.Generation("g2"),
+      AcquireRecheck.Outcome.Fetched,
+      AcquireCheckRow.Reason("fetched")
+    )
+    s.checks.record(
+      done,
+      T0.plusSeconds(120),
+      AcquireRecheck.LastCheck.Generation("g2"),
+      AcquireRecheck.Outcome.Closed,
+      AcquireCheckRow.Reason("held")
+    )
     val _ = s.queues.patch(
       QueueItemId(done.value),
       Queue.QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
@@ -67,15 +89,33 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
   }
 
   stest("the sources holding the items' DOIs, the first citekey, and whether it has its original") { s =>
-    val _ = s.sources.put(source(Citekey("zqa_one"), Some(Doi("10.5555/ZQ.A")), Some(Source.OcrMarkdown("# body"))), Caller.Local)
+    val _ = s.sources.put(
+      source(Citekey("zqa_one"), Some(Doi("10.5555/ZQ.A")), Some(Source.OcrMarkdown("# body"))),
+      Caller.Local
+    )
     val _ = s.sources.put(source(Citekey("zqa_two"), Some(Doi("10.5555/zq.b")), None), Caller.Local)
     val _ = s.sources.put(source(Citekey("zqa_zwei"), Some(Doi("10.5555/zq.b")), None), Caller.Local)
-    s.sources.setOriginal(com.histmersion.domain.library.Citekey("zqa_zwei"), Sha256.applyUnsafe("f" * 64), Caller.Local)
+    s.sources.setOriginal(
+      com.histmersion.domain.library.Citekey("zqa_zwei"),
+      Sha256.applyUnsafe("f" * 64),
+      Caller.Local
+    )
     assertEquals(
-      s.checks.heldByDoi(List(com.histmersion.domain.library.Doi.assume(" 10.5555/zq.a"), com.histmersion.domain.library.Doi("10.5555/zq.b"), com.histmersion.domain.library.Doi("10.5555/zq.none"), com.histmersion.domain.library.Doi.assume(""))),
+      s.checks.heldByDoi(
+        List(
+          com.histmersion.domain.library.Doi.assume(" 10.5555/zq.a"),
+          com.histmersion.domain.library.Doi("10.5555/zq.b"),
+          com.histmersion.domain.library.Doi("10.5555/zq.none"),
+          com.histmersion.domain.library.Doi.assume("")
+        )
+      ),
       Map(
-        "10.5555/zq.a" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_one"), AcquireRecheck.Held.HasOriginal(true)),
-        "10.5555/zq.b" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_two"), AcquireRecheck.Held.HasOriginal(false))
+        "10.5555/zq.a" -> AcquireRecheck
+          .Held(com.histmersion.domain.library.Citekey("zqa_one"), AcquireRecheck.Held.HasOriginal(true)),
+        "10.5555/zq.b" -> AcquireRecheck.Held(
+          com.histmersion.domain.library.Citekey("zqa_two"),
+          AcquireRecheck.Held.HasOriginal(false)
+        )
       )
     )
     assertEquals(s.checks.heldByDoi(Nil), Map.empty)

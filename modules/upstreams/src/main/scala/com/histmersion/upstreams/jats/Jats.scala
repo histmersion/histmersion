@@ -30,7 +30,11 @@ object Jats:
 
   /** The document's root element (an empty `article` when the text has none). */
   def parse(xml: Xml): Elem =
-    final case class Frame(name: com.histmersion.upstreams.jats.Jats.Elem.Name, attrs: Map[String, String], kids: Vector[Node])
+    final case class Frame(
+        name: com.histmersion.upstreams.jats.Jats.Elem.Name,
+        attrs: Map[String, String],
+        kids: Vector[Node]
+    )
     // a hand-rolled reader walks the text once; the open elements are the one mutable state
     var stack = List(Frame(Elem.Name("#document"), Map.empty, Vector.empty))
     def add(n: Node): Unit = stack = stack.head.copy(kids = stack.head.kids :+ n) :: stack.tail
@@ -124,7 +128,8 @@ object Jats:
             else if e.startsWith("#") then scala.util.Try(new String(Character.toChars(e.drop(1).toInt))).toOption
             else Named.get(e)
           scala.util.matching.Regex.quoteReplacement(out.getOrElse(m.matched))
-      ))
+      )
+    )
 
   // ── rendering ───────────────────────────────────────────────────────────────────────────────
 
@@ -163,7 +168,7 @@ object Jats:
           val heading = e.kid(Elem.Name("title")).map(runText).filter(_.nonEmpty).getOrElse("Acknowledgements")
           s"## $heading" +: blocks(e, (3))
         case e if e.name == Elem.Name("ref-list") => refList(e, (2))
-        case e                         => block(e, (2))
+        case e                                    => block(e, (2))
       }
     }
     val floats = article.kid(Elem.Name("floats-group")).toVector.flatMap(blocks(_, (2)))
@@ -178,9 +183,9 @@ object Jats:
   private def blocks(e: Elem, level: Int): Vector[String] =
     // an element's own title is rendered by whoever owns it (sec, abstract, ack, caption)
     e.children.flatMap {
-      case Text(s)                                           => Option(collapse(s)).filter(_.nonEmpty).toVector
+      case Text(s) => Option(collapse(s)).filter(_.nonEmpty).toVector
       case c: Elem if c.name == Elem.Name("title") || c.name == Elem.Name("label") => Vector.empty
-      case c: Elem                                           => block(c, level)
+      case c: Elem                                                                 => block(c, level)
     }
 
   private val Skip = Set(
@@ -225,8 +230,8 @@ object Jats:
               .map {
                 case c: Elem if c.name == Elem.Name("list")  => block(c, level).mkString(" ")
                 case c: Elem if c.name == Elem.Name("label") => ""
-                case c: Elem                      => runText(c)
-                case Text(s)                      => s
+                case c: Elem                                 => runText(c)
+                case Text(s)                                 => s
               }
               .map(collapse)
               .filter(_.nonEmpty)
@@ -255,7 +260,10 @@ object Jats:
       Vector(
         e.kids(Elem.Name("def-item"))
           .map(d =>
-            "- " + (d.kid(Elem.Name("term")).map(runText).getOrElse("") + ": " + d.kid(Elem.Name("def")).map(runText).getOrElse("")).trim
+            "- " + (d.kid(Elem.Name("term")).map(runText).getOrElse("") + ": " + d
+              .kid(Elem.Name("def"))
+              .map(runText)
+              .getOrElse("")).trim
           )
           .mkString("\n")
       )
@@ -314,7 +322,7 @@ object Jats:
             .flatMap {
               case n if n.name == Elem.Name("name") => Some(personName(n))
               case n if n.name == Elem.Name("etal") => Some("et al.")
-              case n                     => Some(runText(n))
+              case n                                => Some(runText(n))
             }
             .filter(_.nonEmpty)
           Option.when(names.nonEmpty)("person-group" -> names.mkString(", "))
@@ -326,7 +334,7 @@ object Jats:
         (f, acc.lastOption) match
           case (("issue", t), Some(("volume", v))) => acc.init :+ ("volume" -> s"$v($t)")
           case (("fpage", t), Some(("volume", v))) => acc.init :+ ("fpage" -> s"$v:$t")
-          case (("lpage", t), Some(("fpage", p))) => acc.init :+ ("lpage" -> s"$p\u2013$t")
+          case (("lpage", t), Some(("fpage", p)))  => acc.init :+ ("lpage" -> s"$p\u2013$t")
           case _                                   => acc :+ f
       }
       merged.map(_._2.trim.stripSuffix(".")).filter(_.nonEmpty) match
@@ -368,7 +376,8 @@ object Jats:
     if t.isEmpty then ((s))
     else
       ((if (s).headOption.exists(_.isWhitespace) then " " else "") + mark + t + mark +
-        (if (s).lastOption.exists(_.isWhitespace) then " " else ""))
+        (if (s).lastOption.exists(_.isWhitespace) then " " else "")
+    )
 
   private def text(e: Elem): String = (e.children.map {
     case Text(s) => s

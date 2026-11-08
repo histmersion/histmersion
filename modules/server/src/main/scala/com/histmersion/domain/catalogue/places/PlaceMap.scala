@@ -11,11 +11,21 @@ import com.histmersion.domain.catalogue.Place
   * no in-memory twin (as the tiles).
   */
 trait PlaceMap:
-  def shapes(kind: Option[Place.Kind.Wire], time: GeoTime, limit: PageSize, modernFrom: DeepTime.SignedYear): PlaceDetailRow.Geometry
+  def shapes(
+      kind: Option[Place.Kind.Wire],
+      time: GeoTime,
+      limit: PageSize,
+      modernFrom: DeepTime.SignedYear
+  ): PlaceDetailRow.Geometry
 
 object PlaceMap:
   def apply(db: Transactor): PlaceMap = Implementation(db)
 
   final private class Implementation(db: Transactor) extends PlaceMap:
-    def shapes(kind: Option[Place.Kind.Wire], time: GeoTime, limit: PageSize, modernFrom: DeepTime.SignedYear): PlaceDetailRow.Geometry =
+    def shapes(
+        kind: Option[Place.Kind.Wire],
+        time: GeoTime,
+        limit: PageSize,
+        modernFrom: DeepTime.SignedYear
+    ): PlaceDetailRow.Geometry =
       PlaceDetailRow.Geometry(db.read(PlaceRepo.geoJsonAt(kind, time, PlaceRepo.Limit(limit.value), modernFrom)).value)

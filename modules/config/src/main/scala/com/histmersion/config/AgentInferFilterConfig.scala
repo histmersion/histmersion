@@ -9,8 +9,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `minCitedShare` (0..1) of the sources the article cites; `sample` sources it returns that the article does not cite
   * are shown with the proposal.
   */
-final case class AgentInferFilterConfig(minHits: AgentInferFilterConfig.MinHits, maxHits: AgentInferFilterConfig.MaxHits, minCitedShare: AgentInferFilterConfig.MinCitedShare, sample: AgentInferFilterConfig.Sample)
-    derives ConfigReader
+final case class AgentInferFilterConfig(
+    minHits: AgentInferFilterConfig.MinHits,
+    maxHits: AgentInferFilterConfig.MaxHits,
+    minCitedShare: AgentInferFilterConfig.MinCitedShare,
+    sample: AgentInferFilterConfig.Sample
+) derives ConfigReader
 
 object AgentInferFilterConfig:
   type MinHits = MinHits.T

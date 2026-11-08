@@ -77,7 +77,8 @@ class ReferableSuite extends DbSuite:
       body(onDatabase(name.toLowerCase.replaceAll("[^a-z]+", "_").take(30))._1)
     }
 
-  private def ref(w: World, ck: String): ItemRef = w.referable.resolve(source, key(ck)).fold(e => fail(e.value), identity)
+  private def ref(w: World, ck: String): ItemRef =
+    w.referable.resolve(source, key(ck)).fold(e => fail(e.value), identity)
 
   both("a reference follows its record through a rename, a merge and a deletion") { w =>
     List("zz_a", "zz_b", "zz_c", "zz_d").foreach(w.add)

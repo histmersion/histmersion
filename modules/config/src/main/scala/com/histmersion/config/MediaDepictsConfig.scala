@@ -8,8 +8,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Pictures that depict an event (`media.depicts`): Commons files whose structured data says `P180 depicts` the event's
   * item, and the images of the works its item lists as `P1299 depicted by`.
   */
-final case class MediaDepictsConfig(perEvent: MediaDepictsConfig.PerEvent, searchLimit: MediaDepictsConfig.SearchLimit, depictedBy: MediaDepictsConfig.DepictedBy, licences: MediaDepictsConfig.Licences)
-    derives ConfigReader
+final case class MediaDepictsConfig(
+    perEvent: MediaDepictsConfig.PerEvent,
+    searchLimit: MediaDepictsConfig.SearchLimit,
+    depictedBy: MediaDepictsConfig.DepictedBy,
+    licences: MediaDepictsConfig.Licences
+) derives ConfigReader
 
 object MediaDepictsConfig:
   type PerEvent = PerEvent.T

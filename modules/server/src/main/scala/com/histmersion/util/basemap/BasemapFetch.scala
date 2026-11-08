@@ -171,7 +171,11 @@ object BasemapFetch:
     * request when the gap before it is at most `overfetch` of the request so far (or 64 KiB) and the request stays
     * within `maxBytes`. Pure.
     */
-  def coalesce(contents: Seq[(ByteOffset, ByteCount)], maxBytes: ByteCount, overfetch: Pace.Overfetch): Vector[(ByteOffset, ByteCount)] =
+  def coalesce(
+      contents: Seq[(ByteOffset, ByteCount)],
+      maxBytes: ByteCount,
+      overfetch: Pace.Overfetch
+  ): Vector[(ByteOffset, ByteCount)] =
     val out = Vector.newBuilder[(Long, Long)]
     var start = -1L // the request being built: [start, end)
     var end = -1L
@@ -223,7 +227,9 @@ object BasemapFetch:
       (head, remote) = first
       _ <- source.expectedSize
         .filter(s => s.value != remote.size.value)
-        .map(s => Left(Problem(s"${source.url} is ${remote.size} bytes, but the provider lists $s for ${source.label}")))
+        .map(s =>
+          Left(Problem(s"${source.url} is ${remote.size} bytes, but the provider lists $s for ${source.label}"))
+        )
         .getOrElse(Right(()))
       h <- PmTiles.parseHeader(PmTiles.HeaderBytes(head.value))
       _ <- Either.cond(
@@ -543,5 +549,8 @@ object BasemapFetch:
         .contains(state)
     then work.list().foreach(f => work.delete(f.key))
     work.makeDirectory().left.foreach(e => throw IOException(e.message.value))
-    work.write(file, ByteSource.Content(state.noSpaces.getBytes(UTF_8))).left.foreach(e => throw IOException(e.message.value))
+    work
+      .write(file, ByteSource.Content(state.noSpaces.getBytes(UTF_8)))
+      .left
+      .foreach(e => throw IOException(e.message.value))
     ChunkCount(work.list().count(_.key.name.value.endsWith(".bin")))

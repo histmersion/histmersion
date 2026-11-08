@@ -27,7 +27,6 @@ object Paging:
   type ShownCount = ShownCount.T
   object ShownCount extends Newtype[Int, Pure]
 
-
   val TotalHeader = "X-Total-Count"
   val NextHeader = "X-Next-Before"
   val CountsHeader = "X-State-Counts"
@@ -39,11 +38,13 @@ object Paging:
       facets: List[(Facet.Name, List[(Facet.Value, Facet.Count)])] = Nil
   ):
     def hasMore: Boolean = (next.isDefined)
-    def count(state: Page.CountState): Count = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(Count(0))
+    def count(state: Page.CountState): Count =
+      counts.collectFirst { case (s, n) if s == state => n }.getOrElse(Count(0))
 
     def all: Page.Total = Page.Total(counts.map(_._2.value).sum)
 
-    def facet(name: Facet.Name): List[(Facet.Value, Facet.Count)] = facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)
+    def facet(name: Facet.Name): List[(Facet.Value, Facet.Count)] =
+      facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)
 
   object Page:
     type CountState = CountState.T
@@ -51,7 +52,7 @@ object Paging:
 
     type Total = Total.T
     object Total extends Newtype[Int, Pure]
-    export Paging.{Cursor as Next}
+    export Paging.Cursor as Next
 
     val empty: Page = Page(Total(0), None, Nil)
 
@@ -65,7 +66,8 @@ object Paging:
         facets: List[(Facet.Name, List[(Facet.Value, Facet.Count)])] = Nil
     ): Page =
       val total =
-        Total(if states.isEmpty then counts.map(_._2.value).sum else counts.collect { case (k, n) if states.contains(k) => n.value }.sum)
+        Total(if states.isEmpty then counts.map(_._2.value).sum
+        else counts.collect { case (k, n) if states.contains(k) => n.value }.sum)
       Page(total, (last).map(refactorValue4 => Cursor((refactorValue4).value)), counts, facets.filter(_._2.nonEmpty))
 
   def encodeCounts(counts: List[(Page.CountState, Count)]): Activity.Counts.Wire =
@@ -77,7 +79,6 @@ object Paging:
         case Array(k, v) => v.trim.toIntOption.map(c => (Page.CountState(k.trim), Count(c)))
         case _           => None
     }
-
 
   /** A server that predates these headers reads as "the page is the whole list". */
   val headers: EndpointIO[Page] =
@@ -125,11 +126,20 @@ object Paging:
     val g = s.reverse.grouped(3).mkString(",").reverse
     if (n).value < 0 then CatalogRecord.Group.Label(s"-$g") else CatalogRecord.Group.Label(g)
 
-  def heading(shown: ShownCount, total: Page.Total, singular: Plural.Noun.Singular, plural: Plural.Noun.Plural = Plural.Noun.Plural(""), qualifier: Option[String] = None): Api.SourceViewQuery.Heading.Text =
+  def heading(
+      shown: ShownCount,
+      total: Page.Total,
+      singular: Plural.Noun.Singular,
+      plural: Plural.Noun.Plural = Plural.Noun.Plural(""),
+      qualifier: Option[String] = None
+  ): Api.SourceViewQuery.Heading.Text =
     val all = math.max((shown).value, (total).value)
     val noun = qualifier.fold("")(q => s"$q ") + Plural.noun(Plural.Count((all).toLong), singular, plural)
     if shown.value >= all then Api.SourceViewQuery.Heading.Text(s"${grouped(GroupSize((all).toLong))} $noun")
-    else Api.SourceViewQuery.Heading.Text(s"Latest ${grouped(GroupSize(shown.value.toLong))} of ${grouped(GroupSize((all).toLong))} $noun")
+    else
+      Api.SourceViewQuery.Heading.Text(
+        s"Latest ${grouped(GroupSize(shown.value.toLong))} of ${grouped(GroupSize((all).toLong))} $noun"
+      )
 
   def olderLine(page: Page, ask: Cursor => OlderLine.Text): Option[OlderLine.Text] =
     page.next.map(c => OlderLine.Text(s"Older: ${ask(c)}"))

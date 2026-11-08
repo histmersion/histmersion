@@ -83,6 +83,7 @@ object DomMarker:
   object BoxSize extends Newtype[Int, Pure]
   type ZIndex = ZIndex.T
   object ZIndex extends Newtype[Int, Pure]
+
   /** A marker element of class `cls` holding `html`. */
   def element(cls: String, html: String): dom.HTMLElement =
     val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]

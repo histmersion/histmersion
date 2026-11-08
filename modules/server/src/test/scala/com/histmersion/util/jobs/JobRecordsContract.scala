@@ -24,7 +24,12 @@ abstract class JobRecordsContract extends DbSuite:
   private def jtest(title: String)(body: JobRecords => Unit): Unit = test(title)(fresh().foreach(body))
 
   jtest("a job is created queued, claimed once, annotated while running, and done") { jobs =>
-    val j = jobs.create(Job.Kind("ingest"), Some(Citekey("zq_job")), Some(Sha256.applyUnsafe("a" * 64)), Some(JobRow.AcquireItem(7)))
+    val j = jobs.create(
+      Job.Kind("ingest"),
+      Some(Citekey("zq_job")),
+      Some(Sha256.applyUnsafe("a" * 64)),
+      Some(JobRow.AcquireItem(7))
+    )
     assertEquals(
       (j.kind, j.status, j.citekey, j.sha256, j.acquireItem),
       ("ingest", "queued", Some("zq_job"), Some("a" * 64), Some(7))
@@ -32,11 +37,17 @@ abstract class JobRecordsContract extends DbSuite:
     assertEquals(jobs.get(jobId(j)).map(_.status), Some("queued"))
     jobs.progress(jobId(j), JobRow.Progress("not yet"))
     assertEquals(jobs.get(jobId(j)).flatMap(_.progress), None, "a queued job takes no progress")
-    assertEquals(jobs.transition(jobId(j), JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))), Some(JobState.Running))
+    assertEquals(
+      jobs.transition(jobId(j), JobState.Queued, JobState.Running, Some(JobRow.Progress("converting"))),
+      Some(JobState.Running)
+    )
     assertEquals(jobs.transition(jobId(j), JobState.Queued, JobState.Running), None, "a second claim is refused")
     jobs.progress(jobId(j), JobRow.Progress("storing 1 asset(s)"))
     assertEquals(jobs.get(jobId(j)).flatMap(_.progress), Some("storing 1 asset(s)"))
-    assertEquals(jobs.transition(jobId(j), JobState.Running, JobState.Done, Some(JobRow.Progress("2 page(s)"))), Some(JobState.Done))
+    assertEquals(
+      jobs.transition(jobId(j), JobState.Running, JobState.Done, Some(JobRow.Progress("2 page(s)"))),
+      Some(JobState.Done)
+    )
     val done: Option[JobInfo] = jobs.get(jobId(j))
     assertEquals(done.map(j => (j.status, j.progress, j.error)), Some(("done", Some("2 page(s)"), None)))
     assertEquals(jobs.get(Job.Id.applyUnsafe("00000000-0000-0000-0000-000000000000")), None)
@@ -58,7 +69,8 @@ class JobRecordsInMemorySuite extends JobRecordsContract:
 class JobRecordsDbSuite extends JobRecordsContract:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val scratch = ScratchDatabases("histmersion_s10j", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
+  private lazy val scratch =
+    ScratchDatabases("histmersion_s10j", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   private val made = AtomicLong(0L)
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
   protected def fresh(): Option[JobRecords] =

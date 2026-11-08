@@ -23,14 +23,25 @@ class SourceFetcherSuite extends munit.FunSuite:
     val f = new SourceFetcher:
       val access = Access.Open
       def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Fetch.Miss.Why("nothing"))
-    assertEquals(((r.add(Registry.AddId("portal"), f)).left.map(refactorError => (refactorError).value): Either[String, Unit]), Left("'portal': no chain here"))
+    assertEquals(
+      ((r.add(Registry.AddId("portal"), f)).left.map(refactorError => (refactorError).value): Either[String, Unit]),
+      Left("'portal': no chain here")
+    )
 
   test("a context written before source fetchers existed still compiles and refuses a fetcher"):
     val ctx = new Plugin.Context:
-      def http = new Plugin.Http { def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] = Left(Plugin.Http.GetResultPart1("offline")) }
-      def log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = () }
+      def http = new Plugin.Http {
+        def get(
+            url: Plugin.Http.GetUrl,
+            headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
+        ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] = Left(Plugin.Http.GetResultPart1("offline"))
+      }
+      def log = new Plugin.Log {
+        def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+      }
       def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-      def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] = Left(Plugin.Context.SecretResultPart1("none"))
+      def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] =
+        Left(Plugin.Context.SecretResultPart1("none"))
       def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
     val f = new SourceFetcher:
       val access = Access.Subscription
@@ -39,9 +50,20 @@ class SourceFetcherSuite extends munit.FunSuite:
 
   test("a FetchedFile's licence is optional"):
     val pdf = "%PDF-1.7".getBytes("US-ASCII")
-    val none = FetchedFile(FetchedFile.Source("oabooks"), Some(FetchedFile.Url("https://example.org/b.pdf")), FetchedFile.Bytes(pdf), FetchedFile.Extension("pdf"))
+    val none = FetchedFile(
+      FetchedFile.Source("oabooks"),
+      Some(FetchedFile.Url("https://example.org/b.pdf")),
+      FetchedFile.Bytes(pdf),
+      FetchedFile.Extension("pdf")
+    )
     assertEquals(none.licence, None)
-    val withIt = FetchedFile(FetchedFile.Source("oabooks"), None, FetchedFile.Bytes(pdf), FetchedFile.Extension("pdf"), Some(Licence("CC-BY-4.0")))
+    val withIt = FetchedFile(
+      FetchedFile.Source("oabooks"),
+      None,
+      FetchedFile.Bytes(pdf),
+      FetchedFile.Extension("pdf"),
+      Some(Licence("CC-BY-4.0"))
+    )
     assertEquals(withIt.licence.map(l => l.value: String), Some("CC-BY-4.0"))
     assertEquals(
       none.copy(licence = Some(Licence("public-domain"))).licence.map(l => l.value: String),

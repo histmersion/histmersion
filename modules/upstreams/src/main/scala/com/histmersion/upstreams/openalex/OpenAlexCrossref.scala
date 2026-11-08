@@ -21,26 +21,32 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
 
   private def mailto = "mailto" -> cfg.mailto.value
 
-  private def getJson(url: RepositoryLanding.Candidate.Url): Either[WorkLookup.Problem, Json] = http.json(url.value).left.map(WorkLookup.Problem(_))
+  private def getJson(url: RepositoryLanding.Candidate.Url): Either[WorkLookup.Problem, Json] =
+    http.json(url.value).left.map(WorkLookup.Problem(_))
 
-  def search(query: OpenAlexCrossref.SearchQuery, since: Option[Year], sort: Option[OpenAlexCrossref.SearchSort], limit: PageSize): Either[WorkLookup.Problem, List[WorkRef]] =
+  def search(
+      query: OpenAlexCrossref.SearchQuery,
+      since: Option[Year],
+      sort: Option[OpenAlexCrossref.SearchSort],
+      limit: PageSize
+  ): Either[WorkLookup.Problem, List[WorkRef]] =
     // relevance keeps results ON TOPIC; sorting purely by citations surfaces mega-cited but tangential
     // work. `cited_by_count` comes back either way, so a caller can re-rank the relevant set.
     val order = if sort.map((_).value.trim.toLowerCase).contains("cited") then "cited_by_count:desc"
     else "relevance_score:desc"
     val from = since.getOrElse(Year(cfg.defaults.minYear.value))
     getJson(
-        Url(
-          RepositoryLanding.Candidate.Url(cfg.openalex.url.value),
-          Url.UrlPath("/works"),
-          "search" -> (query).value,
-          "per-page" -> math.max(1, math.min((limit).value, 50)).toString,
-          "sort" -> order,
-          "filter" -> s"from_publication_date:$from-01-01,type:article|book|book-chapter",
-          "select" -> WorkLookup.WorkFields.value,
-          mailto
-        )
+      Url(
+        RepositoryLanding.Candidate.Url(cfg.openalex.url.value),
+        Url.UrlPath("/works"),
+        "search" -> (query).value,
+        "per-page" -> math.max(1, math.min((limit).value, 50)).toString,
+        "sort" -> order,
+        "filter" -> s"from_publication_date:$from-01-01,type:article|book|book-chapter",
+        "select" -> WorkLookup.WorkFields.value,
+        mailto
       )
+    )
       .map(AcquireParse.openalexWorks)
       .left
       .flatMap { why =>
@@ -62,18 +68,18 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       List("sort" -> "is-referenced-by-count", "order" -> "desc")
     else Nil
     getJson(
-        Url(
-          RepositoryLanding.Candidate.Url(cfg.crossref.url.value),
-          Url.UrlPath("/works"),
-          (List(
-            "query" -> query.value,
-            "rows" -> math.max(1, math.min((limit).value, 50)).toString,
-            "filter" -> s"from-pub-date:$from-01-01,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book",
-            "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
-            mailto
-          ) ++ bySort)*
-        )
+      Url(
+        RepositoryLanding.Candidate.Url(cfg.crossref.url.value),
+        Url.UrlPath("/works"),
+        (List(
+          "query" -> query.value,
+          "rows" -> math.max(1, math.min((limit).value, 50)).toString,
+          "filter" -> s"from-pub-date:$from-01-01,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book",
+          "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
+          mailto
+        ) ++ bySort)*
       )
+    )
       .map(AcquireParse.crossrefWorks)
 
   /** OpenAlex first (richer, keyless), Crossref as the fallback — [[WorkLookup.meta]]. */
@@ -87,7 +93,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
   def references(doi: Doi): Either[WorkLookup.Problem, (OpenAlexCrossref.ReferenceSource, List[RefRow])] =
     crossrefWork(doi).map(AcquireParse.crossrefReferences) match
       case Right(refs) if refs.nonEmpty => Right((OpenAlexCrossref.ReferenceSource("crossref"), refs))
-      case _                            => openalexReferences(doi).map((OpenAlexCrossref.ReferenceSource("openalex"), _))
+      case _ => openalexReferences(doi).map((OpenAlexCrossref.ReferenceSource("openalex"), _))
 
   /** Fallback: resolve OpenAlex `referenced_works` ids to titles, 50 at a time. */
   private def openalexReferences(doi: Doi): Either[WorkLookup.Problem, List[RefRow]] =
@@ -96,15 +102,15 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .map { ids =>
         ids.grouped(50).toList.flatMap { chunk =>
           getJson(
-              Url(
-                RepositoryLanding.Candidate.Url(cfg.openalex.url.value),
-                Url.UrlPath("/works"),
-                "filter" -> ("openalex_id:" + chunk.mkString("|")),
-                "select" -> "doi,display_name,publication_year",
-                "per-page" -> "50",
-                mailto
-              )
+            Url(
+              RepositoryLanding.Candidate.Url(cfg.openalex.url.value),
+              Url.UrlPath("/works"),
+              "filter" -> ("openalex_id:" + chunk.mkString("|")),
+              "select" -> "doi,display_name,publication_year",
+              "per-page" -> "50",
+              mailto
             )
+          )
             .map(AcquireParse.openalexWorks)
             .getOrElse(Nil)
             .map(w => RefRow(title = w.title, year = w.year, doi = w.doi))

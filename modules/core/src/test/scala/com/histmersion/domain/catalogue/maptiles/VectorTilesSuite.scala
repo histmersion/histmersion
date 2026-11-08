@@ -34,7 +34,8 @@ class VectorTilesSuite extends munit.FunSuite:
     val (lat, lon) = (Latitude(37.97), Longitude(23.72)) // Athens
     val z = TileCoord.Z(6)
     val (mx, my) = TileCoord.mercator(lat, lon)
-    val t = tile(z, TileCoord.X(math.floor(mx * (1 << z.value)).toLong), TileCoord.Y(math.floor(my * (1 << z.value)).toLong))
+    val t =
+      tile(z, TileCoord.X(math.floor(mx * (1 << z.value)).toLong), TileCoord.Y(math.floor(my * (1 << z.value)).toLong))
     val (px, py) = t.unitsOf(lat, lon)
     assert(px >= 0 && px < TileCoord.Extent.value && py >= 0 && py < TileCoord.Extent.value, s"$px $py")
     val (qx, _) = tile(z, TileCoord.X(t.x.value + 1), t.y).unitsOf(lat, lon)
@@ -54,19 +55,43 @@ class VectorTilesSuite extends munit.FunSuite:
     }
 
   test("the grid groups only below its deepest zoom, and cells are tile units"):
-    val g = TileGrid.of(maxZoom = TileGrid.MaxZoom(12), maxPoints = TileGrid.MaxPoints(600), cellPx = TileGrid.CellPx(32))
+    val g =
+      TileGrid.of(maxZoom = TileGrid.MaxZoom(12), maxPoints = TileGrid.MaxPoints(600), cellPx = TileGrid.CellPx(32))
     assertEquals(g.cellUnits, 256)
     assertEquals(g.pointsAt(tile(TileCoord.Z(5), TileCoord.X(0), TileCoord.Y(0))), 600)
     assertEquals(g.pointsAt(tile(TileCoord.Z(12), TileCoord.X(0), TileCoord.Y(0))), Int.MaxValue)
     assertEquals(TileGrid.of(TileGrid.MaxZoom(12), TileGrid.MaxPoints(600), TileGrid.CellPx(0)).cellUnits, 8)
-    assertEquals(TileGrid.of(TileGrid.MaxZoom(12), TileGrid.MaxPoints(600), TileGrid.CellPx(4096)).cellUnits.value, TileCoord.Extent.value)
+    assertEquals(
+      TileGrid.of(TileGrid.MaxZoom(12), TileGrid.MaxPoints(600), TileGrid.CellPx(4096)).cellUnits.value,
+      TileCoord.Extent.value
+    )
 
   test("a written tile reads back: layer, extent, places and typed properties"):
     val pts = Seq(
-      TilePoint(TilePoint.X(10), TilePoint.Y(20), Seq(TilePoint.PropKey("k") -> TileValue.Text(TileValue.Text.Value("a")), TilePoint.PropKey("n") -> TileValue.Whole(TileValue.Whole.Value(-3)), TilePoint.PropKey("lo") -> TileValue.Real(TileValue.Real.Value(-1500.5)))),
-      TilePoint(TilePoint.X(4095), TilePoint.Y(0), Seq(TilePoint.PropKey("k") -> TileValue.Text(TileValue.Text.Value("b")), TilePoint.PropKey("f") -> TileValue.Flag(TileValue.Flag.Value(true)), TilePoint.PropKey("n") -> TileValue.Whole(TileValue.Whole.Value(-3))))
+      TilePoint(
+        TilePoint.X(10),
+        TilePoint.Y(20),
+        Seq(
+          TilePoint.PropKey("k") -> TileValue.Text(TileValue.Text.Value("a")),
+          TilePoint.PropKey("n") -> TileValue.Whole(TileValue.Whole.Value(-3)),
+          TilePoint.PropKey("lo") -> TileValue.Real(TileValue.Real.Value(-1500.5))
+        )
+      ),
+      TilePoint(
+        TilePoint.X(4095),
+        TilePoint.Y(0),
+        Seq(
+          TilePoint.PropKey("k") -> TileValue.Text(TileValue.Text.Value("b")),
+          TilePoint.PropKey("f") -> TileValue.Flag(TileValue.Flag.Value(true)),
+          TilePoint.PropKey("n") -> TileValue.Whole(TileValue.Whole.Value(-3))
+        )
+      )
     )
-    val layers = VectorTileReader.read(VectorTileWriter.tile(Seq(VectorTileWriter.LayerName("sites") -> pts, VectorTileWriter.LayerName("empty") -> Nil)).value)
+    val layers = VectorTileReader.read(
+      VectorTileWriter
+        .tile(Seq(VectorTileWriter.LayerName("sites") -> pts, VectorTileWriter.LayerName("empty") -> Nil))
+        .value
+    )
     assertEquals(layers.map(_.name), Vector("sites"))
     val l = layers.head
     assertEquals(l.extent, 4096)
@@ -78,6 +103,12 @@ class VectorTilesSuite extends munit.FunSuite:
     assertEquals(l.features(1).whole("n"), Some(-3L))
 
   test("a key and a value are stored once per layer"):
-    val pts = (1 to 50).map(i => TilePoint(TilePoint.X(i), TilePoint.Y(i), Seq(TilePoint.PropKey("kind") -> TileValue.Text(TileValue.Text.Value("site")))))
+    val pts = (1 to 50).map(i =>
+      TilePoint(
+        TilePoint.X(i),
+        TilePoint.Y(i),
+        Seq(TilePoint.PropKey("kind") -> TileValue.Text(TileValue.Text.Value("site")))
+      )
+    )
     val bytes = VectorTileWriter.layer(VectorTileWriter.LayerName("sites"), pts)
     assertEquals(new String(bytes.value, "UTF-8").sliding(4).count(_ == "site"), 2) // the layer's name and the value

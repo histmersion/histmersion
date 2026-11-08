@@ -20,8 +20,6 @@ object Opencode:
   type SchemaNote = SchemaNote.T
   object SchemaNote extends Newtype[String, Pure]
 
-
-
   def argv(cfg: OpencodeConfig, model: ModelRef.Model, agent: AgentDef.Name, dir: Path): List[ClaudeCode.Argument] =
     List(cfg.command.value, "run", "--agent", agent.value, "--format", "json", "-m", model.value, "--dir", dir.toString)
       .map(ClaudeCode.Argument(_))
@@ -100,7 +98,9 @@ object Opencode:
     if ref.provider != ProviderKind.Opencode then Left(Problem(s"${ref.wire} is not an opencode model"))
     else if !ref.model.value.contains('/') then
       Left(Problem(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5"))
-    else if PlanQuota.poolOf(ref, PlanQuota.Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt(cfg.chatgptLogin.value))).isDefined && !rt.loopback then
-      Left(Problem("opencode on a ChatGPT login is refused while the server listens beyond loopback"))
+    else if PlanQuota
+        .poolOf(ref, PlanQuota.Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt(cfg.chatgptLogin.value)))
+        .isDefined && !rt.loopback
+    then Left(Problem("opencode on a ChatGPT login is refused while the server listens beyond loopback"))
     else if cfg.command.value.trim.isEmpty then Left(Problem("agents.providers.opencode.command is empty"))
     else Right(OpencodeRunClient(ref, cfg, rt))

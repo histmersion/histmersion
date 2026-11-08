@@ -20,12 +20,18 @@ private[histmersion] object Keyset:
 
   /** ` AND (created_at, id) < (that row's)` — the rows older than the cursor. */
   def olderThan(alias: String, table: String, cursor: Param): Sql =
-    Sql.of(Sql.OfText(s" AND (${alias}created_at, ${alias}id) < (SELECT created_at, id FROM $table WHERE id = ?)"), cursor)
+    Sql.of(
+      Sql.OfText(s" AND (${alias}created_at, ${alias}id) < (SELECT created_at, id FROM $table WHERE id = ?)"),
+      cursor
+    )
 
   /** ` AND (created_at, id) >= (that row's)` — the rows from the newest down to the cursor, itself included.
     */
   def atOrNewer(alias: String, table: String, cursor: Param): Sql =
-    Sql.of(Sql.OfText(s" AND (${alias}created_at, ${alias}id) >= (SELECT created_at, id FROM $table WHERE id = ?)"), cursor)
+    Sql.of(
+      Sql.OfText(s" AND (${alias}created_at, ${alias}id) >= (SELECT created_at, id FROM $table WHERE id = ?)"),
+      cursor
+    )
 
   /** Is there a row with this id? A cursor naming no row would silently give an empty page. */
   def existsOn(table: String, cursor: Param)(using DbCon): Boolean =

@@ -18,7 +18,11 @@ import com.histmersion.domain.catalogue.places.Wikidata
   * @param provider
   *   the name its checks are recorded and its pictures stored under
   */
-final class PluginCollection(val provider: ImportService.Provider, col: MediaCollection, allowed: MediaCollectionConfig.Licences) extends SearchedCollection:
+final class PluginCollection(
+    val provider: ImportService.Provider,
+    col: MediaCollection,
+    allowed: MediaCollectionConfig.Licences
+) extends SearchedCollection:
   val role: MediaRole.Wire = MediaRole.Wire(col.role.value)
   private val latest = col.latestYear.map(y => com.histmersion.Year(y.value))
   val conf: MediaCollectionConfig =
@@ -37,7 +41,10 @@ final class PluginCollection(val provider: ImportService.Provider, col: MediaCol
   // the items as the plugin returned them, by key, for `complete` — one import run's own state
   private val items = scala.collection.concurrent.TrieMap.empty[MediaItem.Key, MediaItem]
 
-  def search(fetch: Polite, place: PlaceFacts): Either[SearchedCollection.Problem, List[Either[SearchedCollection.Problem, MediaRecord]]] =
+  def search(
+      fetch: Polite,
+      place: PlaceFacts
+  ): Either[SearchedCollection.Problem, List[Either[SearchedCollection.Problem, MediaRecord]]] =
     PluginMedia
       .guard(col.search(PluginCollection.place(place), PluginMedia.http(fetch)))
       .left
@@ -61,8 +68,9 @@ final class PluginCollection(val provider: ImportService.Provider, col: MediaCol
       resolveId: MediaMatch.ResolveId
   ) =
     col.matchRule match
-      case MediaMatchRule.PlaceIds(deeper) => MediaMatch.withIds(rec, place, resolveId, resolve, deeper.map(d => MediaRecord.GeographyPart1(d.value)), latest)
-      case _                               => matches(rec, place, resolve)
+      case MediaMatchRule.PlaceIds(deeper) =>
+        MediaMatch.withIds(rec, place, resolveId, resolve, deeper.map(d => MediaRecord.GeographyPart1(d.value)), latest)
+      case _ => matches(rec, place, resolve)
 
   override def complete(fetch: Polite, rec: MediaRecord): Either[SearchedCollection.Problem, MediaRecord] =
     items.get(MediaItem.Key(rec.key.value)) match

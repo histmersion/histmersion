@@ -59,7 +59,15 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     lazy val record: Option[PmcRecord] =
       hit.flatMap(_.pmcid).flatMap { id =>
         http
-          .text(Url(RepositoryLanding.Candidate.Url(cfg.pmcDataset.url.value), Url.UrlPath("/"), "list-type" -> "2", "prefix" -> s"metadata/$id.").value, pmcHeaders)
+          .text(
+            Url(
+              RepositoryLanding.Candidate.Url(cfg.pmcDataset.url.value),
+              Url.UrlPath("/"),
+              "list-type" -> "2",
+              "prefix" -> s"metadata/$id."
+            ).value,
+            pmcHeaders
+          )
           .left
           .map(e => ctx.log.info(Plugin.Log.InfoMessage(s"pmc dataset listing failed ($e)")))
           .toOption
@@ -78,20 +86,29 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
       hit.toList
         .flatMap(_.pdfUrls)
         .iterator
-        .map(u => Downloads(http).pdf(ctx.log, FetchedFile.Source("europepmc"), Plugin.Http.GetUrl(u.value), pmcGetHeaders))
+        .map(u =>
+          Downloads(http).pdf(ctx.log, FetchedFile.Source("europepmc"), Plugin.Http.GetUrl(u.value), pmcGetHeaders)
+        )
         .collectFirst { case Some(f) => f }
         .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, FetchedFile.Extension("pdf"))(Downloads.looksLikePdf)))
 
     def fullText: Option[FetchedFile] =
-      record.flatMap(_.xml).flatMap(o => dataset(o, FetchedFile.Extension("xml"))(b => Jats.isJats(Jats.Xml(String(b.value, "UTF-8")))))
+      record
+        .flatMap(_.xml)
+        .flatMap(o => dataset(o, FetchedFile.Extension("xml"))(b => Jats.isJats(Jats.Xml(String(b.value, "UTF-8")))))
 
-    private def dataset(o: PmcObject, ext: FetchedFile.Extension)(ok: FetchedFile.Bytes => Boolean): Option[FetchedFile] =
+    private def dataset(o: PmcObject, ext: FetchedFile.Extension)(
+        ok: FetchedFile.Bytes => Boolean
+    ): Option[FetchedFile] =
       val url = s"${cfg.pmcDataset.url}/${o.key}"
       http.get(Plugin.Http.GetUrl(url), pmcGetHeaders).map(body => FetchedFile.Bytes(body.value)) match
         case Left(e) =>
           ctx.log.info(Plugin.Log.InfoMessage(s"pmc fetch failed ($e)")); None
         case Right(b) if !ok(b) =>
-          ctx.log.info(Plugin.Log.InfoMessage(s"pmc: $url returned ${b.value.length} bytes that are not a $ext — skipping")); None
+          ctx.log.info(
+            Plugin.Log.InfoMessage(s"pmc: $url returned ${b.value.length} bytes that are not a $ext — skipping")
+          );
+          None
         case Right(b) if o.md5.exists(m => Downloads.md5(b).exists(_.value != m.value)) =>
           ctx.log.warn(Plugin.Log.WarnMessage(s"pmc: $url does not match the MD5 its record gives — skipping")); None
         case Right(b) => Some(FetchedFile(FetchedFile.Source("pmc"), Some(FetchedFile.Url(url)), b, ext))

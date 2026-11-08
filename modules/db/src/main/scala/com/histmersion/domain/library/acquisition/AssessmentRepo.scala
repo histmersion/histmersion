@@ -14,7 +14,6 @@ import com.histmersion.domain.library.Doi
   */
 private[acquisition] object AssessmentRepo:
 
-
   final private case class RwRow(
       nature: Option[RetractionNotice.Nature],
       reason: Option[RetractionNotice.Reason],

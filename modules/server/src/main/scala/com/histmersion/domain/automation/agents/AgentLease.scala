@@ -10,7 +10,11 @@ import javax.sql.DataSource
   * over when the holder's lease runs out (it renews it every `ttl / 3`; the ttl is 3 × the managers' tick). `owner`
   * names this PROCESS (host and pid): two servers in one JVM (a test suite) share it; two processes never do.
   */
-final class AgentLease(ds: DataSource, ttlSeconds: AgentLease.TtlSeconds, val owner: AgentLease.Owner = AgentLease.ownerId()):
+final class AgentLease(
+    ds: DataSource,
+    ttlSeconds: AgentLease.TtlSeconds,
+    val owner: AgentLease.Owner = AgentLease.ownerId()
+):
 
   @volatile private var held = false
   @volatile private var thread: Option[Thread] = None
@@ -107,7 +111,6 @@ object AgentLease:
   val TtlSeconds: LeaseRepo.TtlSeconds.type = LeaseRepo.TtlSeconds
   type Owner = LeaseRepo.LeaseOwner
   val Owner: LeaseRepo.LeaseOwner.type = LeaseRepo.LeaseOwner
-
 
   val Name: LeaseRepo.LeaseName = LeaseRepo.LeaseName("agents")
 

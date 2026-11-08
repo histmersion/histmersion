@@ -24,7 +24,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object BundlePlan:
 
-
   type EntityOwnBundle = EntityOwnBundle.T
   object EntityOwnBundle extends Newtype[Boolean, Pure]
   type TombstoneOwnBundle = TombstoneOwnBundle.T
@@ -57,7 +56,6 @@ object BundlePlan:
       case Insert | FastForward | Delete => true
       case _                             => false
 
-
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
   val DeletedRev = "deleted"
 
@@ -88,7 +86,12 @@ object BundlePlan:
     * bundle's rev, as the ledger remembers it; `localizedRev` the rev of the same line in this instance's terms,
     * comparable with the local row's. Without a mapping they are equal.
     */
-  def entity(foreignRev: Ledger.ForeignRev, localizedRev: Local.Rev, local: Local, ownBundle: EntityOwnBundle): Decision =
+  def entity(
+      foreignRev: Ledger.ForeignRev,
+      localizedRev: Local.Rev,
+      local: Local,
+      ownBundle: EntityOwnBundle
+  ): Decision =
     local.rev match
       case Some(r) if r == localizedRev                                => Decision.Unchanged
       case Some(_) if ownBundle.value                                  => Decision.KeepLocal

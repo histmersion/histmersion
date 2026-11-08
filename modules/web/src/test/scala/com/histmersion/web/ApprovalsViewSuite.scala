@@ -26,7 +26,13 @@ class ApprovalsViewSuite extends munit.FunSuite:
       subject = Some(ApprovalInfo.Subject("g"))
     )
     assertEquals(ApprovalsView.evidenceLine(plan), None)
-    val status = ApprovalInfo(ApprovalInfo.Id(2), Some(Agents.RunInfo.Id("r")), ApprovalInfo.Kind("status-change"), Citekey("a2020_b"), evidence = ApprovalInfo.Evidence("a retraction notice"))
+    val status = ApprovalInfo(
+      ApprovalInfo.Id(2),
+      Some(Agents.RunInfo.Id("r")),
+      ApprovalInfo.Kind("status-change"),
+      Citekey("a2020_b"),
+      evidence = ApprovalInfo.Evidence("a retraction notice")
+    )
     assertEquals(ApprovalsView.evidenceLine(status), Some("a retraction notice"))
     assertEquals(ApprovalsView.evidenceLine(status.modify(_.evidence).setTo(ApprovalInfo.Evidence(""))), None)
 
@@ -39,9 +45,25 @@ class ApprovalsViewSuite extends munit.FunSuite:
       Citekey(""),
       subject = Some(ApprovalInfo.Subject("review")),
       hintEffect = Some(
-        HintProposal(Managers.ManagerInfo.Id("review"), HintProposal.Hint(7), HintProposal.Text("wait with tin"), HintEffect(HintEffect.Action("hold"), List(HintEffect.Targets("tin")), until = Some(HintEffect.Until("2026-12-01"))), HintProposal.By("mcp"))
+        HintProposal(
+          Managers.ManagerInfo.Id("review"),
+          HintProposal.Hint(7),
+          HintProposal.Text("wait with tin"),
+          HintEffect(
+            HintEffect.Action("hold"),
+            List(HintEffect.Targets("tin")),
+            until = Some(HintEffect.Until("2026-12-01"))
+          ),
+          HintProposal.By("mcp")
+        )
       )
     )
     assertEquals(ApprovalsView.describe(h), "manager review: hold tin until 2026-12-01")
-    val plan = ApprovalInfo(ApprovalInfo.Id(4), None, ApprovalInfo.Kind("article-plan"), Citekey(""), subject = Some(ApprovalInfo.Subject("g")))
+    val plan = ApprovalInfo(
+      ApprovalInfo.Id(4),
+      None,
+      ApprovalInfo.Kind("article-plan"),
+      Citekey(""),
+      subject = Some(ApprovalInfo.Subject("g"))
+    )
     assertEquals(ApprovalsView.describe(plan), "compile 0 new articles for goal g")

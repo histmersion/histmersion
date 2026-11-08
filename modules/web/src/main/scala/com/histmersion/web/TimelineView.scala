@@ -39,7 +39,8 @@ object TimelineView:
   private def spanTo: Years.Astronomical = Years.Astronomical(UiState.to.now().getOrElse(limits.defaultTo.value))
 
   /** A span of the timeline as the filter and the labels read it. */
-  private def period(from: Years.Astronomical, to: Years.Astronomical): Period = Period(Year(from.value), Year(to.value))
+  private def period(from: Years.Astronomical, to: Years.Astronomical): Period =
+    Period(Year(from.value), Year(to.value))
   private val detailBars = Var(List.empty[TimeBucket])
   private val overviewBars = Var(List.empty[TimeBucket])
   private val loading = Var(false)
@@ -93,7 +94,8 @@ object TimelineView:
   private var lastOvFilterKey: String = ""
 
   /** What the detail curve layer was drawn for: (from, to, width). */
-  private var dtDrawn: (Years.Astronomical, Years.Astronomical, Double) = (Years.Astronomical(0L), Years.Astronomical(0L), 0.0)
+  private var dtDrawn: (Years.Astronomical, Years.Astronomical, Double) =
+    (Years.Astronomical(0L), Years.Astronomical(0L), 0.0)
 
   private enum DragKind derives CanEqual:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
@@ -170,7 +172,8 @@ object TimelineView:
     * `Layout.maxBuckets`.
     */
   private[web] def bucketSizeFor(spanYears: Years.Shift, pixelWidth: Double): PlaybackBuckets.BucketYears =
-    val byPixels = Math.ceil(spanYears.value.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket.value)).toLong
+    val byPixels =
+      Math.ceil(spanYears.value.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket.value)).toLong
     val byLimit = Math.ceil(spanYears.value.toDouble / Layout.maxBuckets.value).toLong
     PlaybackBuckets.BucketYears(Math.max(1L, Math.max(byPixels, byLimit)))
 
@@ -287,7 +290,14 @@ object TimelineView:
       gradId: String
   ): Vector[TimelineCurve.Pt] =
     val ns = "http://www.w3.org/2000/svg"
-    val pts = TimelineCurve.points(bs, from, to, TimelineCurve.ElementSize(w), TimelineCurve.ScreenPixels(baseY), top = TimelineCurve.ScreenPixels(4))
+    val pts = TimelineCurve.points(
+      bs,
+      from,
+      to,
+      TimelineCurve.ElementSize(w),
+      TimelineCurve.ScreenPixels(baseY),
+      top = TimelineCurve.ScreenPixels(4)
+    )
     if pts.nonEmpty then
       val defs = dom.document.createElementNS(ns, "defs")
       val grad = dom.document.createElementNS(ns, "linearGradient")
@@ -335,7 +345,8 @@ object TimelineView:
 
   /** Pure: what the hover marker says of a bucket. */
   private[web] def hoverText(b: TimeBucket): UiLabels.Text =
-    val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value else s"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
+    val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value
+    else s"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
     UiLabels.Text(s"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
 
   private def showHover(layer: dom.Element, at: Option[(Double, TimelineCurve.Pt)], w: Double): Unit =
@@ -348,7 +359,13 @@ object TimelineView:
         val span = (spanTo.value - spanFrom.value).toDouble.max(1)
         dot.setAttribute(
           "fill",
-          Fmt.color(Fmt.ColorT((((p.bucket.start.value + p.bucket.end.value).toDouble / 2 - spanFrom.value) / span).max(0).min(1))).value
+          Fmt
+            .color(
+              Fmt.ColorT(
+                (((p.bucket.start.value + p.bucket.end.value).toDouble / 2 - spanFrom.value) / span).max(0).min(1)
+              )
+            )
+            .value
         )
         layer.appendChild(dot)
         val label = dom.document.createElementNS(svgNs, "text")
@@ -377,7 +394,10 @@ object TimelineView:
     g
 
   /** Horizontal transform mapping a curve drawn for `drawn` onto `now`; identity when they match. */
-  private[web] def realign(drawn: (Years.Astronomical, Years.Astronomical, Double), now: (Years.Astronomical, Years.Astronomical, Double)): (Double, Double) =
+  private[web] def realign(
+      drawn: (Years.Astronomical, Years.Astronomical, Double),
+      now: (Years.Astronomical, Years.Astronomical, Double)
+  ): (Double, Double) =
     val (df, dt, dw) = drawn
     val (nf, nt, nw) = now
     val dSpan = (dt.value - df.value).toDouble.max(1)
@@ -411,7 +431,15 @@ object TimelineView:
       if lastOvBarsLen != bs.length || lastOvWidth <= 0 || h != lastOvHeight then
         clearLayer(ovCurveLayer)
         showHover(ovHoverLayer, None, w)
-        ovPts = drawAreaCurve(ovCurveLayer, bs, Years.Astronomical(limits.min.value), Years.Astronomical(limits.max.value), w, ovBase(h) - 2, "ov-grad")
+        ovPts = drawAreaCurve(
+          ovCurveLayer,
+          bs,
+          Years.Astronomical(limits.min.value),
+          Years.Astronomical(limits.max.value),
+          w,
+          ovBase(h) - 2,
+          "ov-grad"
+        )
         lastOvWidth = w
         lastOvHeight = h
         lastOvBarsLen = bs.length
@@ -489,7 +517,11 @@ object TimelineView:
 
   /** Overview buckets overlapping `[from, to]`, one neighbour kept on each side so the curve runs to the edges.
     */
-  private[web] def underlayBuckets(bs: List[TimeBucket], from: Years.Astronomical, to: Years.Astronomical): List[TimeBucket] =
+  private[web] def underlayBuckets(
+      bs: List[TimeBucket],
+      from: Years.Astronomical,
+      to: Years.Astronomical
+  ): List[TimeBucket] =
     val idx = bs.indices.filter(i => bs(i).end.value >= from.value && bs(i).start.value <= to.value)
     if idx.isEmpty then Nil
     else bs.slice(Math.max(0, idx.head - 1), Math.min(bs.length, idx.last + 2))
@@ -664,7 +696,11 @@ object TimelineView:
             s"defined by: $who",
             PresetMenu.periodoId(p).fold("")(id => s"PeriodO $id")
           ).filter(_.nonEmpty).mkString("\n"),
-          span(cls := "tl-preset-line", span(cls := "tl-preset-label", p.label.value), span(cls := "tl-preset-years", years)),
+          span(
+            cls := "tl-preset-line",
+            span(cls := "tl-preset-label", p.label.value),
+            span(cls := "tl-preset-years", years)
+          ),
           span(cls := "tl-preset-meta", s"$where · $who"),
           onClick --> { _ =>
             setSpan(Years.Astronomical(p.period.start.value), Years.Astronomical(p.period.end.value))
@@ -679,14 +715,17 @@ object TimelineView:
     val (a, b) = (Year(spanFrom.value), Year(spanTo.value))
     List(
       ContextMenu.Entry(
-        if locked.now() then ContextMenu.Entry.Label("Unlock the timeline") else ContextMenu.Entry.Label("Lock the timeline"),
+        if locked.now() then ContextMenu.Entry.Label("Unlock the timeline")
+        else ContextMenu.Entry.Label("Lock the timeline"),
         () => setLocked(!locked.now()),
         pressed = Some(ContextMenu.Entry.Pressed(locked.now()))
       ),
       ContextMenu.Entry(
         ContextMenu.Entry.Label(s"Start the timeline at ${Fmt.periodStr(a, b)}"),
         () => PeriodMarks.startAt(a, b),
-        hint = Some(ContextMenu.Entry.Hint("The years the timeline opens on, for everyone who opens Histmersion from this server"))
+        hint = Some(
+          ContextMenu.Entry.Hint("The years the timeline opens on, for everyone who opens Histmersion from this server")
+        )
       ),
       ContextMenu.Entry(
         ContextMenu.Entry.Label("Add these years to my periods…"),
@@ -801,7 +840,10 @@ object TimelineView:
                   else
                     val clickYear = limits.min.value.toDouble + (x / w) * fullSpan
                     val half = (st.value - sf.value).toDouble / 2
-                    setSpan(Years.Astronomical(Math.round(clickYear - half)), Years.Astronomical(Math.round(clickYear + half)))
+                    setSpan(
+                      Years.Astronomical(Math.round(clickYear - half)),
+                      Years.Astronomical(Math.round(clickYear + half))
+                    )
                     DragKind.PanRange
 
                 dragState.set(Some(DragInfo(x, x, kind, sf.value, st.value)))
@@ -1074,7 +1116,11 @@ object TimelineView:
             ),
             presetsDropdown
           ),
-          ContextMenu.button(ContextMenu.ButtonTitle("Timeline actions"), () => menuEntries(config), ContextMenu.ButtonExtraCls("tl-menu-btn")),
+          ContextMenu.button(
+            ContextMenu.ButtonTitle("Timeline actions"),
+            () => menuEntries(config),
+            ContextMenu.ButtonExtraCls("tl-menu-btn")
+          ),
           button(
             typ := "button",
             cls := "btn btn--ghost tl-all-time",

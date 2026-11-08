@@ -16,7 +16,12 @@ class NoticesSuite extends munit.FunSuite:
   private val t1Seen = Counter.Seen("2026-10-11T08:00:00.000000Z")
   private val t2Seen = Counter.Seen("2026-10-11T09:00:00.000000Z")
 
-  private def c(key: Board.Wire, latest: Option[Counter.Latest], seen: Option[Counter.Seen], count: Option[Counter.Count] = None) =
+  private def c(
+      key: Board.Wire,
+      latest: Option[Counter.Latest],
+      seen: Option[Counter.Seen],
+      count: Option[Counter.Count] = None
+  ) =
     Counter(key, count, latest, seen, Counter.Fresh(UiNotices.fresh(latest, seen)))
 
   test("each watched window is its own board; the others watch none"):
@@ -25,7 +30,11 @@ class NoticesSuite extends munit.FunSuite:
     assertEquals(Notices.boardOf(WindowKey.Approvals), Some(Board.Approvals))
     assertEquals(Notices.boardOf(WindowKey.Acquire), Some(Board.Acquire))
     assertEquals(Notices.boardOf(WindowKey.Log), Some(Board.Log))
-    assertEquals(Notices.boardOf(WindowKey.Goal(WindowKey.Goal.Slug("bronze-age"))), None, "one goal's window is not the goals list")
+    assertEquals(
+      Notices.boardOf(WindowKey.Goal(WindowKey.Goal.Slug("bronze-age"))),
+      None,
+      "one goal's window is not the goals list"
+    )
     assertEquals(Notices.boardOf(WindowKey.Jobs), None)
     // every board is a page of Research's, which marks it read while it is shown
     val pages = List(
@@ -63,12 +72,18 @@ class NoticesSuite extends munit.FunSuite:
     assert(Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), None), t1Seen).fresh.value)
 
   test("the phone's tools button marks news among the boards it shows"):
-    val cs = Map(Board.Wire("approvals") -> c(Board.Wire("approvals"), Some(t2Latest), Some(t1Seen)), Board.Wire("log") -> c(Board.Wire("log"), Some(t1Latest), Some(t1Seen)))
+    val cs = Map(
+      Board.Wire("approvals") -> c(Board.Wire("approvals"), Some(t2Latest), Some(t1Seen)),
+      Board.Wire("log") -> c(Board.Wire("log"), Some(t1Latest), Some(t1Seen))
+    )
     assert(Notices.anyFresh(cs, _ => true))
     assert(!Notices.anyFresh(cs, _ != Board.Approvals), "approvals hidden (no agents): no mark")
 
   test("what a screen reader hears beside the label"):
     assertEquals(Notices.spoken(None), "")
     assertEquals(Notices.spoken(Some(c(Board.Wire("tasks"), Some(t1Latest), Some(t1Seen), Some(Counter.Count(0))))), "")
-    assertEquals(Notices.spoken(Some(c(Board.Wire("tasks"), Some(t2Latest), Some(t1Seen), Some(Counter.Count(12))))), "12 open, something new")
+    assertEquals(
+      Notices.spoken(Some(c(Board.Wire("tasks"), Some(t2Latest), Some(t1Seen), Some(Counter.Count(12))))),
+      "12 open, something new"
+    )
     assertEquals(Notices.spoken(Some(c(Board.Wire("goals"), Some(t2Latest), Some(t1Seen)))), "something new")

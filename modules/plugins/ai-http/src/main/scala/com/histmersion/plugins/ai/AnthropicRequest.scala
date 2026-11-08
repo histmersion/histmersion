@@ -25,7 +25,6 @@ object AnthropicRequest:
 
   /** The output cap when the step names none. */
 
-
   val DefaultMaxTokens = 4096
 
   /** The request for `r`, or why it cannot be built (a tool call whose input is not a JSON object), described as the
@@ -43,7 +42,8 @@ object AnthropicRequest:
           )
         })
       )
-      val schema = r.answerSchemaRendered.map(_.value).orElse(r.answerSchema.map(_.value)).flatMap(s => parse(s).toOption)
+      val schema =
+        r.answerSchemaRendered.map(_.value).orElse(r.answerSchema.map(_.value)).flatMap(s => parse(s).toOption)
       val output = schema.map(s =>
         Json.obj(
           "format" -> Json.obj("type" -> Json.fromString("json_schema"), "schema" -> SchemaJson(s).closed.json)
@@ -85,7 +85,10 @@ object AnthropicRequest:
     go(ms, Nil).map(dropNulls)
 
   @annotation.tailrec
-  private def toolUses(calls: List[(AiTool.Call.Id, AiTool.Call.Tool, AiTool.Call.Input)], acc: List[Json]): Either[Problem, List[Json]] =
+  private def toolUses(
+      calls: List[(AiTool.Call.Id, AiTool.Call.Tool, AiTool.Call.Input)],
+      acc: List[Json]
+  ): Either[Problem, List[Json]] =
     calls match
       case Nil                       => Right(acc.reverse)
       case (id, name, input) :: tail =>

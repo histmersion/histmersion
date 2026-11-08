@@ -47,11 +47,19 @@ class PeriodPlanSuite extends munit.FunSuite:
         period(Bundle.Period.Id("b_age"), Bundle.Period.Label("Age"), Year(-2000), Year(-1000))
       )
     )
-    assertEquals(PeriodPlan.repoint(es, Map(Bundle.Period.ParentId("b_age") -> Bundle.Period.ParentId("h_age"))).periods.map(_.parentId), List(Some("h_age"), None))
+    assertEquals(
+      PeriodPlan
+        .repoint(es, Map(Bundle.Period.ParentId("b_age") -> Bundle.Period.ParentId("h_age")))
+        .periods
+        .map(_.parentId),
+      List(Some("h_age"), None)
+    )
     assertEquals(PeriodPlan.repoint(es, Map.empty), es)
 
   test("two records of one period id are the same period when the span and the label's fingerprint agree"):
     val a = period(Bundle.Period.Id("zz_age"), Bundle.Period.Label("The Zz Age"), Year(-1500), Year(-1000))
     assert(PeriodPlan.samePeriod(a, a.modify(_.label).setTo(Bundle.Period.Label("zz age, the"))))
     assert(!PeriodPlan.samePeriod(a, a.modify(_.label).setTo(Bundle.Period.Label("The Zz Era"))))
-    assert(!PeriodPlan.samePeriod(a, a.modify(_.period).setTo(Some(Bundle.Range(Some(Year(-1600)), Some(Year(-1000)))))))
+    assert(
+      !PeriodPlan.samePeriod(a, a.modify(_.period).setTo(Some(Bundle.Range(Some(Year(-1600)), Some(Year(-1000))))))
+    )

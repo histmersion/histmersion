@@ -40,7 +40,10 @@ object ViewportToggle:
 
   /** What the map shows now, if it is up: the preset menu puts that region's presets first. */
   def viewBox: Option[BBox] =
-    Option.when(TheMap.isUp)(TheMap.surface).flatMap(m => scala.util.Try(bboxOf(m)).toOption).flatMap(t => BBox.parse(BBox.Text(t)))
+    Option
+      .when(TheMap.isUp)(TheMap.surface)
+      .flatMap(m => scala.util.Try(bboxOf(m)).toOption)
+      .flatMap(t => BBox.parse(BBox.Text(t)))
 
   /** The help of the "States shown" menu ([[UiState.areaPick]]). */
   val AreaPickHelp: String =
@@ -82,8 +85,18 @@ object ViewportToggle:
         )
       case MapLayer.Media =>
         List(
-          MediaFilters.select(MediaFilters.FieldName("provider"), UiState.mediaProvider, MediaFilters.providers.signal, k => MediaFilters.ChoiceLabel(MediaProvider.title(MediaProvider.Id(k.value)).value)),
-          MediaFilters.select(MediaFilters.FieldName("licence"), UiState.mediaLicense, MediaFilters.licences.signal, k => MediaFilters.ChoiceLabel(LicenseName.label(k.value)))
+          MediaFilters.select(
+            MediaFilters.FieldName("provider"),
+            UiState.mediaProvider,
+            MediaFilters.providers.signal,
+            k => MediaFilters.ChoiceLabel(MediaProvider.title(MediaProvider.Id(k.value)).value)
+          ),
+          MediaFilters.select(
+            MediaFilters.FieldName("licence"),
+            UiState.mediaLicense,
+            MediaFilters.licences.signal,
+            k => MediaFilters.ChoiceLabel(LicenseName.label(k.value))
+          )
         )
       case MapLayer.Events =>
         List(
@@ -112,7 +125,9 @@ object ViewportToggle:
         title := AreaPickHelp,
         controlled(
           value <-- UiState.areaPick.signal.map(_.wire.value),
-          onChange.mapToValue --> { v => GeoPick.parse(GeoPick.Wire(v)).foreach(p => UiState.set(UiState.areaPick := p)()) }
+          onChange.mapToValue --> { v =>
+            GeoPick.parse(GeoPick.Wire(v)).foreach(p => UiState.set(UiState.areaPick := p)())
+          }
         ),
         GeoPick.values.toList.map(p => option(value := p.wire.value, p.label))
       )
@@ -234,7 +249,17 @@ object ViewportToggle:
                 // minLon > maxLon means the saved viewport crossed the antimeridian: the map needs
                 // a monotonically increasing east bound.
                 val east = if parts(0) > parts(2) then parts(2) + 360 else parts(2)
-                map.fitBounds(GeoBounds(GeoBounds.South(parts(1)), GeoBounds.West(parts(0)), GeoBounds.North(parts(3)), GeoBounds.East(east)), MapSurface.FitBoundsPadding(0), map.maxZoom, animate = MapSurface.FitBoundsAnimate(false))
+                map.fitBounds(
+                  GeoBounds(
+                    GeoBounds.South(parts(1)),
+                    GeoBounds.West(parts(0)),
+                    GeoBounds.North(parts(3)),
+                    GeoBounds.East(east)
+                  ),
+                  MapSurface.FitBoundsPadding(0),
+                  map.maxZoom,
+                  animate = MapSurface.FitBoundsAnimate(false)
+                )
               else UiState.set(UiState.bbox := Some(bboxOf(map)))()
             sub
           },

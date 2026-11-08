@@ -25,12 +25,13 @@ object MapStart:
     BigDecimal(v).setScale(places, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
 
   def decode(s: Encoded): Option[(LatLon, MapSurface.Zoom)] =
-    Option(s.value).map(_.split(',').map(_.trim).toList).collect { case List(a, b, c) => (a, b, c) }.flatMap { (a, b, c) =>
-      for
-        lat <- a.toDoubleOption.filter(v => v >= -90 && v <= 90)
-        lon <- b.toDoubleOption.filter(v => v >= -180 && v <= 180)
-        zoom <- c.toDoubleOption.filter(v => v >= 0 && v <= 22)
-      yield (LatLon(LatLon.Lat(lat), LatLon.Lon(lon)), MapSurface.Zoom(zoom))
+    Option(s.value).map(_.split(',').map(_.trim).toList).collect { case List(a, b, c) => (a, b, c) }.flatMap {
+      (a, b, c) =>
+        for
+          lat <- a.toDoubleOption.filter(v => v >= -90 && v <= 90)
+          lon <- b.toDoubleOption.filter(v => v >= -180 && v <= 180)
+          zoom <- c.toDoubleOption.filter(v => v >= 0 && v <= 22)
+        yield (LatLon(LatLon.Lat(lat), LatLon.Lon(lon)), MapSurface.Zoom(zoom))
     }
 
   /** The view the map opens on: the browser's last one under "last" (if it kept one), else the configured place. Pure.

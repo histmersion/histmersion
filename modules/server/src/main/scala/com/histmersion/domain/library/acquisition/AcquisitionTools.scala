@@ -145,7 +145,11 @@ final class AcquisitionTools(
       )
       .input[IngestInput]
       .handle(in =>
-        render(h.ingest(Ingest.Request(in.id, in.citekey, in.arxiv, in.refetch, Ingest.Request.LegalOnly(in.legalOnly.value))))(AcquireMarkdown.ingest)
+        render(
+          h.ingest(
+            Ingest.Request(in.id, in.citekey, in.arxiv, in.refetch, Ingest.Request.LegalOnly(in.legalOnly.value))
+          )
+        )(AcquireMarkdown.ingest)
       )
 
   private val archive =
@@ -158,14 +162,21 @@ final class AcquisitionTools(
       )
       .input[ArchiveInput]
       .handle { in =>
-        (in.query.map(q => AcquireApi.Query(q.value.trim)).filter(_.value.nonEmpty), in.id.map(i => ArchiveImportRequest.Id(i.value.trim)).filter(_.value.nonEmpty)) match
+        (
+          in.query.map(q => AcquireApi.Query(q.value.trim)).filter(_.value.nonEmpty),
+          in.id.map(i => ArchiveImportRequest.Id(i.value.trim)).filter(_.value.nonEmpty)
+        ) match
           case (_, Some(id)) if in.`import`.value =>
             render(collections.archiveImport(Caller.Local, ArchiveImportRequest(id, in.citekey, in.format)))(
               AcquireMarkdown.ingest
             )
-          case (_, Some(id)) => render(collections.archiveInfo(Caller.Local, ArchiveId(id.value)))(AcquireMarkdown.archiveItem)
-          case (Some(q), _)  =>
-            render(collections.archiveSearch(Caller.Local, Search.Query(q.value), in.rows.map(r => CollectionsService.Limit(r.value))))(AcquireMarkdown.archiveSearch)
+          case (_, Some(id)) =>
+            render(collections.archiveInfo(Caller.Local, ArchiveId(id.value)))(AcquireMarkdown.archiveItem)
+          case (Some(q), _) =>
+            render(
+              collections
+                .archiveSearch(Caller.Local, Search.Query(q.value), in.rows.map(r => CollectionsService.Limit(r.value)))
+            )(AcquireMarkdown.archiveSearch)
           case _ => ToolResult.text("_give a `query` to search, or an `id`_")
       }
 
@@ -184,10 +195,19 @@ final class AcquisitionTools(
       .handle { in =>
         if in.sweep.value then
           in.goal.map(_.value.trim).filter(_.nonEmpty) match
-            case Some(g) => render(h.sweepCandidates(CandidateSweep.Request(CandidateSweep.Request.Goal(g), CandidateSweep.Request.DryRun(in.dryRun.value))))(CandidatesMarkdown.sweep)
-            case None    => ToolResult.text("_give `goal` to sweep_")
+            case Some(g) =>
+              render(
+                h.sweepCandidates(
+                  CandidateSweep.Request(CandidateSweep.Request.Goal(g), CandidateSweep.Request.DryRun(in.dryRun.value))
+                )
+              )(CandidatesMarkdown.sweep)
+            case None => ToolResult.text("_give `goal` to sweep_")
         else if in.mark.nonEmpty then
-          render(h.markCandidates(CandidateMark(in.mark, in.as.getOrElse(Source.Candidate.State(Candidates.State.Seen.wire.value)))))(
+          render(
+            h.markCandidates(
+              CandidateMark(in.mark, in.as.getOrElse(Source.Candidate.State(Candidates.State.Seen.wire.value)))
+            )
+          )(
             CandidatesMarkdown.marked
           )
         else render(h.candidates(in.goal, in.state, in.limit, in.offset))(CandidatesMarkdown.list)
@@ -212,12 +232,12 @@ object AcquisitionTools:
       limit: Option[AcquireApi.Limit] = None,
       notInDb: DiscoverInput.NotInDb = DiscoverInput.NotInDb(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object DiscoverInput:
     type NotInDb = NotInDb.T
     object NotInDb extends Newtype[Boolean, Pure]
-
 
   final case class CandidatesInput(
       goal: Option[Goal.Slug] = None,
@@ -229,7 +249,8 @@ object AcquisitionTools:
       sweep: CandidatesInput.Sweep = CandidatesInput.Sweep(false),
       dryRun: CandidatesInput.DryRun = CandidatesInput.DryRun(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object CandidatesInput:
     type Sweep = Sweep.T
@@ -237,10 +258,10 @@ object AcquisitionTools:
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
 
-
-  final case class RefsInput(id: RefsRequest.Id, apply: RefsRequest.Apply = RefsRequest.Apply(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
-
+  final case class RefsInput(id: RefsRequest.Id, apply: RefsRequest.Apply = RefsRequest.Apply(false))
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class AssessInput(
       id: Option[AssessRequest.Id] = None,
@@ -249,7 +270,8 @@ object AcquisitionTools:
       updateRetractions: AssessInput.UpdateRetractions = AssessInput.UpdateRetractions(false),
       retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object AssessInput:
     type UpdateRetractions = UpdateRetractions.T
@@ -257,16 +279,14 @@ object AcquisitionTools:
     type RetractionsStatus = RetractionsStatus.T
     object RetractionsStatus extends Newtype[Boolean, Pure]
 
-
   final case class FollowupsInput(
       id: FollowupsRequest.Id,
       since: Option[FollowupsRequest.Since] = None,
       limit: Option[FollowupsRequest.Limit] = None,
       apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class IngestInput(
       id: Ingest.Request.Id,
@@ -294,7 +314,8 @@ object AcquisitionTools:
       format: Option[ArchiveImportRequest.Format] = None,
       rows: Option[AcquireApi.Limit] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ArchiveInput:
     type Import = Import.T

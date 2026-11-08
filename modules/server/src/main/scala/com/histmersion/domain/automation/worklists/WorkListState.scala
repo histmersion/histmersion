@@ -27,7 +27,11 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
       case QueueScope.Open        => ofKind.filter(_.status.value == Queue.Open)
       case QueueScope.All         => ofKind
       case QueueScope.ForJob(job) =>
-        ofKind.filter(i => i.status.value != Queue.Note && (i.createdBy.exists(_.value == job.value) || i.closedBy.exists(_.value == job.value)))
+        ofKind.filter(i =>
+          i.status.value != Queue.Note && (i.createdBy.exists(_.value == job.value) || i.closedBy.exists(
+            _.value == job.value
+          ))
+        )
       case QueueScope.ForGoal(goal, linked, withDone) =>
         ofKind.filter(i =>
           i.status.value != Queue.Note && (withDone.value || i.status.value == Queue.Open) &&
@@ -41,7 +45,10 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else
-      items.filter(i => i.list == kind.label && i.text.value.toLowerCase.contains(d) && Scheduling.dois(i.text.value).exists(_.value == d))
+      items.filter(i =>
+        i.list == kind.label && i.text.value.toLowerCase
+          .contains(d) && Scheduling.dois(i.text.value).exists(_.value == d)
+      )
 
   /** `in` added to `kind` at `now`, as the database inserts it. */
   def added(kind: Kind, in: QueueAdd, now: Instant): WorkListState = addedAll(kind, List(in), now)
@@ -50,7 +57,8 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
   def addedAll(kind: Kind, ins: List[QueueAdd], now: Instant): WorkListState =
     @tailrec def loop(rest: List[QueueAdd], made: Vector[QueueItem], last: QueueItemId): WorkListState = rest match
       case Nil        => WorkListState(items ++ made, last)
-      case in :: tail => loop(tail, made :+ WorkListState.item(kind, in, QueueItemId(last.value + 1), now), QueueItemId(last.value + 1))
+      case in :: tail =>
+        loop(tail, made :+ WorkListState.item(kind, in, QueueItemId(last.value + 1), now), QueueItemId(last.value + 1))
     loop(ins, Vector.empty, lastId)
 
   /** `next` written over its item; a done item keeps its first done time, any other status clears it. */
@@ -60,7 +68,9 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
       .using(_.map { cur =>
         if cur.id != next.id then cur
         else
-          val doneAt = if next.status.value == Queue.Done then cur.doneAt.orElse(Some(QueueItem.DoneAt(WorkListState.stamp(now)))) else None
+          val doneAt =
+            if next.status.value == Queue.Done then cur.doneAt.orElse(Some(QueueItem.DoneAt(WorkListState.stamp(now))))
+            else None
           next.modify(_.doneAt).using(_ => doneAt)
       })
 

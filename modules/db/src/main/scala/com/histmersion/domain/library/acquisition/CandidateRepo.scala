@@ -20,7 +20,6 @@ private[acquisition] object CandidateRepo:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
 
-
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class WatchRow(
@@ -97,7 +96,9 @@ private[acquisition] object CandidateRepo:
   ) derives DbCodec
 
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[Goal.Slug], state: Source.Candidate.State, limit: Limit, offset: Offset)(using DbCon): List[Source.Candidate] =
+  def list(goal: Option[Goal.Slug], state: Source.Candidate.State, limit: Limit, offset: Offset)(using
+      DbCon
+  ): List[Source.Candidate] =
     sql"""SELECT id, goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, state,
                    to_char(first_seen AT TIME ZONE 'UTC', ${SqlLiteral(
         ts

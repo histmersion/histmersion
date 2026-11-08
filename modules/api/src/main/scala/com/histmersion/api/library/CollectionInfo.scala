@@ -18,7 +18,8 @@ final case class CollectionInfo(
     reachable: CollectionInfo.Reachable,
     problem: Option[CollectionInfo.Problem]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionInfo:
   type Name = Name.T

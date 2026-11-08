@@ -106,7 +106,8 @@ object PlacesInput:
   private var layer: Boolean = false
   private val pickNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
   private val previewNames = scala.collection.mutable.ListBuffer.empty[DomMarker]
-  private val drawnPlaces = scala.collection.mutable.HashMap.empty[PlaceId, (PlaceId, UiLabels.Text, PlaceHover.PlaceKind)]
+  private val drawnPlaces =
+    scala.collection.mutable.HashMap.empty[PlaceId, (PlaceId, UiLabels.Text, PlaceHover.PlaceKind)]
   private var previewShown = false
   private var previewId: Option[PlaceId] = None
   private var drawn: String = ""
@@ -202,11 +203,13 @@ object PlacesInput:
             activeVar.set(-1)
             menuHidden.set(false)
 
-        latest.onCurrent(ApiClient.places(
-          Some(Api.Search.Text(q)),
-          asOf().map(a => Api.AggregateQuery.AsOf(a.value)),
-          Some(Paging.Limit(uiConfig.facetSuggestions.value))
-        )) {
+        latest.onCurrent(
+          ApiClient.places(
+            Some(Api.Search.Text(q)),
+            asOf().map(a => Api.AggregateQuery.AsOf(a.value)),
+            Some(Paging.Limit(uiConfig.facetSuggestions.value))
+          )
+        ) {
           case Success(rows) => show(rows)
           case Failure(_)    => show(Nil)
         }
@@ -256,7 +259,11 @@ object PlacesInput:
   ): Option[ShapeFeature] =
     drawnPlaces(id) = (id, UiLabels.Text(d.place.label.value), PlaceHover.PlaceKind(d.place.kind.value))
     val t = if js.isUndefined(geo.selectDynamic("type")) then "" else geo.selectDynamic("type").toString
-    if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(d.place.kind, PlaceGlyph.GeometryType("Point")) == PlaceGlyph.Label then
+    if (t == "Point" || t == "MultiPoint") && PlaceGlyph.of(
+        d.place.kind,
+        PlaceGlyph.GeometryType("Point")
+      ) == PlaceGlyph.Label
+    then
       val c = if t == "Point" then geo.coordinates else geo.coordinates.selectDynamic("0")
       val m = PlaceGlyph.labelMarker(
         Geo.Latitude(c.selectDynamic("1").asInstanceOf[Double]),
@@ -501,10 +508,15 @@ object PlacesInput:
             d.geometry.foreach { geoStr =>
               val geo = js.JSON.parse(geoStr.value)
               previewSet.set(
-                drawPlace(id, d, geo, previewNames, () => effectiveAsOf).map(_.modify(_.dashed).setTo(ShapeFeature.Dashed(true))).toList
+                drawPlace(id, d, geo, previewNames, () => effectiveAsOf)
+                  .map(_.modify(_.dashed).setTo(ShapeFeature.Dashed(true)))
+                  .toList
               )
               previewShown = true
-              GeoBounds.ofGeometry(geo).filter(_.valid).foreach(bb => TheMap.surface.fitBounds(bb, MapSurface.FitBoundsPadding(20), MapSurface.MaxZoom(9)))
+              GeoBounds
+                .ofGeometry(geo)
+                .filter(_.valid)
+                .foreach(bb => TheMap.surface.fitBounds(bb, MapSurface.FitBoundsPadding(20), MapSurface.MaxZoom(9)))
             }
         }
 

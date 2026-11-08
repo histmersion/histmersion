@@ -14,7 +14,6 @@ import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
-
 import com.histmersion.api.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Queue
@@ -163,7 +162,11 @@ object AgentRepo:
   def get(id: RunInfo.Id)(using DbCon): Option[RunInfo] =
     (runSelect ++ sqlOf(" AND j.id = ?", str(id.value))).frag.query[RunRow].run().headOption.map(toInfo)
 
-  def list(status: Option[Run.State.Wire], limit: PageSize, goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): Vector[RunInfo] =
+  def list(
+      status: Option[Run.State.Wire],
+      limit: PageSize,
+      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
+  )(using DbCon): Vector[RunInfo] =
     (runSelect ++ runStatus(status) ++ runGoal(goal) ++ Keyset.orderBy("j.") ++ sqlOf(
       " LIMIT ?",
       int(limit.value)
@@ -247,7 +250,9 @@ object AgentRepo:
     * facets — each under every filter but its own. A run's models are the one it was started with and every one its
     * steps reported; the provider is a model's `provider:` part.
     */
-  def runFacets(q: RunQuery)(using DbCon): (List[(Run.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
+  def runFacets(q: RunQuery)(using
+      DbCon
+  ): (List[(Run.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = runConds(q)
     val facetMax = PageSize.applyUnsafe(ListFilters.FacetMax)
     def from(except: String) = Sql.raw(Sql.RawText(" FROM jobs j")) ++ runsOnlySql ++ c.except(except)
@@ -271,7 +276,9 @@ object AgentRepo:
     )
 
   /** How many runs are in each state — of one goal, when given. */
-  def stateCounts(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[(Run.State.Wire, RowCount)] =
+  def stateCounts(
+      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None
+  )(using DbCon): List[(Run.State.Wire, RowCount)] =
     Keyset
       .countsOn(Sql.raw(Sql.RawText(" FROM jobs j")) ++ runsOnlySql ++ runGoal(goal), "j.status")
       .map((s, n) => (Run.State.Wire(s.value), n))
@@ -293,7 +300,11 @@ object AgentRepo:
   /** The runs a manager dispatched, newest first (`active` = only those not settled yet: queued, running, paused or
     * waiting).
     */
-  def forManager(managerId: Managers.ManagerInfo.Id, active: ActiveOnly = ActiveOnly(false), limit: PageSize = PageSize(200))(using DbCon): Vector[RunInfo] =
+  def forManager(
+      managerId: Managers.ManagerInfo.Id,
+      active: ActiveOnly = ActiveOnly(false),
+      limit: PageSize = PageSize(200)
+  )(using DbCon): Vector[RunInfo] =
     val open = if active.value then sqlOf(" AND j.status IN ('queued', 'running', 'paused', 'waiting')") else Sql.empty
     (runSelect ++ sqlOf(" AND j.manager_id = ?", str(managerId.value)) ++ open ++
       sqlOf(" ORDER BY j.created_at DESC, j.id DESC LIMIT ?", int(limit.value))).frag
@@ -544,16 +555,29 @@ object AgentRepo:
     ApprovalKind.parse(r.kind) match
       case Some(ApprovalKind.GoalPlan) =>
         val p = Jsonb.read[Goal.Plans.Plan](r.proposal)
-        base.modify(_.plan).setTo(p).modify(_.evidence).setTo(ApprovalInfo.Evidence(p.map(_.rationale.value).getOrElse("")))
+        base
+          .modify(_.plan)
+          .setTo(p)
+          .modify(_.evidence)
+          .setTo(ApprovalInfo.Evidence(p.map(_.rationale.value).getOrElse("")))
       case Some(ApprovalKind.ArticlePublish) =>
         val d = Jsonb.read[Goal.Plans.ArticleDraft](r.proposal)
-        base.modify(_.article).setTo(d).modify(_.evidence).setTo(ApprovalInfo.Evidence(d.flatMap(_.summary).map(_.value).getOrElse("")))
+        base
+          .modify(_.article)
+          .setTo(d)
+          .modify(_.evidence)
+          .setTo(ApprovalInfo.Evidence(d.flatMap(_.summary).map(_.value).getOrElse("")))
       case Some(ApprovalKind.HintEffect) =>
         val p = Jsonb.read[Managers.HintProposal](r.proposal)
-        base.modify(
-          _.hintEffect).setTo(p).modify(_.evidence).setTo(
-          ApprovalInfo.Evidence(p.map(x => Option(x.why.value).filter(_.nonEmpty).getOrElse(x.text.value)).getOrElse(""))
-        )
+        base
+          .modify(_.hintEffect)
+          .setTo(p)
+          .modify(_.evidence)
+          .setTo(
+            ApprovalInfo.Evidence(
+              p.map(x => Option(x.why.value).filter(_.nonEmpty).getOrElse(x.text.value)).getOrElse("")
+            )
+          )
       case _ =>
         base.withArticleProposal(Jsonb.read[io.circe.Json](r.proposal)).getOrElse {
           val p = Jsonb.read[ProposalEvidence](r.proposal)
@@ -564,15 +588,9 @@ object AgentRepo:
             .setTo(p.flatMap(_.quote).map(q => ApprovalInfo.Quote(q.value)))
         }
 
-
-
-
   /** The payload an approval was recorded with, as stored. */
   def payload(id: ApprovalInfo.Id)(using DbCon): Option[Jsonb.JsonText] =
     sql"SELECT proposal::text FROM approvals WHERE id = $id".query[Jsonb.JsonText].run().headOption
-
-
-
 
   def approval(id: ApprovalInfo.Id)(using DbCon): Option[ApprovalInfo] =
 
@@ -656,7 +674,9 @@ object AgentRepo:
   /** The counts that go with a filtered page: per state (under every filter but the state) and the `kind` and
     * `decidedBy` facets (each under every filter but its own).
     */
-  def approvalFacets(q: ApprovalQuery)(using DbCon): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
+  def approvalFacets(q: ApprovalQuery)(using
+      DbCon
+  ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = approvalConds(q)
     val facetMax = PageSize.applyUnsafe(ListFilters.FacetMax)
     def from(except: String) = Sql.raw(Sql.RawText(" FROM approvals WHERE true")) ++ c.except(except)
@@ -785,7 +805,12 @@ object AgentRepo:
     )
 
   /** Compare-and-set an OPEN approval to its decision. `false` when it had already been decided. */
-  def decide(id: ApprovalInfo.Id, to: ApprovalState, note: Option[ApprovalInfo.Note], result: Option[ApprovalInfo.Result])(using DbCon): Boolean =
+  def decide(
+      id: ApprovalInfo.Id,
+      to: ApprovalState,
+      note: Option[ApprovalInfo.Note],
+      result: Option[ApprovalInfo.Result]
+  )(using DbCon): Boolean =
     sql"""UPDATE approvals SET state = ${to.wire}, note = $note, result = $result, decided_at = now()
           WHERE id = $id AND state = ${ApprovalState.Open.wire}""".update.run() > 0
 

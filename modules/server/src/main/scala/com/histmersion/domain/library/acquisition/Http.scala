@@ -18,14 +18,26 @@ import io.circe.Json
   * job is talking to flaky third parties.
   */
 trait Http:
-  def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[Http.Problem, Json]
-  def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[Http.Problem, Http.Text]
-  def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[Http.Problem, HttpAnswer.Body]
+  def json(
+      url: Http.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
+  ): Either[Http.Problem, Json]
+  def text(
+      url: Http.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
+  ): Either[Http.Problem, Http.Text]
+  def bytes(
+      url: Http.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
+  ): Either[Http.Problem, HttpAnswer.Body]
 
   /** One request, not retried, answered as it came — the status and headers too (CORE's budget reads them). A client
     * that only has bodies (a test's) answers 200 with no headers, or its `Left`.
     */
-  def once(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[Http.Problem, HttpAnswer] =
+  def once(
+      url: Http.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
+  ): Either[Http.Problem, HttpAnswer] =
     bytes(url, headers).map(HttpAnswer(HttpAnswer.Code(200), Map.empty, _))
 
 object Http:

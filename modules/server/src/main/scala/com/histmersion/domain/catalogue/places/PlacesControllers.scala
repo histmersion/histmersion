@@ -50,7 +50,11 @@ final class PlacesControllers(
     geocoder.resolve(name, hint, at, GeocodeSettings.PlaceholderMin(cfg().places.geocodePlaceholderMin.value))
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
-  def search(q: Option[PlaceService.SearchQ], asOf: Option[DeepTime.SignedYear], n: Option[PageSize]): List[com.histmersion.api.catalogue.Place.Hit] =
+  def search(
+      q: Option[PlaceService.SearchQ],
+      asOf: Option[DeepTime.SignedYear],
+      n: Option[PageSize]
+  ): List[com.histmersion.api.catalogue.Place.Hit] =
     places.search(q, asOf, limit(n, page(cfg().places.searchLimit.value)), modernFrom)
 
   /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
@@ -65,7 +69,8 @@ final class PlacesControllers(
           q.to.map(y => Year(y.value)),
           p.flatMap(GeoPick.parse).getOrElse(GeoPick.Mid)
         )
-        val geoLimit = cfg().places.geoLimit(q.limit.map(l => PlacesConfig.GeoLimit(l.value)), PlacesConfig.GeoLimit(100))
+        val geoLimit =
+          cfg().places.geoLimit(q.limit.map(l => PlacesConfig.GeoLimit(l.value)), PlacesConfig.GeoLimit(100))
         Right(
           Api.PlacesGeo.Json(
             shapes.shapes(q.kind.map(k => Place.Kind.Wire(k.value)), time, page(geoLimit.value), modernFrom).value
@@ -73,10 +78,16 @@ final class PlacesControllers(
         )
 
   /** `GET /api/places/{id}` — the row, its GeoJSON geometry and the hierarchy around it at `asOf`. */
-  def get(id: Place.Id, asOf: Option[DeepTime.SignedYear]): Either[Api.Error, com.histmersion.api.catalogue.Place.Entry] =
+  def get(
+      id: Place.Id,
+      asOf: Option[DeepTime.SignedYear]
+  ): Either[Api.Error, com.histmersion.api.catalogue.Place.Entry] =
     places.get(placeId(id), asOf, modernFrom).toRight(notFound(id.value))
 
-  def children(id: Place.Id, asOf: Option[DeepTime.SignedYear]): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Summary]] =
+  def children(
+      id: Place.Id,
+      asOf: Option[DeepTime.SignedYear]
+  ): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Summary]] =
     get(id, asOf).map(_ => places.children(placeId(id), asOf, page(cfg().places.childrenLimit.value), modernFrom))
 
   /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
@@ -187,7 +198,9 @@ final class PlacesControllers(
       in: com.histmersion.api.catalogue.Place.RemoveIn
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.Gone] =
     maintenance.guard(WriteGate.OperationName("places/remove")):
-      ApiPlace.Overrides.reason(in.reason.map(r => ApiPlace.Override.Reason(r.value))).flatMap(r => places.remove(placeId(id), r))
+      ApiPlace.Overrides
+        .reason(in.reason.map(r => ApiPlace.Override.Reason(r.value)))
+        .flatMap(r => places.remove(placeId(id), r))
 
   /** `GET /api/places/overrides?place=` — the kinds and periods people set, every place's or one's. */
   def overrides(id: Option[Place.Id]): List[com.histmersion.api.catalogue.Place.Override] = places.overrides(named(id))
@@ -232,7 +245,10 @@ final class PlacesControllers(
               .either(to.value)
               .left
               .map(why =>
-                Api.Error(Api.Error.Message(s"'${to.value}' is not a place id: $why"), Some(Api.Error.Code(Write.CodeInvalid)))
+                Api.Error(
+                  Api.Error.Message(s"'${to.value}' is not a place id: $why"),
+                  Some(Api.Error.Code(Write.CodeInvalid))
+                )
               )
           )
     ).map((from, to) => LabelRenamed(Bundle.Kind.Place, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))

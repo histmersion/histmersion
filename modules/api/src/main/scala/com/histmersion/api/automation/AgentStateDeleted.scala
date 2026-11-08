@@ -12,7 +12,8 @@ final case class AgentStateDeleted(
     key: AgentStateDeleted.Key,
     deleted: AgentStateDeleted.Deleted
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AgentStateDeleted:
   object Key:

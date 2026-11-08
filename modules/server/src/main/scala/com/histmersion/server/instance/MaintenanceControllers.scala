@@ -35,7 +35,8 @@ final class MaintenanceControllers(
   private def cfg = deps.cfg
   private val maintenance = deps.maintenance
   private val backupJobs = BackupJobs(backups, deps.cfg.backups.requestWaitSeconds.value, deps.pins)
-  private val vacuumJobs = VacuumJobs(ds, deps.maintenance, Deps.data, () => cfg.maintenance.tables.map(t => Vacuum.Table(t.value)), deps.pins)
+  private val vacuumJobs =
+    VacuumJobs(ds, deps.maintenance, Deps.data, () => cfg.maintenance.tables.map(t => Vacuum.Table(t.value)), deps.pins)
 
   /** `pg_dump -Fc` of the server's own database into `backups.dir`, as a job (see [[BackupJobs]]): the answer is the
     * finished backup, or `running` when it outlasts the request.
@@ -75,15 +76,18 @@ final class MaintenanceControllers(
     else None
 
   def backupStatus: Either[Api.Error, Backup.Status] =
-    backupJobs.status.toRight(Api.Error(
+    backupJobs.status.toRight(
+      Api.Error(
         Api.Error.Message("no backup has run since the server started"),
         Some(Api.Error.Code(Write.CodeNotFound))
-      ))
+      )
+    )
 
   def backupList: Either[Api.Error, List[Backup.Info]] = backups.list
 
   /** The archive itself, for `GET /api/backups/{file}` — validated against the listing first. */
-  def backupFile(file: MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] = backups.archive(PreparedBackup.File(file.value))
+  def backupFile(file: MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] =
+    backups.archive(PreparedBackup.File(file.value))
 
   /** Restore under the maintenance lock: every other write is answered 503 until it returns. Refuses a database that
     * still holds sources unless `force` (`pg_restore --clean` DROPS them), and re-validates the schema with Flyway
@@ -92,7 +96,10 @@ final class MaintenanceControllers(
   def restore(req: RestoreRequest): Either[Api.Error, RestoreResult] =
     if backupJobs.running then
       Left(
-        Api.Error(Api.Error.Message("a backup is still running — wait for `histmersion backup` to finish"), Some(Api.Error.Code(Backup.CodeMaintenance)))
+        Api.Error(
+          Api.Error.Message("a backup is still running — wait for `histmersion backup` to finish"),
+          Some(Api.Error.Code(Backup.CodeMaintenance))
+        )
       )
     else if vacuumJobs.isRunning then
       Left(
@@ -136,7 +143,10 @@ final class MaintenanceControllers(
       _ = { Db.evict(ds); Db.evict(deps.queryDs) }
       // the restored versions of what the map's tiles read may be ones the kept tiles were cut under
       _ = clearOnRestore()
-      v <- Migrate.validate(ds).left.map(m => Api.Error(Api.Error.Message(s"restored ${req.file}, but the schema does not validate: $m")))
+      v <- Migrate
+        .validate(ds)
+        .left
+        .map(m => Api.Error(Api.Error.Message(s"restored ${req.file}, but the schema does not validate: $m")))
     yield RestoreResult(
       req.file,
       RestoreResult.SchemaVersion(v.value),

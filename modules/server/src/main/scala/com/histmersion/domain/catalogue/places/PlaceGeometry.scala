@@ -60,21 +60,38 @@ object PlaceGeometry:
       db.read(LandRepo.clipped())
     def reclassify(toleranceKm: GeocodeSettings.ToleranceKm): (RowCount, RowCount) =
       val proposals = db.read(PlaceReviewRepo.proposals())
-      if !proposals.exists(_.fixable) then (RowCount(0), RowCount(0)) else db.transact(PlaceReviewRepo.apply(proposals, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
+      if !proposals.exists(_.fixable) then (RowCount(0), RowCount(0))
+      else db.transact(PlaceReviewRepo.apply(proposals, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
     def relocate(toleranceKm: GeocodeSettings.ToleranceKm): RowCount =
       val moves = db.read(PlaceReviewRepo.relocations())
-      if moves.isEmpty then RowCount(0) else db.transact(PlaceReviewRepo.relocate(moves, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
+      if moves.isEmpty then RowCount(0)
+      else db.transact(PlaceReviewRepo.relocate(moves, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
     def removePointAreas(s: PointAreaRepo.Settings): PointAreaRepo.Removal =
-      if s.kinds.isEmpty then PointAreaRepo.Removal(PointAreaRepo.Removal.Removed(0), PointAreaRepo.Removal.Remaining(0), PointAreaRepo.Removal.Findings(0), PointAreaRepo.Removal.Sources(0))
+      if s.kinds.isEmpty then
+        PointAreaRepo.Removal(
+          PointAreaRepo.Removal.Removed(0),
+          PointAreaRepo.Removal.Remaining(0),
+          PointAreaRepo.Removal.Findings(0),
+          PointAreaRepo.Removal.Sources(0)
+        )
       else
         val kinds = s.kinds.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
-        val deadline = timer.after(scala.concurrent.duration.FiniteDuration(math.max(0L, s.budgetMs.value), scala.concurrent.duration.MILLISECONDS))
+        val deadline = timer.after(
+          scala.concurrent.duration
+            .FiniteDuration(math.max(0L, s.budgetMs.value), scala.concurrent.duration.MILLISECONDS)
+        )
         val todo = db.read(PointAreaRepo.removableIn(kinds))
         val chunks = todo.grouped(math.max(1, s.batch.value)).toList
-        val named = if todo.isEmpty then Map.empty[PointAreaRepo.NameKey, Set[Citekey]] else db.read(PointAreaRepo.nameKeysIn())
+        val named =
+          if todo.isEmpty then Map.empty[PointAreaRepo.NameKey, Set[Citekey]] else db.read(PointAreaRepo.nameKeysIn())
         // one pass over the chunks while time is left; at least one chunk per call, so a call progresses
         @tailrec
-        def go(rest: List[List[com.histmersion.domain.catalogue.Place.Id]], removed: Int, findings: Int, cks: Set[Citekey]): (Int, Int, Set[Citekey]) =
+        def go(
+            rest: List[List[com.histmersion.domain.catalogue.Place.Id]],
+            removed: Int,
+            findings: Int,
+            cks: Set[Citekey]
+        ): (Int, Int, Set[Citekey]) =
           rest match
             case Nil         => (removed, findings, cks)
             case ids :: more =>
@@ -83,4 +100,9 @@ object PlaceGeometry:
               if deadline.reached then acc else go(more, acc._1, acc._2, acc._3)
         val (removed, findings, cks) = go(chunks, 0, 0, Set.empty)
         val remaining = db.read(PointAreaRepo.removableIn(kinds)).size
-        PointAreaRepo.Removal(PointAreaRepo.Removal.Removed(removed), PointAreaRepo.Removal.Remaining(remaining), PointAreaRepo.Removal.Findings(findings), PointAreaRepo.Removal.Sources(cks.size))
+        PointAreaRepo.Removal(
+          PointAreaRepo.Removal.Removed(removed),
+          PointAreaRepo.Removal.Remaining(remaining),
+          PointAreaRepo.Removal.Findings(findings),
+          PointAreaRepo.Removal.Sources(cks.size)
+        )

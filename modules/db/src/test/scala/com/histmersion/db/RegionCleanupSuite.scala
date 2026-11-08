@@ -73,15 +73,28 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
         pt(Longitude(141.9), Latitude(-47.1)),
         properties = types("region")
       )
-    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(Place.Name.Value(precise.label.value))))))
+    val _ = PlaceFixtures.upsertPlaces(
+      ds,
+      List(Place.Input(precise, List(Place.Name(Place.Name.Value(precise.label.value)))))
+    )
     val r =
       connect(ds)(
-        PlaceFixtures.resolve(Geocode.Attempt.Name("Zzrc Thessalia"), Geocode.KindHint.Unknown, None, GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
+        PlaceFixtures.resolve(
+          Geocode.Attempt.Name("Zzrc Thessalia"),
+          Geocode.KindHint.Unknown,
+          None,
+          GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
+        )
       )
     assertEquals(r.map(_.placeId), Some("pleiades_999100010"))
     val alone =
       connect(ds)(
-        PlaceFixtures.resolve(Geocode.Attempt.Name("Zzrc Achaia"), Geocode.KindHint.Unknown, None, GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
+        PlaceFixtures.resolve(
+          Geocode.Attempt.Name("Zzrc Achaia"),
+          Geocode.KindHint.Unknown,
+          None,
+          GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
+        )
       )
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
     assertEquals(

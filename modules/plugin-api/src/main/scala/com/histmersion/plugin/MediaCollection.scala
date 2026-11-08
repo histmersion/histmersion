@@ -43,7 +43,10 @@ trait MediaCollection:
     * host's polite client of this import (its pace, the User-Agent, Retry-After; a bot challenge stops the request) —
     * never open a socket of your own.
     */
-  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]]
+  def search(
+      place: MediaPlace,
+      http: Plugin.Http
+  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]]
 
   /** An item about to be stored, completed by what a search does not answer (its files, the licence read again from the
     * full record). Only items the host decided to store pay for it; the host judges the completed item's licence again.
@@ -61,7 +64,9 @@ trait MediaCollection:
   def asks: Set[MediaTarget] = Set(MediaTarget.Places)
 
   /** The records a search for `event` answers ([[asks]] must name events); none by default. */
-  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[MediaCollection.SearchEventResultPart1, List[Either[MediaCollection.SearchEventResultPart2Part1, MediaItem]]] = Right(Nil)
+  def searchEvent(event: MediaEvent, http: Plugin.Http): Either[MediaCollection.SearchEventResultPart1, List[
+    Either[MediaCollection.SearchEventResultPart2Part1, MediaItem]
+  ]] = Right(Nil)
 
   /** Whether it can be asked now — a key configured, its own switch on — asked before an import: its refusal is the
     * import's ("Europeana images needs a key …"), and nothing is sent.
@@ -85,17 +90,23 @@ trait MediaCollection:
     * for each. By default, [[search]] for each place and [[searchEvent]] for each event, in order.
     */
   def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
-    val asked = places.map(p => MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value((p.id).value)) -> search(p, http)) ++
-      events.map(e => MediaTarget.Id(MediaTarget.Events, MediaTarget.Id.Value((e.id).value)) -> searchEvent(e, http))
+    val asked =
+      places.map(p => MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value((p.id).value)) -> search(p, http)) ++
+        events.map(e => MediaTarget.Id(MediaTarget.Events, MediaTarget.Id.Value((e.id).value)) -> searchEvent(e, http))
     MediaFound(
       uses = asked.flatMap((t, r) =>
-        r.toOption.toList.flatMap(_.collect { case Right(it) => it }.zipWithIndex.map((it, i) => MediaUse(t, it, MediaUse.Rank(i))))
+        r.toOption.toList.flatMap(_.collect { case Right(it) =>
+          it
+        }.zipWithIndex.map((it, i) => MediaUse(t, it, MediaUse.Rank(i))))
       ),
       asked = asked.map(_._1),
       unanswered = asked.collect { case (t, Left(_)) => t }.toSet,
       read = MediaFound.Read(asked.map(_._2.fold(_ => 0, _.size)).sum),
       failed = asked.flatMap((t, r) =>
-        r.fold(e => List(MediaFound.Failed(s"$title search for ${t.id}: $e")), _.collect { case Left(e) => MediaFound.Failed(s"${t.id}: $e") })
+        r.fold(
+          e => List(MediaFound.Failed(s"$title search for ${t.id}: $e")),
+          _.collect { case Left(e) => MediaFound.Failed(s"${t.id}: $e") }
+        )
       )
     )
 
@@ -150,4 +161,13 @@ object MediaCollection:
   val Depiction = "depiction"
 
   /** The roles a collection's pictures may play: the ones the host stores. */
-  val Roles: Set[Roles] = Set(MediaItem.Role(Object), MediaItem.Role(Map), MediaItem.Role(Image), MediaItem.Role(LocatorMap), MediaItem.Role(Plan), MediaItem.Role(AerialView), MediaItem.Role(RouteMap), MediaItem.Role(Depiction))
+  val Roles: Set[Roles] = Set(
+    MediaItem.Role(Object),
+    MediaItem.Role(Map),
+    MediaItem.Role(Image),
+    MediaItem.Role(LocatorMap),
+    MediaItem.Role(Plan),
+    MediaItem.Role(AerialView),
+    MediaItem.Role(RouteMap),
+    MediaItem.Role(Depiction)
+  )

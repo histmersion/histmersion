@@ -8,8 +8,19 @@ import com.histmersion.domain.library.Citekey
 abstract class CoverServiceContract extends MediaStoreSuite:
 
   stest("no source: nothing to illustrate, no cover to ask for") { s =>
-    assertEquals(s.covers.illustrationCandidates(None, refresh = CoverService.CandidatesRefresh(true), CoverService.CandidatesLimit(10)), Nil)
-    assertEquals(s.covers.coverCandidates(Some(Citekey("zq")), refresh = CoverService.CandidatesRefresh(false), CoverService.CandidatesLimit(10)), Nil)
+    assertEquals(
+      s.covers
+        .illustrationCandidates(None, refresh = CoverService.CandidatesRefresh(true), CoverService.CandidatesLimit(10)),
+      Nil
+    )
+    assertEquals(
+      s.covers.coverCandidates(
+        Some(Citekey("zq")),
+        refresh = CoverService.CandidatesRefresh(false),
+        CoverService.CandidatesLimit(10)
+      ),
+      Nil
+    )
   }
 
 class CoverServiceInMemorySuite extends CoverServiceContract with MediaStoreSuite.InMemory

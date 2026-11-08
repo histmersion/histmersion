@@ -23,9 +23,9 @@ final case class EventPut(
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
     scale: Option[EventSummary.Scale] = None
-) derives KindlingsSchema, com.histmersion.api.json.Schema
+) derives KindlingsSchema,
+      com.histmersion.api.json.Schema
 object EventPut:
-
 
   export EventPatch.Geometry
 

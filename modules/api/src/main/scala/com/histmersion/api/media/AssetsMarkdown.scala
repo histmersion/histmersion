@@ -4,7 +4,6 @@ import com.histmersion.api.given
 import com.histmersion.api.library.Citekey
 object AssetsMarkdown:
 
-
   def assets(citekey: Citekey, as: Vector[AssetInfo]): String =
     if as.isEmpty then (s"_No assets stored for **$citekey**._")
     else

@@ -64,7 +64,27 @@ final case class MediaItem(
       period: Option[Period],
       ids: List[(String, String)],
       withheld: Option[String]
-  ) = this(MediaItem.Key(key), MediaItem.Title(title), MediaItem.PageUrl(pageUrl), (imageUrl).map(refactorValue => MediaItem.ImageUrl(refactorValue)), (rights).left.map(refactorError => MediaItem.RightsPart1(refactorError)), (thumbUrl).map(refactorValue3 => MediaItem.ThumbUrl(refactorValue3)), (originalUrl).map(refactorValue4 => MediaItem.OriginalUrl(refactorValue4)), (geography).map(refactorValue5 => { val refactorTuple = refactorValue5; (MediaItem.GeographyPart1(refactorTuple._1), MediaItem.GeographyPart2(refactorTuple._2)) }), period, (ids).map(refactorValue6 => { val refactorTuple2 = refactorValue6; (MediaItem.IdsPart1(refactorTuple2._1), MediaItem.IdsPart2(refactorTuple2._2)) }), (withheld).map(refactorValue7 => MediaItem.Withheld(refactorValue7)), None, None)
+  ) = this(
+    MediaItem.Key(key),
+    MediaItem.Title(title),
+    MediaItem.PageUrl(pageUrl),
+    (imageUrl).map(refactorValue => MediaItem.ImageUrl(refactorValue)),
+    (rights).left.map(refactorError => MediaItem.RightsPart1(refactorError)),
+    (thumbUrl).map(refactorValue3 => MediaItem.ThumbUrl(refactorValue3)),
+    (originalUrl).map(refactorValue4 => MediaItem.OriginalUrl(refactorValue4)),
+    (geography).map { refactorValue5 =>
+      val refactorTuple = refactorValue5;
+      (MediaItem.GeographyPart1(refactorTuple._1), MediaItem.GeographyPart2(refactorTuple._2))
+    },
+    period,
+    (ids).map { refactorValue6 =>
+      val refactorTuple2 = refactorValue6;
+      (MediaItem.IdsPart1(refactorTuple2._1), MediaItem.IdsPart2(refactorTuple2._2))
+    },
+    (withheld).map(refactorValue7 => MediaItem.Withheld(refactorValue7)),
+    None,
+    None
+  )
 
 object MediaItem:
   /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */

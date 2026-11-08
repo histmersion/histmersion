@@ -29,7 +29,11 @@ final case class CollectionSettings(
 
   /** `refusal-backoff-seconds` as milliseconds, the blank and non-positive steps dropped. */
   def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] =
-    CollectionSettings.items(refusalBackoffSeconds).flatMap(_.value.toLongOption).filter(_ > 0).map(s => MediaCollection.RefusalBackoffMsResult(s * 1000))
+    CollectionSettings
+      .items(refusalBackoffSeconds)
+      .flatMap(_.value.toLongOption)
+      .filter(_ > 0)
+      .map(s => MediaCollection.RefusalBackoffMsResult(s * 1000))
 
   /** `max-year` as the last year an object may be made in; 0 sets none. */
   def latestYear: Option[CollectionSettings.MaxYear] = Option.when(maxYear.value != 0)(maxYear)

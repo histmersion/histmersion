@@ -165,7 +165,13 @@ object ReviewManagerPolicy:
           state.pairsBefore.map(b => RunMark.PairsBefore(b.value)),
           f.openPairs.map(p => RunMark.PairsAfter(p.value))
         )
-        val st = state.modify(_.history).setTo(state.history :+ mark).modify(_.before).setTo(None).modify(_.pairsBefore).setTo(None)
+        val st = state
+          .modify(_.history)
+          .setTo(state.history :+ mark)
+          .modify(_.before)
+          .setTo(None)
+          .modify(_.pairsBefore)
+          .setTo(None)
         val churn = f.onlyMissingCritiques.value && pairsStalled(st.history, s.noProgressRuns)
         val pairs = f.openPairs.fold("")(n => s", ${counted(n.value, "open critique pair")}")
         def stop(why: String) =
@@ -173,7 +179,8 @@ object ReviewManagerPolicy:
             s"$t — review manager stopped: $why"
           )
           Next.Stop(ManagerPolicy.ItemOutcome(s"stopped: $why"), Some(ManagerPolicy.ItemTask(task.take(2000))), st)
-        if f.openMajors.value == 0 then Next.Done(ManagerPolicy.ItemOutcome(s"converged after ${counted(attempts.value, "run")}"), st)
+        if f.openMajors.value == 0 then
+          Next.Done(ManagerPolicy.ItemOutcome(s"converged after ${counted(attempts.value, "run")}"), st)
         else if churn then
           stop(
             s"omission churn — every open MAJOR (${f.openMajors}) is a missing-critique finding and the open critique " +
@@ -223,7 +230,12 @@ object ReviewManagerPolicy:
   // ── selection (the review manager's refill) ────────────────────────────────────────────────────
 
   /** One item the selection adds: its kind, target (the article's slug), priority, and why (for the event). */
-  final case class Pick(kind: ManagerPolicy.ItemKind, target: Slug, priority: ManagerPolicy.Candidate.Priority, why: Pick.Why)
+  final case class Pick(
+      kind: ManagerPolicy.ItemKind,
+      target: Slug,
+      priority: ManagerPolicy.Candidate.Priority,
+      why: Pick.Why
+  )
 
   object Pick:
     type Why = Why.T
@@ -251,9 +263,15 @@ object ReviewManagerPolicy:
       inferredBefore: Slug => Boolean
   ): List[Pick] =
     val reviews =
-      (majors.map((slug, n) => Pick(ManagerPolicy.ItemKind.ArticleReview, slug, MajorsPriority, Pick.Why(counted(n.value, "open MAJOR").value))) ++
-        unreviewed.map(slug => Pick(ManagerPolicy.ItemKind.ArticleReview, slug, UnreviewedPriority, Pick.Why("never reviewed"))) ++
-        stale.map((slug, why) => Pick(ManagerPolicy.ItemKind.ArticleReview, slug, StalePriority, Pick.Why(s"stale: $why"))))
+      (majors.map((slug, n) =>
+        Pick(ManagerPolicy.ItemKind.ArticleReview, slug, MajorsPriority, Pick.Why(counted(n.value, "open MAJOR").value))
+      ) ++
+        unreviewed.map(slug =>
+          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, UnreviewedPriority, Pick.Why("never reviewed"))
+        ) ++
+        stale.map((slug, why) =>
+          Pick(ManagerPolicy.ItemKind.ArticleReview, slug, StalePriority, Pick.Why(s"stale: $why"))
+        ))
         .foldLeft(Vector.empty[Pick])((acc, p) => if acc.exists(_.target == p.target) then acc else acc :+ p)
         .take(math.max(0, batch.value))
         .toList
@@ -281,6 +299,8 @@ object ReviewManagerPolicy:
         .map(n => s"its filter gained ${counted(n, "source")}")
         .orElse(
           Option
-            .when(!convergedAt.plus(Duration.ofDays(days.value.toLong)).isAfter(now))(s"last converged over $days days ago")
+            .when(!convergedAt.plus(Duration.ofDays(days.value.toLong)).isAfter(now))(
+              s"last converged over $days days ago"
+            )
         )
         .map(Pick.Why(_))

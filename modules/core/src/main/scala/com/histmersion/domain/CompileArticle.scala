@@ -79,8 +79,11 @@ object CompileArticle:
       .modify(_.place)(_.description("The place the claim is about, as the record names it; null if none"))
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the record states it"))
 
-  final case class ExtractAnswer(relevant: ExtractAnswer.Relevant, reason: ExtractAnswer.Reason, claims: List[ClaimAnswer] = Nil)
-      derives KindlingsCodecAsObject
+  final case class ExtractAnswer(
+      relevant: ExtractAnswer.Relevant,
+      reason: ExtractAnswer.Reason,
+      claims: List[ClaimAnswer] = Nil
+  ) derives KindlingsCodecAsObject
   object ExtractAnswer:
     type Relevant = Relevant.T
     object Relevant extends Newtype[Boolean, Pure]
@@ -133,7 +136,8 @@ object CompileArticle:
             val q = Option(c.quote).map(_.value.trim).getOrElse("")
             val m = AgentVerify.findQuote(AgentProposals.Proposal.Quote(q), record, minRatio)
             if q.isEmpty then Left(Problem(s"$label: no quote"))
-            else if !m.accepted then Left(Problem(s"$label: the quote is not in the record of $citekey — copy it exactly"))
+            else if !m.accepted then
+              Left(Problem(s"$label: the quote is not in the record of $citekey — copy it exactly"))
             else
               Right(
                 Claim(
@@ -147,16 +151,21 @@ object CompileArticle:
                 )
               )
     }
-    val claims = checked.collect { case Right(c) => c }.distinctBy(c => AgentVerify.normalise(AgentVerify.Text(c.claim.value)))
+    val claims =
+      checked.collect { case Right(c) => c }.distinctBy(c => AgentVerify.normalise(AgentVerify.Text(c.claim.value)))
     val tooMany =
-      Option.when(claims.size > maxClaims.value)(Problem(s"at most $maxClaims claims per source (you gave ${claims.size})"))
+      Option.when(claims.size > maxClaims.value)(
+        Problem(s"at most $maxClaims claims per source (you gave ${claims.size})")
+      )
     val reason = Option(a.reason).map(_.value.trim).filter(_.nonEmpty)
-    val noReason = Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(Problem("say why the record is not used"))
+    val noReason =
+      Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(Problem("say why the record is not used"))
     val problems = checked.collect { case Left(m) => m } ++ tooMany.toList ++ noReason.toList
     if problems.nonEmpty && !last.value then Left(problems)
     else
       val kept = if a.relevant.value then claims.take(maxClaims.value) else Nil
-      val notUsed = Option.when(kept.isEmpty)(Coverage.Entry.Reason(reason.getOrElse("no claim could be verified in its record")))
+      val notUsed =
+        Option.when(kept.isEmpty)(Coverage.Entry.Reason(reason.getOrElse("no claim could be verified in its record")))
       Right((Extracted(citekey, kept, notUsed), problems.map(p => Problem(s"extract $citekey: dropped — $p"))))
 
   // ── phase 2: the evidence model (code, from the database) ───────────────────────────────────────
@@ -166,7 +175,8 @@ object CompileArticle:
       derives KindlingsCodecAsObject
 
   /** A disagreement edge between two sources of the filter (only citekey targets count). */
-  final case class EdgeFact(from: Citekey, kind: Article.Coverage.DisagreementKind, to: Citekey) derives KindlingsCodecAsObject
+  final case class EdgeFact(from: Citekey, kind: Article.Coverage.DisagreementKind, to: Citekey)
+      derives KindlingsCodecAsObject
 
   /** The evidence model: the sources with their statuses and claim counts (due weight), the disagreement edges among
     * them, the disputed ones (a non-current status), and the Not-used list with reasons. `filter` is the filter line
@@ -184,7 +194,8 @@ object CompileArticle:
       disputed: List[Citekey],
       notUsed: List[NotUsed]
   ) derives KindlingsCodecAsObject:
-    def used: List[Citekey] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Evidence.ClaimCount(0)).hasClaims)
+    def used: List[Citekey] =
+      sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Evidence.ClaimCount(0)).hasClaims)
 
   object Evidence:
     type ClaimCount = ClaimCount.T
@@ -219,7 +230,8 @@ object CompileArticle:
       case e if e.claims.isEmpty => NotUsed(e.citekey, e.notUsed.getOrElse(Coverage.Entry.Reason("no claim")))
     } ++
       facts.collect {
-        case f if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Evidence.ClaimCount(0)).hasClaims =>
+        case f
+            if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Evidence.ClaimCount(0)).hasClaims =>
           NotUsed(f.citekey, Coverage.Entry.Reason("retracted: may be cited only to note the retraction"))
       }
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
@@ -238,20 +250,23 @@ object CompileArticle:
     }
     val edges = if ev.edges.isEmpty then "none recorded among these sources (not evidence of agreement)"
     else ev.edges.map(e => s"[[${e.from}]] ${e.kind} [[${e.to}]]").mkString("; ")
-    val weight = ev.claims.toList.filter(_._2.hasClaims).sortBy(-_._2.value).map((ck, n) => s"[[$ck]] $n").mkString(", ")
+    val weight =
+      ev.claims.toList.filter(_._2.hasClaims).sortBy(-_._2.value).map((ck, n) => s"[[$ck]] $n").mkString(", ")
     val notUsed =
       if ev.notUsed.isEmpty then "none" else ev.notUsed.map(n => s"[[${n.citekey}]]: ${n.reason}").mkString("\n- ")
-    Description(s"Filter: ${ev.filter} → ${ev.total}\n\n## Claim table\n\n${sources.mkString("\n")}\n\n" +
-      s"## Evidence model\n\n- disagreement edges among the sources: $edges\n" +
-      (if ev.edges.isEmpty then ""
-       else
-         "- the critique checklist: each edge is answered when its two sources are cited in ONE paragraph — the one that " +
-           "states the criticised claim (the target of challenges/refutes/updates; the older work of superseded_by), with the " +
-           "critique in a sentence from the critic's claims. A paragraph that names an author cites that author's work there.\n") +
-      s"- sources with a non-current status: ${
-          if ev.disputed.isEmpty then "none" else ev.disputed.map(c => s"[[$c]]").mkString(", ")
-        }\n" +
-      s"- claims per source (due weight): $weight\n\n## Not used\n\n- $notUsed")
+    Description(
+      s"Filter: ${ev.filter} → ${ev.total}\n\n## Claim table\n\n${sources.mkString("\n")}\n\n" +
+        s"## Evidence model\n\n- disagreement edges among the sources: $edges\n" +
+        (if ev.edges.isEmpty then ""
+         else
+           "- the critique checklist: each edge is answered when its two sources are cited in ONE paragraph — the one that " +
+             "states the criticised claim (the target of challenges/refutes/updates; the older work of superseded_by), with the " +
+             "critique in a sentence from the critic's claims. A paragraph that names an author cites that author's work there.\n") +
+        s"- sources with a non-current status: ${
+            if ev.disputed.isEmpty then "none" else ev.disputed.map(c => s"[[$c]]").mkString(", ")
+          }\n" +
+        s"- claims per source (due weight): $weight\n\n## Not used\n\n- $notUsed"
+    )
 
   // ── phase 3: the draft ──────────────────────────────────────────────────────────────────────────
 
@@ -303,7 +318,10 @@ object CompileArticle:
     * listed there are named, not cited.
     */
   def cited(text: Article.Body, isCitekey: Citekey => Boolean): List[Citekey] =
-    AgentVerify.wikilinks(AgentVerify.Text(withoutNotUsed(text).value)).flatMap(w => Citekey.option(w.value)).filter(isCitekey)
+    AgentVerify
+      .wikilinks(AgentVerify.Text(withoutNotUsed(text).value))
+      .flatMap(w => Citekey.option(w.value))
+      .filter(isCitekey)
 
   /** `text` without its "Not used" section (heading to the next heading of the same or higher level). */
   def withoutNotUsed(text: Article.Body): Article.Body = Article.Coverage.withoutNotUsed(text)
@@ -311,13 +329,20 @@ object CompileArticle:
   /** What the article would read after the draft is applied: the whole body (create), or the current body with the text
     * appended (under `section`, else at the end).
     */
-  def combined(mode: DraftMode, current: Article.Body, text: Article.Body, section: Option[Article.Section]): Either[Articles.Problem, Article.Body] =
+  def combined(
+      mode: DraftMode,
+      current: Article.Body,
+      text: Article.Body,
+      section: Option[Article.Section]
+  ): Either[Articles.Problem, Article.Body] =
     mode match
       case DraftMode.Create => Right(text)
       case DraftMode.Extend =>
         section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty) match
           case Some(s) => Articles.appendUnderSection(current, s, Article.Prose(text.value.trim))
-          case None    => Right(Article.Body(if current.value.trim.isEmpty then text.value.trim else s"${current.value.stripTrailing}\n\n${text.value.trim}"))
+          case None    =>
+            Right(Article.Body(if current.value.trim.isEmpty then text.value.trim
+            else s"${current.value.stripTrailing}\n\n${text.value.trim}"))
 
   /** The inputs of the self-check that come from the corpus. */
   final case class Corpus(
@@ -348,7 +373,8 @@ object CompileArticle:
       last: Last
   ): Either[List[Problem], (ArticleDraft, List[Problem])] =
     val text = Article.Body(Option(a.body).map(_.value.trim).getOrElse(""))
-    val section = a.section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty).filter(_ => mode == DraftMode.Extend)
+    val section =
+      a.section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty).filter(_ => mode == DraftMode.Extend)
     val title = currentTitle
       .orElse(Option(a.title).map(t => Title(t.value.trim)).filter(_.value.nonEmpty))
       .getOrElse(Title(slug.value))
@@ -366,7 +392,9 @@ object CompileArticle:
     val fatal = List(
       Option.when(text.value.isEmpty)("the text is empty"),
       whole.left.toOption.map(m => s"$m — name an existing heading, or null to add at the end")
-    ).flatten ++ AgentVerify.linkProblems(AgentVerify.Text(text.value), corpus.isCitekey, corpus.isTarget).map(_.value) ++
+    ).flatten ++ AgentVerify
+      .linkProblems(AgentVerify.Text(text.value), corpus.isCitekey, corpus.isTarget)
+      .map(_.value) ++
       Option
         .when(ReviewArticle.headings(text).exists(h => h.trim.equalsIgnoreCase("sources cited")))(
           "a Sources cited section is generated by the page; do not write one"
@@ -388,10 +416,18 @@ object CompileArticle:
     val stated = Option(a.reasons)
       .getOrElse(Nil)
       .map(r =>
-        r.modify(_.citekey).setTo(com.histmersion.api.library.Citekey(Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))).modify(_.reason).setTo(Coverage.Entry.Reason(Option(r.reason).map(_.value.trim).getOrElse("")))
+        r.modify(_.citekey)
+          .setTo(
+            com.histmersion.api.library.Citekey(
+              Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
+            )
+          )
+          .modify(_.reason)
+          .setTo(Coverage.Entry.Reason(Option(r.reason).map(_.value.trim).getOrElse("")))
       )
     val reasonProblems = stated.flatMap { r =>
-      if !inFilterKeys(r.citekey.value) then Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table")
+      if !inFilterKeys(r.citekey.value) then
+        Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table")
       else if citesAllKeys(r.citekey.value) then
         Some(s"a reason for [[${r.citekey}]], which the draft cites (a reason is only for a source it leaves out)")
       else if r.reason.value.isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
@@ -399,18 +435,26 @@ object CompileArticle:
     }
     val writerReasons = stated
       .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.value.nonEmpty)
-      .map(r => r.citekey -> Coverage.Entry.Reason(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars)))
+      .map(r =>
+        r.citekey -> Coverage.Entry.Reason(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
+      )
       .toMap
     // the extraction's reason (the record does not bear on the question), unless the writer gave one
     val reasons =
-      (evidence.notUsed.filterNot(n => citesAll(n.citekey)).map(n => com.histmersion.api.library.Citekey(n.citekey.value) -> n.reason).toMap ++ writerReasons)
-    val unexplained = evidence.used.filterNot(ck => citesAll(ck) || reasons.contains(com.histmersion.api.library.Citekey(ck.value)))
+      (evidence.notUsed
+        .filterNot(n => citesAll(n.citekey))
+        .map(n => com.histmersion.api.library.Citekey(n.citekey.value) -> n.reason)
+        .toMap ++ writerReasons)
+    val unexplained =
+      evidence.used.filterNot(ck => citesAll(ck) || reasons.contains(com.histmersion.api.library.Citekey(ck.value)))
     val handWritten = Option
       .when(ReviewArticle.headings(text).exists(_.trim.toLowerCase.startsWith("not used")))(
         "a Not used section: code generates it from the filter — give each left-out source's reason in `reasons`"
       )
       .toList ++
-      Option.when(Article.Coverage.hasMethodLine(text.value))("a _Method_ note: code generates it from the filter").toList
+      Option
+        .when(Article.Coverage.hasMethodLine(text.value))("a _Method_ note: code generates it from the filter")
+        .toList
     val soft =
       mech
         .filter(f => f.kind.value == "citation" && f.problem.value.contains("no [[citekey]]"))
@@ -469,7 +513,11 @@ object CompileArticle:
       .toOption
       .flatten
       .orElse(stored)
-      .orElse(existingTitle.flatMap(t => Article.Filter.normalise(Article.Filter(query = Some(Article.Filter.Query(t.value)))).toOption.flatten))
+      .orElse(
+        existingTitle.flatMap(t =>
+          Article.Filter.normalise(Article.Filter(query = Some(Article.Filter.Query(t.value)))).toOption.flatten
+        )
+      )
 
   /** The log line of a compile run. */
   def logLine(d: ArticleDraft, written: Written, why: Reason, review: Option[Run.Id], runId: Run.Id): LogLine =
@@ -478,4 +526,6 @@ object CompileArticle:
       case DraftMode.Extend =>
         s"appended a section${d.section.fold("")(s => s" under '$s'")} citing ${d.cited.size} source(s)"
     val outcome = if written.value then what else s"nothing written — $why"
-    LogLine(s"compile-article [[${d.slug}]]: $outcome${review.fold("")(r => s"; review run ${r.value.take(8)} started")} (agent run ${runId.value.take(8)})")
+    LogLine(
+      s"compile-article [[${d.slug}]]: $outcome${review.fold("")(r => s"; review run ${r.value.take(8)} started")} (agent run ${runId.value.take(8)})"
+    )

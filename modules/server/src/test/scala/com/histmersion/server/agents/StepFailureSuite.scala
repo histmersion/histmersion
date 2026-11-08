@@ -37,17 +37,29 @@ class StepFailureSuite extends munit.FunSuite:
     val r = claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(OverCap))
     assert(r.finalAnswer.isLeft)
     assertEquals(Engine.outputCapHit(r), Some(4096))
-    val msg = Engine.outputCapMessage("cold-reader-1", Engine.OutputCapLimit(4096), Engine.Count(4096), AgentsControllers.ModelName("claude-code:haiku"), Engine.capKey(Engine.CapKeyOverridden(false)).value)
+    val msg = Engine.outputCapMessage(
+      "cold-reader-1",
+      Engine.OutputCapLimit(4096),
+      Engine.Count(4096),
+      AgentsControllers.ModelName("claude-code:haiku"),
+      Engine.capKey(Engine.CapKeyOverridden(false)).value
+    )
     assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)
     assert(Engine.capKey(Engine.CapKeyOverridden(true)).value.contains("fixer-max-tokens"))
 
   test("#1450 an ordinary error, a usage limit or a good answer is not an output-cap hit"):
     val ok =
       """{"type":"result","subtype":"success","is_error":false,"num_turns":1,"result":"","structured_output":{"notes":"x"},"usage":{}}"""
-    assertEquals(Engine.outputCapHit(claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(ok))), None)
+    assertEquals(
+      Engine.outputCapHit(claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(ok))),
+      None
+    )
     val err =
       """{"type":"result","subtype":"error_during_execution","is_error":true,"num_turns":1,"result":"boom","usage":{}}"""
-    assertEquals(Engine.outputCapHit(claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(err))), None)
+    assertEquals(
+      Engine.outputCapHit(claudeResult(CliProcess.Run.Lines(ClaudeStreams.Init), CliProcess.Run.Lines(err))),
+      None
+    )
 
   test("#941 a decoding failure names the path and the decoder's message, then the start of the answer"):
     val raw = """{"notes": 5}"""
@@ -94,7 +106,9 @@ class StepFailureSuite extends munit.FunSuite:
     val gaveUp = AgentIncomplete("""{"notes": 5}""", FinishReason.MaxIterations, Some(df))
     val p = Engine.answerProblem(gaveUp, FinishReason.MaxIterations)
     assert(
-      p.value.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.value.contains("(iteration limit)"),
+      p.value.startsWith("the answer does not match the schema at .notes: Got value '5'") && p.value.contains(
+        "(iteration limit)"
+      ),
       p
     )
     assertEquals(Engine.undecoded(Left(gaveUp)), Some("""{"notes": 5}"""))
@@ -110,7 +124,11 @@ class StepFailureSuite extends munit.FunSuite:
   test("#941 a text answer that is not JSON keeps the parser's error: recorded, and the text goes back to amend"):
     // a truncated object (the answer ran out mid-string), prose, a JSON array; a well-formed object is no problem
     assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""{"notes": "abc""")).exists(_.message.nonEmpty))
-    assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("I could not find it.")).exists(_.message.contains("no JSON object")))
+    assert(
+      CliOutcomes
+        .textProblem(CliOutcomes.TextProblemText("I could not find it."))
+        .exists(_.message.contains("no JSON object"))
+    )
     assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("[1, 2]")).exists(_.message.contains("not an object")))
     assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""```json\n{"notes":"x"}\n```""")), None)
     assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("  ")), None)
@@ -130,7 +148,14 @@ class StepFailureSuite extends munit.FunSuite:
     assertEquals(Engine.undecoded(r.finalAnswer), Some(text))
     // Codex / opencode: the final text is the answer
     val cli = CliOutcomes.result(
-      CliOutcome(Vector.empty, Vector.empty, Some(CliOutcome.FinalText("no json")), TokenUsage.Zero, None, CliOutcome.Turns(1)),
+      CliOutcome(
+        Vector.empty,
+        Vector.empty,
+        Some(CliOutcome.FinalText("no json")),
+        TokenUsage.Zero,
+        None,
+        CliOutcome.Turns(1)
+      ),
       LlmCall.User("u"),
       LibraryAnswers.notes,
       None
@@ -143,7 +168,14 @@ class StepFailureSuite extends munit.FunSuite:
     )
     // an error result is not a parse problem: no cause, as before
     val failed = CliOutcomes.result(
-      CliOutcome(Vector.empty, Vector.empty, Some(CliOutcome.FinalText("boom")), TokenUsage.Zero, Some(CliOutcome.Error("crash")), CliOutcome.Turns(1)),
+      CliOutcome(
+        Vector.empty,
+        Vector.empty,
+        Some(CliOutcome.FinalText("boom")),
+        TokenUsage.Zero,
+        Some(CliOutcome.Error("crash")),
+        CliOutcome.Turns(1)
+      ),
       LlmCall.User("u"),
       LibraryAnswers.notes,
       None

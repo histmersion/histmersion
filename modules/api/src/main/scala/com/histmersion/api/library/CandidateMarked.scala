@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class CandidateMarked(state: Source.Candidate.State, updated: CandidateMarked.Updated) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class CandidateMarked(state: Source.Candidate.State, updated: CandidateMarked.Updated)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CandidateMarked:
   type Updated = Updated.T

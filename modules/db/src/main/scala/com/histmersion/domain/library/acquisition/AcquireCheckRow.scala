@@ -21,7 +21,8 @@ final case class AcquireCheckRow(
     AcquireRecheck.LastCheck(
       at,
       generation,
-      failed = AcquireRecheck.LastCheck.Failed(AcquireRecheck.Outcome.parse(outcome).contains(AcquireRecheck.Outcome.Failed))
+      failed =
+        AcquireRecheck.LastCheck.Failed(AcquireRecheck.Outcome.parse(outcome).contains(AcquireRecheck.Outcome.Failed))
     )
 
 object AcquireCheckRow:

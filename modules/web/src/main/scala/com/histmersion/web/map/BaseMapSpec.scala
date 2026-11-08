@@ -30,7 +30,13 @@ enum BaseMapSpec derives CanEqual:
   /** An online raster map: its tile URL template (`{s}` for its subdomains), its deepest zoom, its credits (HTML),
     * drawn inverted (`dark`: the light tiles as a dark map) at `opacity`.
     */
-  case Raster(template: BaseMapSpec.Raster.Template, maxZoom: BaseMapSpec.Raster.MaxZoom, attribution: BaseMapSpec.Raster.Attribution, dark: BaseMapSpec.Raster.Dark = BaseMapSpec.Raster.Dark(false), opacity: BaseMapSpec.Raster.Opacity = BaseMapSpec.Raster.Opacity(0.85))
+  case Raster(
+      template: BaseMapSpec.Raster.Template,
+      maxZoom: BaseMapSpec.Raster.MaxZoom,
+      attribution: BaseMapSpec.Raster.Attribution,
+      dark: BaseMapSpec.Raster.Dark = BaseMapSpec.Raster.Dark(false),
+      opacity: BaseMapSpec.Raster.Opacity = BaseMapSpec.Raster.Opacity(0.85)
+  )
 
 object BaseMapSpec:
   object Vector:
@@ -45,7 +51,7 @@ object BaseMapSpec:
     type Reduced = Reduced.T
     object Reduced extends Newtype[Boolean, Pure]
   object Raster:
-    export com.histmersion.api.basemap.BasemapApi.{TileTemplate as Template}
+    export com.histmersion.api.basemap.BasemapApi.TileTemplate as Template
     type MaxZoom = MaxZoom.T
     object MaxZoom extends Newtype[Int, Pure]
     type Attribution = Attribution.T

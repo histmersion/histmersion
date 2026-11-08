@@ -19,7 +19,9 @@ final class RefreshGate:
   /** Run `body` alone for `p`, given the pool's last attempt. A `Right` is an attempt (successful or not), stamped `at`
     * for the throttle; a `Left` is "not taken", and leaves the stamp alone.
     */
-  def exclusive[A](p: PoolId, at: => Long)(body: Option[RefreshGate.Instant] => Either[RefreshGate.Problem, A]): Either[RefreshGate.Problem, A] =
+  def exclusive[A](p: PoolId, at: => Long)(
+      body: Option[RefreshGate.Instant] => Either[RefreshGate.Problem, A]
+  ): Either[RefreshGate.Problem, A] =
     val lock = locks.computeIfAbsent(p, _ => ReentrantLock())
     lock.lockInterruptibly()
     try
@@ -28,7 +30,8 @@ final class RefreshGate:
       r
     finally lock.unlock()
 
-  def lastAttempt(p: PoolId): Option[RefreshGate.Instant] = Option(last.get(p)).map(l => RefreshGate.Instant(l.longValue))
+  def lastAttempt(p: PoolId): Option[RefreshGate.Instant] =
+    Option(last.get(p)).map(l => RefreshGate.Instant(l.longValue))
 
 object RefreshGate:
   type Instant = Instant.T

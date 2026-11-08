@@ -28,7 +28,8 @@ object UiNotices:
     type WiresResult = Wire
     val WiresResult: Wire.type = Wire
 
-    def parse(s: Wire): Option[Board] = values.find(_.wire == Wire(Option(s).map((_).value.trim.toLowerCase).getOrElse("")))
+    def parse(s: Wire): Option[Board] =
+      values.find(_.wire == Wire(Option(s).map((_).value.trim.toLowerCase).getOrElse("")))
     def wires: List[WiresResult] = values.toList.map(_.wire)
 
   final case class Counter(
@@ -38,7 +39,8 @@ object UiNotices:
       seen: Option[Counter.Seen] = None,
       fresh: Counter.Fresh = Counter.Fresh(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Counter:
     type Count = Count.T
@@ -50,22 +52,26 @@ object UiNotices:
     type Fresh = Fresh.T
     object Fresh extends Newtype[Boolean, Pure]
 
-
-  final case class AgentsGlance(running: AgentsGlance.Running = AgentsGlance.Running(0), queued: AgentsGlance.Queued = AgentsGlance.Queued(0), on: AgentsGlance.On = AgentsGlance.On(false), draining: AgentsGlance.Draining = AgentsGlance.Draining(false))
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+  final case class AgentsGlance(
+      running: AgentsGlance.Running = AgentsGlance.Running(0),
+      queued: AgentsGlance.Queued = AgentsGlance.Queued(0),
+      on: AgentsGlance.On = AgentsGlance.On(false),
+      draining: AgentsGlance.Draining = AgentsGlance.Draining(false)
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
 
     /** The agents at a glance, as the top bar says it. */
     def wording: String =
       def runs(n: AgentsGlance.Running) = if n == AgentsGlance.Running(1) then "1 run" else s"$n runs"
-      if !(on).value || (((draining) == AgentsGlance.Draining(true)) && running == AgentsGlance.Running(0)) then ("Agents paused")
+      if !(on).value || (((draining) == AgentsGlance.Draining(true)) && running == AgentsGlance.Running(0)) then
+        ("Agents paused")
       else if (draining).value then s"Agents finishing current work · ${runs(running)}"
       else if (running).value > 0 then s"Agents working · ${runs(running)}"
       else if (queued).value > 0 then (s"Agents working · $queued waiting")
       else ("Agents on · nothing to do")
 
   object AgentsGlance:
-
 
     type Running = Running.T
     object Running extends Newtype[Int, Pure]
@@ -76,23 +82,35 @@ object UiNotices:
     type Draining = Draining.T
     object Draining extends Newtype[Boolean, Pure]
 
-
   final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
-
-  final case class SeenMark(at: Option[SeenMark.At] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class SeenMark(at: Option[SeenMark.At] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object SeenMark:
-    export Counter.{Seen as At}
-
+    export Counter.Seen as At
 
   def fresh(latest: Option[Counter.Latest], seen: Option[Counter.Seen]): Boolean =
     (latest.exists(l => seen.forall(s => (l).value > (s).value)))
 
-  def counter(board: Board, count: Option[Counter.Count], latest: Option[Counter.Latest], seen: Option[Counter.Seen]): Counter =
-    Counter(board.wire, count.filter(_ => ((board.counted) == Board.Counted(true))), latest, seen, Counter.Fresh(fresh(latest, seen)))
+  def counter(
+      board: Board,
+      count: Option[Counter.Count],
+      latest: Option[Counter.Latest],
+      seen: Option[Counter.Seen]
+  ): Counter =
+    Counter(
+      board.wire,
+      count.filter(_ => ((board.counted) == Board.Counted(true))),
+      latest,
+      seen,
+      Counter.Fresh(fresh(latest, seen))
+    )
 
   def advance(held: Option[Counter.Seen], at: SeenMark.At): Counter.Seen = held.filter((_) > (at)).getOrElse(at)
 

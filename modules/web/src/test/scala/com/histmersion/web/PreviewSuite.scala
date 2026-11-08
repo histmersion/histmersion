@@ -39,9 +39,18 @@ class PreviewSuite extends munit.FunSuite:
   )
 
   test("a data-ck element previews a source, a data-slug element an article; a source wins"):
-    assertEquals(Preview.targetOf(Some(Citekey("a2020_b")), None), Some(Preview.Target.Source(Preview.Target.Source.Citekey("a2020_b"))))
-    assertEquals(Preview.targetOf(None, Some(Article.Slug("sea_peoples"))), Some(Preview.Target.Article(Preview.Target.Article.Slug("sea_peoples"))))
-    assertEquals(Preview.targetOf(Some(Citekey("a2020_b")), Some(Article.Slug("x"))), Some(Preview.Target.Source(Preview.Target.Source.Citekey("a2020_b"))))
+    assertEquals(
+      Preview.targetOf(Some(Citekey("a2020_b")), None),
+      Some(Preview.Target.Source(Preview.Target.Source.Citekey("a2020_b")))
+    )
+    assertEquals(
+      Preview.targetOf(None, Some(Article.Slug("sea_peoples"))),
+      Some(Preview.Target.Article(Preview.Target.Article.Slug("sea_peoples")))
+    )
+    assertEquals(
+      Preview.targetOf(Some(Citekey("a2020_b")), Some(Article.Slug("x"))),
+      Some(Preview.Target.Source(Preview.Target.Source.Citekey("a2020_b")))
+    )
     assertEquals(Preview.targetOf(Some(Citekey(" ")), None), None)
 
   test("the source card shows the DOI as identifier, readable places and a bounded summary"):
@@ -80,12 +89,26 @@ class PreviewSuite extends munit.FunSuite:
     children = Nil,
     findings = Place.Counts.Findings(0),
     asOf = Some(Year(-3900L)),
-    links =
-      List(Place.Link(Place.Id("wikidata_q131839713"), Place.Link.Scheme("wikidata"), Place.Link.ExternalId("Q131839713"), Place.Link.Relation("exact_match"))),
+    links = List(
+      Place.Link(
+        Place.Id("wikidata_q131839713"),
+        Place.Link.Scheme("wikidata"),
+        Place.Link.ExternalId("Q131839713"),
+        Place.Link.Relation("exact_match")
+      )
+    ),
     hasBoundary = Place.Entry.HasBoundary(false),
     descriptions = List(
-      Place.Description(Place.Description.Text("former country in Modern Day Spain"), Place.Description.Lang("en"), Place.Description.Source("wikidata")),
-      Place.Description(Place.Description.Text("microestado de Europa (siglo VIII-1769)"), Place.Description.Lang("es"), Place.Description.Source("wikidata"))
+      Place.Description(
+        Place.Description.Text("former country in Modern Day Spain"),
+        Place.Description.Lang("en"),
+        Place.Description.Source("wikidata")
+      ),
+      Place.Description(
+        Place.Description.Text("microestado de Europa (siglo VIII-1769)"),
+        Place.Description.Lang("es"),
+        Place.Description.Source("wikidata")
+      )
     )
   )
 
@@ -100,9 +123,27 @@ class PreviewSuite extends munit.FunSuite:
 
   test("a place card: an undated import says so; a site's point is no missing boundary; a seed place names its source"):
     val gn = patones.copy(
-      place = patones.place.modify(_.id).setTo(Place.Id("geonames_1")).modify(_.label).setTo(Place.Summary.Label("Boğazkale")).modify(_.kind).setTo(Place.Summary.Kind(Place.Kind.Site)).modify(_.periodEnd).setTo(None).modify(_.dating).setTo(Place.Dating.Unknown).modify(_.importSource).setTo(Some(Place.Summary.ImportSource("geonames"))
+      place = patones.place
+        .modify(_.id)
+        .setTo(Place.Id("geonames_1"))
+        .modify(_.label)
+        .setTo(Place.Summary.Label("Boğazkale"))
+        .modify(_.kind)
+        .setTo(Place.Summary.Kind(Place.Kind.Site))
+        .modify(_.periodEnd)
+        .setTo(None)
+        .modify(_.dating)
+        .setTo(Place.Dating.Unknown)
+        .modify(_.importSource)
+        .setTo(Some(Place.Summary.ImportSource("geonames"))),
+      links = List(
+        Place.Link(
+          Place.Id("geonames_1"),
+          Place.Link.Scheme("geonames"),
+          Place.Link.ExternalId("1"),
+          Place.Link.Relation("exact_match")
+        )
       ),
-      links = List(Place.Link(Place.Id("geonames_1"), Place.Link.Scheme("geonames"), Place.Link.ExternalId("1"), Place.Link.Relation("exact_match"))),
       descriptions = Nil
     )
     val c = Preview.card(gn)
@@ -111,9 +152,19 @@ class PreviewSuite extends munit.FunSuite:
     assertEquals(c.links, List("GeoNames 1" -> "https://www.geonames.org/1"))
     assertEquals(c.summary, None)
     val seed = gn.copy(
-      place = gn.place.modify(
-        _.importSource).setTo(None).modify(_.dating).setTo(Place.Dating.Stated).modify(_.kind).setTo(Place.Summary.Kind(Place.Kind.Region)).modify(_.periodStart).setTo(Some(Year(-1650L))).modify(_.periodEnd).setTo(Some(Year(-1180L))).modify(_.source).setTo(Some(Place.Summary.Source("Pleiades (pleiades.stoa.org), CC-BY"))
-      ),
+      place = gn.place
+        .modify(_.importSource)
+        .setTo(None)
+        .modify(_.dating)
+        .setTo(Place.Dating.Stated)
+        .modify(_.kind)
+        .setTo(Place.Summary.Kind(Place.Kind.Region))
+        .modify(_.periodStart)
+        .setTo(Some(Year(-1650L)))
+        .modify(_.periodEnd)
+        .setTo(Some(Year(-1180L)))
+        .modify(_.source)
+        .setTo(Some(Place.Summary.Source("Pleiades (pleiades.stoa.org), CC-BY"))),
       hasBoundary = Place.Entry.HasBoundary(true),
       links = Nil
     )
@@ -124,8 +175,15 @@ class PreviewSuite extends munit.FunSuite:
 
   test("a place card at a time says when an undated place is there only by its findings"):
     val anatolia = patones.copy(
-      place =
-        Place.Summary(Place.Id("anatolia"), Place.Summary.Label("Anatolia"), Place.Summary.Kind(Place.Kind.Region), None, None, None, Place.Summary.Names("")),
+      place = Place.Summary(
+        Place.Id("anatolia"),
+        Place.Summary.Label("Anatolia"),
+        Place.Summary.Kind(Place.Kind.Region),
+        None,
+        None,
+        None,
+        Place.Summary.Names("")
+      ),
       links = Nil,
       descriptions = Nil,
       timeBasis = Place.TimeBasis.Findings
@@ -145,8 +203,19 @@ class PreviewSuite extends munit.FunSuite:
 
   test("a place card: a grid-square point says it is approximate; a people is a group, not a missing boundary"):
     val thessalia = patones.copy(
-      place = patones.place.modify(_.id).setTo(Place.Id("pleiades_1001895")).modify(_.label).setTo(Place.Summary.Label("Thessalia")).modify(_.kind).setTo(Place.Summary.Kind(Place.Kind.Region)).modify(_.importSource).setTo(None).modify(_.dating).setTo(Place.Dating.Stated).modify(_.periodEnd).setTo(None
-      ),
+      place = patones.place
+        .modify(_.id)
+        .setTo(Place.Id("pleiades_1001895"))
+        .modify(_.label)
+        .setTo(Place.Summary.Label("Thessalia"))
+        .modify(_.kind)
+        .setTo(Place.Summary.Kind(Place.Kind.Region))
+        .modify(_.importSource)
+        .setTo(None)
+        .modify(_.dating)
+        .setTo(Place.Dating.Stated)
+        .modify(_.periodEnd)
+        .setTo(None),
       links = Nil,
       descriptions = Nil,
       locationPrecision = Place.Precision.GridCell
@@ -155,7 +224,13 @@ class PreviewSuite extends munit.FunSuite:
     assert(has(t.facts, "location: approximate (atlas grid square)"), t.facts.toString)
     assert(has(t.facts, Place.Shape.NoBoundaryNote.value), t.facts.toString)
     val ubii = thessalia.copy(
-      place = thessalia.place.modify(_.id).setTo(Place.Id("pleiades_109400")).modify(_.label).setTo(Place.Summary.Label("Ubii")).modify(_.kind).setTo(Place.Summary.Kind(Place.Kind.People)),
+      place = thessalia.place
+        .modify(_.id)
+        .setTo(Place.Id("pleiades_109400"))
+        .modify(_.label)
+        .setTo(Place.Summary.Label("Ubii"))
+        .modify(_.kind)
+        .setTo(Place.Summary.Kind(Place.Kind.People)),
       locationPrecision = Place.Precision.Stated
     )
     val u = Preview.card(ubii)

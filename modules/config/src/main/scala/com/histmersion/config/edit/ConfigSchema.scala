@@ -29,7 +29,15 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
       .get(key)
       .orElse(
         Option.when(ConfigSchema.inOpenBlock(key))(
-          SettingField(key, ConfigSchema.openKind(key), None, SettingField.Doc(""), None, ConfigSchema.restartOf(key), SecretRule.of(key))
+          SettingField(
+            key,
+            ConfigSchema.openKind(key),
+            None,
+            SettingField.Doc(""),
+            None,
+            ConfigSchema.restartOf(key),
+            SecretRule.of(key)
+          )
         )
       )
 
@@ -82,14 +90,20 @@ object ConfigSchema:
     }.flatten
     val blocks = nodes
       .collect { case (path, v, true) =>
-        SettingKey.either(path.mkString(".")).toOption.map(k => k -> SettingField.Doc(docs.doc(v.origin.lineNumber, k.leaf.value)))
+        SettingKey
+          .either(path.mkString("."))
+          .toOption
+          .map(k => k -> SettingField.Doc(docs.doc(v.origin.lineNumber, k.leaf.value)))
       }
       .flatten
       .toMap
     new ConfigSchema(fields, blocks)
 
   /** Every node of the tree in the file's order (`isBlock` for an object), the open blocks' contents left out. */
-  private def walk(o: ConfigObject, prefix: List[SettingKey.Segment]): List[(List[SettingKey.Segment], ConfigValue, Boolean)] =
+  private def walk(
+      o: ConfigObject,
+      prefix: List[SettingKey.Segment]
+  ): List[(List[SettingKey.Segment], ConfigValue, Boolean)] =
     o.keySet.asScala.toList.sortBy(k => o.get(k).origin.lineNumber).flatMap { k =>
       val p = prefix :+ SettingKey.Segment(k)
       o.get(k) match
@@ -106,7 +120,8 @@ object ConfigSchema:
     * single value.
     */
   def openKind(key: SettingKey): SettingKind =
-    if key.leaf == SettingKey.Segment("enabled") && key.within(SettingKey.applyUnsafe("histmersion.plugins")) then SettingKind.Flag
+    if key.leaf == SettingKey.Segment("enabled") && key.within(SettingKey.applyUnsafe("histmersion.plugins")) then
+      SettingKind.Flag
     else SettingKind.Any
 
   def inOpenBlock(key: SettingKey): Boolean =

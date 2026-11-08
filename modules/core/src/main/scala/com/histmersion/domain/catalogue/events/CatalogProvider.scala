@@ -58,4 +58,4 @@ object CatalogProvider:
       case GvpName | "smithsonian" | "volcano" => Right(Gvp)
       case NoaaName | "ncei"                   => Right(Noaa)
       case WikidataName | "wd"                 => Right(Wikidata)
-      case other                           => Left(Problem(s"unknown event catalogue '$other' (one of: ${all.mkString(", ")})"))
+      case other => Left(Problem(s"unknown event catalogue '$other' (one of: ${all.mkString(", ")})"))

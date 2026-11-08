@@ -20,12 +20,20 @@ private[acquisition] object AcquireCheckRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image).
 
-
   private val Select = SqlLiteral(
     "SELECT item_id, (extract(epoch FROM checked_at) * 1000)::bigint, generation, outcome, reason, checks FROM acquire_checks"
   )
 
-  private def row(t: (AcquireCheckRow.Item, CheckedAtMs, AcquireRecheck.LastCheck.Generation, AcquireRecheck.Outcome.Wire, AcquireCheckRow.Reason, AcquireCheckRow.Checks)): AcquireCheckRow =
+  private def row(
+      t: (
+          AcquireCheckRow.Item,
+          CheckedAtMs,
+          AcquireRecheck.LastCheck.Generation,
+          AcquireRecheck.Outcome.Wire,
+          AcquireCheckRow.Reason,
+          AcquireCheckRow.Checks
+      )
+  ): AcquireCheckRow =
     AcquireCheckRow(t._1, Instant.ofEpochMilli(t._2.value), t._3, t._4, t._5, t._6)
 
   /** The checks of these items (any that has none is absent). */
@@ -34,7 +42,16 @@ private[acquisition] object AcquireCheckRepo:
     else
       val ids = items.distinct.map(_.toString)
       sql"$Select WHERE item_id::text = ANY($ids::text[])"
-        .query[(AcquireCheckRow.Item, CheckedAtMs, AcquireRecheck.LastCheck.Generation, AcquireRecheck.Outcome.Wire, AcquireCheckRow.Reason, AcquireCheckRow.Checks)]
+        .query[
+          (
+              AcquireCheckRow.Item,
+              CheckedAtMs,
+              AcquireRecheck.LastCheck.Generation,
+              AcquireRecheck.Outcome.Wire,
+              AcquireCheckRow.Reason,
+              AcquireCheckRow.Checks
+          )
+        ]
         .run()
         .map(row)
         .map(r => r.item -> r)
@@ -43,14 +60,29 @@ private[acquisition] object AcquireCheckRepo:
   /** The checks of every OPEN acquisition item. */
   def open()(using DbCon): Map[AcquireCheckRow.Item, AcquireCheckRow] =
     sql"""$Select WHERE item_id IN (SELECT id FROM queue_items WHERE list = 'acquire' AND status = 'open')"""
-      .query[(AcquireCheckRow.Item, CheckedAtMs, AcquireRecheck.LastCheck.Generation, AcquireRecheck.Outcome.Wire, AcquireCheckRow.Reason, AcquireCheckRow.Checks)]
+      .query[
+        (
+            AcquireCheckRow.Item,
+            CheckedAtMs,
+            AcquireRecheck.LastCheck.Generation,
+            AcquireRecheck.Outcome.Wire,
+            AcquireCheckRow.Reason,
+            AcquireCheckRow.Checks
+        )
+      ]
       .run()
       .map(row)
       .map(r => r.item -> r)
       .toMap
 
   /** Record one check of `item` (its previous one replaced, the count kept). */
-  def record(item: AcquireCheckRow.Item, at: Instant, generation: AcquireRecheck.LastCheck.Generation, outcome: AcquireRecheck.Outcome, reason: AcquireCheckRow.Reason)(using
+  def record(
+      item: AcquireCheckRow.Item,
+      at: Instant,
+      generation: AcquireRecheck.LastCheck.Generation,
+      outcome: AcquireRecheck.Outcome,
+      reason: AcquireCheckRow.Reason
+  )(using
       DbCon
   ): Unit =
     val ms = at.toEpochMilli.toDouble / 1000

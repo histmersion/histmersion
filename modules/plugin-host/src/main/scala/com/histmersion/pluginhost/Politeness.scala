@@ -12,7 +12,6 @@ import com.histmersion.domain.CoreQuota
   */
 object Politeness:
 
-
   type Step = HttpPolicy.Step
   val Step = HttpPolicy.Step
 
@@ -24,7 +23,13 @@ object Politeness:
       (a.body.value.length < 4096 && a.text.value.contains("\"code\":\"maxlag\""))
 
   /** Pure: the next step after the `attempt`-th answer (0-based) — [[HttpPolicy.decide]]. */
-  def decide(a: HttpAnswer, attempt: HttpPolicy.Attempt, maxRetries: HttpPolicy.MaxRetries, maxRetryAfterSeconds: HttpPolicy.MaxRetryAfterSeconds, now: Instant): Step =
+  def decide(
+      a: HttpAnswer,
+      attempt: HttpPolicy.Attempt,
+      maxRetries: HttpPolicy.MaxRetries,
+      maxRetryAfterSeconds: HttpPolicy.MaxRetryAfterSeconds,
+      now: Instant
+  ): Step =
     HttpPolicy.decide(
       HttpPolicy.StatusCode(a.code.value),
       a.header(CoreQuota.HeaderName("retry-after")).map(v => HttpPolicy.RetryAfter(v.value)),
@@ -36,4 +41,5 @@ object Politeness:
     )
 
   /** Pure: a Retry-After value as milliseconds from `now` — [[HttpPolicy.retryAfterMs]]. */
-  def retryAfterMs(v: Option[HttpPolicy.RetryAfter], now: Instant): Option[HttpPolicy.Step.Wait.Ms] = HttpPolicy.retryAfterMs(v, now)
+  def retryAfterMs(v: Option[HttpPolicy.RetryAfter], now: Instant): Option[HttpPolicy.Step.Wait.Ms] =
+    HttpPolicy.retryAfterMs(v, now)

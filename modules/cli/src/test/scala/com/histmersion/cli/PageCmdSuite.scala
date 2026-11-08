@@ -14,7 +14,8 @@ class PageCmdSuite extends munit.FunSuite:
       "histmersion jobs --status failed --limit 20 --before 4f1c-9a"
     )
     assertEquals(
-      PageCmd.next("agent runs", List("status" -> None, "limit" -> None, "goal" -> Some("hittites")), Paging.Cursor("r1")),
+      PageCmd
+        .next("agent runs", List("status" -> None, "limit" -> None, "goal" -> Some("hittites")), Paging.Cursor("r1")),
       "histmersion agent runs --goal hittites --before r1"
     )
     assertEquals(PageCmd.next("agent approvals", Nil, Paging.Cursor("12")), "histmersion agent approvals --before 12")

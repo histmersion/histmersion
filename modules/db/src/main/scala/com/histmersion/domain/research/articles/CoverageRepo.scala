@@ -23,7 +23,6 @@ import com.histmersion.domain.library.Edge
   */
 private[articles] object CoverageRepo:
 
-
   private given DbCodec[Coverage.Source] = DbCodec.derived
   private given DbCodec[Coverage.Edge] = DbCodec.derived
 
@@ -34,7 +33,10 @@ private[articles] object CoverageRepo:
     val total = RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
     val rows = (Sql.raw(Sql.RawText("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ")) ++
       FilterSql.where(f, scope) ++ Sql
-        .of(Sql.OfText(" ORDER BY s.citekey LIMIT ?"), I(Param.I.V(math.max(0, cap.value))))).frag.query[Coverage.Source].run().toList
+        .of(Sql.OfText(" ORDER BY s.citekey LIMIT ?"), I(Param.I.V(math.max(0, cap.value))))).frag
+      .query[Coverage.Source]
+      .run()
+      .toList
     (total, rows)
 
   /** How many sources `f` selects, and which of `citekeys` are among them (exact, whatever their number). */
@@ -44,7 +46,10 @@ private[articles] object CoverageRepo:
       if citekeys.isEmpty then Set.empty[Citekey]
       else
         (Sql.raw(Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ FilterSql.where(f, scope) ++
-          Sql.of(Sql.OfText(" AND s.citekey = ANY(?)"), A(citekeys.distinct.map(c => Param.A.V(c.value))))).frag.query[Citekey].run().toSet
+          Sql.of(Sql.OfText(" AND s.citekey = ANY(?)"), A(citekeys.distinct.map(c => Param.A.V(c.value))))).frag
+          .query[Citekey]
+          .run()
+          .toSet
     (total, in)
 
   /** The edges of `kinds` with either end in `citekeys` (source to source only, V026). */

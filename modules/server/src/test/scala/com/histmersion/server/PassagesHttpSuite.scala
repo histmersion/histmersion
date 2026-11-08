@@ -72,7 +72,11 @@ class PassagesHttpSuite extends DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.auth)
+      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)
@@ -109,7 +113,10 @@ class PassagesHttpSuite extends DbSuite:
     withServer { url =>
       seed(url)
       val ds = testPool(cfg.db)
-      assertEquals(PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)).value: String, SourceFixtures.bodyText(ds, Ck).value: String)
+      assertEquals(
+        PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)).value: String,
+        SourceFixtures.bodyText(ds, Ck).value: String
+      )
     }
 
   test("hits with headings, and each offset reads on through get_source's body slice"):

@@ -18,7 +18,15 @@ class AboutStorageSuite extends munit.FunSuite:
   private val vol = "/System/Volumes/Data (/dev/disk3s5)"
 
   private val about =
-    About(About.Name("histmersion"), BuildStamp(BuildStamp.Version("1.2.3")), Health(Health.Status("ok"), Health.Db("ok"), Some(Health.SchemaVersion("97")), Some(Health.Converter("ok"))), JobCounts(), None, None, None)
+    About(
+      About.Name("histmersion"),
+      BuildStamp(BuildStamp.Version("1.2.3")),
+      Health(Health.Status("ok"), Health.Db("ok"), Some(Health.SchemaVersion("97")), Some(Health.Converter("ok"))),
+      JobCounts(),
+      None,
+      None,
+      None
+    )
 
   private val report = Storage.Report(
     ageSeconds = (Some(30)).map(Storage.Report.AgeSeconds.apply),
@@ -50,9 +58,19 @@ class AboutStorageSuite extends munit.FunSuite:
           (Some(28 * GB)).map(ByteCount.apply),
           (Some(5L)).map(Storage.FileCount.apply),
           volume = Some(Storage.Entry.Volume(vol)),
-          shrink = Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(5)).map(h => Storage.Entry.Shrink(h.value))
+          shrink = Storage.Advice
+            .shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(5))
+            .map(h => Storage.Entry.Shrink(h.value))
         ),
-        Storage.Entry(Storage.Entry.Key("plugins"), Storage.Entry.Label("plugins"), Storage.Entry.Group("install"), Some(Storage.Entry.Path("/d/plugins")), None, None, exists = Storage.Entry.Exists(false)),
+        Storage.Entry(
+          Storage.Entry.Key("plugins"),
+          Storage.Entry.Label("plugins"),
+          Storage.Entry.Group("install"),
+          Some(Storage.Entry.Path("/d/plugins")),
+          None,
+          None,
+          exists = Storage.Entry.Exists(false)
+        ),
         Storage.Entry(
           Storage.Entry.Key("basemap"),
           Storage.Entry.Label("terrain base map (cache)"),
@@ -76,7 +94,14 @@ class AboutStorageSuite extends munit.FunSuite:
     ),
     tables = List(TableSize(TableSize.Name("sources"), ByteCount(5 * GB))),
     volumes = List(Storage.Volume(Storage.Volume.Id(vol), ByteCount(994 * GB), ByteCount(5 * GB))),
-    backups = Some(BackupsUsage(BackupsUsage.Count(5), ByteCount(28 * GB), Some(BackupsUsage.Newest("histmersion-1.dump")), BackupsUsage.Keep(5)))
+    backups = Some(
+      BackupsUsage(
+        BackupsUsage.Count(5),
+        ByteCount(28 * GB),
+        Some(BackupsUsage.Newest("histmersion-1.dump")),
+        BackupsUsage.Keep(5)
+      )
+    )
   )
 
   test("Storage: the total, each location nested under the one it is inside, missing ones left out"):
@@ -109,7 +134,11 @@ class AboutStorageSuite extends munit.FunSuite:
     assertEquals((rows.head.label, rows.head.value, rows.head.state), (vol, "5.0 GB free", Some(ServiceState.Down)))
     assert(rows(1).value.startsWith(s"Low disk space on $vol"), rows)
     assert(rows(1).value.contains("backups 28.0 GB (lower backups.keep (now 5)"), rows)
-    val roomy = AboutView.storage(report.modify(_.volumes).setTo(List(Storage.Volume(Storage.Volume.Id(vol), ByteCount(994 * GB), ByteCount(500 * GB)))))
+    val roomy = AboutView.storage(
+      report
+        .modify(_.volumes)
+        .setTo(List(Storage.Volume(Storage.Volume.Id(vol), ByteCount(994 * GB), ByteCount(500 * GB))))
+    )
     assertEquals(roomy.last.rows.map(_.state), List(Some(ServiceState.Ok)))
 
   test("measuring: the window says so; an older server's About has no Storage section"):

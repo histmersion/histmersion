@@ -75,7 +75,8 @@ object EngineStoreSuite:
       val clock = Moving()
       val titles = TrieMap.empty[(Goal.LinkKind, BGoalLinkRow.Ref), GoalLinkTargets.TitleResult]
       val targets = new GoalLinkTargets:
-        def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.TitleResult] = titles.get((kind, ref))
+        def title(kind: Goal.LinkKind, ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.TitleResult] =
+          titles.get((kind, ref))
         def queueList(ref: BGoalLinkRow.Ref): Option[GoalLinkTargets.QueueListResult] = None
       val jobs = JobRuns.InMemory(AtomicReference(Map.empty[Run.Id, JobRunState]), () => Instant.now(clock))
       Some(new EngineStores:
@@ -91,7 +92,10 @@ object EngineStoreSuite:
         def article(slug: Slug, title: Title): Unit =
           titles.update((Goal.LinkKind.Article, BGoalLinkRow.Ref(slug.value)), GoalLinkTargets.TitleResult(title.value))
         def source(citekey: Citekey, title: Title): Unit =
-          titles.update((Goal.LinkKind.Source, BGoalLinkRow.Ref(citekey.value)), GoalLinkTargets.TitleResult(title.value))
+          titles.update(
+            (Goal.LinkKind.Source, BGoalLinkRow.Ref(citekey.value)),
+            GoalLinkTargets.TitleResult(title.value)
+          )
         def within[A](work: DbCon ?=> A): A = connect(NoDatabase)(work))
 
   /** The stores on a scratch database of their own per test. */
@@ -121,9 +125,12 @@ object EngineStoreSuite:
           val agentState = AgentStateService(db)
           def article(slug: Slug, title: Title): Unit =
             connect(ds)(
-              sql"INSERT INTO articles (slug, title, kind, body) VALUES (${slug.value}, ${title.value}, 'concept', '')".update.run()
+              sql"INSERT INTO articles (slug, title, kind, body) VALUES (${slug.value}, ${title.value}, 'concept', '')".update
+                .run()
             ): Unit
           def source(citekey: Citekey, title: Title): Unit =
-            connect(ds)(sql"INSERT INTO sources (citekey, title) VALUES (${citekey.value}, ${title.value})".update.run()): Unit
+            connect(ds)(
+              sql"INSERT INTO sources (citekey, title) VALUES (${citekey.value}, ${title.value})".update.run()
+            ): Unit
           def within[A](work: DbCon ?=> A): A = transact(ds)(work)
       }

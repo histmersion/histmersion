@@ -12,7 +12,6 @@ import com.augustnagro.magnum.*
 /** The `read_marks` table. Takes the connection it runs on. */
 private[reading] object ReadingRepo:
 
-
   private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
@@ -27,7 +26,8 @@ private[reading] object ReadingRepo:
       case ReadingShow.All    => ("", " ORDER BY m.updated_at DESC, m.id DESC")
     (Sql.of(Sql.Text(s"$Projection WHERE m.user_id = ?"), Param.S(Param.S.V(user.value))) ++
       kind.fold(Sql.empty)(k => Sql.of(Sql.Text(" AND m.target_kind = ?"), Param.S(Param.S.V(k.value)))) ++
-      Sql.raw(Sql.Text(where + order)) ++ Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(size.value)))).frag.query[MarkRow].run().toList
+      Sql.raw(Sql.Text(where + order)) ++ Sql
+        .of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(size.value)))).frag.query[MarkRow].run().toList
 
   def get(user: UserId, ref: ItemRef)(using DbCon): Option[MarkRow] =
     Sql
@@ -52,8 +52,8 @@ private[reading] object ReadingRepo:
       .toList
 
   /** Mark read (keeping when it was first marked) or not read yet. */
-  def setRead(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], read: ReadingService.Read, at: MarkTime)(using
-      DbCon
+  def setRead(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], read: ReadingService.Read, at: MarkTime)(
+      using DbCon
   ): Unit =
     val stamp = at.iso
     val readAt = Option.when(read.value)(stamp)

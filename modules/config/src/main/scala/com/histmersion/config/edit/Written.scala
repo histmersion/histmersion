@@ -18,4 +18,4 @@ enum Written derives CanEqual:
 
 object Written:
   object Elsewhere:
-    export SettingsFile.{Path as File}
+    export SettingsFile.Path as File

@@ -13,14 +13,14 @@ object Articles:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
-
   def heading(body: Article.Body): Option[Article.Heading] =
     ((body).value.linesIterator
       .map(_.trim)
       .find(_.nonEmpty)
       .filter(_.startsWith("# "))
       .map(_.drop(2).trim)
-      .filter(_.nonEmpty)).map(refactorValue3 => Article.Heading(refactorValue3))
+      .filter(_.nonEmpty))
+      .map(refactorValue3 => Article.Heading(refactorValue3))
 
   def lede(body: Article.Body): Option[Article.SummaryText] =
     val lines = (body).value.linesIterator.toList.dropWhile(_.trim.isEmpty)
@@ -37,7 +37,9 @@ object Articles:
         else s
       }
       .trim
-    (Option(plain).filter(s => s.nonEmpty && !s.startsWith("#") && !s.startsWith("!"))).map(refactorValue4 => Article.SummaryText(refactorValue4))
+    (Option(plain)
+      .filter(s => s.nonEmpty && !s.startsWith("#") && !s.startsWith("!")))
+      .map(refactorValue4 => Article.SummaryText(refactorValue4))
 
   private val LedeHeadings = Set("## summary", "## lede", "## abstract")
 
@@ -51,8 +53,10 @@ object Articles:
         val norm = s.toLowerCase.replaceAll("[^a-z]+", " ").trim
         if StandIns.contains(norm) || norm.startsWith("lorem ipsum") then
           Left(
-            Problem(s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
-              "and the article's opening paragraph (or its `## Summary` section) is used")
+            Problem(
+              s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
+                "and the article's opening paragraph (or its `## Summary` section) is used"
+            )
           )
         else Right(Some(Article.SummaryText(s)))
 
@@ -60,7 +64,8 @@ object Articles:
 
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
-  def notFound(slug: Article.Slug): Api.Error = Api.Error(Api.Error.Problem(s"No article '$slug'"), Some(Api.Error.Code(Write.CodeNotFound)))
+  def notFound(slug: Article.Slug): Api.Error =
+    Api.Error(Api.Error.Problem(s"No article '$slug'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def kindOf(raw: Article.Kind.Wire): Either[Problem, Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase
@@ -69,7 +74,8 @@ object Articles:
 
   def kindOfDir(dirName: String): Article.Kind.Wire =
     val d = (dirName).trim.toLowerCase
-    if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then Article.Kind.Wire(d.dropRight(1)) else Article.Kind.Wire(d)
+    if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then Article.Kind.Wire(d.dropRight(1))
+    else Article.Kind.Wire(d)
 
   def dirOfKind(kind: Article.Kind.Wire): String = ((kind).value.trim.toLowerCase)
 
@@ -78,7 +84,8 @@ object Articles:
   def slugOf(raw: Article.Slug): Either[Problem, Article.Slug] =
     val s = (raw).value.trim.toLowerCase
     if SlugPattern.matches(s) then Right(Article.Slug(s))
-    else Left(Problem(s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"))
+    else
+      Left(Problem(s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"))
 
   /** The article a put makes, or why it is refused. */
   def applyPut(slug: Article.Slug, p: Article.Put): Either[Problem, Article] =
@@ -88,7 +95,9 @@ object Articles:
       _ <- if p.title.value.trim.nonEmpty then Right(()) else Left(Problem("title must not be empty"))
       period <- periodOf(p.periodStart, p.periodEnd)
       summary <- summaryOf(p.summary)
-      filter <- p.filter.fold[Either[Problem, Option[Article.Filter]]](Right(None))(f => Article.Filter.normalise(f).left.map(e => Problem(e.value)))
+      filter <- p.filter.fold[Either[Problem, Option[Article.Filter]]](Right(None))(f =>
+        Article.Filter.normalise(f).left.map(e => Problem(e.value))
+      )
       reasons <- Coverage.Reason.merge(Map.empty, p.reasons).left.map(e => Problem(e))
     yield Article(
       slug = s,
@@ -111,8 +120,10 @@ object Articles:
         if want == actual then Right(())
         else
           Left(
-            Problem(s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
-              s"updatedAt is '$actual'. Re-read the article and re-apply your patch.")
+            Problem(
+              s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
+                s"updatedAt is '$actual'. Re-read the article and re-apply your patch."
+            )
           )
 
   def applyPatch(existing: Article, patch: Article.Patch): Either[Problem, Article] =
@@ -128,9 +139,35 @@ object Articles:
         Article.Filter.normalise(f).left.map(e => Problem(e.value))
       )
       reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons).left.map(e => Problem(e))
-    yield existing.modify(
-      _.title).setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title)).modify(_.kind).setTo(kind).modify(_.body).setTo(body).modify(_.summary).setTo(summary.orElse(existing.summary)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(lp => Write.applyList(existing.tags.map(t => Write.ListItem(t.value)), lp).map(i => Article.Tags(i.value)))).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions).map(r => Article.Regions(r.value.trim)).filter(_.value.nonEmpty).distinct).modify(_.period).setTo(period).modify(_.filter).setTo(filter).modify(_.reasons).setTo(reasons
-    )
+    yield existing
+      .modify(_.title)
+      .setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title))
+      .modify(_.kind)
+      .setTo(kind)
+      .modify(_.body)
+      .setTo(body)
+      .modify(_.summary)
+      .setTo(summary.orElse(existing.summary))
+      .modify(_.tags)
+      .setTo(
+        patch.tags.fold(existing.tags)(lp =>
+          Write.applyList(existing.tags.map(t => Write.ListItem(t.value)), lp).map(i => Article.Tags(i.value))
+        )
+      )
+      .modify(_.regions)
+      .setTo(
+        patch.regions
+          .getOrElse(existing.regions)
+          .map(r => Article.Regions(r.value.trim))
+          .filter(_.value.nonEmpty)
+          .distinct
+      )
+      .modify(_.period)
+      .setTo(period)
+      .modify(_.filter)
+      .setTo(filter)
+      .modify(_.reasons)
+      .setTo(reasons)
 
   private def bodyOf(current: Article.Body, patch: Article.Patch): Either[Problem, Article.Body] =
     val base = patch.body.map(Article.Coverage.stripGenerated).getOrElse(current)
@@ -138,10 +175,14 @@ object Articles:
       case None    => Right(base)
       case Some(a) =>
         patch.section.map(_.value.trim).filter(_.nonEmpty) match
-          case None    => Right(Article.Body(if base.value.trim.isEmpty then a else s"${base.value.stripTrailing}\n\n$a"))
+          case None => Right(Article.Body(if base.value.trim.isEmpty then a else s"${base.value.stripTrailing}\n\n$a"))
           case Some(s) => appendUnderSection(base, Article.Section(s), Article.Prose(a))
 
-  def appendUnderSection(body: Article.Body, section: Article.Section, text: Article.Prose): Either[Problem, Article.Body] =
+  def appendUnderSection(
+      body: Article.Body,
+      section: Article.Section,
+      text: Article.Prose
+  ): Either[Problem, Article.Body] =
     val sNorm = (section).value.replaceAll("^#+\\s*", "").trim.toLowerCase
     val lines = (body).value.split("\n", -1).toList
     val idx = lines.indexWhere { line =>

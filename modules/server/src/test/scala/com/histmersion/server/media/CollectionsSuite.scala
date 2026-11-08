@@ -32,14 +32,28 @@ import com.histmersion.util.ocr.Pixels
 import com.histmersion.domain.DeepTime
 
 /** The store as a few maps, with the gazetteer facts the matches read. */
-final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService.PlaceKey, List[PlaceFacts]]) extends MediaStore:
+final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService.PlaceKey, List[PlaceFacts]])
+    extends MediaStore:
   val saved = scala.collection.mutable.LinkedHashMap.empty[ProviderAsset.Key, (AssetService.AssetUid, ProviderAsset)]
-  val links = scala.collection.mutable.ListBuffer.empty[(AssetService.AssetUid, ImportService.TargetType, ImportService.TargetId, AssetService.LinkRole, AssetService.LinkRank, Option[AssetService.LinkBasis])]
-  val checks = scala.collection.mutable.LinkedHashMap.empty[(ImportService.Provider, ImportService.TargetId), ImportService.FoundCount]
+  val links = scala.collection.mutable.ListBuffer.empty[
+    (
+        AssetService.AssetUid,
+        ImportService.TargetType,
+        ImportService.TargetId,
+        AssetService.LinkRole,
+        AssetService.LinkRank,
+        Option[AssetService.LinkBasis]
+    )
+  ]
+  val checks = scala.collection.mutable.LinkedHashMap
+    .empty[(ImportService.Provider, ImportService.TargetId), ImportService.FoundCount]
   val refreshed = scala.collection.mutable.ListBuffer.empty[AssetService.AssetUid]
   def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
     val wanted = keys.map(_.value).toSet
-    saved.collect { case (k, (uid, a)) if wanted(k.value) => AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value))) }.toMap
+    saved.collect {
+      case (k, (uid, a)) if wanted(k.value) =>
+        AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
+    }.toMap
   def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId)) =
     val existing = saved.get(a.key).map(_._1)
     val uid = existing.getOrElse(AssetService.AssetUid(f"00000000-0000-0000-0000-${saved.size + 1}%012d"))
@@ -68,8 +82,13 @@ final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService
   ) =
     links += ((uid, tt, ti, role, rank, basis)); true
   def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) = false
-  def checked(provider: ImportService.Provider, tt: ImportService.TargetType, ti: ImportService.TargetId, found: ImportService.FoundCount, qid: Option[Wikidata.Id]) = checks((provider, ti)) =
-    found
+  def checked(
+      provider: ImportService.Provider,
+      tt: ImportService.TargetType,
+      ti: ImportService.TargetId,
+      found: ImportService.FoundCount,
+      qid: Option[Wikidata.Id]
+  ) = checks((provider, ti)) = found
   override def placeFacts(ids: List[Place.Id]) = facts.view.filterKeys(ids.toSet).toMap
   override def mapPlacesNamed(keys: List[ImportService.PlaceKey]) = named.view.filterKeys(keys.toSet).toMap
 
@@ -91,10 +110,23 @@ class CollectionsSuite extends munit.FunSuite:
     ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
       ConverterClient.Problem("not used")
     )
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
-    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
+    override def thumbnail(
+        bytes: ConverterClient.DocumentBytes,
+        filename: ConverterClient.Filename,
+        maxPx: Pixels
+    ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
       calls += filename
-      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(jpeg ++ Array[Byte](42)), ConverterClient.Thumb.Mime("image/jpeg"), ConverterClient.Thumb.Width(330), ConverterClient.Thumb.Height(250)))
+      Right(
+        ConverterClient.Thumb(
+          ConverterClient.Thumb.Bytes(jpeg ++ Array[Byte](42)),
+          ConverterClient.Thumb.Mime("image/jpeg"),
+          ConverterClient.Thumb.Width(330),
+          ConverterClient.Thumb.Height(250)
+        )
+      )
 
   private def fx(name: String) = FakeMediaHttp.fixture(name)
 
@@ -108,11 +140,35 @@ class CollectionsSuite extends munit.FunSuite:
     Some(Longitude(22.756))
   )
   private val mycenaeGn =
-    PlaceFacts(PlaceFacts.Id("geonames_mycenae"), PlaceFacts.Label("Mykines"), Set(PlaceFacts.Keys("mycenae"), PlaceFacts.Keys("mykines")), None, None, Some(Latitude(37.731)), Some(Longitude(22.757)))
+    PlaceFacts(
+      PlaceFacts.Id("geonames_mycenae"),
+      PlaceFacts.Label("Mykines"),
+      Set(PlaceFacts.Keys("mycenae"), PlaceFacts.Keys("mykines")),
+      None,
+      None,
+      Some(Latitude(37.731)),
+      Some(Longitude(22.757))
+    )
   private val greece =
-    PlaceFacts(PlaceFacts.Id("geonames_390903"), PlaceFacts.Label("Greece"), Set(PlaceFacts.Keys("greece")), Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(-100L))), Some(Target.Qid("Q41")), Some(Latitude(39.0)), Some(Longitude(22.0)))
+    PlaceFacts(
+      PlaceFacts.Id("geonames_390903"),
+      PlaceFacts.Label("Greece"),
+      Set(PlaceFacts.Keys("greece")),
+      Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(-100L))),
+      Some(Target.Qid("Q41")),
+      Some(Latitude(39.0)),
+      Some(Longitude(22.0))
+    )
   private val cyprus =
-    PlaceFacts(PlaceFacts.Id("geonames_146669"), PlaceFacts.Label("Cyprus"), Set(PlaceFacts.Keys("cyprus")), Some((DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-300L))), Some(Target.Qid("Q229")), Some(Latitude(35.0)), Some(Longitude(33.0)))
+    PlaceFacts(
+      PlaceFacts.Id("geonames_146669"),
+      PlaceFacts.Label("Cyprus"),
+      Set(PlaceFacts.Keys("cyprus")),
+      Some((DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-300L))),
+      Some(Target.Qid("Q229")),
+      Some(Latitude(35.0)),
+      Some(Longitude(33.0))
+    )
   private val facts = List(mycenae, greece, cyprus).map(f => Place.Id.assume(f.id.value) -> f).toMap
   // Pleiades' and GeoNames' Mycenae are one site (3 km): the name resolves to it once
   private val named = Map(
@@ -120,7 +176,8 @@ class CollectionsSuite extends munit.FunSuite:
     ImportService.PlaceKey("greece") -> List(greece),
     ImportService.PlaceKey("cyprus") -> List(cyprus)
   )
-  private def target(f: PlaceFacts) = Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
+  private def target(f: PlaceFacts) =
+    Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
   private val cfg = FakeMediaHttp.cfg
 
@@ -139,7 +196,10 @@ class CollectionsSuite extends munit.FunSuite:
       store: CollStore = CollStore(facts, named),
       conv: ThumbConverter = ThumbConverter()
   ): MediaImportReport =
-    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(col.conf.requestIntervalMs.value)))
+    val (polite, _) = FakeMediaHttp.polite(
+      http,
+      cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(col.conf.requestIntervalMs.value))
+    )
     CollectionImport(col, polite, cfg, conv).run(targets, dryRun, refresh = CollectionImport.Refresh(false), store)
 
   // ── the Met ──────────────────────────────────────────────────────────────────────────────────
@@ -154,7 +214,8 @@ class CollectionsSuite extends munit.FunSuite:
       metObject(248284, _.replace("\"isPublicDomain\": true", "\"isPublicDomain\": false"))
     else if url.endsWith("/v1/objects/252447") then
       metObject(252447, _.replace("\"excavation\": \"Mycenae\"", "\"excavation\": \"Argos\""))
-    else if url.contains("/v1/objects/") then Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
+    else if url.contains("/v1/objects/") then
+      Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
     else if url.startsWith("https://images.metmuseum.org/") then
       FakeMediaHttp.bytes(jpeg ++ url.getBytes("UTF-8"), "image/jpeg")
     else Left(s"unexpected $url")
@@ -174,7 +235,13 @@ class CollectionsSuite extends munit.FunSuite:
       r.rejected.map(_.key.value).sorted,
       List("names another place on the map", "not Open Access (isPublicDomain is false)")
     )
-    assertEquals(r.byLicence, List(MediaCount(MediaCount.Key("CC0-1.0"), MediaCount.N(2)), MediaCount(MediaCount.Key("not open access"), MediaCount.N(1), allowed = MediaCount.Allowed(false))))
+    assertEquals(
+      r.byLicence,
+      List(
+        MediaCount(MediaCount.Key("CC0-1.0"), MediaCount.N(2)),
+        MediaCount(MediaCount.Key("not open access"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
+      )
+    )
     assertEquals(r.failed.size, 2, "the two objects the stand-in has no record of are lines, not the end")
     assert(store.saved.isEmpty && store.links.isEmpty && store.checks.isEmpty)
     assert(http.requests.forall(_._1.startsWith("https://collectionapi.metmuseum.org/")), "documented API only")
@@ -186,13 +253,17 @@ class CollectionsSuite extends munit.FunSuite:
   ):
     val http = FakeMediaHttp { url =>
       if url.contains("/v1.1/search?") then FakeMediaHttp.json(fx("met-search.json"))
-      else if url.endsWith("/v1/objects/248284") then Right(HttpAnswer(HttpAnswer.Code(403), Map.empty, HttpAnswer.Body("Forbidden".getBytes("UTF-8"))))
+      else if url.endsWith("/v1/objects/248284") then
+        Right(HttpAnswer(HttpAnswer.Code(403), Map.empty, HttpAnswer.Body("Forbidden".getBytes("UTF-8"))))
       else if url.contains("/v1/objects/") then metObject(252448)
       else Left(s"unexpected $url")
     }
     val store = CollStore(facts, named)
     val r = run(FakeMediaHttp.builtin(Met), http, List(target(mycenae), target(greece)), dryRun = DryOff, store)
-    assert(r.failed.exists(_.value.contains("refused the request; the rest of this batch was not asked")), r.failed.toString)
+    assert(
+      r.failed.exists(_.value.contains("refused the request; the rest of this batch was not asked")),
+      r.failed.toString
+    )
     assertEquals(http.requests.count(_._1.contains("/v1.1/search?")), 1, "Greece was not searched")
     assert(store.checks.isEmpty && store.saved.isEmpty, "nothing recorded: the next run asks both again")
 
@@ -230,7 +301,8 @@ class CollectionsSuite extends munit.FunSuite:
 
   test("a place whose search fails is not recorded as asked (the next run asks again)"):
     val store = CollStore(facts, named)
-    val http = FakeMediaHttp(_ => Right(HttpAnswer(HttpAnswer.Code(500), Map.empty, HttpAnswer.Body(Array.emptyByteArray))))
+    val http =
+      FakeMediaHttp(_ => Right(HttpAnswer(HttpAnswer.Code(500), Map.empty, HttpAnswer.Body(Array.emptyByteArray))))
     val c = cfg.modify(_.maxRetries).setTo(MediaConfig.MaxRetries(0))
     val (polite, _) = FakeMediaHttp.polite(http, c)
     val r = CollectionImport(FakeMediaHttp.builtin(Met), polite, c, ThumbConverter()).run(
@@ -305,7 +377,13 @@ class CollectionsSuite extends munit.FunSuite:
     "LoC: loc.gov's bot challenge (403) ends the search with that reason — not worked around, not recorded as asked"
   ):
     val http = FakeMediaHttp(_ =>
-      Right(HttpAnswer(HttpAnswer.Code(403), Map(CoreQuota.HeaderName("cf-mitigated") -> CoreQuota.HeaderValue("challenge")), HttpAnswer.Body("Just a moment...".getBytes("UTF-8"))))
+      Right(
+        HttpAnswer(
+          HttpAnswer.Code(403),
+          Map(CoreQuota.HeaderName("cf-mitigated") -> CoreQuota.HeaderValue("challenge")),
+          HttpAnswer.Body("Just a moment...".getBytes("UTF-8"))
+        )
+      )
     )
     val store = CollStore(facts, named)
     val r = run(FakeMediaHttp.builtin(Loc), http, List(target(mycenae), target(greece)), dryRun = DryOff, store)
@@ -316,18 +394,36 @@ class CollectionsSuite extends munit.FunSuite:
   // ── equivalents ──────────────────────────────────────────────────────────────────────────────
 
   test("a name naming the place's equivalents (same item, or within same-site-km) is not ambiguous; another place is"):
-    val far = PlaceFacts(PlaceFacts.Id("other_mycenae"), PlaceFacts.Label("Mycenae"), Set(PlaceFacts.Keys("mycenae")), None, None, Some(Latitude(10.0)), Some(Longitude(10.0)))
+    val far = PlaceFacts(
+      PlaceFacts.Id("other_mycenae"),
+      PlaceFacts.Label("Mycenae"),
+      Set(PlaceFacts.Keys("mycenae")),
+      None,
+      None,
+      Some(Latitude(10.0)),
+      Some(Longitude(10.0))
+    )
     val keyed = named.map((k, v) => MediaMatch.PlaceInfo.Keys(k.value) -> v)
-    val r1 = SearchedCollection.resolveFor(mycenae, keyed, MediaConfig.SameSiteKm(3.0))(MediaMatch.PlaceInfo.Keys("mycenae"))
+    val r1 =
+      SearchedCollection.resolveFor(mycenae, keyed, MediaConfig.SameSiteKm(3.0))(MediaMatch.PlaceInfo.Keys("mycenae"))
     assertEquals(r1, Set("pleiades_570491"))
     val r2 =
-      SearchedCollection.resolveFor(mycenae, keyed.updated(MediaMatch.PlaceInfo.Keys("mycenae"), List(mycenae, mycenaeGn, far)), MediaConfig.SameSiteKm(3.0))(MediaMatch.PlaceInfo.Keys("mycenae"))
+      SearchedCollection.resolveFor(
+        mycenae,
+        keyed.updated(MediaMatch.PlaceInfo.Keys("mycenae"), List(mycenae, mycenaeGn, far)),
+        MediaConfig.SameSiteKm(3.0)
+      )(MediaMatch.PlaceInfo.Keys("mycenae"))
     assertEquals(r2, Set("pleiades_570491", "other_mycenae"))
-    assert(SearchedCollection.distanceKm(Latitude(37.73), Longitude(22.756), Latitude(37.731), Longitude(22.757)).value < 0.2)
+    assert(
+      SearchedCollection.distanceKm(Latitude(37.73), Longitude(22.756), Latitude(37.731), Longitude(22.757)).value < 0.2
+    )
 
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 
   test("the roles a collection's pictures may play are the place and event roles the host stores"):
-    assertEquals(MediaCollection.Roles.map(_.value: String), MediaRole.all.map(_.value: String).toSet -- Set(MediaRole.Cover, MediaRole.Illustration))
+    assertEquals(
+      MediaCollection.Roles.map(_.value: String),
+      MediaRole.all.map(_.value: String).toSet -- Set(MediaRole.Cover, MediaRole.Illustration)
+    )
     assertEquals(FakeMediaHttp.builtin(Loc).role, MediaRole.Map)
     assertEquals(FakeMediaHttp.builtin(Met).role, MediaRole.Object)

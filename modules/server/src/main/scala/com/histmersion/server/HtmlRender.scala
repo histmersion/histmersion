@@ -37,7 +37,8 @@ object HtmlRender:
 
   private def escText(s: String): String = HtmlAtoms.esc(s)
 
-  private def display(s: String): String = com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(s)).value
+  private def display(s: String): String =
+    com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(s)).value
 
   def esc(s: Text): Html = Html(escText(s.value))
 
@@ -95,7 +96,9 @@ object HtmlRender:
   def chip(field: ChipField, value: Label): Html =
     Html(
       s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${escText(value.value)}"""" +
-        s""" href="/#${field.hashKey}=${escText(HtmlAtoms.segment(value.value))}">${escText(display(value.value))}</a>"""
+        s""" href="/#${field.hashKey}=${escText(HtmlAtoms.segment(value.value))}">${escText(
+            display(value.value)
+          )}</a>"""
     )
 
   def chips(field: ChipField, values: List[Label]): Html =
@@ -127,8 +130,16 @@ object HtmlRender:
     val meta = List(
       f.confidence.map(c => confidenceBadge(c).value).getOrElse(""),
       escText(where),
-      escText(f.periodName.map(_.value).filter(n => n.nonEmpty && period.nonEmpty).fold(period)(n => s"$period (${display(n)})")),
-      f.significance.map(_.value).filter(_.nonEmpty).fold("")(s => s"""<span class="significance">${escText(display(s))}</span>""")
+      escText(
+        f.periodName
+          .map(_.value)
+          .filter(n => n.nonEmpty && period.nonEmpty)
+          .fold(period)(n => s"$period (${display(n)})")
+      ),
+      f.significance
+        .map(_.value)
+        .filter(_.nonEmpty)
+        .fold("")(s => s"""<span class="significance">${escText(display(s))}</span>""")
     ).filter(_.nonEmpty)
     Html(
       s"""<li class="finding"><div class="claim">${escText(f.claim.value)}</div>""" +

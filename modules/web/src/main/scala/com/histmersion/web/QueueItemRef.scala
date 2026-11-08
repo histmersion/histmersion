@@ -21,9 +21,12 @@ import com.histmersion.api.Api
   */
 object QueueItemRef:
 
-
-
-  final case class Ref(authors: List[Ref.Authors], title: Option[Ref.Title], year: Option[Ref.Year], doi: Option[Ref.Doi])
+  final case class Ref(
+      authors: List[Ref.Authors],
+      title: Option[Ref.Title],
+      year: Option[Ref.Year],
+      doi: Option[Ref.Doi]
+  )
 
   object Ref:
     type Authors = Authors.T

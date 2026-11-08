@@ -49,7 +49,10 @@ object ArticlesCarried:
       rows(ImportRank(43))(ArticleBundleRepo.articlesIn),
       RowsIn(ImportStage.Derived, ImportRank(201), ArticleBundleRepo.articleLinksIn)
     )
-  )(scope => ArticleBundleRepo.articles(scope).toList)(a => CarriedKind.RecordsClock(a.updatedAt.value), (es, ls) => es.modify(_.articles).setTo(ls))
+  )(scope => ArticleBundleRepo.articles(scope).toList)(
+    a => CarriedKind.RecordsClock(a.updatedAt.value),
+    (es, ls) => es.modify(_.articles).setTo(ls)
+  )
 
   /** The versions: the lines without their bodies are what a merge compares, the lines with them what an export writes.
     */
@@ -63,7 +66,11 @@ object ArticlesCarried:
       val rs = ArticleBundleRepo.versions(scope).toList
       val bodies = rs.map(r => BlobOut(r.bodySha, r.bodyBytes, ArticleBundleRepo.versionBody(r.uid)))
       val as = rs.map(ArticleBundleRepo.versionLine)
-      CarriedOut(CarriedOut.Payload(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))), as.map(_.updatedAt.value).maxOption.map(CarriedOut.AsOf(_)), bodies)
+      CarriedOut(
+        CarriedOut.Payload(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))),
+        as.map(_.updatedAt.value).maxOption.map(CarriedOut.AsOf(_)),
+        bodies
+      )
 
     def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities =
       val as = ArticleBundleRepo.versions(scope).toList.map(ArticleBundleRepo.versionLine)

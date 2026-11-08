@@ -63,7 +63,11 @@ class UiNoticesHttpSuite extends DbSuite:
 
   test("counts, news, marking read without the key, and the mark only moving forward"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("s3cret")))
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.auth)
+      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("s3cret")))
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"

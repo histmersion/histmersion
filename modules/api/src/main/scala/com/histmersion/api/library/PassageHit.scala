@@ -8,13 +8,18 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class PassageHit(offset: PassageHit.Offset, heading: Option[PassageHit.Heading], text: PassageHit.Text, matches: List[MatchSpan])
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class PassageHit(
+    offset: PassageHit.Offset,
+    heading: Option[PassageHit.Heading],
+    text: PassageHit.Text,
+    matches: List[MatchSpan]
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object PassageHit:
   type Offset = Offset.T
   object Offset extends Newtype[Int, Pure]
   type Heading = Heading.T
   object Heading extends Newtype[String, Pure]
-  export Passage.{Excerpt as Text}
+  export Passage.Excerpt as Text

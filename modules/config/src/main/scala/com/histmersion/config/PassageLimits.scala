@@ -19,11 +19,15 @@ final case class PassageLimits(
 ) derives ConfigReader:
   /** `limit` into `[1, maxLimit]`; absent or `<= 0` is the default. */
   def limitOf(requested: Option[PassageLimits.Limit]): PassageLimits.Limit =
-    PassageLimits.Limit(requested.map(_.value).filter(_ > 0).getOrElse(limit.value).max(1).min(math.max(1, maxLimit.value)))
+    PassageLimits.Limit(
+      requested.map(_.value).filter(_ > 0).getOrElse(limit.value).max(1).min(math.max(1, maxLimit.value))
+    )
 
   /** `context` into `[0, maxContext]`; absent or negative is the default. */
   def contextOf(requested: Option[PassageLimits.Context]): PassageLimits.Context =
-    PassageLimits.Context(requested.map(_.value).filter(_ >= 0).getOrElse(context.value).max(0).min(math.max(0, maxContext.value)))
+    PassageLimits.Context(
+      requested.map(_.value).filter(_ >= 0).getOrElse(context.value).max(0).min(math.max(0, maxContext.value))
+    )
 
 object PassageLimits:
 

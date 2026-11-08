@@ -32,7 +32,7 @@ private[places] object TreeRepo:
       case (Some(a), Some(b)) =>
         val (lo, hi) = (Year(a.value), Year(b.value))
         Some(if a <= b then Period(lo, hi) else Period(hi, lo))
-      case _                  => None
+      case _ => None
 
   final private[histmersion] case class RegionNodeRow(
       id: RegionNodeRow.Id,
@@ -102,7 +102,9 @@ private[places] object TreeRepo:
           WHERE r.kind = '${Place.Relation.PartOf}'
         )"""
 
-  private def closureParams(ids: List[com.histmersion.domain.catalogue.Place.Id]) = List(Param.A(ids.map(i => Param.A.V(i.value))))
+  private def closureParams(ids: List[com.histmersion.domain.catalogue.Place.Id]) = List(
+    Param.A(ids.map(i => Param.A.V(i.value)))
+  )
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */
   /** `withdrawn` is Pleiades's own marker for a superseded record. Some of the export carries it as a property, some
@@ -136,7 +138,9 @@ private[places] object TreeRepo:
   /** The gazetteer slice a tree's rows need: every place they were materialised into (`placeIds`) plus all its
     * ancestors, and the edges between them. Empty when nothing is located — no query is run then.
     */
-  def gazetteer(placeIds: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): (List[RegionNode], List[Place.Relation]) =
+  def gazetteer(placeIds: List[com.histmersion.domain.catalogue.Place.Id])(using
+      DbCon
+  ): (List[RegionNode], List[Place.Relation]) =
     val ids = placeIds.distinct
     if ids.isEmpty then (Nil, Nil)
     else

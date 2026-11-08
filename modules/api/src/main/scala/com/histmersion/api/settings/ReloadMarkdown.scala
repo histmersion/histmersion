@@ -3,13 +3,12 @@ package api.settings
 import com.histmersion.api.given
 object ReloadMarkdown:
 
-
   def report(r: ReloadReport): String =
     def list(title: String, xs: List[String]): List[String] =
       if xs.isEmpty then Nil else (s"**$title:**" :: xs.map(x => s"- $x")).map(refactorValue => (refactorValue))
     val head =
       if r.errors.nonEmpty then s"# Config reload failed — generation ${r.generation} stays"
-      else if ((r.published) == ReloadReport.Published(true)) then s"# Config reloaded — generation ${r.generation}"
+      else if (r.published) == ReloadReport.Published(true) then s"# Config reloaded — generation ${r.generation}"
       else s"# Config unchanged — generation ${r.generation}"
     val file = r.file.map(f => s"File: `$f`").toList
     val none =

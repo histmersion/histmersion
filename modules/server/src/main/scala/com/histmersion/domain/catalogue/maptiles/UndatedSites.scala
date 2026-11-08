@@ -23,8 +23,11 @@ object UndatedSites:
   def apply(db: Transactor, keptZoom: () => UndatedBuild.MaxZoom, background: (() => Unit) => Unit): UndatedSites =
     Implementation(db, keptZoom, background)
 
-  final private class Implementation(db: Transactor, keptZoom: () => UndatedBuild.MaxZoom, background: (() => Unit) => Unit)
-      extends UndatedSites:
+  final private class Implementation(
+      db: Transactor,
+      keptZoom: () => UndatedBuild.MaxZoom,
+      background: (() => Unit) => Unit
+  ) extends UndatedSites:
     private val rebuilding = AtomicBoolean(false)
 
     def counted(c: TileCoord, grid: TileGrid, siteType: Option[TileRepo.SiteType]): List[GridCell] =
@@ -45,7 +48,11 @@ object UndatedSites:
       if !ok then rebuild(now, perSide, wanted)
       ok
 
-    private def rebuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom): Unit =
+    private def rebuild(
+        version: UndatedBuild.Version,
+        perSide: UndatedBuild.PerSide,
+        maxZoom: UndatedBuild.MaxZoom
+    ): Unit =
       if rebuilding.compareAndSet(false, true) then
         background { () =>
           try
@@ -75,7 +82,10 @@ object UndatedSites:
       val cu = grid.cellUnits.value.max(1)
       inTile(c, siteType)
         .groupBy((_, px, py) =>
-          (c.x.value * perSide.value + math.floor(px / cu).toLong, c.y.value * perSide.value + math.floor(py / cu).toLong)
+          (
+            c.x.value * perSide.value + math.floor(px / cu).toLong,
+            c.y.value * perSide.value + math.floor(py / cu).toLong
+          )
         )
         .toList
         .sortBy(_._1)

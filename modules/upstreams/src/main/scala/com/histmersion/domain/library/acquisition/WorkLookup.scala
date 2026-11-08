@@ -24,8 +24,10 @@ object WorkLookup:
   object WorkFieldsValue extends Newtype[String, Pure]
 
   val WorkFields: WorkFields =
-    WorkFieldsValue("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
-      "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works")
+    WorkFieldsValue(
+      "id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
+        "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works"
+    )
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
   def workUrl(cfg: UpstreamSettings, doi: Doi): Candidate.Url =
@@ -59,9 +61,17 @@ object WorkLookup:
       w: WorkRef
   ): WorkRef =
     cfg.contact
-      .flatMap(email => json(Url(Candidate.Url(cfg.unpaywall.url.value), Url.UrlPath(s"/$doi"), "email" -> email.value)).toOption)
+      .flatMap(email =>
+        json(Url(Candidate.Url(cfg.unpaywall.url.value), Url.UrlPath(s"/$doi"), "email" -> email.value)).toOption
+      )
       .map(AcquireParse.unpaywallAccess)
-      .fold(w)(a => w.copy(isOa = WorkRef.IsOa(a.isOa.value), oaStatus = a.status.map(s => WorkRef.OaStatus(s.value)), oaUrl = a.url.map(u => WorkRef.OaUrl(u.value))))
+      .fold(w)(a =>
+        w.copy(
+          isOa = WorkRef.IsOa(a.isOa.value),
+          oaStatus = a.status.map(s => WorkRef.OaStatus(s.value)),
+          oaUrl = a.url.map(u => WorkRef.OaUrl(u.value))
+        )
+      )
 
   /** Pure: what the acquisition chain is asked for one work — its identifiers and what its metadata record says of it.
     * A DOI that is none is not passed on.

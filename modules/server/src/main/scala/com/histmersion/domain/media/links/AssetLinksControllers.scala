@@ -29,7 +29,8 @@ final class AssetLinksControllers(
 
   /** The identifier a target of `targetType` answers to now. */
   private def refId(targetType: String, id: String): String =
-    AliasKinds.ofTarget(Activity.Entry.TargetKind(targetType))
+    AliasKinds
+      .ofTarget(Activity.Entry.TargetKind(targetType))
       .fold(id)(kind => current(kind, AliasTable.Id(id)).value)
 
   def list(
@@ -39,11 +40,9 @@ final class AssetLinksControllers(
       targetId: Option[AssetService.TargetId]
   ): AssetLink.List =
     val target = for t <- targetType; i <- targetId yield refId(t.value, i.value)
-    citekey.map(k =>
-      Citekey.option(current(AliasKinds.SourceRecords, AliasTable.Id(k.value)).value)
-    ) match
+    citekey.map(k => Citekey.option(current(AliasKinds.SourceRecords, AliasTable.Id(k.value)).value)) match
       case Some(None) => AssetLink.List.of(RowCount(0), Nil, UnreadPage.Offset(0))
-      case keys =>
+      case keys       =>
         links.list(
           keys.flatten,
           asset,
@@ -55,7 +54,10 @@ final class AssetLinksControllers(
     maintenance.guard(WriteGate.OperationName("create_asset_link"))(
       links.create(
         in.modify(_.citekey)
-          .setTo(com.histmersion.api.library.Citekey(current(AliasKinds.SourceRecords, AliasTable.Id(in.citekey.value)).value))
+          .setTo(
+            com.histmersion.api.library
+              .Citekey(current(AliasKinds.SourceRecords, AliasTable.Id(in.citekey.value)).value)
+          )
           .modify(_.targetId)
           .setTo(MediaTarget.TargetId(refId(in.targetType.value, in.targetId.value)))
       )

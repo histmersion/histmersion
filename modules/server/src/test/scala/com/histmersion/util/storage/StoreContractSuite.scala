@@ -169,7 +169,8 @@ class DiskStoreSuite extends StoreContractSuite:
     assertEquals(s.where(Store.Key.applyUnsafe("x/y")), dir.resolve("x/y").toString)
     val real = Files.writeString(dir.resolve("real.conf"), "old")
     Files.createSymbolicLink(dir.resolve("link.conf"), real)
-    val r = s.reserve(Store.Key.applyUnsafe("link.conf"), TempName.Unique, throughLink = Store.ThroughLink(true)).toOption.get
+    val r =
+      s.reserve(Store.Key.applyUnsafe("link.conf"), TempName.Unique, throughLink = Store.ThroughLink(true)).toOption.get
     Using.resource(r.output())(_.write("new".getBytes(UTF_8)))
     assert(r.onDisk.exists(p => p.getFileName.toString.startsWith(".link.conf.")))
     assert(r.commit(keepPermissions = Store.KeepPermissions(true)).isRight)
@@ -179,7 +180,9 @@ class DiskStoreSuite extends StoreContractSuite:
 
   test("on disk: a reservation's suffixed file is the key's name and the suffix, beside it"):
     val dir = Files.createTempDirectory("histmersion-store")
-    val r = Storage.at(Location.Backups, dir).reserve(Store.Key.applyUnsafe("a.dump"), TempName.Suffixed(TempName.Suffixed.Suffix(".part")))
+    val r = Storage
+      .at(Location.Backups, dir)
+      .reserve(Store.Key.applyUnsafe("a.dump"), TempName.Suffixed(TempName.Suffixed.Suffix(".part")))
     assertEquals(r.flatMap(_.onDisk).map(_.toString), Right(dir.resolve("a.dump.part").toString))
     r.foreach(_.close())
 

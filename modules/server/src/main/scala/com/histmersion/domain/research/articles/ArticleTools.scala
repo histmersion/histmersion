@@ -92,7 +92,8 @@ object ArticleTools:
         .handle { in =>
           readSlug(in.slug).flatMap(articles.get(_)) match
             case Right(v) =>
-              val parts = in.parts.map(_.value.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil).map(Article.Part(_))
+              val parts =
+                in.parts.map(_.value.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil).map(Article.Part(_))
               ToolResult.text(ArticleMarkdown.article(v, parts))
             case Left(e) => ToolResult.text(s"_No article '${in.slug}' — find a slug with list_articles._")
         }
@@ -277,7 +278,8 @@ object ArticleTools:
       .modify(_.tag)(_.description("Only articles citing a source that carries this tag"))
       .modify(_.title)(_.description("Case-insensitive substring of the article's title"))
 
-  final case class GetArticleInput(slug: GetArticleInput.Slug, parts: Option[GetArticleInput.Parts] = None) derives KindlingsCodecAsObject
+  final case class GetArticleInput(slug: GetArticleInput.Slug, parts: Option[GetArticleInput.Parts] = None)
+      derives KindlingsCodecAsObject
   object GetArticleInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
@@ -391,12 +393,17 @@ object ArticleTools:
         )
       )
 
-  final case class PutArticleInput(slug: PutArticleInput.Slug, article: Article.Put, strict: PutArticleInput.Strict = PutArticleInput.Strict(false))
+  final case class PutArticleInput(
+      slug: PutArticleInput.Slug,
+      article: Article.Put,
+      strict: PutArticleInput.Strict = PutArticleInput.Strict(false)
+  )
   object PutArticleInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
     type Strict = com.histmersion.domain.research.Article.StrictMode
-    val Strict: com.histmersion.domain.research.Article.StrictMode.type = com.histmersion.domain.research.Article.StrictMode
+    val Strict: com.histmersion.domain.research.Article.StrictMode.type =
+      com.histmersion.domain.research.Article.StrictMode
 
     given Schema[PutArticleInput] = KindlingsSchema
       .derived[PutArticleInput]
@@ -404,12 +411,17 @@ object ArticleTools:
       .modify(_.strict)(_.description(LibraryTools.StrictDoc))
     given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
-  final case class PatchArticleInput(slug: PatchArticleInput.Slug, patch: Article.Patch, strict: PatchArticleInput.Strict = PatchArticleInput.Strict(false))
+  final case class PatchArticleInput(
+      slug: PatchArticleInput.Slug,
+      patch: Article.Patch,
+      strict: PatchArticleInput.Strict = PatchArticleInput.Strict(false)
+  )
   object PatchArticleInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
     type Strict = com.histmersion.domain.research.Article.StrictMode
-    val Strict: com.histmersion.domain.research.Article.StrictMode.type = com.histmersion.domain.research.Article.StrictMode
+    val Strict: com.histmersion.domain.research.Article.StrictMode.type =
+      com.histmersion.domain.research.Article.StrictMode
 
     given Schema[PatchArticleInput] = KindlingsSchema
       .derived[PatchArticleInput]
@@ -418,12 +430,14 @@ object ArticleTools:
     given Codec.AsObject[PatchArticleInput] =
       StrictJson.codec(KindlingsCodecAsObject.derived[PatchArticleInput]) // #813
 
-  final case class ExportArticleInput(slug: ExportArticleInput.Slug) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ExportArticleInput(slug: ExportArticleInput.Slug)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ExportArticleInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug
-
 
   final case class ArticleVersionsInput(slug: ArticleVersionsInput.Slug) derives KindlingsCodecAsObject
   object ArticleVersionsInput:
@@ -435,7 +449,8 @@ object ArticleTools:
       .schema
       .modify(_.slug)(_.description("The article's slug (lowercase, e.g. steppe_hypothesis)"))
 
-  final case class ArticleVersionInput(slug: ArticleVersionInput.Slug, versionId: ArticleVersionInput.VersionId) derives KindlingsCodecAsObject
+  final case class ArticleVersionInput(slug: ArticleVersionInput.Slug, versionId: ArticleVersionInput.VersionId)
+      derives KindlingsCodecAsObject
   object ArticleVersionInput:
     type Slug = Article.Slug
     val Slug: Article.Slug.type = Article.Slug

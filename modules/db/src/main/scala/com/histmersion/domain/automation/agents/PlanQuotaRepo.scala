@@ -91,7 +91,13 @@ object PlanQuotaRepo:
       .run()
       .headOption
       .map((h, f, r, u, t) =>
-        Pool(Pool.Held(h), f.map(Pool.Floors(_)), r.map(Pool.Refusal(_)), u.map(Pool.RefusalUntil(_)), t.map(Pool.PlanType(_)))
+        Pool(
+          Pool.Held(h),
+          f.map(Pool.Floors(_)),
+          r.map(Pool.Refusal(_)),
+          u.map(Pool.RefusalUntil(_)),
+          t.map(Pool.PlanType(_))
+        )
       )
       .getOrElse(NoPool)
 
@@ -107,7 +113,12 @@ object PlanQuotaRepo:
             ON CONFLICT (pool) DO UPDATE SET floors = EXCLUDED.floors, updated_at = now()""".update.run()
 
   /** The provider's own refusal (None lifts it) and its plan type, as last read. */
-  def setRefusal(p: PoolId, refusal: Option[Pool.Refusal], until: Option[Pool.RefusalUntil], planType: Option[Pool.PlanType])(using DbCon): Unit =
+  def setRefusal(
+      p: PoolId,
+      refusal: Option[Pool.Refusal],
+      until: Option[Pool.RefusalUntil],
+      planType: Option[Pool.PlanType]
+  )(using DbCon): Unit =
     val u = until.map(_.value.toDouble / 1000)
     val _ =
       sql"""INSERT INTO plan_pools (pool, refusal, refusal_until, plan_type) VALUES (${p.wire}, $refusal, to_timestamp($u::float8), $planType)
@@ -129,7 +140,9 @@ object PlanQuotaRepo:
   // ── the refresh log (V069) ──────────────────────────────────────────────────────────────────────
 
   /** One fresh reading a pool took on purpose (or tried to). */
-  def logRefresh(p: PoolId, mode: RefreshMode, trigger: RefreshTrigger, ok: Boolean, detail: RefreshDetail)(using DbCon): Unit =
+  def logRefresh(p: PoolId, mode: RefreshMode, trigger: RefreshTrigger, ok: Boolean, detail: RefreshDetail)(using
+      DbCon
+  ): Unit =
     val _ =
       sql"""INSERT INTO plan_quota_refreshes (pool, mode, trigger, ok, detail)
             VALUES (${p.wire}, $mode, $trigger, $ok, ${detail.value.take(1000)})""".update.run()
@@ -145,6 +158,12 @@ object PlanQuotaRepo:
       .run()
       .headOption
       .map((a, m, t, ok, d) =>
-        RefreshInfo(RefreshInfo.At(a), RefreshInfo.Mode(m), RefreshInfo.Trigger(t), RefreshInfo.Ok(ok), RefreshInfo.Detail(d))
+        RefreshInfo(
+          RefreshInfo.At(a),
+          RefreshInfo.Mode(m),
+          RefreshInfo.Trigger(t),
+          RefreshInfo.Ok(ok),
+          RefreshInfo.Detail(d)
+        )
       )
     (RowCount(n), last)

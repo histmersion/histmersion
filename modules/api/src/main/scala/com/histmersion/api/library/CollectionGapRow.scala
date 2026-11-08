@@ -27,7 +27,8 @@ final case class CollectionGapRow(
     original: CollectionGapRow.Original,
     counted: CollectionGapRow.Counted
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionGapRow:
   type Summary = Summary.T

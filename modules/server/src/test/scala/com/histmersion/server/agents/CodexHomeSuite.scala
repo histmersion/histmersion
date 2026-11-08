@@ -89,9 +89,23 @@ class CodexHomeSuite extends munit.FunSuite:
   test("keep-sessions-days 0 and vacuum off change nothing; a failing vacuum is reported, not thrown"):
     val h = home()
     try
-      val off = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(CodexConfig.KeepSessionsDays(0)).modify(_.vacuum).setTo(CodexConfig.Vacuum(false)), now, _ => fail("vacuum is off"))
+      val off = Codex.Home.retain(
+        h,
+        cfg
+          .modify(_.keepSessionsDays)
+          .setTo(CodexConfig.KeepSessionsDays(0))
+          .modify(_.vacuum)
+          .setTo(CodexConfig.Vacuum(false)),
+        now,
+        _ => fail("vacuum is off")
+      )
       assertEquals((off.deleted, off.vacuumed), (0, Nil))
-      val bad = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(CodexConfig.KeepSessionsDays(0)), now, _ => Left(Codex.Home.Problem("sqlite3: not found")))
+      val bad = Codex.Home.retain(
+        h,
+        cfg.modify(_.keepSessionsDays).setTo(CodexConfig.KeepSessionsDays(0)),
+        now,
+        _ => Left(Codex.Home.Problem("sqlite3: not found"))
+      )
       assertEquals(bad.problems.size, 2, bad.toString)
       assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.value.contains("no Codex home")))
     finally cleanup(h)

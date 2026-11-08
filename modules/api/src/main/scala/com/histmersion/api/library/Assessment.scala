@@ -25,7 +25,8 @@ final case class Assessment(
     checkedAt: Option[Assessment.CheckedAt] = None,
     kept: Option[Source.Status] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object Assessment:
   type Target = Target.T

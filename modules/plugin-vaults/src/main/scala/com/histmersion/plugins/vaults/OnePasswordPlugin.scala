@@ -12,7 +12,8 @@ import com.histmersion.plugin.Processes
 
 final class OnePasswordPlugin extends Plugin:
   type Config = OnePasswordConfig
-  val info = Plugin.Info(Plugin.Info.Id("1password"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
+  val info =
+    Plugin.Info(Plugin.Info.Id("1password"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
   def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     given files: LocalFiles = ctx.files

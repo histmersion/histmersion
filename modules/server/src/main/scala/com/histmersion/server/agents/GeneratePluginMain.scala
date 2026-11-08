@@ -16,4 +16,6 @@ import com.histmersion.util.storage.Location
   given Stores = Stores.disk
   given Resources = Resources.classpath(classOf[Prompts].getClassLoader)
   val store = summon[Stores].at(Location.AgentHomes, Path.of(root).toAbsolutePath.normalize)
-  PluginTree.write(store, EngineContributions.roster).fold(message => { scribe.error(s"cannot generate the plugin: $message"); sys.exit(1) }, identity)
+  PluginTree
+    .write(store, EngineContributions.roster)
+    .fold(message => { scribe.error(s"cannot generate the plugin: $message"); sys.exit(1) }, identity)

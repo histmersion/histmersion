@@ -22,8 +22,19 @@ object CatalogueReferable:
       RecordTable.Key("t.id"),
       RecordTable.Title("t.label"),
       Some(RecordTable.Uid("t.uid")),
-      Some(AliasColumns(AliasColumns.Table("event_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("event_id")))
+      Some(
+        AliasColumns(AliasColumns.Table("event_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("event_id"))
+      )
     )
 
   val Places: RecordTable =
-    RecordTable(PlaceKind, RecordTable.Table("places"), RecordTable.Key("t.id"), RecordTable.Title("t.label"), None, Some(AliasColumns(AliasColumns.Table("place_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("place_id"))))
+    RecordTable(
+      PlaceKind,
+      RecordTable.Table("places"),
+      RecordTable.Key("t.id"),
+      RecordTable.Title("t.label"),
+      None,
+      Some(
+        AliasColumns(AliasColumns.Table("place_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("place_id"))
+      )
+    )

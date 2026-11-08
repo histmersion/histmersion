@@ -23,7 +23,8 @@ final case class MetadataPatch(
     calibreId: Option[Source.CalibreId] = None,
     clear: List[MetadataField] = Nil
 ) derives KindlingsSchema,
-      com.histmersion.api.json.Schema, CanEqual
+      com.histmersion.api.json.Schema,
+      CanEqual
 object MetadataPatch:
 
   export Source.Provenance

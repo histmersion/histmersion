@@ -85,16 +85,19 @@ object HttpPolicy:
 
   /** A `Retry-After` value — delay seconds or an HTTP date — as milliseconds from `now`. */
   def retryAfterMs(v: Option[RetryAfter], now: Instant): Option[Step.Wait.Ms] =
-    v.map(_.value.trim).filter(_.nonEmpty).flatMap { s =>
-      s.toLongOption
-        .map(_ * 1000L)
-        .orElse(
-          scala.util
-            .Try(ZonedDateTime.parse(s, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant)
-            .toOption
-            .map(t => (t.toEpochMilli - now.toEpochMilli).max(0L))
-        )
-    }.map(Step.Wait.Ms(_))
+    v.map(_.value.trim)
+      .filter(_.nonEmpty)
+      .flatMap { s =>
+        s.toLongOption
+          .map(_ * 1000L)
+          .orElse(
+            scala.util
+              .Try(ZonedDateTime.parse(s, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant)
+              .toOption
+              .map(t => (t.toEpochMilli - now.toEpochMilli).max(0L))
+          )
+      }
+      .map(Step.Wait.Ms(_))
 
   /** The next step after the `attempt`-th (0-based) answer. `slowDown` says the answer asks to slow down although its
     * code does not (MediaWiki's `maxlag` comes back as a 200), named `why`.
@@ -112,7 +115,8 @@ object HttpPolicy:
       val why = slowDown.fold(s"HTTP $code")(_.value)
       val wait = retryAfterMs(retryAfter, now).getOrElse(backoffMs(attempt)).value.max(0L)
       if attempt.value >= maxRetries.value then Step.GiveUp(Step.GiveUp.Why(s"$why after $maxRetries retries"))
-      else if wait > maxRetryAfterSeconds.value.toLong * 1000L then Step.GiveUp(Step.GiveUp.Why(s"$why: asked to wait ${wait / 1000} s"))
+      else if wait > maxRetryAfterSeconds.value.toLong * 1000L then
+        Step.GiveUp(Step.GiveUp.Why(s"$why: asked to wait ${wait / 1000} s"))
       else Step.Wait(Step.Wait.Ms(wait), Step.Wait.Why(why))
     else if code.value >= 400 then Step.GiveUp(Step.GiveUp.Why(s"HTTP $code"))
     else Step.Accept
@@ -148,18 +152,26 @@ object HttpPolicy:
 
   /** The macOS keychains that hold the system's roots: Apple's, and those an administrator added. */
   val MacKeychains: List[Trust.Keychains.Paths] =
-    List(Trust.Keychains.Paths("/System/Library/Keychains/SystemRootCertificates.keychain"), Trust.Keychains.Paths("/Library/Keychains/System.keychain"))
+    List(
+      Trust.Keychains.Paths("/System/Library/Keychains/SystemRootCertificates.keychain"),
+      Trust.Keychains.Paths("/Library/Keychains/System.keychain")
+    )
 
   /** Where Linux distributions keep their CA bundle (Debian/Ubuntu/Alpine, Fedora/RHEL, Arch/others). */
   val LinuxBundles: List[Trust.Bundle.Paths] =
-    List(Trust.Bundle.Paths("/etc/ssl/certs/ca-certificates.crt"), Trust.Bundle.Paths("/etc/pki/tls/certs/ca-bundle.crt"), Trust.Bundle.Paths("/etc/ssl/cert.pem"))
+    List(
+      Trust.Bundle.Paths("/etc/ssl/certs/ca-certificates.crt"),
+      Trust.Bundle.Paths("/etc/pki/tls/certs/ca-bundle.crt"),
+      Trust.Bundle.Paths("/etc/ssl/cert.pem")
+    )
 
   /** The trust sources of a configuration on an OS (`os.name`): the JDK's always; the system's when `systemTrust`
     * (macOS keychains, else the Linux bundles); a PEM file when one is named.
     */
   def trust(systemTrust: SystemTrust, extraCaFile: Option[Trust.PemFile.Path], osName: OsName): List[Trust] =
     val mac = osName.value.toLowerCase(java.util.Locale.ROOT).contains("mac")
-    val system = Option.when(systemTrust.value)(if mac then Trust.Keychains(MacKeychains) else Trust.Bundle(LinuxBundles))
+    val system =
+      Option.when(systemTrust.value)(if mac then Trust.Keychains(MacKeychains) else Trust.Bundle(LinuxBundles))
     Trust.Jdk :: system.toList ++ extraCaFile.map(Trust.PemFile(_)).toList
 
   private val PemCert =

@@ -150,7 +150,9 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
             Left(
               Cli.Error(
                 Cli.Error.Message(
-                  Client.unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method))).value
+                  Client
+                    .unexpected(Client.HttpStatus(resp.code.code), serverUrl, Client.Write(Client.isWrite(req.method)))
+                    .value
                 ),
                 exitCode = ExitCode.Refused
               )
@@ -164,7 +166,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def sources(f: Filter): Either[Cli.Error, SearchResult] = call(Api.sources)(f)
   def facets(field: Api.Facets.Field, prefix: Option[Api.Facets.Prefix], f: Filter): Either[Cli.Error, List[Facet]] =
     call(Api.facets)((field, prefix, f))
-  def getSource(ck: Citekey): Either[Cli.Error, Source.WithFindings] = call(Api.getSource)((ck, Api.SourceViewQuery.FullText(true)))
+  def getSource(ck: Citekey): Either[Cli.Error, Source.WithFindings] =
+    call(Api.getSource)((ck, Api.SourceViewQuery.FullText(true)))
   def findings(q: Api.FindingsQuery): Either[Cli.Error, List[GeoHit]] = call(Api.findings)(q)
   def findingsPage(q: Api.FindingsQuery): Either[Cli.Error, GeoHitPage] = call(Api.findingsPage)(q)
   def aggregate(q: Api.AggregateQuery): Either[Cli.Error, TimeHistogram] = call(Api.aggregate)(q)
@@ -172,7 +175,10 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     call(Api.neighbors)((ck, kinds))
   def graph(ck: Citekey, depth: Option[Source.Graph.DepthCount]): Either[Cli.Error, Source.Graph] =
     call(Api.graph)((ck, depth))
-  def contradictions(ck: Option[Citekey], since: Option[Api.AggregateQuery.AsOf]): Either[Cli.Error, ContradictionsResult] =
+  def contradictions(
+      ck: Option[Citekey],
+      since: Option[Api.AggregateQuery.AsOf]
+  ): Either[Cli.Error, ContradictionsResult] =
     call(Api.contradictions)((ck, since))
   def seed(req: SeedRequest): Either[Cli.Error, SeedResult] = call(Api.seed)(req)
   def reindex(after: Option[Api.Reindex.Scope], limit: Option[Paging.Limit]): Either[Cli.Error, ReindexResult] =
@@ -180,7 +186,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
   // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
   def configReload: Either[Cli.Error, ReloadReport] = call(Api.configReload)(())
-  def settings(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] = call(ConfigEditApi.get)(prefix.map(p => ConfigEdit.Page.Selector(p.value)))
+  def settings(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
+    call(ConfigEditApi.get)(prefix.map(p => ConfigEdit.Page.Selector(p.value)))
   def writeSettings(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] = call(ConfigEditApi.write)(w)
   def restartServer: Either[Cli.Error, ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
   def backup: Either[Cli.Error, Backup.Status] = call(Api.backup)(())
@@ -209,7 +216,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
   // ── portable bundles (docs/research-merge-import.md) ────────────────────────────────────────
   def instance: Either[Cli.Error, InstanceInfo] = call(Api.instance)(())
-  def setInstance(label: Option[InstanceLabel.Label]): Either[Cli.Error, InstanceInfo] = call(Api.setInstance)(InstanceLabel(label))
+  def setInstance(label: Option[InstanceLabel.Label]): Either[Cli.Error, InstanceInfo] =
+    call(Api.setInstance)(InstanceLabel(label))
 
   /** Stream a bundle into `dest` (as [[downloadBackup]]: written to disk, never a byte array). */
   def exportBundle(since: Option[Bundle.Name], dest: java.io.File): Either[Cli.Error, (java.io.File, Api.FileName)] =
@@ -226,9 +234,14 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def mergeImport(req: MergeImportRequest): Either[Cli.Error, Bundle.ImportResult] = call(Api.mergeImport)(req)
   def mergeApply(req: MergeApplyRequest): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApply)(req)
   def mergeApplyStatus(job: Api.Merge.Id): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApplyStatus)(job)
-  def merges(limit: Option[Paging.Limit]): Either[Cli.Error, List[MergeInfo]] = call(Api.merges)(limit.map(l => Api.Merge.Limit(l.value)))
+  def merges(limit: Option[Paging.Limit]): Either[Cli.Error, List[MergeInfo]] =
+    call(Api.merges)(limit.map(l => Api.Merge.Limit(l.value)))
   def mergeDetail(id: Api.Merge.Id): Either[Cli.Error, MergeDetail] = call(Api.mergeDetail)(id)
-  def mergeLedger(uid: Option[Api.Merge.Id], merge: Option[Api.Merge.Entity], limit: Option[Paging.Limit]): Either[Cli.Error, MergeLedger] =
+  def mergeLedger(
+      uid: Option[Api.Merge.Id],
+      merge: Option[Api.Merge.Entity],
+      limit: Option[Paging.Limit]
+  ): Either[Cli.Error, MergeLedger] =
     call(Api.mergeLedger)((uid, merge, limit.map(l => Api.Merge.Limit(l.value))))
   // label renames (V042, V053)
   def renameArticle(slug: ReviewGoal.Slug, to: LabelRename.To): Either[Cli.Error, LabelRenamed] =
@@ -241,16 +254,27 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     call(Api.renamePlace)((id, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
-  def putSource(ck: Citekey, in: Source.Put, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
+  def putSource(
+      ck: Citekey,
+      in: Source.Put,
+      strict: Cli.Strict = Cli.Strict(false)
+  ): Either[Cli.Error, Source.WithFindings] =
     call(Api.putSource)((ck, in, Api.Overwrite(strict.value)))
-  def patchSource(ck: Citekey, p: Source.Patch, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
+  def patchSource(
+      ck: Citekey,
+      p: Source.Patch,
+      strict: Cli.Strict = Cli.Strict(false)
+  ): Either[Cli.Error, Source.WithFindings] =
     call(Api.patchSource)((ck, p, Api.Apply(strict.value)))
   // the formatting lint of agent-written Markdown
   def lintSource(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.lintSource)(ck)
   def fixSourceFormat(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.fixSourceFormat)(ck)
   def lintArticle(slug: ReviewGoal.Slug): Either[Cli.Error, FormatReport] = call(Api.lintArticle)(slug)
   def fixArticleFormat(slug: ReviewGoal.Slug): Either[Cli.Error, FormatReport] = call(Api.fixArticleFormat)(slug)
-  def checkArticle(slug: ReviewGoal.Slug, in: Article.Edits.ArticleCheckRequest): Either[Cli.Error, Article.Edits.ArticleCheck] =
+  def checkArticle(
+      slug: ReviewGoal.Slug,
+      in: Article.Edits.ArticleCheckRequest
+  ): Either[Cli.Error, Article.Edits.ArticleCheck] =
     call(Api.checkArticle)((slug, in))
   def lintMarkdown(in: FormatCheck): Either[Cli.Error, FormatReport] = call(OpsApi.lintMarkdown)(in)
   def importNote(req: NoteImport): Either[Cli.Error, SeedResult] = call(Api.importNote)(req)
@@ -261,12 +285,21 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     call(Api.deleteSource)((ck, Source.DeleteRequest(apply)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
-  def places(q: Option[Api.Search.Text], asOf: Option[Api.AggregateQuery.AsOf], limit: Option[Paging.Limit]): Either[Cli.Error, List[Place.Hit]] =
+  def places(
+      q: Option[Api.Search.Text],
+      asOf: Option[Api.AggregateQuery.AsOf],
+      limit: Option[Paging.Limit]
+  ): Either[Cli.Error, List[Place.Hit]] =
     call(Api.places)((q.map(t => Place.Kind.Wire(t.value)), asOf, limit.map(l => Api.PlacesGeoQuery.Limit(l.value))))
-  def place(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf]): Either[Cli.Error, PlaceDetail] = call(Api.place)((id, asOf, None))
+  def place(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf]): Either[Cli.Error, PlaceDetail] =
+    call(Api.place)((id, asOf, None))
   def placeChildren(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf]): Either[Cli.Error, List[Place.Summary]] =
     call(Api.placeChildren)((id, asOf))
-  def placeTree(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf], depth: Option[Place.Depth]): Either[Cli.Error, List[Place.TreeRow]] =
+  def placeTree(
+      id: Place.Id,
+      asOf: Option[Api.AggregateQuery.AsOf],
+      depth: Option[Place.Depth]
+  ): Either[Cli.Error, List[Place.TreeRow]] =
     call(Api.placeTree)((id, asOf, depth))
   def importPlaces(
       kind: Option[Api.ExternalPlaces.Source],
@@ -286,10 +319,14 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def mergePlace(id: Place.Id, in: Place.MergeIn): Either[Cli.Error, Place.Gone] = call(Api.mergePlace)((id, in))
   def removePlace(id: Place.Id, in: Place.RemoveIn): Either[Cli.Error, Place.Gone] = call(Api.removePlace)((id, in))
   def rebuildPlaces: Either[Cli.Error, Place.RebuildResult] = call(Api.rebuildPlaces)(())
-  def fetchExternalPlaces(source: Api.ExternalPlaces.Source, dryRun: Cli.DryRun): Either[Cli.Error, Place.ImportResult] =
+  def fetchExternalPlaces(
+      source: Api.ExternalPlaces.Source,
+      dryRun: Cli.DryRun
+  ): Either[Cli.Error, Place.ImportResult] =
     call(Api.fetchExternalPlaces)((source, Api.Apply(dryRun.value)))
   def placeSources: Either[Cli.Error, List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
-  def loadPlaces(source: Api.ExternalPlaces.Source, apply: Api.Apply): Either[Cli.Error, JobInfo] = call(Api.loadPlaces)((source, apply))
+  def loadPlaces(source: Api.ExternalPlaces.Source, apply: Api.Apply): Either[Cli.Error, JobInfo] =
+    call(Api.loadPlaces)((source, apply))
   def buildHierarchy: Either[Cli.Error, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
   // ── named periods (#719) and first-run data (#720) ──────────────────────────────────────────
   def periods(
@@ -299,14 +336,18 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
       to: Option[Api.PlacesGeoQuery.To]
   ): Either[Cli.Error, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
   def period(id: Period.Id): Either[Cli.Error, Period.Detail] = call(Api.period)(id)
-  def seedPeriods(replace: Api.Overwrite = Api.Overwrite(false)): Either[Cli.Error, Period.ImportResult] = call(Api.seedPeriods)(replace)
+  def seedPeriods(replace: Api.Overwrite = Api.Overwrite(false)): Either[Cli.Error, Period.ImportResult] =
+    call(Api.seedPeriods)(replace)
   def importPeriods(
       collections: List[CorpusCounts.Periods.Source],
       body: CorpusCounts.Periods.Name,
       dataset: Dataset = Dataset.Local
   ): Either[Cli.Error, Period.ImportResult] =
     call(Api.importPeriods)((collections, Some(CorpusCounts.Periods.Collection(dataset.wire.value)), body))
-  def fetchPeriods(source: CorpusCounts.Periods.Source, collections: List[CorpusCounts.Periods.Collection]): Either[Cli.Error, Period.ImportResult] =
+  def fetchPeriods(
+      source: CorpusCounts.Periods.Source,
+      collections: List[CorpusCounts.Periods.Collection]
+  ): Either[Cli.Error, Period.ImportResult] =
     call(Api.fetchPeriods)((source, collections))
   def init(fetch: Api.Overwrite): Either[Cli.Error, JobInfo] = call(Api.init)(fetch)
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
@@ -341,10 +382,19 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   def listArticles(q: Api.ArticleQuery): Either[Cli.Error, Article.List] = call(Api.articles)(q)
-  def getArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.View] = call(Api.getArticle)((slug, Article.FullText(false)))
-  def putArticle(slug: ReviewGoal.Slug, in: Article.Put, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Article.View] =
+  def getArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.View] =
+    call(Api.getArticle)((slug, Article.FullText(false)))
+  def putArticle(
+      slug: ReviewGoal.Slug,
+      in: Article.Put,
+      strict: Cli.Strict = Cli.Strict(false)
+  ): Either[Cli.Error, Article.View] =
     call(Api.putArticle)((slug, in, Api.Overwrite(strict.value)))
-  def patchArticle(slug: ReviewGoal.Slug, p: Article.Patch, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Article.View] =
+  def patchArticle(
+      slug: ReviewGoal.Slug,
+      p: Article.Patch,
+      strict: Cli.Strict = Cli.Strict(false)
+  ): Either[Cli.Error, Article.View] =
     call(Api.patchArticle)((slug, p, Api.Apply(strict.value)))
   def deleteArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.Deleted] = call(Api.deleteArticle)(slug)
   def articleCoverage(slug: ReviewGoal.Slug): Either[Cli.Error, Coverage] = call(Api.articleCoverage)(slug)
@@ -392,7 +442,8 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def assets(ck: Citekey): Either[Cli.Error, List[AssetInfo]] = call(Api.assets)(Api.Assets.Kind(ck.value))
   def putAssets(ck: Citekey, in: List[AssetInput]): Either[Cli.Error, AssetsStored] =
     call(Api.putAssets)((Api.Assets.Owner(ck.value), in))
-  def assetDetail(ck: Citekey, name: Bundle.Asset.Variant): Either[Cli.Error, AssetDetail] = call(Api.assetDetail)((Bundle.Asset.Uid(ck.value), name))
+  def assetDetail(ck: Citekey, name: Bundle.Asset.Variant): Either[Cli.Error, AssetDetail] =
+    call(Api.assetDetail)((Bundle.Asset.Uid(ck.value), name))
   def patchAsset(ck: Citekey, name: Bundle.Asset.Variant, p: AssetPatch): Either[Cli.Error, AssetDetail] =
     call(Api.patchAsset)((Bundle.Asset.Uid(ck.value), name, p))
   def assetLinks(
@@ -401,7 +452,14 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
       tt: Option[Attestation.TargetType],
       ti: Option[Attestation.TargetId]
   ): Either[Cli.Error, AssetLink.List] =
-    call(Api.assetLinks)((ck.map(c => Bundle.Asset.Uid(c.value)), asset.map(a => AssetLinks.Kind(a.value)), tt.map(t => AssetLinks.TargetId(t.value)), ti.map(t => AssetLinks.TargetKind(t.value))))
+    call(Api.assetLinks)(
+      (
+        ck.map(c => Bundle.Asset.Uid(c.value)),
+        asset.map(a => AssetLinks.Kind(a.value)),
+        tt.map(t => AssetLinks.TargetId(t.value)),
+        ti.map(t => AssetLinks.TargetKind(t.value))
+      )
+    )
   def createAssetLink(in: AssetLink.Put): Either[Cli.Error, AssetLink] = call(Api.createAssetLink)(in)
   def deleteAssetLink(id: AssetLink.Id): Either[Cli.Error, AssetLink.Deleted] = call(Api.deleteAssetLink)(id)
   // ── media from outside providers (#1446) ──
@@ -426,13 +484,13 @@ object Client:
   object Problem extends Newtype[String, Pure]
   type Write = Write.T
   object Write extends Newtype[Boolean, Pure]
+
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
 
   type ServerUrl = ServerUrl.T
   object ServerUrl extends Newtype[String, Pure]
   type Token = Token.T
   object Token extends Newtype[String, Pure]
-
 
   def isWrite(m: sttp.model.Method): Boolean =
     m == sttp.model.Method.POST || m == sttp.model.Method.PUT || m == sttp.model.Method.PATCH ||

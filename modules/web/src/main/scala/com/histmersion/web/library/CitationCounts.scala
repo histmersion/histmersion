@@ -16,9 +16,11 @@ object CitationCounts:
     */
   def answering(r: NeighborRow): Boolean =
     val kind = Edge.Kind.wireOf(r.kind).value
-    (r.direction.value == "in" && Article.Coverage.DisagreementKinds.exists(_.value == kind) && kind != "superseded_by") ||
-      (r.direction.value == "in" && kind == "supersedes") ||
-      (r.direction.value == "out" && kind == "superseded_by")
+    (r.direction.value == "in" && Article.Coverage.DisagreementKinds.exists(
+      _.value == kind
+    ) && kind != "superseded_by") ||
+    (r.direction.value == "in" && kind == "supersedes") ||
+    (r.direction.value == "out" && kind == "superseded_by")
 
   def of(rows: List[NeighborRow], citingArticles: Int): CitationCounts =
     CitationCounts(

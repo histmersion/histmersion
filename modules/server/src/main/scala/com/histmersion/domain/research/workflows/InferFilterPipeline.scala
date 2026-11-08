@@ -57,7 +57,8 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
           ctx.code[String](AgentRepo.StepRecord.Name("close"))(
             log(
               ctx,
-              FilterInference.logLine(slug, FilterInference.Outcome("it records a filter already; nothing proposed"), runId)
+              FilterInference
+                .logLine(slug, FilterInference.Outcome("it records a filter already; nothing proposed"), runId)
             )
           )
         else
@@ -121,8 +122,9 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
     else
       l.citedLines.map(x => s"- $x").mkString("\n", "\n", "") +
         (if l.cited.size > l.citedLines.size then s"\n- … and ${l.cited.size - l.citedLines.size} more" else "")
-    val article = s"slug: ${l.slug}\ntitle: ${l.title}\nkind: ${l.kind}\nsummary: ${l.summary.fold("none")(_.value)}\n" +
-      s"tags: ${l.tags.mkString(", ")}"
+    val article =
+      s"slug: ${l.slug}\ntitle: ${l.title}\nkind: ${l.kind}\nsummary: ${l.summary.fold("none")(_.value)}\n" +
+        s"tags: ${l.tags.mkString(", ")}"
     s"Infer the filter this article is compiled from.\n\n${Prompt.data("article", article)}\n\n" +
       s"${Prompt.data("article-text", l.excerpt.value)}\n\nThe sources it cites (${l.cited.size}): $cited\n\n" +
       s"The corpus's most used topics: ${l.topics.mkString(", ")}\nIts most used tags: ${l.tags0.mkString(", ")}\n\n" +

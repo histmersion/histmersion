@@ -20,9 +20,21 @@ class WorkListControllersSuite extends munit.FunSuite:
 
   test("a log item with no topic joins the entry of the clock's UTC day; another list's stays without one"):
     val c = controllers()
-    assertEquals(c.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text("ran the lint"))).map(_.topic), Right(Some("2026-10-30")))
-    assertEquals(c.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text("named"), topic = Some(Queue.QueueItem.Topic("Later")))).map(_.topic), Right(Some("Later")))
-    assertEquals(c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("read Cline"))).map(_.topic), Right(None))
+    assertEquals(
+      c.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text("ran the lint"))).map(_.topic),
+      Right(Some("2026-10-30"))
+    )
+    assertEquals(
+      c.add(
+        WorkListControllers.ListName("log"),
+        QueueAdd(Queue.QueueItem.Text("named"), topic = Some(Queue.QueueItem.Topic("Later")))
+      ).map(_.topic),
+      Right(Some("Later"))
+    )
+    assertEquals(
+      c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("read Cline"))).map(_.topic),
+      Right(None)
+    )
 
   test("an unknown list, an empty text, a bad status or instant are refused with today's messages"):
     val c = controllers()
@@ -30,11 +42,32 @@ class WorkListControllersSuite extends munit.FunSuite:
       c.add(WorkListControllers.ListName("notes"), QueueAdd(Queue.QueueItem.Text("x"))).left.map(_.message),
       Left("unknown queue list 'notes' — one of: acquire, tasks, log")
     )
-    assertEquals(c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("  "))).left.map(_.message), Left("queue item text is empty"))
-    assert(c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("x"), status = Some(Queue.QueueItem.Status("maybe")))).left.exists(_.message.value.contains("unknown status")))
-    assert(c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("x"), createdAt = Some(Queue.QueueItem.CreatedAt("yesterday")))).left.exists(_.message.value.contains("ISO-8601")))
-    assertEquals(c.patch(QueueItemId(42), QueuePatch(text = Some(Queue.QueueItem.Text(" ")))).left.map(_.message), Left("queue item text is empty"))
-    assertEquals(c.delete(QueueItemId(42)).left.map(e => (e.message, e.code)), Left(("No queue item #42", Some("not_found"))))
+    assertEquals(
+      c.add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("  "))).left.map(_.message),
+      Left("queue item text is empty")
+    )
+    assert(
+      c.add(
+        WorkListControllers.ListName("tasks"),
+        QueueAdd(Queue.QueueItem.Text("x"), status = Some(Queue.QueueItem.Status("maybe")))
+      ).left
+        .exists(_.message.value.contains("unknown status"))
+    )
+    assert(
+      c.add(
+        WorkListControllers.ListName("tasks"),
+        QueueAdd(Queue.QueueItem.Text("x"), createdAt = Some(Queue.QueueItem.CreatedAt("yesterday")))
+      ).left
+        .exists(_.message.value.contains("ISO-8601"))
+    )
+    assertEquals(
+      c.patch(QueueItemId(42), QueuePatch(text = Some(Queue.QueueItem.Text(" ")))).left.map(_.message),
+      Left("queue item text is empty")
+    )
+    assertEquals(
+      c.delete(QueueItemId(42)).left.map(e => (e.message, e.code)),
+      Left(("No queue item #42", Some("not_found")))
+    )
 
   test("an import counts the items and the notes apart; the export renders what was imported"):
     val c = controllers()

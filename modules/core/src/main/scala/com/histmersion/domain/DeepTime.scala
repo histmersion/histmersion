@@ -9,6 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 object DeepTime:
   type SignedYear = SignedYear.T
   object SignedYear extends Newtype[Long, Pure]
+
   /** `None` for a year beyond what a `Year` holds — no source dates anything to it. */
 
   def year(y: SignedYear): Option[Year] = yearOf(y.value)

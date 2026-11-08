@@ -53,12 +53,16 @@ object KeePassXcSession:
     */
   def segment(out: Processes.Session.OutResult, from: SegmentFrom, prompt: Prompt): Option[Segment] =
     Option
-      .when(out.value.length >= from.value + prompt.value.length && out.value.endsWith(prompt.value))(Segment(out.value.substring(from.value, out.value.length - prompt.value.length)))
+      .when(out.value.length >= from.value + prompt.value.length && out.value.endsWith(prompt.value))(
+        Segment(out.value.substring(from.value, out.value.length - prompt.value.length))
+      )
 
   /** Pure: the value in a segment — without the echo of the request line (a session reading through readline prints it
     * back) and without the line break the value ends with.
     */
   def answer(segment: Segment, command: Command): Secret.Vault.ResolveResultPart2 =
     val body =
-      List(command.value + "\r\n", command.value + "\n").find(segment.value.startsWith).fold(segment.value)(e => segment.value.drop(e.length))
+      List(command.value + "\r\n", command.value + "\n")
+        .find(segment.value.startsWith)
+        .fold(segment.value)(e => segment.value.drop(e.length))
     Secret.Vault.ResolveResultPart2(Subprocess.value(Subprocess.ValueOut(body)).value)

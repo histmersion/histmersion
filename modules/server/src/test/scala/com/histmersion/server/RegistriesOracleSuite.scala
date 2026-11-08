@@ -46,14 +46,35 @@ class RegistriesOracleSuite extends munit.FunSuite:
 
   private val details: List[(String, JobDetail)] = List(
     "none" -> JobDetail.empty,
-    "init" -> InitPlan.Detail(Some(InitPlan(gazetteer = InitPlan.Gazetteer(true), periodPresets = InitPlan.PeriodPresets(true), fetch = List(InitPlan.Fetch("land"))))),
+    "init" -> InitPlan.Detail(
+      Some(
+        InitPlan(
+          gazetteer = InitPlan.Gazetteer(true),
+          periodPresets = InitPlan.PeriodPresets(true),
+          fetch = List(InitPlan.Fetch("land"))
+        )
+      )
+    ),
     "plan" -> ExchangeJobKinds.PlanHash(Some(MergePlan.PlanHash("abc123"))),
-    "vacuum" -> VacuumPlan.Detail(Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), tables = List(Vacuum.Request.Tables("sources"), Vacuum.Request.Tables("places"))))),
+    "vacuum" -> VacuumPlan.Detail(
+      Some(
+        VacuumPlan(
+          analyze = VacuumPlan.Analyze(true),
+          tables = List(Vacuum.Request.Tables("sources"), Vacuum.Request.Tables("places"))
+        )
+      )
+    ),
     "media" -> ImportJobKinds.Media(Some(JobKinds.Subject("pictures of 3 places"))),
     "events" -> EventsJobKinds.Catalogue(Some(JobKinds.Subject("gvp: 10 parts"))),
     "about" -> JobDetail.Purpose(Some(JobKinds.Subject("the vector map of crete"))),
     "recheck" -> Acquire.Checks.RecheckJob.Detail(
-      Some(Acquire.Checks.RecheckJob(all = Acquire.Checks.RecheckJob.All(true), upTo = Acquire.Checks.RecheckJob.UpTo(7), since = Acquire.Checks.RecheckJob.Since("2026-10-01")))
+      Some(
+        Acquire.Checks.RecheckJob(
+          all = Acquire.Checks.RecheckJob.All(true),
+          upTo = Acquire.Checks.RecheckJob.UpTo(7),
+          since = Acquire.Checks.RecheckJob.Since("2026-10-01")
+        )
+      )
     )
   )
 
@@ -61,10 +82,20 @@ class RegistriesOracleSuite extends munit.FunSuite:
     val lines = RegisteredJobKinds.all.kinds.flatMap { k =>
       val head = s"${k.value}\t${Wording.jobKindOf(k)}\tstoppable=${JobActions.Stoppable.contains(k)}"
       val subjects = details.map { (name, d) =>
-        val j = JobInfo(id = SpatialHierarchyResult.Job.Id("j"), kind = JobKinds.Wire(k.value), status = JobInfo.Status("done"), detail = Some(d))
+        val j = JobInfo(
+          id = SpatialHierarchyResult.Job.Id("j"),
+          kind = JobKinds.Wire(k.value),
+          status = JobInfo.Status("done"),
+          detail = Some(d)
+        )
         s"  $name\t${JobDetail.subject(j).getOrElse("-")}"
       }
-      val withCitekey = JobInfo(id = SpatialHierarchyResult.Job.Id("j"), kind = JobKinds.Wire(k.value), status = JobInfo.Status("done"), citekey = (Some("hattusa_1990")).map(Citekey.apply))
+      val withCitekey = JobInfo(
+        id = SpatialHierarchyResult.Job.Id("j"),
+        kind = JobKinds.Wire(k.value),
+        status = JobInfo.Status("done"),
+        citekey = (Some("hattusa_1990")).map(Citekey.apply)
+      )
       head :: subjects ::: List(s"  citekey\t${JobDetail.subject(withCitekey).getOrElse("-")}")
     }
     val unknown = s"unknown\t${Wording.jobKindOf(JobKinds.Wire("some-new-kind"))}\tstoppable=${JobActions.Stoppable
@@ -78,7 +109,5 @@ class RegistriesOracleSuite extends munit.FunSuite:
         s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, Aliases.Id("old_one"), Aliases.Id("new_one")).getOrElse("-")}"
     }
     val bundles =
-      Bundle.Kind.values.toList.map(b =>
-        s"bundle $b\t${AliasKinds.of(b).fold("-")(_.noun)}"
-      )
+      Bundle.Kind.values.toList.map(b => s"bundle $b\t${AliasKinds.of(b).fold("-")(_.noun)}")
     check("alias-tables.txt", (lines ++ bundles).mkString("", "\n", "\n"))

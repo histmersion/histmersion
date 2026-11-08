@@ -29,7 +29,8 @@ final case class WorkRef(
     oaLocations: List[WorkRef.OaLocations] = Nil,
     oaLicence: Option[WorkRef.OaLicence] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object WorkRef:
   type OpenalexId = OpenalexId.T

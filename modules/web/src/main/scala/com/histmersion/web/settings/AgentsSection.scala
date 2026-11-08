@@ -31,10 +31,22 @@ object AgentsSection:
         SettingsForm.ApplyTitle("Research agents"),
         None,
         List(
-          SettingsForm.Item(SettingsForm.Item.Key("agents.enabled"), Some(SettingsForm.Item.Name("Run research agents on this server"))),
-          SettingsForm.Item(SettingsForm.Item.Key("agents.max-concurrent-runs"), Some(SettingsForm.Item.Name("Agent runs at once"))),
-          SettingsForm.Item(SettingsForm.Item.Key("agents.budgets.run-tokens"), Some(SettingsForm.Item.Name("Tokens one run may use"))),
-          SettingsForm.Item(SettingsForm.Item.Key("agents.budgets.daily-usd"), Some(SettingsForm.Item.Name("Money all runs together may spend a day (USD)")))
+          SettingsForm.Item(
+            SettingsForm.Item.Key("agents.enabled"),
+            Some(SettingsForm.Item.Name("Run research agents on this server"))
+          ),
+          SettingsForm.Item(
+            SettingsForm.Item.Key("agents.max-concurrent-runs"),
+            Some(SettingsForm.Item.Name("Agent runs at once"))
+          ),
+          SettingsForm.Item(
+            SettingsForm.Item.Key("agents.budgets.run-tokens"),
+            Some(SettingsForm.Item.Name("Tokens one run may use"))
+          ),
+          SettingsForm.Item(
+            SettingsForm.Item.Key("agents.budgets.daily-usd"),
+            Some(SettingsForm.Item.Name("Money all runs together may spend a day (USD)"))
+          )
         )
       ),
       SettingsForm(
@@ -54,8 +66,14 @@ object AgentsSection:
           )
         ) ++
           List(
-            SettingsForm.Item(SettingsForm.Item.Key("agents.providers.claude-code.command"), Some(SettingsForm.Item.Name("Claude Code: the claude command"))),
-            SettingsForm.Item(SettingsForm.Item.Key("agents.providers.codex.command"), Some(SettingsForm.Item.Name("Codex: the codex command")))
+            SettingsForm.Item(
+              SettingsForm.Item.Key("agents.providers.claude-code.command"),
+              Some(SettingsForm.Item.Name("Claude Code: the claude command"))
+            ),
+            SettingsForm.Item(
+              SettingsForm.Item.Key("agents.providers.codex.command"),
+              Some(SettingsForm.Item.Name("Codex: the codex command"))
+            )
           )
       )
     )

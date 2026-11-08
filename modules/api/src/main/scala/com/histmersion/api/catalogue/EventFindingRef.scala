@@ -17,7 +17,8 @@ final case class EventFindingRef(
     periodStart: Option[Year] = None,
     periodEnd: Option[Year] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventFindingRef:
   type Id = Id.T

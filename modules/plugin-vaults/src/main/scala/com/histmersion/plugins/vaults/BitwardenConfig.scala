@@ -15,8 +15,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `BW_SESSION`: `session` (a Secret, e.g. `env:BW_SESSION`) is passed to the `bw` process only; without it the vault
   * reports locked.
   */
-final case class BitwardenConfig(cli: BitwardenConfig.Cli, session: Option[Secret], field: BitwardenConfig.Field, timeoutSeconds: BitwardenConfig.TimeoutSeconds)
-    derives ConfigReader
+final case class BitwardenConfig(
+    cli: BitwardenConfig.Cli,
+    session: Option[Secret],
+    field: BitwardenConfig.Field,
+    timeoutSeconds: BitwardenConfig.TimeoutSeconds
+) derives ConfigReader
 
 object BitwardenConfig:
   type Cli = Cli.T

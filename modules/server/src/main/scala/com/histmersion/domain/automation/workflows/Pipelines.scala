@@ -47,4 +47,6 @@ private[histmersion] object Pipelines:
   /** Add `line` to the worklog; answers the line. */
   def log(workLists: WorkListControllers, ctx: RunCtx, line: LogLine): Either[Api.Error.Message, LogLine] =
     val entry = Pipelines.entry(ctx, EntryText(line.value))
-    ctx.write("log line", entry.asJson)(workLists.add(WorkListControllers.ListName("log"), entry).left.map(_.message).map(_ => line))(Right(line))
+    ctx.write("log line", entry.asJson)(
+      workLists.add(WorkListControllers.ListName("log"), entry).left.map(_.message).map(_ => line)
+    )(Right(line))

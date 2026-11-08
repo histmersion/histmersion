@@ -51,7 +51,11 @@ final class ModelPicker(
   private def poolModel(m: ModelRef): ChainEntry.Model = ChainEntry.Model(m.model.value)
 
   /** The model hit its plan's limit: skip it until `until` (else the configured cool-down). */
-  def cool(model: ModelRef, until: Option[Instant], now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): Instant =
+  def cool(
+      model: ModelRef,
+      until: Option[Instant],
+      now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
+  ): Instant =
     val at = until
       .map(_.toEpochMilli)
       .filter(_ > now.value)
@@ -83,7 +87,9 @@ final class ModelPicker(
   /** The models skipped now because their plan reported its usage limit, with until when — after lifting those a later
     * reading of their pool clears (`agent quota`, `agent quota refresh`).
     */
-  def cooldowns(now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())): List[(ModelRef.Wire, Instant)] =
+  def cooldowns(
+      now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis())
+  ): List[(ModelRef.Wire, Instant)] =
     import scala.jdk.CollectionConverters.*
     cooldown.keySet.asScala.toList.sorted.flatMap(w =>
       ModelRef
@@ -110,7 +116,10 @@ final class ModelPicker(
           .map(m => ModelPicker.Problem(s"agents.roles.${role.wire}: $m"))
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
-  def chainFor(role: Role, overrideRef: Option[AgentsControllers.ModelName]): Either[ModelPicker.Problem, List[ModelRef]] =
+  def chainFor(
+      role: Role,
+      overrideRef: Option[AgentsControllers.ModelName]
+  ): Either[ModelPicker.Problem, List[ModelRef]] =
     overrideRef.map(_.value.trim).filter(_.nonEmpty) match
       case Some(ref) => parseChain(Chain.Spec(ref), known()).left.map(p => ModelPicker.Problem(p.value))
       case None      =>
@@ -118,9 +127,11 @@ final class ModelPicker(
           Either.cond(
             ms.nonEmpty,
             ms,
-            ModelPicker.Problem(s"no model for the ${role.wire} role — set agents.roles.${role.wire} " +
-              s"(HISTMERSION_AGENTS_ROLE_${role.wire.value.toUpperCase.replace('-', '_')}) to provider:model[ > provider:model …], " +
-              s"save one with `histmersion agent models set ${role.wire} <provider:model>…`, or pass one")
+            ModelPicker.Problem(
+              s"no model for the ${role.wire} role — set agents.roles.${role.wire} " +
+                s"(HISTMERSION_AGENTS_ROLE_${role.wire.value.toUpperCase.replace('-', '_')}) to provider:model[ > provider:model …], " +
+                s"save one with `histmersion agent models set ${role.wire} <provider:model>…`, or pass one"
+            )
           )
         }
 
@@ -138,7 +149,11 @@ final class ModelPicker(
   /** One allowance in effect: the parsed allowance (or why it cannot be read — then it BLOCKS what it covers: a broken
     * cap must not read as no cap) and where it comes from.
     */
-  final case class Effective(target: Target.Wire, allowance: Either[Allowance.Problem, Allowance], source: SettingSource)
+  final case class Effective(
+      target: Target.Wire,
+      allowance: Either[Allowance.Problem, Allowance],
+      source: SettingSource
+  )
 
   /** Config's allowances with the saved ones over them (a saved target replaces config's). A config string that does
     * not parse is one problem, and caps nothing it could not read.
@@ -245,7 +260,8 @@ final class ModelPicker(
         case None => (p, pools.verdict(p, Some(poolModel(m)), poolInstant(now))._1, None)
     }
     val refreshed = plan.flatMap(_._3)
-    if noLogin.isDefined then ModelState(ModelState.Usable(false), noLogin, None, ht, hu, unavailable = ModelState.Unavailable(true))
+    if noLogin.isDefined then
+      ModelState(ModelState.Usable(false), noLogin, None, ht, hu, unavailable = ModelState.Unavailable(true))
     else if broken.nonEmpty then
       ModelState(
         ModelState.Usable(false),
@@ -324,7 +340,8 @@ final class ModelPicker(
             if exhausted.isEmpty then
               Left(
                 PickFailure.Unavailable(
-                  PickFailure.Unavailable.Message(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
+                  PickFailure.Unavailable
+                    .Message(s"no model of the ${role.wire} chain can run: ${notReady.mkString("; ")}")
                 )
               )
             else
@@ -342,26 +359,38 @@ final class ModelPicker(
           case m :: tail if planHit && !mayFallThrough && pools.paid(m) =>
             go(
               tail,
-              notReady :+ Picked.Skipped(s"${m.wire}: not used — the chain does not fall from a plan to a paid key " +
-                s"(histmersion agent quota fallthrough ${role.wire} on)"),
+              notReady :+ Picked.Skipped(
+                s"${m.wire}: not used — the chain does not fall from a plan to a paid key " +
+                  s"(histmersion agent quota fallthrough ${role.wire} on)"
+              ),
               exhausted,
               planHit
             )
           case m :: tail =>
             resolve(m) match
-              case Left(why)                => go(tail, notReady :+ Picked.Skipped(s"${m.wire}: $why"), exhausted, planHit)
+              case Left(why) => go(tail, notReady :+ Picked.Skipped(s"${m.wire}: $why"), exhausted, planHit)
               case Right((client, billing)) =>
                 val st = state(m, effective, now, refresh)
                 st.refreshed.foreach(onRefresh)
                 if st.unavailable.value then
-                  go(tail, notReady :+ Picked.Skipped(s"${m.wire}: ${st.why.getOrElse("unavailable")}"), exhausted, planHit)
+                  go(
+                    tail,
+                    notReady :+ Picked.Skipped(s"${m.wire}: ${st.why.getOrElse("unavailable")}"),
+                    exhausted,
+                    planHit
+                  )
                 else if st.usable.value then
                   Right(Picked(client, billing, st.headroomTokens, st.headroomUsd, (notReady ++ exhausted.map(_.text))))
                 else
                   go(
                     tail,
                     notReady,
-                    exhausted :+ Exhaust(m, Picked.Skipped(s"${m.wire}: ${st.why.getOrElse("not usable")}"), st.freesAt, st.held),
+                    exhausted :+ Exhaust(
+                      m,
+                      Picked.Skipped(s"${m.wire}: ${st.why.getOrElse("not usable")}"),
+                      st.freesAt,
+                      st.held
+                    ),
                     planHit || st.planBlocked.value
                   )
       go(chain, Nil, Nil, planHit = false)
@@ -370,7 +399,12 @@ final class ModelPicker(
   /** One model of a chain passed over for want of headroom: why, when it frees by itself (None = not by itself), and
     * the held pool it draws on, if any.
     */
-  final private case class Exhaust(model: ModelRef, text: Picked.Skipped, freesAt: Option[PlanQuotaRepo.EpochMillis], held: Option[PlanQuota.PoolId])
+  final private case class Exhaust(
+      model: ModelRef,
+      text: Picked.Skipped,
+      freesAt: Option[PlanQuotaRepo.EpochMillis],
+      held: Option[PlanQuota.PoolId]
+  )
 
   // ── the picture (`agent models`) ───────────────────────────────────────────────────────────────
 
@@ -380,7 +414,7 @@ final class ModelPicker(
     val (effective, _) = allowances
     Role.values.toList.map { r =>
       chain(r) match
-        case Left(m)          =>
+        case Left(m) =>
           RoleChain(
             RoleChain.Role(r.wire.value),
             RoleChain.Source(SettingSource.Config.wire.value),
@@ -391,7 +425,13 @@ final class ModelPicker(
         case Right((ms, src)) =>
           val entries = ms.map { m =>
             resolve(m) match
-              case Left(why)           => ChainEntry(ChainEntry.Model(m.wire.value), ready = ModelChains.ChainEntry.Ready(false), usable = ModelChains.ChainEntry.Usable(false), Some(ChainEntry.Problem(why.value)))
+              case Left(why) =>
+                ChainEntry(
+                  ChainEntry.Model(m.wire.value),
+                  ready = ModelChains.ChainEntry.Ready(false),
+                  usable = ModelChains.ChainEntry.Usable(false),
+                  Some(ChainEntry.Problem(why.value))
+                )
               case Right((_, billing)) =>
                 val st = state(m, effective, now)
                 ChainEntry(
@@ -474,7 +514,11 @@ object ModelPicker:
     * was reported (`observed`, the pool's newest reading) — the reading the limit came with, or an older one, says
     * nothing about a reset — and only when that pool's verdict for the model is usable (#1827).
     */
-  def lifts(since: PlanQuotaRepo.EpochMillis, observed: Option[PlanQuotaRepo.EpochMillis], usable: PoolUsable): Boolean =
+  def lifts(
+      since: PlanQuotaRepo.EpochMillis,
+      observed: Option[PlanQuotaRepo.EpochMillis],
+      usable: PoolUsable
+  ): Boolean =
     usable.value && observed.exists(_ > since)
 
   /** When a chain whose every model is out of headroom gets one back by itself, and the clause the pause message says
@@ -482,7 +526,9 @@ object ModelPicker:
     * large as its limit) does not keep the others' resets from counting — plus the pools a person holds, which free
     * only when released. None = nothing frees by itself.
     */
-  def whenFrees(models: List[(ModelRef, Option[PlanQuotaRepo.EpochMillis], Option[PlanQuota.PoolId])]): (Option[PlanQuotaRepo.EpochMillis], String) =
+  def whenFrees(
+      models: List[(ModelRef, Option[PlanQuotaRepo.EpochMillis], Option[PlanQuota.PoolId])]
+  ): (Option[PlanQuotaRepo.EpochMillis], String) =
     val held = models.flatMap(_._3).distinct
     val heldText =
       held.map(p => s"the ${p.title} is held (release it with `histmersion agent quota release ${p.wire}`)")

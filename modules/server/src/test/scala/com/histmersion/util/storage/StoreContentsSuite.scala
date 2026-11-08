@@ -20,12 +20,22 @@ class StoreContentsSuite extends munit.FunSuite:
       val contents = Store.Contents(s)
       val data = ByteSource.Content("an original".getBytes(UTF_8))
       assertEquals(contents.find(sha(data)), None)
-      assert(contents.store(sha(data), ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
+      assert(
+        contents
+          .store(sha(data), ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8)))
+          .isLeft
+      )
       assertEquals(contents.find(sha(data)), None)
       assertEquals(s.list().size, 0)
-      assertEquals(contents.store(sha(data), ContentStore.Ext("../evil"), java.io.ByteArrayInputStream(data.value)), Right(()))
+      assertEquals(
+        contents.store(sha(data), ContentStore.Ext("../evil"), java.io.ByteArrayInputStream(data.value)),
+        Right(())
+      )
       assertEquals(contents.find(sha(data)).map(_._2), Some("bin"))
-      assertEquals(contents.store(sha(data), ContentStore.Ext("pdf"), java.io.ByteArrayInputStream(data.value)), Right(()))
+      assertEquals(
+        contents.store(sha(data), ContentStore.Ext("pdf"), java.io.ByteArrayInputStream(data.value)),
+        Right(())
+      )
       assertEquals(s.list().map(_.key.value), List(s"${sha(data)}.bin"))
       assertEquals(contents.find(sha(data)).map(_._1.read(_.readAllBytes()).toList), Some(data.value.toList))
 

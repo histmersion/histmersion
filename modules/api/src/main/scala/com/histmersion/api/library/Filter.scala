@@ -30,7 +30,8 @@ final case class Filter(
     title: Option[Filter.Title] = None,
     goal: Option[Filter.Goal] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
 
   def isEmpty: Boolean =
     (q.forall((_).value.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
@@ -48,7 +49,6 @@ object Filter:
   object YearFrom extends Newtype[Long, Pure]
   type YearTo = YearTo.T
   object YearTo extends Newtype[Long, Pure]
-
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
 
@@ -70,7 +70,7 @@ object Filter:
   object Offset extends Newtype[Int, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
-  export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
+  export com.histmersion.api.research.ReviewGoal.Slug as Goal
 
   val Earliest: Year = Year(-1000000000L)
   val Latest: Year = Year(1000000000L)
@@ -158,7 +158,9 @@ object Filter:
     val query = Param(
       Param.Rest("q"),
       Param.Mcp("query"),
-      Param.Doc("Full text (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or), evaluated within one ~4 000-char chunk"),
+      Param.Doc(
+        "Full text (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or), evaluated within one ~4 000-char chunk"
+      ),
       Param.Brief("Free text: words AND-ed, \"a phrase\", -word, or")
     )
     val tags = Param(
@@ -180,34 +182,81 @@ object Filter:
       Param.Brief("Any one, a place id or name")
     )
     val topics =
-      Param(Param.Rest("topic"), Param.Mcp("topics"), Param.Doc("ALL required — every topic must be present on the source"), Param.Brief("Every one required"))
+      Param(
+        Param.Rest("topic"),
+        Param.Mcp("topics"),
+        Param.Doc("ALL required — every topic must be present on the source"),
+        Param.Brief("Every one required")
+      )
     val status = Param(
       Param.Rest("status"),
       _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("status"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc(s"ANY matches — ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief(s"Any of ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}")
+      _root_.com.histmersion.api.library.Filter.Docs.Param
+        .Doc(s"ANY matches — ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param
+        .Brief(s"Any of ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}")
     )
-    val yearFrom = Param(Param.Rest("yearFrom"), Param.Mcp("yearFrom"), Param.Doc("Earliest publication year (inclusive)"), Param.Brief("Earliest publication year"))
-    val yearTo = Param(Param.Rest("yearTo"), Param.Mcp("yearTo"), Param.Doc("Latest publication year (inclusive)"), Param.Brief("Latest publication year"))
+    val yearFrom = Param(
+      Param.Rest("yearFrom"),
+      Param.Mcp("yearFrom"),
+      Param.Doc("Earliest publication year (inclusive)"),
+      Param.Brief("Earliest publication year")
+    )
+    val yearTo = Param(
+      Param.Rest("yearTo"),
+      Param.Mcp("yearTo"),
+      Param.Doc("Latest publication year (inclusive)"),
+      Param.Brief("Latest publication year")
+    )
     val from = Param(
       Param.Rest("from"),
       Param.Mcp("from"),
       Param.Doc("Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)"),
       Param.Brief("Period start, a signed year (BCE negative)")
     )
-    val to = Param(Param.Rest("to"), Param.Mcp("to"), Param.Doc("Deep-time end, a signed year (BCE negative)"), Param.Brief("Period end, a signed year"))
+    val to = Param(
+      Param.Rest("to"),
+      Param.Mcp("to"),
+      Param.Doc("Deep-time end, a signed year (BCE negative)"),
+      Param.Brief("Period end, a signed year")
+    )
     val minLon = Param(
       Param.Rest("minLon"),
       Param.Mcp("minLon"),
       Param.Doc("Bounding box: west longitude (a west above the east crosses the antimeridian)"),
       Param.Brief("Box: west longitude")
     )
-    val minLat = Param(Param.Rest("minLat"), Param.Mcp("minLat"), Param.Doc("Bounding box: south latitude"), Param.Brief("Box: south latitude"))
-    val maxLon = Param(Param.Rest("maxLon"), Param.Mcp("maxLon"), Param.Doc("Bounding box: east longitude"), Param.Brief("Box: east longitude"))
-    val maxLat = Param(Param.Rest("maxLat"), Param.Mcp("maxLat"), Param.Doc("Bounding box: north latitude"), Param.Brief("Box: north latitude"))
-    val sort = Param(Param.Rest("sort"), Param.Mcp("sort"), Param.Doc(s"Ordering: ${Sort.all.mkString("|")}"), Param.Brief(Sort.all.mkString("|")))
+    val minLat = Param(
+      Param.Rest("minLat"),
+      Param.Mcp("minLat"),
+      Param.Doc("Bounding box: south latitude"),
+      Param.Brief("Box: south latitude")
+    )
+    val maxLon = Param(
+      Param.Rest("maxLon"),
+      Param.Mcp("maxLon"),
+      Param.Doc("Bounding box: east longitude"),
+      Param.Brief("Box: east longitude")
+    )
+    val maxLat = Param(
+      Param.Rest("maxLat"),
+      Param.Mcp("maxLat"),
+      Param.Doc("Bounding box: north latitude"),
+      Param.Brief("Box: north latitude")
+    )
+    val sort = Param(
+      Param.Rest("sort"),
+      Param.Mcp("sort"),
+      Param.Doc(s"Ordering: ${Sort.all.mkString("|")}"),
+      Param.Brief(Sort.all.mkString("|"))
+    )
     val limit =
-      Param(Param.Rest("limit"), Param.Mcp("limit"), Param.Doc("Results per page (default: the configured page size, at most 500)"), Param.Brief("Results per page"))
+      Param(
+        Param.Rest("limit"),
+        Param.Mcp("limit"),
+        Param.Doc("Results per page (default: the configured page size, at most 500)"),
+        Param.Brief("Results per page")
+      )
     val offset = Param(
       Param.Rest("offset"),
       Param.Mcp("offset"),
@@ -215,8 +264,18 @@ object Filter:
       Param.Brief("The next page's offset, from the listing's footer")
     )
     val title =
-      Param(Param.Rest("title"), Param.Mcp("title"), Param.Doc("Case-insensitive substring of the listed item's title"), Param.Brief("A substring of the title"))
-    val goal = Param(Param.Rest("goal"), Param.Mcp("goal"), Param.Doc("Only the sources a research goal links (its slug)"), Param.Brief("A research goal's slug"))
+      Param(
+        Param.Rest("title"),
+        Param.Mcp("title"),
+        Param.Doc("Case-insensitive substring of the listed item's title"),
+        Param.Brief("A substring of the title")
+      )
+    val goal = Param(
+      Param.Rest("goal"),
+      Param.Mcp("goal"),
+      Param.Doc("Only the sources a research goal links (its slug)"),
+      Param.Brief("A research goal's slug")
+    )
 
     val all: List[Param] =
       List(

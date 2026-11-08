@@ -119,7 +119,9 @@ final case class BundleEntities(
       assets.map(_.updatedAt.value) ++ assetLinks.map(_.updatedAt.value) ++ attestations.map(_.updatedAt.value) ++
       events.map(_.updatedAt.value) ++ goals.map(_.updatedAt.value) ++ queue.map(_.updatedAt.value) ++
       places.map(_.updatedAt.value) ++ periods.map(_.updatedAt.value) ++ articleAliases.map(_.createdAt.value) ++
-      eventAliases.map(_.createdAt.value) ++ goalAliases.map(_.createdAt.value) ++ placeAliases.map(_.createdAt.value) ++
+      eventAliases.map(_.createdAt.value) ++ goalAliases.map(_.createdAt.value) ++ placeAliases.map(
+        _.createdAt.value
+      ) ++
       eventCatalogue.map(_.retrievedAt.value) ++ eventCandidates.map(_.computedAt.value) ++
       eventChecks.map(_.checkedAt.value) ++ corrections.map(_.updatedAt.value) ++
       siteTypes.flatMap(_.checkedAt.map(_.value)) ++
@@ -210,8 +212,7 @@ object BundleEntities:
         Bundle.Files.Assessments,
         false
       ),
-      aliases =
-        read[Bundle.Alias](Bundle.Files.Aliases, false),
+      aliases = read[Bundle.Alias](Bundle.Files.Aliases, false),
       articles = read[Bundle.Article](Bundle.Kind.Article.file, true),
       versions = read[Bundle.ArticleVersion](Bundle.Kind.ArticleVersion.file, true),
       assets = read[Bundle.Asset](Bundle.Kind.Asset.file, true),

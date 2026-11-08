@@ -21,6 +21,5 @@ object LibrarySort:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
-
   def of(wire: Option[Wire]): LibrarySort =
     wire.flatMap(w => values.find(_.wire.value == w.value.trim.toLowerCase)).getOrElse(Relevance)

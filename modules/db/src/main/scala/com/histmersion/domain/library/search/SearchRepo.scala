@@ -21,7 +21,6 @@ private[search] object SearchRepo:
 
   /** How many sources the filter selects — `SearchResult.total` without building a page. */
 
-
   def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): RowCount =
     RowCount(FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
 
@@ -40,7 +39,12 @@ private[search] object SearchRepo:
   def selectionCounts(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Place.Counts =
     (FilterSql.selectionCountsQuery(filter, scope).frag.query[(Int, Int, Int, Int)].run().head match
       case (s, f, a, e) =>
-        Place.Counts(Place.Counts.Sources(s), Place.Counts.Findings(f), Place.Counts.Articles(a), Place.Counts.Events(e))
+        Place.Counts(
+          Place.Counts.Sources(s),
+          Place.Counts.Findings(f),
+          Place.Counts.Articles(a),
+          Place.Counts.Events(e)
+        )
     )
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that made it match, why
@@ -53,11 +57,12 @@ private[search] object SearchRepo:
     * computes `ts_headline` only for the page's citekeys — typically 10–25 instead of every matching source in the
     * corpus.
     */
-  def sources(filter: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope = PlaceScope.empty)(using DbCon): SearchResult =
+  def sources(filter: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope = PlaceScope.empty)(using
+      DbCon
+  ): SearchResult =
     val total = FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0)
     val rows = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
-    if rows.isEmpty then
-      SearchResult.of(SearchResult.Total(total), Nil, UnreadPage.Offset(filter.offset.value.max(0)))
+    if rows.isEmpty then SearchResult.of(SearchResult.Total(total), Nil, UnreadPage.Offset(filter.offset.value.max(0)))
     else
       val citekeys = rows.map(_.citekey).toList
       // phase 2: snippets for the page only (the expensive ts_headline runs for N page rows, not all)
@@ -82,8 +87,12 @@ private[search] object SearchRepo:
       val hits = rows.map { r =>
         // merge the snippet into the row before building the hit
         val withSnippet = snippets.get(r.citekey) match
-          case Some(sr) => r.modify(_.snippet).setTo(Some(SearchHit.Snippet(sr.snippet.value))).modify(_.matchedHeading).setTo(sr.heading.map(h => SearchHit.MatchedHeading(h.value)))
-          case None     => r
+          case Some(sr) =>
+            r.modify(_.snippet)
+              .setTo(Some(SearchHit.Snippet(sr.snippet.value)))
+              .modify(_.matchedHeading)
+              .setTo(sr.heading.map(h => SearchHit.MatchedHeading(h.value)))
+          case None => r
         val matched =
           if !filter.hasFindingCriteria then Nil
           else

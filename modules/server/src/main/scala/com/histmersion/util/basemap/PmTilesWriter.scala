@@ -69,9 +69,33 @@ final class PmTilesWriter(out: Reservation):
     data.write(metaBytes)
     data.write(leafBytes)
     data.close()
-    val header = template.modify(
-      _.rootOffset).setTo(ByteOffset.applyUnsafe(PmTiles.HeaderLength.toLong)).modify(_.rootLength).setTo(ByteCount.applyUnsafe(rootBytes.length.toLong)).modify(_.metadataOffset).setTo(ByteOffset.applyUnsafe(metaOffset)).modify(_.metadataLength).setTo(ByteCount.applyUnsafe(metaBytes.length.toLong)).modify(_.leafOffset).setTo(ByteOffset.applyUnsafe(leafOffset)).modify(_.leafLength).setTo(ByteCount.applyUnsafe(leafBytes.length.toLong)).modify(_.dataOffset).setTo(ByteOffset.applyUnsafe(dataOffset)).modify(_.dataLength).setTo(ByteCount.applyUnsafe(dataLength)).modify(_.addressedTiles).setTo(PmTiles.Header.AddressedTiles(addressed)).modify(_.tileEntries).setTo(PmTiles.Header.TileEntries(entries.size.toLong)).modify(_.tileContents).setTo(PmTiles.Header.TileContents(seen.size.toLong)).modify(_.clustered).setTo(PmTiles.Header.Clustered(true)).modify(_.internalCompression).setTo(ic
-    )
+    val header = template
+      .modify(_.rootOffset)
+      .setTo(ByteOffset.applyUnsafe(PmTiles.HeaderLength.toLong))
+      .modify(_.rootLength)
+      .setTo(ByteCount.applyUnsafe(rootBytes.length.toLong))
+      .modify(_.metadataOffset)
+      .setTo(ByteOffset.applyUnsafe(metaOffset))
+      .modify(_.metadataLength)
+      .setTo(ByteCount.applyUnsafe(metaBytes.length.toLong))
+      .modify(_.leafOffset)
+      .setTo(ByteOffset.applyUnsafe(leafOffset))
+      .modify(_.leafLength)
+      .setTo(ByteCount.applyUnsafe(leafBytes.length.toLong))
+      .modify(_.dataOffset)
+      .setTo(ByteOffset.applyUnsafe(dataOffset))
+      .modify(_.dataLength)
+      .setTo(ByteCount.applyUnsafe(dataLength))
+      .modify(_.addressedTiles)
+      .setTo(PmTiles.Header.AddressedTiles(addressed))
+      .modify(_.tileEntries)
+      .setTo(PmTiles.Header.TileEntries(entries.size.toLong))
+      .modify(_.tileContents)
+      .setTo(PmTiles.Header.TileContents(seen.size.toLong))
+      .modify(_.clustered)
+      .setTo(PmTiles.Header.Clustered(true))
+      .modify(_.internalCompression)
+      .setTo(ic)
     val headerBytes: Array[Byte] = PmTiles.encodeHeader(header).value
     out.writeAt(ByteOffset.applyUnsafe(0L), ByteSource.Content(headerBytes ++ rootBytes))
     out.commit().fold(e => throw IOException(e.message.value), _.size)
@@ -92,7 +116,10 @@ object PmTilesWriter:
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4
     * 096 entries (doubled until their index fits). Pure.
     */
-  def directories(entries: Vector[PmTiles.Entry], c: PmTiles.Compression): (PmTiles.CompressedBytes, PmTiles.CompressedBytes) =
+  def directories(
+      entries: Vector[PmTiles.Entry],
+      c: PmTiles.Compression
+  ): (PmTiles.CompressedBytes, PmTiles.CompressedBytes) =
     val whole = PmTiles.compress(PmTiles.encodeDirectory(entries), c)
     if whole.value.length <= PmTiles.RootBytes - PmTiles.HeaderLength then
       (whole, PmTiles.CompressedBytes(Array.emptyByteArray))
@@ -115,6 +142,7 @@ object PmTilesWriter:
           }
           .toVector
         val root = PmTiles.compress(PmTiles.encodeDirectory(index), c)
-        if root.value.length <= PmTiles.RootBytes - PmTiles.HeaderLength then (root, PmTiles.CompressedBytes(out.toByteArray))
+        if root.value.length <= PmTiles.RootBytes - PmTiles.HeaderLength then
+          (root, PmTiles.CompressedBytes(out.toByteArray))
         else tryLeaves(EntriesPerLeaf(size.value * 2))
       tryLeaves(EntriesPerLeaf(4096))

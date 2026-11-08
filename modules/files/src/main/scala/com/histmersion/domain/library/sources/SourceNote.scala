@@ -103,9 +103,13 @@ object SourceNote:
     extractYaml(text).map { y =>
       val m = parse(y)
       val src = toSource(m, fallbackCitekey)
-      src.modify(
-        _.edges).setTo(edgesOf(src.citekey, m, text)).modify(_.notes).setTo(bodyOf(text)).modify(_.topics).setTo(withLinkedTopics(src.topics, src.citekey, text)
-      )
+      src
+        .modify(_.edges)
+        .setTo(edgesOf(src.citekey, m, text))
+        .modify(_.notes)
+        .setTo(bodyOf(text))
+        .modify(_.topics)
+        .setTo(withLinkedTopics(src.topics, src.citekey, text))
     }
 
   private def yamlMap(text: Text): Map[String, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
@@ -146,7 +150,9 @@ object SourceNote:
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root = three parents up
     * from `wiki/sources/<ck>.md`). None if absent.
     */
-  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[SafePath.Base])(using files: TextFiles): Option[Source.OcrMarkdown] =
+  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[SafePath.Base])(using
+      files: TextFiles
+  ): Option[Source.OcrMarkdown] =
     str(m, "md_path").flatMap { rel =>
       Option(notePath.getParent)
         .flatMap(a => Option(a.getParent))
@@ -154,7 +160,9 @@ object SourceNote:
         .map(_.resolve(rel))
         .filter(SafePath.within(confineTo, _))
         .filter(files.exists(_))
-        .map(f => Source.OcrMarkdown(files.read(f).value.filterNot(_.toInt == 0))) // Postgres text rejects NUL bytes (present in some OCR output)
+        .map(f =>
+          Source.OcrMarkdown(files.read(f).value.filterNot(_.toInt == 0))
+        ) // Postgres text rejects NUL bytes (present in some OCR output)
     }
 
   private def extractYaml(text: Text): Option[String] = split(text.value).map(_._1)

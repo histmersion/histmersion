@@ -17,8 +17,7 @@ object CoreFailure:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
   object Skipped:
-    export CoreFailure.{Problem as Why}
+    export CoreFailure.Problem as Why
 
   object Failed:
-    export CoreFailure.{Problem as Why}
-
+    export CoreFailure.Problem as Why

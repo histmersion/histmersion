@@ -30,7 +30,10 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
       s"$e — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
     else e
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(
+      place: MediaPlace,
+      http: Plugin.Http
+  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(LocCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(j => LocCollection.results(j).left.map(_.value))
@@ -57,10 +60,17 @@ object LocCollection:
   type ThumbPx = MediaSettings.ThumbPx
   val ThumbPx: MediaSettings.ThumbPx.type = MediaSettings.ThumbPx
 
-  def searchUrl(base: CollectionSettings.ApiUrl, name: MediaPlace.Label, limit: CollectionSettings.Candidates): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"${base.value.stripSuffix("/")}/maps/?q=${name.value.enc}&fo=json&c=${limit.value.max(1)}&fa=${"partof:geography and map division".enc}")
+  def searchUrl(
+      base: CollectionSettings.ApiUrl,
+      name: MediaPlace.Label,
+      limit: CollectionSettings.Candidates
+  ): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(
+      s"${base.value.stripSuffix("/")}/maps/?q=${name.value.enc}&fo=json&c=${limit.value.max(1)}&fa=${"partof:geography and map division".enc}"
+    )
 
-  def itemUrl(base: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${base.value.stripSuffix("/")}/item/${id.value.enc}/?fo=json")
+  def itemUrl(base: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"${base.value.stripSuffix("/")}/item/${id.value.enc}/?fo=json")
 
   private val ItemId = """.*/item/([^/?#]+)/?.*""".r
 
@@ -90,7 +100,13 @@ object LocCollection:
   /** Pure: one item answer. `maxYear` is the public-domain boundary; `displayPx`/`thumbPx` choose among the item's JPEG
     * files (the largest no wider than display, the smallest no narrower than thumb).
     */
-  def record(json: Json, base: CollectionSettings.ApiUrl, maxYear: CollectionSettings.MaxYear, displayPx: CollectionSettings.DisplayPx, thumbPx: MediaSettings.ThumbPx): Either[Problem, MediaItem] =
+  def record(
+      json: Json,
+      base: CollectionSettings.ApiUrl,
+      maxYear: CollectionSettings.MaxYear,
+      displayPx: CollectionSettings.DisplayPx,
+      thumbPx: MediaSettings.ThumbPx
+  ): Either[Problem, MediaItem] =
     val item = json.hcursor.downField("item")
     if item.focus.isEmpty then Left(Problem("no item in the answer"))
     else
@@ -133,12 +149,18 @@ object LocCollection:
         val original = files.sortBy(-_._2).headOption.map(_._1)
         val rights: Either[MediaItem.RightsPart1, MediaRights] =
           if !advisory.toLowerCase(Locale.ROOT).contains(NoKnown) then
-            Left(MediaItem.RightsPart1(if advisory.isEmpty then "no rights statement" else "rights not \"No known restrictions\""))
+            Left(MediaItem.RightsPart1(if advisory.isEmpty then "no rights statement"
+            else "rights not \"No known restrictions\""))
           else if period.isEmpty then Left(MediaItem.RightsPart1("no date on the map"))
-          else if period.exists(_.end.value > maxYear.value) then Left(MediaItem.RightsPart1(s"made after ${maxYear.value} (may be in copyright)"))
+          else if period.exists(_.end.value > maxYear.value) then
+            Left(MediaItem.RightsPart1(s"made after ${maxYear.value} (may be in copyright)"))
           else
             Right(
-              MediaRights.publicDomain(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit), Some(MediaRights.LicenceUrl("https://www.loc.gov/legal/understanding-copyright/")))
+              MediaRights.publicDomain(
+                creator.map(MediaRights.Author(_)),
+                MediaRights.Credit(credit),
+                Some(MediaRights.LicenceUrl("https://www.loc.gov/legal/understanding-copyright/"))
+              )
             )
         MediaItem(
           key,

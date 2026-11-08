@@ -2,7 +2,11 @@ package com.histmersion
 package upstreams.archiveorg
 
 import io.github.iltotore.iron.constraint.any.Pure
-final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.Format], megabytes: ArchiveFile.Megabytes)
+final case class ArchiveFile(
+    name: ArchiveFile.Name,
+    format: Option[ArchiveFile.Format],
+    megabytes: ArchiveFile.Megabytes
+)
 
 object ArchiveFile:
   type Name = Name.T

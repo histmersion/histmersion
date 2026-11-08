@@ -39,7 +39,10 @@ class BrowserDownloadSuite extends munit.FunSuite:
     isOa = WorkRef.IsOa(true),
     oaStatus = Some(WorkRef.OaStatus("gold")),
     oaUrl = Some(WorkRef.OaUrl("https://www.mdpi.com/2077-1444/10/4/258/pdf")),
-    oaLocations = List(WorkRef.OaLocations("https://www.mdpi.com/2077-1444/10/4/258"), WorkRef.OaLocations("https://www.mdpi.com/2077-1444/10/4/258/pdf")),
+    oaLocations = List(
+      WorkRef.OaLocations("https://www.mdpi.com/2077-1444/10/4/258"),
+      WorkRef.OaLocations("https://www.mdpi.com/2077-1444/10/4/258/pdf")
+    ),
     oaLicence = Some(WorkRef.OaLicence("cc-by"))
   )
 
@@ -53,10 +56,24 @@ class BrowserDownloadSuite extends munit.FunSuite:
         "at https://www.mdpi.com/2077-1444/10/4/258; mdpi.com refuses downloads by scripts: download it in the browser, " +
         "then histmersion ingest <file> --citekey greener2019_archaeology"
     )
-    assertEquals(Scheduling.dois(b.text.value), Set(com.histmersion.domain.library.Doi("10.3390/rel10040258")), "the DOI the acquisition list finds it by")
+    assertEquals(
+      Scheduling.dois(b.text.value),
+      Set(com.histmersion.domain.library.Doi("10.3390/rel10040258")),
+      "the DOI the acquisition list finds it by"
+    )
 
   test("diamond counts as gold; no licence, no title: the item says what it knows"):
-    val w = mdpi.modify(_.oaStatus).setTo(Some(WorkRef.OaStatus("Diamond"))).modify(_.oaLicence).setTo(None).modify(_.title).setTo(None).modify(_.authors).setTo(Nil).modify(_.year).setTo(None)
+    val w = mdpi
+      .modify(_.oaStatus)
+      .setTo(Some(WorkRef.OaStatus("Diamond")))
+      .modify(_.oaLicence)
+      .setTo(None)
+      .modify(_.title)
+      .setTo(None)
+      .modify(_.authors)
+      .setTo(Nil)
+      .modify(_.year)
+      .setTo(None)
     val text = BrowserDownload.of(w, ck, Refusing).map(_.text).getOrElse(fail("not a browser download"))
     assert(
       text.value.startsWith(
@@ -73,9 +90,11 @@ class BrowserDownloadSuite extends munit.FunSuite:
     assertEquals(BrowserDownload.of(mdpi.modify(_.doi).setTo(None), ck, Refusing), None)
     assertEquals(
       BrowserDownload.of(
-        mdpi.modify(
-          _.oaUrl).setTo(Some(WorkRef.OaUrl("https://doi.org/10.3390/rel10040258"))).modify(_.oaLocations).setTo(List(WorkRef.OaLocations("https://zenodo.org/records/1"))
-        ),
+        mdpi
+          .modify(_.oaUrl)
+          .setTo(Some(WorkRef.OaUrl("https://doi.org/10.3390/rel10040258")))
+          .modify(_.oaLocations)
+          .setTo(List(WorkRef.OaLocations("https://zenodo.org/records/1"))),
         ck,
         Refusing
       ),
@@ -83,7 +102,11 @@ class BrowserDownloadSuite extends munit.FunSuite:
     )
     assertEquals(BrowserDownload.of(mdpi, ck, refusing(Nil)), None)
     assertEquals(
-      BrowserDownload.of(mdpi.modify(_.oaUrl).setTo(Some(WorkRef.OaUrl("https://notmdpi.com/x"))).copy(oaLocations = Nil), ck, Refusing),
+      BrowserDownload.of(
+        mdpi.modify(_.oaUrl).setTo(Some(WorkRef.OaUrl("https://notmdpi.com/x"))).copy(oaLocations = Nil),
+        ck,
+        Refusing
+      ),
       None,
       "a host matches itself and its subdomains only"
     )
@@ -93,8 +116,10 @@ class BrowserDownloadSuite extends munit.FunSuite:
       doi = (Some("10.16993/bbk")).map(Doi.apply),
       title = (Some("Book")).map(com.histmersion.api.library.Title.apply),
       oaStatus = Some(WorkRef.OaStatus("gold")),
-      oaLocations =
-        List(WorkRef.OaLocations("https://doi.org/10.16993/bbk"), WorkRef.OaLocations("https://www.stockholmuniversitypress.se/site/books/m/10.16993/bbk/"))
+      oaLocations = List(
+        WorkRef.OaLocations("https://doi.org/10.16993/bbk"),
+        WorkRef.OaLocations("https://www.stockholmuniversitypress.se/site/books/m/10.16993/bbk/")
+      )
     )
     assertEquals(
       BrowserDownload.of(sup, ck, Refusing).map(b => b.landing.value: String),

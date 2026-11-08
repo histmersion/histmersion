@@ -27,7 +27,8 @@ class PgRelocationSuite extends munit.FunSuite:
   test("binary: a padded path constant is rewritten in place, nothing after it moves"):
     val slot = b("/build/env/default/lib") ++ Array.fill[Byte](20)(0)
     val in = b("HEAD") ++ Array[Byte](0) ++ slot ++ b("TAIL") ++ Array[Byte](0)
-    val (out, tooLong) = PgRelocation.patch(PgRelocation.FileBytes(in), from, PgRelocation.PatchTo(b("/somewhere/much/longer/pg")))
+    val (out, tooLong) =
+      PgRelocation.patch(PgRelocation.FileBytes(in), from, PgRelocation.PatchTo(b("/somewhere/much/longer/pg")))
     assertEquals(out.value.length, in.length)
     assertEquals(tooLong, 0)
     val strings = String(out.value, UTF_8).split('\u0000').filter(_.nonEmpty).toList
@@ -36,7 +37,11 @@ class PgRelocationSuite extends munit.FunSuite:
 
   test("binary: a string that would not fit is left alone and counted"):
     val in = Array[Byte](0) ++ b("/build/env/default/bin") ++ Array[Byte](0) ++ b("X") ++ Array[Byte](0)
-    val (out, tooLong) = PgRelocation.patch(PgRelocation.FileBytes(in), from, PgRelocation.PatchTo(b("/a/path/that/is/far/too/long/to/fit/here")))
+    val (out, tooLong) = PgRelocation.patch(
+      PgRelocation.FileBytes(in),
+      from,
+      PgRelocation.PatchTo(b("/a/path/that/is/far/too/long/to/fit/here"))
+    )
     assertEquals(tooLong, 1)
     assertEquals(out.value.toList, in.toList)
 
@@ -44,7 +49,10 @@ class PgRelocationSuite extends munit.FunSuite:
     val s = b("'--prefix=/build/env/default' '--libdir=/build/env/default/lib'")
     val in = Array[Byte](0) ++ s ++ Array[Byte](0)
     val (out, _) = PgRelocation.patch(PgRelocation.FileBytes(in), from, PgRelocation.PatchTo(b("/p")))
-    assertEquals(String(out.value, UTF_8).split('\u0000').filter(_.nonEmpty).toList, List("'--prefix=/p' '--libdir=/p/lib'"))
+    assertEquals(
+      String(out.value, UTF_8).split('\u0000').filter(_.nonEmpty).toList,
+      List("'--prefix=/p' '--libdir=/p/lib'")
+    )
 
   test("relocate: follows the marker, updates it, and is a no-op once home"):
     val pg = Files.createTempDirectory("pgreloc")
@@ -58,17 +66,34 @@ class PgRelocationSuite extends munit.FunSuite:
       Files.writeString(bin.resolve("tool-config"), "prefix=/build/env/default\n")
       Files.writeString(bin.resolve("unrelated"), "nothing to see")
       val here = pg.toRealPath().toString
-      val r = PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = PgRelocation.MacOsMode(false), Processes())
-      assertEquals(r, Some(PgRelocation.Result(files = PgRelocation.Result.Files(2), signed = PgRelocation.Result.Signed(0), tooLong = PgRelocation.Result.TooLong(0))))
+      val r =
+        PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = PgRelocation.MacOsMode(false), Processes())
+      assertEquals(
+        r,
+        Some(
+          PgRelocation.Result(
+            files = PgRelocation.Result.Files(2),
+            signed = PgRelocation.Result.Signed(0),
+            tooLong = PgRelocation.Result.TooLong(0)
+          )
+        )
+      )
       assertEquals(Files.readString(pg.resolve(PgRelocation.Marker)), here)
       assertEquals(Files.readString(bin.resolve("tool-config")), s"prefix=$here\n")
       assert(String(Files.readAllBytes(bin.resolve("pg_config")), UTF_8).contains(s"$here/share\u0000"))
-      assertEquals(PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = PgRelocation.MacOsMode(false), Processes()), None)
+      assertEquals(
+        PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = PgRelocation.MacOsMode(false), Processes()),
+        None
+      )
     finally deleteTree(pg)
 
   test("relocate: no marker means a pixi environment used in place — untouched"):
     val pg = Files.createTempDirectory("pgreloc")
-    try assertEquals(PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = PgRelocation.MacOsMode(false), Processes()), None)
+    try
+      assertEquals(
+        PgRelocation.relocate(Storage.at(Location.Postgres, pg), macOS = PgRelocation.MacOsMode(false), Processes()),
+        None
+      )
     finally deleteTree(pg)
 
   private def deleteTree(p: Path): Unit =

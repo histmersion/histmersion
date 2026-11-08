@@ -47,8 +47,6 @@ object MergeRepo:
   type UidText = UidText.T
   object UidText extends Newtype[String, Pure]
 
-
-
   private val ts = BundleSql.ts
 
   private val mergeCols =
@@ -290,7 +288,13 @@ object MergeRepo:
     else
       decided.flatMap { d =>
         BundlePlan
-          .ledgerAfter(d.decision, d.foreignRev, d.localizedRev, d.localRev, BundlePlan.Local.Tombstoned(d.tombstone.value))
+          .ledgerAfter(
+            d.decision,
+            d.foreignRev,
+            d.localizedRev,
+            d.localRev,
+            BundlePlan.Local.Tombstoned(d.tombstone.value)
+          )
           .filterNot(l => existing.get(d.foreignUid).contains(l))
           .map(d -> _)
       }

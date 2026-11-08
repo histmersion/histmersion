@@ -60,7 +60,10 @@ final class ApprovalDigestService(
     val day = ManagerPolicy.dayStart(now)
     def pastHour(t: Instant) = !t.isBefore(ManagerPolicy.dayStart(t).plusSeconds(math.min(23, hour).toLong * 3600L))
     val due = hour >= 0 && (pastHour(now) || agents.digestClock.exists(c => pastHour(Instant.now(c)))) &&
-      agents.autopilotRow.lastDigest().flatMap(d => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(d.value))).forall(_.isBefore(day))
+      agents.autopilotRow
+        .lastDigest()
+        .flatMap(d => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(d.value)))
+        .forall(_.isBefore(day))
     if !due then Nil
     else
       val line = ApprovalDigest.line(digest(now))
@@ -110,7 +113,9 @@ final class ApprovalDigestService(
       else
         val by = b.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
         val note = Some(
-          DecisionRequest.Note((b.note.map(_.value.trim).filter(_.nonEmpty).getOrElse("") + s" (decided in bulk by $by)").trim)
+          DecisionRequest.Note(
+            (b.note.map(_.value.trim).filter(_.nonEmpty).getOrElse("") + s" (decided in bulk by $by)").trim
+          )
         )
         val done = ms.map(o =>
           o.id -> agents.decide(
@@ -146,4 +151,3 @@ final class ApprovalDigestService(
           bad,
           BulkResult.Left(left)
         )
-

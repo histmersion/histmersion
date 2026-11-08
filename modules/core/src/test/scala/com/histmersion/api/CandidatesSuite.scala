@@ -31,20 +31,33 @@ import com.histmersion.api.research.ReviewGoal
 class CandidatesSuite extends munit.FunSuite:
 
   private def w(doi: String, title: String = "T", by: List[String] = Nil) =
-    WorkRef(doi = (Some(doi)).map(Doi.apply), title = (Some(title)).map(Title.apply), authors = (by).map(AuthorName.apply))
+    WorkRef(
+      doi = (Some(doi)).map(Doi.apply),
+      title = (Some(title)).map(Title.apply),
+      authors = (by).map(AuthorName.apply)
+    )
 
   test(
     "a work's key is its DOI, lower case without a resolver; an arXiv preprint without one gets arXiv's DataCite DOI"
   ):
     assertEquals(CandidateDedupe.keyOf(w("https://doi.org/10.1234/ABC")), Some("10.1234/abc"))
-    assertEquals(CandidateDedupe.keyOf(WorkRef(arxivId = Some(Source.Candidate.ArxivId("2401.01234v3")))), Some("10.48550/arxiv.2401.01234"))
+    assertEquals(
+      CandidateDedupe.keyOf(WorkRef(arxivId = Some(Source.Candidate.ArxivId("2401.01234v3")))),
+      Some("10.48550/arxiv.2401.01234")
+    )
     assertEquals(CandidateDedupe.keyOf(WorkRef(title = (Some("no id")).map(Title.apply))), None)
 
   test("a watch reads from its watermark, or (never read) the look-back before today"):
     val today = LocalDate.of(2026, 10, 24)
-    assertEquals(Candidates.since(Some(Candidates.Watermark("2026-10-01")), today, Candidates.Lookback(365)), LocalDate.of(2026, 10, 1))
+    assertEquals(
+      Candidates.since(Some(Candidates.Watermark("2026-10-01")), today, Candidates.Lookback(365)),
+      LocalDate.of(2026, 10, 1)
+    )
     assertEquals(Candidates.since(None, today, Candidates.Lookback(365)), LocalDate.of(2025, 10, 24))
-    assertEquals(Candidates.since(Some(Candidates.Watermark("not a date")), today, Candidates.Lookback(30)), LocalDate.of(2026, 9, 24))
+    assertEquals(
+      Candidates.since(Some(Candidates.Watermark("not a date")), today, Candidates.Lookback(30)),
+      LocalDate.of(2026, 9, 24)
+    )
 
   test("one sweep's works: once each by key with every watch that found it; no id, retracted and known left out"):
     val found = List(
@@ -52,9 +65,13 @@ class CandidatesSuite extends munit.FunSuite:
       CandidateDedupe.FoundBy("crossref query \"x\"") -> w("10.1234/A", title = "Other title"),
       CandidateDedupe.FoundBy("openalex citing 10.9999/z") -> w("10.1234/a"),
       CandidateDedupe.FoundBy("openalex query \"x\"") -> WorkRef(title = (Some("no doi")).map(Title.apply)),
-      CandidateDedupe.FoundBy("openalex query \"x\"") -> w("10.1234/r").modify(_.isRetracted).setTo(WorkRef.IsRetracted(true)),
+      CandidateDedupe
+        .FoundBy("openalex query \"x\"") -> w("10.1234/r").modify(_.isRetracted).setTo(WorkRef.IsRetracted(true)),
       CandidateDedupe.FoundBy("europepmc query \"x\"") -> w("10.1234/known"),
-      CandidateDedupe.FoundBy("arxiv query \"x\"") -> WorkRef(arxivId = Some(Source.Candidate.ArxivId("2401.00001")), title = (Some("P")).map(Title.apply))
+      CandidateDedupe.FoundBy("arxiv query \"x\"") -> WorkRef(
+        arxivId = Some(Source.Candidate.ArxivId("2401.00001")),
+        title = (Some("P")).map(Title.apply)
+      )
     )
     val (kept, skipped) = CandidateDedupe.dedupe(found, Set(com.histmersion.domain.library.Doi("10.1234/known")))
     assertEquals(
@@ -152,7 +169,10 @@ class CandidatesSuite extends munit.FunSuite:
         Some(ReviewGoal.Slug("g")),
         CandidateList.State("new"),
         List(c),
-        List(CandidateCount(Source.Candidate.State("new"), CandidateCount.Count(1)), CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(4))),
+        List(
+          CandidateCount(Source.Candidate.State("new"), CandidateCount.Count(1)),
+          CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(4))
+        ),
         next = Some(CandidateList.Next(25))
       )
     )
@@ -162,8 +182,21 @@ class CandidatesSuite extends munit.FunSuite:
       CandidateSweep(
         CandidateSweep.Goal("g"),
         List(
-          CandidateWatch(CandidateWatch.Goal("g"), CandidateWatch.Kind("query"), CandidateWatch.Subject("x"), CandidateWatch.Index("crossref"), Some(CandidateWatch.Watermark("2026-10-24")), lastFound = CandidateWatch.LastFound(3)),
-          CandidateWatch(CandidateWatch.Goal("g"), CandidateWatch.Kind("query"), CandidateWatch.Subject("x"), CandidateWatch.Index("arxiv"), lastError = Some(CandidateWatch.LastError("timeout")))
+          CandidateWatch(
+            CandidateWatch.Goal("g"),
+            CandidateWatch.Kind("query"),
+            CandidateWatch.Subject("x"),
+            CandidateWatch.Index("crossref"),
+            Some(CandidateWatch.Watermark("2026-10-24")),
+            lastFound = CandidateWatch.LastFound(3)
+          ),
+          CandidateWatch(
+            CandidateWatch.Goal("g"),
+            CandidateWatch.Kind("query"),
+            CandidateWatch.Subject("x"),
+            CandidateWatch.Index("arxiv"),
+            lastError = Some(CandidateWatch.LastError("timeout"))
+          )
         ),
         CandidateSweep.Found(3),
         CandidateSweep.Added(2),

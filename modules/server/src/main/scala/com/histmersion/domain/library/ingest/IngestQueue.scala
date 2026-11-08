@@ -95,7 +95,12 @@ final class IngestQueue(
     val jobId = Job.Id.assume(job.id.value)
     val _ = pending.put(jobId, IngestPending(params, citekey, file, sha, kind))
     pool.submit(jobId)
-    Ingest.Accepted(job.id, com.histmersion.api.library.Citekey(citekey.value), Ingest.Accepted.Status(job.status.value), Some(com.histmersion.api.Sha256(sha.value)))
+    Ingest.Accepted(
+      job.id,
+      com.histmersion.api.library.Citekey(citekey.value),
+      Ingest.Accepted.Status(job.status.value),
+      Some(com.histmersion.api.Sha256(sha.value))
+    )
 
   // ── the converter's health ─────────────────────────────────────────────────────────────────
 
@@ -190,15 +195,16 @@ final class IngestQueue(
                 // the source is written; only now is the item it was acquired for fulfilled. This
                 // worker holds the job in `running`, so the transition below cannot be refused
                 val ticked = job.params.acquireItem match
-                  case Some(item)                              => List(tickOff(item, job.citekey, id))
+                  case Some(item)                                   => List(tickOff(item, job.citekey, id))
                   case None if job.kind == IngestPending.IngestKind => matchAcquisitions(job.citekey, id)
-                  case None                                    => Nil
+                  case None                                         => Nil
                 val enrich = afterStoreSafely(job.citekey)
                 val _ = jobs.transition(
                   id,
                   JobState.Running,
                   JobState.Done,
-                  progress = Some(JobRow.Progress((s"${doc.pages} page(s), $n asset(s)" :: ticked ++ enrich).mkString(" · ")))
+                  progress =
+                    Some(JobRow.Progress((s"${doc.pages} page(s), $n asset(s)" :: ticked ++ enrich).mkString(" · ")))
                 )
 
   /** [[afterStore]], whose failure is a note on the job, never a failed job. */
@@ -213,11 +219,19 @@ final class IngestQueue(
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then the figures, then
     * the digest of the original. Returns how many assets were kept.
     */
-  private def store(jobId: Job.Id, job: IngestPending, doc: ConvertedDoc): Either[String, AssetService.ReplacedFigureCount] =
+  private def store(
+      jobId: Job.Id,
+      job: IngestPending,
+      doc: ConvertedDoc
+  ): Either[String, AssetService.ReplacedFigureCount] =
     if maintenance.active then Left("a restore is in progress; this job was not written")
     else storeNow(jobId, job, doc)
 
-  private def storeNow(jobId: Job.Id, job: IngestPending, doc: ConvertedDoc): Either[String, AssetService.ReplacedFigureCount] =
+  private def storeNow(
+      jobId: Job.Id,
+      job: IngestPending,
+      doc: ConvertedDoc
+  ): Either[String, AssetService.ReplacedFigureCount] =
     val citekey = job.citekey
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body = Source.OcrMarkdown(doc.markdown.value.filterNot(_.toInt == 0))
@@ -261,7 +275,11 @@ final class IngestQueue(
         case Some(item) =>
           queues.patch(
             QueueItemId(id.value),
-            Queue.fulfil(item, com.histmersion.api.library.Citekey(citekey.value), Some(Queue.QueueItem.ClosedBy(jobId.value)))
+            Queue.fulfil(
+              item,
+              com.histmersion.api.library.Citekey(citekey.value),
+              Some(Queue.QueueItem.ClosedBy(jobId.value))
+            )
           ) match
             case Right(_) => s"ticked off acquisition item $id"
             case Left(e)  => warning(e.message)
@@ -299,7 +317,11 @@ final class IngestQueue(
                       queues
                         .patch(
                           QueueItemId(id.value),
-                          Queue.fulfil(item, com.histmersion.api.library.Citekey(citekey.value), Some(Queue.QueueItem.ClosedBy(jobId.value)))
+                          Queue.fulfil(
+                            item,
+                            com.histmersion.api.library.Citekey(citekey.value),
+                            Some(Queue.QueueItem.ClosedBy(jobId.value))
+                          )
                         )
                         .left
                         .map(e => AcquireMatch.Problem(e.message))
@@ -320,7 +342,8 @@ final class IngestQueue(
     */
   private def skeleton(p: Ingest.Params, body: Source.OcrMarkdown): Source.Put =
     Source.Put(
-      title = com.histmersion.api.library.Title(p.title.map(_.value.trim).filter(_.nonEmpty).getOrElse(p.citekey.value)),
+      title =
+        com.histmersion.api.library.Title(p.title.map(_.value.trim).filter(_.nonEmpty).getOrElse(p.citekey.value)),
       authors = p.authors.map(_.value.trim).filter(_.nonEmpty).map(com.histmersion.api.library.AuthorName(_)),
       doi = p.doi.map(_.value.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Doi(_)),
       year = p.year,

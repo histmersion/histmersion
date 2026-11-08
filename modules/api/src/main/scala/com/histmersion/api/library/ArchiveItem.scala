@@ -21,10 +21,11 @@ final case class ArchiveItem(
     lendingOnly: ArchiveItem.LendingOnly = ArchiveItem.LendingOnly(false),
     files: List[ArchiveFile] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ArchiveItem:
-  export com.histmersion.api.library.{ArchiveId as Identifier}
+  export com.histmersion.api.library.ArchiveId as Identifier
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type Creator = Creator.T

@@ -49,7 +49,8 @@ final case class AcquireConfig(
   /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so a blank default
     * means "anonymous": no polite pool, and no Unpaywall, which refuses requests without an e-mail.
     */
-  def contact: Option[AcquireConfig.ContactEmail] = Option(contactEmail).map(_.value.trim).filter(_.nonEmpty).map(AcquireConfig.ContactEmail(_))
+  def contact: Option[AcquireConfig.ContactEmail] =
+    Option(contactEmail).map(_.value.trim).filter(_.nonEmpty).map(AcquireConfig.ContactEmail(_))
 
   /** The `mailto` value; empty without a contact, and `Url` drops an empty parameter. */
   def mailto: AcquireConfig.ContactEmail = contact.getOrElse(AcquireConfig.ContactEmail(""))

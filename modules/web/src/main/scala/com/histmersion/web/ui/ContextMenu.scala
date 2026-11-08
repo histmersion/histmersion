@@ -16,7 +16,7 @@ object ContextMenu:
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
 
-  export Open.{Title as ShowTitle, Title as OnTitle, Title as ButtonTitle}
+  export Open.{Title as ButtonTitle, Title as OnTitle, Title as ShowTitle}
   type ButtonExtraCls = ButtonExtraCls.T
   object ButtonExtraCls extends Newtype[String, Pure]
 
@@ -68,7 +68,13 @@ object ContextMenu:
     val py = if y + h + margin > vh then math.max(margin, y - h) else y
     (math.max(margin, math.min(px, vw - w - margin)), math.max(margin, math.min(py, vh - h - margin)))
 
-  def show(title: ContextMenu.ShowTitle, entries: List[Entry], x: Double, y: Double, back: Option[dom.HTMLElement]): Unit =
+  def show(
+      title: ContextMenu.ShowTitle,
+      entries: List[Entry],
+      x: Double,
+      y: Double,
+      back: Option[dom.HTMLElement]
+  ): Unit =
     open.set(Some(Open(title, entries, x, y, back)))
 
   def close(returnFocus: Boolean = true): Unit =
@@ -113,7 +119,11 @@ object ContextMenu:
     )
 
   /** The visible way in: a "⋯" button that opens the same menu under itself. */
-  def button(title: ContextMenu.ButtonTitle, entries: () => List[Entry], extraCls: ButtonExtraCls = ButtonExtraCls("")): HtmlElement =
+  def button(
+      title: ContextMenu.ButtonTitle,
+      entries: () => List[Entry],
+      extraCls: ButtonExtraCls = ButtonExtraCls("")
+  ): HtmlElement =
     L.button(
       typ := "button",
       cls := s"btn btn--icon btn--sm menu-btn $extraCls".trim,

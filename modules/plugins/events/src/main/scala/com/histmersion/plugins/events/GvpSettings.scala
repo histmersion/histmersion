@@ -8,8 +8,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** `histmersion.events.gvp`: the WFS, the most eruptions one window may hold, a window's years, the pace, and the
   * Holocene floor no GVP dating reaches before.
   */
-final case class GvpSettings(url: GvpSettings.Url, pageSize: GvpSettings.PageSize, windowYears: GvpSettings.WindowYears, requestIntervalMs: GvpSettings.RequestIntervalMs, floorYear: GvpSettings.FloorYear)
-    derives ConfigReader
+final case class GvpSettings(
+    url: GvpSettings.Url,
+    pageSize: GvpSettings.PageSize,
+    windowYears: GvpSettings.WindowYears,
+    requestIntervalMs: GvpSettings.RequestIntervalMs,
+    floorYear: GvpSettings.FloorYear
+) derives ConfigReader
 
 object GvpSettings:
   type Url = Url.T

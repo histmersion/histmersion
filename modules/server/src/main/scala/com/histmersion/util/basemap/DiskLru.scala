@@ -15,7 +15,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   *
   * Thread-safe: every operation holds the instance's lock (they are file operations of a few KB).
   */
-final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru.Ext = DiskLru.Ext("webp"))(using clock: java.time.Clock):
+final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru.Ext = DiskLru.Ext("webp"))(using
+    clock: java.time.Clock
+):
 
   // the index (access-ordered: the eldest is the least recently used) and its byte total, loaded once;
   // `var`s under the instance lock
@@ -26,7 +28,8 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytes, ext: DiskLru
   private def file(key: String, absent: Boolean): Store.Key =
     Store.Key.applyUnsafe(key + (if absent then ".none" else s".$ext"))
 
-  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message.value))
+  private def done(written: Either[Store.Error, ?]): Unit =
+    written.left.foreach(e => throw IOException(e.message.value))
 
   private def load(): Unit = if !loaded then
     loaded = true
@@ -95,4 +98,3 @@ object DiskLru:
   object Key extends Newtype[String, Pure]
   type Ext = Ext.T
   object Ext extends Newtype[String, Pure]
-

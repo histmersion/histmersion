@@ -8,7 +8,8 @@ import com.histmersion.api.Api
 
 /** The agents' scratch state as REST, MCP and the CLI reach it; every write holds the maintenance guard. */
 final class AgentStateControllers(store: AgentStateService, maintenance: WriteGate):
-  private def notFound(key: AgentStateRecord.Key) = Api.Error(Api.Error.Message(s"No agent state key '$key'"), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def notFound(key: AgentStateRecord.Key) =
+    Api.Error(Api.Error.Message(s"No agent state key '$key'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def list(): List[AgentStateEntry] = store.list()
 
@@ -21,5 +22,5 @@ final class AgentStateControllers(store: AgentStateService, maintenance: WriteGa
 
   def delete(key: AgentStateRecord.Key): Either[Api.Error, AgentStateDeleted] =
     maintenance.guard(WriteGate.OperationName("agent_state_delete")):
-      if store.delete(key) then Right(AgentStateDeleted(Api.AgentState.Key(key.value), AgentStateDeleted.Deleted(true))) else Left(notFound(key))
-
+      if store.delete(key) then Right(AgentStateDeleted(Api.AgentState.Key(key.value), AgentStateDeleted.Deleted(true)))
+      else Left(notFound(key))

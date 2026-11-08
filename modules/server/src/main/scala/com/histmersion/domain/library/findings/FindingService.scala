@@ -20,4 +20,3 @@ object FindingService:
   final private class Implementation(db: Transactor) extends FindingService:
     def feed(filter: Filter, scope: PlaceScope): List[GeoHit] = db.read(FindingRepo.findingsFor(filter, scope)).toList
     def count(filter: Filter, scope: PlaceScope): RowCount = db.read(FindingRepo.findingsCount(filter, scope))
-

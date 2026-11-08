@@ -32,8 +32,6 @@ object Backup:
   type ToolOutput = ToolOutput.T
   object ToolOutput extends Newtype[String, Pure]
 
-
-
   val Prefix = "histmersion-"
   val Extension = ".dump"
 
@@ -49,7 +47,11 @@ object Backup:
     if !((taken(Result.File((name).value))) == (true)) then Result.File((name).value)
     else
       val stem = (name).value.dropRight(Extension.length)
-      LazyList.from(2).map(n => Result.File(s"$stem-$n$Extension")).find(c => !((taken(c)) == (true))).getOrElse(Result.File((name).value))
+      LazyList
+        .from(2)
+        .map(n => Result.File(s"$stem-$n$Extension"))
+        .find(c => !((taken(c)) == (true)))
+        .getOrElse(Result.File((name).value))
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
 
@@ -133,11 +135,21 @@ object Backup:
         else (authority, None)
       val port: Either[Problem, Option[PgTarget.Port]] = portText match
         case None    => Right(None)
-        case Some(p) => ((p.toIntOption.map(Some(_)).toRight(s"'$p' is not a port number in '$u'")).left.map(refactorError => Problem(refactorError))).map(refactorValue2 => (refactorValue2).map(refactorValue3 => PgTarget.Port(refactorValue3)))
+        case Some(p) =>
+          ((p.toIntOption
+            .map(Some(_))
+            .toRight(s"'$p' is not a port number in '$u'"))
+            .left
+            .map(refactorError => Problem(refactorError)))
+            .map(refactorValue2 => (refactorValue2).map(refactorValue3 => PgTarget.Port(refactorValue3)))
       for
         name <- Some(db.trim).filter(_.nonEmpty).toRight(Problem(s"JDBC URL has no database name: '$u'"))
         p <- port
-      yield PgTarget((Some(host).filter(_.nonEmpty)).map(refactorValue10 => PgTarget.Host(refactorValue10)), p, PgTarget.Database(name))
+      yield PgTarget(
+        (Some(host).filter(_.nonEmpty)).map(refactorValue10 => PgTarget.Host(refactorValue10)),
+        p,
+        PgTarget.Database(name)
+      )
 
   private val IgnoredErrors = """errors ignored on restore:\s*(\d+)""".r
 
@@ -158,10 +170,16 @@ object Backup:
   val CodeMaintenance = "maintenance"
 
   def maintenance(op: String): Api.Error =
-    Api.Error(Api.Error.Problem(s"$op is unavailable: a restore is in progress on this server"), Some(Api.Error.Code(CodeMaintenance)))
+    Api.Error(
+      Api.Error.Problem(s"$op is unavailable: a restore is in progress on this server"),
+      Some(Api.Error.Code(CodeMaintenance))
+    )
 
   def missing(file: Result.File): Api.Error =
-    Api.Error(Api.Error.Problem(s"no backup named '$file' in the backups directory"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(
+      Api.Error.Problem(s"no backup named '$file' in the backups directory"),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
 
   /** Formatted against `Locale.ROOT`: the string goes onto the wire, and JDK 25's CLDR renders `%.1f` as `2,5` under
     * locales such as `en_PL`.
@@ -174,13 +192,15 @@ object Backup:
       val v = (n).value.toDouble / math.pow(1000, exp.toDouble)
       (String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1)))
 
-  final case class Info(file: Info.File, bytes: ByteCount, createdAt: Info.CreatedAt) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Info(file: Info.File, bytes: ByteCount, createdAt: Info.CreatedAt)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Info:
     export Result.File
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
-
 
   final case class Result(
       file: Result.File,
@@ -189,7 +209,8 @@ object Backup:
       durationMs: Result.DurationMs,
       pruned: List[Result.Pruned] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Result:
     type File = File.T
@@ -198,7 +219,6 @@ object Backup:
     object DurationMs extends Newtype[Long, Pure]
     type Pruned = Pruned.T
     object Pruned extends Newtype[String, Pure]
-
 
   enum State derives CanEqual:
     case Running, Done, Failed
@@ -219,19 +239,21 @@ object Backup:
       error: Option[Status.Error] = None,
       pruned: List[Status.Pruned] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def stateOf: Option[State] = State.parse(state)
     def result: Option[Result] =
       for b <- bytes; h <- sha256 if stateOf.contains(State.Done) yield Result(file, b, h, durationMs, pruned)
 
   object Status:
 
-    export Result.{File as RunningFile, File as FailedFile, File, DurationMs}
+    export Result.{DurationMs, File, File as FailedFile, File as RunningFile}
     type Error = Error.T
     object Error extends Newtype[String, Pure]
     export Result.Pruned
 
-    def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status = Status(file, State.Running.wire, Result.DurationMs((elapsedMs).value))
+    def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status =
+      Status(file, State.Running.wire, Result.DurationMs((elapsedMs).value))
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
     def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, error: Error): Status =

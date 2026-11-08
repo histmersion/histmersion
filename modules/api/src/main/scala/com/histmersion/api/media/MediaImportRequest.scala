@@ -18,7 +18,8 @@ final case class MediaImportRequest(
     event: Option[Event.Id] = None,
     refresh: MediaImportRequest.Refresh = MediaImportRequest.Refresh(false)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MediaImportRequest:
   export RepairAcquire.RepairRequest.DryRun

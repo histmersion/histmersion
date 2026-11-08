@@ -12,7 +12,6 @@ object ScheduleKind:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[ScheduleKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given WireEnumValues[ScheduleKind]:
     def all: Array[ScheduleKind] = values

@@ -25,13 +25,18 @@ trait DownloadedGazetteer extends GazetteerSource:
   def download(http: Plugin.Http): Either[DownloadedGazetteer.Problem, DownloadedGazetteer.Text] =
     http.fetch(url) match
       case Left(e)                           => Left(DownloadedGazetteer.Problem(s"download failed: $e"))
-      case Right(r) if r.status.value != 200 => Left(DownloadedGazetteer.Problem(s"HTTP ${r.status.value} from ${url.value}"))
-      case Right(r)                          =>
-        if url.value.endsWith(".zip") then DownloadedGazetteer.unzip(r.body) else Right(DownloadedGazetteer.Text(String(r.body.value, UTF_8)))
+      case Right(r) if r.status.value != 200 =>
+        Left(DownloadedGazetteer.Problem(s"HTTP ${r.status.value} from ${url.value}"))
+      case Right(r) =>
+        if url.value.endsWith(".zip") then DownloadedGazetteer.unzip(r.body)
+        else Right(DownloadedGazetteer.Text(String(r.body.value, UTF_8)))
 
   /** A property's text: the first of `keys` that holds a non-empty string. */
   protected def str(o: JsonObject, keys: String*): Option[DownloadedGazetteer.Text] =
-    keys.iterator.flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty)).nextOption().map(DownloadedGazetteer.Text(_))
+    keys.iterator
+      .flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty))
+      .nextOption()
+      .map(DownloadedGazetteer.Text(_))
 
   /** A name as an id part: lower case, every run of other characters than `a-z0-9` one `_`, none at the ends. */
   protected def slugify(name: GazetteerName.Name): DownloadedGazetteer.Slug =
@@ -52,8 +57,8 @@ object DownloadedGazetteer:
   object Text extends Newtype[String, Pure]
   type Year = Year.T
   object Year extends Newtype[Long, Pure]
-  /** The first usable file of a zip archive, as UTF-8 text. */
 
+  /** The first usable file of a zip archive, as UTF-8 text. */
 
   def unzip(data: Plugin.HttpResponse.Body): Either[Problem, Text] =
     try

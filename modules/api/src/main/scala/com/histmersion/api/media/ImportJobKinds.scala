@@ -16,7 +16,9 @@ object ImportJobKinds:
   val MediaImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("media-import"),
     JobKinds.Wire("Fetch pictures"),
-    JobKindMeaning("Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events."),
+    JobKindMeaning(
+      "Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events."
+    ),
     stoppable = JobKindEntry.OfStoppable(true),
     subject = Media.of
   )

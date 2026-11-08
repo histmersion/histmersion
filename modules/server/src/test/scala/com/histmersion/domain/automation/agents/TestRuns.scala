@@ -101,7 +101,17 @@ object TestRuns:
     RunState
       .next(from, to)
       .flatMap(t =>
-        Option.when(runs(ds).move(Job.Kind.assume(JobKind), id, RunRow.Status(from.wire.value), RunRow.Status(t.wire.value), error, None, resumeAt))(t)
+        Option.when(
+          runs(ds).move(
+            Job.Kind.assume(JobKind),
+            id,
+            RunRow.Status(from.wire.value),
+            RunRow.Status(t.wire.value),
+            error,
+            None,
+            resumeAt
+          )
+        )(t)
       )
 
   def reconcile(ds: DataSource): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =

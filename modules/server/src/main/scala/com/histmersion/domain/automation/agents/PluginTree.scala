@@ -50,7 +50,9 @@ object PluginTree:
         if store.isLink(key.parent) then
           val _ = store.delete(key.parent)
         store.makeDirectory(key.parent).fold(error => throw java.io.IOException(error.message.value), identity)
-        store.write(key, ByteSource.Content(text.getBytes(UTF_8))).fold(error => throw java.io.IOException(error.message.value), _ => ())
+        store
+          .write(key, ByteSource.Content(text.getBytes(UTF_8)))
+          .fold(error => throw java.io.IOException(error.message.value), _ => ())
       }
       scribe.info(s"wrote ${tree.size} file(s) under ${store.where()}")
       Right(())

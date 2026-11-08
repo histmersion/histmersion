@@ -8,7 +8,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** `propose-articles`: at most `maxArticles` per plan; each one's filter returns at least `minSources` sources and
   * shares less than `maxOverlap` (0..1) of them with any article of the research area.
   */
-final case class AgentSeedConfig(maxArticles: AgentSeedConfig.MaxArticles, minSources: AgentSeedConfig.MinSources, maxOverlap: AgentSeedConfig.MaxOverlap) derives ConfigReader
+final case class AgentSeedConfig(
+    maxArticles: AgentSeedConfig.MaxArticles,
+    minSources: AgentSeedConfig.MinSources,
+    maxOverlap: AgentSeedConfig.MaxOverlap
+) derives ConfigReader
 
 object AgentSeedConfig:
   type MaxArticles = MaxArticles.T

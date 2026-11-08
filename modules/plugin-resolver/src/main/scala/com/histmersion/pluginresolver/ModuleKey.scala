@@ -12,10 +12,13 @@ final case class ModuleKey(group: GroupId, artifact: ArtifactId):
 object ModuleKey:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
+
   /** `group:artifact`. */
   type ParseResultPart1 = Resolver.Problem
   val ParseResultPart1: Resolver.Problem.type = Resolver.Problem
 
   def parse(raw: Text): Either[ParseResultPart1, ModuleKey] = (raw).value.trim.split(':').toList match
-    case List(g, a) => (for group <- GroupId.either(g); artifact <- ArtifactId.either(a) yield ModuleKey(group, artifact)).left.map(refactorError => Resolver.Problem(refactorError))
-    case _          => Left(ParseResultPart1(s"not group:artifact: '$raw'"))
+    case List(g, a) =>
+      (for group <- GroupId.either(g); artifact <- ArtifactId.either(a)
+      yield ModuleKey(group, artifact)).left.map(refactorError => Resolver.Problem(refactorError))
+    case _ => Left(ParseResultPart1(s"not group:artifact: '$raw'"))

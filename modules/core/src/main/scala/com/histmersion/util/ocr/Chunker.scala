@@ -20,7 +20,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Chunker:
 
-
   type ChunkMarkdown = ChunkMarkdown.T
   object ChunkMarkdown extends Newtype[String, Pure]
   type ChunkMaxChars = ChunkMaxChars.T

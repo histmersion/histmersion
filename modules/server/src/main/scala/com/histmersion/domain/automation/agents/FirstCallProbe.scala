@@ -17,7 +17,8 @@ import scala.concurrent.duration.*
   */
 final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identity]:
   // set once per step attempt: by the first response, or by a CLI client's report (which wins)
-  private val state = java.util.concurrent.atomic.AtomicReference[Option[Option[AgentRepo.StepRecord.FirstCallTokens]]](None)
+  private val state =
+    java.util.concurrent.atomic.AtomicReference[Option[Option[AgentRepo.StepRecord.FirstCallTokens]]](None)
 
   def tokens: Option[AgentRepo.StepRecord.FirstCallTokens] = state.get().flatten
 
@@ -25,11 +26,17 @@ final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identit
 
   override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
     val r = next
-    val _ = state.compareAndSet(None, Some(r.usage.map(_.inputTokens.value).filter(_ > 0).map(AgentRepo.StepRecord.FirstCallTokens(_))))
+    val _ = state.compareAndSet(
+      None,
+      Some(r.usage.map(_.inputTokens.value).filter(_ > 0).map(AgentRepo.StepRecord.FirstCallTokens(_)))
+    )
     r
 
 private[histmersion] object FirstCallProbe:
   /** A command-line client's reading of its first model call, to every probe among `interceptors`. */
 
-  def report(interceptors: List[AgentInterceptor[Identity]], tokens: Option[AgentRepo.StepRecord.FirstCallTokens]): Unit =
+  def report(
+      interceptors: List[AgentInterceptor[Identity]],
+      tokens: Option[AgentRepo.StepRecord.FirstCallTokens]
+  ): Unit =
     interceptors.foreach { case p: FirstCallProbe => p.report(tokens); case _ => () }

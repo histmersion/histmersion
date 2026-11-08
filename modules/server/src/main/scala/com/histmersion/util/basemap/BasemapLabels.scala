@@ -310,7 +310,12 @@ object BasemapLabels:
   /** The runs of `l` (world units) whose segments touch tile `(x, y)` grown by `buffer`, relative to the tile's corner
     * and rounded. Pure.
     */
-  def clip(l: Vector[(WorldX, WorldY)], x: PmTiles.TileColumn, y: PmTiles.TileRow, buffer: Buffer): Vector[Vector[(Mvt.PointX, Mvt.PointY)]] =
+  def clip(
+      l: Vector[(WorldX, WorldY)],
+      x: PmTiles.TileColumn,
+      y: PmTiles.TileRow,
+      buffer: Buffer
+  ): Vector[Vector[(Mvt.PointX, Mvt.PointY)]] =
     val tx = x.value
     val ty = y.value
     val pts = l.map((wx, wy) => (wx.value, wy.value))
@@ -378,7 +383,9 @@ object BasemapLabels:
             props(l)
           ))
         else
-          val parts = l.line.map(p => simplify(p.map((lo, la) => world(lo, la, z)), Tolerance(Extent / 256.0))).filter(_.size >= 2)
+          val parts = l.line
+            .map(p => simplify(p.map((lo, la) => world(lo, la, z)), Tolerance(Extent / 256.0)))
+            .filter(_.size >= 2)
           val all = parts.flatten
           if all.nonEmpty then
             val txs = (math
@@ -402,7 +409,14 @@ object BasemapLabels:
     }
 
   /** Write `labels` as the archive `key` of `store` (zooms 0…`maxZoom`, bounds `b`); answers its tiles and bytes. */
-  def write(store: Store, key: Store.Key, labels: List[Label], b: BBox, maxZoom: PmTiles.Zoom, metadata: Json): (BasemapFetch.TileCount, ByteCount) =
+  def write(
+      store: Store,
+      key: Store.Key,
+      labels: List[Label],
+      b: BBox,
+      maxZoom: PmTiles.Zoom,
+      metadata: Json
+  ): (BasemapFetch.TileCount, ByteCount) =
     val ts = tiles(labels, maxZoom)
     val w = PmTilesWriter(store, key)
     val header = PmTiles.Header(

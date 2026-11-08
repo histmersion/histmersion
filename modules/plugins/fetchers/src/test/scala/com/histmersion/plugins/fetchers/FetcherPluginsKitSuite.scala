@@ -74,17 +74,29 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       Plugin.Info.Id("archive-org"),
       Map(
         metadata -> json(HttpAnswer.Text(item)),
-        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.epub") -> StubAnswer.ok(HttpAnswer.Body(book), CoreQuota.HeaderValue("application/epub+zip")),
-        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf ++ book), CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.epub") -> StubAnswer
+          .ok(HttpAnswer.Body(book), CoreQuota.HeaderValue("application/epub+zip")),
+        HttpTransport.Url("https://archive.org/download/zqbook/zqbook.pdf") -> StubAnswer.ok(
+          HttpAnswer.Body(Pdf ++ book),
+          CoreQuota.HeaderValue("application/pdf")
+        )
       )
     )
     assertEquals(h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook")))).file.map(_.extension), Some("epub"))
-    assertEquals(h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook")), format = Some(WorkKey.Format("pdf")))).file.map(_.extension), Some("pdf"))
+    assertEquals(
+      h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook")), format = Some(WorkKey.Format("pdf"))))
+        .file
+        .map(_.extension),
+      Some("pdf")
+    )
 
   test("archive-org: a lending-only item is REFUSED and never downloaded"):
     val lent =
       """{"metadata":{"identifier":"zqlent","access-restricted-item":"true"},"files":[{"name":"zqlent.pdf"}]}"""
-    val h = load(Plugin.Info.Id("archive-org"), Map(HttpTransport.Url("https://archive.org/metadata/zqlent") -> json(HttpAnswer.Text(lent))))
+    val h = load(
+      Plugin.Info.Id("archive-org"),
+      Map(HttpTransport.Url("https://archive.org/metadata/zqlent") -> json(HttpAnswer.Text(lent)))
+    )
     val r = h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqlent"))))
     r.outcome match
       case FetchOutcome.Refused(why) => assert(why.value.contains("lending-only"), why)
@@ -92,8 +104,13 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     assertEquals(r.requests, List("GET https://archive.org/metadata/zqlent"))
 
   test("archive-org: an item with no epub/pdf file is a miss"):
-    val h = load(Plugin.Info.Id("archive-org"), Map(metadata -> json(HttpAnswer.Text("""{"metadata":{},"files":[{"name":"zqbook.djvu"}]}"""))))
-    assert(h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook")))).answers.exists(_.why.value.contains("no epub/pdf")))
+    val h = load(
+      Plugin.Info.Id("archive-org"),
+      Map(metadata -> json(HttpAnswer.Text("""{"metadata":{},"files":[{"name":"zqbook.djvu"}]}""")))
+    )
+    assert(
+      h.fetch(WorkKey(archive = Some(WorkKey.Archive("zqbook")))).answers.exists(_.why.value.contains("no epub/pdf"))
+    )
 
   // ── the open-access indexes ─────────────────────────────────────────────────────────────────
 
@@ -103,7 +120,8 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       Map(
         HttpTransport.Url("https://api.unpaywall.org/v2/10.1/up?email=plugin@example.org") ->
           json(HttpAnswer.Text("""{"best_oa_location":{"url_for_pdf":"https://repo.example.org/up.pdf"}}""")),
-        HttpTransport.Url("https://repo.example.org/up.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://repo.example.org/up.pdf") -> StubAnswer
+          .ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
       ),
       "contact-email = \"plugin@example.org\""
     )
@@ -121,7 +139,8 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
       Map(
         HttpTransport.Url("https://api.core.ac.uk/v3/search/works/?q=doi:%2210.1/core%22&limit=1") ->
           json(HttpAnswer.Text("""{"results":[{"downloadUrl":"https://core.example.org/core.pdf"}]}""")),
-        HttpTransport.Url("https://core.example.org/core.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://core.example.org/core.pdf") -> StubAnswer
+          .ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
       ),
       "api-key = \"env:ZQ_CORE_KEY\"",
       Map(Secret.Ref.ParseText("env:ZQ_CORE_KEY") -> Secret.Vault.ResolveResultPart2("k-secret"))
@@ -143,10 +162,15 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
           HttpAnswer.Text("""{"data":{"attributes":{"url":"https://repo.example.ac.uk/item/1"}}}""")
         ),
         HttpTransport.Url("https://repo.example.ac.uk/item/1") -> StubAnswer.text(
-          HttpAnswer.Text("""<html><head><meta name="citation_pdf_url" content="https://repo.example.ac.uk/item/1.pdf"></head></html>"""),
+          HttpAnswer.Text(
+            """<html><head><meta name="citation_pdf_url" content="https://repo.example.ac.uk/item/1.pdf"></head></html>"""
+          ),
           CoreQuota.HeaderValue("text/html")
         ),
-        HttpTransport.Url("https://repo.example.ac.uk/item/1.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))
+        HttpTransport.Url("https://repo.example.ac.uk/item/1.pdf") -> StubAnswer.ok(
+          HttpAnswer.Body(Pdf),
+          CoreQuota.HeaderValue("application/pdf")
+        )
       )
     )
     val r = h.fetch(WorkKey(doi = Some(Doi.applyUnsafe("10.9999/zq"))))
@@ -154,5 +178,13 @@ class FetcherPluginsKitSuite extends munit.FunSuite:
     assert(!r.requests.exists(u => u.value.contains("unpaywall") || u.value.contains("openalex")), r.requests.toString)
 
   test("arxiv: the preprint's PDF by its id"):
-    val h = load(Plugin.Info.Id("arxiv"), Map(HttpTransport.Url("https://arxiv.org/pdf/2101.00001") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf"))))
+    val h = load(
+      Plugin.Info.Id("arxiv"),
+      Map(
+        HttpTransport.Url("https://arxiv.org/pdf/2101.00001") -> StubAnswer.ok(
+          HttpAnswer.Body(Pdf),
+          CoreQuota.HeaderValue("application/pdf")
+        )
+      )
+    )
     assertEquals(h.fetch(WorkKey(arxiv = Some(WorkKey.Arxiv("2101.00001")))).file.map(_.source), Some("arxiv"))

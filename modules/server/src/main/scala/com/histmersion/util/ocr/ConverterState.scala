@@ -32,6 +32,7 @@ object ConverterState:
   object Probe extends Newtype[String, Pure]
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
+
   /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
   object Busy:
     type JobId = Job.Id
@@ -40,7 +41,6 @@ object ConverterState:
   object Down:
     type Reason = Reason.T
     object Reason extends Newtype[String, Pure]
-
 
   def of(probe: Probe, busyJob: Option[Job.Id]): ConverterState =
     if probe.value == "ok" then Ok else busyJob.fold(Down(Down.Reason(probe.value)))(Busy(_))

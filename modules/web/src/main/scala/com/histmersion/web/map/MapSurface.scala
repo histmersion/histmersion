@@ -16,10 +16,24 @@ trait MapSurface:
 
   /** The container's size, CSS pixels. */
   def size: (MapSurface.Dimension, MapSurface.Dimension)
-  def setView(at: LatLon, zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)): Unit
-  def setZoom(zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(true)): Unit = setView(center, zoom, animate)
-  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)): Unit
-  def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)): Unit
+  def setView(
+      at: LatLon,
+      zoom: MapSurface.Zoom,
+      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)
+  ): Unit
+  def setZoom(zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(true)): Unit =
+    setView(center, zoom, animate)
+  def fitBounds(
+      b: GeoBounds,
+      padding: MapSurface.FitBoundsPadding,
+      maxZoom: MapSurface.MaxZoom,
+      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)
+  ): Unit
+  def panBy(
+      dx: MapSurface.PanByDx,
+      dy: MapSurface.PanByDy,
+      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)
+  ): Unit
   def project(p: LatLon): ScreenPt
   def unproject(p: ScreenPt): LatLon
 

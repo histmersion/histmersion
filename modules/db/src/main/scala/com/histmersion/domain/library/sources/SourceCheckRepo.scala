@@ -175,18 +175,15 @@ private[sources] object SourceCheckRepo:
     arrays(tagsSql).map((ck, tags) => (Citekey(ck), tags.map(Lint.Tag(_))))
   )
   private val YearRows = CheckInput(
-    pairs(yearsSql).map((ck, y) =>
-      (Citekey(ck), Option(y).flatMap(_.toIntOption).map(i => Year(i.toLong)))
-    )
+    pairs(yearsSql).map((ck, y) => (Citekey(ck), Option(y).flatMap(_.toIntOption).map(i => Year(i.toLong))))
   ) // year is nullable
   private val AuthorRows = CheckInput(
-    arrays(authorsSql).map((ck, authors) =>
-      (Citekey(ck), authors.map(AuthorName(_)))
-    )
+    arrays(authorsSql).map((ck, authors) => (Citekey(ck), authors.map(AuthorName(_))))
   )
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
-  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck => run(StoredCitekeys).contains(ck.value)
+  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck =>
+    run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection. */
   def report(r: Rule, c: Context, maxItems: Lint.ItemLimit)(using run: CheckRun)(using DbCon): LintRuleReport =
@@ -213,7 +210,8 @@ private[sources] object SourceCheckRepo:
           ),
           c.format
         )
-      case FindingGeocode  => FindingPlacement.movesIn(c.geocode).map(m => LintItem(m.citekey, LintItem.Detail(m.describe)))
+      case FindingGeocode =>
+        FindingPlacement.movesIn(c.geocode).map(m => LintItem(m.citekey, LintItem.Detail(m.describe)))
       case FindingUnplaced =>
         FindingPlacement.placementsIn(c.geocode).map(p => LintItem(p.citekey, LintItem.Detail(p.describe)))
       case FindingPlaceholder =>

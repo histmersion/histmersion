@@ -11,7 +11,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * works on: every call is answered and draws nothing, markers are kept off screen, so the list, the timeline and the
   * windows behave as with a map.
   */
-final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: MapSurface.MaxZoom) extends MapSurface:
+final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capabilities, maxZoom0: MapSurface.MaxZoom)
+    extends MapSurface:
 
   // `var`s: the view the app asked for, kept so it reads back what it set; the max zoom
   private var at = LatLon(LatLon.Lat(37.0), LatLon.Lon(30.0))
@@ -44,12 +45,26 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def maxZoom: MapSurface.MaxZoom = maxZ
   def setMaxZoom(v: MapSurface.MaxZoom): Unit = maxZ = v
   def center: LatLon = at
-  def bounds: GeoBounds = GeoBounds(GeoBounds.South(-85), GeoBounds.West(-180), GeoBounds.North(85), GeoBounds.East(180))
+  def bounds: GeoBounds =
+    GeoBounds(GeoBounds.South(-85), GeoBounds.West(-180), GeoBounds.North(85), GeoBounds.East(180))
   def size: (MapSurface.Dimension, MapSurface.Dimension) = (MapSurface.Dimension(0.0), MapSurface.Dimension(0.0))
-  def setView(p: LatLon, zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)): Unit = { at = p; z = math.min(zoom.value, maxZ.value) }
-  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)): Unit =
+  def setView(
+      p: LatLon,
+      zoom: MapSurface.Zoom,
+      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)
+  ): Unit = { at = p; z = math.min(zoom.value, maxZ.value) }
+  def fitBounds(
+      b: GeoBounds,
+      padding: MapSurface.FitBoundsPadding,
+      maxZoom: MapSurface.MaxZoom,
+      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)
+  ): Unit =
     at = LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2))
-  def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)): Unit = ()
+  def panBy(
+      dx: MapSurface.PanByDx,
+      dy: MapSurface.PanByDy,
+      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)
+  ): Unit = ()
   // far outside any view: a marker placed here is hidden, never moved ([[MarkerPane]])
   def project(p: LatLon): ScreenPt = ScreenPt(ScreenPt.X(-1e6), ScreenPt.Y(-1e6))
   def unproject(p: ScreenPt): LatLon = at
@@ -61,14 +76,17 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def overlayRoot: dom.HTMLElement = overlay
   def corner(c: Corner): dom.HTMLElement = corners(c)
   def setBaseMap(b: BaseMapSpec): Unit = ()
-  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id.value, NoMap.Shapes(NoMap.Shapes.Id(id.value)))
+  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet =
+    sets.getOrElseUpdate(id.value, NoMap.Shapes(NoMap.Shapes.Id(id.value)))
   def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id.value)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
-  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
-  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup = new Popup:
-    def close(): Unit = ()
-    def isOpen: Boolean = false
-    def element: Option[dom.HTMLElement] = None
+  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles =
+    NoMap.Tiles
+  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup =
+    new Popup:
+      def close(): Unit = ()
+      def isOpen: Boolean = false
+      def element: Option[dom.HTMLElement] = None
   def closePopups(): Unit = ()
   def drawnNames: Seq[MapSurface.LabelText] = Nil
   def baseMapAreasAt(p: ScreenPt): Seq[MapSurface.LayerId] = Nil

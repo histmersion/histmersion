@@ -135,7 +135,6 @@ object Store:
 
   /** A [[ContentStore]] over a store: `<sha256>.<ext>` at its top. */
 
-
   final class Contents(store: Store) extends ContentStore:
 
     def find(sha256: Sha256): Option[(ByteSource, ContentStore.Ext)] =
@@ -173,7 +172,6 @@ object Store:
           .left
           .map(e => ContentStore.Problem(s"cannot store it in ${store.where()}: ${e.getMessage}"))
           .flatten
-
 
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.
@@ -224,7 +222,8 @@ object Store:
     val Root: Key = applyUnsafe("")
 
     /** A name made of one segment or several, each checked. */
-    def of(segments: String*): Either[Problem, Key] = either(segments.filter(_.nonEmpty).mkString("/")).left.map(Problem(_))
+    def of(segments: String*): Either[Problem, Key] =
+      either(segments.filter(_.nonEmpty).mkString("/")).left.map(Problem(_))
 
     extension (key: Key)
       def isRoot: Boolean = key.value.isEmpty

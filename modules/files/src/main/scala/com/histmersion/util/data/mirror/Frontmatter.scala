@@ -24,7 +24,8 @@ final case class Frontmatter(fields: List[(Frontmatter.Key, Any)]):
     Frontmatter.Block(new Yaml(opts).dump(m))
 
   /** The whole note: the fenced frontmatter, then the body after a blank line when there is one. */
-  def note(body: Option[Frontmatter.NoteBody]): Frontmatter.Note = Frontmatter.Note(s"---\n${yaml.value}---\n" + body.fold("")(b => s"\n${b.value}\n"))
+  def note(body: Option[Frontmatter.NoteBody]): Frontmatter.Note =
+    Frontmatter.Note(s"---\n${yaml.value}---\n" + body.fold("")(b => s"\n${b.value}\n"))
 
 object Frontmatter:
   type Block = Block.T

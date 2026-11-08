@@ -29,7 +29,8 @@ final case class MergeIssue(
     decidedBy: Option[MergeIssue.DecidedBy] = None,
     detail: Option[IssueDetail] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def open: Boolean = (severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty)
 object MergeIssue:
 
@@ -166,12 +167,9 @@ object MergeIssue:
       def wire(e: DecidedBy): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
       def fromWire(s: WireEnumValues.Wire): Option[DecidedBy] = values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
-
   object Detail:
     type ClipLength = ClipLength.T
     object ClipLength extends Newtype[Int, Pure]
-
-
 
     def describe(s: Bundle.Source): List[String] =
       val who = s.authors.take(2).mkString("; ") + (if s.authors.length > 2 then " et al." else "")
@@ -185,7 +183,8 @@ object MergeIssue:
         ).flatten.mkString(" · "))
       )
 
-    def side(s: Bundle.Source): IssueSide = IssueSide(IssueSide.Label(s.citekey.value), s.uid, describe(s).map(IssueSide.Lines(_)))
+    def side(s: Bundle.Source): IssueSide =
+      IssueSide(IssueSide.Label(s.citekey.value), s.uid, describe(s).map(IssueSide.Lines(_)))
 
     def rangeText(r: Option[Bundle.Range]): String = r match
       case None                           => ("none")
@@ -245,7 +244,14 @@ object MergeIssue:
           field("historicity", Some(l.historicity.value), Some(r.historicity.value)),
           field("description", clip(l.description.map(_.value)), clip(r.description.map(_.value)))
         ),
-        place = Some(IssuePlace(l.geom.map(g => IssuePlace.LeftGeometry(g.value)), r.geom.map(g => IssuePlace.RightGeometry(g.value)), eventSpan(l), eventSpan(r)))
+        place = Some(
+          IssuePlace(
+            l.geom.map(g => IssuePlace.LeftGeometry(g.value)),
+            r.geom.map(g => IssuePlace.RightGeometry(g.value)),
+            eventSpan(l),
+            eventSpan(r)
+          )
+        )
       )
 
     def placeDetail(l: Bundle.Place, r: Bundle.Place): IssueDetail =
@@ -260,7 +266,14 @@ object MergeIssue:
             Option(r.names.map(_.name).mkString("; ")).filter(_.nonEmpty)
           )
         ),
-        place = Some(IssuePlace(l.geom.map(g => IssuePlace.LeftGeometry(g.value)), r.geom.map(g => IssuePlace.RightGeometry(g.value)), l.period.map(span), r.period.map(span)))
+        place = Some(
+          IssuePlace(
+            l.geom.map(g => IssuePlace.LeftGeometry(g.value)),
+            r.geom.map(g => IssuePlace.RightGeometry(g.value)),
+            l.period.map(span),
+            r.period.map(span)
+          )
+        )
       )
 
     def planText(j: Json): String =
@@ -269,6 +282,8 @@ object MergeIssue:
           Option(p.rationale.value).filter(_.nonEmpty).map(r => preview(r, ClipLength(160))),
           Option.when(p.subGoals.nonEmpty)(s"sub-goals: ${p.subGoals.map(_.slug).mkString(", ")}"),
           Option.when(p.queries.nonEmpty)(s"queries: ${p.queries.mkString("; ")}"),
-          Option.when(p.works.nonEmpty)(s"${Plural.count(Plural.Count((p.works.size).toLong), Plural.Noun.Singular("work"))}")
+          Option.when(p.works.nonEmpty)(
+            s"${Plural.count(Plural.Count((p.works.size).toLong), Plural.Noun.Singular("work"))}"
+          )
         ).flatten.mkString(" · ")
       }

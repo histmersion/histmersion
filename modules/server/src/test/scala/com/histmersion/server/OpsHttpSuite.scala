@@ -341,7 +341,9 @@ class OpsHttpSuite extends DbSuite:
         val check = io.circe.parser.decode[Article.Edits.ArticleCheck](r).toOption.get
         assertEquals(check.edits.map(_.applied), List(false, false))
         assert(
-          check.problems.exists(_.value.contains("zzhttp_ghost")) && check.problems.exists(_.value.startsWith("edit 2 (delete")),
+          check.problems.exists(_.value.contains("zzhttp_ghost")) && check.problems.exists(
+            _.value.startsWith("edit 2 (delete")
+          ),
           check.problems
         )
         assertEquals(post(s"$url/api/articles/zzhttp_check/check", "{}")._1, 400)

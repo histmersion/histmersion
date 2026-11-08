@@ -7,9 +7,14 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class FigureLicenceFill(candidates: FigureLicenceFill.Candidates, updated: FigureLicenceFill.Updated, applied: FigureLicenceFill.Applied, bySource: List[MediaCount] = Nil)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class FigureLicenceFill(
+    candidates: FigureLicenceFill.Candidates,
+    updated: FigureLicenceFill.Updated,
+    applied: FigureLicenceFill.Applied,
+    bySource: List[MediaCount] = Nil
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object FigureLicenceFill:
   type Candidates = Candidates.T

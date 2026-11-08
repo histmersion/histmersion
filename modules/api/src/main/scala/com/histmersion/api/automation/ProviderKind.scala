@@ -47,4 +47,7 @@ object ProviderKind:
 
   /** The names a reference may use, for an error message: the host's, then the plugins'. */
   def names(known: Set[Plugin.Name] = Set.empty): String =
-    ((values.map(_.wire.value: String) ++ known.toList.map(n => n.value: String).sorted.filterNot(k => values.exists(_.wire.value == k))).mkString(", "))
+    ((values.map(_.wire.value: String) ++ known.toList
+      .map(n => n.value: String)
+      .sorted
+      .filterNot(k => values.exists(_.wire.value == k))).mkString(", "))

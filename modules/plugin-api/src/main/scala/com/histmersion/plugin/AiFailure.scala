@@ -11,7 +11,10 @@ enum AiFailure derives CanEqual:
   /** The plan behind the model reported its own usage limit: the host passes the model over until `untilEpochMs` (or
     * its cool-down) and tries the chain's next one.
     */
-  case LimitReached(message: AiFailure.LimitReached.Message, untilEpochMs: Option[AiFailure.LimitReached.UntilEpochMs] = None)
+  case LimitReached(
+      message: AiFailure.LimitReached.Message,
+      untilEpochMs: Option[AiFailure.LimitReached.UntilEpochMs] = None
+  )
 
 object AiFailure:
   object Error:

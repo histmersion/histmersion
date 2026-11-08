@@ -17,7 +17,11 @@ enum QueueScope derives CanEqual:
   /** The items (no notes) that serve goal `goal`: its own, and those its `queue-item` links name (`linked`, the links'
     * references as the goal stores them); open ones only unless `withDone`.
     */
-  case ForGoal(goal: QueueScope.ForGoal.Goal, linked: Set[QueueScope.ForGoal.Linked], withDone: QueueScope.ForGoal.WithDone)
+  case ForGoal(
+      goal: QueueScope.ForGoal.Goal,
+      linked: Set[QueueScope.ForGoal.Linked],
+      withDone: QueueScope.ForGoal.WithDone
+  )
 
 object QueueScope:
   object ForJob:

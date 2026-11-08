@@ -18,7 +18,10 @@ trait FocusService:
   def goals(): List[FocusRepo.GoalRow]
 
   /** The goals linked to each of `refs` by a link of `kind`. */
-  def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]]
+  def goalsOf(
+      kind: com.histmersion.domain.automation.Goal.LinkKind.Wire,
+      refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]
+  ): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]]
 
   /** Per goal: the outcome of its last settled model-using item when it stopped or failed. */
   def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy]
@@ -45,13 +48,22 @@ object FocusService:
 
   final private class Implementation(db: Transactor) extends FocusService:
     def goals(): List[FocusRepo.GoalRow] = db.read(FocusRepo.goals())
-    def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] = db.read(FocusRepo.goalsOf(kind, refs))
-    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy] = db.read(FocusRepo.lastStops())
+    def goalsOf(
+        kind: com.histmersion.domain.automation.Goal.LinkKind.Wire,
+        refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]
+    ): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
+      db.read(FocusRepo.goalsOf(kind, refs))
+    def lastStops(): Map[com.histmersion.domain.automation.Goal.Slug, FocusRepo.GoalRow.LeftWhy] =
+      db.read(FocusRepo.lastStops())
     def sourceCounts(): Map[com.histmersion.domain.automation.Goal.Slug, RowCount] = db.read(FocusRepo.sourceCounts())
-    def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.JoinWhy, now: Instant): Unit = db.transact(FocusRepo.joined(slug, why, now))
-    def left(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.GoalRow.LeftWhy, now: Instant): Unit = db.transact(FocusRepo.left(slug, why, now))
-    def pin(slug: com.histmersion.domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned): Boolean = db.transact(FocusRepo.pin(slug, pinned))
-    def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority): Boolean = db.transact(FocusRepo.priority(slug, n))
+    def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.JoinWhy, now: Instant): Unit =
+      db.transact(FocusRepo.joined(slug, why, now))
+    def left(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.GoalRow.LeftWhy, now: Instant): Unit =
+      db.transact(FocusRepo.left(slug, why, now))
+    def pin(slug: com.histmersion.domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned): Boolean =
+      db.transact(FocusRepo.pin(slug, pinned))
+    def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority): Boolean =
+      db.transact(FocusRepo.priority(slug, n))
 
   /** The focus in memory, over the shared state's goals, links and managers' items. */
   final class InMemory(state: AtomicReference[AutomationState], clock: Clock) extends FocusService:
@@ -75,7 +87,10 @@ object FocusService:
           f.leftWhy.map(w => FocusRepo.GoalRow.LeftWhy(w.value))
         )
       }
-    def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
+    def goalsOf(
+        kind: com.histmersion.domain.automation.Goal.LinkKind.Wire,
+        refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref]
+    ): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
       if refs.isEmpty then Map.empty
       else
         val wanted = refs.map(_.value)
@@ -112,7 +127,9 @@ object FocusService:
         .view
         .map((g, ls) => com.histmersion.domain.automation.Goal.Slug.assume(g) -> RowCount(ls.size))
         .toMap
-    private def changeFocus(slug: com.histmersion.domain.automation.Goal.Slug, mustExist: Boolean)(f: FocusRecord => FocusRecord): Boolean =
+    private def changeFocus(slug: com.histmersion.domain.automation.Goal.Slug, mustExist: Boolean)(
+        f: FocusRecord => FocusRecord
+    ): Boolean =
       val goalKey = AutomationState.GoalsKey(slug.value)
       val focusKey = AutomationState.FocusKey(slug.value)
       state
@@ -124,9 +141,12 @@ object FocusService:
         .contains(goalKey) || !mustExist
     def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.JoinWhy, now: Instant): Unit =
       val _ = changeFocus(slug, mustExist = false)(
-        _.modify(_.active).setTo(FocusRecord.Active(true))
-          .modify(_.since).setTo(Some(now))
-          .modify(_.why).setTo(Some(FocusRecord.Why(why.value)))
+        _.modify(_.active)
+          .setTo(FocusRecord.Active(true))
+          .modify(_.since)
+          .setTo(Some(now))
+          .modify(_.why)
+          .setTo(Some(FocusRecord.Why(why.value)))
       )
     def left(slug: com.histmersion.domain.automation.Goal.Slug, why: FocusRepo.GoalRow.LeftWhy, now: Instant): Unit =
       val focusKey = AutomationState.FocusKey(slug.value)
@@ -136,9 +156,12 @@ object FocusService:
             .fold(fs)(f =>
               fs.updated(
                 focusKey,
-                f.modify(_.active).setTo(FocusRecord.Active(false))
-                  .modify(_.leftAt).setTo(Some(now))
-                  .modify(_.leftWhy).setTo(Some(FocusRecord.LeftWhy(why.value)))
+                f.modify(_.active)
+                  .setTo(FocusRecord.Active(false))
+                  .modify(_.leftAt)
+                  .setTo(Some(now))
+                  .modify(_.leftWhy)
+                  .setTo(Some(FocusRecord.LeftWhy(why.value)))
               )
             )
         )

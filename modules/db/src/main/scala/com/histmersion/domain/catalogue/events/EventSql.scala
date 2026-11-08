@@ -53,7 +53,11 @@ object EventSql:
   /** What only the catalogue work narrows events by: the tier, the catalogue context of the map's layer, and the area
     * the anchor lies in.
     */
-  final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = Narrow.Context(false), area: Option[BBox] = None)
+  final case class Narrow(
+      tier: Option[Narrow.Tier] = None,
+      context: Narrow.Context = Narrow.Context(false),
+      area: Option[BBox] = None
+  )
 
   object Narrow:
     type Tier = Tier.T
@@ -83,13 +87,21 @@ object EventSql:
       if more.context.value then
         // the catalogue's events of the period stay, whatever the sources selected
         val inPeriod = related.eventWhere(Filter(period = filter.period, title = filter.title), PlaceScope.empty)
-        ps += (Sql.raw(Sql.RawText("(")) ++ selected ++ Sql.raw(Sql.Text(s" OR ($catalogueOnly AND ")) ++ inPeriod ++ Sql.raw(Sql.Text("))")))
+        ps += (Sql.raw(Sql.RawText("(")) ++ selected ++ Sql.raw(
+          Sql.Text(s" OR ($catalogueOnly AND ")
+        ) ++ inPeriod ++ Sql.raw(Sql.Text("))")))
       else ps += selected
-    clean(more.tier.map(_.value)).map(_.toLowerCase).foreach(t => ps += Sql.of(Sql.Text(s"($TierSql) = ?"), Param.S(Param.S.V(t))))
+    clean(more.tier.map(_.value))
+      .map(_.toLowerCase)
+      .foreach(t => ps += Sql.of(Sql.Text(s"($TierSql) = ?"), Param.S(Param.S.V(t))))
     more.area.foreach(b => ps += EnvelopeSql.envelopes(s"coalesce(e.geom, ep.geom)", b))
     clean(text.map(_.value)).foreach { t =>
       val c = LikePattern.contains(t)
-      ps += Sql.of(Sql.Text("(e.label ILIKE ? ESCAPE '\\' OR e.description ILIKE ? ESCAPE '\\')"), Param.S(Param.S.V(c)), Param.S(Param.S.V(c)))
+      ps += Sql.of(
+        Sql.Text("(e.label ILIKE ? ESCAPE '\\' OR e.description ILIKE ? ESCAPE '\\')"),
+        Param.S(Param.S.V(c)),
+        Param.S(Param.S.V(c))
+      )
     }
     EventTaxonomy.condition(clean(kind.map(_.value)).map(k => EventTaxonomy.KindCondition.Filter(k))).foreach { c =>
       ps += Sql.of(
@@ -97,7 +109,9 @@ object EventSql:
         Param.A(c.kinds.map(k => Param.A.V(k.value)))
       )
     }
-    clean(historicity.map(_.value)).map(_.toLowerCase).foreach(h => ps += Sql.of(Sql.Text("e.historicity = ?"), Param.S(Param.S.V(h))))
+    clean(historicity.map(_.value))
+      .map(_.toLowerCase)
+      .foreach(h => ps += Sql.of(Sql.Text("e.historicity = ?"), Param.S(Param.S.V(h))))
     clean(placeId.map(_.value)).foreach(p => ps += Sql.of(Sql.Text("e.place_id = ?"), Param.S(Param.S.V(p))))
     val parts = ps.result()
     if parts.isEmpty then Sql.raw(Sql.RawText("TRUE"))

@@ -131,7 +131,10 @@ object PlacesTools:
     given Codec.AsObject[PlaceNamesInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PlaceNamesInput])
 
   private def placeId(raw: String): Either[Api.Error, Place.Id] =
-    Place.Id.either(raw).left.map(_ => Api.Error(Api.Error.Message(s"No place '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    Place.Id
+      .either(raw)
+      .left
+      .map(_ => Api.Error(Api.Error.Message(s"No place '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   private def year(y: com.histmersion.Year): Year = Year(y.value.toLong)
 
@@ -196,12 +199,12 @@ object PlacesTools:
         .handle { in =>
           val id = in.placeId.map(_.value.trim).filter(_.nonEmpty)
           (id, in.name.map(_.value.trim).filter(_.nonEmpty)) match
-            case (_, None)       =>
+            case (_, None) =>
               ToolResult.text(
                 PlacesMarkdown.manualPlaceNames(id match
                   case None      => places.manualNames(None)
-                  case Some(raw) => Place.Id.option(raw).fold(List.empty[ManualPlaceName])(i => places.manualNames(Some(i)))
-                )
+                  case Some(raw) =>
+                    Place.Id.option(raw).fold(List.empty[ManualPlaceName])(i => places.manualNames(Some(i))))
               )
             case (None, Some(_)) =>
               ToolResult.text("_`placeId` is required to add or remove a name — find it with `places`_")
@@ -248,16 +251,17 @@ object PlacesTools:
           val id = in.placeId.map(_.value.trim).filter(_.nonEmpty)
           val into = in.mergeInto.map(_.value.trim).filter(_.nonEmpty)
           val gone = into.isDefined || in.remove.exists(_.value)
-          val ask = gone || in.kind.exists(_.value.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
-            in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.value)
+          val ask =
+            gone || in.kind.exists(_.value.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
+              in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.value)
           def text(r: Either[Api.Error, String]) = ToolResult.text(r.fold(McpOut.refusal, identity))
           (id, ask) match
-            case (_, false)   =>
+            case (_, false) =>
               ToolResult.text(
                 PlacesMarkdown.placeOverrides(id match
                   case None      => places.overrides(None)
-                  case Some(raw) => Place.Id.option(raw).fold(List.empty[ApiPlace.Override])(i => places.overrides(Some(i)))
-                )
+                  case Some(raw) =>
+                    Place.Id.option(raw).fold(List.empty[ApiPlace.Override])(i => places.overrides(Some(i))))
               )
             case (None, true) =>
               ToolResult.text("_`placeId` is required to set, reset, merge or remove — find it with `places`_")
@@ -280,7 +284,8 @@ object PlacesTools:
                   text(
                     placeId(pid)
                       .flatMap(found =>
-                        places.remove(me, found, ApiPlace.RemoveIn(in.reason.map(q => ApiPlace.RemoveIn.Reason(q.value))))
+                        places
+                          .remove(me, found, ApiPlace.RemoveIn(in.reason.map(q => ApiPlace.RemoveIn.Reason(q.value))))
                       )
                       .map(PlacesMarkdown.placeGone)
                   )

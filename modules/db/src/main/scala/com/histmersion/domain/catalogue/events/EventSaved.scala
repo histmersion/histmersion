@@ -5,7 +5,12 @@ package domain.catalogue.events
   * and what became of the refreshed events' corrections by hand.
   */
 import com.histmersion.api.catalogue.Correction
-final case class EventSaved(created: EventSaved.Created, updated: EventSaved.Updated, rows: EventSaved.Rows, corrections: Correction.Counts = Correction.Counts())
+final case class EventSaved(
+    created: EventSaved.Created,
+    updated: EventSaved.Updated,
+    rows: EventSaved.Rows,
+    corrections: Correction.Counts = Correction.Counts()
+)
 
 object EventSaved:
   type Created = RowCount

@@ -98,19 +98,28 @@ object EventService:
       db.read(EventRepo.list(selection.sql(related), limit, offset))
     def geo(selection: EventSelection, limit: PageSize, tolerance: GeoTolerance): EventGeo.List =
       db.read(EventRepo.geo(selection.sql(related), limit, tolerance))
-    def geoOf(ids: List[Event.Id]): Map[Event.Id, EventGeo] = db.read(EventRepo.geoOf(ids.map(i => BEventRow.Id(i.value)))).map((k, v) => Event.Id.assume(k.value) -> v)
+    def geoOf(ids: List[Event.Id]): Map[Event.Id, EventGeo] =
+      db.read(EventRepo.geoOf(ids.map(i => BEventRow.Id(i.value)))).map((k, v) => Event.Id.assume(k.value) -> v)
     def get(id: Event.Id): Option[EventEntry] = db.read(EventRepo.get(BEventRow.Id(id.value)))
     def tierAndNames(id: Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
-      db.read(EventRepo.tierAndNames(BEventRow.Id(id.value))).map((tier, names, catalogue) =>
-        (EventSummary.Tier(tier.value), names.map(n => EventEntry.Names(n.value)), catalogue.map(c => HeldEvent.Catalogue(c.value)))
-      )
+      db.read(EventRepo.tierAndNames(BEventRow.Id(id.value)))
+        .map((tier, names, catalogue) =>
+          (
+            EventSummary.Tier(tier.value),
+            names.map(n => EventEntry.Names(n.value)),
+            catalogue.map(c => HeldEvent.Catalogue(c.value))
+          )
+        )
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
     def geometryError(geojson: EventDetailRow.Geometry): Option[Problem] =
       db.read(EventRepo.geometryError(BEventRow.Geom(geojson.value))).map(p => Problem(p.value))
     def put(id: Event.Id, in: EventPut): Unit = db.transact(EventRepo.put(BEventRow.Id(id.value), in))
-    def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit] = db.transact(EventRepo.patch(BEventRow.Id(id.value), p))
-    def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit] = db.transact(EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
-    def renamedTo(id: Event.Id): Option[Event.Id] = db.read(EventRepo.renamedTo(BEventRow.Id(id.value))).map(i => Event.Id.assume(i.value))
+    def patch(id: Event.Id, p: EventPatch): Either[Api.Error, Unit] =
+      db.transact(EventRepo.patch(BEventRow.Id(id.value), p))
+    def rename(from: Event.Id, to: Event.Id): Either[Api.Error, Unit] =
+      db.transact(EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
+    def renamedTo(id: Event.Id): Option[Event.Id] =
+      db.read(EventRepo.renamedTo(BEventRow.Id(id.value))).map(i => Event.Id.assume(i.value))
     def delete(id: Event.Id): Boolean = db.transact(EventRepo.delete(BEventRow.Id(id.value)))
 
   /** The same rules over the shared in-memory state, which holds the catalogue's rows alone: no place is stored, so an
@@ -159,11 +168,11 @@ object EventService:
       sel.narrow.area.forall(b =>
         e.geometry
           .flatMap(HeldEvent.pointOf)
-          .exists((lat, lon) =>
-            b.contains(Longitude(lon.value), Latitude(lat.value))
-          )
+          .exists((lat, lon) => b.contains(Longitude(lon.value), Latitude(lat.value)))
       ) &&
-      clean(sel.text.map(_.value)).forall(t => containsText(Some(e.label.value), t) || containsText(e.description.map(_.value), t)) &&
+      clean(sel.text.map(_.value)).forall(t =>
+        containsText(Some(e.label.value), t) || containsText(e.description.map(_.value), t)
+      ) &&
       EventTaxonomy
         .condition(clean(sel.kind.map(_.value)).map(EventTaxonomy.KindCondition.Filter(_)))
         .forall(c => c.kinds.contains(EventSummary.Kind(e.kind.value)) != c.negate.value) &&
@@ -189,7 +198,8 @@ object EventService:
       e.geometry.flatMap(HeldEvent.pointOf).map { (lat, lon) =>
         val sum = summaryOf(s, e)
         val vei = s.catalogueRecords.filter(_._1.value == e.id.value).flatMap(_._2.vei.map(_.value)).maxOption
-        val magnitude = s.catalogueRecords.filter(_._1.value == e.id.value).flatMap(_._2.magnitude.map(_.value)).maxOption
+        val magnitude =
+          s.catalogueRecords.filter(_._1.value == e.id.value).flatMap(_._2.magnitude.map(_.value)).maxOption
         EventGeo(
           sum.id,
           EventGeo.Label(sum.label.value),
@@ -257,7 +267,9 @@ object EventService:
 
     def tierAndNames(id: Event.Id): Option[(EventSummary.Tier, List[EventEntry.Names], Option[HeldEvent.Catalogue])] =
       val s = state.get
-      s.events.find(_.id == id).map(e => (summaryOf(s, e).tier, e.names.map(n => EventEntry.Names(n.value)), e.catalogue))
+      s.events
+        .find(_.id == id)
+        .map(e => (summaryOf(s, e).tier, e.names.map(n => EventEntry.Names(n.value)), e.catalogue))
 
     def catalogueRefs(id: Event.Id): List[EventCatalogueRef] =
       state.get.catalogueRecords
@@ -402,7 +414,9 @@ object EventService:
               .using(o => p.scale.flatMap(EventScale.parse).fold(o)(_.map(x => HeldEvent.Scale(x.value))))
               .modify(_.wikidata)
               .using(o =>
-                p.wikidata.map(_.value.trim).fold(o)(q => Option(q).filter(_.nonEmpty).flatMap(w => HeldEvent.Wikidata.option(w)))
+                p.wikidata
+                  .map(_.value.trim)
+                  .fold(o)(q => Option(q).filter(_.nonEmpty).flatMap(w => HeldEvent.Wikidata.option(w)))
               )
               .modify(_.geometry)
               .using(o =>

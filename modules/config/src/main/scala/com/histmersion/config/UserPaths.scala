@@ -15,7 +15,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class UserPaths(environment: Environment, osName: UserPaths.OsName):
   def isMac: Boolean = UserPaths.isMac(osName)
   def defaultDataDir: Option[Path] = UserPaths.defaultDataDir(environment.lookup, osName)
-  def dataDir(configured: RuntimeConfig.DataDir): Option[Path] = UserPaths.dataDir(configured, environment.lookup, osName)
+  def dataDir(configured: RuntimeConfig.DataDir): Option[Path] =
+    UserPaths.dataDir(configured, environment.lookup, osName)
   def cacheDir: Option[Path] = UserPaths.cacheDir(environment.lookup)
   def configFile: Option[Path] = UserPaths.configFile(environment.lookup)
 

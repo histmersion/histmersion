@@ -7,7 +7,6 @@ package cli
   */
 private[cli] object KindSources:
 
-
   def main(kind: PluginKind): String = kind match
     case PluginKind.SourceFetcher   => SourceFetcherMain
     case PluginKind.MediaCollection => MediaCollectionMain

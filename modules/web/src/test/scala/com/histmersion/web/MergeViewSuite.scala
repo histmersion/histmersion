@@ -102,7 +102,9 @@ class MergeViewSuite extends munit.FunSuite:
     )
     assertEquals(MergeView.counter(p), (1, 2))
     assert(!MergeView.applicable(p))
-    assert(MergeView.applicable(plan(List(issue(MergeIssue.Id("S-2"), decision = Some(MergeDecision.Wire("keep-left")))))))
+    assert(
+      MergeView.applicable(plan(List(issue(MergeIssue.Id("S-2"), decision = Some(MergeDecision.Wire("keep-left"))))))
+    )
     assert(!MergeView.applicable(plan(Nil, changes = MergePlan.Changes(0))), "nothing to write is nothing to apply")
     assert(!MergeView.applicable(plan(Nil).modify(_.problems).setTo(List(MergePlan.Problems("a blob is missing")))))
 
@@ -113,12 +115,38 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals(MergeView.filtered(is, "RIGHT_S-1").map(_.id), List("S-1"))
 
   test("a decision replaces the earlier one of its issue; taking it back removes it; a text goes with file: only"):
-    val r0 = MergeResolutions(List(MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("keep-left"))))
-    val r1 = MergeView.decide(r0, MergeIssue.Id("S-1"), Some(MergeDecision.of(MergeDecision.Kind.KeepRight)), Some(MergeResolution.Text("ignored")))
-    assertEquals(r1.resolve, List(MergeResolution(MergeResolution.Issue("S-1"), MergeResolution.Decision("keep-right")), MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("keep-left"))))
+    val r0 =
+      MergeResolutions(List(MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("keep-left"))))
+    val r1 = MergeView.decide(
+      r0,
+      MergeIssue.Id("S-1"),
+      Some(MergeDecision.of(MergeDecision.Kind.KeepRight)),
+      Some(MergeResolution.Text("ignored"))
+    )
+    assertEquals(
+      r1.resolve,
+      List(
+        MergeResolution(MergeResolution.Issue("S-1"), MergeResolution.Decision("keep-right")),
+        MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("keep-left"))
+      )
+    )
     val r2 =
-      MergeView.decide(r1, MergeIssue.Id("S-2"), Some(MergeDecision.withArg(MergeDecision.Kind.File, MergeDecision.Argument("merged/x.md"))), Some(MergeResolution.Text("text")))
-    assertEquals(r2.resolve.find(_.issue == MergeResolution.Issue("S-2")), Some(MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("file:merged/x.md"), Some(MergeResolution.Text("text")))))
+      MergeView.decide(
+        r1,
+        MergeIssue.Id("S-2"),
+        Some(MergeDecision.withArg(MergeDecision.Kind.File, MergeDecision.Argument("merged/x.md"))),
+        Some(MergeResolution.Text("text"))
+      )
+    assertEquals(
+      r2.resolve.find(_.issue == MergeResolution.Issue("S-2")),
+      Some(
+        MergeResolution(
+          MergeResolution.Issue("S-2"),
+          MergeResolution.Decision("file:merged/x.md"),
+          Some(MergeResolution.Text("text"))
+        )
+      )
+    )
     assertEquals(MergeView.decide(r2, MergeIssue.Id("S-1"), None).resolve.map(_.issue), List("S-2"))
     assertEquals(MergeView.chosen(r2, MergeIssue.Id("S-2")).map(_.kind), Some(MergeDecision.Kind.File))
 
@@ -126,7 +154,8 @@ class MergeViewSuite extends munit.FunSuite:
     "the result column: the row the issue is about follows the decision (to decide until then); the others are the server's"
   ):
     val i = issue(MergeIssue.Id("S-1"))
-    val f =IssueField(IssueField.Field("status"), Some(IssueField.Left("current")), Some(IssueField.Right("contested")))
+    val f =
+      IssueField(IssueField.Field("status"), Some(IssueField.Left("current")), Some(IssueField.Right("contested")))
     assertEquals(MergeView.resultOf(i, f, None), Some(Left("to decide")))
     assertEquals(
       MergeView.resultOf(i, f, Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
@@ -134,13 +163,21 @@ class MergeViewSuite extends munit.FunSuite:
     )
     assertEquals(
       MergeView
-        .resultOf(i, IssueField(IssueField.Field("title"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))), Some(MergeDecision.of(MergeDecision.Kind.KeepRight))),
+        .resultOf(
+          i,
+          IssueField(IssueField.Field("title"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))),
+          Some(MergeDecision.of(MergeDecision.Kind.KeepRight))
+        ),
       None
     )
     val notes = issue(MergeIssue.Id("S-2"), kind = MergeIssue.Kind.NotesDiffers)
     assertEquals(
       MergeView
-        .resultOf(notes, IssueField(IssueField.Field("notes"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))), Some(MergeDecision.of(MergeDecision.Kind.Concat))),
+        .resultOf(
+          notes,
+          IssueField(IssueField.Field("notes"), Some(IssueField.Left("a")), Some(IssueField.Right("b"))),
+          Some(MergeDecision.of(MergeDecision.Kind.Concat))
+        ),
       Some(Right("a\n\nb"))
     )
     val gate = issue(MergeIssue.Id("S-3"), kind = MergeIssue.Kind.SameWork)
@@ -153,7 +190,13 @@ class MergeViewSuite extends munit.FunSuite:
       Some(Right("b"))
     )
     // the rows that differ come first; empty rows go
-    val rows = MergeView.rows(List(IssueField(IssueField.Field("year"), Some(IssueField.Left("1")), Some(IssueField.Right("1"))), f, IssueField(IssueField.Field("doi"), None, None)))
+    val rows = MergeView.rows(
+      List(
+        IssueField(IssueField.Field("year"), Some(IssueField.Left("1")), Some(IssueField.Right("1"))),
+        f,
+        IssueField(IssueField.Field("doi"), None, None)
+      )
+    )
     assertEquals(rows.map((x, d) => x.field -> d), List("status" -> true, "year" -> false))
 
   test("the editor starts from the agreed text with every conflict marked; markers left mean not merged"):
@@ -163,7 +206,12 @@ class MergeViewSuite extends munit.FunSuite:
       IssueText.Right("a\nβ\nc"),
       List(
         IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("a"))),
-        IssueHunk(IssueHunk.Conflict(true), List(IssueHunk.Base("b")), List(IssueHunk.Left("B")), List(IssueHunk.Right("β"))),
+        IssueHunk(
+          IssueHunk.Conflict(true),
+          List(IssueHunk.Base("b")),
+          List(IssueHunk.Left("B")),
+          List(IssueHunk.Right("β"))
+        ),
         IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("c")))
       )
     )
@@ -174,7 +222,8 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals(MergeView.fileName(issue(MergeIssue.Id("A-1"))), "merged/left_A-1.md")
 
   test("spans: one axis for both, each a bar in per cent of it"):
-    val (lo, hi) = MergeView.axis(List(IssueSpan(Some(Year(-1200)), Some(Year(-1190))), IssueSpan(Some(Year(-1210)), None))).get
+    val (lo, hi) =
+      MergeView.axis(List(IssueSpan(Some(Year(-1200)), Some(Year(-1190))), IssueSpan(Some(Year(-1210)), None))).get
     assertEquals((lo, hi), (-1220L, -1180L))
     assertEquals(MergeView.bar(IssueSpan(Some(Year(-1200)), Some(Year(-1190))), lo, hi), (50.0, 25.0))
     assertEquals(MergeView.axis(Nil), None)

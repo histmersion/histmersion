@@ -22,7 +22,14 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def at(c: TileCellPoint): (Geo.Latitude, Geo.Longitude) = (Geo.Latitude(c.lat.value), Geo.Longitude(c.lon.value))
   def inner(c: TileCellPoint): String = c.n.value.toString
   def fill(c: TileCellPoint, span: (Years.Astronomical, Years.Astronomical)): String =
-    MapView.rampEnds((c.midLo.toList.map(m => MapView.Mid(m.value)) ++ c.midHi.map(m => MapView.Mid(m.value))), span, Certainty.NoSay)._1.value
+    MapView
+      .rampEnds(
+        (c.midLo.toList.map(m => MapView.Mid(m.value)) ++ c.midHi.map(m => MapView.Mid(m.value))),
+        span,
+        Certainty.NoSay
+      )
+      ._1
+      .value
   def member(c: TileCellPoint): Member =
     Member(
       dot,
@@ -34,10 +41,12 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
     )
   override def classes(c: TileCellPoint): String = if c.undated.value == c.n.value then MapView.UndatedClass else ""
   def label(c: TileCellPoint): UiLabels.Text =
-    UiLabels.Text(DotCluster.summary(Map(dot -> DotCluster.KindCount(c.n.value)), DotCluster.Undated(c.undated.value)).value)
+    UiLabels.Text(
+      DotCluster.summary(Map(dot -> DotCluster.KindCount(c.n.value)), DotCluster.Undated(c.undated.value)).value
+    )
   def action(c: TileCellPoint): UiLabels.Text = UiLabels.Text("zoom in")
   def target(c: TileCellPoint, asOf: Option[Years.Astronomical]): Option[Preview.Target] = None
   def activate(c: TileCellPoint, how: Activation): Unit = MapView.zoomInto(List(c.box))
   def open(key: PointKind.PointKey, c: TileCellPoint, row: dom.Element): Unit = MapView.zoomInto(List(c.box))
-  override def recolour(m: DomMarker, c: TileCellPoint, span: (Years.Astronomical, Years.Astronomical)): Unit = MapView.repaintCell(m, member(c))
-
+  override def recolour(m: DomMarker, c: TileCellPoint, span: (Years.Astronomical, Years.Astronomical)): Unit =
+    MapView.repaintCell(m, member(c))

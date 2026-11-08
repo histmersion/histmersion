@@ -19,18 +19,31 @@ object CalibreSection:
           )
         ),
         List(
-          SettingsForm.Item(SettingsForm.Item.Key("cli.calibre.library-dir"), Some(SettingsForm.Item.Name("Library folder"))),
-          SettingsForm.Item(SettingsForm.Item.Key("cli.calibre.calibredb"), Some(SettingsForm.Item.Name("The calibredb command"))),
-          SettingsForm.Item(SettingsForm.Item.Key("cli.calibre.originals-dir"), Some(SettingsForm.Item.Name("Folder of originals (optional)")))
+          SettingsForm
+            .Item(SettingsForm.Item.Key("cli.calibre.library-dir"), Some(SettingsForm.Item.Name("Library folder"))),
+          SettingsForm.Item(
+            SettingsForm.Item.Key("cli.calibre.calibredb"),
+            Some(SettingsForm.Item.Name("The calibredb command"))
+          ),
+          SettingsForm.Item(
+            SettingsForm.Item.Key("cli.calibre.originals-dir"),
+            Some(SettingsForm.Item.Name("Folder of originals (optional)"))
+          )
         )
       ),
       SettingsForm(
         SettingsForm.ApplyTitle("Files on the server"),
         None,
         List(
-          SettingsForm.Item(SettingsForm.Item.Key("converter.spool-dir"), Some(SettingsForm.Item.Name("Where an upload is kept for reading again"))),
+          SettingsForm.Item(
+            SettingsForm.Item.Key("converter.spool-dir"),
+            Some(SettingsForm.Item.Name("Where an upload is kept for reading again"))
+          ),
           SettingsForm.Item(SettingsForm.Item.Key("backups.dir"), Some(SettingsForm.Item.Name("Backups folder"))),
-          SettingsForm.Item(SettingsForm.Item.Key("bundles.dir"), Some(SettingsForm.Item.Name("Exported collections folder")))
+          SettingsForm.Item(
+            SettingsForm.Item.Key("bundles.dir"),
+            Some(SettingsForm.Item.Name("Exported collections folder"))
+          )
         )
       )
     )

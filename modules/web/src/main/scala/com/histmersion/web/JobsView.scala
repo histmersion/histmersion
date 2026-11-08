@@ -37,7 +37,11 @@ object JobsView:
     val MaxMs: Int = com.histmersion.web.Poll.MaxMs
 
     /** The delay before the next poll, or `None` to stop: no job left to wait for. */
-    def next(previous: Option[com.histmersion.web.Poll.Revision], jobs: List[JobInfo], changed: com.histmersion.web.Poll.DataChanged): Option[com.histmersion.web.Poll.Revision] =
+    def next(
+        previous: Option[com.histmersion.web.Poll.Revision],
+        jobs: List[JobInfo],
+        changed: com.histmersion.web.Poll.DataChanged
+    ): Option[com.histmersion.web.Poll.Revision] =
       com.histmersion.web.Poll.next(previous, com.histmersion.web.Poll.LiveMode(jobs.exists(!_.isTerminal)), changed)
 
   /** Is any job still queued or running — anywhere in the table (the server's counts), not just among the rows a filter
@@ -315,9 +319,22 @@ object JobsView:
           cls := "job-meta muted",
           // an agent run is a job: its row leads to the run; any other job, to its own page
           if j.kind == AgentJobKinds.Agent.kind then
-            WinLink(WindowKey.Run(WindowKey.Run.Id(j.id.value)), title := s"agent run ${j.id}", s"run ${j.id.value.take(8)}")
-          else RouteLink(Route.Job(Route.Job.Id(j.id.value)), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.value.take(8)}"),
-          Option(j.createdAt).filter(_.value.nonEmpty).map(c => span(title := c.value, s" · started ${agoOf(c.value)}")),
+            WinLink(
+              WindowKey.Run(WindowKey.Run.Id(j.id.value)),
+              title := s"agent run ${j.id}",
+              s"run ${j.id.value.take(8)}"
+            )
+          else
+            RouteLink(
+              Route.Job(Route.Job.Id(j.id.value)),
+              cls := "link-btn",
+              title := s"job ${j.id}",
+              s"job ${j.id.value.take(8)}"
+            )
+          ,
+          Option(j.createdAt)
+            .filter(_.value.nonEmpty)
+            .map(c => span(title := c.value, s" · started ${agoOf(c.value)}")),
           Option(j.updatedAt)
             .filter(u => u.value.nonEmpty && u.value != j.createdAt.value)
             .map(u => span(title := u.value, s" · updated ${agoOf(u.value)}"))

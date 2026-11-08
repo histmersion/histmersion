@@ -18,10 +18,11 @@ final case class PluginStatus(
     warnings: List[PluginStatus.Warnings] = Nil,
     error: Option[PluginStatus.Error] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object PluginStatus:
-  export PluginDescription.{Id, Version, SpiVersion}
+  export PluginDescription.{Id, SpiVersion, Version}
   type Enabled = Enabled.T
   object Enabled extends Newtype[Boolean, Pure]
   type State = State.T

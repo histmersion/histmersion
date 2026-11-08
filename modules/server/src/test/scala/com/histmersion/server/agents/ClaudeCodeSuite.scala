@@ -73,19 +73,25 @@ class ClaudeCodeSuite extends munit.FunSuite:
   private val Offered = List(ToolUse.Tool("get_source"), ToolUse.Tool("search"))
   private def stream(lines: String*): List[CliProcess.Run.Lines] = lines.toList.map(CliProcess.Run.Lines(_))
   private val Launch =
-    ClaudeCode.Launch.Agent(ClaudeCode.Launch.Agent.PluginDir("/g/headless"), ClaudeCode.Launch.Agent.Name("article-skeptic"), ClaudeCode.Launch.Agent.Settings("/g/roles/article-skeptic/settings.json"))
+    ClaudeCode.Launch.Agent(
+      ClaudeCode.Launch.Agent.PluginDir("/g/headless"),
+      ClaudeCode.Launch.Agent.Name("article-skeptic"),
+      ClaudeCode.Launch.Agent.Settings("/g/roles/article-skeptic/settings.json")
+    )
 
   test("argv: the generated plugin's agent and role settings; no hooks switch, no slash-command switch, our MCP only"):
-    val a = ClaudeCode.argv(
-      Cfg,
-      ModelRef.Model("sonnet"),
-      AgentDef.MaxTurns(4),
-      ClaudeCode.SchemaJson("""{"type":"object"}"""),
-      Launch,
-      Some(Path.of("/t/mcp.json")),
-      Offered,
-      AllTools
-    ).map(_.value)
+    val a = ClaudeCode
+      .argv(
+        Cfg,
+        ModelRef.Model("sonnet"),
+        AgentDef.MaxTurns(4),
+        ClaudeCode.SchemaJson("""{"type":"object"}"""),
+        Launch,
+        Some(Path.of("/t/mcp.json")),
+        Offered,
+        AllTools
+      )
+      .map(_.value)
     assertEquals(a.take(2), List("claude", "-p"))
     def after(flag: String) = a(a.indexOf(flag) + 1)
     assertEquals(after("--output-format"), "stream-json")
@@ -120,7 +126,18 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test(
     "argv: --disable-slash-commands by default (a role's skills are in its prompt), never --bare or the dynamic-sections flag"
   ):
-    val a = ClaudeCode.argv(Ref, ModelRef.Model("sonnet"), AgentDef.MaxTurns(4), ClaudeCode.SchemaJson("{}"), Launch, Some(Path.of("/t/mcp.json")), List(ToolUse.Tool("get_source")), AllTools).map(_.value)
+    val a = ClaudeCode
+      .argv(
+        Ref,
+        ModelRef.Model("sonnet"),
+        AgentDef.MaxTurns(4),
+        ClaudeCode.SchemaJson("{}"),
+        Launch,
+        Some(Path.of("/t/mcp.json")),
+        List(ToolUse.Tool("get_source")),
+        AllTools
+      )
+      .map(_.value)
     assert(a.contains("--disable-slash-commands"), a)
     assertEquals(
       a.slice(a.indexOf("--setting-sources"), a.indexOf("--setting-sources") + 3),
@@ -132,7 +149,16 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assert(!a.contains("--bare") && !a.contains("--exclude-dynamic-system-prompt-sections"), a)
     assert(
       !ClaudeCode
-        .argv(Ref.modify(_.disableSlashCommands).setTo(ClaudeCodeConfig.DisableSlashCommands(false)), ModelRef.Model("sonnet"), AgentDef.MaxTurns(4), ClaudeCode.SchemaJson("{}"), Launch, None, Nil, AllTools)
+        .argv(
+          Ref.modify(_.disableSlashCommands).setTo(ClaudeCodeConfig.DisableSlashCommands(false)),
+          ModelRef.Model("sonnet"),
+          AgentDef.MaxTurns(4),
+          ClaudeCode.SchemaJson("{}"),
+          Launch,
+          None,
+          Nil,
+          AllTools
+        )
         .map(_.value)
         .contains("--disable-slash-commands")
     )
@@ -143,7 +169,13 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val env = new java.util.HashMap[String, String](
       java.util.Map.of("PATH", "/bin", "CLAUDE_CODE_DISABLE_CRON", "1", "ANTHROPIC_API_KEY", "sk-x")
     )
-    ClaudeCode.environment(Ref, LlmCall.MaxTokens(2048), Some(RunGrant.Token("hmrt_1")), GenSettings.QuotaUrl("http://q"), env)
+    ClaudeCode.environment(
+      Ref,
+      LlmCall.MaxTokens(2048),
+      Some(RunGrant.Token("hmrt_1")),
+      GenSettings.QuotaUrl("http://q"),
+      env
+    )
     Ref.envChanges.collect { case (k, Some(v)) => k -> v }.foreach((k, v) => assertEquals(env.get(k.value), v, k))
     assertEquals(env.get("CLAUDE_CODE_DISABLE_ARTIFACT"), "1")
     assertEquals(env.get("CLAUDE_CODE_DISABLE_ADVISOR_TOOL"), "1")
@@ -154,18 +186,27 @@ class ClaudeCodeSuite extends munit.FunSuite:
     )
     // the person's file: one default off, one variable of the server's own removed, one added — and an
     // attempt to set what the provider owns (the output cap, the run token, an API key) loses
-    val mine = Ref.modify(_.env).setTo(Ref.env ++ Map(
-        ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_ARTIFACT") -> None,
-        ClaudeCodeConfig.EnvKey("PATH") -> Some(ClaudeCodeConfig.EnvValue("")),
-        ClaudeCodeConfig.EnvKey("MY_FLAG") -> Some(ClaudeCodeConfig.EnvValue("x")),
-        ClaudeCodeConfig.EnvKey("CLAUDE_CODE_MAX_OUTPUT_TOKENS") -> Some(ClaudeCodeConfig.EnvValue("99999")),
-        ClaudeCodeConfig.EnvKey("HISTMERSION_RUN_TOKEN") -> Some(ClaudeCodeConfig.EnvValue("forged")),
-        ClaudeCodeConfig.EnvKey("ANTHROPIC_API_KEY") -> Some(ClaudeCodeConfig.EnvValue("sk-y"))
+    val mine = Ref
+      .modify(_.env)
+      .setTo(
+        Ref.env ++ Map(
+          ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_ARTIFACT") -> None,
+          ClaudeCodeConfig.EnvKey("PATH") -> Some(ClaudeCodeConfig.EnvValue("")),
+          ClaudeCodeConfig.EnvKey("MY_FLAG") -> Some(ClaudeCodeConfig.EnvValue("x")),
+          ClaudeCodeConfig.EnvKey("CLAUDE_CODE_MAX_OUTPUT_TOKENS") -> Some(ClaudeCodeConfig.EnvValue("99999")),
+          ClaudeCodeConfig.EnvKey("HISTMERSION_RUN_TOKEN") -> Some(ClaudeCodeConfig.EnvValue("forged")),
+          ClaudeCodeConfig.EnvKey("ANTHROPIC_API_KEY") -> Some(ClaudeCodeConfig.EnvValue("sk-y"))
+        )
       )
-    )
     val env2 =
       new java.util.HashMap[String, String](java.util.Map.of("PATH", "/bin", "CLAUDE_CODE_DISABLE_ARTIFACT", "1"))
-    ClaudeCode.environment(mine, LlmCall.MaxTokens(2048), Some(RunGrant.Token("hmrt_1")), GenSettings.QuotaUrl("http://q"), env2)
+    ClaudeCode.environment(
+      mine,
+      LlmCall.MaxTokens(2048),
+      Some(RunGrant.Token("hmrt_1")),
+      GenSettings.QuotaUrl("http://q"),
+      env2
+    )
     assert(!env2.containsKey("CLAUDE_CODE_DISABLE_ARTIFACT") && !env2.containsKey("PATH"), env2)
     assertEquals(env2.get("MY_FLAG"), "x")
     assertEquals(env2.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "2048")
@@ -179,17 +220,19 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "16")
 
   test("argv: without a generated plugin the prompt goes as a file; a web role keeps the web tools"):
-    val a = ClaudeCode.argv(
-      Cfg,
-      ModelRef.Model("opus"),
-      AgentDef.MaxTurns(1),
-      ClaudeCode.SchemaJson("{}"),
-      ClaudeCode.Launch.SystemPrompt(ClaudeCode.Launch.SystemPrompt.File("/s")),
-      None,
-      Nil,
-      AllTools,
-      web = List("WebSearch", "WebFetch")
-    ).map(_.value)
+    val a = ClaudeCode
+      .argv(
+        Cfg,
+        ModelRef.Model("opus"),
+        AgentDef.MaxTurns(1),
+        ClaudeCode.SchemaJson("{}"),
+        ClaudeCode.Launch.SystemPrompt(ClaudeCode.Launch.SystemPrompt.File("/s")),
+        None,
+        Nil,
+        AllTools,
+        web = List("WebSearch", "WebFetch")
+      )
+      .map(_.value)
     assertEquals(a(a.indexOf("--system-prompt-file") + 1), "/s")
     assertEquals(a(a.indexOf("--tools") + 1), "WebSearch,WebFetch")
     assertEquals(a(a.indexOf("--allowedTools") + 1), "WebSearch,WebFetch,StructuredOutput")
@@ -199,7 +242,13 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val env = new java.util.HashMap[String, String](
       java.util.Map.of("ANTHROPIC_API_KEY", "sk-x", "ANTHROPIC_AUTH_TOKEN", "t", "PATH", "/bin")
     )
-    ClaudeCode.environment(Cfg, LlmCall.MaxTokens(2048), Some(RunGrant.Token("hmrt_1")), GenSettings.QuotaUrl("http://h/api/agents/quota/claude"), env)
+    ClaudeCode.environment(
+      Cfg,
+      LlmCall.MaxTokens(2048),
+      Some(RunGrant.Token("hmrt_1")),
+      GenSettings.QuotaUrl("http://h/api/agents/quota/claude"),
+      env
+    )
     assert(!env.containsKey("ANTHROPIC_API_KEY") && !env.containsKey("ANTHROPIC_AUTH_TOKEN"), env)
     assertEquals(env.get("PATH"), "/bin")
     assertEquals(env.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), "2048")
@@ -207,13 +256,25 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assertEquals(env.get("HISTMERSION_RUN_TOKEN"), "hmrt_1")
     assertEquals(env.get("HISTMERSION_QUOTA_URL"), "http://h/api/agents/quota/claude")
     val keep = new java.util.HashMap[String, String](java.util.Map.of("ANTHROPIC_API_KEY", "sk-x"))
-    ClaudeCode.environment(Cfg.modify(_.useApiKey).setTo(ClaudeCodeConfig.UseApiKey(true)).modify(_.configDir).setTo(ClaudeCodeConfig.ConfigDir("/c/hm")), LlmCall.MaxTokens(10), None, GenSettings.QuotaUrl("u"), keep)
+    ClaudeCode.environment(
+      Cfg
+        .modify(_.useApiKey)
+        .setTo(ClaudeCodeConfig.UseApiKey(true))
+        .modify(_.configDir)
+        .setTo(ClaudeCodeConfig.ConfigDir("/c/hm")),
+      LlmCall.MaxTokens(10),
+      None,
+      GenSettings.QuotaUrl("u"),
+      keep
+    )
     assertEquals(keep.get("ANTHROPIC_API_KEY"), "sk-x")
     assertEquals(keep.get("CLAUDE_CONFIG_DIR"), "/c/hm")
 
   test("mcp config: http to the agent endpoint, the step's run token as the bearer"):
     assertEquals(
-      ClaudeCode.mcpConfig(GenSettings.AgentMcpUrl("http://127.0.0.1:18000/mcp/agent"), Some(RunGrant.Token("hmrt_9"))).noSpaces,
+      ClaudeCode
+        .mcpConfig(GenSettings.AgentMcpUrl("http://127.0.0.1:18000/mcp/agent"), Some(RunGrant.Token("hmrt_9")))
+        .noSpaces,
       """{"mcpServers":{"histmersion":{"type":"http","url":"http://127.0.0.1:18000/mcp/agent","headers":{"Authorization":"Bearer hmrt_9"}}}}"""
     )
 
@@ -224,18 +285,32 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   test("loopback: 127.x, ::1 and localhost are; 0.0.0.0 and a LAN address are not — and claude-code is refused there"):
     assert(
-      ClaudeCode.Env.isLoopback(ServerConfig.Host("127.0.0.1")) && ClaudeCode.Env.isLoopback(ServerConfig.Host("localhost")) && ClaudeCode.Env.isLoopback(
+      ClaudeCode.Env.isLoopback(ServerConfig.Host("127.0.0.1")) && ClaudeCode.Env.isLoopback(
+        ServerConfig.Host("localhost")
+      ) && ClaudeCode.Env.isLoopback(
         ServerConfig.Host("[::1]")
       )
     )
-    assert(!ClaudeCode.Env.isLoopback(ServerConfig.Host("0.0.0.0")) && !ClaudeCode.Env.isLoopback(ServerConfig.Host("192.168.1.5")))
+    assert(
+      !ClaudeCode.Env.isLoopback(ServerConfig.Host("0.0.0.0")) && !ClaudeCode.Env.isLoopback(
+        ServerConfig.Host("192.168.1.5")
+      )
+    )
     val dir = Files.createTempDirectory("hm-rt-")
     val lan = CliRuntime(FakeCli.app(dir, "HISTMERSION_BIND" -> "0.0.0.0"), EngineContributions.roster)
     assert(ClaudeCode.client(Cfg, lan, Sonnet).left.exists(_.value.contains("beyond loopback")))
-    assert(ClaudeCode.client(Cfg.modify(_.allowNonLoopback).setTo(ClaudeCodeConfig.AllowNonLoopback(true)), lan, Sonnet).isRight)
     assert(
       ClaudeCode
-        .client(Cfg, CliRuntime(FakeCli.app(dir), EngineContributions.roster), ModelRef(ProviderKind.Local, ModelRef.Model("x")))
+        .client(Cfg.modify(_.allowNonLoopback).setTo(ClaudeCodeConfig.AllowNonLoopback(true)), lan, Sonnet)
+        .isRight
+    )
+    assert(
+      ClaudeCode
+        .client(
+          Cfg,
+          CliRuntime(FakeCli.app(dir), EngineContributions.roster),
+          ModelRef(ProviderKind.Local, ModelRef.Model("x"))
+        )
         .isLeft
     )
 
@@ -304,15 +379,21 @@ class ClaudeCodeSuite extends munit.FunSuite:
       .replace("\"subtype\":\"success\"", "\"subtype\":\"error_max_turns\"")
       .replace("\"result\":\"Done.\"", "\"result\":\"{\\\"citekey\\\":\\\"x2020\\\",\\\"title\\\":\\\"X\\\"}\"")
     val o = ClaudeCode.parse(stream(Init, cut))
-    assert(ClaudeCode.result(o, LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer.isLeft)
+    assert(
+      ClaudeCode.result(o, LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).toOption.get.finalAnswer.isLeft
+    )
 
   test("jsonInText: a fence wins, else first brace to last; prose and arrays are not answers"):
     assertEquals(
-      ClaudeCode.jsonInText(ClaudeCode.Result.Text("a\n```json\n{\"x\":1}\n```\nb {not}")).flatMap(_.hcursor.get[Int]("x").toOption),
+      ClaudeCode
+        .jsonInText(ClaudeCode.Result.Text("a\n```json\n{\"x\":1}\n```\nb {not}"))
+        .flatMap(_.hcursor.get[Int]("x").toOption),
       Some(1)
     )
     assertEquals(
-      ClaudeCode.jsonInText(ClaudeCode.Result.Text("so: {\"x\": {\"y\": 2}} done")).flatMap(_.hcursor.downField("x").get[Int]("y").toOption),
+      ClaudeCode
+        .jsonInText(ClaudeCode.Result.Text("so: {\"x\": {\"y\": 2}} done"))
+        .flatMap(_.hcursor.downField("x").get[Int]("y").toOption),
       Some(2)
     )
     assertEquals(ClaudeCode.jsonInText(ClaudeCode.Result.Text("no json here")), None)
@@ -327,11 +408,17 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test("the plan's usage limit is told apart from an error, with its reset time when the CLI gives one"):
     val lim =
       """{"type":"result","subtype":"success","is_error":true,"num_turns":0,"result":"Claude AI usage limit reached|1759683600","usage":{}}"""
-    val l = ClaudeCode.result(ClaudeCode.parse(stream(lim)), LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).left.toOption.get
+    val l = ClaudeCode
+      .result(ClaudeCode.parse(stream(lim)), LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]())
+      .left
+      .toOption
+      .get
     assertEquals(l.until, Some(java.time.Instant.ofEpochSecond(1759683600L)))
     val other = lim.replace("Claude AI usage limit reached|1759683600", "API Error: 500")
     assert(
-      ClaudeCode.result(ClaudeCode.parse(stream(other)), LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).isRight,
+      ClaudeCode
+        .result(ClaudeCode.parse(stream(other)), LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]())
+        .isRight,
       "an error is not a limit"
     )
 
@@ -340,7 +427,10 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val res =
       """{"type":"result","subtype":"error_during_execution","is_error":true,"num_turns":1,"result":"","permission_denials":[{"tool_name":"mcp__histmersion__query"}],"usage":{}}"""
     val r =
-      ClaudeCode.result(ClaudeCode.parse(stream(init, res)), LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]()).toOption.get
+      ClaudeCode
+        .result(ClaudeCode.parse(stream(init, res)), LlmCall.User("u"), ResponseSchema.derived[ProbeAnswer]())
+        .toOption
+        .get
     r.finishReason match
       case FinishReason.Error(m) =>
         assert(m.contains("agent MCP server is failed") && m.contains("mcp__histmersion__query"), m)
@@ -406,7 +496,9 @@ class ClaudeCodeSuite extends munit.FunSuite:
     List(4200L, 6100L, 8000L).foreach(n => http.aroundLlmCall(ctx)(resp(n)))
     assertEquals(http.tokens, Some(4200L))
     val cli = FirstCallProbe()
-    cli.aroundLlmCall(ctx) { FirstCallProbe.report(List(cli), Some(AgentRepo.StepRecord.FirstCallTokens(5000L))); resp(90000L) }
+    cli.aroundLlmCall(ctx) {
+      FirstCallProbe.report(List(cli), Some(AgentRepo.StepRecord.FirstCallTokens(5000L))); resp(90000L)
+    }
     assertEquals(cli.tokens, Some(5000L), "the process's total is never taken for its first call")
     val unknown = FirstCallProbe()
     unknown.aroundLlmCall(ctx) { FirstCallProbe.report(List(unknown), None); resp(90000L) }
@@ -448,7 +540,8 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val counting = new AgentInterceptor[Identity]:
       override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
         val _ = calls.incrementAndGet(); next
-    val r = ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)), rt).run(call(skeptic, List(counting)))
+    val r = ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)), rt)
+      .run(call(skeptic, List(counting)))
     assertEquals(r.finalAnswer, Right(ProbeAnswer(Citekey("x2020"), Title("X"), Some(Year(2020)))))
     assertEquals(calls.get, 1, "the interceptors (the LLM-slot semaphore, latency) see the process as one call")
     assertEquals(fake.stdin, "USER <source-text>data</source-text>", "untrusted data on stdin, never in argv")
@@ -473,7 +566,15 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val fake = FakeCli("claude", List(Init294, First294a, First294b, Tool294, Second294, Success))
     val (rt, skeptic) = runtime(FakeCli.Sink())
     val first = FirstCallProbe()
-    val r = ClaudeCodeClient(Sonnet, Ref.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)).modify(_.timeoutSeconds).setTo(ClaudeCodeConfig.TimeoutSeconds(30)), rt)
+    val r = ClaudeCodeClient(
+      Sonnet,
+      Ref
+        .modify(_.command)
+        .setTo(ClaudeCodeConfig.Command(fake.script.toString))
+        .modify(_.timeoutSeconds)
+        .setTo(ClaudeCodeConfig.TimeoutSeconds(30)),
+      rt
+    )
       .run(call(skeptic, List(first)))
     assertEquals(r.finalAnswer, Right(ProbeAnswer(Citekey("x2020"), Title("X"), Some(Year(2020)))))
     assert(fake.args.contains("--disable-slash-commands"), fake.args)
@@ -483,11 +584,14 @@ class ClaudeCodeSuite extends munit.FunSuite:
 
   test("the client: a pool below its floor mid-step STOPS the process (no waiting for the answer) — the plan's limit"):
     val fake = FakeCli("claude", List(Init, Turn1, RateLimit), sleepAfter = 60)
-    val sink = FakeCli.Sink(block = Some((PoolSink.BlockedReason("five_hour: 8% left, floor 25%"), Some(PlanQuotaRepo.EpochMillis(1791236400000L)))))
+    val sink = FakeCli.Sink(block =
+      Some((PoolSink.BlockedReason("five_hour: 8% left, floor 25%"), Some(PlanQuotaRepo.EpochMillis(1791236400000L))))
+    )
     val (rt, skeptic) = runtime(sink)
     val t0 = System.nanoTime()
     val e = intercept[ModelLimitReached](
-      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)), rt)
+        .run(call(skeptic))
     )
     assert((System.nanoTime() - t0) / 1000000000L < 25, "stopped, not timed out")
     assert(e.getMessage.contains("quota guard") && e.getMessage.contains("floor 25%"), e.getMessage)
@@ -497,7 +601,8 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val fake = FakeCli("claude", List(Init, Turn1, Aborted))
     val (rt, skeptic) = runtime(FakeCli.Sink())
     val e = intercept[ModelLimitReached](
-      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)), rt)
+        .run(call(skeptic))
     )
     assert(e.getMessage.contains("quota-guard mod"), e.getMessage)
 
@@ -509,16 +614,19 @@ class ClaudeCodeSuite extends munit.FunSuite:
     val f1 = FakeCli("claude", List(lim))
     val (rt, skeptic) = runtime(FakeCli.Sink())
     val e = intercept[ModelLimitReached](
-      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(f1.script.toString)), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(f1.script.toString)), rt)
+        .run(call(skeptic))
     )
     assertEquals(e.until, Some(java.time.Instant.ofEpochSecond(1759683600L)))
     val f2 = FakeCli("claude", Nil, code = 3)
     val io = intercept[java.io.IOException](
-      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(f2.script.toString)), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command(f2.script.toString)), rt)
+        .run(call(skeptic))
     )
     assert(io.getMessage.contains("exited 3 without a result"), io.getMessage)
     val missing = intercept[java.io.IOException](
-      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command("/nonexistent/claude")), rt).run(call(skeptic))
+      ClaudeCodeClient(Sonnet, Cfg.modify(_.command).setTo(ClaudeCodeConfig.Command("/nonexistent/claude")), rt)
+        .run(call(skeptic))
     )
     assert(missing.getMessage.contains("HISTMERSION_AGENTS_CLAUDE_COMMAND"), missing.getMessage)
 

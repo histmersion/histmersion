@@ -5,7 +5,9 @@ import sttp.tapir.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class OffsetPage(total: RowCount, offset: Offset, shown: RowCount):
-  def next: Option[Offset] = (Option.when(shown.value > 0 && offset.value + shown.value < total.value)(offset.value + shown.value)).map(Offset.apply)
+  def next: Option[Offset] = (Option
+    .when(shown.value > 0 && offset.value + shown.value < total.value)(offset.value + shown.value))
+    .map(Offset.apply)
 
   def isAll: Boolean = (offset.value == 0 && shown >= total)
 
@@ -19,7 +21,7 @@ object OffsetPage:
   val FullSetMax: FullSetMax = FullSetMaxValue(500)
 
   def header(p: OffsetPage, noun: String): String =
-    if (p.isAll) then (s"### ${math.max(p.total.value, p.shown.value)} $noun")
+    if p.isAll then (s"### ${math.max(p.total.value, p.shown.value)} $noun")
     else (s"### ${p.shown.value} of ${p.total.value} $noun")
 
   def footer(p: OffsetPage): String =

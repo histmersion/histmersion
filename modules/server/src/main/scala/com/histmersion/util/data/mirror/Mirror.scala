@@ -35,7 +35,6 @@ object Mirror:
     def records: Records
     def note(id: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody]
 
-
   /** The kind of record a mirror contribution writes notes of (`sources`, `articles`, …). */
   type Records = Records.T
   object Records extends Newtype[String, Pure]

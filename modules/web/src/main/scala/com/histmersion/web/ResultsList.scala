@@ -73,7 +73,12 @@ object ResultsList:
   val element: HtmlElement =
     div(
       cls := "results-container",
-      ResultsPaging.countBar(countText.signal, isBusy.signal.map(b => ResultsPaging.Loading(b)), isError.signal.map(b => ResultsPaging.Failed(b)), id = Some("count")),
+      ResultsPaging.countBar(
+        countText.signal,
+        isBusy.signal.map(b => ResultsPaging.Loading(b)),
+        isError.signal.map(b => ResultsPaging.Failed(b)),
+        id = Some("count")
+      ),
       div(
         idAttr := "list",
         cls <-- isBusy.signal.map(b => if b then "list is-busy" else "list"),
@@ -105,7 +110,8 @@ object ResultsList:
   def failed(msg: Problem): Unit =
     isError.set(true)
     isBusy.set(false)
-    countText.set(UiLabels.Text(if msg.value.nonEmpty then msg.value else "failed to load — retrying on the next change"))
+    countText.set(UiLabels.Text(if msg.value.nonEmpty then msg.value
+    else "failed to load — retrying on the next change"))
 
   def renderSources(result: SearchResult, opts: SourceRenderOpts): Unit =
     last = Some(LastSources(result, opts))
@@ -228,9 +234,10 @@ object ResultsList:
 
   private def countLine(): UiLabels.Text =
     val findings = pageOpts match
-      case Some(o) if o.inView.value => s"${Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding"))} in view / ${o.total} total"
-      case Some(o)                   => Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding")).value
-      case None                      => ""
+      case Some(o) if o.inView.value =>
+        s"${Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding"))} in view / ${o.total} total"
+      case Some(o) => Plural.count(Plural.Count(o.findings.value.toLong), Plural.CountSingular("finding")).value
+      case None    => ""
     ResultsPaging.countLine(
       Paging.Shown(pageHits.length),
       Paging.Page.Total(pageTotal.value),
@@ -245,7 +252,9 @@ object ResultsList:
   private def pageSize: Paging.Limit = Paging.Limit(pageParams.fold(20)(p => math.max(p.limit.value, 20)))
 
   private def nextLabel(): Option[UiLabels.Text] =
-    pageParams.flatMap(_ => ResultsPaging.moreLabel(RowCount(pageTotal.value - pageHits.length), ResultsPaging.PageNumber(pageSize.value)))
+    pageParams.flatMap(_ =>
+      ResultsPaging.moreLabel(RowCount(pageTotal.value - pageHits.length), ResultsPaging.PageNumber(pageSize.value))
+    )
 
   /** "show more": the next page from the server, appended; a failure says so in the count line. */
   private def more(): Unit =
@@ -295,7 +304,9 @@ object ResultsList:
       div(cls := "meta", meta),
       src.snippet
         .filter(_.value.nonEmpty)
-        .map(s => div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(UiLabels.Text(s.value)))))
+        .map(s =>
+          div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(UiLabels.Text(s.value))))
+        )
         .getOrElse(emptyNode),
       if why.nonEmpty then ul(cls := "why", why.map(w => li(w.value)))
       else emptyNode,
@@ -311,7 +322,10 @@ object ResultsList:
                 Fmt.periodStr(m.periodStart, m.periodEnd).value match
                   case "" => emptyNode
                   case p  => span(cls := "p", s" $p"),
-                m.regionName.filter(_.value.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.display(UiLabels.Text(r.value))}")).getOrElse(emptyNode),
+                m.regionName
+                  .filter(_.value.nonEmpty)
+                  .map(r => span(cls := "rg", s" ${Fmt.display(UiLabels.Text(r.value))}"))
+                  .getOrElse(emptyNode),
                 if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then
@@ -323,7 +337,9 @@ object ResultsList:
       RowActions(
         ItemRef.source(src.citekey, Title(src.title.value)),
         ItemRef.Href(SourceLink.href(src.citekey)),
-        List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+        List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString))
+          .filter(_.nonEmpty)
+          .mkString(", ")
       ),
       onClick --> { ev =>
         val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a, button")).isDefined
@@ -364,7 +380,9 @@ object ResultsList:
                       Chip.Text(t.value),
                       prefix = Some(Chip.Prefix(s"${c.label}: ")),
                       extraCls = Chip.ExtraClass("place"),
-                      remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value)))
+                      remove = Some(() =>
+                        UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value))
+                      )
                     )
                   )
               )
@@ -373,7 +391,9 @@ object ResultsList:
                 Chip(
                   Chip.Text(c.shown.map(_.value).getOrElse(Fmt.displayTag(Fmt.DisplayTagS(c.value.value)).value)),
                   prefix = Some(Chip.Prefix(s"${c.label}: ")),
-                  remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value)))
+                  remove = Some(() =>
+                    UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value))
+                  )
                 )
               )
           }

@@ -21,8 +21,6 @@ private[assets] object AssetBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-
-
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
     (Sql.raw(Sql.Text(s"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
                        x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
@@ -56,7 +54,12 @@ private[assets] object AssetBundleRepo:
   def bytes(uid: UUID)(using DbCon): java.io.OutputStream => Unit =
     out =>
       out.write(
-        Sql.of(Sql.OfText("SELECT bytes FROM assets WHERE uid = ?::uuid"), Param.S(Param.S.V(uid.toString))).frag.query[Array[Byte]].run().head
+        Sql
+          .of(Sql.OfText("SELECT bytes FROM assets WHERE uid = ?::uuid"), Param.S(Param.S.V(uid.toString)))
+          .frag
+          .query[Array[Byte]]
+          .run()
+          .head
       )
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────

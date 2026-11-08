@@ -40,7 +40,8 @@ object CollectionsTools:
       apply: CollectionInput.Apply = CollectionInput.Apply(false),
       fields: List[CollectionInput.Fields] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object CollectionInput:
     type Action = Action.T
@@ -48,7 +49,8 @@ object CollectionsTools:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
     type Query = com.histmersion.domain.library.search.Search.Query
-    val Query: com.histmersion.domain.library.search.Search.Query.type = com.histmersion.domain.library.search.Search.Query
+    val Query: com.histmersion.domain.library.search.Search.Query.type =
+      com.histmersion.domain.library.search.Search.Query
     type Id = Id.T
     object Id extends Newtype[String, Pure]
     type Format = Format.T
@@ -65,7 +67,6 @@ object CollectionsTools:
     object Apply extends Newtype[Boolean, Pure]
     type Fields = Fields.T
     object Fields extends Newtype[String, Pure]
-
 
   def apply(c: CollectionsControllers) =
     val me = Caller.Local
@@ -96,7 +97,8 @@ object CollectionsTools:
             case "info"   => answer(c.collection(me, name))(CollectionsMarkdown.collection)
             case "search" =>
               answer(c.search(me, name, in.query, limit, CollectionsService.SearchUnlinked(in.unlinked.value)))(s =>
-                if in.unlinked.value then CollectionsMarkdown.unlinked(s.entries, CollectionsMarkdown.Total(s.total.value))
+                if in.unlinked.value then
+                  CollectionsMarkdown.unlinked(s.entries, CollectionsMarkdown.Total(s.total.value))
                 else CollectionsMarkdown.search(s.entries)
               )
             case "import" =>
@@ -119,7 +121,9 @@ object CollectionsTools:
             case "link" =>
               (in.citekey, in.id) match
                 case (Some(ck), Some(id)) =>
-                  answer(c.link(me, name, CollectionLinkRequest(ck, CollectionLinkRequest.Id(id.value))))(CollectionsMarkdown.linked)
+                  answer(c.link(me, name, CollectionLinkRequest(ck, CollectionLinkRequest.Id(id.value))))(
+                    CollectionsMarkdown.linked
+                  )
                 case _ => ToolResult.text("_give a `citekey` and the entry's `id`_")
             case "push" =>
               in.citekey.fold(ToolResult.text("_give a `citekey`_"))(ck =>
@@ -131,9 +135,13 @@ object CollectionsTools:
               in.citekey match
                 case Some(ck) => answer(c.updateOne(me, name, CollectionUpdateOne(ck)))(CollectionsMarkdown.updatedOne)
                 case None     =>
-                  answer(c.updateAll(me, name, CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(in.apply.value))))(u =>
-                    CollectionsMarkdown.updateAll(u.rows, u.applied.value)
-                  )
+                  answer(
+                    c.updateAll(
+                      me,
+                      name,
+                      CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(in.apply.value))
+                    )
+                  )(u => CollectionsMarkdown.updateAll(u.rows, u.applied.value))
             case "set" =>
               val fields = in.fields.flatMap(f =>
                 f.value.split(":", 2) match
@@ -142,7 +150,9 @@ object CollectionsTools:
                   case _ => None
               )
               in.id.fold(ToolResult.text("_give the entry's `id`_"))(id =>
-                answer(c.set(me, name, CollectionSetRequest(CollectionSetRequest.Id(id.value), fields)))(CollectionsMarkdown.set)
+                answer(c.set(me, name, CollectionSetRequest(CollectionSetRequest.Id(id.value), fields)))(
+                  CollectionsMarkdown.set
+                )
               )
             case "audit" => answer(c.audit(me, name))(CollectionsMarkdown.audit)
             case "gaps"  => answer(c.gaps(me, name, limit))(g => CollectionsMarkdown.gaps(g.gaps))

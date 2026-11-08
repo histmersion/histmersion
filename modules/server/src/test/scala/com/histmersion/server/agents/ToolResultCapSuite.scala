@@ -34,8 +34,10 @@ class ToolResultCapSuite extends munit.FunSuite:
     assert(cut.startsWith("x" * 500) && cut.length <= 1000, cut.length)
 
   test("chip links lose their targets; article links and wikilinks stay"):
-    val md = ToolResultCap.Markdown("**Topics:** [pie religion](/#topic=pie_religion), [oral tradition](/#topic=oral_tradition)  \n" +
-      "- [Dragon-Slayer](/article/dragon_slayer) cites [[watkins1995_dragon]]; see [a figure](http://h/x.png)")
+    val md = ToolResultCap.Markdown(
+      "**Topics:** [pie religion](/#topic=pie_religion), [oral tradition](/#topic=oral_tradition)  \n" +
+        "- [Dragon-Slayer](/article/dragon_slayer) cites [[watkins1995_dragon]]; see [a figure](http://h/x.png)"
+    )
     assertEquals(
       ToolResultCap.plainLinks(md),
       "**Topics:** pie religion, oral tradition  \n- [Dragon-Slayer](/article/dragon_slayer) cites [[watkins1995_dragon]]; see [a figure](http://h/x.png)"
@@ -47,7 +49,8 @@ class ToolResultCapSuite extends munit.FunSuite:
       "**Provenance:** archive_org  \n**Uid:** 01a102ee-d28a-75e8-9beb-7c8ee0d08957\n\nThe summary.\n\n" +
       "## Notes\n\n" + (1 to 300).map(i => s"Note line $i about the book.").mkString("\n") +
       "\n\n## Findings (2)\n- The formula *gʷhen- dhgʷhim recurs.\n- It is Proto-Indo-European." +
-      "\n\n## Mentioned in articles (1)\n- [Dragon-Slayer](/article/dragon_slayer)")
+      "\n\n## Mentioned in articles (1)\n- [Dragon-Slayer](/article/dragon_slayer)"
+  )
 
   test("a source record drops its identity lines and chip links"):
     val c = ToolResultCap.compactSource(Record)
@@ -70,14 +73,19 @@ class ToolResultCapSuite extends munit.FunSuite:
     assert(r.contains("## Mentioned in articles (1)"), "room left: the mentions stay")
     assert(r.contains("get_source section=\"notes\""), "the notes say how to read them whole")
     assert(r.contains("Note line 1 about") && !r.contains("Note line 300 about"), "the notes are cut")
-    assertEquals(ToolResultCap.source(ToolResultCap.Markdown(c), ToolResultCap.SourceMax(c.length)), c, "within the cap: untouched")
+    assertEquals(
+      ToolResultCap.source(ToolResultCap.Markdown(c), ToolResultCap.SourceMax(c.length)),
+      c,
+      "within the cap: untouched"
+    )
 
   test("with no room for the notes they are left out, then the mentions, then the rest is cut"):
     val c = ToolResultCap.compactSource(Record)
     val tight = ToolResultCap.source(ToolResultCap.Markdown(c), ToolResultCap.SourceMax(700))
     assert(tight.length <= 700, tight.length)
     assert(tight.contains("characters of notes left out") || tight.contains("…cut at"), tight)
-    val noNotes = ToolResultCap.source(ToolResultCap.Markdown(c.replace("## Notes", "## Elsewhere")),ToolResultCap.SourceMax(300))
+    val noNotes =
+      ToolResultCap.source(ToolResultCap.Markdown(c.replace("## Notes", "## Elsewhere")), ToolResultCap.SourceMax(300))
     assert(noNotes.length <= 300 && noNotes.contains("section=\"findings\""), noNotes)
 
   test("a query shows at most its row cap, marked, with how to ask for less"):
@@ -92,7 +100,13 @@ class ToolResultCapSuite extends munit.FunSuite:
     assert(md.startsWith("### 50 row(s) (truncated by the row cap)"), md.take(80))
     assert(md.contains("| ck50 |") && !md.contains("| ck51 |"), "50 rows")
     assert(md.contains("70 more rows not shown") && md.contains("never a whole table"), md.takeRight(200))
-    val capped = QueryResult(List(QueryResult.Columns("c")), (1 to 500).toList.map(i => List(Some(QueryResult.Rows(s"r$i")))), QueryResult.RowCount(500), QueryResult.Truncated(true), QueryResult.ElapsedMs(3))
+    val capped = QueryResult(
+      List(QueryResult.Columns("c")),
+      (1 to 500).toList.map(i => List(Some(QueryResult.Rows(s"r$i")))),
+      QueryResult.RowCount(500),
+      QueryResult.Truncated(true),
+      QueryResult.ElapsedMs(3)
+    )
     assert(
       LibraryAgentTools
         .queryResult(capped, AgentToolsConfig.QueryMaxRows(50), ToolResultCap.CapMax(100000))

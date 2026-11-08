@@ -17,11 +17,51 @@ class ResultsWidthSuite extends munit.FunSuite:
     )
 
   test("the keys: ← wider, → narrower, Shift four times as far, Home and End the ends"):
-    assertEquals(ResultsWidth.step(ResultsWidth.Width(480), ResultsWidth.KeyName("ArrowLeft"), shift = ResultsWidth.ShiftHeld(false), ResultsWidth.StepViewport(1440)), Some(496))
-    assertEquals(ResultsWidth.step(ResultsWidth.Width(480), ResultsWidth.KeyName("ArrowRight"), shift = ResultsWidth.ShiftHeld(true), ResultsWidth.StepViewport(1440)), Some(416))
-    assertEquals(ResultsWidth.step(ResultsWidth.Width(480), ResultsWidth.KeyName("Home"), shift = ResultsWidth.ShiftHeld(false), ResultsWidth.StepViewport(1440)), Some(ResultsWidth.min))
-    assertEquals(ResultsWidth.step(ResultsWidth.Width(480), ResultsWidth.KeyName("End"), shift = ResultsWidth.ShiftHeld(false), ResultsWidth.StepViewport(1440)), Some(800))
-    assertEquals(ResultsWidth.step(ResultsWidth.Width(480), ResultsWidth.KeyName("a"), shift = ResultsWidth.ShiftHeld(false), ResultsWidth.StepViewport(1440)), None)
+    assertEquals(
+      ResultsWidth.step(
+        ResultsWidth.Width(480),
+        ResultsWidth.KeyName("ArrowLeft"),
+        shift = ResultsWidth.ShiftHeld(false),
+        ResultsWidth.StepViewport(1440)
+      ),
+      Some(496)
+    )
+    assertEquals(
+      ResultsWidth.step(
+        ResultsWidth.Width(480),
+        ResultsWidth.KeyName("ArrowRight"),
+        shift = ResultsWidth.ShiftHeld(true),
+        ResultsWidth.StepViewport(1440)
+      ),
+      Some(416)
+    )
+    assertEquals(
+      ResultsWidth.step(
+        ResultsWidth.Width(480),
+        ResultsWidth.KeyName("Home"),
+        shift = ResultsWidth.ShiftHeld(false),
+        ResultsWidth.StepViewport(1440)
+      ),
+      Some(ResultsWidth.min)
+    )
+    assertEquals(
+      ResultsWidth.step(
+        ResultsWidth.Width(480),
+        ResultsWidth.KeyName("End"),
+        shift = ResultsWidth.ShiftHeld(false),
+        ResultsWidth.StepViewport(1440)
+      ),
+      Some(800)
+    )
+    assertEquals(
+      ResultsWidth.step(
+        ResultsWidth.Width(480),
+        ResultsWidth.KeyName("a"),
+        shift = ResultsWidth.ShiftHeld(false),
+        ResultsWidth.StepViewport(1440)
+      ),
+      None
+    )
 
   test("a kept width is read back; nonsense is none"):
     assertEquals(ResultsWidth.decode(Some(" 512 ")), Some(512))

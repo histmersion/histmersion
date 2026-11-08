@@ -74,15 +74,19 @@ object PluginHost:
         catch
           case e: LinkageError => Left(e)
           case NonFatal(e)     => Left(e)
-      val loaded: Either[(Option[Provider], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
-        case Some(p) => described(p).left.map(e => Some(Provider(p.getClass.getName)) -> e).map(Some(_))
-        case None    => Right(None)
-      }
+      val loaded: Either[(Option[Provider], Throwable), Option[Plugin]] =
+        step.left.map(e => providerOf(e) -> e).flatMap {
+          case Some(p) => described(p).left.map(e => Some(Provider(p.getClass.getName)) -> e).map(Some(_))
+          case None    => Right(None)
+        }
       loaded match
         case Right(Some(p))      => loop(p :: acc, errs)
         case Right(None)         => (acc.reverse, errs.reverse)
         case Left((provider, e)) =>
-          loop(acc, Problem(s"a plugin provider${provider.fold("")(c => s" ($c)")} could not be loaded: ${failure(e)}") :: errs)
+          loop(
+            acc,
+            Problem(s"a plugin provider${provider.fold("")(c => s" ($c)")} could not be loaded: ${failure(e)}") :: errs
+          )
     loop(Nil, Nil)
 
   private val ProviderClass = "Provider ([\\w.$]+)".r.unanchored
@@ -158,7 +162,11 @@ object PluginHost:
     }
     val bad = infos.flatMap { i =>
       if i.spiVersion != spi then
-        Some(i.id -> Problem(s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi"))
+        Some(
+          i.id -> Problem(
+            s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi"
+          )
+        )
       else if !i.id.value.matches(IdPattern) then
         Some(i.id -> Problem(s"'${i.id}': a plugin id is kebab-case $IdPattern"))
       else if Reserved(i.id.value) then Some(i.id -> Problem(s"'${i.id}' is a key of $Root, not a plugin id"))
@@ -172,7 +180,9 @@ object PluginHost:
   def order(ids: List[Plugin.Info.Id], configured: List[Plugin.Info.Id]): (List[Plugin.Info.Id], List[Problem]) =
     val listed = configured.distinct
     val unknown =
-      listed.filterNot(ids.contains).map(id => Problem(s"$Root.$OrderKey names '$id', which is no plugin in this binary"))
+      listed
+        .filterNot(ids.contains)
+        .map(id => Problem(s"$Root.$OrderKey names '$id', which is no plugin in this binary"))
     (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sorted, unknown)
 
   /** Pure: one digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent. What a relink records
@@ -348,7 +358,11 @@ object PluginHost:
   /** Resolve one reference: `value:` is the literal, `env:` the variable of `env`, `<vault>:` asks the vault registered
     * under that name. Errors name the reference (never a value).
     */
-  def resolve(ref: Secret.Ref, env: Config, vaults: Map[Secret.Ref.Vault.Value, Secret.Vault]): Either[Problem, SecretValue] =
+  def resolve(
+      ref: Secret.Ref,
+      env: Config,
+      vaults: Map[Secret.Ref.Vault.Value, Secret.Vault]
+  ): Either[Problem, SecretValue] =
     ref match
       case Secret.Ref.Value(v) => Right(SecretValue(v.value))
       case Secret.Ref.Env(n)   =>
@@ -359,20 +373,31 @@ object PluginHost:
       case Secret.Ref.Vault(name, r) =>
         vaults.get(name) match
           case None =>
-            Left(Problem(s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)"))
+            Left(
+              Problem(
+                s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)"
+              )
+            )
           case Some(v) =>
             try
-              v.resolve(Secret.Vault.ResolveRef(r.value)).left
+              v.resolve(Secret.Vault.ResolveRef(r.value))
+                .left
                 .map(e => Problem(s"secret ${ref.shown}: $e"))
                 .map(x => SecretValue(x.value))
-            catch case NonFatal(e) => Left(Problem(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}"))
+            catch
+              case NonFatal(e) =>
+                Left(Problem(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}"))
 
   /** Resolve several references of ONE vault in one call ([[Secret.Vault.resolveAll]]): each answer as [[resolve]]
     * words it; a reference the vault did not answer is an error, an answer to one not asked is dropped. A `resolveAll`
     * that throws (the SPI's default throws whatever one `resolve` throws) is answered one reference at a time instead,
     * so a throw fails only its own reference.
     */
-  def resolveAll(name: Secret.Ref.Vault.Value, refs: List[Secret.Ref.Vault.Ref], vault: Secret.Vault): Map[Secret.Ref.Vault.Ref, Either[Problem, SecretValue]] =
+  def resolveAll(
+      name: Secret.Ref.Vault.Value,
+      refs: List[Secret.Ref.Vault.Ref],
+      vault: Secret.Vault
+  ): Map[Secret.Ref.Vault.Ref, Either[Problem, SecretValue]] =
     val asked = refs.distinct
     def one(r: Secret.Ref.Vault.Ref) = resolve(Secret.Ref.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
     try
@@ -426,8 +451,11 @@ object PluginHost:
   /** A registry whose additions are kept apart until the plugin's `register` returned. Mutable, but owned by ONE
     * register call: `close` ends it, after which any add (a plugin that kept the context) is refused.
     */
-  final private class Staged[A](kind: String, committed: Map[Registry.AddId, A], valid: (Registry.AddId, A) => Option[Problem])
-      extends Registry[A]:
+  final private class Staged[A](
+      kind: String,
+      committed: Map[Registry.AddId, A],
+      valid: (Registry.AddId, A) => Option[Problem]
+  ) extends Registry[A]:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
     private var added: ListMap[Registry.AddId, A] = ListMap.empty
     private var open = true
@@ -471,7 +499,9 @@ object PluginHost:
         .flatMap(v => Option(v.unwrapped))
         .map(v => Plugin.Context.EnvResult(v.toString))
     def secret(s: Secret) =
-      resolved(s).left.map(e => Plugin.Context.SecretResultPart1(e.value)).map(v => Plugin.Context.SecretResultPart2(v.value))
+      resolved(s).left
+        .map(e => Plugin.Context.SecretResultPart1(e.value))
+        .map(v => Plugin.Context.SecretResultPart2(v.value))
     def secretVaults = vaults
     override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.QuotaArg1(upstream.value))
     override def licences = HostLicences
@@ -499,7 +529,9 @@ object PluginHost:
       Some(Problem(s"'$id' is the name of one of Histmersion's own media providers"))
     else
       (c.role :: c.roles.toList.sorted).find(r => !MediaCollection.Roles(r)).map { r =>
-        Problem(s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}")
+        Problem(
+          s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}"
+        )
       }
 
   /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues, unless it is the
@@ -614,7 +646,9 @@ object PluginHost:
     val unknown = unknownBlocks(user, infos.map(_.id).toSet)
       .map(id => Problem(s"$Root.$id configures no plugin in this binary — ignored"))
     val warnings = discoveryErrors ++ orderErr ++ orderWarn ++ unknown
-    warnings.foreach(w => services.log(HostServices.LogArg1(""), HostServices.LogArg2(true), HostServices.LogArg3(w.value)))
+    warnings.foreach(w =>
+      services.log(HostServices.LogArg1(""), HostServices.LogArg2(true), HostServices.LogArg3(w.value))
+    )
 
     val byId = accepted.map(p => p.info.id -> p).toMap
 
@@ -770,7 +804,9 @@ object PluginHost:
             "use env:<NAME> or a vault reference"
         )
       )
-    warns.foreach(w => services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(w.value)))
+    warns.foreach(w =>
+      services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(w.value))
+    )
     def fail(e: Problem) =
       (
         status(p, true, PluginState.Failed, Some(pr.block), Some(Problem(s"$Root.$id: $e")), Nil, warns),
@@ -790,7 +826,11 @@ object PluginHost:
             validCollection(firstParty)
           )
         val events =
-          Staged[EventCatalogue](Registries.EventCatalogue, held(regs.eventCatalogues)(_.value), validCatalogue(firstParty))
+          Staged[EventCatalogue](
+            Registries.EventCatalogue,
+            held(regs.eventCatalogues)(_.value),
+            validCatalogue(firstParty)
+          )
         val ai = Staged[AiProvider](Registries.AiProvider, held(regs.aiProviders)(_.value), validAiProvider(firstParty))
         val gazetteers =
           Staged[GazetteerSource](

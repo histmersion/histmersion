@@ -26,16 +26,28 @@ class SpiValuesSuite extends munit.FunSuite:
     assertEquals(SpiValues.year(DeepTime.SignedYear(-1600L)), Some(Year(-1600)))
     assertEquals(SpiValues.year(DeepTime.SignedYear(5_000_000_000L)), None)
     assertEquals(
-      List(SpiValues.yearBound(DeepTime.SignedYear(-5_000_000_000L)),SpiValues.yearBound(DeepTime.SignedYear(2026L))),
+      List(SpiValues.yearBound(DeepTime.SignedYear(-5_000_000_000L)), SpiValues.yearBound(DeepTime.SignedYear(2026L))),
       List(Year(Int.MinValue), Year(2026))
     )
-    assertEquals(SpiValues.period(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1700L)), Period.from(Year(-1700), Year(-1600)).toOption)
+    assertEquals(
+      SpiValues.period(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1700L)),
+      Period.from(Year(-1700), Year(-1600)).toOption
+    )
     assertEquals(SpiValues.period(com.histmersion.Period.point(com.histmersion.Year(7))), Some(Period.point(Year(7))))
     assertEquals((SpiValues.latitude(Latitude(91.0)), SpiValues.longitude(Longitude(-181.0))), (None, None))
-    assertEquals(com.histmersion.domain.library.Doi.normalize(" 10.1234/abc ").flatMap(SpiValues.doi), Some(Doi("10.1234/abc")))
+    assertEquals(
+      com.histmersion.domain.library.Doi.normalize(" 10.1234/abc ").flatMap(SpiValues.doi),
+      Some(Doi("10.1234/abc"))
+    )
     assertEquals(com.histmersion.domain.library.Doi.normalize("abc").flatMap(SpiValues.doi), None)
-    assertEquals((SpiValues.wikidata(Wikidata.Id("Q5788")), Wikidata.Id.option("Troy").flatMap(SpiValues.wikidata)), (Some(WikidataId("Q5788")), None))
-    assertEquals(SpiValues.area(Longitude(-10), Latitude(30), Longitude(40), Latitude(50)), Some((Longitude(-10), Latitude(30), Longitude(40), Latitude(50))))
+    assertEquals(
+      (SpiValues.wikidata(Wikidata.Id("Q5788")), Wikidata.Id.option("Troy").flatMap(SpiValues.wikidata)),
+      (Some(WikidataId("Q5788")), None)
+    )
+    assertEquals(
+      SpiValues.area(Longitude(-10), Latitude(30), Longitude(40), Latitude(50)),
+      Some((Longitude(-10), Latitude(30), Longitude(40), Latitude(50)))
+    )
     assertEquals(SpiValues.area(Longitude(-10), Latitude(30), Longitude(400), Latitude(50)), None)
 
   test("from a plugin: a valid value converts unchanged"):
@@ -86,7 +98,8 @@ class SpiValuesSuite extends munit.FunSuite:
     )
 
   test("a catalogue record's bad position or Wikidata item is left out with a warning, the rest of the record kept"):
-    val offGlobe = PluginEvents.record(CatalogRecord.Provider("zq"), event.modify(_.lat).setTo(Some(Latitude(95.0)))).toOption.get
+    val offGlobe =
+      PluginEvents.record(CatalogRecord.Provider("zq"), event.modify(_.lat).setTo(Some(Latitude(95.0)))).toOption.get
     assertEquals((offGlobe.record.lat, offGlobe.record.lon, offGlobe.record.wikidata), (None, None, Some("Q42")))
     assertEquals((offGlobe.record.label, offGlobe.record.timeSpan.notBefore), ("Quake", Some(-1200L)))
     assertEquals(
@@ -96,7 +109,10 @@ class SpiValuesSuite extends munit.FunSuite:
         "q-1: catalogue 'zq': a position needs both latitude and longitude, left out"
       )
     )
-    val noItem = PluginEvents.record(CatalogRecord.Provider("zq"), event.modify(_.wikidata).setTo(Some(WikidataId("Troy")))).toOption.get
+    val noItem = PluginEvents
+      .record(CatalogRecord.Provider("zq"), event.modify(_.wikidata).setTo(Some(WikidataId("Troy"))))
+      .toOption
+      .get
     assertEquals((noItem.record.lat, noItem.record.wikidata), (Some(36.4), None))
     assertEquals(
       noItem.warnings,
@@ -153,7 +169,34 @@ class SpiValuesSuite extends munit.FunSuite:
 
   test("a query asks for the import's years and area as the SPI's values"):
     assertEquals(
-      PluginEvents.query(Some(DeepTime.SignedYear(-3000L)), DeepTime.SignedYear(2026L), Some(BBox(com.histmersion.api.catalogue.Longitude(-10), com.histmersion.api.catalogue.Latitude(30), com.histmersion.api.catalogue.Longitude(40), com.histmersion.api.catalogue.Latitude(50)))),
+      PluginEvents.query(
+        Some(DeepTime.SignedYear(-3000L)),
+        DeepTime.SignedYear(2026L),
+        Some(
+          BBox(
+            com.histmersion.api.catalogue.Longitude(-10),
+            com.histmersion.api.catalogue.Latitude(30),
+            com.histmersion.api.catalogue.Longitude(40),
+            com.histmersion.api.catalogue.Latitude(50)
+          )
+        )
+      ),
       CatalogueQuery(Some(Year(-3000)), Year(2026), Some((Longitude(-10), Latitude(30), Longitude(40), Latitude(50))))
     )
-    assertEquals(PluginEvents.query(None, DeepTime.SignedYear(2026L), Some(BBox(com.histmersion.api.catalogue.Longitude(-10), com.histmersion.api.catalogue.Latitude(30), com.histmersion.api.catalogue.Longitude(400), com.histmersion.api.catalogue.Latitude(50)))).area, None)
+    assertEquals(
+      PluginEvents
+        .query(
+          None,
+          DeepTime.SignedYear(2026L),
+          Some(
+            BBox(
+              com.histmersion.api.catalogue.Longitude(-10),
+              com.histmersion.api.catalogue.Latitude(30),
+              com.histmersion.api.catalogue.Longitude(400),
+              com.histmersion.api.catalogue.Latitude(50)
+            )
+          )
+        )
+        .area,
+      None
+    )

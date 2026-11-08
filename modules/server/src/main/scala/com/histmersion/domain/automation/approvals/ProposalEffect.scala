@@ -6,4 +6,3 @@ package domain.automation.approvals
   */
 trait ProposalEffect:
   def proposal(payload: ApprovalEffects.Payload): Option[() => Either[ApprovalEffects.Problem, String]]
-

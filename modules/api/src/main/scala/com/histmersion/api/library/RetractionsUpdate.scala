@@ -16,7 +16,8 @@ final case class RetractionsUpdate(
     running: RetractionsUpdate.Running = RetractionsUpdate.Running(false),
     error: Option[RetractionsUpdate.Error] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object RetractionsUpdate:
   type Rows = Rows.T

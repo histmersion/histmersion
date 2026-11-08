@@ -15,7 +15,10 @@ class AssetReconcileSuite extends munit.FunSuite:
       existing = List(name("a") -> sha('1'), name("b") -> sha('2'), name("c") -> sha('3'), name("d") -> sha('2')),
       incoming = List(name("a") -> sha('9'), name("e") -> sha('2'), name("f") -> sha('2'), name("g") -> sha('7'))
     )
-    assertEquals(r, Reconciled(renames = List(name("b") -> name("e"), name("d") -> name("f")), deletes = List(NewFigure.Name("c"))))
+    assertEquals(
+      r,
+      Reconciled(renames = List(name("b") -> name("e"), name("d") -> name("f")), deletes = List(NewFigure.Name("c")))
+    )
     assertEquals(Reconciled.of(List(name("a") -> sha('1')), List(name("a") -> sha('1'))), Reconciled(Nil, Nil))
     // a name match wins over a sha256 match elsewhere: `b` keeps its name even though `a`'s picture moved there
     assertEquals(

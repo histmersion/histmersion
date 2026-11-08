@@ -27,8 +27,14 @@ class OffsetPageSuite extends munit.FunSuite:
 
   test("header: the whole list, or how much of it"):
     assertEquals(OffsetPage.header(OffsetPage(RowCount(7), Offset(0), RowCount(7)), "event(s)"), "### 7 event(s)")
-    assertEquals(OffsetPage.header(OffsetPage(RowCount(412), Offset(0), RowCount(50)), "event(s)"), "### 50 of 412 event(s)")
-    assertEquals(OffsetPage.header(OffsetPage(RowCount(412), Offset(400), RowCount(12)), "event(s)"), "### 12 of 412 event(s)")
+    assertEquals(
+      OffsetPage.header(OffsetPage(RowCount(412), Offset(0), RowCount(50)), "event(s)"),
+      "### 50 of 412 event(s)"
+    )
+    assertEquals(
+      OffsetPage.header(OffsetPage(RowCount(412), Offset(400), RowCount(12)), "event(s)"),
+      "### 12 of 412 event(s)"
+    )
 
   test("footer: empty for the whole list; the range and the next offset otherwise"):
     assertEquals(OffsetPage.footer(OffsetPage(RowCount(7), Offset(0), RowCount(7))), "")
@@ -36,12 +42,17 @@ class OffsetPageSuite extends munit.FunSuite:
       OffsetPage.footer(OffsetPage(RowCount(412), Offset(50), RowCount(50))),
       "\n\n_showing 51–100 of 412 — next: offset=100 — full set: limit=412_"
     )
-    assertEquals(OffsetPage.footer(OffsetPage(RowCount(412), Offset(400), RowCount(12))), "\n\n_showing 401–412 of 412 — full set: limit=412_")
+    assertEquals(
+      OffsetPage.footer(OffsetPage(RowCount(412), Offset(400), RowCount(12))),
+      "\n\n_showing 401–412 of 412 — full set: limit=412_"
+    )
     assert(!OffsetPage.footer(OffsetPage(RowCount(9000), Offset(0), RowCount(50))).contains("full set"))
 
   test("markdown: the empty text, and past the end says so"):
     assertEquals(
-      OffsetPage.markdown(OffsetPage(RowCount(0), Offset(0), RowCount(0)), "goal(s)", "_No goals._", Nil)((_: Int).toString),
+      OffsetPage.markdown(OffsetPage(RowCount(0), Offset(0), RowCount(0)), "goal(s)", "_No goals._", Nil)(
+        (_: Int).toString
+      ),
       "_No goals._"
     )
     assert(
@@ -52,7 +63,13 @@ class OffsetPageSuite extends munit.FunSuite:
     )
 
   private val g = Goal(Goal.Slug("g1"), Goal.Title("A goal"), Goal.StatusValue("planned"))
-  private def ev(i: Int) = EventSummary(Event.Id(s"e$i"), EventSummary.Label(s"Event $i"), EventSummary.Kind("battle"), TimeSpan(), EventSummary.Historicity("attested"))
+  private def ev(i: Int) = EventSummary(
+    Event.Id(s"e$i"),
+    EventSummary.Label(s"Event $i"),
+    EventSummary.Kind("battle"),
+    TimeSpan(),
+    EventSummary.Historicity("attested")
+  )
 
   test("every paged list prints its footer: events, goals, attestations, asset links, pictures (#1798)"):
     val events = EventsMarkdown.eventList(EventList.of(EventList.Total(412), List(ev(1), ev(2)), UnreadPage.Offset(50)))

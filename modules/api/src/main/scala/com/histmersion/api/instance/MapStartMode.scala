@@ -14,5 +14,5 @@ object MapStartMode:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
-
-  def parse(s: Wire): MapStartMode = values.find(_.wire == Wire(Option(s).fold("")((_).value.trim.toLowerCase))).getOrElse(Last)
+  def parse(s: Wire): MapStartMode =
+    values.find(_.wire == Wire(Option(s).fold("")((_).value.trim.toLowerCase))).getOrElse(Last)

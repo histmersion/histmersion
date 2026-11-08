@@ -26,16 +26,30 @@ class GeoPickSuite extends munit.FunSuite:
     assertEquals(GeoPick.resolve(None, Some(Year(-3)), Some(Year(0)), GeoPick.Mid), At(Year((-3L + 0L) / 2)))
 
   test("the range picks keep the whole range; reversed bounds are put in order; one year is a snapshot"):
-    assertEquals(GeoPick.resolve(None, Some(Year(1000)), Some(Year(1500)), GeoPick.Earliest), Within(Year(1000), Year(1500), latest = Within.Latest(false)))
-    assertEquals(GeoPick.resolve(None, Some(Year(1500)), Some(Year(1000)), GeoPick.Latest), Within(Year(1000), Year(1500), latest = Within.Latest(true)))
+    assertEquals(
+      GeoPick.resolve(None, Some(Year(1000)), Some(Year(1500)), GeoPick.Earliest),
+      Within(Year(1000), Year(1500), latest = Within.Latest(false))
+    )
+    assertEquals(
+      GeoPick.resolve(None, Some(Year(1500)), Some(Year(1000)), GeoPick.Latest),
+      Within(Year(1000), Year(1500), latest = Within.Latest(true))
+    )
     assertEquals(GeoPick.resolve(None, Some(Year(1200)), Some(Year(1200)), GeoPick.Latest), At(Year(1200)))
-    assertEquals(GeoPick.resolve(None, Some(Year(1200)), None, GeoPick.Earliest), At(Year(1200)), "one bound alone is that year")
+    assertEquals(
+      GeoPick.resolve(None, Some(Year(1200)), None, GeoPick.Earliest),
+      At(Year(1200)),
+      "one bound alone is that year"
+    )
     assertEquals(GeoPick.resolve(None, None, Some(Year(-700)), GeoPick.Mid), At(Year(-700)))
 
   test("without a range `asOf` is the year (the old query), and without it nothing is time-sliced"):
     assertEquals(GeoPick.resolve(Some(Year(-1200)), None, None, GeoPick.Earliest), At(Year(-1200)))
     assertEquals(GeoPick.resolve(None, None, None, GeoPick.Mid), Always)
-    assertEquals(GeoPick.resolve(Some(Year(-1200)), Some(Year(0)), Some(Year(100)), GeoPick.Start), At(Year(0)), "a range wins over asOf")
+    assertEquals(
+      GeoPick.resolve(Some(Year(-1200)), Some(Year(0)), Some(Year(100)), GeoPick.Start),
+      At(Year(0)),
+      "a range wins over asOf"
+    )
 
   test("the window a time rule reads"):
     assertEquals(Always.window, None)

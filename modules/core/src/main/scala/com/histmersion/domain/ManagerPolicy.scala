@@ -73,8 +73,8 @@ object ManagerPolicy:
   type ItemTask = ItemTask.T
   object ItemTask extends Newtype[String, Pure]
 
-  /** What an item of a manager does: reviews an article, infers its coverage filter, plans a goal, proposes its articles,
-    * sweeps for acquisitions or checks currency.
+  /** What an item of a manager does: reviews an article, infers its coverage filter, plans a goal, proposes its
+    * articles, sweeps for acquisitions or checks currency.
     */
   type ItemKind = ItemKind.T
   object ItemKind extends Newtype[String, Pure]:
@@ -261,7 +261,11 @@ object ManagerPolicy:
       object Failures extends Newtype[Int, Pure]
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
-  def backoff(baseMinutes: ReviewSettings.BackoffMinutes, maxMinutes: ReviewSettings.MaxBackoffMinutes, failures: Next.Retry.Failures): Duration =
+  def backoff(
+      baseMinutes: ReviewSettings.BackoffMinutes,
+      maxMinutes: ReviewSettings.MaxBackoffMinutes,
+      failures: Next.Retry.Failures
+  ): Duration =
     val exp = math.min(30, math.max(0, failures.value - 1))
     val mins = math.min(maxMinutes.value.toLong, baseMinutes.value.toLong * (1L << exp))
     Duration.ofMinutes(math.max(1L, mins))
@@ -359,7 +363,8 @@ object ManagerPolicy:
       (kind == ItemKind.ProposeArticles && open.contains((ItemKind.PlanGoalItem, target)))
 
   /** The item kinds whose target is a goal. */
-  val GoalKinds: Set[ItemKind] = Set(ItemKind.PlanGoalItem, ItemKind.ProposeArticles, ItemKind.AcquisitionSweep, ItemKind.CurrencyCheck)
+  val GoalKinds: Set[ItemKind] =
+    Set(ItemKind.PlanGoalItem, ItemKind.ProposeArticles, ItemKind.AcquisitionSweep, ItemKind.CurrencyCheck)
 
   /** Must an item of `kind` (whose pipeline is `pipeline`) wait for the unsettled runs on its target (their pipelines)?
     * On an article or a source: any of them (one writer at a time). On a goal — its plan, its article proposal, its
@@ -373,7 +378,12 @@ object ManagerPolicy:
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
 
   /** What dispatch needs of an item. */
-  final case class Candidate(id: Candidate.Id, target: Candidate.Target, priority: Candidate.Priority, notBefore: Option[Instant])
+  final case class Candidate(
+      id: Candidate.Id,
+      target: Candidate.Target,
+      priority: Candidate.Priority,
+      notBefore: Option[Instant]
+  )
 
   object Candidate:
     type Id = Id.T
@@ -481,13 +491,23 @@ object ManagerPolicy:
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   /** Does a structured hint effect name this target (by slug, or by one of its tags/topics/goals)? */
-  def matches(e: HintEffect, target: Candidate.Target, tags: List[Tag], topics: List[Topic], goals: List[Goal.Slug]): Boolean =
+  def matches(
+      e: HintEffect,
+      target: Candidate.Target,
+      tags: List[Tag],
+      topics: List[Topic],
+      goals: List[Goal.Slug]
+  ): Boolean =
     def eq(a: String, b: String) = a.trim.equalsIgnoreCase(b.trim)
     e.targets.exists(t => eq(t.value, target.value)) || e.tag.exists(t => tags.exists(x => eq(x.value, t.value))) ||
-    e.topic.exists(t => topics.exists(x => eq(x.value, t.value))) || e.goal.exists(g => goals.exists(x => eq(x.value, g.value)))
+    e.topic.exists(t => topics.exists(x => eq(x.value, t.value))) || e.goal.exists(g =>
+      goals.exists(x => eq(x.value, g.value))
+    )
 
   /** The notes a run is given: the manager's live standing hints and unconsumed once-hints, manager-wide or about this
     * item, oldest first.
     */
   def notesFor(hints: List[ManagerHint], itemId: ItemId): List[ManagerHint] =
-    hints.filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty).sortBy(h => h.id.value: Long)
+    hints
+      .filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty)
+      .sortBy(h => h.id.value: Long)

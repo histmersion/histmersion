@@ -32,7 +32,13 @@ class ArticleEditsSuite extends munit.FunSuite:
     assertEquals(
       applyAll(
         Body,
-        List(e(Op.InsertAfter, Anchor("Two dates are argued [[knapp2016_tin]]."), Some(NewText("\n\nA third is not [[knapp2016_tin]]."))))
+        List(
+          e(
+            Op.InsertAfter,
+            Anchor("Two dates are argued [[knapp2016_tin]]."),
+            Some(NewText("\n\nA third is not [[knapp2016_tin]]."))
+          )
+        )
       ).body,
       BodyText.replace(
         "Two dates are argued [[knapp2016_tin]].",
@@ -56,11 +62,14 @@ class ArticleEditsSuite extends munit.FunSuite:
       val r = applyAll(Body, List(e(Op.Replace, Anchor("by sea"), t)))
       assertEquals(r.body, Body, s"text ${t.fold("null")(x => s"'${x.value}'")}: nothing changed")
       assert(
-        r.problems.head.value.endsWith("a replace with no new text — give the text, or use delete to remove the passage"),
+        r.problems.head.value
+          .endsWith("a replace with no new text — give the text, or use delete to remove the passage"),
         r.problems
       )
     assert(applyAll(Body, List(EditAnswer(Op.Delete, Anchor(null), None))).problems.head.value.contains("no anchor"))
-    assert(applyAll(Body, List(e(Op.InsertBefore, Anchor("by sea"), None))).problems.head.value.endsWith("no text to insert"))
+    assert(
+      applyAll(Body, List(e(Op.InsertBefore, Anchor("by sea"), None))).problems.head.value.endsWith("no text to insert")
+    )
     // from the wire: "text": null decodes as absent
     val js = """[{"op":"replace","anchor":"by sea","text":null}]"""
     val decoded = io.circe.parser.decode[List[EditAnswer]](js).fold(e => fail(e.getMessage), identity)
@@ -77,7 +86,11 @@ class ArticleEditsSuite extends munit.FunSuite:
   test("a missing or ambiguous anchor is a problem naming the edit and the anchor's head; the edit is skipped"):
     val r = applyAll(
       Body,
-      List(e(Op.Replace, Anchor("by land"), Some(NewText("by sea"))), e(Op.Delete, Anchor("[[knapp2016_tin]].")), e(Op.Replace, Anchor("Tin"), Some(NewText("Tin metal"))))
+      List(
+        e(Op.Replace, Anchor("by land"), Some(NewText("by sea"))),
+        e(Op.Delete, Anchor("[[knapp2016_tin]].")),
+        e(Op.Replace, Anchor("Tin"), Some(NewText("Tin metal")))
+      )
     )
     assertEquals(r.body, BodyText.replace("Tin reached", "Tin metal reached"), "the third edit still applies")
     val ps = r.problems.map(_.value)
@@ -85,18 +98,34 @@ class ArticleEditsSuite extends munit.FunSuite:
     assert(ps.head.startsWith("edit 1 (replace \"by land\"): the anchor is not in the article"), ps.head)
     assert(ps(1).startsWith("edit 2 (delete \"[[knapp2016_tin]].\"): the anchor occurs 3 times"), ps(1))
     assertEquals(r.results.map(_.applied), List(false, false, true))
-    assert(applyAll(Body, List(e(Op.InsertAfter, Anchor("  "), Some(NewText("x"))))).problems.head.value.contains("no anchor"))
-    assert(applyAll(Body, List(e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" "))))).problems.head.value.endsWith("no text to insert"))
+    assert(
+      applyAll(Body, List(e(Op.InsertAfter, Anchor("  "), Some(NewText("x"))))).problems.head.value
+        .contains("no anchor")
+    )
+    assert(
+      applyAll(Body, List(e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" "))))).problems.head.value
+        .endsWith("no text to insert")
+    )
 
   test("edits apply in order: a later anchor is looked up in the text the earlier ones produced"):
-    val es = List(e(Op.Replace, Anchor("by sea"), Some(NewText("by the sea route"))), e(Op.InsertAfter, Anchor("the sea route"), Some(NewText(" from Cyprus"))))
+    val es = List(
+      e(Op.Replace, Anchor("by sea"), Some(NewText("by the sea route"))),
+      e(Op.InsertAfter, Anchor("the sea route"), Some(NewText(" from Cyprus")))
+    )
     assertEquals(applyAll(Body, es).body, BodyText.replace("by sea", "by the sea route from Cyprus"))
     // the other order: the second anchor does not exist yet
     assert(applyAll(Body, es.reverse).problems.exists(_.value.startsWith("edit 1 (insertAfter \"the sea route\")")))
 
   test("a refused edit is skipped with its reason; the rest apply"):
-    val es = List(e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" [[ghost2020_x]]"))), e(Op.Replace, Anchor("Two dates"), Some(NewText("Three dates"))))
-    val r = applyAll(Body, es, a => Option.when(a.text.exists(_.value.contains("ghost")))(EditResult.Problem("its text is refused: ghost")))
+    val es = List(
+      e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" [[ghost2020_x]]"))),
+      e(Op.Replace, Anchor("Two dates"), Some(NewText("Three dates")))
+    )
+    val r = applyAll(
+      Body,
+      es,
+      a => Option.when(a.text.exists(_.value.contains("ghost")))(EditResult.Problem("its text is refused: ghost"))
+    )
     assertEquals(r.body, BodyText.replace("Two dates", "Three dates"))
     assertEquals(r.problems, List("edit 1 (insertAfter \"by sea\"): its text is refused: ghost"))
 

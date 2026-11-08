@@ -34,7 +34,6 @@ private[imports] object ImportRepo:
   type Since = Since.T
   object Since extends Newtype[Long, Pure]
 
-
   val Place: Target.TargetType = Target.TargetType("place")
   val Event: Target.TargetType = Target.TargetType("event")
 
@@ -58,7 +57,11 @@ private[imports] object ImportRepo:
     * this provider (neither that place nor that item), or — `since` set, a refresh — not since then; `everyOne` (a
     * refresh with no start) leaves none out.
     */
-  private def placeCandidates(provider: MediaItemRow.Provider, since: Option[Since], everyOne: Boolean = false): String =
+  private def placeCandidates(
+      provider: MediaItemRow.Provider,
+      since: Option[Since],
+      everyOne: Boolean = false
+  ): String =
     s"""WITH used AS (
           SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
           FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id),
@@ -78,7 +81,11 @@ private[imports] object ImportRepo:
 
   private def lit(s: String): String = "'" + s.replace("'", "''") + "'"
 
-  private def eventCandidates(provider: MediaItemRow.Provider, since: Option[Since], everyOne: Boolean = false): String =
+  private def eventCandidates(
+      provider: MediaItemRow.Provider,
+      since: Option[Since],
+      everyOne: Boolean = false
+  ): String =
     s"""SELECT e.id, e.wikidata, e.label FROM events e
         WHERE e.wikidata IS NOT NULL
           AND ($everyOne OR NOT EXISTS (SELECT 1 FROM media_checks c WHERE c.provider = ${lit(provider.value)}
@@ -98,7 +105,10 @@ private[imports] object ImportRepo:
       refresh: Refresh,
       since: Option[Since]
   )(using DbCon): Either[Problem, List[Target]] =
-    (place.flatMap(p => com.histmersion.domain.catalogue.Place.Id.option(p.value.trim)), event.flatMap(e => com.histmersion.domain.catalogue.Event.Id.option(e.value.trim))) match
+    (
+      place.flatMap(p => com.histmersion.domain.catalogue.Place.Id.option(p.value.trim)),
+      event.flatMap(e => com.histmersion.domain.catalogue.Event.Id.option(e.value.trim))
+    ) match
       case (Some(pid), _) =>
         sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
           case None        => Left(Problem(s"No place '${pid.value}'"))
@@ -107,12 +117,17 @@ private[imports] object ImportRepo:
               .map(q => List(Target(Place, Target.Id(pid.value), q, label)))
               .toRight(Problem(s"place '${pid.value}' (${label.value}) has no Wikidata link"))
       case (None, Some(eid)) =>
-        sql"SELECT label, wikidata FROM events WHERE id = $eid".query[(Target.Label, Option[Target.Qid])].run().headOption match
+        sql"SELECT label, wikidata FROM events WHERE id = $eid"
+          .query[(Target.Label, Option[Target.Qid])]
+          .run()
+          .headOption match
           case None                   => Left(Problem(s"No event '${eid.value}'"))
           case Some((label, Some(q))) => Right(List(Target(Event, Target.Id(eid.value), q, label)))
           case Some((label, None))    =>
             Left(
-              Problem(s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`")
+              Problem(
+                s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`"
+              )
             )
       case (None, None) =>
         val n = limit.value.max(1)
@@ -150,8 +165,10 @@ private[imports] object ImportRepo:
     * refresh job.
     */
   def pending(provider: MediaItemRow.Provider, since: Option[Since])(using DbCon): RowCount =
-    val e = Sql.raw(Sql.Text(s"SELECT count(*)::int FROM (${eventCandidates(provider, since)}) x")).frag.query[Int].run().head
-    val p = Sql.raw(Sql.Text(s"SELECT count(*)::int FROM (${placeCandidates(provider, since)}) x")).frag.query[Int].run().head
+    val e =
+      Sql.raw(Sql.Text(s"SELECT count(*)::int FROM (${eventCandidates(provider, since)}) x")).frag.query[Int].run().head
+    val p =
+      Sql.raw(Sql.Text(s"SELECT count(*)::int FROM (${placeCandidates(provider, since)}) x")).frag.query[Int].run().head
     RowCount(e + p)
 
   // ── which places and events a collection or the depictions import asks (#1446) ──────────────
@@ -159,7 +176,12 @@ private[imports] object ImportRepo:
   /** The places on the map — those holding findings — not asked yet by `check` (by place id: a collection is searched
     * by name, so equivalents with another id are asked on their own).
     */
-  private def mapPlaces(check: MediaItemRow.Provider, since: Option[Since], everyOne: Boolean, pleiadesOnly: Boolean): String =
+  private def mapPlaces(
+      check: MediaItemRow.Provider,
+      since: Option[Since],
+      everyOne: Boolean,
+      pleiadesOnly: Boolean
+  ): String =
     s"""WITH used AS (
           SELECT fp.place_id, count(*) AS n, count(DISTINCT f.citekey) AS s
           FROM finding_places fp JOIN findings f ON f.id = fp.finding_id GROUP BY fp.place_id)
@@ -191,14 +213,19 @@ private[imports] object ImportRepo:
     val n = limit.value.max(1)
     val asOf = if refresh.value then since else None
     val everyOne = refresh.value && since.isEmpty
-    (place.flatMap(p => com.histmersion.domain.catalogue.Place.Id.option(p.value.trim)), event.flatMap(e => com.histmersion.domain.catalogue.Event.Id.option(e.value.trim))) match
+    (
+      place.flatMap(p => com.histmersion.domain.catalogue.Place.Id.option(p.value.trim)),
+      event.flatMap(e => com.histmersion.domain.catalogue.Event.Id.option(e.value.trim))
+    ) match
       case (Some(pid), _) =>
         if !places.value then Left(Problem("this import is about events: name one with --event"))
         else
           sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
-            case None                                                                    => Left(Problem(s"No place '${pid.value}'"))
+            case None => Left(Problem(s"No place '${pid.value}'"))
             case Some(l) if pleiadesOnly.value && pleiadesIdsIn(List(pid)).isEmpty =>
-              Left(Problem(s"place '${pid.value}' (${l.value}) has no Pleiades id (its own, or an exact Pleiades link)"))
+              Left(
+                Problem(s"place '${pid.value}' (${l.value}) has no Pleiades id (its own, or an exact Pleiades link)")
+              )
             case Some(l) => Right(List(Target(Place, Target.Id(pid.value), Target.Qid(""), l)))
       case (None, Some(eid)) =>
         if places.value then Left(Problem("this import is about places: name one with --place"))
@@ -211,7 +238,9 @@ private[imports] object ImportRepo:
             case Some((label, Some(q))) => Right(List(Target(Event, Target.Id(eid.value), q, label)))
             case Some((label, None))    =>
               Left(
-                Problem(s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`")
+                Problem(
+                  s"event '${eid.value}' (${label.value}) has no Wikidata item — set one with `histmersion events patch ${eid.value} --wikidata Q…`"
+                )
               )
       case (None, None) =>
         if places.value then
@@ -241,14 +270,16 @@ private[imports] object ImportRepo:
           )
 
   /** How many places (`places`) or events a collection or the depictions import has still to ask. */
-  def collectionPending(check: MediaItemRow.Provider, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly)(using
-      DbCon
+  def collectionPending(check: MediaItemRow.Provider, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly)(
+      using DbCon
   ): RowCount =
     val q = if places.value then mapPlaces(check, since, everyOne = false, pleiadesOnly.value)
     else eventCandidates(check, since, everyOne = false)
     RowCount(Sql.raw(Sql.Text(s"SELECT count(*)::int FROM ($q) x")).frag.query[Int].run().head)
 
-  def placeFacts(ids: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] =
+  def placeFacts(
+      ids: List[com.histmersion.domain.catalogue.Place.Id]
+  )(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] =
     if ids.isEmpty then Map.empty
     else
       sql"""SELECT p.id, p.label,
@@ -283,32 +314,44 @@ private[imports] object ImportRepo:
         .run()
         .toList
         .map { (id, label, keys, lo, hi, q, lat, lon) =>
-          com.histmersion.domain.catalogue.Place.Id.applyUnsafe(id) -> PlaceFacts(PlaceFacts.Id(id), label, keys.toSet, lo.zip(hi), q, lat, lon)
+          com.histmersion.domain.catalogue.Place.Id
+            .applyUnsafe(id) -> PlaceFacts(PlaceFacts.Id(id), label, keys.toSet, lo.zip(hi), q, lat, lon)
         }
         .toMap
 
   /** The Pleiades ids of places: a `pleiades_<n>` place is that record alone; another place has its exact Pleiades
     * links, in order. Places without one are left out.
     */
-  def pleiadesIds(ids: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
+  def pleiadesIds(ids: List[com.histmersion.domain.catalogue.Place.Id])(using
+      DbCon
+  ): Map[com.histmersion.domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
     if ids.isEmpty then Map.empty else pleiadesIdsIn(ids)
 
-  private def pleiadesIdsIn(ids: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
+  private def pleiadesIdsIn(ids: List[com.histmersion.domain.catalogue.Place.Id])(using
+      DbCon
+  ): Map[com.histmersion.domain.catalogue.Place.Id, List[ExternalIds.ExternalId]] =
     val own =
       ids.flatMap(id => ExternalIds.ofPlaceId(id).filter(_._1 == ExternalIds.Pleiades).map(p => id -> List(p._2))).toMap
     val rest = ids.filterNot(own.contains)
     val linked =
       if rest.isEmpty then Map.empty
-      else sql"""SELECT place_id, external_id FROM place_links WHERE place_id = ANY($rest::text[])
+      else
+        sql"""SELECT place_id, external_id FROM place_links WHERE place_id = ANY($rest::text[])
                   AND scheme = 'pleiades' AND relation = 'exact_match' AND external_id ~ '^[0-9]+$$'
-                  ORDER BY place_id, external_id""".query[(com.histmersion.domain.catalogue.Place.Id, ExternalIds.ExternalId)].run().toList.groupMap(_._1)(_._2)
+                  ORDER BY place_id, external_id"""
+          .query[(com.histmersion.domain.catalogue.Place.Id, ExternalIds.ExternalId)]
+          .run()
+          .toList
+          .groupMap(_._1)(_._2)
     own ++ linked
 
   /** The gazetteer ids each place carries — its own id's (`pleiades_570491` → `pleiades:570491`) and its exact
     * Pleiades, GeoNames and Wikidata links — as [[ExternalIds]] pairs, to match a record that names its place by such
     * an id.
     */
-  def placeExternalIds(ids: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] =
+  def placeExternalIds(
+      ids: List[com.histmersion.domain.catalogue.Place.Id]
+  )(using DbCon): Map[com.histmersion.domain.catalogue.Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] =
     if ids.isEmpty then Map.empty
     else
       val linked =
@@ -326,7 +369,9 @@ private[imports] object ImportRepo:
   /** The places ON THE MAP (holding findings) carrying each gazetteer id — as their own id (`pleiades_697725`) or an
     * exact link.
     */
-  def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)])(using DbCon): Map[(ExternalIds.Scheme, ExternalIds.ExternalId), List[PlaceFacts]] =
+  def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)])(using
+      DbCon
+  ): Map[(ExternalIds.Scheme, ExternalIds.ExternalId), List[PlaceFacts]] =
     val ws = ids
       .filter((s, e) => Set(ExternalIds.Pleiades, ExternalIds.GeoNames, ExternalIds.Wikidata)(s) && e.value.nonEmpty)
       .distinct
@@ -378,7 +423,9 @@ private[imports] object ImportRepo:
   // ── what was asked ───────────────────────────────────────────────────────────────────────────
 
   /** Record a place's Commons category (Wikidata P373) as a link of the place. Returns whether new. */
-  def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: Category, qid: Target.Qid)(using DbCon): Boolean =
+  def commonsCategory(placeId: com.histmersion.domain.catalogue.Place.Id, category: Category, qid: Target.Qid)(using
+      DbCon
+  ): Boolean =
     sql"""INSERT INTO place_links (place_id, scheme, external_id, relation, import_source, import_ref)
           VALUES ($placeId, 'commons', $category, 'see_also', 'media:wikidata', $qid)
           ON CONFLICT (place_id, scheme, external_id) DO NOTHING""".update.run() > 0
@@ -386,7 +433,13 @@ private[imports] object ImportRepo:
   /** Remember that `provider` was asked about a place, event or source (by its Wikidata item `qid`, when it has one),
     * and how many pictures it gave.
     */
-  def checked(provider: MediaItemRow.Provider, targetType: Target.TargetType, targetId: Target.Id, found: RowCount, qid: Option[Target.Qid])(using
+  def checked(
+      provider: MediaItemRow.Provider,
+      targetType: Target.TargetType,
+      targetId: Target.Id,
+      found: RowCount,
+      qid: Option[Target.Qid]
+  )(using
       DbCon
   ): Unit =
     val _ = sql"""INSERT INTO media_checks (provider, target_type, target_id, checked_at, found, qid)

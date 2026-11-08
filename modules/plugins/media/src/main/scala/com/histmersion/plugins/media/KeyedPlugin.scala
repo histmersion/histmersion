@@ -17,7 +17,11 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
   type Config = KeyedPlugin.Config
 
   /** The collection over the media settings and the key, when one is set. */
-  protected def collection(c: KeyedPlugin.Config, key: Option[KeyedCollection.Key], ctx: Plugin.Context): MediaCollection
+  protected def collection(
+      c: KeyedPlugin.Config,
+      key: Option[KeyedCollection.Key],
+      ctx: Plugin.Context
+  ): MediaCollection
 
   def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     c.apiKey
@@ -43,6 +47,5 @@ object KeyedPlugin:
   object Id extends Newtype[String, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-
 
   final case class Config(apiKey: Option[Secret], media: MediaSettings) derives ConfigReader

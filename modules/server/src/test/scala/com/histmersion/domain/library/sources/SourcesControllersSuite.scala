@@ -30,15 +30,32 @@ import com.histmersion.api.library.Title
 class SourcesControllersSuite extends munit.FunSuite:
 
   private val formatting = new SourceFormatting:
-    def issues(summary: Option[com.histmersion.domain.library.Source.Summary], notes: Option[SourceNote.Text]): List[FormatIssue] =
+    def issues(
+        summary: Option[com.histmersion.domain.library.Source.Summary],
+        notes: Option[SourceNote.Text]
+    ): List[FormatIssue] =
       (summary.map(_.value).toList ++ notes.map(_.value).toList)
         .filter(_.contains("<div>"))
         .map(_ =>
-          FormatIssue(FormatRule.HtmlTag, FormatSeverity.Error, FormatField.Notes, FormatIssue.Line(1), FormatIssue.Column(1), FormatIssue.Excerpt("<div>"), FormatIssue.Message("never closed"))
+          FormatIssue(
+            FormatRule.HtmlTag,
+            FormatSeverity.Error,
+            FormatField.Notes,
+            FormatIssue.Line(1),
+            FormatIssue.Column(1),
+            FormatIssue.Excerpt("<div>"),
+            FormatIssue.Message("never closed")
+          )
         )
-    def fix(text: com.histmersion.domain.library.Source.Text, field: FormatField): (com.histmersion.domain.library.Source.Text, List[com.histmersion.domain.library.Source.Text]) =
+    def fix(
+        text: com.histmersion.domain.library.Source.Text,
+        field: FormatField
+    ): (com.histmersion.domain.library.Source.Text, List[com.histmersion.domain.library.Source.Text]) =
       if text.value.contains("  ") then
-        (com.histmersion.domain.library.Source.Text(text.value.replace("  ", " ")), List(com.histmersion.domain.library.Source.Text("double space")))
+        (
+          com.histmersion.domain.library.Source.Text(text.value.replace("  ", " ")),
+          List(com.histmersion.domain.library.Source.Text("double space"))
+        )
       else (text, Nil)
     def refusal(issues: List[FormatIssue]): Option[SourceFormatting.Problem] =
       Option.when(issues.nonEmpty)(SourceFormatting.Problem("refused (strict)"))
@@ -47,13 +64,16 @@ class SourcesControllersSuite extends munit.FunSuite:
   private val originals = new SourceOriginals:
     def find(plan: SourceDeletePlan): List[SourceOriginals.FindResult] =
       List(SourceOriginals.FindResult(s"/spool/${plan.deletion.citekey}.pdf"))
-    def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemoveResult] = { removed.set(files); Nil }
+    def remove(files: List[SourceOriginals.RemoveFiles]): List[SourceOriginals.RemoveResult] = {
+      removed.set(files); Nil
+    }
 
   private def controllers(gate: WriteGate = WriteGate()) =
     val state = AtomicReference(LibraryState.empty)
     val sources = SourceService.InMemory(state, LibraryStoreSuite.Ticking(), () => LibraryStoreSuite.Settings)
     val media = new MediaSources:
-      def current(citekey: Citekey): Option[MediaSources.Current] = sources.current(citekey).map(c => MediaSources.Current(c.value))
+      def current(citekey: Citekey): Option[MediaSources.Current] =
+        sources.current(citekey).map(c => MediaSources.Current(c.value))
       def lookup(citekey: Citekey): Either[MediaSources.Error, MediaSources.Key] =
         if sources.load(citekey).isDefined then Right(MediaSources.Key(citekey.value))
         else Left(MediaSources.Error.NotFound)
@@ -78,7 +98,11 @@ class SourcesControllersSuite extends munit.FunSuite:
     )(using new SystemTimer)
 
   private val put =
-    Source.Put(title = Title("Walls"), body = Some(Source.OcrMarkdown("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n")), notes = Some(Source.Notes("ok")))
+    Source.Put(
+      title = Title("Walls"),
+      body = Some(Source.OcrMarkdown("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n")),
+      notes = Some(Source.Notes("ok"))
+    )
 
   private val Walls90 = Citekey("zqa1990_walls")
   private val Walls91 = com.histmersion.api.library.Citekey("zqa1991_walls")
@@ -87,7 +111,10 @@ class SourcesControllersSuite extends munit.FunSuite:
 
   test("a put under a citekey that is not one is refused; a strict put with a formatting error too"):
     val c = controllers()
-    assertEquals(c.parseCitekey(com.histmersion.api.library.Citekey("Not A Key")).flatMap(c.put(_, put)).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(
+      c.parseCitekey(com.histmersion.api.library.Citekey("Not A Key")).flatMap(c.put(_, put)).left.map(_.code),
+      Left(Some(Write.CodeInvalid))
+    )
     assertEquals(
       c.put(Walls90, put.modify(_.notes).setTo(Div), strict = SourcesControllers.PutStrict(true)).left.map(_.message),
       Left("refused (strict)")
@@ -101,12 +128,40 @@ class SourcesControllersSuite extends munit.FunSuite:
     val _ = c.rename(Walls90, Rename.Request(Walls91))
     assertEquals(c.get(Walls90, body = SourcesControllers.GetBody(false)).map(_.source.citekey), Right("zqa1991_walls"))
     assertEquals(c.canonical(Walls90), "zqa1991_walls")
-    assertEquals(c.patch(Walls90, Source.Patch(summary = Some(Source.Summary("s")))).map(_.source.summary), Right(Some("s")))
-    assert(c.markdown(Walls90, SourcesControllers.MarkdownFullText(false)).toOption.get.value.endsWith("(mentioned: zqa1991_walls)"))
-    assert(c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("toc"))).toOption.get.value.contains("Gate"))
-    assert(c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense"))).left.exists(_.message.value.startsWith("unknown section")))
-    assertEquals(c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate"))).map(_.matches), Right(1))
-    assertEquals(c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqnone2000_x"), Api.PassagesQuery.Q("gate"))).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(
+      c.patch(Walls90, Source.Patch(summary = Some(Source.Summary("s")))).map(_.source.summary),
+      Right(Some("s"))
+    )
+    assert(
+      c.markdown(Walls90, SourcesControllers.MarkdownFullText(false))
+        .toOption
+        .get
+        .value
+        .endsWith("(mentioned: zqa1991_walls)")
+    )
+    assert(
+      c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("toc")))
+        .toOption
+        .get
+        .value
+        .contains("Gate")
+    )
+    assert(
+      c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense")))
+        .left
+        .exists(_.message.value.startsWith("unknown section"))
+    )
+    assertEquals(
+      c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqa1990_walls"), Api.PassagesQuery.Q("gate")))
+        .map(_.matches),
+      Right(1)
+    )
+    assertEquals(
+      c.passages(Api.PassagesQuery(com.histmersion.api.library.Citekey("zqnone2000_x"), Api.PassagesQuery.Q("gate")))
+        .left
+        .map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
     assertEquals(c.aliases, List(Source.Alias(Source.Alias.Value("zqa1990_walls"), Walls91)))
 
   test("formatting repaired as one guarded patch; a delete's dry run names the originals, its apply removes them"):

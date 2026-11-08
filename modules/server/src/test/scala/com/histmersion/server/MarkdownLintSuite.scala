@@ -33,8 +33,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     * bold, in a Glossary TABLE with a `|label`), a `_Method_` line with snake_case citekeys, starred reconstructions
     * written as literals, a numbered list, a quote.
     */
-  private val clean = Scan.Text(
-    """# Sea Peoples
+  private val clean = Scan.Text("""# Sea Peoples
       |
       |## Summary
       |
@@ -71,15 +70,15 @@ class MarkdownLintSuite extends munit.FunSuite:
     assert(html(Scan.Text(Pages.linkProse(FullText.Shown.Markdown(clean.value), _ => None).value)).contains("<table>"))
 
   test("[[citekey]] and [[slug]] links are the corpus's link syntax, never a problem"):
-    val md = Scan.Text("Text [[haak2015_massive]], [[bronze_age_collapse]], [[knapp2016]] and [[haak2015_massive|Haak]].\n")
+    val md =
+      Scan.Text("Text [[haak2015_massive]], [[bronze_age_collapse]], [[knapp2016]] and [[haak2015_massive|Haak]].\n")
     assertEquals(body(md), Nil)
     assertEquals(MarkdownLint.issues(md, FormatField.Notes), Nil)
 
   // ── the user's four examples ───────────────────────────────────────────────────────────────
 
   test("example 1: a table right under a paragraph does not render — and --fix adds the blank line"):
-    val md = Scan.Text(
-      """## Festivals
+    val md = Scan.Text("""## Festivals
         |The four festivals mark the quarters [[koch2006_celtic]]:
         || Festival | Date |
         ||---|---|
@@ -107,8 +106,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     assert(m.message.value.contains("3 cells") && m.message.value.contains("2"), m.message)
 
   test("a table row with extra cells (an unescaped pipe) or split across lines"):
-    val md = Scan.Text(
-      """| Site | Date |
+    val md = Scan.Text("""| Site | Date |
         ||---|---|
         || Ugarit | 1185 BCE | burnt |
         || Pylos |
@@ -150,8 +148,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(rules(Scan.Text("snake_case words and frazer1922_goldenbough are fine [[cline2014_year]].\n")), Nil)
 
   test("example 3: links the renderer cannot read"):
-    val md = Scan.Text(
-      """See [the reliefs] (https://example.org/habu) and [the letters](https://example.org/ugarit and
+    val md = Scan.Text("""See [the reliefs] (https://example.org/habu) and [the letters](https://example.org/ugarit and
         |<https://example.org/open and [](https://example.org/x) and [text]() [[cline2014_year]].
         |""".stripMargin)
     val is = body(md)
@@ -163,8 +160,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     assert(f.value.contains("<https://example.org/open>"), f.value)
 
   test("example 3: malformed wikilinks — short a bracket, escaped, padded, not a slug, an embed"):
-    val md = Scan.Text(
-      """A [[cline2014_year] and [drews1993_end]] and \[\[haak2015_massive\]\] and [[ cline2014_year ]]
+    val md = Scan.Text("""A [[cline2014_year] and [drews1993_end]] and \[\[haak2015_massive\]\] and [[ cline2014_year ]]
         |and [[Bronze Age Collapse]] and ![[map.png]] and [[md/haak2015/paper.md]].
         |""".stripMargin)
     val is = body(md)
@@ -172,7 +168,10 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(is.size, 7)
     assertEquals(is.filter(_.severity == FormatSeverity.Warning).size, 2) // escaped and padded render on the page
     val f = fixed(md)
-    assert(f.value.contains("A [[cline2014_year]] and [[drews1993_end]] and [[haak2015_massive]] and [[cline2014_year]]"), f.value)
+    assert(
+      f.value.contains("A [[cline2014_year]] and [[drews1993_end]] and [[haak2015_massive]] and [[cline2014_year]]"),
+      f.value
+    )
     assert(f.value.contains("[[Bronze Age Collapse]]"), "never rewritten — that would be guessing a slug")
 
   test("a Markdown link to a wiki page should be a [[wikilink]] — fixed with its label"):
@@ -184,12 +183,15 @@ class MarkdownLintSuite extends munit.FunSuite:
     val md = Scan.Text("Cline [[cline2014_year]] and [[no_such_page]]; see drews1993_end too.\n")
     assertEquals(rules(md), Nil)
     val ctx =
-      article.modify(_.resolves).setTo(Some(Set("cline2014_year"))).modify(_.isCitekey).setTo(Some(Set("drews1993_end", "cline2014_year")))
+      article
+        .modify(_.resolves)
+        .setTo(Some(Set("cline2014_year")))
+        .modify(_.isCitekey)
+        .setTo(Some(Set("drews1993_end", "cline2014_year")))
     assertEquals(rules(md, ctx), List(FormatRule.WikilinkUnresolved, FormatRule.BareCitekey))
 
   test("example 4: a YAML frontmatter block pasted into the body renders as a rule and a heading"):
-    val md = Scan.Text(
-      """---
+    val md = Scan.Text("""---
         |title: Sea Peoples
         |slug: sea_peoples
         |tags: [bronze_age_collapse]
@@ -220,8 +222,7 @@ class MarkdownLintSuite extends munit.FunSuite:
   // ── structure ──────────────────────────────────────────────────────────────────────────────
 
   test("headings: no space, a stuck #, a skipped level, a second title, duplicates, Sources cited"):
-    val md = Scan.Text(
-      """# Title
+    val md = Scan.Text("""# Title
         |
         |##Summary
         |
@@ -280,7 +281,10 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(rules(indented), List(FormatRule.IndentedCode))
     assert(!html(fixed(indented)).contains("<pre>"))
     // a continuation paragraph inside a numbered list item is NOT code
-    assertEquals(rules(Scan.Text("1. **The name.** Text [[cline2014_year]].\n\n    More of item one [[cline2014_year]].\n")), Nil)
+    assertEquals(
+      rules(Scan.Text("1. **The name.** Text [[cline2014_year]].\n\n    More of item one [[cline2014_year]].\n")),
+      Nil
+    )
 
   test("code spans: an unpaired backtick; a curly quote closing one"):
     assertEquals(rules(Scan.Text("Run `histmersion get and stop [[cline2014_year]].\n")), List(FormatRule.CodeSpan))
@@ -307,8 +311,7 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(rules(Scan.Text("~~old claim~~ [[cline2014_year]].\n")), List(FormatRule.Strikethrough))
 
   test("chatter and placeholders left in the text"):
-    val md = Scan.Text(
-      """Here is the revised article with the changes you asked for.
+    val md = Scan.Text("""Here is the revised article with the changes you asked for.
         |
         |# Sea Peoples
         |
@@ -369,7 +372,16 @@ class MarkdownLintSuite extends munit.FunSuite:
       assert(r.description.value.nonEmpty && !r.wire.value.contains("_"), r.wire)
     }
     val i =
-      FormatIssue(FormatRule.TableNotRendered, FormatSeverity.Error, FormatField.Body, FormatIssue.Line(3), FormatIssue.Column(1), FormatIssue.Excerpt("| a |"), FormatIssue.Message("m"), Some(FormatIssue.Fix("f")))
+      FormatIssue(
+        FormatRule.TableNotRendered,
+        FormatSeverity.Error,
+        FormatField.Body,
+        FormatIssue.Line(3),
+        FormatIssue.Column(1),
+        FormatIssue.Excerpt("| a |"),
+        FormatIssue.Message("m"),
+        Some(FormatIssue.Fix("f"))
+      )
     val j = io.circe.parser.decode[FormatIssue](io.circe.syntax.EncoderOps(i).asJson.noSpaces)
     assertEquals(j, Right(i))
     assert(io.circe.syntax.EncoderOps(i).asJson.noSpaces.contains("\"rule\":\"table-not-rendered\""))
@@ -377,7 +389,8 @@ class MarkdownLintSuite extends munit.FunSuite:
   // ── the page notice ─────────────────────────────────────────────────────────────────────────
 
   test("the page notice: folded, counted, one line per problem, escaped; nothing when clean"):
-    val is = body(Scan.Text("Intro [[cline2014_year]]:\n| A | B |\n|---|---|\n| 1 | 2 |\n\nThe ** x** <b>bold</b> here.\n"))
+    val is =
+      body(Scan.Text("Intro [[cline2014_year]]:\n| A | B |\n|---|---|\n| 1 | 2 |\n\nThe ** x** <b>bold</b> here.\n"))
     val html = Pages.formatNotice(is, "This article", Some(Article.Slug("sea_peoples"))).value
     assert(
       html.startsWith(
@@ -407,7 +420,12 @@ class MarkdownLintSuite extends munit.FunSuite:
       None
     )
     val page =
-      Pages.article(ArticlePage(row, Nil, Nil, MarkdownLint.issues(Scan.Text(row.body.value), FormatField.Body, article)), _ => None).value
+      Pages
+        .article(
+          ArticlePage(row, Nil, Nil, MarkdownLint.issues(Scan.Text(row.body.value), FormatField.Body, article)),
+          _ => None
+        )
+        .value
     assert(
       page.indexOf("format-notice") > page.indexOf("</h1>") && page.indexOf("format-notice") < page.indexOf("<p>The"),
       page
@@ -435,15 +453,27 @@ class MarkdownLintSuite extends munit.FunSuite:
     )
     val md = Scan.Text("# Tin\n\nTin moved [[knapp2016_tin]].\n\n" + Article.Coverage.sections(c))
     assertEquals(body(md), Nil)
-    val page = Pages.article(
-      ArticlePage(
-        Article.Row(Article.Slug("tin"), Article.Title("Tin"), Article.Kind.Wire("concept"), Article.Body("# Tin\n\nTin moved [[knapp2016_tin]]."), None, Nil, Nil, None, None),
-        Nil,
-        Nil,
-        Nil,
-        Some(c)
-      ),
-      _ => None
-    ).value
+    val page = Pages
+      .article(
+        ArticlePage(
+          Article.Row(
+            Article.Slug("tin"),
+            Article.Title("Tin"),
+            Article.Kind.Wire("concept"),
+            Article.Body("# Tin\n\nTin moved [[knapp2016_tin]]."),
+            None,
+            Nil,
+            Nil,
+            None,
+            None
+          ),
+          Nil,
+          Nil,
+          Nil,
+          Some(c)
+        ),
+        _ => None
+      )
+      .value
     assert(page.contains("<h2>Not used</h2>") && page.contains("<ul>") && page.contains("<em>Method: "), page)
     assert(!page.contains("_Method"), "the emphasis renders")

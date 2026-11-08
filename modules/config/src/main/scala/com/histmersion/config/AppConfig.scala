@@ -60,7 +60,10 @@ object AppConfig:
     loadWithUserFile(env, UserPaths.configFile(Environment.of(env).lookup))
 
   /** The same with an explicit environment and file (tests; `file = None`: no location). */
-  def loadWithUserFile(env: org.ekrich.config.Config, file: Option[java.nio.file.Path]): Either[ConfigLayers.Problem, LoadedConfig] =
+  def loadWithUserFile(
+      env: org.ekrich.config.Config,
+      file: Option[java.nio.file.Path]
+  ): Either[ConfigLayers.Problem, LoadedConfig] =
     // Parse reference.conf and resolve ${?ENV} overrides from the given environment only — deliberately
     // NOT ConfigFactory.load(), which folds ALL system properties into HOCON (dotted keys like
     // `io.netty.allocator.type` then collide and blow up sconfig under native-image).
@@ -73,7 +76,14 @@ object AppConfig:
         val merged = ConfigLayers.merged(reference, ConfigFactory.empty, env)
         decode(merged).left
           .map(configError)
-          .map(LoadedConfig(_, UserConfigFile(None, loaded = UserConfigFile.Loaded(false)), env = env, merged = ConfigReload.settings(merged)))
+          .map(
+            LoadedConfig(
+              _,
+              UserConfigFile(None, loaded = UserConfigFile.Loaded(false)),
+              env = env,
+              merged = ConfigReload.settings(merged)
+            )
+          )
       case Some(p) =>
         ConfigLayers.parse(p).left.map(inFile(p)).flatMap {
           case None =>
@@ -127,7 +137,17 @@ object AppConfig:
       _ <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile)
       merged <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile)
       cfg <- decode(merged).left.map(inFile)
-    yield LoadedConfig(cfg, UserConfigFile(p, loaded = UserConfigFile.Loaded(true), keys.unknown.map(u => UserConfigFile.UnknownKeys(u.value))), user, env, ConfigReload.settings(merged))
+    yield LoadedConfig(
+      cfg,
+      UserConfigFile(
+        p,
+        loaded = UserConfigFile.Loaded(true),
+        keys.unknown.map(u => UserConfigFile.UnknownKeys(u.value))
+      ),
+      user,
+      env,
+      ConfigReload.settings(merged)
+    )
 
   /** An environment `Config` as a lookup (its keys are variable names, not paths). */
   def lookup(env: org.ekrich.config.Config): String => Option[String] =

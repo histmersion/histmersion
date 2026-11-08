@@ -47,7 +47,8 @@ class RangeLabelsSuite extends munit.FunSuite:
       assertReadable(p)
 
   test("no room even outside (a bar narrower than both years): one label for both, from the bar's start"):
-    val p = place(UiLabels.Text("3000 BCE"), UiLabels.Text("2990 BCE"), ScreenPixels(40), ScreenPixels(45), ElementSize(80))
+    val p =
+      place(UiLabels.Text("3000 BCE"), UiLabels.Text("2990 BCE"), ScreenPixels(40), ScreenPixels(45), ElementSize(80))
     p match
       case Placement.Joined(l) =>
         assertEquals(l.text, "3000 BCE – 2990 BCE")
@@ -57,5 +58,6 @@ class RangeLabelsSuite extends munit.FunSuite:
   test("every handle position keeps the years readable"):
     for x0 <- 0 to 600 by 7; d <- List(0, 1, 5, 20, 60, 120) do
       val x1 = math.min(bar.value, x0 + d.toDouble)
-      val p = place(UiLabels.Text("12500 BCE"), UiLabels.Text("12480 BCE"), ScreenPixels(x0.toDouble), ScreenPixels(x1), bar)
+      val p =
+        place(UiLabels.Text("12500 BCE"), UiLabels.Text("12480 BCE"), ScreenPixels(x0.toDouble), ScreenPixels(x1), bar)
       assertReadable(p)

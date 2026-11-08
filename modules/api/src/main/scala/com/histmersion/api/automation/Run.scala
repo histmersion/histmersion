@@ -25,7 +25,6 @@ object Run:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     /** The legal transitions. `None` = refuse (the run has moved on). Resume is `Paused → Queued`. */

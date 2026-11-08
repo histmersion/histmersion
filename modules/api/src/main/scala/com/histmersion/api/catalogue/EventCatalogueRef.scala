@@ -19,7 +19,8 @@ final case class EventCatalogueRef(
     deaths: Option[EventCatalogueRef.Deaths] = None,
     retrievedAt: Option[EventCatalogueRef.RetrievedAt] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventCatalogueRef:
   export CatalogRecord.Provider

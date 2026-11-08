@@ -19,5 +19,4 @@ object Shelf:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[Shelf] = values.find(_.wire.value == s.value.trim.toLowerCase)

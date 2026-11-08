@@ -28,15 +28,32 @@ class WikidataCommonsSuite extends munit.FunSuite:
 
   /** The store as a few maps. */
   class MemStore extends MediaStore:
-    val saved = scala.collection.mutable.LinkedHashMap.empty[ProviderAsset.Key, (AssetService.AssetUid, ProviderAsset, (ImportService.TargetType, ImportService.TargetId))]
+    val saved = scala.collection.mutable.LinkedHashMap.empty[
+      ProviderAsset.Key,
+      (AssetService.AssetUid, ProviderAsset, (ImportService.TargetType, ImportService.TargetId))
+    ]
     val links = scala.collection.mutable.LinkedHashSet
-      .empty[(AssetService.AssetUid, ImportService.TargetType, ImportService.TargetId, AssetService.LinkRole, Option[AssetService.LinkProperty], Option[AssetService.LinkItem], AssetService.LinkRank)]
+      .empty[
+        (
+            AssetService.AssetUid,
+            ImportService.TargetType,
+            ImportService.TargetId,
+            AssetService.LinkRole,
+            Option[AssetService.LinkProperty],
+            Option[AssetService.LinkItem],
+            AssetService.LinkRank
+        )
+      ]
     val cats = scala.collection.mutable.LinkedHashSet.empty[(Place.Id, ImportService.CommonsCategory, Wikidata.Id)]
-    val checks = scala.collection.mutable.LinkedHashMap.empty[(ImportService.TargetType, ImportService.TargetId), ImportService.FoundCount]
+    val checks = scala.collection.mutable.LinkedHashMap
+      .empty[(ImportService.TargetType, ImportService.TargetId), ImportService.FoundCount]
     val refreshed = scala.collection.mutable.ListBuffer.empty[(AssetService.AssetUid, Rights)]
     def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
       val wanted = keys.map(_.value).toSet
-      saved.collect { case (k, (uid, a, _)) if wanted(k.value) => AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value))) }.toMap
+      saved.collect {
+        case (k, (uid, a, _)) if wanted(k.value) =>
+          AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
+      }.toMap
     def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId)) =
       val existing = saved.get(a.key).map(_._1)
       val uid = existing.getOrElse(AssetService.AssetUid(f"00000000-0000-0000-0000-${saved.size + 1}%012d"))
@@ -55,8 +72,15 @@ class WikidataCommonsSuite extends munit.FunSuite:
       val before = links.exists(l => l._1 == uid && l._2 == tt && l._3 == ti && l._4 == role)
       links += ((uid, tt, ti, role, p, q, rank))
       !before
-    def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) = cats.add((placeId, category, qid))
-    def checked(provider: ImportService.Provider, tt: ImportService.TargetType, ti: ImportService.TargetId, found: ImportService.FoundCount, qid: Option[Wikidata.Id]) = checks((tt, ti)) = found
+    def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) =
+      cats.add((placeId, category, qid))
+    def checked(
+        provider: ImportService.Provider,
+        tt: ImportService.TargetType,
+        ti: ImportService.TargetId,
+        found: ImportService.FoundCount,
+        qid: Option[Wikidata.Id]
+    ) = checks((tt, ti)) = found
 
   private val wbgetentities = FakeMediaHttp.fixture("wbgetentities.json")
   private val imageinfo = FakeMediaHttp.fixture("imageinfo.json")
@@ -90,7 +114,12 @@ class WikidataCommonsSuite extends munit.FunSuite:
       settings: String = ""
   ): MediaImportReport =
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
-    OwnImport(MediaImporter.ImporterName("wikidata"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("wikidata"), settings), polite, cfg).run(ts, dryRun, refresh, store)
+    OwnImport(
+      MediaImporter.ImporterName("wikidata"),
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("wikidata"), settings),
+      polite,
+      cfg
+    ).run(ts, dryRun, refresh, store)
 
   private val DryOn = MediaImporter.DryRun(true)
   private val DryOff = MediaImporter.DryRun(false)
@@ -113,7 +142,12 @@ class WikidataCommonsSuite extends munit.FunSuite:
     )
     assertEquals(
       r.byRole,
-      List(MediaCount(MediaCount.Key("image"), MediaCount.N(2)), MediaCount(MediaCount.Key("aerial-view"), MediaCount.N(1)), MediaCount(MediaCount.Key("plan"), MediaCount.N(1)), MediaCount(MediaCount.Key("route-map"), MediaCount.N(1)))
+      List(
+        MediaCount(MediaCount.Key("image"), MediaCount.N(2)),
+        MediaCount(MediaCount.Key("aerial-view"), MediaCount.N(1)),
+        MediaCount(MediaCount.Key("plan"), MediaCount.N(1)),
+        MediaCount(MediaCount.Key("route-map"), MediaCount.N(1))
+      )
     )
     assertEquals(
       r.rejected.map(_.key.value).sorted,
@@ -226,27 +260,46 @@ class WikidataCommonsSuite extends munit.FunSuite:
     val r = run(down, dryRun = DryOn)
     assertEquals(r.items, 0)
     assert(r.failed.exists(_.value.startsWith("Wikidata Q404…: www.wikidata.org: HTTP 404")), r.failed.toString)
-    val withNc = FakeMediaHttp.cfg.modify(_.commons).setTo(FakeMediaHttp.cfg.commons.modify(_.licences).setTo(MediaCommonsConfig.Licences("cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa"))
-    )
+    val withNc = FakeMediaHttp.cfg
+      .modify(_.commons)
+      .setTo(
+        FakeMediaHttp.cfg.commons
+          .modify(_.licences)
+          .setTo(MediaCommonsConfig.Licences("cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa"))
+      )
     val store = MemStore()
     val r2 = run(provider(), dryRun = DryOff, store, cfg = withNc)
     assertEquals(r2.stored, 2)
-    assertEquals(store.saved.get(ProviderAsset.Key("File:Mycenae plan NC.png")).map(_._2.kind), Some(Some(AssetKind.Plan)))
+    assertEquals(
+      store.saved.get(ProviderAsset.Key("File:Mycenae plan NC.png")).map(_._2.kind),
+      Some(Some(AssetKind.Plan))
+    )
 
   test("a rendition larger than max-bytes is not stored, and says why"):
     val store = MemStore()
-    val r = run(provider(), dryRun = DryOff, store, cfg = FakeMediaHttp.cfg.modify(_.maxBytes).setTo(MediaConfig.MaxBytes(2L)))
+    val r = run(
+      provider(),
+      dryRun = DryOff,
+      store,
+      cfg = FakeMediaHttp.cfg.modify(_.maxBytes).setTo(MediaConfig.MaxBytes(2L))
+    )
     assertEquals(r.stored, 0)
     assert(r.failed.exists(_.value.contains("larger than media.max-bytes")), r.failed.toString)
 
   test(
     "a picture the store cannot write is a line in the report; the others are stored and every target checked (#1491)"
   ):
-    val withNc = FakeMediaHttp.cfg.modify(_.commons).setTo(FakeMediaHttp.cfg.commons.modify(_.licences).setTo(MediaCommonsConfig.Licences("cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa"))
-    )
+    val withNc = FakeMediaHttp.cfg
+      .modify(_.commons)
+      .setTo(
+        FakeMediaHttp.cfg.commons
+          .modify(_.licences)
+          .setTo(MediaCommonsConfig.Licences("cc0,public-domain,cc-by,cc-by-sa,cc-by-nc-sa"))
+      )
     val store = new MemStore:
       override def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId)) =
-        if a.key == ProviderAsset.Key("File:Mycenae plan NC.png") then throw IllegalStateException("disk full") else super.save(a, first)
+        if a.key == ProviderAsset.Key("File:Mycenae plan NC.png") then throw IllegalStateException("disk full")
+        else super.save(a, first)
     val r = run(provider(), dryRun = DryOff, store, cfg = withNc)
     assertEquals(r.stored, 1)
     assert(

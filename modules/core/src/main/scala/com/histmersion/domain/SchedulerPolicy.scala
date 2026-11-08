@@ -35,7 +35,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 object SchedulerPolicy:
   type StartedNote = StartedNote.T
   object StartedNote extends Newtype[String, Pure]
-  export SchedulerDefaults.{Strategy as StrategyName}
+  export SchedulerDefaults.Strategy as StrategyName
 
   /** A pin is worth this many priority levels. */
   val PinBoost = 1000
@@ -59,7 +59,6 @@ object SchedulerPolicy:
     object Wire extends Newtype[String, Pure]
     type Label = Label.T
     object Label extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[JobType] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 
@@ -242,7 +241,13 @@ object SchedulerPolicy:
   /** A candidate with what the pass computed: the hours it waited, its aging levels, its effective goal priority (the
     * goal's plus aging), and whether it waited past `max-wait-hours`.
     */
-  final case class Scored(c: Candidate, waitedMinutes: Scored.WaitedMinutes, aging: Scored.Aging, effective: Scored.Effective, overdue: Scored.Overdue)
+  final case class Scored(
+      c: Candidate,
+      waitedMinutes: Scored.WaitedMinutes,
+      aging: Scored.Aging,
+      effective: Scored.Effective,
+      overdue: Scored.Overdue
+  )
 
   object Scored:
     type WaitedMinutes = WaitedMinutes.T
@@ -301,7 +306,6 @@ object SchedulerPolicy:
 
     /** Why `x` stands behind `ahead` (the first candidate before it in the order), in a sentence. */
     def behindWhy(x: Scored, ahead: Scored, s: Settings): String
-
 
   private def goalName(x: Scored): String = x.c.goal.fold("library work")(g => s"goal $g")
 
@@ -372,7 +376,12 @@ object SchedulerPolicy:
   /** Why a candidate did not start: a code ([[Code]]), a sentence, the items it waits behind (labels), and its place in
     * the order (1 = next).
     */
-  final case class Wait(code: Wait.Code, why: Wait.Why, behind: List[Wait.Behind] = Nil, position: Wait.Position = Wait.Position(0))
+  final case class Wait(
+      code: Wait.Code,
+      why: Wait.Why,
+      behind: List[Wait.Behind] = Nil,
+      position: Wait.Position = Wait.Position(0)
+  )
 
   object Wait:
     type Code = Block.Code

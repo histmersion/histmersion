@@ -53,8 +53,6 @@ object Cli:
   type Strict = Strict.T
   object Strict extends Newtype[Boolean, Pure]
 
-
-
   def out(using console: Console): Console.Output = console.out
   def err(using console: Console): Console.Output = console.err
 
@@ -126,7 +124,9 @@ object Cli:
       .mapN { (dir, force) => (c: Client) =>
         Option(dir).filter(_.nonEmpty).map(Path.of(_)).filter(Files.isDirectory(_)) match
           case Some(p) => hostSeed(c, p, Api.Overwrite(force))
-          case None    => c.seed(SeedRequest(SeedRequest.Dir(dir), SeedRequest.Force(force))).map(report) // server-side (bind-mounted) corpus
+          case None    =>
+            c.seed(SeedRequest(SeedRequest.Dir(dir), SeedRequest.Force(force)))
+              .map(report) // server-side (bind-mounted) corpus
       }
   }
 
@@ -181,7 +181,8 @@ object Cli:
               )
             case Left(e) => loop(tail, number + 1, imported, failed :+ s"$ck: ${e.message}", skipped)
     val acc = loop(files, 1, 0, Nil, Nil)
-    val done = c.resolveEdges.map(e => report(acc.modify(_.edgesResolved).setTo(SeedResult.EdgesResolved(e.resolved.value))))
+    val done =
+      c.resolveEdges.map(e => report(acc.modify(_.edgesResolved).setTo(SeedResult.EdgesResolved(e.resolved.value))))
     layout.root.fold(done)(root =>
       done.map(_ => ArticleCli.report(ArticleCli.importAll(c, root, force, Set(ArticleCli.WikiLayout.SourcesDir))))
     )
@@ -196,8 +197,7 @@ object Cli:
     Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
       Opts.argument[String]("file.md").map { file => (c: Client) =>
         val p = Path.of(file)
-        if !Files.isRegularFile(p) then
-          Left(Error(Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+        if !Files.isRegularFile(p) then Left(Error(Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
         // an explicit `put` is always deliberate → force past the "newer in DB" guard
         else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
       }
@@ -230,7 +230,7 @@ object Cli:
                 text.value
               )
               None
-            case Left(e)     => Some(s"$ck: ${e.message}")
+            case Left(e) => Some(s"$ck: ${e.message}")
         }
         Cli.out.println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
         // a renamed source's note would otherwise linger under its OLD citekey — and a later
@@ -248,7 +248,10 @@ object Cli:
         meta.flatMap { _ =>
           if failed.nonEmpty then
             Left(
-              Error(Error.Message(s"${failed.size} of $total source(s) could not be exported"), exitCode = ExitCode.Refused)
+              Error(
+                Error.Message(s"${failed.size} of $total source(s) could not be exported"),
+                exitCode = ExitCode.Refused
+              )
             )
           else if only.nonEmpty then Right(())
           else ArticleCli.exportAll(c, articles).map(_ => ())
@@ -258,7 +261,8 @@ object Cli:
   }
 
   /** The directory a kind's notes go in under the export's directory, as the mirror's layout places them. */
-  private def placed(out: Path, placement: MirrorPlacement): Path = placement.directory.fold(out)(d => out.resolve(d.value))
+  private def placed(out: Path, placement: MirrorPlacement): Path =
+    placement.directory.fold(out)(d => out.resolve(d.value))
 
   /** Delete `<sources>/<alias>.md` for every old citekey (V027). Best effort: a server without the alias endpoint, or a
     * file that cannot be removed, is reported and does not fail the export.
@@ -416,8 +420,9 @@ object Cli:
                   asOf.map(Api.AggregateQuery.TreeAsOf(_)),
                   samples.map(Api.AggregateQuery.TreeSamples(_))
                 )
+              ).map(h =>
+                Output.emit(json, h)(SearchMarkdown.tree(_, SearchMarkdown.TreeUnit(unit.getOrElse("sources"))))
               )
-                .map(h => Output.emit(json, h)(SearchMarkdown.tree(_, SearchMarkdown.TreeUnit(unit.getOrElse("sources")))))
     }
   }
 
@@ -437,8 +442,7 @@ object Cli:
         Api.Facets.Field(field),
         prefix.map(Api.Facets.Prefix(_)),
         f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
-      )
-        .map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(Facet.FieldText(field), rs.toVector)))
+      ).map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(Facet.FieldText(field), rs.toVector)))
     }
   }
 
@@ -503,8 +507,7 @@ object Cli:
                 offset.map(Api.SourceViewQuery.Offset(_)),
                 chars.map(Api.SourceViewQuery.Chars(_))
               )
-            )
-              .map(value => out.println(value))
+            ).map(value => out.println(value))
         else
           c.getSource(Citekey(ck))
             .map(sw =>
@@ -554,7 +557,8 @@ object Cli:
         Output.jsonFlag
       )
         .mapN { (region, f, json) => (c: Client) =>
-          c.findingsPage(Api.FindingsQuery(f, region.map(Api.FindingsQuery.Region(_)))).map(p => Output.emit(json, p)(SearchMarkdown.geoPage))
+          c.findingsPage(Api.FindingsQuery(f, region.map(Api.FindingsQuery.Region(_))))
+            .map(p => Output.emit(json, p)(SearchMarkdown.geoPage))
         }
     }
 
@@ -633,7 +637,9 @@ object Cli:
     ).mapN { (file, force, yes) => (c: Client) =>
       if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
       then Left(Error(Error.Message("aborted"), exitCode = ExitCode.Usage))
-      else c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force))).map(r => out.println(Markdown.restored(r)))
+      else
+        c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
+          .map(r => out.println(Markdown.restored(r)))
     }
   }
 
@@ -666,7 +672,8 @@ object Cli:
         Opts.option[Int]("depth", "BFS depth 0–4 (default 2)").orNone,
         Output.jsonFlag
       ).mapN { (ck, depth, json) => (c: Client) =>
-        c.graph(Citekey(ck), depth.map(Source.Graph.DepthCount(_))).map(g => Output.emit(json, g)(SourcesMarkdown.graph))
+        c.graph(Citekey(ck), depth.map(Source.Graph.DepthCount(_)))
+          .map(g => Output.emit(json, g)(SourcesMarkdown.graph))
       }
     }
 
@@ -700,12 +707,13 @@ object Cli:
           Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
         )
           .mapN { (analyze, tables, noWait) => (c: Client) =>
-            c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap { j =>
-              out.println(
-                s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
-                  "(`histmersion jobs` lists it)"
-              )
-              if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
+            c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap {
+              j =>
+                out.println(
+                  s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
+                    "(`histmersion jobs` lists it)"
+                )
+                if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
             }
           }
       }
@@ -765,9 +773,9 @@ object Cli:
         val url = server.getOrElse(Settings.app.cli.serverUrl.value)
         val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
         run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
-          case Right(())                               => ()
+          case Right(())                                     => ()
           case Left(e) if WorkingDir.denied(e.message.value) => err.println(WorkingDir.message); sys.exit(3)
-          case Left(e)                                 => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
+          case Left(e) => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(message: Error.Message, exitCode: ExitCode = ExitCode.Unreachable)

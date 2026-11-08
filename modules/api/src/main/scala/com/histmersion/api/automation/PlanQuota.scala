@@ -22,12 +22,12 @@ object PlanQuota:
   val WindowStateNow: Now.type = Now
   type VerdictNow = Now
   val VerdictNow: Now.type = Now
-  export ModelChains.ChainEntry.{Model as VerdictModel}
+  export ModelChains.ChainEntry.Model as VerdictModel
   type RefreshNeedNow = Now
   val RefreshNeedNow: Now.type = Now
-  export ModelChains.ChainEntry.{Model as RefreshNeedModel}
-  export RefreshInfo.{LastAttempt as RefreshDecisionLastAttempt}
-  export Rules.{MinGap as RefreshDecisionMinGapMs}
+  export ModelChains.ChainEntry.Model as RefreshNeedModel
+  export RefreshInfo.LastAttempt as RefreshDecisionLastAttempt
+  export Rules.MinGap as RefreshDecisionMinGapMs
   type RefreshDecisionNow = Now
   val RefreshDecisionNow: Now.type = Now
 
@@ -42,7 +42,6 @@ object PlanQuota:
     object Wire extends Newtype[String, Pure]
     type Title = Title.T
     object Title extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[PoolId] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
@@ -62,10 +61,13 @@ object PlanQuota:
     object OpencodeChatgpt extends Newtype[Boolean, Pure]
 
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
-    case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == Logins.ClaudeCodeApiKey(true))                              => Some(PoolId.ClaudePlan)
-    case ProviderKind.Codex if !((logins.codexApiKey) == Logins.CodexApiKey(true))                                        => Some(PoolId.ChatgptPlan)
-    case ProviderKind.Opencode if ((logins.opencodeChatgpt) == Logins.OpencodeChatgpt(true)) && m.model.value.startsWith("openai/") => Some(PoolId.ChatgptPlan)
-    case _                                                                                => None
+    case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == Logins.ClaudeCodeApiKey(true)) =>
+      Some(PoolId.ClaudePlan)
+    case ProviderKind.Codex if !((logins.codexApiKey) == Logins.CodexApiKey(true)) => Some(PoolId.ChatgptPlan)
+    case ProviderKind.Opencode
+        if ((logins.opencodeChatgpt) == Logins.OpencodeChatgpt(true)) && m.model.value.startsWith("openai/") =>
+      Some(PoolId.ChatgptPlan)
+    case _ => None
 
   def paid(m: ModelRef, logins: Logins): Boolean =
     (m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty)
@@ -86,7 +88,6 @@ object PlanQuota:
   object Source:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
@@ -129,7 +130,7 @@ object PlanQuota:
     object Wire extends Newtype[String, Pure]
     type OfResult = Floor
     val OfResult: Floor.type = Floor
-    export Reading.{Limit as OfLimit, Kind as OfKind}
+    export Reading.{Kind as OfKind, Limit as OfLimit}
 
     type ByKindKey = ByKindKey.T
     object ByKindKey extends Newtype[String, Pure]
@@ -153,12 +154,17 @@ object PlanQuota:
         case Nil  => Right(Floors(parsed.collect { case Right((k, v)) => ByKindKey(k) -> Floor(v) }.toMap))
         case errs => Left(Problem(errs.mkString("; ")))
 
-  final case class Rules(floors: Floors, defaultFloor: Rules.DefaultFloor, staleMs: Rules.StaleMs, marginPct: Rules.MarginPct)
+  final case class Rules(
+      floors: Floors,
+      defaultFloor: Rules.DefaultFloor,
+      staleMs: Rules.StaleMs,
+      marginPct: Rules.MarginPct
+  )
 
   object Rules:
     type MinGap = MinGap.T
     object MinGap extends Newtype[Long, Pure]
-    export Floors.{Floor as DefaultFloor}
+    export Floors.Floor as DefaultFloor
     type StaleMs = StaleMs.T
     object StaleMs extends Newtype[Long, Pure]
     type MarginPct = MarginPct.T
@@ -198,8 +204,7 @@ object PlanQuota:
     object Blocked:
       type Reason = Reason.T
       object Reason extends Newtype[String, Pure]
-      export Reading.{ResetsAt as Until}
-
+      export Reading.ResetsAt as Until
 
   def current(readings: List[Reading], now: Now, model: Option[ModelChains.ChainEntry.Model] = None): List[Reading] =
     readings
@@ -218,14 +223,21 @@ object PlanQuota:
     val pct = (d: Double) =>
       java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
     val why =
-      if ((r.rejected) == Reading.Rejected(true)) then Some(s"${r.kind}: the provider refuses it")
+      if (r.rejected) == Reading.Rejected(true) then Some(s"${r.kind}: the provider refuses it")
       else if !stale && left <= floor.value then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
       else if stale && left < floor.value + rules.marginPct.value then
         Some(
           s"${r.kind}: ${pct(left)}% left when last read, floor $floor% (+${rules.marginPct} while the reading is stale)"
         )
       else None
-    WindowState(r, floor, WindowStatus.LeftPct(left), WindowState.Stale(stale), WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => WindowState.Why(refactorValue4)))
+    WindowState(
+      r,
+      floor,
+      WindowStatus.LeftPct(left),
+      WindowState.Stale(stale),
+      WindowState.Usable(why.isEmpty),
+      (why).map(refactorValue4 => WindowState.Why(refactorValue4))
+    )
 
   def verdict(
       readings: List[Reading],
@@ -239,14 +251,18 @@ object PlanQuota:
     val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
-      if (held).value then Verdict.Blocked(Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
+      if (held).value then
+        Verdict.Blocked(Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(_.value > now.value)) match
-          case Some((why, until))             => Verdict.Blocked(why, until)
-          case None if blocking.nonEmpty      => Verdict.Blocked(Verdict.Blocked.Reason(blocking.flatMap(_.why).mkString("; ")), earliest)
-          case None if states.isEmpty         => Verdict.Usable(Some(Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
-          case None if states.exists((refactorCallback => ((refactorCallback.stale) == WindowState.Stale(true)))) => Verdict.Usable(Some(Verdict.Usable.Note("the last reading is stale")))
-          case None                           => Verdict.Usable(None)
+          case Some((why, until))        => Verdict.Blocked(why, until)
+          case None if blocking.nonEmpty =>
+            Verdict.Blocked(Verdict.Blocked.Reason(blocking.flatMap(_.why).mkString("; ")), earliest)
+          case None if states.isEmpty =>
+            Verdict.Usable(Some(Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
+          case None if states.exists((refactorCallback => ((refactorCallback.stale) == WindowState.Stale(true)))) =>
+            Verdict.Usable(Some(Verdict.Usable.Note("the last reading is stale")))
+          case None => Verdict.Usable(None)
     (v, states)
 
   enum RefreshMode(val wire: RefreshMode.Wire) derives CanEqual:
@@ -258,8 +274,8 @@ object PlanQuota:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
-    def parse(s: Wire): Option[RefreshMode] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: Wire): Option[RefreshMode] =
+      values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   enum Login derives CanEqual:
     case Present(detail: Present.Detail)
@@ -313,7 +329,13 @@ object PlanQuota:
       if states.isEmpty then Some(RefreshNeed.NoReading)
       else
         val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
-        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == WindowState.Stale(true)) && !((s.reading.rejected) == Reading.Rejected(true)) && s.leftPct.value > s.floor.value))(
+        Option.when(
+          blocking.nonEmpty && blocking.forall(s =>
+            ((s.stale) == WindowState.Stale(true)) && !((s.reading.rejected) == Reading.Rejected(
+              true
+            )) && s.leftPct.value > s.floor.value
+          )
+        )(
           RefreshNeed.StaleOnly
         )
 
@@ -330,10 +352,10 @@ object PlanQuota:
       force: Boolean = (false)
   ): Either[Problem, Option[RefreshNeed]] =
     login match
-      case _ if !(enabled)                              => Left(Problem("refresh is off for this pool"))
-      case Login.Missing(why)                         => Left(Problem(s"no login: $why"))
-      case _ if (force)                                 => Right(need)
-      case _ if need.isEmpty                          => Left(Problem("the reading decides by itself"))
+      case _ if !(enabled)                                          => Left(Problem("refresh is off for this pool"))
+      case Login.Missing(why)                                       => Left(Problem(s"no login: $why"))
+      case _ if (force)                                             => Right(need)
+      case _ if need.isEmpty                                        => Left(Problem("the reading decides by itself"))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
         Left(Problem("a fresh reading was taken (or tried) less than stale-minutes ago"))
       case _ => Right(need)
@@ -352,7 +374,8 @@ object PlanQuota:
       source: WindowStatus.Source,
       why: Option[WindowStatus.Why] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object WindowStatus:
     export Reading.Limit
@@ -377,7 +400,6 @@ object PlanQuota:
     type Why = Why.T
     object Why extends Newtype[String, Pure]
 
-
   final case class PoolStatus(
       pool: PoolStatus.Pool,
       title: PoolStatus.Title,
@@ -399,10 +421,11 @@ object PlanQuota:
       refreshesToday: PoolStatus.RefreshesToday = PoolStatus.RefreshesToday(0),
       lastRefresh: Option[RefreshInfo] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object PoolStatus:
-    export PoolId.{Wire as Pool, Title}
+    export PoolId.{Title, Wire as Pool}
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     type Covers = Covers.T
@@ -434,50 +457,60 @@ object PlanQuota:
     type RefreshesToday = RefreshesToday.T
     object RefreshesToday extends Newtype[Int, Pure]
 
-
-  final case class RefreshInfo(at: RefreshInfo.At, mode: RefreshInfo.Mode, trigger: RefreshInfo.Trigger, ok: RefreshInfo.Ok, detail: RefreshInfo.Detail)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class RefreshInfo(
+      at: RefreshInfo.At,
+      mode: RefreshInfo.Mode,
+      trigger: RefreshInfo.Trigger,
+      ok: RefreshInfo.Ok,
+      detail: RefreshInfo.Detail
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RefreshInfo:
     type LastAttempt = LastAttempt.T
     object LastAttempt extends Newtype[Long, Pure]
     type At = At.T
     object At extends Newtype[String, Pure]
-    export RefreshMode.{Wire as Mode}
-    export RefreshTrigger.{Wire as Trigger}
+    export RefreshMode.Wire as Mode
+    export RefreshTrigger.Wire as Trigger
     type Ok = Ok.T
     object Ok extends Newtype[Boolean, Pure]
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
 
-
-  final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object QuotaRefresh:
-    export PoolId.{Wire as Pool}
+    export PoolId.Wire as Pool
 
-
-  final case class PoolRefreshed(pool: PoolRefreshed.Pool, refreshed: PoolRefreshed.Refreshed, detail: PoolRefreshed.Detail, status: PoolStatus)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class PoolRefreshed(
+      pool: PoolRefreshed.Pool,
+      refreshed: PoolRefreshed.Refreshed,
+      detail: PoolRefreshed.Detail,
+      status: PoolStatus
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object PoolRefreshed:
-    export PoolId.{Wire as Pool}
+    export PoolId.Wire as Pool
     type Refreshed = Refreshed.T
     object Refreshed extends Newtype[Boolean, Pure]
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
 
-
   final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[QuotaRefreshed.Lifted] = Nil)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object QuotaRefreshed:
     type Lifted = Lifted.T
     object Lifted extends Newtype[String, Pure]
-
 
   final case class QuotaInfo(
       plans: List[PoolStatus],
@@ -486,7 +519,8 @@ object PlanQuota:
       now: QuotaInfo.Now,
       cooldowns: List[Cooldown] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object QuotaInfo:
     type Fallthrough = Fallthrough.T
@@ -494,10 +528,10 @@ object PlanQuota:
     type Now = Now.T
     object Now extends Newtype[String, Pure]
 
-
   final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Cooldown.Reason)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Cooldown:
     export ModelChains.ChainEntry.Model
@@ -506,10 +540,10 @@ object PlanQuota:
     type Reason = Reason.T
     object Reason extends Newtype[String, Pure]
 
-
   final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object PoolSet:
     type Hold = Hold.T
@@ -517,38 +551,46 @@ object PlanQuota:
     type Floors = Floors.T
     object Floors extends Newtype[String, Pure]
 
-
-  final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object FallthroughSet:
     type Fallthrough = Fallthrough.T
     object Fallthrough extends Newtype[Boolean, Pure]
 
-
   /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
-  final case class ModWindow(kind: ModWindow.Kind, percentUsed: ModWindow.PercentUsed, resetsAt: Option[ModWindow.ResetsAt] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ModWindow(
+      kind: ModWindow.Kind,
+      percentUsed: ModWindow.PercentUsed,
+      resetsAt: Option[ModWindow.ResetsAt] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ModWindow:
     export WindowStatus.Kind
-    export Reading.{UsedPct as PercentUsed}
+    export Reading.UsedPct as PercentUsed
     type ResetsAt = ResetsAt.T
     object ResetsAt extends Newtype[String, Pure]
 
-
   final case class ModReport(source: ModReport.Source, rateLimits: List[ModWindow])
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ModReport:
     type Source = Source.T
     object Source extends Newtype[String, Pure]
 
-
-  final case class GuardAnswer(allow: GuardAnswer.Allow, reason: Option[GuardAnswer.Reason] = None, resetsAt: Option[GuardAnswer.ResetsAt] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class GuardAnswer(
+      allow: GuardAnswer.Allow,
+      reason: Option[GuardAnswer.Reason] = None,
+      resetsAt: Option[GuardAnswer.ResetsAt] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object GuardAnswer:
     type Allow = Allow.T

@@ -22,7 +22,12 @@ object ArticleFixtures:
   export CritiqueRepo.By
 
   def put(ds: DataSource, a: Article): Article.UpdatedAt = transact(ds)(ArticleRepo.put(a))
-  def patch(ds: DataSource, slug: Slug, p: Article.Patch, by: CritiqueRepo.By = CritiqueRepo.By("person")): Either[Api.Error, Article.UpdatedAt] =
+  def patch(
+      ds: DataSource,
+      slug: Slug,
+      p: Article.Patch,
+      by: CritiqueRepo.By = CritiqueRepo.By("person")
+  ): Either[Api.Error, Article.UpdatedAt] =
     transact(ds)(ArticleRepo.patch(slug, p, by))
   def delete(ds: DataSource, slug: Slug): Boolean = transact(ds)(ArticleRepo.delete(slug))
   def rename(ds: DataSource, oldSlug: Slug, newSlug: Slug): Either[Api.Error, List[Slug]] =
@@ -47,7 +52,11 @@ object ArticleFixtures:
   def slugs(ds: DataSource): Vector[Slug] = connect(ds)(ArticleRepo.slugs)
   def updatedAtMillis(ds: DataSource): Map[Slug, CitekeyMillis.Millis] =
     connect(ds)(ArticleRepo.updatedAtMillis)
-  def listVersions(ds: DataSource, slug: Slug, limit: ArticleRepo.Limit = ArticleRepo.Limit(20)): List[Article.Version] =
+  def listVersions(
+      ds: DataSource,
+      slug: Slug,
+      limit: ArticleRepo.Limit = ArticleRepo.Limit(20)
+  ): List[Article.Version] =
     connect(ds)(ArticleRepo.listVersions(slug, limit))
   def getVersion(ds: DataSource, slug: Slug, versionId: ArticleRepo.VersionId): Option[Article.VersionFull] =
     connect(ds)(ArticleRepo.getVersion(slug, versionId))

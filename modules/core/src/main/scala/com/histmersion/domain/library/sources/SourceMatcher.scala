@@ -34,7 +34,6 @@ import com.histmersion.domain.library.Citekey
 object SourceMatcher:
   private given CanEqual[UUID, UUID] = CanEqual.derived
 
-
   /** A number written out in the evidence text: a weight or a similarity. */
   type Figure = Figure.T
   object Figure extends Newtype[Double, Pure]
@@ -157,10 +156,15 @@ object SourceMatcher:
   private def reprintHint(a: Side, b: Side): Boolean =
     def says(s: Side) =
       val text = MergeText.fold(
-        MergeText.Text(List(Some(s.source.title.value), s.source.venue.map(_.value), s.source.notes.map(_.value)).flatten.mkString(" "))
+        MergeText.Text(
+          List(Some(s.source.title.value), s.source.venue.map(_.value), s.source.notes.map(_.value)).flatten
+            .mkString(" ")
+        )
       )
       reprintWords.exists(text.value.contains)
-    b.source.year.exists(y => years(a).contains(y.value)) || a.source.year.exists(y => years(b).contains(y.value)) || says(a) || says(b)
+    b.source.year.exists(y => years(a).contains(y.value)) || a.source.year.exists(y =>
+      years(b).contains(y.value)
+    ) || says(a) || says(b)
 
   private def part(reason: String, weight: Double): (Evidence.Reason, Evidence.Weight) =
     (Evidence.Reason(reason), Evidence.Weight(weight))
@@ -192,8 +196,10 @@ object SourceMatcher:
       if fr.value.nonEmpty && fr == fl then part("title the same", w.titleFingerprint.value)
       else if mr.value.nonEmpty && (mr == ml || mr == fl || fr == ml) then
         part("main title the same, the subtitle differs", w.titleMain.value)
-      else if jw.value >= w.titleSimilarAtLeast.value then part(s"titles similar (Jaro-Winkler ${fixed(Figure(jw.value), Decimals(2))})", w.titleSimilar.value)
-      else if tj.value >= w.titleTokensAtLeast.value then part(s"title words overlap (Jaccard ${fixed(Figure(tj.value), Decimals(2))})", w.titleTokens.value)
+      else if jw.value >= w.titleSimilarAtLeast.value then
+        part(s"titles similar (Jaro-Winkler ${fixed(Figure(jw.value), Decimals(2))})", w.titleSimilar.value)
+      else if tj.value >= w.titleTokensAtLeast.value then
+        part(s"title words overlap (Jaccard ${fixed(Figure(tj.value), Decimals(2))})", w.titleTokens.value)
       else part("titles differ", w.titleDiffers.value)
 
     // authors
@@ -219,7 +225,9 @@ object SourceMatcher:
     val venue: Option[(Evidence.Reason, Evidence.Weight)] =
       venueFingerprint(r)
         .zip(venueFingerprint(l))
-        .map((a, b) => if a == b then part("venue the same", w.venueEqual.value) else part("venues differ", w.venueDiffers.value))
+        .map((a, b) =>
+          if a == b then part("venue the same", w.venueEqual.value) else part("venues differ", w.venueDiffers.value)
+        )
 
     // body
     val body: Option[(Evidence.Reason, Evidence.Weight)] =
@@ -227,10 +235,12 @@ object SourceMatcher:
         case (Some(a), Some(b)) if a == b => Some(part("the same OCR body", w.bodySame.value))
         case (Some(a), Some(b))           =>
           sketches.get(a).zip(sketches.get(b)).map((x, y) => x.similarity(y).value).flatMap { j =>
-            if j >= w.bodySameAtLeast.value then Some(part(s"OCR bodies alike (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodySame.value))
+            if j >= w.bodySameAtLeast.value then
+              Some(part(s"OCR bodies alike (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodySame.value))
             else if j >= w.bodyEditionAtLeast.value then
               Some(part(s"OCR bodies partly alike (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodyEdition.value))
-            else if j < w.bodyDiffersBelow.value then Some(part(s"OCR bodies differ (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodyDiffers.value))
+            else if j < w.bodyDiffersBelow.value then
+              Some(part(s"OCR bodies differ (MinHash ${fixed(Figure(j), Decimals(2))})", w.bodyDiffers.value))
             else None
           }
         case _ => None
@@ -292,12 +302,16 @@ object SourceMatcher:
         val flags =
           (if ev.doiConflict.value && !ev.strongKey then
              List(
-               Pair.Flags(s"two different DOIs: ${l.source.doi.getOrElse("")} here, ${r.source.doi.getOrElse("")} in the bundle")
+               Pair.Flags(
+                 s"two different DOIs: ${l.source.doi.getOrElse("")} here, ${r.source.doi.getOrElse("")} in the bundle"
+               )
              )
            else Nil) ++
             (if yearFlag then
                List(
-                 Pair.Flags(s"years ${l.source.year.getOrElse(0)} here and ${r.source.year.getOrElse(0)} in the bundle: another edition?")
+                 Pair.Flags(
+                   s"years ${l.source.year.getOrElse(0)} here and ${r.source.year.getOrElse(0)} in the bundle: another edition?"
+                 )
                )
              else Nil)
         val separate = ev.yearGap.value && !ev.strongKey && editions.contains(EditionsPolicy.Separate)

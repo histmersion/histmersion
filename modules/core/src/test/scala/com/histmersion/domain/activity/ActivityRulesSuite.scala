@@ -19,13 +19,57 @@ class ActivityRulesSuite extends munit.FunSuite:
   private def at(min: Int) = Entry.At(now.minusSeconds(min * 60L).toString)
 
   private val entries = List(
-    Entry(Entry.Key("run:r1"), Entry.Kind("run"), at(1), state = Entry.State("running"), what = Entry.What("review-article"), goal = Some(Goal.Slug("g1")), job = Some(SpatialHierarchyResult.Job.Id("r1"))),
-    Entry(Entry.Key("job:j1"), Entry.Kind("job"), at(2), state = Entry.State("failed"), what = Entry.What("media-import"), job = Some(SpatialHierarchyResult.Job.Id("j1")), error = Some(Entry.Error("HTTP 500"))),
-    Entry(Entry.Key("log:10"), Entry.Kind("log"), at(3), text = Entry.Text("a run's line"), goal = Some(Goal.Slug("g1")), job = Some(SpatialHierarchyResult.Job.Id("r1")), by = Some(Entry.By("agent"))),
-    Entry(Entry.Key("log:11"), Entry.Kind("log"), at(3), text = Entry.Text("a job's line"), job = Some(SpatialHierarchyResult.Job.Id("j1")), by = Some(Entry.By("job"))),
+    Entry(
+      Entry.Key("run:r1"),
+      Entry.Kind("run"),
+      at(1),
+      state = Entry.State("running"),
+      what = Entry.What("review-article"),
+      goal = Some(Goal.Slug("g1")),
+      job = Some(SpatialHierarchyResult.Job.Id("r1"))
+    ),
+    Entry(
+      Entry.Key("job:j1"),
+      Entry.Kind("job"),
+      at(2),
+      state = Entry.State("failed"),
+      what = Entry.What("media-import"),
+      job = Some(SpatialHierarchyResult.Job.Id("j1")),
+      error = Some(Entry.Error("HTTP 500"))
+    ),
+    Entry(
+      Entry.Key("log:10"),
+      Entry.Kind("log"),
+      at(3),
+      text = Entry.Text("a run's line"),
+      goal = Some(Goal.Slug("g1")),
+      job = Some(SpatialHierarchyResult.Job.Id("r1")),
+      by = Some(Entry.By("agent"))
+    ),
+    Entry(
+      Entry.Key("log:11"),
+      Entry.Kind("log"),
+      at(3),
+      text = Entry.Text("a job's line"),
+      job = Some(SpatialHierarchyResult.Job.Id("j1")),
+      by = Some(Entry.By("job"))
+    ),
     Entry(Entry.Key("log:12"), Entry.Kind("log"), at(3), text = Entry.Text("a person's line")),
-    Entry(Entry.Key("decision:5"), Entry.Kind("decision"), at(4), state = Entry.State("approved"), what = Entry.What("edge"), goal = Some(Goal.Slug("g1"))),
-    Entry(Entry.Key("job:j0"), Entry.Kind("job"), at(60 * 24 * 9), state = Entry.State("failed"), what = Entry.What("basemap-fetch"))
+    Entry(
+      Entry.Key("decision:5"),
+      Entry.Kind("decision"),
+      at(4),
+      state = Entry.State("approved"),
+      what = Entry.What("edge"),
+      goal = Some(Goal.Slug("g1"))
+    ),
+    Entry(
+      Entry.Key("job:j0"),
+      Entry.Kind("job"),
+      at(60 * 24 * 9),
+      state = Entry.State("failed"),
+      what = Entry.What("basemap-fetch")
+    )
   )
 
   private def keys(p: Activity.Page) = p.entries.map(_.key)
@@ -40,8 +84,13 @@ class ActivityRulesSuite extends munit.FunSuite:
     def walk(q: ActivityQuery, acc: List[Entry.Key]): List[Entry.Key] =
       val p = ActivityRules.page(entries, q, Activity.Counts())
       p.next match
-        case Some(c) => walk(q.modify(_.before).setTo(Some(ActivityCursor.parse(ActivityCursor.Wire(c.value)).fold(p => fail(p.value), identity))), acc ++ keys(p))
-        case None    => acc ++ keys(p)
+        case Some(c) =>
+          walk(
+            q.modify(_.before)
+              .setTo(Some(ActivityCursor.parse(ActivityCursor.Wire(c.value)).fold(p => fail(p.value), identity))),
+            acc ++ keys(p)
+          )
+        case None => acc ++ keys(p)
     for size <- 1 to 4 do
       assertEquals(
         walk(ActivityQuery(limit = ActivityQuery.Limit(size)), Nil),
@@ -87,8 +136,23 @@ class ActivityRulesSuite extends munit.FunSuite:
 
   test("the query: the chips' words, a time ago, a capped limit; anything else a 400 naming what is allowed"):
     assertEquals(
-      ActivityRules.query(Some(Show.Wire("problems")), Some(ListFilters.TimeBound("7d")), Some(ActivityQuery.Goal(" g1 ")), Some(ActivityQuery.Limit(1000)), None, now),
-      Right(ActivityQuery(Show.Problems, Some(now.minusSeconds(7 * 86400)), Some(ActivityQuery.Goal("g1")), ActivityQuery.Limit(Activity.MaxLimit), None))
+      ActivityRules.query(
+        Some(Show.Wire("problems")),
+        Some(ListFilters.TimeBound("7d")),
+        Some(ActivityQuery.Goal(" g1 ")),
+        Some(ActivityQuery.Limit(1000)),
+        None,
+        now
+      ),
+      Right(
+        ActivityQuery(
+          Show.Problems,
+          Some(now.minusSeconds(7 * 86400)),
+          Some(ActivityQuery.Goal("g1")),
+          ActivityQuery.Limit(Activity.MaxLimit),
+          None
+        )
+      )
     )
     assertEquals(ActivityRules.query(None, None, None, None, None, now), Right(ActivityQuery()))
     assert(

@@ -6,7 +6,16 @@ import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.{connect, transact}
 
-import com.histmersion.domain.automation.agents.{AgentRepo, AnswerSchemas, ApprovalService, Checked, Halt, Prompt, RunCtx, StepAgent}
+import com.histmersion.domain.automation.agents.{
+  AgentRepo,
+  AnswerSchemas,
+  ApprovalService,
+  Checked,
+  Halt,
+  Prompt,
+  RunCtx,
+  StepAgent
+}
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
@@ -58,7 +67,12 @@ final class HintEffectPipeline(
         AnswerSchemas.hintEffect
       )((a, last) =>
         HintProposals
-          .check(a, t => loaded.known.contains(t), loaded.itemTarget.map(t => HintProposals.Item(t.value)), HintProposals.Last(last.value))
+          .check(
+            a,
+            t => loaded.known.contains(t),
+            loaded.itemTarget.map(t => HintProposals.Item(t.value)),
+            HintProposals.Last(last.value)
+          )
           .left
           .map(_.map(p => RunCtx.Problem(p.value)))
           .map((e, ws) =>
@@ -113,8 +127,11 @@ final class HintEffectPipeline(
       )
 
   private def input(l: Loaded): String =
-    val manager = s"id: ${l.managerId.value}\nkind: ${l.kind.value}\nresearch area: ${l.goal.fold("none (library-wide)")(_.value)}\n" +
-      s"its settings now: ${l.settings.value}" + l.itemTarget.fold("")(t => s"\nthe hint is about the item: ${t.value}")
+    val manager =
+      s"id: ${l.managerId.value}\nkind: ${l.kind.value}\nresearch area: ${l.goal.fold("none (library-wide)")(_.value)}\n" +
+        s"its settings now: ${l.settings.value}" + l.itemTarget.fold("")(t =>
+          s"\nthe hint is about the item: ${t.value}"
+        )
     s"Propose the action this hint asks the manager to take, if any.\n\n${Prompt.data("hint", l.text.value)}\n\n" +
       s"${Prompt.data("manager", manager)}\n\n" +
       Prompt.data("items", if l.items.isEmpty then "none" else l.items.map(x => s"- ${x.value}").mkString("\n")) +
@@ -139,7 +156,10 @@ final class HintEffectPipeline(
           HintProposal.Why(p.why.value)
         )
         val what = ManagersMarkdown.effect(e)
-        ctx.write(s"${ApprovalKind.HintEffect.wire.value} approval for ${l.managerId.value} hint #${l.hint.value}", hp.asJson) {
+        ctx.write(
+          s"${ApprovalKind.HintEffect.wire.value} approval for ${l.managerId.value} hint #${l.hint.value}",
+          hp.asJson
+        ) {
           val a = store.openSubject(
             Some(Job.Id.assume(ctx.run.id.value)),
             ApprovalKind.HintEffect,
@@ -152,7 +172,9 @@ final class HintEffectPipeline(
               None,
               Some(ctx.run.id),
               ManagerEvent.Kind(Feed.Hint),
-              ManagerEvent.Text(s"hint #${l.hint.value}: a model proposed $what — approval #${a.id.value} waits for a person")
+              ManagerEvent.Text(
+                s"hint #${l.hint.value}: a model proposed $what — approval #${a.id.value} waits for a person"
+              )
             )
           )
           Right(s"approval ${a.id.value} waits for a person: $what")

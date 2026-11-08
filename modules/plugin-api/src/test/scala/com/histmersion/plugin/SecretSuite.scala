@@ -16,8 +16,14 @@ final class ExamplePlugin extends Plugin:
 class SecretSuite extends munit.FunSuite:
 
   test("the three reference forms parse"):
-    assertEquals(Secret.Ref.parse(Secret.Ref.ParseText("value:hunter2")), Right(Secret.Ref.Value(Secret.Ref.Value.Literal("hunter2"))))
-    assertEquals(Secret.Ref.parse(Secret.Ref.ParseText("env:PORTAL_TOKEN")), Right(Secret.Ref.Env(Secret.Ref.Env.Name("PORTAL_TOKEN"))))
+    assertEquals(
+      Secret.Ref.parse(Secret.Ref.ParseText("value:hunter2")),
+      Right(Secret.Ref.Value(Secret.Ref.Value.Literal("hunter2")))
+    )
+    assertEquals(
+      Secret.Ref.parse(Secret.Ref.ParseText("env:PORTAL_TOKEN")),
+      Right(Secret.Ref.Env(Secret.Ref.Env.Name("PORTAL_TOKEN")))
+    )
     assertEquals(
       Secret.Ref.parse(Secret.Ref.ParseText(" keepassxc:Histmersion/Portal#password ")),
       Right(Secret.Ref.Vault(Secret.Ref.Vault.Value("keepassxc"), Secret.Ref.Vault.Ref("Histmersion/Portal#password")))
@@ -27,7 +33,10 @@ class SecretSuite extends munit.FunSuite:
       Right(Secret.Ref.Vault(Secret.Ref.Vault.Value("1password"), Secret.Ref.Vault.Ref("op://Private/Portal/password")))
     )
     // a literal keeps its colons and its spaces inside
-    assertEquals(Secret.Ref.parse(Secret.Ref.ParseText("value:a:b c")), Right(Secret.Ref.Value(Secret.Ref.Value.Literal("a:b c"))))
+    assertEquals(
+      Secret.Ref.parse(Secret.Ref.ParseText("value:a:b c")),
+      Right(Secret.Ref.Value(Secret.Ref.Value.Literal("a:b c")))
+    )
 
   test("a bare value, an empty part or a bad name is refused, and the error never echoes a value"):
     val bare = Secret.Ref.parse(Secret.Ref.ParseText("hunter2"))
@@ -42,8 +51,14 @@ class SecretSuite extends munit.FunSuite:
     assert(Secret.Ref.parse(Secret.Ref.ParseText(null)).isLeft)
 
   test("toString shows the reference, never a literal value"):
-    assertEquals(Secret.parse(Secret.Ref.ParseText("env:PORTAL_TOKEN")).map(_.toString), Right("Secret(env:PORTAL_TOKEN)"))
-    assertEquals(Secret.parse(Secret.Ref.ParseText("bitwarden:abc#password")).map(_.toString), Right("Secret(bitwarden:abc#password)"))
+    assertEquals(
+      Secret.parse(Secret.Ref.ParseText("env:PORTAL_TOKEN")).map(_.toString),
+      Right("Secret(env:PORTAL_TOKEN)")
+    )
+    assertEquals(
+      Secret.parse(Secret.Ref.ParseText("bitwarden:abc#password")).map(_.toString),
+      Right("Secret(bitwarden:abc#password)")
+    )
     val literal = Secret.parse(Secret.Ref.ParseText("value:hunter2")).toOption.get
     assertEquals(literal.toString, "Secret(value:***)")
     assert(!s"$literal ${Some(literal)} ${List(literal)}".contains("hunter2"))

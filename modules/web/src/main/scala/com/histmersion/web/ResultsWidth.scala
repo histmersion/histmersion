@@ -28,9 +28,13 @@ object ResultsWidth:
   def min: Width = Width(Layout.sidebarMinWidth.value)
 
   /** The widest: `sidebarMaxWidth`, and never more than 60 % of the window, so the map keeps the rest. */
-  def max(viewport: ViewportWidth): Width = Width(math.max(min.value, math.min(Layout.sidebarMaxWidth.value, (viewport.value * 0.6).toInt)))
+  def max(viewport: ViewportWidth): Width = Width(
+    math.max(min.value, math.min(Layout.sidebarMaxWidth.value, (viewport.value * 0.6).toInt))
+  )
 
-  def clamp(w: Width, viewport: ClampViewport): Width = Width(math.max(min.value, math.min(max(viewport).value, w.value)))
+  def clamp(w: Width, viewport: ClampViewport): Width = Width(
+    math.max(min.value, math.min(max(viewport).value, w.value))
+  )
 
   /** What one key press does: ← widens (the column is on the right), → narrows, by 16 px (64 with Shift); Home the
     * narrowest, End the widest. None for any other key.

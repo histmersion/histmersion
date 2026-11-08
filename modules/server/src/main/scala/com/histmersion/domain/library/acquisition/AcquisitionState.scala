@@ -15,7 +15,15 @@ final case class AcquisitionState(
     retractions: Map[AcquisitionState.RetractionsKey, Acquire.RetractionRow],
     assessments: Map[AcquisitionState.AssessmentsKey, (AssessmentRecord, AcquisitionState.AssessmentsValuePart2)],
     candidates: List[Source.Candidate],
-    watches: Map[(AcquisitionState.WatchesKeyPart1, AcquisitionState.WatchesKeyPart2, AcquisitionState.WatchesKeyPart3, AcquisitionState.WatchesKeyPart4), CandidateWatch],
+    watches: Map[
+      (
+          AcquisitionState.WatchesKeyPart1,
+          AcquisitionState.WatchesKeyPart2,
+          AcquisitionState.WatchesKeyPart3,
+          AcquisitionState.WatchesKeyPart4
+      ),
+      CandidateWatch
+    ],
     quotas: Map[AcquisitionState.QuotasKey, CoreQuota.State],
     checks: Map[AcquisitionState.ChecksKey, AcquireCheckRow]
 )

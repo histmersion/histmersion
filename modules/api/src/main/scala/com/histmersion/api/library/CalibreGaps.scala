@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class CalibreGaps(count: CalibreGaps.Count, gaps: List[CalibreGap]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class CalibreGaps(count: CalibreGaps.Count, gaps: List[CalibreGap])
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CalibreGaps:
   type Count = Count.T

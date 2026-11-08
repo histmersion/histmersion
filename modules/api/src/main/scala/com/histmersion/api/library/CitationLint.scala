@@ -8,7 +8,14 @@ object CitationLint:
   def danglingEdges(edges: List[Edge], citekeys: Set[Citekey], maxSuggestions: ItemLimit): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.map(_.value.toString).contains(e.dst.value.toString))
-      .sortBy(e => (if looksLikeCitekey(e.dst) then 0 else 1, e.src.value.toString, (Edge.Kind.wireOf(e.kind).value: String), e.dst.value.toString))
+      .sortBy(e =>
+        (
+          if looksLikeCitekey(e.dst) then 0 else 1,
+          e.src.value.toString,
+          (Edge.Kind.wireOf(e.kind).value: String),
+          e.dst.value.toString
+        )
+      )
       .map { e =>
         val near = suggest(e.dst, citekeys, maxSuggestions)
         val what =
@@ -30,6 +37,11 @@ object CitationLint:
           val verdict =
             if near.sizeIs == 1 then s"resolves to ${near.head} (fixable: lint --fix)"
             else s"ambiguous between ${shown.mkString(", ")}$more"
-          Some(LintItem(Citekey(e.src.value.toString), LintItem.Detail(s"${Edge.Kind.wireOf(e.kind)} → ${e.dst.value.toString} $verdict")))
+          Some(
+            LintItem(
+              Citekey(e.src.value.toString),
+              LintItem.Detail(s"${Edge.Kind.wireOf(e.kind)} → ${e.dst.value.toString} $verdict")
+            )
+          )
       }
       .sortBy(i => (i.citekey.value: String, i.detail.value: String))

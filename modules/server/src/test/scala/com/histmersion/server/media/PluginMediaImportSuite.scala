@@ -72,9 +72,11 @@ class PluginMediaImportSuite extends DbSuite:
     */
   final private class ZqPlugin extends Plugin:
     type Config = ZqPluginConfig
-    val info = Plugin.Info(Plugin.Info.Id("zq-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
+    val info =
+      Plugin.Info(Plugin.Info.Id("zq-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = Plugin.DefaultsResourceResult("zq-none.conf")
-    def register(c: ZqPluginConfig, ctx: Plugin.Context) = ctx.mediaCollections.add(CollectionAdd, ZqCollection).left.map(e => Plugin.RegisterResultPart1(e.value))
+    def register(c: ZqPluginConfig, ctx: Plugin.Context) =
+      ctx.mediaCollections.add(CollectionAdd, ZqCollection).left.map(e => Plugin.RegisterResultPart1(e.value))
 
   private object ZqCollection extends MediaCollection:
     val title = MediaCollection.TitleResult("Zq portal objects")
@@ -115,8 +117,16 @@ class PluginMediaImportSuite extends DbSuite:
           List(
             item(spi.MediaItem.Key("by"), spi.Licence("CC BY 4.0"), spi.MediaItem.GeographyPart2("Zqplenai")),
             item(spi.MediaItem.Key("nc"), spi.Licence("CC BY-NC 4.0"), spi.MediaItem.GeographyPart2("Zqplenai")),
-            item(spi.MediaItem.Key("arr"), spi.Licence("All rights reserved"), spi.MediaItem.GeographyPart2("Zqplenai")),
-            item(spi.MediaItem.Key("far"), spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"), spi.MediaItem.GeographyPart2("Zqpl Nowhere")),
+            item(
+              spi.MediaItem.Key("arr"),
+              spi.Licence("All rights reserved"),
+              spi.MediaItem.GeographyPart2("Zqplenai")
+            ),
+            item(
+              spi.MediaItem.Key("far"),
+              spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"),
+              spi.MediaItem.GeographyPart2("Zqpl Nowhere")
+            ),
             Left(MediaCollection.SearchResultPart2Part1("a record the API could not describe"))
           )
         }
@@ -136,7 +146,10 @@ class PluginMediaImportSuite extends DbSuite:
 
   private lazy val base =
     val b = AppConfig.load()
-    b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(b.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.media)
+      .setTo(b.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
   private lazy val ds =
     val d = testPool(base.db)
     Migrate.run(d)
@@ -144,8 +157,17 @@ class PluginMediaImportSuite extends DbSuite:
 
   /** The config with `allow` as this collection's own allowlist. */
   private def allowing(allow: String): AppConfig =
-    base.modify(_.media).setTo(base.media.modify(_.collections).setTo(base.media.collections.modify(_.perCollection).setTo(Map(CollectionKey -> MediaPluginCollectionsConfig.Licences(allow))))
-    )
+    base
+      .modify(_.media)
+      .setTo(
+        base.media
+          .modify(_.collections)
+          .setTo(
+            base.media.collections
+              .modify(_.perCollection)
+              .setTo(Map(CollectionKey -> MediaPluginCollectionsConfig.Licences(allow)))
+          )
+      )
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM media_links WHERE target_id LIKE 'zqpl%'".update.run()
@@ -206,7 +228,10 @@ class PluginMediaImportSuite extends DbSuite:
     // the plugin's request went through the host's polite client, with the host's User-Agent
     val (url, headers) = http.requests.head
     assert(url.startsWith("https://zq.example/search?q=Zqplenae"), url)
-    assertEquals(headers.get("User-Agent"), Some(HttpPolicy.userAgent(HttpPolicy.UserAgent(base.media.userAgent.value)).value))
+    assertEquals(
+      headers.get("User-Agent"),
+      Some(HttpPolicy.userAgent(HttpPolicy.UserAgent(base.media.userAgent.value)).value)
+    )
     assertEquals(headers.get("Accept"), Some("application/json"))
     assertEquals(AssetFixtures.thumbs(ds, Target.TargetType("place"), PlaceTarget), Nil, "a dry run stores nothing")
 
@@ -217,7 +242,10 @@ class PluginMediaImportSuite extends DbSuite:
       .importMedia(MediaImportRequest(Collection, dryRun = MediaImportRequest.DryRun(false), place = Some(PlaceId)))
       .fold(e => fail(e.message.value), identity)
     assertEquals((r.stored, r.linked), (2, 2), r.toString)
-    assert(r.rejected.exists(_.key.value == s"licence all-rights-reserved not allowed for $Collection"), r.rejected.toString)
+    assert(
+      r.rejected.exists(_.key.value == s"licence all-rights-reserved not allowed for $Collection"),
+      r.rejected.toString
+    )
     val stored = connect(ds)(
       sql"""SELECT a.provider_key, a.license, a.credit, m.basis, m.role FROM assets a
           JOIN media_links m ON m.asset_uid = a.uid WHERE a.provider = ${Collection.value} ORDER BY a.provider_key"""
@@ -260,7 +288,10 @@ class PluginMediaImportSuite extends DbSuite:
       )
     )
     assert(
-      h.imports.importMedia(MediaImportRequest(MediaItem.Provider("rijks"))).left.exists(_.message.value.contains(s"opencontext, $Collection;"))
+      h.imports
+        .importMedia(MediaImportRequest(MediaItem.Provider("rijks")))
+        .left
+        .exists(_.message.value.contains(s"opencontext, $Collection;"))
     )
     assert(
       handlers(base, fake).importMedia(MediaImportRequest(Collection, event = Some(Event.Id("e1")))).isLeft,
@@ -280,7 +311,15 @@ class PluginMediaImportSuite extends DbSuite:
   test("through the server: GET /api/media/providers lists the plugin's collection; about lists what it registered"):
     val client = HttpClient.newHttpClient()
     supervised {
-      val b = Composition.server(base, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = generation).start()
+      val b = Composition
+        .server(
+          base,
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
+          MediaWiring.NoThumbnails,
+          plugins = generation
+        )
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val r = client.send(
@@ -290,7 +329,11 @@ class PluginMediaImportSuite extends DbSuite:
         assertEquals(r.statusCode, 200, r.body)
         val ps = decode[List[MediaProvider.Info]](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
         assertEquals(ps.map(_.name).last, Collection)
-        assert(ps.find(_.name == MediaItem.Provider("met")).exists(p => p.builtin.value && p.plugin == MediaProvider.Info.Plugin("media-met")), ps.toString)
+        assert(
+          ps.find(_.name == MediaItem.Provider("met"))
+            .exists(p => p.builtin.value && p.plugin == MediaProvider.Info.Plugin("media-met")),
+          ps.toString
+        )
         assert(
           MediaMarkdown
             .mediaProviders(ps)

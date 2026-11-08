@@ -56,7 +56,13 @@ class BackgroundJobSuite extends DbSuite:
     val slot = BackgroundJob.Slot()
     val go = CountDownLatch(1)
     val j = BackgroundJob
-      .start(ds, Job.Kind("zz-test"), Some(JobDetail.Purpose(Some(JobKinds.Subject("a test")))), slot, BackgroundJob.Work("a test job")) { (job, progress) =>
+      .start(
+        ds,
+        Job.Kind("zz-test"),
+        Some(JobDetail.Purpose(Some(JobKinds.Subject("a test")))),
+        slot,
+        BackgroundJob.Work("a test job")
+      ) { (job, progress) =>
         go.await()
         progress(JobInfo.Progress(s"working on ${job.kind}"))
         Outcome.done(Outcome.Summary("all done"))
@@ -65,7 +71,12 @@ class BackgroundJobSuite extends DbSuite:
     assertEquals(j.detail.flatMap(JobDetail.Purpose.of), Some("a test"))
     assert(slot.isRunning, "the slot is held while the job runs")
     assertEquals(
-      BackgroundJob.start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) => Outcome.done(Outcome.Summary("no"))).left.map(_.message),
+      BackgroundJob
+        .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
+          Outcome.done(Outcome.Summary("no"))
+        )
+        .left
+        .map(_.message),
       Left(s"a test job is already running (job ${j.id}) — see `histmersion jobs`")
     )
     go.countDown()
@@ -77,12 +88,16 @@ class BackgroundJobSuite extends DbSuite:
   dbTest("a failure keeps its summary and its reason; an exception fails the job with its message"):
     val slot = BackgroundJob.Slot()
     val f = BackgroundJob
-      .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) => Outcome(Some(Outcome.Summary("half")), Some(Outcome.Error("disk full"))))
+      .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
+        Outcome(Some(Outcome.Summary("half")), Some(Outcome.Error("disk full")))
+      )
       .fold(e => fail(e.message.value), identity)
     assertEquals(await(f.id).error, Some("disk full"))
     Thread.sleep(50)
     val x = BackgroundJob
-      .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) => throw IllegalStateException("boom"))
+      .start(ds, Job.Kind("zz-test"), None, slot, BackgroundJob.Work("a test job"))((_, _) =>
+        throw IllegalStateException("boom")
+      )
       .fold(e => fail(e.message.value), identity)
     val failed = await(x.id)
     assertEquals((failed.status, failed.error), ("failed", Some("IllegalStateException: boom")))

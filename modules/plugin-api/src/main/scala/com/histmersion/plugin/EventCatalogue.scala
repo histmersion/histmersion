@@ -45,7 +45,11 @@ trait EventCatalogue:
   def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult]
 
   /** The records of one part. `http` is the host's polite client of this import. */
-  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage]
+  def read(
+      part: EventCatalogue.ReadPart,
+      query: CatalogueQuery,
+      http: Plugin.Http
+  ): Either[EventCatalogue.ReadResultPart1, CataloguePage]
 
   /** Whether every part is read at every import, whatever an earlier import read: for a catalogue whose parts are pages
     * of a list that changes (page 2 of the newest records is other records next week), so a part's key does not stand

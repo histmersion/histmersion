@@ -28,7 +28,8 @@ object ItemRef:
   object Href extends Newtype[String, Pure]
 
   def source(ck: Citekey, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Source, ItemKey(ck.value)), title)
-  def article(slug: Article.Slug, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Article, ItemKey(slug.value)), title)
+  def article(slug: Article.Slug, title: Title): ItemRef =
+    ItemRef(Target.item(ItemKind.Article, ItemKey(slug.value)), title)
 
   /** An item chosen in Explore's results or on the map. */
   def of(t: Preview.Target, title: Title): ItemRef = t match

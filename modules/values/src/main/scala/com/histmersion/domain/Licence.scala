@@ -29,7 +29,9 @@ object Licence:
     Option(csv).toList
       .flatMap((_).value.split(",").toList)
       .map(_.trim.toLowerCase(Locale.ROOT))
-      .flatMap({ val refactorFunction = Family.fromWire; (refactorValue) => refactorFunction(Family.Wire(refactorValue)) })
+      .flatMap {
+        val refactorFunction = Family.fromWire; (refactorValue) => refactorFunction(Family.Wire(refactorValue))
+      }
       .filterNot((refactorCallback2 => ((refactorCallback2.never) == (true))))
       .toSet
 
@@ -82,7 +84,8 @@ object Licence:
 
   /** Pure: a statement as a licence — a Creative Commons URL read as one, anything else classified. */
   def ofStatement(stated: Statement): Licence =
-    if (stated).value.toLowerCase(Locale.ROOT).matches("^https?://.*") then ofUrl(Url((stated).value)) else classify(Id((stated).value))
+    if (stated).value.toLowerCase(Locale.ROOT).matches("^https?://.*") then ofUrl(Url((stated).value))
+    else classify(Id((stated).value))
 
   /** Pure: the first of the candidates that reads as a known licence (the machine id first, then the short name);
     * [[LicenceFamily.Unknown]] with the first non-empty one when none does.
@@ -95,7 +98,7 @@ object Licence:
   def firstKnown(statements: List[Statement]): Licence =
     val cands = statements.map((_).value.trim).filter(_.nonEmpty)
     cands.iterator
-      .map({ val refactorFunction2 = classify; (refactorValue3) => refactorFunction2(Id(refactorValue3)) })
+      .map { val refactorFunction2 = classify; (refactorValue3) => refactorFunction2(Id(refactorValue3)) }
       .find(_.family != Family.Unknown)
       .getOrElse(unknown(Statement(cands.headOption.getOrElse(""))))
 

@@ -12,7 +12,6 @@ import com.histmersion.domain.catalogue.Place
   */
 object SiteTypesSql:
 
-
   private def quote(s: String): String = "'" + s.replace("'", "''") + "'"
   private def list(xs: Iterable[String]): String = xs.map(quote).mkString(", ")
 
@@ -26,10 +25,13 @@ object SiteTypesSql:
       "'-[0-9]+\\s*(,|$)', '\\1', 'g')), '\\s*,\\s*')"
     val byType = SiteTypes.pleiadesTypes.toList.groupMap(_._2)(_._1)
     val pleiades = preference
-      .flatMap(t => byType.get(t).map(ks => s"WHEN ft.v && ARRAY[${list(ks.map(_.value).sorted)}] THEN ${quote(t.value)}"))
+      .flatMap(t =>
+        byType.get(t).map(ks => s"WHEN ft.v && ARRAY[${list(ks.map(_.value).sorted)}] THEN ${quote(t.value)}")
+      )
       .mkString(s"(SELECT CASE ", " ", s" END FROM (SELECT $types AS v) ft)")
     val fcode = s"upper(btrim($a.properties->>'fcode'))"
-    val geonames = SiteTypes.geonamesCodes.toList.sortBy(_._1.value)
+    val geonames = SiteTypes.geonamesCodes.toList
+      .sortBy(_._1.value)
       .map((c, t) => s"WHEN ${quote(c.value)} THEN ${quote(t.value)}")
       .mkString(s"CASE $fcode ", " ", s" ELSE CASE WHEN $fcode LIKE 'P.%' THEN ${quote(SiteTypes.Settlement)} END END")
     // the item's own P31 classes: a JSON array in `properties.p31` (anything else counts as none)
@@ -37,9 +39,12 @@ object SiteTypesSql:
       "'array' THEN " + s"$a.properties->'p31' ELSE '[]'::jsonb END) x)"
     val byClass = SiteTypes.wikidataClasses.toList.groupMap(_._2)(_._1)
     val own = preference
-      .flatMap(t => byClass.get(t).map(ks => s"WHEN w.v && ARRAY[${list(ks.map(_.value).sorted)}] THEN ${quote(t.value)}"))
+      .flatMap(t =>
+        byClass.get(t).map(ks => s"WHEN w.v && ARRAY[${list(ks.map(_.value).sorted)}] THEN ${quote(t.value)}")
+      )
       .mkString(s"(SELECT CASE ", " ", s" END FROM (SELECT $p31 AS v) w)")
-    val wikidata = SiteTypes.wikidataClasses.toList.sortBy(_._1.value)
+    val wikidata = SiteTypes.wikidataClasses.toList
+      .sortBy(_._1.value)
       .map((c, t) => s"WHEN ${quote(c.value)} THEN ${quote(t.value)}")
       .mkString(s"CASE btrim($a.properties->>'class') ", " ", " END")
     s"(CASE WHEN $a.kind IN (${quote(Place.Kind.Site)}, ${quote(Place.Kind.Feature)}) THEN " +

@@ -74,7 +74,9 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
 
   private val Lon = -150.0
   private val Lat = -60.0
-  private def pt(dx: Double = 0) = Some(GazGeometry.GeoJson(GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[${Lon + dx},$Lat]}""")))
+  private def pt(dx: Double = 0) = Some(
+    GazGeometry.GeoJson(GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[${Lon + dx},$Lat]}"""))
+  )
   private def wd(q: ExternalId.Id) = ExternalId(LinkScheme.Wikidata, q)
   private def gn(n: ExternalId.Id) = ExternalId(LinkScheme.Geonames, n)
 
@@ -112,7 +114,11 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
   private val V1 = Gazetteer.LoadCounts.Version("v1")
   private val V2 = Gazetteer.LoadCounts.Version("v2")
 
-  private def load(source: Gazetteer.SourceInfo.Key, version: Gazetteer.LoadCounts.Version, rs: List[GazRecord]): Gazetteer.LoadCounts =
+  private def load(
+      source: Gazetteer.SourceInfo.Key,
+      version: Gazetteer.LoadCounts.Version,
+      rs: List[GazRecord]
+  ): Gazetteer.LoadCounts =
     connect(ds)(GazetteerImport.session(source, version, apply = true, pointAreaKinds = Set.empty).batch(rs))
 
   private val Patones = rec(
@@ -153,14 +159,27 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
         provenance = None,
         calibreId = None,
         findings = periods.toList.zipWithIndex.map((p, i) =>
-          Finding(Finding.Id(s"$ck#$i"), ck, Finding.Claim(s"claim $i"), Some(Finding.Region("Zzpt")), Some(GeoPoint(Longitude(Lon), Latitude(Lat))), Some(p), None, Nil, None)
+          Finding(
+            Finding.Id(s"$ck#$i"),
+            ck,
+            Finding.Claim(s"claim $i"),
+            Some(Finding.Region("Zzpt")),
+            Some(GeoPoint(Longitude(Lon), Latitude(Lat))),
+            Some(p),
+            None,
+            Nil,
+            None
+          )
         )
       ),
       cfg.limits.chunkChars,
       cfg.places.pointToleranceKm
     )
 
-  private def onMap(kind: com.histmersion.domain.catalogue.Place.Kind.Wire, asOf: Option[DeepTime.SignedYear]): Set[String] =
+  private def onMap(
+      kind: com.histmersion.domain.catalogue.Place.Kind.Wire,
+      asOf: Option[DeepTime.SignedYear]
+  ): Set[String] =
     "\"id\":\"((?:wikidata_q|geonames_)99950[0-9]+|zzpt[a-z_]*|lpf_zzpt[a-z0-9_]*)\"".r
       .findAllMatchIn(PlaceFixtures.geoJson(ds, Some(kind), asOf, PlaceRepo.Limit(100000)).value)
       .map(_.group(1))
@@ -187,7 +206,10 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
 
   test("time filters see the end-only place only in its window: search, the map feed, finding_places"):
     load(Wikidata, V1, List(Patones))
-    assert(!found(PatonesQuery, Some(DeepTime.SignedYear(-4000L))).contains(PatonesHit), "4000 BCE: not 'since forever'")
+    assert(
+      !found(PatonesQuery, Some(DeepTime.SignedYear(-4000L))).contains(PatonesHit),
+      "4000 BCE: not 'since forever'"
+    )
     assert(found(PatonesQuery, Some(DeepTime.SignedYear(1600L))).contains(PatonesHit))
     assert(found(PatonesQuery, None).contains(PatonesHit), "no time: by name")
     // the 4664–3153 BCE finding the user saw it beside is NOT assigned to it; the 1600s one is
@@ -196,7 +218,17 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     assert(PlaceFixtures.placesOf(ds, Finding.Id("zzpt_src#1")).exists(_.id == PatonesHit))
     assertEquals(onMap(PolityKind, Some(DeepTime.SignedYear(-3900L))), Set.empty[String])
     assertEquals(onMap(PolityKind, Some(DeepTime.SignedYear(1620L))), Set(PatonesId))
-    assert(PlaceFixtures.geoJson(ds, Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")), Some(DeepTime.SignedYear(1620L)), PlaceRepo.Limit(100000)).value.contains("\"hasBoundary\":false"))
+    assert(
+      PlaceFixtures
+        .geoJson(
+          ds,
+          Some(com.histmersion.domain.catalogue.Place.Kind.Wire("polity")),
+          Some(DeepTime.SignedYear(1620L)),
+          PlaceRepo.Limit(100000)
+        )
+        .value
+        .contains("\"hasBoundary\":false")
+    )
 
   test("the geocoder: the end-only place loses to an undated namesake outside its window, wins inside it"):
     load(Wikidata, V1, List(Patones))
@@ -215,24 +247,47 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     )
     def at(p: Period) =
       connect(ds)(
-        PlaceFixtures.resolve(Geocode.Attempt.Name("Zzpt Kingdom of Patones"), KindHint.Unknown, Some(p), GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
+        PlaceFixtures.resolve(
+          Geocode.Attempt.Name("Zzpt Kingdom of Patones"),
+          KindHint.Unknown,
+          Some(p),
+          GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
+        )
       )
         .map(_.placeId)
     // the candidate carries the WINDOW, so the time rule reads it; who brought a place in (the tier)
     // still ranks before time, so the time rule is compared at one tier
     val cands = connect(ds)(PlaceFixtures.candidates(Geocode.key("Zzpt Kingdom of Patones"), None))
     assertEquals(cands.find(_.id == PatonesHit).map(c => (c.from, c.to)), Some((Some(1469L), Some(1769L))))
-    val ranked = Geocode.rank(cands.map(_.modify(_.tier).setTo(Gazetteer.Rank(0))), KindHint.Unknown, Some(Period(Year(-4664), Year(-3153))), Geocode.Placeholder.Min(4))
+    val ranked = Geocode.rank(
+      cands.map(_.modify(_.tier).setTo(Gazetteer.Rank(0))),
+      KindHint.Unknown,
+      Some(Period(Year(-4664), Year(-3153))),
+      Geocode.Placeholder.Min(4)
+    )
     assertEquals(ranked.head.id, "geonames_999500002", "outside its window the dated place ranks after the undated one")
-    val inside = Geocode.rank(cands.map(_.modify(_.tier).setTo(Gazetteer.Rank(0))), KindHint.Unknown, Some(Period(Year(1600), Year(1650))), Geocode.Placeholder.Min(4))
+    val inside = Geocode.rank(
+      cands.map(_.modify(_.tier).setTo(Gazetteer.Rank(0))),
+      KindHint.Unknown,
+      Some(Period(Year(1600), Year(1650))),
+      Geocode.Placeholder.Min(4)
+    )
     assertEquals(inside.head.id.value: String, PatonesId)
     assertEquals(at(Period(Year(1600), Year(1650))).map(_.value: String), Some(PatonesId))
-    assertEquals(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("geonames_999500002")).map(_.place.dating), Some(Place.Dating.Unknown))
+    assertEquals(
+      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("geonames_999500002")).map(_.place.dating),
+      Some(Place.Dating.Unknown)
+    )
 
   test(
     "an undated GeoNames place: found by name with no time, at a time only by a finding dated then, never on a time-sliced map"
   ):
-    val g = rec(gn(ExternalId.Id("999500003")), GazRecord.Label("Zzpt Bogazkale"), GazRecord.Kind(Place.Kind.Site), Span.always)
+    val g = rec(
+      gn(ExternalId.Id("999500003")),
+      GazRecord.Label("Zzpt Bogazkale"),
+      GazRecord.Kind(Place.Kind.Site),
+      Span.always
+    )
     load(Geonames, V1, List(g))
     val id = com.histmersion.domain.catalogue.Place.Id("geonames_999500003")
     val hit = Place.Id("geonames_999500003")
@@ -255,9 +310,11 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
         Place.Id("zzpt_region"),
         Place.Label("Zzpt Region"),
         Place.KindValue(Place.Kind.Region),
-        Some(Place.Geometry(
-          s"""{"type":"Polygon","coordinates":[[[${Lon - 1},${Lat - 1}],[${Lon + 1},${Lat - 1}],[${Lon + 1},${Lat + 1}],[${Lon - 1},${Lat + 1}],[${Lon - 1},${Lat - 1}]]]}"""
-        )),
+        Some(
+          Place.Geometry(
+            s"""{"type":"Polygon","coordinates":[[[${Lon - 1},${Lat - 1}],[${Lon + 1},${Lat - 1}],[${Lon + 1},${Lat + 1}],[${Lon - 1},${Lat + 1}],[${Lon - 1},${Lat - 1}]]]}"""
+          )
+        ),
         None,
         Some(Place.Source("fixture")),
         None
@@ -282,11 +339,17 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     // an undated seed region is in a time view only by a finding dated then (the time rule)
     assertEquals(onMap(RegionKind, Some(DeepTime.SignedYear(-4000L))), Set.empty[String])
     assertEquals(onMap(RegionKind, None), Set("zzpt_region"))
-    assert(found(LpfQuery, Some(DeepTime.SignedYear(-4000L))).contains(Place.Id("lpf_zzpt_1")), "an LPF 'until 1769' is as the dataset says")
+    assert(
+      found(LpfQuery, Some(DeepTime.SignedYear(-4000L))).contains(Place.Id("lpf_zzpt_1")),
+      "an LPF 'until 1769' is as the dataset says"
+    )
     val d = PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("lpf_zzpt_1")).get.place
     assertEquals((d.periodStart, d.periodEnd, d.dating), (None, Some(1769L), Place.Dating.Stated))
     assert(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.hasBoundary.value)
-    assertEquals(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.place.dating, Place.Dating.Stated)
+    assertEquals(
+      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.place.dating,
+      Place.Dating.Stated
+    )
 
   test("the base layers draw an imported place only once a finding is attached"):
     val dated = rec(
@@ -303,11 +366,14 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
   test(
     "descriptions: per source and language; a re-run changes nothing; a new version updates only descriptions and dates"
   ):
-    val v1 = Patones.modify(_.descriptions).setTo(List(
-        GazDescription(GazDescription.Text("former country in Modern Day Spain"), GazDescription.Lang("en")),
-        GazDescription(GazDescription.Text("microestado de Europa (siglo VIII-1769)"), GazDescription.Lang("es"))
+    val v1 = Patones
+      .modify(_.descriptions)
+      .setTo(
+        List(
+          GazDescription(GazDescription.Text("former country in Modern Day Spain"), GazDescription.Lang("en")),
+          GazDescription(GazDescription.Text("microestado de Europa (siglo VIII-1769)"), GazDescription.Lang("es"))
+        )
       )
-    )
     assert(!load(Wikidata, V1, List(v1)).unchanged)
     assert(load(Wikidata, V1, List(v1)).unchanged, "a re-run of the same version")
     val d = PlaceFixtures.get(ds, PatonesId).get
@@ -316,14 +382,23 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
       List("en" -> "former country in Modern Day Spain", "es" -> "microestado de Europa (siglo VIII-1769)")
     )
     assertEquals(d.descriptions.map(_.source).distinct, List("wikidata"))
-    val v2 = v1.modify(
-      _.span).setTo(Span(None, Some(Year(1750)))).modify(_.descriptions).setTo(List(GazDescription(GazDescription.Text("former microstate in Spain"), GazDescription.Lang("en")), v1.descriptions(1))
-    )
+    val v2 = v1
+      .modify(_.span)
+      .setTo(Span(None, Some(Year(1750))))
+      .modify(_.descriptions)
+      .setTo(
+        List(
+          GazDescription(GazDescription.Text("former microstate in Spain"), GazDescription.Lang("en")),
+          v1.descriptions(1)
+        )
+      )
     val c = load(Wikidata, V2, List(v2))
     assertEquals((c.created, c.placesChanged, c.descriptionsAdded, c.descriptionsRemoved), (0L, 1L, 0L, 0L))
     assertEquals(c.descriptionsChanged, 2L, "the new text, and the version on the other")
     val rows =
-      connect(ds)(sql"SELECT count(*)::int FROM place_descriptions WHERE place_id = ${PatonesId.value}".query[Int].run().head)
+      connect(ds)(
+        sql"SELECT count(*)::int FROM place_descriptions WHERE place_id = ${PatonesId.value}".query[Int].run().head
+      )
     assertEquals(rows, 2, "no duplicates")
     assertEquals(PlaceFixtures.get(ds, PatonesId).get.place.periodEnd, Some(1750L))
     assertEquals(
@@ -339,9 +414,11 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
         Place.Id("zzpt_land"),
         Place.Label("Zzpt Land"),
         Place.KindValue(Place.Kind.Region),
-        Some(Place.Geometry(
-          s"""{"type":"Polygon","coordinates":[[[${Lon - 2},${Lat - 2}],[${Lon + 2},${Lat - 2}],[${Lon + 2},${Lat + 2}],[${Lon - 2},${Lat + 2}],[${Lon - 2},${Lat - 2}]]]}"""
-        )),
+        Some(
+          Place.Geometry(
+            s"""{"type":"Polygon","coordinates":[[[${Lon - 2},${Lat - 2}],[${Lon + 2},${Lat - 2}],[${Lon + 2},${Lat + 2}],[${Lon - 2},${Lat + 2}],[${Lon - 2},${Lat - 2}]]]}"""
+          )
+        ),
         None,
         Some(Place.Source("fixture")),
         None
@@ -366,7 +443,13 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
       Geonames,
       V1,
       List(
-        rec(gn(ExternalId.Id("999500010")), GazRecord.Label("Zzpt Village"), GazRecord.Kind(Place.Kind.Site), Span.always, dx = 0.5)
+        rec(
+          gn(ExternalId.Id("999500010")),
+          GazRecord.Label("Zzpt Village"),
+          GazRecord.Kind(Place.Kind.Site),
+          Span.always,
+          dx = 0.5
+        )
       )
     )
     // an edge to an imported place (an old spatial-hierarchy run, a hand edit) is not followed
@@ -374,14 +457,31 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
                       VALUES ('geonames_999500010', 'zzpt_land', 'part_of', int8range(NULL, NULL))""".update.run())
     val scope = PlaceFixtures.scopeFor(ds, List(Filter.Places("zzpt_land")), None)
     assertEquals(scope.idsFor(PlaceScope.Value("zzpt_land")).map(_.toSet), Some(Set("zzpt_land", "zzpt_town")))
-    assertEquals(PlaceFixtures.children(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_land"), None, PlaceRepo.Limit(100)).map(_.id).toSet, Set("zzpt_town"))
     assertEquals(
-      PlaceFixtures.hierarchy(ds, None, Some(com.histmersion.domain.catalogue.Place.Id("zzpt_land")), PlaceRepo.Depth(3), PlaceRepo.Limit(100)).map(_.id).toSet,
+      PlaceFixtures
+        .children(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_land"), None, PlaceRepo.Limit(100))
+        .map(_.id)
+        .toSet,
+      Set("zzpt_town")
+    )
+    assertEquals(
+      PlaceFixtures
+        .hierarchy(
+          ds,
+          None,
+          Some(com.histmersion.domain.catalogue.Place.Id("zzpt_land")),
+          PlaceRepo.Depth(3),
+          PlaceRepo.Limit(100)
+        )
+        .map(_.id)
+        .toSet,
       Set("zzpt_land", "zzpt_town")
     )
     // a picked imported place still scopes to itself
     assertEquals(
-      PlaceFixtures.scopeFor(ds, List(Filter.Places("geonames_999500010")), None).idsFor(PlaceScope.Value("geonames_999500010")),
+      PlaceFixtures
+        .scopeFor(ds, List(Filter.Places("geonames_999500010")), None)
+        .idsFor(PlaceScope.Value("geonames_999500010")),
       Some(List("geonames_999500010"))
     )
 

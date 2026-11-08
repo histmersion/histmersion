@@ -179,7 +179,8 @@ class AiTrafficSuite extends munit.FunSuite:
        |}
        |$extra""".stripMargin
 
-  /** The loop over `ref` for `c`, as the engine runs a step: through the server's factory, then `AgentsControllers.call`.
+  /** The loop over `ref` for `c`, as the engine runs a step: through the server's factory, then
+    * `AgentsControllers.call`.
     */
   private def scenario[A: io.circe.Encoder](
       up: Upstream,
@@ -383,7 +384,14 @@ class AiTrafficSuite extends munit.FunSuite:
           Nil,
           providers(up.port) + s"""histmersion.agents.providers.anthropic.base-url = "http://127.0.0.1:$closed"\n"""
         ).replace(s"127.0.0.1:$closed", "127.0.0.1:<closed>"),
-        scenario(up, "anthropic: no key", sonnet, call(AnswerSchemas.probe, LlmCall.MaxIterations(2)), Nil, providers(up.port, key = false)),
+        scenario(
+          up,
+          "anthropic: no key",
+          sonnet,
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
+          Nil,
+          providers(up.port, key = false)
+        ),
         scenario(
           up,
           "anthropic: a base URL that is not one",
@@ -658,7 +666,14 @@ class AiTrafficSuite extends munit.FunSuite:
           List(Answer(400, "x" * 700)),
           base
         ),
-        scenario(up, "openai: no key", gpt, call(AnswerSchemas.probe, LlmCall.MaxIterations(2)), Nil, providers(up.port, key = false)),
+        scenario(
+          up,
+          "openai: no key",
+          gpt,
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
+          Nil,
+          providers(up.port, key = false)
+        ),
         // ── local ──
         scenario(
           up,

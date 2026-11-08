@@ -42,7 +42,8 @@ object FirstPartySettings:
   /** The keys that shape the acquisition client every plugin of a generation is lent (its User-Agent, timeouts and TLS
     * trust, its patience with `Retry-After`): a change rebuilds every plugin that uses the client.
     */
-  val ClientKeys: List[ConfigReload.Key] = List(ConfigReload.Key("histmersion.acquire"), ConfigReload.Key("histmersion.media.max-retry-after-seconds"))
+  val ClientKeys: List[ConfigReload.Key] =
+    List(ConfigReload.Key("histmersion.acquire"), ConfigReload.Key("histmersion.media.max-retry-after-seconds"))
 
   private val fetcher = ClientKeys
   private val unpaywallContact = ConfigReload.Key(s"${PluginHost.Root}.oa-unpaywall.contact-email")
@@ -64,7 +65,10 @@ object FirstPartySettings:
       List(
         // the landing step asks Unpaywall with oa-unpaywall's own contact, so the two share one request
         entry("oa-landing", fetcher :+ unpaywallContact),
-        entry("events-gvp", List(ConfigReload.Key("histmersion.events.gvp"), ConfigReload.Key("histmersion.events.min-year"))),
+        entry(
+          "events-gvp",
+          List(ConfigReload.Key("histmersion.events.gvp"), ConfigReload.Key("histmersion.events.min-year"))
+        ),
         entry("events-noaa", List(ConfigReload.Key("histmersion.events.noaa"))),
         entry("events-wikidata", List(ConfigReload.Key("histmersion.events.wikidata")))
       ) ++

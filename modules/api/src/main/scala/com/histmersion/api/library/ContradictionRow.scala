@@ -20,7 +20,8 @@ final case class ContradictionRow(
     otherYear: Option[Year] = None,
     otherStatus: Option[Source.Status] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ContradictionRow:
   object Direction:

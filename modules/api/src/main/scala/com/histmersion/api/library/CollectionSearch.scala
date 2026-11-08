@@ -13,7 +13,8 @@ final case class CollectionSearch(
     entries: List[CollectionEntry],
     total: CollectionSearch.Total
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionSearch:
   type Total = Total.T

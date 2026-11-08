@@ -44,7 +44,13 @@ object DownloadJobs:
   /** Read again now (after a download was started here). */
   def refresh(): Unit =
     ApiClient
-      .jobs(ListFilters.JobFilter(status = List(JobState.Wire("running"), JobState.Wire("queued"), JobState.Wire("paused")), kind = Kinds), Some(Paging.Limit(20)))
+      .jobs(
+        ListFilters.JobFilter(
+          status = List(JobState.Wire("running"), JobState.Wire("queued"), JobState.Wire("paused")),
+          kind = Kinds
+        ),
+        Some(Paging.Limit(20))
+      )
       .foreach { (js, _) =>
         jobs.set(js)
         if mounted && js.exists(_.status != JobState.Paused.wire) then
@@ -65,8 +71,13 @@ object DownloadJobs:
             cls := "activity-list download-jobs-list",
             js.map { j =>
               val e = Entry(
-                Entry.Key(s"job:${j.id}"), Entry.Kind("job"), Entry.At(j.createdAt.value), state = Entry.State(j.status.value), what = Entry.What(j.kind.value),
-                text = Entry.Text(j.progress.map(_.value).getOrElse("")), job = Some(j.id)
+                Entry.Key(s"job:${j.id}"),
+                Entry.Kind("job"),
+                Entry.At(j.createdAt.value),
+                state = Entry.State(j.status.value),
+                what = Entry.What(j.kind.value),
+                text = Entry.Text(j.progress.map(_.value).getOrElse("")),
+                job = Some(j.id)
               )
               ActivityView.row(e, () => refresh())
             }

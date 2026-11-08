@@ -37,7 +37,8 @@ import com.histmersion.api.catalogue.LeadFacts
 class EventMarkersSuite extends munit.FunSuite:
 
   test("the registry has an icon for every event kind and every site type, each a currentColor SVG"):
-    val missing = (EventTaxonomy.kinds.map(_.icon.value) ++ SiteTypes.all.map(_.icon.value)).filterNot(Glyphs.inner.contains)
+    val missing =
+      (EventTaxonomy.kinds.map(_.icon.value) ++ SiteTypes.all.map(_.icon.value)).filterNot(Glyphs.inner.contains)
     assertEquals(missing, Nil)
     val svg = Glyphs.svg(Glyphs.Name("swords")).value
     assert(svg.startsWith("""<svg class="glyph" viewBox="0 0 24 24"""") && svg.contains("<polyline"), svg)
@@ -92,7 +93,10 @@ class EventMarkersSuite extends munit.FunSuite:
     val c = EventMarker.html(eruption, EventMarker.Color("rgb(1,2,3)")).value
     assert(c.contains("hd-ev--catalogue") && c.contains("hd-ev--natural"), c)
     assert(
-      EventMarker.describe(eruption).value.contains("VEI 6") && EventMarker.describe(eruption).value.contains("catalogue only")
+      EventMarker.describe(eruption).value.contains("VEI 6") && EventMarker
+        .describe(eruption)
+        .value
+        .contains("catalogue only")
     )
 
   test("an event's place on the ramp is the middle of its span within the span shown"):
@@ -101,7 +105,16 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(EventMarker.rampAt(battle, (Year(-1274L), Year(-1274L))).value, 0.5)
 
   test("a site's marker is a circle badge: its type's icon and colour; the exclamation mark when untyped"):
-    val fort = SitePoint(Some(SitePoint.Id("zz_f")), SitePoint.Label("Zz fort"), SitePoint.Kind(Place.Kind.Site), Some(SitePoint.SiteType("fortification")), None, LatLon.Lat(37), LatLon.Lon(32), None)
+    val fort = SitePoint(
+      Some(SitePoint.Id("zz_f")),
+      SitePoint.Label("Zz fort"),
+      SitePoint.Kind(Place.Kind.Site),
+      Some(SitePoint.SiteType("fortification")),
+      None,
+      LatLon.Lat(37),
+      LatLon.Lon(32),
+      None
+    )
     val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)")
     assert(
       h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(
@@ -152,18 +165,29 @@ class EventMarkersSuite extends munit.FunSuite:
   test("the menus: all, the two groups, every kind; the tiers; every site type"):
     val kinds = LayerFilters.eventKinds
     assertEquals(kinds.head.value.value, "")
-    assertEquals(kinds.filter(o => EventTaxonomy.groups.map(_.value).contains(o.value.value)).map(_.value.value), List("natural", "human"))
+    assertEquals(
+      kinds.filter(o => EventTaxonomy.groups.map(_.value).contains(o.value.value)).map(_.value.value),
+      List("natural", "human")
+    )
     assertEquals(kinds.size, 3 + EventTaxonomy.kinds.size)
     // every kind listed under its group, after that group's "all"
     EventTaxonomy.kinds.foreach { k =>
       val o = kinds.find(_.value.value == k.kind.value).get
       assertEquals(o.group.map(_.value), Some(s"${k.group} events"))
       assert(kinds.indexWhere(_.value.value == k.group.value) < kinds.indexOf(o))
-      assert(o.icon.value.contains("hd-badge--square") && o.icon.value.contains(Glyphs.badge(Glyphs.BadgeName(k.icon.value)).value), o.icon)
+      assert(
+        o.icon.value.contains("hd-badge--square") && o.icon.value
+          .contains(Glyphs.badge(Glyphs.BadgeName(k.icon.value)).value),
+        o.icon
+      )
     }
     assertEquals(LayerFilters.tiers.map(_.value.value), List("", "attested", "catalogue"))
     assert(
-      LayerFilters.tiers(1).icon.value.contains("hd-ev--attested") && LayerFilters.tiers(2).icon.value.contains("hd-ev--catalogue")
+      LayerFilters.tiers(1).icon.value.contains("hd-ev--attested") && LayerFilters
+        .tiers(2)
+        .icon
+        .value
+        .contains("hd-ev--catalogue")
     )
     assertEquals(LayerFilters.siteTypes.size, 1 + SiteTypes.all.size)
     assert(LayerFilters.siteTypes.tail.forall(_.icon.value.contains("hd-badge--circle")))
@@ -180,7 +204,9 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(IconSelect.step("End", 0, 3), Some(2))
     assertEquals(IconSelect.step("Home", 2, 3), Some(0))
     assertEquals(IconSelect.step("x", 0, 3), None)
-    val os = List("all", "battle", "burial", "cave").map(l => IconSelect.Opt(IconSelect.Opt.Value(l), IconSelect.Opt.Label(l), Icon.Html("")))
+    val os = List("all", "battle", "burial", "cave").map(l =>
+      IconSelect.Opt(IconSelect.Opt.Value(l), IconSelect.Opt.Label(l), Icon.Html(""))
+    )
     assertEquals(IconSelect.typeAhead(os, 0, "b"), Some(1))
     assertEquals(IconSelect.typeAhead(os, 1, "b"), Some(2))
     assertEquals(IconSelect.typeAhead(os, 2, "b"), Some(1), "wraps")
@@ -188,15 +214,47 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(IconSelect.typeAhead(os, 0, "zz"), None)
 
   test("an open-ended event's card dates it at the end it states and says the other is not recorded (#1768)"):
-    val start = Preview.card(EventDetail(EventSummary(Event.Id("e"), EventSummary.Label("E"), EventSummary.Kind("war"), TimeSpan(notBefore = Some(Year(-1200))), EventSummary.Historicity("attested"))))
+    val start = Preview.card(
+      EventDetail(
+        EventSummary(
+          Event.Id("e"),
+          EventSummary.Label("E"),
+          EventSummary.Kind("war"),
+          TimeSpan(notBefore = Some(Year(-1200))),
+          EventSummary.Historicity("attested")
+        )
+      )
+    )
     assert(start.byline.value.contains("1200 BCE (end not recorded)"), start.byline)
     val both =
-      Preview.card(EventDetail(EventSummary(Event.Id("e"), EventSummary.Label("E"), EventSummary.Kind("war"), TimeSpan(Some(Year(-431)), None, None, Some(Year(-404))), EventSummary.Historicity("attested"))))
+      Preview.card(
+        EventDetail(
+          EventSummary(
+            Event.Id("e"),
+            EventSummary.Label("E"),
+            EventSummary.Kind("war"),
+            TimeSpan(Some(Year(-431)), None, None, Some(Year(-404))),
+            EventSummary.Historicity("attested")
+          )
+        )
+      )
     assert(!both.byline.value.contains("not recorded"), both.byline)
     assertEquals(
       EventPlayback
         .playable(
-          List(EventGeo(Event.Id("e"), EventGeo.Label("E"), EventGeo.Kind("war"), EventGeo.Scale("regional"), EventGeo.Historicity("attested"), TimeSpan(notBefore = Some(Year(-1200))), Latitude(0), Longitude(0), EventGeo.Anchor("event")))
+          List(
+            EventGeo(
+              Event.Id("e"),
+              EventGeo.Label("E"),
+              EventGeo.Kind("war"),
+              EventGeo.Scale("regional"),
+              EventGeo.Historicity("attested"),
+              TimeSpan(notBefore = Some(Year(-1200))),
+              Latitude(0),
+              Longitude(0),
+              EventGeo.Anchor("event")
+            )
+          )
         )
         .map(_._2)
         .map((a, b) => (a.value, b.value)),
@@ -206,7 +264,13 @@ class EventMarkersSuite extends munit.FunSuite:
 
   test("an event card: attesting sources as source links, the catalogue as provenance, leads with their actions"):
     val d = EventDetail(
-      EventSummary(Event.Id("e"), EventSummary.Label("E"), EventSummary.Kind("eruption"), TimeSpan(Some(Year(-1600)), None, None, Some(Year(-1600))), EventSummary.Historicity("attested")),
+      EventSummary(
+        Event.Id("e"),
+        EventSummary.Label("E"),
+        EventSummary.Kind("eruption"),
+        TimeSpan(Some(Year(-1600)), None, None, Some(Year(-1600))),
+        EventSummary.Historicity("attested")
+      ),
       tier = EventGeo.Tier(EventTier.Catalogue),
       sources = Nil,
       catalogue = List(
@@ -220,7 +284,15 @@ class EventMarkersSuite extends munit.FunSuite:
           vei = Some(EventCatalogueRef.Vei(6))
         )
       ),
-      candidates = List(EventLinkCandidate(Event.Id("e"), Citekey("x2020"), EventLinkCandidate.Score(0.9), title = Some(Title("X")), reasons = List(EventLinkCandidate.Reasons("names it 1 time")))),
+      candidates = List(
+        EventLinkCandidate(
+          Event.Id("e"),
+          Citekey("x2020"),
+          EventLinkCandidate.Score(0.9),
+          title = Some(Title("X")),
+          reasons = List(EventLinkCandidate.Reasons("names it 1 time"))
+        )
+      ),
       leads = List(
         EventLead(
           Event.Id("e"),
@@ -235,7 +307,10 @@ class EventMarkersSuite extends munit.FunSuite:
     )
     val secs = Preview.eventSections(d)
     assertEquals(secs.map(_.kind.value), List("candidates", "catalogue", "leads"))
-    assertEquals(secs.head.note.map(_.value), Some("unconfirmed — proposed from findings near it and passages naming it"))
+    assertEquals(
+      secs.head.note.map(_.value),
+      Some("unconfirmed — proposed from findings near it and passages naming it")
+    )
     assertEquals(secs.head.items.head.citekey.map(_.value), Some("x2020"))
     assert(secs(1).items.head.text.value.contains("VEI 6") && secs(1).items.head.href.isDefined)
     assert(secs(1).note.exists(_.value.contains("research lead, not evidence")))
@@ -252,14 +327,30 @@ class EventMarkersSuite extends munit.FunSuite:
 
   // ── how precisely an event is dated (the data-source assessment's P0) ─────────────────────────
 
-  private val hekla = eruption.modify(_.id).setTo(Event.Id("gvp_12724")).modify(_.label).setTo(EventGeo.Label("Eruption of Hekla")).modify(_.timeSpan).setTo(TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026)))).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Imprecise)).modify(_.dating).setTo(Some(EventGeo.Dating("250 CE ± 2500 (tephrochronology)"))
-  )
-  private val approx = eruption.modify(_.id).setTo(Event.Id("zz_a")).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Approximate))
+  private val hekla = eruption
+    .modify(_.id)
+    .setTo(Event.Id("gvp_12724"))
+    .modify(_.label)
+    .setTo(EventGeo.Label("Eruption of Hekla"))
+    .modify(_.timeSpan)
+    .setTo(TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026))))
+    .modify(_.precision)
+    .setTo(EventGeo.Precision(EventPrecision.Imprecise))
+    .modify(_.dating)
+    .setTo(Some(EventGeo.Dating("250 CE ± 2500 (tephrochronology)")))
+  private val approx = eruption
+    .modify(_.id)
+    .setTo(Event.Id("zz_a"))
+    .modify(_.precision)
+    .setTo(EventGeo.Precision(EventPrecision.Approximate))
 
   test("an imprecisely dated event is not drawn at a year — neither as a marker nor in playback"):
     assert(!PointKinds.Events.keep(hekla))
     assert(PointKinds.Events.keep(eruption) && PointKinds.Events.keep(approx))
-    assertEquals(EventPlayback.playable(List(hekla, eruption, approx)).map(_._1.id), Vector("zz_e", "zz_a").map(Event.Id.apply))
+    assertEquals(
+      EventPlayback.playable(List(hekla, eruption, approx)).map(_._1.id),
+      Vector("zz_e", "zz_a").map(Event.Id.apply)
+    )
 
   test("an approximately dated event is drawn faded: its marker and its playback label carry the class"):
     assert(EventMarker.html(approx, EventMarker.Color("rgb(1,2,3)")).value.contains("hd-ev--approximate"))
@@ -298,9 +389,14 @@ class EventMarkersSuite extends munit.FunSuite:
     val card = Preview.card(d)
     assertEquals(card.byline.value, "Eruption · 250 CE ± 2500 (tephrochronology) · attested")
     assert(card.facts.map(_.value).contains("window: 2251 BCE–2026 CE"), card.facts.toString)
-    assert(card.facts.map(_.value).contains("imprecise date — listed, not drawn on the map at a year"), card.facts.toString)
     assert(
-      card.facts.exists(f => f.value.startsWith("corrected by hand — label: “Hekla 3”") && f.value.contains("CONFLICT")),
+      card.facts.map(_.value).contains("imprecise date — listed, not drawn on the map at a year"),
+      card.facts.toString
+    )
+    assert(
+      card.facts.exists(f =>
+        f.value.startsWith("corrected by hand — label: “Hekla 3”") && f.value.contains("CONFLICT")
+      ),
       card.facts.toString
     )
     // the events list shows the stated dating and marks it

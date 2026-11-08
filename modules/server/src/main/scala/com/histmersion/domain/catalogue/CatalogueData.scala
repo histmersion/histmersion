@@ -66,7 +66,13 @@ object CatalogueData extends DataContribution:
     CacheHolding.InStore(Location.Basemap, Store.Key.applyUnsafe(directory))
 
   override val caches: List[CacheSpec] = List(
-    CacheSpec(owner, CacheName("map-tiles"), CacheSpec.Label("map tiles"), CacheHolding.InMemory, List(CacheEvent.Restored)),
+    CacheSpec(
+      owner,
+      CacheName("map-tiles"),
+      CacheSpec.Label("map tiles"),
+      CacheHolding.InMemory,
+      List(CacheEvent.Restored)
+    ),
     CacheSpec(
       owner,
       CacheName("undated-cells"),

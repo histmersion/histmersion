@@ -39,8 +39,18 @@ class WatchSchedulesSuite extends munit.FunSuite:
     val p = migrate(
       None,
       List(
-        sch(ScheduleKind.Currency, GoalSchedule.Cron("@daily"), usd = Some(GoalSchedule.BudgetUsd(0.1)), next = Some(GoalSchedule.NextRunAt("2026-10-18T00:00:00Z"))),
-        sch(ScheduleKind.Acquisition, GoalSchedule.Cron("@monthly"), usd = Some(GoalSchedule.BudgetUsd(0.25)), next = Some(GoalSchedule.NextRunAt("2026-11-01T00:00:00Z")))
+        sch(
+          ScheduleKind.Currency,
+          GoalSchedule.Cron("@daily"),
+          usd = Some(GoalSchedule.BudgetUsd(0.1)),
+          next = Some(GoalSchedule.NextRunAt("2026-10-18T00:00:00Z"))
+        ),
+        sch(
+          ScheduleKind.Acquisition,
+          GoalSchedule.Cron("@monthly"),
+          usd = Some(GoalSchedule.BudgetUsd(0.25)),
+          next = Some(GoalSchedule.NextRunAt("2026-11-01T00:00:00Z"))
+        )
       ),
       now
     )
@@ -57,23 +67,44 @@ class WatchSchedulesSuite extends munit.FunSuite:
     "a disabled schedule is not swept, its cron kept only when nothing else is there; an empty watcher sweeps nothing"
   ):
     val p =
-      migrate(None, List(sch(ScheduleKind.Currency, GoalSchedule.Cron("@weekly"), on = GoalSchedule.Enabled(false), next = Some(GoalSchedule.NextRunAt("2026-10-18T00:00:00Z")))), now)
+      migrate(
+        None,
+        List(
+          sch(
+            ScheduleKind.Currency,
+            GoalSchedule.Cron("@weekly"),
+            on = GoalSchedule.Enabled(false),
+            next = Some(GoalSchedule.NextRunAt("2026-10-18T00:00:00Z"))
+          )
+        ),
+        now
+      )
     assertEquals((p.config.sweeps, p.cron, p.nextTick), (Some(Nil), Some("@weekly"), None))
     assert(p.notes.exists(_.value.contains("was off: not swept")), p.notes)
     assertEquals(Sweep.of(p.config), Nil)
 
   test("an existing watcher keeps its own cron, next firing, sweeps and budget; it gains the enabled kinds"):
     val e = Existing(
-      ManagerConfig(sweeps = Some(List(Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(1.0))),
+      ManagerConfig(
+        sweeps = Some(List(Managers.Sweep.Wire("currency"))),
+        budgetUsd = Some(ManagerConfig.BudgetUsd(1.0))
+      ),
       Some(Cron.Text("@weekly")),
       Some(ManagerPolicy.InstantText("2026-10-18T00:00:00Z"))
     )
-    val p = migrate(Some(e), List(sch(ScheduleKind.Acquisition, GoalSchedule.Cron("@daily"), usd = Some(GoalSchedule.BudgetUsd(0.2)))), now)
+    val p = migrate(
+      Some(e),
+      List(sch(ScheduleKind.Acquisition, GoalSchedule.Cron("@daily"), usd = Some(GoalSchedule.BudgetUsd(0.2)))),
+      now
+    )
     assertEquals(
       (p.config.sweeps, p.cron, p.nextTick, p.config.budgetUsd),
       (Some(List("acquisition", "currency")), Some("@weekly"), Some("2026-10-18T00:00:00Z"), Some(1.0))
     )
-    assert(p.notes.exists(_.value.contains("its cron `@weekly` kept over the acquisition schedule's `@daily`")), p.notes)
+    assert(
+      p.notes.exists(_.value.contains("its cron `@weekly` kept over the acquisition schedule's `@daily`")),
+      p.notes
+    )
 
   test("view: one schedule per sweep, the watcher's cron and next firing; paused says how to make it fire"):
     val m = ManagerInfo(
@@ -81,7 +112,10 @@ class WatchSchedulesSuite extends munit.FunSuite:
       Managers.ManagerInfo.Kind("watch"),
       Some(Goal.Slug("tin")),
       State.Paused.wire,
-      config = ManagerConfig(sweeps = Some(List(Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(0.5))),
+      config = ManagerConfig(
+        sweeps = Some(List(Managers.Sweep.Wire("currency"))),
+        budgetUsd = Some(ManagerConfig.BudgetUsd(0.5))
+      ),
       cron = Some(Managers.ManagerInfo.Cron("@daily")),
       nextTickAt = Some(Managers.ManagerInfo.NextTickAt("2026-10-18T00:00:00Z"))
     )

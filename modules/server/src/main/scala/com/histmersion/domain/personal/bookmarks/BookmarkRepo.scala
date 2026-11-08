@@ -18,7 +18,6 @@ private[bookmarks] object BookmarkRepo:
   type RowsChanged = RowsChanged.T
   object RowsChanged extends Newtype[Int, Pure]
 
-
   private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
@@ -31,7 +30,10 @@ private[bookmarks] object BookmarkRepo:
     (Sql.of(Sql.Text(s"$Projection WHERE b.user_id = ? AND b.deleted_at IS NULL"), Param.S(Param.S.V(user.value))) ++
       kind.fold(Sql.empty)(k => Sql.of(Sql.Text(" AND b.target_kind = ?"), Param.S(Param.S.V(k.wire.value)))) ++
       Sql.raw(Sql.Text(" ORDER BY b.created_at DESC, b.id DESC")) ++
-      size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag.query[Bookmark.Row].run().toList
+      size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag
+      .query[Bookmark.Row]
+      .run()
+      .toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Bookmark.Id)(using DbCon): Option[Bookmark.Row] =
     Sql
@@ -75,9 +77,13 @@ private[bookmarks] object BookmarkRepo:
   )(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET label = $label, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))
+          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+      .run()
+      .pipe(RowsChanged(_))
 
   def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))
+          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+      .run()
+      .pipe(RowsChanged(_))

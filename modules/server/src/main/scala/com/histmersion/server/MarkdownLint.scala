@@ -94,7 +94,9 @@ object MarkdownLint:
   def lookups(texts: List[Scan.Text]): List[WikiLinks.Occurrence.Target] =
     texts
       .flatMap(t =>
-        Article.Links.targets(WikiLinks.Body(t.value)).map(_.value) ++ CitekeyTok.findAllMatchIn(t.value).map(_.group(1))
+        Article.Links
+          .targets(WikiLinks.Body(t.value))
+          .map(_.value) ++ CitekeyTok.findAllMatchIn(t.value).map(_.group(1))
       )
       .distinct
       .map(WikiLinks.Occurrence.Target(_))
@@ -159,7 +161,9 @@ object MarkdownLint:
         val edits = chosen.flatMap(_.edits).sortBy(e => (-e.start, -e.end))
         val next = edits.foldLeft(t)((s, e) => s.substring(0, e.start) + e.replacement + s.substring(e.end))
         val lines =
-          chosen.reverse.map(f => s"${f.issue.rule.wire} at line ${f.issue.line}: ${f.issue.fix.fold("repaired")(_.value)}")
+          chosen.reverse.map(f =>
+            s"${f.issue.rule.wire} at line ${f.issue.line}: ${f.issue.fix.fold("repaired")(_.value)}"
+          )
         if next == t then (t, done) else loop(next, round + 1, done ++ lines)
     val (fixed, lines) = loop(text.value, 0, Nil)
     (Scan.Text(fixed), lines.map(Repair(_)))
@@ -382,10 +386,19 @@ object MarkdownLint:
     // ── the masked text and its AST ──────────────────────────────────────────────────────────────
     // every wikilink the renderer rewrites is replaced by `W`s of the same length (as the page puts
     // an anchor there before flexmark runs), so `**[[ck]]**` is bold and `[[a_b|c]]` no table cell
-    private final case class Wikilink(start: Int, end: Int, raw: String, embed: Boolean, escaped: Boolean, target: Option[String])
+    final private case class Wikilink(
+        start: Int,
+        end: Int,
+        raw: String,
+        embed: Boolean,
+        escaped: Boolean,
+        target: Option[String]
+    )
     private val links = Article.Links
       .occurrences(WikiLinks.Body(text))
-      .map(o => Wikilink(o.start.value, o.end.value, o.raw.value, o.embed.value, o.escaped.value, o.target.map(_.value)))
+      .map(o =>
+        Wikilink(o.start.value, o.end.value, o.raw.value, o.embed.value, o.escaped.value, o.target.map(_.value))
+      )
     private val masked =
       val b = new java.lang.StringBuilder(text)
       links.filter(o => o.target.nonEmpty && !o.embed).foreach(o => (o.start until o.end).foreach(b.setCharAt(_, 'W')))
@@ -912,7 +925,9 @@ object MarkdownLint:
             val target = Option(m.group(1)).orElse(Option(m.group(2))).map(_.toLowerCase).getOrElse("")
             val label = lk.getText.toString.trim
             val wiki =
-              if label.isEmpty || label.toLowerCase == target || Label.display(Label.Text(target)).value == label.toLowerCase
+              if label.isEmpty || label.toLowerCase == target || Label
+                  .display(Label.Text(target))
+                  .value == label.toLowerCase
               then s"[[$target]]"
               else s"[[$target|${label.replace("|", "-").replace("]", ")").replace("[", "(")}]]"
             val ok = Article.Links.normalize(WikiLinks.NormalizeRaw(target)).nonEmpty
@@ -1101,7 +1116,8 @@ object MarkdownLint:
                 s"`${"#" * h.getLevel} ${h.getText.toString.trim}` already appears at line ${lineOf(first.getStartOffset) + 1} — the section is written twice"
               )
             case None => seen(key) = h
-        if ctx.article.value && field == FormatField.Body && """^sources\s+cited\b""".r.findFirstIn(key._2).isDefined then
+        if ctx.article.value && field == FormatField.Body && """^sources\s+cited\b""".r.findFirstIn(key._2).isDefined
+        then
           add(
             FormatRule.SourcesCitedSection,
             h.getStartOffset,
@@ -1258,7 +1274,10 @@ object MarkdownLint:
           // the `_Method:_` line lists the filter's citekeys on purpose — the writing guide's convention
           if !MethodLine.matches(t) then
             ctx.isCitekey.foreach { known =>
-              val bare = CitekeyTok.findAllMatchIn(mt).filter(m => isLiteral(st + m.start) && known(WikiLinks.Occurrence.Target(m.group(1)))).toList
+              val bare = CitekeyTok
+                .findAllMatchIn(mt)
+                .filter(m => isLiteral(st + m.start) && known(WikiLinks.Occurrence.Target(m.group(1))))
+                .toList
               bare.headOption.foreach { m =>
                 val names = bare.map(_.group(1)).distinct
                 add(

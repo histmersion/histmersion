@@ -18,5 +18,6 @@ object HandedFile:
     type Size = Size.T
     object Size extends Newtype[Long, Pure]
 
-  def snapshot(file: HandedFile): Snapshot = Snapshot(Snapshot.Name(file.getName), Snapshot.Size(file.length()), source(file))
+  def snapshot(file: HandedFile): Snapshot =
+    Snapshot(Snapshot.Name(file.getName), Snapshot.Size(file.length()), source(file))
   def source(file: HandedFile): ByteSource = ByteSource.file(file.toPath)

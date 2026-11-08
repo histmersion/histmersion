@@ -47,7 +47,11 @@ object MediaCovers:
         ORDER BY s.citekey""")
 
   /** The Calibre-linked sources to look at, as (citekey, Calibre id). */
-  def linked(c: Client, only: Option[Citekey], refresh: MediaImportRequest.Refresh): Either[Cli.Error, List[(Citekey, Calibre.Book.Id)]] =
+  def linked(
+      c: Client,
+      only: Option[Citekey],
+      refresh: MediaImportRequest.Refresh
+  ): Either[Cli.Error, List[(Citekey, Calibre.Book.Id)]] =
     c.query(linkedQuery(only, refresh))
       .map(_.rows.flatMap { r =>
         for
@@ -91,15 +95,21 @@ object MediaCovers:
               Outcome.Failed(MediaCoversReport.Failed(s"$ck: cannot read ${path.value} (${e.getMessage})"))
             case Right(bytes) =>
               c.putSourceCover(
-                SourceCoverParams(ck, MediaItem.Provider(MediaProvider.Calibre), SourceCoverParams.Key(book.id.toString), None),
+                SourceCoverParams(
+                  ck,
+                  MediaItem.Provider(MediaProvider.Calibre),
+                  SourceCoverParams.Key(book.id.toString),
+                  None
+                ),
                 Api.FileBytes(bytes)
               ) match
                 case Right(_) => Outcome.Uploaded(line)
                 case Left(e)  => Outcome.Failed(MediaCoversReport.Failed(s"$ck: ${e.message}"))
       case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
         Outcome.AskOpenLibrary(ck, MediaCoversRequest.Isbn(isbn.value))
-      case Some(CoverChoice.Pick.OpenLibrary(_, _)) => Outcome.Skipped(Outcome.Skipped.Reason("no cover file in Calibre"))
-      case None                                     => Outcome.Skipped(Outcome.Skipped.Reason("no cover file in Calibre, no ISBN"))
+      case Some(CoverChoice.Pick.OpenLibrary(_, _)) =>
+        Outcome.Skipped(Outcome.Skipped.Reason("no cover file in Calibre"))
+      case None => Outcome.Skipped(Outcome.Skipped.Reason("no cover file in Calibre, no ISBN"))
 
   /** The Calibre step over the linked sources: what was uploaded, what Open Library is to be asked for (by the server),
     * and the counts.
@@ -113,7 +123,15 @@ object MediaCovers:
       limit: Option[Paging.Limit]
   ): Either[Cli.Error, (MediaCoversReport, List[(Citekey, MediaCoversRequest.Isbn)])] =
     if !cal.libraryExists then
-      Right((MediaCoversReport(dryRun, skipped = List(MediaCount(MediaCount.Key("no Calibre library here"), MediaCount.N(1)))), Nil))
+      Right(
+        (
+          MediaCoversReport(
+            dryRun,
+            skipped = List(MediaCount(MediaCount.Key("no Calibre library here"), MediaCount.N(1)))
+          ),
+          Nil
+        )
+      )
     else
       for
         links <- linked(c, only, refresh)
@@ -124,7 +142,11 @@ object MediaCovers:
         val byId = books.map(b => b.id -> b).toMap
         val cap = limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue)
         val outcomes = links.take(cap).map { (ck, id) =>
-          byId.get(id).fold[Outcome](Outcome.Skipped(Outcome.Skipped.Reason("Calibre id not in the library")))(one(c, ck, _, dryRun))
+          byId
+            .get(id)
+            .fold[Outcome](Outcome.Skipped(Outcome.Skipped.Reason("Calibre id not in the library")))(
+              one(c, ck, _, dryRun)
+            )
         }
         val lines = outcomes.collect { case Outcome.Uploaded(l) => l }
         val asks = outcomes.collect { case Outcome.AskOpenLibrary(ck, i) => (ck, i) }

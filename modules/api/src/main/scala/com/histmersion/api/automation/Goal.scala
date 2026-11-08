@@ -33,7 +33,8 @@ final case class Goal(
     parentSlug: Option[Goal.Slug] = None,
     updatedAt: Option[Goal.UpdatedAt] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object Goal:
   type Export = Export.T
@@ -89,7 +90,6 @@ object Goal:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     val SearchQuery: LinkKind = Query
 
     def parse(s: Wire): Option[LinkKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -98,18 +98,16 @@ object Goal:
       def wire(e: LinkKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
       def fromWire(s: WireEnumValues.Wire): Option[LinkKind] = parse(Wire((s).value))
 
-
   final case class Deleted(
       slug: Slug,
       deleted: Deleted.Value
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Deleted:
     type Value = Value.T
     object Value extends Newtype[Boolean, Pure]
-
-
 
   final case class List(
       total: RowCount,
@@ -117,14 +115,19 @@ object Goal:
       offset: Offset = Offset(0),
       next: Option[Offset] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(goals.size))
 
   object List:
 
-
     def of(total: RowCount, rows: scala.List[Goal], offset: UnreadPage.Offset): List =
-      List(RowCount((total).value), rows, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next)
+      List(
+        RowCount((total).value),
+        rows,
+        Offset((offset).value),
+        OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
+      )
 
   final case class Patch(
       title: Option[Title] = None,
@@ -136,10 +139,10 @@ object Goal:
       periodEnd: Option[Year] = None,
       parentSlug: Option[Slug] = None,
       budgetUsd: Option[Patch.BudgetUsd] = None
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Patch:
-
 
     type BudgetUsd = BudgetUsd.T
     object BudgetUsd extends Newtype[Double, Pure]
@@ -154,8 +157,8 @@ object Goal:
         notes: Option[Notes] = None,
         tags: scala.List[Tags] = Nil
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
-
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     final case class PlannedWork(
         doi: Doi,
@@ -167,7 +170,8 @@ object Goal:
         isOa: PlannedWork.IsOa = PlannedWork.IsOa(false),
         why: PlannedWork.Why = PlannedWork.Why("")
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object PlannedWork:
       type InCorpus = InCorpus.T
@@ -177,7 +181,6 @@ object Goal:
       type Why = Why.T
       object Why extends Newtype[String, Pure]
 
-
     final case class Plan(
         goal: Slug,
         rationale: Plan.Rationale = Plan.Rationale(""),
@@ -186,7 +189,8 @@ object Goal:
         works: scala.List[PlannedWork] = Nil,
         dropped: scala.List[Plan.Dropped] = Nil
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema:
+          KindlingsSchema,
+          com.histmersion.api.json.Schema:
       def isEmpty: Boolean = (subGoals.isEmpty && queries.isEmpty && works.isEmpty)
 
     object Plan:
@@ -197,7 +201,6 @@ object Goal:
       object Queries extends Newtype[String, Pure]
       type Dropped = Dropped.T
       object Dropped extends Newtype[String, Pure]
-
 
     export Goal.LinkKind as LinkKind
     export com.histmersion.api.research.DraftMode
@@ -217,7 +220,8 @@ object Goal:
         filter: ArticleDraft.Filter = ArticleDraft.Filter(""),
         reasons: scala.List[Coverage.Reason] = Nil
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object ArticleDraft:
       type Text = Text.T
@@ -229,7 +233,6 @@ object Goal:
       type Filter = Filter.T
       object Filter extends Newtype[String, Pure]
 
-
     final case class GoalLink(
         kind: LinkKind,
         ref: GoalLink.Ref,
@@ -238,7 +241,8 @@ object Goal:
         createdAt: GoalLink.CreatedAt = GoalLink.CreatedAt(""),
         queue: Option[GoalLink.Queue] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object GoalLink:
       type QueueNumber = QueueNumber.T
@@ -254,10 +258,10 @@ object Goal:
       type Queue = Queue.T
       object Queue extends Newtype[String, Pure]
 
-
-    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None)
+        derives KindlingsSchema,
+          com.histmersion.api.json.Schema
     object LinkAdd:
-
 
       type Ref = Ref.T
       object Ref extends Newtype[String, Pure]
@@ -278,7 +282,8 @@ object Goal:
         lastRun: Option[GoalSchedule.LastRun] = None,
         lastNote: Option[GoalSchedule.LastNote] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object GoalSchedule:
       type Cron = Cron.T
@@ -296,11 +301,13 @@ object Goal:
       type LastNote = LastNote.T
       object LastNote extends Newtype[String, Pure]
 
-
-    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = ScheduleSet.Enabled(true), budgetUsd: Option[ScheduleSet.BudgetUsd] = None)
-        derives KindlingsSchema, com.histmersion.api.json.Schema
+    final case class ScheduleSet(
+        cron: ScheduleSet.Cron,
+        enabled: ScheduleSet.Enabled = ScheduleSet.Enabled(true),
+        budgetUsd: Option[ScheduleSet.BudgetUsd] = None
+    ) derives KindlingsSchema,
+          com.histmersion.api.json.Schema
     object ScheduleSet:
-
 
       type Cron = Cron.T
       object Cron extends Newtype[String, Pure]
@@ -311,12 +318,14 @@ object Goal:
 
       given Codec.AsObject[ScheduleSet] = StrictJson.codec(KindlingsCodecAsObject.derived[ScheduleSet])
 
-    final case class Removed(removed: Removed.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Removed(removed: Removed.Value)
+        derives KindlingsCodecAsObject,
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object Removed:
       type Value = Value.T
       object Value extends Newtype[Boolean, Pure]
-
 
     final case class GoalView(
         goal: Goal,
@@ -326,12 +335,12 @@ object Goal:
         plan: Option[Plan] = None,
         budgetUsd: Option[GoalView.BudgetUsd] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object GoalView:
       type BudgetUsd = BudgetUsd.T
       object BudgetUsd extends Newtype[Double, Pure]
-
 
   final case class Put(
       title: Title,
@@ -342,22 +351,35 @@ object Goal:
       periodStart: Option[Year] = None,
       periodEnd: Option[Year] = None,
       parentSlug: Option[Slug] = None
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Put:
-
 
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
   object Stages:
-    export Goal.{Stage as AllPart1, StageMeaning as AllPart2, StageMeaning as MeaningResult, Stage as MeaningStatus}
+    export Goal.{Stage as AllPart1, Stage as MeaningStatus, StageMeaning as AllPart2, StageMeaning as MeaningResult}
 
     val all: scala.List[(Stage, StageMeaning)] = scala.List(
-      { val refactorTuple6 = Status.Planned -> "created; nothing works on it yet"; (Stage(refactorTuple6._1), StageMeaning(refactorTuple6._2)) },
-      { val refactorTuple7 = Status.Seeding -> "finding and reading sources, writing its articles"; (Stage(refactorTuple7._1), StageMeaning(refactorTuple7._2)) },
-      { val refactorTuple3 = Status.Compiled -> "its articles are written; not all have passed review yet"; (Stage(refactorTuple3._1), StageMeaning(refactorTuple3._2)) },
-      { val refactorTuple9 = Status.Reviewed -> "every article (and sub-goal) passed the review panel"; (Stage(refactorTuple9._1), StageMeaning(refactorTuple9._2)) },
-      { val refactorTuple10 = Status.Done -> "finished: only you set this, the autopilot never does"; (Stage(refactorTuple10._1), StageMeaning(refactorTuple10._2)) }
+      {
+        val refactorTuple6 = Status.Planned -> "created; nothing works on it yet";
+        (Stage(refactorTuple6._1), StageMeaning(refactorTuple6._2))
+      }, {
+        val refactorTuple7 = Status.Seeding -> "finding and reading sources, writing its articles";
+        (Stage(refactorTuple7._1), StageMeaning(refactorTuple7._2))
+      }, {
+        val refactorTuple3 = Status.Compiled -> "its articles are written; not all have passed review yet";
+        (Stage(refactorTuple3._1), StageMeaning(refactorTuple3._2))
+      }, {
+        val refactorTuple9 = Status.Reviewed -> "every article (and sub-goal) passed the review panel";
+        (Stage(refactorTuple9._1), StageMeaning(refactorTuple9._2))
+      }, {
+        val refactorTuple10 = Status.Done -> "finished: only you set this, the autopilot never does";
+        (Stage(refactorTuple10._1), StageMeaning(refactorTuple10._2))
+      }
     )
 
-    def meaning(status: Stage): Option[StageMeaning] = all.collectFirst { case (s, m) if s == status => StageMeaning((m).value) }
+    def meaning(status: Stage): Option[StageMeaning] = all.collectFirst {
+      case (s, m) if s == status => StageMeaning((m).value)
+    }

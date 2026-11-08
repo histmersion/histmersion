@@ -7,6 +7,7 @@ import com.histmersion.plugin.Registry
 final class PleiadesPlugin extends MediaPlugin("media-pleiades"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
-    ctx.mediaCollections.add(Registry.AddId("pleiades"), PleiadesPictures(c.media, ctx.licences))
+    ctx.mediaCollections
+      .add(Registry.AddId("pleiades"), PleiadesPictures(c.media, ctx.licences))
       .left
       .map(e => Plugin.RegisterResultPart1(e.value))

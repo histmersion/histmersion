@@ -9,8 +9,12 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A tombstone as a bundle reads it (Magnum maps a SELECT's columns positionally). */
-final private[histmersion] case class BTombstoneRow(uid: UUID, kind: BTombstoneRow.Kind, origin: UUID, deletedAt: BTombstoneRow.DeletedAt)
-    derives DbCodec
+final private[histmersion] case class BTombstoneRow(
+    uid: UUID,
+    kind: BTombstoneRow.Kind,
+    origin: UUID,
+    deletedAt: BTombstoneRow.DeletedAt
+) derives DbCodec
 
 object BTombstoneRow:
   type Kind = Kind.T

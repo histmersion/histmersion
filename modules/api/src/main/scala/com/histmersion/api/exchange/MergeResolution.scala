@@ -12,11 +12,12 @@ final case class MergeResolution(
     decision: MergeResolution.Decision,
     text: Option[MergeResolution.Text] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MergeResolution:
   type Issue = Issue.T
   object Issue extends Newtype[String, Pure]
-  export MergeDecision.Kind.{Wire as Decision}
+  export MergeDecision.Kind.Wire as Decision
   type Text = Text.T
   object Text extends Newtype[String, Pure]

@@ -7,7 +7,12 @@ import com.histmersion.api.media.DataCredit
 /** Whom and how a reuse must credit: the licence, its URL, the author to name and the credit line in the provider's own
   * form. A picture carries one, and so does a dataset (its licence and credit).
   */
-final case class Attribution(licence: Licence, licenceUrl: Option[Attribution.LicenceUrl], author: Option[Attribution.Author], credit: Attribution.Credit)
+final case class Attribution(
+    licence: Licence,
+    licenceUrl: Option[Attribution.LicenceUrl],
+    author: Option[Attribution.Author],
+    credit: Attribution.Credit
+)
 
 object Attribution:
   type Cc0Author = AuthorName
@@ -32,7 +37,11 @@ object Attribution:
   def cc0(author: Option[Cc0Author], credit: Cc0Credit): Attribution =
     Attribution(Licence(Licence.Id("CC0-1.0"), Licence.Family.Cc0), Some(Cc0Url), author, credit)
 
-  def publicDomain(author: Option[PublicDomainAuthor], credit: PublicDomainCredit, url: Option[Licence.Url] = Some(PdmUrl)): Attribution =
+  def publicDomain(
+      author: Option[PublicDomainAuthor],
+      credit: PublicDomainCredit,
+      url: Option[Licence.Url] = Some(PdmUrl)
+  ): Attribution =
     Attribution(Licence(Licence.Id("public-domain"), Licence.Family.PublicDomain), url, author, credit)
 
   /** A dataset's credit as the reuse it allows (Q26): its stated licence classified as it is read — a Creative Commons
@@ -43,5 +52,9 @@ object Attribution:
     val stated = Licence.ofStatement(Licence.Statement(credit.licence.value))
     val licence =
       if stated.family != Licence.Family.Unknown then stated
-      else credit.licenceUrl.map(u => Licence.ofUrl(Licence.Url(u.value))).filter(_.family != Licence.Family.Unknown).getOrElse(stated)
+      else
+        credit.licenceUrl
+          .map(u => Licence.ofUrl(Licence.Url(u.value)))
+          .filter(_.family != Licence.Family.Unknown)
+          .getOrElse(stated)
     Attribution(licence, credit.licenceUrl.map(u => LicenceUrl(u.value)), None, Credit(credit.credit.value))

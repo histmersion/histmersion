@@ -33,7 +33,12 @@ import com.histmersion.api.automation.{Agents, Queue}
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerContext.TickLine
-import com.histmersion.domain.automation.{Approval as DomainApproval, Goal as DomainGoal, Pipeline as DomainPipeline, Run as DomainRun}
+import com.histmersion.domain.automation.{
+  Approval as DomainApproval,
+  Goal as DomainGoal,
+  Pipeline as DomainPipeline,
+  Run as DomainRun
+}
 import scala.collection.mutable.Builder
 import com.histmersion.domain.automation.Manager
 import com.histmersion.api.automation.Run
@@ -105,14 +110,21 @@ final class ManagerSupervisor(
   def nudge(): Unit = { val _ = nudges.offer("settled") }
 
   /** An event of a manager's feed, its text as assembled. */
-  private def recordEvent(id: ManagerInfo.Id, item: Option[ManagerItem.Id], run: Option[DomainRun.Id], feed: String, text: String): Unit =
+  private def recordEvent(
+      id: ManagerInfo.Id,
+      item: Option[ManagerItem.Id],
+      run: Option[DomainRun.Id],
+      feed: String,
+      text: String
+  ): Unit =
     agents.managerStore.event(id, item, run, ManagerEvent.Kind(feed), ManagerEvent.Text(text))
 
   /** A run id read back from the database. */
   private def runIdOf(r: RunInfo.Id): DomainRun.Id = DomainRun.Id.assume(r.value)
 
   private def itemKindOf(i: ManagerItem): ManagerContext.ItemKind = ManagerContext.ItemKind(i.kind.value)
-  private def itemTargetOf(i: ManagerItem): ManagerContext.ItemTarget = i.target.transformInto[ManagerContext.ItemTarget]
+  private def itemTargetOf(i: ManagerItem): ManagerContext.ItemTarget =
+    i.target.transformInto[ManagerContext.ItemTarget]
 
   /** The library-wide managers exist — `review` and `enrich` — created PAUSED, so deploying never starts spending until
     * a person resumes them. Idempotent.
@@ -171,7 +183,8 @@ final class ManagerSupervisor(
 
   /** The kinds the supervisor runs, by kind; and the kind that drives each item kind. */
   private val byKind: Map[Kind, ManagerKindDefinition] = kinds.map(k => k.kind -> k).toMap
-  private val byItem: Map[ManagerContext.ItemKind, ManagerKindDefinition] = kinds.flatMap(k => k.items.map(_ -> k)).toMap
+  private val byItem: Map[ManagerContext.ItemKind, ManagerKindDefinition] =
+    kinds.flatMap(k => k.items.map(_ -> k)).toMap
 
   /** One pass at `now`. Returns what was done, one line each (for a test or a log). Never throws for one item's or one
     * manager's sake.
@@ -186,7 +199,8 @@ final class ManagerSupervisor(
       // decide (a decided plan settles its held item below)
       out ++= guarded(ManagerLight.Id("autopilot"), out)(agents.autopilot.tick(now)).map(TickLine(_))
       // draining: no approval decided by code (a decision wakes a waiting run: new work)
-      if !agents.drain.draining then out ++= guarded(ManagerLight.Id("auto-approvals"), out)(agents.autoApprovals.sweep(now)).map(TickLine(_))
+      if !agents.drain.draining then
+        out ++= guarded(ManagerLight.Id("auto-approvals"), out)(agents.autoApprovals.sweep(now)).map(TickLine(_))
       out ++= guarded(ManagerLight.Id("digest"), out)(agents.digest.tick(now)).map(TickLine(_))
       val managers = agents.managerStore.list().filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
@@ -207,7 +221,9 @@ final class ManagerSupervisor(
       live.foreach { m =>
         val mid = m.id.transformInto[ManagerLight.Id]
         val fired = guarded(mid, out)(fireCron(m, now, out))
-        guarded(mid, out)(byKind.get(kindOf(m)).foreach(_.refill(this, m, now, ManagerKindDefinition.RefillForce(fired), out)))
+        guarded(mid, out)(
+          byKind.get(kindOf(m)).foreach(_.refill(this, m, now, ManagerKindDefinition.RefillForce(fired), out))
+        )
       }
       // the autopilot's focus: which goals are active; the others' model-using items are held (after the
       // refill and the crons, so what they just queued waits too)
@@ -250,7 +266,10 @@ final class ManagerSupervisor(
     Transactor(ds).read(ManagerRepo.toEvaluate(m.id)).foreach {
       case (item, None) =>
         // its run row is gone (deleted by hand): the item goes back to the queue
-        if Transactor(ds).transact(ManagerRepo.requeue(item.id, ManagerRepo.ItemRow.Outcome("its run disappeared; queued again"))) then
+        if Transactor(ds).transact(
+            ManagerRepo.requeue(item.id, ManagerRepo.ItemRow.Outcome("its run disappeared; queued again"))
+          )
+        then
           recordEvent(
             m.id,
             Some(item.id),
@@ -323,7 +342,15 @@ final class ManagerSupervisor(
     ) match
       case Next.Done(outcome, state) =>
         if Transactor(ds).transact(
-            ManagerRepo.evaluated(item.id, Some(runInfoId), ItemStatus.Done, None, None, state, Some(ManagerItem.Outcome(outcome.value)))
+            ManagerRepo.evaluated(
+              item.id,
+              Some(runInfoId),
+              ItemStatus.Done,
+              None,
+              None,
+              state,
+              Some(ManagerItem.Outcome(outcome.value))
+            )
           )
         then
           recordEvent(
@@ -338,7 +365,16 @@ final class ManagerSupervisor(
       case Next.Wait(approval, note) =>
         val hold = Hold(reason = Hold.Reason(note.value), untilApproval = Some(Hold.UntilApproval(approval.value)))
         if Transactor(ds).transact(
-            ManagerRepo.evaluated(item.id, Some(runInfoId), ItemStatus.Held, None, None, item.state, Some(ManagerItem.Outcome(note.value)), Some(hold))
+            ManagerRepo.evaluated(
+              item.id,
+              Some(runInfoId),
+              ItemStatus.Held,
+              None,
+              None,
+              item.state,
+              Some(ManagerItem.Outcome(note.value)),
+              Some(hold)
+            )
           )
         then
           recordEvent(m.id, Some(item.id), Some(run), Feed.Held, s"${item.target} (${item.kind}): $note")
@@ -383,7 +419,15 @@ final class ManagerSupervisor(
           out += TickLine(s"${item.target}: stopped")
       case Next.Again(notBefore, state, note) =>
         if Transactor(ds).transact(
-            ManagerRepo.evaluated(item.id, Some(runInfoId), ItemStatus.Pending, notBefore, None, state, Some(ManagerItem.Outcome(note.value)))
+            ManagerRepo.evaluated(
+              item.id,
+              Some(runInfoId),
+              ItemStatus.Pending,
+              notBefore,
+              None,
+              state,
+              Some(ManagerItem.Outcome(note.value))
+            )
           )
         then recordEvent(m.id, Some(item.id), Some(run), Feed.Evaluated, s"${item.target}: $note")
 
@@ -402,7 +446,10 @@ final class ManagerSupervisor(
       .lastOption match
       case None                                          => StepFacts.Finished(none)
       case Some(a) if a.state == ApprovalState.Open.wire =>
-        StepFacts.Waiting(ManagerPolicy.ApprovalId(a.id.value), ManagerPolicy.ItemNote(s"approval #${a.id} waits for a person"))
+        StepFacts.Waiting(
+          ManagerPolicy.ApprovalId(a.id.value),
+          ManagerPolicy.ItemNote(s"approval #${a.id} waits for a person")
+        )
       case Some(a) =>
         StepFacts.Finished(ManagerPolicy.ItemOutcome(s"approval #${a.id} " + decidedAs(a).getOrElse(a.state.value)))
 
@@ -445,7 +492,15 @@ final class ManagerSupervisor(
         val added = plan.articles.count { p =>
           val spec = ArticleSpec(p.title, p.kind, p.filter, p.why.transformInto[ArticleSpec.Why])
           agents.managerStore
-            .upsert(id, ManagerItem.Kind(ArticleCompile), ManagerItem.Target(p.slug.value), ItemOrigin.Chain, ManagerItem.Priority(0), reopen = false, ItemState(spec = Some(spec)))
+            .upsert(
+              id,
+              ManagerItem.Kind(ArticleCompile),
+              ManagerItem.Target(p.slug.value),
+              ItemOrigin.Chain,
+              ManagerItem.Priority(0),
+              reopen = false,
+              ItemState(spec = Some(spec))
+            )
             ._2
         }
         if added > 0 then
@@ -500,7 +555,10 @@ final class ManagerSupervisor(
   ): Unit =
     agents.approvalStore.approval(DomainApproval.Id(aid.value)) match
       case None =>
-        if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Stopped, ManagerItem.Outcome(s"approval #$aid is gone"), List(ItemStatus.Held)))
+        if transact(ds)(
+            ManagerRepo
+              .settle(i.id, ItemStatus.Stopped, ManagerItem.Outcome(s"approval #$aid is gone"), List(ItemStatus.Held))
+          )
         then recordEvent(m.id, Some(i.id), None, Feed.Stopped, s"${i.target}: approval #$aid is gone")
       case Some(a) =>
         decidedAs(a).foreach { decided =>
@@ -508,7 +566,12 @@ final class ManagerSupervisor(
           val outcome = s"approval #$aid $decided"
           if transact(ds)(
               ManagerRepo
-                .settle(i.id, if ok then ItemStatus.Done else ItemStatus.Stopped, ManagerItem.Outcome(outcome), List(ItemStatus.Held))
+                .settle(
+                  i.id,
+                  if ok then ItemStatus.Done else ItemStatus.Stopped,
+                  ManagerItem.Outcome(outcome),
+                  List(ItemStatus.Held)
+                )
             )
           then
             val run = i.runId.map(runIdOf)
@@ -543,7 +606,11 @@ final class ManagerSupervisor(
             val existing = agents.managerStore.get(id)
             val plan = WatchSchedules.migrate(
               existing.map(m =>
-                WatchSchedules.Existing(m.config, m.cron.map(c => Cron.Text(c.value)), m.nextTickAt.map(t => ManagerPolicy.InstantText(t.value)))
+                WatchSchedules.Existing(
+                  m.config,
+                  m.cron.map(c => Cron.Text(c.value)),
+                  m.nextTickAt.map(t => ManagerPolicy.InstantText(t.value))
+                )
               ),
               rows,
               now
@@ -553,15 +620,19 @@ final class ManagerSupervisor(
             existing match
               case None    => ManagerRepo.createIn(id, Kind.Watch, Some(apiGoal), State.Paused, plan.config, cron, next)
               case Some(_) => ManagerRepo.setConfigIn(id, plan.config, cron, next)
-            val text = s"${Plural.count(Plural.CountN(rows.size.toLong), Plural.CountSingular("goal schedule"))} moved into this watcher" +
-              (if existing.isEmpty then " (created paused: resume it for them to fire)" else "") +
-              (if plan.notes.isEmpty then "" else s": ${plan.notes.mkString("; ")}")
+            val text =
+              s"${Plural.count(Plural.CountN(rows.size.toLong), Plural.CountSingular("goal schedule"))} moved into this watcher" +
+                (if existing.isEmpty then " (created paused: resume it for them to fire)" else "") +
+                (if plan.notes.isEmpty then "" else s": ${plan.notes.mkString("; ")}")
             ManagerRepo.eventIn(id, None, None, ManagerEvent.Kind(Feed.Migrated), ManagerEvent.Text(text))
             text
           }
         }
         moved.toList.map { text =>
-          val _ = workLists.add(WorkListControllers.ListName(Queue.Kind.Log.label.value), QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal)))
+          val _ = workLists.add(
+            WorkListControllers.ListName(Queue.Kind.Log.label.value),
+            QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal))
+          )
           scribe.info(s"goal $g: $text")
           TickLine(s"$id: migrated")
         }
@@ -583,7 +654,11 @@ final class ManagerSupervisor(
     if !cfg.scheduler.enabled.value then false
     else
       val cron = m.cron.flatMap(c => Cron.parse(Cron.Text(c.value)).toOption)
-      ManagerPolicy.cronStep(cron, m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))), now) match
+      ManagerPolicy.cronStep(
+        cron,
+        m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))),
+        now
+      ) match
         case ManagerPolicy.CronStep.Idle           => false
         case ManagerPolicy.CronStep.Schedule(next) =>
           val _ = Transactor(ds).transact(ManagerRepo.setNextTick(m.id, next))
@@ -703,7 +778,12 @@ final class ManagerSupervisor(
   final private class Lost extends RuntimeException("the item moved on")
 
   /** Settle a pending item without a run (its target is gone, or its work is done already). */
-  def settleNow(m: ManagerInfo, item: ManagerItem, status: ItemStatus, why: ManagerContext.SettleNowWhy): Option[ManagerLight.Id] =
+  def settleNow(
+      m: ManagerInfo,
+      item: ManagerItem,
+      status: ItemStatus,
+      why: ManagerContext.SettleNowWhy
+  ): Option[ManagerLight.Id] =
     if transact(ds)(ManagerRepo.settle(item.id, status, ManagerItem.Outcome(why.value), List(ItemStatus.Pending))) then
       recordEvent(
         m.id,
@@ -727,7 +807,12 @@ final class ManagerSupervisor(
       byItem.get(itemKindOf(item)) match
         case Some(k) => k.dispatch(this, m, s, item, now, out)
         case None    =>
-          settleNow(m, item, ItemStatus.Cancelled, ManagerPolicy.ItemOutcome(s"'${item.kind}' items are not driven by a ${m.kind} manager"))
+          settleNow(
+            m,
+            item,
+            ItemStatus.Cancelled,
+            ManagerPolicy.ItemOutcome(s"'${item.kind}' items are not driven by a ${m.kind} manager")
+          )
 
   /** Create, mark and submit one run: ONE transaction (the run row, the item's compare-and-set, the hints it reached,
     * the event), the submit after the commit. The manager's model overrides go to the roles the pipeline uses; `tweak`
@@ -754,7 +839,10 @@ final class ManagerSupervisor(
           recordEvent(m.id, Some(item.id), None, Feed.Starved, note)
         None
       case Right(pr) =>
-        val hints = ManagerPolicy.notesFor(Transactor(ds).read(ManagerRepo.hints(m.id, live = true)), ManagerPolicy.ItemId(item.id.value))
+        val hints = ManagerPolicy.notesFor(
+          Transactor(ds).read(ManagerRepo.hints(m.id, live = true)),
+          ManagerPolicy.ItemId(item.id.value)
+        )
         val notes = hints.map(h => RunParams.Notes(h.text.value.trim))
         val params = tweak(pr.params).copy(notes = Option.when(notes.nonEmpty)(notes))
         val id =
@@ -786,8 +874,8 @@ final class ManagerSupervisor(
                 ManagerEvent.Kind(Feed.Started),
                 ManagerEvent.Text(
                   s"${item.target}: run ${item.attempts.value + 1} ($what)" + (if notes.nonEmpty then
-                                                                                  s" with ${Plural.count(Plural.CountN(notes.size.toLong), Plural.CountSingular("note"))}"
-                                                                                else "")
+                                                                                 s" with ${Plural.count(Plural.CountN(notes.size.toLong), Plural.CountSingular("note"))}"
+                                                                               else "")
                 )
               )
               id
@@ -821,7 +909,11 @@ final class ManagerSupervisor(
 
   /** The roles a manager of kind `k` runs (what its `models` setting may name). */
   def roles(k: Kind): List[Role] =
-    itemKinds(k).filterNot(_.value == OaIngest).map(i => pipelineOf(ManagerContext.ItemKind(i.value))).flatMap(_.roles).distinct
+    itemKinds(k)
+      .filterNot(_.value == OaIngest)
+      .map(i => pipelineOf(ManagerContext.ItemKind(i.value)))
+      .flatMap(_.roles)
+      .distinct
 
   // ── what a kind is given (ManagerContext) ─────────────────────────────────────────────────────
 
@@ -830,7 +922,8 @@ final class ManagerSupervisor(
     val kind: Kind = Kind.Review
     override def items: List[ManagerContext.ItemKind] = Nil
     def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
-    def facts(c: ManagerContext, item: ManagerItem, run: DomainRun.Id): StepFacts = StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
+    def facts(c: ManagerContext, item: ManagerItem, run: DomainRun.Id): StepFacts =
+      StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
     def dispatch(
         c: ManagerContext,
         m: ManagerInfo,
@@ -839,12 +932,22 @@ final class ManagerSupervisor(
         now: Instant,
         out: Builder[TickLine, List[TickLine]]
     ): Option[ManagerLight.Id] = None
-    def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+    def target(
+        m: ManagerInfo,
+        itemKind: ManagerContext.ItemKind,
+        raw: ManagerItem.Target
+    ): Either[Api.Error, ManagerContext.ItemTarget] =
       Left(Api.Error(Api.Error.Message(s"unknown item kind '$itemKind'")))
     def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
-  def event(id: ManagerLight.Id, item: Option[ManagerContext.ItemId], run: Option[DomainRun.Id], feed: ManagerContext.EventFeed, text: ManagerContext.EventText): Unit =
+  def event(
+      id: ManagerLight.Id,
+      item: Option[ManagerContext.ItemId],
+      run: Option[DomainRun.Id],
+      feed: ManagerContext.EventFeed,
+      text: ManagerContext.EventText
+  ): Unit =
     recordEvent(id.transformInto[ManagerInfo.Id], item.map(i => ManagerItem.Id(i.value)), run, feed.value, text.value)
   def lastEventOf(id: ManagerLight.Id, feed: ManagerContext.EventFeed): Option[ManagerEvent] =
     agents.managerStore.lastEventOf(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value))
@@ -870,16 +973,38 @@ final class ManagerSupervisor(
     )
     (ManagerContext.ItemId(itemId.value), isNew)
   def item(itemId: ManagerContext.ItemId): Option[ManagerItem] = agents.managerStore.item(ManagerItem.Id(itemId.value))
-  def itemFor(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Option[ManagerItem] =
-    agents.managerStore.itemFor(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(kind.value), target.transformInto[ManagerItem.Target])
+  def itemFor(
+      id: ManagerLight.Id,
+      kind: ManagerContext.ItemKind,
+      target: ManagerContext.ItemTarget
+  ): Option[ManagerItem] =
+    agents.managerStore.itemFor(
+      id.transformInto[ManagerInfo.Id],
+      ManagerItem.Kind(kind.value),
+      target.transformInto[ManagerItem.Target]
+    )
   def hasItem(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Boolean =
-    Transactor(ds).read(ManagerRepo.hasItem(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(kind.value), target.transformInto[ManagerItem.Target]))
-  def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: ManagerRepo.RestaleReason): Boolean =
-    Transactor(ds).transact(ManagerRepo.restale(ManagerItem.Id(itemId.value), priority.transformInto[ManagerItem.Priority], why))
+    Transactor(ds).read(
+      ManagerRepo.hasItem(
+        id.transformInto[ManagerInfo.Id],
+        ManagerItem.Kind(kind.value),
+        target.transformInto[ManagerItem.Target]
+      )
+    )
+  def restale(
+      itemId: ManagerContext.ItemId,
+      priority: ManagerContext.Priority,
+      why: ManagerRepo.RestaleReason
+  ): Boolean =
+    Transactor(ds).transact(
+      ManagerRepo.restale(ManagerItem.Id(itemId.value), priority.transformInto[ManagerItem.Priority], why)
+    )
   def pending(id: ManagerLight.Id): RowCount =
     RowCount(connect(ds)(ManagerRepo.counts(id.transformInto[ManagerInfo.Id])).pending.value)
   def openKeys(id: ManagerLight.Id): List[(ManagerContext.ItemKind, ManagerContext.ItemTarget)] =
-    agents.managerStore.openKeys(id.transformInto[ManagerInfo.Id]).map((k, t) => (ManagerContext.ItemKind(k.value), t.transformInto[ManagerContext.ItemTarget]))
+    agents.managerStore
+      .openKeys(id.transformInto[ManagerInfo.Id])
+      .map((k, t) => (ManagerContext.ItemKind(k.value), t.transformInto[ManagerContext.ItemTarget]))
   def evaluated(
       itemId: ManagerContext.ItemId,
       run: Option[DomainRun.Id],
@@ -900,16 +1025,39 @@ final class ManagerSupervisor(
         outcome.map(o => ManagerItem.Outcome(o.value))
       )
     )
-  def hints(id: ManagerLight.Id): List[ManagerHint] = Transactor(ds).read(ManagerRepo.hints(id.transformInto[ManagerInfo.Id], live = true))
+  def hints(id: ManagerLight.Id): List[ManagerHint] =
+    Transactor(ds).read(ManagerRepo.hints(id.transformInto[ManagerInfo.Id], live = true))
   def state(id: ManagerLight.Id): Option[ManagerLight.State] =
     agents.managerStore.get(id.transformInto[ManagerInfo.Id]).map(m => ManagerLight.State(m.state.value))
-  def openMajorArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[(Slug, RowCount)] =
+  def openMajorArticles(
+      id: ManagerLight.Id,
+      tags: List[GoalRow.Tags],
+      goal: Option[DomainGoal.Slug],
+      limit: ManagerContext.Limit
+  ): List[(Slug, RowCount)] =
     Transactor(ds).read(
-      ManagerRepo.openMajorArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
+      ManagerRepo.openMajorArticles(
+        id.transformInto[ManagerInfo.Id],
+        ManagerItem.Kind(ArticleReview),
+        tags.map(t => EnrichSource.Tag(t.value)),
+        goal,
+        PageSize.assume(limit.value)
+      )
     )
-  def unreviewedArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[DomainGoal.Slug], limit: ManagerContext.Limit): List[Slug] =
+  def unreviewedArticles(
+      id: ManagerLight.Id,
+      tags: List[GoalRow.Tags],
+      goal: Option[DomainGoal.Slug],
+      limit: ManagerContext.Limit
+  ): List[Slug] =
     Transactor(ds).read(
-      ManagerRepo.unreviewedArticles(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
+      ManagerRepo.unreviewedArticles(
+        id.transformInto[ManagerInfo.Id],
+        ManagerItem.Kind(ArticleReview),
+        tags.map(t => EnrichSource.Tag(t.value)),
+        goal,
+        PageSize.assume(limit.value)
+      )
     )
   def staleCandidates(
       id: ManagerLight.Id,
@@ -919,7 +1067,13 @@ final class ManagerSupervisor(
   ): List[(Slug, ManagerRepo.ProgressText, Option[ItemState.FilterHits], Option[ManagerContext.ItemId])] =
     Transactor(ds)
       .read(
-        ManagerRepo.staleCandidates(id.transformInto[ManagerInfo.Id], ManagerItem.Kind(ArticleReview), tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
+        ManagerRepo.staleCandidates(
+          id.transformInto[ManagerInfo.Id],
+          ManagerItem.Kind(ArticleReview),
+          tags.map(t => EnrichSource.Tag(t.value)),
+          goal,
+          PageSize.assume(limit.value)
+        )
       )
       .map((slug, progress, hits, itemId) => (slug, progress, hits, itemId.map(i => ManagerContext.ItemId(i.value))))
   def extendCandidates(
@@ -929,7 +1083,12 @@ final class ManagerSupervisor(
       limit: ManagerContext.Limit
   ): List[(Slug, Option[ManagerRepo.ProgressText])] =
     Transactor(ds).read(
-      ManagerRepo.extendCandidates(id.transformInto[ManagerInfo.Id], tags.map(t => EnrichSource.Tag(t.value)), goal, PageSize.assume(limit.value))
+      ManagerRepo.extendCandidates(
+        id.transformInto[ManagerInfo.Id],
+        tags.map(t => EnrichSource.Tag(t.value)),
+        goal,
+        PageSize.assume(limit.value)
+      )
     )
   def articleFacets(slug: Slug): (List[EnrichSource.Tag], List[DomainGoal.Slug]) =
     Transactor(ds).read(ManagerRepo.articleFacets(slug))
@@ -945,15 +1104,29 @@ final class ManagerSupervisor(
       .map(o => AgentRepo.StepRecord.Output(o.value))
   def approvalsOf(run: DomainRun.Id, kind: DomainApproval.Kind): List[ApprovalInfo] =
     agents.approvalStore.approvalsOf(run.transformInto[Job.Id], Some(kind.transformInto[Approval.Kind]))
-  def unsettledOn(target: ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.unsettledOn(target.transformInto[AgentsControllers.Target])
-  def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.forTarget(p, target.transformInto[AgentsControllers.Target])
+  def unsettledOn(target: ManagerContext.ItemTarget): Seq[RunInfo] =
+    agents.runs.unsettledOn(target.transformInto[AgentsControllers.Target])
+  def runsFor(p: Pipeline, target: ManagerContext.ItemTarget): Seq[RunInfo] =
+    agents.runs.forTarget(p, target.transformInto[AgentsControllers.Target])
   def slugExists(slug: Slug): Boolean = agents.host.articleExists(slug)
-  def parentOf(slug: DomainGoal.Slug): Option[DomainGoal.Slug] = agents.goals.get(slug).flatMap(_.parentSlug.map(g => DomainGoal.Slug.assume(g.value)))
-  def linkGoal(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind, ref: BGoalLinkRow.Ref, note: Option[BGoalLinkRow.Note]): Unit =
-    val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref.transformInto[Goal.Plans.GoalLink.Ref], note.map(_.transformInto[Goal.Plans.GoalLink.Note]))
+  def parentOf(slug: DomainGoal.Slug): Option[DomainGoal.Slug] =
+    agents.goals.get(slug).flatMap(_.parentSlug.map(g => DomainGoal.Slug.assume(g.value)))
+  def linkGoal(
+      goal: DomainGoal.Slug,
+      kind: Goal.Plans.LinkKind,
+      ref: BGoalLinkRow.Ref,
+      note: Option[BGoalLinkRow.Note]
+  ): Unit =
+    val _ = agents.goals.link(
+      goal,
+      kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind],
+      ref.transformInto[Goal.Plans.GoalLink.Ref],
+      note.map(_.transformInto[Goal.Plans.GoalLink.Note])
+    )
   def goalLinks(goal: DomainGoal.Slug, kind: Goal.Plans.LinkKind): List[BGoalLinkRow.Ref] =
     agents.goals.links(goal).filter(_.kind == kind).map(_.ref.transformInto[BGoalLinkRow.Ref])
-  def sharedIngestLeft(now: Instant): Option[RowCount] = agents.autopilot.sharedIngestLeft(now).map(l => RowCount(l.value))
+  def sharedIngestLeft(now: Instant): Option[RowCount] =
+    agents.autopilot.sharedIngestLeft(now).map(l => RowCount(l.value))
   def autopilotSoon(): Unit = agents.autopilot.soon()
 
   // ── a run settled ──────────────────────────────────────────────────────────────────────────────
@@ -962,7 +1135,8 @@ final class ManagerSupervisor(
   def settled(r: RunInfo): Unit =
     r.managerId.foreach { mid =>
       val stalled = r.error.exists(_.value.startsWith(PauseReason.Stalled.wire.value + ":"))
-      val text = s"${r.target}: run ${r.status}" + r.error.filter(_.value.nonEmpty).fold("")(e => s" — ${e.value.take(300)}")
+      val text =
+        s"${r.target}: run ${r.status}" + r.error.filter(_.value.nonEmpty).fold("")(e => s" — ${e.value.take(300)}")
       recordEvent(mid, r.managerItem, Some(runIdOf(r.id)), if stalled then Feed.Stall else Feed.Settled, text)
       nudge()
     }

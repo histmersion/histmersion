@@ -35,7 +35,8 @@ final class HttpDownload(userAgent: HttpPolicy.UserAgent):
       else
         val bytes = HttpDownload.readAll(conn.getInputStream)
         conn.disconnect()
-        if url.value.endsWith(".zip") then HttpDownload.unzip(bytes) else Right(HttpDownload.Text(new String(bytes, "UTF-8")))
+        if url.value.endsWith(".zip") then HttpDownload.unzip(bytes)
+        else Right(HttpDownload.Text(new String(bytes, "UTF-8")))
     catch case e: Exception => Left(HttpDownload.Problem(s"download failed: ${e.getMessage}"))
 
   /** `url` into the file reserved for it. */

@@ -8,7 +8,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** `plan-goal`: at most this many sub-goals, queries and works in one plan (a longer answer is sent back), each query
   * at most `queryChars` long.
   */
-final case class AgentPlanConfig(maxSubGoals: AgentPlanConfig.MaxSubGoals, maxQueries: AgentPlanConfig.MaxQueries, maxWorks: AgentPlanConfig.MaxWorks, queryChars: AgentPlanConfig.QueryChars) derives ConfigReader
+final case class AgentPlanConfig(
+    maxSubGoals: AgentPlanConfig.MaxSubGoals,
+    maxQueries: AgentPlanConfig.MaxQueries,
+    maxWorks: AgentPlanConfig.MaxWorks,
+    queryChars: AgentPlanConfig.QueryChars
+) derives ConfigReader
 
 object AgentPlanConfig:
   type MaxSubGoals = MaxSubGoals.T

@@ -14,8 +14,13 @@ import com.histmersion.domain.CoreQuota
 object Challenge:
   type Body = Body.T
   object Body extends Newtype[Array[Byte], Pure]
-  def isChallenge(code: HttpPolicy.StatusCode, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue], body: Body): Boolean =
-    val mitigated = headers.exists((k, v) => k.value.equalsIgnoreCase("cf-mitigated") && v.value.toLowerCase.contains("challenge"))
+  def isChallenge(
+      code: HttpPolicy.StatusCode,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue],
+      body: Body
+  ): Boolean =
+    val mitigated =
+      headers.exists((k, v) => k.value.equalsIgnoreCase("cf-mitigated") && v.value.toLowerCase.contains("challenge"))
     val page = new String(body.value.take(4096), "ISO-8859-1").toLowerCase
     mitigated || isAnubis(body) || ((code.value == 403 || code.value == 429 || code.value == 503) &&
       (page.contains("<title>just a moment") || page.contains("challenge-platform") ||

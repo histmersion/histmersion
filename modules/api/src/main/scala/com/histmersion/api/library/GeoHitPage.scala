@@ -16,10 +16,15 @@ final case class GeoHitPage(
     offset: Offset = Offset(0),
     next: Option[Offset] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, RowCount(hits.size))
 object GeoHitPage:
 
-
   def of(total: SearchResult.Total, hits: List[GeoHit], offset: UnreadPage.Offset): GeoHitPage =
-    GeoHitPage(RowCount((total).value), hits, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next)
+    GeoHitPage(
+      RowCount((total).value),
+      hits,
+      Offset((offset).value),
+      OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next
+    )

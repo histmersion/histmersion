@@ -86,19 +86,19 @@ object Route:
     export com.histmersion.api.research.Article.Slug
 
   object Place:
-    export Pages.{PlaceId as Id}
+    export Pages.PlaceId as Id
 
   object Event:
-    export Pages.{EventId as Id}
+    export Pages.EventId as Id
 
   object Run:
-    export Route.{RunId as Id}
+    export Route.RunId as Id
 
   object Manager:
-    export Route.{ManagerId as Id}
+    export Route.ManagerId as Id
 
   object Job:
-    export Pages.{JobId as Id}
+    export Pages.JobId as Id
 
   type ParsePath = String
   type LegacyPath = String

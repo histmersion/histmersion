@@ -25,7 +25,8 @@ class RecordingsSuite extends munit.FunSuite:
       "GET https://x.example/a?q=1\nstatus: 200\ncontent-type: application/json\nbody: 001-x.example.json\n"
     )
     assertEquals(RecordedExchange.parse("# body trimmed to its first 2 KiB\n\n" + RecordedExchange.render(e)), Right(e))
-    val failed = RecordedExchange("GET", HttpTransport.Url("https://x.example/b"), None, Nil, None, Some("x.example unreachable"))
+    val failed =
+      RecordedExchange("GET", HttpTransport.Url("https://x.example/b"), None, Nil, None, Some("x.example unreachable"))
     assertEquals(RecordedExchange.parse(RecordedExchange.render(failed)), Right(failed))
     assert(RecordedExchange.parse("GET https://x.example/c\nstatus: soon").isLeft)
     assert(RecordedExchange.parse("GET https://x.example/c\n").isLeft)
@@ -79,7 +80,10 @@ class RecordingsSuite extends munit.FunSuite:
     )
     assertEquals(ProjectPaths.resolve(relative, None), relative.toAbsolutePath.normalize)
     assertEquals(ProjectPaths.resolve(relative, Some(ProjectPaths.ProjectDir("  "))), relative.toAbsolutePath.normalize)
-    assertEquals(ProjectPaths.resolve(Path.of("/elsewhere/rec"), Some(ProjectPaths.ProjectDir("/work/p"))), Path.of("/elsewhere/rec"))
+    assertEquals(
+      ProjectPaths.resolve(Path.of("/elsewhere/rec"), Some(ProjectPaths.ProjectDir("/work/p"))),
+      Path.of("/elsewhere/rec")
+    )
 
   test("the reason to skip names the directory it looked in, resolved"):
     val why = HttpMode.fromEnv(Path.of("recordings", "never-recorded"), Map.empty)

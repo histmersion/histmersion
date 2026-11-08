@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class TimeBucket(start: TimeBucket.Start, end: TimeBucket.End, count: TimeBucket.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class TimeBucket(start: TimeBucket.Start, end: TimeBucket.End, count: TimeBucket.Count)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object TimeBucket:
   type Start = Start.T

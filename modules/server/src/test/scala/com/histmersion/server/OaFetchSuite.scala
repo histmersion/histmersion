@@ -22,9 +22,16 @@ class OaFetchSuite extends munit.FunSuite:
   final private class RecordingHttp extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
     private def miss(url: Http.Url) = { urls = urls :+ url; Left(Http.Problem(s"$url: offline")) }
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] = miss(url)
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Http.Text] = miss(url)
-    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, HttpAnswer.Body] = miss(url)
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
+      miss(url)
+    def text(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, Http.Text] = miss(url)
+    def bytes(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, HttpAnswer.Body] = miss(url)
 
   private def acquire(email: AcquireConfig.ContactEmail) = AppConfig.load().acquire.copy(contactEmail = email)
 
@@ -35,7 +42,11 @@ class OaFetchSuite extends munit.FunSuite:
     val cfg = acquire(email)
     val http = RecordingHttp()
     val _ =
-      OaFetch(loaded(s"histmersion.acquire.contact-email = \"$email\""), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(Doi("10.1038/nature14317")), None)
+      OaFetch(
+        loaded(s"histmersion.acquire.contact-email = \"$email\""),
+        http,
+        core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
+      ).fetch(Some(Doi("10.1038/nature14317")), None)
     http.urls
 
   test("the repository default has no contact e-mail"):

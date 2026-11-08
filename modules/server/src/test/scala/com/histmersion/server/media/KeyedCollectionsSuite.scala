@@ -44,15 +44,33 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
       ConverterClient.Problem("not used")
     )
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
 
   private def fx(name: String) = FakeMediaHttp.fixture(name)
   private val cfg = FakeMediaHttp.cfg
 
   private val egypt =
-    PlaceFacts(PlaceFacts.Id("geonames_357994"), PlaceFacts.Label("Egypt"), Set(PlaceFacts.Keys("egypt")), Some((DeepTime.SignedYear(-3100L), DeepTime.SignedYear(-30L))), Some(Target.Qid("Q79")), Some(Latitude(26.0)), Some(Longitude(30.0)))
+    PlaceFacts(
+      PlaceFacts.Id("geonames_357994"),
+      PlaceFacts.Label("Egypt"),
+      Set(PlaceFacts.Keys("egypt")),
+      Some((DeepTime.SignedYear(-3100L), DeepTime.SignedYear(-30L))),
+      Some(Target.Qid("Q79")),
+      Some(Latitude(26.0)),
+      Some(Longitude(30.0))
+    )
   private val syria =
-    PlaceFacts(PlaceFacts.Id("geonames_163843"), PlaceFacts.Label("Syria"), Set(PlaceFacts.Keys("syria")), Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(1500L))), Some(Target.Qid("Q858")), Some(Latitude(35.0)), Some(Longitude(38.0)))
+    PlaceFacts(
+      PlaceFacts.Id("geonames_163843"),
+      PlaceFacts.Label("Syria"),
+      Set(PlaceFacts.Keys("syria")),
+      Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(1500L))),
+      Some(Target.Qid("Q858")),
+      Some(Latitude(35.0)),
+      Some(Longitude(38.0))
+    )
   private val mycenae = PlaceFacts(
     PlaceFacts.Id("pleiades_570491"),
     PlaceFacts.Label("Mycenae"),
@@ -63,7 +81,15 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     Some(Longitude(22.756))
   )
   private val greece =
-    PlaceFacts(PlaceFacts.Id("geonames_390903"), PlaceFacts.Label("Greece"), Set(PlaceFacts.Keys("greece")), Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(-100L))), Some(Target.Qid("Q41")), Some(Latitude(39.0)), Some(Longitude(22.0)))
+    PlaceFacts(
+      PlaceFacts.Id("geonames_390903"),
+      PlaceFacts.Label("Greece"),
+      Set(PlaceFacts.Keys("greece")),
+      Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(-100L))),
+      Some(Target.Qid("Q41")),
+      Some(Latitude(39.0)),
+      Some(Longitude(22.0))
+    )
   private val facts = List(egypt, syria, mycenae, greece).map(f => Place.Id.assume(f.id.value) -> f).toMap
   private val named =
     Map(
@@ -72,7 +98,8 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       ImportService.PlaceKey("mycenae") -> List(mycenae),
       ImportService.PlaceKey("greece") -> List(greece)
     )
-  private def target(f: PlaceFacts) = Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
+  private def target(f: PlaceFacts) =
+    Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
   private val DryOn = CollectionImport.DryRun(true)
   private val DryOff = CollectionImport.DryRun(false)
@@ -86,8 +113,14 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       dryRun: CollectionImport.DryRun,
       store: CollStore = CollStore(facts, named)
   ): MediaImportReport =
-    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
-    CollectionImport(col, polite, cfg, NoConverter()).run(targets, dryRun, refresh = CollectionImport.Refresh(false), store)
+    val (polite, _) =
+      FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
+    CollectionImport(col, polite, cfg, NoConverter()).run(
+      targets,
+      dryRun,
+      refresh = CollectionImport.Refresh(false),
+      store
+    )
 
   /** The two key-gated plugins switched on, each with the fixture key as a secret reference. */
   private val keyed =
@@ -164,7 +197,9 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     val r =
       run(collection(Smithsonian), http, List(target(egypt), target(syria)), dryRun = DryOff, store)
     assert(
-      r.failed.exists(_.value.contains("the API key was refused (check histmersion.plugins.media-smithsonian.api-key)")),
+      r.failed.exists(
+        _.value.contains("the API key was refused (check histmersion.plugins.media-smithsonian.api-key)")
+      ),
       r.failed.toString
     )
     assert(r.failed.exists(_.value.contains("the rest of this batch was not asked")))
@@ -266,7 +301,8 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     Some(Latitude(59.0)),
     Some(Longitude(-3.0))
   )
-  private val orkneyStore = CollStore(Map(Place.Id.assume(orkney.id.value) -> orkney), Map(ImportService.PlaceKey("orkney") -> List(orkney)))
+  private val orkneyStore =
+    CollStore(Map(Place.Id.assume(orkney.id.value) -> orkney), Map(ImportService.PlaceKey("orkney") -> List(orkney)))
 
   test("Europeana defaults: max-year 1500 and the natural-history exclusions are in the search and the reasons"):
     assertEquals(cfg.europeana.maxYear, 1500)

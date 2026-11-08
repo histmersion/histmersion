@@ -91,7 +91,8 @@ object Lpf:
         (obj("in")
           .flatMap(yearOf)
           .orElse(obj((wide).value).flatMap(yearOf))
-          .orElse(obj((narrow).value).flatMap(yearOf))).map(refactorValue => Year((refactorValue).value))
+          .orElse(obj((narrow).value).flatMap(yearOf)))
+          .map(refactorValue => Year((refactorValue).value))
 
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =
@@ -136,7 +137,11 @@ object Lpf:
     Place.Kind.parse(Place.Kind.ParseS(s)).map(k => Place.KindValue(k.value))
 
   private def str(o: JsonObject, keys: String*): Option[String] =
-    (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue25 => (refactorValue25))
+    (keys.iterator
+      .flatMap(k => o(k).flatMap(_.asString))
+      .map(_.trim)
+      .find(_.nonEmpty))
+      .map(refactorValue25 => (refactorValue25))
 
   private def slug(s: String): String =
     s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
@@ -207,7 +212,14 @@ object Lpf:
       .flatMap(_.toList)
     val declared = arrays.flatMap { j =>
       j.asString
-        .map(p => Place.Relation(Place.Relation.ChildId(id), Place.Relation.ParentId(p.trim), Place.Relation.Kind(Place.Relation.PartOf), None))
+        .map(p =>
+          Place.Relation(
+            Place.Relation.ChildId(id),
+            Place.Relation.ParentId(p.trim),
+            Place.Relation.Kind(Place.Relation.PartOf),
+            None
+          )
+        )
         .orElse(j.asObject.flatMap { o =>
           val pred = str(o, "relationType", "relation_type", "kind", "type").getOrElse("gvp:broaderPartitive")
           val kind = if PartOfPredicates.contains(pred.toLowerCase) then Place.Relation.PartOf else pred
@@ -215,12 +227,25 @@ object Lpf:
             .map { p =>
               val (period, open) =
                 OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
-              Place.Relation(Place.Relation.ChildId(id), Place.Relation.ParentId(p), Place.Relation.Kind(kind), period, open)
+              Place.Relation(
+                Place.Relation.ChildId(id),
+                Place.Relation.ParentId(p),
+                Place.Relation.Kind(kind),
+                period,
+                open
+              )
             }
         })
     }
     val flat = str(props, "parent", "part_of", "partOf", "parentId")
-      .map(p => Place.Relation(Place.Relation.ChildId(id), Place.Relation.ParentId(p), Place.Relation.Kind(Place.Relation.PartOf), None))
+      .map(p =>
+        Place.Relation(
+          Place.Relation.ChildId(id),
+          Place.Relation.ParentId(p),
+          Place.Relation.Kind(Place.Relation.PartOf),
+          None
+        )
+      )
     (declared ++ flat)
       .filter(_.parentId.value.nonEmpty)
       .distinctBy(r => (r.parentId, r.kind))
@@ -276,7 +301,8 @@ object Lpf:
               geometry = f("geometry").filterNot(_.isNull).map(g => Place.Geometry(g.noSpaces)),
               period = period,
               source = str(props, "source", "citation").orElse(str(f, "source")).map(Place.Source(_)),
-              properties = Some(leftover).filter(_.nonEmpty).map(o => Place.Properties(Json.fromJsonObject(o).noSpaces)),
+              properties =
+                Some(leftover).filter(_.nonEmpty).map(o => Place.Properties(Json.fromJsonObject(o).noSpaces)),
               open = open
             ),
             readNames(f, props, if label.nonEmpty then label else id),
@@ -337,7 +363,8 @@ object Lpf:
       fields += "relations" -> Json.arr(in.relations.map { r =>
         Json.fromFields(
           List(
-            "relationType" -> Json.fromString(if r.kind == Place.Relation.Kind(Place.Relation.PartOf) then "gvp:broaderPartitive"
+            "relationType" -> Json.fromString(if r.kind == Place.Relation.Kind(Place.Relation.PartOf) then
+              "gvp:broaderPartitive"
             else r.kind.value),
             "relationTo" -> Json.fromString(r.parentId.value)
           ) ++
@@ -350,10 +377,12 @@ object Lpf:
     Json.fromFields(fields.result())
 
   def render(items: List[Place.Input]): Document =
-    Document(Json
-      .obj(
-        "type" -> Json.fromString("FeatureCollection"),
-        "@context" -> Json.fromString(Context),
-        "features" -> Json.arr(items.map(renderFeature)*)
-      )
-      .spaces2)
+    Document(
+      Json
+        .obj(
+          "type" -> Json.fromString("FeatureCollection"),
+          "@context" -> Json.fromString(Context),
+          "features" -> Json.arr(items.map(renderFeature)*)
+        )
+        .spaces2
+    )

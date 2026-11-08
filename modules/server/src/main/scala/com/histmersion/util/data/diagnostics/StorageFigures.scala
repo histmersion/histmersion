@@ -43,7 +43,13 @@ final class StorageFigures(registry: DataContributions):
           .filterNot((_, s) => covered(s.where()))
       }
     val caches = children(Location.CacheDirectory).map((n, s) =>
-      StorageSpot(ShownStore.Key(s"cache:$n"), ShownStore.Label(s"cache: $n"), ShownStore.Group("caches"), List(s), Some(s))
+      StorageSpot(
+        ShownStore.Key(s"cache:$n"),
+        ShownStore.Label(s"cache: $n"),
+        ShownStore.Group("caches"),
+        List(s),
+        Some(s)
+      )
     )
     val rest = storage
       .find(Location.DataDirectory)
@@ -107,7 +113,8 @@ final class StorageFigures(registry: DataContributions):
       val results = spot.stores.map(_.measure(budget))
       val exists = results.exists(_.exists.value)
       val unread = results.map(_.unreadable.value).sum
-      if unread > 0 then problems += s"${spot.label}: ${Plural.count(Plural.CountN(unread.toLong), Plural.CountSingular("entry"), Plural.CountPlural("entries"))} could not be read"
+      if unread > 0 then
+        problems += s"${spot.label}: ${Plural.count(Plural.CountN(unread.toLong), Plural.CountSingular("entry"), Plural.CountPlural("entries"))} could not be read"
       val extra = if spot.key == ShownStore.Basemap.key then spot.shown.flatMap(basemapDetail(_, budget)) else None
       com.histmersion.api.maintenance.Storage.Entry(
         key = StorageReports.Entry.Key(spot.key.value),
@@ -115,10 +122,15 @@ final class StorageFigures(registry: DataContributions):
         group = StorageReports.Entry.Group(spot.group.value),
         path = spot.path.map(p => StorageReports.Entry.Path(p.value)),
         bytes = (Option.when(exists)(results.map(_.bytes.value).sum)).map(ByteCount.apply),
-        files = (Option.when(exists)(results.map(_.files.value).sum)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
+        files = (Option
+          .when(exists)(results.map(_.files.value).sum))
+          .map(com.histmersion.api.maintenance.Storage.FileCount.apply),
         exists = StorageReports.Entry.Exists(exists),
         partial = StorageReports.Entry.Partial(results.exists(_.partial.value)),
-        detail = (spot.detail.toList ++ extra.toList).map[String](_.value).reduceOption(_ + " · " + _).map(StorageReports.Entry.Detail.apply),
+        detail = (spot.detail.toList ++ extra.toList)
+          .map[String](_.value)
+          .reduceOption(_ + " · " + _)
+          .map(StorageReports.Entry.Detail.apply),
         shrink = StorageReports.Advice
           .shrink(StorageReports.Entry.Key(spot.key.value), StorageReports.Advice.Keep(settings.backups.keep.value))
           .map(h => StorageReports.Entry.Shrink(h.value)),
@@ -133,7 +145,13 @@ final class StorageFigures(registry: DataContributions):
       .map(_.head)
       .toList
       .sortBy(_.id.value)
-      .map(v => com.histmersion.api.maintenance.Storage.Volume(com.histmersion.api.maintenance.Storage.Volume.Id(v.id.value), ByteCount(v.total.value), ByteCount(v.usable.value)))
+      .map(v =>
+        com.histmersion.api.maintenance.Storage.Volume(
+          com.histmersion.api.maintenance.Storage.Volume.Id(v.id.value),
+          ByteCount(v.total.value),
+          ByteCount(v.usable.value)
+        )
+      )
     val (dbEntry, tables) =
       database.fold((Option.empty[com.histmersion.api.maintenance.Storage.Entry], List.empty[TableSize])) { d =>
         val size = scala.util.Try(d.databaseSize).toEither.left.map(e => s"database size: ${e.getMessage}")
@@ -152,7 +170,9 @@ final class StorageFigures(registry: DataContributions):
               StorageReports.Entry.Group("database"),
               bytes = (size.toOption.map(_._2.value)).map(ByteCount.apply),
               exists = StorageReports.Entry.Exists(size.isRight),
-              within = Option.when(measured.exists(e => e.key.value == ShownStore.DatabaseCluster.key.value && e.exists.value))(
+              within = Option.when(
+                measured.exists(e => e.key.value == ShownStore.DatabaseCluster.key.value && e.exists.value)
+              )(
                 StorageReports.Entry.Key(ShownStore.DatabaseCluster.key.value)
               ),
               detail = size.toOption.map(s => StorageReports.Entry.Detail(s._1.value)),
@@ -177,7 +197,8 @@ final class StorageFigures(registry: DataContributions):
       )
     val report = com.histmersion.api.maintenance.Storage.Report(
       measuredAt = Some(StorageReports.Report.MeasuredAt(now().toString)),
-      tookMillis = (Some((System.nanoTime() - started) / 1_000_000L)).map(com.histmersion.api.maintenance.Storage.Report.DurationMillis.apply),
+      tookMillis = (Some((System.nanoTime() - started) / 1_000_000L))
+        .map(com.histmersion.api.maintenance.Storage.Report.DurationMillis.apply),
       entries = StorageReports.nest(dbEntry.toList ++ measured),
       tables = tables,
       volumes = volumes,
@@ -192,5 +213,3 @@ final class StorageFigures(registry: DataContributions):
           .toList).map(StorageReports.Report.Problems(_))
     )
     StorageReports.withHints(report)
-
-

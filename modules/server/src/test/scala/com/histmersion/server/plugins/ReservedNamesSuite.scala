@@ -34,5 +34,9 @@ class ReservedNamesSuite extends munit.FunSuite:
   test("the settings table names every first-party plugin but the vaults, which are rebuilt as any plugin is"):
     assertEquals(
       FirstPartySettings.all.map(_.plugin).toSet,
-      ReservedNames.firstPartyPlugins -- Set(ReservedNames.Name("keepassxc"), ReservedNames.Name("1password"), ReservedNames.Name("bitwarden"))
+      ReservedNames.firstPartyPlugins -- Set(
+        ReservedNames.Name("keepassxc"),
+        ReservedNames.Name("1password"),
+        ReservedNames.Name("bitwarden")
+      )
     )

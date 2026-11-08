@@ -42,7 +42,12 @@ private[articles] object CritiqueRepo:
 
   /** One checked change: set `reason` on the edge's direction, or remove the pair's reason. */
   private enum Change derives CanEqual:
-    case Set(src: com.histmersion.domain.library.Citekey, dst: com.histmersion.domain.library.Citekey, reason: Reason, by: By)
+    case Set(
+        src: com.histmersion.domain.library.Citekey,
+        dst: com.histmersion.domain.library.Citekey,
+        reason: Reason,
+        by: By
+    )
     case Remove(a: com.histmersion.domain.library.Citekey, b: com.histmersion.domain.library.Citekey)
 
   /** Check the reasons of a patch, inside the caller's transaction, writing nothing. Each pair's citekeys resolve as
@@ -79,7 +84,7 @@ private[articles] object CritiqueRepo:
                   )
                 )
               case (Some(a), Some(b)) if r.reason.value.isEmpty => Right(done :+ Change.Remove(a, b))
-              case (Some(a), Some(b))                     =>
+              case (Some(a), Some(b))                           =>
                 val dirs = sql"""SELECT src, dst FROM edges WHERE kind = ANY($kinds::text[])
                                  AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))"""
                   .query[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey)]

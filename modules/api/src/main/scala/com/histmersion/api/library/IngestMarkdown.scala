@@ -12,7 +12,6 @@ import com.histmersion.api.given
 import com.histmersion.api.RowCount
 object IngestMarkdown:
 
-
   def job(j: JobInfo): String =
     val lines = List(
       Some(s"- **status:** ${j.status}"),
@@ -57,8 +56,14 @@ object IngestMarkdown:
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |"
       )
-      val kinds = ListFilters.facetLine(ListFilters.FacetName("By kind"), page.facet(Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), RowCount(n.value))))
-      (List(s"### ${Paging.heading(Paging.ShownCount(js.size), page.total, Plural.Noun.Singular("job"), qualifier = status.map(_.value))}", "") ++
+      val kinds = ListFilters.facetLine(
+        ListFilters.FacetName("By kind"),
+        page.facet(Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), RowCount(n.value)))
+      )
+      (List(
+        s"### ${Paging.heading(Paging.ShownCount(js.size), page.total, Plural.Noun.Singular("job"), qualifier = status.map(_.value))}",
+        ""
+      ) ++
         Option.when(kinds.value.nonEmpty)(List(kinds.value, "")).toList.flatten ++
         List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o =>
           List("", o)

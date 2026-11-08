@@ -21,7 +21,12 @@ final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, lim
     budget.unavailable(limits, CoreQuota.Purpose.Search).map(r => ScholarlyIndex.Problem(r.describe.value))
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     key match
-      case None    => Left(ScholarlyIndex.Problem("no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one"))
+      case None =>
+        Left(
+          ScholarlyIndex.Problem(
+            "no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one"
+          )
+        )
       case Some(k) =>
         api
           .searchWorks(

@@ -16,7 +16,10 @@ object Version:
   /** The SPDX id of the licence the program is distributed under. */
   val licence: Licence = Licence("AGPL-3.0-or-later")
 
-  final case class Info(name: Info.Name, version: Info.Version) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Info(name: Info.Name, version: Info.Version)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Info:
     type Name = Name.T

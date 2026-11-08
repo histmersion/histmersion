@@ -62,16 +62,26 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         val section = in.sectionOrBody
         site.sources
-          .markdown(in.citekey, fullText = SourcesControllers.MarkdownFullText(false), section, in.heading, in.offset, bodyChars(in.chars))
+          .markdown(
+            in.citekey,
+            fullText = SourcesControllers.MarkdownFullText(false),
+            section,
+            in.heading,
+            in.offset,
+            bodyChars(in.chars)
+          )
           .fold(
             e => s"No source '${in.citekey}': ${e.message}",
             md =>
               section.map(_.value.toLowerCase) match
-                case None | Some("all") => ToolResultCap.source(ToolResultCap.Markdown(ToolResultCap.compactSource(ToolResultCap.Markdown(md.value))), max)
-                case Some("body")       =>
+                case None | Some("all") =>
+                  ToolResultCap
+                    .source(ToolResultCap.Markdown(ToolResultCap.compactSource(ToolResultCap.Markdown(md.value))), max)
+                case Some("body") =>
                   cap(md.value, max, "read on with get_source section=\"body\" offset=… chars=…; a word: passages")
                 case Some("toc") => cap(md.value, max, "read one part with get_source heading=…")
-                case _           => cap(ToolResultCap.plainLinks(ToolResultCap.Markdown(md.value)), max, "a word in the source: passages")
+                case _           =>
+                  cap(ToolResultCap.plainLinks(ToolResultCap.Markdown(md.value)), max, "a word in the source: passages")
           )
       }
     },
@@ -117,7 +127,10 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
             in.prefix.map(p => FilterSql.FacetPrefix(p.value)),
             facetsIn.toFilter
           )
-          .fold(e => e.message.value, fs => cap(SearchMarkdown.facets(facetsIn.field, fs.toVector), max, "narrow it with `prefix`"))
+          .fold(
+            e => e.message.value,
+            fs => cap(SearchMarkdown.facets(facetsIn.field, fs.toVector), max, "narrow it with `prefix`")
+          )
       }
     },
     contribution(LibraryAgentTools.Neighbors) {
@@ -127,7 +140,12 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         val rows = site.citations.neighbors(in.citekey, in.kinds)
         if rows.isEmpty then s"No edges recorded for ${in.citekey}. An empty result is not evidence of agreement."
-        else cap(SourcesMarkdown.neighbors(Citekey(in.citekey.value), rows.toVector), max, "ask for one edge kind (`kinds`)")
+        else
+          cap(
+            SourcesMarkdown.neighbors(Citekey(in.citekey.value), rows.toVector),
+            max,
+            "ask for one edge kind (`kinds`)"
+          )
       }
     },
     contribution(LibraryAgentTools.Query) {
@@ -161,10 +179,19 @@ object LibraryAgentTools:
     * [[cap]]ped like any result.
     */
 
-  def queryResult(r: com.histmersion.api.library.Query.QueryResult, maxRows: AgentToolsConfig.QueryMaxRows, max: ToolResultCap.CapMax): String =
+  def queryResult(
+      r: com.histmersion.api.library.Query.QueryResult,
+      maxRows: AgentToolsConfig.QueryMaxRows,
+      max: ToolResultCap.CapMax
+  ): String =
     val rows = maxRows.value
     val shown = if rows > 0 && r.rows.size > rows then
-      r.modify(_.rows).setTo(r.rows.take(rows)).modify(_.rowCount).setTo(com.histmersion.api.library.Query.QueryResult.RowCount(rows)).modify(_.truncated).setTo(com.histmersion.api.library.Query.QueryResult.Truncated(true))
+      r.modify(_.rows)
+        .setTo(r.rows.take(rows))
+        .modify(_.rowCount)
+        .setTo(com.histmersion.api.library.Query.QueryResult.RowCount(rows))
+        .modify(_.truncated)
+        .setTo(com.histmersion.api.library.Query.QueryResult.Truncated(true))
     else r
     val more = if shown.rows.size < r.rows.size then
       s"\n\n_…${r.rows.size - shown.rows.size}${

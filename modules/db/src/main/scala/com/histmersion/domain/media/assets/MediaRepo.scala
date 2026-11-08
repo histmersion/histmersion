@@ -66,7 +66,9 @@ private[assets] object MediaRepo:
   type SetSourcePictureProperty = SetSourcePictureProperty.T
   object SetSourcePictureProperty extends Newtype[String, Pure]
 
-  def known(provider: MediaItemRow.Provider, keys: List[MediaItemRow.ProviderKey])(using DbCon): Map[MediaItemRow.ProviderKey, Known] =
+  def known(provider: MediaItemRow.Provider, keys: List[MediaItemRow.ProviderKey])(using
+      DbCon
+  ): Map[MediaItemRow.ProviderKey, Known] =
     if keys.isEmpty then Map.empty
     else
       sql"""SELECT provider_key, uid::text, license FROM assets
@@ -144,14 +146,25 @@ private[assets] object MediaRepo:
           RETURNING (xmax = 0)""".query[Boolean].run().head
 
   /** Store a thumbnail for a stored picture (a figure chosen to illustrate its source). */
-  def setThumb(uid: MediaItemRow.Uid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[MediaThumbRow.Width], height: Option[MediaThumbRow.Height])(using
+  def setThumb(
+      uid: MediaItemRow.Uid,
+      bytes: ProviderAsset.Thumb,
+      mime: ProviderAsset.ThumbMime,
+      width: Option[MediaThumbRow.Width],
+      height: Option[MediaThumbRow.Height]
+  )(using
       DbCon
   ): Unit =
     val _ = sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
           WHERE uid = $uid::uuid""".update.run()
 
   /** Make `uid` the source's picture in `role` — replacing the one it had in that role. */
-  def setSourcePicture(citekey: Citekey, uid: MediaItemRow.Uid, role: MediaRole.Wire, property: Option[SetSourcePictureProperty])(using DbCon): Unit =
+  def setSourcePicture(
+      citekey: Citekey,
+      uid: MediaItemRow.Uid,
+      role: MediaRole.Wire,
+      property: Option[SetSourcePictureProperty]
+  )(using DbCon): Unit =
     val _ = sql"""DELETE FROM media_links WHERE target_type = 'source' AND target_id = $citekey AND role = $role
             AND asset_uid <> $uid::uuid""".update.run()
     val _ = sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank)
@@ -215,7 +228,9 @@ private[assets] object MediaRepo:
     * Best role first, then the place's own before an equivalent's, then the provider's preference. Index lookups only
     * (label key, GiST on the point, the links' item), within the hover budget.
     */
-  def placeThumbsIn(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit)(using DbCon): List[MediaThumb] =
+  def placeThumbsIn(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit)(using
+      DbCon
+  ): List[MediaThumb] =
     val deg = kmToDegrees(sameSiteKm)
     sql"""WITH p AS (SELECT id, label, geom FROM places WHERE id = $placeId),
           eq AS (
@@ -351,9 +366,17 @@ private[assets] object MediaRepo:
 
   def facets(using DbCon): MediaFacets =
     val providers = sql"""SELECT coalesce(provider, ${MediaProvider.Source}), count(*)::int FROM assets
-          GROUP BY 1 ORDER BY 2 DESC, 1""".query[(String, Int)].run().toList.map((k, n) => MediaCount(MediaCount.Key(k), MediaCount.N(n)))
+          GROUP BY 1 ORDER BY 2 DESC, 1"""
+      .query[(String, Int)]
+      .run()
+      .toList
+      .map((k, n) => MediaCount(MediaCount.Key(k), MediaCount.N(n)))
     val licences = sql"""SELECT coalesce(nullif(btrim(license), ''), 'none'), count(*)::int FROM assets
-          GROUP BY 1 ORDER BY 2 DESC, 1""".query[(String, Int)].run().toList.map((k, n) => MediaCount(MediaCount.Key(k), MediaCount.N(n)))
+          GROUP BY 1 ORDER BY 2 DESC, 1"""
+      .query[(String, Int)]
+      .run()
+      .toList
+      .map((k, n) => MediaCount(MediaCount.Key(k), MediaCount.N(n)))
     MediaFacets(providers, licences)
 
   /** The media layer: geolocated pictures in the span, by kind, provider and licence. */
@@ -465,7 +488,15 @@ private[assets] object MediaRepo:
   def sourceFigures(citekey: Citekey)(using DbCon): List[SourceFigure] =
     sql"""SELECT uid::text, name, width, height, thumb IS NOT NULL FROM assets
           WHERE citekey = $citekey AND mime LIKE 'image/%' ORDER BY name"""
-      .query[(SourceFigure.Uid, SourceFigure.Name, Option[SourceFigure.Width], Option[SourceFigure.Height], SourceFigure.HasThumb)]
+      .query[
+        (
+            SourceFigure.Uid,
+            SourceFigure.Name,
+            Option[SourceFigure.Width],
+            Option[SourceFigure.Height],
+            SourceFigure.HasThumb
+        )
+      ]
       .run()
       .toList
       .map(SourceFigure.apply)

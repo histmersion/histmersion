@@ -12,15 +12,16 @@ object ApprovalDigest:
   type Line = Line.T
   object Line extends Newtype[String, Pure]
 
-
-  final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object SubjectCount:
     type Subject = Subject.T
     object Subject extends Newtype[String, Pure]
     type Count = Count.T
     object Count extends Newtype[Int, Pure]
-
 
   final case class KindGroup(
       kind: KindGroup.Kind,
@@ -30,18 +31,18 @@ object ApprovalDigest:
       subjects: List[SubjectCount] = Nil,
       ids: List[KindGroup.Ids] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object KindGroup:
-    export Approval.Kind.{Wire as Kind}
+    export Approval.Kind.Wire as Kind
     type Count = Count.T
     object Count extends Newtype[Int, Pure]
     type Oldest = Oldest.T
     object Oldest extends Newtype[String, Pure]
-    export Approval.DecidedBy.{Wire as DecidedBy}
+    export Approval.DecidedBy.Wire as DecidedBy
     type Ids = Ids.T
     object Ids extends Newtype[Long, Pure]
-
 
   final case class Digest(
       at: Digest.At,
@@ -51,7 +52,8 @@ object ApprovalDigest:
       lastWritten: Option[Digest.LastWritten] = None,
       goalPlansWait: Option[Digest.GoalPlansWait] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Digest:
     type At = At.T
@@ -65,7 +67,6 @@ object ApprovalDigest:
     type GoalPlansWait = GoalPlansWait.T
     object GoalPlansWait extends Newtype[String, Pure]
 
-
   final case class BulkDecide(
       decision: BulkDecide.Decision,
       kind: Option[BulkDecide.Kind] = None,
@@ -76,12 +77,13 @@ object ApprovalDigest:
       limit: Option[BulkDecide.Limit] = None,
       by: Option[BulkDecide.By] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object BulkDecide:
     type Decision = Decision.T
     object Decision extends Newtype[String, Pure]
-    export Approval.Kind.{Wire as Kind}
+    export Approval.Kind.Wire as Kind
     type Subject = Subject.T
     object Subject extends Newtype[String, Pure]
     type Ids = Ids.T
@@ -94,15 +96,16 @@ object ApprovalDigest:
     type By = By.T
     object By extends Newtype[String, Pure]
 
-
-  final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object BulkFailed:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
     type Error = Error.T
     object Error extends Newtype[String, Pure]
-
 
   final case class BulkResult(
       decision: BulkResult.Decision,
@@ -112,7 +115,8 @@ object ApprovalDigest:
       failed: List[BulkFailed] = Nil,
       left: BulkResult.Left = BulkResult.Left(0)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object BulkResult:
     type Decision = Decision.T
@@ -126,7 +130,6 @@ object ApprovalDigest:
     type Left = Left.T
     object Left extends Newtype[Int, Pure]
 
-
   val Waits = "waits"
 
   val IdsShown = 50
@@ -136,13 +139,17 @@ object ApprovalDigest:
   object Open:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
-    export Approval.Kind.{Wire as Kind}
+    export Approval.Kind.Wire as Kind
     type Subject = Subject.T
     object Subject extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 
-  def group(open: List[Open], checked: Approval.Kind.Wire => Boolean, waiting: Set[Approval.Kind.Wire] = Set.empty): List[KindGroup] =
+  def group(
+      open: List[Open],
+      checked: Approval.Kind.Wire => Boolean,
+      waiting: Set[Approval.Kind.Wire] = Set.empty
+  ): List[KindGroup] =
     open
       .groupBy(_.kind)
       .toList
@@ -159,7 +166,9 @@ object ApprovalDigest:
           k,
           KindGroup.Count(as.size),
           sorted.headOption.map(o => KindGroup.Oldest(o.createdAt.value.take(10))),
-          if waiting(k) then Approval.DecidedBy.Wire(Waits) else if checked(k) then Approval.DecidedBy.Wire("checked") else Approval.DecidedBy.Wire("person"),
+          if waiting(k) then Approval.DecidedBy.Wire(Waits)
+          else if checked(k) then Approval.DecidedBy.Wire("checked")
+          else Approval.DecidedBy.Wire("person"),
           subjects,
           sorted.take(IdsShown).map(o => KindGroup.Ids(o.id.value))
         )
@@ -169,26 +178,33 @@ object ApprovalDigest:
   def matching(open: List[Open], b: BulkDecide): List[Open] =
     open
       .filter(o =>
-        b.kind.forall(k => o.kind.value == k.value.trim) && b.subject.forall(s => o.subject.exists(_.value == s.value.trim)) &&
+        b.kind.forall(k => o.kind.value == k.value.trim) && b.subject.forall(s =>
+          o.subject.exists(_.value == s.value.trim)
+        ) &&
           (b.ids.isEmpty || b.ids.exists(_.value == o.id.value))
       )
       .sortBy(_.id)
       .take(math.max(1, b.limit.map(_.value).getOrElse(Int.MaxValue)))
 
   def line(d: Digest): Line =
-    if d.total == Digest.Total(0) && d.heldForPerson == Digest.HeldForPerson(0) then Line("approval digest: nothing waits for a person")
+    if d.total == Digest.Total(0) && d.heldForPerson == Digest.HeldForPerson(0) then
+      Line("approval digest: nothing waits for a person")
     else
-      Line(s"approval digest: ${Plural.count(Plural.CountN(d.total.value.toLong), Plural.CountSingular("approval"))} wait for a person" +
-        (if d.kinds.isEmpty then ""
-         else
-           " — " + d.kinds
-             .map(g =>
-               s"${g.kind} ${g.count}" + g.oldest.fold("")(o => s" (oldest $o)") +
-                 (if g.decidedBy.value == "checked" then ", the autopilot's checks decide them within the day's cap"
-                  else if g.decidedBy.value == Waits then ", waiting: nobody needs to decide them now"
-                  else "")
-             )
-             .mkString("; ")) +
-        (if d.heldForPerson.value > 0 then s"; ${Plural.count(Plural.CountN(d.heldForPerson.value.toLong), Plural.CountSingular("manager item"))} held for a person" else "") +
-        d.goalPlansWait.fold("")(w => s"; $w") +
-        "; decide a whole kind at once: histmersion agent decide-all approve --kind <kind> (or the Approvals window)")
+      Line(
+        s"approval digest: ${Plural.count(Plural.CountN(d.total.value.toLong), Plural.CountSingular("approval"))} wait for a person" +
+          (if d.kinds.isEmpty then ""
+           else
+             " — " + d.kinds
+               .map(g =>
+                 s"${g.kind} ${g.count}" + g.oldest.fold("")(o => s" (oldest $o)") +
+                   (if g.decidedBy.value == "checked" then ", the autopilot's checks decide them within the day's cap"
+                    else if g.decidedBy.value == Waits then ", waiting: nobody needs to decide them now"
+                    else "")
+               )
+               .mkString("; ")) +
+          (if d.heldForPerson.value > 0 then
+             s"; ${Plural.count(Plural.CountN(d.heldForPerson.value.toLong), Plural.CountSingular("manager item"))} held for a person"
+           else "") +
+          d.goalPlansWait.fold("")(w => s"; $w") +
+          "; decide a whole kind at once: histmersion agent decide-all approve --kind <kind> (or the Approvals window)"
+      )

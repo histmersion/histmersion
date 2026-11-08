@@ -125,7 +125,13 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.ofWindow(WindowKey.ApiKey), None)
     assertEquals(Route.hrefOf(WindowKey.ApiKey), "/settings/keys")
     // single items stay windows, and link to their own pages
-    List(WindowKey.Run(WindowKey.Run.Id("x")), WindowKey.Goal(WindowKey.Goal.Slug("g")), WindowKey.Manager(WindowKey.Manager.Id("m")), WindowKey.Source(WindowKey.Source.Citekey("s")), WindowKey.Article(WindowKey.Article.Slug("a")))
+    List(
+      WindowKey.Run(WindowKey.Run.Id("x")),
+      WindowKey.Goal(WindowKey.Goal.Slug("g")),
+      WindowKey.Manager(WindowKey.Manager.Id("m")),
+      WindowKey.Source(WindowKey.Source.Citekey("s")),
+      WindowKey.Article(WindowKey.Article.Slug("a"))
+    )
       .foreach(k => assertEquals(Route.ofWindow(k), None, k.toString))
 
   test("a link to a window points at its page; one with no page of its own, at the map with it open"):
@@ -138,7 +144,10 @@ class RouteSuite extends munit.FunSuite:
   test("a list item's page is its list's, scrolled to it"):
     assertEquals(Route.queueItem(Queue.Kind.Tasks, Goal.Plans.GoalLink.QueueNumber(12)), "/research/backlog?item=12")
     assertEquals(Route.queueItem(Queue.Kind.Acquire, Goal.Plans.GoalLink.QueueNumber(3)), "/research/acquire?item=3")
-    assertEquals(Route.queueItem(Queue.Kind.Log, Goal.Plans.GoalLink.QueueNumber(9)), "/research/activity/worklog?item=9")
+    assertEquals(
+      Route.queueItem(Queue.Kind.Log, Goal.Plans.GoalLink.QueueNumber(9)),
+      "/research/activity/worklog?item=9"
+    )
 
   test("old addresses land on their new pages; windows of single items stay open over them"):
     assertEquals(Route.legacy("/", Nil), Some(Route.Landing(Route.Explore, Nil)))

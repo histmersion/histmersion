@@ -28,5 +28,4 @@ object MapLayer:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
-
   def fromWire(s: Wire): Option[MapLayer] = values.find(_.wire.value == s.value.trim.toLowerCase)

@@ -32,12 +32,25 @@ class CataloguesSuite extends munit.FunSuite:
       e.notAfter.map(_.value.toLong)
     )
 
-  private val gvpSettings = GvpEvents(GvpEvents.MinYear(-12000), GvpSettings(GvpSettings.Url("https://gvp.example/ows"), GvpSettings.PageSize(5000), GvpSettings.WindowYears(1000), GvpSettings.RequestIntervalMs(0), GvpSettings.FloorYear(-9700)))
+  private val gvpSettings = GvpEvents(
+    GvpEvents.MinYear(-12000),
+    GvpSettings(
+      GvpSettings.Url("https://gvp.example/ows"),
+      GvpSettings.PageSize(5000),
+      GvpSettings.WindowYears(1000),
+      GvpSettings.RequestIntervalMs(0),
+      GvpSettings.FloorYear(-9700)
+    )
+  )
   private val gvp = GvpCatalogue(gvpSettings)
   private val limits = PluginEvents.limits(Some(gvp), DeepTime.SignedYear(2026))
 
   /** As the host stores an event of `provider`: checked, then dated inside `limits`. */
-  private def stored(provider: CatalogRecord.Provider, e: CatalogueEvent, l: CatalogDating.Limits = limits): CatalogRecord =
+  private def stored(
+      provider: CatalogRecord.Provider,
+      e: CatalogueEvent,
+      l: CatalogDating.Limits = limits
+  ): CatalogRecord =
     PluginEvents.derive(PluginEvents.record(provider, e).fold(e => fail(e.value), _.record), l)
 
   // ── GVP ─────────────────────────────────────────────────────────────────────────────────────
@@ -58,9 +71,17 @@ class CataloguesSuite extends munit.FunSuite:
     assertEquals((r46.notBefore.map(_.value.toLong), r46.notAfter.map(_.value.toLong)), (Some(46L), Some(47L)))
 
   test("GVP: windows of years cover the range once, each a part"):
-    assertEquals(GvpCatalogue.windows(GvpCatalogue.Year(-3000), GvpCatalogue.Year(-1), GvpSettings.WindowYears(1000)), List((-3000L, -2001L), (-2000L, -1001L), (-1000L, -1L)))
+    assertEquals(
+      GvpCatalogue.windows(GvpCatalogue.Year(-3000), GvpCatalogue.Year(-1), GvpSettings.WindowYears(1000)),
+      List((-3000L, -2001L), (-2000L, -1001L), (-1000L, -1L))
+    )
     assertEquals(GvpCatalogue.windows(GvpCatalogue.Year(1), GvpCatalogue.Year(0), GvpSettings.WindowYears(10)), Nil)
-    val url = GvpCatalogue.url(GvpSettings.Url("https://x/ows"), GvpCatalogue.Year(-3000), GvpCatalogue.Year(-2001), GvpSettings.PageSize(5000))
+    val url = GvpCatalogue.url(
+      GvpSettings.Url("https://x/ows"),
+      GvpCatalogue.Year(-3000),
+      GvpCatalogue.Year(-2001),
+      GvpSettings.PageSize(5000)
+    )
     assert(url.value.contains("CQL_FILTER=StartDateYear%3E%3D-3000+AND+StartDateYear%3C%3D-2001"), url)
     assertEquals(
       gvp.parts(CatalogueQuery(None, Year(-10000))),
@@ -92,8 +113,21 @@ class CataloguesSuite extends munit.FunSuite:
     samples.foreach { case (num, volcano, year, pm, method, (lo, hi)) =>
       val r = stored(CatalogRecord.Provider("gvp"), GvpCatalogue.record(feature(num, volcano, year, pm, method)).get)
       assertEquals((r.central, r.plusMinus, r.datingMethod), (Some(year), Some(pm), Some(method)), s"$num")
-      assertEquals(r.timeSpan, TimeSpan(Some(com.histmersion.api.catalogue.Year(lo)), None, None, Some(com.histmersion.api.catalogue.Year(hi))), s"$num: no certain core is invented")
-      assertEquals(EventPrecision.of(r.timeSpan, r.plusMinus.map(p => EventSummary.PlusMinus(p.value))),EventPrecision.Imprecise, s"$num")
+      assertEquals(
+        r.timeSpan,
+        TimeSpan(
+          Some(com.histmersion.api.catalogue.Year(lo)),
+          None,
+          None,
+          Some(com.histmersion.api.catalogue.Year(hi))
+        ),
+        s"$num: no certain core is invented"
+      )
+      assertEquals(
+        EventPrecision.of(r.timeSpan, r.plusMinus.map(p => EventSummary.PlusMinus(p.value))),
+        EventPrecision.Imprecise,
+        s"$num"
+      )
       assert(
         r.raw.isDefined && !r.description.exists(_.value.contains("dated by")),
         s"$num: the method is a field, not prose"
@@ -103,7 +137,15 @@ class CataloguesSuite extends munit.FunSuite:
   test("GVP re-read: from its own record (the stored span not trusted, the names an import added kept)"):
     val parsed = GvpCatalogue.record(feature(12724, "Hekla", 250, 2500, "Tephrochronology")).get
     val again =
-      gvp.reread(parsed.copy(notBefore = Some(Year(0)), notAfter = Some(Year(0)), names = List(CatalogueEvent.Names("Hekla tephra")))).get
+      gvp
+        .reread(
+          parsed.copy(
+            notBefore = Some(Year(0)),
+            notAfter = Some(Year(0)),
+            names = List(CatalogueEvent.Names("Hekla tephra"))
+          )
+        )
+        .get
     assertEquals(years(again), years(parsed))
     assert(again.names.contains("Hekla tephra") && again.names.contains("Hekla eruption"), again.names.toString)
 
@@ -120,27 +162,47 @@ class CataloguesSuite extends munit.FunSuite:
       raw = None,
       description = Some(CatalogueEvent.Description("Confirmed Eruption at Hekla; dated by Tephrochronology"))
     )
-    val r = PluginEvents.derive(PluginEvents.record(CatalogRecord.Provider("gvp"), gvp.reread(legacy).get).fold(e => fail(e.value), _.record), limits)
+    val r = PluginEvents.derive(
+      PluginEvents.record(CatalogRecord.Provider("gvp"), gvp.reread(legacy).get).fold(e => fail(e.value), _.record),
+      limits
+    )
     assertEquals((r.central, r.plusMinus, r.datingMethod), (Some(250L), Some(2500L), Some("Tephrochronology")))
-    assertEquals(r.timeSpan, TimeSpan(Some(com.histmersion.api.catalogue.Year(-2251)), None, None, Some(com.histmersion.api.catalogue.Year(2026))))
+    assertEquals(
+      r.timeSpan,
+      TimeSpan(
+        Some(com.histmersion.api.catalogue.Year(-2251)),
+        None,
+        None,
+        Some(com.histmersion.api.catalogue.Year(2026))
+      )
+    )
     assertEquals(r.description, Some("Confirmed Eruption at Hekla"))
 
   test("a stored record goes to its catalogue and back unchanged"):
     val (recs, _) = GvpCatalogue.parse(fixture("gvp.json")).toOption.get
     recs.foreach { e =>
       val r = PluginEvents.record(CatalogRecord.Provider("gvp"), e).fold(e => fail(e.value), _.record)
-      assertEquals(PluginEvents.event(r).flatMap(PluginEvents.record(CatalogRecord.Provider("gvp"), _).toOption.map(_.record)), Some(r))
+      assertEquals(
+        PluginEvents.event(r).flatMap(PluginEvents.record(CatalogRecord.Provider("gvp"), _).toOption.map(_.record)),
+        Some(r)
+      )
       assertEquals(PluginEvents.reread(gvp, PluginEvents.RereadProvider("gvp"), r), Some(r))
     }
 
   // ── NOAA ────────────────────────────────────────────────────────────────────────────────────
 
   private val noaa = NoaaCatalogue(
-    NoaaSettings(NoaaSettings.Url("https://noaa.example/api/v1"), NoaaSettings.PageSize(200), NoaaSettings.RequestIntervalMs(0), NoaaSettings.Datasets("earthquakes,volcanoes,bogus,tsunamis"))
+    NoaaSettings(
+      NoaaSettings.Url("https://noaa.example/api/v1"),
+      NoaaSettings.PageSize(200),
+      NoaaSettings.RequestIntervalMs(0),
+      NoaaSettings.Datasets("earthquakes,volcanoes,bogus,tsunamis")
+    )
   )
 
   test("NOAA: earthquakes with magnitude, volcano events grouped by the GVP number, doubtful tsunamis contested"):
-    val (eq, pages) = NoaaCatalogue.parse(NoaaCatalogue.Dataset("earthquakes"), fixture("noaa_earthquakes.json")).toOption.get
+    val (eq, pages) =
+      NoaaCatalogue.parse(NoaaCatalogue.Dataset("earthquakes"), fixture("noaa_earthquakes.json")).toOption.get
     assertEquals(pages, 50)
     assertEquals(eq.head.id, "earthquake:1")
     assertEquals(eq.head.magnitude, Some(7.3))
@@ -150,9 +212,18 @@ class CataloguesSuite extends munit.FunSuite:
     val santorini = vs.find(_.id == CatalogueEvent.Id("volcano:1351")).get
     assertEquals(santorini.group, Some("volcano:212040"))
     assertEquals(santorini.vei, Some(7))
-    val (ts, _) = NoaaCatalogue.parse(NoaaCatalogue.Dataset("tsunamis"), fixture("noaa_tsunamis_events.json")).toOption.get
-    assertEquals(ts.find(_.id == CatalogueEvent.Id("tsunami:1")).map(_.historicity), Some("contested"), "validity 1: very doubtful")
-    assertEquals(ts.find(_.id == CatalogueEvent.Id("tsunami:3")).map(_.historicity), Some("attested"), "validity 4: definite")
+    val (ts, _) =
+      NoaaCatalogue.parse(NoaaCatalogue.Dataset("tsunamis"), fixture("noaa_tsunamis_events.json")).toOption.get
+    assertEquals(
+      ts.find(_.id == CatalogueEvent.Id("tsunami:1")).map(_.historicity),
+      Some("contested"),
+      "validity 1: very doubtful"
+    )
+    assertEquals(
+      ts.find(_.id == CatalogueEvent.Id("tsunami:3")).map(_.historicity),
+      Some("attested"),
+      "validity 4: definite"
+    )
     assert(ts.forall(t => t.magnitude.isEmpty && t.vei.isEmpty), "a tsunami is not sized by its earthquake's magnitude")
 
   test("NOAA: a part per dataset, the next page named by the one before; every part read at every import"):
@@ -166,17 +237,28 @@ class CataloguesSuite extends munit.FunSuite:
       noaa.read(EventCatalogue.ReadPart("earthquakes:1"), CatalogueQuery(None, Year(499)), http).map(_.next),
       Right(Some("earthquakes:2"))
     )
-    assertEquals(noaa.read(EventCatalogue.ReadPart("earthquakes:2"), CatalogueQuery(None, Year(499)), http).map(_.next), Right(None))
+    assertEquals(
+      noaa.read(EventCatalogue.ReadPart("earthquakes:2"), CatalogueQuery(None, Year(499)), http).map(_.next),
+      Right(None)
+    )
 
   test("NOAA and Wikidata re-read their records from their raw ones"):
-    val (eq, _) = NoaaCatalogue.parse(NoaaCatalogue.Dataset("earthquakes"), fixture("noaa_earthquakes.json")).toOption.get
+    val (eq, _) =
+      NoaaCatalogue.parse(NoaaCatalogue.Dataset("earthquakes"), fixture("noaa_earthquakes.json")).toOption.get
     val one = eq.head
     assertEquals(
       noaa.reread(one.copy(notBefore = None, notAfter = None, beginBy = None, endFrom = None)).map(years),
       Some(years(one))
     )
     val wd = WikidataCatalogue.parse(fixture("wikidata_siege.json"), CatalogueEvent.Kind("siege")).toOption.get.head
-    val wikidata = WikidataCatalogue(WikidataSettings(WikidataSettings.SparqlUrl("https://q.example/sparql"), WikidataSettings.RequestIntervalMs(0), WikidataSettings.Classes("Q188055:siege"), WikidataSettings.Languages("en")))
+    val wikidata = WikidataCatalogue(
+      WikidataSettings(
+        WikidataSettings.SparqlUrl("https://q.example/sparql"),
+        WikidataSettings.RequestIntervalMs(0),
+        WikidataSettings.Classes("Q188055:siege"),
+        WikidataSettings.Languages("en")
+      )
+    )
     assertEquals(
       wikidata.reread(wd.copy(notBefore = None, notAfter = None, beginBy = None, endFrom = None)).map(years),
       Some(years(wd))
@@ -205,25 +287,68 @@ class CataloguesSuite extends munit.FunSuite:
       "date":{"type":"literal","value":"-1183-01-01T00:00:00Z"},"datePrec":{"type":"literal","value":"9"},
       "coord":{"type":"literal","value":"Point(26.24 39.95)"},
       "legend":{"type":"uri","value":"http://www.wikidata.org/entity/$legend"}}]}}""").toOption.get
-    assertEquals(WikidataCatalogue.parse(row("Q26913948"), CatalogueEvent.Kind("siege")).toOption.get.head.historicity, "legendary")
-    assertEquals(WikidataCatalogue.parse(row("Q24336466"), CatalogueEvent.Kind("siege")).toOption.get.head.historicity, "mythic")
+    assertEquals(
+      WikidataCatalogue.parse(row("Q26913948"), CatalogueEvent.Kind("siege")).toOption.get.head.historicity,
+      "legendary"
+    )
+    assertEquals(
+      WikidataCatalogue.parse(row("Q24336466"), CatalogueEvent.Kind("siege")).toOption.get.head.historicity,
+      "mythic"
+    )
 
   test("Wikidata: a part per configured class, the query asks for the class and its subclasses"):
     val wikidata =
-      WikidataCatalogue(WikidataSettings(WikidataSettings.SparqlUrl("https://q.example/sparql"), WikidataSettings.RequestIntervalMs(0), WikidataSettings.Classes("Q178561:battle, bad, Q188055:siege"), WikidataSettings.Languages("de, fr")))
+      WikidataCatalogue(
+        WikidataSettings(
+          WikidataSettings.SparqlUrl("https://q.example/sparql"),
+          WikidataSettings.RequestIntervalMs(0),
+          WikidataSettings.Classes("Q178561:battle, bad, Q188055:siege"),
+          WikidataSettings.Languages("de, fr")
+        )
+      )
     assertEquals(wikidata.parts(CatalogueQuery(None, Year(499))), List("class:Q178561", "class:Q188055"))
-    val q = WikidataCatalogue.sparql(WikidataItem.Id("Q188055"), None, CatalogDating.HistoricalYear(499), WikidataSettings.LabelLanguage("en"))
+    val q = WikidataCatalogue.sparql(
+      WikidataItem.Id("Q188055"),
+      None,
+      CatalogDating.HistoricalYear(499),
+      WikidataSettings.LabelLanguage("en")
+    )
     assert(q.value.contains("wdt:P31/wdt:P279* wd:Q188055") && q.value.contains("YEAR(?t) <= 499"), q)
     assert(
-      WikidataCatalogue.sparql(WikidataItem.Id("Q1"), Some(CatalogDating.HistoricalYear(-3000)), CatalogDating.HistoricalYear(-1), WikidataSettings.LabelLanguage("en")).value.contains("YEAR(?t) <= 0 && YEAR(?t) >= -2999"),
+      WikidataCatalogue
+        .sparql(
+          WikidataItem.Id("Q1"),
+          Some(CatalogDating.HistoricalYear(-3000)),
+          CatalogDating.HistoricalYear(-1),
+          WikidataSettings.LabelLanguage("en")
+        )
+        .value
+        .contains("YEAR(?t) <= 0 && YEAR(?t) >= -2999"),
       "historical years become astronomical"
     )
-    assertEquals(WikidataSettings(WikidataSettings.SparqlUrl("u"), WikidataSettings.RequestIntervalMs(0), WikidataSettings.Classes(""), WikidataSettings.Languages("de, fr")).labelLanguages, "de,fr,en")
+    assertEquals(
+      WikidataSettings(
+        WikidataSettings.SparqlUrl("u"),
+        WikidataSettings.RequestIntervalMs(0),
+        WikidataSettings.Classes(""),
+        WikidataSettings.Languages("de, fr")
+      ).labelLanguages,
+      "de,fr,en"
+    )
 
   test("each catalogue states the terms the host shows for its records"):
-    val terms = List(gvp, noaa, WikidataCatalogue(WikidataSettings(WikidataSettings.SparqlUrl("u"), WikidataSettings.RequestIntervalMs(0), WikidataSettings.Classes(""), WikidataSettings.Languages("en")))).map(c =>
-      (c.title, c.licence.value: String)
-    )
+    val terms = List(
+      gvp,
+      noaa,
+      WikidataCatalogue(
+        WikidataSettings(
+          WikidataSettings.SparqlUrl("u"),
+          WikidataSettings.RequestIntervalMs(0),
+          WikidataSettings.Classes(""),
+          WikidataSettings.Languages("en")
+        )
+      )
+    ).map(c => (c.title, c.licence.value: String))
     assertEquals(
       terms,
       List(

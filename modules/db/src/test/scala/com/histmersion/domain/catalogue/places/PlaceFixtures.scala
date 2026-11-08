@@ -35,7 +35,14 @@ object PlaceFixtures:
   private def areaTolerance(t: PlacesConfig.PointToleranceKm) = PointAreaRepo.Settings.ToleranceKm(t.value)
 
   def upsertPlaces(ds: DataSource, batch: List[Place.Input], dataset: Dataset = Dataset.Seed): Place.ImportResult =
-    if batch.isEmpty then Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil) else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
+    if batch.isEmpty then
+      Place.ImportResult(
+        Place.ImportResult.Places(0),
+        Place.ImportResult.Names(0),
+        Place.ImportResult.Relations(0),
+        Nil
+      )
+    else transact(ds)(PlaceRepo.upsertPlaces(batch, dataset))
 
   def search(
       ds: DataSource,
@@ -92,23 +99,43 @@ object PlaceFixtures:
   def scopeFor(ds: DataSource, values: List[Filter.Places], period: Option[Period]): PlaceScope =
     connect(ds)(PlaceRepo.scopeFor(values.map(v => PlaceRepo.ScopeForValues(v.value)), period))
 
-  def footprints(ds: DataSource, placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[SignedYear]): Vector[Place.Footprint] =
+  def footprints(
+      ds: DataSource,
+      placeId: com.histmersion.domain.catalogue.Place.Id,
+      asOf: Option[SignedYear]
+  ): Vector[Place.Footprint] =
     connect(ds)(PlaceRepo.footprints(placeId, asOf))
 
-  def links(ds: DataSource, placeId: com.histmersion.domain.catalogue.Place.Id): Vector[Place.Link] = connect(ds)(PlaceRepo.links(placeId))
+  def links(ds: DataSource, placeId: com.histmersion.domain.catalogue.Place.Id): Vector[Place.Link] =
+    connect(ds)(PlaceRepo.links(placeId))
 
-  def rename(ds: DataSource, oldId: com.histmersion.domain.catalogue.Place.Id, newId: com.histmersion.domain.catalogue.Place.Id): Either[Api.Error, Unit] =
+  def rename(
+      ds: DataSource,
+      oldId: com.histmersion.domain.catalogue.Place.Id,
+      newId: com.histmersion.domain.catalogue.Place.Id
+  ): Either[Api.Error, Unit] =
     transact(ds)(PlaceRepo.rename(oldId, newId))
 
   def renamedTo(ds: DataSource, id: AliasTable.Id): Option[AliasTable.Id] = PlaceAliasTable.table.renamedTo(ds, id)
 
-  def addName(ds: DataSource, id: com.histmersion.domain.catalogue.Place.Id, name: PlaceRepo.Name, lang: PlaceRepo.Lang): Either[Api.Error, Place.NameChanged] =
+  def addName(
+      ds: DataSource,
+      id: com.histmersion.domain.catalogue.Place.Id,
+      name: PlaceRepo.Name,
+      lang: PlaceRepo.Lang
+  ): Either[Api.Error, Place.NameChanged] =
     transact(ds)(PlaceRepo.addName(id, name, lang))
 
-  def removeName(ds: DataSource, id: com.histmersion.domain.catalogue.Place.Id, name: PlaceRepo.Name, lang: PlaceRepo.Lang): Either[Api.Error, Place.NameChanged] =
+  def removeName(
+      ds: DataSource,
+      id: com.histmersion.domain.catalogue.Place.Id,
+      name: PlaceRepo.Name,
+      lang: PlaceRepo.Lang
+  ): Either[Api.Error, Place.NameChanged] =
     transact(ds)(PlaceRepo.removeName(id, name, lang))
 
-  def manualNames(ds: DataSource, id: Option[com.histmersion.domain.catalogue.Place.Id]): List[ManualPlaceName] = connect(ds)(PlaceRepo.manualNames(id))
+  def manualNames(ds: DataSource, id: Option[com.histmersion.domain.catalogue.Place.Id]): List[ManualPlaceName] =
+    connect(ds)(PlaceRepo.manualNames(id))
 
   def addPlace(ds: DataSource, in: Place.Input): Either[Api.Error, Place.Summary] = transact(ds)(PlaceRepo.addPlace(in))
 
@@ -117,11 +144,20 @@ object PlaceFixtures:
   def rebuildFindingPlaces(ds: DataSource, toleranceKm: PlacesConfig.PointToleranceKm): Place.RebuildResult =
     transact(ds)(FindingPlaceRepo.rebuildFindingPlaces(findingTolerance(toleranceKm)))
 
-  def materialisePlaces(ds: DataSource, placeIds: List[com.histmersion.domain.catalogue.Place.Id], toleranceKm: PlacesConfig.PointToleranceKm): RowCount =
-    transact(ds)(FindingPlaceRepo.materialisePlaces(placeIds.map(i => BPlaceRow.Id(i.value)), findingTolerance(toleranceKm)))
+  def materialisePlaces(
+      ds: DataSource,
+      placeIds: List[com.histmersion.domain.catalogue.Place.Id],
+      toleranceKm: PlacesConfig.PointToleranceKm
+  ): RowCount =
+    transact(ds)(
+      FindingPlaceRepo.materialisePlaces(placeIds.map(i => BPlaceRow.Id(i.value)), findingTolerance(toleranceKm))
+    )
 
   /** The same, on the suite's own transaction. */
-  def materialisePlacesIn(placeIds: List[com.histmersion.domain.catalogue.Place.Id], toleranceKm: PlacesConfig.PointToleranceKm)(using DbCon): RowCount =
+  def materialisePlacesIn(
+      placeIds: List[com.histmersion.domain.catalogue.Place.Id],
+      toleranceKm: PlacesConfig.PointToleranceKm
+  )(using DbCon): RowCount =
     FindingPlaceRepo.materialisePlaces(placeIds.map(i => BPlaceRow.Id(i.value)), findingTolerance(toleranceKm))
 
   def unresolvedPlaceholders(ds: DataSource): List[(Citekey, FindingPlaceRepo.Placeholder.Detail)] =
@@ -129,22 +165,42 @@ object PlaceFixtures:
 
   /** The places of the gazetteer slice the rows of a tree hang off. */
   def gazetteer(ds: DataSource, rows: Seq[Tree.TreeRow]): (List[RegionNode], List[Place.Relation]) =
-    connect(ds)(TreeRepo.gazetteer(rows.iterator.flatMap(_.placeIds).map(i => com.histmersion.domain.catalogue.Place.Id.applyUnsafe(i.value)).toList))
+    connect(ds)(
+      TreeRepo.gazetteer(
+        rows.iterator
+          .flatMap(_.placeIds)
+          .map(i => com.histmersion.domain.catalogue.Place.Id.applyUnsafe(i.value))
+          .toList
+      )
+    )
 
   def setOverride(
       ds: DataSource,
       id: com.histmersion.domain.catalogue.Place.Id,
       edit: Place.OverrideEdit,
       toleranceKm: PlacesConfig.PointToleranceKm
-  ): Either[Api.Error, Place.OverrideChanged] = transact(ds)(PlaceOverrideRepo.set(BPlaceRow.Id(id.value), edit, findingTolerance(toleranceKm)))
+  ): Either[Api.Error, Place.OverrideChanged] =
+    transact(ds)(PlaceOverrideRepo.set(BPlaceRow.Id(id.value), edit, findingTolerance(toleranceKm)))
 
-  def merge(ds: DataSource, from: com.histmersion.domain.catalogue.Place.Id, into: com.histmersion.domain.catalogue.Place.Id, toleranceKm: PlacesConfig.PointToleranceKm): Either[Api.Error, Place.Gone] =
-    transact(ds)(PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), findingTolerance(toleranceKm)))
+  def merge(
+      ds: DataSource,
+      from: com.histmersion.domain.catalogue.Place.Id,
+      into: com.histmersion.domain.catalogue.Place.Id,
+      toleranceKm: PlacesConfig.PointToleranceKm
+  ): Either[Api.Error, Place.Gone] =
+    transact(ds)(
+      PlaceOverrideRepo.merge(BPlaceRow.Id(from.value), BPlaceRow.Id(into.value), findingTolerance(toleranceKm))
+    )
 
-  def remove(ds: DataSource, id: com.histmersion.domain.catalogue.Place.Id, reason: Option[PlaceOverrideRepo.RemovalReason]): Either[Api.Error, Place.Gone] =
+  def remove(
+      ds: DataSource,
+      id: com.histmersion.domain.catalogue.Place.Id,
+      reason: Option[PlaceOverrideRepo.RemovalReason]
+  ): Either[Api.Error, Place.Gone] =
     transact(ds)(PlaceOverrideRepo.remove(BPlaceRow.Id(id.value), reason))
 
-  def overrides(ds: DataSource, id: Option[com.histmersion.domain.catalogue.Place.Id]): List[Place.Override] = connect(ds)(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
+  def overrides(ds: DataSource, id: Option[com.histmersion.domain.catalogue.Place.Id]): List[Place.Override] =
+    connect(ds)(PlaceOverrideRepo.list(id.map(i => BPlaceRow.Id(i.value))))
 
   def replaceLand(ds: DataSource, geometries: List[BPlaceRow.Geom]): RowCount =
     val n = transact(ds)(LandRepo.replace(geometries))
@@ -159,10 +215,18 @@ object PlaceFixtures:
 
   def proposals(ds: DataSource): List[PlaceReview.Proposal] = connect(ds)(PlaceReviewRepo.proposals())
 
-  def applyProposals(ds: DataSource, ps: List[PlaceReview.Proposal], toleranceKm: PlacesConfig.PointToleranceKm): (RowCount, RowCount) =
+  def applyProposals(
+      ds: DataSource,
+      ps: List[PlaceReview.Proposal],
+      toleranceKm: PlacesConfig.PointToleranceKm
+  ): (RowCount, RowCount) =
     transact(ds)(PlaceReviewRepo.apply(ps, areaTolerance(toleranceKm)))
 
   def relocations(ds: DataSource): List[PlaceReviewRepo.Relocation] = connect(ds)(PlaceReviewRepo.relocations())
 
-  def relocate(ds: DataSource, rs: List[PlaceReviewRepo.Relocation], toleranceKm: PlacesConfig.PointToleranceKm): RowCount =
+  def relocate(
+      ds: DataSource,
+      rs: List[PlaceReviewRepo.Relocation],
+      toleranceKm: PlacesConfig.PointToleranceKm
+  ): RowCount =
     transact(ds)(PlaceReviewRepo.relocate(rs, areaTolerance(toleranceKm)))

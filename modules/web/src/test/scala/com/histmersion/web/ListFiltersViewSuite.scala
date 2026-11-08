@@ -33,7 +33,10 @@ class ListFiltersViewSuite extends munit.FunSuite:
     assertEquals(ListFilterBar.toggled(List("edge"), "goal-plan"), List("edge", "goal-plan"))
     assertEquals(ListFilterBar.toggled(List("edge", "goal-plan"), "edge"), List("goal-plan"))
     assertEquals(ListFilterBar.optionLabel("review-article", 1223), "Review an article (1,223)")
-    assertEquals(ListFilterBar.optionLabel("seed:x", 0, id => Wording.manager(Wording.ManagerId(id))), "Seeding manager · X")
+    assertEquals(
+      ListFilterBar.optionLabel("seed:x", 0, id => Wording.manager(Wording.ManagerId(id))),
+      "Seeding manager · X"
+    )
     assertEquals(ListFilterBar.optionLabel("some-new-kind", 2), "Some new kind (2)", "an identifier never reads raw")
     assertEquals(
       ListFilterBar.tooltip("edge", id => UiLabels.label(UiLabels.Key(id)).value, _ => Some("A typed link.")),
@@ -71,20 +74,56 @@ class ListFiltersViewSuite extends munit.FunSuite:
     UiState.set(UiState.approvalKinds := List("goal-plan"), UiState.approvalBy := List("person"))()
     assertEquals(
       ApprovalsView.currentFilter(),
-      ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")), decidedBy = List(Approval.DecidedBy.Wire("person")))
+      ListFilters.ApprovalFilter(
+        kind = List(Approval.Kind.Wire("goal-plan")),
+        decidedBy = List(Approval.DecidedBy.Wire("person"))
+      )
     )
-    val rows = List(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("edge")), appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("goal-plan"), ApprovalInfo.State("approved")))
-    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")))).map(_.id.value), List(1L))
+    val rows = List(
+      appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")),
+      appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("edge")),
+      appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("goal-plan"), ApprovalInfo.State("approved"))
+    )
     assertEquals(
-      ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(Approval.State.Wire("all")), kind = List(Approval.Kind.Wire("goal-plan")))).map(_.id.value),
+      ApprovalsView
+        .visible(rows, ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan"))))
+        .map(_.id.value),
+      List(1L)
+    )
+    assertEquals(
+      ApprovalsView
+        .visible(
+          rows,
+          ListFilters
+            .ApprovalFilter(state = Some(Approval.State.Wire("all")), kind = List(Approval.Kind.Wire("goal-plan")))
+        )
+        .map(_.id.value),
       List(1L, 3L)
     )
-    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(Approval.State.Wire("approved")))).map(_.id.value), List(3L))
-    assertEquals(ApprovalsView.qualifier(ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")))).map(_.value), Some("open goal-plan"))
+    assertEquals(
+      ApprovalsView
+        .visible(rows, ListFilters.ApprovalFilter(state = Some(Approval.State.Wire("approved"))))
+        .map(_.id.value),
+      List(3L)
+    )
+    assertEquals(
+      ApprovalsView.qualifier(ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")))).map(_.value),
+      Some("open goal-plan")
+    )
 
   test("approvals: a bulk decision applies to the ticked rows still shown and open, and says what it will do"):
-    val rows = List(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("edge")), appr(ApprovalInfo.Id(4), ApprovalInfo.Kind("edge"), ApprovalInfo.State("approved")))
-    assertEquals(ApprovalsView.bulkTargets(Set(ApprovalInfo.Id(1), ApprovalInfo.Id(3), ApprovalInfo.Id(4), ApprovalInfo.Id(9)), rows).map(_.id.value), List(1L, 3L))
+    val rows = List(
+      appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")),
+      appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("goal-plan")),
+      appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("edge")),
+      appr(ApprovalInfo.Id(4), ApprovalInfo.Kind("edge"), ApprovalInfo.State("approved"))
+    )
+    assertEquals(
+      ApprovalsView
+        .bulkTargets(Set(ApprovalInfo.Id(1), ApprovalInfo.Id(3), ApprovalInfo.Id(4), ApprovalInfo.Id(9)), rows)
+        .map(_.id.value),
+      List(1L, 3L)
+    )
     val text = ApprovalsView.confirmText(Decision.Approve, rows.take(3))
     assert(text.startsWith("Approve 3 approvals (2 plan a goal, 1 link two sources)?"), text)
     assert(ApprovalsView.confirmText(Decision.Reject, rows.take(1)).startsWith("Reject 1 approval (1 plan a goal)?"))
@@ -92,11 +131,25 @@ class ListFiltersViewSuite extends munit.FunSuite:
   test("approvals: who decided, as the row says it"):
     assertEquals(ApprovalsView.decidedLine(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan"))), None)
     assertEquals(
-      ApprovalsView.decidedLine(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan"), ApprovalInfo.State("approved"), note = Some(ApprovalInfo.Note("autopilot: approved — ok")))),
+      ApprovalsView.decidedLine(
+        appr(
+          ApprovalInfo.Id(1),
+          ApprovalInfo.Kind("goal-plan"),
+          ApprovalInfo.State("approved"),
+          note = Some(ApprovalInfo.Note("autopilot: approved — ok"))
+        )
+      ),
       Some(ListFilters.DecidedBy.Autopilot.describe.value)
     )
     assertEquals(
-      ApprovalsView.decidedLine(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("edge"), ApprovalInfo.State("approved"), result = Some(ApprovalInfo.Result("applied automatically: x")))),
+      ApprovalsView.decidedLine(
+        appr(
+          ApprovalInfo.Id(1),
+          ApprovalInfo.Kind("edge"),
+          ApprovalInfo.State("approved"),
+          result = Some(ApprovalInfo.Result("applied automatically: x"))
+        )
+      ),
       Some(ListFilters.DecidedBy.Auto.describe.value)
     )
 
@@ -138,29 +191,66 @@ class ListFiltersViewSuite extends munit.FunSuite:
       )
     )
     val rows = List(
-      run(RunInfo.Id("a"), RunInfo.Status("failed"), RunInfo.Pipeline("review-article"), Some(RunInfo.Origin("manager")), Some(Managers.ManagerInfo.Id("review"))),
+      run(
+        RunInfo.Id("a"),
+        RunInfo.Status("failed"),
+        RunInfo.Pipeline("review-article"),
+        Some(RunInfo.Origin("manager")),
+        Some(Managers.ManagerInfo.Id("review"))
+      ),
       run(RunInfo.Id("b"), RunInfo.Status("done"), RunInfo.Pipeline("review-article")),
       run(RunInfo.Id("c"), RunInfo.Status("failed"), RunInfo.Pipeline("enrich-source"))
     )
     assertEquals(
-      RunsView.visible(rows, ListFilters.RunFilter(pipeline = List(ListFilters.RunFilter.Pipeline("review-article")))).map(_.id.value),
+      RunsView
+        .visible(rows, ListFilters.RunFilter(pipeline = List(ListFilters.RunFilter.Pipeline("review-article"))))
+        .map(_.id.value),
       List("a", "b")
     )
     assertEquals(
-      RunsView.visible(rows, ListFilters.RunFilter(status = List(ListFilters.RunFilter.Status("failed")), manager = List(ListFilters.RunFilter.Manager("review")))).map(_.id.value),
+      RunsView
+        .visible(
+          rows,
+          ListFilters.RunFilter(
+            status = List(ListFilters.RunFilter.Status("failed")),
+            manager = List(ListFilters.RunFilter.Manager("review"))
+          )
+        )
+        .map(_.id.value),
       List("a")
     )
     // a run with no origin was a person's
-    assertEquals(RunsView.visible(rows, ListFilters.RunFilter(origin = List(Agents.Origin.Wire("person")))).map(_.id.value), List("b", "c"))
+    assertEquals(
+      RunsView.visible(rows, ListFilters.RunFilter(origin = List(Agents.Origin.Wire("person")))).map(_.id.value),
+      List("b", "c")
+    )
 
   test("jobs: the query from the fields; the rows the states and kinds show at once"):
     assertEquals(
       JobsView.filterOf(Some(JobState.Failed), List("ingest"), None, Some("2026-10-01"), None),
-      ListFilters.JobFilter(List(JobState.Wire("failed")), List(JobKinds.Wire("ingest")), None, Some(ListFilters.JobFilter.Until("2026-10-01")), None)
+      ListFilters.JobFilter(
+        List(JobState.Wire("failed")),
+        List(JobKinds.Wire("ingest")),
+        None,
+        Some(ListFilters.JobFilter.Until("2026-10-01")),
+        None
+      )
     )
-    val rows = List(JobInfo(SpatialHierarchyResult.Job.Id("1"), JobKinds.Wire("ingest"), JobInfo.Status("done")), JobInfo(SpatialHierarchyResult.Job.Id("2"), JobKinds.Wire("reocr"), JobInfo.Status("failed")), JobInfo(SpatialHierarchyResult.Job.Id("3"), JobKinds.Wire("ingest"), JobInfo.Status("failed")))
-    assertEquals(JobsView.visible(rows, ListFilters.JobFilter(kind = List(JobKinds.Wire("ingest")))).map(_.id), List("1", "3").map(SpatialHierarchyResult.Job.Id.apply))
+    val rows = List(
+      JobInfo(SpatialHierarchyResult.Job.Id("1"), JobKinds.Wire("ingest"), JobInfo.Status("done")),
+      JobInfo(SpatialHierarchyResult.Job.Id("2"), JobKinds.Wire("reocr"), JobInfo.Status("failed")),
+      JobInfo(SpatialHierarchyResult.Job.Id("3"), JobKinds.Wire("ingest"), JobInfo.Status("failed"))
+    )
     assertEquals(
-      JobsView.visible(rows, ListFilters.JobFilter(status = List(JobState.Wire("failed")), kind = List(JobKinds.Wire("ingest")))).map(_.id),
+      JobsView.visible(rows, ListFilters.JobFilter(kind = List(JobKinds.Wire("ingest")))).map(_.id),
+      List("1", "3").map(SpatialHierarchyResult.Job.Id.apply)
+    )
+    assertEquals(
+      JobsView
+        .visible(
+          rows,
+          ListFilters.JobFilter(status = List(JobState.Wire("failed")), kind = List(JobKinds.Wire("ingest")))
+        )
+        .map(_.id),
       List("3").map(SpatialHierarchyResult.Job.Id.apply)
     )

@@ -14,10 +14,9 @@ final case class ConfigFileInfo(
     loaded: ConfigFileInfo.Loaded = ConfigFileInfo.Loaded(false),
     unknownKeys: List[ConfigFileInfo.UnknownKeys] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object ConfigFileInfo:
-
-
 
   type Path = Path.T
   object Path extends Newtype[String, Pure]
@@ -32,5 +31,6 @@ object ConfigFileInfo:
       case Some(p) =>
         val state = if (c.loaded).value then "read" else "not found: defaults and environment only"
         val keys = if c.unknownKeys.isEmpty then ""
-        else s"; ignored unknown ${Plural.noun(Plural.Count((c.unknownKeys.size).toLong), Plural.Noun.Singular("key"))}: ${c.unknownKeys.mkString(", ")}"
+        else
+          s"; ignored unknown ${Plural.noun(Plural.Count((c.unknownKeys.size).toLong), Plural.Noun.Singular("key"))}: ${c.unknownKeys.mkString(", ")}"
         (s"$p ($state$keys)")

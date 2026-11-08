@@ -23,7 +23,8 @@ final case class MapPrefs(
     contours: Option[MapPrefs.Contours] = None,
     depthPhysical: Option[MapPrefs.DepthPhysical] = None,
     depthReadable: Option[MapPrefs.DepthReadable] = None
-) derives hearth.kindlings.circederivation.KindlingsCodecAsObject, CanEqual:
+) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
+      CanEqual:
 
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
   def seaDepth(style: VectorStyle): Boolean = style match
@@ -40,6 +41,7 @@ final case class MapPrefs(
 object MapPrefs:
   type SeaDepth = SeaDepth.T
   object SeaDepth extends Newtype[Boolean, Pure]
+
   /** Physical is the map of the land's form, its sea coloured by depth; Readable keeps OSM Carto's flat water unless
     * the viewer asks for the depth.
     */
@@ -59,6 +61,7 @@ object MapPrefs:
 
   /** Kept as one JSON value; anything unreadable is no options at all. */
   given FieldCodec[MapPrefs]:
-    def encode(a: MapPrefs) = if a == MapPrefs() then Nil else List(FieldCodec.Token(io.circe.syntax.EncoderOps(a).asJson.noSpaces))
+    def encode(a: MapPrefs) =
+      if a == MapPrefs() then Nil else List(FieldCodec.Token(io.circe.syntax.EncoderOps(a).asJson.noSpaces))
     def decode(vs: List[FieldCodec.Token]) =
       Some(vs.headOption.flatMap(v => io.circe.parser.decode[MapPrefs](v.value).toOption).getOrElse(MapPrefs()))

@@ -25,10 +25,19 @@ class PlaceCleanupSuite extends munit.FunSuite:
     assert(!Place.Precision.gridCentre(Longitude(22.50001), Latitude(37.5)))
 
   test("only a Pleiades point is an atlas grid square; a Wikidata coordinate in whole minutes is not"):
-    assertEquals(Place.Precision.of(Place.Id("pleiades_1001895"), Longitude(22.5), Latitude(37.5)), Place.Precision.GridCell)
-    assertEquals(Place.Precision.of(Place.Id("curated_brittany"), Longitude(22.5), Latitude(37.5)), Place.Precision.Stated)
+    assertEquals(
+      Place.Precision.of(Place.Id("pleiades_1001895"), Longitude(22.5), Latitude(37.5)),
+      Place.Precision.GridCell
+    )
+    assertEquals(
+      Place.Precision.of(Place.Id("curated_brittany"), Longitude(22.5), Latitude(37.5)),
+      Place.Precision.Stated
+    )
     assertEquals(Place.Precision.of(Place.Id("wikidata_q1"), Longitude(22.25), Latitude(37.25)), Place.Precision.Stated)
-    assertEquals(Place.Precision.of(Place.Id("pleiades_1332"), Longitude(22.29543), Latitude(39.44387)), Place.Precision.Stated)
+    assertEquals(
+      Place.Precision.of(Place.Id("pleiades_1332"), Longitude(22.29543), Latitude(39.44387)),
+      Place.Precision.Stated
+    )
     assertEquals(Place.Precision.values.toList.map(_.wire), List("stated", "grid-cell"))
     assertEquals(Place.Precision.parse(Place.Precision.Wire("grid-cell")), Some(Place.Precision.GridCell))
 
@@ -42,7 +51,15 @@ class PlaceCleanupSuite extends munit.FunSuite:
   test("a place's Markdown: the shape and, for a grid-square point, the location"):
     val pt = Some(Place.Geometry("""{"type":"Point","coordinates":[22.5,37.5]}"""))
     def detail(kind: Place.Summary.Kind, precision: Place.Precision) = PlaceDetail(
-      Place.Summary(Place.Id("pleiades_1001895"), Place.Summary.Label("Thessalia"), kind, None, None, None, Place.Summary.Names("")),
+      Place.Summary(
+        Place.Id("pleiades_1001895"),
+        Place.Summary.Label("Thessalia"),
+        kind,
+        None,
+        None,
+        None,
+        Place.Summary.Names("")
+      ),
       pt,
       Nil,
       Nil,

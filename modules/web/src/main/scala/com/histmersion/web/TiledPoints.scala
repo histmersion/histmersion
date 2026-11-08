@@ -18,7 +18,6 @@ object TiledPoints:
     * before that the read no longer has (the map let their tile go) and that `keep` (near the view).
     */
 
-
   def merge[A](fresh: Seq[A], was: Seq[A], key: A => String, keep: A => Boolean): Seq[A] =
     val now = fresh.iterator.map(key).toSet
     fresh ++ was.filter(a => !now(key(a)) && keep(a))

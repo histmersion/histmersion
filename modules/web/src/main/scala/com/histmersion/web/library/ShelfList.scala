@@ -86,7 +86,8 @@ object ShelfList:
               unread.signal.map(
                 _.flatMap(_.toOption).fold("Loading…")(p =>
                   if p.total.value == 0 then "Nothing left to read"
-                  else s"${p.offset.value + 1}–${p.offset.value + p.rows.size} of ${ListPage.grouped(p.total.value)} not read yet"
+                  else
+                    s"${p.offset.value + 1}–${p.offset.value + p.rows.size} of ${ListPage.grouped(p.total.value)} not read yet"
                 )
               )
             case _ => rows.map(rs => s"${ListPage.grouped(rs.size)} ${shelf.label.value.toLowerCase}"))
@@ -116,9 +117,15 @@ object ShelfList:
         )
       ),
       child.maybe <-- unread.signal.map(
-        _.flatMap(_.left.toOption).map(m => ErrorLine.text(ErrorLine.Problem(s"Could not list what is not read yet: $m")))
+        _.flatMap(_.left.toOption).map(m =>
+          ErrorLine.text(ErrorLine.Problem(s"Could not list what is not read yet: $m"))
+        )
       ),
-      ul(cls := "shelf-rows", aria.label := shelf.label.value, children <-- rows.map(_.map(row(_, shelf, section, chosen)))),
+      ul(
+        cls := "shelf-rows",
+        aria.label := shelf.label.value,
+        children <-- rows.map(_.map(row(_, shelf, section, chosen)))
+      ),
       child.maybe <-- rows.map(rs =>
         Option.when(rs.isEmpty && (shelf != Shelf.Unread || unread.now().exists(_.isRight)))(
           p(cls := "library-empty muted", empty)

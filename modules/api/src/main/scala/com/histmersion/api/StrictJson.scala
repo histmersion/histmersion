@@ -16,8 +16,6 @@ object StrictJson:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
-
-
   def codec[A](derived: Codec.AsObject[A])(using s: Schema[A]): Codec.AsObject[A] =
     Codec.AsObject.from(decoder(derived), derived)
 
@@ -51,9 +49,11 @@ object StrictJson:
         }
       )
       val noun = s"unknown ${Plural.noun(Plural.Count((unknown.size).toLong), Plural.Noun.Singular("key"))}"
-      Problem(s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
-        (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
-        s"; expected only: ${known.mkString(", ")}")
+      Problem(
+        s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
+          (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
+          s"; expected only: ${known.mkString(", ")}"
+      )
     }
 
   def fieldNames(s: Schema[?]): List[FieldName] = s.schemaType match

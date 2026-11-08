@@ -22,11 +22,13 @@ import com.histmersion.api.catalogue.Year
   */
 class CritiquePairingSuite extends munit.FunSuite:
 
-  private val excerpt = Article.Body(scala.io.Source.fromResource("review/achilles-excerpt.md")(using scala.io.Codec.UTF8).mkString)
+  private val excerpt =
+    Article.Body(scala.io.Source.fromResource("review/achilles-excerpt.md")(using scala.io.Codec.UTF8).mkString)
 
   /** The live edges around those sources. */
   private val edges = List(
-    Coverage.Edge(Citekey("bachvarova2016_hittite"), Coverage.Edge.Kind("challenges"), Citekey("burkert1992_orientalizing")),
+    Coverage
+      .Edge(Citekey("bachvarova2016_hittite"), Coverage.Edge.Kind("challenges"), Citekey("burkert1992_orientalizing")),
     Coverage.Edge(Citekey("bachvarova2016_hittite"), Coverage.Edge.Kind("challenges"), Citekey("latacz2004_troy")),
     Coverage.Edge(Citekey("bachvarova2016_hittite"), Coverage.Edge.Kind("challenges"), Citekey("west1997_helicon")),
     Coverage.Edge(Citekey("ballesteros2024_naming"), Coverage.Edge.Kind("challenges"), Citekey("lord1960_singer")),
@@ -59,9 +61,15 @@ class CritiquePairingSuite extends munit.FunSuite:
     assertEquals(names(Citekey("latacz2004_troy"), List(AuthorName("Joachim Latacz"))), List("Latacz"))
     assertEquals(names(Citekey("drews1993_endbronze"), List(AuthorName("Drews Robert"))), List("Drews"))
     assertEquals(names(Citekey("bjrn2024_twenty"), List(AuthorName("Rasmus Bjørn"))), List("Bjørn"))
-    assertEquals(names(Citekey("kelly2021_gods"), List(AuthorName("Adrian Kelly"), AuthorName("Christopher Metcalf"))), List("Kelly"))
+    assertEquals(
+      names(Citekey("kelly2021_gods"), List(AuthorName("Adrian Kelly"), AuthorName("Christopher Metcalf"))),
+      List("Kelly")
+    )
     assertEquals(names(Citekey("smith1987_dying"), List(AuthorName("Smith, Jonathan Z."))), List("Smith"))
-    assertEquals(names(Citekey("iecor2025_dataset"), List(AuthorName("Cormac Anderson"), AuthorName("Matthew Scarborough"))), List("Anderson"))
+    assertEquals(
+      names(Citekey("iecor2025_dataset"), List(AuthorName("Cormac Anderson"), AuthorName("Matthew Scarborough"))),
+      List("Anderson")
+    )
     assertEquals(names(Citekey("x2000_y"), Nil), Nil)
     assertEquals(names(Citekey("li2000_y"), List(AuthorName("Li"))), Nil, "a two-letter name matches too much prose")
 
@@ -128,9 +136,12 @@ class CritiquePairingSuite extends munit.FunSuite:
     // only another year beside every mention: another work of the author — no hit at all
     assertEquals(hits(Article.Body("Alpha answers West's 1988 article [[a2000_x]]."), r, es.take(1), w), Nil)
     // the critic named by its own name is no mention of the partner
-    val self = List(Coverage.Edge(Citekey("west1997_helicon"), Coverage.Edge.Kind("updates"), Citekey("west2011_making")))
+    val self =
+      List(Coverage.Edge(Citekey("west1997_helicon"), Coverage.Edge.Kind("updates"), Citekey("west2011_making")))
     assertEquals(
-      hits(Article.Body("West revised his view [[west1997_helicon]]." + cited), r, self, w).filter(_.unit.value == 0).map(_.mechanical),
+      hits(Article.Body("West revised his view [[west1997_helicon]]." + cited), r, self, w)
+        .filter(_.unit.value == 0)
+        .map(_.mechanical),
       List(false)
     )
 
@@ -151,16 +162,28 @@ class CritiquePairingSuite extends munit.FunSuite:
       text
     )
     // a pair whose criticised work no paragraph cites: nothing to point at
-    val loose = CritiquePair(CritiqueSide(Citekey("a2000_x")), List(CritiquePair.Kinds("refutes")), CritiqueSide(Citekey("b2001_y")), CritiqueState.Open)
+    val loose = CritiquePair(
+      CritiqueSide(Citekey("a2000_x")),
+      List(CritiquePair.Kinds("refutes")),
+      CritiqueSide(Citekey("b2001_y")),
+      CritiqueState.Open
+    )
     assertEquals(instruction(excerpt, loose, resolve), None)
 
   test("resolver: the citekey, an old one renamed away, the unique short form — nothing else"):
     val r = resolver(
-      Set(Citekey("knapp2016_seven"), Citekey("knapp2021_migration"), Citekey("west2011_making"), Citekey("latacz2004_troy")),
+      Set(
+        Citekey("knapp2016_seven"),
+        Citekey("knapp2021_migration"),
+        Citekey("west2011_making"),
+        Citekey("latacz2004_troy")
+      ),
       Map(Citekey("latacz2023_troy") -> Citekey("latacz2004_troy"))
     )
     assertEquals(
-      List("west2011_making", "latacz2023_troy", "knapp2016", "knapp", "nothing", "WEST2011_MAKING").map(s => r(Article.Link.Target(s))),
+      List("west2011_making", "latacz2023_troy", "knapp2016", "knapp", "nothing", "WEST2011_MAKING").map(s =>
+        r(Article.Link.Target(s))
+      ),
       List(
         Some("west2011_making"),
         Some("latacz2004_troy"),
@@ -173,7 +196,10 @@ class CritiquePairingSuite extends munit.FunSuite:
 
   test("the lint rule: one item per hit, per article"):
     val items = Article.Lint.articleCritiquePairing(
-      List(Article.Slug("achilles_origins") -> excerpt, Article.Slug("clean") -> Article.Body("Nothing here [[lord1960_singer]].")),
+      List(
+        Article.Slug("achilles_origins") -> excerpt,
+        Article.Slug("clean") -> Article.Body("Nothing here [[lord1960_singer]].")
+      ),
       resolve,
       edges,
       work

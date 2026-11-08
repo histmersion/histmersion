@@ -44,7 +44,6 @@ object Goal:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     val SearchQuery: LinkKind = Query
 
     def parse(s: Wire): Option[LinkKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

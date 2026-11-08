@@ -66,7 +66,17 @@ object StrictJsonSchema:
 
   /** The string `format`s strict mode supports. */
   val StringFormats: Set[StringFormats] =
-    Set(StringFormatsValue("date-time"), StringFormatsValue("time"), StringFormatsValue("date"), StringFormatsValue("duration"), StringFormatsValue("email"), StringFormatsValue("hostname"), StringFormatsValue("ipv4"), StringFormatsValue("ipv6"), StringFormatsValue("uuid"))
+    Set(
+      StringFormatsValue("date-time"),
+      StringFormatsValue("time"),
+      StringFormatsValue("date"),
+      StringFormatsValue("duration"),
+      StringFormatsValue("email"),
+      StringFormatsValue("hostname"),
+      StringFormatsValue("ipv4"),
+      StringFormatsValue("ipv6"),
+      StringFormatsValue("uuid")
+    )
 
   /** `schema` (a root object schema) in strict form. */
   def apply(schema: Json): Json =
@@ -104,7 +114,10 @@ object StrictJsonSchema:
         convertObject(o.remove("$ref").toList.foldLeft(d)((acc, kv) => acc.add(kv._1, kv._2)), defs, seen + r)
       case None =>
         val str = types(o).contains("string")
-        val kept = o.filter((k, v) => Keywords(KeywordsValue(k)) && (k != "format" || (str && v.asString.exists(f => StringFormats(StringFormatsValue(f))))))
+        val kept = o.filter((k, v) =>
+          Keywords(KeywordsValue(k)) && (k != "format" || (str && v.asString
+            .exists(f => StringFormats(StringFormatsValue(f)))))
+        )
         val sub = (j: Json) => convert(j, defs, seen)
         val mapped = kept.toList.map {
           case (k @ ("properties" | "$defs" | "definitions"), v) => k -> v.mapObject(_.mapValues(sub))

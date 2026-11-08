@@ -79,7 +79,8 @@ object MyItems:
 
   // ── notes ───────────────────────────────────────────────────────────────────────────────────────
 
-  def notesOn(identity: Target.Identity): Signal[List[Note]] = notes.signal.map(_.filter(_.target.identity.contains(identity)))
+  def notesOn(identity: Target.Identity): Signal[List[Note]] =
+    notes.signal.map(_.filter(_.target.identity.contains(identity)))
 
   def addNote(target: Target, text: Note.Text, title: Title): Future[Note] =
     tracked(ApiClient.addNote(Note.New(target, text, Some(title))))(n => notes.update(n :: _))

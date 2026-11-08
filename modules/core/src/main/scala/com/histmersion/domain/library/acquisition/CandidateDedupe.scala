@@ -20,8 +20,11 @@ object CandidateDedupe:
     * indexes is one.
     */
   def keyOf(w: WorkRef): Option[Doi] =
-    w.doi.flatMap(d => Ident.doi(Ident.Written(d.value)))
-      .orElse(w.arxivId.flatMap(a => Doi.option(s"10.48550/arxiv.${a.value.trim.toLowerCase.replaceAll("v\\d+$", "")}")))
+    w.doi
+      .flatMap(d => Ident.doi(Ident.Written(d.value)))
+      .orElse(
+        w.arxivId.flatMap(a => Doi.option(s"10.48550/arxiv.${a.value.trim.toLowerCase.replaceAll("v\\d+$", "")}"))
+      )
 
   def dedupe(
       found: List[(FoundBy, WorkRef)],
@@ -31,12 +34,16 @@ object CandidateDedupe:
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (by, w) =>
       keyOf(w) match
-        case None                         => skipped("no DOI") += 1
+        case None                           => skipped("no DOI") += 1
         case Some(_) if w.isRetracted.value => skipped("retracted") += 1
-        case Some(k) if known.contains(k) => skipped("in the corpus or queued") += 1
-        case Some(k)                      =>
+        case Some(k) if known.contains(k)   => skipped("in the corpus or queued") += 1
+        case Some(k)                        =>
           kept.get(k) match
-            case Some((first, bys)) => kept(k) = (Candidates.richer(first, w), if bys.contains(by) then bys else bys :+ by)
-            case None               => kept(k) = (w, List(by))
+            case Some((first, bys)) =>
+              kept(k) = (Candidates.richer(first, w), if bys.contains(by) then bys else bys :+ by)
+            case None => kept(k) = (w, List(by))
     }
-    (kept.toList.map { case (k, (w, bys)) => (k, w, bys) }, skipped.toMap.map((reason, n) => SkipReason(reason) -> SkipCount(n)))
+    (
+      kept.toList.map { case (k, (w, bys)) => (k, w, bys) },
+      skipped.toMap.map((reason, n) => SkipReason(reason) -> SkipCount(n))
+    )

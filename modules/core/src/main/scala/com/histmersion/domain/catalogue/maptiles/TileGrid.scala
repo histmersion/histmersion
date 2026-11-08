@@ -7,9 +7,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   * holding more than `maxPoints` items counts them by square cells of `cellUnits` tile units, one feature a cell; at
   * `maxZoom` (the deepest tile cut — deeper views draw it larger) every item is one.
   */
-final case class TileGrid private (maxZoom: TileGrid.MaxZoom, maxPoints: TileGrid.MaxPoints, cellUnits: TileGrid.CellUnits):
+final case class TileGrid private (
+    maxZoom: TileGrid.MaxZoom,
+    maxPoints: TileGrid.MaxPoints,
+    cellUnits: TileGrid.CellUnits
+):
   /** The most items `c` keeps as features of their own before it groups them by cell. */
-  def pointsAt(c: TileCoord): TileGrid.MaxPoints = if c.z.value >= maxZoom.value then TileGrid.MaxPoints(Int.MaxValue) else maxPoints
+  def pointsAt(c: TileCoord): TileGrid.MaxPoints =
+    if c.z.value >= maxZoom.value then TileGrid.MaxPoints(Int.MaxValue) else maxPoints
 
 object TileGrid:
   /** A tile is 512 CSS pixels a side where MapLibre draws it at its own zoom. */

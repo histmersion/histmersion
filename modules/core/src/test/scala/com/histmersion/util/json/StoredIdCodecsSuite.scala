@@ -19,5 +19,6 @@ class StoredIdCodecsSuite extends munit.FunSuite:
     assertEquals(p.target.map(_.value), Some("b"))
 
   test("a stored proposed work with a DOI written as a link decodes"):
-    val w = decode[ProposedWork]("""{"doi":"https://doi.org/10.1/x","why":"w"}""").fold(e => fail(e.getMessage), identity)
+    val w =
+      decode[ProposedWork]("""{"doi":"https://doi.org/10.1/x","why":"w"}""").fold(e => fail(e.getMessage), identity)
     assertEquals(w.doi.value, "https://doi.org/10.1/x")

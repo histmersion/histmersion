@@ -35,7 +35,11 @@ object OaRecords:
 
   def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: Doi): Option[Plugin.Http.GetUrl] =
     http.json(
-      Url(RepositoryLanding.Candidate.Url(cfg.doiHandles.url.value), Url.UrlPath(s"/${doi.value}"), "type" -> "URL").value
+      Url(
+        RepositoryLanding.Candidate.Url(cfg.doiHandles.url.value),
+        Url.UrlPath(s"/${doi.value}"),
+        "type" -> "URL"
+      ).value
     ) match
       case Right(j) => RepositoryLanding.handleUrl(j).map(u => Plugin.Http.GetUrl(u.value))
       case Left(e)  =>

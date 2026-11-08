@@ -48,7 +48,8 @@ trait Plugin:
     * key the plugin reads has a default in it (`null` for an optional value such as an optional [[Secret]]), and a key
     * the user sets that it lacks is reported as unknown. `enabled` is the host's key; absent, the plugin is disabled.
     */
-  def defaultsResource: Plugin.DefaultsResourceResult = Plugin.DefaultsResourceResult(s"META-INF/histmersion/plugins/${info.id}.conf")
+  def defaultsResource: Plugin.DefaultsResourceResult =
+    Plugin.DefaultsResourceResult(s"META-INF/histmersion/plugins/${info.id}.conf")
 
   /** Called once per generation, only when enabled, after the host decoded the block into `config` and resolved every
     * [[Secret]] in it. Adds the plugin's contributions to `ctx`'s registries. The registries are STAGED: a `Left` (or
@@ -75,7 +76,11 @@ object Plugin:
     type LenientParseArg1 = LenientParseArg1.T
     object LenientParseArg1 extends Newtype[String, Pure]
 
-    private def lenient[A](name: LenientName, strict: ConfigReader[A], parse: LenientParseArg1 => Option[A]): ConfigReader[A] =
+    private def lenient[A](
+        name: LenientName,
+        strict: ConfigReader[A],
+        parse: LenientParseArg1 => Option[A]
+    ): ConfigReader[A] =
       new ConfigReader[A]:
         def from(v: org.ekrich.config.ConfigValue) =
           strict
@@ -84,7 +89,8 @@ object Plugin:
               ConfigReader.stringReader
                 .from(v)
                 .flatMap(s =>
-                  parse(LenientParseArg1(s.trim)).toRight(ConfigDecodingError.CannotConvert(Nil, s"'$s' is not a $name", None))
+                  parse(LenientParseArg1(s.trim))
+                    .toRight(ConfigDecodingError.CannotConvert(Nil, s"'$s' is not a $name", None))
                 )
             )
 
@@ -93,7 +99,8 @@ object Plugin:
     given ConfigReader[Double] = lenient(LenientName("double"), ConfigReader.doubleReader, (_).value.toDoubleOption)
     given ConfigReader[Boolean] = lenient(LenientName("boolean"), ConfigReader.booleanReader, (_).value.toBooleanOption)
 
-    given newtypeReader: [T] => (mirror: RefinedType.Mirror[T]) => (base: ConfigReader[mirror.BaseType]) => ConfigReader[T] =
+    given newtypeReader
+        : [T] => (mirror: RefinedType.Mirror[T]) => (base: ConfigReader[mirror.BaseType]) => ConfigReader[T] =
       base.emap(mirror.ops.either).asInstanceOf[ConfigReader[T]]
 
   /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new extension point
@@ -129,18 +136,21 @@ object Plugin:
       * may add several (one per step). A host that has no acquisition chain refuses every addition — the default, so a
       * context written for an earlier extension point (a test's) still compiles.
       */
-    def sourceFetchers: Registry[SourceFetcher] = Registry.refusing(Registry.RefusingWhy("this host has no acquisition chain"))
+    def sourceFetchers: Registry[SourceFetcher] =
+      Registry.refusing(Registry.RefusingWhy("this host has no acquisition chain"))
 
     /** The media collections `histmersion media import <id>` runs: each under its own id — the name the import is asked
       * for, and the provider its pictures are stored under. The host judges every licence and every match itself
       * ([[MediaCollection]]).
       */
-    def mediaCollections: Registry[MediaCollection] = Registry.refusing(Registry.RefusingWhy("this host has no media import"))
+    def mediaCollections: Registry[MediaCollection] =
+      Registry.refusing(Registry.RefusingWhy("this host has no media import"))
 
     /** The event catalogues `histmersion events import <id>` reads, each under its own id — the import's name and the
       * catalogue its records are stored under.
       */
-    def eventCatalogues: Registry[EventCatalogue] = Registry.refusing(Registry.RefusingWhy("this host has no event catalogues"))
+    def eventCatalogues: Registry[EventCatalogue] =
+      Registry.refusing(Registry.RefusingWhy("this host has no event catalogues"))
 
     /** The AI providers the embedded agents call, each under its PROVIDER NAME — the part before the colon of a
       * `provider:model` reference. The host runs the tool loop, the tools, the validation and every budget; the
@@ -164,13 +174,15 @@ object Plugin:
       * asked for. A host that imports no gazetteers refuses every addition — the default, so a context written for an
       * earlier extension point still compiles.
       */
-    def gazetteerSources: Registry[GazetteerSource] = Registry.refusing(Registry.RefusingWhy("this host has no gazetteer import"))
+    def gazetteerSources: Registry[GazetteerSource] =
+      Registry.refusing(Registry.RefusingWhy("this host has no gazetteer import"))
 
     /** The collections of sources the library searches and imports from, and may write back to, each under its own name
       * — the name `histmersion calibre …` or `histmersion archive …` runs it by ([[SourceCollection]]). A host that has
       * no library refuses every addition — the default, so a context written before collections existed still compiles.
       */
-    def sourceCollections: Registry[SourceCollection] = Registry.refusing(Registry.RefusingWhy("this host has no source collections"))
+    def sourceCollections: Registry[SourceCollection] =
+      Registry.refusing(Registry.RefusingWhy("this host has no source collections"))
 
   object Context:
     type EnvResult = EnvResult.T
@@ -189,7 +201,10 @@ object Plugin:
     /** One GET under the host's outbound policy (its User-Agent, `Retry-After`, a slow-down asked again, a bot
       * challenge ending the request): the body of a 2xx answer, or why there is none.
       */
-    def get(url: Http.GetUrl, headers: Map[Http.GetHeadersPart1, Http.GetHeadersPart2] = Map.empty): Either[Http.GetResultPart1, Http.GetResultPart2]
+    def get(
+        url: Http.GetUrl,
+        headers: Map[Http.GetHeadersPart1, Http.GetHeadersPart2] = Map.empty
+    ): Either[Http.GetResultPart1, Http.GetResultPart2]
 
     /** One GET with the host's identity, answered as it came — its status and headers, a slow-down or an error answer
       * included — and never asked again: for an upstream whose own budget decides when to ask again (an
@@ -198,7 +213,10 @@ object Plugin:
       *
       * A host that has only bodies answers through [[get]]: status 200 and no headers, or its `Left`.
       */
-    def fetch(url: Http.FetchUrl, headers: Map[Http.FetchHeadersPart1, Http.FetchHeadersPart2] = Map.empty): Either[Http.FetchResultPart1, HttpResponse] =
+    def fetch(
+        url: Http.FetchUrl,
+        headers: Map[Http.FetchHeadersPart1, Http.FetchHeadersPart2] = Map.empty
+    ): Either[Http.FetchResultPart1, HttpResponse] =
       get(url, headers).map(HttpResponse(HttpResponse.Status(200), Map.empty, _))
 
   object Http:
@@ -231,9 +249,14 @@ object Plugin:
     * @param body
     *   the answer's bytes
     */
-  final case class HttpResponse(status: HttpResponse.Status, headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue], body: HttpResponse.Body):
+  final case class HttpResponse(
+      status: HttpResponse.Status,
+      headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue],
+      body: HttpResponse.Body
+  ):
     /** A header by name, in any case. */
-    def header(name: HttpResponse.HeaderName): Option[HttpResponse.HeaderResult] = headers.get(HttpResponse.HeadersKey((name).value.toLowerCase(Locale.ROOT)))
+    def header(name: HttpResponse.HeaderName): Option[HttpResponse.HeaderResult] =
+      headers.get(HttpResponse.HeadersKey((name).value.toLowerCase(Locale.ROOT)))
 
   object HttpResponse:
     type HeaderResult = HeadersValue

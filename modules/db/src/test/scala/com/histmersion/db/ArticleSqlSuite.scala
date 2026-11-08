@@ -58,9 +58,19 @@ class ArticleSqlSuite extends munit.FunSuite:
     assertEquals(s.params, List(Param.S(Param.S.V("100%_sea")), Param.S(Param.S.V("%100\\%\\_sea%"))))
 
   test("parameters stay in textual order when the parts are combined"):
-    val s = where(Some(Article.Kind("report")), Some(Search.Query("gods")), Filter(status = List(Filter.Status("current")), title = Some(Filter.Title("pie"))))
+    val s = where(
+      Some(Article.Kind("report")),
+      Some(Search.Query("gods")),
+      Filter(status = List(Filter.Status("current")), title = Some(Filter.Title("pie")))
+    )
     assertEquals(
       s.params,
-      List(Param.S(Param.S.V("current")), Param.S(Param.S.V("%pie%")), Param.S(Param.S.V("report")), Param.S(Param.S.V("gods")), Param.S(Param.S.V("%gods%")))
+      List(
+        Param.S(Param.S.V("current")),
+        Param.S(Param.S.V("%pie%")),
+        Param.S(Param.S.V("report")),
+        Param.S(Param.S.V("gods")),
+        Param.S(Param.S.V("%gods%"))
+      )
     )
     assertEquals(s.text.value.count(_ == '?'), 5)

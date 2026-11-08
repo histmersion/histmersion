@@ -2,7 +2,7 @@ package com.histmersion
 package domain.media.assets
 
 import com.histmersion.api.{Api, Write}
-import com.histmersion.api.library.{Citekey as ApiCitekey}
+import com.histmersion.api.library.Citekey as ApiCitekey
 import com.histmersion.api.media.Iiif
 import com.histmersion.domain.library.Citekey
 import sttp.shared.Identity
@@ -15,7 +15,9 @@ object IiifRoutes:
 
   def apply(iiif: IiifControllers): List[ServerEndpoint[Any, Identity]] =
     List(
-      Api.iiifInfo.serverLogic[Identity]((ck, name) => citekey(ck.value)(k => iiif.info(k, AssetService.AssetName(name.value)))),
+      Api.iiifInfo.serverLogic[Identity]((ck, name) =>
+        citekey(ck.value)(k => iiif.info(k, AssetService.AssetName(name.value)))
+      ),
       Api.iiifImage.serverLogic[Identity] { (ck, name, region, size, rotation, filename) =>
         citekey(ck.value) { k =>
           iiif

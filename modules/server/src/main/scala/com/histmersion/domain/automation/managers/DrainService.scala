@@ -38,7 +38,8 @@ final class DrainService(
       (RunRow.Status(Agents.RunState.Queued.wire.value), RunRow.Status(Agents.RunState.Running.wire.value))
     )
 
-  private def count(n: Int, noun: String): String = Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
+  private def count(n: Int, noun: String): String =
+    Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
 
   /** Draining now? */
   def draining: Boolean = agents.autopilotRow.drain().isDefined
@@ -64,7 +65,9 @@ final class DrainService(
         SchedulerPolicy.Block(
           SchedulerPolicy.Block.Code("drain"),
           SchedulerPolicy.Block.Why(
-            s"draining since ${since.value}${if by.value.nonEmpty then s" (by ${by.value})" else ""}: nothing new starts until it is lifted " +
+            s"draining since ${since.value}${
+                if by.value.nonEmpty then s" (by ${by.value})" else ""
+              }: nothing new starts until it is lifted " +
               "(histmersion agent autopilot undrain)"
           )
         )

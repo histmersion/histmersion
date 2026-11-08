@@ -8,8 +8,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** `histmersion.events.noaa`: NCEI's hazard service, its page size, the pace and the datasets read (comma-separated:
   * `earthquakes`, `volcanoes`, `tsunamis`).
   */
-final case class NoaaSettings(url: NoaaSettings.Url, pageSize: NoaaSettings.PageSize, requestIntervalMs: NoaaSettings.RequestIntervalMs, datasets: NoaaSettings.Datasets)
-    derives ConfigReader:
+final case class NoaaSettings(
+    url: NoaaSettings.Url,
+    pageSize: NoaaSettings.PageSize,
+    requestIntervalMs: NoaaSettings.RequestIntervalMs,
+    datasets: NoaaSettings.Datasets
+) derives ConfigReader:
   /** The datasets named, in order; a name NCEI has no dataset of is left out. */
   def datasetList: List[NoaaCatalogue.Dataset] =
     datasets.value.split(",").map(_.trim).flatMap(d => NoaaCatalogue.Datasets.find(_.value == d)).toList

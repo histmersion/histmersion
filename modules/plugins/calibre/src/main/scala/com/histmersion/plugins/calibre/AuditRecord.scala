@@ -4,7 +4,13 @@ package plugins.calibre
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A corpus source as the audit sees it: the Calibre entry it names and what the corpus says. */
-final case class AuditRecord(citekey: AuditRecord.Citekey, calibreId: AuditRecord.CalibreId, title: AuditRecord.Title, authors: List[AuditRecord.Authors], year: Option[AuditRecord.Year])
+final case class AuditRecord(
+    citekey: AuditRecord.Citekey,
+    calibreId: AuditRecord.CalibreId,
+    title: AuditRecord.Title,
+    authors: List[AuditRecord.Authors],
+    year: Option[AuditRecord.Year]
+)
 
 object AuditRecord:
   type Citekey = Citekey.T

@@ -18,5 +18,4 @@ object ItemStatus:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[ItemStatus] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

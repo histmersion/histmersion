@@ -14,7 +14,8 @@ final case class NeighborRow(
     status: Option[Source.Status] = None,
     target: NeighborTarget = NeighborTarget.Source
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object NeighborRow:
-  export ContradictionRow.Direction.{Wire as Direction}
+  export ContradictionRow.Direction.Wire as Direction

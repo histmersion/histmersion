@@ -36,7 +36,6 @@ object ReadingService:
   type Read = Read.T
   object Read extends Newtype[Boolean, Pure]
 
-
   def apply(db: Transactor, items: Referables, readables: List[Readable]): ReadingService =
     Implementation(db, items, readables)
 
@@ -86,7 +85,6 @@ object ReadingService:
 
     def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems =
       unreadOf(readables, kind)(db.read(ReadingRepo.read(user, kind)).toSet, size, from)
-
 
   /** The read marks held in `state`, beside the bookmarks and notes of the same person, by the rules the table keeps.
     */
@@ -141,4 +139,3 @@ object ReadingService:
     def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems =
       val read = mine(state.get, user).filter(m => m.ref.kind == kind && m.readAt.isDefined).map(_.ref).toSet
       unreadOf(readables, kind)(read, size, from)
-

@@ -18,8 +18,10 @@ object DataCredits:
     ),
     DataCredit(
       DataCredit.Name("Protomaps basemap"),
-      DataCredit.UsedFor("the Readable and Physical styles; the extract kept here is an ODbL derivative of " +
-        "OpenStreetMap, filtered by basemap.vector.drop"),
+      DataCredit.UsedFor(
+        "the Readable and Physical styles; the extract kept here is an ODbL derivative of " +
+          "OpenStreetMap, filtered by basemap.vector.drop"
+      ),
       DataCredit.Licence("BSD (code), ODbL (data)"),
       (odbl).map(refactorValue2 => DataCredit.LicenceUrl(refactorValue2)),
       MediaItem.Credit("Protomaps"),
@@ -30,7 +32,9 @@ object DataCredits:
       DataCredit.UsedFor("the land cover drawn at low zoom"),
       DataCredit.Licence("CC BY 4.0"),
       (ccBy4).map(refactorValue3 => DataCredit.LicenceUrl(refactorValue3)),
-      MediaItem.Credit("© ESA WorldCover project 2020 / Contains modified Copernicus Sentinel data (2020) processed by ESA WorldCover consortium"),
+      MediaItem.Credit(
+        "© ESA WorldCover project 2020 / Contains modified Copernicus Sentinel data (2020) processed by ESA WorldCover consortium"
+      ),
       DataCredit.Url("https://esa-worldcover.org/en/data-access")
     ),
     DataCredit(
@@ -38,7 +42,9 @@ object DataCredits:
       DataCredit.UsedFor("relief and contours"),
       DataCredit.Licence("per source (Copernicus; CC BY 4.0 and others)"),
       None,
-      MediaItem.Credit("Copernicus DEM © DLR e.V. 2010-2014, Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA"),
+      MediaItem.Credit(
+        "Copernicus DEM © DLR e.V. 2010-2014, Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA"
+      ),
       DataCredit.Url("https://mapterhorn.com/attribution")
     ),
     DataCredit(
@@ -86,8 +92,10 @@ object DataCredits:
       DataCredit.UsedFor("places (an extract built on this machine)"),
       DataCredit.Licence("ODC-By 1.0"),
       Some(DataCredit.LicenceUrl("https://opendatacommons.org/licenses/by/1-0/")),
-      MediaItem.Credit("Contains information from the J. Paul Getty Trust, Getty Research Institute, the Getty Thesaurus of Geographic Names, " +
-        "which is made available under the ODC Attribution License"),
+      MediaItem.Credit(
+        "Contains information from the J. Paul Getty Trust, Getty Research Institute, the Getty Thesaurus of Geographic Names, " +
+          "which is made available under the ODC Attribution License"
+      ),
       DataCredit.Url("https://www.getty.edu/research/tools/vocabularies/tgn/")
     ),
     DataCredit(
@@ -111,7 +119,9 @@ object DataCredits:
       DataCredit.UsedFor("a few polity outlines"),
       DataCredit.Licence("CC0 unless a feature says otherwise"),
       (cc0).map(refactorValue18 => DataCredit.LicenceUrl(refactorValue18)),
-      MediaItem.Credit("Map data courtesy of the OpenHistoricalMap project, in the public domain unless otherwise noted"),
+      MediaItem.Credit(
+        "Map data courtesy of the OpenHistoricalMap project, in the public domain unless otherwise noted"
+      ),
       DataCredit.Url("https://www.openhistoricalmap.org/copyright")
     ),
     DataCredit(
@@ -139,5 +149,13 @@ object DataCredits:
       DataCredit.Url("https://volcano.si.edu"),
       onMap = DataCredit.OnMap(true)
     ),
-    DataCredit(DataCredit.Name("PeriodO"), DataCredit.UsedFor("period presets"), DataCredit.Licence("CC0"), (cc0).map(refactorValue10 => DataCredit.LicenceUrl(refactorValue10)), MediaItem.Credit("PeriodO"), DataCredit.Url("https://perio.do"), onMap = DataCredit.OnMap(false))
+    DataCredit(
+      DataCredit.Name("PeriodO"),
+      DataCredit.UsedFor("period presets"),
+      DataCredit.Licence("CC0"),
+      (cc0).map(refactorValue10 => DataCredit.LicenceUrl(refactorValue10)),
+      MediaItem.Credit("PeriodO"),
+      DataCredit.Url("https://perio.do"),
+      onMap = DataCredit.OnMap(false)
+    )
   )

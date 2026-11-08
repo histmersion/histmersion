@@ -32,8 +32,8 @@ object TilesApi:
 
   object TileQuery:
 
-    export TileLayer.{Wire as Layer}
-    export com.histmersion.api.basemap.Basemap.{Zoom as Z}
+    export TileLayer.Wire as Layer
+    export com.histmersion.api.basemap.Basemap.Zoom as Z
     type X = X.T
     object X extends Newtype[Long, Pure]
     type Y = Y.T
@@ -42,7 +42,7 @@ object TilesApi:
     object Kind extends Newtype[String, Pure]
     type Tier = Tier.T
     object Tier extends Newtype[String, Pure]
-    export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
+    export com.histmersion.api.catalogue.Historicity.Wire as Historicity
     type Context = Context.T
     object Context extends Newtype[Boolean, Pure]
     export Api.Search.Text
@@ -89,7 +89,63 @@ object TilesApi:
       .in(query[Option[String]]("license"))
       .in(query[Option[Boolean]]("undated"))
       .in(header[Option[String]](HeaderNames.IfNoneMatch))
-      .mapIn { case (layer, z, x, y, filter, kind, tier, historicity, context, text, placeId, siteType, provider, license, undated, ifNoneMatch) => TileQuery(TileQuery.Layer(layer), TileQuery.Z(z), TileQuery.X(x), TileQuery.Y(y), filter, kind.map(TileQuery.Kind(_)), tier.map(TileQuery.Tier(_)), historicity.map(TileQuery.Historicity(_)), context.map(TileQuery.Context(_)), text.map(TileQuery.Text(_)), placeId.map(Place.Id(_)), siteType.map(TileQuery.SiteType(_)), provider.map(TileQuery.Provider(_)), license.map(TileQuery.License(_)), undated.map(TileQuery.Undated(_)), ifNoneMatch.map(TileQuery.IfNoneMatch(_))) }(v => (v.layer.value, v.z.value, v.x.value, v.y.value, v.filter, v.kind.map(_.value), v.tier.map(_.value), v.historicity.map(_.value), v.context.map(_.value), v.text.map(_.value), v.placeId.map(_.value), v.siteType.map(_.value), v.provider.map(_.value), v.license.map(_.value), v.undated.map(_.value), v.ifNoneMatch.map(_.value)))
+      .mapIn {
+        case (
+              layer,
+              z,
+              x,
+              y,
+              filter,
+              kind,
+              tier,
+              historicity,
+              context,
+              text,
+              placeId,
+              siteType,
+              provider,
+              license,
+              undated,
+              ifNoneMatch
+            ) =>
+          TileQuery(
+            TileQuery.Layer(layer),
+            TileQuery.Z(z),
+            TileQuery.X(x),
+            TileQuery.Y(y),
+            filter,
+            kind.map(TileQuery.Kind(_)),
+            tier.map(TileQuery.Tier(_)),
+            historicity.map(TileQuery.Historicity(_)),
+            context.map(TileQuery.Context(_)),
+            text.map(TileQuery.Text(_)),
+            placeId.map(Place.Id(_)),
+            siteType.map(TileQuery.SiteType(_)),
+            provider.map(TileQuery.Provider(_)),
+            license.map(TileQuery.License(_)),
+            undated.map(TileQuery.Undated(_)),
+            ifNoneMatch.map(TileQuery.IfNoneMatch(_))
+          )
+      }(v =>
+        (
+          v.layer.value,
+          v.z.value,
+          v.x.value,
+          v.y.value,
+          v.filter,
+          v.kind.map(_.value),
+          v.tier.map(_.value),
+          v.historicity.map(_.value),
+          v.context.map(_.value),
+          v.text.map(_.value),
+          v.placeId.map(_.value),
+          v.siteType.map(_.value),
+          v.provider.map(_.value),
+          v.license.map(_.value),
+          v.undated.map(_.value),
+          v.ifNoneMatch.map(_.value)
+        )
+      )
       .errorOut(statusCode(StatusCode.BadRequest))
       .errorOut(jsonBody[Api.Error])
       .out(
@@ -98,7 +154,15 @@ object TilesApi:
           .and(header[String](HeaderNames.Etag))
           .and(header[String](HeaderNames.CacheControl))
           .and(statusCode)
-          .map { case (bytes, contentType, etag, cacheControl, status) => TileAnswer(Api.FileBytes(bytes), TileAnswer.ContentType(contentType), TileAnswer.Etag(etag), TileAnswer.CacheControl(cacheControl), status) }(v => (v.bytes.value, v.contentType.value, v.etag.value, v.cacheControl.value, v.status))
+          .map { case (bytes, contentType, etag, cacheControl, status) =>
+            TileAnswer(
+              Api.FileBytes(bytes),
+              TileAnswer.ContentType(contentType),
+              TileAnswer.Etag(etag),
+              TileAnswer.CacheControl(cacheControl),
+              status
+            )
+          }(v => (v.bytes.value, v.contentType.value, v.etag.value, v.cacheControl.value, v.status))
       )
 
   lazy val all: List[AnyEndpoint] = List(tile)

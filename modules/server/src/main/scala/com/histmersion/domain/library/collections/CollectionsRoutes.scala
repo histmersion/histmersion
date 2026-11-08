@@ -14,7 +14,9 @@ object CollectionsRoutes:
     val me = Caller.Local
     List(
       CollectionsApi.collections.serverLogic[Identity](_ => c.collections(me)),
-      CollectionsApi.collection.serverLogic[Identity](name => c.collection(me, CollectionsService.CollectionName(name.value))),
+      CollectionsApi.collection.serverLogic[Identity](name =>
+        c.collection(me, CollectionsService.CollectionName(name.value))
+      ),
       CollectionsApi.search.serverLogic[Identity]((name, q, limit, unlinked) =>
         c.search(
           me,
@@ -22,14 +24,31 @@ object CollectionsRoutes:
           q.map(x => Search.Query(x.value)),
           limit.map(l => CollectionsService.Limit(l.value)),
           CollectionsService.SearchUnlinked(unlinked)
-        )),
-      CollectionsApi.importItem.serverLogic[Identity]((name, req) => c.importItem(me, CollectionsService.CollectionName(name.value), req)),
-      CollectionsApi.link.serverLogic[Identity]((name, req) => c.link(me, CollectionsService.CollectionName(name.value), req)),
-      CollectionsApi.push.serverLogic[Identity]((name, req) => c.push(me, CollectionsService.CollectionName(name.value), req)),
-      CollectionsApi.updateOne.serverLogic[Identity]((name, req) => c.updateOne(me, CollectionsService.CollectionName(name.value), req)),
-      CollectionsApi.updateAll.serverLogic[Identity]((name, req) => c.updateAll(me, CollectionsService.CollectionName(name.value), req)),
-      CollectionsApi.set.serverLogic[Identity]((name, req) => c.set(me, CollectionsService.CollectionName(name.value), req)),
+        )
+      ),
+      CollectionsApi.importItem.serverLogic[Identity]((name, req) =>
+        c.importItem(me, CollectionsService.CollectionName(name.value), req)
+      ),
+      CollectionsApi.link.serverLogic[Identity]((name, req) =>
+        c.link(me, CollectionsService.CollectionName(name.value), req)
+      ),
+      CollectionsApi.push.serverLogic[Identity]((name, req) =>
+        c.push(me, CollectionsService.CollectionName(name.value), req)
+      ),
+      CollectionsApi.updateOne.serverLogic[Identity]((name, req) =>
+        c.updateOne(me, CollectionsService.CollectionName(name.value), req)
+      ),
+      CollectionsApi.updateAll.serverLogic[Identity]((name, req) =>
+        c.updateAll(me, CollectionsService.CollectionName(name.value), req)
+      ),
+      CollectionsApi.set.serverLogic[Identity]((name, req) =>
+        c.set(me, CollectionsService.CollectionName(name.value), req)
+      ),
       CollectionsApi.audit.serverLogic[Identity](name => c.audit(me, CollectionsService.CollectionName(name.value))),
-      CollectionsApi.gaps.serverLogic[Identity]((name, limit) => c.gaps(me, CollectionsService.CollectionName(name.value), limit.map(l => CollectionsService.Limit(l.value)))),
-      CollectionsApi.sync.serverLogic[Identity]((name, req) => c.sync(me, CollectionsService.CollectionName(name.value), req))
+      CollectionsApi.gaps.serverLogic[Identity]((name, limit) =>
+        c.gaps(me, CollectionsService.CollectionName(name.value), limit.map(l => CollectionsService.Limit(l.value)))
+      ),
+      CollectionsApi.sync.serverLogic[Identity]((name, req) =>
+        c.sync(me, CollectionsService.CollectionName(name.value), req)
+      )
     )

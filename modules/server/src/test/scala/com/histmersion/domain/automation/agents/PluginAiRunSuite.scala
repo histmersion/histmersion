@@ -114,16 +114,24 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assertEquals(ours.size, 1, "the plugin comes from its own jar")
     val env = ConfigFactory.parseString(s"ZZ_HELLO_AI_TOKEN = ${quote(Secret)}")
     // the six built-ins as the server has them: the HTTP APIs' first-party plugins, supplied the host's settings
-    val builtin = PluginHost.discover(getClass.getClassLoader)._1.filter(p => BuiltinAi.pluginIds(com.histmersion.util.plugins.Plugin.Id.assume(p.info.id.value)))
+    val builtin = PluginHost
+      .discover(getClass.getClassLoader)
+      ._1
+      .filter(p => BuiltinAi.pluginIds(com.histmersion.util.plugins.Plugin.Id.assume(p.info.id.value)))
     val all = builtin ++ ServerPlugins.providers ++ ours
     val u = ConfigFactory.parseString(user)
-    val host = FirstPartySettings.hostView(AppConfig.loadWithUserFile(env, None).fold(p => fail(p.value), _.merged), u, env, all)
+    val host =
+      FirstPartySettings.hostView(AppConfig.loadWithUserFile(env, None).fold(p => fail(p.value), _.merged), u, env, all)
     PluginHost.build(
       all,
       u,
       env,
       Plugins.services(
-        () => new Plugin.Http { def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) },
+        () =>
+          new Plugin.Http {
+            def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+              Left(Plugin.Http.GetResultPart1("offline"))
+          },
         env
       ),
       fallback = FirstPartySettings.fallback(_, host),
@@ -132,11 +140,26 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("echo=1/2; limited=1/2")).modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(AgentRolesConfig.Extractor("hello-ai:echo"))
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
-    )
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.server)
+      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .modify(_.agents)
+      .setTo(
+        b.agents
+          .modify(_.enabled)
+          .setTo(AgentsConfig.Enabled(true))
+          .modify(_.prices)
+          .setTo(AgentsConfig.Prices("echo=1/2; limited=1/2"))
+          .modify(_.roles)
+          .setTo(b.agents.roles.modify(_.extractor).setTo(AgentRolesConfig.Extractor("hello-ai:echo")))
+      )
+      .modify(_.libraryAgents)
+      .setTo(
+        b.libraryAgents
+          .modify(_.enrich)
+          .setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
+      )
 
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -153,8 +176,8 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
   override def afterSuite(): Unit = loader.close()
 
-  /** The server's own wiring (`AgentsControllers(ServerEngineSite(deps, ServerWiring(deps)))`: no scripted factory) over
-    * `g`.
+  /** The server's own wiring (`AgentsControllers(ServerEngineSite(deps, ServerWiring(deps)))`: no scripted factory)
+    * over `g`.
     */
   private def handlers(g: Generation, cfg: AppConfig = baseCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds, ds, plugins = g)
@@ -163,9 +186,20 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
 
   private def startAndRun(a: AgentsControllers, h: ServerWiring): RunInfo =
     assert(
-      h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("Bronze Age tin"), year = (Some(2019)).map(Year.apply), body = Some(Body))).isRight
+      h.library.sources
+        .put(
+          Ck,
+          Source.Put(
+            title = com.histmersion.api.library.Title("Bronze Age tin"),
+            year = (Some(2019)).map(Year.apply),
+            body = Some(Body)
+          )
+        )
+        .isRight
     )
-    val run = a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).fold(e => fail(e.message.value), identity)
+    val run = a
+      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .fold(e => fail(e.message.value), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -175,7 +209,12 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assertEquals((st.state, st.provides), ("registered", List("ai-provider:hello-ai")))
     assert(st.settings.exists(s => s.key.value == "token" && s.value.value == "env:ZZ_HELLO_AI_TOKEN"), st.settings)
     assert(!g.report.toString.contains(Secret), "the token's value is never in the report")
-    assertEquals(BuiltinAi.known(g.registries.aiProviders.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)), Set("hello-ai"))
+    assertEquals(
+      BuiltinAi.known(
+        g.registries.aiProviders.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)
+      ),
+      Set("hello-ai")
+    )
     // switched off, it is gone and the six built-ins are untouched
     val off = generation(pluginConf.replace("enabled = true", "enabled = false"))
     assert(!off.registries.aiProviders.contains(Registries.AiProvidersKey("hello-ai")))
@@ -191,19 +230,34 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assertEquals(llm.flatMap(_.actualModel).distinct, List("echo-scripted"), "the model the provider said served")
     // classify: the facets call ran in the host, then the answer — two turns, each counted
     assertEquals(llm.head.usage, Usage(Agents.Usage.Input(200), Agents.Usage.Output(40)))
-    assert(connect(ds)(AgentRepo.messages(jobId(run.id))).exists(m => m.toolName.contains("facets") && m.role.value == "tool"))
+    assert(
+      connect(ds)(AgentRepo.messages(jobId(run.id))).exists(m =>
+        m.toolName.contains("facets") && m.role.value == "tool"
+      )
+    )
     val got = h.library.sources.get(Ck, body = SourcesControllers.GetBody(false)).toOption.get
     assertEquals(got.source.summary, Some("Tin reached the Aegean by sea."))
     assert(got.findings.exists(_.claim.value.contains("Uluburun")), got.findings.toString)
     assert(got.source.notes.exists(_.value.contains("tin by sea")), got.source.notes.toString)
 
   test("a chain passes over a plugin model whose plan reports its limit, to the chain's next model"):
-    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(AgentRolesConfig.Extractor("hello-ai:limited > hello-ai:echo")))
-    )
+    val cfg = baseCfg
+      .modify(_.agents)
+      .setTo(
+        baseCfg.agents
+          .modify(_.roles)
+          .setTo(
+            baseCfg.agents.roles
+              .modify(_.extractor)
+              .setTo(AgentRolesConfig.Extractor("hello-ai:limited > hello-ai:echo"))
+          )
+      )
     val (a, h) = handlers(generation(), cfg)
     val run = startAndRun(a, h)
     assertEquals(run.status, "done", run.error.toString)
-    val done = connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(200))).filter(s => s.kind.value == "llm" && s.status.value == "done")
+    val done = connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(200))).filter(s =>
+      s.kind.value == "llm" && s.status.value == "done"
+    )
     assert(done.nonEmpty && done.forall(_.model.contains("hello-ai:echo")), done.toString)
     assert(a.picker.cooldowns().exists(_._1.value == "hello-ai:limited"), a.picker.cooldowns().toString)
 
@@ -211,7 +265,8 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     "agent models, the doctor and models set see the provider while it is registered, and refuse it once it is gone"
   ):
     val (a, _) = handlers(generation())
-    val chain = a.picker.roleChains(PlanQuotaRepo.EpochMillis(System.currentTimeMillis())).find(_.role.value == "extractor").get
+    val chain =
+      a.picker.roleChains(PlanQuotaRepo.EpochMillis(System.currentTimeMillis())).find(_.role.value == "extractor").get
     assertEquals(chain.active, Some("hello-ai:echo"))
     val d = a.doctor(offline = AgentsControllers.Offline(true))
     val sec = d.providers.find(_.provider.value == "hello-ai").get
@@ -220,12 +275,22 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assert(sec.checks.exists(c => c.name.value == "token" && c.detail.value.contains("never shown")), sec.checks)
     assert(sec.checks.exists(c => c.name.value == "model hello-ai:echo" && c.level == CheckLevel.Ok), sec.checks)
     assert(!AgentsMarkdown.doctor(d).contains(Secret))
-    assert(a.setChain(Agents.Role.Wire("extractor"), ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo"), ModelChains.ChainEntry.Model("local:x")))).isRight)
+    assert(
+      a.setChain(
+        Agents.Role.Wire("extractor"),
+        ModelChains.ChainSet(
+          List(ModelChains.ChainEntry.Model("hello-ai:echo"), ModelChains.ChainEntry.Model("local:x"))
+        )
+      ).isRight
+    )
     // the same database, the plugin switched off: the saved chain no longer reads, a new one is refused
     val (gone, _) = handlers(generation(pluginConf.replace("enabled = true", "enabled = false")))
     assert(
       gone
-        .setChain(Agents.Role.Wire("extractor"), ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo"))))
+        .setChain(
+          Agents.Role.Wire("extractor"),
+          ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo")))
+        )
         .left
         .exists(_.message.value.contains("unknown provider 'hello-ai'"))
     )

@@ -165,7 +165,9 @@ object IconSelect:
             case _ => ()
 
     val current =
-      opts.signal.combineWith(field.signal).map((os, v) => os.find(_.value.value == v.getOrElse("")).orElse(os.headOption))
+      opts.signal
+        .combineWith(field.signal)
+        .map((os, v) => os.find(_.value.value == v.getOrElse("")).orElse(os.headOption))
 
     div(
       cls := "icon-select",
@@ -185,7 +187,10 @@ object IconSelect:
             span(cls := "icon-select-icon", onMountCallback(c => c.thisNode.ref.innerHTML = o.icon.value))
           )
         ),
-        span(cls := "icon-select-label", child.text <-- current.map(o => s"${name.value}: ${o.fold("")(_.label.value)}")),
+        span(
+          cls := "icon-select-label",
+          child.text <-- current.map(o => s"${name.value}: ${o.fold("")(_.label.value)}")
+        ),
         span(cls := "icon-select-caret", aria.hidden := true, "▾"),
         onClick --> { _ => if isOpen.now() then close(refocus = true) else openList() },
         onKeyDown --> { e =>

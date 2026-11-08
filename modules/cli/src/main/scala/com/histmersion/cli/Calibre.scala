@@ -50,7 +50,10 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
-  def search(query: Api.Search.Text, limit: Paging.Limit = Paging.Limit(20)): Either[Calibre.Problem, List[Calibre.Book]] =
+  def search(
+      query: Api.Search.Text,
+      limit: Paging.Limit = Paging.Limit(20)
+  ): Either[Calibre.Problem, List[Calibre.Book]] =
     viaCalibredb(Some(query), limit).orElse(viaSqlite(Some(query), None, limit))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
@@ -62,7 +65,10 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), Paging.Limit(1)).map(_.headOption))
 
-  private def viaCalibredb(query: Option[Api.Search.Text], limit: Paging.Limit): Either[Calibre.Problem, List[Calibre.Book]] =
+  private def viaCalibredb(
+      query: Option[Api.Search.Text],
+      limit: Paging.Limit
+  ): Either[Calibre.Problem, List[Calibre.Book]] =
     val cmd = List(cfg.calibredb.value, "list") ++ libArgs ++
       List(
         "--for-machine",
@@ -106,7 +112,9 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       )
       _ <- Either.cond(Files.isRegularFile(file), (), Calibre.Problem(s"no such file: $file"))
       out <- shell.run(addCmd(file, meta))
-      id <- Calibre.parseAddedId(out).toRight(Calibre.Problem(s"calibredb add did not report a new id: ${out.trim.take(200)}"))
+      id <- Calibre
+        .parseAddedId(out)
+        .toRight(Calibre.Problem(s"calibredb add did not report a new id: ${out.trim.take(200)}"))
       _ <- setMetadata(id, meta)
     yield id
 
@@ -131,7 +139,10 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     * `apply`, write the entries that would change. An entry linked from more than one record (a chapter and its volume)
     * is left alone — which record it should show is a decision for a person, `calibre update <citekey>`.
     */
-  def updateAll(linked: List[LinkedRecord], apply: CollectionSync.Request.Apply): Either[Calibre.Problem, List[UpdateEntry]] =
+  def updateAll(
+      linked: List[LinkedRecord],
+      apply: CollectionSync.Request.Apply
+  ): Either[Calibre.Problem, List[UpdateEntry]] =
     for
       _ <- Either.cond(!apply.value || !guiRunning, (), GuiRunning)
       books <- all()
@@ -141,7 +152,10 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
           e.modify(_.outcome)
             .setTo(
               write(e.calibreId, cs)
-                .fold(p => UpdateOutcome.Failed(cs, UpdateOutcome.Failed.Reason(p.value)), _ => UpdateOutcome.Applied(cs))
+                .fold(
+                  p => UpdateOutcome.Failed(cs, UpdateOutcome.Failed.Reason(p.value)),
+                  _ => UpdateOutcome.Applied(cs)
+                )
             )
         case _ => e
     }
@@ -242,7 +256,11 @@ object Calibre:
   /** The volume a title names — `Volume I`, `Vol. 2`, `volume 3` — so two volumes of one work get two citekeys.
     */
   def volumeOf(title: com.histmersion.api.library.Title): Option[VolumeNumber] =
-    Volume.findFirstMatchIn(title.value).flatMap(m => m.group(1).toIntOption.orElse(roman(m.group(1)))).filter(_ > 0).map(VolumeNumber(_))
+    Volume
+      .findFirstMatchIn(title.value)
+      .flatMap(m => m.group(1).toIntOption.orElse(roman(m.group(1))))
+      .filter(_ > 0)
+      .map(VolumeNumber(_))
 
   private def roman(s: String): Option[Int] =
     val v = Map('i' -> 1, 'v' -> 5, 'x' -> 10, 'l' -> 50, 'c' -> 100)
@@ -274,11 +292,11 @@ object Calibre:
       existing: Option[Option[Source.CalibreId]]
   ): Either[Problem, ImportTarget] =
     existing match
-      case None                                        => Right(ImportTarget.Create)
+      case None                                                    => Right(ImportTarget.Create)
       case Some(Some(linked)) if linked.value == id.value.toString => Right(ImportTarget.Update(None))
       case Some(linked) if explicit.value                          =>
         Right(ImportTarget.Update(linked.map(l => ImportTarget.Update.Previous(l.value))))
-      case Some(linked)                                =>
+      case Some(linked) =>
         val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
         Left(
           Problem(
@@ -377,20 +395,20 @@ object Calibre:
           .filter(p => empty(current.publisher.map(_.value)) && !isBlank(p))
           .map(p =>
             Change(
-                Field.Publisher,
-                Change.From(current.publisher.fold("")(_.value)),
-                Change.To(p)
-              )
+              Field.Publisher,
+              Change.From(current.publisher.fold("")(_.value)),
+              Change.To(p)
+            )
           ),
         meta.summary
           .map(_.value)
           .filter(d => empty(current.comments.map(_.value)) && !isBlank(d))
           .map(d =>
             Change(
-                Field.Comments,
-                Change.From(current.comments.fold("")(_.value)),
-                Change.To(d)
-              )
+              Field.Comments,
+              Change.From(current.comments.fold("")(_.value)),
+              Change.To(d)
+            )
           )
       ).flatten
     }
@@ -410,11 +428,23 @@ object Calibre:
     * only in case is left as Calibre has it (#883). A value with a comma cannot cross `--field identifiers:` (the comma
     * separates the pairs), so it is left out.
     */
-  def mergeIdentifiers(current: Map[Book.IdentifiersKey, Book.IdentifiersValue], doi: Option[com.histmersion.api.library.Doi], isbn: Option[CalibreGap.Isbn]): Map[Book.IdentifiersKey, Book.IdentifiersValue] =
+  def mergeIdentifiers(
+      current: Map[Book.IdentifiersKey, Book.IdentifiersValue],
+      doi: Option[com.histmersion.api.library.Doi],
+      isbn: Option[CalibreGap.Isbn]
+  ): Map[Book.IdentifiersKey, Book.IdentifiersValue] =
     def ok(v: String) = v.trim.nonEmpty && !v.contains(",")
     val sameDoi = (d: String) => current.get(Book.IdentifiersKey("doi")).exists(_.value.trim.equalsIgnoreCase(d))
-    current ++ doi.map(_.value.trim).filter(ok).filterNot(sameDoi).map(d => Book.IdentifiersKey("doi") -> Book.IdentifiersValue(d)) ++
-      isbn.map(_.value.trim).filter(ok).filterNot(_ => current.get(Book.IdentifiersKey("isbn")).exists(_.value.trim.nonEmpty)).map(i => Book.IdentifiersKey("isbn") -> Book.IdentifiersValue(i))
+    current ++ doi
+      .map(_.value.trim)
+      .filter(ok)
+      .filterNot(sameDoi)
+      .map(d => Book.IdentifiersKey("doi") -> Book.IdentifiersValue(d)) ++
+      isbn
+        .map(_.value.trim)
+        .filter(ok)
+        .filterNot(_ => current.get(Book.IdentifiersKey("isbn")).exists(_.value.trim.nonEmpty))
+        .map(i => Book.IdentifiersKey("isbn") -> Book.IdentifiersValue(i))
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
   def identifiersValue(ids: Map[Book.IdentifiersKey, Book.IdentifiersValue]): String =
@@ -534,15 +564,23 @@ object Calibre:
         (),
         Problem(s"cannot set ${unknown.mkString(", ")} — settable: ${SettableFields.mkString(", ")}")
       )
-      _ <- value("title").fold(Right(()))(t => Either.cond(!isBlank(t), (), Problem("refusing a blank or Unknown title")))
+      _ <- value("title").fold(Right(()))(t =>
+        Either.cond(!isBlank(t), (), Problem("refusing a blank or Unknown title"))
+      )
       _ <- value("authors").fold(Right(()))(a =>
-        Either.cond(a.split("&").map(_.trim).forall(x => !isBlank(x)), (), Problem("refusing a blank or Unknown author"))
+        Either
+          .cond(a.split("&").map(_.trim).forall(x => !isBlank(x)), (), Problem("refusing a blank or Unknown author"))
       )
     yield List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
       fields.flatMap(f => List("--field", s"${f.name}:${f.value}"))
 
   def parseAddedId(out: String): Option[Book.Id] =
-    AddedIds.findFirstMatchIn(out).map(_.group(1)).flatMap(_.split(",").headOption).flatMap(_.trim.toIntOption).map(Book.Id(_))
+    AddedIds
+      .findFirstMatchIn(out)
+      .map(_.group(1))
+      .flatMap(_.split(",").headOption)
+      .flatMap(_.trim.toIntOption)
+      .map(Book.Id(_))
 
   /** `calibredb list --for-machine`: authors as `A & B`, tags/formats as arrays, identifiers as an object, formats as
     * ABSOLUTE paths.
@@ -649,7 +687,10 @@ object Calibre:
     * `<originals>/<citekey>/paper.*` — an optional override of the original the server stored, which
     * `calibre push`/`sync` download otherwise ([[pushFile]]).
     */
-  def originalFor(originalsDir: Option[CalibreCliConfig.OriginalsDir], citekey: com.histmersion.api.library.Citekey): Option[Path] =
+  def originalFor(
+      originalsDir: Option[CalibreCliConfig.OriginalsDir],
+      citekey: com.histmersion.api.library.Citekey
+  ): Option[Path] =
     originalsDir.map(d => Path.of(d.value, citekey.value)).filter(Files.isDirectory(_)).flatMap { dir =>
       val s = Files.list(dir)
       try
@@ -713,9 +754,9 @@ object Calibre:
         if local(g.citekey).isDefined then GapOriginal.Local
         else
           g.storedOriginal match
-            case Some(stored) if stored.value  => GapOriginal.Stored
-            case Some(_)                        => GapOriginal.Missing
-            case None                           => GapOriginal.Unknown
+            case Some(stored) if stored.value => GapOriginal.Stored
+            case Some(_)                      => GapOriginal.Missing
+            case None                         => GapOriginal.Unknown
       val inCalibre = g.calibreId.exists(_.value.trim.nonEmpty) ||
         g.provenance.exists(_.value.trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
       GapEntry(g, original, counted = GapEntry.Counted(original != GapOriginal.Missing && !inCalibre))
@@ -844,9 +885,12 @@ object Calibre:
     def issues(r: AuditRecord, b: Book): List[AuditIssue] =
       List(
         Option.when(junk(b))(AuditIssue.Junk),
-        Option.when(!junk(b) && !titleMatches(com.histmersion.api.library.Title(r.title.value), b.title))(AuditIssue.Title),
+        Option
+          .when(!junk(b) && !titleMatches(com.histmersion.api.library.Title(r.title.value), b.title))(AuditIssue.Title),
         Option.when(!junk(b) && !authorsMatch(r.authors.map(a => AuthorName(a.value)), b.authors))(AuditIssue.Authors),
-        Option.when(r.year.isDefined && year(b).isDefined && r.year.map(y => Book.Year(y.value.toLong)) != year(b))(AuditIssue.Year)
+        Option.when(r.year.isDefined && year(b).isDefined && r.year.map(y => Book.Year(y.value.toLong)) != year(b))(
+          AuditIssue.Year
+        )
       ).flatten
 
     def audit(records: List[AuditRecord], books: Map[Book.Id, Book]): List[AuditFinding] =
@@ -911,7 +955,8 @@ object Calibre:
       .flatMap(_.toIntOption)
       .filter(_ >= Acquire.MinCitekeyYear)
       .map(n => Book.Year(n.toLong))
-    def doi: Option[com.histmersion.api.library.Doi] = identifiers.get(Book.IdentifiersKey("doi")).map(v => com.histmersion.api.library.Doi(v.value))
+    def doi: Option[com.histmersion.api.library.Doi] =
+      identifiers.get(Book.IdentifiersKey("doi")).map(v => com.histmersion.api.library.Doi(v.value))
     def isbn: Option[CalibreGap.Isbn] = identifiers.get(Book.IdentifiersKey("isbn")).map(v => CalibreGap.Isbn(v.value))
 
     /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
@@ -1025,14 +1070,19 @@ object Calibre:
         )
 
     /** `calibre link --json`, `calibre push --json`. */
-    final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Linked.CalibreId) derives KindlingsCodecAsObject
+    final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Linked.CalibreId)
+        derives KindlingsCodecAsObject
 
     object Linked:
       type CalibreId = Calibre.Book.Id
       val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
 
     /** `calibre push --replace --json`: `replaced` is the format swapped in. */
-    final case class Replaced(citekey: com.histmersion.api.library.Citekey, calibreId: Replaced.CalibreId, replaced: Replaced.Value) derives KindlingsCodecAsObject
+    final case class Replaced(
+        citekey: com.histmersion.api.library.Citekey,
+        calibreId: Replaced.CalibreId,
+        replaced: Replaced.Value
+    ) derives KindlingsCodecAsObject
 
     object Replaced:
       type CalibreId = Calibre.Book.Id
@@ -1041,7 +1091,11 @@ object Calibre:
       object Value extends Newtype[String, Pure]
 
     /** `calibre update <citekey> --json`: the fields written. */
-    final case class Updated(citekey: com.histmersion.api.library.Citekey, calibreId: Updated.CalibreId, changed: List[Updated.Changed]) derives KindlingsCodecAsObject
+    final case class Updated(
+        citekey: com.histmersion.api.library.Citekey,
+        calibreId: Updated.CalibreId,
+        changed: List[Updated.Changed]
+    ) derives KindlingsCodecAsObject
 
     object Updated:
       type CalibreId = Calibre.Book.Id
@@ -1090,7 +1144,13 @@ object Calibre:
           case UpdateOutcome.Failed(_, r) => Some(r)
           case UpdateOutcome.Refused(r)   => Some(r)
           case _                          => None
-        UpdateRow(e.calibreId, e.citekeys.map(k => Citekeys(k.value)), State(state), changes.map(ch => Change(Change.Field(ch.field.name.value), ch.from, ch.to)), reason.map(r => Reason(r.value)))
+        UpdateRow(
+          e.calibreId,
+          e.citekeys.map(k => Citekeys(k.value)),
+          State(state),
+          changes.map(ch => Change(Change.Field(ch.field.name.value), ch.from, ch.to)),
+          reason.map(r => Reason(r.value))
+        )
       def of(r: CollectionUpdateRow): UpdateRow =
         UpdateRow(
           CalibreId(r.id.value.toIntOption.getOrElse(0)),
@@ -1103,8 +1163,12 @@ object Calibre:
     /** `calibre audit --json`: one entry that disagrees with its record; `fix` = the citekey whose record
       * `calibre update` would write over it, absent when the entry is missing.
       */
-    final case class AuditRow(calibreId: AuditRow.CalibreId, citekeys: List[AuditRow.Citekeys], issues: List[AuditRow.Issues], fix: Option[AuditRow.Fix])
-        derives KindlingsCodecAsObject
+    final case class AuditRow(
+        calibreId: AuditRow.CalibreId,
+        citekeys: List[AuditRow.Citekeys],
+        issues: List[AuditRow.Issues],
+        fix: Option[AuditRow.Fix]
+    ) derives KindlingsCodecAsObject
     object AuditRow:
       type CalibreId = Calibre.Book.Id
       val CalibreId: Calibre.Book.Id.type = Calibre.Book.Id
@@ -1122,7 +1186,8 @@ object Calibre:
           f.issues.map(i => Issues(i.toString)),
           Option.when(f.fixable)(Fix(f.record.citekey.value))
         )
-      def of(r: CollectionAudit.Row): AuditRow = AuditRow(CalibreId(r.id.value.toIntOption.getOrElse(0)), r.citekeys, r.codes, r.fix)
+      def of(r: CollectionAudit.Row): AuditRow =
+        AuditRow(CalibreId(r.id.value.toIntOption.getOrElse(0)), r.citekeys, r.codes, r.fix)
 
     /** `calibre gaps --json` / `calibre sync --json`: EVERY source the server lists, each with where its original is
       * (`local` | `stored` | `none` | `unknown`) and whether it `counted` as a gap. `count` is the counted ones (what
@@ -1211,7 +1276,8 @@ object Calibre:
           r.counted
         )
 
-    final case class Gaps(count: Gaps.Count, uncounted: Gaps.Uncounted, total: Gaps.Total, gaps: List[GapRow]) derives KindlingsCodecAsObject
+    final case class Gaps(count: Gaps.Count, uncounted: Gaps.Uncounted, total: Gaps.Total, gaps: List[GapRow])
+        derives KindlingsCodecAsObject
     object Gaps:
       type Count = CollectionGaps.Count
       val Count: CollectionGaps.Count.type = CollectionGaps.Count

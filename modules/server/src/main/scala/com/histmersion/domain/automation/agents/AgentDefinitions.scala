@@ -31,7 +31,6 @@ object AgentDefinitions:
 
   /** The MCP server's name in every runtime's configuration. */
 
-
   val McpServer = "histmersion"
 
   /** The include fragment that is the writing guide, and the heading it is sent under. */
@@ -55,7 +54,8 @@ object AgentDefinitions:
     else
       val out = Marked.replaceAllIn(
         text.value,
-        m => java.util.regex.Matcher.quoteReplacement(if keep.exists(_.wire.value == m.group(1)) then m.group(2) else "")
+        m =>
+          java.util.regex.Matcher.quoteReplacement(if keep.exists(_.wire.value == m.group(1)) then m.group(2) else "")
       )
       AgentDef.Body(out.replaceAll("\n{3,}", "\n\n"))
 
@@ -64,7 +64,10 @@ object AgentDefinitions:
   def markerProblems(text: AgentDef.Body): List[String] =
     val ms = Marker.findAllMatchIn(text.value).map(m => (m.group(1) == "/", m.group(2))).toList
     val unknown =
-      ms.map(_._2).distinct.filterNot(a => Audience.values.exists(_.wire.value == a)).map(a => s"names no audience: only:$a")
+      ms.map(_._2)
+        .distinct
+        .filterNot(a => Audience.values.exists(_.wire.value == a))
+        .map(a => s"names no audience: only:$a")
     @tailrec def pair(rest: List[(Boolean, String)], open: Option[String], errs: List[String]): List[String] =
       (open, rest) match
         case (_, Nil)                               => errs ++ open.map(o => s"only:$o is never closed").toList
@@ -129,7 +132,14 @@ object AgentDefinitions:
         case Some(i: java.util.Map[?, ?]) =>
           val im = i.asScala.toMap.map((k, v) => k.toString -> v)
           strings(im.getOrElse("tools", null))
-            .map(ts => Some(InteractiveSpec(InteractiveSpec.Model(String.valueOf(im.getOrElse("model", ""))), ts.map(InteractiveSpec.Tools(_)))))
+            .map(ts =>
+              Some(
+                InteractiveSpec(
+                  InteractiveSpec.Model(String.valueOf(im.getOrElse("model", ""))),
+                  ts.map(InteractiveSpec.Tools(_))
+                )
+              )
+            )
         case _ => Right(None)
       for
         n <- str("name")
@@ -232,12 +242,15 @@ object AgentDefinitions:
     }
     parts.collect { case Left(m) => m } match
       case Nil =>
-        Right(render((forAudience(d.body, keep).value.trim :: parts.collect { case Right(p) => p }).mkString("\n\n"), style))
+        Right(
+          render((forAudience(d.body, keep).value.trim :: parts.collect { case Right(p) => p }).mkString("\n\n"), style)
+        )
       case errs => Left(errs.mkString("; "))
 
   /** Who a headless run of `d` is: a step — and the writer when it includes the whole writing guide. */
   def headlessAudience(d: AgentDef): Set[Audience] =
-    if d.include.exists(_.value == WritingGuide) then Set(Audience.Headless, Audience.Writer) else Set(Audience.Headless)
+    if d.include.exists(_.value == WritingGuide) then Set(Audience.Headless, Audience.Writer)
+    else Set(Audience.Headless)
 
 /** The definitions as the server reads them: bundled resources (`agents/index.txt` lists them), each file overridable
   * from `agents.prompts-dir` through [[Prompts]]. Read on every use — a definition can be iterated on without a
@@ -278,7 +291,11 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
       .flatMap(text => AgentDefinitions.parse(name, AgentDefinitions.Markdown(text), tools))
       .flatMap(d =>
         Either.cond(
-          roster.roles.contains(io.scalaland.chimney.Transformer.derive[AgentRole, com.histmersion.domain.automation.AgentRole].transform(d.role)),
+          roster.roles.contains(
+            io.scalaland.chimney.Transformer
+              .derive[AgentRole, com.histmersion.domain.automation.AgentRole]
+              .transform(d.role)
+          ),
           d,
           s"agents/$name.md: role ${d.role.wire} is no contributed workflow's " +
             s"(one of: ${roster.roles.map(_.wire).mkString(", ")})"

@@ -16,7 +16,10 @@ object EventFields:
   val all: List[String] = List(Label, Kind, Span, Historicity, Description, Geometry)
 
   def point(lat: Latitude, lon: Longitude): Json =
-    Json.obj("type" -> "Point".asJson, "coordinates" -> Json.arr((lon.value: Double).asJson, (lat.value: Double).asJson))
+    Json.obj(
+      "type" -> "Point".asJson,
+      "coordinates" -> Json.arr((lon.value: Double).asJson, (lat.value: Double).asJson)
+    )
 
   def geometry(g: Option[EventGeometry.Geojson]): Json =
     g.map((_).value.trim).filter(_.nonEmpty).fold(Json.Null)(t => io.circe.parser.parse(t).getOrElse(t.asJson))

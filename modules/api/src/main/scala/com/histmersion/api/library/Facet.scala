@@ -14,13 +14,13 @@ final case class Facet(
     id: Option[Facet.Id] = None,
     contested: Facet.Contested = Facet.Contested(false)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object Facet:
   type FieldText = FieldText.T
   object FieldText extends Newtype[String, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-
 
   type Value = Value.T
   object Value extends Newtype[String, Pure]

@@ -18,22 +18,25 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
 
   private val keys = Map("ANTHROPIC_API_KEY" -> "k-test", "OPENAI_API_KEY" -> "k-test")
 
-  private def request(iteration: AiTurn.Request.Iteration = AiTurn.Request.Iteration(1), tools: List[AiTool] = Nil) = AiTurn.Request(
-    AiTurn.Request.Model("m-1"),
-    AiTurn.Request.System("SYSTEM"),
-    List(AiMessage.User(AiMessage.User.Text("USER"))),
-    tools,
-    Some(AiTurn.Request.AnswerSchema("""{"type":"object","properties":{"word":{"type":"string"}},"required":["word"]}""")),
-    AiTurn.Request.MaxTokens(100),
-    iteration,
-    AiTurn.Request.MaxIterations(2),
-    Some(
-      AiTurn.Request.AnswerSchemaRendered(
-        """{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","properties":{"word":{"type":"string"}},"required":["word"]}"""
-      )
-    ),
-    None
-  )
+  private def request(iteration: AiTurn.Request.Iteration = AiTurn.Request.Iteration(1), tools: List[AiTool] = Nil) =
+    AiTurn.Request(
+      AiTurn.Request.Model("m-1"),
+      AiTurn.Request.System("SYSTEM"),
+      List(AiMessage.User(AiMessage.User.Text("USER"))),
+      tools,
+      Some(
+        AiTurn.Request.AnswerSchema("""{"type":"object","properties":{"word":{"type":"string"}},"required":["word"]}""")
+      ),
+      AiTurn.Request.MaxTokens(100),
+      iteration,
+      AiTurn.Request.MaxIterations(2),
+      Some(
+        AiTurn.Request.AnswerSchemaRendered(
+          """{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","properties":{"word":{"type":"string"}},"required":["word"]}"""
+        )
+      ),
+      None
+    )
 
   private val claudeAnswer =
     """{"id":"msg_01","type":"message","role":"assistant","model":"claude-sonnet-4-5-20250929","content":[""" +
@@ -46,10 +49,20 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       """"message":{"role":"assistant","content":"{\"word\":\"hi\"}"},"finish_reason":"stop"}],""" +
       """"usage":{"prompt_tokens":700,"completion_tokens":30,"total_tokens":730}}"""
 
-  private def json(body: AiHttp.Response.Body) = Right(AiHttp.Response(AiHttp.Response.Status(200), body, Map(AiHttp.Response.HeadersKey("content-type") -> AiHttp.Response.HeadersValue("application/json"))))
+  private def json(body: AiHttp.Response.Body) = Right(
+    AiHttp.Response(
+      AiHttp.Response.Status(200),
+      body,
+      Map(AiHttp.Response.HeadersKey("content-type") -> AiHttp.Response.HeadersValue("application/json"))
+    )
+  )
 
   test("each plugin loads from the class path with its defaults and the host's settings, and registers its provider"):
-    Map(Plugin.Info.Id("ai-anthropic") -> "anthropic", Plugin.Info.Id("ai-openai") -> "openai", Plugin.Info.Id("ai-local") -> "local").foreach { (id, name) =>
+    Map(
+      Plugin.Info.Id("ai-anthropic") -> "anthropic",
+      Plugin.Info.Id("ai-openai") -> "openai",
+      Plugin.Info.Id("ai-local") -> "local"
+    ).foreach { (id, name) =>
       val h = load(id, keys)
       assertEquals(h.contributions.aiProviders, List(name), id)
       assertEquals(h.plugin.info.version, "0.1.0", id)
@@ -57,7 +70,8 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     }
 
   test("a provider plugin has no setting the host owns: a base URL in its block is refused"):
-    val refused = PluginHarness.load(Plugin.Info.Id("ai-openai"), "base-url = \"http://127.0.0.1:1/v1\"", env = Map.empty)
+    val refused =
+      PluginHarness.load(Plugin.Info.Id("ai-openai"), "base-url = \"http://127.0.0.1:1/v1\"", env = Map.empty)
     assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
 
   test("without a key the hosted providers refuse every model, saying where the key goes; a local server needs none"):
@@ -94,7 +108,10 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
         Right(
           AiTurn(
             AiTurn.Text("Let me look."),
-            List(AiTool.Call(AiTool.Call.Id("toolu_01"), AiTool.Call.Tool("facets"), AiTool.Call.Input("""{"field":"tags"}"""))),
+            List(
+              AiTool
+                .Call(AiTool.Call.Id("toolu_01"), AiTool.Call.Tool("facets"), AiTool.Call.Input("""{"field":"tags"}"""))
+            ),
             AiStop.ToolUse,
             Some(AiUsage(AiUsage.Input(2000), AiUsage.Output(80), AiUsage.CacheRead(500), AiUsage.CacheWrite(300))),
             Some(AiTurn.ServedBy("claude-sonnet-4-5-20250929"))
@@ -108,13 +125,18 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       Right(
         AiHttp.Response(
           AiHttp.Response.Status(429),
-          AiHttp.Response.Body("""{"error":{"message":"Rate limit reached","type":"tokens","code":"rate_limit_exceeded"}}""")
+          AiHttp.Response.Body(
+            """{"error":{"message":"Rate limit reached","type":"tokens","code":"rate_limit_exceeded"}}"""
+          )
         )
       )
     )
     val r = load(Plugin.Info.Id("ai-openai"), keys).aiTurn(Registries.AiProvidersKey("openai"), request(), http)
     assertEquals(http.requests.head.url, "https://api.openai.com/v1/chat/completions")
-    assertEquals(r.turn, Some(Left(AiFailure.Error(AiFailure.Error.Message("RuntimeException: OpenAI API error: Rate limit reached")))))
+    assertEquals(
+      r.turn,
+      Some(Left(AiFailure.Error(AiFailure.Error.Message("RuntimeException: OpenAI API error: Rate limit reached"))))
+    )
 
   test("a client that cannot connect is described as the providers always described it"):
     val http = ScriptedAiHttp(Left(ScriptedAiHttp.Problem("ConnectException: ")))
@@ -124,16 +146,32 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       Some(
         Left(
           AiFailure.Error(
-            AiFailure.Error.Message("ConnectException: Exception when sending request: POST https://api.anthropic.com/v1/messages")
+            AiFailure.Error.Message(
+              "ConnectException: Exception when sending request: POST https://api.anthropic.com/v1/messages"
+            )
           )
         )
       )
     )
 
   test("the providers ask for the loop's notes and verbatim failures, and offer tools"):
-    val settings = ProviderSettings(ProviderSettings.BaseUrl("http://127.0.0.1:1"), ProviderSettings.ApiKey(""), ProviderSettings.StrictTools(false), ProviderSettings.TimeoutSeconds(1))
+    val settings = ProviderSettings(
+      ProviderSettings.BaseUrl("http://127.0.0.1:1"),
+      ProviderSettings.ApiKey(""),
+      ProviderSettings.StrictTools(false),
+      ProviderSettings.TimeoutSeconds(1)
+    )
     List(AnthropicProvider(settings), ChatCompletionsProvider.openAi(settings), ChatCompletionsProvider.local(settings))
       .foreach { p =>
-        assertEquals(p.capabilities, AiCapabilities(AiCapabilities.Tools(true), AiCapabilities.StructuredOutput(true), AiCapabilities.IterationMarkers(true), AiCapabilities.VerbatimFailures(true)), p.title)
+        assertEquals(
+          p.capabilities,
+          AiCapabilities(
+            AiCapabilities.Tools(true),
+            AiCapabilities.StructuredOutput(true),
+            AiCapabilities.IterationMarkers(true),
+            AiCapabilities.VerbatimFailures(true)
+          ),
+          p.title
+        )
         assert(!p.spendsPersonalPlan.value, p.title)
       }

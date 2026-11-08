@@ -55,9 +55,11 @@ final class CheckControllers(
     */
   def lintWithFix(rules: List[CheckRule.Name], fix: CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
     if !fix.value then lint(rules)
-    else guardedLintFix(rules).flatMap(f => lint(rules).map(_.modify(_.fixed).setTo(f.applied.map(a => LintReport.Fixed(a.value)))))
+    else
+      guardedLintFix(rules).flatMap(f =>
+        lint(rules).map(_.modify(_.fixed).setTo(f.applied.map(a => LintReport.Fixed(a.value))))
+      )
 
 object CheckControllers:
   type ApplyFix = ApplyFix.T
   object ApplyFix extends Newtype[Boolean, Pure]
-

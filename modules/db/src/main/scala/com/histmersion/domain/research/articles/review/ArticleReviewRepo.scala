@@ -39,7 +39,8 @@ private[review] object ArticleReviewRepo:
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
 
-  final private case class ApprovalRow(subject: ApprovalRow.Subject, id: ApprovalRow.Id, kind: ApprovalRow.Kind) derives DbCodec
+  final private case class ApprovalRow(subject: ApprovalRow.Subject, id: ApprovalRow.Id, kind: ApprovalRow.Kind)
+      derives DbCodec
 
   object ApprovalRow:
     type Subject = com.histmersion.domain.research.Slug
@@ -60,14 +61,17 @@ private[review] object ArticleReviewRepo:
     val Status: Goal.Status.Wire.type = Goal.Status.Wire
 
   /** The approval kinds that leave an article waiting for a person. */
-  val WaitingKinds: List[ApprovalRow.Kind] = List(ApprovalRow.Kind("article-filter"), ApprovalRow.Kind("article-publish"))
+  val WaitingKinds: List[ApprovalRow.Kind] =
+    List(ApprovalRow.Kind("article-filter"), ApprovalRow.Kind("article-publish"))
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the manager and the
     * ledgers know nothing of maps to empty facts.
     */
-  def facts(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): Map[com.histmersion.domain.research.Slug, (Facts, Option[FactsRow.UpdatedAt])] =
+  def facts(
+      slugs: List[com.histmersion.domain.research.Slug]
+  )(using DbCon): Map[com.histmersion.domain.research.Slug, (Facts, Option[FactsRow.UpdatedAt])] =
     if slugs.isEmpty then Map.empty
     else
       val rows = sql"""
@@ -96,7 +100,9 @@ private[review] object ArticleReviewRepo:
         .run()
       val waiting = approvals(slugs)
       rows.map { r =>
-        val item = r.itemStatus.flatMap(ItemStatus.parse).map(s => ItemFacts(s, r.outcome, r.attempts.getOrElse(ItemFacts.Attempts(0))))
+        val item = r.itemStatus
+          .flatMap(ItemStatus.parse)
+          .map(s => ItemFacts(s, r.outcome, r.attempts.getOrElse(ItemFacts.Attempts(0))))
         val ledger = r.findings
           .filter(_.value > 0)
           .map(n =>
@@ -110,18 +116,27 @@ private[review] object ArticleReviewRepo:
         r.slug -> (Facts(item, ledger, r.round, waiting.getOrElse(r.slug, Nil)), r.updatedAt)
       }.toMap
 
-  private def approvals(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): Map[com.histmersion.domain.research.Slug, List[ReviewApproval]] =
+  private def approvals(
+      slugs: List[com.histmersion.domain.research.Slug]
+  )(using DbCon): Map[com.histmersion.domain.research.Slug, List[ReviewApproval]] =
     sql"""SELECT subject, id, kind FROM approvals
           WHERE state = 'open' AND kind = ANY($WaitingKinds::text[]) AND subject = ANY(${slugs.distinct}::text[])
-          ORDER BY id""".query[ApprovalRow].run().toList.groupMap(_.subject)(r =>
-      ReviewApproval(ReviewApproval.Id(r.id.value), ReviewApproval.Kind(r.kind.value))
-    )
+          ORDER BY id"""
+      .query[ApprovalRow]
+      .run()
+      .toList
+      .groupMap(_.subject)(r => ReviewApproval(ReviewApproval.Id(r.id.value), ReviewApproval.Kind(r.kind.value)))
 
   /** When each of `runs` started (UTC), for the runs still recorded. */
   def runStarts(runs: List[Run.Id])(using DbCon): Map[Run.Id, String] =
     if runs.isEmpty then Map.empty
-    else sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
-              WHERE id = ANY(${runs.distinct}::text[])""".query[(String, String)].run().map((id, at) => Run.Id.assume(id) -> at).toMap
+    else
+      sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
+              WHERE id = ANY(${runs.distinct}::text[])"""
+        .query[(String, String)]
+        .run()
+        .map((id, at) => Run.Id.assume(id) -> at)
+        .toMap
 
   /** The research goals that link the article (`goal_links` of kind `article`), by slug. */
   def goals(slug: com.histmersion.domain.research.Slug)(using DbCon): List[ReviewGoal] =
@@ -130,4 +145,6 @@ private[review] object ArticleReviewRepo:
       .query[GoalRow]
       .run()
       .toList
-      .map(r => ReviewGoal(ReviewGoal.Slug(r.slug.value), ReviewGoal.Title(r.title.value), ReviewGoal.Status(r.status.value)))
+      .map(r =>
+        ReviewGoal(ReviewGoal.Slug(r.slug.value), ReviewGoal.Title(r.title.value), ReviewGoal.Status(r.status.value))
+      )

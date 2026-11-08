@@ -61,7 +61,11 @@ class InteractiveLatencySuite extends munit.FunSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place(Place.Id("zzl_world"), Place.Label("Zzl World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        Place(
+          Place.Id("zzl_world"),
+          Place.Label("Zzl World"),
+          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)
+        ),
         List(Place.Name(Place.Name.Value("Zzl World")))
       ),
       Place.Input(
@@ -70,7 +74,9 @@ class InteractiveLatencySuite extends munit.FunSuite:
           Place.Label("Zzl Land"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
-            Place.Geometry("""{"type":"Polygon","coordinates":[[[60.0,-50.0],[70.0,-50.0],[70.0,-40.0],[60.0,-40.0],[60.0,-50.0]]]}""")
+            Place.Geometry(
+              """{"type":"Polygon","coordinates":[[[60.0,-50.0],[70.0,-50.0],[70.0,-40.0],[60.0,-40.0],[60.0,-50.0]]]}"""
+            )
           )
         ),
         List(Place.Name(Place.Name.Value("Zzl Land")), Place.Name(Place.Name.Value("Zzlandia"), Place.Name.Lang("xx"))),

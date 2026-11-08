@@ -91,14 +91,18 @@ final class GoalFocusService(
 
   private def watch(goal: Goal.Slug): ManagerInfo.Id = watchId(ApiGoal.Ref(goal.value))
 
-  private def count(n: Int, noun: String): String = Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
+  private def count(n: Int, noun: String): String =
+    Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(noun)).value
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
 
   /** Does only a person decide an approval of `kind` opened by a run of a manager whose `autoApprove` is `auto` (the
     * same rule as [[AutoApprovals.checked]])?
     */
-  private def byPerson(kind: Option[FocusRepo.WorkRow.ApprovalKind], autoApprove: Option[FocusRepo.WorkRow.AutoApprove]): Boolean =
+  private def byPerson(
+      kind: Option[FocusRepo.WorkRow.ApprovalKind],
+      autoApprove: Option[FocusRepo.WorkRow.AutoApprove]
+  ): Boolean =
     kind.flatMap(k => ApprovalKind.parse(Approval.Kind.Wire(k.value))) match
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
         !autoApprove
@@ -163,8 +167,9 @@ final class GoalFocusService(
     GoalFocus.Settings(
       max,
       GoalFocus.Settings.MinSources(agents.sourcesToPlan.value),
-      plansByPerson =
-        GoalFocus.Settings.PlansByPerson(!cfg.approvals.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan)),
+      plansByPerson = GoalFocus.Settings.PlansByPerson(
+        !cfg.approvals.checked(com.histmersion.domain.automation.Approval.Kind.GoalPlan)
+      ),
       GoalFocus.Settings.OpenPersonPlans(r.openPlans.value)
     )
 
@@ -192,7 +197,8 @@ final class GoalFocusService(
       if changes.nonEmpty then log(s"autopilot focus: ${changes.mkString("; ")}".take(1000))
       changes
 
-  private def notInForce: FocusRepo.GoalRow.LeftWhy = FocusRepo.GoalRow.LeftWhy("the central scheduler admits the work (agents.scheduler.strategy)")
+  private def notInForce: FocusRepo.GoalRow.LeftWhy =
+    FocusRepo.GoalRow.LeftWhy("the central scheduler admits the work (agents.scheduler.strategy)")
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
   private def managerOf(goal: Goal.Slug): Option[ManagerInfo.Id] =
@@ -305,7 +311,10 @@ final class GoalFocusService(
         .getOrElse(s, Nil)
         .filterNot(k => seen(k.slug.value))
         .map { k =>
-          (if GoalFocus.finished(Goal.Status.Wire(k.status.value)) then 0 else 1) + open(k.slug.value, seen + k.slug.value)
+          (if GoalFocus.finished(Goal.Status.Wire(k.status.value)) then 0 else 1) + open(
+            k.slug.value,
+            seen + k.slug.value
+          )
         }
         .sum
     AutopilotPolicy.goalPlanSubGoals(
@@ -325,7 +334,8 @@ final class GoalFocusService(
   /** Why goal plans are not offered now, if they are not ([[AutopilotPolicy.goalPlansWait]]). */
   def goalPlansWait(): Option[AutopilotPolicy.Description] =
     val limit = acfg.maxUnfinishedGoals
-    if limit.value <= 0 then None else AutopilotPolicy.goalPlansWait(unfinishedPlanned(), AutopilotPolicy.Limit(limit.value))
+    if limit.value <= 0 then None
+    else AutopilotPolicy.goalPlansWait(unfinishedPlanned(), AutopilotPolicy.Limit(limit.value))
 
   // ── what it shows ──────────────────────────────────────────────────────────────────────────────
 
@@ -334,7 +344,10 @@ final class GoalFocusService(
     val (max, from) = cap
     val r = read()
     val plan =
-      GoalFocus.select(r.facts, settings(r, if max.value > 0 then max else GoalFocus.Settings.Max(acfg.maxActiveGoals.value)))
+      GoalFocus.select(
+        r.facts,
+        settings(r, if max.value > 0 then max else GoalFocus.Settings.Max(acfg.maxActiveGoals.value))
+      )
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
     def goal(p: GoalFocus.Pick, active: Boolean): FocusGoal =
@@ -353,7 +366,9 @@ final class GoalFocusService(
         if active then f.flatMap(x => GoalFocus.doing(x.work)).map(d => FocusGoal.Doing(d.value)) else None,
         FocusGoal.Open(open),
         FocusGoal.DoneLast7(done),
-        GoalFocus.etaDays(AutopilotPolicy.OpenCount(open), AutopilotPolicy.DoneLast7(done)).map(d => FocusGoal.EtaDays(d.value))
+        GoalFocus
+          .etaDays(AutopilotPolicy.OpenCount(open), AutopilotPolicy.DoneLast7(done))
+          .map(d => FocusGoal.EtaDays(d.value))
       )
     val shown = math.max(0, acfg.focusQueueShown.value)
     val note =
@@ -406,7 +421,9 @@ final class GoalFocusService(
       case "pin" | "unpin" =>
         val on = in.action.value.trim.equalsIgnoreCase("pin")
         goal
-          .flatMap(g => known(g).flatMap(s => Either.cond(agents.focusStore.pin(s, FocusRepo.GoalRow.Pinned(on)), s, missing(g))))
+          .flatMap(g =>
+            known(g).flatMap(s => Either.cond(agents.focusStore.pin(s, FocusRepo.GoalRow.Pinned(on)), s, missing(g)))
+          )
           .map { g =>
             event(g, s"focus: ${if on then "pinned" else "unpinned"} by $by")
             s"${g.value} ${if on then "pinned: it is active from the next tick" else "unpinned"} (by $by)"

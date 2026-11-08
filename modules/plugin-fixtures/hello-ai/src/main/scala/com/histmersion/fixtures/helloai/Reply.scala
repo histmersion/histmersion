@@ -13,8 +13,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * that tool once first (when the step offers it), then answers. The model `limited` reports its plan's usage limit, so
   * a chain can be seen to move on.
   */
-final case class Reply(when: Reply.When, text: Reply.Text, tool: Option[Reply.Tool] = None, input: Option[Reply.Input] = None)
-    derives ConfigReader
+final case class Reply(
+    when: Reply.When,
+    text: Reply.Text,
+    tool: Option[Reply.Tool] = None,
+    input: Option[Reply.Input] = None
+) derives ConfigReader
 
 object Reply:
   type When = When.T

@@ -45,14 +45,20 @@ private[places] object SiteTypeRepo:
       before: Option[DeepTime.SignedYear]
   )(using DbCon): List[(Place.Id, PlaceRepo.Label, Option[PlaceRepo.SiteType])] =
     (Sql.raw(Sql.Text("SELECT p.id, upper(substr(p.id, 10)), p.properties->>'class' FROM places p WHERE ")) ++
-      toTypeWhere(refresh, before) ++ Sql.of(Sql.OfText(" ORDER BY p.id LIMIT ?"), Param.I(Param.I.V(limit.value.max(0))))).frag
+      toTypeWhere(refresh, before) ++ Sql.of(
+        Sql.OfText(" ORDER BY p.id LIMIT ?"),
+        Param.I(Param.I.V(limit.value.max(0)))
+      )).frag
       .query[(Place.Id, PlaceRepo.Label, Option[PlaceRepo.SiteType])]
       .run()
       .toList
 
   def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear])(using DbCon): RowCount =
     RowCount(
-      (Sql.raw(Sql.RawText("SELECT count(*)::int FROM places p WHERE ")) ++ toTypeWhere(refresh, before)).frag.query[Int].run().head
+      (Sql.raw(Sql.RawText("SELECT count(*)::int FROM places p WHERE ")) ++ toTypeWhere(refresh, before)).frag
+        .query[Int]
+        .run()
+        .head
     )
 
   /** Record the refined types (`None` = asked, none of the curated classes). */

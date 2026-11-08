@@ -1,7 +1,15 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.domain.automation.agents.{AgentDef, AgentGenerator, FirstCallProbe, LlmCall, LlmClient, ModelLimitReached, ToolUse}
+import com.histmersion.domain.automation.agents.{
+  AgentDef,
+  AgentGenerator,
+  FirstCallProbe,
+  LlmCall,
+  LlmClient,
+  ModelLimitReached,
+  ToolUse
+}
 
 import com.histmersion.config.ClaudeCodeConfig
 import com.histmersion.api.automation.Agents.ModelRef
@@ -43,20 +51,31 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
 
   def run[Out](call: LlmCall[Out]): AgentResult[Either[AgentFailure, Out]] =
     CliProcess.withDir(CliProcess.WithDirPrefix("histmersion-claude-")) { dir =>
-      val grant = Option.when(call.tools.nonEmpty)(rt.grant(call, call.agent, CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value))).flatten
+      val grant = Option
+        .when(call.tools.nonEmpty)(rt.grant(call, call.agent, CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value)))
+        .flatten
       try
         val mcp = grant.map(g =>
-          CliProcess.privateFile(dir.resolve("mcp.json"), CliProcess.PrivateFileText(ClaudeCode.mcpConfig(rt.agentMcpUrl, Some(g.token)).noSpaces))
+          CliProcess.privateFile(
+            dir.resolve("mcp.json"),
+            CliProcess.PrivateFileText(ClaudeCode.mcpConfig(rt.agentMcpUrl, Some(g.token)).noSpaces)
+          )
         )
         // the generated plugin and role settings, when they exist for this agent
         val plugin = for
           a <- call.agent
           p <- rt.trees.claudePlugin.filter(d => Files.isRegularFile(d.resolve("agents").resolve(s"${a.name}.md")))
           s <- rt.trees.claudeRole(a.name.value).filter(Files.isRegularFile(_))
-        yield ClaudeCode.Launch.Agent(ClaudeCode.Launch.Agent.PluginDir(p.toString), ClaudeCode.Launch.Agent.Name(a.name.value), ClaudeCode.Launch.Agent.Settings(s.toString))
+        yield ClaudeCode.Launch.Agent(
+          ClaudeCode.Launch.Agent.PluginDir(p.toString),
+          ClaudeCode.Launch.Agent.Name(a.name.value),
+          ClaudeCode.Launch.Agent.Settings(s.toString)
+        )
         val launch = plugin.getOrElse(
           ClaudeCode.Launch.SystemPrompt(
-            ClaudeCode.Launch.SystemPrompt.File(Files.writeString(dir.resolve("system.md"), call.system.value, StandardCharsets.UTF_8).toString)
+            ClaudeCode.Launch.SystemPrompt.File(
+              Files.writeString(dir.resolve("system.md"), call.system.value, StandardCharsets.UTF_8).toString
+            )
           )
         )
         val web = call.agent.map(a => AgentGenerator.claudeWebTools(a.web)).getOrElse(Nil)
@@ -90,7 +109,9 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
             env => ClaudeCode.environment(cfg, call.maxTokens, grant.map(_.token), rt.quotaUrl, env)(using rt.jvmHome),
             CliProcess.RunStdin(call.user.value),
             CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value),
-            CliProcess.RunHint("install Claude Code or set agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND) to its absolute path"),
+            CliProcess.RunHint(
+              "install Claude Code or set agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND) to its absolute path"
+            ),
             onLine = l => pool.flatMap(p => ClaudeCode.watch(l, p))
           )
           stopped.set(r.stopped)
@@ -118,10 +139,15 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
               .flatMap(_.blocked(PlanQuota.PoolId.ClaudePlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(i => java.time.Instant.ofEpochMilli(i.value))
-            throw new ModelLimitReached(model, until, ModelLimitReached.Message(s"claude -p stopped by the quota guard: $why"))
+            throw new ModelLimitReached(
+              model,
+              until,
+              ModelLimitReached.Message(s"claude -p stopped by the quota guard: $why")
+            )
           case None =>
             ClaudeCode.result(o, call.user, call.schema) match
               case Right(r)  => r
-              case Left(lim) => throw new ModelLimitReached(model, lim.until, ModelLimitReached.Message(lim.message.value))
+              case Left(lim) =>
+                throw new ModelLimitReached(model, lim.until, ModelLimitReached.Message(lim.message.value))
       finally grant.foreach(g => rt.tokens.revoke(g.token))
     }

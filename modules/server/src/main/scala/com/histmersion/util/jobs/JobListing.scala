@@ -51,16 +51,18 @@ final class JobListing(ds: DataSource, cfg: () => AppConfig):
             counts.map((state, n) => (Paging.Page.CountState(state.value), Paging.Count(n.value))),
             q.status.map(st => Paging.Page.CountState(st.value)),
             Option.when(more)(Filter.Last(rows.last.id.value)),
-            facets.map((name, values) =>
-              (Facet.Name(name), values.map((v, n) => (Facet.Value(v), Facet.Count(n.value))))
-            )
+            facets
+              .map((name, values) => (Facet.Name(name), values.map((v, n) => (Facet.Value(v), Facet.Count(n.value)))))
           )
         )
       }
 
   /** The newest job of `kind`. */
   def newest(kind: Job.Kind): Option[JobInfo] =
-    Transactor(ds).read(JobRepo.page(JobQuery(kinds = List(JobQuery.Kinds(kind.value))), PageSize(1), None, None)).toOption.flatMap(_._1.headOption)
+    Transactor(ds)
+      .read(JobRepo.page(JobQuery(kinds = List(JobQuery.Kinds(kind.value))), PageSize(1), None, None))
+      .toOption
+      .flatMap(_._1.headOption)
 
   private def clean(cursor: Option[Paging.Cursor]): Option[JobRepo.PageCursor] =
     cursor.map(_.value.trim).filter(_.nonEmpty).map(JobRepo.PageCursor(_))

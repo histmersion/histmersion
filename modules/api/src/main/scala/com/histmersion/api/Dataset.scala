@@ -16,4 +16,7 @@ object Dataset:
   def ofParam(raw: Option[Wire]): Either[Api.Error, Dataset] =
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(Local)
-      case Some(s) => parse(Wire(s)).toRight(Api.Error(Api.Error.Problem(s"dataset '$s' is not seed or local"), Some(Api.Error.Code(Write.CodeInvalid))))
+      case Some(s) =>
+        parse(Wire(s)).toRight(
+          Api.Error(Api.Error.Problem(s"dataset '$s' is not seed or local"), Some(Api.Error.Code(Write.CodeInvalid)))
+        )

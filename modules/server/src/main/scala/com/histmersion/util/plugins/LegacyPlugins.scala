@@ -32,7 +32,6 @@ object LegacyPlugins:
 
   /** A former plugin id and the plugins that took its place, in their chain order. */
 
-
   final case class Split(id: Plugin.Id, into: List[Plugin.Id])
 
   val OaIndex: Split =
@@ -77,7 +76,11 @@ object LegacyPlugins:
   private def has(c: Config, p: String): Boolean = Try(c.hasPathOrNull(p)).getOrElse(false)
 
   /** The former block's keys onto the successors; the block itself removed. */
-  private def block(user: Config, split: Split, known: Plugin.Id => Set[SettingsService.ConfigPath]): (Config, List[Migrated.Warnings]) =
+  private def block(
+      user: Config,
+      split: Split,
+      known: Plugin.Id => Set[SettingsService.ConfigPath]
+  ): (Config, List[Migrated.Warnings]) =
     val from = path(split.id)
     if !has(user, from) then (user, Nil)
     else
@@ -94,7 +97,8 @@ object LegacyPlugins:
               case Nil       => (acc, ign)
               case k :: tail =>
                 val targets =
-                  if k == "enabled" then split.into else split.into.filter(id => known(id).contains(SettingsService.ConfigPath(k)))
+                  if k == "enabled" then split.into
+                  else split.into.filter(id => known(id).contains(SettingsService.ConfigPath(k)))
                 if targets.isEmpty then carry(tail, acc, ign :+ k)
                 else
                   val v = old.root.get(k)
@@ -110,7 +114,9 @@ object LegacyPlugins:
             s" — write ${PluginHost.Root}.<id> instead"
           (
             out,
-            (warn :: ignored.map(k => s"$from.$k: none of ${split.into.map(_.value).mkString(", ")} has this setting — ignored"))
+            (warn :: ignored.map(k =>
+              s"$from.$k: none of ${split.into.map(_.value).mkString(", ")} has this setting — ignored"
+            ))
               .map(Migrated.Warnings(_))
           )
 
@@ -124,7 +130,11 @@ object LegacyPlugins:
         val replaced = ids.flatMap(id => if id == split.id.value then into.filterNot(ids.contains) else List(id))
         (
           user.withValue(at, ConfigValueFactory.fromIterable(replaced.asJava)),
-          List(Migrated.Warnings(s"$at names '${split.id}', which is deprecated: ${successors(split)} — listed in its place"))
+          List(
+            Migrated.Warnings(
+              s"$at names '${split.id}', which is deprecated: ${successors(split)} — listed in its place"
+            )
+          )
         )
       case _ => (user, Nil)
 

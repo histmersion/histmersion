@@ -10,7 +10,9 @@ object IngestJobKinds:
   val Ingest: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("ingest"),
     JobKinds.Wire("Bring in a source"),
-    JobKindMeaning("Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it.")
+    JobKindMeaning(
+      "Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it."
+    )
   )
 
   val Reocr: JobKindEntry =

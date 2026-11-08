@@ -23,7 +23,8 @@ object RunCompare:
       attempts: RunSide.Attempts,
       failures: RunSide.Failures
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RunSide:
     type Status = Status.T
@@ -41,7 +42,6 @@ object RunCompare:
     type Failures = Failures.T
     object Failures extends Newtype[Int, Pure]
 
-
   final case class StepSide(
       models: List[StepSide.Models],
       actual: List[StepSide.Actual],
@@ -54,7 +54,8 @@ object RunCompare:
       firstCallTokens: Option[StepSide.FirstCallTokens] = None,
       turns: Option[StepSide.Turns] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object StepSide:
     type Models = Models.T
@@ -63,19 +64,20 @@ object RunCompare:
     object Actual extends Newtype[String, Pure]
     type Billing = Billing.T
     object Billing extends Newtype[String, Pure]
-    export RunSide.{CostUsd, Seconds, Attempts, Failures}
+    export RunSide.{Attempts, CostUsd, Failures, Seconds}
     type FirstCallTokens = FirstCallTokens.T
     object FirstCallTokens extends Newtype[Long, Pure]
     type Turns = Turns.T
     object Turns extends Newtype[Int, Pure]
 
-
-  final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object StepRow:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
-
 
   final case class EnrichSide(
       findings: EnrichSide.Findings,
@@ -90,7 +92,8 @@ object RunCompare:
       notesChars: EnrichSide.NotesChars,
       uniqueClaims: List[EnrichSide.UniqueClaims]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object EnrichSide:
     type Findings = Findings.T
@@ -112,10 +115,14 @@ object RunCompare:
     type UniqueClaims = UniqueClaims.T
     object UniqueClaims extends Newtype[String, Pure]
 
-
-  final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ReviewerSide(
+      reviewer: ReviewerSide.Reviewer,
+      verdict: Option[ReviewerSide.Verdict],
+      majors: ReviewerSide.Majors,
+      minors: ReviewerSide.Minors
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ReviewerSide:
     type Reviewer = Reviewer.T
@@ -127,15 +134,16 @@ object RunCompare:
     type Minors = Minors.T
     object Minors extends Newtype[Int, Pure]
 
-
-  final case class KindCount(kind: KindCount.Kind, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object KindCount:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     type Count = Count.T
     object Count extends Newtype[Int, Pure]
-
 
   final case class ReviewSide(
       verdict: Option[ReviewSide.Verdict],
@@ -144,7 +152,8 @@ object RunCompare:
       kinds: List[KindCount],
       majors: List[ReviewSide.Majors]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ReviewSide:
     type Verdict = Verdict.T
@@ -154,10 +163,16 @@ object RunCompare:
     type Majors = Majors.T
     object Majors extends Newtype[String, Pure]
 
-
-  final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List[MajorOverlap.Pairs])
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class MajorOverlap(
+      a: MajorOverlap.A,
+      b: MajorOverlap.B,
+      aMajors: MajorOverlap.AMajors,
+      bMajors: MajorOverlap.BMajors,
+      shared: MajorOverlap.Shared,
+      pairs: List[MajorOverlap.Pairs]
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object MajorOverlap:
     type A = A.T
@@ -173,7 +188,6 @@ object RunCompare:
     type Pairs = Pairs.T
     object Pairs extends Newtype[String, Pure]
 
-
   final case class Comparison(
       pipeline: Comparison.Pipeline,
       target: Comparison.Target,
@@ -184,7 +198,8 @@ object RunCompare:
       overlaps: List[MajorOverlap] = Nil,
       notes: List[Comparison.Notes] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Comparison:
     type Pipeline = Pipeline.T

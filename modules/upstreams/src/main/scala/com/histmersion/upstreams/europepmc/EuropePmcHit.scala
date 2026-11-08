@@ -3,7 +3,11 @@ package upstreams.europepmc
 
 import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
-final case class EuropePmcHit(pmcid: Option[EuropePmcHit.Pmcid], isOpenAccess: EuropePmcHit.IsOpenAccess, pdfUrls: List[EuropePmcHit.PdfUrls])
+final case class EuropePmcHit(
+    pmcid: Option[EuropePmcHit.Pmcid],
+    isOpenAccess: EuropePmcHit.IsOpenAccess,
+    pdfUrls: List[EuropePmcHit.PdfUrls]
+)
 
 object EuropePmcHit:
   type Pmcid = WorkKey.Pmcid

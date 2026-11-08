@@ -25,9 +25,10 @@ final case class EventPatch(
     participants: Option[List[EventParticipant]] = None,
     scale: Option[EventSummary.Scale] = None,
     wikidata: Option[EventPatch.Wikidata] = None
-) derives KindlingsSchema, com.histmersion.api.json.Schema, CanEqual
+) derives KindlingsSchema,
+      com.histmersion.api.json.Schema,
+      CanEqual
 object EventPatch:
-
 
   type Geometry = Geometry.T
   object Geometry extends Newtype[String, Pure]

@@ -28,7 +28,11 @@ class UiStateSuite extends munit.FunSuite:
     import FieldCodec.given
     assertEquals(summon[FieldCodec[Option[Long]]].decode(List(FieldCodec.Token("x"))), Some(None))
     assertEquals(summon[FieldCodec[Option[Long]]].decode(List(FieldCodec.Token("-1200"))), Some(Some(-1200L)))
-    assertEquals(summon[FieldCodec[List[String]]].decode(List(FieldCodec.Token(" a"), FieldCodec.Token(""), FieldCodec.Token("a"), FieldCodec.Token("b"))), Some(List("a", "b")))
+    assertEquals(
+      summon[FieldCodec[List[String]]]
+        .decode(List(FieldCodec.Token(" a"), FieldCodec.Token(""), FieldCodec.Token("a"), FieldCodec.Token("b"))),
+      Some(List("a", "b"))
+    )
     assertEquals(
       summon[FieldCodec[Set[MapLayer]]].encode(Set(MapLayer.Media, MapLayer.Boundaries)),
       List("boundaries", "media")
@@ -128,7 +132,8 @@ class UiStateSuite extends munit.FunSuite:
 
   // found in the browser: after back/forward the URL named other windows than the ones shown
   test("windows reconcile to the URL state: close the extra ones, open the missing ones, nothing twice") {
-    val src = WindowKey.Source(WindowKey.Source.Citekey("a2020_b")); val acq = WindowKey.Acquire; val jobs = WindowKey.Jobs
+    val src = WindowKey.Source(WindowKey.Source.Citekey("a2020_b")); val acq = WindowKey.Acquire;
+    val jobs = WindowKey.Jobs
     assertEquals(WindowManager.reconcile(List(acq), List(src)), (List(acq), List(src)))
     assertEquals(WindowManager.reconcile(List(src, acq), List(src, acq)), (Nil, Nil))
     assertEquals(WindowManager.reconcile(Nil, List(jobs, jobs)), (Nil, List(jobs)))

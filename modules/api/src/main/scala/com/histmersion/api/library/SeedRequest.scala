@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class SeedRequest(dir: SeedRequest.Dir, force: SeedRequest.Force = SeedRequest.Force(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class SeedRequest(dir: SeedRequest.Dir, force: SeedRequest.Force = SeedRequest.Force(false))
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object SeedRequest:
   type Dir = Dir.T

@@ -11,8 +11,12 @@ import scala.collection.mutable
   * kept as data, its base maps recorded. The test double of the map engine — the view-model's logic (clustering, what
   * is drawn, base-map decisions) runs on it without a browser.
   */
-final class FakeSurface(w: MapSurface.Dimension = MapSurface.Dimension(1000), h: MapSurface.Dimension = MapSurface.Dimension(600), caps: Capabilities = Capabilities(Capabilities.Webgl(true), Capabilities.Software(false), Capabilities.Renderer("fake")))
-    extends MapSurface:
+final class FakeSurface(
+    w: MapSurface.Dimension = MapSurface.Dimension(1000),
+    h: MapSurface.Dimension = MapSurface.Dimension(600),
+    caps: Capabilities =
+      Capabilities(Capabilities.Webgl(true), Capabilities.Software(false), Capabilities.Renderer("fake"))
+) extends MapSurface:
   // `var`s: the view, as a map holds it
   private var c = LatLon(LatLon.Lat(37), LatLon.Lon(30))
   private var z = MapSurface.Zoom(5.0)
@@ -30,15 +34,36 @@ final class FakeSurface(w: MapSurface.Dimension = MapSurface.Dimension(1000), h:
   def bounds: GeoBounds =
     val nw = unproject(ScreenPt(ScreenPt.X(0), ScreenPt.Y(0)))
     val se = unproject(ScreenPt(ScreenPt.X(w.value), ScreenPt.Y(h.value)))
-    GeoBounds(GeoBounds.South(se.lat.value), GeoBounds.West(nw.lon.value), GeoBounds.North(nw.lat.value), GeoBounds.East(se.lon.value))
+    GeoBounds(
+      GeoBounds.South(se.lat.value),
+      GeoBounds.West(nw.lon.value),
+      GeoBounds.North(nw.lat.value),
+      GeoBounds.East(se.lon.value)
+    )
   def size: (MapSurface.Dimension, MapSurface.Dimension) = (w, h)
-  def setView(at: LatLon, zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)): Unit =
+  def setView(
+      at: LatLon,
+      zoom: MapSurface.Zoom,
+      animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)
+  ): Unit =
     c = at
     z = MapSurface.Zoom(math.min(zoom.value, zmax.value))
     fire(MapEventKind.Move); fire(MapEventKind.MoveEnd); fire(MapEventKind.ZoomEnd)
-  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)): Unit =
-    setView(LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)), MapSurface.Zoom(math.min(maxZoom.value, z.value + 1)))
-  def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)): Unit =
+  def fitBounds(
+      b: GeoBounds,
+      padding: MapSurface.FitBoundsPadding,
+      maxZoom: MapSurface.MaxZoom,
+      animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)
+  ): Unit =
+    setView(
+      LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)),
+      MapSurface.Zoom(math.min(maxZoom.value, z.value + 1))
+    )
+  def panBy(
+      dx: MapSurface.PanByDx,
+      dy: MapSurface.PanByDy,
+      animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)
+  ): Unit =
     setView(unproject(ScreenPt(ScreenPt.X(w.value / 2 + dx.value), ScreenPt.Y(h.value / 2 + dy.value))), z)
   def project(p: LatLon): ScreenPt =
     val (x, y) = world(p)
@@ -64,14 +89,17 @@ final class FakeSurface(w: MapSurface.Dimension = MapSurface.Dimension(1000), h:
   def overlayRoot: dom.HTMLElement = null
   def corner(c: Corner): dom.HTMLElement = null
   def setBaseMap(b: BaseMapSpec): Unit = baseMaps += b
-  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id.value, FakeShapes(NoMap.Shapes.Id(id.value)))
+  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet =
+    sets.getOrElseUpdate(id.value, FakeShapes(NoMap.Shapes.Id(id.value)))
   def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id.value)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
-  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
-  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup = new Popup:
-    def close(): Unit = ()
-    def isOpen: Boolean = true
-    def element: Option[dom.HTMLElement] = None
+  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles =
+    NoMap.Tiles
+  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup =
+    new Popup:
+      def close(): Unit = ()
+      def isOpen: Boolean = true
+      def element: Option[dom.HTMLElement] = None
   def closePopups(): Unit = ()
   def capabilities: Capabilities = caps
   def drawnNames: Seq[MapSurface.LabelText] = Nil

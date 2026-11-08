@@ -34,10 +34,25 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(Commons.fileTitle(Commons.File.Title("  ")), "")
 
   test("the imageinfo URL asks for the rendition width and, with meta, only the licence fields"):
-    val u = Commons.imageInfoUrl(Commons.Settings.ApiUrl("https://c/w/api.php"), List(Commons.File.Title("File:A b.jpg")), Commons.File.Width(1280), Commons.Settings.Maxlag(5), meta = Commons.ImageInfoUrlMeta(true))
-    assert(u.value.contains("iiurlwidth=1280") && u.value.contains("iiextmetadatafilter=LicenseShortName%7CLicense%7C"), u)
+    val u = Commons.imageInfoUrl(
+      Commons.Settings.ApiUrl("https://c/w/api.php"),
+      List(Commons.File.Title("File:A b.jpg")),
+      Commons.File.Width(1280),
+      Commons.Settings.Maxlag(5),
+      meta = Commons.ImageInfoUrlMeta(true)
+    )
+    assert(
+      u.value.contains("iiurlwidth=1280") && u.value.contains("iiextmetadatafilter=LicenseShortName%7CLicense%7C"),
+      u
+    )
     assert(u.value.contains("titles=File%3AA+b.jpg") && u.value.endsWith("&maxlag=5"), u)
-    val t = Commons.imageInfoUrl(Commons.Settings.ApiUrl("https://c/w/api.php"), List(Commons.File.Title("File:A.jpg")), Commons.File.Width(330), Commons.Settings.Maxlag(0), meta = Commons.ImageInfoUrlMeta(false))
+    val t = Commons.imageInfoUrl(
+      Commons.Settings.ApiUrl("https://c/w/api.php"),
+      List(Commons.File.Title("File:A.jpg")),
+      Commons.File.Width(330),
+      Commons.Settings.Maxlag(0),
+      meta = Commons.ImageInfoUrlMeta(false)
+    )
     assert(!t.value.contains("extmetadata") && !t.value.contains("maxlag"), t)
 
   private val imageinfo = json(
@@ -55,7 +70,11 @@ class CommonsParsersSuite extends munit.FunSuite:
     val m = Commons.imageInfo(imageinfo).toOption.get
     assertEquals(m(Commons.File.Title("File:Gone.jpg")), Left("missing on Commons"))
     val a = m(Commons.File.Title("File:A.jpg")).toOption.get
-    assertEquals(m(Commons.File.Title("File:a.jpg")), m(Commons.File.Title("File:A.jpg")), "the asked title maps to the canonical one")
+    assertEquals(
+      m(Commons.File.Title("File:a.jpg")),
+      m(Commons.File.Title("File:A.jpg")),
+      "the asked title maps to the canonical one"
+    )
     assertEquals(a.originalUrl, "https://up/A.jpg")
     assertEquals(a.renditionUrl, Some("https://up/t/1280px-A.jpg"))
     assertEquals((a.renditionWidth, a.renditionHeight, a.width), (Some(1280), Some(853), Some(3000)))
@@ -109,7 +128,16 @@ class CommonsParsersSuite extends munit.FunSuite:
       (it.pageUrl, it.imageUrl, it.originalUrl),
       ("https://commons/wiki/File:X.jpg", Some("https://up/t/1280px-X.jpg"), Some("https://up/X.jpg"))
     )
-    assertEquals(it.rendition, Some(MediaRendition(MediaRendition.Mime("image/jpeg"), Some(MediaRendition.Width(1280)), Some(MediaRendition.Height(640)))))
+    assertEquals(
+      it.rendition,
+      Some(
+        MediaRendition(
+          MediaRendition.Mime("image/jpeg"),
+          Some(MediaRendition.Width(1280)),
+          Some(MediaRendition.Height(640))
+        )
+      )
+    )
 
   test("rights: a custom Attribution wins over Artist"):
     val it = file("License" -> "cc-by-4.0", "Artist" -> "user42", "Attribution" -> "Photo: Jane Roe")
@@ -138,12 +166,19 @@ class CommonsParsersSuite extends munit.FunSuite:
   test("a file Commons does not answer for, or does not have, is stated with the reason it cannot be used"):
     val http = new Plugin.Http:
       def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
-        Right(Plugin.HttpResponse.Body("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8)))
-    val (items, failed) = Commons.Files(http, media, HostLicences).items(List(Commons.File.Title("File:Gone.jpg"), Commons.File.Title("File:Other.jpg")))
+        Right(
+          Plugin.HttpResponse.Body("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8))
+        )
+    val (items, failed) = Commons
+      .Files(http, media, HostLicences)
+      .items(List(Commons.File.Title("File:Gone.jpg"), Commons.File.Title("File:Other.jpg")))
     assertEquals(failed, Nil)
     assertEquals(items(Commons.File.Title("File:Gone.jpg")).rights, Left("missing on Commons"))
     assertEquals(items(Commons.File.Title("File:Other.jpg")).rights, Left("no answer from Commons"))
-    val down = new Plugin.Http { def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("HTTP 503")) }
+    val down = new Plugin.Http {
+      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+        Left(Plugin.Http.GetResultPart1("HTTP 503"))
+    }
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(Commons.File.Title("File:A.jpg")))
     assertEquals(none(Commons.File.Title("File:A.jpg")).rights, Left("no answer from Commons"))
     assertEquals(lines, List("Commons File:A.jpg…: HTTP 503"))

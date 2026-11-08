@@ -68,11 +68,10 @@ private[places] object PlaceRepo:
   type SiteType = SiteType.T
   object SiteType extends Newtype[String, Pure]
 
-
-  export com.histmersion.domain.catalogue.Place.Kind.{Wire as GeoJsonQueryKind}
+  export com.histmersion.domain.catalogue.Place.Kind.Wire as GeoJsonQueryKind
   type GeoJsonQueryLimit = Limit
   val GeoJsonQueryLimit: Limit.type = Limit
-  export com.histmersion.domain.DeepTime.{SignedYear as GeoJsonQueryModernFrom}
+  export com.histmersion.domain.DeepTime.SignedYear as GeoJsonQueryModernFrom
   type ScopeForValues = ScopeForValues.T
   object ScopeForValues extends Newtype[String, Pure]
 
@@ -146,7 +145,13 @@ private[places] object PlaceRepo:
   def upsertPlaces(batch: List[Place.Input], dataset: Dataset = Dataset.Seed)(using
       DbCon
   ): Place.ImportResult =
-    if batch.isEmpty then Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil)
+    if batch.isEmpty then
+      Place.ImportResult(
+        Place.ImportResult.Places(0),
+        Place.ImportResult.Names(0),
+        Place.ImportResult.Relations(0),
+        Nil
+      )
     else upsertIn(batch, dataset)
 
   /** The ids of `ids` a seed import must not create (V080): a place a person removed (`place_removals`), and an old id
@@ -406,12 +411,14 @@ private[places] object PlaceRepo:
         Param.S(Param.S.V(id.value))
       )
       .frag
-      .query[(
-        Place.Designation.Id,
-        Option[Place.Designation.Label],
-        Option[Place.Designation.Start],
-        Option[Place.Designation.End]
-      )]
+      .query[
+        (
+            Place.Designation.Id,
+            Option[Place.Designation.Label],
+            Option[Place.Designation.Start],
+            Option[Place.Designation.End]
+        )
+      ]
       .run()
       .toList
       .map(Place.Designation.apply)
@@ -487,7 +494,12 @@ private[places] object PlaceRepo:
   )(using DbCon): Vector[Place.Summary] =
     kids(id, asOf, limit, modernFrom)
 
-  private def kids(id: com.histmersion.domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear], limit: Limit, modernFrom: DeepTime.SignedYear)(using
+  private def kids(
+      id: com.histmersion.domain.catalogue.Place.Id,
+      asOf: Option[DeepTime.SignedYear],
+      limit: Limit,
+      modernFrom: DeepTime.SignedYear
+  )(using
       DbCon
   ): Vector[Place.Summary] =
     (Sql.raw(Sql.RawText("WITH ")) ++ timeWindowCte(asOf, modernFrom) ++
@@ -612,7 +624,8 @@ private[places] object PlaceRepo:
       Some(Sql.of(Sql.OfText("p.label !~* ?"), S(Param.S.V(UninformativeLabel)))),
       // across all time a present-day place is never drawn; at a year, the time rule decides
       // (physical features always, present-day places from `modern-from`, undated ones by findings)
-      Some(raw(if window.isEmpty then s"NOT $ModernSql" else inWindowSql("p", window, k.map(com.histmersion.domain.catalogue.Place.Kind.Wire(_))))),
+      Some(raw(if window.isEmpty then s"NOT $ModernSql"
+      else inWindowSql("p", window, k.map(com.histmersion.domain.catalogue.Place.Kind.Wire(_))))),
       k.map(v => Sql.of(Sql.OfText("p.kind = ?"), S(Param.S.V(v)))),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
       window.map(_ => raw(s"NOT $UndatedImportSql")),
@@ -979,7 +992,11 @@ private[places] object PlaceRepo:
                           AND ($lo::bigint IS NULL
                                OR r.period && int8range($lo::bigint, $hi::bigint, '[]'))
                       )
-                      SELECT d.id FROM d JOIN places p ON p.id = d.id""".query[String].run().toList.map(PlaceScope.ByValueValue.assume(_))
+                      SELECT d.id FROM d JOIN places p ON p.id = d.id"""
+              .query[String]
+              .run()
+              .toList
+              .map(PlaceScope.ByValueValue.assume(_))
           }.toMap,
           labels
         )
@@ -1010,7 +1027,9 @@ private[places] object PlaceRepo:
       .query[Place.Link]
       .run()
 
-  def types(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using DbCon): List[Place.Type] =
+  def types(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[DeepTime.SignedYear])(using
+      DbCon
+  ): List[Place.Type] =
     typesIn(placeId, asOf)
 
   /** A place's types valid at `asOf` — [[types]] and the place detail read the same rows. An undated type (`(,)`, every
@@ -1032,8 +1051,12 @@ private[places] object PlaceRepo:
     * old id of another place; renaming back to an old id drops that alias. The caller's transaction (a bundle import
     * follows a rename made in the other collection, #888).
     */
-  private[places] def renameIn(oldId: com.histmersion.domain.catalogue.Place.Id, newId: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Either[Api.Error, Unit] =
-    def exists(i: com.histmersion.domain.catalogue.Place.Id) = sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
+  private[places] def renameIn(
+      oldId: com.histmersion.domain.catalogue.Place.Id,
+      newId: com.histmersion.domain.catalogue.Place.Id
+  )(using DbCon): Either[Api.Error, Unit] =
+    def exists(i: com.histmersion.domain.catalogue.Place.Id) =
+      sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT place_id FROM place_aliases WHERE alias = $newId"
       .query[com.histmersion.domain.catalogue.Place.Id]
       .run()
@@ -1050,7 +1073,9 @@ private[places] object PlaceRepo:
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          Api.Error.Message(s"'${newId.value}' is an old id of '${aliasOf.get.value}' and still resolves to it — pick another"),
+          Api.Error.Message(
+            s"'${newId.value}' is an old id of '${aliasOf.get.value}' and still resolves to it — pick another"
+          ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -1064,7 +1089,9 @@ private[places] object PlaceRepo:
       Right(())
 
   /** [[renameIn]] in a transaction of its own. */
-  def rename(oldId: com.histmersion.domain.catalogue.Place.Id, newId: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Either[Api.Error, Unit] =
+  def rename(oldId: com.histmersion.domain.catalogue.Place.Id, newId: com.histmersion.domain.catalogue.Place.Id)(using
+      DbCon
+  ): Either[Api.Error, Unit] =
     renameIn(
       com.histmersion.domain.catalogue.Place.Id.applyUnsafe(oldId.value.trim),
       com.histmersion.domain.catalogue.Place.Id.applyUnsafe(newId.value.trim)
@@ -1100,56 +1127,70 @@ private[places] object PlaceRepo:
   def addName(id: com.histmersion.domain.catalogue.Place.Id, name: Name, lang: Lang)(using
       DbCon
   ): Either[Api.Error, Place.NameChanged] =
-    labelOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).map { label =>
-      val before =
-        sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND import_source = ''"
-          .query[Boolean]
-          .run()
-          .headOption
-      if !before.contains(true) then
-        val _ = sql"""INSERT INTO place_names (place_id, name, lang, manual) VALUES ($id, $name, $lang, true)
+    labelOf(id)
+      .toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .map { label =>
+        val before =
+          sql"SELECT manual FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND import_source = ''"
+            .query[Boolean]
+            .run()
+            .headOption
+        if !before.contains(true) then
+          val _ = sql"""INSERT INTO place_names (place_id, name, lang, manual) VALUES ($id, $name, $lang, true)
                       ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET manual = true""".update
-          .run()
-      nameChanged(id, label, name, lang, added = true, changed = !before.contains(true), wasImported = before.contains(false))
-    }
+            .run()
+        nameChanged(
+          id,
+          label,
+          name,
+          lang,
+          added = true,
+          changed = !before.contains(true),
+          wasImported = before.contains(false)
+        )
+      }
 
   /** Remove a name a person added. An IMPORTED name is refused — the next seed would bring it back. */
   def removeName(id: com.histmersion.domain.catalogue.Place.Id, name: Name, lang: Lang)(using
       DbCon
   ): Either[Api.Error, Place.NameChanged] =
-    labelOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { label =>
-      sql"SELECT bool_or(manual) FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang HAVING count(*) > 0"
-        .query[Boolean]
-        .run()
-        .headOption match
-        case None =>
-          val langs = sql"SELECT lang FROM place_names WHERE place_id = $id AND name = $name AND manual"
-            .query[String]
-            .run()
-            .map(l => if l.isEmpty then "no language" else l)
-          val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
-          Left(
-            Api.Error(
-              Api.Error.Message(s"'$label' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"),
-              Some(Api.Error.Code(Write.CodeNotFound))
-            )
-          )
-        case Some(false) =>
-          Left(
-            Api.Error(
-              Api.Error.Message(
-                s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$id], not one added by hand — " +
-                  "removing it would last only until the next import"
-              ),
-              Some(Api.Error.Code(Write.CodeInvalid))
-            )
-          )
-        case Some(true) =>
-          val _ =
-            sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND manual".update
+    labelOf(id)
+      .toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .flatMap { label =>
+        sql"SELECT bool_or(manual) FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang HAVING count(*) > 0"
+          .query[Boolean]
+          .run()
+          .headOption match
+          case None =>
+            val langs = sql"SELECT lang FROM place_names WHERE place_id = $id AND name = $name AND manual"
+              .query[String]
               .run()
-          Right(nameChanged(id, label, name, lang, added = false, changed = true, wasImported = false))
-    }
+              .map(l => if l.isEmpty then "no language" else l)
+            val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
+            Left(
+              Api.Error(
+                Api.Error.Message(
+                  s"'$label' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"
+                ),
+                Some(Api.Error.Code(Write.CodeNotFound))
+              )
+            )
+          case Some(false) =>
+            Left(
+              Api.Error(
+                Api.Error.Message(
+                  s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$id], not one added by hand — " +
+                    "removing it would last only until the next import"
+                ),
+                Some(Api.Error.Code(Write.CodeInvalid))
+              )
+            )
+          case Some(true) =>
+            val _ =
+              sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND manual".update
+                .run()
+            Right(nameChanged(id, label, name, lang, added = false, changed = true, wasImported = false))
+      }
 
   /** The names people added, by place then name; `id` narrows to one place. */
   def manualNames(id: Option[com.histmersion.domain.catalogue.Place.Id])(using DbCon): List[ManualPlaceName] =
@@ -1184,7 +1225,9 @@ private[places] object PlaceRepo:
     else if alias.isDefined then
       Left(
         Api.Error(
-          Api.Error.Message(s"'${id.value}' is an old id of '${alias.get}' and still resolves to it — choose another id"),
+          Api.Error.Message(
+            s"'${id.value}' is an old id of '${alias.get}' and still resolves to it — choose another id"
+          ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )

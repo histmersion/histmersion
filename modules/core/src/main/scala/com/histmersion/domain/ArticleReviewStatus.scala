@@ -17,14 +17,18 @@ object ArticleReviewStatus:
   object OutcomeSuffix extends Newtype[String, Pure]
   type Progress = Progress.T
   object Progress extends Newtype[String, Pure]
-  export ReviewRound.{StartedAt as RunStart}
+  export ReviewRound.StartedAt as RunStart
   type StatusLine = StatusLine.T
   object StatusLine extends Newtype[String, Pure]
 
   /** The review manager's `article-review` item for the article: its status, its last outcome line and how many runs it
     * started.
     */
-  final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = ItemFacts.Attempts(0))
+  final case class ItemFacts(
+      status: ItemStatus,
+      outcome: Option[ItemFacts.Outcome] = None,
+      attempts: ItemFacts.Attempts = ItemFacts.Attempts(0)
+  )
 
   object ItemFacts:
     type Outcome = Outcome.T
@@ -34,7 +38,12 @@ object ArticleReviewStatus:
 
   /** The ledger's findings counted: the open MAJOR and minor ones, all of them, and the runs that raised or closed one.
     */
-  final case class LedgerFacts(openMajors: LedgerFacts.OpenMajors, openMinors: LedgerFacts.OpenMinors, findings: LedgerFacts.Findings, runs: LedgerFacts.Runs)
+  final case class LedgerFacts(
+      openMajors: LedgerFacts.OpenMajors,
+      openMinors: LedgerFacts.OpenMinors,
+      findings: LedgerFacts.Findings,
+      runs: LedgerFacts.Runs
+  )
 
   object LedgerFacts:
     type OpenMajors = ReviewBadge.OpenMajors
@@ -73,7 +82,9 @@ object ArticleReviewStatus:
     */
   def badge(f: Facts): ReviewBadge =
     val item = f.item.filter(_.status != ItemStatus.Cancelled)
-    val counts = f.ledger.getOrElse(LedgerFacts(LedgerFacts.OpenMajors(0), LedgerFacts.OpenMinors(0), LedgerFacts.Findings(0), LedgerFacts.Runs(0)))
+    val counts = f.ledger.getOrElse(
+      LedgerFacts(LedgerFacts.OpenMajors(0), LedgerFacts.OpenMinors(0), LedgerFacts.Findings(0), LedgerFacts.Runs(0))
+    )
     val runNo = item.map(_.attempts).filter(_.value > 0)
     val (state, label, detail) = item.map(_.status) match
       case Some(ItemStatus.Active) =>
@@ -136,10 +147,13 @@ object ArticleReviewStatus:
     )
 
   private def soFar(c: LedgerFacts): Progress =
-    if c.findings.value == 0 then Progress("") else Progress(s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor.")
+    if c.findings.value == 0 then Progress("")
+    else Progress(s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor.")
 
   private def majorsLine(c: LedgerFacts): StatusLine =
-    StatusLine(s"${Plural.count(Plural.CountN(c.openMajors.value.toLong), Plural.CountSingular("MAJOR finding"))} ${if c.openMajors.value == 1 then "is" else "are"} still open.")
+    StatusLine(s"${Plural.count(Plural.CountN(c.openMajors.value.toLong), Plural.CountSingular("MAJOR finding"))} ${
+        if c.openMajors.value == 1 then "is" else "are"
+      } still open.")
 
   /** `: <outcome>.` after a sentence still open, or ` <lead><outcome>.` after a finished one; `none` when the manager
     * recorded no outcome. The manager's own leading `stopped:`/`failed:` is dropped.

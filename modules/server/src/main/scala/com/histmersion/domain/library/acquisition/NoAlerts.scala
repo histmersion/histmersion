@@ -10,4 +10,8 @@ object NoAlerts extends CitationAlerts:
   private val off = Left(CitationAlerts.Problem("the citation alerts are not connected"))
   def citing(doi: Doi, since: java.time.LocalDate, limit: CitationAlerts.CitingLimit) = off
   def authors(doi: Doi) = off
-  def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: java.time.LocalDate, limit: CitationAlerts.ByAuthorLimit) = off
+  def byAuthor(
+      authorId: CitationAlerts.ByAuthorAuthorId,
+      since: java.time.LocalDate,
+      limit: CitationAlerts.ByAuthorLimit
+  ) = off

@@ -21,7 +21,8 @@ final class JavaRangeHttp(
     userAgent: JavaRangeHttp.UserAgent,
     policy: RetryPolicy,
     sleep: RetryWait.Ms => Unit = ms => Thread.sleep(ms.value)
-)(using clock: java.time.Clock) extends RangeHttp:
+)(using clock: java.time.Clock)
+    extends RangeHttp:
 
   private def request(url: RangeHttp.Url, range: Option[(ByteOffset, ByteCount)]): HttpRequest =
     val b = HttpRequest
@@ -104,7 +105,11 @@ final class JavaRangeHttp(
       }
     )
 
-  def bytes(url: RangeHttp.Url, offset: ByteOffset, length: ByteCount): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
+  def bytes(
+      url: RangeHttp.Url,
+      offset: ByteOffset,
+      length: ByteCount
+  ): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val want = math.min(offset.value + length.value, total.value) - offset.value
@@ -114,7 +119,12 @@ final class JavaRangeHttp(
       }
     )
 
-  def download(url: RangeHttp.Url, offset: ByteOffset, length: ByteCount, to: Reservation): Either[RangeHttp.Problem, RemoteFile] =
+  def download(
+      url: RangeHttp.Url,
+      offset: ByteOffset,
+      length: ByteCount,
+      to: Reservation
+  ): Either[RangeHttp.Problem, RemoteFile] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val got = Using.resource(to.output())(out => r.body.transferTo(out))

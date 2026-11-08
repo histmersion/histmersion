@@ -9,8 +9,8 @@ object FormatMarkdown:
   type IssueLine = IssueLine.T
   object IssueLine extends Newtype[String, Pure]
 
-
-  def problems(n: FormatReport.IssueCount): String = Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("formatting problem")).value
+  def problems(n: FormatReport.IssueCount): String =
+    Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("formatting problem")).value
 
   def line(i: FormatIssue): IssueLine =
     val sev = summon[WireEnumValues[FormatSeverity]].wire(i.severity)
@@ -34,5 +34,6 @@ object FormatMarkdown:
     val fixed = if r.fixed.isEmpty then "" else r.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
     if r.issues.isEmpty then (s"$fixed### ${r.subject}: no formatting problems")
     else
-      val head = s"### ${r.subject}: ${problems(FormatReport.IssueCount(r.issues.size))} (${r.errors} error(s), ${r.warnings} warning(s))"
+      val head =
+        s"### ${r.subject}: ${problems(FormatReport.IssueCount(r.issues.size))} (${r.errors} error(s), ${r.warnings} warning(s))"
       (s"$fixed$head\n\n${r.issues.map(i => s"- ${line(i)}").mkString("\n")}")

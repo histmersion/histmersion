@@ -43,16 +43,21 @@ object Ingest:
       .findFirstMatchIn((disposition).value)
       .map(_.group(1).trim)
       .map(_.reverse.takeWhile(_ != '.').reverse.toLowerCase)
-      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))).map(refactorValue => Extension(refactorValue))
+      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit)))
+      .map(refactorValue => Extension(refactorValue))
 
-  final case class Accepted(jobId: SpatialHierarchyResult.Job.Id, citekey: Citekey, status: Accepted.Status, sha256: Option[Sha256] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Accepted(
+      jobId: SpatialHierarchyResult.Job.Id,
+      citekey: Citekey,
+      status: Accepted.Status,
+      sha256: Option[Sha256] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Accepted:
     type Status = Status.T
     object Status extends Newtype[String, Pure]
-
 
   final case class Params(
       citekey: Citekey,
@@ -68,13 +73,13 @@ object Ingest:
   )
 
   object Params:
-    export com.histmersion.api.exchange.Bundle.Asset.{FileName as Filename}
+    export com.histmersion.api.exchange.Bundle.Asset.FileName as Filename
     type Quality = Quality.T
     object Quality extends Newtype[Boolean, Pure]
     type Force = Force.T
     object Force extends Newtype[Boolean, Pure]
     export Source.Provenance
-    export Acquire.{ItemNumber as AcquireItem}
+    export Acquire.ItemNumber as AcquireItem
 
   final case class Report(
       citekey: Citekey,
@@ -87,15 +92,15 @@ object Ingest:
       steps: List[Step],
       dropIn: Option[Report.DropIn] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Report:
     type Created = Created.T
     object Created extends Newtype[Boolean, Pure]
     type EdgesAdded = EdgesAdded.T
     object EdgesAdded extends Newtype[Int, Pure]
-    export Ingest.{DropInPath as DropIn}
-
+    export Ingest.DropInPath as DropIn
 
   final case class Request(
       id: Request.Id,
@@ -104,22 +109,25 @@ object Ingest:
       refetch: Request.Refetch = Request.Refetch(false),
       legalOnly: Request.LegalOnly = Request.LegalOnly(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Request:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
-    export Source.Candidate.{ArxivId as Arxiv}
+    export Source.Candidate.ArxivId as Arxiv
     type Refetch = Refetch.T
     object Refetch extends Newtype[Boolean, Pure]
     type LegalOnly = LegalOnly.T
     object LegalOnly extends Newtype[Boolean, Pure]
 
-
-  final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Step:
-    export Ingest.{StepName as Value}
+    export Ingest.StepName as Value
     type Ok = Ok.T
     object Ok extends Newtype[Boolean, Pure]
     type Detail = Detail.T

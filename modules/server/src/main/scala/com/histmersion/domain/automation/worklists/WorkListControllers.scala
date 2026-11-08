@@ -19,7 +19,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class WorkListControllers(queues: QueueService, maintenance: WriteGate, clock: Clock):
 
   def kindOf(list: WorkListControllers.KindOfList): Either[Api.Error, Kind] =
-    Kind.parse(Kind.Label(list.value)).toRight(WorkListControllers.bad(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
+    Kind
+      .parse(Kind.Label(list.value))
+      .toRight(WorkListControllers.bad(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
 
   def add(list: WorkListControllers.ListName, in: QueueAdd): Either[Api.Error, QueueItem] =
     maintenance.guard(WriteGate.OperationName("queue/add")):
@@ -35,7 +37,10 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
           for
             status <- Queue.statusOf(in.status).left.map(p => WorkListControllers.bad(p.value))
             createdAt <- Queue.createdAtOf(in.createdAt).left.map(p => WorkListControllers.bad(p.value))
-          yield queues.add(k, in.modify(_.topic).setTo(topic).modify(_.status).setTo(status).modify(_.createdAt).setTo(createdAt))
+          yield queues.add(
+            k,
+            in.modify(_.topic).setTo(topic).modify(_.status).setTo(status).modify(_.createdAt).setTo(createdAt)
+          )
       }
 
   def patch(id: QueueItemId, p: QueuePatch): Either[Api.Error, QueueItem] =
@@ -45,7 +50,9 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
           status <- Queue.statusOf(p.status)
           _ <- Queue.textOf(p.text)
         yield p.modify(_.status).setTo(status)
-      checked.left.map(p => WorkListControllers.bad(p.value)).flatMap(c => queues.patch(id, c).left.map(WorkListControllers.error))
+      checked.left
+        .map(p => WorkListControllers.bad(p.value))
+        .flatMap(c => queues.patch(id, c).left.map(WorkListControllers.error))
 
   def delete(id: QueueItemId): Either[Api.Error, QueueItem] =
     maintenance.guard(WriteGate.OperationName("queue/delete"))(queues.delete(id).left.map(WorkListControllers.error))
@@ -60,7 +67,12 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
         val rows = Queue.parse(k, Queue.FileText(req.text.value))
         val counts = queues.replace(k, rows, ImportMode.of(req.replace.value))
         val notes = rows.count(_.status.exists(_.value == Queue.Note))
-        QueueImported(k.label, QueueImported.Items(counts.written.value - notes), QueueImported.Notes(notes), QueueImported.Replaced(counts.removed.value))
+        QueueImported(
+          k.label,
+          QueueImported.Items(counts.written.value - notes),
+          QueueImported.Notes(notes),
+          QueueImported.Replaced(counts.removed.value)
+        )
       }
 
   /** Every list at once — what `histmersion export <dir>` writes alongside the source notes. */
@@ -76,4 +88,5 @@ object WorkListControllers:
   private def bad(message: String): Api.Error = Api.Error(Api.Error.Message(message))
 
   def error(e: QueueError): Api.Error = e match
-    case QueueError.NotFound(_) => Api.Error(Api.Error.Message(s"${e.message}"), Some(Api.Error.Code(Write.CodeNotFound)))
+    case QueueError.NotFound(_) =>
+      Api.Error(Api.Error.Message(s"${e.message}"), Some(Api.Error.Code(Write.CodeNotFound)))

@@ -23,8 +23,11 @@ final private[places] case class FootprintRow(
       Place.Footprint.Id(id.value),
       Place.Id(placeId.value),
       Place.Footprint.Role(role.value),
-      for s <- periodStart; e <- periodEnd yield
-        Period(com.histmersion.api.catalogue.Year(s.value.toLong), com.histmersion.api.catalogue.Year(e.value.toLong)),
+      for s <- periodStart; e <- periodEnd
+      yield Period(
+        com.histmersion.api.catalogue.Year(s.value.toLong),
+        com.histmersion.api.catalogue.Year(e.value.toLong)
+      ),
       certainty.map(c => Place.Footprint.Certainty(c.value)),
       accuracyM.map(a => Place.Footprint.AccuracyM(a.value)),
       citekey.map(c => com.histmersion.api.library.Citekey(c.value))

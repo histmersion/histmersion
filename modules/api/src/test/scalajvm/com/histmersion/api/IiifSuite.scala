@@ -21,10 +21,26 @@ class IiifSuite extends munit.FunSuite:
     assertEquals(Iiif.Region.parse(Iiif.Region.Wire("square")), Right(Iiif.Region.Full))
 
   test("Region.parse: pixel coordinates"):
-    assertEquals(Iiif.Region.parse(Iiif.Region.Wire("10,20,100,200")), Right(Iiif.Region.Pixels(Iiif.Region.Pixels.X(10), Iiif.Region.Pixels.Y(20), Iiif.Region.Pixels.W(100), Iiif.Region.Pixels.H(200))))
+    assertEquals(
+      Iiif.Region.parse(Iiif.Region.Wire("10,20,100,200")),
+      Right(
+        Iiif.Region.Pixels(
+          Iiif.Region.Pixels.X(10),
+          Iiif.Region.Pixels.Y(20),
+          Iiif.Region.Pixels.W(100),
+          Iiif.Region.Pixels.H(200)
+        )
+      )
+    )
 
   test("Region.parse: zero origin"):
-    assertEquals(Iiif.Region.parse(Iiif.Region.Wire("0,0,50,50")), Right(Iiif.Region.Pixels(Iiif.Region.Pixels.X(0), Iiif.Region.Pixels.Y(0), Iiif.Region.Pixels.W(50), Iiif.Region.Pixels.H(50))))
+    assertEquals(
+      Iiif.Region.parse(Iiif.Region.Wire("0,0,50,50")),
+      Right(
+        Iiif.Region
+          .Pixels(Iiif.Region.Pixels.X(0), Iiif.Region.Pixels.Y(0), Iiif.Region.Pixels.W(50), Iiif.Region.Pixels.H(50))
+      )
+    )
 
   test("Region.parse: rejects zero width"):
     assert(Iiif.Region.parse(Iiif.Region.Wire("0,0,0,50")).isLeft)
@@ -56,10 +72,16 @@ class IiifSuite extends munit.FunSuite:
     assertEquals(Iiif.Size.parse(Iiif.Size.Wire(",150")), Right(Iiif.Size.Height(Iiif.Size.Height.H(150))))
 
   test("Size.parse: exact"):
-    assertEquals(Iiif.Size.parse(Iiif.Size.Wire("300,200")), Right(Iiif.Size.Exact(Iiif.Size.Exact.W(300), Iiif.Size.Exact.H(200))))
+    assertEquals(
+      Iiif.Size.parse(Iiif.Size.Wire("300,200")),
+      Right(Iiif.Size.Exact(Iiif.Size.Exact.W(300), Iiif.Size.Exact.H(200)))
+    )
 
   test("Size.parse: best fit"):
-    assertEquals(Iiif.Size.parse(Iiif.Size.Wire("!300,200")), Right(Iiif.Size.BestFit(Iiif.Size.BestFit.W(300), Iiif.Size.BestFit.H(200))))
+    assertEquals(
+      Iiif.Size.parse(Iiif.Size.Wire("!300,200")),
+      Right(Iiif.Size.BestFit(Iiif.Size.BestFit.W(300), Iiif.Size.BestFit.H(200)))
+    )
 
   test("Size.parse: rejects zero width"):
     assert(Iiif.Size.parse(Iiif.Size.Wire("0,")).isLeft)
@@ -99,7 +121,8 @@ class IiifSuite extends munit.FunSuite:
   // ── info.json ─────────────────────────────────────────────────────────────────────────────────
 
   test("infoJson produces valid structure"):
-    val json = Iiif.infoJson(Iiif.ImageId("http://example.com/iiif/test/fig1.png"), ImageSize.Width(800), ImageSize.Height(600))
+    val json =
+      Iiif.infoJson(Iiif.ImageId("http://example.com/iiif/test/fig1.png"), ImageSize.Width(800), ImageSize.Height(600))
     val cursor = json.hcursor
     assertEquals(cursor.get[String]("@context"), Right(Iiif.ApiContext))
     assertEquals(cursor.get[String]("id"), Right("http://example.com/iiif/test/fig1.png"))

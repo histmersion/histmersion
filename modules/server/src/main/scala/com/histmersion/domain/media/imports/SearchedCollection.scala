@@ -21,10 +21,17 @@ trait SearchedCollection:
   def conf: MediaCollectionConfig
 
   /** The records a search for the place's name answers; one record may be unreadable on its own. */
-  def search(fetch: Polite, place: PlaceFacts): Either[SearchedCollection.Problem, List[Either[SearchedCollection.Problem, MediaRecord]]]
+  def search(
+      fetch: Polite,
+      place: PlaceFacts
+  ): Either[SearchedCollection.Problem, List[Either[SearchedCollection.Problem, MediaRecord]]]
 
   /** Why a record is tied to the place, or why not. */
-  def matches(rec: MediaRecord, place: MediaMatch.PlaceInfo, resolve: MediaMatch.Resolve): Either[MediaMatch.Refusal, MediaMatch.Basis] =
+  def matches(
+      rec: MediaRecord,
+      place: MediaMatch.PlaceInfo,
+      resolve: MediaMatch.Resolve
+  ): Either[MediaMatch.Refusal, MediaMatch.Basis] =
     MediaMatch.museum(rec, place, resolve)
 
   /** Does a match read the gazetteer ids the places carry ([[matchesWithIds]])? */
@@ -58,8 +65,13 @@ object SearchedCollection:
   /** Pure: the equivalents of a place among the places a name names — itself, one with its Wikidata item, one within
     * `sameSiteKm` of its point — collapse to its id; others keep theirs.
     */
-  def resolveFor(target: PlaceFacts, named: Map[MediaMatch.PlaceInfo.Keys, List[PlaceFacts]], sameSiteKm: MediaConfig.SameSiteKm): MediaMatch.Resolve =
-    key => named.getOrElse(key, Nil).map(p => if equivalent(target, p, sameSiteKm) then infoId(target) else infoId(p)).toSet
+  def resolveFor(
+      target: PlaceFacts,
+      named: Map[MediaMatch.PlaceInfo.Keys, List[PlaceFacts]],
+      sameSiteKm: MediaConfig.SameSiteKm
+  ): MediaMatch.Resolve =
+    key =>
+      named.getOrElse(key, Nil).map(p => if equivalent(target, p, sameSiteKm) then infoId(target) else infoId(p)).toSet
 
   /** Pure: what a gazetteer id names for `target` — the places on the map carrying it (`byId`), the target's
     * equivalents collapsed to its id, and the target itself when it carries the id (`own`: a place asked by `--place`
@@ -77,7 +89,8 @@ object SearchedCollection:
 
   def equivalent(a: PlaceFacts, b: PlaceFacts, km: MediaConfig.SameSiteKm): Boolean =
     a.id == b.id || a.qid.exists(q => b.qid.contains(q)) ||
-      (for la <- a.lat; oa <- a.lon; lb <- b.lat; ob <- b.lon yield distanceKm(la, oa, lb, ob).value <= km.value).getOrElse(false)
+      (for la <- a.lat; oa <- a.lon; lb <- b.lat; ob <- b.lon
+      yield distanceKm(la, oa, lb, ob).value <= km.value).getOrElse(false)
 
   /** Pure: great-circle distance in km. */
   def distanceKm(lat1: Latitude, lon1: Longitude, lat2: Latitude, lon2: Longitude): DistanceKm =
@@ -89,4 +102,5 @@ object SearchedCollection:
     DistanceKm(2 * r * math.asin(math.sqrt(a.min(1.0))))
 
   /** Pure: a record's licence key for the counts — its SPDX id, or why it has none. */
-  def licenceKey(rec: MediaRecord): LicenceKey = rec.rights.fold(_ => LicenceKey("not open access"), r => LicenceKey(r.licence.id.value))
+  def licenceKey(rec: MediaRecord): LicenceKey =
+    rec.rights.fold(_ => LicenceKey("not open access"), r => LicenceKey(r.licence.id.value))

@@ -32,8 +32,12 @@ object SetupPlan:
       Option.when(c.email.value.trim != before.email.value.trim)(
         ConfigEdit.Change.Key("acquire.contact-email") -> Some(ConfigEdit.Change.Value(c.email.value.trim))
       ),
-      c.area.filter(a => !before.area.contains(a)).map(a => ConfigEdit.Change.Key("basemap.bbox") -> Some(ConfigEdit.Change.Value(a.value))),
-      Option.when(c.agents != before.agents)(ConfigEdit.Change.Key("agents.enabled") -> Some(ConfigEdit.Change.Value(c.agents.value.toString))),
+      c.area
+        .filter(a => !before.area.contains(a))
+        .map(a => ConfigEdit.Change.Key("basemap.bbox") -> Some(ConfigEdit.Change.Value(a.value))),
+      Option.when(c.agents != before.agents)(
+        ConfigEdit.Change.Key("agents.enabled") -> Some(ConfigEdit.Change.Value(c.agents.value.toString))
+      ),
       Option.when(c.calibre.value.trim != before.calibre.value.trim && c.calibre.value.trim.nonEmpty)(
         ConfigEdit.Change.Key("cli.calibre.library-dir") -> Some(ConfigEdit.Change.Value(c.calibre.value.trim))
       )

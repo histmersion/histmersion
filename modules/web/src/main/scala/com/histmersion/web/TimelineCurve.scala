@@ -26,7 +26,14 @@ object TimelineCurve:
   /** Pure: each bucket's point over `[from, to]` drawn `w` px wide — at its middle year, its height its share of the
     * largest count between `baseY` (none) and `top` (the largest).
     */
-  def points(bs: Seq[TimeBucket], from: Years.Astronomical, to: Years.Astronomical, w: ElementSize, baseY: ScreenPixels, top: ScreenPixels): Vector[Pt] =
+  def points(
+      bs: Seq[TimeBucket],
+      from: Years.Astronomical,
+      to: Years.Astronomical,
+      w: ElementSize,
+      baseY: ScreenPixels,
+      top: ScreenPixels
+  ): Vector[Pt] =
     val maxCount = bs.iterator.map(_.count.value).maxOption.getOrElse(0)
     if maxCount <= 0 then Vector.empty
     else
@@ -34,7 +41,11 @@ object TimelineCurve:
       bs.iterator.map { b =>
         val mid = (b.start.value.toDouble + b.end.value.toDouble) / 2
         val x = (mid - from.value.toDouble) / span * w.value
-        Pt(ScreenPixels(x), ScreenPixels(baseY.value - b.count.value.toDouble / maxCount * (baseY.value - top.value)), b)
+        Pt(
+          ScreenPixels(x),
+          ScreenPixels(baseY.value - b.count.value.toDouble / maxCount * (baseY.value - top.value)),
+          b
+        )
       }.toVector
 
   /** Pure: the tangent (dy/dx) at each point of a monotone cubic through them (`xs` increasing). Where the neighbouring
@@ -72,7 +83,14 @@ object TimelineCurve:
     t
 
   /** One cubic segment: its two control points and its end. */
-  final case class Segment(c1x: ScreenPixels, c1y: ScreenPixels, c2x: ScreenPixels, c2y: ScreenPixels, x: ScreenPixels, y: ScreenPixels)
+  final case class Segment(
+      c1x: ScreenPixels,
+      c1y: ScreenPixels,
+      c2x: ScreenPixels,
+      c2y: ScreenPixels,
+      x: ScreenPixels,
+      y: ScreenPixels
+  )
 
   /** Pure: the cubic segments from each point to the next (none for fewer than two). */
   def segments(pts: IndexedSeq[Pt]): Vector[Segment] =
@@ -141,4 +159,5 @@ object TimelineCurve:
         val mid = (lo + hi) >>> 1
         if pts(mid).x.value < x.value then lo = mid + 1 else hi = mid
       val right = pts(lo)
-      if lo > 0 && math.abs(pts(lo - 1).x.value - x.value) <= math.abs(right.x.value - x.value) then Some(pts(lo - 1)) else Some(right)
+      if lo > 0 && math.abs(pts(lo - 1).x.value - x.value) <= math.abs(right.x.value - x.value) then Some(pts(lo - 1))
+      else Some(right)

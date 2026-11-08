@@ -10,7 +10,11 @@ object SettingEdit:
   /** A change as a person or a client gives it — the key as typed, the value as typed and read as the setting's kind
     * (`None`: take it out). An unknown key is left to [[SettingPolicy]], which refuses it by name.
     */
-  def parse(key: SettingKey.ParseRaw, value: Option[SettingValue.Typed], schema: ConfigSchema): Either[SettingError, SettingEdit] =
+  def parse(
+      key: SettingKey.ParseRaw,
+      value: Option[SettingValue.Typed],
+      schema: ConfigSchema
+  ): Either[SettingError, SettingEdit] =
     SettingKey.parse(key).left.map(SettingError.BadKey(_)).flatMap { k =>
       value match
         case None    => Right(Unset(k))
@@ -21,9 +25,15 @@ object SettingEdit:
     }
 
   /** Every change of `changes` parsed, the first refusal ending it. */
-  def parseAll(changes: List[(SettingKey.ParseRaw, Option[SettingValue.Typed])], schema: ConfigSchema): Either[SettingError, List[SettingEdit]] =
+  def parseAll(
+      changes: List[(SettingKey.ParseRaw, Option[SettingValue.Typed])],
+      schema: ConfigSchema
+  ): Either[SettingError, List[SettingEdit]] =
     @scala.annotation.tailrec
-    def loop(rest: List[(SettingKey.ParseRaw, Option[SettingValue.Typed])], acc: List[SettingEdit]): Either[SettingError, List[SettingEdit]] =
+    def loop(
+        rest: List[(SettingKey.ParseRaw, Option[SettingValue.Typed])],
+        acc: List[SettingEdit]
+    ): Either[SettingError, List[SettingEdit]] =
       rest match
         case Nil            => Right(acc.reverse)
         case (k, v) :: tail =>

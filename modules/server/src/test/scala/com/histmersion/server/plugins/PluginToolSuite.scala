@@ -21,16 +21,19 @@ import com.histmersion.api.plugins.PluginDescription
   */
 class PluginToolSuite extends munit.FunSuite:
 
-  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console = new com.histmersion.util.console.Console {
-    def write(value: Any): Unit = stdout(String.valueOf(value))
-    def writeLine(value: Any): Unit = stdout(String.valueOf(value))
-    def writeLine(): Unit = stdout("")
-    def errorWrite(value: => String): Unit = stderr(value)
-    def errorLine(value: => String): Unit = stderr(value)
-    def errorLine(): Unit = stderr("")
-    def errorFlush(): Unit = ()
-    def readLine(): com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException("input not used")
-  }
+  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console =
+    new com.histmersion.util.console.Console {
+      def write(value: Any): Unit = stdout(String.valueOf(value))
+      def writeLine(value: Any): Unit = stdout(String.valueOf(value))
+      def writeLine(): Unit = stdout("")
+      def errorWrite(value: => String): Unit = stderr(value)
+      def errorLine(value: => String): Unit = stderr(value)
+      def errorLine(): Unit = stderr("")
+      def errorFlush(): Unit = ()
+      def readLine(): com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException(
+        "input not used"
+      )
+    }
 
   private lazy val hello: Path =
     val in = getClass.getClassLoader.getResourceAsStream("plugin-fixtures.txt")
@@ -105,9 +108,18 @@ class PluginToolSuite extends munit.FunSuite:
     val kit = classes("a/A.class", "a/B.class")
     assertEquals(RelinkPlugins.duplicates(kit, List(PluginJar.File("p.jar") -> classes("p/P.class"))), Nil)
     val dups =
-      RelinkPlugins.duplicates(kit, List(PluginJar.File("p.jar") -> classes("a/A.class", "p/P.class"), PluginJar.File("q.jar") -> classes("p/P.class")))
+      RelinkPlugins.duplicates(
+        kit,
+        List(
+          PluginJar.File("p.jar") -> classes("a/A.class", "p/P.class"),
+          PluginJar.File("q.jar") -> classes("p/P.class")
+        )
+      )
     assertEquals(dups.size, 2)
-    assert(dups.head.value.startsWith("p.jar duplicates") && dups.head.value.contains("1 with the kit (a.A)"), dups.head)
+    assert(
+      dups.head.value.startsWith("p.jar duplicates") && dups.head.value.contains("1 with the kit (a.A)"),
+      dups.head
+    )
     assert(dups(1).value.startsWith("q.jar duplicates") && dups(1).value.contains("1 with p.jar (p.P)"), dups(1))
 
   private def kitWith(d: Path, jars: Map[String, Map[String, Array[Byte]]]): Path =
@@ -150,8 +162,14 @@ class PluginToolSuite extends munit.FunSuite:
     val (_, twice) = RelinkPlugins.check(clean, List(hello, twin), Nil, loader)
     assert(twice.exists(_.value.contains(s"plugin id 'hello' is already provided by ${hello.getFileName}")), twice)
     assert(twice.exists(_.value.startsWith("hello-copy.jar duplicates classes")), twice)
-    assertEquals(RelinkPlugins.hostIds(loader).get(PluginDescription.Id("archive-org")), Some("this Histmersion (a first-party plugin)"))
-    assert(RelinkPlugins.hostIds(loader).contains(PluginDescription.Id("keepassxc")), RelinkPlugins.hostIds(loader).keys)
+    assertEquals(
+      RelinkPlugins.hostIds(loader).get(PluginDescription.Id("archive-org")),
+      Some("this Histmersion (a first-party plugin)")
+    )
+    assert(
+      RelinkPlugins.hostIds(loader).contains(PluginDescription.Id("keepassxc")),
+      RelinkPlugins.hostIds(loader).keys
+    )
     // the open-access indexes (D4), and the former id their settings are still read under
     assert(
       Set("oa-unpaywall", "oa-core", "oa-openalex", "oa-landing")
@@ -159,7 +177,10 @@ class PluginToolSuite extends munit.FunSuite:
         .subsetOf(RelinkPlugins.hostIds(loader).keySet)
     )
     assert(
-      RelinkPlugins.hostIds(loader).get(PluginDescription.Id("oa-index")).exists(_.contains("former first-party plugin")),
+      RelinkPlugins
+        .hostIds(loader)
+        .get(PluginDescription.Id("oa-index"))
+        .exists(_.contains("former first-party plugin")),
       RelinkPlugins.hostIds(loader)
     )
 
@@ -210,12 +231,21 @@ class PluginToolSuite extends munit.FunSuite:
 
   tmp.test("plugin-set jar: written, found on a class path, the digest over the jars' names and checksums"): d =>
     val set =
-      PluginKit.pluginSet(List(RelinkPlugins.describe(hello, loader)), PluginSet.SpiVersion(Spi.Version), PluginSet.Mode("native"), Some(PluginSet.Kit("0.1.0 (abc)")), None)
+      PluginKit.pluginSet(
+        List(RelinkPlugins.describe(hello, loader)),
+        PluginSet.SpiVersion(Spi.Version),
+        PluginSet.Mode("native"),
+        Some(PluginSet.Kit("0.1.0 (abc)")),
+        None
+      )
     val jar = d.resolve("plugin-set.jar")
     RelinkPlugins.writePluginSet(jar, set)
     val found = PluginSetResource.load(URLClassLoader(Array(jar.toUri.toURL), null))
     assertEquals(found, Right(Some(set)))
-    assertEquals(set.digest, PluginKit.digest(List(PluginJar.File(hello.getFileName.toString) -> RelinkPlugins.sha256(hello))))
+    assertEquals(
+      set.digest,
+      PluginKit.digest(List(PluginJar.File(hello.getFileName.toString) -> RelinkPlugins.sha256(hello)))
+    )
     // its own native-image metadata registers the resource, as a plugin jar's does
     val jf = JarFile(jar.toFile)
     try
@@ -232,7 +262,12 @@ class PluginToolSuite extends munit.FunSuite:
     val kit = kitWith(d, Map("a.jar" -> Map("a/A.class" -> Array[Byte](1))))
     Files.writeString(kit.resolve("main-class"), "com.histmersion.server.histmersionServer\n")
     Files.writeString(kit.resolve("kit.json"), "{}")
-    val m = RelinkPlugins.kitManifest(kit, PluginKit.KitManifest.Version("0.1.0"), Some(PluginKit.KitManifest.Commit("abc")), PluginKit.KitManifest.Graalvm("25.0.4.1.1"))
+    val m = RelinkPlugins.kitManifest(
+      kit,
+      PluginKit.KitManifest.Version("0.1.0"),
+      Some(PluginKit.KitManifest.Commit("abc")),
+      PluginKit.KitManifest.Graalvm("25.0.4.1.1")
+    )
     assertEquals(m.files.map(_.file), List("classpath", "lib/a.jar", "main-class"))
     assertEquals(
       m.files.find(_.file.value == "lib/a.jar").map(_.sha256.value: String),
@@ -242,7 +277,8 @@ class PluginToolSuite extends munit.FunSuite:
       (m.mainClass, m.graalvm, m.spiVersion),
       ("com.histmersion.server.histmersionServer", "25.0.4.1.1", Spi.Version)
     )
-    val actual = m.files.map(f => f.file -> Sha256.applyUnsafe(RelinkPlugins.sha256(kit.resolve(f.file.value)).value)).toMap
+    val actual =
+      m.files.map(f => f.file -> Sha256.applyUnsafe(RelinkPlugins.sha256(kit.resolve(f.file.value)).value)).toMap
     assertEquals(PluginKit.verifyKit(m.files, actual), Nil)
 
   test("relink exit boundary preserves JSON, usage and failure channels") {
@@ -250,7 +286,12 @@ class PluginToolSuite extends munit.FunSuite:
     val err = List.newBuilder[String]
     val emit: String => Unit = s => { out += s; () }
     val reject: String => Unit = s => { err += s; () }
-    assertEquals(RelinkPlugins.exitCode(List(RelinkPlugins.Argument("describe"), RelinkPlugins.Argument(hello.toString)))(using consoleFor(emit, reject)), 0)
+    assertEquals(
+      RelinkPlugins.exitCode(List(RelinkPlugins.Argument("describe"), RelinkPlugins.Argument(hello.toString)))(using
+        consoleFor(emit, reject)
+      ),
+      0
+    )
     assertEquals(out.result(), List(PluginKit.renderJars(List(RelinkPlugins.describe(hello, loader)))))
     assertEquals(err.result(), Nil)
     out.clear()
@@ -258,7 +299,12 @@ class PluginToolSuite extends munit.FunSuite:
     assertEquals(out.result(), Nil)
     assert(err.result().head.startsWith("usage:"))
     err.clear()
-    assertEquals(RelinkPlugins.exitCode(List(RelinkPlugins.Argument("describe"), RelinkPlugins.Argument(hello.toString)))(using consoleFor(_ => throw new IllegalArgumentException("sink failed"), reject)), 3)
+    assertEquals(
+      RelinkPlugins.exitCode(List(RelinkPlugins.Argument("describe"), RelinkPlugins.Argument(hello.toString)))(using
+        consoleFor(_ => throw new IllegalArgumentException("sink failed"), reject)
+      ),
+      3
+    )
     assertEquals(err.result(), List("pluginTool: IllegalArgumentException: sink failed"))
   }
 
@@ -268,7 +314,19 @@ class PluginToolSuite extends munit.FunSuite:
     val record = d.resolve("record.json")
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    assertEquals(RelinkPlugins.exitCode(List(RelinkPlugins.Argument("plugin-set"), RelinkPlugins.Argument(jar.toString), RelinkPlugins.Argument(record.toString), RelinkPlugins.Argument("jvm"), RelinkPlugins.Argument(kit.toString), RelinkPlugins.Argument(hello.toString)))(using consoleFor(s => { out += s; () }, s => { err += s; () })), 0)
+    assertEquals(
+      RelinkPlugins.exitCode(
+        List(
+          RelinkPlugins.Argument("plugin-set"),
+          RelinkPlugins.Argument(jar.toString),
+          RelinkPlugins.Argument(record.toString),
+          RelinkPlugins.Argument("jvm"),
+          RelinkPlugins.Argument(kit.toString),
+          RelinkPlugins.Argument(hello.toString)
+        )
+      )(using consoleFor(s => { out += s; () }, s => { err += s; () })),
+      0
+    )
     val expected = PluginKit.digest(List(PluginJar.File(hello.getFileName.toString) -> RelinkPlugins.sha256(hello)))
     assertEquals(out.result(), List(expected))
     assertEquals(err.result(), Nil)

@@ -10,8 +10,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   * the same on demand, and `--fetch` adds the network sources in `fetchSources` (comma-separated: gazetteer importers,
   * `land`, `periodo`).
   */
-final case class InitConfig(auto: InitConfig.Auto, dataDir: InitConfig.DataDir, fetchSources: InitConfig.FetchSources) derives ConfigReader:
-  def sources: List[InitConfig.FetchSource] = Option(fetchSources.value).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct.map(InitConfig.FetchSource(_))
+final case class InitConfig(auto: InitConfig.Auto, dataDir: InitConfig.DataDir, fetchSources: InitConfig.FetchSources)
+    derives ConfigReader:
+  def sources: List[InitConfig.FetchSource] = Option(fetchSources.value).toList
+    .flatMap(_.split(",").toList)
+    .map(_.trim)
+    .filter(_.nonEmpty)
+    .distinct
+    .map(InitConfig.FetchSource(_))
 
 object InitConfig:
   type FetchSource = FetchSource.T

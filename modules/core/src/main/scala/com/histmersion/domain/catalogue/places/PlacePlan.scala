@@ -62,8 +62,14 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
 
   override def notices: List[PairQuestions.InfoLine] =
     renames.toList.map { (p, ours, kept) =>
-      if kept then PairQuestions.InfoLine(s"place $ours: renamed ${p.id} in the bundle, but here ${p.id} is another place — it keeps its id")
-      else PairQuestions.InfoLine(s"place $ours: renamed ${p.id} in the bundle — renamed here too (the old id stays an alias)")
+      if kept then
+        PairQuestions.InfoLine(
+          s"place $ours: renamed ${p.id} in the bundle, but here ${p.id} is another place — it keeps its id"
+        )
+      else
+        PairQuestions.InfoLine(
+          s"place $ours: renamed ${p.id} in the bundle — renamed here too (the old id stays an alias)"
+        )
     }
 
   override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
@@ -136,7 +142,6 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
 object PlacePlan:
   private given CanEqual[UUID, UUID] = CanEqual.derived
 
-
   /** Events and places point at places by id: a bundle place matched to one here under another id is pointed at under
     * that id. Pure.
     */
@@ -183,11 +188,28 @@ object PlacePlan:
       l: Bundle.Place,
       r: Bundle.Place
   ): Bundle.Place =
-    l.modify(
-      _.names).setTo((l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
-        .sortBy(n => (n.name.value, n.lang.fold("")(_.value)))).modify(_.relations).setTo((l.relations ++ r.relations.filterNot(x =>
-        l.relations.exists(y => y.parentId == x.parentId && y.kind == x.kind)
-      ))
-        .sortBy(x => (x.parentId.value, x.kind.value))).modify(_.links).setTo((l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
-          .sortBy(x => (x.scheme.value, x.externalId.value))).modify(_.types).setTo((l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel.value)).modify(_.source).setTo(l.source.orElse(r.source)).modify(_.properties).setTo(l.properties.orElse(r.properties)).modify(_.rev).setTo(Bundle.Place.Rev("")
-    )
+    l.modify(_.names)
+      .setTo(
+        (l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
+          .sortBy(n => (n.name.value, n.lang.fold("")(_.value)))
+      )
+      .modify(_.relations)
+      .setTo(
+        (l.relations ++ r.relations.filterNot(x =>
+          l.relations.exists(y => y.parentId == x.parentId && y.kind == x.kind)
+        ))
+          .sortBy(x => (x.parentId.value, x.kind.value))
+      )
+      .modify(_.links)
+      .setTo(
+        (l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
+          .sortBy(x => (x.scheme.value, x.externalId.value))
+      )
+      .modify(_.types)
+      .setTo((l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel.value))
+      .modify(_.source)
+      .setTo(l.source.orElse(r.source))
+      .modify(_.properties)
+      .setTo(l.properties.orElse(r.properties))
+      .modify(_.rev)
+      .setTo(Bundle.Place.Rev(""))

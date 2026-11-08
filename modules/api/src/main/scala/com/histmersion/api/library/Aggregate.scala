@@ -23,7 +23,7 @@ object Aggregate:
   def finer(size: Width): Width = size match
     case s if (s).value > 1000 => Width((1000).toLong)
     case s if (s).value > 100  => Width((100).toLong)
-    case _             => Width((10).toLong)
+    case _                     => Width((10).toLong)
 
   def buckets(from: Year, to: Year, size: Width): List[(Year, Year)] =
     require((size).value > 0, s"bucket size must be positive, got $size")
@@ -79,7 +79,11 @@ object Aggregate:
     counting match
       case Counting.Overlap =>
         buckets(from, to, size).map { (bStart, bEnd) =>
-          TimeBucket(TimeBucket.Start(bStart.value), TimeBucket.End(bEnd.value), TimeBucket.Count(spans.count((s, e) => s <= bEnd && e >= bStart)))
+          TimeBucket(
+            TimeBucket.Start(bStart.value),
+            TimeBucket.End(bEnd.value),
+            TimeBucket.Count(spans.count((s, e) => s <= bEnd && e >= bStart))
+          )
         }
       case Counting.Starts =>
         val (lo, hi) = order(from, to)
@@ -93,7 +97,11 @@ object Aggregate:
           .mapValues(_.size)
           .toMap
         buckets(from, to, size).map { (bStart, bEnd) =>
-          TimeBucket(TimeBucket.Start(bStart.value), TimeBucket.End(bEnd.value), TimeBucket.Count(byBucket.getOrElse(bStart.value, 0)))
+          TimeBucket(
+            TimeBucket.Start(bStart.value),
+            TimeBucket.End(bEnd.value),
+            TimeBucket.Count(byBucket.getOrElse(bStart.value, 0))
+          )
         }
 
   def span(row: Period.Row): Option[(Year, Year)] = (row.periodStart, row.periodEnd) match

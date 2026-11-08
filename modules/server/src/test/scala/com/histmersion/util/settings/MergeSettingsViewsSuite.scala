@@ -16,6 +16,9 @@ class MergeSettingsViewsSuite extends munit.FunSuite:
       (s.autoMerge.value, s.newAtMost.value, s.minhashSize.value, s.findingNearAtLeast.value, s.findingWithinKm.value),
       (c.autoMerge.value, c.newAtMost.value, c.minhashSize.value, c.findingNearAtLeast.value, c.findingWithinKm.value)
     )
-    assertEquals((s.placeWithinKm.value, s.placeOverlapAtLeast.value), (c.placeWithinKm.value, c.placeOverlapAtLeast.value))
+    assertEquals(
+      (s.placeWithinKm.value, s.placeOverlapAtLeast.value),
+      (c.placeWithinKm.value, c.placeOverlapAtLeast.value)
+    )
     assertEquals(s.weights.productIterator.toList, c.weights.productIterator.toList)
     assertEquals(s.weights.productElementNames.toList, c.weights.productElementNames.toList)

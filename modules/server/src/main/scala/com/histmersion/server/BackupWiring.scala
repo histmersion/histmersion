@@ -14,7 +14,8 @@ object BackupWiring:
       () => deps.cfg,
       deps.storage,
       Processes(),
-      () => StorageLocations.searchPath(
+      () =>
+        StorageLocations.searchPath(
           deps.environment.get(Environment.VariablesKey("PATH"))
         ),
       deps.transactor,

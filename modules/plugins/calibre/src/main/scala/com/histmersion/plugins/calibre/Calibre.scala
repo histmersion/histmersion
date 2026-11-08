@@ -35,7 +35,10 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
-  def search(query: CollectionQuery.Text, limit: Calibre.SearchLimit = Calibre.SearchLimit(20)): Either[Calibre.Problem, List[Calibre.Book]] =
+  def search(
+      query: CollectionQuery.Text,
+      limit: Calibre.SearchLimit = Calibre.SearchLimit(20)
+  ): Either[Calibre.Problem, List[Calibre.Book]] =
     viaCalibredb(Some(query), limit.value).orElse(viaSqlite(Some(query), None, limit.value))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
@@ -73,7 +76,10 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
         s"(b.title LIKE $like OR b.author_sort LIKE $like)"
     val sql = Calibre.sqliteQuery(Calibre.SqlWhere(where), Calibre.SqliteQueryLimit(limit))
     shell
-      .run(Calibre.argv(cfg.sqlite.value, "-readonly", "-json", Path.of(cfg.library.value, "metadata.db").toString, sql.value))
+      .run(
+        Calibre
+          .argv(cfg.sqlite.value, "-readonly", "-json", Path.of(cfg.library.value, "metadata.db").toString, sql.value)
+      )
       .flatMap(Calibre.parseSqliteJson(_, cfg.library))
 
   // ── writing (push) ──────────────────────────────────────────────────────────────────────────
@@ -90,7 +96,9 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
       _ <- Either.cond(!guiRunning, (), GuiRunning)
       _ <- Either.cond(files.isFile(file).value, (), Calibre.Problem(s"no such file: $file"))
       out <- shell.run(addCmd(file, meta))
-      id <- Calibre.parseAddedId(out).toRight(Calibre.Problem(s"calibredb add did not report a new id: ${out.value.trim.take(200)}"))
+      id <- Calibre
+        .parseAddedId(out)
+        .toRight(Calibre.Problem(s"calibredb add did not report a new id: ${out.value.trim.take(200)}"))
       _ <- setMetadata(id, meta)
     yield id
 
@@ -124,7 +132,10 @@ final class Calibre(cfg: Calibre.Library, shell: Shell)(using files: LocalFiles)
         case UpdateOutcome.Change(cs) if apply.value =>
           e.copy(outcome =
             write(Calibre.Book.Id(e.calibreId.value), cs)
-              .fold(why => UpdateOutcome.Failed(cs, UpdateOutcome.Failed.Reason(why.value)), _ => UpdateOutcome.Applied(cs))
+              .fold(
+                why => UpdateOutcome.Failed(cs, UpdateOutcome.Failed.Reason(why.value)),
+                _ => UpdateOutcome.Applied(cs)
+              )
           )
         case _ => e
     }
@@ -233,7 +244,8 @@ object Calibre:
   // ── import: citekeys and where they land ─────────────────────────────────────────────────────
 
   /** The formats `calibre push --replace` puts into an entry: the two the corpus imports. */
-  val ReplaceableFormats: List[CollectionFile.Format] = List(CollectionFile.Format("pdf"), CollectionFile.Format("epub"))
+  val ReplaceableFormats: List[CollectionFile.Format] =
+    List(CollectionFile.Format("pdf"), CollectionFile.Format("epub"))
 
   def formatOf(file: Path): Either[Problem, CollectionFile.Format] =
     val ext = CollectionFile.Format(file.getFileName.toString.reverse.takeWhile(_ != '.').reverse.toLowerCase)
@@ -246,7 +258,12 @@ object Calibre:
   /** `calibredb add_format` replaces the entry's existing format of the same type (that is its default;
     * `--dont-replace` would be the opposite).
     */
-  def replaceFormatCmd(calibredb: Settings.ExecutablePath, libArgs: List[Argument], id: Book.Id, file: Path): List[Argument] =
+  def replaceFormatCmd(
+      calibredb: Settings.ExecutablePath,
+      libArgs: List[Argument],
+      id: Book.Id,
+      file: Path
+  ): List[Argument] =
     argv(calibredb.value, "add_format") ++ libArgs ++ argv(id.toString, file.toString)
 
   /** `calibredb add` prints `Added book ids: 1693`. */
@@ -300,7 +317,9 @@ object Calibre:
             Change.To(identifiersValue(ids))
           )
         ),
-        Option.when(meta.tags.nonEmpty && meta.tags.map(_.value).distinct.sorted != current.tags.map(_.value).distinct.sorted)(
+        Option.when(
+          meta.tags.nonEmpty && meta.tags.map(_.value).distinct.sorted != current.tags.map(_.value).distinct.sorted
+        )(
           Change(
             Field.Tags,
             Change.From(current.tags.mkString(",")),
@@ -309,14 +328,10 @@ object Calibre:
         ),
         meta.publisher
           .filter(p => empty(current.publisher.map(_.value)) && !isBlank(p.value))
-          .map(p =>
-            Change(Field.Publisher, Change.From(current.publisher.fold("")(_.value)), Change.To(p.value))
-          ),
+          .map(p => Change(Field.Publisher, Change.From(current.publisher.fold("")(_.value)), Change.To(p.value))),
         meta.summary
           .filter(d => empty(current.comments.map(_.value)) && !isBlank(d.value))
-          .map(d =>
-            Change(Field.Comments, Change.From(current.comments.fold("")(_.value)), Change.To(d.value))
-          )
+          .map(d => Change(Field.Comments, Change.From(current.comments.fold("")(_.value)), Change.To(d.value)))
       ).flatten
     }
 
@@ -335,11 +350,23 @@ object Calibre:
     * only in case is left as Calibre has it. A value with a comma cannot cross `--field identifiers:` (the comma
     * separates the pairs), so it is left out.
     */
-  def mergeIdentifiers(current: Map[Book.IdentifiersKey, Book.IdentifiersValue], doi: Option[Push.Doi], isbn: Option[Push.Isbn]): Map[Book.IdentifiersKey, Book.IdentifiersValue] =
+  def mergeIdentifiers(
+      current: Map[Book.IdentifiersKey, Book.IdentifiersValue],
+      doi: Option[Push.Doi],
+      isbn: Option[Push.Isbn]
+  ): Map[Book.IdentifiersKey, Book.IdentifiersValue] =
     def ok(v: String) = v.trim.nonEmpty && !v.contains(",")
     val sameDoi = (d: String) => current.get(Book.IdentifiersKey("doi")).exists(_.value.trim.equalsIgnoreCase(d))
-    current ++ doi.map(_.value.trim).filter(ok).filterNot(sameDoi).map(d => Book.IdentifiersKey("doi") -> Book.IdentifiersValue(d)) ++
-      isbn.map(_.value.trim).filter(ok).filterNot(_ => current.get(Book.IdentifiersKey("isbn")).exists(_.value.trim.nonEmpty)).map(i => Book.IdentifiersKey("isbn") -> Book.IdentifiersValue(i))
+    current ++ doi
+      .map(_.value.trim)
+      .filter(ok)
+      .filterNot(sameDoi)
+      .map(d => Book.IdentifiersKey("doi") -> Book.IdentifiersValue(d)) ++
+      isbn
+        .map(_.value.trim)
+        .filter(ok)
+        .filterNot(_ => current.get(Book.IdentifiersKey("isbn")).exists(_.value.trim.nonEmpty))
+        .map(i => Book.IdentifiersKey("isbn") -> Book.IdentifiersValue(i))
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
   private def identifiersValue(ids: Map[Book.IdentifiersKey, Book.IdentifiersValue]): String =
@@ -402,7 +429,17 @@ object Calibre:
 
   /** The fields `calibre set` may write. Formats, covers and the file itself are Calibre's business. */
   val SettableFields: List[Field.Name] =
-    List(Field.Name("title"), Field.Name("authors"), Field.Name("publisher"), Field.Name("pubdate"), Field.Name("languages"), Field.Name("identifiers"), Field.Name("tags"), Field.Name("comments"), Field.Name("series"))
+    List(
+      Field.Name("title"),
+      Field.Name("authors"),
+      Field.Name("publisher"),
+      Field.Name("pubdate"),
+      Field.Name("languages"),
+      Field.Name("identifiers"),
+      Field.Name("tags"),
+      Field.Name("comments"),
+      Field.Name("series")
+    )
 
   /** `calibredb set_metadata` for [[Calibre.set]], or why it is refused: an unknown field, nothing to set, or a
     * blank/"Unknown" title or author (the metadata guard).
@@ -422,15 +459,26 @@ object Calibre:
         (),
         Problem(s"cannot set ${unknown.mkString(", ")} — settable: ${SettableFields.mkString(", ")}")
       )
-      _ <- value(Field.Name("title")).fold[Either[Problem, Unit]](Right(()))(t => Either.cond(!isBlank(t.value), (), Problem("refusing a blank or Unknown title")))
+      _ <- value(Field.Name("title")).fold[Either[Problem, Unit]](Right(()))(t =>
+        Either.cond(!isBlank(t.value), (), Problem("refusing a blank or Unknown title"))
+      )
       _ <- value(Field.Name("authors")).fold[Either[Problem, Unit]](Right(()))(a =>
-        Either.cond(a.value.split("&").map(_.trim).forall(x => !isBlank(x)), (), Problem("refusing a blank or Unknown author"))
+        Either.cond(
+          a.value.split("&").map(_.trim).forall(x => !isBlank(x)),
+          (),
+          Problem("refusing a blank or Unknown author")
+        )
       )
     yield argv(calibredb.value, "set_metadata") ++ libArgs ++ argv(id.toString) ++
       fields.flatMap((k, v) => argv("--field", s"$k:$v"))
 
   def parseAddedId(out: Processes.Result.Out): Option[Book.Id] =
-    AddedIds.findFirstMatchIn(out.value).map(_.group(1)).flatMap(_.split(",").headOption).flatMap(_.trim.toIntOption).map(n => Book.Id(n))
+    AddedIds
+      .findFirstMatchIn(out.value)
+      .map(_.group(1))
+      .flatMap(_.split(",").headOption)
+      .flatMap(_.trim.toIntOption)
+      .map(n => Book.Id(n))
 
   /** `calibredb list --for-machine`: authors as `A & B`, tags/formats as arrays, identifiers as an object, formats as
     * ABSOLUTE paths.
@@ -449,13 +497,46 @@ object Calibre:
               id = Book.Id(id),
               title = Book.Title(c.downField("title").as[String].getOrElse("")),
               authors = splitAuthors(c.downField("authors").as[String].getOrElse("")),
-              pubdate = (c.downField("pubdate").as[String].toOption).map(refactorValue14 => Book.Pubdate(refactorValue14)),
-              publisher = (c.downField("publisher").as[String].toOption.filter(_.nonEmpty)).map(refactorValue15 => Book.Publisher(refactorValue15)),
-              tags = (c.downField("tags").as[List[String]].getOrElse(Nil)).map(refactorValue16 => Book.Tags(refactorValue16)),
-              comments = (c.downField("comments").as[String].toOption.filter(_.nonEmpty)).map(refactorValue17 => Book.Comments(refactorValue17)),
-              identifiers = (c.downField("identifiers").as[Map[String, String]].getOrElse(Map.empty)).iterator.map { case (refactorKey, refactorItem) => (Book.IdentifiersKey(refactorKey), Book.IdentifiersValue(refactorItem)) }.toMap,
-              formats = (c.downField("formats").as[List[String]].getOrElse(Nil)).map(refactorValue18 => Book.Formats(refactorValue18)),
-              cover = (c.downField("cover").as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue19 => Book.Cover(refactorValue19))
+              pubdate =
+                (c.downField("pubdate").as[String].toOption).map(refactorValue14 => Book.Pubdate(refactorValue14)),
+              publisher = (c
+                .downField("publisher")
+                .as[String]
+                .toOption
+                .filter(_.nonEmpty))
+                .map(refactorValue15 => Book.Publisher(refactorValue15)),
+              tags = (c
+                .downField("tags")
+                .as[List[String]]
+                .getOrElse(Nil))
+                .map(refactorValue16 => Book.Tags(refactorValue16)),
+              comments = (c
+                .downField("comments")
+                .as[String]
+                .toOption
+                .filter(_.nonEmpty))
+                .map(refactorValue17 => Book.Comments(refactorValue17)),
+              identifiers = (c
+                .downField("identifiers")
+                .as[Map[String, String]]
+                .getOrElse(Map.empty))
+                .iterator
+                .map { case (refactorKey, refactorItem) =>
+                  (Book.IdentifiersKey(refactorKey), Book.IdentifiersValue(refactorItem))
+                }
+                .toMap,
+              formats = (c
+                .downField("formats")
+                .as[List[String]]
+                .getOrElse(Nil))
+                .map(refactorValue18 => Book.Formats(refactorValue18)),
+              cover = (c
+                .downField("cover")
+                .as[String]
+                .toOption
+                .map(_.trim)
+                .filter(_.nonEmpty))
+                .map(refactorValue19 => Book.Cover(refactorValue19))
             )
           }
         })
@@ -516,7 +597,8 @@ object Calibre:
     * authors/tags/publishers/identifiers, and `data` for the files).
     */
   def sqliteQuery(where: SqlWhere, limit: SqliteQueryLimit): SqlQuery =
-    SqlQuery(s"""SELECT b.id AS id, b.title AS title,
+    SqlQuery(
+      s"""SELECT b.id AS id, b.title AS title,
        | (SELECT group_concat(a.name, ' & ') FROM authors a
        |    JOIN books_authors_link l ON l.author = a.id WHERE l.book = b.id) AS authors,
        | b.pubdate AS pubdate,
@@ -530,7 +612,8 @@ object Calibre:
        |    FROM data d WHERE d.book = b.id) AS formats,
        | CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover
        |FROM books b WHERE $where ORDER BY b.id DESC LIMIT ${limit.value.max(1)}""".stripMargin
-      .replace("\n", " "))
+        .replace("\n", " ")
+    )
 
   /** The PURE half of `histmersion calibre audit`: compare every linked entry with its record. */
   object Audit:
@@ -574,17 +657,28 @@ object Calibre:
         Option.when(junk(b))(AuditIssue.Junk),
         Option.when(!junk(b) && !titleMatches(r.title, b.title))(AuditIssue.Title),
         Option.when(!junk(b) && !authorsMatch(r.authors, b.authors))(AuditIssue.Authors),
-        Option.when(r.year.isDefined && year(b).isDefined && r.year.map(_.value) != year(b).map(_.value))(AuditIssue.Year)
+        Option
+          .when(r.year.isDefined && year(b).isDefined && r.year.map(_.value) != year(b).map(_.value))(AuditIssue.Year)
       ).flatten
 
     def audit(records: List[AuditRecord], books: Map[Book.Id, Book]): List[AuditFinding] =
       records.groupBy(_.calibreId).toList.sortBy(_._1).flatMap { (id, rs) =>
         val keys = rs.map(_.citekey).sorted.map(k => AuditFinding.Citekeys(k.value))
         books.get(Book.Id(id.value)) match
-          case None    => List(AuditFinding(AuditFinding.CalibreId(id.value), keys, List(AuditIssue.Missing), None, rs.minBy(_.citekey.value)))
+          case None =>
+            List(
+              AuditFinding(
+                AuditFinding.CalibreId(id.value),
+                keys,
+                List(AuditIssue.Missing),
+                None,
+                rs.minBy(_.citekey.value)
+              )
+            )
           case Some(b) =>
             val (best, found) = rs.map(r => r -> issues(r, b)).minBy((r, is) => (is.size, r.citekey.value))
-            if found.isEmpty then Nil else List(AuditFinding(AuditFinding.CalibreId(id.value), keys, found, Some(b), best))
+            if found.isEmpty then Nil
+            else List(AuditFinding(AuditFinding.CalibreId(id.value), keys, found, Some(b), best))
       }
 
   /** One book as Calibre holds it — the shape both readers below produce (`calibredb list --for-machine` and the
@@ -614,8 +708,10 @@ object Calibre:
       .flatMap(_.toIntOption)
       .filter(_ >= Book.FirstYear.value)
       .map(y => Book.Year(y))
-    def doi: Option[Push.Doi] = (identifiers.get(Book.IdentifiersKey("doi"))).map(refactorValue24 => Push.Doi((refactorValue24).value))
-    def isbn: Option[Push.Isbn] = (identifiers.get(Book.IdentifiersKey("isbn"))).map(refactorValue25 => Push.Isbn((refactorValue25).value))
+    def doi: Option[Push.Doi] =
+      (identifiers.get(Book.IdentifiersKey("doi"))).map(refactorValue24 => Push.Doi((refactorValue24).value))
+    def isbn: Option[Push.Isbn] =
+      (identifiers.get(Book.IdentifiersKey("isbn"))).map(refactorValue25 => Push.Isbn((refactorValue25).value))
 
     /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
     def pick(format: Option[CollectionFile.Format]): Option[Book.Formats] =
@@ -685,7 +781,12 @@ object Calibre:
     * expanded), the `calibredb` and `sqlite3` to run, and the process whose presence means the Calibre GUI holds the
     * library.
     */
-  final case class Library(library: Library.Value, calibredb: Settings.ExecutablePath, sqlite: Settings.Sqlite, guiProcess: Shell.ProcessMatch)
+  final case class Library(
+      library: Library.Value,
+      calibredb: Settings.ExecutablePath,
+      sqlite: Settings.Sqlite,
+      guiProcess: Shell.ProcessMatch
+  )
 
   object Library:
     type Value = Value.T
@@ -745,7 +846,9 @@ object Calibre:
     /** The settings as the library is reached, `~` read against `home`, a bare `calibredb` found on `searchPath` or in
       * Calibre's install directories (kept bare when it is in none, so the failure names it as configured).
       */
-    def library(home: Option[Plugin.Context.EnvResult], searchPath: Option[Plugin.Context.EnvResult] = None)(using files: LocalFiles): Library =
+    def library(home: Option[Plugin.Context.EnvResult], searchPath: Option[Plugin.Context.EnvResult] = None)(using
+        files: LocalFiles
+    ): Library =
       library(home, searchPath, path => files.isExecutable(path).value)
 
     def library(
@@ -792,9 +895,16 @@ object Calibre:
     /** `name` as configured when it holds a `/`; otherwise the first executable `name` on `searchPath`, then in
       * [[InstallDirs]].
       */
-    def locate(name: Calibredb, home: Option[Plugin.Context.EnvResult], searchPath: Option[Plugin.Context.EnvResult], executable: Path => Boolean): ExecutablePath =
+    def locate(
+        name: Calibredb,
+        home: Option[Plugin.Context.EnvResult],
+        searchPath: Option[Plugin.Context.EnvResult],
+        executable: Path => Boolean
+    ): ExecutablePath =
       if name.value.contains('/') || name.value.isBlank then ExecutablePath(name.value)
       else
         val dirs = searchPath.toList.flatMap(_.value.split(':').toList).filter(_.nonEmpty) ++
-          InstallDirs.flatMap(d => if d.value.startsWith("~/") then home.map(_.value + d.value.drop(1)).toList else List(d.value))
+          InstallDirs.flatMap(d =>
+            if d.value.startsWith("~/") then home.map(_.value + d.value.drop(1)).toList else List(d.value)
+          )
         ExecutablePath(dirs.iterator.map(d => Path.of(d, name.value)).find(executable).fold(name.value)(_.toString))

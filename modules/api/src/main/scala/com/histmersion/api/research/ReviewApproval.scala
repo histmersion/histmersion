@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class ReviewApproval(id: ReviewApproval.Id, kind: ReviewApproval.Kind) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class ReviewApproval(id: ReviewApproval.Id, kind: ReviewApproval.Kind)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ReviewApproval:
   type Id = Id.T

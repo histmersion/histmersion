@@ -21,5 +21,4 @@ object MapTone:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): MapTone = if s.value.trim.equalsIgnoreCase("dark") then Dark else Light

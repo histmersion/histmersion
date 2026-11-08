@@ -49,7 +49,9 @@ final class EventSourceReferrer extends SourceReferrer:
       .query[(String, String)]
       .run()
       .toList
-      .map((e, a) => DeleteBlocker(DeleteBlocker.Kind.EventParticipant, DeleteBlocker.Id(e), Some(DeleteBlocker.Title(a))))
+      .map((e, a) =>
+        DeleteBlocker(DeleteBlocker.Kind.EventParticipant, DeleteBlocker.Id(e), Some(DeleteBlocker.Title(a)))
+      )
     val datings = sql"SELECT count(*)::int FROM event_datings WHERE citekey = ANY($keys::text[])"
       .query[Int]
       .run()
@@ -57,7 +59,9 @@ final class EventSourceReferrer extends SourceReferrer:
       .getOrElse(0)
     DeleteReport(
       blockers = events ++ relations ++ participants,
-      counts = List(DeletePart.EventDatings -> datings).collect { case (p, rows) if rows > 0 => DeleteCount(p, DeleteCount.Rows(rows)) }
+      counts = List(DeletePart.EventDatings -> datings).collect {
+        case (p, rows) if rows > 0 => DeleteCount(p, DeleteCount.Rows(rows))
+      }
     )
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =

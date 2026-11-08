@@ -10,11 +10,11 @@ import com.histmersion.api.library.SourcesMarkdown
 import chimp.server.*
 import com.histmersion.api.{Api, StrictJson, Write}
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.domain.library.citations.{CitationService, CitationsControllers}
+import com.histmersion.domain.library.citations.{CitationsControllers, CitationService}
 import com.histmersion.domain.library.findings.FindingsControllers
 import com.histmersion.domain.library.labels.LabelsControllers
 import com.histmersion.domain.library.search.SearchControllers
-import com.histmersion.domain.library.sources.{SourceService, SourcesControllers}
+import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.util.data.mirror.Frontmatter
 import com.histmersion.util.mcp.McpOut
@@ -118,7 +118,11 @@ object LibraryTools:
         )
         .input[FacetsInput]
         .handle { in =>
-          labels.facets(Facet.Field.Wire(in.field.value), in.prefix.map(p => FilterSql.FacetPrefix(p.value)), in.toFilter) match
+          labels.facets(
+            Facet.Field.Wire(in.field.value),
+            in.prefix.map(p => FilterSql.FacetPrefix(p.value)),
+            in.toFilter
+          ) match
             case Right(fs) => ToolResult.text(SearchMarkdown.facets(in.field, fs.toVector))
             case Left(e)   => McpOut.error(e)
         }
@@ -140,7 +144,14 @@ object LibraryTools:
         )
         .input[GetSourceInput]
         .handle { in =>
-          sources.markdown(in.citekey, SourcesControllers.MarkdownFullText(in.fullText.value), in.section, in.heading, in.offset, in.chars) match
+          sources.markdown(
+            in.citekey,
+            SourcesControllers.MarkdownFullText(in.fullText.value),
+            in.section,
+            in.heading,
+            in.offset,
+            in.chars
+          ) match
             case Right(md) => ToolResult.text(md.value)
             case Left(e)   => ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
         }
@@ -260,7 +271,10 @@ object LibraryTools:
               ToolResult.text(
                 Aliases
                   .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
-                    Aliases.Note(SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
+                    Aliases.Note(
+                      SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
+                        .notice(sw.formatting)
+                    )
                   )
                   .value
               )
@@ -290,7 +304,10 @@ object LibraryTools:
               ToolResult.text(
                 Aliases
                   .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
-                    Aliases.Note(SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting))
+                    Aliases.Note(
+                      SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
+                        .notice(sw.formatting)
+                    )
                   )
                   .value
               )
@@ -504,7 +521,7 @@ object LibraryTools:
   /** `passages` as Markdown, with the same wording for an unknown citekey as `get_source`. */
   def passagesMarkdown(sources: SourcesControllers, in: PassagesInput): String =
     sources.passages(Api.PassagesQuery(ApiCitekey(in.citekey.value), in.query, in.regex, in.limit, in.context)) match
-      case Right(r)                                       => PassagesMarkdown.render(r)
+      case Right(r)                                                       => PassagesMarkdown.render(r)
       case Left(e) if e.code.contains(Api.Error.Code(Write.CodeNotFound)) =>
         s"_No source '${in.citekey}' — find a citekey with search._"
       case Left(e) => McpOut.refusal(e)
@@ -591,7 +608,8 @@ object LibraryTools:
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
 
-  final case class NeighborsInput(citekey: Citekey, kinds: List[NeighborsInput.Kinds] = Nil) derives KindlingsCodecAsObject
+  final case class NeighborsInput(citekey: Citekey, kinds: List[NeighborsInput.Kinds] = Nil)
+      derives KindlingsCodecAsObject
   object NeighborsInput:
     type Kinds = Edge.Kind.Wire
     val Kinds: Edge.Kind.Wire.type = Edge.Kind.Wire
@@ -660,7 +678,8 @@ object LibraryTools:
       .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PatchSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchSourceInput]) // #813
 
-  final case class RenameSourceInput(citekey: Citekey, newCitekey: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject
+  final case class RenameSourceInput(citekey: Citekey, newCitekey: com.histmersion.api.library.Citekey)
+      derives KindlingsCodecAsObject
   object RenameSourceInput:
 
     given Schema[RenameSourceInput] = KindlingsSchema
@@ -669,8 +688,10 @@ object LibraryTools:
       .modify(_.citekey)(_.description("The source's current citekey"))
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
-  final case class ExportSourceInput(citekey: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
+  final case class ExportSourceInput(citekey: Citekey)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   /** The MCP spelling of [[com.histmersion.api.library.Filter]] for `histogram` — now the FULL filter shape (A2).
     * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1).

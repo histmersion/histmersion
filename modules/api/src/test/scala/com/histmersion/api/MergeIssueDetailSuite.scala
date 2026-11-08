@@ -100,7 +100,11 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     assertEquals(MergeIssue.Detail.describe(source(Nil)), List("\"Tin\"", "2001 · no DOI · current"))
     assertEquals(
       MergeIssue.Detail.side(source(List(AuthorName("A")))),
-      IssueSide(IssueSide.Label("ck2001_a"), U1, List(IssueSide.Lines("\"Tin\""), IssueSide.Lines("A · 2001 · no DOI · current")))
+      IssueSide(
+        IssueSide.Label("ck2001_a"),
+        U1,
+        List(IssueSide.Lines("\"Tin\""), IssueSide.Lines("A · 2001 · no DOI · current"))
+      )
     )
 
   test("a range reads none, always, or its two ends with … for an open one"):
@@ -116,7 +120,10 @@ class MergeIssueDetailSuite extends munit.FunSuite:
     assertEquals(MergeIssue.Detail.clip(Some("abcdef"), MergeIssue.Detail.ClipLength(4)), Some("abc…"))
 
   test("a source pair, field by field: the OCR body by its hash prefix"):
-    val fs = MergeIssue.Detail.sourceFields(source(List(AuthorName("A"))), source(List(AuthorName("A"), AuthorName("B"))).modify(_.bodySha256).setTo(None))
+    val fs = MergeIssue.Detail.sourceFields(
+      source(List(AuthorName("A"))),
+      source(List(AuthorName("A"), AuthorName("B"))).modify(_.bodySha256).setTo(None)
+    )
     assertEquals(
       fs.map(_.field),
       List(
@@ -134,10 +141,16 @@ class MergeIssueDetailSuite extends munit.FunSuite:
         "OCR body"
       )
     )
-    assertEquals(fs.find(_.field.value == "authors").get, IssueField(IssueField.Field("authors"), Some(IssueField.Left("A")), Some(IssueField.Right("A; B"))))
+    assertEquals(
+      fs.find(_.field.value == "authors").get,
+      IssueField(IssueField.Field("authors"), Some(IssueField.Left("A")), Some(IssueField.Right("A; B")))
+    )
     assertEquals(fs.find(_.field.value == "period").get.left, Some("-1650..…"))
     assertEquals(fs.find(_.field.value == "summary").get.left, Some("a summary"))
-    assertEquals(fs.find(_.field.value == "OCR body").get, IssueField(IssueField.Field("OCR body"), Some(IssueField.Left(s"sha256 ${"f" * 12}…")), None))
+    assertEquals(
+      fs.find(_.field.value == "OCR body").get,
+      IssueField(IssueField.Field("OCR body"), Some(IssueField.Left(s"sha256 ${"f" * 12}…")), None)
+    )
 
   test("an event pair: its dates, geometries and the span of its outer dates"):
     val d = MergeIssue.Detail.eventDetail(event(U1, Some(Bundle.Event.Geom("01"))), event(U2, None))
@@ -153,15 +166,28 @@ class MergeIssueDetailSuite extends munit.FunSuite:
         )
       )
     )
-    assertEquals(MergeIssue.Detail.eventSpan(event(U1, None).modify(_.notBefore).setTo(None).modify(_.notAfter).setTo(None)), None)
+    assertEquals(
+      MergeIssue.Detail.eventSpan(event(U1, None).modify(_.notBefore).setTo(None).modify(_.notAfter).setTo(None)),
+      None
+    )
 
   test("a place pair: its span and names, and both periods as spans"):
     val d = MergeIssue.Detail.placeDetail(
-      place(U1, Some(Bundle.Range(Some(Year(-2000)), Some(Year(-1600)))), List(Bundle.PlaceName.Name("Thera"), Bundle.PlaceName.Name("Santorini"))),
+      place(
+        U1,
+        Some(Bundle.Range(Some(Year(-2000)), Some(Year(-1600)))),
+        List(Bundle.PlaceName.Name("Thera"), Bundle.PlaceName.Name("Santorini"))
+      ),
       place(U2, None, Nil)
     )
-    assertEquals(d.fields.find(_.field.value == "span").get, IssueField(IssueField.Field("span"), Some(IssueField.Left("-2000..-1600")), Some(IssueField.Right("none"))))
-    assertEquals(d.fields.find(_.field.value == "names").get, IssueField(IssueField.Field("names"), Some(IssueField.Left("Thera; Santorini")), None))
+    assertEquals(
+      d.fields.find(_.field.value == "span").get,
+      IssueField(IssueField.Field("span"), Some(IssueField.Left("-2000..-1600")), Some(IssueField.Right("none")))
+    )
+    assertEquals(
+      d.fields.find(_.field.value == "names").get,
+      IssueField(IssueField.Field("names"), Some(IssueField.Left("Thera; Santorini")), None)
+    )
     assertEquals(d.place.flatMap(_.leftSpan), Some(IssueSpan(Some(Year(-2000)), Some(Year(-1600)))))
 
   test("an approved plan as one line; anything else as a JSON preview"):

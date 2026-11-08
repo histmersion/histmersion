@@ -57,7 +57,11 @@ class LpfTimeSuite extends munit.FunSuite:
       "several timespans → the widest span"
     )
     assertEquals(when("""{"start":"-300","end":"100"}"""), Some(Span(Some(Year(-300)), Some(Year(100)))))
-    assertEquals(when("""{"start":"100","end":"-300"}"""), Some(Span(Some(Year(-300)), Some(Year(100)))), "inverted: swapped")
+    assertEquals(
+      when("""{"start":"100","end":"-300"}"""),
+      Some(Span(Some(Year(-300)), Some(Year(100)))),
+      "inverted: swapped"
+    )
     assertEquals(when("\"-500\""), Some(Span(Some(Year(-500)), Some(Year(-500)))), "a bare year is that one year")
     assertEquals(when("""{}"""), None)
 

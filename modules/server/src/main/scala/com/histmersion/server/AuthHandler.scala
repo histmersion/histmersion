@@ -72,7 +72,6 @@ object AuthHandler:
   type RequestPath = RequestPath.T
   object RequestPath extends Newtype[String, Pure]
 
-
   def isWrite(m: HttpMethod): Boolean =
     m == HttpMethod.POST || m == HttpMethod.PUT || m == HttpMethod.PATCH || m == HttpMethod.DELETE
 

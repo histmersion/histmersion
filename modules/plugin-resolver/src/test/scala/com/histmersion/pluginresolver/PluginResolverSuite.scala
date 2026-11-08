@@ -11,16 +11,19 @@ import scala.jdk.CollectionConverters.*
   */
 class PluginResolverSuite extends munit.FunSuite:
 
-  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console = new com.histmersion.util.console.Console {
-    def write(value: Any): Unit = stdout(String.valueOf(value))
-    def writeLine(value: Any): Unit = stdout(String.valueOf(value))
-    def writeLine(): Unit = stdout("")
-    def errorWrite(value: => String): Unit = stderr(value)
-    def errorLine(value: => String): Unit = stderr(value)
-    def errorLine(): Unit = stderr("")
-    def errorFlush(): Unit = ()
-    def readLine(): com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException("input not used")
-  }
+  private def consoleFor(stdout: String => Unit, stderr: String => Unit): com.histmersion.util.console.Console =
+    new com.histmersion.util.console.Console {
+      def write(value: Any): Unit = stdout(String.valueOf(value))
+      def writeLine(value: Any): Unit = stdout(String.valueOf(value))
+      def writeLine(): Unit = stdout("")
+      def errorWrite(value: => String): Unit = stderr(value)
+      def errorLine(value: => String): Unit = stderr(value)
+      def errorLine(): Unit = stderr("")
+      def errorFlush(): Unit = ()
+      def readLine(): com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException(
+        "input not used"
+      )
+    }
 
   private val fixtures: Path =
     val text = String(getClass.getClassLoader.getResourceAsStream("plugin-fixtures-repo.txt").readAllBytes(), UTF_8)
@@ -40,7 +43,10 @@ class PluginResolverSuite extends munit.FunSuite:
     val kit = Files.createDirectories(root.resolve("kit"))
     val plugins = Files.createDirectories(root.resolve("plugins"))
     Files.writeString(kit.resolve("modules"), shipped.mkString("", "\n", "\n"))
-    Files.writeString(kit.resolve("excludes"), "org.scala-lang:scala3-library_3\norg.scala-lang:scala-library\nio.github.iltotore:iron_3\n")
+    Files.writeString(
+      kit.resolve("excludes"),
+      "org.scala-lang:scala3-library_3\norg.scala-lang:scala-library\nio.github.iltotore:iron_3\n"
+    )
     Files.copy(published("histmersion-plugin-hello-deps_3", "jar"), plugins.resolve("hello-deps-0.1.0.jar"))
     if withPom then
       Files.copy(published("histmersion-plugin-hello-deps_3", "pom"), plugins.resolve("hello-deps-0.1.0.pom"))
@@ -49,7 +55,11 @@ class PluginResolverSuite extends munit.FunSuite:
   private def run(s: Setup, extra: String*): (Int, List[String], List[String]) =
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    val rc = DependencyResolver.parse((s.args(extra*).tail :+ s.plugins.resolve("hello-deps-0.1.0.jar").toString).map(refactorValue => Resolver.Argument(refactorValue))) match
+    val rc = DependencyResolver.parse(
+      (s.args(extra*).tail :+ s.plugins.resolve("hello-deps-0.1.0.jar").toString).map(refactorValue =>
+        Resolver.Argument(refactorValue)
+      )
+    ) match
       case Left(e)  => fail((e).value)
       case Right(r) => DependencyResolver.resolve(r.copy(cache = Some(s.cache)))(using consoleFor(out += _, err += _))
     ((rc).value, out.result(), err.result())
@@ -122,13 +132,28 @@ class PluginResolverSuite extends munit.FunSuite:
     val s = setup(Nil)
     assertEquals(run(s)._1, 0)
     val again = DependencyResolver
-      .parse(List(Resolver.Argument("--kit"), Resolver.Argument(s.kit.toString), Resolver.Argument("--lib"), Resolver.Argument(s.lib.toString), Resolver.Argument(s.plugins.resolve("hello-deps-0.1.0.jar").toString)))
+      .parse(
+        List(
+          Resolver.Argument("--kit"),
+          Resolver.Argument(s.kit.toString),
+          Resolver.Argument("--lib"),
+          Resolver.Argument(s.lib.toString),
+          Resolver.Argument(s.plugins.resolve("hello-deps-0.1.0.jar").toString)
+        )
+      )
       .fold(e => fail((e).value), identity)
-    assertEquals(((DependencyResolver.resolve(again.copy(cache = Some(s.cache)))(using consoleFor(_ => (), _ => ()))).value: Int), 0)
-    assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
-    val other = RepositoryUrl.fromArgument(Resolver.Argument(s.kit.resolve("other-repo").toString)).fold(e => fail((e).value), identity)
     assertEquals(
-      ((DependencyResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)))(using consoleFor(_ => (), _ => ()))).value: Int),
+      ((DependencyResolver.resolve(again.copy(cache = Some(s.cache)))(using consoleFor(_ => (), _ => ()))).value: Int),
+      0
+    )
+    assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
+    val other = RepositoryUrl
+      .fromArgument(Resolver.Argument(s.kit.resolve("other-repo").toString))
+      .fold(e => fail((e).value), identity)
+    assertEquals(
+      ((DependencyResolver
+        .resolve(again.copy(cache = Some(s.cache), repositories = List(other)))(using consoleFor(_ => (), _ => ())))
+        .value: Int),
       0
     )
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(other.value, fixtures.toUri.toString))
@@ -156,25 +181,50 @@ class PluginResolverSuite extends munit.FunSuite:
   test("usage: the kit and lib are required, an unknown option is named"):
     assert(DependencyResolver.parse(List(Resolver.Argument("x.jar"))).isLeft)
     assertEquals(
-      ((DependencyResolver.parse(List(Resolver.Argument("--kit"), Resolver.Argument("k"), Resolver.Argument("--lib"), Resolver.Argument("l"), Resolver.Argument("--nope"))).left.toOption).map(refactorValue2 => (refactorValue2).value): Option[String]),
+      ((DependencyResolver
+        .parse(
+          List(
+            Resolver.Argument("--kit"),
+            Resolver.Argument("k"),
+            Resolver.Argument("--lib"),
+            Resolver.Argument("l"),
+            Resolver.Argument("--nope")
+          )
+        )
+        .left
+        .toOption)
+        .map(refactorValue2 => (refactorValue2).value): Option[String]),
       Some("unknown option --nope")
     )
-    assertEquals(((DependencyResolver.run(List(Resolver.Argument("nothing")))(using consoleFor(_ => (), _ => ()))).value: Int), 1)
+    assertEquals(
+      ((DependencyResolver.run(List(Resolver.Argument("nothing")))(using consoleFor(_ => (), _ => ()))).value: Int),
+      1
+    )
 
   test("resolver exit boundary supplies errors and preserves failure status") {
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    assertEquals(((DependencyResolver.exitCode(List(Resolver.Argument("nothing")))(using consoleFor(s => { out += s; () }, s => { err += s; () }))).value: Int), 1)
+    assertEquals(
+      ((DependencyResolver
+        .exitCode(List(Resolver.Argument("nothing")))(using consoleFor(s => { out += s; () }, s => { err += s; () })))
+        .value: Int),
+      1
+    )
     assertEquals(out.result(), Nil)
     assert(err.result().head.startsWith("usage: pluginResolver"))
     val failures = List.newBuilder[String]
     var calls = 0
-    val status = DependencyResolver.exitCode(List(Resolver.Argument("nothing")))(using consoleFor(_ => (), s => {
-      calls += 1
-      if calls == 1 then throw new IllegalArgumentException("sink failed")
-      failures += s
-      ()
-    }))
+    val status = DependencyResolver.exitCode(List(Resolver.Argument("nothing")))(using
+      consoleFor(
+        _ => (),
+        s => {
+          calls += 1
+          if calls == 1 then throw new IllegalArgumentException("sink failed")
+          failures += s
+          ()
+        }
+      )
+    )
     assertEquals(((status).value: Int), 3)
     assertEquals(failures.result(), List("pluginResolver: IllegalArgumentException: sink failed"))
   }

@@ -33,8 +33,10 @@ object MediaTools:
 
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class AssetsInput(citekey: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
+  final case class AssetsInput(citekey: Citekey)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class PatchAssetInput(
       citekey: Citekey,
@@ -120,7 +122,8 @@ object MediaTools:
           val rows = assets.figures(in.citekey)
           if rows.isEmpty && !sourceExists(in.citekey) then
             ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
-          else ToolResult.text(AssetsMarkdown.assets(com.histmersion.api.library.Citekey(in.citekey.value), rows.toVector))
+          else
+            ToolResult.text(AssetsMarkdown.assets(com.histmersion.api.library.Citekey(in.citekey.value), rows.toVector))
         },
       tool("patch_asset")
         .description(
@@ -142,8 +145,9 @@ object MediaTools:
               periodEnd = in.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
             )
           ) match
-            case Right(d) => ToolResult.text(MediaMarkdown.assetDetail(com.histmersion.api.library.Citekey(in.citekey.value), d))
-            case Left(e)  => McpOut.error(e)
+            case Right(d) =>
+              ToolResult.text(MediaMarkdown.assetDetail(com.histmersion.api.library.Citekey(in.citekey.value), d))
+            case Left(e) => McpOut.error(e)
         },
       tool("asset_links")
         .description(
@@ -168,7 +172,16 @@ object MediaTools:
                 case Right(l) => ToolResult.text(MediaMarkdown.assetLink(l))
                 case Left(e)  => McpOut.error(e)
             case None =>
-              ToolResult.text(MediaMarkdown.assetLinkList(links.list(in.citekey, in.asset.map(a => AssetService.AssetUid(a.value)), in.targetType.map(t => AssetService.TargetType(t.value)), in.targetId.map(t => AssetService.TargetId(t.value)))))
+              ToolResult.text(
+                MediaMarkdown.assetLinkList(
+                  links.list(
+                    in.citekey,
+                    in.asset.map(a => AssetService.AssetUid(a.value)),
+                    in.targetType.map(t => AssetService.TargetType(t.value)),
+                    in.targetId.map(t => AssetService.TargetId(t.value))
+                  )
+                )
+              )
         },
       tool("delete_asset_link")
         .description("Delete an asset link by id.")

@@ -229,7 +229,8 @@ class BasemapFetchSuite extends munit.FunSuite:
       )
     )
     val stored = PmTiles.TileBytes(PmTiles.gzip(tile).value)
-    val rules = Basemap.parseSubset(Basemap.Subset.Spec("places:p,roads:l~highway|rail")).fold(e => fail(e.value), identity)
+    val rules =
+      Basemap.parseSubset(Basemap.Subset.Spec("places:p,roads:l~highway|rail")).fold(e => fail(e.value), identity)
     val cut = BasemapService
       .subset(
         stored,

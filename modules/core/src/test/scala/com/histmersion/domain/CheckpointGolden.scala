@@ -85,8 +85,16 @@ object CheckpointGolden:
         topics = Some(List(Source.Topics("bronze_age"))),
         regions = Some(List(Source.Regions("Aegean"))),
         period = Some(Period.Input(Year(-3300), Year(-1200))),
-        tags = Some(ListPatch(List(Write.ListItem("tin")), List(Write.ListItem("old")), Some(List(Write.ListItem("tin"), Write.ListItem("trade"))))),
-        findings = Some(FindingsPatch(findingInputs, List(FindingsPatch.Remove("smith1987_tin#3")), Some(findingInputs.take(1)))),
+        tags = Some(
+          ListPatch(
+            List(Write.ListItem("tin")),
+            List(Write.ListItem("old")),
+            Some(List(Write.ListItem("tin"), Write.ListItem("trade")))
+          )
+        ),
+        findings = Some(
+          FindingsPatch(findingInputs, List(FindingsPatch.Remove("smith1987_tin#3")), Some(findingInputs.take(1)))
+        ),
         edges = Some(
           EdgesPatch(
             List(Edge.Input(Citekey("doe2001_tin"), Edge.Kind.Challenges, Some(Citekey("smith1987_tin")))),
@@ -144,7 +152,9 @@ object CheckpointGolden:
       Source.Status.Current,
       Classified.StatusEvidence("It is cited as current.")
     ) ::
-      Source.Status.values.toList.map(s => Classified(Classified.Summary("A summary."), Nil, Nil, Nil, None, None, s, Classified.StatusEvidence("")))
+      Source.Status.values.toList.map(s =>
+        Classified(Classified.Summary("A summary."), Nil, Nil, Nil, None, None, s, Classified.StatusEvidence(""))
+      )
   )
 
   val findings: Golden[Findings] = Golden(
@@ -163,7 +173,17 @@ object CheckpointGolden:
             List(EnrichSource.Tag("tin")),
             com.histmersion.domain.library.Confidence.Wire("high")
           ),
-          FindingProposal(FindingProposal.Claim("A bare claim."), Proposal.Quote("a bare claim"), None, None, None, None, None, Nil, com.histmersion.domain.library.Confidence.Wire("low"))
+          FindingProposal(
+            FindingProposal.Claim("A bare claim."),
+            Proposal.Quote("a bare claim"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            Nil,
+            com.histmersion.domain.library.Confidence.Wire("low")
+          )
         )
       ),
       Findings()
@@ -174,7 +194,17 @@ object CheckpointGolden:
     "enrich-verified-findings.ndjson",
     List(
       VerifiedFindings(
-        VerifiedFinding(VerifiedFinding.Claim("A bare claim."), VerifiedFinding.Quote("a bare claim"), AgentVerify.Ratio(0.91), None, None, None, None, Nil, VerifiedFinding.Confidence("low")) ::
+        VerifiedFinding(
+          VerifiedFinding.Claim("A bare claim."),
+          VerifiedFinding.Quote("a bare claim"),
+          AgentVerify.Ratio(0.91),
+          None,
+          None,
+          None,
+          None,
+          Nil,
+          VerifiedFinding.Confidence("low")
+        ) ::
           Geocode.KindHint.values.toList.map(k =>
             VerifiedFinding(
               VerifiedFinding.Claim("Tin came from the east."),
@@ -202,7 +232,13 @@ object CheckpointGolden:
       Geocoded(
         findingInputs,
         List(
-          GeocodeChoice(GeocodeChoice.Claim("Tin came from the east."), GeocodeChoice.Asked("Troy"), Some(Place.Id.assume("troy")), Some(GeocodeChoice.Label("Troy")), Some(GeocodeChoice.Approximate("a qualifier was dropped"))),
+          GeocodeChoice(
+            GeocodeChoice.Claim("Tin came from the east."),
+            GeocodeChoice.Asked("Troy"),
+            Some(Place.Id.assume("troy")),
+            Some(GeocodeChoice.Label("Troy")),
+            Some(GeocodeChoice.Approximate("a qualifier was dropped"))
+          ),
           GeocodeChoice(GeocodeChoice.Claim("Nowhere."), GeocodeChoice.Asked("Atlantis"), None, None, None)
         )
       ),
@@ -211,7 +247,15 @@ object CheckpointGolden:
   )
 
   private val evidence =
-    List(Evidence(com.histmersion.domain.library.Citekey("smith1987_tin"), Some(Offset(120)), Evidence.Quote("the route is later"), Evidence.Ratio(0.97)), Evidence(com.histmersion.domain.library.Citekey("doe2001_tin"), None, Evidence.Quote("q"), Evidence.Ratio(1.0)))
+    List(
+      Evidence(
+        com.histmersion.domain.library.Citekey("smith1987_tin"),
+        Some(Offset(120)),
+        Evidence.Quote("the route is later"),
+        Evidence.Ratio(0.97)
+      ),
+      Evidence(com.histmersion.domain.library.Citekey("doe2001_tin"), None, Evidence.Quote("q"), Evidence.Ratio(1.0))
+    )
 
   val reviewFindings: Golden[ReviewArticle.Finding] = Golden(
     "review-finding.ndjson",
@@ -229,7 +273,16 @@ object CheckpointGolden:
       pair = Some(CritiqueRef(Citekey("doe2001_tin"), Citekey("smith1987_tin")))
     ) ::
       (for r <- Reviewer.values.toList; s <- Severity.values.toList
-      yield ReviewArticle.Finding(ReviewArticle.Finding.Id(s"${r.prefix}1"), r, s, ReviewArticle.Finding.Kind("style"), ReviewArticle.Finding.Where(""), ReviewArticle.Finding.Quote(""), ReviewArticle.Finding.Problem("A problem."), ReviewArticle.Finding.Fix("")))
+      yield ReviewArticle.Finding(
+        ReviewArticle.Finding.Id(s"${r.prefix}1"),
+        r,
+        s,
+        ReviewArticle.Finding.Kind("style"),
+        ReviewArticle.Finding.Where(""),
+        ReviewArticle.Finding.Quote(""),
+        ReviewArticle.Finding.Problem("A problem."),
+        ReviewArticle.Finding.Fix("")
+      ))
   )
 
   val reports: Golden[Report] = Golden(
@@ -242,9 +295,23 @@ object CheckpointGolden:
       List(ReviewArticle.ExplainSlotsValue("disagreement")),
       proposals.values.take(2),
       List(Check(Check.Id("R1"), fixed = Check.Fixed(true), Check.Quote("a quote"), Check.Note("fixed in ## Origins"))),
-      List(SpotCheck(com.histmersion.domain.library.Citekey("smith1987_tin"), SpotCheck.Claim("tin came"), SpotCheck.Verdict("attributable"), SpotCheck.RecordQuote("the route is later"), SpotCheck.Ratio(0.98), SpotCheck.Tool("get_source"))),
       List(
-        CritiqueReason(Citekey("doe2001_tin"), Citekey("smith1987_tin"), CritiqueReason.Reason("Not about the route."), Some(Activity.Actor("skeptic (agent run 1234abcd)"))),
+        SpotCheck(
+          com.histmersion.domain.library.Citekey("smith1987_tin"),
+          SpotCheck.Claim("tin came"),
+          SpotCheck.Verdict("attributable"),
+          SpotCheck.RecordQuote("the route is later"),
+          SpotCheck.Ratio(0.98),
+          SpotCheck.Tool("get_source")
+        )
+      ),
+      List(
+        CritiqueReason(
+          Citekey("doe2001_tin"),
+          Citekey("smith1987_tin"),
+          CritiqueReason.Reason("Not about the route."),
+          Some(Activity.Actor("skeptic (agent run 1234abcd)"))
+        ),
         CritiqueReason(Citekey("roe1990_tin"), Citekey("smith1987_tin"), CritiqueReason.Reason("Not material."))
       )
     ) ::
@@ -341,13 +408,30 @@ private object EnrichSourceSamples:
 
   val patches: List[Source.Patch] = List(
     EnrichSource
-      .patch(loaded, classified, List(Finding.Input(Finding.Claim("A claim."), lon = Some(Longitude(1.0)), lat = Some(Latitude(2.0)))), Some(EnrichSource.PatchNotes("Notes.")))
+      .patch(
+        loaded,
+        classified,
+        List(Finding.Input(Finding.Claim("A claim."), lon = Some(Longitude(1.0)), lat = Some(Latitude(2.0)))),
+        Some(EnrichSource.PatchNotes("Notes."))
+      )
       ._1,
     EnrichSource
       .patch(
-        loaded.modify(
-          _.status).setTo(Source.Status.Wire("current")).modify(_.hasSummary).setTo(EnrichSource.Loaded.HasSummary(true)).modify(_.hasNotes).setTo(EnrichSource.Loaded.HasNotes(true)).modify(_.hasPeriod).setTo(EnrichSource.Loaded.HasPeriod(true)).modify(_.topics).setTo(List(EnrichSource.Topic("bronze_age"))).modify(_.regions).setTo(List(EnrichSource.Region("Aegean"))).modify(_.tags).setTo(List(EnrichSource.Tag("tin"), EnrichSource.Tag("trade"))
-        ),
+        loaded
+          .modify(_.status)
+          .setTo(Source.Status.Wire("current"))
+          .modify(_.hasSummary)
+          .setTo(EnrichSource.Loaded.HasSummary(true))
+          .modify(_.hasNotes)
+          .setTo(EnrichSource.Loaded.HasNotes(true))
+          .modify(_.hasPeriod)
+          .setTo(EnrichSource.Loaded.HasPeriod(true))
+          .modify(_.topics)
+          .setTo(List(EnrichSource.Topic("bronze_age")))
+          .modify(_.regions)
+          .setTo(List(EnrichSource.Region("Aegean")))
+          .modify(_.tags)
+          .setTo(List(EnrichSource.Tag("tin"), EnrichSource.Tag("trade"))),
         classified.modify(_.status).setTo(Source.Status.Contested),
         Nil,
         None

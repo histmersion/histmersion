@@ -32,7 +32,9 @@ object ItemActions:
       title <-- on.map(b =>
         if b then s"Bookmarked — remove the bookmark of “${ref.title.value}”" else s"Bookmark “${ref.title.value}”"
       ),
-      aria.label <-- on.map(b => if b then s"Remove the bookmark of ${ref.title.value}" else s"Bookmark ${ref.title.value}"),
+      aria.label <-- on.map(b =>
+        if b then s"Remove the bookmark of ${ref.title.value}" else s"Bookmark ${ref.title.value}"
+      ),
       Icon(Icon.Bookmark),
       Option.when(!compact.value)(span(child.text <-- on.map(b => if b then "Bookmarked" else "Bookmark"))),
       onClick --> { ev => ev.stopPropagation(); bookmark(ref) }
@@ -60,8 +62,14 @@ object ItemActions:
           Icon(Icon.Read),
           cls("is-on") <-- read,
           child.text <-- read.map(r => if r then "Mark as unread" else "Mark as read"),
-          onClick --> (_ => writing(MyItems.setRead(ref, ReadMark.Read(!MyItems.readNow(ref.identity.getOrElse(Target.Identity("")))))))
+          onClick --> (_ =>
+            writing(MyItems.setRead(ref, ReadMark.Read(!MyItems.readNow(ref.identity.getOrElse(Target.Identity(""))))))
+          )
         )
       ),
-      ContextMenu.button(ContextMenu.ButtonTitle(s"More: ${ref.title.value}"), () => ItemMenu.entries(ref, byline), ContextMenu.ButtonExtraCls("item-more"))
+      ContextMenu.button(
+        ContextMenu.ButtonTitle(s"More: ${ref.title.value}"),
+        () => ItemMenu.entries(ref, byline),
+        ContextMenu.ButtonExtraCls("item-more")
+      )
     )

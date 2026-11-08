@@ -30,13 +30,19 @@ private[sources] object SourceDeleteRepo:
   /** Delete `requested`, unless something refuses it. `files` names the stored originals the service removes after the
     * commit (they are part of the answer and the log line); `logTopic` is the log entry's heading (today's date).
     */
-  def applyIn(requested: Citekey, logTopic: SourceReferrers.Day, files: SourceDeletePlan => List[Source.Deletion.Files], referrers: SourceReferrers)(
-      using DbCon
+  def applyIn(
+      requested: Citekey,
+      logTopic: SourceReferrers.Day,
+      files: SourceDeletePlan => List[Source.Deletion.Files],
+      referrers: SourceReferrers
+  )(using
+      DbCon
   ): Either[Api.Error, SourceDeletePlan] =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $requested FOR UPDATE".query[String].run()
     planIn(requested, referrers).flatMap { p0 =>
       val d0 = p0.deletion
-      if d0.refused then Left(
+      if d0.refused then
+        Left(
           Api.Error(
             Api.Error.Message(Source.Delete.refusal(d0.citekey, d0.blockers).value),
             Some(Api.Error.Code(Write.CodeInvalid))
@@ -51,8 +57,12 @@ private[sources] object SourceDeleteRepo:
         Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log.map(e => Source.Deletion.LogEntry(e.value)))))
     }
 
-  final private case class Row(citekey: Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[SourceDeletePlan.Sha256])
-      derives DbCodec
+  final private case class Row(
+      citekey: Citekey,
+      title: Row.Title,
+      calibreId: Option[Row.CalibreId],
+      sha256: Option[SourceDeletePlan.Sha256]
+  ) derives DbCodec
 
   object Row:
     type Title = com.histmersion.domain.Title

@@ -32,7 +32,9 @@ object Fingerprint extends Newtype[String, Pure]:
     */
   def fold(s: FoldS): FoldResult =
     val pre = LatinFold.fold(s.value).flatMap(c => quotes.getOrElse(c, c.toString))
-    FoldResult(Normalizer.normalize(pre, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT))
+    FoldResult(
+      Normalizer.normalize(pre, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT)
+    )
 
   /** Folded alphanumeric tokens, in order. */
   def tokens(s: TokensS): List[TokensResult] =

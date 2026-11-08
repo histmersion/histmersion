@@ -65,7 +65,12 @@ object NoteMarkers:
     val words = s"Your note: ${PersonalMarkdown.excerpt(n.text, FormatIssue.Excerpt.Length(80))}"
     el.setAttribute("aria-label", s"$words — show it")
     el.setAttribute("title", words)
-    val m = new DomMarker(LatLon.Lat(n.target.lat.get.value), LatLon.Lon(n.target.lon.get.value), el, Some((DomMarker.BoxSize(26), DomMarker.BoxSize(26))))
+    val m = new DomMarker(
+      LatLon.Lat(n.target.lat.get.value),
+      LatLon.Lon(n.target.lon.get.value),
+      el,
+      Some((DomMarker.BoxSize(26), DomMarker.BoxSize(26)))
+    )
     m.handlers = new MarkerHandlers:
       override def click(e: dom.MouseEvent): Unit = { e.stopPropagation(); show(n) }
       override def key(e: dom.KeyboardEvent): Unit =
@@ -76,14 +81,22 @@ object NoteMarkers:
   def show(n: Note): Unit =
     for la <- n.target.lat; lo <- n.target.lon do
       shown.foreach(_.unmount())
-      val pop = TheMap.surface.popup(LatLon(LatLon.Lat(la.value), LatLon.Lon(lo.value)), MapSurface.PopupHtml(""), MapSurface.PopupCls("note-popup"))
+      val pop = TheMap.surface.popup(
+        LatLon(LatLon.Lat(la.value), LatLon.Lon(lo.value)),
+        MapSurface.PopupHtml(""),
+        MapSurface.PopupCls("note-popup")
+      )
       TheMap.surface.popupBody(pop).foreach { body =>
         val box = dom.document.createElement("div")
         body.appendChild(box)
         shown = Some(
           render(
             box,
-            div(cls := "note-popup-body", p(cls := "note-popup-where muted", Target.where(n.target).value), NoteList.card(n))
+            div(
+              cls := "note-popup-body",
+              p(cls := "note-popup-where muted", Target.where(n.target).value),
+              NoteList.card(n)
+            )
           )
         )
       }

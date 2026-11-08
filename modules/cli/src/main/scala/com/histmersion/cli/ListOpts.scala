@@ -13,7 +13,6 @@ import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origi
   */
 object ListOpts:
 
-
   private def many(name: String, help: String): Opts[List[String]] =
     Opts.options[String](name, s"$help (repeatable, or comma-separated)").orEmpty
   private def one(name: String, help: String): Opts[Option[String]] = Opts.option[String](name, help).orNone

@@ -23,7 +23,13 @@ class ThrottleSuite extends munit.FunSuite:
       due.foreach(_._3())
 
   private def throttled(clock: Clock, out: mutable.ListBuffer[Int]) =
-    Throttle[Int](Throttle.IntervalMs(100), out += _, () => ResearchOverview.EpochMillis(clock.t), clock.later, clock.cancel)
+    Throttle[Int](
+      Throttle.IntervalMs(100),
+      out += _,
+      () => ResearchOverview.EpochMillis(clock.t),
+      clock.later,
+      clock.cancel
+    )
 
   test("the first call runs at once") {
     val c = Clock(); val out = mutable.ListBuffer.empty[Int]
@@ -57,8 +63,16 @@ class ThrottleSuite extends munit.FunSuite:
   }
 
   test("FadingLayer.plan splits keys into entering, staying, exiting") {
-    val p = FadingLayer.plan(Set(FadingLayer.Key("a"), FadingLayer.Key("b")), Set(FadingLayer.Key("b"), FadingLayer.Key("c")))
-    assertEquals(p, FadingLayer.Plan(entering = Set(FadingLayer.Key("c")), staying = Set(FadingLayer.Key("b")), exiting = Set(FadingLayer.Key("a"))))
+    val p =
+      FadingLayer.plan(Set(FadingLayer.Key("a"), FadingLayer.Key("b")), Set(FadingLayer.Key("b"), FadingLayer.Key("c")))
+    assertEquals(
+      p,
+      FadingLayer.Plan(
+        entering = Set(FadingLayer.Key("c")),
+        staying = Set(FadingLayer.Key("b")),
+        exiting = Set(FadingLayer.Key("a"))
+      )
+    )
   }
 
 class LatestOnlySuite extends munit.FunSuite:

@@ -105,7 +105,10 @@ class HotGraphSuite extends munit.FunSuite:
   test("a failed build publishes nothing and closes what the reload had built"):
     withFixture { f =>
       // the pool builds, the query role does not: nothing changes, the new pool is closed again
-      val e = f.graph.reload(Map("db" -> "b", "query" -> "bad", "other" -> "x"), List(HotNode.Name("db"), HotNode.Name("query")))
+      val e = f.graph.reload(
+        Map("db" -> "b", "query" -> "bad", "other" -> "x"),
+        List(HotNode.Name("db"), HotNode.Name("query"))
+      )
       assert(e.swap.exists(m => m.value.contains("query") && m.value.contains("role cannot log in")), e.toString)
       assertEquals(f.graph.generation, 0L)
       assertEquals(f.graph.config("db"), "a")
@@ -207,7 +210,8 @@ class HotGraphSuite extends munit.FunSuite:
           Right(useInScope(Res(s"pool-${ctx.config("db")}", log))(_.close()))
         }
         .fold(p => fail(p.value), identity)
-      val o = graph.reload(Map("db" -> "b"), List(HotNode.Name("db")), drain = 100.millis).fold(p => fail(p.value), identity)
+      val o =
+        graph.reload(Map("db" -> "b"), List(HotNode.Name("db")), drain = 100.millis).fold(p => fail(p.value), identity)
       assertEquals(o.draining.size, 1)
       assert(!log.contains("close pool-a"))
       out.set(0) // the last connection came back
@@ -221,9 +225,15 @@ class HotGraphSuite extends munit.FunSuite:
     val graph = Hot.Graph[Conf](Map("db" -> "a"), quiet)
     try
       val seen = ConcurrentLinkedQueue[String]()
-      val pool = graph.node[String](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db")))(ctx => Right(ctx.config("db"))).fold(p => fail(p.value), identity)
+      val pool = graph
+        .node[String](Hot.Graph.Def.Name("pool"), keys = List(HotNode.Keys("db")))(ctx => Right(ctx.config("db")))
+        .fold(p => fail(p.value), identity)
       val _ = graph
-        .node[String](Hot.Graph.Def.Name("hook"), deps = List(pool), onPublish = _ => { val _ = seen.add(pool.use(identity)) }) { ctx =>
+        .node[String](
+          Hot.Graph.Def.Name("hook"),
+          deps = List(pool),
+          onPublish = _ => { val _ = seen.add(pool.use(identity)) }
+        ) { ctx =>
           Right(ctx(pool))
         }
         .fold(p => fail(p.value), identity)

@@ -44,7 +44,12 @@ final class BackupJobs(
           // the dump runs on the generation (database) the request was pinned to
           val work = pins.carryWork { () =>
             val _ = f.complete(
-              scala.util.Try(p.run()).toEither.left.map(e => Api.Error(Api.Error.Message(s"backup crashed: ${e.getMessage}"))).flatten
+              scala.util
+                .Try(p.run())
+                .toEither
+                .left
+                .map(e => Api.Error(Api.Error.Message(s"backup crashed: ${e.getMessage}")))
+                .flatten
             )
           }
           val _ = Thread.ofPlatform().daemon(true).name("histmersion-backup").start(() => work())
@@ -67,4 +72,3 @@ final class BackupJobs(
         case Right(r) => Backup.Status.done(r)
         case Left(e)  =>
           Backup.Status.failed(Backup.Status.FailedFile(j.file.value), elapsed, Backup.Status.Error(e.message.value))
-

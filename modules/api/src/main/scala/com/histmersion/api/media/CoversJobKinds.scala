@@ -10,7 +10,9 @@ object CoversJobKinds:
   val MediaCovers: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("media-covers"),
     JobKinds.Wire("Fetch source covers"),
-    JobKindMeaning("Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures."),
+    JobKindMeaning(
+      "Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures."
+    ),
     stoppable = JobKindEntry.OfStoppable(true),
     subject = ImportJobKinds.Media.of
   )

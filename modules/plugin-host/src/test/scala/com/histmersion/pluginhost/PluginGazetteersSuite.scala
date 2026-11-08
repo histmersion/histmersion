@@ -62,29 +62,59 @@ class PluginGazetteersSuite extends munit.FunSuite:
             Some(Place.Properties("""{"wikidata":"Q170494"}""")),
             None
           ),
-          List(Place.Name(Place.Name.Value("Hatti"), Place.Name.Lang("hit"), Some(ApiPeriod(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1200))), Some(OpenSide.End))),
-          List(Place.Relation(Place.Relation.ChildId("zz_slice_-1650_-1401"), Place.Relation.ParentId("zz_hittites"), Place.Relation.Kind("part_of"), Some(ApiPeriod(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1401))), None))
+          List(
+            Place.Name(
+              Place.Name.Value("Hatti"),
+              Place.Name.Lang("hit"),
+              Some(ApiPeriod(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1200))),
+              Some(OpenSide.End)
+            )
+          ),
+          List(
+            Place.Relation(
+              Place.Relation.ChildId("zz_slice_-1650_-1401"),
+              Place.Relation.ParentId("zz_hittites"),
+              Place.Relation.Kind("part_of"),
+              Some(ApiPeriod(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1401))),
+              None
+            )
+          )
         )
       )
     )
 
   test("a place's own source wins over the credit; no credit and no source stores none; an empty label is kept"):
     assertEquals(
-      PluginGazetteers.input(slice.modify(_.source).setTo(Some(GazetteerPlace.Source("its own"))), Attribution.Credit("credit")).map(_.place.source),
+      PluginGazetteers
+        .input(slice.modify(_.source).setTo(Some(GazetteerPlace.Source("its own"))), Attribution.Credit("credit"))
+        .map(_.place.source),
       Right(Some("its own"))
     )
     assertEquals(PluginGazetteers.input(slice, Attribution.Credit("  ")).map(_.place.source), Right(None))
-    assertEquals(PluginGazetteers.input(slice.modify(_.label).setTo(GazetteerPlace.Label("")), Attribution.Credit("c")).map(_.place.label), Right(""))
     assertEquals(
-      PluginGazetteers.input(slice.modify(_.open).setTo(Some(GazetteerOpenSide.Start)), Attribution.Credit("c")).map(_.place.open),
+      PluginGazetteers
+        .input(slice.modify(_.label).setTo(GazetteerPlace.Label("")), Attribution.Credit("c"))
+        .map(_.place.label),
+      Right("")
+    )
+    assertEquals(
+      PluginGazetteers
+        .input(slice.modify(_.open).setTo(Some(GazetteerOpenSide.Start)), Attribution.Credit("c"))
+        .map(_.place.open),
       Right(Some(OpenSide.Start))
     )
 
   test("what the store could not keep is refused, naming the place"):
     def refusal(p: GazetteerPlace) = PluginGazetteers.input(p, Attribution.Credit("c")).left.toOption
     assertEquals(refusal(slice.modify(_.id).setTo(GazetteerPlace.Id(" "))), Some("a place with no id"))
-    assertEquals(refusal(slice.modify(_.kind).setTo(GazetteerPlace.Kind(""))), Some("place 'zz_slice_-1650_-1401': no kind"))
-    assertEquals(refusal(slice.modify(_.label).setTo(GazetteerPlace.Label.assume(null))), Some("place 'zz_slice_-1650_-1401': no label"))
+    assertEquals(
+      refusal(slice.modify(_.kind).setTo(GazetteerPlace.Kind(""))),
+      Some("place 'zz_slice_-1650_-1401': no kind")
+    )
+    assertEquals(
+      refusal(slice.modify(_.label).setTo(GazetteerPlace.Label.assume(null))),
+      Some("place 'zz_slice_-1650_-1401': no label")
+    )
     assertEquals(
       refusal(slice.modify(_.geometry).setTo(Some(GazetteerPlace.Geometry("POINT(1 2)")))),
       Some("place 'zz_slice_-1650_-1401': its geometry is not a JSON object")
@@ -98,11 +128,29 @@ class PluginGazetteersSuite extends munit.FunSuite:
       Some("place 'zz_slice_-1650_-1401': an open side without a period")
     )
     assertEquals(
-      refusal(slice.modify(_.relations).setTo(List(GazetteerRelation(GazetteerRelation.ChildId("zz_slice_-1650_-1401"), GazetteerRelation.ParentId(""))))),
+      refusal(
+        slice
+          .modify(_.relations)
+          .setTo(
+            List(GazetteerRelation(GazetteerRelation.ChildId("zz_slice_-1650_-1401"), GazetteerRelation.ParentId("")))
+          )
+      ),
       Some("place 'zz_slice_-1650_-1401': a relation without both its places")
     )
     assertEquals(
-      refusal(slice.modify(_.relations).setTo(List(GazetteerRelation(GazetteerRelation.ChildId("a"), GazetteerRelation.ParentId("b"), kind = GazetteerRelation.Kind(" "))))),
+      refusal(
+        slice
+          .modify(_.relations)
+          .setTo(
+            List(
+              GazetteerRelation(
+                GazetteerRelation.ChildId("a"),
+                GazetteerRelation.ParentId("b"),
+                kind = GazetteerRelation.Kind(" ")
+              )
+            )
+          )
+      ),
       Some("place 'zz_slice_-1650_-1401': the relation to 'b' has no kind")
     )
     assertEquals(
@@ -111,10 +159,11 @@ class PluginGazetteersSuite extends munit.FunSuite:
     )
     assertEquals(refusal(null), Some("a place that is null"))
 
-  private def source(answer: => Either[GazetteerSource.FetchResultPart1, List[GazetteerPlace]]): GazetteerSource = new GazetteerSource:
-    def title = GazetteerSource.TitleResult("Atlas")
-    def rights = GazetteerRights(Licence("CC BY 4.0"), GazetteerRights.Credit("Atlas, CC BY 4.0"))
-    def fetch(http: Plugin.Http) = answer
+  private def source(answer: => Either[GazetteerSource.FetchResultPart1, List[GazetteerPlace]]): GazetteerSource =
+    new GazetteerSource:
+      def title = GazetteerSource.TitleResult("Atlas")
+      def rights = GazetteerRights(Licence("CC BY 4.0"), GazetteerRights.Credit("Atlas, CC BY 4.0"))
+      def fetch(http: Plugin.Http) = answer
 
   private val offline = new Plugin.Http {
     def get(
@@ -136,7 +185,10 @@ class PluginGazetteersSuite extends munit.FunSuite:
         .map((in, out) => (in.map(_.place.id), out)),
       Right((List("zz_slice_-1650_-1401", "zz_other"), List("place 'zz_bad': no kind")))
     )
-    assertEquals(PluginGazetteers.places(source(Left(GazetteerSource.FetchResultPart1("HTTP 503 from x"))), offline), Left("HTTP 503 from x"))
+    assertEquals(
+      PluginGazetteers.places(source(Left(GazetteerSource.FetchResultPart1("HTTP 503 from x"))), offline),
+      Left("HTTP 503 from x")
+    )
     assertEquals(
       PluginGazetteers.places(source(throw IllegalStateException("boom")), offline),
       Left("the plugin failed: IllegalStateException: boom")
@@ -157,5 +209,11 @@ class PluginGazetteersSuite extends munit.FunSuite:
         )
     val r = PluginGazetteers.http(wire, HostLog.scribe).fetch(Plugin.Http.FetchUrl("https://data.example/x.zip"))
     assertEquals(r.map(_.status), Right(503))
-    assertEquals(sent.toList, List("https://data.example/x.zip" -> Map("User-Agent" -> PluginGazetteers.UserAgent.value)))
-    assert(PluginGazetteers.UserAgent.value.matches("Histmersion/\\S+ \\(gazetteer import\\)"), PluginGazetteers.UserAgent)
+    assertEquals(
+      sent.toList,
+      List("https://data.example/x.zip" -> Map("User-Agent" -> PluginGazetteers.UserAgent.value))
+    )
+    assert(
+      PluginGazetteers.UserAgent.value.matches("Histmersion/\\S+ \\(gazetteer import\\)"),
+      PluginGazetteers.UserAgent
+    )

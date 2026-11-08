@@ -188,7 +188,12 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     // the seed again, now with a period of its own: the override wins, the source's period is remembered
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(regio(period = Some(Period(Year(1700), Year(2100)))), List(Place.Name(Place.Name.Value("Zzpo Regio XII (Piscina Publica)"))))),
+      List(
+        Place.Input(
+          regio(period = Some(Period(Year(1700), Year(2100)))),
+          List(Place.Name(Place.Name.Value("Zzpo Regio XII (Piscina Publica)")))
+        )
+      ),
       Dataset.Seed
     )
     assertEquals(row(Regio), ("region", "[-7,)", false))
@@ -208,9 +213,13 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
 
   test("the override follows a rename; a reset restores the source's kind and period and the findings"):
     seed()
-    val _ = put(kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)), from = Some(Year(-7)), to = Some(Year(410)))
+    val _ =
+      put(kind = Some(Place.OverrideEdit.Put.Kind(DPlace.Kind.Region)), from = Some(Year(-7)), to = Some(Year(410)))
     assertEquals(PlaceFixtures.rename(ds, Regio, DPlace.Id("zzpo_regio_xii")), Right(()))
-    assertEquals(PlaceFixtures.overrides(ds, Some(com.histmersion.domain.catalogue.Place.Id("zzpo_regio_xii"))).map(_.kind), List(Some("region")))
+    assertEquals(
+      PlaceFixtures.overrides(ds, Some(com.histmersion.domain.catalogue.Place.Id("zzpo_regio_xii"))).map(_.kind),
+      List(Some("region"))
+    )
     assertEquals(PlaceFixtures.rename(ds, DPlace.Id("zzpo_regio_xii"), Regio), Right(()))
     val r = PlaceFixtures.setOverride(ds, Regio, Place.OverrideEdit.Reset, tol).toOption.get
     assertEquals(
@@ -224,7 +233,10 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       Left(Some(Write.CodeNotFound))
     )
     assertEquals(
-      PlaceFixtures.setOverride(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_nope"), Place.OverrideEdit.Reset, tol).left.map(_.code),
+      PlaceFixtures
+        .setOverride(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_nope"), Place.OverrideEdit.Reset, tol)
+        .left
+        .map(_.code),
       Left(Some(Write.CodeNotFound))
     )
     // after the reset, the next seed writes the source's kind freely
@@ -239,7 +251,8 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     val _ = PlaceFixtures.setOverride(
       ds,
       Tribe,
-      Place.OverrideEdit.Put(None, Some((Some(Year(-508L)), Some(Year(-322L)))), Some(Place.OverrideEdit.Put.Reason("kept a region"))),
+      Place.OverrideEdit
+        .Put(None, Some((Some(Year(-508L)), Some(Year(-322L)))), Some(Place.OverrideEdit.Put.Reason("kept a region"))),
       tol
     )
     assertEquals(listed, Set.empty[String])
@@ -248,12 +261,22 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
   test("a merge moves the findings and the id; a re-seed of the merged id does not bring it back"):
     seed()
     val dup =
-      Place(Place.Id("zzpo_dup"), Place.Label("Withdrawn: Zzpo Roma"), Place.KindValue(DPlace.Kind.Site), pt(150.52, -30.62))
-    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(dup, List(Place.Name(Place.Name.Value("Withdrawn: Zzpo Roma"))))), Dataset.Seed)
+      Place(
+        Place.Id("zzpo_dup"),
+        Place.Label("Withdrawn: Zzpo Roma"),
+        Place.KindValue(DPlace.Kind.Site),
+        pt(150.52, -30.62)
+      )
+    val _ = PlaceFixtures.upsertPlaces(
+      ds,
+      List(Place.Input(dup, List(Place.Name(Place.Name.Value("Withdrawn: Zzpo Roma"))))),
+      Dataset.Seed
+    )
     connect(ds):
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
                     VALUES ('zzpo_dup', 'pleiades', 'zzpo1', 'exact_match')""".update.run()
-    val _ = transact(ds)(PlaceFixtures.materialisePlacesIn(List(com.histmersion.domain.catalogue.Place.Id("zzpo_dup")), tol))
+    val _ =
+      transact(ds)(PlaceFixtures.materialisePlacesIn(List(com.histmersion.domain.catalogue.Place.Id("zzpo_dup")), tol))
     assertEquals(placesOf(1), Set(Regio, City, DPlace.Id("zzpo_dup")))
     val r = PlaceFixtures.merge(ds, DPlace.Id("zzpo_dup"), City, tol).toOption.get
     assertEquals((r.into.map(_.value: String), r.findingsBefore, r.findingsAfter, r.unlocated), (Some(City), 2, 2, 0))
@@ -269,7 +292,10 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(res.places, 1)
     assertEquals(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_dup")), None)
     assertEquals(PlaceFixtures.merge(ds, City, City, tol).left.map(_.code), Left(Some(Write.CodeInvalid)))
-    assertEquals(PlaceFixtures.merge(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_nope"), City, tol).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(
+      PlaceFixtures.merge(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_nope"), City, tol).left.map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
 
   test("a removal is refused while something refers to the place; done, no re-seed brings it back"):
     seed()
@@ -278,22 +304,58 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     val refused = PlaceFixtures.remove(ds, City, None)
     assert(refused.left.exists(_.message.value.contains("2 finding(s) it is the only place of")), refused.toString)
     val road =
-      Place(Place.Id("zzpo_road"), Place.Label("Withdrawn: Untitled"), Place.KindValue(DPlace.Kind.Site), pt(151.9, -31.9))
-    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(road, List(Place.Name(Place.Name.Value("Withdrawn: Untitled"))))), Dataset.Seed)
+      Place(
+        Place.Id("zzpo_road"),
+        Place.Label("Withdrawn: Untitled"),
+        Place.KindValue(DPlace.Kind.Site),
+        pt(151.9, -31.9)
+      )
+    val _ = PlaceFixtures.upsertPlaces(
+      ds,
+      List(Place.Input(road, List(Place.Name(Place.Name.Value("Withdrawn: Untitled"))))),
+      Dataset.Seed
+    )
     val _ = PlaceFixtures.addName(ds, DPlace.Id("zzpo_road"), PlaceFixtures.Name("Zzpo Via"), PlaceFixtures.Lang(""))
-    assert(PlaceFixtures.remove(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road"), None).left.exists(_.message.value.contains("1 name(s) added by hand")))
+    assert(
+      PlaceFixtures
+        .remove(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road"), None)
+        .left
+        .exists(_.message.value.contains("1 name(s) added by hand"))
+    )
     val _ = PlaceFixtures.removeName(ds, DPlace.Id("zzpo_road"), PlaceFixtures.Name("Zzpo Via"), PlaceFixtures.Lang(""))
-    val r = PlaceFixtures.remove(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road"), Some(PlaceFixtures.RemovalReason("withdrawn by Pleiades, no replacement"))).toOption.get
+    val r = PlaceFixtures
+      .remove(
+        ds,
+        com.histmersion.domain.catalogue.Place.Id("zzpo_road"),
+        Some(PlaceFixtures.RemovalReason("withdrawn by Pleiades, no replacement"))
+      )
+      .toOption
+      .get
     assertEquals((r.placeId, r.into, r.findingsBefore, r.unlocated), ("zzpo_road", None, 0, 0))
-    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(road, List(Place.Name(Place.Name.Value("Withdrawn: Untitled"))))), Dataset.Seed)
-    assertEquals(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road")), None, "the seed leaves a removed place out")
+    val _ = PlaceFixtures.upsertPlaces(
+      ds,
+      List(Place.Input(road, List(Place.Name(Place.Name.Value("Withdrawn: Untitled"))))),
+      Dataset.Seed
+    )
+    assertEquals(
+      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road")),
+      None,
+      "the seed leaves a removed place out"
+    )
     assert(
       PlaceFixtures.addPlace(ds, Place.Input(road.modify(_.label).setTo(Place.Label("Zzpo Road")), Nil)).isLeft,
       "nor may a person reuse its id"
     )
     connect(ds)(sql"DELETE FROM place_removals WHERE id = 'zzpo_road'".update.run())
-    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(road, List(Place.Name(Place.Name.Value("Withdrawn: Untitled"))))), Dataset.Seed)
-    assert(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road")).isDefined, "deleting the removal lets the seed bring it back")
+    val _ = PlaceFixtures.upsertPlaces(
+      ds,
+      List(Place.Input(road, List(Place.Name(Place.Name.Value("Withdrawn: Untitled"))))),
+      Dataset.Seed
+    )
+    assert(
+      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpo_road")).isDefined,
+      "deleting the removal lets the seed bring it back"
+    )
 
   // ── a point set by hand (V081) ────────────────────────────────────────────────────────────────
 
@@ -361,7 +423,8 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
 
   test("a point never replaces a shape: refused on an area, and a shape a source gives later is kept"):
     seed()
-    val square = Some(Place.Geometry("""{"type":"Polygon","coordinates":[[[151,-32],[152,-32],[152,-31],[151,-31],[151,-32]]]}"""))
+    val square =
+      Some(Place.Geometry("""{"type":"Polygon","coordinates":[[[151,-32],[152,-32],[152,-31],[151,-31],[151,-32]]]}"""))
     val _ = PlaceFixtures.upsertPlaces(ds, List(tribe(square)), Dataset.Seed)
     assertEquals(movePoint(Tribe, Longitude(150.9), Latitude(-30.9)).left.map(_.code), Left(Some(Write.CodeInvalid)))
     // back to a point, moved by hand; then the source gives the shape again — the shape wins
@@ -387,7 +450,12 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place(Place.Id("pleiades_zzpo_parthia"), Place.Label("Zzpo Parthyene"), Place.KindValue(DPlace.Kind.Region), pt(152.5, -32.5)),
+          Place(
+            Place.Id("pleiades_zzpo_parthia"),
+            Place.Label("Zzpo Parthyene"),
+            Place.KindValue(DPlace.Kind.Region),
+            pt(152.5, -32.5)
+          ),
           List(Place.Name(Place.Name.Value("Zzpo Parthyene")))
         )
       ),
@@ -405,6 +473,11 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     )
     assertEquals(geom(id), "POINT(151.1 -31.3)")
     // the person puts back Pleiades' own point — the grid square's centre — and the lint stops offering the move
-    val _ = movePoint(id, Longitude(152.5), Latitude(-32.5), Place.OverrideEdit.Put.Reason("Pleiades reprPoint; the Wikidata coordinate is the capital"))
+    val _ = movePoint(
+      id,
+      Longitude(152.5),
+      Latitude(-32.5),
+      Place.OverrideEdit.Put.Reason("Pleiades reprPoint; the Wikidata coordinate is the capital")
+    )
     assertEquals(geom(id), "POINT(152.5 -32.5)")
     assertEquals(listed, Nil)

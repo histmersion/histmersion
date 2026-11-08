@@ -65,7 +65,8 @@ final class PersonalControllers(
 
   private def size(raw: Option[Paging.Limit]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw).value)
 
-  private def search(q: Option[PersonalApi.Search]): SearchWords = SearchWords.of(q.map(w => SearchWords.Query(w.value)))
+  private def search(q: Option[PersonalApi.Search]): SearchWords =
+    SearchWords.of(q.map(w => SearchWords.Query(w.value)))
 
   private def label(title: Option[Title]): Option[TargetLabel] =
     TargetLabel.tidy(title.map(t => TargetLabel.Label(t.value)))
@@ -153,20 +154,25 @@ final class PersonalControllers(
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p.value))
       yield notes.add(user, t, text, label(in.title), now()).wire
 
-  def editNote(caller: Caller, id: WireNote.Id, in: com.histmersion.api.personal.Note.Edit): Either[Api.Error, WireNote] =
+  def editNote(
+      caller: Caller,
+      id: WireNote.Id,
+      in: com.histmersion.api.personal.Note.Edit
+  ): Either[Api.Error, WireNote] =
     maintenance.guard(WriteGate.OperationName("edit_note")):
       for
         user <- person(caller)
         nid <- Note.idOf(id).left.map(p => bad(p.value))
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(p => bad(p.value))
-        n <- edited(user, nid, text, in.ifUpdatedAt.map(_.value.trim).filter(_.nonEmpty).map(MarkTime.Iso(_))).left.map {
-          case Note.EditRefused.Missing      => missing(s"note $id")
-          case Note.EditRefused.Changed(was) =>
-            Api.Error(
-              Api.Error.Message(s"the note changed since it was opened (now ${was.iso}); open it again"),
-              Some(Api.Error.Code(Write.CodePrecondition))
-            )
-        }
+        n <- edited(user, nid, text, in.ifUpdatedAt.map(_.value.trim).filter(_.nonEmpty).map(MarkTime.Iso(_))).left
+          .map {
+            case Note.EditRefused.Missing      => missing(s"note $id")
+            case Note.EditRefused.Changed(was) =>
+              Api.Error(
+                Api.Error.Message(s"the note changed since it was opened (now ${was.iso}); open it again"),
+                Some(Api.Error.Code(Write.CodePrecondition))
+              )
+          }
       yield n.wire
 
   /** A time last seen that is no time at all never matches the note's: the edit is refused as a stale one. */
@@ -216,7 +222,9 @@ final class PersonalControllers(
       for
         user <- person(caller)
         key <- readable(in.kind, in.id)
-      yield reading.setRead(user, MarkTarget.itemKind(in.kind), key, ReadingService.Read(in.read.value), label(in.title), now()).wire
+      yield reading
+        .setRead(user, MarkTarget.itemKind(in.kind), key, ReadingService.Read(in.read.value), label(in.title), now())
+        .wire
 
   def opened(caller: Caller, in: ReadOpened): Either[Api.Error, WireReadMark] =
     maintenance.guard(WriteGate.OperationName("opened")):

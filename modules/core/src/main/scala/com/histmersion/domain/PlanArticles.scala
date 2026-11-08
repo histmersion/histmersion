@@ -35,8 +35,6 @@ object PlanArticles:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
-
-
   final case class ArticleAnswer(
       slug: ArticleAnswer.Slug,
       title: ArticleAnswer.Title,
@@ -75,7 +73,8 @@ object PlanArticles:
       .modify(_.tags)(_.description("Tags every source must have, from the corpus vocabulary (facets)"))
       .modify(_.why)(_.description("What the article would establish that the area's articles do not, in one sentence"))
 
-  final case class ArticlesAnswer(rationale: ArticlesAnswer.Rationale, articles: List[ArticleAnswer] = Nil) derives KindlingsCodecAsObject
+  final case class ArticlesAnswer(rationale: ArticlesAnswer.Rationale, articles: List[ArticleAnswer] = Nil)
+      derives KindlingsCodecAsObject
   object ArticlesAnswer:
     type Rationale = Rationale.T
     object Rationale extends Newtype[String, Pure]
@@ -116,16 +115,21 @@ object PlanArticles:
     * selects something. Left = the problems a retry should fix (nothing usable, an empty rationale); the ones it cannot
     * fix are dropped with why.
     */
-  def check(a: ArticlesAnswer, maxArticles: Limits.MaxArticles, last: LastRound): Either[List[Problem], (List[Candidate], List[ArticlePlan.Dropped])] =
+  def check(
+      a: ArticlesAnswer,
+      maxArticles: Limits.MaxArticles,
+      last: LastRound
+  ): Either[List[Problem], (List[Candidate], List[ArticlePlan.Dropped])] =
     val problems = List.newBuilder[Problem]
     val dropped = List.newBuilder[ArticlePlan.Dropped]
     val kept = a.articles
       .foldLeft(Vector.empty[Candidate]) { (acc, x) =>
         Articles.slugOf(Article.Slug(Option(x.slug).fold("")(_.value))) match
-          case Left(m)                                                  => problems += Problem(s"article '${x.slug}': $m"); acc
-          case Right(s) if Option(x.title).forall(_.value.trim.isEmpty) => problems += Problem(s"article '$s' has no title"); acc
-          case Right(s) if acc.exists(_.slug == s)                      => dropped += ArticlePlan.Dropped(s"'$s' proposed twice"); acc
-          case Right(s)                                                 =>
+          case Left(m) => problems += Problem(s"article '${x.slug}': $m"); acc
+          case Right(s) if Option(x.title).forall(_.value.trim.isEmpty) =>
+            problems += Problem(s"article '$s' has no title"); acc
+          case Right(s) if acc.exists(_.slug == s) => dropped += ArticlePlan.Dropped(s"'$s' proposed twice"); acc
+          case Right(s)                            =>
             val kind = x.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse("concept")
             Articles.kindOf(Article.Kind.Wire(kind)) match
               case Left(m)  => problems += Problem(s"article '$s': $m"); acc
@@ -137,8 +141,9 @@ object PlanArticles:
                     tags = x.tags.map(t => Article.Filter.Tags(t.value))
                   )
                 ) match
-                  case Left(m)        => problems += Problem(s"article '$s': $m"); acc
-                  case Right(None)    => problems += Problem(s"article '$s' has no filter: give a query, topics or tags"); acc
+                  case Left(m)     => problems += Problem(s"article '$s': $m"); acc
+                  case Right(None) =>
+                    problems += Problem(s"article '$s' has no filter: give a query, topics or tags"); acc
                   case Right(Some(f)) =>
                     acc :+ Candidate(
                       s,
@@ -155,7 +160,8 @@ object PlanArticles:
       problems += Problem("the rationale is empty — say how the articles cover the area")
     val ps = problems.result()
     if ps.nonEmpty && !last.value then Left(ps)
-    else Right((kept.take(maxArticles.value), dropped.result() ++ ps.map(p => ArticlePlan.Dropped(s"not proposed: $p"))))
+    else
+      Right((kept.take(maxArticles.value), dropped.result() ++ ps.map(p => ArticlePlan.Dropped(s"not proposed: $p"))))
 
   /** Verify the candidates against the corpus: `slugFree` (no article and no old slug of one), `hits` (a filter's
     * source count and its sources), `existing` (each article of the area with its sources). Every candidate that passes

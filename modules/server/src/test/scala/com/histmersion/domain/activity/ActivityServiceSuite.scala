@@ -63,7 +63,14 @@ class ActivityServiceSuite extends DbSuite:
         error = Some(Entry.Error("HTTP 500")),
         job = Some(Entry.Job("j1"))
       ),
-      Entry(Entry.Key("job:j0"), Entry.Kind("job"), at(ago(60 * 24 * 9)), state = Entry.State("failed"), what = Entry.What("basemap-fetch"), job = Some(Entry.Job("j0"))),
+      Entry(
+        Entry.Key("job:j0"),
+        Entry.Kind("job"),
+        at(ago(60 * 24 * 9)),
+        state = Entry.State("failed"),
+        what = Entry.What("basemap-fetch"),
+        job = Some(Entry.Job("j0"))
+      ),
       Entry(
         Entry.Key("log:1"),
         Entry.Kind("log"),
@@ -73,7 +80,14 @@ class ActivityServiceSuite extends DbSuite:
         job = Some(Entry.Job("r1")),
         by = Some(Entry.By("agent"))
       ),
-      Entry(Entry.Key("log:2"), Entry.Kind("log"), at(ago(3)), text = Entry.Text("fetched"), job = Some(Entry.Job("j1")), by = Some(Entry.By("job"))),
+      Entry(
+        Entry.Key("log:2"),
+        Entry.Kind("log"),
+        at(ago(3)),
+        text = Entry.Text("fetched"),
+        job = Some(Entry.Job("j1")),
+        by = Some(Entry.By("job"))
+      ),
       Entry(Entry.Key("log:3"), Entry.Kind("log"), at(ago(3)), text = Entry.Text("a person's note")),
       Entry(
         Entry.Key("decision:1"),
@@ -191,7 +205,10 @@ class ActivityServiceSuite extends DbSuite:
       assertEquals(es(w.key("j1")).error, Some("HTTP 500"))
 
     test(s"$label: the counts: one running, one problem this week"):
-      assertEquals(w.service.page(ActivityQuery(), now).counts, Activity.Counts(running = Activity.Counts.Running(1), problemsWeek = Activity.Counts.ProblemsWeek(1)))
+      assertEquals(
+        w.service.page(ActivityQuery(), now).counts,
+        Activity.Counts(running = Activity.Counts.Running(1), problemsWeek = Activity.Counts.ProblemsWeek(1))
+      )
 
   spec("in memory", inMemory)
 

@@ -225,7 +225,10 @@ class FormatHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       assertEquals(is, 200, ib)
       val (rs, rb) = post(s"$url/api/places/zz_fmt_place_a/rename", """{"to":"zz_fmt_place_b"}""")
       assertEquals(rs, 200, rb)
-      assertEquals(decode[LabelRenamed](rb), LabelRenamed(Bundle.Kind.Place, LabelRenamed.From("zz_fmt_place_a"), LabelRenamed.To("zz_fmt_place_b")))
+      assertEquals(
+        decode[LabelRenamed](rb),
+        LabelRenamed(Bundle.Kind.Place, LabelRenamed.From("zz_fmt_place_a"), LabelRenamed.To("zz_fmt_place_b"))
+      )
       val (gs, gb) = get(s"$url/api/places/zz_fmt_place_a")
       assertEquals(gs, 200, gb)
       assert(gb.contains("\"zz_fmt_place_b\""), gb)

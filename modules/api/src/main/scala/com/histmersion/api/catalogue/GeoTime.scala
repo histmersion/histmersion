@@ -19,4 +19,3 @@ object GeoTime:
   object Within:
     type Latest = Latest.T
     object Latest extends Newtype[Boolean, Pure]
-

@@ -19,7 +19,10 @@ import scala.jdk.CollectionConverters.*
   */
 final class FakeMediaHttp(route: String => Either[String, HttpAnswer]) extends HttpTransport:
   val requests = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]
-  def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(
+      url: HttpTransport.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+  ): Either[HttpTransport.Problem, HttpAnswer] =
     requests += url.value -> headers.map((k, v) => k.value -> v.value)
     route(url.value).left.map(HttpTransport.Problem(_))
 
@@ -44,7 +47,10 @@ object FakeMediaHttp:
 
   /** The default media config with no pause between requests. */
   lazy val cfg: MediaConfig =
-    AppConfig.load(org.ekrich.config.ConfigFactory.empty).media.copy(requestIntervalMs = MediaConfig.RequestIntervalMs(0))
+    AppConfig
+      .load(org.ekrich.config.ConfigFactory.empty)
+      .media
+      .copy(requestIntervalMs = MediaConfig.RequestIntervalMs(0))
 
   /** A [[Polite]] over `http` whose sleeps are recorded, not slept, on a clock that sleeping advances. */
   def polite(
@@ -55,13 +61,26 @@ object FakeMediaHttp:
     val slept = scala.collection.mutable.ListBuffer.empty[Polite.IntervalMs]
     // `var`: the fake clock, advanced by every recorded sleep
     var now = Polite.EpochMs(1_000_000L)
-    (new Polite(http, c, ms => { slept += ms; now = Polite.EpochMs(now.value + ms.value) }, () => now, refusalBackoffMs), slept)
+    (
+      new Polite(
+        http,
+        c,
+        ms => { slept += ms; now = Polite.EpochMs(now.value + ms.value) },
+        () => now,
+        refusalBackoffMs
+      ),
+      slept
+    )
 
   /** The first-party collection registered as `name`, as the host builds it: its plugin discovered on the class path
     * and supplied the host's settings `settings` (a `histmersion.conf` text: `histmersion.media.*`, and a keyed one's
     * `histmersion.plugins.<id>` block), its secret references read from `env`.
     */
-  def collection(name: Registries.MediaCollectionsKey, settings: String = "", env: Map[String, String] = Map.empty): MediaCollection =
+  def collection(
+      name: Registries.MediaCollectionsKey,
+      settings: String = "",
+      env: Map[String, String] = Map.empty
+  ): MediaCollection =
     val g = ServerPlugins.offlineWith(Nil, ConfigFactory.parseString(settings), ConfigFactory.parseMap(env.asJava))
     g.registries.mediaCollections.getOrElse(
       name,
@@ -77,4 +96,8 @@ object FakeMediaHttp:
       env: Map[String, String] = Map.empty,
       c: MediaConfig = cfg
   ): PluginCollection =
-    PluginCollection(BuiltinMedia.providerOf(name), collection(Registries.MediaCollectionsKey(name.value), settings, env), BuiltinMedia.licencesFor(name, c))
+    PluginCollection(
+      BuiltinMedia.providerOf(name),
+      collection(Registries.MediaCollectionsKey(name.value), settings, env),
+      BuiltinMedia.licencesFor(name, c)
+    )

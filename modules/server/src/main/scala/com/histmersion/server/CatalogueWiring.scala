@@ -76,7 +76,8 @@ final class CatalogueWiring(
       http,
       () => DeepTime.SignedYear(java.time.Year.now(deps.clock.withZone(java.time.ZoneOffset.UTC)).getValue.toLong)
     )
-  def this(deps: Deps) = this(deps, JavaHttpTransport(HttpTransport.TimeoutSeconds(deps.cfg.events.timeoutSeconds.value)))
+  def this(deps: Deps) =
+    this(deps, JavaHttpTransport(HttpTransport.TimeoutSeconds(deps.cfg.events.timeoutSeconds.value)))
 
   /** One catalogue run at a time; an event catalogue's import may be paused and cancelled. */
   val jobs: CatalogueJobs =
@@ -87,8 +88,7 @@ final class CatalogueWiring(
   lazy val eventImporter: EventImports =
     EventImports(
       EventImportService(deps.transactor),
-      () =>
-        deps.plugins.registries.eventCatalogues.map((k, c) => CatalogRecord.Provider(k.value) -> c),
+      () => deps.plugins.registries.eventCatalogues.map((k, c) => CatalogRecord.Provider(k.value) -> c),
       () => deps.cfg,
       http,
       presentYear,

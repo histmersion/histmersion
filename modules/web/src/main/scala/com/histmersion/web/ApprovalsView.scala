@@ -113,7 +113,8 @@ object ApprovalsView:
   val States: List[Approval.State.Wire] = ApprovalState.values.toList.map(_.wire) :+ Approval.State.Wire("all")
 
   /** The state a button stands for as the URL keeps it: the open ones are the default (`None`). */
-  def stateValue(button: Approval.State.Wire): Option[String] = Option.when(button != ApprovalState.Open.wire)(button.value)
+  def stateValue(button: Approval.State.Wire): Option[String] =
+    Option.when(button != ApprovalState.Open.wire)(button.value)
 
   /** The state the list shows: the open ones unless another was picked. */
   def shownState(field: Option[Approval.State.Wire]): Approval.State.Wire = field.getOrElse(ApprovalState.Open.wire)
@@ -136,7 +137,12 @@ object ApprovalsView:
       UiState.approvalSubject.now()
     )
 
-  private def filterOfFields(state: Option[String], kinds: List[String], by: List[String], subject: Option[String]): ListFilters.ApprovalFilter =
+  private def filterOfFields(
+      state: Option[String],
+      kinds: List[String],
+      by: List[String],
+      subject: Option[String]
+  ): ListFilters.ApprovalFilter =
     filterOf(
       state.map(Approval.State.Wire(_)),
       kinds.map(Approval.Kind.Wire(_)),
@@ -171,12 +177,14 @@ object ApprovalsView:
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
   /** Who decided an approval, as its row says it (nothing while it is open). */
-  def decidedLine(a: ApprovalInfo): Option[String] = ListFilters.DecidedBy.of(a.state, a.note, a.result.map(r => Approval.Outcome(r.value))).map(_.describe.value)
+  def decidedLine(a: ApprovalInfo): Option[String] =
+    ListFilters.DecidedBy.of(a.state, a.note, a.result.map(r => Approval.Outcome(r.value))).map(_.describe.value)
 
   /** The self-check line of a draft. */
   def selfCheck(d: Goal.Plans.ArticleDraft): String =
     if d.problems.isEmpty then "The code self-check found nothing."
-    else s"The code self-check still found ${Plural.count(Plural.CountN(d.problems.size), Plural.CountSingular("problem"))} after the writer's last attempt:"
+    else
+      s"The code self-check still found ${Plural.count(Plural.CountN(d.problems.size), Plural.CountSingular("problem"))} after the writer's last attempt:"
 
   /** A plan, as a person weighs it: sub-goals, queries, works (in the corpus or to acquire), dropped. */
   private[web] def planBlock(plan: Goal.Plans.Plan): HtmlElement =
@@ -187,7 +195,9 @@ object ApprovalsView:
         div(
           h5("Sub-goals"),
           ul(
-            plan.subGoals.map(g => li(code(g.slug.value), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n"))))
+            plan.subGoals.map(g =>
+              li(code(g.slug.value), s" — ${g.title}", g.notes.map(n => span(cls := "muted", s": $n")))
+            )
           )
         )
       ),
@@ -270,13 +280,15 @@ object ApprovalsView:
 
   private def decide(a: ApprovalInfo, d: Decision, note: String): Unit =
     busy.update(_ + a.id)
-    ApiClient.decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty).map(Agents.DecisionRequest.Note(_))).onComplete { r =>
-      busy.update(_ - a.id)
-      r.failed.foreach(e => list.failure.set(Some(PolledList.Problem(e.getMessage))))
-      refresh()
-      // decided here or in a goal's window: the count drops, and the decision is not news to its maker
-      Notices.ownWrite(UiNotices.Board.Approvals)
-    }
+    ApiClient
+      .decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty).map(Agents.DecisionRequest.Note(_)))
+      .onComplete { r =>
+        busy.update(_ - a.id)
+        r.failed.foreach(e => list.failure.set(Some(PolledList.Problem(e.getMessage))))
+        refresh()
+        // decided here or in a goal's window: the count drops, and the decision is not news to its maker
+        Notices.ownWrite(UiNotices.Board.Approvals)
+      }
 
   /** A bulk decision, after the person confirmed it: one request per approval, ONE AFTER ANOTHER, each through the very
     * endpoint (and checks) of its own button — an approval decided meanwhile is refused (409) and the rest go on; the
@@ -297,7 +309,11 @@ object ApprovalsView:
       busy.update(_ -- as.map(_.id))
       selected.set(Set.empty)
       list.failure.set(
-        Option.when(errs.nonEmpty)(PolledList.Problem(s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"))
+        Option.when(errs.nonEmpty)(
+          PolledList.Problem(
+            s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"
+          )
+        )
       )
       refresh()
       Notices.ownWrite(UiNotices.Board.Approvals)
@@ -311,10 +327,12 @@ object ApprovalsView:
 
   /** An approval's state (or "all") as its button and badge read it. */
   def stateLabel(s: Approval.State.Wire): String =
-    if s.value == "all" then "All" else ApprovalState.parse(s).fold[String](Wording.humanize(Wording.Id(s.value)))(Wording.approvalState)
+    if s.value == "all" then "All"
+    else ApprovalState.parse(s).fold[String](Wording.humanize(Wording.Id(s.value)))(Wording.approvalState)
 
   /** An approval's kind as a person reads it ([[Wording.approvalKind]]). */
-  def kindLabel(kind: Approval.Kind.Wire): String = ApprovalKind.parse(kind).fold[String](Wording.humanize(Wording.Id(kind.value)))(Wording.approvalKind)
+  def kindLabel(kind: Approval.Kind.Wire): String =
+    ApprovalKind.parse(kind).fold[String](Wording.humanize(Wording.Id(kind.value)))(Wording.approvalKind)
 
   private def stateButtons: HtmlElement =
     def count(l: ListPaging.Listing[ApprovalInfo], s: Approval.State.Wire) =
@@ -327,7 +345,9 @@ object ApprovalsView:
           cls := "btn btn--toggle",
           dataAttr("state") := s.value,
           stateMeaning(s).map(m => title := m),
-          aria.pressed <-- UiState.approvalState.signal.map(v => (shownState(v.map(Approval.State.Wire(_))) == s).toString),
+          aria.pressed <-- UiState.approvalState.signal.map(v =>
+            (shownState(v.map(Approval.State.Wire(_))) == s).toString
+          ),
           span(stateLabel(s)),
           child.text <-- list.listing.signal.map { l =>
             val n = count(l, s); if n > 0 then s" ${Paging.grouped(Paging.GroupSize(n.toLong))}" else ""
@@ -373,11 +393,12 @@ object ApprovalsView:
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
   def digestLine(g: ApprovalDigest.KindGroup): String =
-    s"${kindLabel(Approval.Kind.Wire(g.kind.value))} ${Paging.grouped(Paging.GroupSize(g.count.value))}" + g.oldest.fold("")(o => s" (oldest $o)") +
+    s"${kindLabel(Approval.Kind.Wire(g.kind.value))} ${Paging.grouped(Paging.GroupSize(g.count.value))}" + g.oldest
+      .fold("")(o => s" (oldest $o)") +
       (g.decidedBy.value match
-        case "checked" => " · the autopilot's checks decide them within the day's cap"
+        case "checked"            => " · the autopilot's checks decide them within the day's cap"
         case ApprovalDigest.Waits => " · waiting: nobody needs to decide them now"
-        case _                                                   => " · a person decides")
+        case _                    => " · a person decides")
 
   /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the list below
     * (its kind filter), where the bulk bar decides them all at once.
@@ -394,7 +415,8 @@ object ApprovalsView:
           p(
             cls := "muted",
             s"Waiting for a person: ${Plural.count(Plural.CountN(x.total.value), Plural.CountSingular("approval"))}" +
-              (if x.heldForPerson.value > 0 then s", ${Plural.count(Plural.CountN(x.heldForPerson.value), Plural.CountSingular("manager item"))} held for a person"
+              (if x.heldForPerson.value > 0 then
+                 s", ${Plural.count(Plural.CountN(x.heldForPerson.value), Plural.CountSingular("manager item"))} held for a person"
                else "") +
               " — pick a kind, then decide the shown ones at once."
           ),
@@ -409,7 +431,9 @@ object ApprovalsView:
                 title := (kindMeaning(Approval.Kind.Wire(g.kind.value)).toList :+ g.subjects
                   .map(s => s"${s.subject} (${s.count})")
                   .mkString(", ")).mkString("\n"),
-                onClick --> (_ => UiState.set(UiState.approvalKinds := List(g.kind.value), UiState.approvalState := None)())
+                onClick --> (_ =>
+                  UiState.set(UiState.approvalKinds := List(g.kind.value), UiState.approvalState := None)()
+                )
               )
             )
           )
@@ -529,7 +553,11 @@ object ApprovalsView:
           )
         )
       ),
-      span(cls := s"job-state state-${a.state}", title := a.state.value, stateLabel(Approval.State.Wire(a.state.value))),
+      span(
+        cls := s"job-state state-${a.state}",
+        title := a.state.value,
+        stateLabel(Approval.State.Wire(a.state.value))
+      ),
       div(
         cls := "job-main",
         div(
@@ -544,7 +572,13 @@ object ApprovalsView:
             case Some(ApprovalKind.GoalPlan) =>
               span(
                 "Plan for the goal ",
-                a.subject.fold(span("?"))(g => WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.value)), title := g.value, Wording.humanize(Wording.Id(g.value))))
+                a.subject.fold(span("?"))(g =>
+                  WinLink(
+                    WindowKey.Goal(WindowKey.Goal.Slug(g.value)),
+                    title := g.value,
+                    Wording.humanize(Wording.Id(g.value))
+                  )
+                )
               )
             case Some(ApprovalKind.ArticlePublish) =>
               span(
@@ -558,7 +592,11 @@ object ApprovalsView:
             case Some(ApprovalKind.HintEffect) =>
               span(
                 a.subject.fold(span("A manager"))(id =>
-                  WinLink(WindowKey.Manager(WindowKey.Manager.Id(id.value)), title := id.value, Wording.manager(Wording.ManagerId(id.value)))
+                  WinLink(
+                    WindowKey.Manager(WindowKey.Manager.Id(id.value)),
+                    title := id.value,
+                    Wording.manager(Wording.ManagerId(id.value))
+                  )
                 ),
                 ": ",
                 strong(a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))),
@@ -588,7 +626,9 @@ object ApprovalsView:
         div(
           cls := "job-meta muted",
           span(s"#${a.id}"),
-          a.runId.map(id => span(" · ", WinLink(WindowKey.Run(WindowKey.Run.Id(id.value)), s"run ${id.value.take(8)}"))),
+          a.runId.map(id =>
+            span(" · ", WinLink(WindowKey.Run(WindowKey.Run.Id(id.value)), s"run ${id.value.take(8)}"))
+          ),
           span(
             " · ",
             span(

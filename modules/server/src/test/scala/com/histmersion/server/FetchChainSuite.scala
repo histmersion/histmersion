@@ -27,36 +27,91 @@ class FetchChainSuite extends munit.FunSuite:
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       calls.incrementAndGet(); answer(work, ctx)
 
-  private def found(source: FetchedFile.Source, bytes: FetchedFile.Bytes = Pdf, ext: FetchedFile.Extension = FetchedFile.Extension("pdf")) =
-    Fake(Access.Open, (_, _) => Fetch.Found(FetchedFile(source, Some(FetchedFile.Url(s"https://$source.example/f")), bytes, ext)))
+  private def found(
+      source: FetchedFile.Source,
+      bytes: FetchedFile.Bytes = Pdf,
+      ext: FetchedFile.Extension = FetchedFile.Extension("pdf")
+  ) =
+    Fake(
+      Access.Open,
+      (_, _) => Fetch.Found(FetchedFile(source, Some(FetchedFile.Url(s"https://$source.example/f")), bytes, ext))
+    )
   private def miss(access: Access = Access.Open) = Fake(access, (_, _) => Fetch.Miss(Fetch.Miss.Why("none")))
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────
 
   test("order: the configured ids first, as listed, then the other registered ones in registration order"):
-    assertEquals(FetchChain.order(List(com.histmersion.util.plugins.Plugin.Id("a"), com.histmersion.util.plugins.Plugin.Id("b"), com.histmersion.util.plugins.Plugin.Id("c"), com.histmersion.util.plugins.Plugin.Id("d")), List(com.histmersion.util.plugins.Plugin.Id("c"), com.histmersion.util.plugins.Plugin.Id("a"))), (List("c", "a", "b", "d"), Nil))
-    assertEquals(FetchChain.order(List(com.histmersion.util.plugins.Plugin.Id("a"), com.histmersion.util.plugins.Plugin.Id("b")), Nil), (List("a", "b"), Nil))
+    assertEquals(
+      FetchChain.order(
+        List(
+          com.histmersion.util.plugins.Plugin.Id("a"),
+          com.histmersion.util.plugins.Plugin.Id("b"),
+          com.histmersion.util.plugins.Plugin.Id("c"),
+          com.histmersion.util.plugins.Plugin.Id("d")
+        ),
+        List(com.histmersion.util.plugins.Plugin.Id("c"), com.histmersion.util.plugins.Plugin.Id("a"))
+      ),
+      (List("c", "a", "b", "d"), Nil)
+    )
+    assertEquals(
+      FetchChain
+        .order(List(com.histmersion.util.plugins.Plugin.Id("a"), com.histmersion.util.plugins.Plugin.Id("b")), Nil),
+      (List("a", "b"), Nil)
+    )
 
   test("order: a listed id nothing registered is skipped, with one note naming every such id"):
-    val (ids, notes) = FetchChain.order(List(com.histmersion.util.plugins.Plugin.Id("a")), CommaList("x, a , , y, x").entries.flatMap(e => com.histmersion.util.plugins.Plugin.Id.option(e.value)))
+    val (ids, notes) = FetchChain.order(
+      List(com.histmersion.util.plugins.Plugin.Id("a")),
+      CommaList("x, a , , y, x").entries.flatMap(e => com.histmersion.util.plugins.Plugin.Id.option(e.value))
+    )
     assertEquals(ids, List("a"))
     assertEquals(notes.size, 1)
     assert(notes.head.value.contains("'x', 'y'"), notes.head)
 
   test("the legal gate: open and subscription always run; unauthorised only when allowed, never on the legal path"):
-    for legal <- List(true, false).map(FetchChain.LegalOnly(_)); allow <- List(true, false).map(FetchChain.AllowUnauthorised(_)) do
+    for
+      legal <- List(true, false).map(FetchChain.LegalOnly(_));
+      allow <- List(true, false).map(FetchChain.AllowUnauthorised(_))
+    do
       assert(FetchChain.runs(Access.Open, legal, allow))
       assert(FetchChain.runs(Access.Subscription, legal, allow))
-    assert(FetchChain.runs(Access.Unauthorised, legalOnly = FetchChain.LegalOnly(false), allowUnauthorised = FetchChain.AllowUnauthorised(true)))
-    assert(!FetchChain.runs(Access.Unauthorised, legalOnly = FetchChain.LegalOnly(false), allowUnauthorised = FetchChain.AllowUnauthorised(false)))
-    assert(!FetchChain.runs(Access.Unauthorised, legalOnly = FetchChain.LegalOnly(true), allowUnauthorised = FetchChain.AllowUnauthorised(true)))
-    assert(!FetchChain.runs(Access.Unauthorised, legalOnly = FetchChain.LegalOnly(true), allowUnauthorised = FetchChain.AllowUnauthorised(false)))
+    assert(
+      FetchChain.runs(
+        Access.Unauthorised,
+        legalOnly = FetchChain.LegalOnly(false),
+        allowUnauthorised = FetchChain.AllowUnauthorised(true)
+      )
+    )
+    assert(
+      !FetchChain.runs(
+        Access.Unauthorised,
+        legalOnly = FetchChain.LegalOnly(false),
+        allowUnauthorised = FetchChain.AllowUnauthorised(false)
+      )
+    )
+    assert(
+      !FetchChain.runs(
+        Access.Unauthorised,
+        legalOnly = FetchChain.LegalOnly(true),
+        allowUnauthorised = FetchChain.AllowUnauthorised(true)
+      )
+    )
+    assert(
+      !FetchChain.runs(
+        Access.Unauthorised,
+        legalOnly = FetchChain.LegalOnly(true),
+        allowUnauthorised = FetchChain.AllowUnauthorised(false)
+      )
+    )
 
   test("the PDF check: the magic bytes within the first KiB of a plausible size"):
     assert(FetchChain.looksLikePdf(Pdf))
     assert(!FetchChain.looksLikePdf(Html))
     assert(!FetchChain.looksLikePdf(FetchedFile.Bytes("%PDF-1.4".getBytes("ISO-8859-1"))), "too small to be a PDF")
-    assert(!FetchChain.looksLikePdf(FetchedFile.Bytes(("x" * 2000 + "%PDF").getBytes("ISO-8859-1"))), "not within the first KiB")
+    assert(
+      !FetchChain.looksLikePdf(FetchedFile.Bytes(("x" * 2000 + "%PDF").getBytes("ISO-8859-1"))),
+      "not within the first KiB"
+    )
 
   test("describe names the identifiers, else the title"):
     assertEquals(
@@ -70,33 +125,50 @@ class FetchChainSuite extends munit.FunSuite:
 
   test("the first copy wins and the fetchers after it are not asked"):
     val (a, b, c) = (miss(), found(FetchedFile.Source("b")), found(FetchedFile.Source("c")))
-    val got = FetchChain(List(FetchChain.Step.Id("a") -> a, FetchChain.Step.Id("b") -> b, FetchChain.Step.Id("c") -> c)).fetch(Some(FetchedDoi), None)
+    val got = FetchChain(List(FetchChain.Step.Id("a") -> a, FetchChain.Step.Id("b") -> b, FetchChain.Step.Id("c") -> c))
+      .fetch(Some(FetchedDoi), None)
     assertEquals(got.map(_.source), Right("b"))
     assertEquals((a.calls.get, b.calls.get, c.calls.get), (1, 1, 0))
 
   test("nothing found: the message ingest has always reported"):
-    assertEquals(FetchChain(List(FetchChain.Step.Id("a") -> miss())).fetch(Some(FetchedDoi), None), Left(FetchChain.NoCopy))
-    assertEquals(FetchChain(Nil).fetch(Some(com.histmersion.domain.library.Doi("10.1234/x")), None), Left(FetchChain.NoCopy))
+    assertEquals(
+      FetchChain(List(FetchChain.Step.Id("a") -> miss())).fetch(Some(FetchedDoi), None),
+      Left(FetchChain.NoCopy)
+    )
+    assertEquals(
+      FetchChain(Nil).fetch(Some(com.histmersion.domain.library.Doi("10.1234/x")), None),
+      Left(FetchChain.NoCopy)
+    )
 
   test("a 'PDF' that is not one is no copy: the chain moves on"):
-    val got = FetchChain(List(FetchChain.Step.Id("html") -> found(FetchedFile.Source("html"), Html), FetchChain.Step.Id("real") -> found(FetchedFile.Source("real")))).fetch(Some(FetchedDoi), None)
+    val got = FetchChain(
+      List(
+        FetchChain.Step.Id("html") -> found(FetchedFile.Source("html"), Html),
+        FetchChain.Step.Id("real") -> found(FetchedFile.Source("real"))
+      )
+    ).fetch(Some(FetchedDoi), None)
     assertEquals(got.map(_.source), Right("real"))
 
   test("a copy in another format is not PDF-checked (a JATS text, an EPUB)"):
     val xml = FetchedFile.Bytes("<article/>".getBytes("UTF-8"))
-    val got = FetchChain(List(FetchChain.Step.Id("text") -> found(FetchedFile.Source("text"), xml, FetchedFile.Extension("xml")))).fetch(Some(FetchedDoi), None)
+    val got = FetchChain(
+      List(FetchChain.Step.Id("text") -> found(FetchedFile.Source("text"), xml, FetchedFile.Extension("xml")))
+    ).fetch(Some(FetchedDoi), None)
     assertEquals(got.map(f => (f.source, f.extension)), Right(("text", "xml")))
 
   test("a fetcher that throws is a miss; the chain goes on"):
     val boom = Fake(Access.Open, (_, _) => throw new IllegalStateException("bang"))
     assertEquals(
-      FetchChain(List(FetchChain.Step.Id("boom") -> boom, FetchChain.Step.Id("ok") -> found(FetchedFile.Source("ok")))).fetch(Some(FetchedDoi), None).map(_.source),
+      FetchChain(List(FetchChain.Step.Id("boom") -> boom, FetchChain.Step.Id("ok") -> found(FetchedFile.Source("ok"))))
+        .fetch(Some(FetchedDoi), None)
+        .map(_.source),
       Right("ok")
     )
 
   test("a refusal is asked once, the chain goes on, and a failed fetch says who refused and why"):
     val no = Fake(Access.Open, (_, _) => Fetch.Refused(Fetch.Refused.Why("lending-only")))
-    val r = FetchChain(List(FetchChain.Step.Id("no") -> no, FetchChain.Step.Id("a") -> miss())).fetchLegal(Some(FetchedDoi), None)
+    val r = FetchChain(List(FetchChain.Step.Id("no") -> no, FetchChain.Step.Id("a") -> miss()))
+      .fetchLegal(Some(FetchedDoi), None)
     assertEquals(r, Left(s"${FetchChain.NoCopy} (no: lending-only)"))
     assertEquals(no.calls.get, 1)
 
@@ -105,7 +177,12 @@ class FetchChainSuite extends munit.FunSuite:
     val boom = Fake(Access.Open, (_, _) => throw new IllegalStateException("bang"))
     val off = Fake(Access.Unauthorised, (_, _) => Fetch.Miss(Fetch.Miss.Why("never asked")))
     val got = FetchChain(
-      List(FetchChain.Step.Id("a") -> Fake(Access.Open, (_, _) => Fetch.Miss(Fetch.Miss.Why("no record"))), FetchChain.Step.Id("no") -> no, FetchChain.Step.Id("boom") -> boom, FetchChain.Step.Id("u") -> off)
+      List(
+        FetchChain.Step.Id("a") -> Fake(Access.Open, (_, _) => Fetch.Miss(Fetch.Miss.Why("no record"))),
+        FetchChain.Step.Id("no") -> no,
+        FetchChain.Step.Id("boom") -> boom,
+        FetchChain.Step.Id("u") -> off
+      )
     ).fetchWorkExplained(doi, legalOnly = FetchChain.LegalOnly(false))
     assertEquals(got.file, Left(s"${FetchChain.NoCopy} (no: bot challenge)"))
     assertEquals(
@@ -116,23 +193,35 @@ class FetchChainSuite extends munit.FunSuite:
         "boom: no copy — boom failed: IllegalStateException: bang"
       )
     )
-    val hit = FetchChain(List(FetchChain.Step.Id("a") -> miss(), FetchChain.Step.Id("b") -> found(FetchedFile.Source("b")))).fetchWorkExplained(doi, legalOnly = FetchChain.LegalOnly(false))
+    val hit = FetchChain(
+      List(FetchChain.Step.Id("a") -> miss(), FetchChain.Step.Id("b") -> found(FetchedFile.Source("b")))
+    ).fetchWorkExplained(doi, legalOnly = FetchChain.LegalOnly(false))
     assertEquals((hit.file.map(_.source), hit.answers), (Right("b"), Nil))
 
   test("an unauthorised fetcher stays off unless allowed, and never runs on the legal path"):
-    def unauthorised = Fake(Access.Unauthorised, (_, _) => Fetch.Found(FetchedFile(FetchedFile.Source("u"), None, Pdf, FetchedFile.Extension("pdf"))))
+    def unauthorised = Fake(
+      Access.Unauthorised,
+      (_, _) => Fetch.Found(FetchedFile(FetchedFile.Source("u"), None, Pdf, FetchedFile.Extension("pdf")))
+    )
     val off = unauthorised
-    assertEquals(FetchChain(List(FetchChain.Step.Id("u") -> off)).fetch(Some(FetchedDoi), None), Left(FetchChain.NoCopy))
+    assertEquals(
+      FetchChain(List(FetchChain.Step.Id("u") -> off)).fetch(Some(FetchedDoi), None),
+      Left(FetchChain.NoCopy)
+    )
     assertEquals(off.calls.get, 0)
     val legal = unauthorised
     assertEquals(
-      FetchChain(List(FetchChain.Step.Id("u") -> legal), allowUnauthorised = FetchChain.AllowUnauthorised(true)).fetchLegal(Some(FetchedDoi), None),
+      FetchChain(List(FetchChain.Step.Id("u") -> legal), allowUnauthorised = FetchChain.AllowUnauthorised(true))
+        .fetchLegal(Some(FetchedDoi), None),
       Left(FetchChain.NoCopy)
     )
     assertEquals(legal.calls.get, 0)
     val on = unauthorised
     assertEquals(
-      FetchChain(List(FetchChain.Step.Id("a") -> miss(), FetchChain.Step.Id("u") -> on), allowUnauthorised = FetchChain.AllowUnauthorised(true))
+      FetchChain(
+        List(FetchChain.Step.Id("a") -> miss(), FetchChain.Step.Id("u") -> on),
+        allowUnauthorised = FetchChain.AllowUnauthorised(true)
+      )
         .fetch(Some(FetchedDoi), None)
         .map(_.source),
       Right("u")
@@ -144,7 +233,10 @@ class FetchChainSuite extends munit.FunSuite:
     val spy = Fake(Access.Open, (w, _) => { seen += w; Fetch.Miss(Fetch.Miss.Why("none")) })
     val chain = FetchChain(List(FetchChain.Step.Id("spy") -> spy))
     val _ = chain.fetch(Some(com.histmersion.domain.library.Doi("10.1/x")), Some(ArxivId("2101.00001")))
-    val _ = chain.fetchWork(WorkKey(archive = Some(WorkKey.Archive("racesofeurope")), format = Some(WorkKey.Format("pdf"))), legalOnly = FetchChain.LegalOnly(true))
+    val _ = chain.fetchWork(
+      WorkKey(archive = Some(WorkKey.Archive("racesofeurope")), format = Some(WorkKey.Format("pdf"))),
+      legalOnly = FetchChain.LegalOnly(true)
+    )
     assertEquals(
       seen.toList,
       List(
@@ -155,7 +247,9 @@ class FetchChainSuite extends munit.FunSuite:
 
   test("the memo is shared by the fetchers of ONE fetch and computed once; the next fetch starts afresh"):
     val computed = java.util.concurrent.atomic.AtomicInteger(0)
-    def record(ctx: Fetch.Context) = ctx.memo(Fetch.Context.MemoKey("test:record:10.1234/x")) { computed.incrementAndGet(); Fetch.Miss.Why("rec") }
+    def record(ctx: Fetch.Context) = ctx.memo(Fetch.Context.MemoKey("test:record:10.1234/x")) {
+      computed.incrementAndGet(); Fetch.Miss.Why("rec")
+    }
     val a = Fake(Access.Open, (_, ctx) => { record(ctx); Fetch.Miss(Fetch.Miss.Why("a")) })
     val b = Fake(Access.Open, (_, ctx) => Fetch.Miss(record(ctx)))
     val chain = FetchChain(List(FetchChain.Step.Id("a") -> a, FetchChain.Step.Id("b") -> b))
@@ -167,13 +261,28 @@ class FetchChainSuite extends munit.FunSuite:
   test("a memo value computed while another is being computed is kept too"):
     val m = FetchChain.Memo()
     val outer = m.get(Fetch.Context.MemoKey("outer"))(m.get(Fetch.Context.MemoKey("inner"))(1) + 1)
-    assertEquals((outer, m.get(Fetch.Context.MemoKey("inner"))(99), m.get(Fetch.Context.MemoKey("outer"))(99)), (2, 1, 2))
+    assertEquals(
+      (outer, m.get(Fetch.Context.MemoKey("inner"))(99), m.get(Fetch.Context.MemoKey("outer"))(99)),
+      (2, 1, 2)
+    )
 
   test(
     "of: the registry in chain order, a note for what is listed and missing and for an unauthorised fetcher left off"
   ):
-    val regs = ListMap[com.histmersion.util.plugins.Plugin.Id, SourceFetcher](com.histmersion.util.plugins.Plugin.Id("b") -> miss(), com.histmersion.util.plugins.Plugin.Id("u") -> miss(Access.Unauthorised), com.histmersion.util.plugins.Plugin.Id("a") -> found(FetchedFile.Source("a")))
-    val (chain, notes) = FetchChain.of(regs, List(com.histmersion.util.plugins.Plugin.Id("a"), com.histmersion.util.plugins.Plugin.Id("gone"), com.histmersion.util.plugins.Plugin.Id("b")), allowUnauthorised = FetchChain.AllowUnauthorised(false))
+    val regs = ListMap[com.histmersion.util.plugins.Plugin.Id, SourceFetcher](
+      com.histmersion.util.plugins.Plugin.Id("b") -> miss(),
+      com.histmersion.util.plugins.Plugin.Id("u") -> miss(Access.Unauthorised),
+      com.histmersion.util.plugins.Plugin.Id("a") -> found(FetchedFile.Source("a"))
+    )
+    val (chain, notes) = FetchChain.of(
+      regs,
+      List(
+        com.histmersion.util.plugins.Plugin.Id("a"),
+        com.histmersion.util.plugins.Plugin.Id("gone"),
+        com.histmersion.util.plugins.Plugin.Id("b")
+      ),
+      allowUnauthorised = FetchChain.AllowUnauthorised(false)
+    )
     assertEquals(chain.plan.map(_._1), List("a", "b", "u"))
     assertEquals(notes.size, 2, notes.mkString("\n"))
     assert(notes.exists(_.value.contains("'gone'")))

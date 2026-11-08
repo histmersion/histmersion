@@ -18,7 +18,6 @@ object GoalLinkRepo:
   type ItemId = ItemId.T
   object ItemId extends Newtype[Int, Pure]
 
-
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class LinkRow(
@@ -48,7 +47,9 @@ object GoalLinkRepo:
     }
 
   /** [[goalsOfItems]] on the caller's connection. */
-  def goalsOfItemsIn(items: List[ItemId])(using DbCon): List[(ItemId, com.histmersion.domain.automation.Goal.Slug, BGoalRow.Title)] =
+  def goalsOfItemsIn(
+      items: List[ItemId]
+  )(using DbCon): List[(ItemId, com.histmersion.domain.automation.Goal.Slug, BGoalRow.Title)] =
     if items.isEmpty then Nil
     else
       locally:
@@ -70,7 +71,12 @@ object GoalLinkRepo:
 
   /** Link (idempotent: an existing link keeps its note unless a new one is given). `false` = the goal does not exist.
     */
-  def link(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: GoalLink.Ref, note: Option[GoalLink.Note])(using DbCon): Boolean =
+  def link(
+      goal: com.histmersion.domain.automation.Goal.Slug,
+      kind: LinkKind,
+      ref: GoalLink.Ref,
+      note: Option[GoalLink.Note]
+  )(using DbCon): Boolean =
     val exists = sql"SELECT 1 FROM goals WHERE slug = $goal".query[Int].run().nonEmpty
     if exists then
       sql"""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES ($goal, ${kind.wire}, $ref, $note)
@@ -78,16 +84,29 @@ object GoalLinkRepo:
         .run()
     exists
 
-  def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: GoalLink.Ref)(using DbCon): Boolean =
+  def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: GoalLink.Ref)(using
+      DbCon
+  ): Boolean =
 
     sql"DELETE FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} AND ref = $ref".update.run() > 0
 
   /** Every goal's links counted by kind: (goal, kind) → n. Article links count only articles that exist.
     */
-  def linkCounts()(using DbCon): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), RowCount] =
+  def linkCounts()(using
+      DbCon
+  ): Map[
+    (com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire),
+    RowCount
+  ] =
     sql"""SELECT l.goal_slug, l.kind, count(*)::int FROM goal_links l
           WHERE l.kind <> 'article' OR EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.ref)
-          GROUP BY l.goal_slug, l.kind""".query[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire, RowCount)].run().map((g, k, n) => (g, k) -> n).toMap
+          GROUP BY l.goal_slug, l.kind"""
+      .query[
+        (com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire, RowCount)
+      ]
+      .run()
+      .map((g, k, n) => (g, k) -> n)
+      .toMap
 
   /** The goals that record an approved plan. */
   def planned()(using DbCon): Set[com.histmersion.domain.automation.Goal.Slug] =
@@ -96,7 +115,9 @@ object GoalLinkRepo:
   // ── plan and run cap ───────────────────────────────────────────────────────────────────────────
 
   /** The approved plan (its JSON) and the goal's run cap. `None` = no such goal. */
-  def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[(Option[BGoalRow.Plan], Option[BigDecimal])] =
+  def planAndBudget(
+      goal: com.histmersion.domain.automation.Goal.Slug
+  )(using DbCon): Option[(Option[BGoalRow.Plan], Option[BigDecimal])] =
     sql"SELECT plan::text, budget_usd FROM goals WHERE slug = $goal"
       .query[(Option[BGoalRow.Plan], Option[BigDecimal])]
       .run()
@@ -158,8 +179,14 @@ object GoalLinkRepo:
       .flatMap(toSchedule)
 
   /** One row here (a bundle's import, before the managers move it into its goal's watcher). */
-  def schedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind)(using DbCon): Option[GoalSchedule] =
-    (scheduleSelect ++ Sql.of(Sql.OfText(" WHERE goal_slug = ? AND kind = ?"), Param.S(Param.S.V(goal.value)), Param.S(Param.S.V(kind.wire.value)))).frag
+  def schedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind)(using
+      DbCon
+  ): Option[GoalSchedule] =
+    (scheduleSelect ++ Sql.of(
+      Sql.OfText(" WHERE goal_slug = ? AND kind = ?"),
+      Param.S(Param.S.V(goal.value)),
+      Param.S(Param.S.V(kind.wire.value))
+    )).frag
       .query[ScheduleRow]
       .run()
       .headOption
@@ -189,7 +216,10 @@ object GoalLinkRepo:
     * tick moves them).
     */
   def scheduleGoals()(using DbCon): List[com.histmersion.domain.automation.Goal.Slug] =
-    sql"SELECT DISTINCT goal_slug FROM goal_schedules ORDER BY goal_slug".query[com.histmersion.domain.automation.Goal.Slug].run().toList
+    sql"SELECT DISTINCT goal_slug FROM goal_schedules ORDER BY goal_slug"
+      .query[com.histmersion.domain.automation.Goal.Slug]
+      .run()
+      .toList
 
   /** Take a goal's schedules OUT of the table, in the caller's transaction (the migration into its watcher): two
     * servers migrating at once cannot both get them.
@@ -197,9 +227,11 @@ object GoalLinkRepo:
   def takeSchedulesIn(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
     Sql
       .of(
-        Sql.OfText(s"""DELETE FROM goal_schedules WHERE goal_slug = ? RETURNING goal_slug, kind, cron, enabled, budget_usd,
+        Sql.OfText(
+          s"""DELETE FROM goal_schedules WHERE goal_slug = ? RETURNING goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),
-              last_job, last_note"""),
+              last_job, last_note"""
+        ),
         Param.S(Param.S.V(goal.value))
       )
       .frag

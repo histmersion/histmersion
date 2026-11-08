@@ -13,7 +13,8 @@ final case class CollectionFieldChange(
     from: CollectionFieldChange.From,
     to: CollectionFieldChange.To
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionFieldChange:
   type Field = Field.T

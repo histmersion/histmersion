@@ -15,4 +15,5 @@ object Vocab:
   /** A vocabulary column: `parse` the stored wire string, `unknown` for anything it does not know. */
 
   def codec[E](parse: WireEnumValues.Wire => Option[E], wire: E => WireEnumValues.Wire, unknown: E): DbCodec[E] =
-    DbCodec[Option[String]].biMap(s => s.flatMap(v => parse(WireEnumValues.Wire(v.trim))).getOrElse(unknown), e => Some(wire(e).value))
+    DbCodec[Option[String]]
+      .biMap(s => s.flatMap(v => parse(WireEnumValues.Wire(v.trim))).getOrElse(unknown), e => Some(wire(e).value))

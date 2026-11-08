@@ -33,9 +33,7 @@ class SpoolSuite extends munit.FunSuite:
       .parse(citekey)
       .left
       .map(_.value)
-      .flatMap(ck =>
-        spool.write(ck, ext, Spool.Bytes(bytes)).left.map(_.value).map(k => Path.of(spool.where(k).value))
-      )
+      .flatMap(ck => spool.write(ck, ext, Spool.Bytes(bytes)).left.map(_.value).map(k => Path.of(spool.where(k).value)))
 
   tmp.test("a valid citekey writes inside the spool") { d =>
     val p = write(d, "anthony2007_horse", Spool.Extension("pdf"))

@@ -77,7 +77,6 @@ object AssetLinkService:
 
     def delete(id: LinkId): Boolean = db.transact(AssetLinkRepo.delete(AssetLink.Id(id.value)))
 
-
   /** The links media holds in memory, beside its pictures (the figure a link names is looked up there). */
   final class InMemory(state: AtomicReference[MediaState]) extends AssetLinkService:
     def list(
@@ -87,7 +86,12 @@ object AssetLinkService:
         targetId: Option[AssetService.TargetId]
     ): AssetLink.List =
       val (ck, an, tt, ti) =
-        (named(citekey.map(_.value)), named(asset.map(_.value)), named(targetType.map(_.value)), named(targetId.map(_.value)))
+        (
+          named(citekey.map(_.value)),
+          named(asset.map(_.value)),
+          named(targetType.map(_.value)),
+          named(targetId.map(_.value))
+        )
       val rows = state.get.assetLinks
         .filter(l =>
           ck.forall(_ == l.citekey.value) && an.forall(_ == l.assetName.value) && tt.forall(_ == l.targetType.value) &&
@@ -98,11 +102,23 @@ object AssetLinkService:
       AssetLink.List.of(RowCount(rows.size), rows, UnreadPage.Offset(0))
 
     def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
-      if !state.get.assets.exists(a => a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value) then Left(noFigure(in))
+      if !state.get.assets.exists(a =>
+          a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value
+        )
+      then Left(noFigure(in))
       else
         val after = state.updateAndGet { s =>
           val id = MediaState.LastAssetLinkId(s.lastAssetLinkId.value + 1)
-          val l = AssetLink(AssetLink.Id(id.value), in.citekey, in.assetName, in.relation, in.targetType, in.targetId, in.xywh, in.notes)
+          val l = AssetLink(
+            AssetLink.Id(id.value),
+            in.citekey,
+            in.assetName,
+            in.relation,
+            in.targetType,
+            in.targetId,
+            in.xywh,
+            in.notes
+          )
           s.modify(_.assetLinks).using(_ :+ l).modify(_.lastAssetLinkId).setTo(id)
         }
         Right(after.assetLinks.last)
@@ -110,4 +126,3 @@ object AssetLinkService:
     def delete(id: LinkId): Boolean =
       val before = state.getAndUpdate(_.modify(_.assetLinks).using(_.filterNot(_.id.value == id.value)))
       before.assetLinks.exists(_.id.value == id.value)
-

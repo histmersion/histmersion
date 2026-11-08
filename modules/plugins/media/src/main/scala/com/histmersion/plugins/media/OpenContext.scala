@@ -31,7 +31,6 @@ object OpenContext:
   type Year = Year.T
   object Year extends Newtype[String, Pure]
 
-
   type Attributes = AttributesValue
   type AttributesValue = AttributesValue.T
   object AttributesValue extends Newtype[String, Pure]
@@ -44,13 +43,18 @@ object OpenContext:
   val Region: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("region")
   val Spatial: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("dc-terms:spatial")
 
-  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, rows: CollectionSettings.Candidates): Plugin.Http.GetUrl =
+  def searchUrl(
+      api: CollectionSettings.ApiUrl,
+      name: MediaPlace.Label,
+      rows: CollectionSettings.Candidates
+  ): Plugin.Http.GetUrl =
     Plugin.Http.GetUrl(
       s"${api.value.stripSuffix("/")}/query/.json?type=media&cat=oc-gen-image&q=${name.value.enc}&rows=${rows.value.max(1)}" +
         s"&attributes=${Attributes.value.enc}&add-attribute-uris=1&response=${"metadata,uri-meta".enc}"
     )
 
-  def itemUrl(api: CollectionSettings.ApiUrl, uuid: Uuid): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/media/${uuid.value.enc}.json")
+  def itemUrl(api: CollectionSettings.ApiUrl, uuid: Uuid): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/media/${uuid.value.enc}.json")
 
   private val UuidPattern = """.*/media/([0-9a-fA-F-]{36})/?$""".r
 
@@ -86,65 +90,66 @@ object OpenContext:
       .orElse(c.str("href").flatMap(u => uuidOf(Plugin.Http.GetUrl(u))))
       .toRight(Problem("no media uri"))
       .map { uuid =>
-      val title = c.str("label").getOrElse(uuid.value)
-      val context = c.str("context label").getOrElse("")
-      val project = c.str("project label")
-      val creators = c.strs("Creator")
-      val year = c.str("published").map(_.take(4)).filter(_.matches("[0-9]{4}"))
-      val cite = c.str("citation uri")
-      val page = c.str("href").getOrElse(s"https://opencontext.org/media/$uuid")
-      val licUrl = c.strs("License [URI]").headOption
-      val licLabel = c.strs("License").headOption.getOrElse("")
-      val rights: Either[MediaItem.RightsPart1, MediaRights] = licUrl match
-        case None    => Left(MediaItem.RightsPart1("no licence on the record"))
-        case Some(u) =>
-          val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
-          if lic.family.value == Licence.Read.Unknown then Left(MediaItem.RightsPart1(s"licence not readable ($u)"))
-          else
-            Right(
-              MediaRights(
-                Licence(u),
-                Some(MediaRights.LicenceUrl(u)),
-                Option.when(creators.nonEmpty)(MediaRights.Author(creators.mkString(", "))),
-                credit(
-                  MediaItem.Title(title),
-                  ContextLabel(context),
-                  creators.map(MediaRights.Author(_)),
-                  year.map(Year(_)),
-                  project.map(Project(_)),
-                  cite.map(Cite(_)),
-                  shortLicence(Licence(licLabel), lic.id)
+        val title = c.str("label").getOrElse(uuid.value)
+        val context = c.str("context label").getOrElse("")
+        val project = c.str("project label")
+        val creators = c.strs("Creator")
+        val year = c.str("published").map(_.take(4)).filter(_.matches("[0-9]{4}"))
+        val cite = c.str("citation uri")
+        val page = c.str("href").getOrElse(s"https://opencontext.org/media/$uuid")
+        val licUrl = c.strs("License [URI]").headOption
+        val licLabel = c.strs("License").headOption.getOrElse("")
+        val rights: Either[MediaItem.RightsPart1, MediaRights] = licUrl match
+          case None    => Left(MediaItem.RightsPart1("no licence on the record"))
+          case Some(u) =>
+            val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
+            if lic.family.value == Licence.Read.Unknown then Left(MediaItem.RightsPart1(s"licence not readable ($u)"))
+            else
+              Right(
+                MediaRights(
+                  Licence(u),
+                  Some(MediaRights.LicenceUrl(u)),
+                  Option.when(creators.nonEmpty)(MediaRights.Author(creators.mkString(", "))),
+                  credit(
+                    MediaItem.Title(title),
+                    ContextLabel(context),
+                    creators.map(MediaRights.Author(_)),
+                    year.map(Year(_)),
+                    project.map(Project(_)),
+                    cite.map(Cite(_)),
+                    shortLicence(Licence(licLabel), lic.id)
+                  )
                 )
               )
-            )
-      val segs = context.split("/").toList.map(_.trim).filter(_.nonEmpty)
-      val (regions, deeper) = segs.splitAt(2)
-      // the site and its named parts; excavation units (`I`, `Lot 2631`, `Trench 94`, `2631.1`) name no place
-      val geo = deeper.filterNot(d => unitSegment(Segment(d))).reverse.map(d => Context -> MediaItem.GeographyPart2(d)) ++
-        regions.reverse.map(d => Region -> MediaItem.GeographyPart2(d)) ++
-        c.strs("Spatial Coverage").map(d => Spatial -> MediaItem.GeographyPart2(d))
-      val ids = c.strs("Spatial Coverage [URI]").flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u))).distinct
-      val image = c.str("item category").forall(_.equalsIgnoreCase("Image media"))
-      val withheld = Option.when(
-        c.bool("oc-api:human-remains-related").contains(true) ||
-          c.strs("Subject").exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains))
-      )(MediaItem.Withheld(Withheld))
-      val period = Period.range(num(c, "early bce/ce"), num(c, "late bce/ce"))
-      val thumb = c.str("thumbnail").filter(_ => image)
-      // the search names only the thumbnail; the stored rendition is the item's preview ([[item]])
-      MediaItem(
-        MediaItem.Key(uuid.value),
-        MediaItem.Title(title),
-        MediaItem.PageUrl(page),
-        thumb.map(MediaItem.ImageUrl(_)),
-        rights,
-        thumbUrl = thumb.map(MediaItem.ThumbUrl(_)),
-        geography = geo,
-        period = period,
-        ids = ids,
-        withheld = withheld
-      )
-    }
+        val segs = context.split("/").toList.map(_.trim).filter(_.nonEmpty)
+        val (regions, deeper) = segs.splitAt(2)
+        // the site and its named parts; excavation units (`I`, `Lot 2631`, `Trench 94`, `2631.1`) name no place
+        val geo =
+          deeper.filterNot(d => unitSegment(Segment(d))).reverse.map(d => Context -> MediaItem.GeographyPart2(d)) ++
+            regions.reverse.map(d => Region -> MediaItem.GeographyPart2(d)) ++
+            c.strs("Spatial Coverage").map(d => Spatial -> MediaItem.GeographyPart2(d))
+        val ids = c.strs("Spatial Coverage [URI]").flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u))).distinct
+        val image = c.str("item category").forall(_.equalsIgnoreCase("Image media"))
+        val withheld = Option.when(
+          c.bool("oc-api:human-remains-related").contains(true) ||
+            c.strs("Subject").exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains))
+        )(MediaItem.Withheld(Withheld))
+        val period = Period.range(num(c, "early bce/ce"), num(c, "late bce/ce"))
+        val thumb = c.str("thumbnail").filter(_ => image)
+        // the search names only the thumbnail; the stored rendition is the item's preview ([[item]])
+        MediaItem(
+          MediaItem.Key(uuid.value),
+          MediaItem.Title(title),
+          MediaItem.PageUrl(page),
+          thumb.map(MediaItem.ImageUrl(_)),
+          rights,
+          thumbUrl = thumb.map(MediaItem.ThumbUrl(_)),
+          geography = geo,
+          period = period,
+          ids = ids,
+          withheld = withheld
+        )
+      }
 
   private val UnitWords = Set(
     "trench",
@@ -217,7 +222,9 @@ object OpenContext:
     val who = if creators.isEmpty then "" else creators.mkString(", ") + year.fold("")(y => s" ($y)") + ". "
     val what = s"\"$title${if context.value.nonEmpty then s" from $context" else ""}\"."
     MediaRights.Credit(
-      (List(who + what) ++ project.map(p => s"In $p.") ++ List("Open Context.") ++ cite.map(_.value + ".") :+ licence.value)
+      (List(who + what) ++ project.map(p => s"In $p.") ++ List("Open Context.") ++ cite.map(
+        _.value + "."
+      ) :+ licence.value)
         .mkString(" ")
     )
 
@@ -255,12 +262,15 @@ object OpenContext:
           case Some(l) if l.id != searched.id =>
             Left(Problem(s"the media item's licence (${l.id}) differs from the search's (${searched.id})"))
           case Some(_) =>
-            file("oc-gen:preview").orElse(file("oc-gen:thumbnail")).toRight(Problem("no preview file on the media item")).map {
-              preview =>
+            file("oc-gen:preview")
+              .orElse(file("oc-gen:thumbnail"))
+              .toRight(Problem("no preview file on the media item"))
+              .map { preview =>
                 rec.copy(
                   imageUrl = Some(MediaItem.ImageUrl(preview)),
                   thumbUrl = file("oc-gen:thumbnail").map(MediaItem.ThumbUrl(_)).orElse(rec.thumbUrl),
-                  originalUrl = file("oc-gen:fullfile").orElse(file("oc-gen:ia-fullfille")).map(MediaItem.OriginalUrl(_))
+                  originalUrl =
+                    file("oc-gen:fullfile").orElse(file("oc-gen:ia-fullfille")).map(MediaItem.OriginalUrl(_))
                 )
-            }
+              }
       }

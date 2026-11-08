@@ -5,7 +5,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object MapStack:
 
-
   enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas) derives CanEqual:
     case Areas extends Pane(Pane.Name("areas"), point = Pane.Point(false), canvas = Pane.Canvas(true))
 
@@ -29,11 +28,12 @@ object MapStack:
     type Canvas = Canvas.T
     object Canvas extends Newtype[Boolean, Pure]
 
-
   val order: List[Pane] = Pane.values.toList
 
   val domPanes: List[Pane] = order.filterNot((refactorCallback => ((refactorCallback.canvas) == Pane.Canvas(true))))
 
   def pointsAboveAreas(order: List[Pane]): Boolean =
     val firstPoint = order.indexWhere((refactorCallback => ((refactorCallback.point) == Pane.Point(true))))
-    (firstPoint < 0 || order.drop(firstPoint).forall((refactorCallback => ((refactorCallback.point) == Pane.Point(true)))))
+    (firstPoint < 0 || order
+      .drop(firstPoint)
+      .forall((refactorCallback => ((refactorCallback.point) == Pane.Point(true)))))

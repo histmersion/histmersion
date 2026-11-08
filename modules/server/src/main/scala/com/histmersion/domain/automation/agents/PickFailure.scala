@@ -15,7 +15,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 enum PickFailure derives CanEqual:
   case Unavailable(message: PickFailure.Unavailable.Message)
-  case Exhausted(message: PickFailure.Exhausted.Message, freesAt: Option[Instant], reason: PauseReason = PauseReason.Allowance)
+  case Exhausted(
+      message: PickFailure.Exhausted.Message,
+      freesAt: Option[Instant],
+      reason: PauseReason = PauseReason.Allowance
+  )
 
 object PickFailure:
   type Problem = Problem.T

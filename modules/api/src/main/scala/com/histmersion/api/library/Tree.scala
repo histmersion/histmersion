@@ -15,7 +15,6 @@ object Tree:
   type SplitRatioAmount = SplitRatioAmount.T
   object SplitRatioAmount extends Newtype[Double, Pure]
 
-
   type MaxDepth = MaxDepthValue
   type MaxDepthValue = Depth
   val MaxDepthValue: Depth.type = Depth
@@ -36,23 +35,23 @@ object Tree:
   type SplitRatio = SplitRatioValue
   type SplitRatioValue = SplitRatioAmount
   val SplitRatioValue: SplitRatioAmount.type = SplitRatioAmount
-  export com.histmersion.api.catalogue.{Year as RegionTreeAsOf}
+  export com.histmersion.api.catalogue.Year as RegionTreeAsOf
   type RegionTreeDepth = Depth
   val RegionTreeDepth: Depth.type = Depth
   type RegionTreeSamples = MaxSamplesCount
   val RegionTreeSamples: MaxSamplesCount.type = MaxSamplesCount
-  export RegionNode.{Id as RegionTreeRoot}
+  export RegionNode.Id as RegionTreeRoot
   type TimeRegionTreeDepth = Depth
   val TimeRegionTreeDepth: Depth.type = Depth
   type TimeRegionTreeSamples = MaxSamplesCount
   val TimeRegionTreeSamples: MaxSamplesCount.type = MaxSamplesCount
-  export com.histmersion.api.catalogue.{Year as RegionTimeTreeAsOf}
+  export com.histmersion.api.catalogue.Year as RegionTimeTreeAsOf
   type RegionTimeTreeDepth = Depth
   val RegionTimeTreeDepth: Depth.type = Depth
   type RegionTimeTreeSamples = MaxSamplesCount
   val RegionTimeTreeSamples: MaxSamplesCount.type = MaxSamplesCount
-  export RegionNode.{Id as RegionTimeTreeRoot}
-  export com.histmersion.api.catalogue.{Year as RegionsAsOf}
+  export RegionNode.Id as RegionTimeTreeRoot
+  export com.histmersion.api.catalogue.Year as RegionsAsOf
   type RegionsDepth = Depth
   val RegionsDepth: Depth.type = Depth
   type RegionsSamples = MaxSamplesCount
@@ -92,11 +91,31 @@ object Tree:
 
   def midpoint(start: Year, end: Year): Year = Year((start).value + Math.floorDiv((end).value - (start).value, 2L))
 
-  def timeTime(rows: List[TreeRow], from: Year, to: Year, depth: TimeTimeDepth, samples: TimeTimeSamples = TimeTimeSamples(0)): List[Bucket] =
+  def timeTime(
+      rows: List[TreeRow],
+      from: Year,
+      to: Year,
+      depth: TimeTimeDepth,
+      samples: TimeTimeSamples = TimeTimeSamples(0)
+  ): List[Bucket] =
     val (lo, hi) = order(from, to)
-    timeLevel(rows, lo, hi, Aggregate.bucketSize(Aggregate.Span(hi.value - lo.value)), clamp(depth), samples, (_, _, _) => (Nil, Bucket.Overlap(0)))
+    timeLevel(
+      rows,
+      lo,
+      hi,
+      Aggregate.bucketSize(Aggregate.Span(hi.value - lo.value)),
+      clamp(depth),
+      samples,
+      (_, _, _) => (Nil, Bucket.Overlap(0))
+    )
 
-  def timeTree(rows: List[TreeRow], from: Tree.TimeTreeFrom, to: Tree.TimeTreeTo, depth: TimeTreeDepth, samples: TimeTreeSamples = TimeTreeSamples(0)): List[Bucket] =
+  def timeTree(
+      rows: List[TreeRow],
+      from: Tree.TimeTreeFrom,
+      to: Tree.TimeTreeTo,
+      depth: TimeTreeDepth,
+      samples: TimeTreeSamples = TimeTreeSamples(0)
+  ): List[Bucket] =
     timeTime(rows, from, to, depth, samples)
 
   private def timeLevel(
@@ -119,7 +138,10 @@ object Tree:
           else
             nest(mine, bStart, bEnd) match
               case (Nil, _) if finer < size =>
-                (splitWorthShowing(count, timeLevel(mine, bStart, bEnd, finer, Depth(depth.value - 1), samples, nest)), Bucket.Overlap(0))
+                (
+                  splitWorthShowing(count, timeLevel(mine, bStart, bEnd, finer, Depth(depth.value - 1), samples, nest)),
+                  Bucket.Overlap(0)
+                )
               case (Nil, _) => (Nil, Bucket.Overlap(0))
               case (ks, o)  => (ks, o)
         Some(
@@ -210,10 +232,13 @@ object Tree:
     val byId = nodes.iterator.map(n => n.id -> n).toMap
     def live(id: RegionNode.Id) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
     val edges = relations.filter(r =>
-      r.kind == Place.Relation.Kind(Place.Relation.PartOf) && coversAsOf(r.period, asOf) && live(childNode(r.childId)) && live(parentNode(r.parentId))
+      r.kind == Place.Relation.Kind(Place.Relation.PartOf) && coversAsOf(r.period, asOf) && live(
+        childNode(r.childId)
+      ) && live(parentNode(r.parentId))
     )
     val kidsOf = edges.groupMap(r => parentNode(r.parentId))(r => childNode(r.childId)).view.mapValues(_.distinct).toMap
-    val parents = edges.groupMap(r => childNode(r.childId))(r => parentNode(r.parentId)).view.mapValues(_.distinct).toMap
+    val parents =
+      edges.groupMap(r => childNode(r.childId))(r => parentNode(r.parentId)).view.mapValues(_.distinct).toMap
 
     val reach = rows.iterator.map(r => r.key -> ancestors(r.placeIds.filter(live).toSet, parents)).toMap
     def at(id: RegionNode.Id): List[TreeRow] = rows.filter(r => reach(r.key).contains(id))
@@ -225,7 +250,9 @@ object Tree:
         .filterNot(seen.contains)
         .map(id => (id, at(id)))
         .filter((_, mine) => mine.nonEmpty)
-        .sortBy((id, mine) => (-(distinct(mine).value), byId.get(id).fold("")(_.label.value.toLowerCase), id.value: String))
+        .sortBy((id, mine) =>
+          (-(distinct(mine).value), byId.get(id).fold("")(_.label.value.toLowerCase), id.value: String)
+        )
         .flatMap { (id, mine) =>
           if drawnAt.contains(id) then None
           else
@@ -292,7 +319,10 @@ object Tree:
   private def childNode(id: Place.Relation.ChildId): RegionNode.Id = RegionNode.Id(id.value)
   private def parentNode(id: Place.Relation.ParentId): RegionNode.Id = RegionNode.Id(id.value)
 
-  private def ancestors(start: Set[RegionNode.Id], parents: Map[RegionNode.Id, List[RegionNode.Id]]): Set[RegionNode.Id] =
+  private def ancestors(
+      start: Set[RegionNode.Id],
+      parents: Map[RegionNode.Id, List[RegionNode.Id]]
+  ): Set[RegionNode.Id] =
     @annotation.tailrec
     def go(frontier: Set[RegionNode.Id], seen: Set[RegionNode.Id]): Set[RegionNode.Id] =
       val next = frontier.flatMap(parents.getOrElse(_, Nil)) -- seen

@@ -14,5 +14,4 @@ object Step:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[Status] = values.find(_.wire == s)

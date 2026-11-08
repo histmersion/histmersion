@@ -41,7 +41,9 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
       periodLine(o) = _ => localPeriod(o)
       folds.count(_.modify(_.periodsMerged).using(n => MergeTally.PeriodsMerged(n.value + 1)))
     def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
-      PlanMerge.InfoResult(s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept")
+      PlanMerge.InfoResult(
+        s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept"
+      )
 
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
     val periodIdMap: Map[Bundle.Period.ParentId, Bundle.Period.ParentId] =
@@ -82,19 +84,33 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
               ),
               Some(IssueSide(IssueSide.Label(o.id.value), o.uid, List(IssueSide.Lines(o.label.value)))),
               Some(IssueSide(IssueSide.Label(p.id.value), f, List(IssueSide.Lines(p.label.value)))),
-              List(MergeIssue.Why("keep-left keeps this collection's period; keep-right takes the bundle's label and span")),
+              List(
+                MergeIssue.Why("keep-left keeps this collection's period; keep-right takes the bundle's label and span")
+              ),
               lr,
               detail = Some(
                 IssueDetail(
                   fields = List(
-                    IssueField(IssueField.Field("label"), Some(IssueField.Left(o.label.value)), Some(IssueField.Right(p.label.value))),
+                    IssueField(
+                      IssueField.Field("label"),
+                      Some(IssueField.Left(o.label.value)),
+                      Some(IssueField.Right(p.label.value))
+                    ),
                     IssueField(
                       IssueField.Field("span"),
                       Some(IssueField.Left(MergeIssue.Detail.rangeText(o.period))),
                       Some(IssueField.Right(MergeIssue.Detail.rangeText(p.period)))
                     ),
-                    IssueField(IssueField.Field("authority"), o.authority.map(a => IssueField.Left(a.value)), p.authority.map(a => IssueField.Right(a.value))),
-                    IssueField(IssueField.Field("region"), o.region.map(a => IssueField.Left(a.value)), p.region.map(a => IssueField.Right(a.value)))
+                    IssueField(
+                      IssueField.Field("authority"),
+                      o.authority.map(a => IssueField.Left(a.value)),
+                      p.authority.map(a => IssueField.Right(a.value))
+                    ),
+                    IssueField(
+                      IssueField.Field("region"),
+                      o.region.map(a => IssueField.Left(a.value)),
+                      p.region.map(a => IssueField.Right(a.value))
+                    )
                   ),
                   place = Some(
                     IssuePlace(
@@ -120,7 +136,8 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
         folds.fold(f, o, Bundle.Kind.Period)
         folds.count(_.modify(_.periodsMerged).using(n => MergeTally.PeriodsMerged(n.value + 1)))
         if d.kind == km.KeepRight then
-          periodLine(o) = es => periodIn(es, o).modify(_.origin).setTo(localPeriod(o).origin).modify(_.rev).setTo(Bundle.Period.Rev(""))
+          periodLine(o) = es =>
+            periodIn(es, o).modify(_.origin).setTo(localPeriod(o).origin).modify(_.rev).setTo(Bundle.Period.Rev(""))
         else folds.keepLocal(f)
       case _ => ()
 
@@ -147,4 +164,6 @@ object PeriodPlan:
       l: Bundle.Period,
       r: Bundle.Period
   ): Boolean =
-    l.period == r.period && Fingerprint.of(Fingerprint.OfS(l.label.value)) == Fingerprint.of(Fingerprint.OfS(r.label.value))
+    l.period == r.period && Fingerprint.of(Fingerprint.OfS(l.label.value)) == Fingerprint.of(
+      Fingerprint.OfS(r.label.value)
+    )

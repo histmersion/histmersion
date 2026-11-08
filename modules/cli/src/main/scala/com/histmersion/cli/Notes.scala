@@ -81,7 +81,13 @@ object Notes:
             .Try(Files.readAllBytes(f))
             .toOption
             .filter(b => b.nonEmpty && b.length <= maxBytes.value)
-            .map(b => AssetInput(Bundle.Asset.FileName(name.value), mime, AssetInput.Base64(java.util.Base64.getEncoder.encodeToString(b))))
+            .map(b =>
+              AssetInput(
+                Bundle.Asset.FileName(name.value),
+                mime,
+                AssetInput.Base64(java.util.Base64.getEncoder.encodeToString(b))
+              )
+            )
       }
     }
 

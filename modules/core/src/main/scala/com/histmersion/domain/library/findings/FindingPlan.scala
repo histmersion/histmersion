@@ -84,32 +84,53 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
             MergeIssue.Kind.FindingNearDuplicate,
             MergeIssue.Severity.Default,
             Bundle.Kind.Finding,
-            MergeIssue.Title(s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(SourceMatcher.Figure(j.value), SourceMatcher.Decimals(2))})"),
-            Some(IssueSide(IssueSide.Label(lf.id.value), lf.uid, List(IssueSide.Lines(MergeIssue.Detail.preview(lf.claim.value))))),
-            Some(IssueSide(IssueSide.Label(rf.id.value), rf.uid, List(IssueSide.Lines(MergeIssue.Detail.preview(rf.claim.value))))),
+            MergeIssue.Title(
+              s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(SourceMatcher.Figure(j.value), SourceMatcher.Decimals(2))})"
+            ),
+            Some(
+              IssueSide(
+                IssueSide.Label(lf.id.value),
+                lf.uid,
+                List(IssueSide.Lines(MergeIssue.Detail.preview(lf.claim.value)))
+              )
+            ),
+            Some(
+              IssueSide(
+                IssueSide.Label(rf.id.value),
+                rf.uid,
+                List(IssueSide.Lines(MergeIssue.Detail.preview(rf.claim.value)))
+              )
+            ),
             List(MergeIssue.Why("by default both are kept; merge makes them one finding")),
             List(km.Both, km.Merge),
             Some(MergeDecision.of(km.Both)),
             cond,
-            detail =
-              Some(
-                IssueDetail(
-                  List(
-                    IssueField(IssueField.Field("claim"), Some(IssueField.Left(lf.claim.value)), Some(IssueField.Right(rf.claim.value))),
-                    IssueField(
-                      IssueField.Field("period"),
-                      lf.period.map(x => IssueField.Left(MergeIssue.Detail.rangeText(Some(x)))),
-                      rf.period.map(x => IssueField.Right(MergeIssue.Detail.rangeText(Some(x))))
-                    ),
-                    IssueField(IssueField.Field("region"), lf.region.map(x => IssueField.Left(x.value)), rf.region.map(x => IssueField.Right(x.value))),
-                    IssueField(
-                      IssueField.Field("confidence"),
-                      lf.confidence.map(c => IssueField.Left(c.toString.toLowerCase)),
-                      rf.confidence.map(c => IssueField.Right(c.toString.toLowerCase))
-                    )
+            detail = Some(
+              IssueDetail(
+                List(
+                  IssueField(
+                    IssueField.Field("claim"),
+                    Some(IssueField.Left(lf.claim.value)),
+                    Some(IssueField.Right(rf.claim.value))
+                  ),
+                  IssueField(
+                    IssueField.Field("period"),
+                    lf.period.map(x => IssueField.Left(MergeIssue.Detail.rangeText(Some(x)))),
+                    rf.period.map(x => IssueField.Right(MergeIssue.Detail.rangeText(Some(x))))
+                  ),
+                  IssueField(
+                    IssueField.Field("region"),
+                    lf.region.map(x => IssueField.Left(x.value)),
+                    rf.region.map(x => IssueField.Right(x.value))
+                  ),
+                  IssueField(
+                    IssueField.Field("confidence"),
+                    lf.confidence.map(c => IssueField.Left(c.toString.toLowerCase)),
+                    rf.confidence.map(c => IssueField.Right(c.toString.toLowerCase))
                   )
                 )
               )
+            )
           ),
           Set.empty
         )
@@ -136,12 +157,19 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     def merging(rf: Bundle.Finding) =
       nearIssue.get(rf.uid).flatMap(id => folds.decisionIn(id)).exists(_.kind == km.Merge)
     val renumbered =
-      localFindingsOf.getOrElse(left.uid, Nil).map(f => Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}")).toSet
+      localFindingsOf
+        .getOrElse(left.uid, Nil)
+        .map(f => Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}"))
+        .toSet
     val incoming = ms.collect {
       case Match.Unmatched(rf)                  => rf
       case Match.Near(rf, _, _) if !merging(rf) => rf
     }
-    val ids = nextIds(com.histmersion.api.library.Citekey(citekey.value), assignedIds.toSet ++ renumbered, IdCount(incoming.size))
+    val ids = nextIds(
+      com.histmersion.api.library.Citekey(citekey.value),
+      assignedIds.toSet ++ renumbered,
+      IdCount(incoming.size)
+    )
     assignedIds ++= ids
     incoming.zip(ids).foreach((rf, id) => findingLine(rf.uid) = es => findingIn(es, rf.uid).modify(_.id).setTo(id))
     ms.foreach {
@@ -159,8 +187,10 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     in.foreign.findings
       .filter(_.sourceUid == source)
       .foreach(f =>
-        findingLine(f.uid) =
-          es => findingIn(es, f.uid).modify(_.id).setTo(Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}"))
+        findingLine(f.uid) = es =>
+          findingIn(es, f.uid)
+            .modify(_.id)
+            .setTo(Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}"))
       )
 
   // a finding id a different finding has here: the bundle's is renumbered (a source whose citekey collides is renamed
@@ -187,7 +217,9 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
           val id = nextIds(com.histmersion.api.library.Citekey(ck), assignedIds.toSet, IdCount(1)).head
           assignedIds += id
           findingLine(r.foreignUid) = es => findingIn(es, r.foreignUid).modify(_.id).setTo(id)
-          relabels.info(PlanRelabels.InfoLine(s"finding ${f.id}: that id is another finding's here — the bundle's arrives as $id"))
+          relabels.info(
+            PlanRelabels.InfoLine(s"finding ${f.id}: that id is another finding's here — the bundle's arrives as $id")
+          )
           relabels.relabelled(PlanRelabels.RelabelledLine(s"finding ${f.id} → $id"))
         }
       }
@@ -235,9 +267,12 @@ object FindingPlan:
     o.map(r => Bundle.Finding.Region(r.value.trim)).filter(_.value.nonEmpty)
 
   /** The claim as compared: folded, stopwords out, de-duplicated, sorted. */
-  def claimKey(claim: Bundle.Finding.Claim): ClaimKey = ClaimKey(MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).distinct.sorted.mkString(" "))
+  def claimKey(claim: Bundle.Finding.Claim): ClaimKey = ClaimKey(
+    MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).distinct.sorted.mkString(" ")
+  )
 
-  private def claimWords(claim: Bundle.Finding.Claim): Set[String] = MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).toSet
+  private def claimWords(claim: Bundle.Finding.Claim): Set[String] =
+    MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).toSet
 
   /** Great-circle distance in km. */
   def km(lon1: Longitude, lat1: Latitude, lon2: Longitude, lat2: Latitude): Distance =
@@ -256,7 +291,9 @@ object FindingPlan:
       withinKm: MergeSettings.FindingWithinKm
   ): Boolean =
     val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v).within(withinKm)
-    val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(MergeText.Text(x.value)) == MergeText.fingerprint(MergeText.Text(y.value)))
+    val regions = text(a.region)
+      .zip(text(b.region))
+      .map((x, y) => MergeText.fingerprint(MergeText.Text(x.value)) == MergeText.fingerprint(MergeText.Text(y.value)))
     points.orElse(regions).forall(identity) || points.contains(true) || regions.contains(true)
 
   /** Caution ranks: contested is the least sure, then low, medium, high. */
@@ -330,12 +367,31 @@ object FindingPlan:
       case (Some(a), Some(b)) => Some(if caution(b) < caution(a) then b else a)
       case (a, b)             => a.orElse(b)
     val point = if l.lon.isDefined && l.lat.isDefined then (l.lon, l.lat) else (r.lon, r.lat)
-    l.modify(
-      _.region).setTo(text(l.region).orElse(text(r.region))).modify(_.lon).setTo(point._1).modify(_.lat).setTo(point._2).modify(_.period).setTo(period).modify(_.periodName).setTo(if period == l.period then l.periodName.orElse(r.periodName) else r.periodName.orElse(l.periodName)).modify(_.tags).setTo(MergeFold.unionTags(l.tags, r.tags)(_.value)).modify(_.confidence).setTo(conf).modify(_.significance).setTo(l.significance.orElse(r.significance)).modify(_.rev).setTo(Bundle.Finding.Rev("")
-    )
+    l.modify(_.region)
+      .setTo(text(l.region).orElse(text(r.region)))
+      .modify(_.lon)
+      .setTo(point._1)
+      .modify(_.lat)
+      .setTo(point._2)
+      .modify(_.period)
+      .setTo(period)
+      .modify(_.periodName)
+      .setTo(if period == l.period then l.periodName.orElse(r.periodName) else r.periodName.orElse(l.periodName))
+      .modify(_.tags)
+      .setTo(MergeFold.unionTags(l.tags, r.tags)(_.value))
+      .modify(_.confidence)
+      .setTo(conf)
+      .modify(_.significance)
+      .setTo(l.significance.orElse(r.significance))
+      .modify(_.rev)
+      .setTo(Bundle.Finding.Rev(""))
 
   /** `<citekey>#<n>` labels for `count` new findings: after the highest number in use, never one that is taken. */
-  def nextIds(citekey: com.histmersion.api.library.Citekey, taken: Set[Bundle.Finding.Id], count: IdCount): List[Bundle.Finding.Id] =
+  def nextIds(
+      citekey: com.histmersion.api.library.Citekey,
+      taken: Set[Bundle.Finding.Id],
+      count: IdCount
+  ): List[Bundle.Finding.Id] =
     val Num = s"""^${java.util.regex.Pattern.quote(citekey.value)}#(\\d+)$$""".r
     val top = taken.toList.map(_.value).collect { case Num(n) => n.toInt }.maxOption.getOrElse(0)
     Iterator.from(top + 1).map(n => Bundle.Finding.Id(s"$citekey#$n")).filterNot(taken).take(count.value).toList

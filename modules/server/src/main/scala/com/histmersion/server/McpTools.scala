@@ -171,7 +171,13 @@ final class McpTools(
                       js.toVector,
                       page,
                       f.qualifier.map(q => Ingest.JobStatus(q.value)),
-                      Paging.olderLine(page, c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")).map(t => Ingest.JobAge(t.value))
+                      Paging
+                        .olderLine(
+                          page,
+                          c =>
+                            Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")
+                        )
+                        .map(t => Ingest.JobAge(t.value))
                     )
                 )
             )
@@ -263,7 +269,7 @@ final class McpTools(
                       .fold(s"No setting called $k.")(ConfigEditMarkdown.field),
                   Some(k)
                 )
-              case None    => page(ConfigEditMarkdown.page, in.prefix)
+              case None => page(ConfigEditMarkdown.page, in.prefix)
           case "set" | "unset" =>
             in.key.map(_.trim).filter(_.nonEmpty) match
               case None    => McpOut.error(Api.Error(Api.Error.Message(s"`${in.action}` needs a `key`")))
@@ -283,7 +289,10 @@ final class McpTools(
                   )
                   .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
           case "restart" => h.settings.restart().fold(McpOut.error, r => ToolResult.text(ConfigEditMarkdown.restart(r)))
-          case other => McpOut.error(Api.Error(Api.Error.Message(s"unknown action '$other' (one of: get, set, unset, reload, restart)")))
+          case other     =>
+            McpOut.error(
+              Api.Error(Api.Error.Message(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
+            )
       }
 
   private val backup =
@@ -377,9 +386,11 @@ final class McpTools(
           .flatMap(h.goals.put(_, put)) match
           case Right(g) =>
             ToolResult.text(
-              Aliases.note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
-                Aliases.Note(GoalsMarkdown.goal(g))
-              ).value
+              Aliases
+                .note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
+                  Aliases.Note(GoalsMarkdown.goal(g))
+                )
+                .value
             )
           case Left(e) => McpOut.error(e)
       }
@@ -407,9 +418,11 @@ final class McpTools(
           .flatMap(h.goals.patch(_, p)) match
           case Right(g) =>
             ToolResult.text(
-              Aliases.note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
-                Aliases.Note(GoalsMarkdown.goal(g))
-              ).value
+              Aliases
+                .note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
+                  Aliases.Note(GoalsMarkdown.goal(g))
+                )
+                .value
             )
           case Left(e) => McpOut.error(e)
       }
@@ -471,7 +484,9 @@ final class McpTools(
           case Some(Left(e)) => ToolResult.text(s"_editions '$e' is not merge or separate_")
           case other         =>
             val res = MergeResolutions(
-              in.resolve.toList.sortBy(_._1).map((k, v) => MergeResolution(MergeResolution.Issue(k), MergeResolution.Decision(v))),
+              in.resolve.toList
+                .sortBy(_._1)
+                .map((k, v) => MergeResolution(MergeResolution.Issue(k), MergeResolution.Decision(v))),
               MergePolicy(other.flatMap(_.toOption))
             )
             h.bundles.plan(MergePlan.Request(MergePlan.Request.Bundle(in.bundle), res)) match
@@ -495,10 +510,13 @@ final class McpTools(
       .handle { in =>
         MergesAction.parse(in.action) match
           case None => ToolResult.text(s"_action '${in.action.getOrElse("")}' is not list, show or ledger_")
-          case Some(MergesAction.List) => ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit.map(Api.Merge.Limit(_)))))
+          case Some(MergesAction.List) =>
+            ToolResult.text(MergeMarkdown.merges(h.bundles.merges(in.limit.map(Api.Merge.Limit(_)))))
           case Some(MergesAction.Show) =>
             in.id.fold(ToolResult.text("_show needs `id` (a merge id from `list`)_"))(id =>
-              h.bundles.mergeDetail(MergeRepo.MergeIdOrPrefix(id)).fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
+              h.bundles
+                .mergeDetail(MergeRepo.MergeIdOrPrefix(id))
+                .fold(McpOut.error, d => ToolResult.text(MergeMarkdown.detail(d)))
             )
           case Some(MergesAction.Ledger) =>
             h.bundles
@@ -535,10 +553,12 @@ final class McpTools(
           case "event" =>
             renamed(Event.Id.either(in.from.trim), "event id")(h.events.renamed(_, req))
           case "goal" =>
-            renamed(com.histmersion.domain.automation.Goal.Slug.either(in.from.trim), "goal slug")(h.goals.rename(_, req))
+            renamed(com.histmersion.domain.automation.Goal.Slug.either(in.from.trim), "goal slug")(
+              h.goals.rename(_, req)
+            )
           case "place" =>
             renamed(Place.Id.either(in.from.trim), "place id")(h.places.renamed(_, req))
-          case other     => Left(s"_kind '$other' is not article, event, goal or place_")
+          case other => Left(s"_kind '$other' is not article, event, goal or place_")
         r.fold(ToolResult.text, _.fold(McpOut.error, x => ToolResult.text(MergeMarkdown.renamed(x))))
       }
 
@@ -588,12 +608,17 @@ final class McpTools(
         h.agents,
         dry =>
           Right(
-            RepairAcquire.markdown(
-              EngineContributions
-                .work(h.agents)
-                .oaBacklog
-                .repair(RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(Activity.Actor("mcp"))))
-            ).value
+            RepairAcquire
+              .markdown(
+                EngineContributions
+                  .work(h.agents)
+                  .oaBacklog
+                  .repair(
+                    RepairAcquire
+                      .RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(Activity.Actor("mcp")))
+                  )
+              )
+              .value
           ),
         st => h.autopilot.page(st).markdown
       )
@@ -666,7 +691,10 @@ object McpTools:
         _.description("Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds")
       )
 
-  final case class JobControlInput(id: String, action: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class JobControlInput(id: String, action: String)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class ActivityInput(
       show: Option[String] = None,
@@ -675,7 +703,8 @@ object McpTools:
       limit: Option[Int] = None,
       before: Option[String] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class JobStatusInput(
       id: Option[String] = None,

@@ -20,4 +20,3 @@ object LibrarySection:
   object Slug extends Newtype[String, Pure]
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-

@@ -46,11 +46,22 @@ object AiHttp:
   object GetTimeoutSeconds extends Newtype[Int, Pure]
 
   val Offline: AiHttp = new AiHttp:
-    def post(url: PostUrl, headers: Map[PostHeadersPart1, PostHeadersPart2], body: PostBody, timeoutSeconds: PostTimeoutSeconds) = Left(PostResultPart1("offline"))
-    def get(url: GetUrl, headers: Map[GetHeadersPart1, GetHeadersPart2], timeoutSeconds: GetTimeoutSeconds) = Left(GetResultPart1("offline"))
+    def post(
+        url: PostUrl,
+        headers: Map[PostHeadersPart1, PostHeadersPart2],
+        body: PostBody,
+        timeoutSeconds: PostTimeoutSeconds
+    ) = Left(PostResultPart1("offline"))
+    def get(url: GetUrl, headers: Map[GetHeadersPart1, GetHeadersPart2], timeoutSeconds: GetTimeoutSeconds) = Left(
+      GetResultPart1("offline")
+    )
 
   /** One HTTP answer. */
-  final case class Response(status: Response.Status, body: Response.Body, headers: Map[Response.HeadersKey, Response.HeadersValue] = Map.empty)
+  final case class Response(
+      status: Response.Status,
+      body: Response.Body,
+      headers: Map[Response.HeadersKey, Response.HeadersValue] = Map.empty
+  )
 
   object Response:
     type Status = Status.T

@@ -12,7 +12,6 @@ object PlaceSeed:
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */
 
-
   final case class Entry[K](name: Entry.Name, directory: Entry.Directory, at: K)
 
   object Entry:
@@ -27,7 +26,8 @@ object PlaceSeed:
     * over it. `top` is what the seed directory holds, `list` what a subdirectory holds.
     */
   def files[K](top: List[Entry[K]], list: K => List[Entry[K]]): List[(K, Option[Place.Kind.Wire])] =
-    def isSeed(e: Entry[K]) = !e.directory.value && (e.name.value.endsWith(".json") || e.name.value.endsWith(".geojson"))
+    def isSeed(e: Entry[K]) =
+      !e.directory.value && (e.name.value.endsWith(".json") || e.name.value.endsWith(".geojson"))
 
     /** `polities` → `polity`, `sites` → `site`, `regions` → `region`; anything else → no override. */
     def dirKind(name: Entry.Name) =

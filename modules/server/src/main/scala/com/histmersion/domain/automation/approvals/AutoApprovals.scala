@@ -48,7 +48,8 @@ final class AutoApprovals(
   private val PerTick = 50
 
   /** The run that opened an approval, and the manager that dispatched that run. */
-  private def runOf(a: ApprovalInfo): Option[RunInfo] = a.runId.flatMap(id => Run.Id.option(id.value)).flatMap(agents.runs.get(_))
+  private def runOf(a: ApprovalInfo): Option[RunInfo] =
+    a.runId.flatMap(id => Run.Id.option(id.value)).flatMap(agents.runs.get(_))
 
   /** Does the supervisor decide `a`? The manager's `autoApprove` wins; else `agents.approvals.<kind>`. */
   def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
@@ -166,7 +167,10 @@ final class AutoApprovals(
                 ManagerEvent.Text(text.take(2000))
               )
             )
-            val _ = agents.workLists.add(WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text(s"autopilot: $text".take(1000))))
+            val _ = agents.workLists.add(
+              WorkListControllers.ListName("log"),
+              QueueAdd(QueueItem.Text(s"autopilot: $text".take(1000)))
+            )
             scribe.info(s"autopilot: $text")
             List(s"$what: ${decision.wire}")
 
@@ -234,7 +238,9 @@ final class AutoApprovals(
                     depth
                   ),
                   AutopilotPolicy.DepthLimit(caps.maxGoalDepth.value),
-                  AutopilotPolicy.ApprovedToday(agents.approvalStore.autoApprovedSince(ApprovalKind.GoalPlan, day).size),
+                  AutopilotPolicy.ApprovedToday(
+                    agents.approvalStore.autoApprovedSince(ApprovalKind.GoalPlan, day).size
+                  ),
                   goalPlanCap
                 ) match
                   // decided by code whatever the focus: only the sub-goals it would open are bounded
@@ -255,5 +261,5 @@ final class AutoApprovals(
 
   def config: AgentsConfig = cfg
   def slugExists(slug: ApprovalChecks.Slug): Boolean = Slug.option(slug.value).exists(agents.host.articleExists)
-  def autoApprovedSince(kind: Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore.autoApprovedSince(io.scalaland.chimney.Transformer.derive[Approval.Kind, ApprovalKind].transform(kind), since)
-
+  def autoApprovedSince(kind: Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore
+    .autoApprovedSince(io.scalaland.chimney.Transformer.derive[Approval.Kind, ApprovalKind].transform(kind), since)

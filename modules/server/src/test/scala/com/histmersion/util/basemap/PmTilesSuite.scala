@@ -27,7 +27,8 @@ class PmTilesSuite extends munit.FunSuite:
 
   test("ids at one zoom are a permutation of its range"):
     val z = PmTiles.Zoom(4)
-    val ids = for x <- 0L until 16L; y <- 0L until 16L yield PmTiles.tileId(z, PmTiles.TileColumn(x), PmTiles.TileRow(y))
+    val ids = for x <- 0L until 16L; y <- 0L until 16L
+    yield PmTiles.tileId(z, PmTiles.TileColumn(x), PmTiles.TileRow(y))
     assertEquals(
       ids.sortBy[Long](_.value),
       (PmTiles.zoomBase(PmTiles.Zoom(4)).value until PmTiles.zoomBase(PmTiles.Zoom(5)).value).toVector
@@ -67,16 +68,33 @@ class PmTilesSuite extends munit.FunSuite:
 
   test("a directory round-trips, contiguous offsets stored as 0"):
     val es = Vector(
-      PmTiles.Entry(PmTiles.Entry.TileId(0), PmTiles.Entry.Offset(0), PmTiles.Entry.Length(10), PmTiles.Entry.RunLength(1)),
-      PmTiles.Entry(PmTiles.Entry.TileId(1), PmTiles.Entry.Offset(10), PmTiles.Entry.Length(20), PmTiles.Entry.RunLength(3)),
-      PmTiles.Entry(PmTiles.Entry.TileId(9), PmTiles.Entry.Offset(0), PmTiles.Entry.Length(10), PmTiles.Entry.RunLength(1)),
-      PmTiles.Entry(PmTiles.Entry.TileId(20), PmTiles.Entry.Offset(500), PmTiles.Entry.Length(7), PmTiles.Entry.RunLength(0))
+      PmTiles
+        .Entry(PmTiles.Entry.TileId(0), PmTiles.Entry.Offset(0), PmTiles.Entry.Length(10), PmTiles.Entry.RunLength(1)),
+      PmTiles
+        .Entry(PmTiles.Entry.TileId(1), PmTiles.Entry.Offset(10), PmTiles.Entry.Length(20), PmTiles.Entry.RunLength(3)),
+      PmTiles
+        .Entry(PmTiles.Entry.TileId(9), PmTiles.Entry.Offset(0), PmTiles.Entry.Length(10), PmTiles.Entry.RunLength(1)),
+      PmTiles.Entry(
+        PmTiles.Entry.TileId(20),
+        PmTiles.Entry.Offset(500),
+        PmTiles.Entry.Length(7),
+        PmTiles.Entry.RunLength(0)
+      )
     )
     assertEquals(PmTiles.decodeDirectory(PmTiles.encodeDirectory(es)), Right(es))
     assert(PmTiles.decodeDirectory(PmTiles.PlainBytes(Array(5.toByte))).isLeft)
 
   test("find: a run covers its ids, a leaf is returned to look further"):
-    val es = Vector(PmTiles.Entry(PmTiles.Entry.TileId(1), PmTiles.Entry.Offset(0), PmTiles.Entry.Length(10), PmTiles.Entry.RunLength(3)), PmTiles.Entry(PmTiles.Entry.TileId(10), PmTiles.Entry.Offset(10), PmTiles.Entry.Length(5), PmTiles.Entry.RunLength(0)))
+    val es = Vector(
+      PmTiles
+        .Entry(PmTiles.Entry.TileId(1), PmTiles.Entry.Offset(0), PmTiles.Entry.Length(10), PmTiles.Entry.RunLength(3)),
+      PmTiles.Entry(
+        PmTiles.Entry.TileId(10),
+        PmTiles.Entry.Offset(10),
+        PmTiles.Entry.Length(5),
+        PmTiles.Entry.RunLength(0)
+      )
+    )
     assertEquals(PmTiles.find(es, PmTiles.Entry.TileId(0)), None)
     assertEquals(PmTiles.find(es, PmTiles.Entry.TileId(3)).map(_.offset), Some(0L))
     assertEquals(PmTiles.find(es, PmTiles.Entry.TileId(4)), None)
@@ -126,8 +144,14 @@ class PmTilesSuite extends munit.FunSuite:
       assertEquals(r.header.addressedTiles, 85L)
       assert(r.header.tileContents.value < 85L, "the identical tiles are stored once")
       assertEquals(r.metadata.hcursor.get[String]("name"), Right("test"))
-      assertEquals(r.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))), Right(Some("2/1/3")))
-      assertEquals(r.tile(PmTiles.Zoom(3), PmTiles.TileColumn(5), PmTiles.TileRow(0)).map(_.map(_.value.toList)), Right(Some(List[Byte](9, 9))))
+      assertEquals(
+        r.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))),
+        Right(Some("2/1/3"))
+      )
+      assertEquals(
+        r.tile(PmTiles.Zoom(3), PmTiles.TileColumn(5), PmTiles.TileRow(0)).map(_.map(_.value.toList)),
+        Right(Some(List[Byte](9, 9)))
+      )
       assertEquals(r.tile(PmTiles.Zoom(4), PmTiles.TileColumn(0), PmTiles.TileRow(0)), Right(None))
       assert(!Files.exists(dir.resolve("t.pmtiles.data")))
     finally r.close()
@@ -159,11 +183,21 @@ class PmTilesSuite extends munit.FunSuite:
     val p = BasemapFixtures.vectorArchive(dir.resolve("v.pmtiles"), maxZoom = PmTiles.Zoom(3))
     val f = BasemapFixtures.open(p).fold(e => fail(e.value), identity)
     try
-      val before = f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1)).fold(e => fail(e.value), identity).get
+      val before =
+        f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1)).fold(e => fail(e.value), identity).get
       // an interrupted thread reading: the JDK closes the shared channel
-      val t = Thread.ofVirtual().unstarted { () => Thread.currentThread().interrupt(); scala.util.Try(f.tile(PmTiles.Zoom(3), PmTiles.TileColumn(2), PmTiles.TileRow(2))) }
+      val t = Thread.ofVirtual().unstarted { () =>
+        Thread.currentThread().interrupt();
+        scala.util.Try(f.tile(PmTiles.Zoom(3), PmTiles.TileColumn(2), PmTiles.TileRow(2)))
+      }
       t.start(); t.join()
-      assertEquals(f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1)).map(_.map(_.value.toList)), Right(Some(before.value.toList)), "read again on a reopened channel")
+      assertEquals(
+        f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1)).map(_.map(_.value.toList)),
+        Right(Some(before.value.toList)),
+        "read again on a reopened channel"
+      )
       assert(f.size.value > 0)
     finally f.close()
-    intercept[java.nio.channels.ClosedChannelException](f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1)))
+    intercept[java.nio.channels.ClosedChannelException](
+      f.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(1))
+    )

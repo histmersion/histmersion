@@ -9,8 +9,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * server's environment: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`), whether tool schemas are sent in OpenAI's strict form,
   * and how long one call may take. The key never reaches a log line: [[toString]] redacts it.
   */
-final case class ProviderSettings(baseUrl: ProviderSettings.BaseUrl, apiKey: ProviderSettings.ApiKey, strictTools: ProviderSettings.StrictTools, timeoutSeconds: ProviderSettings.TimeoutSeconds)
-    derives ConfigReader:
+final case class ProviderSettings(
+    baseUrl: ProviderSettings.BaseUrl,
+    apiKey: ProviderSettings.ApiKey,
+    strictTools: ProviderSettings.StrictTools,
+    timeoutSeconds: ProviderSettings.TimeoutSeconds
+) derives ConfigReader:
   override def toString: String =
     s"ProviderSettings($baseUrl, apiKey=${if (apiKey).value.isEmpty then "unset" else "<redacted>"}, " +
       s"strictTools=$strictTools, timeoutSeconds=$timeoutSeconds)"

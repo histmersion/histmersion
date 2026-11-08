@@ -51,13 +51,19 @@ class VocabularySuite extends munit.FunSuite:
     for p <- Pipeline.values do assertEquals(Pipeline.parse(p.wire), Some(p))
     for k <- Manager.Kind.values do assertEquals(Manager.Kind.parse(k.wire), Some(k))
     assertEquals(ProviderKind.parse(ProviderKind.Wire("claude-code")), Some(ProviderKind.ClaudeCode))
-    assertEquals(ProviderKind.parse(ProviderKind.Wire("acme"), known = Set(ProviderKind.Wire("acme"))), Some(ProviderKind.Plugin(ProviderKind.Wire("acme"))))
+    assertEquals(
+      ProviderKind.parse(ProviderKind.Wire("acme"), known = Set(ProviderKind.Wire("acme"))),
+      Some(ProviderKind.Plugin(ProviderKind.Wire("acme")))
+    )
     assertEquals(ProviderKind.parse(ProviderKind.Wire("acme")), None)
     assertEquals(ScheduleKind.Acquisition.pipeline, Pipeline.AcquisitionSweep)
     assertEquals(Run.State.next(Run.State.Paused, Run.State.Queued), Some(Run.State.Queued))
     assertEquals(Run.State.next(Run.State.Done, Run.State.Queued), None)
     assertEquals(Approval.DecidedBy.of(Approval.State.Wire("open"), None, None), None)
-    assertEquals(Approval.DecidedBy.of(Approval.State.Wire("approved"), Some(Approval.Note("autopilot: ok")), None), Some(Approval.DecidedBy.Autopilot))
+    assertEquals(
+      Approval.DecidedBy.of(Approval.State.Wire("approved"), Some(Approval.Note("autopilot: ok")), None),
+      Some(Approval.DecidedBy.Autopilot)
+    )
 
   test("the wire spellings the store and the clients rely on"):
     assertEquals(Edge.Kind.wireOf(Edge.Kind.SupersededBy), "superseded_by")

@@ -60,7 +60,11 @@ class PlacesHttpSuite extends DbSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place(Place.Id("zzh_world"), Place.Label("Zzh World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        Place(
+          Place.Id("zzh_world"),
+          Place.Label("Zzh World"),
+          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)
+        ),
         List(Place.Name(Place.Name.Value("Zzh World")))
       ),
       Place.Input(
@@ -69,7 +73,9 @@ class PlacesHttpSuite extends DbSuite:
           Place.Label("Zzh Land"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
-            Place.Geometry("""{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}""")
+            Place.Geometry(
+              """{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}"""
+            )
           ),
           Some(Period(Year(-3000), Year(0)))
         ),
@@ -85,7 +91,14 @@ class PlacesHttpSuite extends DbSuite:
           Some(Period(Year(-1400), Year(-1200)))
         ),
         List(Place.Name(Place.Name.Value("Zzh Polity"))),
-        List(Place.Relation(Place.Relation.ChildId("zzh_polity"), Place.Relation.ParentId("zzh_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1400), Year(-1200)))))
+        List(
+          Place.Relation(
+            Place.Relation.ChildId("zzh_polity"),
+            Place.Relation.ParentId("zzh_land"),
+            Place.Relation.Kind(Place.Relation.PartOf),
+            Some(Period(Year(-1400), Year(-1200)))
+          )
+        )
       )
     )
   )
@@ -165,7 +178,11 @@ class PlacesHttpSuite extends DbSuite:
   private val countsDoc = Lpf.render(
     List(
       Place.Input(
-        Place(Place.Id("zzc_world"), Place.Label("Zzc World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
+        Place(
+          Place.Id("zzc_world"),
+          Place.Label("Zzc World"),
+          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)
+        ),
         List(Place.Name(Place.Name.Value("Zzc World")))
       ),
       Place.Input(
@@ -174,7 +191,9 @@ class PlacesHttpSuite extends DbSuite:
           Place.Label("Zzc Land"),
           Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
-            Place.Geometry("""{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}""")
+            Place.Geometry(
+              """{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}"""
+            )
           )
         ),
         List(Place.Name(Place.Name.Value("Zzc Land"))),
@@ -228,7 +247,14 @@ class PlacesHttpSuite extends DbSuite:
       assertEquals(about.build.licence, Some("AGPL-3.0-or-later"))
       assertEquals(
         about.build.sourceUrl.map(_.value: String),
-        Some(CorrespondingSource.url(CorrespondingSource.Repository(cfg.server.sourceUrl.value), BuildMeta.gitCommit.map(CorrespondingSource.Commit(_))).value: String)
+        Some(
+          CorrespondingSource
+            .url(
+              CorrespondingSource.Repository(cfg.server.sourceUrl.value),
+              BuildMeta.gitCommit.map(CorrespondingSource.Commit(_))
+            )
+            .value: String
+        )
       )
       assertEquals(about.health.db, "ok")
       assert(about.health.schemaVersion.isDefined, ab)
@@ -244,9 +270,27 @@ class PlacesHttpSuite extends DbSuite:
     val d = java.nio.file.Files.createTempDirectory("about-storage")
     java.nio.file.Files.createDirectories(d.resolve("backups"))
     java.nio.file.Files.write(d.resolve("backups/histmersion-20261001T100000Z.dump"), Array.fill[Byte](2048)(1))
-    val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(d.resolve("data").toString))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(d.resolve("backups").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(d.resolve("uploads").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(d.resolve("bundles").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(d.resolve("basemap").toString))).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir(d.resolve("gazetteer").toString)))).modify(_.storage).setTo(base.storage.modify(_.waitMillis).setTo(StorageConfig.WaitMillis(30000))
-    )
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.runtime)
+      .setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(d.resolve("data").toString)))
+      .modify(_.backups)
+      .setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(d.resolve("backups").toString)))
+      .modify(_.converter)
+      .setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(d.resolve("uploads").toString)))
+      .modify(_.bundles)
+      .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(d.resolve("bundles").toString)))
+      .modify(_.basemap)
+      .setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(d.resolve("basemap").toString)))
+      .modify(_.places)
+      .setTo(
+        base.places
+          .modify(_.sources)
+          .setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir(d.resolve("gazetteer").toString)))
+      )
+      .modify(_.storage)
+      .setTo(base.storage.modify(_.waitMillis).setTo(StorageConfig.WaitMillis(30000)))
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"

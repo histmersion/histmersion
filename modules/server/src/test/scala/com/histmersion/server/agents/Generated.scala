@@ -20,7 +20,10 @@ object Generated:
     val texts = defs.agents.toOption.toList.flatten.map(_.body.value) ++
       defs.fragments.toOption.toList.flatMap(_.values.map(_.value)) ++
       defs.skills.toOption.toList.flatMap(_.values.map(s => s.header.mkString("\n") + s.body))
-    texts.flatMap(AgentDefinitions.placeholders).map(t => ToolName.either(t).fold(m => throw AssertionError(m), identity)).toSet ++ ToolboxOrder.names
+    texts
+      .flatMap(AgentDefinitions.placeholders)
+      .map(t => ToolName.either(t).fold(m => throw AssertionError(m), identity))
+      .toSet ++ ToolboxOrder.names
 
   def defs(): AgentGenerator.Defs =
     val d = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)

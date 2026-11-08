@@ -11,8 +11,9 @@ final class AliasTables(val tables: List[AliasTable]):
   def get(kind: AliasKind): Option[AliasTable] = byKind.get(kind)
 
   /** The identifier a record of `kind` answers to now; `id` itself for a kind nobody registered. */
-  def current(ds: DataSource, kind: AliasKind, id: AliasTable.Id): AliasTable.Id = get(kind).fold(AliasTable.Id(id.value.trim))(_.current(ds, id))
+  def current(ds: DataSource, kind: AliasKind, id: AliasTable.Id): AliasTable.Id =
+    get(kind).fold(AliasTable.Id(id.value.trim))(_.current(ds, id))
 
   /** The identifier an old one of `kind` was renamed to, when it is one. */
-  def renamedTo(ds: DataSource, kind: AliasKind, id: AliasTable.Id): Option[AliasTable.Id] = get(kind).flatMap(_.renamedTo(ds, id))
-
+  def renamedTo(ds: DataSource, kind: AliasKind, id: AliasTable.Id): Option[AliasTable.Id] =
+    get(kind).flatMap(_.renamedTo(ds, id))

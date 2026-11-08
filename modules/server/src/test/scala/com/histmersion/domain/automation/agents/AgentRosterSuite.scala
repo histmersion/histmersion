@@ -26,7 +26,8 @@ class AgentRosterSuite extends munit.FunSuite:
   test("a definition whose role no workflow contributes is refused, naming the roles there are"):
     val roster = EngineContributions.roster
     val without = roster.modify(_.roles).setTo(roster.roles.filterNot(_ == AgentRole.Skeptic))
-    val skeptic = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), without).agentNames.map(AgentDefinitions(new Prompts(Prompts.OverrideDir("")), without).agent)
+    val skeptic = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), without).agentNames
+      .map(AgentDefinitions(new Prompts(Prompts.OverrideDir("")), without).agent)
     val refused = skeptic.collect { case Left(m) if m.contains("is no contributed workflow's") => m }
     assert(refused.nonEmpty, "the skeptic's definition is refused")
     assert(refused.forall(_.contains("role skeptic")), refused)

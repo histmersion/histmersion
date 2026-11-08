@@ -5,7 +5,12 @@ import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class MediaCommonsConfig(apiUrl: MediaCommonsConfig.ApiUrl, batch: MediaCommonsConfig.Batch, maxlag: MediaCommonsConfig.Maxlag, licences: MediaCommonsConfig.Licences) derives ConfigReader
+final case class MediaCommonsConfig(
+    apiUrl: MediaCommonsConfig.ApiUrl,
+    batch: MediaCommonsConfig.Batch,
+    maxlag: MediaCommonsConfig.Maxlag,
+    licences: MediaCommonsConfig.Licences
+) derives ConfigReader
 
 object MediaCommonsConfig:
   type ApiUrl = ApiUrl.T

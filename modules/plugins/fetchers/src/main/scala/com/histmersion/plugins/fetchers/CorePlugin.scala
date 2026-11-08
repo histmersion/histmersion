@@ -8,7 +8,9 @@ final class CorePlugin extends FetcherPlugin("oa-core"):
   type Config = CoreConfig
   def register(c: CoreConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     c.apiKey
-      .fold[Either[Plugin.RegisterResultPart1, Option[OpenAccess.CoreKey]]](Right(c.acquire.core.key.map(k => OpenAccess.CoreKey(k.value))))(s =>
+      .fold[Either[Plugin.RegisterResultPart1, Option[OpenAccess.CoreKey]]](
+        Right(c.acquire.core.key.map(k => OpenAccess.CoreKey(k.value)))
+      )(s =>
         ctx
           .secret(s)
           .left

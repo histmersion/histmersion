@@ -29,7 +29,8 @@ object MapMenu:
   def setLocked(on: MapSurface.Locked, surface: MapSurface): Unit =
     locked.set(on)
     surface.setLocked(on)
-    Flash.say(if on.value then Flash.Text("The map is locked: it does not move until you unlock it.") else Flash.Text("The map moves again."))
+    Flash.say(if on.value then Flash.Text("The map is locked: it does not move until you unlock it.")
+    else Flash.Text("The map moves again."))
 
   /** A point on the map, as a target. Pure. */
   def point(at: LatLon, zoom: MapSurface.Zoom, span: Option[(Year, Year)]): Target =
@@ -62,10 +63,12 @@ object MapMenu:
               .foreach(_ => Flash.say(Flash.Text("Bookmarked the place: it is in My library › Bookmarks.")))
           )
       ),
-      ContextMenu.Entry(ContextMenu.Entry.Label("Add a note here"), () => NoteEditor.write(here, Title("Place on the map"))),
+      ContextMenu
+        .Entry(ContextMenu.Entry.Label("Add a note here"), () => NoteEditor.write(here, Title("Place on the map"))),
       ContextMenu.Separator,
       ContextMenu.Entry(
-        if locked.now().value then ContextMenu.Entry.Label("Unlock the map") else ContextMenu.Entry.Label("Lock the map"),
+        if locked.now().value then ContextMenu.Entry.Label("Unlock the map")
+        else ContextMenu.Entry.Label("Lock the map"),
         () => setLocked(MapSurface.Locked(!locked.now().value), surface),
         pressed = Some(ContextMenu.Entry.Pressed(locked.now().value))
       ),
@@ -76,7 +79,10 @@ object MapMenu:
       ),
       ContextMenu.Entry(
         ContextMenu.Entry.Label("Bookmark this view of the map"),
-        () => SavedViews.save(SavedViews.suggestedName(UiState.q.now(), UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))))
+        () =>
+          SavedViews.save(
+            SavedViews.suggestedName(UiState.q.now(), UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_)))
+          )
       )
     )
 
@@ -90,10 +96,17 @@ object MapMenu:
       MapStartConfig.Label("the view I chose")
     )
     SettingsStore
-      .save(StartPlace.changes(c).map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), Some(ConfigEdit.Change.Value(v.value)))))
+      .save(
+        StartPlace
+          .changes(c)
+          .map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), Some(ConfigEdit.Change.Value(v.value))))
+      )
       .onComplete(r =>
         Flash.say(
-          r.fold(e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e)}"), _ => Flash.Text("The map opens here from now on."))
+          r.fold(
+            e => Flash.Text(s"The start was not saved: ${SettingsStore.message(e)}"),
+            _ => Flash.Text("The map opens here from now on.")
+          )
         )
       )
 
@@ -130,7 +143,14 @@ object MapMenu:
     val ctrl = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
     ctrl.className = "map-actions-ctrl"
     surface.addControl(ctrl, Corner.TopLeft)
-    val _ = render(ctrl, ContextMenu.button(ContextMenu.ButtonTitle("Map actions"), () => entries(surface, surface.center), ContextMenu.ButtonExtraCls("map-actions-btn")))
+    val _ = render(
+      ctrl,
+      ContextMenu.button(
+        ContextMenu.ButtonTitle("Map actions"),
+        () => entries(surface, surface.center),
+        ContextMenu.ButtonExtraCls("map-actions-btn")
+      )
+    )
     val _ = render(
       box,
       div(
@@ -139,6 +159,11 @@ object MapMenu:
         role := "status",
         Icon(Icon.Lock),
         span("The map is locked"),
-        button(typ := "button", cls := "btn btn--sm map-unlock", "Unlock", onClick --> (_ => setLocked(MapSurface.Locked(false), surface)))
+        button(
+          typ := "button",
+          cls := "btn btn--sm map-unlock",
+          "Unlock",
+          onClick --> (_ => setLocked(MapSurface.Locked(false), surface))
+        )
       )
     )

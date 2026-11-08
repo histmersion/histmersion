@@ -17,7 +17,13 @@ class CalibreSettingsSuite extends munit.FunSuite:
 
   private given LocalFiles = new DiskLocalFiles
   private given Processes = new SystemProcesses
-  private val settings = Calibre.Settings(Calibre.Settings.LibraryPath("~/Calibre Library"), Calibre.Settings.Calibredb("calibredb"), Calibre.Settings.Sqlite("sqlite3"), writeBack = Calibre.Settings.WriteBack(true), Calibre.Settings.GuiProcess("gui"))
+  private val settings = Calibre.Settings(
+    Calibre.Settings.LibraryPath("~/Calibre Library"),
+    Calibre.Settings.Calibredb("calibredb"),
+    Calibre.Settings.Sqlite("sqlite3"),
+    writeBack = Calibre.Settings.WriteBack(true),
+    Calibre.Settings.GuiProcess("gui")
+  )
   private def only(paths: String*): Path => Boolean = p => paths.contains(p.toString)
 
   test("a bare name on the search path wins over the install directories"):
@@ -46,10 +52,21 @@ class CalibreSettingsSuite extends munit.FunSuite:
     assertEquals(lib.calibredb, "/home/someone/Applications/calibre.app/Contents/MacOS/calibredb")
 
   test("found nowhere, the name stays as configured"):
-    assertEquals(settings.library(Some(Plugin.Context.EnvResult("/home/someone")), Some(Plugin.Context.EnvResult("/usr/bin")), only()).calibredb, "calibredb")
+    assertEquals(
+      settings
+        .library(Some(Plugin.Context.EnvResult("/home/someone")), Some(Plugin.Context.EnvResult("/usr/bin")), only())
+        .calibredb,
+      "calibredb"
+    )
 
   test("a configured path is used as it is"):
     val lib = Calibre
-      .Settings(Calibre.Settings.LibraryPath("~/Calibre Library"), Calibre.Settings.Calibredb("/somewhere/calibredb"), Calibre.Settings.Sqlite("sqlite3"), writeBack = Calibre.Settings.WriteBack(true), Calibre.Settings.GuiProcess("gui"))
+      .Settings(
+        Calibre.Settings.LibraryPath("~/Calibre Library"),
+        Calibre.Settings.Calibredb("/somewhere/calibredb"),
+        Calibre.Settings.Sqlite("sqlite3"),
+        writeBack = Calibre.Settings.WriteBack(true),
+        Calibre.Settings.GuiProcess("gui")
+      )
       .library(None, Some(Plugin.Context.EnvResult("/usr/bin")), _ => true)
     assertEquals(lib.calibredb, "/somewhere/calibredb")

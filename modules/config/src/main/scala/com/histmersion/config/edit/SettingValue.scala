@@ -96,7 +96,9 @@ object SettingValue:
         ConfigFactory.parseString(s"v = $s").getValue("v") match
           case l: ConfigList => fromConfig(l).toRight(Problem(s"'$s' holds something other than plain values"))
           case _             => Left(Problem(s"'$s' is not a list"))
-      catch case e: ConfigException => Left(Problem(s"'$s' is not a list: ${e.getMessage.replaceFirst("^String: \\d+: ", "")}"))
+      catch
+        case e: ConfigException =>
+          Left(Problem(s"'$s' is not a list: ${e.getMessage.replaceFirst("^String: \\d+: ", "")}"))
     else Right(Items(s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(x => Text(Text.Value(x)))))
 
   /** A value as HOCON holds it — `None` for an object or null. */

@@ -42,11 +42,23 @@ final class PageBuilder(
         .map(a => a.slug.value -> a)
         .toMap
       def entry(r: NeighborRow): Option[Citation] = r.target match
-        case NeighborTarget.Source     =>
-          refs.get(r.citekey.value).map(Citation.ToSource(_, Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
-        case NeighborTarget.Article    => linked.get(r.citekey.value).map(a => Citation.ToArticle(a, Some(Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value))))
+        case NeighborTarget.Source =>
+          refs
+            .get(r.citekey.value)
+            .map(Citation.ToSource(_, Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
+        case NeighborTarget.Article =>
+          linked
+            .get(r.citekey.value)
+            .map(a =>
+              Citation.ToArticle(a, Some(Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
+            )
         case NeighborTarget.Unresolved =>
-          Some(Citation.Unresolved(Citation.Unresolved.Id(r.citekey.value), Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)))
+          Some(
+            Citation.Unresolved(
+              Citation.Unresolved.Id(r.citekey.value),
+              Edge.Kind.Wire(com.histmersion.api.library.Edge.Kind.wireOf(r.kind).value)
+            )
+          )
       val citingArticles = articles
         .sourceArticles(ck)
         .getOrElse(Nil)
@@ -78,12 +90,17 @@ final class PageBuilder(
           else
             s.ocrMarkdown
               .filter(_.value.trim.nonEmpty)
-              .fold(FullText.Missing)(m => FullText.Shown(FullText.Shown.Markdown(m.value))),
+              .fold(FullText.Missing)(m => FullText.Shown(FullText.Shown.Markdown(m.value)))
+        ,
         query = term.map(SourcePage.Query(_)),
         formatting = sources.formatIssues(s.summary, s.notes)
       )
       val md =
-        List(s.summary.map(_.value), s.notes.map(_.value), if full.value then s.ocrMarkdown.map(_.value) else None).flatten
+        List(
+          s.summary.map(_.value),
+          s.notes.map(_.value),
+          if full.value then s.ocrMarkdown.map(_.value) else None
+        ).flatten
           .mkString("\n\n")
       val links = articles.pageLinks(Article.Links.targets(WikiLinks.Body(md)))
       (Title(s.title.value), highlighted(Pages.source(page, ck => links(WikiLinks.Occurrence.Target(ck.value))), term))

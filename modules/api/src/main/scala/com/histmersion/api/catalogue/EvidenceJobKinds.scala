@@ -10,6 +10,8 @@ object EvidenceJobKinds:
   val EventsCandidates: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("events-candidates"),
     JobKinds.Wire("Find sources for events"),
-    JobKindMeaning("Looks for the sources that may attest each catalogue event: candidate links for you to confirm or reject."),
+    JobKindMeaning(
+      "Looks for the sources that may attest each catalogue event: candidate links for you to confirm or reject."
+    ),
     subject = EventsJobKinds.Catalogue.of
   )

@@ -68,7 +68,11 @@ object AttestationSourceReferrer:
     * dating it gives. An edge TO it is parked, not deleted, so its attestations stay.
     */
 
-  def goes(targetType: BAttestationFullRow.TargetType, targetId: BAttestationFullRow.TargetId, source: SourceKeys): Boolean =
+  def goes(
+      targetType: BAttestationFullRow.TargetType,
+      targetId: BAttestationFullRow.TargetId,
+      source: SourceKeys
+  ): Boolean =
     targetType.value match
       case "finding"      => targetId.value.startsWith(source.findingPrefix.value)
       case "edge"         => targetId.value.split('|').headOption.contains(source.citekey.value)

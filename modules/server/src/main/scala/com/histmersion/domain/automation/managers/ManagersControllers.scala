@@ -60,7 +60,10 @@ final class ManagersControllers(
   /** The runs manager `id` dispatched, newest first (`status` narrows) — `run_status`'s manager filter. */
   def runs(id: ManagerLight.Id, status: Option[Run.State.Wire], limit: Option[PageSize]): List[RunInfo] =
     val st = status.map(_.value.trim).filter(_.nonEmpty)
-    agents.runs.forManager(ManagerLight.Id(id.value.trim), limit = RunQuery.Limit(limits.page(limit, PageSize(50)).value)).toList.filter(r => st.forall(_ == r.status.value))
+    agents.runs
+      .forManager(ManagerLight.Id(id.value.trim), limit = RunQuery.Limit(limits.page(limit, PageSize(50)).value))
+      .toList
+      .filter(r => st.forall(_ == r.status.value))
 
   private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
   private def notFound(what: String) = Api.Error(Api.Error.Message(what), Some(Api.Error.Code(Write.CodeNotFound)))
@@ -71,7 +74,13 @@ final class ManagersControllers(
 
   private def lightId(m: ManagerInfo): ManagerLight.Id = m.id.transformInto[ManagerLight.Id]
 
-  private def record(id: ManagerInfo.Id, item: Option[ManagerItem.Id], run: Option[DomainRun.Id], feed: String, text: String): Unit =
+  private def record(
+      id: ManagerInfo.Id,
+      item: Option[ManagerItem.Id],
+      run: Option[DomainRun.Id],
+      feed: String,
+      text: String
+  ): Unit =
     agents.managerStore.event(id, item, run, ManagerEvent.Kind(feed), ManagerEvent.Text(text))
 
   private def kindOf(m: ManagerInfo): Kind = Kind.parse(m.kind).getOrElse(Kind.Review)
@@ -82,9 +91,13 @@ final class ManagersControllers(
   private def kinds: List[ManagerKindDefinition] = agents.workflows.managerKinds
 
   /** Every manager's backlog, by id, as its kind's domain counts it (one reading for every manager listed). */
-  private def backlogs(): Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] = kinds.foldLeft(Map.empty)(_ ++ _.backlog())
+  private def backlogs(): Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])] =
+    kinds.foldLeft(Map.empty)(_ ++ _.backlog())
 
-  private def withEffective(m: ManagerInfo, backlog: => Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])]): ManagerInfo =
+  private def withEffective(
+      m: ManagerInfo,
+      backlog: => Map[ManagerLight.Id, (IngestBacklog.Lane.Backlog, Option[IngestBacklog.DaysToDrain])]
+  ): ManagerInfo =
     val e = m
       .modify(_.effective)
       .setTo(
@@ -97,7 +110,9 @@ final class ManagersControllers(
     else
       backlog
         .get(lightId(m))
-        .fold(e)((n, days) => e.copy(backlog = ManagerInfo.Backlog(n.value), backlogDays = days.map(d => ManagerInfo.BacklogDays(d.value))))
+        .fold(e)((n, days) =>
+          e.copy(backlog = ManagerInfo.Backlog(n.value), backlogDays = days.map(d => ManagerInfo.BacklogDays(d.value)))
+        )
 
   private def manager(id: ManagerLight.Id): Either[Api.Error, ManagerInfo] =
     agents.managerStore
@@ -136,7 +151,12 @@ final class ManagersControllers(
     val state =
       if in.paused.exists(!_.value) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
     val goal = in.goal.map(_.value.trim).filter(_.nonEmpty)
-    def make(k: Kind, id: ManagerLight.Id, g: Option[DomainGoal.Slug], cron: Option[ManagerLight.Cron] = None): Either[Api.Error, ManagerInfo] =
+    def make(
+        k: Kind,
+        id: ManagerLight.Id,
+        g: Option[DomainGoal.Slug],
+        cron: Option[ManagerLight.Cron] = None
+    ): Either[Api.Error, ManagerInfo] =
       for
         _ <- validate(k, in.config)
         c <- cron
@@ -144,7 +164,8 @@ final class ManagersControllers(
           .fold[Either[Api.Error, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
         infoId = id.transformInto[ManagerInfo.Id]
         _ <- Either.cond(
-          agents.managerStore.create(infoId, k, g, state, in.config, c.map(x => ManagerInfo.Cron(x.text.value)), c.flatMap(_.next(now))),
+          agents.managerStore
+            .create(infoId, k, g, state, in.config, c.map(x => ManagerInfo.Cron(x.text.value)), c.flatMap(_.next(now))),
           (),
           conflict(s"the manager '$id' exists already")
         )
@@ -168,15 +189,19 @@ final class ManagersControllers(
       case Some(Kind.Review) if goal.isDefined =>
         Left(error("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
       case Some(Kind.Review)                   => make(Kind.Review, ManagerLight.Id(ReviewId), None)
-      case Some(Kind.Enrich) if goal.isDefined => Left(Api.Error(Api.Error.Message("the enrich manager is library-wide: give no goal")))
-      case Some(Kind.Enrich)                   => make(Kind.Enrich, ManagerLight.Id(EnrichId), None)
-      case Some(Kind.Seed)                     =>
+      case Some(Kind.Enrich) if goal.isDefined =>
+        Left(Api.Error(Api.Error.Message("the enrich manager is library-wide: give no goal")))
+      case Some(Kind.Enrich) => make(Kind.Enrich, ManagerLight.Id(EnrichId), None)
+      case Some(Kind.Seed)   =>
         for
           g <- goal.toRight(Api.Error(Api.Error.Message("a seeding manager is for one research area: give its goal")))
           slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
           gl <- host.goal(slug)
           m <- make(Kind.Seed, seedId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id], Some(slug))
-          _ <- addItem(lightId(m), EnqueueRequest(EnqueueRequest.Kind(ProposeArticles), EnqueueRequest.Target(gl.slug.value)))
+          _ <- addItem(
+            lightId(m),
+            EnqueueRequest(EnqueueRequest.Kind(ProposeArticles), EnqueueRequest.Target(gl.slug.value))
+          )
           out <- manager(lightId(m))
         yield out
       case Some(Kind.Watch) =>
@@ -195,7 +220,11 @@ final class ManagersControllers(
             .foreach(sw =>
               addItem(
                 lightId(m),
-                EnqueueRequest(EnqueueRequest.Kind(sw.itemKind.value), EnqueueRequest.Target(gl.slug.value), Some(EnqueueRequest.Priority(0))),
+                EnqueueRequest(
+                  EnqueueRequest.Kind(sw.itemKind.value),
+                  EnqueueRequest.Target(gl.slug.value),
+                  Some(EnqueueRequest.Priority(0))
+                ),
                 ItemOrigin.Selection
               )
             )
@@ -245,7 +274,11 @@ final class ManagersControllers(
       Left(Api.Error(Api.Error.Message("the enrich manager has no cron: the ingests and the Enrich buttons feed it")))
     else
       ManagerPolicy
-        .checkCron(Cron.Text(text.value), now, cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes])
+        .checkCron(
+          Cron.Text(text.value),
+          now,
+          cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes]
+        )
         .left
         .map(p => error(p.value))
 
@@ -272,7 +305,10 @@ final class ManagersControllers(
             )
             .flatMap(_ =>
               ModelChains
-                .parseChain(ModelChains.Chain.Spec(o.model.value), agents.knownProviders.map(i => com.histmersion.api.automation.ProviderKind.Plugin.Name(i.value)))
+                .parseChain(
+                  ModelChains.Chain.Spec(o.model.value),
+                  agents.knownProviders.map(i => com.histmersion.api.automation.ProviderKind.Plugin.Name(i.value))
+                )
                 .left
                 .map(e => error(s"models ${o.role}: $e"))
                 .map(_ => ())
@@ -286,13 +322,18 @@ final class ManagersControllers(
       Removed(Removed.Value(Transactor(ds).transact(ManagerRepo.delete(m.id))))
     }
 
-  private def inFlight(id: ManagerLight.Id): List[RunInfo] = agents.runs.forManager(id, active = RunService.Active(true)).toList
+  private def inFlight(id: ManagerLight.Id): List[RunInfo] =
+    agents.runs.forManager(id, active = RunService.Active(true)).toList
 
   /** `POST /api/agents/managers/{id}/{pause|resume|stop}[?runs=true]`. Pause = no new runs (with `runs`, its in-flight
     * runs are paused too, cooperatively); resume reverses both (only the runs paused on request); stop cancels its
     * in-flight runs and its open items.
     */
-  def action(id: ManagerLight.Id, action: ManagersControllers.Action, runs: Option[ManagerInfo.PauseRuns]): Either[Api.Error, ManagerInfo] =
+  def action(
+      id: ManagerLight.Id,
+      action: ManagersControllers.Action,
+      runs: Option[ManagerInfo.PauseRuns]
+  ): Either[Api.Error, ManagerInfo] =
     manager(id).flatMap { m =>
       val withRuns = runs.exists(_.value)
       action.value.trim.toLowerCase match
@@ -300,7 +341,9 @@ final class ManagersControllers(
           agents.managerStore.setState(m.id, State.Paused, ManagerInfo.PauseRuns(withRuns))
           val paused = if withRuns then
             inFlight(lightId(m))
-              .filter(r => r.status.value == RunState.Running.wire.value || r.status.value == RunState.Queued.wire.value)
+              .filter(r =>
+                r.status.value == RunState.Running.wire.value || r.status.value == RunState.Queued.wire.value
+              )
               .count(r => agents.engine.pause(runIdOf(r.id)).isRight)
           else 0
           record(
@@ -308,7 +351,8 @@ final class ManagersControllers(
             None,
             None,
             Feed.Paused,
-            "paused by a person" + (if withRuns then s", with ${Plural.count(Plural.CountN(paused.toLong), Plural.CountSingular("run"))} in flight"
+            "paused by a person" + (if withRuns then
+                                      s", with ${Plural.count(Plural.CountN(paused.toLong), Plural.CountSingular("run"))} in flight"
                                     else "; its runs in flight go on")
           )
           manager(lightId(m))
@@ -316,7 +360,10 @@ final class ManagersControllers(
           agents.managerStore.setState(m.id, State.Active, ManagerInfo.PauseRuns(false))
           val resumed = if m.pauseRuns.value && cfg.enabled.value then
             inFlight(lightId(m))
-              .filter(r => r.status.value == RunState.Paused.wire.value && r.error.exists(_.value.startsWith(PauseReason.Requested.wire.value)))
+              .filter(r =>
+                r.status.value == RunState.Paused.wire.value && r.error
+                  .exists(_.value.startsWith(PauseReason.Requested.wire.value))
+              )
               .count(r => agents.engine.resume(runIdOf(r.id), None, None).isRight)
           else 0
           record(
@@ -324,7 +371,8 @@ final class ManagersControllers(
             None,
             None,
             Feed.Paused,
-            "resumed by a person" + (if resumed > 0 then s", with ${Plural.count(Plural.CountN(resumed.toLong), Plural.CountSingular("run"))} it had paused"
+            "resumed by a person" + (if resumed > 0 then
+                                       s", with ${Plural.count(Plural.CountN(resumed.toLong), Plural.CountSingular("run"))} it had paused"
                                      else "")
           )
           supervisor.nudge()
@@ -332,7 +380,8 @@ final class ManagersControllers(
         case "stop" =>
           agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false))
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
-          val items = Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, ManagerRepo.CancelReason("the manager was stopped")))
+          val items =
+            Transactor(ds).transact(ManagerRepo.cancelOpen(m.id, ManagerRepo.CancelReason("the manager was stopped")))
           record(
             m.id,
             None,
@@ -346,7 +395,12 @@ final class ManagersControllers(
 
   // ── items ──────────────────────────────────────────────────────────────────────────────────────
 
-  def items(id: ManagerLight.Id, status: Option[com.histmersion.domain.automation.ItemStatus.Wire], offset: Option[Offset], limit: Option[PageSize]): Either[Api.Error, ItemPage] =
+  def items(
+      id: ManagerLight.Id,
+      status: Option[com.histmersion.domain.automation.ItemStatus.Wire],
+      offset: Option[Offset],
+      limit: Option[PageSize]
+  ): Either[Api.Error, ItemPage] =
     for
       m <- manager(id)
       st <- status.map(_.value.trim).filter(_.nonEmpty) match
@@ -367,16 +421,23 @@ final class ManagersControllers(
     r.toLongOption
       .flatMap(n => agents.managerStore.item(ManagerItem.Id(n)))
       .filter(_.managerId == m.id)
-      .orElse(itemKinds(kindOf(m)).iterator.map(k => agents.managerStore.itemFor(m.id, k, ManagerItem.Target(r))).collectFirst {
-        case Some(i) =>
-          i
-      })
+      .orElse(
+        itemKinds(kindOf(m)).iterator
+          .map(k => agents.managerStore.itemFor(m.id, k, ManagerItem.Target(r)))
+          .collectFirst { case Some(i) =>
+            i
+          }
+      )
       .toRight(notFound(s"No item '$ref' of manager ${m.id}"))
 
   /** A target as an item of `kind` names it: an article's slug, a source's citekey, the goal (a seeding manager's own).
     * A compile item is never added by hand: it comes from an approved plan.
     */
-  private def targetOf(m: ManagerInfo, kind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+  private def targetOf(
+      m: ManagerInfo,
+      kind: ManagerContext.ItemKind,
+      raw: ManagerItem.Target
+  ): Either[Api.Error, ManagerContext.ItemTarget] =
     kinds.find(_.items.contains(kind)) match
       case Some(k) => k.target(m, kind, raw)
       case None    => Left(error(s"unknown item kind '$kind'"))
@@ -385,7 +446,11 @@ final class ManagersControllers(
     * the kind itself; blank = the manager's default). An article's review whose article records no filter brings an
     * infer-filter item with it (the review manager's `inferFilter`).
     */
-  def addItem(id: ManagerLight.Id, in: EnqueueRequest, origin: ItemOrigin = ItemOrigin.Person): Either[Api.Error, ManagerItem] =
+  def addItem(
+      id: ManagerLight.Id,
+      in: EnqueueRequest,
+      origin: ItemOrigin = ItemOrigin.Person
+  ): Either[Api.Error, ManagerItem] =
     for
       m <- manager(id)
       kind <- itemKindOf(kindOf(m), com.histmersion.api.ItemKind.Word(in.kind.value)).toRight(
@@ -394,7 +459,14 @@ final class ManagersControllers(
       itemKind = ManagerContext.ItemKind(kind.value)
       target <- targetOf(m, itemKind, ManagerItem.Target(in.target.value))
       prio = in.priority.fold(ManagerSupervisor.PersonPriority)(_.value)
-      (itemId, isNew) = agents.managerStore.upsert(m.id, kind, target.transformInto[ManagerItem.Target], origin, ManagerItem.Priority(prio), reopen = true)
+      (itemId, isNew) = agents.managerStore.upsert(
+        m.id,
+        kind,
+        target.transformInto[ManagerItem.Target],
+        origin,
+        ManagerItem.Priority(prio),
+        reopen = true
+      )
       label = if kind == itemKinds(kindOf(m)).head then target.value else s"$target ($kind)"
       _ = record(
         m.id,
@@ -403,7 +475,9 @@ final class ManagersControllers(
         Feed.Evaluated,
         s"$label ${if isNew then "enqueued" else "enqueued again"} by a ${origin.wire} (priority $prio)"
       )
-      _ = kinds.find(_.items.contains(itemKind)).foreach(_.added(supervisor, m, itemKind, target, ManagerContext.Priority(prio)))
+      _ = kinds
+        .find(_.items.contains(itemKind))
+        .foreach(_.added(supervisor, m, itemKind, target, ManagerContext.Priority(prio)))
       item <- agents.managerStore.item(itemId).toRight(notFound(s"item $itemId vanished"))
     yield
       supervisor.nudge()
@@ -421,10 +495,14 @@ final class ManagersControllers(
         )
       case Some(EnqueueKind.Review) =>
         supervisor.ensureDefaults()
-        addItem(ManagerLight.Id(ReviewId), in.modify(_.kind).setTo(EnqueueRequest.Kind(ArticleReview))).map(i => EnqueueResult(ManagerInfo.Id(ReviewId), List(i)))
+        addItem(ManagerLight.Id(ReviewId), in.modify(_.kind).setTo(EnqueueRequest.Kind(ArticleReview))).map(i =>
+          EnqueueResult(ManagerInfo.Id(ReviewId), List(i))
+        )
       case Some(EnqueueKind.Extend) =>
         supervisor.ensureDefaults()
-        addItem(ManagerLight.Id(ReviewId), in.modify(_.kind).setTo(EnqueueRequest.Kind(ArticleExtend))).map(i => EnqueueResult(ManagerInfo.Id(ReviewId), List(i)))
+        addItem(ManagerLight.Id(ReviewId), in.modify(_.kind).setTo(EnqueueRequest.Kind(ArticleExtend))).map(i =>
+          EnqueueResult(ManagerInfo.Id(ReviewId), List(i))
+        )
       case Some(EnqueueKind.Seed) =>
         val text = in.target.value.trim
         for
@@ -434,17 +512,25 @@ final class ManagersControllers(
           _ = supervisor.ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(slug))
           out <- addItem(
             id.transformInto[ManagerLight.Id],
-            in.modify(_.kind).setTo(EnqueueRequest.Kind(ProposeArticles)).modify(_.target).setTo(EnqueueRequest.Target(g.slug.value))
+            in.modify(_.kind)
+              .setTo(EnqueueRequest.Kind(ProposeArticles))
+              .modify(_.target)
+              .setTo(EnqueueRequest.Target(g.slug.value))
           ).map(i => EnqueueResult(id, List(i)))
         yield out
       case Some(EnqueueKind.Enrich) =>
         supervisor.ensureDefaults()
         kinds
           .find(_.kind == Kind.Enrich)
-          .fold(Right((List(ManagerContext.ItemTarget(in.target.value.trim)), Nil)))(_.expand(supervisor, ManagerItem.Target(in.target.value.trim)))
+          .fold(Right((List(ManagerContext.ItemTarget(in.target.value.trim)), Nil)))(
+            _.expand(supervisor, ManagerItem.Target(in.target.value.trim))
+          )
           .map { (cks, skipped) =>
             val items = cks.flatMap(ck =>
-              addItem(ManagerLight.Id(EnrichId), EnqueueRequest(EnqueueRequest.Kind(SourceEnrich), EnqueueRequest.Target(ck.value), in.priority)).toOption
+              addItem(
+                ManagerLight.Id(EnrichId),
+                EnqueueRequest(EnqueueRequest.Kind(SourceEnrich), EnqueueRequest.Target(ck.value), in.priority)
+              ).toOption
             )
             EnqueueResult(ManagerInfo.Id(EnrichId), items, skipped.map(s => EnqueueResult.Skipped(s.value)))
           }
@@ -491,9 +577,7 @@ final class ManagersControllers(
         case "release" =>
           Either
             .cond(transact(ds)(ManagerRepo.release(i.id)), (), conflict(s"item #${i.id} is ${i.status}, not held"))
-            .map(_ =>
-              record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person")
-            )
+            .map(_ => record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
         case "priority" =>
           in.priority.toRight(Api.Error(Api.Error.Message("give `priority`"))).map { p =>
             Transactor(ds).transact(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
@@ -507,7 +591,12 @@ final class ManagersControllers(
             .cond(
               transact(ds)(
                 ManagerRepo
-                  .settle(i.id, ItemStatus.Stopped, ManagerItem.Outcome(why), List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active))
+                  .settle(
+                    i.id,
+                    ItemStatus.Stopped,
+                    ManagerItem.Outcome(why),
+                    List(ItemStatus.Pending, ItemStatus.Held, ItemStatus.Active)
+                  )
               ),
               (),
               conflict(s"item #${i.id} is ${i.status} already")
@@ -520,9 +609,7 @@ final class ManagersControllers(
               (),
               conflict(s"item #${i.id} is ${i.status}; only a settled item can be re-opened")
             )
-            .map(_ =>
-              record(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person")
-            )
+            .map(_ => record(m.id, Some(i.id), None, Feed.Evaluated, s"${i.target}: re-opened by a person"))
         case other => Left(error(s"unknown item action '$other' (one of: ${ItemPatch.Actions.mkString(", ")})"))
       out <- agents.managerStore.item(i.id).toRight(notFound(s"item ${i.id} vanished"))
     yield
@@ -560,7 +647,15 @@ final class ManagersControllers(
         error("`suggest` asks a model for the action: give no effect with it")
       )
       // a suggestion needs a run that can start: checked before the hint is recorded
-      _ <- if suggest then agents.prepare(RunRequest(RunRequest.Pipeline(Pipeline.HintEffect.wire.value), RunRequest.Target(m.id.value)), None).map(_ => ()) else Right(())
+      _ <-
+        if suggest then
+          agents
+            .prepare(
+              RunRequest(RunRequest.Pipeline(Pipeline.HintEffect.wire.value), RunRequest.Target(m.id.value)),
+              None
+            )
+            .map(_ => ())
+        else Right(())
       author = ManagerHint.Author(in.author.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
       hint = Transactor(ds).transact(
         ManagerRepo.addHint(
@@ -584,7 +679,9 @@ final class ManagersControllers(
               None,
               _.modify(_.hint).setTo(Some(RunParams.Hint(hint.id.value)))
             )
-            .map(r => s" — a model reads it for an action (run ${r.id.value.take(8)}); a person approves what it proposes")
+            .map(r =>
+              s" — a model reads it for an action (run ${r.id.value.take(8)}); a person approves what it proposes"
+            )
         else Right("")
       _ = record(
         m.id,
@@ -638,14 +735,26 @@ final class ManagersControllers(
       )
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
-  private def proposeEffect(m: ManagerInfo, hintId: ManagerHint.Id, text: ManagerHint.Text, e: HintEffect, by: ManagerHint.Author): String =
+  private def proposeEffect(
+      m: ManagerInfo,
+      hintId: ManagerHint.Id,
+      text: ManagerHint.Text,
+      e: HintEffect,
+      by: ManagerHint.Author
+  ): String =
     import io.circe.syntax.*
     val a = agents.approvalStore.openSubject(
       None,
       ApprovalKind.HintEffect,
       ApprovalQuery.Subject(m.id.value),
       ApprovalService.Payload(
-        HintProposal(m.id, HintProposal.Hint(hintId.value), HintProposal.Text(text.value), e, HintProposal.By(by.value)).asJson.noSpaces
+        HintProposal(
+          m.id,
+          HintProposal.Hint(hintId.value),
+          HintProposal.Text(text.value),
+          e,
+          HintProposal.By(by.value)
+        ).asJson.noSpaces
       )
     )
     s" — proposed ${ManagersMarkdown.effect(e)}: approval #${a.id} waits for a person"
@@ -662,11 +771,21 @@ final class ManagersControllers(
         .filter(_.managerId == m.id)
         .toRight(s"hint #${p.hint} of ${m.id} is gone")
       _ <- Either.cond(ht.retiredAt.isEmpty, (), s"hint #${ht.id} was retired meanwhile")
-      e <- checkEffect(m, p.effect, ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))), proposal = true).left.map(_.message.value)
+      e <- checkEffect(
+        m,
+        p.effect,
+        ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))),
+        proposal = true
+      ).left.map(_.message.value)
       w <- e.action.value match
         case HintEffect.Config =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
-          val _ = agents.managerStore.setConfig(m.id, c, m.cron, m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))))
+          val _ = agents.managerStore.setConfig(
+            m.id,
+            c,
+            m.cron,
+            m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+          )
           Right(s" — settings now: ${ManagersControllers.describe(c)}")
         case _ => Right(applyEffect(m, ht.id, ht.text, e))
       _ = Transactor(ds).transact(ManagerRepo.setHintEffect(ht.id, Some(e)))
@@ -685,7 +804,12 @@ final class ManagersControllers(
     // the named targets become items of the manager's default kind (a target that exists); the matched
     // ones are the open items
     val kind = itemKinds(kindOf(m)).headOption.getOrElse(ManagerItem.Kind(ArticleReview))
-    val named = e.targets.flatMap(t => targetOf(m, ManagerContext.ItemKind(kind.value), ManagerItem.Target(t.value)).toOption.map(_.transformInto[ManagerItem.Target])).distinct
+    val named = e.targets
+      .flatMap(t =>
+        targetOf(m, ManagerContext.ItemKind(kind.value), ManagerItem.Target(t.value)).toOption
+          .map(_.transformInto[ManagerItem.Target])
+      )
+      .distinct
     val open = connect(ds)(ManagerRepo.withStatus(m.id, ItemStatus.Pending)) ++ connect(ds)(
       ManagerRepo.withStatus(m.id, ItemStatus.Held)
     )
@@ -710,7 +834,9 @@ final class ManagersControllers(
           agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(p), reopen = true)
           true
         }
-        matched.foreach(i => Transactor(ds).transact(ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p)))))
+        matched.foreach(i =>
+          Transactor(ds).transact(ManagerRepo.setPriority(i.id, ManagerItem.Priority(math.max(i.priority.value, p))))
+        )
         matched.size + added
       case HintEffect.HoldAction =>
         val hold = Hold(
@@ -720,7 +846,8 @@ final class ManagersControllers(
           Some(Hold.Hint(hintId.value))
         )
         val added = named.filterNot(t => open.exists(_.target == t)).flatMap { t =>
-          val (id, _) = agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(0), reopen = true)
+          val (id, _) =
+            agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(0), reopen = true)
           agents.managerStore.item(id).filter(_.status == ItemStatus.Pending.wire)
         }
         (matched ++ added).count(i => transact(ds)(ManagerRepo.hold(i.id, hold)))
@@ -775,14 +902,26 @@ final class ManagersControllers(
     val budget = in.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value))
     for
       cron <- ManagerPolicy
-        .checkCron(Cron.Text(in.cron.value), now, cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes])
+        .checkCron(
+          Cron.Text(in.cron.value),
+          now,
+          cfg.scheduler.minIntervalMinutes.transformInto[ManagerPolicy.MinIntervalMinutes]
+        )
         .left
         .map(p => error(p.value))
       _ = agents.managerStore.get(id) match
         case None =>
           val c = ManagerConfig(sweeps = Some(if in.enabled.value then List(sw.wire) else Nil), budgetUsd = budget)
           val _ =
-            agents.managerStore.create(id, Kind.Watch, Some(goal), State.Paused, c, Some(ManagerInfo.Cron(cron.text.value)), cron.next(now))
+            agents.managerStore.create(
+              id,
+              Kind.Watch,
+              Some(goal),
+              State.Paused,
+              c,
+              Some(ManagerInfo.Cron(cron.text.value)),
+              cron.next(now)
+            )
           record(
             id,
             None,
@@ -794,7 +933,11 @@ final class ManagersControllers(
         case Some(m) =>
           val cur = Sweep.of(m.config)
           val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled.value else cur.contains(x))
-          val c = m.config.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(budget.orElse(m.config.budgetUsd))
+          val c = m.config
+            .modify(_.sweeps)
+            .setTo(Some(sweeps.map(_.wire)))
+            .modify(_.budgetUsd)
+            .setTo(budget.orElse(m.config.budgetUsd))
           val next = if m.cron.exists(_.value == cron.text.value) && m.nextTickAt.isDefined then
             m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
           else cron.next(now)
@@ -836,33 +979,43 @@ final class ManagersControllers(
   def removeSchedule(goal: DomainGoal.Slug, kind: Goal.Plans.ScheduleKind): Goal.Plans.Removed =
     val legacy = agents.goals.removeSchedule(goal, kind.transformInto[ScheduleKind])
     val sw = WatchSchedules.sweepOf(kind)
-    val fromWatcher = agents.managerStore.get(watchId(Goal.Ref(goal.value))).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
-      val rest = Sweep.of(m.config).filterNot(_ == sw)
-      val _ = agents.managerStore.setConfig(
-        m.id,
-        m.config.modify(_.sweeps).setTo(Some(rest.map(_.wire))),
-        m.cron,
-        m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
-      )
-      cancelSweep(m, sw, ManagerRepo.CancelReason("its schedule was removed"))
-      record(
-        m.id,
-        None,
-        None,
-        Feed.Hint,
-        s"the goal's ${kind.wire} schedule removed; sweeps " +
-          (if rest.isEmpty then "none" else rest.map(_.wire).mkString(", "))
-      )
-      true
-    }
+    val fromWatcher =
+      agents.managerStore.get(watchId(Goal.Ref(goal.value))).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
+        val rest = Sweep.of(m.config).filterNot(_ == sw)
+        val _ = agents.managerStore.setConfig(
+          m.id,
+          m.config.modify(_.sweeps).setTo(Some(rest.map(_.wire))),
+          m.cron,
+          m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+        )
+        cancelSweep(m, sw, ManagerRepo.CancelReason("its schedule was removed"))
+        record(
+          m.id,
+          None,
+          None,
+          Feed.Hint,
+          s"the goal's ${kind.wire} schedule removed; sweeps " +
+            (if rest.isEmpty then "none" else rest.map(_.wire).mkString(", "))
+        )
+        true
+      }
     Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
   private def cancelSweep(m: ManagerInfo, sw: Sweep, why: ManagerRepo.CancelReason): Unit =
-    m.goal.flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value))).foreach { i =>
-      if transact(ds)(ManagerRepo.settle(i.id, ItemStatus.Cancelled, ManagerItem.Outcome(why.value), List(ItemStatus.Pending, ItemStatus.Held)))
-      then record(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
-    }
+    m.goal
+      .flatMap(g => agents.managerStore.itemFor(m.id, ManagerItem.Kind(sw.itemKind.value), ManagerItem.Target(g.value)))
+      .foreach { i =>
+        if transact(ds)(
+            ManagerRepo.settle(
+              i.id,
+              ItemStatus.Cancelled,
+              ManagerItem.Outcome(why.value),
+              List(ItemStatus.Pending, ItemStatus.Held)
+            )
+          )
+        then record(m.id, Some(i.id), None, Feed.Stopped, s"${i.target} (${i.kind}): $why")
+      }
 
   // ── the autopilot ──────────────────────────────────────────────────────────────────────────────
 
@@ -908,11 +1061,17 @@ final class ManagersControllers(
       .map { to =>
         val now = agents.autopilot.status()
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).orElse(Some("person"))
-        AgentMode.steps(AgentMode.Step.Autopilot.On(now.on.value), AgentMode.Step.Drain.On(now.drain.isDefined), to).foldLeft(now) { (_, step) =>
-          step match
-            case AgentMode.Step.Autopilot(on) => agents.autopilot.set(Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(on.value), by.map(Autopilot.AutopilotSet.By(_))))
-            case AgentMode.Step.Drain(on)     => agents.drain.set(Autopilot.DrainSet(Autopilot.DrainSet.On(on.value), by.map(Autopilot.DrainSet.By(_))))
-        }
+        AgentMode
+          .steps(AgentMode.Step.Autopilot.On(now.on.value), AgentMode.Step.Drain.On(now.drain.isDefined), to)
+          .foldLeft(now) { (_, step) =>
+            step match
+              case AgentMode.Step.Autopilot(on) =>
+                agents.autopilot.set(
+                  Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(on.value), by.map(Autopilot.AutopilotSet.By(_)))
+                )
+              case AgentMode.Step.Drain(on) =>
+                agents.drain.set(Autopilot.DrainSet(Autopilot.DrainSet.On(on.value), by.map(Autopilot.DrainSet.By(_))))
+          }
       }
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
@@ -921,7 +1080,11 @@ final class ManagersControllers(
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────
 
-  def events(id: ManagerLight.Id, before: Option[ManagerRepo.EventCursor], limit: Option[PageSize]): Either[Api.Error, EventPage] =
+  def events(
+      id: ManagerLight.Id,
+      before: Option[ManagerRepo.EventCursor],
+      limit: Option[PageSize]
+  ): Either[Api.Error, EventPage] =
     manager(id).map { m =>
       val lim = limits.page(limit, PageSize(50))
       val es = connect(ds)(ManagerRepo.events(m.id, before, lim))

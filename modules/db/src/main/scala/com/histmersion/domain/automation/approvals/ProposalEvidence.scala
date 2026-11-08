@@ -7,8 +7,10 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** What every approval's list shows of a proposal about a record of a domain (a source's status or edge, the library's
   * proposals): the evidence it rests on and the passage it quotes, read from its stored payload.
   */
-final case class ProposalEvidence(evidence: Option[ProposalEvidence.Evidence] = None, quote: Option[ProposalEvidence.Quote] = None)
-    derives KindlingsCodecAsObject
+final case class ProposalEvidence(
+    evidence: Option[ProposalEvidence.Evidence] = None,
+    quote: Option[ProposalEvidence.Quote] = None
+) derives KindlingsCodecAsObject
 
 object ProposalEvidence:
   type Evidence = Evidence.T

@@ -20,7 +20,11 @@ final class PlaceCardView(
     counts: PlaceCardView.PlaceId => Place.Counts,
     pictures: PlaceCardView.PlaceId => List[MediaThumb]
 ):
-  def apply(id: PlaceCardView.PlaceId, asOf: Option[DeepTime.SignedYear], withCounts: PlaceCardView.WithCounts): Either[Api.Error, PlaceDetail] =
+  def apply(
+      id: PlaceCardView.PlaceId,
+      asOf: Option[DeepTime.SignedYear],
+      withCounts: PlaceCardView.WithCounts
+  ): Either[Api.Error, PlaceDetail] =
     place(id, asOf).map(d =>
       if withCounts.value then
         d.modify(_.counts)

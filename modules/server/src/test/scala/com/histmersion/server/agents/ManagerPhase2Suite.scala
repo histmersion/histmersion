@@ -31,7 +31,7 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import com.histmersion.db.*
 import com.histmersion.api.automation.Goal
-import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.automation.Goal as DomainGoal
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.MetadataPatch
 import com.histmersion.api.library.Source
@@ -88,14 +88,50 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(AgentRolesConfig.Writer(m.value))).modify(_.approvals).setTo(b.agents.approvals.modify(_.articlePublish).setTo(AgentApprovalsConfig.Gate("auto"))
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(AgentSeedConfig.MinSources(2)))).modify(_.researchAgents).setTo(b.researchAgents.modify(
-        _.inferFilter).setTo(b.researchAgents.inferFilter.modify(_.minHits).setTo(AgentInferFilterConfig.MinHits(1))).modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(AgentReviewConfig.SpotChecks(0))
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.agents)
+      .setTo(
+        b.agents
+          .modify(_.enabled)
+          .setTo(AgentsConfig.Enabled(true))
+          .modify(_.prices)
+          .setTo(AgentsConfig.Prices("scripted=1/2"))
+          .modify(_.roles)
+          .setTo(
+            b.agents.roles
+              .modify(_.extractor)
+              .setTo(AgentRolesConfig.Extractor(m.value))
+              .modify(_.reviewer)
+              .setTo(AgentRolesConfig.Reviewer(m.value))
+              .modify(_.coldReader)
+              .setTo(AgentRolesConfig.ColdReader(m.value))
+              .modify(_.skeptic)
+              .setTo(AgentRolesConfig.Skeptic(m.value))
+              .modify(_.fixer)
+              .setTo(AgentRolesConfig.Fixer(m.value))
+              .modify(_.planner)
+              .setTo(AgentRolesConfig.Planner(m.value))
+              .modify(_.writer)
+              .setTo(AgentRolesConfig.Writer(m.value))
+          )
+          .modify(_.approvals)
+          .setTo(b.agents.approvals.modify(_.articlePublish).setTo(AgentApprovalsConfig.Gate("auto")))
       )
-    )
+      .modify(_.libraryAgents)
+      .setTo(
+        b.libraryAgents
+          .modify(_.seed)
+          .setTo(b.libraryAgents.seed.modify(_.minSources).setTo(AgentSeedConfig.MinSources(2)))
+      )
+      .modify(_.researchAgents)
+      .setTo(
+        b.researchAgents
+          .modify(_.inferFilter)
+          .setTo(b.researchAgents.inferFilter.modify(_.minHits).setTo(AgentInferFilterConfig.MinHits(1)))
+          .modify(_.review)
+          .setTo(b.researchAgents.review.modify(_.spotChecks).setTo(AgentReviewConfig.SpotChecks(0)))
+      )
 
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -138,7 +174,9 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
             status = Some(Source.Status.Current),
             summary = Some(Source.Summary("The Uluburun ship carried ten tons of copper and one ton of tin.")),
             body = Some(
-              Source.OcrMarkdown("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
+              Source.OcrMarkdown(
+                "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+              )
             )
           )
         )
@@ -152,7 +190,9 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
             title = com.histmersion.api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
-            body = Some(Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia."))
+            body = Some(
+              Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+            )
           )
         )
         .isRight
@@ -170,7 +210,10 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz tin in the Bronze Age"), notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from")))
+          com.histmersion.api.automation.Goal.Put(
+            com.histmersion.api.automation.Goal.Title("Zz tin in the Bronze Age"),
+            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          )
         )
         .isRight
     )
@@ -212,18 +255,32 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     )
     val (a, h) = handlers(c); seed(h)
     assert(
-      h.research.articles.put(Slug("zzagent_f1"), Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(articleBody), tags = List(PutTag))).isRight
+      h.research.articles
+        .put(
+          Slug("zzagent_f1"),
+          Article
+            .Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(articleBody), tags = List(PutTag))
+        )
+        .isRight
     )
     a.managers.ensureDefaults()
     a.managing
       .update(
         ApiIds.manager(Review),
         ManagerUpdate(
-          Some(ManagerConfig(includeTags = Some(List(IncludeTag)), inferFilter = Some(ManagerConfig.InferFilter(true)), cooldownMinutes = Some(ManagerConfig.CooldownMinutes(0))))
+          Some(
+            ManagerConfig(
+              includeTags = Some(List(IncludeTag)),
+              inferFilter = Some(ManagerConfig.InferFilter(true)),
+              cooldownMinutes = Some(ManagerConfig.CooldownMinutes(0))
+            )
+          )
         )
       )
       .fold(e => fail(e.message.value), identity)
-    a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing
+      .action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
+      .fold(e => fail(e.message.value), identity)
     val out = a.managers.tick(t0)
     assert(out.exists(_.value.contains("selected 2")), out)
     val inf = item(Review, InferKind, ManagerItem.Target("zzagent_f1"))
@@ -246,11 +303,25 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assertEquals(appr.filter.map(p => (p.total, p.cited, p.citedIn)), Some((2, 2, 2)))
     a.managers.tick(t0)
     assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).status, "held")
-    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).hold.flatMap(_.untilApproval).map(_.value), Some(appr.id.value))
-    assertEquals(item(Review, ReviewKind, ManagerItem.Target("zzagent_f1")).status, "pending", "the review waits for the filter")
-    assertEquals(ArticleFixtures.load(ds, Slug("zzagent_f1")).flatMap(_.filter), None, "nothing recorded before approval")
+    assertEquals(
+      item(Review, InferKind, ManagerItem.Target("zzagent_f1")).hold.flatMap(_.untilApproval).map(_.value),
+      Some(appr.id.value)
+    )
+    assertEquals(
+      item(Review, ReviewKind, ManagerItem.Target("zzagent_f1")).status,
+      "pending",
+      "the review waits for the filter"
+    )
+    assertEquals(
+      ArticleFixtures.load(ds, Slug("zzagent_f1")).flatMap(_.filter),
+      None,
+      "nothing recorded before approval"
+    )
     // approve: the filter is recorded, the item done, the review dispatched
-    assertEquals(a.decide(ApiIds.approval(appr.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(
+      a.decide(ApiIds.approval(appr.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state),
+      Right("approved")
+    )
     assertEquals(
       ArticleFixtures.load(ds, Slug("zzagent_f1")).flatMap(_.filter),
       Some(Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
@@ -268,12 +339,26 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
       text("""{"rationale":"the tin sources","query":null,"topics":["zzagent_tin"],"tags":[],"extraQueries":[]}""")
     )
     val auto =
-      baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articleFilter).setTo(AgentApprovalsConfig.Gate("auto"))))
+      baseCfg
+        .modify(_.agents)
+        .setTo(
+          baseCfg.agents
+            .modify(_.approvals)
+            .setTo(baseCfg.agents.approvals.modify(_.articleFilter).setTo(AgentApprovalsConfig.Gate("auto")))
+        )
     val (a, h) = handlers(c, auto); seed(h)
     assert(
-      h.research.articles.put(Slug("zzagent_f2"), Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(articleBody), tags = List(PutTag))).isRight
+      h.research.articles
+        .put(
+          Slug("zzagent_f2"),
+          Article
+            .Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(articleBody), tags = List(PutTag))
+        )
+        .isRight
     )
-    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("review"), EnqueueRequest.Target("zzagent_f2"))).fold(e => fail(e.message.value), identity)
+    val r = a.managing
+      .enqueue(EnqueueRequest(EnqueueRequest.Kind("review"), EnqueueRequest.Target("zzagent_f2")))
+      .fold(e => fail(e.message.value), identity)
     a.managing.update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
     assertEquals(r.items.map(_.kind), List(ArticleReview))
     assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f2")).priority, 10, "at the review's priority")
@@ -281,7 +366,10 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     a.managers.tick(t0)
     val run = item(Review, InferKind, ManagerItem.Target("zzagent_f2")).runId.get
     a.engine.execute(ApiIds.run(run))
-    assertEquals(ArticleFixtures.load(ds, Slug("zzagent_f2")).flatMap(_.filter).map(_.topics), Some(List("zzagent_tin")))
+    assertEquals(
+      ArticleFixtures.load(ds, Slug("zzagent_f2")).flatMap(_.filter).map(_.topics),
+      Some(List("zzagent_tin"))
+    )
     a.managers.tick(t0)
     assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f2")).status, "done")
     assertEquals(item(Review, ReviewKind, ManagerItem.Target("zzagent_f2")).status, "active")
@@ -310,9 +398,18 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
       )
     )
     val (a, h) = handlers(c); seed(h)
-    assert(h.research.articles.put(Slug("zzagent_old"), Article.Put(Article.Title("Old"), Article.Kind.Wire("concept"), Article.Body("Old text."))).isRight)
+    assert(
+      h.research.articles
+        .put(
+          Slug("zzagent_old"),
+          Article.Put(Article.Title("Old"), Article.Kind.Wire("concept"), Article.Body("Old text."))
+        )
+        .isRight
+    )
     val m =
-      a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug), paused = Some(ManagerCreate.Paused(false)))).fold(e => fail(e.message.value), identity)
+      a.managing
+        .create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug), paused = Some(ManagerCreate.Paused(false))))
+        .fold(e => fail(e.message.value), identity)
     assertEquals((m.id, m.kind, m.goal.map(_.value: String)), (seedId(ref(Goal)), "seed", Some(Goal)))
     assert(a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug))).isLeft, "one per area")
     a.managers.tick(t0)
@@ -362,7 +459,11 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     val chained = item(Review, ReviewKind, ManagerItem.Target("zzagent_new"))
     assertEquals((chained.origin, chained.priority, chained.status), ("chain", 2, "pending"))
     assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("paused"))
-    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zzagent_new")))
+    assert(
+      connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
+        l.kind == LinkKind.Article && l.ref == com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zzagent_new")
+      )
+    )
 
   test("seed: a rejected plan compiles nothing; Extend on a goal queues the next proposal"):
     val c = ScriptedClient(Model)
@@ -372,7 +473,9 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
       )
     )
     val (a, h) = handlers(c); seed(h)
-    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("seed"), EnqueueRequest.Target("zzagent-goal2"))).fold(e => fail(e.message.value), identity)
+    val r = a.managing
+      .enqueue(EnqueueRequest(EnqueueRequest.Kind("seed"), EnqueueRequest.Target("zzagent-goal2")))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((r.managerId, r.items.map(_.kind)), (seedId(ref(Goal)), List(ProposeArticles)))
     assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).map(_.state), Some("paused"))
     a.managing.action(ApiIds.manager(seedId(ref(Goal))), ManagersControllers.Action("resume"), None)
@@ -383,15 +486,26 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assert(a.decide(ApiIds.approval(appr.id), Approval.Outcome("reject"), DecisionRequest()).isRight)
     a.managers.tick(t0)
     assertEquals(item(seedId(ref(Goal)), ProposeKind, goalTarget(Goal)).status, "stopped")
-    assert(connect(ds)(ManagerRepo.itemFor(seedId(ref(Goal)), CompileKind, ManagerRepo.ItemRow.Target("zzagent_r"))).isEmpty)
+    assert(
+      connect(ds)(ManagerRepo.itemFor(seedId(ref(Goal)), CompileKind, ManagerRepo.ItemRow.Target("zzagent_r"))).isEmpty
+    )
     // Extend again: the settled item is re-opened
-    assertEquals(a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("seed"), EnqueueRequest.Target("zzagent-goal2"))).map(_.items.map(_.status)), Right(List("pending")))
+    assertEquals(
+      a.managing
+        .enqueue(EnqueueRequest(EnqueueRequest.Kind("seed"), EnqueueRequest.Target("zzagent-goal2")))
+        .map(_.items.map(_.status)),
+      Right(List("pending"))
+    )
 
   // ── the enrich manager (auto-enrich) ───────────────────────────────────────────────────────────
 
   test("enrich: an ingest queues an item (manager created paused); enriched sources are skipped; Enrich on an article"):
     val c = ScriptedClient(Model)
-    val (a, h) = handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(AgentsConfig.AutoEnrich(true)))); seed(h)
+    val (a, h) = handlers(
+      c,
+      baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(AgentsConfig.AutoEnrich(true)))
+    );
+    seed(h)
     val note = a.autoEnrich(Ck).getOrElse(fail("no note"))
     assert(note.value.startsWith("enrichment queued: item #") && note.value.contains("paused"), note)
     val i = item(Enrich, EnrichKind, ckTarget(Ck))
@@ -408,16 +522,32 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assertEquals(item(Enrich, EnrichKind, ckTarget(Ck)).status, "done")
     assert(item(Enrich, EnrichKind, ckTarget(Ck)).outcome.exists(_.value.contains("already enriched")))
     // Enrich on an article: only its unenriched cited sources
-    assert(h.research.articles.put(Slug("zzagent_e1"), Article.Put(Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Body(articleBody))).isRight)
-    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("enrich"), EnqueueRequest.Target("zzagent_e1"))).fold(e => fail(e.message.value), identity)
+    assert(
+      h.research.articles
+        .put(
+          Slug("zzagent_e1"),
+          Article.Put(Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Body(articleBody))
+        )
+        .isRight
+    )
+    val r = a.managing
+      .enqueue(EnqueueRequest(EnqueueRequest.Kind("enrich"), EnqueueRequest.Target("zzagent_e1")))
+      .fold(e => fail(e.message.value), identity)
     assertEquals(r.items.map(_.target.value: String), List(Ck2))
     assert(r.skipped.exists(_.value.contains(Ck.value)), r.skipped)
     a.managers.tick(t0)
     val run = connect(ds)(AgentRepo.get(item(Enrich, EnrichKind, ckTarget(Ck2)).runId.get)).get
     assertEquals((run.pipeline, run.origin, run.managerId), ("enrich-source", Some("manager"), Some(Enrich)))
     // with the managers off, auto-enrich queues a run at once, as before
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(AgentsConfig.AutoEnrich(true)).modify(_.managers).setTo(baseCfg.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(false)))
-    )
+    val off = baseCfg
+      .modify(_.agents)
+      .setTo(
+        baseCfg.agents
+          .modify(_.autoEnrich)
+          .setTo(AgentsConfig.AutoEnrich(true))
+          .modify(_.managers)
+          .setTo(baseCfg.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(false)))
+      )
     val (b, _) = handlers(c, off)
     connect(ds)(sql"DELETE FROM jobs WHERE kind = 'agent' AND target_id LIKE 'zzagent%'".update.run())
     assert(b.autoEnrich(Ck2).exists(_.value.startsWith("enrichment queued: run ")), b.autoEnrich(Ck2))
@@ -443,7 +573,11 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     a.managers.ensureDefaults()
     a.managing.update(
       ApiIds.manager(Review),
-      ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag)), staleAfterDays = Some(ManagerConfig.StaleAfterDays(90)))))
+      ManagerUpdate(
+        Some(
+          ManagerConfig(includeTags = Some(List(IncludeTag)), staleAfterDays = Some(ManagerConfig.StaleAfterDays(90)))
+        )
+      )
     )
     a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
     // it converged when its filter returned one source
@@ -473,11 +607,18 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
       h.research.articles
         .put(
           Slug("zzagent_x1"),
-          Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(s"Tin [[$Ck]]."), filter = Some(Article.Filter(topics = List(Filter.Topics("zzagent_tin")))))
+          Article.Put(
+            Article.Title("Zz tin"),
+            Article.Kind.Wire("concept"),
+            Article.Body(s"Tin [[$Ck]]."),
+            filter = Some(Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
+          )
         )
         .isRight
     )
-    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("extend"), EnqueueRequest.Target("zzagent_x1"))).fold(e => fail(e.message.value), identity)
+    val r = a.managing
+      .enqueue(EnqueueRequest(EnqueueRequest.Kind("extend"), EnqueueRequest.Target("zzagent_x1")))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((r.managerId, r.items.map(i => (i.kind, i.priority))), (Review, List((ArticleExtend, 10))))
     a.managing.update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
     a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
@@ -485,4 +626,12 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     val run = connect(ds)(AgentRepo.get(item(Review, ExtendKind, ManagerItem.Target("zzagent_x1")).runId.get)).get
     assertEquals((run.pipeline, run.params.chainReview), ("compile-article", Some(false)))
     assert(a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("frobnicate"), EnqueueRequest.Target("x"))).isLeft)
-    assert(a.managing.addItem(ApiIds.manager(seedId(ref(Goal))), EnqueueRequest(EnqueueRequest.Kind("compile"), EnqueueRequest.Target("zzagent_y"))).isLeft, "no such manager")
+    assert(
+      a.managing
+        .addItem(
+          ApiIds.manager(seedId(ref(Goal))),
+          EnqueueRequest(EnqueueRequest.Kind("compile"), EnqueueRequest.Target("zzagent_y"))
+        )
+        .isLeft,
+      "no such manager"
+    )

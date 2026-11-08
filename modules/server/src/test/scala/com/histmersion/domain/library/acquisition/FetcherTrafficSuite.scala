@@ -27,7 +27,8 @@ class FetcherTrafficSuite extends munit.FunSuite:
 
   private val Pdf: HttpAnswer.Body = HttpAnswer.Body(("%PDF-1.5\n" + ("x" * 4096)).getBytes("ISO-8859-1"))
   private val Epub: HttpAnswer.Body = HttpAnswer.Body(("PK epub " + ("e" * 20480)).getBytes("ISO-8859-1"))
-  private val Xml: HttpAnswer.Body = HttpAnswer.Body(scala.io.Source.fromResource("jats/article.xml").mkString.getBytes(UTF_8))
+  private val Xml: HttpAnswer.Body =
+    HttpAnswer.Body(scala.io.Source.fromResource("jats/article.xml").mkString.getBytes(UTF_8))
 
   private val ContentType = CoreQuota.HeaderName("content-type")
   private val PdfType = CoreQuota.HeaderValue("application/pdf")
@@ -42,18 +43,40 @@ class FetcherTrafficSuite extends munit.FunSuite:
     OaFetch.md5(OaFetch.Bytes(b.value)).getOrElse(fail("no MD5 in this runtime")).value
 
   private def json(s: String): Either[HttpTransport.Problem, HttpAnswer] =
-    Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/json")), HttpAnswer.Body(s.getBytes(UTF_8))))
+    Right(
+      HttpAnswer(
+        HttpAnswer.Code(200),
+        Map(ContentType -> CoreQuota.HeaderValue("application/json")),
+        HttpAnswer.Body(s.getBytes(UTF_8))
+      )
+    )
   private def html(s: String): Either[HttpTransport.Problem, HttpAnswer] =
-    Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("text/html")), HttpAnswer.Body(s.getBytes(UTF_8))))
+    Right(
+      HttpAnswer(
+        HttpAnswer.Code(200),
+        Map(ContentType -> CoreQuota.HeaderValue("text/html")),
+        HttpAnswer.Body(s.getBytes(UTF_8))
+      )
+    )
   private def file(b: HttpAnswer.Body, mime: CoreQuota.HeaderValue): Either[HttpTransport.Problem, HttpAnswer] =
     Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> mime), b))
   private val notFound: Either[HttpTransport.Problem, HttpAnswer] =
-    Right(HttpAnswer(HttpAnswer.Code(404), Map(ContentType -> CoreQuota.HeaderValue("text/plain")), HttpAnswer.Body("not found".getBytes(UTF_8))))
+    Right(
+      HttpAnswer(
+        HttpAnswer.Code(404),
+        Map(ContentType -> CoreQuota.HeaderValue("text/plain")),
+        HttpAnswer.Body("not found".getBytes(UTF_8))
+      )
+    )
 
   /** Answers from `routes` (matched on the URL's text), 404 otherwise; every request written to `out`. */
-  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]]) extends HttpTransport:
+  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]])
+      extends HttpTransport:
     val out = StringBuilder()
-    def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+    def get(
+        url: HttpTransport.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[HttpTransport.Problem, HttpAnswer] =
       val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
@@ -109,8 +132,11 @@ class FetcherTrafficSuite extends munit.FunSuite:
     if search then
       wire.out.clear()
       val host = new SttpHttp(PolicyHttp.acquisition(l.config, wire))
-      val (indexes, _) = Indexes.of(cfg, host, Plugins.coreKey(g, cfg.core.key.map(k => Plugins.CoreKey(k.value))), core)
-      val got = indexes.find(_.name.value == "core").map(_.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(5)))
+      val (indexes, _) =
+        Indexes.of(cfg, host, Plugins.coreKey(g, cfg.core.key.map(k => Plugins.CoreKey(k.value))), core)
+      val got = indexes
+        .find(_.name.value == "core")
+        .map(_.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(5)))
       sb ++= "### core index search\n"
       sb ++= wire.out.result()
       sb ++= s"core index: ${got.fold("none")(_.fold(e => s"failed $e", hits => s"${hits.size} hit(s)"))}\n"
@@ -127,11 +153,21 @@ class FetcherTrafficSuite extends munit.FunSuite:
     val record = fixture("pmc_dataset_oa.json").replaceAll("(\\.pdf\\?md5=)[0-9a-f]{32}", "$1" + md5(Pdf))
     {
       case u if u.startsWith(c.europepmc.url.value + "/search") => json(fixture("europepmc_oa.json"))
-      case u if u.startsWith("https://europepmc.org/")    =>
-        Right(HttpAnswer(HttpAnswer.Code(403), Map(CoreQuota.HeaderName("cf-mitigated") -> CoreQuota.HeaderValue("challenge")), HttpAnswer.Body("Just a moment...".getBytes(UTF_8))))
+      case u if u.startsWith("https://europepmc.org/")          =>
+        Right(
+          HttpAnswer(
+            HttpAnswer.Code(403),
+            Map(CoreQuota.HeaderName("cf-mitigated") -> CoreQuota.HeaderValue("challenge")),
+            HttpAnswer.Body("Just a moment...".getBytes(UTF_8))
+          )
+        )
       case u if u.startsWith(c.pmcDataset.url.value + "/?") =>
         Right(
-          HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> XmlType), HttpAnswer.Body(fixture("pmc_dataset_list.xml").getBytes(UTF_8)))
+          HttpAnswer(
+            HttpAnswer.Code(200),
+            Map(ContentType -> XmlType),
+            HttpAnswer.Body(fixture("pmc_dataset_list.xml").getBytes(UTF_8))
+          )
         )
       case u if u.startsWith(c.pmcDataset.url.value + "/metadata/")        => json(record)
       case u if u.startsWith(c.pmcDataset.url.value) && u.endsWith(".pdf") => file(Pdf, PdfType)
@@ -173,18 +209,30 @@ class FetcherTrafficSuite extends munit.FunSuite:
     case u if u.startsWith(s"${c.unpaywall.url}/10.1/up") =>
       json("""{"doi":"10.1/up","best_oa_location":{"url_for_pdf":"https://repo.example.org/up.pdf","license":"cc-by"},
              |"oa_locations":[{"url_for_pdf":"https://repo.example.org/up.pdf","license":"cc-by"}]}""".stripMargin)
-    case "https://repo.example.org/up.pdf" => file(Pdf, PdfType)
+    case "https://repo.example.org/up.pdf"                                                  => file(Pdf, PdfType)
     case u if u.startsWith(s"${c.core.url.value}/search/works/") && u.contains("10.1/core") =>
       Right(
         HttpAnswer(
           HttpAnswer.Code(200),
-          Map(ContentType -> CoreQuota.HeaderValue("application/json"), CoreQuota.HeaderName("x-ratelimit-limit") -> CoreQuota.HeaderValue("25"), CoreQuota.HeaderName("x-ratelimit-remaining") -> CoreQuota.HeaderValue("20")),
-          HttpAnswer.Body("""{"results":[{"doi":"10.1/core","downloadUrl":"https://core.example.org/core.pdf"}]}""".getBytes(UTF_8))
+          Map(
+            ContentType -> CoreQuota.HeaderValue("application/json"),
+            CoreQuota.HeaderName("x-ratelimit-limit") -> CoreQuota.HeaderValue("25"),
+            CoreQuota.HeaderName("x-ratelimit-remaining") -> CoreQuota.HeaderValue("20")
+          ),
+          HttpAnswer.Body(
+            """{"results":[{"doi":"10.1/core","downloadUrl":"https://core.example.org/core.pdf"}]}""".getBytes(UTF_8)
+          )
         )
       )
     case "https://core.example.org/core.pdf"                     => file(Pdf, PdfType)
     case u if u.startsWith(s"${c.core.url.value}/search/works/") =>
-      Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/json")), HttpAnswer.Body("""{"results":[]}""".getBytes(UTF_8))))
+      Right(
+        HttpAnswer(
+          HttpAnswer.Code(200),
+          Map(ContentType -> CoreQuota.HeaderValue("application/json")),
+          HttpAnswer.Body("""{"results":[]}""".getBytes(UTF_8))
+        )
+      )
     case u if u.startsWith(s"${c.openalex.url}/") && u.contains("10.1/oa") =>
       json(
         """{"id":"https://openalex.org/W9","best_oa_location":{"pdf_url":"https://oa.example.org/oa.pdf"},

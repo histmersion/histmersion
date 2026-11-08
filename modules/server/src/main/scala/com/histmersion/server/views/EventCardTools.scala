@@ -207,11 +207,17 @@ object EventCardTools:
               )
               Event.Id
                 .option(in.id.value)
-                .toRight(Api.Error(Api.Error.Message(s"No event '${in.id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                .toRight(
+                  Api.Error(Api.Error.Message(s"No event '${in.id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
+                )
                 .flatMap(page.patch(Caller.Local, _, p)) match
                 case Right(d) =>
                   ToolResult.text(
-                    Aliases.note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(Aliases.Note(d.markdown.value)).value
+                    Aliases
+                      .note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(
+                        Aliases.Note(d.markdown.value)
+                      )
+                      .value
                   )
                 case Left(e) => McpOut.error(e)
         }

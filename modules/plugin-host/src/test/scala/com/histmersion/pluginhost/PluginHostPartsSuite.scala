@@ -22,7 +22,10 @@ import com.histmersion.domain.HttpPolicy
   */
 class PluginHostPartsSuite extends munit.FunSuite:
 
-  private def item(licence: String, image: Option[MediaItem.ImageUrl] = Some(MediaItem.ImageUrl("https://x.example/1.jpg"))) =
+  private def item(
+      licence: String,
+      image: Option[MediaItem.ImageUrl] = Some(MediaItem.ImageUrl("https://x.example/1.jpg"))
+  ) =
     MediaItem(
       MediaItem.Key("k1"),
       MediaItem.Title("A picture"),
@@ -35,14 +38,20 @@ class PluginHostPartsSuite extends munit.FunSuite:
     val allow = LicencePolicy.of(com.histmersion.domain.Licence.AllowList("cc0,cc-by"))
     assertEquals(PluginMedia.refusal(PluginMedia.record(item("CC-BY-4.0")), allow, PluginMedia.Provider("mine")), None)
     assert(
-      PluginMedia.refusal(PluginMedia.record(item("CC BY-NC 4.0")), allow, PluginMedia.Provider("mine")).exists(_.value.contains("not allowed"))
+      PluginMedia
+        .refusal(PluginMedia.record(item("CC BY-NC 4.0")), allow, PluginMedia.Provider("mine"))
+        .exists(_.value.contains("not allowed"))
     )
     assertEquals(
       PluginMedia.refusal(PluginMedia.record(item("CC0-1.0", image = None)), allow, PluginMedia.Provider("mine")),
       Some("no image")
     )
     assertEquals(
-      PluginMedia.refusal(PluginMedia.record(item("CC0-1.0").modify(_.withheld).setTo(Some(MediaItem.Withheld("human remains")))), allow, PluginMedia.Provider("mine")),
+      PluginMedia.refusal(
+        PluginMedia.record(item("CC0-1.0").modify(_.withheld).setTo(Some(MediaItem.Withheld("human remains")))),
+        allow,
+        PluginMedia.Provider("mine")
+      ),
       Some("human remains")
     )
     assertEquals(
@@ -55,12 +64,16 @@ class PluginHostPartsSuite extends munit.FunSuite:
     )
 
   final private class Paged(pages: Map[String, Either[String, CataloguePage]]) extends EventCatalogue:
-    val title = EventCatalogue.TitleResult("t"); val licence = Licence("l"); val citation = EventCatalogue.CitationResult("c"); val home = EventCatalogue.HomeResult("h")
+    val title = EventCatalogue.TitleResult("t"); val licence = Licence("l");
+    val citation = EventCatalogue.CitationResult("c"); val home = EventCatalogue.HomeResult("h")
     def parts(q: CatalogueQuery) = pages.keys.toList.map(EventCatalogue.PartsResult(_))
-    def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) = pages(part.value).left.map(EventCatalogue.ReadResultPart1(_))
+    def read(part: EventCatalogue.ReadPart, q: CatalogueQuery, http: Plugin.Http) =
+      pages(part.value).left.map(EventCatalogue.ReadResultPart1(_))
 
   private val offline = new Plugin.Http:
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline"))
+    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(
+      Plugin.Http.GetResultPart1("offline")
+    )
 
   test("a part is read page by page until no next page, a repeat, a part done or a full run"):
     val cat = Paged(
@@ -71,7 +84,11 @@ class PluginHostPartsSuite extends munit.FunSuite:
         "c" -> Right(CataloguePage(Nil, Some(CataloguePage.Next("done"))))
       )
     )
-    def read(first: PluginEvents.PartName, done: PluginEvents.PartName => Boolean = _ => false, full: => Boolean = false) =
+    def read(
+        first: PluginEvents.PartName,
+        done: PluginEvents.PartName => Boolean = _ => false,
+        full: => Boolean = false
+    ) =
       val seen = List.newBuilder[(PluginEvents.PartName, Boolean)]
       PluginEvents.readPart(cat, first, CatalogueQuery(None, Year(2025)), offline, done, full)((p, got) =>
         seen += p -> got.isRight
@@ -83,7 +100,16 @@ class PluginHostPartsSuite extends munit.FunSuite:
     assertEquals(read(PluginEvents.PartName("a"), done = _.value == "a"), Nil)
     assertEquals(read(PluginEvents.PartName("a"), full = true), Nil)
 
-  private val request = AiTurn.Request(AiTurn.Request.Model("m"), AiTurn.Request.System("s"), List(AiMessage.User(AiMessage.User.Text("hi"))), Nil, None, AiTurn.Request.MaxTokens(10), AiTurn.Request.Iteration(1), AiTurn.Request.MaxIterations(1))
+  private val request = AiTurn.Request(
+    AiTurn.Request.Model("m"),
+    AiTurn.Request.System("s"),
+    List(AiMessage.User(AiMessage.User.Text("hi"))),
+    Nil,
+    None,
+    AiTurn.Request.MaxTokens(10),
+    AiTurn.Request.Iteration(1),
+    AiTurn.Request.MaxIterations(1)
+  )
 
   test("an AI provider's exception or null is its failure"):
     val throwing = new AiProvider:
@@ -94,8 +120,14 @@ class PluginHostPartsSuite extends munit.FunSuite:
       val title = AiProvider.TitleResult("t")
       def turn(r: AiTurn.Request, http: AiHttp) = Right(null)
     assertEquals(PluginAi.check(throwing, PluginAi.ModelName("m")), Left("its check threw IllegalStateException"))
-    assertEquals(PluginAi.turn(throwing, request, AiHttp.Offline), Left(AiFailure.Error(AiFailure.Error.Message("IllegalStateException: boom"))))
-    assertEquals(PluginAi.turn(nulls, request, AiHttp.Offline), Left(AiFailure.Error(AiFailure.Error.Message("the provider answered null"))))
+    assertEquals(
+      PluginAi.turn(throwing, request, AiHttp.Offline),
+      Left(AiFailure.Error(AiFailure.Error.Message("IllegalStateException: boom")))
+    )
+    assertEquals(
+      PluginAi.turn(nulls, request, AiHttp.Offline),
+      Left(AiFailure.Error(AiFailure.Error.Message("the provider answered null")))
+    )
 
   /** Answers in turn, recording each request's headers. */
   final private class Scripted(answers: Either[HttpTransport.Problem, HttpAnswer]*) extends HttpTransport:
@@ -114,24 +146,43 @@ class PluginHostPartsSuite extends munit.FunSuite:
 
   test("the acquisition client: a slow-down asked again, a challenge ends the request, the User-Agent is the host's"):
     val waits = List.newBuilder[Long]
-    val busy = Scripted(answer(HttpAnswer.Code(503), "busy", CoreQuota.HeaderName("retry-after") -> CoreQuota.HeaderValue("2")), answer(HttpAnswer.Code(200), "ok"))
-    val http = PolicyHttp(HttpPolicy.UserAgent("histmersion/0.1 (mailto:someone@example.org)"), busy, sleep = ms => waits += ms.value, log = quiet)
-    assertEquals(http.bytes(HttpTransport.Url("https://x.example/a"), Map(CoreQuota.HeaderName("user-agent") -> CoreQuota.HeaderValue("mine"))).map(b => String(b.value, "UTF-8")), Right("ok"))
+    val busy = Scripted(
+      answer(HttpAnswer.Code(503), "busy", CoreQuota.HeaderName("retry-after") -> CoreQuota.HeaderValue("2")),
+      answer(HttpAnswer.Code(200), "ok")
+    )
+    val http = PolicyHttp(
+      HttpPolicy.UserAgent("histmersion/0.1 (mailto:someone@example.org)"),
+      busy,
+      sleep = ms => waits += ms.value,
+      log = quiet
+    )
+    assertEquals(
+      http
+        .bytes(
+          HttpTransport.Url("https://x.example/a"),
+          Map(CoreQuota.HeaderName("user-agent") -> CoreQuota.HeaderValue("mine"))
+        )
+        .map(b => String(b.value, "UTF-8")),
+      Right("ok")
+    )
     assertEquals(waits.result(), List(2000L))
     assert(busy.sent.result().forall(_.get("User-Agent").contains("mine")))
     val own = Scripted(answer(HttpAnswer.Code(200), "ok"))
-    PolicyHttp(HttpPolicy.UserAgent("histmersion/0.1 (mailto:someone@example.org)"), own, log = quiet).bytes(HttpTransport.Url("https://x.example/a"))
+    PolicyHttp(HttpPolicy.UserAgent("histmersion/0.1 (mailto:someone@example.org)"), own, log = quiet)
+      .bytes(HttpTransport.Url("https://x.example/a"))
     assertEquals(own.sent.result().map(_.get("User-Agent")), List(Some("histmersion/0.1")))
-    val challenged = Scripted(answer(HttpAnswer.Code(403),"<html><title>Just a moment...</title></html>"))
-    val got = PolicyHttp(HttpPolicy.UserAgent("ua"), challenged, sleep = _ => fail("a challenge is never retried"), log = quiet)
-      .bytes(HttpTransport.Url("https://x.example/b"))
+    val challenged = Scripted(answer(HttpAnswer.Code(403), "<html><title>Just a moment...</title></html>"))
+    val got =
+      PolicyHttp(HttpPolicy.UserAgent("ua"), challenged, sleep = _ => fail("a challenge is never retried"), log = quiet)
+        .bytes(HttpTransport.Url("https://x.example/b"))
     assert(got.left.exists(_.value.contains("bot-protection challenge")), got.toString)
     val down = Scripted(Left(HttpTransport.Problem("x unreachable")), Left(HttpTransport.Problem("x unreachable")))
     assertEquals(
-      PolicyHttp(HttpPolicy.UserAgent("ua"), down, tries = PolicyHttp.Tries(2), sleep = _ => (), log = quiet).bytes(HttpTransport.Url("https://x.example/c")),
+      PolicyHttp(HttpPolicy.UserAgent("ua"), down, tries = PolicyHttp.Tries(2), sleep = _ => (), log = quiet)
+        .bytes(HttpTransport.Url("https://x.example/c")),
       Left("x unreachable")
     )
-    val missing = Scripted(answer(HttpAnswer.Code(404),"no such work"))
+    val missing = Scripted(answer(HttpAnswer.Code(404), "no such work"))
     assertEquals(
       PolicyHttp(HttpPolicy.UserAgent("ua"), missing, log = quiet).bytes(HttpTransport.Url("https://x.example/d")),
       Left("https://x.example/d: HTTP 404 no such work")
@@ -160,10 +211,15 @@ class PluginHostPartsSuite extends munit.FunSuite:
     val other = NoSuchMethodError("'scala.Option com.histmersion.plugin.WorkKey.year()'")
     assertEquals(PluginHost.foreignSpi(other), Some(None))
     assert(
-      PluginHost.failure(other).value.startsWith("it was built against another plugin SPI; this Histmersion speaks SPI 2")
+      PluginHost
+        .failure(other)
+        .value
+        .startsWith("it was built against another plugin SPI; this Histmersion speaks SPI 2")
     )
     assertEquals(PluginHost.foreignSpi(NoSuchMethodError("'void org.example.Lib.go()'")), None)
-    assert(PluginHost.failure(NoClassDefFoundError("org/example/Lib")).value.startsWith("class org.example.Lib is missing"))
+    assert(
+      PluginHost.failure(NoClassDefFoundError("org/example/Lib")).value.startsWith("class org.example.Lib is missing")
+    )
 
   test("a plugin whose info cannot be read is not loaded: the error, not an exception"):
     val old = new Plugin:

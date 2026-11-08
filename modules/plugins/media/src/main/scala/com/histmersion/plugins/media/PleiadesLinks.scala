@@ -18,8 +18,8 @@ object PleiadesLinks:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-
-  def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")
+  def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")
 
   val OnFlickr: Problem = Problem("on Flickr (its API needs a key)")
   val Category: Problem = Problem("a Commons category, not a file")
@@ -53,7 +53,12 @@ object PleiadesLinks:
       if host == "upload.wikimedia.org" then
         val segs = u.split("[?#]").head.split("/").toList.dropWhile(_ != "commons").drop(1)
         val name = if segs.headOption.contains("thumb") then segs.lift(3) else segs.lift(2)
-        Some(name.map(n => Commons.fileTitle(decode(Text(n)))).filter(_.value.nonEmpty).toRight(Problem("an unreadable Commons file URL")))
+        Some(
+          name
+            .map(n => Commons.fileTitle(decode(Text(n))))
+            .filter(_.value.nonEmpty)
+            .toRight(Problem("an unreadable Commons file URL"))
+        )
       else
         filePart.findFirstMatchIn(u) match
           case Some(m) =>
@@ -65,7 +70,11 @@ object PleiadesLinks:
           case None                                => None
     else if host.endsWith("flickr.com") || host.endsWith("staticflickr.com") then Some(Left(OnFlickr))
     else if Pictures.matches(u.split("[?#]").head) || PictureHosts.exists(lower.contains) then
-      Some(Left(Problem(s"a picture on ${if host.isEmpty then "another site" else host} (no documented keyless licence API)")))
+      Some(
+        Left(
+          Problem(s"a picture on ${if host.isEmpty then "another site" else host} (no documented keyless licence API)")
+        )
+      )
     else None
 
   /** Pure: the picture links of a place record, in its order, one per URL. */
@@ -81,7 +90,10 @@ object PleiadesLinks:
               val h = r.hcursor
               val cito = h.str("type").orElse(h.str("citationTypeURI").map(_.split("/").last)).getOrElse("reference")
               (h.str("accessURI").toList ++ h.str("alternateURI").toList)
-                .flatMap(u => classify(Plugin.Http.GetUrl(u)).map(PleiadesLink(PleiadesLink.Url(u.trim), PleiadesLink.Citation(cito), _)))
+                .flatMap(u =>
+                  classify(Plugin.Http.GetUrl(u))
+                    .map(PleiadesLink(PleiadesLink.Url(u.trim), PleiadesLink.Citation(cito), _))
+                )
             }
             .distinctBy(_.url)
         )

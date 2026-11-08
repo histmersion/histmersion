@@ -32,7 +32,6 @@ object SetupPage:
 
   /** This tab left the setup without saving: it is not shown again until the tab is closed. */
 
-
   val LeftKey = "histmersion.setupLeft"
 
   def leave(): Unit = scala.util.Try(dom.window.sessionStorage.setItem(LeftKey, "1"))
@@ -60,7 +59,10 @@ object SetupPage:
   /** The areas offered (`basemap.setup-areas`). */
   def areasOf(p: ConfigEdit.Page): List[MapArea] =
     p.field(ConfigEdit.Field.Key("basemap.setup-areas")).flatMap(_.effective).toList.flatMap { json =>
-      scala.util.Try(js.JSON.parse(json.value).asInstanceOf[js.Array[String]].toList).getOrElse(Nil).flatMap(MapArea.parse)
+      scala.util
+        .Try(js.JSON.parse(json.value).asInstanceOf[js.Array[String]].toList)
+        .getOrElse(Nil)
+        .flatMap(MapArea.parse)
     }
 
   def element(ui: UiConfig): HtmlElement =
@@ -84,7 +86,9 @@ object SetupPage:
           before.set(c); choices.set(c); start.set(c.start)
         }
       }
-      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption.map(ByteCount(_))))
+      ApiClient
+        .about()
+        .foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption.map(ByteCount(_))))
 
     /** Write the choices (and the mark that the setup is done); then, unless skipping, start the downloads. */
     def finish(download: Boolean): Unit =
@@ -96,7 +100,12 @@ object SetupPage:
           working.set(true)
           val changes = SetupPlan.changes(c, before.now()).map((k, v) => ConfigEdit.Change(k, v))
           ApiClient
-            .writeSettings(ConfigEdit.Write(changes, version = page.now().flatMap(_.toOption).map(p => ConfigEdit.Write.Version(p.version.value))))
+            .writeSettings(
+              ConfigEdit.Write(
+                changes,
+                version = page.now().flatMap(_.toOption).map(p => ConfigEdit.Write.Version(p.version.value))
+              )
+            )
             .onComplete { r =>
               r.toEither.left.map(SettingsStore.message) match
                 case Left(why) => working.set(false); problem.set(Some(why.value))
@@ -106,7 +115,10 @@ object SetupPage:
                     .sequence(
                       wanted.map(d =>
                         startDownload(d)
-                          .transform(t => scala.util.Success(d.label.value -> t.toEither.left.map(e => SettingsStore.message(e).value)))
+                          .transform(t =>
+                            scala.util
+                              .Success(d.label.value -> t.toEither.left.map(e => SettingsStore.message(e).value))
+                          )
                       )
                     )
                     .foreach { results =>
@@ -221,7 +233,10 @@ object SetupPage:
                     if s == SetupStep.Papers then
                       SetupPlan
                         .email(choices.now().email)
-                        .fold(why => problem.set(Some(why.value)), _ => { problem.set(None); step.set(s.next.getOrElse(s)) })
+                        .fold(
+                          why => problem.set(Some(why.value)),
+                          _ => { problem.set(None); step.set(s.next.getOrElse(s)) }
+                        )
                     else step.set(s.next.getOrElse(s))
                   }
                 )
@@ -232,19 +247,26 @@ object SetupPage:
     )
 
   private def startDownload(d: SetupDownload): Future[String] = d match
-    case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(BBox.Text(area.value)))).map(_ => "started")
+    case SetupDownload.Map(area) =>
+      ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(BBox.Text(area.value)))).map(_ => "started")
     case SetupDownload.Boundaries => ApiClient.initData(fetch = Api.Overwrite(true)).map(_ => "started")
     case SetupDownload.Events     =>
       ApiClient
         .eventCatalogues()
         .flatMap(cs =>
           Future
-            .sequence(cs.map(_.id).filter(id => Set("gvp", "noaa")(id.value)).map(id => ApiClient.importEvents(EventImportRequest.Provider(id.value))))
+            .sequence(
+              cs.map(_.id)
+                .filter(id => Set("gvp", "noaa")(id.value))
+                .map(id => ApiClient.importEvents(EventImportRequest.Provider(id.value)))
+            )
             .map(js => s"${js.size} started")
         )
     case SetupDownload.Pictures   => ApiClient.importMedia(MediaItem.Provider("wikidata")).map(_ => "started")
     case SetupDownload.MorePlaces =>
-      Future.sequence(List("geonames", "wikidata").map(n => ApiClient.loadPlaces(Api.ExternalPlaces.Source(n)))).map(_ => "started")
+      Future
+        .sequence(List("geonames", "wikidata").map(n => ApiClient.loadPlaces(Api.ExternalPlaces.Source(n))))
+        .map(_ => "started")
 
   private def check(
       text: String,
@@ -312,11 +334,14 @@ object SetupPage:
                   Wording.plugin(Wording.PluginId(f.id.value)),
                   "",
                   choices.signal.map(
-                    _.finders.getOrElse(SetupChoices.FindersKey(f.id.value), SetupChoices.FindersValue(f.enabled.value)).value
+                    _.finders
+                      .getOrElse(SetupChoices.FindersKey(f.id.value), SetupChoices.FindersValue(f.enabled.value))
+                      .value
                   ),
                   b =>
                     choices.update(c =>
-                      c.modify(_.finders).using(_ + (SetupChoices.FindersKey(f.id.value) -> SetupChoices.FindersValue(b)))
+                      c.modify(_.finders)
+                        .using(_ + (SetupChoices.FindersKey(f.id.value) -> SetupChoices.FindersValue(b)))
                     )
                 )
               )
@@ -333,31 +358,31 @@ object SetupPage:
           fieldSet(
             cls := "setup-group",
             legend("Which area?"),
-            (areas.map(a => Option(SetupChoices.Area(a.bbox.value)) -> (a.label.value, a.approxGb)) :+ (Option.empty[SetupChoices.Area] -> ("No map download", MapArea.ApproxGb(0.0)))).map {
-              (box, info) =>
-                label(
-                  cls := "setup-opt setup-area",
-                  cls("sel") <-- choices.signal.map(_.area == box),
-                  input(
-                    typ := "radio",
-                    nameAttr := "setup-area",
-                    controlled(
-                      checked <-- choices.signal.map(_.area == box),
-                      onClick.mapTo(box) --> (b => choices.update(_.modify(_.area).setTo(b)))
-                    )
-                  ),
+            (areas.map(a => Option(SetupChoices.Area(a.bbox.value)) -> (a.label.value, a.approxGb)) :+ (Option
+              .empty[SetupChoices.Area] -> ("No map download", MapArea.ApproxGb(0.0)))).map { (box, info) =>
+              label(
+                cls := "setup-opt setup-area",
+                cls("sel") <-- choices.signal.map(_.area == box),
+                input(
+                  typ := "radio",
+                  nameAttr := "setup-area",
+                  controlled(
+                    checked <-- choices.signal.map(_.area == box),
+                    onClick.mapTo(box) --> (b => choices.update(_.modify(_.area).setTo(b)))
+                  )
+                ),
+                span(
+                  strong(info._1),
                   span(
-                    strong(info._1),
-                    span(
-                      cls := "muted",
-                      if box.isEmpty then "Coastlines only. You can download later."
-                      else if box.exists(_.value == "world") then
-                        "Recommended. Sites and events from every continent appear on the map."
-                      else "Smaller. Elsewhere the map shows coastlines only."
-                    )
-                  ),
-                  span(cls := "setup-size", if box.isEmpty then "Nothing" else MapArea.size(info._2))
-                )
+                    cls := "muted",
+                    if box.isEmpty then "Coastlines only. You can download later."
+                    else if box.exists(_.value == "world") then
+                      "Recommended. Sites and events from every continent appear on the map."
+                    else "Smaller. Elsewhere the map shows coastlines only."
+                  )
+                ),
+                span(cls := "setup-size", if box.isEmpty then "Nothing" else MapArea.size(info._2))
+              )
             },
             p(cls := "muted", child.text <-- free.map(_.fold("")(b => s"Free on this disk: ${Backup.humanBytes(b)}")))
           ),

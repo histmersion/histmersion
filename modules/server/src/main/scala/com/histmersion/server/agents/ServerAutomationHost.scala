@@ -33,9 +33,14 @@ import com.histmersion.domain.Title
 final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream) extends AutomationHost:
   def articleExists(slug: Slug): Boolean = h.research.articleStore.exists(slug)
   def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal] = h.goals.get(slug)
-  def putGoal(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] = h.goals.put(slug, in)
-  def patchGoal(slug: com.histmersion.domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] = h.goals.patch(slug, patch)
-  def runTarget(p: Pipeline, raw: AutomationHost.RunTargetRaw): Option[Either[Api.Error, AutomationHost.RunTargetResultPart2]] =
+  def putGoal(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] =
+    h.goals.put(slug, in)
+  def patchGoal(slug: com.histmersion.domain.automation.Goal.Slug, patch: Goal.Patch): Either[Api.Error, Goal] =
+    h.goals.patch(slug, patch)
+  def runTarget(
+      p: Pipeline,
+      raw: AutomationHost.RunTargetRaw
+  ): Option[Either[Api.Error, AutomationHost.RunTargetResultPart2]] =
     p.targetKind match
       case TargetKind.Source =>
         Some(
@@ -43,13 +48,13 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             .parse(raw.value)
             .left
             .map(p => refused(p.value))
-            .flatMap(ck =>
-              h.library.sources.get(ck, body = SourcesControllers.GetBody(false))
-            )
+            .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
             .map(w => AutomationHost.RunTargetResultPart2(w.source.citekey.value))
         )
       case TargetKind.Article if p == Pipeline.CompileArticle =>
-        Some(Slug.parse(raw.value).map(sl => AutomationHost.RunTargetResultPart2(sl.value)).left.map(p => refused(p.value)))
+        Some(
+          Slug.parse(raw.value).map(sl => AutomationHost.RunTargetResultPart2(sl.value)).left.map(p => refused(p.value))
+        )
       case TargetKind.Article =>
         Some(
           Slug
@@ -72,13 +77,19 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
 
   private def refused(why: String): Api.Error = Api.Error(Api.Error.Message(why))
 
-  def runOptions(p: Pipeline, req: RunRequest, target: ManagerContext.ItemTarget, roundsCap: AutomationHost.RunOptionsRoundsCap): Either[Api.Error, Unit] =
+  def runOptions(
+      p: Pipeline,
+      req: RunRequest,
+      target: ManagerContext.ItemTarget,
+      roundsCap: AutomationHost.RunOptionsRoundsCap
+  ): Either[Api.Error, Unit] =
     val wrong = (what: String, owner: Pipeline) =>
       Left(Api.Error(Api.Error.Message(s"$what is an option of ${owner.wire}, not of ${p.wire}")))
     val compileOpts =
       req.title.isDefined || req.kind.isDefined || req.query.isDefined || req.topics.nonEmpty || req.tags.nonEmpty
     p match
-      case _ if p != Pipeline.ReviewArticle && req.fix.contains(RunRequest.Fix(true)) => wrong("fix", Pipeline.ReviewArticle)
+      case _ if p != Pipeline.ReviewArticle && req.fix.contains(RunRequest.Fix(true)) =>
+        wrong("fix", Pipeline.ReviewArticle)
       case _ if p != Pipeline.ReviewArticle && req.rounds.isDefined     => wrong("rounds", Pipeline.ReviewArticle)
       case _ if p != Pipeline.EnrichSource && req.acquireItem.isDefined =>
         wrong("an acquisition item", Pipeline.EnrichSource)
@@ -131,27 +142,32 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         .parse(raw.value)
         .left
         .map(p => refused(p.value))
-        .flatMap(ck =>
-          h.library.sources.get(ck, body = SourcesControllers.GetBody(false))
-        )
+        .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
         .map(w => AutomationHost.LinkRefResultPart2(w.source.citekey.value))
 
   def probeSubject(citekey: Citekey): Either[Api.Error, ProbeAnswer] =
-    h.library.sources.get(citekey, body = SourcesControllers.GetBody(false)).map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
+    h.library.sources
+      .get(citekey, body = SourcesControllers.GetBody(false))
+      .map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))
 
   def sameTitle(answered: Title, record: Title): Boolean = AgentVerify.sameTitle(answered, record)
 
-  def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi).left.map(p => PlanGoal.Problem(p.value)).map(w =>
-      PlanGoal.Work(
-        w.title.map(t => PlanGoal.Work.Title(t.value)),
-        w.year.map(y => Year(y.value.toInt)),
-        w.authors.map(a => PlanGoal.Work.Authors(a.value)),
-        w.citekey.flatMap(c => Citekey.option(c.value)),
-        PlanGoal.Work.InDb(w.inDb.value),
-        PlanGoal.Work.IsOa(w.isOa.value),
-        PlanGoal.Work.IsRetracted(w.isRetracted.value)
+  def workLookup: PlanGoal.Lookup = doi =>
+    upstream()
+      .meta(doi)
+      .left
+      .map(p => PlanGoal.Problem(p.value))
+      .map(w =>
+        PlanGoal.Work(
+          w.title.map(t => PlanGoal.Work.Title(t.value)),
+          w.year.map(y => Year(y.value.toInt)),
+          w.authors.map(a => PlanGoal.Work.Authors(a.value)),
+          w.citekey.flatMap(c => Citekey.option(c.value)),
+          PlanGoal.Work.InDb(w.inDb.value),
+          PlanGoal.Work.IsOa(w.isOa.value),
+          PlanGoal.Work.IsRetracted(w.isRetracted.value)
+        )
       )
-    )
   def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.VocabularyResult] =
     h.library.labels
       .facets(Facet.Field.Wire(field.value), None, Filter())

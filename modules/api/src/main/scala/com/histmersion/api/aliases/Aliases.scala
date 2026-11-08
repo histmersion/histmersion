@@ -18,11 +18,17 @@ object Aliases:
   val RuleResult: RuleText.type = RuleText
 
   val Rule: Rule =
-    RuleText("The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +
-      "reference) goes to the record under its new one, and the answer names the new one.")
+    RuleText(
+      "The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +
+        "reference) goes to the record under its new one, and the answer names the new one."
+    )
 
   def rule(k: AliasKind): RuleText =
-    RuleText((Rule).value.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}"))
+    RuleText(
+      (Rule).value
+        .replaceFirst("The old one", s"The old ${k.idWord.value}")
+        .replace("new one", s"new ${k.idWord.value}")
+    )
 
   def followed(k: AliasKind, asked: Id, now: Id): Option[Note] =
     val a = (asked).value.trim

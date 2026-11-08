@@ -38,9 +38,16 @@ final class AgentDoctor(
     app: AppConfig,
     picker: ModelPicker,
     resolve: ModelRef => Either[AgentDoctor.Problem, (LlmClient, Billing)],
-    listModels: (HttpDownload.Url, List[(AgentDoctor.HeaderName, AgentDoctor.HeaderText)], AgentsConfig.DoctorTimeoutSeconds) => Either[AgentDoctor.Problem, List[ModelRef.Model]] = AgentDoctor.listModels,
-    runCommand: (List[ProcessLaunch.Command], Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]], AgentsConfig.DoctorTimeoutSeconds) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)] =
-      AgentDoctor.runCommand,
+    listModels: (
+        HttpDownload.Url,
+        List[(AgentDoctor.HeaderName, AgentDoctor.HeaderText)],
+        AgentsConfig.DoctorTimeoutSeconds
+    ) => Either[AgentDoctor.Problem, List[ModelRef.Model]] = AgentDoctor.listModels,
+    runCommand: (
+        List[ProcessLaunch.Command],
+        Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]],
+        AgentsConfig.DoctorTimeoutSeconds
+    ) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)] = AgentDoctor.runCommand,
     /** The AI-provider registry of the pinned plugin generation (docs/research-plugins.md §22): a host provider whose
       * plugin is off says so, and each plugin provider gets its own section. None: every host provider is taken as on,
       * and there is no plugin provider (a test's doctor).
@@ -53,7 +60,8 @@ final class AgentDoctor(
 
   private val cfg = app.agents
 
-  private def check(level: CheckLevel, n: String, d: String) = DoctorCheck(DoctorCheck.Name(n), level, DoctorCheck.Detail(d))
+  private def check(level: CheckLevel, n: String, d: String) =
+    DoctorCheck(DoctorCheck.Name(n), level, DoctorCheck.Detail(d))
   private def ok(n: String, d: String) = check(CheckLevel.Ok, n, d)
   private def warn(n: String, d: String) = check(CheckLevel.Warn, n, d)
   private def fail(n: String, d: String) = check(CheckLevel.Fail, n, d)
@@ -78,7 +86,14 @@ final class AgentDoctor(
       }
       val off = registry
         .filterNot(_.contains(AgentDoctor.RegistryKey(k.wire.value)))
-        .map(_ => BuiltinAi.lookup(k, scala.collection.immutable.ListMap.empty).left.toOption.map(_.value).getOrElse("switched off"))
+        .map(_ =>
+          BuiltinAi
+            .lookup(k, scala.collection.immutable.ListMap.empty)
+            .left
+            .toOption
+            .map(_.value)
+            .getOrElse("switched off")
+        )
         .map(why => (if models.nonEmpty then fail else warn) ("plugin", why))
         .toList
       ProviderDoctor(
@@ -98,10 +113,13 @@ final class AgentDoctor(
     val global =
       (if cfg.enabled.value then ok("agents", "enabled")
        else warn("agents", "off (agents.enabled = false): nothing runs, settings can still be made")) ::
-        Agents.Prices.parse(Agents.Prices.Wire(cfg.prices.value)).fold(m => List(fail("prices", s"agents.prices: $m")), _ => Nil) ++
+        Agents.Prices
+          .parse(Agents.Prices.Wire(cfg.prices.value))
+          .fold(m => List(fail("prices", s"agents.prices: $m")), _ => Nil) ++
         allowanceProblems.map(fail("allowances", _)) ++
         allowances.collect {
-          case e if e.allowance.isLeft => fail(s"allowance ${e.target}", e.allowance.left.toOption.map(_.value).getOrElse(""))
+          case e if e.allowance.isLeft =>
+            fail(s"allowance ${e.target}", e.allowance.left.toOption.map(_.value).getOrElse(""))
         } ++
         roleChecks
     DoctorReport(DoctorReport.Enabled(cfg.enabled.value), online, providers, global)
@@ -122,7 +140,13 @@ final class AgentDoctor(
           p.doctor(AiProvider.DoctorOnline(online), aiHttp),
           why => List(AiCheck(AiCheck.Name("doctor"), AiCheck.Level("fail"), AiCheck.Detail(why)))
         )
-          .map(c => DoctorCheck(DoctorCheck.Name(c.name.value), CheckLevel.parse(CheckLevel.Wire(c.level.value)).getOrElse(CheckLevel.Warn), DoctorCheck.Detail(c.detail.value)))
+          .map(c =>
+            DoctorCheck(
+              DoctorCheck.Name(c.name.value),
+              CheckLevel.parse(CheckLevel.Wire(c.level.value)).getOrElse(CheckLevel.Warn),
+              DoctorCheck.Detail(c.detail.value)
+            )
+          )
         val (listing, upstream) =
           if !online then (List(ok("models listing", "offline: not asked")), Nil)
           else
@@ -164,7 +188,11 @@ final class AgentDoctor(
 
   // ── the HTTP providers ─────────────────────────────────────────────────────────────────────────
 
-  private def http(k: ProviderKind, models: List[ModelRef], online: Boolean): (List[DoctorCheck], List[ProviderDoctor.UpstreamModels]) =
+  private def http(
+      k: ProviderKind,
+      models: List[ModelRef],
+      online: Boolean
+  ): (List[DoctorCheck], List[ProviderDoctor.UpstreamModels]) =
     val p = com.histmersion.domain.automation.ProviderKind.values
       .find(_.wire.value == k.wire.value)
       .flatMap(cfg.provider)
@@ -204,7 +232,9 @@ final class AgentDoctor(
             (
               p.baseUrl.value.stripSuffix("/") + "/models",
               Option
-                .when(p.apiKey.value.nonEmpty)(AgentDoctor.HeaderName("Authorization") -> AgentDoctor.HeaderText(s"Bearer ${p.apiKey.value}"))
+                .when(p.apiKey.value.nonEmpty)(
+                  AgentDoctor.HeaderName("Authorization") -> AgentDoctor.HeaderText(s"Bearer ${p.apiKey.value}")
+                )
                 .toList
             )
         listModels(HttpDownload.Url(endpoint), headers, cfg.doctorTimeoutSeconds) match
@@ -219,7 +249,10 @@ final class AgentDoctor(
                   s"not in the provider's list of ${ids.size} model(s) — an alias, or a typo?"
                 )
             }
-            (List(key, urlCheck, ok("models listing", s"${ids.size} model(s), free call")) ++ present, ids.map(i => ProviderDoctor.UpstreamModels(i.value)))
+            (
+              List(key, urlCheck, ok("models listing", s"${ids.size} model(s), free call")) ++ present,
+              ids.map(i => ProviderDoctor.UpstreamModels(i.value))
+            )
 
   // ── claude-code ────────────────────────────────────────────────────────────────────────────────
 
@@ -248,10 +281,11 @@ final class AgentDoctor(
           .filter(_.nonEmpty)
           .map(d => envKey("CLAUDE_CONFIG_DIR") -> Some(ProcessLaunch.EnvironmentValue(AgentTrees.expandIn(d, paths))))
           .toMap
-    val version = runCommand(List(cmd(cc.command.value), cmd("--version")), childEnv, cfg.doctorTimeoutSeconds).flatMap {
-      case (code, out) if code.value == 0 => Right(out.value)
-      case (code, out)                    => Left(AgentDoctor.Problem(s"exit ${code.value}: ${out.value.take(300)}"))
-    }
+    val version =
+      runCommand(List(cmd(cc.command.value), cmd("--version")), childEnv, cfg.doctorTimeoutSeconds).flatMap {
+        case (code, out) if code.value == 0 => Right(out.value)
+        case (code, out)                    => Left(AgentDoctor.Problem(s"exit ${code.value}: ${out.value.take(300)}"))
+      }
     val versionCheck = version.fold(
       why =>
         level(
@@ -328,9 +362,11 @@ final class AgentDoctor(
       hint: String
   ): DoctorCheck =
     runCommand(List(command, cmd("--version")), env, cfg.doctorTimeoutSeconds) match
-      case Right((c, out)) if c.value == 0 => ok("executable", s"${command.value}: ${out.value.trim.linesIterator.nextOption().getOrElse("")}")
-      case Right((c, out))                 => level("executable", s"'${command.value} --version' exit ${c.value}: ${out.value.take(200)} — $hint")
-      case Left(why)                       => level("executable", s"'${command.value} --version' failed: ${why.value} — $hint")
+      case Right((c, out)) if c.value == 0 =>
+        ok("executable", s"${command.value}: ${out.value.trim.linesIterator.nextOption().getOrElse("")}")
+      case Right((c, out)) =>
+        level("executable", s"'${command.value} --version' exit ${c.value}: ${out.value.take(200)} — $hint")
+      case Left(why) => level("executable", s"'${command.value} --version' failed: ${why.value} — $hint")
 
   // ── codex, opencode ────────────────────────────────────────────────────────────────────────────
 
@@ -376,6 +412,7 @@ object AgentDoctor:
   object HeaderText extends Newtype[String, Pure]
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** What a local command printed. */
   type Output = Output.T
   object Output extends Newtype[String, Pure]
@@ -392,10 +429,13 @@ object AgentDoctor:
         val in = c.downField("loggedIn").as[Boolean].getOrElse(false)
         val method = c.downField("authMethod").as[String].getOrElse("unknown")
         val plan = c.downField("subscriptionType").as[String].toOption.filter(_.nonEmpty)
-        if !in then Left(Problem("not logged in — run `claude`, then /login (or `claude setup-token` for a long-lived token)"))
+        if !in then
+          Left(Problem("not logged in — run `claude`, then /login (or `claude setup-token` for a long-lived token)"))
         else if !useApiKey.value && (method == "api_key" || method == "api_key_helper") then
           Left(
-            Problem(s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key")
+            Problem(
+              s"logged in with an API key ($method), not a Claude plan — log in with your Claude account, or set use-api-key"
+            )
           )
         else Right(DoctorCheck.Detail(s"logged in ($method${plan.fold("")(p => s", plan $p")})"))
 
@@ -403,11 +443,18 @@ object AgentDoctor:
     HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10)).build()
 
   /** `GET <url>` with `headers`; `data[].id` of an OpenAI- or Anthropic-style model listing. */
-  def listModels(url: HttpDownload.Url, headers: List[(HeaderName, HeaderText)], timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds): Either[Problem, List[ModelRef.Model]] =
+  def listModels(
+      url: HttpDownload.Url,
+      headers: List[(HeaderName, HeaderText)],
+      timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds
+  ): Either[Problem, List[ModelRef.Model]] =
     try
       val req = headers
         .foldLeft(
-          HttpRequest.newBuilder(URI.create(url.value)).GET().timeout(Duration.ofSeconds(math.max(1, timeoutSeconds.value).toLong))
+          HttpRequest
+            .newBuilder(URI.create(url.value))
+            .GET()
+            .timeout(Duration.ofSeconds(math.max(1, timeoutSeconds.value).toLong))
         ) { case (b, (k, v)) =>
           b.header(k.value, v.value)
         }
@@ -417,7 +464,8 @@ object AgentDoctor:
       else modelIds(Output(res.body()))
     catch
       case e: InterruptedException => throw e
-      case e: Exception => Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+      case e: Exception            =>
+        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
 
   /** `{"data":[{"id":…},…]}` → the ids. */
   def modelIds(body: Output): Either[Problem, List[ModelRef.Model]] =
@@ -455,4 +503,5 @@ object AgentDoctor:
       else Right((ProcessResult.ExitCode(p.exitValue()), Output(out.get(5, TimeUnit.SECONDS))))
     catch
       case e: InterruptedException => throw e
-      case e: Exception => Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+      case e: Exception            =>
+        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))

@@ -17,7 +17,8 @@ final case class BuildStamp(
     licence: Option[BuildStamp.Licence] = None,
     sourceUrl: Option[BuildStamp.SourceUrl] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object BuildStamp:
   type Version = Version.T

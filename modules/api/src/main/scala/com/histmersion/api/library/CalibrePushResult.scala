@@ -9,7 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CalibrePushResult(citekey: Citekey, calibreId: Source.CalibreId, ok: CalibrePushResult.Ok)
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CalibrePushResult:
   type Ok = Ok.T

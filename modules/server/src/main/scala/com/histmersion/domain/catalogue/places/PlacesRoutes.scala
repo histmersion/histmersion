@@ -69,13 +69,14 @@ object PlacesRoutes:
       Api.mergePlace.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.merge(me, i, in))),
       Api.removePlace.serverLogic[Identity]((id, in) => trimmed(id).flatMap(i => places.remove(me, i, in))),
       Api.addPlace.serverLogic[Identity](in => places.add(me, in)),
-      Api.importPlaces.serverLogic[Identity]((kind, dataset, body) => 
+      Api.importPlaces.serverLogic[Identity]((kind, dataset, body) =>
         places.importPlaces(
           me,
           kind.map(k => Place.Kind.Wire(k.value)),
           dataset.map(d => Dataset.Wire(d.value)),
           PlacesControllers.DatasetBody(body.value)
-        )),
+        )
+      ),
       Api.rebuildPlaces.serverLogic[Identity](_ => places.rebuild(me)),
       Api.fetchExternalPlaces.serverLogic[Identity]((source, dryRun) => gazetteer.fetch(me, source, dryRun)),
       Api.loadPlaces.serverLogic[Identity]((source, apply) => load(source, apply)),

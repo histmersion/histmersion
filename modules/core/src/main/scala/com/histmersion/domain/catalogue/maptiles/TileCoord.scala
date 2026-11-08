@@ -14,7 +14,12 @@ final case class TileCoord private (z: TileCoord.Z, x: TileCoord.X, y: TileCoord
   /** The tile's bounds in degrees: west, south, east, north. */
   def bounds: (Double, Double, Double, Double) =
     val n = side.value.toDouble
-    (x.value / n * 360 - 180, TileCoord.latOf((y.value + 1) / n).value, (x.value + 1) / n * 360 - 180, TileCoord.latOf(y.value / n).value)
+    (
+      x.value / n * 360 - 180,
+      TileCoord.latOf((y.value + 1) / n).value,
+      (x.value + 1) / n * 360 - 180,
+      TileCoord.latOf(y.value / n).value
+    )
 
   /** Where `lat`/`lon` falls in this tile, in tile units (0 at its west and north edges, [[TileCoord.Extent]] at the
     * east and south): outside the tile below 0 or at the extent and beyond. Pure.
@@ -29,6 +34,7 @@ object TileCoord:
   object Problem extends Newtype[String, Pure]
   type TilesPerSide = TilesPerSide.T
   object TilesPerSide extends Newtype[Long, Pure]
+
   /** The units a tile's side is divided into (the vector tile format's usual extent). */
   type Extent = ExtentValue
   type ExtentValue = ExtentValue.T

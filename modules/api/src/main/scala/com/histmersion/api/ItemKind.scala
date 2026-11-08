@@ -27,7 +27,6 @@ object ItemKind:
     type Pattern = Pattern.T
     object Pattern extends Newtype[String, Pure]
 
-
   val Items: Set[ItemKind] = Set(Source, Article, Event, Place, Picture, Goal)
 
   val Bookmarkable: Set[ItemKind] = values.toSet

@@ -37,8 +37,14 @@ class MediaPortalsSuite extends munit.FunSuite:
     assertEquals(ofUrl(Url("")).family, Unknown)
 
   test("gazetteer ids in their URI forms, and the id a place id carries itself"):
-    assertEquals(ExternalIds.of(ExternalIds.Uri("https://pleiades.stoa.org/places/697725")), Some("pleiades" -> "697725"))
-    assertEquals(ExternalIds.of(ExternalIds.Uri("http://pleiades.stoa.org/places/697725/")), Some("pleiades" -> "697725"))
+    assertEquals(
+      ExternalIds.of(ExternalIds.Uri("https://pleiades.stoa.org/places/697725")),
+      Some("pleiades" -> "697725")
+    )
+    assertEquals(
+      ExternalIds.of(ExternalIds.Uri("http://pleiades.stoa.org/places/697725/")),
+      Some("pleiades" -> "697725")
+    )
     assertEquals(ExternalIds.of(ExternalIds.Uri("https://www.geonames.org/310858")), Some("geonames" -> "310858"))
     assertEquals(ExternalIds.of(ExternalIds.Uri("http://sws.geonames.org/310858/")), Some("geonames" -> "310858"))
     assertEquals(ExternalIds.of(ExternalIds.Uri("http://www.wikidata.org/entity/Q5788")), Some("wikidata" -> "Q5788"))
@@ -50,13 +56,29 @@ class MediaPortalsSuite extends munit.FunSuite:
 
   // ── the match by a record's own place id ─────────────────────────────────────────────────────
 
-  private val petra = MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("pleiades_697725"), MediaMatch.PlaceInfo.Label("Petra"), Set(MediaMatch.PlaceInfo.Keys("petra")), DeepTime.span(DeepTime.SignedYear(-300L), DeepTime.SignedYear(400L)))
+  private val petra = MediaMatch.PlaceInfo(
+    MediaMatch.PlaceInfo.Id("pleiades_697725"),
+    MediaMatch.PlaceInfo.Label("Petra"),
+    Set(MediaMatch.PlaceInfo.Keys("petra")),
+    DeepTime.span(DeepTime.SignedYear(-300L), DeepTime.SignedYear(400L))
+  )
   private def rec(
       ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)],
       geo: List[(MediaRecord.GeographyPart1, MediaRecord.GeographyPart2)],
       period: Option[Period] = DeepTime.span(DeepTime.SignedYear(-200L), DeepTime.SignedYear(360L))
   ) =
-    MediaRecord(MediaRecord.Key("k"), MediaRecord.Title("t"), MediaRecord.PageUrl("p"), Some(MediaRecord.ImageUrl("i")), None, None, Left(MediaRecord.RightsPart1("x")), geo, period, ids)
+    MediaRecord(
+      MediaRecord.Key("k"),
+      MediaRecord.Title("t"),
+      MediaRecord.PageUrl("p"),
+      Some(MediaRecord.ImageUrl("i")),
+      None,
+      None,
+      Left(MediaRecord.RightsPart1("x")),
+      geo,
+      period,
+      ids
+    )
   private def gp(field: String, value: String) =
     (MediaRecord.GeographyPart1(field), MediaRecord.GeographyPart2(value))
   private def ext(scheme: String, id: String) = (ExternalIds.Scheme(scheme), ExternalIds.ExternalId(id))
@@ -74,12 +96,24 @@ class MediaPortalsSuite extends munit.FunSuite:
   test("a shared place id ties the record; a finer context naming another place on the map refuses it"):
     val geo = List(gp("context", "Trench 94"), gp("context", "Petra Great Temple"), gp("region", "Jordan"))
     assertEquals(
-      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), geo), petra, idsOnMap, namesOnMap, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(
+        rec(List(ext("pleiades", "697725")), geo),
+        petra,
+        idsOnMap,
+        namesOnMap,
+        Set(MediaRecord.GeographyPart1("context"))
+      ),
       Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE")
     )
     val finer = gp("context", "Lion Gate") :: geo
     assertEquals(
-      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), finer), petra, idsOnMap, namesOnMap, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(
+        rec(List(ext("pleiades", "697725")), finer),
+        petra,
+        idsOnMap,
+        namesOnMap,
+        Set(MediaRecord.GeographyPart1("context"))
+      ),
       Left("its context names another place on the map")
     )
     assertEquals(
@@ -96,22 +130,46 @@ class MediaPortalsSuite extends munit.FunSuite:
   test(
     "an id naming only another place refuses it (not filed under the country); an id naming two places is ambiguous"
   ):
-    val jordan = MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("geonames_248816"), MediaMatch.PlaceInfo.Label("Jordan"), Set(MediaMatch.PlaceInfo.Keys("jordan")), DeepTime.span(DeepTime.SignedYear(-3000L), DeepTime.SignedYear(2000L)))
+    val jordan = MediaMatch.PlaceInfo(
+      MediaMatch.PlaceInfo.Id("geonames_248816"),
+      MediaMatch.PlaceInfo.Label("Jordan"),
+      Set(MediaMatch.PlaceInfo.Keys("jordan")),
+      DeepTime.span(DeepTime.SignedYear(-3000L), DeepTime.SignedYear(2000L))
+    )
     val geo = List(gp("context", "Petra Great Temple"), gp("region", "Jordan"))
     assertEquals(
-      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), geo), jordan, idsOnMap, namesOnMap, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(
+        rec(List(ext("pleiades", "697725")), geo),
+        jordan,
+        idsOnMap,
+        namesOnMap,
+        Set(MediaRecord.GeographyPart1("context"))
+      ),
       Left("its place id names another place on the map")
     )
     assertEquals(
-      MediaMatch.withIds(rec(List(ext("pleiades", "1")), geo), petra, idsOnMap, namesOnMap, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(
+        rec(List(ext("pleiades", "1")), geo),
+        petra,
+        idsOnMap,
+        namesOnMap,
+        Set(MediaRecord.GeographyPart1("context"))
+      ),
       Left("its place id is ambiguous on the map")
     )
 
   test("without an id naming a place on the map, the names decide (most specific first), then the dates"):
     val geo = List(gp("context", "Trench 1"), gp("context", "Petra"), gp("region", "Jordan"))
-    val withPetra: MediaMatch.Resolve = k => if k.value == "petra" then Set(MediaMatch.PlaceInfo.Id("pleiades_697725")) else namesOnMap(k)
+    val withPetra: MediaMatch.Resolve =
+      k => if k.value == "petra" then Set(MediaMatch.PlaceInfo.Id("pleiades_697725")) else namesOnMap(k)
     assertEquals(
-      MediaMatch.withIds(rec(List(ext("geonames", "999")), geo), petra, idsOnMap, withPetra, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(
+        rec(List(ext("geonames", "999")), geo),
+        petra,
+        idsOnMap,
+        withPetra,
+        Set(MediaRecord.GeographyPart1("context"))
+      ),
       Right("context = Petra; 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(
@@ -121,10 +179,19 @@ class MediaPortalsSuite extends munit.FunSuite:
 
   test("a context name shared by two places is settled by an id naming the target alone, else ambiguous"):
     val twoNames: MediaMatch.Resolve =
-      k => if k.value == "petra great temple" then Set(MediaMatch.PlaceInfo.Id("pleiades_697725"), MediaMatch.PlaceInfo.Id("other")) else namesOnMap(k)
+      k =>
+        if k.value == "petra great temple" then
+          Set(MediaMatch.PlaceInfo.Id("pleiades_697725"), MediaMatch.PlaceInfo.Id("other"))
+        else namesOnMap(k)
     val geo = List(gp("context", "Petra Great Temple"), gp("region", "Jordan"))
     assertEquals(
-      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), geo), petra, idsOnMap, twoNames, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(
+        rec(List(ext("pleiades", "697725")), geo),
+        petra,
+        idsOnMap,
+        twoNames,
+        Set(MediaRecord.GeographyPart1("context"))
+      ),
       Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(

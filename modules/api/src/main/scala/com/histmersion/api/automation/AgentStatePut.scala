@@ -11,10 +11,10 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class AgentStatePut(
     value: AgentStatePut.Value
-) derives KindlingsSchema, com.histmersion.api.json.Schema
+) derives KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AgentStatePut:
-
 
   type Value = Value.T
   object Value extends Newtype[String, Pure]

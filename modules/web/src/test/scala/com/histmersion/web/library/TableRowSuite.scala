@@ -52,7 +52,16 @@ class TableRowSuite extends munit.FunSuite:
 
   test("an article's row: its kind in words, its regions under the title, no status"):
     val r = TableRow.of(
-      Article.Summary(Article.Slug("sea-peoples"), Article.Title("The Sea Peoples"), Article.Kind.Wire("concept"), None, Nil, List(Article.Regions("eastern_mediterranean")), None, None)
+      Article.Summary(
+        Article.Slug("sea-peoples"),
+        Article.Title("The Sea Peoples"),
+        Article.Kind.Wire("concept"),
+        None,
+        Nil,
+        List(Article.Regions("eastern_mediterranean")),
+        None,
+        None
+      )
     )
     assertEquals(
       r,

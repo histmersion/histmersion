@@ -30,7 +30,13 @@ final case class UiSettings(
     tilesTone: UiSettings.TilesTone = UiSettings.TilesTone("light"),
     docsUrl: UiSettings.DocsUrl = UiSettings.DocsUrl(""),
     baseMapSource: UiSettings.BaseMapSource = UiSettings.BaseMapSource("auto"),
-    mapStart: UiMapStartSettings = UiMapStartSettings(UiMapStartSettings.Mode("last"), UiMapStartSettings.Lat(37.0), UiMapStartSettings.Lon(30.0), UiMapStartSettings.Zoom(5.0), UiMapStartSettings.Label("Anatolia"))
+    mapStart: UiMapStartSettings = UiMapStartSettings(
+      UiMapStartSettings.Mode("last"),
+      UiMapStartSettings.Lat(37.0),
+      UiMapStartSettings.Lon(30.0),
+      UiMapStartSettings.Zoom(5.0),
+      UiMapStartSettings.Label("Anatolia")
+    )
 ) derives ConfigReader
 
 object UiSettings:

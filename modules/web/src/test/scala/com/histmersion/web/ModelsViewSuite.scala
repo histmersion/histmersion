@@ -26,7 +26,12 @@ class ModelsViewSuite extends munit.FunSuite:
   test("limits and a reserve as typed, with the problem when they do not read"):
     assertEquals(
       ModelsView.limitsInput("2M tokens/5h, 5 usd/day"),
-      Right(List(LimitSpec(ModelChains.LimitSpec.Amount(2000000), Measure.Tokens, ModelChains.LimitSpec.Window("5h")), LimitSpec(ModelChains.LimitSpec.Amount(5), Measure.Usd, ModelChains.LimitSpec.Window("1d"))))
+      Right(
+        List(
+          LimitSpec(ModelChains.LimitSpec.Amount(2000000), Measure.Tokens, ModelChains.LimitSpec.Window("5h")),
+          LimitSpec(ModelChains.LimitSpec.Amount(5), Measure.Usd, ModelChains.LimitSpec.Window("1d"))
+        )
+      )
     )
     assertEquals(ModelsView.limitsInput(""), Right(Nil))
     assert(ModelsView.limitsInput("2M tokens").isLeft)
@@ -35,14 +40,58 @@ class ModelsViewSuite extends munit.FunSuite:
     assert(ModelsView.reserveInput("120").isLeft)
 
   test("the used share of a limit, clamped; a chained model's state"):
-    val l = LimitStatus(ModelChains.LimitStatus.Limit("1k tokens/1h"), Measure.Tokens, ModelChains.LimitStatus.Window("1h"), ModelChains.LimitStatus.Amount(1000), ModelChains.LimitStatus.Used(250), ModelChains.LimitStatus.Remaining(750), ModelChains.LimitStatus.Reserve(0), usable = ModelChains.LimitStatus.Usable(true))
+    val l = LimitStatus(
+      ModelChains.LimitStatus.Limit("1k tokens/1h"),
+      Measure.Tokens,
+      ModelChains.LimitStatus.Window("1h"),
+      ModelChains.LimitStatus.Amount(1000),
+      ModelChains.LimitStatus.Used(250),
+      ModelChains.LimitStatus.Remaining(750),
+      ModelChains.LimitStatus.Reserve(0),
+      usable = ModelChains.LimitStatus.Usable(true)
+    )
     assertEquals(ModelsView.usedPct(l), 25)
     assertEquals(ModelsView.usedPct(l.modify(_.used).setTo(LimitStatus.Used(5000.0))), 100)
-    assertEquals(ModelsView.entryState(ChainEntry(ModelChains.ChainEntry.Model("local:a"), ready = ModelChains.ChainEntry.Ready(true), usable = ModelChains.ChainEntry.Usable(true))), "is-usable")
-    assertEquals(ModelsView.entryState(ChainEntry(ModelChains.ChainEntry.Model("local:a"), ready = ModelChains.ChainEntry.Ready(true), usable = ModelChains.ChainEntry.Usable(false))), "is-paused")
-    assertEquals(ModelsView.entryState(ChainEntry(ModelChains.ChainEntry.Model("local:a"), ready = ModelChains.ChainEntry.Ready(false), usable = ModelChains.ChainEntry.Usable(false))), "is-unready")
     assertEquals(
-      ModelsView.limitsText(AllowanceStatus(ModelChains.AllowanceStatus.Target("local:a"), ModelChains.AllowanceStatus.Source("saved"), ModelChains.AllowanceStatus.ReservePct(0), List(l, l.modify(_.limit).setTo(ModelChains.LimitStatus.Limit("5 usd/1d"))), usable = ModelChains.AllowanceStatus.Usable(true))),
+      ModelsView.entryState(
+        ChainEntry(
+          ModelChains.ChainEntry.Model("local:a"),
+          ready = ModelChains.ChainEntry.Ready(true),
+          usable = ModelChains.ChainEntry.Usable(true)
+        )
+      ),
+      "is-usable"
+    )
+    assertEquals(
+      ModelsView.entryState(
+        ChainEntry(
+          ModelChains.ChainEntry.Model("local:a"),
+          ready = ModelChains.ChainEntry.Ready(true),
+          usable = ModelChains.ChainEntry.Usable(false)
+        )
+      ),
+      "is-paused"
+    )
+    assertEquals(
+      ModelsView.entryState(
+        ChainEntry(
+          ModelChains.ChainEntry.Model("local:a"),
+          ready = ModelChains.ChainEntry.Ready(false),
+          usable = ModelChains.ChainEntry.Usable(false)
+        )
+      ),
+      "is-unready"
+    )
+    assertEquals(
+      ModelsView.limitsText(
+        AllowanceStatus(
+          ModelChains.AllowanceStatus.Target("local:a"),
+          ModelChains.AllowanceStatus.Source("saved"),
+          ModelChains.AllowanceStatus.ReservePct(0),
+          List(l, l.modify(_.limit).setTo(ModelChains.LimitStatus.Limit("5 usd/1d"))),
+          usable = ModelChains.AllowanceStatus.Usable(true)
+        )
+      ),
       "1k tokens/1h, 5 usd/1d"
     )
 
@@ -56,7 +105,12 @@ class ModelsViewSuite extends munit.FunSuite:
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T14:00:00Z"))
     )
     assertEquals(RunsView.pausedFor(r), Some("allowance"))
-    assert(RunsView.pausedText(r, Agents.PauseReason.Wire("allowance")).value.contains("resumes by itself at 2026-10-05T14:00:00Z"))
+    assert(
+      RunsView
+        .pausedText(r, Agents.PauseReason.Wire("allowance"))
+        .value
+        .contains("resumes by itself at 2026-10-05T14:00:00Z")
+    )
     assert(RunsView.pausedText(r, Agents.PauseReason.Wire("budget")).value.contains("Raise the budget"))
 
   test("a plan window's bar: the used share and where the floor sits; a reading's age in words"):
@@ -89,4 +143,9 @@ class ModelsViewSuite extends munit.FunSuite:
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T21:40:00Z"))
     )
     assertEquals(RunsView.pausedFor(r), Some("plan-quota"))
-    assert(RunsView.pausedText(r, Agents.PauseReason.Wire("plan-quota")).value.contains("resumes by itself at 2026-10-05T21:40:00Z"))
+    assert(
+      RunsView
+        .pausedText(r, Agents.PauseReason.Wire("plan-quota"))
+        .value
+        .contains("resumes by itself at 2026-10-05T21:40:00Z")
+    )

@@ -25,17 +25,21 @@ object JobControlRules:
       Left(Problem(s"a ${job.kind} job cannot be paused or cancelled: it runs as one piece and ends by itself"))
     else
       (action, JobState.parse(job.status)) match
-        case (_, None)                                  => Left(Problem(s"job ${job.id} is ${job.status}"))
-        case (_, Some(s)) if s.isTerminal               => Left(Problem(s"job ${job.id} has ended (${s.wire})"))
-        case (JobAction.Pause, Some(JobState.Running))  => Right(JobControlStep.RequestStop(JobStop.Pause))
-        case (JobAction.Pause, Some(JobState.Paused))   => Left(Problem(s"job ${job.id} is already paused"))
-        case (JobAction.Pause, Some(_))                 => Left(Problem(s"job ${job.id} has not started yet: cancel it instead"))
+        case (_, None)                                 => Left(Problem(s"job ${job.id} is ${job.status}"))
+        case (_, Some(s)) if s.isTerminal              => Left(Problem(s"job ${job.id} has ended (${s.wire})"))
+        case (JobAction.Pause, Some(JobState.Running)) => Right(JobControlStep.RequestStop(JobStop.Pause))
+        case (JobAction.Pause, Some(JobState.Paused))  => Left(Problem(s"job ${job.id} is already paused"))
+        case (JobAction.Pause, Some(_)) => Left(Problem(s"job ${job.id} has not started yet: cancel it instead"))
         case (JobAction.Cancel, Some(JobState.Running)) => Right(JobControlStep.RequestStop(JobStop.Cancel))
         case (JobAction.Cancel, Some(_))                => Right(JobControlStep.CancelNow)
         case (JobAction.Resume, Some(JobState.Paused))  =>
           if resumable then Right(JobControlStep.Resume)
           else
-            Left(Problem(s"job ${job.id} was paused before the server restarted: start it again — it goes on where it stopped"))
+            Left(
+              Problem(
+                s"job ${job.id} was paused before the server restarted: start it again — it goes on where it stopped"
+              )
+            )
         case (JobAction.Resume, Some(_)) => Left(Problem(s"job ${job.id} is not paused"))
 
   /** The progress line a stopped job keeps: what it had done, and that it was paused or cancelled. */

@@ -35,7 +35,8 @@ object RunRow:
   type Pipeline = Pipeline.T
   object Pipeline extends Newtype[String, Pure]
   type PipelineVersion = com.histmersion.domain.automation.Pipeline.Version
-  val PipelineVersion: com.histmersion.domain.automation.Pipeline.Version.type = com.histmersion.domain.automation.Pipeline.Version
+  val PipelineVersion: com.histmersion.domain.automation.Pipeline.Version.type =
+    com.histmersion.domain.automation.Pipeline.Version
   type TargetKind = TargetKind.T
   object TargetKind extends Newtype[String, Pure]
   type Target = Target.T

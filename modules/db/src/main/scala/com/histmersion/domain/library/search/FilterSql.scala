@@ -43,7 +43,6 @@ import com.histmersion.api.library.Hit
   */
 object FilterSql:
 
-
   type FacetPrefix = FacetPrefix.T
   object FacetPrefix extends Newtype[String, Pure]
 
@@ -95,7 +94,10 @@ object FilterSql:
 
   /** `finding_places` membership for ONE finding row (alias `fa`), uncorrelated like [[placeIdsSource]]. */
   private def placeIdsFinding(ids: List[Place.Id], fa: String): Sql =
-    of(s"$fa.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))", strs(ids.map(_.value)))
+    of(
+      s"$fa.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))",
+      strs(ids.map(_.value))
+    )
 
   /** The wave-1 name match for a source: its own regions, any of its findings' `region_name`, OR any place_name
     * matching by ILIKE prefix (so "Anatolian" reaches "Anatolian plateau" etc.).
@@ -158,7 +160,9 @@ object FilterSql:
     // authors: any-of, case-insensitive substring
     if f.authors.nonEmpty then
       ps += anyOf(
-        f.authors.map(a => of(s"EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ?$Esc)", str(contains(a.value))))
+        f.authors.map(a =>
+          of(s"EXISTS (SELECT 1 FROM unnest(s.authors) x WHERE x ILIKE ?$Esc)", str(contains(a.value)))
+        )
       )
 
     // places: any-of — a gazetteer id through `finding_places`, otherwise the name ILIKE over
@@ -176,7 +180,9 @@ object FilterSql:
         f.status.map(x => str(x.value.trim.toLowerCase))
       )
 
-    f.years.foreach(y => ps += of("(s.year IS NOT NULL AND s.year BETWEEN ? AND ?)", lng(y.start.value), lng(y.end.value)))
+    f.years.foreach(y =>
+      ps += of("(s.year IS NOT NULL AND s.year BETWEEN ? AND ?)", lng(y.start.value), lng(y.end.value))
+    )
 
     f.period.foreach(p =>
       ps += of(
@@ -204,7 +210,9 @@ object FilterSql:
     f.goal
       .map(_.value.trim)
       .filter(_.nonEmpty)
-      .foreach(g => ps += of("s.citekey IN (SELECT ref FROM goal_links WHERE goal_slug = ? AND kind = 'source')", str(g)))
+      .foreach(g =>
+        ps += of("s.citekey IN (SELECT ref FROM goal_links WHERE goal_slug = ? AND kind = 'source')", str(g))
+      )
 
     val parts = ps.result()
     if parts.isEmpty then Sql.raw(Sql.RawText("TRUE")) else join(" AND ", parts)
@@ -281,7 +289,8 @@ object FilterSql:
   /** The filter with every finding-level criterion removed — what is left is what a SOURCE must satisfy on its own:
     * `q`, authors, topics, status, publication years.
     */
-  def sourceOnly(f: Filter): Filter = f.modify(_.tags).setTo(Nil).modify(_.places).setTo(Nil).modify(_.period).setTo(None).modify(_.bbox).setTo(None)
+  def sourceOnly(f: Filter): Filter =
+    f.modify(_.tags).setTo(Nil).modify(_.places).setTo(Nil).modify(_.period).setTo(None).modify(_.bbox).setTo(None)
 
   /** Source-level predicate for a query whose row is a FINDING (its source joined in as `s`). */
   def sourceWhere(f: Filter): Sql = where(sourceOnly(f))
@@ -399,7 +408,8 @@ object FilterSql:
     Search.snippetsQuery(q, snippetWords, citekeys)
 
   /** One snippet row: (citekey, heading, snippet). */
-  final case class SnippetRow(citekey: Citekey, heading: Option[SnippetRow.Heading], snippet: SnippetRow.Snippet) derives DbCodec
+  final case class SnippetRow(citekey: Citekey, heading: Option[SnippetRow.Heading], snippet: SnippetRow.Snippet)
+      derives DbCodec
 
   object SnippetRow:
     type Heading = Heading.T
@@ -413,16 +423,16 @@ object FilterSql:
   def findingsQuery(citekeys: List[Citekey]): Sql =
     Sql(
       Sql.Text(
-      "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
-        s" ${RangeSql.cols("f.period")}, f.period_name, f.tags," +
-        // the gazetteer places this finding was materialised into (plan §1.6a) — labels for the
-        // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied. Arrays, not
-        // joined strings: a place label routinely contains a comma.
-        " ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id" +
-        " WHERE fp.finding_id = f.id ORDER BY p.label)," +
-        " ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id)" +
-        s" FROM findings f WHERE f.citekey IN (${List.fill(citekeys.size)("?").mkString(", ")})" +
-        " ORDER BY f.citekey, f.id"
+        "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
+          s" ${RangeSql.cols("f.period")}, f.period_name, f.tags," +
+          // the gazetteer places this finding was materialised into (plan §1.6a) — labels for the
+          // reader, ids so `findingWhy` can say WHICH place chip the finding satisfied. Arrays, not
+          // joined strings: a place label routinely contains a comma.
+          " ARRAY(SELECT p.label FROM finding_places fp JOIN places p ON p.id = fp.place_id" +
+          " WHERE fp.finding_id = f.id ORDER BY p.label)," +
+          " ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = f.id ORDER BY fp.place_id)" +
+          s" FROM findings f WHERE f.citekey IN (${List.fill(citekeys.size)("?").mkString(", ")})" +
+          " ORDER BY f.citekey, f.id"
       ),
       citekeys.map(c => str(c.value))
     )

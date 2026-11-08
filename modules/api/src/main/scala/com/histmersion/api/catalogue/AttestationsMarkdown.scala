@@ -5,7 +5,6 @@ import com.histmersion.api.Markdown.*
 
 object AttestationsMarkdown:
 
-
   private[api] def attestationLine(a: Attestation): String =
     val loc = List(
       a.page.map(p => s"p.$p"),
@@ -20,9 +19,11 @@ object AttestationsMarkdown:
     (s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n")
 
   def attestationList(result: Attestation.List): String =
-    OffsetPage.markdown(result.page, ("attestation(s)"), ("_No matching attestations._"), result.attestations)(
-      attestationLine
-    ).value
+    OffsetPage
+      .markdown(result.page, ("attestation(s)"), ("_No matching attestations._"), result.attestations)(
+        attestationLine
+      )
+      .value
 
   def attestation(a: Attestation): String =
     val header = s"# Attestation #${a.id}\n\n_[[${a.citekey}]] → ${a.targetType}:`${a.targetId}`_"

@@ -11,14 +11,25 @@ import io.circe.Json
   * given.
   */
 final class ClevelandCollection(conf: CollectionSettings)
-    extends MuseumCollection(conf, MuseumCollection.Provider("The Cleveland Museum of Art"), MuseumCollection.Key("media.cleveland")):
+    extends MuseumCollection(
+      conf,
+      MuseumCollection.Provider("The Cleveland Museum of Art"),
+      MuseumCollection.Key("media.cleveland")
+    ):
   val title = MediaCollection.TitleResult("Cleveland Museum of Art objects")
-  override val description = MediaCollection.DescriptionResult("The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum)
+  override val description =
+    MediaCollection.DescriptionResult("The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum)
   val role = MediaCollection.RoleResult(MediaCollection.Object)
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(
+      place: MediaPlace,
+      http: Plugin.Http
+  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
-      .askJson(ClevelandCollection.searchUrl(Plugin.Http.GetUrl(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates))
+      .askJson(
+        ClevelandCollection
+          .searchUrl(Plugin.Http.GetUrl(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates)
+      )
       .left
       .map(e => MediaCollection.SearchResultPart1(e))
       .flatMap(ClevelandCollection.records)
@@ -40,45 +51,65 @@ object ClevelandCollection:
     "tombstone"
   ).mkString(",")
 
-  def searchUrl(api: Plugin.Http.GetUrl, name: CollectionQuery.Text, limit: CollectionSettings.Candidates): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/artworks/?q=${name.value.enc}&cc0=1&has_image=1&limit=${limit.value.max(1)}&fields=$Fields")
+  def searchUrl(
+      api: Plugin.Http.GetUrl,
+      name: CollectionQuery.Text,
+      limit: CollectionSettings.Candidates
+  ): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(
+      s"${api.value.stripSuffix("/")}/artworks/?q=${name.value.enc}&cc0=1&has_image=1&limit=${limit.value.max(1)}&fields=$Fields"
+    )
 
   /** Pure: the records of a search answer. */
-  def records(json: Json): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def records(
+      json: Json
+  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
-      case None       => Left(MediaCollection.SearchResultPart1(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer")))
+      case None =>
+        Left(
+          MediaCollection.SearchResultPart1(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer"))
+        )
       case Some(rows) => Right(rows.toList.map(record))
 
   def record(json: Json): Either[MediaCollection.SearchResultPart2Part1, MediaItem] =
     val c = json.hcursor
-    c.str("accession_number").orElse(c.str("id")).toRight(MediaCollection.SearchResultPart2Part1("no accession number")).map { acc =>
-      val title = c.str("title").getOrElse(acc)
-      val creator = c
-        .downField("creators")
-        .downArray
-        .downField("description")
-        .focus
-        .flatMap(_.asString)
-        .map(_.trim)
-        .filter(_.nonEmpty)
-      val page = c.str("url").getOrElse(s"https://clevelandart.org/art/$acc")
-      val credit = (List(Some(title), creator).flatten ++ List("The Cleveland Museum of Art") ++
-        c.str("creditline").toList :+ "CC0").mkString(", ")
-      val rights =
-        if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then Right(MediaRights.cc0(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
-        else Left(MediaItem.RightsPart1(s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})"))
-      val img = c.downField("images")
-      def url(size: String) = img.downField(size).downField("url").focus.flatMap(_.asString)
-      val geo = c.str("find_spot").map("find_spot" -> _).toList ++ c.strs("culture").map("culture" -> _)
-      MediaItem(
-        MediaItem.Key(acc),
-        MediaItem.Title(title),
-        MediaItem.PageUrl(page),
-        url("web").map(u => MediaItem.ImageUrl(u)),
-        rights,
-        originalUrl = url("print").orElse(url("full")).map(u => MediaItem.OriginalUrl(u)),
-        geography = geo.map((f, v) => (MediaItem.GeographyPart1(f), MediaItem.GeographyPart2(v))),
-        period = Period.range(c.long("creation_date_earliest"), c.long("creation_date_latest"))
-      )
-    }
+    c.str("accession_number")
+      .orElse(c.str("id"))
+      .toRight(MediaCollection.SearchResultPart2Part1("no accession number"))
+      .map { acc =>
+        val title = c.str("title").getOrElse(acc)
+        val creator = c
+          .downField("creators")
+          .downArray
+          .downField("description")
+          .focus
+          .flatMap(_.asString)
+          .map(_.trim)
+          .filter(_.nonEmpty)
+        val page = c.str("url").getOrElse(s"https://clevelandart.org/art/$acc")
+        val credit = (List(Some(title), creator).flatten ++ List("The Cleveland Museum of Art") ++
+          c.str("creditline").toList :+ "CC0").mkString(", ")
+        val rights =
+          if c.str("share_license_status").exists(_.equalsIgnoreCase("CC0")) then
+            Right(MediaRights.cc0(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
+          else
+            Left(
+              MediaItem.RightsPart1(
+                s"not Open Access (share_license_status ${c.str("share_license_status").getOrElse("missing")})"
+              )
+            )
+        val img = c.downField("images")
+        def url(size: String) = img.downField(size).downField("url").focus.flatMap(_.asString)
+        val geo = c.str("find_spot").map("find_spot" -> _).toList ++ c.strs("culture").map("culture" -> _)
+        MediaItem(
+          MediaItem.Key(acc),
+          MediaItem.Title(title),
+          MediaItem.PageUrl(page),
+          url("web").map(u => MediaItem.ImageUrl(u)),
+          rights,
+          originalUrl = url("print").orElse(url("full")).map(u => MediaItem.OriginalUrl(u)),
+          geography = geo.map((f, v) => (MediaItem.GeographyPart1(f), MediaItem.GeographyPart2(v))),
+          period = Period.range(c.long("creation_date_earliest"), c.long("creation_date_latest"))
+        )
+      }

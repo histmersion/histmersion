@@ -52,7 +52,11 @@ class MediaTrafficSuite extends DbSuite:
     val sb = StringBuilder()
     val loaded = load("")
     val wire = MediaWire.Wire()
-    val plugins = ServerPlugins.load(loaded, transport = _ => wire, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    val plugins = ServerPlugins.load(
+      loaded,
+      transport = _ => wire,
+      core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
+    )
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
 
     def report(r: Either[Api.Error, MediaImportReport]): String =
@@ -90,35 +94,137 @@ class MediaTrafficSuite extends DbSuite:
       "smithsonian",
       "europeana"
     ).map(MediaItem.Provider(_))
-    all.foreach(p => run(s"$p (dry run)", MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(true), limit = Some(MediaImportRequest.Limit(20)))))
+    all.foreach(p =>
+      run(
+        s"$p (dry run)",
+        MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(true), limit = Some(MediaImportRequest.Limit(20)))
+      )
+    )
 
-    run("wikidata, one place", MediaImportRequest(MediaItem.Provider("wikidata"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_570491"))))
-    run("wikidata, one event", MediaImportRequest(MediaItem.Provider("wikidata"), dryRun = MediaImportRequest.DryRun(false), event = Some(Event.Id("fall_of_x"))))
-    run("depicts, one event", MediaImportRequest(MediaItem.Provider("depicts"), dryRun = MediaImportRequest.DryRun(false), event = Some(Event.Id("battle_of_kadesh"))))
-    run("met, one place", MediaImportRequest(MediaItem.Provider("met"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_570491"))))
-    run("cleveland, one place", MediaImportRequest(MediaItem.Provider("cleveland"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("geonames_146669"))))
-    run("aic, one place", MediaImportRequest(MediaItem.Provider("aic"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("geonames_146669"))))
-    run("loc, one place", MediaImportRequest(MediaItem.Provider("loc"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_570491"))))
-    run("pleiades, one place", MediaImportRequest(MediaItem.Provider("pleiades"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_757208100"))))
-    run("opencontext, one place", MediaImportRequest(MediaItem.Provider("opencontext"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_697725"))))
-    run("smithsonian, one place", MediaImportRequest(MediaItem.Provider("smithsonian"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("geonames_357994"))))
-    run("europeana, one place", MediaImportRequest(MediaItem.Provider("europeana"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_570491"))))
+    run(
+      "wikidata, one place",
+      MediaImportRequest(
+        MediaItem.Provider("wikidata"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_570491"))
+      )
+    )
+    run(
+      "wikidata, one event",
+      MediaImportRequest(
+        MediaItem.Provider("wikidata"),
+        dryRun = MediaImportRequest.DryRun(false),
+        event = Some(Event.Id("fall_of_x"))
+      )
+    )
+    run(
+      "depicts, one event",
+      MediaImportRequest(
+        MediaItem.Provider("depicts"),
+        dryRun = MediaImportRequest.DryRun(false),
+        event = Some(Event.Id("battle_of_kadesh"))
+      )
+    )
+    run(
+      "met, one place",
+      MediaImportRequest(
+        MediaItem.Provider("met"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_570491"))
+      )
+    )
+    run(
+      "cleveland, one place",
+      MediaImportRequest(
+        MediaItem.Provider("cleveland"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("geonames_146669"))
+      )
+    )
+    run(
+      "aic, one place",
+      MediaImportRequest(
+        MediaItem.Provider("aic"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("geonames_146669"))
+      )
+    )
+    run(
+      "loc, one place",
+      MediaImportRequest(
+        MediaItem.Provider("loc"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_570491"))
+      )
+    )
+    run(
+      "pleiades, one place",
+      MediaImportRequest(
+        MediaItem.Provider("pleiades"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_757208100"))
+      )
+    )
+    run(
+      "opencontext, one place",
+      MediaImportRequest(
+        MediaItem.Provider("opencontext"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_697725"))
+      )
+    )
+    run(
+      "smithsonian, one place",
+      MediaImportRequest(
+        MediaItem.Provider("smithsonian"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("geonames_357994"))
+      )
+    )
+    run(
+      "europeana, one place",
+      MediaImportRequest(
+        MediaItem.Provider("europeana"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_570491"))
+      )
+    )
 
     run(
       "wikidata, one place again, --refresh",
-      MediaImportRequest(MediaItem.Provider("wikidata"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_570491")), refresh = MediaImportRequest.Refresh(true))
+      MediaImportRequest(
+        MediaItem.Provider("wikidata"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_570491")),
+        refresh = MediaImportRequest.Refresh(true)
+      )
     )
     run(
       "met, one place again, --refresh",
-      MediaImportRequest(MediaItem.Provider("met"), dryRun = MediaImportRequest.DryRun(false), place = Some(Place.Id("pleiades_570491")), refresh = MediaImportRequest.Refresh(true))
+      MediaImportRequest(
+        MediaItem.Provider("met"),
+        dryRun = MediaImportRequest.DryRun(false),
+        place = Some(Place.Id("pleiades_570491")),
+        refresh = MediaImportRequest.Refresh(true)
+      )
     )
 
     all.foreach(p => job(p, MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(false))))
 
     // the names an import is refused under
     run("an unknown provider", MediaImportRequest(MediaItem.Provider("rijks")))
-    run("an alias", MediaImportRequest(MediaItem.Provider("commons"), dryRun = MediaImportRequest.DryRun(true), limit = Some(MediaImportRequest.Limit(2))))
-    run("a collection asked about an event", MediaImportRequest(MediaItem.Provider("met"), event = Some(Event.Id("fall_of_x"))))
+    run(
+      "an alias",
+      MediaImportRequest(
+        MediaItem.Provider("commons"),
+        dryRun = MediaImportRequest.DryRun(true),
+        limit = Some(MediaImportRequest.Limit(2))
+      )
+    )
+    run(
+      "a collection asked about an event",
+      MediaImportRequest(MediaItem.Provider("met"), event = Some(Event.Id("fall_of_x")))
+    )
     val off = load(
       """histmersion.plugins.media-cleveland.enabled = false
         |histmersion.media.met.enabled = false
@@ -128,7 +234,16 @@ class MediaTrafficSuite extends DbSuite:
     )
     val offHandlers =
       MediaWiring(
-        Deps(off.config, ds, ds, plugins = ServerPlugins.load(off, transport = _ => wire, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))),
+        Deps(
+          off.config,
+          ds,
+          ds,
+          plugins = ServerPlugins.load(
+            off,
+            transport = _ => wire,
+            core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
+          )
+        ),
         wire,
         MediaWire.Thumbs()
       )

@@ -70,7 +70,17 @@ object CarriedKind:
   def owned[A: Encoder.AsObject](owner: DataOwner, entry: BundleEntry, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> List[A]
   )(clock: A => Option[OwnedClock], set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
-    Lines(owner, entry, None, None, steps, lines, a => BundleFormat.line(a), a => clock(a).map(c => CarriedOut.AsOf(c.value)), set)
+    Lines(
+      owner,
+      entry,
+      None,
+      None,
+      steps,
+      lines,
+      a => BundleFormat.line(a),
+      a => clock(a).map(c => CarriedOut.AsOf(c.value)),
+      set
+    )
 
   final private class Lines[A](
       val owner: DataOwner,

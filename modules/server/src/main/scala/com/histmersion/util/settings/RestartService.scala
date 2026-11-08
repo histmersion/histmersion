@@ -22,8 +22,9 @@ object RestartService:
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
 
-
-  val Started: Summary = Summary("The server is restarting. It is back in a few seconds; this page reconnects by itself.")
+  val Started: Summary = Summary(
+    "The server is restarting. It is back in a few seconds; this page reconnects by itself."
+  )
   val NotHere: Problem =
     Problem(
       "This server was not started by a service that starts it again, so it cannot restart itself. " +
@@ -36,7 +37,6 @@ object RestartService:
   final private class Implementation(stop: Option[() => Unit]) extends RestartService:
     def available: Boolean = stop.isDefined
     def restart(): Either[Problem, Summary] = stop.toRight(NotHere).map { s => s(); Started }
-
 
   /** Counts the restarts asked for instead of ending anything. */
   final class InMemory(val available: Boolean) extends RestartService:

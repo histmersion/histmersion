@@ -35,13 +35,40 @@ class ReviewLedgerSuite extends munit.FunSuite:
     Finding(id, r, sev, kind, where, quote, problem, Finding.Fix("fix it"))
 
   private val tinMajor =
-    f(Finding.Id("R1"), Reviewer.Rules, Severity.Major, Finding.Where("Intro"), Finding.Problem("tin is not defined"), Finding.Quote("Tin reached the Aegean"))
+    f(
+      Finding.Id("R1"),
+      Reviewer.Rules,
+      Severity.Major,
+      Finding.Where("Intro"),
+      Finding.Problem("tin is not defined"),
+      Finding.Quote("Tin reached the Aegean")
+    )
   private val dateMajor =
-    f(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Where("Disagreements"), Finding.Problem("the date has no support"), Finding.Quote("The date is argued"), Finding.Kind("date"))
+    f(
+      Finding.Id("S1"),
+      Reviewer.Skeptic,
+      Severity.Major,
+      Finding.Where("Disagreements"),
+      Finding.Problem("the date has no support"),
+      Finding.Quote("The date is argued"),
+      Finding.Kind("date")
+    )
   private val readerMin =
-    f(Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor, Finding.Where("Open questions"), Finding.Problem("opaque sentence"), Finding.Quote("Where the tin was mined"))
+    f(
+      Finding.Id("C1"),
+      Reviewer.ColdReader,
+      Severity.Minor,
+      Finding.Where("Open questions"),
+      Finding.Problem("opaque sentence"),
+      Finding.Quote("Where the tin was mined")
+    )
 
-  private def fresh: Ledger = absorb(Ledger(ReviewLedger.Ledger.Slug("tin")), List(tinMajor, dateMajor, readerMin), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Round(1))._1
+  private def fresh: Ledger = absorb(
+    Ledger(ReviewLedger.Ledger.Slug("tin")),
+    List(tinMajor, dateMajor, readerMin),
+    Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+    ReviewLedger.Closure.Round(1)
+  )._1
 
   test("absorb: new findings get ledger ids per reviewer; the same one again keeps its id"):
     val l = fresh
@@ -50,9 +77,24 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(("R1", Status.Open, 1), ("S1", Status.Open, 1), ("C1", Status.Open, 1))
     )
     // pass 2 numbers its findings from 1 again: the ledger maps them
-    val again = f(Finding.Id("R1"), Reviewer.Rules, Severity.Major, Finding.Where("Intro"), Finding.Problem("tin is still not defined"), Finding.Quote("Tin reached the Aegean"))
-    val other = f(Finding.Id("R2"), Reviewer.Rules, Severity.Minor, Finding.Where("Summary"), Finding.Problem("a filler phrase"), Finding.Quote("it is worth noting"))
-    val (l2, ids) = absorb(l, List(other, again), Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.Closure.Round(2))
+    val again = f(
+      Finding.Id("R1"),
+      Reviewer.Rules,
+      Severity.Major,
+      Finding.Where("Intro"),
+      Finding.Problem("tin is still not defined"),
+      Finding.Quote("Tin reached the Aegean")
+    )
+    val other = f(
+      Finding.Id("R2"),
+      Reviewer.Rules,
+      Severity.Minor,
+      Finding.Where("Summary"),
+      Finding.Problem("a filler phrase"),
+      Finding.Quote("it is worth noting")
+    )
+    val (l2, ids) =
+      absorb(l, List(other, again), Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.Closure.Round(2))
     assertEquals(ids.map(_.id), List("R2", "R1"))
     assertEquals(l2.entries.size, 4)
     assertEquals(l2.entry(Finding.Id("R1")).map(_.finding.problem), Some("tin is still not defined"))
@@ -60,10 +102,39 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(nextId(l2, Reviewer.Mechanical), "M1")
 
   test("same: one reviewer only; the quoted passage, or the same where with a similar problem"):
-    assert(same(tinMajor, tinMajor.modify(_.quote).setTo(Finding.Quote("Tin reached the Aegean by sea, in ingots")).modify(_.problem).setTo(Finding.Problem("x"))))
-    assert(same(tinMajor, tinMajor.modify(_.quote).setTo(Finding.Quote("")).modify(_.problem).setTo(Finding.Problem("tin is not defined at all"))))
+    assert(
+      same(
+        tinMajor,
+        tinMajor
+          .modify(_.quote)
+          .setTo(Finding.Quote("Tin reached the Aegean by sea, in ingots"))
+          .modify(_.problem)
+          .setTo(Finding.Problem("x"))
+      )
+    )
+    assert(
+      same(
+        tinMajor,
+        tinMajor
+          .modify(_.quote)
+          .setTo(Finding.Quote(""))
+          .modify(_.problem)
+          .setTo(Finding.Problem("tin is not defined at all"))
+      )
+    )
     assert(!same(tinMajor, tinMajor.modify(_.reviewer).setTo(Reviewer.Skeptic)))
-    assert(!same(tinMajor, tinMajor.modify(_.quote).setTo(Finding.Quote("")).modify(_.where).setTo(Finding.Where("Summary")).modify(_.problem).setTo(Finding.Problem("a number lacks its unit"))))
+    assert(
+      !same(
+        tinMajor,
+        tinMajor
+          .modify(_.quote)
+          .setTo(Finding.Quote(""))
+          .modify(_.where)
+          .setTo(Finding.Where("Summary"))
+          .modify(_.problem)
+          .setTo(Finding.Problem("a number lacks its unit"))
+      )
+    )
     // mechanical: same kind, place, problem up to the colon and quote — a coverage count may change
     val cov = f(
       Finding.Id("M1"),
@@ -77,26 +148,79 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assert(
       same(
         cov,
-        cov.modify(_.id).setTo(Finding.Id("M4")).modify(_.problem).setTo(Finding.Problem("3 sources the filter returns are neither cited nor given a reason: [[b]]"))
+        cov
+          .modify(_.id)
+          .setTo(Finding.Id("M4"))
+          .modify(_.problem)
+          .setTo(Finding.Problem("3 sources the filter returns are neither cited nor given a reason: [[b]]"))
       )
     )
     assert(!same(cov, cov.modify(_.kind).setTo(Finding.Kind("citation"))))
 
   test("transitions: claimed by the fixer, then fixed by its reviewer; not fixed carries the note"):
-    val fixed = Fix(ReviewArticle.Fix.Body("body"), Nil, List(Finding.Id("R1"), Finding.Id("S1")), Nil, Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1))
-    val l = applyFix(fresh, fixed, ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyFixRound(1))
+    val fixed = Fix(
+      ReviewArticle.Fix.Body("body"),
+      Nil,
+      List(Finding.Id("R1"), Finding.Id("S1")),
+      Nil,
+      Nil,
+      Nil,
+      ReviewArticle.Fix.Notes(""),
+      ReviewArticle.Fix.WordsBefore(1),
+      ReviewArticle.Fix.WordsAfter(1)
+    )
+    val l = applyFix(
+      fresh,
+      fixed,
+      ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.ApplyFixRound(1)
+    )
     assertEquals(l.claimed(Reviewer.Rules).map(_.id), List("R1"))
     assertEquals(l.claimed(Reviewer.Skeptic).map(_.id), List("S1"))
     val checked =
-      applyChecks(l, Reviewer.Rules, List(Check(ReviewArticle.Check.Id("R1"), fixed = ReviewArticle.Check.Fixed(true), ReviewArticle.Check.Quote("Tin, a metal"), ReviewArticle.Check.Note("defined now"))), ReviewLedger.ApplyChecksRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyChecksRound(2))
+      applyChecks(
+        l,
+        Reviewer.Rules,
+        List(
+          Check(
+            ReviewArticle.Check.Id("R1"),
+            fixed = ReviewArticle.Check.Fixed(true),
+            ReviewArticle.Check.Quote("Tin, a metal"),
+            ReviewArticle.Check.Note("defined now")
+          )
+        ),
+        ReviewLedger.ApplyChecksRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+        ReviewLedger.ApplyChecksRound(2)
+      )
     assertEquals(
       checked.entry(Finding.Id("R1")).map(e => (e.status, e.claimed, e.closed)),
-      Some((Status.Fixed, false, Some(Closure(ReviewLedger.Closure.By("rules"), ReviewLedger.Closure.Round(2), ReviewLedger.Closure.Run("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Note("defined now"), ReviewLedger.Closure.Quote("Tin, a metal")))))
+      Some(
+        (
+          Status.Fixed,
+          false,
+          Some(
+            Closure(
+              ReviewLedger.Closure.By("rules"),
+              ReviewLedger.Closure.Round(2),
+              ReviewLedger.Closure.Run("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+              ReviewLedger.Closure.Note("defined now"),
+              ReviewLedger.Closure.Quote("Tin, a metal")
+            )
+          )
+        )
+      )
     )
     val notYet = applyChecks(
       checked,
       Reviewer.Skeptic,
-      List(Check(ReviewArticle.Check.Id("S1"), fixed = ReviewArticle.Check.Fixed(false), ReviewArticle.Check.Quote("The date is argued"), ReviewArticle.Check.Note("still no year"))),
+      List(
+        Check(
+          ReviewArticle.Check.Id("S1"),
+          fixed = ReviewArticle.Check.Fixed(false),
+          ReviewArticle.Check.Quote("The date is argued"),
+          ReviewArticle.Check.Note("still no year")
+        )
+      ),
       ReviewLedger.ApplyChecksRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyChecksRound(2)
     )
@@ -106,7 +230,20 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assertEquals(notes(notYet), Map("S1" -> "not fixed yet — still no year"))
     // a reviewer cannot close another's finding, nor a closed one
-    val foreign = applyChecks(notYet, Reviewer.Rules, List(Check(ReviewArticle.Check.Id("S1"), fixed = ReviewArticle.Check.Fixed(true), ReviewArticle.Check.Quote("x"), ReviewArticle.Check.Note(""))), ReviewLedger.ApplyChecksRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyChecksRound(2))
+    val foreign = applyChecks(
+      notYet,
+      Reviewer.Rules,
+      List(
+        Check(
+          ReviewArticle.Check.Id("S1"),
+          fixed = ReviewArticle.Check.Fixed(true),
+          ReviewArticle.Check.Quote("x"),
+          ReviewArticle.Check.Note("")
+        )
+      ),
+      ReviewLedger.ApplyChecksRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.ApplyChecksRound(2)
+    )
     assertEquals(foreign.entry(Finding.Id("S1")).map(_.status), Some(Status.Open))
     assertEquals(notYet.verdict, Verdict.Major)
 
@@ -117,15 +254,34 @@ class ReviewLedgerSuite extends munit.FunSuite:
       ReviewArticle.Fix.Body("body"),
       Nil,
       Nil,
-      List(Rejection(ReviewArticle.Rejection.Id("S1"), ReviewArticle.Rejection.Reason("the record dates it"), Citekey("ck2019"), ReviewArticle.Rejection.Quote("Its cargo dates to 1320 BCE."), ReviewArticle.Rejection.Ratio(1.0))),
+      List(
+        Rejection(
+          ReviewArticle.Rejection.Id("S1"),
+          ReviewArticle.Rejection.Reason("the record dates it"),
+          Citekey("ck2019"),
+          ReviewArticle.Rejection.Quote("Its cargo dates to 1320 BCE."),
+          ReviewArticle.Rejection.Ratio(1.0)
+        )
+      ),
       Nil,
       Nil,
       ReviewArticle.Fix.Notes(""),
       ReviewArticle.Fix.WordsBefore(1),
       ReviewArticle.Fix.WordsAfter(1),
-      wontFix = List(ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("defined in the glossary")), ReviewArticle.WontFix(ReviewArticle.WontFix.Id("R1"), ReviewArticle.WontFix.Reason("a major cannot be declined")))
+      wontFix = List(
+        ReviewArticle.WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("defined in the glossary")),
+        ReviewArticle.WontFix(
+          ReviewArticle.WontFix.Id("R1"),
+          ReviewArticle.WontFix.Reason("a major cannot be declined")
+        )
+      )
     )
-    val l = applyFix(fresh, fix, ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyFixRound(1))
+    val l = applyFix(
+      fresh,
+      fix,
+      ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.ApplyFixRound(1)
+    )
     assertEquals(
       l.entry(Finding.Id("S1")).map(e => (e.status, e.closed.flatMap(_.citekey), e.closed.map(_.quote))),
       Some((Status.Rejected, Some("ck2019"), Some("Its cargo dates to 1320 BCE.")))
@@ -139,15 +295,65 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("transitions: a fixed finding raised again is re-opened; a rejected one is re-opened and escalated"):
     val fixedAll =
-      applyFix(fresh, Fix(ReviewArticle.Fix.Body("b"), Nil, Nil, List(Rejection(ReviewArticle.Rejection.Id("S1"), ReviewArticle.Rejection.Reason("dated"), Citekey("ck"), ReviewArticle.Rejection.Quote("q"), ReviewArticle.Rejection.Ratio(1.0))), Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1)), ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyFixRound(1))
+      applyFix(
+        fresh,
+        Fix(
+          ReviewArticle.Fix.Body("b"),
+          Nil,
+          Nil,
+          List(
+            Rejection(
+              ReviewArticle.Rejection.Id("S1"),
+              ReviewArticle.Rejection.Reason("dated"),
+              Citekey("ck"),
+              ReviewArticle.Rejection.Quote("q"),
+              ReviewArticle.Rejection.Ratio(1.0)
+            )
+          ),
+          Nil,
+          Nil,
+          ReviewArticle.Fix.Notes(""),
+          ReviewArticle.Fix.WordsBefore(1),
+          ReviewArticle.Fix.WordsAfter(1)
+        ),
+        ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+        ReviewLedger.ApplyFixRound(1)
+      )
     val l = applyChecks(
-      applyFix(fixedAll, Fix(ReviewArticle.Fix.Body("b"), Nil, List(Finding.Id("R1")), Nil, Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1)), ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyFixRound(1)),
+      applyFix(
+        fixedAll,
+        Fix(
+          ReviewArticle.Fix.Body("b"),
+          Nil,
+          List(Finding.Id("R1")),
+          Nil,
+          Nil,
+          Nil,
+          ReviewArticle.Fix.Notes(""),
+          ReviewArticle.Fix.WordsBefore(1),
+          ReviewArticle.Fix.WordsAfter(1)
+        ),
+        ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+        ReviewLedger.ApplyFixRound(1)
+      ),
       Reviewer.Rules,
-      List(Check(ReviewArticle.Check.Id("R1"), fixed = ReviewArticle.Check.Fixed(true), ReviewArticle.Check.Quote("q"), ReviewArticle.Check.Note(""))),
+      List(
+        Check(
+          ReviewArticle.Check.Id("R1"),
+          fixed = ReviewArticle.Check.Fixed(true),
+          ReviewArticle.Check.Quote("q"),
+          ReviewArticle.Check.Note("")
+        )
+      ),
       ReviewLedger.ApplyChecksRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyChecksRound(2)
     )
-    val (back, ids) = absorb(l, List(tinMajor.modify(_.id).setTo(Finding.Id("R7")), dateMajor.modify(_.id).setTo(Finding.Id("S9"))), Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.Closure.Round(1))
+    val (back, ids) = absorb(
+      l,
+      List(tinMajor.modify(_.id).setTo(Finding.Id("R7")), dateMajor.modify(_.id).setTo(Finding.Id("S9"))),
+      Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"),
+      ReviewLedger.Closure.Round(1)
+    )
     assertEquals(ids.map(_.id), List("R1", "S1"))
     assertEquals(back.entry(Finding.Id("R1")).map(e => (e.status, e.reopened, e.closed)), Some((Status.Open, 1, None)))
     assert(back.entry(Finding.Id("R1")).flatMap(_.notFixed).exists(_.value.contains("raised again")))
@@ -155,10 +361,39 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assert(back.entry(Finding.Id("S1")).flatMap(_.notFixed).exists(_.value.contains("rejected before ([[ck]]): dated")))
     // a declined minor raised again stays declined; raised as MAJOR it opens
     val declined =
-      applyFix(fresh, Fix(ReviewArticle.Fix.Body("b"), Nil, Nil, Nil, Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1), wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("fine")))), ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyFixRound(1))
-    assertEquals(absorb(declined, List(readerMin), Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.Closure.Round(1))._1.entry(Finding.Id("C1")).map(_.status), Some(Status.WontFix))
+      applyFix(
+        fresh,
+        Fix(
+          ReviewArticle.Fix.Body("b"),
+          Nil,
+          Nil,
+          Nil,
+          Nil,
+          Nil,
+          ReviewArticle.Fix.Notes(""),
+          ReviewArticle.Fix.WordsBefore(1),
+          ReviewArticle.Fix.WordsAfter(1),
+          wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("fine")))
+        ),
+        ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+        ReviewLedger.ApplyFixRound(1)
+      )
     assertEquals(
-      absorb(declined, List(readerMin.modify(_.severity).setTo(Severity.Major)), Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.Closure.Round(1))._1.entry(Finding.Id("C1")).map(_.status),
+      absorb(
+        declined,
+        List(readerMin),
+        Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"),
+        ReviewLedger.Closure.Round(1)
+      )._1.entry(Finding.Id("C1")).map(_.status),
+      Some(Status.WontFix)
+    )
+    assertEquals(
+      absorb(
+        declined,
+        List(readerMin.modify(_.severity).setTo(Severity.Major)),
+        Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"),
+        ReviewLedger.Closure.Round(1)
+      )._1.entry(Finding.Id("C1")).map(_.status),
       Some(Status.Open)
     )
 
@@ -173,18 +408,51 @@ class ReviewLedgerSuite extends munit.FunSuite:
       Finding.Kind("citation")
     )
     val filler =
-      f(Finding.Id("M2"), Reviewer.Mechanical, Severity.Minor, Finding.Where("body"), Finding.Problem("banned filler — it is worth noting"), Finding.Quote(""), Finding.Kind("language"))
-    val l0 = absorb(Ledger(ReviewLedger.Ledger.Slug("tin")), List(uncited, filler), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Round(1))._1
-    val dup = f(Finding.Id("M1"), Reviewer.Mechanical, Severity.Minor, Finding.Where("Summary"), Finding.Problem("a duplicated heading"), Finding.Quote("## Summary"), Finding.Kind("section"))
-    val (l1, _) = recheckMechanical(l0, List(filler.modify(_.id).setTo(Finding.Id("M1")), dup.modify(_.id).setTo(Finding.Id("M2"))), ReviewLedger.RecheckMechanicalRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.RecheckMechanicalRound(2))
+      f(
+        Finding.Id("M2"),
+        Reviewer.Mechanical,
+        Severity.Minor,
+        Finding.Where("body"),
+        Finding.Problem("banned filler — it is worth noting"),
+        Finding.Quote(""),
+        Finding.Kind("language")
+      )
+    val l0 = absorb(
+      Ledger(ReviewLedger.Ledger.Slug("tin")),
+      List(uncited, filler),
+      Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.Closure.Round(1)
+    )._1
+    val dup = f(
+      Finding.Id("M1"),
+      Reviewer.Mechanical,
+      Severity.Minor,
+      Finding.Where("Summary"),
+      Finding.Problem("a duplicated heading"),
+      Finding.Quote("## Summary"),
+      Finding.Kind("section")
+    )
+    val (l1, _) = recheckMechanical(
+      l0,
+      List(filler.modify(_.id).setTo(Finding.Id("M1")), dup.modify(_.id).setTo(Finding.Id("M2"))),
+      ReviewLedger.RecheckMechanicalRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.RecheckMechanicalRound(2)
+    )
     assertEquals(
       l1.entries.map(e => (e.id, e.status, e.closed.map(_.by))),
       List(("M1", Status.Fixed, Some("mechanical")), ("M2", Status.Open, None), ("M3", Status.Open, None))
     )
 
   test("the term count: a MAJOR count stored by an earlier run is superseded by the pass's minor one, under its id"):
-    val legacy = f(Finding.Id("C2"), Reviewer.ColdReader, Severity.Major, Finding.Where("explain-back"), Finding.Problem("27 terms are undefined (more than 8)"))
-    val stored = absorb(fresh, List(legacy), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Round(1))._1
+    val legacy = f(
+      Finding.Id("C2"),
+      Reviewer.ColdReader,
+      Severity.Major,
+      Finding.Where("explain-back"),
+      Finding.Problem("27 terms are undefined (more than 8)")
+    )
+    val stored =
+      absorb(fresh, List(legacy), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Round(1))._1
     assertEquals(stored.openMajors.map(_.id), List("R1", "S1", "C2"))
     // the next full pass: the reader counts 12 — a different count and wording, the same finding
     val count = Finding(
@@ -199,7 +467,17 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assert(same(legacy, count))
     assert(!same(readerMin, count))
-    val (l, ids) = absorb(recheckTermCount(stored, List(count), ReviewLedger.RecheckTermCountRun("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.RecheckTermCountRound(1)), List(count), Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.Closure.Round(1))
+    val (l, ids) = absorb(
+      recheckTermCount(
+        stored,
+        List(count),
+        ReviewLedger.RecheckTermCountRun("53df4857-3ea7-7141-2c78-e3a48bf0b437"),
+        ReviewLedger.RecheckTermCountRound(1)
+      ),
+      List(count),
+      Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"),
+      ReviewLedger.Closure.Round(1)
+    )
     assertEquals(ids.map(_.id), List("C2"))
     assertEquals(l.entries.size, stored.entries.size)
     assertEquals(
@@ -208,14 +486,27 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assertEquals(l.openMajors.map(_.id), List("R1", "S1"))
     // with the other MAJORs fixed, the count alone leaves the article MINOR
-    val onlyCount = l.modify(_.entries).setTo(l.entries.filter(e => e.id == Finding.Id("C2") || e.id == Finding.Id("C1")))
+    val onlyCount =
+      l.modify(_.entries).setTo(l.entries.filter(e => e.id == Finding.Id("C2") || e.id == Finding.Id("C1")))
     assertEquals(onlyCount.verdict, Verdict.Minor)
     assertEquals(taskText(onlyCount, Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437")), None)
 
   test("the term count: a pass that does not raise it again (8 or fewer) closes it; a declined one stays declined"):
-    val legacy = f(Finding.Id("C2"), Reviewer.ColdReader, Severity.Major, Finding.Where("explain-back"), Finding.Problem("27 terms are undefined (more than 8)"))
-    val stored = absorb(fresh, List(legacy), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Round(1))._1
-    val closed = recheckTermCount(stored, List(readerMin), ReviewLedger.RecheckTermCountRun("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.RecheckTermCountRound(3))
+    val legacy = f(
+      Finding.Id("C2"),
+      Reviewer.ColdReader,
+      Severity.Major,
+      Finding.Where("explain-back"),
+      Finding.Problem("27 terms are undefined (more than 8)")
+    )
+    val stored =
+      absorb(fresh, List(legacy), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Round(1))._1
+    val closed = recheckTermCount(
+      stored,
+      List(readerMin),
+      ReviewLedger.RecheckTermCountRun("53df4857-3ea7-7141-2c78-e3a48bf0b437"),
+      ReviewLedger.RecheckTermCountRound(3)
+    )
     assertEquals(
       closed.entry(Finding.Id("C2")).map(e => (e.status, e.closed.map(c => (c.by, c.round)))),
       Some((Status.Fixed, Some(("mechanical", 3))))
@@ -232,42 +523,118 @@ class ReviewLedgerSuite extends munit.FunSuite:
       TermCount.problem(ReviewArticle.ColdReaderAnswer.TermsUndefined(10)),
       TermCount.Fix
     )
-    val minor = absorb(Ledger(ReviewLedger.Ledger.Slug("tin")), List(count), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.Closure.Round(1))._1
+    val minor = absorb(
+      Ledger(ReviewLedger.Ledger.Slug("tin")),
+      List(count),
+      Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.Closure.Round(1)
+    )._1
     val declined = applyFix(
       minor,
-      Fix(ReviewArticle.Fix.Body("body"), Nil, Nil, Nil, Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1), wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("names, not terms")))),
+      Fix(
+        ReviewArticle.Fix.Body("body"),
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        ReviewArticle.Fix.Notes(""),
+        ReviewArticle.Fix.WordsBefore(1),
+        ReviewArticle.Fix.WordsAfter(1),
+        wontFix = List(WontFix(ReviewArticle.WontFix.Id("C1"), ReviewArticle.WontFix.Reason("names, not terms")))
+      ),
       ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyFixRound(1)
     )
     assertEquals(declined.entry(Finding.Id("C1")).map(_.status), Some(Status.WontFix))
     assertEquals(
-      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(ReviewArticle.ColdReaderAnswer.TermsUndefined(11)))), Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"), ReviewLedger.Closure.Round(1))._1.entry(Finding.Id("C1")).map(_.status),
+      absorb(
+        declined,
+        List(count.modify(_.problem).setTo(TermCount.problem(ReviewArticle.ColdReaderAnswer.TermsUndefined(11)))),
+        Run.Id("53df4857-3ea7-7141-2c78-e3a48bf0b437"),
+        ReviewLedger.Closure.Round(1)
+      )._1.entry(Finding.Id("C1")).map(_.status),
       Some(Status.WontFix)
     )
 
   test("lessons: trimmed, never twice, the newest 15 kept"):
     val l = learn(
       Ledger(ReviewLedger.Ledger.Slug("tin")),
-      List(ReviewArticle.Recheck.Lessons("  every date needs  its [[citekey]] "), ReviewArticle.Recheck.Lessons(""), ReviewArticle.Recheck.Lessons("Every date needs its [[citekey]]")),
+      List(
+        ReviewArticle.Recheck.Lessons("  every date needs  its [[citekey]] "),
+        ReviewArticle.Recheck.Lessons(""),
+        ReviewArticle.Recheck.Lessons("Every date needs its [[citekey]]")
+      ),
       LessonSource.Recheck,
       ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
       ReviewLedger.LearnRound(2)
     )
     assertEquals(l.lessons.map(_.text), List("every date needs its [[citekey]]"))
-    val many = learn(l, (1 to 20).map(i => ReviewArticle.Recheck.Lessons(s"lesson $i")).toList, LessonSource.Recheck, ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.LearnRound(3))
+    val many = learn(
+      l,
+      (1 to 20).map(i => ReviewArticle.Recheck.Lessons(s"lesson $i")).toList,
+      LessonSource.Recheck,
+      ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+      ReviewLedger.LearnRound(3)
+    )
     assertEquals(many.lessons.size, MaxLessons)
     assertEquals(many.lessons.last.text, "lesson 20")
-    assertEquals(learn(l, List(ReviewArticle.Recheck.Lessons("x" * 500)), LessonSource.Recheck, ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.LearnRound(3)).lessons.last.text.value.length, LessonChars)
+    assertEquals(
+      learn(
+        l,
+        List(ReviewArticle.Recheck.Lessons("x" * 500)),
+        LessonSource.Recheck,
+        ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+        ReviewLedger.LearnRound(3)
+      ).lessons.last.text.value.length,
+      LessonChars
+    )
 
   test("a verification pass applies checks, absorbs its findings and keeps its lessons"):
-    val l = applyFix(fresh, Fix(ReviewArticle.Fix.Body("b"), Nil, List(Finding.Id("S1")), Nil, Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1)), ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyFixRound(1))
+    val l = applyFix(
+      fresh,
+      Fix(
+        ReviewArticle.Fix.Body("b"),
+        Nil,
+        List(Finding.Id("S1")),
+        Nil,
+        Nil,
+        Nil,
+        ReviewArticle.Fix.Notes(""),
+        ReviewArticle.Fix.WordsBefore(1),
+        ReviewArticle.Fix.WordsAfter(1)
+      ),
+      ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.ApplyFixRound(1)
+    )
     val rc = Recheck(
       Reviewer.Skeptic,
-      List(Check(ReviewArticle.Check.Id("S1"), fixed = ReviewArticle.Check.Fixed(true), ReviewArticle.Check.Quote("1320 BCE"), ReviewArticle.Check.Note(""))),
-      List(f(Finding.Id("S1"), Reviewer.Skeptic, Severity.Minor, Finding.Where("Open questions"), Finding.Problem("a source is missing"), Finding.Quote("Where the tin"))),
+      List(
+        Check(
+          ReviewArticle.Check.Id("S1"),
+          fixed = ReviewArticle.Check.Fixed(true),
+          ReviewArticle.Check.Quote("1320 BCE"),
+          ReviewArticle.Check.Note("")
+        )
+      ),
+      List(
+        f(
+          Finding.Id("S1"),
+          Reviewer.Skeptic,
+          Severity.Minor,
+          Finding.Where("Open questions"),
+          Finding.Problem("a source is missing"),
+          Finding.Quote("Where the tin")
+        )
+      ),
       List(ReviewArticle.Recheck.Lessons("cite the year"))
     )
-    val after = applyRecheck(l, rc, ReviewLedger.ApplyRecheckRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), ReviewLedger.ApplyRecheckRound(2))
+    val after = applyRecheck(
+      l,
+      rc,
+      ReviewLedger.ApplyRecheckRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+      ReviewLedger.ApplyRecheckRound(2)
+    )
     assertEquals(
       after.entries.map(e => (e.id, e.status)),
       List(("R1", Status.Open), ("S1", Status.Fixed), ("C1", Status.Open), ("S2", Status.Open))
@@ -276,9 +643,31 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("merged: the open findings in reviewer order, under ledger ids, with their verdict"):
     val l = applyChecks(
-      applyFix(fresh, Fix(ReviewArticle.Fix.Body("b"), Nil, List(Finding.Id("R1")), Nil, Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1)), ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(1)),
+      applyFix(
+        fresh,
+        Fix(
+          ReviewArticle.Fix.Body("b"),
+          Nil,
+          List(Finding.Id("R1")),
+          Nil,
+          Nil,
+          Nil,
+          ReviewArticle.Fix.Notes(""),
+          ReviewArticle.Fix.WordsBefore(1),
+          ReviewArticle.Fix.WordsAfter(1)
+        ),
+        ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+        ReviewLedger.ApplyFixRound(1)
+      ),
       Reviewer.Rules,
-      List(Check(ReviewArticle.Check.Id("R1"), fixed = ReviewArticle.Check.Fixed(true), ReviewArticle.Check.Quote("q"), ReviewArticle.Check.Note(""))),
+      List(
+        Check(
+          ReviewArticle.Check.Id("R1"),
+          fixed = ReviewArticle.Check.Fixed(true),
+          ReviewArticle.Check.Quote("q"),
+          ReviewArticle.Check.Note("")
+        )
+      ),
       ReviewLedger.ApplyChecksRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
       ReviewLedger.ApplyChecksRound(2)
     )
@@ -290,9 +679,31 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(promptText(Ledger(ReviewLedger.Ledger.Slug("tin")), OpenStyle.Full, ReviewLedger.ClosedLimit(60)), "")
     val l = learn(
       applyChecks(
-        applyFix(fresh, Fix(ReviewArticle.Fix.Body("b"), Nil, List(Finding.Id("R1"), Finding.Id("S1")), Nil, Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1)), ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(1)),
+        applyFix(
+          fresh,
+          Fix(
+            ReviewArticle.Fix.Body("b"),
+            Nil,
+            List(Finding.Id("R1"), Finding.Id("S1")),
+            Nil,
+            Nil,
+            Nil,
+            ReviewArticle.Fix.Notes(""),
+            ReviewArticle.Fix.WordsBefore(1),
+            ReviewArticle.Fix.WordsAfter(1)
+          ),
+          ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+          ReviewLedger.ApplyFixRound(1)
+        ),
         Reviewer.Rules,
-        List(Check(ReviewArticle.Check.Id("R1"), fixed = ReviewArticle.Check.Fixed(true), ReviewArticle.Check.Quote("q"), ReviewArticle.Check.Note(""))),
+        List(
+          Check(
+            ReviewArticle.Check.Id("R1"),
+            fixed = ReviewArticle.Check.Fixed(true),
+            ReviewArticle.Check.Quote("q"),
+            ReviewArticle.Check.Note("")
+          )
+        ),
         ReviewLedger.ApplyChecksRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyChecksRound(2)
       ),
@@ -321,13 +732,22 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("editedPassages: the changed paragraphs with a paragraph of margin, under their heading; what was removed"):
     val before =
-      ReviewArticle.Fix.Body("Intro one.\n\n## Disagreements\n\nThe date is argued.\n\nA second point.\n\n## Open\n\nMines.\n\nLast.")
+      ReviewArticle.Fix.Body(
+        "Intro one.\n\n## Disagreements\n\nThe date is argued.\n\nA second point.\n\n## Open\n\nMines.\n\nLast."
+      )
     val after =
-      ReviewArticle.Fix.Body("Intro one.\n\n## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.\n\n## Open\n\nMines.\n\nLast.")
+      ReviewArticle.Fix.Body(
+        "Intro one.\n\n## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.\n\n## Open\n\nMines.\n\nLast."
+      )
     val e = editedPassages(before, after)
     assertEquals(
       e.passages,
-      List(Passage(Some(ReviewLedger.Passage.Heading("Disagreements")), ReviewLedger.Passage.Text("## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.")))
+      List(
+        Passage(
+          Some(ReviewLedger.Passage.Heading("Disagreements")),
+          ReviewLedger.Passage.Text("## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.")
+        )
+      )
     )
     assertEquals(e.removed, List("The date is argued."))
     assert(
@@ -340,11 +760,37 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(two.passages.size, 2)
     assertEquals(editedPassages(before, ReviewArticle.Fix.Body(before.value + "\n\nAdded.")).removed, Nil)
     assert(editedPassages(before, before).isEmpty)
-    assertEquals(editedPassages(before, after, margin = ReviewLedger.PassageMargin(0)).passages.map(_.text), List("The cargo dates to 1320 BCE."))
+    assertEquals(
+      editedPassages(before, after, margin = ReviewLedger.PassageMargin(0)).passages.map(_.text),
+      List("The cargo dates to 1320 BCE.")
+    )
 
   test("taskText (#934): one line per article listing its open MAJORs, cut to size; none when none is open"):
     val esc = absorb(
-      applyFix(fresh, Fix(ReviewArticle.Fix.Body("b"), Nil, Nil, List(Rejection(ReviewArticle.Rejection.Id("S1"), ReviewArticle.Rejection.Reason("dated"), Citekey("ck"), ReviewArticle.Rejection.Quote("q"), ReviewArticle.Rejection.Ratio(1.0))), Nil, Nil, ReviewArticle.Fix.Notes(""), ReviewArticle.Fix.WordsBefore(1), ReviewArticle.Fix.WordsAfter(1)), ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(1)),
+      applyFix(
+        fresh,
+        Fix(
+          ReviewArticle.Fix.Body("b"),
+          Nil,
+          Nil,
+          List(
+            Rejection(
+              ReviewArticle.Rejection.Id("S1"),
+              ReviewArticle.Rejection.Reason("dated"),
+              Citekey("ck"),
+              ReviewArticle.Rejection.Quote("q"),
+              ReviewArticle.Rejection.Ratio(1.0)
+            )
+          ),
+          Nil,
+          Nil,
+          ReviewArticle.Fix.Notes(""),
+          ReviewArticle.Fix.WordsBefore(1),
+          ReviewArticle.Fix.WordsAfter(1)
+        ),
+        ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+        ReviewLedger.ApplyFixRound(1)
+      ),
       List(dateMajor),
       Run.Id("d2791864-28a7-5016-b17e-4df5ea43d080"),
       ReviewLedger.Closure.Round(1)
@@ -357,30 +803,63 @@ class ReviewLedgerSuite extends munit.FunSuite:
       )
     )
     val one = esc.modify(_.entries).setTo(esc.entries.filterNot(_.id == Finding.Id("S1")))
-    assert(taskText(one, Run.Id("abcdef01-93ac-ef8b-cd70-71607816bfcb")).exists(_.value.contains(": 1 open MAJOR — R1 (Intro)")))
-    assertEquals(taskText(fresh.copy(entries = fresh.entries.filterNot(_.major)), Run.Id("9dd4e461-268c-8034-f5c8-564e155c67a6")), None)
+    assert(
+      taskText(one, Run.Id("abcdef01-93ac-ef8b-cd70-71607816bfcb"))
+        .exists(_.value.contains(": 1 open MAJOR — R1 (Intro)"))
+    )
+    assertEquals(
+      taskText(fresh.copy(entries = fresh.entries.filterNot(_.major)), Run.Id("9dd4e461-268c-8034-f5c8-564e155c67a6")),
+      None
+    )
     val long = absorb(
       Ledger(ReviewLedger.Ledger.Slug("tin")),
-      (1 to 40).toList.map(i => f(Finding.Id(s"R$i"), Reviewer.Rules, Severity.Major, Finding.Where(s"Section $i"), Finding.Problem(s"problem number $i " * 5))),
+      (1 to 40).toList.map(i =>
+        f(
+          Finding.Id(s"R$i"),
+          Reviewer.Rules,
+          Severity.Major,
+          Finding.Where(s"Section $i"),
+          Finding.Problem(s"problem number $i " * 5)
+        )
+      ),
       Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
       ReviewLedger.Closure.Round(1)
     )._1
-    val t = taskText(long, Run.Id("abcdef01-93ac-ef8b-cd70-71607816bfcb"), maxChars = ReviewLedger.TaskTextLimit(300)).get
+    val t =
+      taskText(long, Run.Id("abcdef01-93ac-ef8b-cd70-71607816bfcb"), maxChars = ReviewLedger.TaskTextLimit(300)).get
     assert(t.value.length <= 300 && t.value.contains("…") && t.value.endsWith("(agent run abcdef01)"), t)
     assert(legacyTask(Slug("tin"), ReviewLedger.TaskText("review-article [[tin]]: MAJOR open — S1 major: x")))
-    assert(legacyTask(Slug("tin"), ReviewLedger.TaskText("review-article [[tin]]: MAJOR raised again after the fixer rejected it — S1")))
     assert(
-      !legacyTask(Slug("tin"), ReviewLedger.TaskText(t.value.replace("[[tin]]", "[[tin]]"))) && !legacyTask(Slug("tin2"), ReviewLedger.TaskText("review-article [[tin]]: MAJOR open"))
+      legacyTask(
+        Slug("tin"),
+        ReviewLedger.TaskText("review-article [[tin]]: MAJOR raised again after the fixer rejected it — S1")
+      )
+    )
+    assert(
+      !legacyTask(Slug("tin"), ReviewLedger.TaskText(t.value.replace("[[tin]]", "[[tin]]"))) && !legacyTask(
+        Slug("tin2"),
+        ReviewLedger.TaskText("review-article [[tin]]: MAJOR open")
+      )
     )
     // the collapsed item, as a run or the interactive skill writes it, is found again by its article
     assert(articleTask(ReviewLedger.ArticleTaskSlug("tin"), t))
-    assert(articleTask(ReviewLedger.ArticleTaskSlug("tin"), ReviewLedger.TaskText("review-article tin: 2 open MAJORs — R4 (Intro): x; S2: y")))
+    assert(
+      articleTask(
+        ReviewLedger.ArticleTaskSlug("tin"),
+        ReviewLedger.TaskText("review-article tin: 2 open MAJORs — R4 (Intro): x; S2: y")
+      )
+    )
     assert(!articleTask(ReviewLedger.ArticleTaskSlug("tin2"), t) && !articleTask(ReviewLedger.ArticleTaskSlug("ti"), t))
     assert(
-      !articleTask(ReviewLedger.ArticleTaskSlug("tin"), ReviewLedger.TaskText("review-article [[tin]]: MAJOR open — S1 major: x")),
+      !articleTask(
+        ReviewLedger.ArticleTaskSlug("tin"),
+        ReviewLedger.TaskText("review-article [[tin]]: MAJOR open — S1 major: x")
+      ),
       "a legacy item is closed, not reused"
     )
-    assert(!articleTask(ReviewLedger.ArticleTaskSlug("tin"), ReviewLedger.TaskText("compile-article [[tin]]: 2 open MAJORs")))
+    assert(
+      !articleTask(ReviewLedger.ArticleTaskSlug("tin"), ReviewLedger.TaskText("compile-article [[tin]]: 2 open MAJORs"))
+    )
 
   test("the ledger round-trips through JSON (what review_ledgers stores and a step checkpoints)"):
     val l = learn(
@@ -390,7 +869,15 @@ class ReviewLedgerSuite extends munit.FunSuite:
           ReviewArticle.Fix.Body("b"),
           Nil,
           List(Finding.Id("R1")),
-          List(Rejection(ReviewArticle.Rejection.Id("S1"), ReviewArticle.Rejection.Reason("dated"), Citekey("ck"), ReviewArticle.Rejection.Quote("q"), ReviewArticle.Rejection.Ratio(1.0))),
+          List(
+            Rejection(
+              ReviewArticle.Rejection.Id("S1"),
+              ReviewArticle.Rejection.Reason("dated"),
+              Citekey("ck"),
+              ReviewArticle.Rejection.Quote("q"),
+              ReviewArticle.Rejection.Ratio(1.0)
+            )
+          ),
           Nil,
           Nil,
           ReviewArticle.Fix.Notes(""),

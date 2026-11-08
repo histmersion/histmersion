@@ -69,7 +69,10 @@ object LabelPlacement:
   /** Pure: (lat, lon) → the zoom-0 Mercator plane. */
   def project(lat: Geo.Latitude, lon: Geo.Longitude): Pt =
     val phi = math.toRadians(math.max(-MaxLat, math.min(MaxLat, lat.value)))
-    Pt((lon.value + 180.0) / 360.0 * World, (1.0 - math.log(math.tan(phi) + 1.0 / math.cos(phi)) / math.Pi) / 2.0 * World)
+    Pt(
+      (lon.value + 180.0) / 360.0 * World,
+      (1.0 - math.log(math.tan(phi) + 1.0 / math.cos(phi)) / math.Pi) / 2.0 * World
+    )
 
   /** Pure: the inverse of [[project]] → (lat, lon). */
   def unproject(p: Pt): (Geo.Latitude, Geo.Longitude) =

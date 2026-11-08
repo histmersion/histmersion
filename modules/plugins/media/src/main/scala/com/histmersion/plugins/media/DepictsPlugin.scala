@@ -7,5 +7,7 @@ import com.histmersion.plugin.Registry
 final class DepictsPlugin extends MediaPlugin("media-depicts"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
-    ctx.mediaCollections.add(Registry.AddId("depicts"), Commons.Depictions(c.media, ctx.licences)).left.map(e => Plugin.RegisterResultPart1(e.value))
-
+    ctx.mediaCollections
+      .add(Registry.AddId("depicts"), Commons.Depictions(c.media, ctx.licences))
+      .left
+      .map(e => Plugin.RegisterResultPart1(e.value))

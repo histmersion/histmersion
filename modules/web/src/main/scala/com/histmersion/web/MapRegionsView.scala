@@ -87,7 +87,8 @@ object MapRegionsView:
                 job.set(Some(j))
                 if !j.isTerminal then poll(id, dry)
                 else
-                  if j.succeeded then dry.foreach(q => checked.set(Some(q.copy(dryRun = Basemap.FetchQuery.DryRun(false)))))
+                  if j.succeeded then
+                    dry.foreach(q => checked.set(Some(q.copy(dryRun = Basemap.FetchQuery.DryRun(false)))))
                   load()
               }
             )
@@ -102,7 +103,8 @@ object MapRegionsView:
   private val canDownload: Signal[Boolean] =
     checked.signal.combineWith(box.signal, content.signal, depth.signal, pick.signal, job.signal, Auth.writable).map {
       (ok, _, _, _, _, j, writable) =>
-        writable && !j.exists(!_.isTerminal) && ok.exists(q => current(dryRun = Basemap.FetchQuery.DryRun(false)).toOption.contains(q))
+        writable && !j.exists(!_.isTerminal) && ok
+          .exists(q => current(dryRun = Basemap.FetchQuery.DryRun(false)).toOption.contains(q))
     }
 
   private val busy: Signal[Boolean] = job.signal.map(_.exists(!_.isTerminal))
@@ -124,7 +126,9 @@ object MapRegionsView:
             "region",
             select(
               cls := "field map-region-pick",
-              children <-- status.signal.map(_.toList.flatMap(choices).map(c => option(value := c.id.value, c.label.value))),
+              children <-- status.signal.map(
+                _.toList.flatMap(choices).map(c => option(value := c.id.value, c.label.value))
+              ),
               // the options are made again when the status is read again: the choice is set again after them
               controlled(
                 value <-- status.signal.combineWith(pick.signal).map(_._2.value),
@@ -143,7 +147,9 @@ object MapRegionsView:
               placeholder := "minLon,minLat,maxLon,maxLat or world",
               controlled(
                 value <-- box.signal.map(_.value),
-                onInput.mapToValue --> { v => box.set(BBox.Text(v)); pick.set(RegionChoice.Id(OwnBox)); checked.set(None) }
+                onInput.mapToValue --> { v =>
+                  box.set(BBox.Text(v)); pick.set(RegionChoice.Id(OwnBox)); checked.set(None)
+                }
               )
             )
           )
@@ -170,7 +176,10 @@ object MapRegionsView:
               typ := "text",
               cls := "field map-region-zoom",
               placeholder := "as configured",
-              controlled(value <-- depth.signal.map(_.value), onInput.mapToValue --> { v => depth.set(ZoomText(v)); checked.set(None) })
+              controlled(
+                value <-- depth.signal.map(_.value),
+                onInput.mapToValue --> { v => depth.set(ZoomText(v)); checked.set(None) }
+              )
             )
           )
         ),
@@ -247,7 +256,10 @@ object MapRegionsView:
               cls := "btn btn--sm btn--danger map-region-remove-all",
               child.text <-- confirmAll.signal.map(c => if c then "remove everything — sure?" else "remove everything"),
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-              onClick --> (_ => if confirmAll.now() then remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("all"))) else confirmAll.set(true))
+              onClick --> (_ =>
+                if confirmAll.now() then remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("all")))
+                else confirmAll.set(true)
+              )
             )
           )
         )

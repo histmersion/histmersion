@@ -7,7 +7,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
   def key: ExternalId.Key = ExternalId.Key(s"${scheme.wire}:$id")
 
-  def placeId: ExternalId.PlaceId = ExternalId.PlaceId(s"${scheme.wire}_${(id).value.toLowerCase(java.util.Locale.ROOT)}")
+  def placeId: ExternalId.PlaceId =
+    ExternalId.PlaceId(s"${scheme.wire}_${(id).value.toLowerCase(java.util.Locale.ROOT)}")
 
 object ExternalId:
   type Key = Key.T
@@ -16,7 +17,6 @@ object ExternalId:
   object PlaceId extends Newtype[String, Pure]
   type Reference = Reference.T
   object Reference extends Newtype[String, Pure]
-
 
   type Id = Id.T
   object Id extends Newtype[String, Pure]

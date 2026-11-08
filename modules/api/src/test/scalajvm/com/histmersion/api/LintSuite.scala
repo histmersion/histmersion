@@ -34,7 +34,9 @@ class LintSuite extends munit.FunSuite:
 
   test("a subset is honoured, deduplicated, and blanks are ignored"):
     assertEquals(
-      Lint.select(List(Rule.Name("no-findings"), Rule.Name(" "), Rule.Name("no-findings"), Rule.Name("no-period"))).map(_.map(_.name)),
+      Lint
+        .select(List(Rule.Name("no-findings"), Rule.Name(" "), Rule.Name("no-findings"), Rule.Name("no-period")))
+        .map(_.map(_.name)),
       Right(List(NoFindings, NoPeriod))
     )
 
@@ -54,7 +56,10 @@ class LintSuite extends munit.FunSuite:
     assertEquals(Lint.suggest(Citekey("heggarty2023"), corpus, ItemLimit(3)), List("heggarty2023_language"))
 
   test("an ambiguous short citekey suggests all of them, shortest first"):
-    assertEquals(Lint.suggest(Citekey("knapp2016"), corpus, ItemLimit(3)), List("knapp2016_collapse", "knapp2016_seapeoples"))
+    assertEquals(
+      Lint.suggest(Citekey("knapp2016"), corpus, ItemLimit(3)),
+      List("knapp2016_collapse", "knapp2016_seapeoples")
+    )
 
   test("a typo suggests the key it shares a prefix with"):
     assertEquals(Lint.suggest(Citekey("anthony2015_ringes"), corpus, ItemLimit(1)), List("anthony2015_ringe"))
@@ -79,7 +84,10 @@ class LintSuite extends munit.FunSuite:
       items.exists(i => i.citekey.value == "anthony2015_ringe" && i.detail.value.contains("heggarty2023_language")),
       items.toString
     )
-    assert(items.exists(i => i.citekey.value == "kassian2025_critique" && !i.detail.value.contains("closest")), items.toString)
+    assert(
+      items.exists(i => i.citekey.value == "kassian2025_critique" && !i.detail.value.contains("closest")),
+      items.toString
+    )
 
   test("a target with a four-digit year is a source reference; a slug is an article link"):
     assert(Lint.looksLikeCitekey(Citekey("gray_atkinson_2003")))
@@ -90,7 +98,10 @@ class LintSuite extends munit.FunSuite:
   test("citekey-shaped dangling targets sort FIRST, so the item cap keeps the actionable ones"):
     // the seeded corpus has 1 050 article links and exactly ONE dead source reference; the report
     // must not bury it.
-    val edges = (1 to 5).toList.map(i => edge(Citekey("s"), Citekey(s"concept_$i"))) :+ edge(Citekey("s"), Citekey("gray_atkinson_2003"))
+    val edges = (1 to 5).toList.map(i => edge(Citekey("s"), Citekey(s"concept_$i"))) :+ edge(
+      Citekey("s"),
+      Citekey("gray_atkinson_2003")
+    )
     val items = CitationLint.danglingEdges(edges, corpus, ItemLimit(3))
     assert(items.head.detail.value.contains("gray_atkinson_2003"), items.head.detail)
     assert(items.head.detail.value.endsWith("(no such source)"), items.head.detail)
@@ -98,7 +109,11 @@ class LintSuite extends munit.FunSuite:
 
   test("dangling-edges deduplicates and orders by (src, kind, dst)"):
     val e = edge(Citekey("b_src"), Citekey("gone"), Edge.Kind.Cites)
-    val items = CitationLint.danglingEdges(List(e, e, edge(Citekey("a_src"), Citekey("gone"), Edge.Kind.Cites)), corpus, ItemLimit(1))
+    val items = CitationLint.danglingEdges(
+      List(e, e, edge(Citekey("a_src"), Citekey("gone"), Edge.Kind.Cites)),
+      corpus,
+      ItemLimit(1)
+    )
     assertEquals(items.map(_.citekey), List("a_src", "b_src"))
 
   test("unresolved-short-citekeys covers only prefixes of real citekeys, and flags the fixable ones"):
@@ -111,21 +126,40 @@ class LintSuite extends munit.FunSuite:
     assertEquals(items.map(_.citekey), List("a", "b"))
     assert(items.head.detail.value.contains("resolves to heggarty2023_language"), items.head.detail)
     assert(items.head.detail.value.contains("lint --fix"))
-    assert(items(1).detail.value.contains("ambiguous between knapp2016_collapse, knapp2016_seapeoples"), items(1).detail)
+    assert(
+      items(1).detail.value.contains("ambiguous between knapp2016_collapse, knapp2016_seapeoples"),
+      items(1).detail
+    )
 
   // ── duplicates ───────────────────────────────────────────────────────────────────────────────
 
   test("duplicates groups case- and whitespace-insensitively, naming the partners"):
-    val items = Lint.duplicates(List(Citekey("a") -> Lint.DuplicateKey("10.1/X"), Citekey("b") -> Lint.DuplicateKey(" 10.1/x "), Citekey("c") -> Lint.DuplicateKey("10.2/y")), "doi")
+    val items = Lint.duplicates(
+      List(
+        Citekey("a") -> Lint.DuplicateKey("10.1/X"),
+        Citekey("b") -> Lint.DuplicateKey(" 10.1/x "),
+        Citekey("c") -> Lint.DuplicateKey("10.2/y")
+      ),
+      "doi"
+    )
     assertEquals(items.map(_.citekey), List("a", "b"))
     assert(items.head.detail.value.contains("also on b"), items.head.detail)
     assert(items(1).detail.value.contains("also on a"), items(1).detail)
 
   test("a key repeated for the SAME citekey is not a duplicate"):
-    assertEquals(Lint.duplicates(List(Citekey("a") -> Lint.DuplicateKey("10.1/x"), Citekey("a") -> Lint.DuplicateKey("10.1/x")), "doi"), Nil)
+    assertEquals(
+      Lint.duplicates(
+        List(Citekey("a") -> Lint.DuplicateKey("10.1/x"), Citekey("a") -> Lint.DuplicateKey("10.1/x")),
+        "doi"
+      ),
+      Nil
+    )
 
   test("blank keys are skipped (an unpopulated sha256 column reports nothing)"):
-    assertEquals(Lint.duplicates(List(Citekey("a") -> Lint.DuplicateKey(""), Citekey("b") -> Lint.DuplicateKey("  ")), "sha256"), Nil)
+    assertEquals(
+      Lint.duplicates(List(Citekey("a") -> Lint.DuplicateKey(""), Citekey("b") -> Lint.DuplicateKey("  ")), "sha256"),
+      Nil
+    )
 
   test("blank() is true for absent and whitespace-only values"):
     assert(Lint.blank(None) && Lint.blank(Some("")) && Lint.blank(Some("  \n ")))
@@ -144,7 +178,11 @@ class LintSuite extends munit.FunSuite:
   test("Markdown groups by rule, shows counts and folds the clean rules into one line"):
     val rep = LintReport(
       List(
-        Lint.report(rule, List(LintItem(Citekey("a"), LintItem.Detail("x")), LintItem(Citekey("b"), LintItem.Detail("y"))), ItemLimit(1)),
+        Lint.report(
+          rule,
+          List(LintItem(Citekey("a"), LintItem.Detail("x")), LintItem(Citekey("b"), LintItem.Detail("y"))),
+          ItemLimit(1)
+        ),
         Lint.report(Lint.rule(Lint.Rule.Name(NoPeriod)).get, Nil, ItemLimit(50))
       )
     )
@@ -160,7 +198,8 @@ class LintSuite extends munit.FunSuite:
     assert(md.value.startsWith("### Lint: clean (1 rule(s) checked)"), md)
 
   test("applied fixes are reported above the verdict"):
-    val md = Lint.markdown(LintReport(List(Lint.report(rule, Nil, ItemLimit(50))), List(LintReport.Fixed("resolve-edges: 3"))))
+    val md =
+      Lint.markdown(LintReport(List(Lint.report(rule, Nil, ItemLimit(50))), List(LintReport.Fixed("resolve-edges: 3"))))
     assert(md.value.startsWith("- fixed: resolve-edges: 3"), md)
 
   // ── wave 3 rules ─────────────────────────────────────────────────────────────────────────────
@@ -189,7 +228,11 @@ class LintSuite extends munit.FunSuite:
 
   test("nonCanonicalTags flags tags not in lowercase_snake_case"):
     val items = Lint.nonCanonicalTags(
-      List((Citekey("a"), List(Tag("sea_peoples"), Tag("Bronze-Age"))), (Citekey("b"), List(Tag("good_tag"))), (Citekey("c"), List(Tag("BAD TAG"))))
+      List(
+        (Citekey("a"), List(Tag("sea_peoples"), Tag("Bronze-Age"))),
+        (Citekey("b"), List(Tag("good_tag"))),
+        (Citekey("c"), List(Tag("BAD TAG")))
+      )
     )
     assertEquals(items.map(_.citekey), List("a", "c"))
     assert(items.head.detail.value.contains("Bronze-Age"))
@@ -211,7 +254,11 @@ class LintSuite extends munit.FunSuite:
 
   test("authorPipe flags authors with pipe characters"):
     val items = Lint.authorPipe(
-      List((Citekey("a"), List(AuthorName("Eric H. Cline"))), (Citekey("b"), List(AuthorName("Cline| Eric H."))), (Citekey("c"), List(AuthorName("Good Author"), AuthorName("Bad| Author"))))
+      List(
+        (Citekey("a"), List(AuthorName("Eric H. Cline"))),
+        (Citekey("b"), List(AuthorName("Cline| Eric H."))),
+        (Citekey("c"), List(AuthorName("Good Author"), AuthorName("Bad| Author")))
+      )
     )
     assertEquals(items.map(_.citekey), List("b", "c"))
     assert(items.head.detail.value.contains("Cline| Eric H."))
@@ -220,7 +267,10 @@ class LintSuite extends munit.FunSuite:
     val items = Article.Lint.articleFiller(
       List(
         (Article.Slug("clean"), Article.Body("The sources agree on this point.")),
-        (Article.Slug("bad"), Article.Body("It is worth noting that the evidence is clear. Interestingly, this sheds light on..."))
+        (
+          Article.Slug("bad"),
+          Article.Body("It is worth noting that the evidence is clear. Interestingly, this sheds light on...")
+        )
       )
     )
     assertEquals(items.size, 1)
@@ -283,8 +333,14 @@ class LintSuite extends munit.FunSuite:
     val two = "Theseus was a king of Athens. These sources say so:"
     assertEquals(paras(s"$two\n\n- [[a2001]]"), List(two))
     // and the lint rule agrees
-    assertEquals(Article.Lint.articleUncitedParagraphs(List(Article.Slug("t") -> Article.Body(s"$leadIn\n\n- [[a2001]]"))), Nil)
-    assertEquals(Article.Lint.articleUncitedParagraphs(List(Article.Slug("t") -> Article.Body(s"$two\n\n- [[a2001]]"))).size, 1)
+    assertEquals(
+      Article.Lint.articleUncitedParagraphs(List(Article.Slug("t") -> Article.Body(s"$leadIn\n\n- [[a2001]]"))),
+      Nil
+    )
+    assertEquals(
+      Article.Lint.articleUncitedParagraphs(List(Article.Slug("t") -> Article.Body(s"$two\n\n- [[a2001]]"))).size,
+      1
+    )
 
   test("sentenceCount: abbreviations, initials and dates do not end a sentence"):
     assertEquals(Lint.sentenceCount(""), 0)
@@ -319,7 +375,18 @@ class LintSuite extends munit.FunSuite:
     val check: FormatChecker = (text, field, article) =>
       seen += ((field, article))
       if text.contains("**") then
-        List(FormatIssue(FormatRule.Emphasis, FormatSeverity.Error, field, FormatIssue.Line(2), FormatIssue.Column(5), FormatIssue.Excerpt("a ** b"), FormatIssue.Message("unpaired"), Some(FormatIssue.Fix("trim"))))
+        List(
+          FormatIssue(
+            FormatRule.Emphasis,
+            FormatSeverity.Error,
+            field,
+            FormatIssue.Line(2),
+            FormatIssue.Column(5),
+            FormatIssue.Excerpt("a ** b"),
+            FormatIssue.Message("unpaired"),
+            Some(FormatIssue.Fix("trim"))
+          )
+        )
       else Nil
     val items = Lint.formatItems(
       List(

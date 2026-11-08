@@ -19,7 +19,6 @@ object CritiquePairing:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
-
   final case class Work(citekey: Citekey, names: List[Work.Names], year: Option[Year])
 
   object Work:
@@ -54,7 +53,7 @@ object CritiquePairing:
     object Where extends Newtype[String, Pure]
     type Edges = Edges.T
     object Edges extends Newtype[String, Pure]
-    export Work.{Names as Named}
+    export Work.Names as Named
     type Mechanical = Mechanical.T
     object Mechanical extends Newtype[Boolean, Pure]
 
@@ -73,7 +72,10 @@ object CritiquePairing:
       .map((_).value.trim)
       .filter(_.nonEmpty)
       .map(a => if a.contains(",") then a.takeWhile(_ != ',').trim else a.split("\\s+").last.trim)
-    ((if byKey.nonEmpty then byKey else first.toList).filter(n => n.length >= 3 && n.head.isUpper).distinct).map(Work.Names(_))
+    ((if byKey.nonEmpty then byKey else first.toList)
+      .filter(n => n.length >= 3 && n.head.isUpper)
+      .distinct)
+      .map(Work.Names(_))
 
   private val LinkRe = """!?\\?\[\\?\[[^\[\]\n]+?\\?\]\\?\]""".r
   private val YearRe = """(?<!\d)(1[0-9]\d\d|20\d\d)(?!\d)""".r
@@ -86,7 +88,7 @@ object CritiquePairing:
     case Strong, Weak, Conflict
 
   object Mention:
-    export com.histmersion.api.text.WikiLinks.Occurrence.{Target as Key}
+    export com.histmersion.api.text.WikiLinks.Occurrence.Target as Key
 
   private def mention(text: String, name: Work.Names, year: Option[Year]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r
@@ -154,7 +156,9 @@ object CritiquePairing:
     }
 
   def repair(body: Article.Body, hs: List[Hit]): (Article.Body, List[Hit]) =
-    val todo = hs.filter((refactorCallback => ((refactorCallback.mechanical) == Hit.Mechanical(true)))).groupBy(h => (h.from, h.to))
+    val todo = hs
+      .filter((refactorCallback => ((refactorCallback.mechanical) == Hit.Mechanical(true))))
+      .groupBy(h => (h.from, h.to))
     if todo.isEmpty then (body, Nil)
     else
       val crlf = (body).value.contains("\r\n")
@@ -177,7 +181,10 @@ object CritiquePairing:
                 insert(tail, ls.updated(j, l.substring(0, at) + ins + l.substring(at)), acc ++ xs.distinctBy(_.missing))
       val (out, done) = insert(todo.toList.sortBy { case ((f, t), _) => ((f.value: Int), (t.value: Int)) }, lines, Nil)
       val text = out.mkString("\n")
-      (Article.Body(if crlf then text.replace("\n", "\r\n") else text), done.sortBy(h => ((h.unit.value: Int), (h.missing.value: String))))
+      (
+        Article.Body(if crlf then text.replace("\n", "\r\n") else text),
+        done.sortBy(h => ((h.unit.value: Int), (h.missing.value: String)))
+      )
 
   def instruction(
       body: Article.Body,
@@ -191,9 +198,11 @@ object CritiquePairing:
     def cites(u: Critiques.Block) = targetsOf(u).flatMap(resolve).contains(crit)
     near.flatMap(n => us.find((u, i) => i == n.value && cites(u))).orElse(us.find((u, _) => cites(u))).map { (u, _) =>
       val head = words(prose(u.text.value)).take(10).mkString(" ")
-      Instruction.Text(s"${p.ref.wire}: in the paragraph beginning \"$head\" (it cites [[$crit]]), add one sentence stating the " +
-        s"${p.kinds.mkString("/")} from [[$critic]]'s record and cite [[$critic]] in that paragraph — or, when it does " +
-        "not touch what that paragraph says, set the pair aside with a reason")
+      Instruction.Text(
+        s"${p.ref.wire}: in the paragraph beginning \"$head\" (it cites [[$crit]]), add one sentence stating the " +
+          s"${p.kinds.mkString("/")} from [[$critic]]'s record and cite [[$critic]] in that paragraph — or, when it does " +
+          "not touch what that paragraph says, set the pair aside with a reason"
+      )
     }
 
   def resolver(citekeys: Set[Citekey], aliases: Map[Citekey, Citekey]): Mention.Key => Option[Citekey] =

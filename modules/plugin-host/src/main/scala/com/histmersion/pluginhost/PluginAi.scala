@@ -32,9 +32,15 @@ object PluginAi:
   /** One model call: the provider's answer, or its failure — an exception or a `null` being an error. */
   def turn(provider: AiProvider, request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val answer =
-      try Option(provider.turn(request, http)).getOrElse(Left(AiFailure.Error(AiFailure.Error.Message("the provider answered null"))))
+      try
+        Option(provider.turn(request, http))
+          .getOrElse(Left(AiFailure.Error(AiFailure.Error.Message("the provider answered null"))))
       catch
         case e: InterruptedException => throw e
-        case NonFatal(e) =>
-          Left(AiFailure.Error(AiFailure.Error.Message(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")))
+        case NonFatal(e)             =>
+          Left(
+            AiFailure.Error(
+              AiFailure.Error.Message(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")
+            )
+          )
     answer.flatMap(t => Option(t).toRight(AiFailure.Error(AiFailure.Error.Message("the provider answered null"))))

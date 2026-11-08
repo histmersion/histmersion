@@ -39,16 +39,18 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
       )
       .map((a, b) => EventCatalogue.PartsResult(s"years:${a.value}..${b.value}"))
 
-  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
+  def read(
+      part: EventCatalogue.ReadPart,
+      query: CatalogueQuery,
+      http: Plugin.Http
+  ): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
     part.value match
       case GvpCatalogue.Window(a, b) =>
         CatalogueJson(http)(
           GvpCatalogue.url(cfg.gvp.url, GvpCatalogue.Year(a.toLong), GvpCatalogue.Year(b.toLong), cfg.gvp.pageSize)
         ).left
           .map(e => EventCatalogue.ReadResultPart1(e.value))
-          .flatMap(j =>
-            GvpCatalogue.parse(j).left.map(e => EventCatalogue.ReadResultPart1(e.value))
-          )
+          .flatMap(j => GvpCatalogue.parse(j).left.map(e => EventCatalogue.ReadResultPart1(e.value)))
           .flatMap((rs, total) =>
             Either.cond(
               total.forall(_.value <= rs.size),
@@ -135,7 +137,8 @@ object GvpCatalogue:
       val volcano = str(p, JsonFields.Key("Volcano_Name")).map(_.value).getOrElse("unnamed volcano")
       val vnum = long(p, JsonFields.Key("Volcano_Number"))
       val pm = long(p, JsonFields.Key("StartDateYearUncertainty")).filter(_.value > 0)
-      val start = CatalogDating.year(CatalogDating.HistoricalYear(year.value), pm.map(m => CatalogDating.YearMargin(m.value)))
+      val start =
+        CatalogDating.year(CatalogDating.HistoricalYear(year.value), pm.map(m => CatalogDating.YearMargin(m.value)))
       val end = long(p, JsonFields.Key("EndDateYear")).map(y =>
         CatalogDating.year(
           CatalogDating.HistoricalYear(y.value),
@@ -150,7 +153,9 @@ object GvpCatalogue:
       val d = Dated.of(CatalogDating.span(Some(start), end))
       CatalogueEvent(
         id = CatalogueEvent.Id(num.value.toString),
-        url = CatalogueEvent.Url(vnum.fold("https://volcano.si.edu")(v => s"https://volcano.si.edu/volcano.cfm?vn=${v.value}")),
+        url = CatalogueEvent.Url(
+          vnum.fold("https://volcano.si.edu")(v => s"https://volcano.si.edu/volcano.cfm?vn=${v.value}")
+        ),
         label = CatalogueEvent.Label(s"Eruption of $volcano"),
         kind = CatalogueEvent.Kind("eruption"),
         notBefore = d.notBefore,

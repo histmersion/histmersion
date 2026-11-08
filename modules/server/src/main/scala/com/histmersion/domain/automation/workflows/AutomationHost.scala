@@ -36,10 +36,18 @@ trait AutomationHost:
   /** The target as pipeline `p` names it: an existing source or article, a goal — or, for compile-article, any valid
     * slug (a new article is created, an existing one extended). None: a target kind the engine resolves itself.
     */
-  def runTarget(p: Pipeline, raw: AutomationHost.RunTargetRaw): Option[Either[Api.Error, AutomationHost.RunTargetResultPart2]]
+  def runTarget(
+      p: Pipeline,
+      raw: AutomationHost.RunTargetRaw
+  ): Option[Either[Api.Error, AutomationHost.RunTargetResultPart2]]
 
   /** The options pipeline `p` understands, checked before a run is queued (`roundsCap`: the review's round cap). */
-  def runOptions(p: Pipeline, req: RunRequest, target: ManagerContext.ItemTarget, roundsCap: AutomationHost.RunOptionsRoundsCap): Either[Api.Error, Unit]
+  def runOptions(
+      p: Pipeline,
+      req: RunRequest,
+      target: ManagerContext.ItemTarget,
+      roundsCap: AutomationHost.RunOptionsRoundsCap
+  ): Either[Api.Error, Unit]
 
   /** The roles a run of `p` may give a model of its own: its own, and those of the run it chains. */
   def runRoles(p: Pipeline): List[Role]

@@ -20,7 +20,7 @@ import com.histmersion.util.console.Console
   */
 object LabelRenameCmd:
 
-  def apply(kind: Bundle.Kind)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def apply(kind: Bundle.Kind)(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     val (what, effect) = kind match
       case Bundle.Kind.Article =>
         ("an article a new slug", "versions, links and every [[old]] in other articles follow")

@@ -33,8 +33,15 @@ object SettingsStore:
     ApiClient.settings().onComplete(r => page.set(Some(r.toEither.left.map(message))))
 
   /** `changes` written against the version read; the page is read again either way. */
-  def save(changes: List[ConfigEdit.Change], literalConsent: SaveLiteralConsent = SaveLiteralConsent(false)): Future[ConfigEdit.Written] =
-    val w = ConfigEdit.Write(changes, version = now.map(p => ConfigEdit.Write.Version(p.version.value)), literalConsent = ConfigEdit.Write.LiteralConsent(literalConsent.value))
+  def save(
+      changes: List[ConfigEdit.Change],
+      literalConsent: SaveLiteralConsent = SaveLiteralConsent(false)
+  ): Future[ConfigEdit.Written] =
+    val w = ConfigEdit.Write(
+      changes,
+      version = now.map(p => ConfigEdit.Write.Version(p.version.value)),
+      literalConsent = ConfigEdit.Write.LiteralConsent(literalConsent.value)
+    )
     val f = ApiClient.writeSettings(w)
     f.onComplete { r =>
       result.set(Some(r.toEither.left.map(message)))

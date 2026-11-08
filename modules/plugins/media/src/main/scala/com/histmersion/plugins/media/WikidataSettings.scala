@@ -16,12 +16,15 @@ final case class WikidataSettings(
     placeProperties: WikidataSettings.PlaceProperties,
     eventProperties: WikidataSettings.EventProperties
 ) derives ConfigReader:
-  def placeRoles: List[(WikidataSettings.Property, MediaItem.Role)] = WikidataSettings.roles(WikidataSettings.Spec(placeProperties.value))
-  def eventRoles: List[(WikidataSettings.Property, MediaItem.Role)] = WikidataSettings.roles(WikidataSettings.Spec(eventProperties.value))
+  def placeRoles: List[(WikidataSettings.Property, MediaItem.Role)] =
+    WikidataSettings.roles(WikidataSettings.Spec(placeProperties.value))
+  def eventRoles: List[(WikidataSettings.Property, MediaItem.Role)] =
+    WikidataSettings.roles(WikidataSettings.Spec(eventProperties.value))
 
 object WikidataSettings:
   type Spec = Spec.T
   object Spec extends Newtype[String, Pure]
+
   /** A Wikidata property id (`P18`). */
   type Property = Property.T
   object Property extends Newtype[String, Pure]
@@ -57,7 +60,8 @@ object WikidataSettings:
       .filter(_.nonEmpty)
       .flatMap { e =>
         e.split(":", 2).map(_.trim) match
-          case Array(p, r) if p.matches("P[1-9][0-9]*") && PictureRoles.contains(MediaItem.Role(r)) => Some(Property(p) -> MediaItem.Role(r))
-          case _                                                                                    => None
+          case Array(p, r) if p.matches("P[1-9][0-9]*") && PictureRoles.contains(MediaItem.Role(r)) =>
+            Some(Property(p) -> MediaItem.Role(r))
+          case _ => None
       }
       .distinctBy(_._1)

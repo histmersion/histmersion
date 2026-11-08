@@ -32,7 +32,6 @@ import com.histmersion.api.exchange.IssueSide
 object MergeFixture:
   private given CanEqual[UUID, UUID] = CanEqual.derived
 
-
   private def settings(c: MergeConfig): MergeSettings =
     MergeSettings(
       MergeSettings.AutoMerge(c.autoMerge.value),
@@ -41,30 +40,30 @@ object MergeFixture:
       MergeSettings.FindingNearAtLeast(c.findingNearAtLeast.value),
       MergeSettings.FindingWithinKm(c.findingWithinKm.value),
       MatchWeights(
-      MatchWeights.TitleFingerprint(c.weights.titleFingerprint.value),
-      MatchWeights.TitleMain(c.weights.titleMain.value),
-      MatchWeights.TitleSimilar(c.weights.titleSimilar.value),
-      MatchWeights.TitleSimilarAtLeast(c.weights.titleSimilarAtLeast.value),
-      MatchWeights.TitleTokens(c.weights.titleTokens.value),
-      MatchWeights.TitleTokensAtLeast(c.weights.titleTokensAtLeast.value),
-      MatchWeights.TitleDiffers(c.weights.titleDiffers.value),
-      MatchWeights.AuthorsSame(c.weights.authorsSame.value),
-      MatchWeights.AuthorsFirst(c.weights.authorsFirst.value),
-      MatchWeights.AuthorsOverlap(c.weights.authorsOverlap.value),
-      MatchWeights.AuthorsDisjoint(c.weights.authorsDisjoint.value),
-      MatchWeights.YearEqual(c.weights.yearEqual.value),
-      MatchWeights.YearNear(c.weights.yearNear.value),
-      MatchWeights.YearReprint(c.weights.yearReprint.value),
-      MatchWeights.YearFar(c.weights.yearFar.value),
-      MatchWeights.VenueEqual(c.weights.venueEqual.value),
-      MatchWeights.VenueDiffers(c.weights.venueDiffers.value),
-      MatchWeights.BodySame(c.weights.bodySame.value),
-      MatchWeights.BodySameAtLeast(c.weights.bodySameAtLeast.value),
-      MatchWeights.BodyEdition(c.weights.bodyEdition.value),
-      MatchWeights.BodyEditionAtLeast(c.weights.bodyEditionAtLeast.value),
-      MatchWeights.BodyDiffers(c.weights.bodyDiffers.value),
-      MatchWeights.BodyDiffersBelow(c.weights.bodyDiffersBelow.value),
-      MatchWeights.Alias(c.weights.alias.value)
+        MatchWeights.TitleFingerprint(c.weights.titleFingerprint.value),
+        MatchWeights.TitleMain(c.weights.titleMain.value),
+        MatchWeights.TitleSimilar(c.weights.titleSimilar.value),
+        MatchWeights.TitleSimilarAtLeast(c.weights.titleSimilarAtLeast.value),
+        MatchWeights.TitleTokens(c.weights.titleTokens.value),
+        MatchWeights.TitleTokensAtLeast(c.weights.titleTokensAtLeast.value),
+        MatchWeights.TitleDiffers(c.weights.titleDiffers.value),
+        MatchWeights.AuthorsSame(c.weights.authorsSame.value),
+        MatchWeights.AuthorsFirst(c.weights.authorsFirst.value),
+        MatchWeights.AuthorsOverlap(c.weights.authorsOverlap.value),
+        MatchWeights.AuthorsDisjoint(c.weights.authorsDisjoint.value),
+        MatchWeights.YearEqual(c.weights.yearEqual.value),
+        MatchWeights.YearNear(c.weights.yearNear.value),
+        MatchWeights.YearReprint(c.weights.yearReprint.value),
+        MatchWeights.YearFar(c.weights.yearFar.value),
+        MatchWeights.VenueEqual(c.weights.venueEqual.value),
+        MatchWeights.VenueDiffers(c.weights.venueDiffers.value),
+        MatchWeights.BodySame(c.weights.bodySame.value),
+        MatchWeights.BodySameAtLeast(c.weights.bodySameAtLeast.value),
+        MatchWeights.BodyEdition(c.weights.bodyEdition.value),
+        MatchWeights.BodyEditionAtLeast(c.weights.bodyEditionAtLeast.value),
+        MatchWeights.BodyDiffers(c.weights.bodyDiffers.value),
+        MatchWeights.BodyDiffersBelow(c.weights.bodyDiffersBelow.value),
+        MatchWeights.Alias(c.weights.alias.value)
       ),
       MergeSettings.PlaceWithinKm(c.placeWithinKm.value),
       MergeSettings.PlaceOverlapAtLeast(c.placeOverlapAtLeast.value)
@@ -121,7 +120,19 @@ object MergeFixture:
     )
 
   def article(id: String, slug: String, body: String, origin: UUID = work): Bundle.Article =
-    Bundle.Article(uid(id), origin, Bundle.Article.Slug(slug), Bundle.Article.Title(slug.replace('_', ' ')), Bundle.Article.Kind("concept"), Bundle.Article.Body(body), None, Nil, Nil, None, Bundle.Article.UpdatedAt(At))
+    Bundle.Article(
+      uid(id),
+      origin,
+      Bundle.Article.Slug(slug),
+      Bundle.Article.Title(slug.replace('_', ' ')),
+      Bundle.Article.Kind("concept"),
+      Bundle.Article.Body(body),
+      None,
+      Nil,
+      Nil,
+      None,
+      Bundle.Article.UpdatedAt(At)
+    )
 
   def event(
       id: String,
@@ -155,7 +166,20 @@ object MergeFixture:
     )
 
   def goal(id: String, slug: String, title: String, origin: UUID = work, notes: Option[String] = None): Bundle.Goal =
-    Bundle.Goal(uid(id), origin, Bundle.Goal.Slug(slug), Bundle.Goal.Title(title), Bundle.Goal.Status("planned"), notes.map(Bundle.Goal.Notes(_)), Nil, Nil, None, None, Bundle.Goal.CreatedAt(At), Bundle.Goal.UpdatedAt(At))
+    Bundle.Goal(
+      uid(id),
+      origin,
+      Bundle.Goal.Slug(slug),
+      Bundle.Goal.Title(title),
+      Bundle.Goal.Status("planned"),
+      notes.map(Bundle.Goal.Notes(_)),
+      Nil,
+      Nil,
+      None,
+      None,
+      Bundle.Goal.CreatedAt(At),
+      Bundle.Goal.UpdatedAt(At)
+    )
 
   def manifest(es: BundleEntities): Bundle.Manifest =
     Bundle.Manifest(
@@ -168,7 +192,12 @@ object MergeFixture:
       es.asOf,
       Nil,
       Bundle.Blobs(Bundle.Blobs.Count(0), ByteCount(0)),
-      Bundle.Reference(Bundle.Reference.Places(0), Bundle.Reference.PlacesDigest(""), Bundle.Reference.Periods(0), Bundle.Reference.PeriodsDigest(""))
+      Bundle.Reference(
+        Bundle.Reference.Places(0),
+        Bundle.Reference.PlacesDigest(""),
+        Bundle.Reference.Periods(0),
+        Bundle.Reference.PeriodsDigest("")
+      )
     )
 
   val bodyOlsen: String =
@@ -272,8 +301,7 @@ object MergeFixture:
     ),
     events = List(event("w-siege", "zz_siege", "Siege of Troy (work)")),
     goals = List(goal("w-goal", "zz_goal_both", "Goal created at work")),
-    tombstones =
-      List(Bundle.Tombstone(uid("goal-shared"), Bundle.Kind.Goal, work, Bundle.Tombstone.DeletedAt(At)))
+    tombstones = List(Bundle.Tombstone(uid("goal-shared"), Bundle.Kind.Goal, work, Bundle.Tombstone.DeletedAt(At)))
   )
 
   /** Home's sources. */
@@ -409,11 +437,17 @@ object MergeFixture:
         aliases = Map(Citekey("latacz2023_troy") -> uid("h-latacz"), Citekey("harrison1903_old") -> uid("h-themis")),
         slugs = localArticles.map(a => a.slug -> a.uid).toMap,
         events = Map(Bundle.Event.Id("zz_siege") -> uid("h-siege")),
-        goals = Map(Bundle.Goal.Slug("zz_goal_both") -> uid("h-goal"), Bundle.Goal.Slug("zz_shared_goal") -> goalOriginal.uid)
+        goals =
+          Map(Bundle.Goal.Slug("zz_goal_both") -> uid("h-goal"), Bundle.Goal.Slug("zz_shared_goal") -> goalOriginal.uid)
       ),
       live = Set.empty,
       places = Set.empty,
-      reference = Bundle.Reference(Bundle.Reference.Places(0), Bundle.Reference.PlacesDigest(""), Bundle.Reference.Periods(0), Bundle.Reference.PeriodsDigest(""))
+      reference = Bundle.Reference(
+        Bundle.Reference.Places(0),
+        Bundle.Reference.PlacesDigest(""),
+        Bundle.Reference.Periods(0),
+        Bundle.Reference.PeriodsDigest("")
+      )
     )
 
   /** An issue as the expected list names it: kind, letter, the two labels, severity, conditional on. */
@@ -443,18 +477,85 @@ object MergeFixture:
   import com.histmersion.api.exchange.MergeIssue.Kind.*
   import com.histmersion.api.exchange.MergeIssue.Severity.*
   val expected: Set[Expect] = Set(
-    Expect(NotesDiffers, "S", Some(IssueSide.Label("guterbock1997_hittite")), Some(IssueSide.Label("guterbock1997_perspectives")), Blocking),
-    Expect(DoiDiffers, "S", Some(IssueSide.Label("kuhrt1995_ancient")), Some(IssueSide.Label("kuhrt1995_near")), Blocking),
-    Expect(BodyDiffers, "O", Some(IssueSide.Label("kuhrt1995_ancient")), Some(IssueSide.Label("kuhrt1995_near")), Default),
-    Expect(StatusDiffers, "S", Some(IssueSide.Label("bryce2005_kingdom_hittites")), Some(IssueSide.Label("bryce2005_kingdom")), Blocking),
-    Expect(SameWork, "S", Some(IssueSide.Label("page1959_history")), Some(IssueSide.Label("page2024_history")), Blocking),
-    Expect(YearDiffers, "S", Some(IssueSide.Label("page1959_history")), Some(IssueSide.Label("page2024_history")), Blocking, Some(DecisionKind.Map)),
-    Expect(CitekeyCollision, "S", Some(IssueSide.Label("smith2019_ritual")), Some(IssueSide.Label("smith2019_ritual")), Blocking),
-    Expect(AliasConflict, "L", Some(IssueSide.Label("harrison1912_themis")), Some(IssueSide.Label("harrison1903_prolegomena")), Blocking),
-    Expect(BodyDiffers, "O", Some(IssueSide.Label("olsen2015_penelope_weaving")), Some(IssueSide.Label("olsen2015_penelope")), Default),
-    Expect(ChangedBothSides, "S", Some(IssueSide.Label("zzshared2001_alpha")), Some(IssueSide.Label("zzshared2001_alpha")), Blocking),
+    Expect(
+      NotesDiffers,
+      "S",
+      Some(IssueSide.Label("guterbock1997_hittite")),
+      Some(IssueSide.Label("guterbock1997_perspectives")),
+      Blocking
+    ),
+    Expect(
+      DoiDiffers,
+      "S",
+      Some(IssueSide.Label("kuhrt1995_ancient")),
+      Some(IssueSide.Label("kuhrt1995_near")),
+      Blocking
+    ),
+    Expect(
+      BodyDiffers,
+      "O",
+      Some(IssueSide.Label("kuhrt1995_ancient")),
+      Some(IssueSide.Label("kuhrt1995_near")),
+      Default
+    ),
+    Expect(
+      StatusDiffers,
+      "S",
+      Some(IssueSide.Label("bryce2005_kingdom_hittites")),
+      Some(IssueSide.Label("bryce2005_kingdom")),
+      Blocking
+    ),
+    Expect(
+      SameWork,
+      "S",
+      Some(IssueSide.Label("page1959_history")),
+      Some(IssueSide.Label("page2024_history")),
+      Blocking
+    ),
+    Expect(
+      YearDiffers,
+      "S",
+      Some(IssueSide.Label("page1959_history")),
+      Some(IssueSide.Label("page2024_history")),
+      Blocking,
+      Some(DecisionKind.Map)
+    ),
+    Expect(
+      CitekeyCollision,
+      "S",
+      Some(IssueSide.Label("smith2019_ritual")),
+      Some(IssueSide.Label("smith2019_ritual")),
+      Blocking
+    ),
+    Expect(
+      AliasConflict,
+      "L",
+      Some(IssueSide.Label("harrison1912_themis")),
+      Some(IssueSide.Label("harrison1903_prolegomena")),
+      Blocking
+    ),
+    Expect(
+      BodyDiffers,
+      "O",
+      Some(IssueSide.Label("olsen2015_penelope_weaving")),
+      Some(IssueSide.Label("olsen2015_penelope")),
+      Default
+    ),
+    Expect(
+      ChangedBothSides,
+      "S",
+      Some(IssueSide.Label("zzshared2001_alpha")),
+      Some(IssueSide.Label("zzshared2001_alpha")),
+      Blocking
+    ),
     Expect(DeletedThereChangedHere, "G", Some(IssueSide.Label("zz_shared_goal")), None, Blocking),
-    Expect(ArticleDiverged, "A", Some(IssueSide.Label("bronze_age_collapse")), Some(IssueSide.Label("bronze_age_collapse")), Blocking),
+    Expect(
+      ArticleDiverged,
+      "A",
+      Some(IssueSide.Label("bronze_age_collapse")),
+      Some(IssueSide.Label("bronze_age_collapse")),
+      Blocking
+    ),
     Expect(ArticleDiverged, "A", Some(IssueSide.Label("zz_same_text")), Some(IssueSide.Label("zz_same_text")), Default),
     Expect(LabelTaken, "E", Some(IssueSide.Label("zz_siege")), Some(IssueSide.Label("zz_siege")), Blocking)
   )

@@ -21,7 +21,9 @@ object OpsRoutes:
   private def refused(what: String, raw: String): Api.Error =
     Api.Error(Api.Error.Message(s"invalid $what '$raw'"), Some(Api.Error.Code(Write.CodeInvalid)))
 
-  private def scoped[A](raw: Option[Queue.Wire], what: String)(either: String => Either[String, A]): Either[Api.Error, Option[A]] =
+  private def scoped[A](raw: Option[Queue.Wire], what: String)(
+      either: String => Either[String, A]
+  ): Either[Api.Error, Option[A]] =
     raw.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(v) => either(v).left.map(_ => refused(what, v)).map(Some(_))
@@ -43,5 +45,7 @@ object OpsRoutes:
       yield r
     ),
     OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.add(WorkListControllers.ListName(list.value), in)),
-    OpsApi.goalsExport.serverLogicSuccess[Identity](_ => com.histmersion.api.automation.Goal.Export(w.goals.exportText()))
+    OpsApi.goalsExport.serverLogicSuccess[Identity](_ =>
+      com.histmersion.api.automation.Goal.Export(w.goals.exportText())
+    )
   )

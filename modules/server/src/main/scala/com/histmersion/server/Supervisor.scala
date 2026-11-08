@@ -72,18 +72,29 @@ object Supervisor:
       .orElse(exe.flatMap(e => Option(e.toAbsolutePath.getParent)).flatMap(b => Option(b.getParent)))
     val data = UserPaths.dataDir(rc.dataDir, env, osName)
     for
-      h <- home.toRight(Problem("runtime.home is empty and the executable's location is unknown (set HISTMERSION_HOME)"))
+      h <- home.toRight(
+        Problem("runtime.home is empty and the executable's location is unknown (set HISTMERSION_HOME)")
+      )
       d <- data.toRight(Problem("runtime.data-dir is empty and HOME is unset (set HISTMERSION_DATA_DIR)"))
     yield Layout(h.toAbsolutePath.normalize, d.toAbsolutePath.normalize)
 
   /** The server options every start uses: loopback TCP only, no Unix socket (see the class doc), and the memory
     * settings ([[pgSettings]]).
     */
-  private[server] def pgOptions(port: RuntimeConfig.PgPort, settings: List[(String, String)] = Nil): ProcessLaunch.Command =
-    command((s"-p ${port.value} -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" ::
-      settings.map((k, v) => s"-c $k=$v")).mkString(" "))
+  private[server] def pgOptions(
+      port: RuntimeConfig.PgPort,
+      settings: List[(String, String)] = Nil
+  ): ProcessLaunch.Command =
+    command(
+      (s"-p ${port.value} -c listen_addresses=127.0.0.1 -c unix_socket_directories=''" ::
+        settings.map((k, v) => s"-c $k=$v")).mkString(" ")
+    )
 
-  private[server] def pgStart(l: Layout, port: RuntimeConfig.PgPort, settings: List[(String, String)] = Nil): List[ProcessLaunch.Command] =
+  private[server] def pgStart(
+      l: Layout,
+      port: RuntimeConfig.PgPort,
+      settings: List[(String, String)] = Nil
+  ): List[ProcessLaunch.Command] =
     List(
       command(l.pgBin.resolve("pg_ctl").toString),
       command("-D"),
@@ -136,7 +147,15 @@ object Supervisor:
       .Try {
         if UserPaths.isMac(osName) then
           processes
-            .run(ProcessLaunch(List(ProcessLaunch.Command("/usr/sbin/sysctl"), ProcessLaunch.Command("-n"), ProcessLaunch.Command("hw.memsize"))))
+            .run(
+              ProcessLaunch(
+                List(
+                  ProcessLaunch.Command("/usr/sbin/sysctl"),
+                  ProcessLaunch.Command("-n"),
+                  ProcessLaunch.Command("hw.memsize")
+                )
+              )
+            )
             .toOption
             .flatMap(_.lines.mkString("\n").trim.toLongOption)
         else
@@ -150,7 +169,15 @@ object Supervisor:
       .flatMap(ByteCount.option(_))
 
   private[server] def pgStop(l: Layout): List[ProcessLaunch.Command] =
-    List(command(l.pgBin.resolve("pg_ctl").toString), command("-D"), command(l.cluster.toString), command("-m"), command("fast"), command("-w"), command("stop"))
+    List(
+      command(l.pgBin.resolve("pg_ctl").toString),
+      command("-D"),
+      command(l.cluster.toString),
+      command("-m"),
+      command("fast"),
+      command("-w"),
+      command("stop")
+    )
 
   private[server] def initdb(l: Layout, user: DbConfig.User, pwFile: Path): List[ProcessLaunch.Command] =
     List(
@@ -167,30 +194,56 @@ object Supervisor:
     )
 
   private[server] def converterCmd(l: Layout, port: RuntimeConfig.ConverterPort): List[ProcessLaunch.Command] =
-    List(command(l.python.toString), command("-m"), command("uvicorn"), command("app:app"), command("--host"), command("127.0.0.1"), command("--port"), command(port.value.toString))
+    List(
+      command(l.python.toString),
+      command("-m"),
+      command("uvicorn"),
+      command("app:app"),
+      command("--host"),
+      command("127.0.0.1"),
+      command("--port"),
+      command(port.value.toString)
+    )
 
   /** The configuration with every endpoint and directory pointed at the bundle. Settings the user changed explicitly (a
     * backups dir other than the default, a pg-bin-dir) are kept.
     */
   private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[ServerConfig.Host] = None): AppConfig =
-    val dbName = Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).toOption.map(_.database.value).filter(_.nonEmpty).getOrElse("histmersion")
+    val dbName = Backup
+      .parseJdbc(Backup.JdbcUrl(cfg.db.url.value))
+      .toOption
+      .map(_.database.value)
+      .filter(_.nonEmpty)
+      .getOrElse("histmersion")
     cfg.copy(
       // a desktop install is private by default, so the bind address is loopback unless the user
       // says otherwise (set HISTMERSION_BIND=0.0.0.0 to share on the LAN — and set HISTMERSION_API_KEY then)
-      server = cfg.server.modify(_.host).setTo(explicitBind.filter(_.value.nonEmpty).getOrElse(ServerConfig.Host("127.0.0.1"))),
+      server = cfg.server
+        .modify(_.host)
+        .setTo(explicitBind.filter(_.value.nonEmpty).getOrElse(ServerConfig.Host("127.0.0.1"))),
       db = cfg.db.modify(_.url).setTo(DbConfig.Url(s"jdbc:postgresql://127.0.0.1:${cfg.runtime.pgPort.value}/$dbName")),
-      converter =
-        cfg.converter.modify(_.url).setTo(ConverterConfig.Url(s"http://127.0.0.1:${cfg.runtime.converterPort.value}")).modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(l.uploads.toString)),
-      backups = cfg.backups.modify(
-        _.dir).setTo(if cfg.backups.dir.value == DefaultBackupsDir then BackupsConfig.Dir(l.backups.toString) else cfg.backups.dir).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(Option(cfg.backups.pgBinDir.value).filter(_.nonEmpty).getOrElse(l.pgBin.toString))
-      ),
+      converter = cfg.converter
+        .modify(_.url)
+        .setTo(ConverterConfig.Url(s"http://127.0.0.1:${cfg.runtime.converterPort.value}"))
+        .modify(_.spoolDir)
+        .setTo(ConverterConfig.SpoolDir(l.uploads.toString)),
+      backups = cfg.backups
+        .modify(_.dir)
+        .setTo(if cfg.backups.dir.value == DefaultBackupsDir then BackupsConfig.Dir(l.backups.toString)
+        else cfg.backups.dir)
+        .modify(_.pgBinDir)
+        .setTo(
+          BackupsConfig.PgBinDir(Option(cfg.backups.pgBinDir.value).filter(_.nonEmpty).getOrElse(l.pgBin.toString))
+        ),
       bundles = cfg.bundles
         .modify(_.dir)
-        .setTo(if cfg.bundles.dir.value == DefaultBundlesDir then BundlesConfig.Dir(l.bundles.toString) else cfg.bundles.dir),
+        .setTo(if cfg.bundles.dir.value == DefaultBundlesDir then BundlesConfig.Dir(l.bundles.toString)
+        else cfg.bundles.dir),
       // the first-run data ships inside the bundle (scripts/bundle/server.sh copies db/ there)
       init = cfg.init
         .modify(_.dataDir)
-        .setTo(if cfg.init.dataDir.value == DefaultInitDataDir then InitConfig.DataDir(l.initData.toString) else cfg.init.dataDir)
+        .setTo(if cfg.init.dataDir.value == DefaultInitDataDir then InitConfig.DataDir(l.initData.toString)
+        else cfg.init.dataDir)
     )
 
   /** `backups.dir`'s reference.conf value — relative, i.e. meaningless for a bundle. */
@@ -245,8 +298,16 @@ object Supervisor:
 
     val fresh = !Files.exists(l.cluster.resolve("PG_VERSION"))
     if fresh then initCluster(l, cfg.db.user, cfg.db.password)
-    if run(List(command(l.pgBin.resolve("pg_ctl").toString), command("-D"), command(l.cluster.toString), command("status")), l)._1 == 0 then
-      scribe.info("runtime: postgres already running on this cluster — adopting it")
+    if run(
+        List(
+          command(l.pgBin.resolve("pg_ctl").toString),
+          command("-D"),
+          command(l.cluster.toString),
+          command("status")
+        ),
+        l
+      )._1 == 0
+    then scribe.info("runtime: postgres already running on this cluster — adopting it")
     else
       val settings = pgSettings(cfg.runtime.postgres, physicalMemory(paths.osName))
       scribe.info(s"runtime: postgres memory ${settings.map((k, v) => s"$k=$v").mkString(", ")}")
@@ -256,7 +317,11 @@ object Supervisor:
           s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}"
         )
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
-    val configured = configure(cfg, l, paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value)))
+    val configured = configure(
+      cfg,
+      l,
+      paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value))
+    )
     ensureDatabase(configured)
 
     if Files.isExecutable(l.python) then superviseConverter(l, cfg.runtime.converterPort)
@@ -270,14 +335,23 @@ object Supervisor:
     * `runtime.*`, are restart-only), and a database the reload names is created in the bundled cluster before a pool
     * opens on it. `started` is the config [[start]] was given.
     */
-  def reloadSource(started: AppConfig, read: () => Either[ConfigSource.Problem, LoadedConfig], paths: UserPaths): ConfigSource =
+  def reloadSource(
+      started: AppConfig,
+      read: () => Either[ConfigSource.Problem, LoadedConfig],
+      paths: UserPaths
+  ): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e.value), identity)
     val bind = paths.environment.get(Environment.VariablesKey("HISTMERSION_BIND")).map(v => ServerConfig.Host(v.value))
     ConfigSource(
       read,
       c => configure(c, l, bind),
-      c => scala.util.Try(ensureDatabase(c)).toEither.left.map(e => ConfigSource.Problem(s"cannot create the database: ${e.getMessage}"))
+      c =>
+        scala.util
+          .Try(ensureDatabase(c))
+          .toEither
+          .left
+          .map(e => ConfigSource.Problem(s"cannot create the database: ${e.getMessage}"))
     )
 
   private def initCluster(l: Layout, user: DbConfig.User, password: DbConfig.Password): Unit =
@@ -292,7 +366,8 @@ object Supervisor:
 
   /** `CREATE DATABASE` on first run (the cluster starts with only `postgres`). */
   private def ensureDatabase(cfg: AppConfig): Unit =
-    val target = Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).fold(e => throw IllegalStateException(e.value), identity)
+    val target =
+      Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).fold(e => throw IllegalStateException(e.value), identity)
     val dbUrl = cfg.db.url.value
     val adminUrl = dbUrl.take(dbUrl.lastIndexOf('/') + 1) + "postgres"
     val c = java.sql.DriverManager.getConnection(adminUrl, cfg.db.user.value, cfg.db.password.value)
@@ -318,7 +393,8 @@ object Supervisor:
           environment = Map(
             ProcessLaunch.EnvironmentKey("DOCLING_ARTIFACTS_PATH") -> ProcessLaunch.EnvironmentValue(l.models.toString),
             ProcessLaunch.EnvironmentKey("HF_HUB_OFFLINE") -> ProcessLaunch.EnvironmentValue("1"),
-            ProcessLaunch.EnvironmentKey("HISTMERSION_CONVERTER_PORT") -> ProcessLaunch.EnvironmentValue(port.value.toString)
+            ProcessLaunch.EnvironmentKey("HISTMERSION_CONVERTER_PORT") -> ProcessLaunch
+              .EnvironmentValue(port.value.toString)
           ),
           output = ProcessOutput.AppendTo(Storage.at(Location.Logs, l.logs), Store.Key("converter.log"))
         )
@@ -350,5 +426,11 @@ object Supervisor:
   /** Run a Postgres tool with the bundle's environment; returns (exit code, output lines). */
   private def run(cmd: List[ProcessLaunch.Command], l: Layout): (Int, List[String]) =
     processes
-      .run(ProcessLaunch(cmd, environment = Map(ProcessLaunch.EnvironmentKey("PROJ_DATA") -> ProcessLaunch.EnvironmentValue(l.projData.toString))))
+      .run(
+        ProcessLaunch(
+          cmd,
+          environment =
+            Map(ProcessLaunch.EnvironmentKey("PROJ_DATA") -> ProcessLaunch.EnvironmentValue(l.projData.toString))
+        )
+      )
       .fold(e => throw java.io.IOException(e.value), r => (r.exitCode.value, r.lines.map(_.value)))

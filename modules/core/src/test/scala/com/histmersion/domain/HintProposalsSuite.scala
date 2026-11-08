@@ -15,7 +15,11 @@ import com.histmersion.api.automation.Managers
 class HintProposalsSuite extends munit.FunSuite:
 
   private val items = Set(HintProposals.Item("tin"), HintProposals.Item("copper"), HintProposals.Item("zz-goal"))
-  private def chk(a: HintAnswer, last: HintProposals.Last = HintProposals.Last(false), item: Option[HintProposals.Item] = None) =
+  private def chk(
+      a: HintAnswer,
+      last: HintProposals.Last = HintProposals.Last(false),
+      item: Option[HintProposals.Item] = None
+  ) =
     check(a, items.contains, item, last)
 
   test("none (or nothing) proposes nothing; an unknown action is sent back, and on the last attempt proposes nothing"):
@@ -23,45 +27,117 @@ class HintProposalsSuite extends munit.FunSuite:
     assertEquals(chk(HintAnswer(HintAnswer.Action(""))), Right((None, Nil)))
     assert(chk(HintAnswer(HintAnswer.Action("delete"))).left.exists(_.head.value.contains("is not an action")))
     assert(
-      chk(HintAnswer(HintAnswer.Action("delete")), last = HintProposals.Last(true)).exists((e, ws) => e.isEmpty && ws.head.value.startsWith("nothing proposed"))
+      chk(HintAnswer(HintAnswer.Action("delete")), last = HintProposals.Last(true)).exists((e, ws) =>
+        e.isEmpty && ws.head.value.startsWith("nothing proposed")
+      )
     )
 
   test(
     "hold: the targets as listed, a date that parses or a source; an unknown target is sent back, dropped on the last attempt"
   ):
     assertEquals(
-      chk(HintAnswer(HintAnswer.Action("Hold"), targets = List(HintAnswer.Targets("tin")), until = Some(HintAnswer.Until("2026-12-01")))).map(_._1),
-      Right(Some(HintEffect(HintEffect.Action("hold"), List(HintEffect.Targets("tin")), until = Some(HintEffect.Until("2026-12-01")))))
+      chk(
+        HintAnswer(
+          HintAnswer.Action("Hold"),
+          targets = List(HintAnswer.Targets("tin")),
+          until = Some(HintAnswer.Until("2026-12-01"))
+        )
+      ).map(_._1),
+      Right(
+        Some(
+          HintEffect(
+            HintEffect.Action("hold"),
+            List(HintEffect.Targets("tin")),
+            until = Some(HintEffect.Until("2026-12-01"))
+          )
+        )
+      )
     )
-    assert(chk(HintAnswer(HintAnswer.Action("hold"), targets = List(HintAnswer.Targets("tin")))).left.exists(_.exists(_.value.contains("give `until`"))))
     assert(
-      chk(HintAnswer(HintAnswer.Action("hold"), targets = List(HintAnswer.Targets("tin")), until = Some(HintAnswer.Until("next week")))).left
+      chk(HintAnswer(HintAnswer.Action("hold"), targets = List(HintAnswer.Targets("tin")))).left
+        .exists(_.exists(_.value.contains("give `until`")))
+    )
+    assert(
+      chk(
+        HintAnswer(
+          HintAnswer.Action("hold"),
+          targets = List(HintAnswer.Targets("tin")),
+          until = Some(HintAnswer.Until("next week"))
+        )
+      ).left
         .exists(_.exists(_.value.contains("not a date")))
     )
     assert(
-      chk(HintAnswer(HintAnswer.Action("hold"), targets = List(HintAnswer.Targets("tin"), HintAnswer.Targets("lead")), until = Some(HintAnswer.Until("2026-12-01")))).left
+      chk(
+        HintAnswer(
+          HintAnswer.Action("hold"),
+          targets = List(HintAnswer.Targets("tin"), HintAnswer.Targets("lead")),
+          until = Some(HintAnswer.Until("2026-12-01"))
+        )
+      ).left
         .exists(_.exists(_.value.contains("not among the manager's items: lead")))
     )
     assertEquals(
-      chk(HintAnswer(HintAnswer.Action("hold"), targets = List(HintAnswer.Targets("tin"), HintAnswer.Targets("lead")), untilSource = Some(HintAnswer.UntilSource("10.1/x"))), last = HintProposals.Last(true)),
+      chk(
+        HintAnswer(
+          HintAnswer.Action("hold"),
+          targets = List(HintAnswer.Targets("tin"), HintAnswer.Targets("lead")),
+          untilSource = Some(HintAnswer.UntilSource("10.1/x"))
+        ),
+        last = HintProposals.Last(true)
+      ),
       Right(
         (
-          Some(HintEffect(HintEffect.Action("hold"), List(HintEffect.Targets("tin")), untilSource = Some(HintEffect.UntilSource("10.1/x")))),
+          Some(
+            HintEffect(
+              HintEffect.Action("hold"),
+              List(HintEffect.Targets("tin")),
+              untilSource = Some(HintEffect.UntilSource("10.1/x"))
+            )
+          ),
           List("dropped, not among the manager's items: lead")
         )
       )
     )
     assert(
-      chk(HintAnswer(HintAnswer.Action("hold"), targets = List(HintAnswer.Targets("lead")), until = Some(HintAnswer.Until("2026-12-01"))), last = HintProposals.Last(true)).exists(_._1.isEmpty)
+      chk(
+        HintAnswer(
+          HintAnswer.Action("hold"),
+          targets = List(HintAnswer.Targets("lead")),
+          until = Some(HintAnswer.Until("2026-12-01"))
+        ),
+        last = HintProposals.Last(true)
+      ).exists(_._1.isEmpty)
     )
 
   test("prioritise and skip: targets, a tag, or the item the hint is about; the priority within bounds"):
     assertEquals(
-      chk(HintAnswer(HintAnswer.Action("prioritise"), tag = Some(HintAnswer.Tag("hittite")), priority = Some(HintAnswer.Priority(7)))).map(_._1),
-      Right(Some(HintEffect(HintEffect.Action("prioritise"), Nil, Some(HintEffect.Tag("hittite")), priority = Some(HintEffect.Priority(7)))))
+      chk(
+        HintAnswer(
+          HintAnswer.Action("prioritise"),
+          tag = Some(HintAnswer.Tag("hittite")),
+          priority = Some(HintAnswer.Priority(7))
+        )
+      ).map(_._1),
+      Right(
+        Some(
+          HintEffect(
+            HintEffect.Action("prioritise"),
+            Nil,
+            Some(HintEffect.Tag("hittite")),
+            priority = Some(HintEffect.Priority(7))
+          )
+        )
+      )
     )
     assert(
-      chk(HintAnswer(HintAnswer.Action("prioritise"), targets = List(HintAnswer.Targets("tin")), priority = Some(HintAnswer.Priority(99)))).left
+      chk(
+        HintAnswer(
+          HintAnswer.Action("prioritise"),
+          targets = List(HintAnswer.Targets("tin")),
+          priority = Some(HintAnswer.Priority(99))
+        )
+      ).left
         .exists(_.exists(_.value.contains("outside")))
     )
     assertEquals(
@@ -70,17 +146,36 @@ class HintProposalsSuite extends munit.FunSuite:
     )
     assert(chk(HintAnswer(HintAnswer.Action("skip"))).left.exists(_.exists(_.value.contains("name the items"))))
     assertEquals(
-      chk(HintAnswer(HintAnswer.Action("skip"), targets = List(HintAnswer.Targets("copper")), priority = Some(HintAnswer.Priority(5)))).map(_._1.flatMap(_.priority)),
+      chk(
+        HintAnswer(
+          HintAnswer.Action("skip"),
+          targets = List(HintAnswer.Targets("copper")),
+          priority = Some(HintAnswer.Priority(5))
+        )
+      ).map(_._1.flatMap(_.priority)),
       Right(None),
       "a priority belongs to prioritise only"
     )
 
   test("config: settings as key=value that parse; none, or a typo, is sent back"):
     assertEquals(
-      chk(HintAnswer(HintAnswer.Action("config"), settings = List(HintAnswer.Settings("max-runs=1"), HintAnswer.Settings("cooldownMinutes=60")))).map(_._1.flatMap(_.config)),
-      Right(Some(Managers.ManagerConfig(maxRuns = Some(Managers.ManagerConfig.MaxRuns(1)), cooldownMinutes = Some(Managers.ManagerConfig.CooldownMinutes(60)))))
+      chk(
+        HintAnswer(
+          HintAnswer.Action("config"),
+          settings = List(HintAnswer.Settings("max-runs=1"), HintAnswer.Settings("cooldownMinutes=60"))
+        )
+      ).map(_._1.flatMap(_.config)),
+      Right(
+        Some(
+          Managers.ManagerConfig(
+            maxRuns = Some(Managers.ManagerConfig.MaxRuns(1)),
+            cooldownMinutes = Some(Managers.ManagerConfig.CooldownMinutes(60))
+          )
+        )
+      )
     )
     assert(chk(HintAnswer(HintAnswer.Action("config"))).left.exists(_.head.value.contains("give the settings")))
     assert(
-      chk(HintAnswer(HintAnswer.Action("config"), settings = List(HintAnswer.Settings("speed=fast")))).left.exists(_.head.value.contains("unknown manager setting"))
+      chk(HintAnswer(HintAnswer.Action("config"), settings = List(HintAnswer.Settings("speed=fast")))).left
+        .exists(_.head.value.contains("unknown manager setting"))
     )

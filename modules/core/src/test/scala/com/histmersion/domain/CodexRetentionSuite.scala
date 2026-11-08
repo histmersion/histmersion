@@ -19,9 +19,21 @@ class CodexRetentionSuite extends munit.FunSuite:
 
   test("only transcripts under sessions/ or archived_sessions/ older than keep-days, oldest first"):
     val files = List(
-      FileInfo(FileInfo.Rel("sessions/2026/09/01/rollout-a.jsonl"), FileInfo.Bytes(10), FileInfo.ModifiedMs(nowMs - 40 * Day)),
-      FileInfo(FileInfo.Rel("sessions/2026/10/20/rollout-b.jsonl"), FileInfo.Bytes(10), FileInfo.ModifiedMs(nowMs - 3 * Day)),
-      FileInfo(FileInfo.Rel("archived_sessions/rollout-c.jsonl"), FileInfo.Bytes(10), FileInfo.ModifiedMs(nowMs - 60 * Day)),
+      FileInfo(
+        FileInfo.Rel("sessions/2026/09/01/rollout-a.jsonl"),
+        FileInfo.Bytes(10),
+        FileInfo.ModifiedMs(nowMs - 40 * Day)
+      ),
+      FileInfo(
+        FileInfo.Rel("sessions/2026/10/20/rollout-b.jsonl"),
+        FileInfo.Bytes(10),
+        FileInfo.ModifiedMs(nowMs - 3 * Day)
+      ),
+      FileInfo(
+        FileInfo.Rel("archived_sessions/rollout-c.jsonl"),
+        FileInfo.Bytes(10),
+        FileInfo.ModifiedMs(nowMs - 60 * Day)
+      ),
       FileInfo(FileInfo.Rel("auth.json"), FileInfo.Bytes(1), FileInfo.ModifiedMs(nowMs - 400 * Day)),
       FileInfo(FileInfo.Rel("state_5.sqlite"), FileInfo.Bytes(1), FileInfo.ModifiedMs(nowMs - 400 * Day)),
       FileInfo(FileInfo.Rel("extractor.config.toml"), FileInfo.Bytes(1), FileInfo.ModifiedMs(nowMs - 400 * Day)),
@@ -36,7 +48,14 @@ class CodexRetentionSuite extends munit.FunSuite:
 
   test("the SQLite files at the top of the home, not their journals; a pass is due once per interval"):
     assertEquals(
-      CodexRetention.sqliteFiles(List(CodexRetention.FileName("state_5.sqlite-wal"), CodexRetention.FileName("thread_history_1.sqlite"), CodexRetention.FileName("state_5.sqlite"), CodexRetention.FileName("auth.json"))),
+      CodexRetention.sqliteFiles(
+        List(
+          CodexRetention.FileName("state_5.sqlite-wal"),
+          CodexRetention.FileName("thread_history_1.sqlite"),
+          CodexRetention.FileName("state_5.sqlite"),
+          CodexRetention.FileName("auth.json")
+        )
+      ),
       List("state_5.sqlite", "thread_history_1.sqlite")
     )
     assert(CodexRetention.due(None, now, CodexRetention.EveryHours(24)))
@@ -47,4 +66,8 @@ class CodexRetentionSuite extends munit.FunSuite:
   test("the configured defaults, and About's shrink hint"):
     val c = AppConfig.load().agents.providers.codex
     assertEquals((c.keepSessionsDays, c.vacuum, c.retentionEveryHours, c.sqlite), (14, true, 24, "sqlite3"))
-    assert(Storage.Advice.shrink(Storage.Entry.Key("codex-home"), Storage.Advice.Keep(0)).exists(_.value.contains("keep-sessions-days")))
+    assert(
+      Storage.Advice
+        .shrink(Storage.Entry.Key("codex-home"), Storage.Advice.Keep(0))
+        .exists(_.value.contains("keep-sessions-days"))
+    )

@@ -54,7 +54,11 @@ object AssetsCarried extends CarriedKind:
       files: ContentStore
   ): Option[BlobSink] = use match
     case BlobUse.AssetBytes(u) =>
-      Some(BlobSink.Held(bytes => AssetBundleRepo.write(writer, writer.once(AssetBundleRepo.byUid)(u), Some(AssetBytesRow.Bytes(bytes)))))
+      Some(
+        BlobSink.Held(bytes =>
+          AssetBundleRepo.write(writer, writer.once(AssetBundleRepo.byUid)(u), Some(AssetBytesRow.Bytes(bytes)))
+        )
+      )
     case _ => None
 
   override val rowsIn: List[RowsIn] =

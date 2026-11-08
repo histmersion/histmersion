@@ -64,7 +64,10 @@ private[workflows] trait GoalSweep:
         ctx.write(
           s"link queue item $id to goal $goal",
           io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
-        ) { val _ = goals.link(goal, Goal.LinkKind.QueueItem, GoalLink.Ref(id.value.toString), Some(GoalLink.Note(doi.value))) }(())
+        ) {
+          val _ =
+            goals.link(goal, Goal.LinkKind.QueueItem, GoalLink.Ref(id.value.toString), Some(GoalLink.Note(doi.value)))
+        }(())
         Right(false)
       case None =>
         val item = QueueAdd(
@@ -75,7 +78,12 @@ private[workflows] trait GoalSweep:
         )
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
           site.workLists.add(WorkListControllers.ListName("acquire"), item).left.map(_.message.value).map { added =>
-            val _ = goals.link(goal, Goal.LinkKind.QueueItem, GoalLink.Ref(added.id.value.toString), Some(GoalLink.Note(doi.value)))
+            val _ = goals.link(
+              goal,
+              Goal.LinkKind.QueueItem,
+              GoalLink.Ref(added.id.value.toString),
+              Some(GoalLink.Note(doi.value))
+            )
             true
           }
         )(Right(true))

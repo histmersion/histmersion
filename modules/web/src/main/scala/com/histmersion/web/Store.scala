@@ -32,4 +32,3 @@ object Store:
     def get(key: String): Option[String] = m.get(key)
     def put(key: String, value: String): Unit = m(key) = value
     def remove(key: String): Unit = { val _ = m.remove(key) }
-

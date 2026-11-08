@@ -87,7 +87,8 @@ object PointAreas:
               if findings.value == 1 then "also" else "each also"
             } at another place"
         else if findings.value == 1 then ": 1 finding, at no other place"
-        else s": ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}, $alone of them at no other place"
+        else
+          s": ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}, $alone of them at no other place"
       val kept = if pinned.value > 0 then
         s" — kept: named by $pinned attestation(s)/asset link(s)/place override(s); move or reset those first"
       else ""
@@ -149,7 +150,12 @@ object PointAreas:
     LintItem(Citekey(l.id.value), LintItem.Detail(l.detail.value))
 
   /** One line for `lint --fix`. */
-  def fixed(removed: FixedRemoved, remaining: FixedRemaining, findings: FixedFindings, sources: FixedSources): FixedResult =
+  def fixed(
+      removed: FixedRemoved,
+      remaining: FixedRemaining,
+      findings: FixedFindings,
+      sources: FixedSources
+  ): FixedResult =
     FixedResult(
       s"${Lint.PlaceImportedPointArea}: $removed point-only imported area(s) removed" +
         (if findings.value > 0 then

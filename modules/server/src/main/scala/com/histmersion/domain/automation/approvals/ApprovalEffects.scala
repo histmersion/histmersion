@@ -26,8 +26,8 @@ object ApprovalEffects:
   object Payload extends Newtype[String, Pure]
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
-  /** The effects the domains contribute, as one: the library's source proposals and each subject kind's own. */
 
+  /** The effects the domains contribute, as one: the library's source proposals and each subject kind's own. */
 
   def of(proposals: ProposalEffect, subjects: List[SubjectEffect]): ApprovalEffects = new ApprovalEffects:
     def proposal(payload: Payload): Option[() => Either[Problem, String]] = proposals.proposal(payload)

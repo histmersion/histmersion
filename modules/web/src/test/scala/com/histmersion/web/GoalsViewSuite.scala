@@ -34,7 +34,13 @@ class GoalsViewSuite extends munit.FunSuite:
     )
 
   test("the open plan of a goal"):
-    val open = ApprovalInfo(ApprovalInfo.Id(1), Some(Agents.RunInfo.Id("r")), ApprovalInfo.Kind("goal-plan"), Citekey(""), subject = Some(ApprovalInfo.Subject("a")))
+    val open = ApprovalInfo(
+      ApprovalInfo.Id(1),
+      Some(Agents.RunInfo.Id("r")),
+      ApprovalInfo.Kind("goal-plan"),
+      Citekey(""),
+      subject = Some(ApprovalInfo.Subject("a"))
+    )
     val done = open.modify(_.id).setTo(ApprovalInfo.Id(2)).modify(_.state).setTo(ApprovalInfo.State("approved"))
     val other = open.modify(_.id).setTo(ApprovalInfo.Id(3)).modify(_.subject).setTo(Some(ApprovalInfo.Subject("b")))
     val edge = ApprovalInfo(ApprovalInfo.Id(4), None, ApprovalInfo.Kind("edge"), Citekey("a2020_b"))
@@ -48,8 +54,15 @@ class GoalsViewSuite extends munit.FunSuite:
       GoalsView.linkToAdd(LinkKind.Query, Goal.Plans.LinkAdd.Ref("  tin trade "), Goal.Plans.LinkAdd.Note(" ")),
       Some(LinkAdd(LinkKind.Query, Goal.Plans.LinkAdd.Ref("tin trade"), None))
     )
-    assertEquals(GoalsView.linkToAdd(LinkKind.Source, Goal.Plans.LinkAdd.Ref("  "), Goal.Plans.LinkAdd.Note("why")), None)
-    val ls = List(GoalLink(LinkKind.Source, Goal.Plans.GoalLink.Ref("a")), GoalLink(LinkKind.Query, Goal.Plans.GoalLink.Ref("q")), GoalLink(LinkKind.Source, Goal.Plans.GoalLink.Ref("b")))
+    assertEquals(
+      GoalsView.linkToAdd(LinkKind.Source, Goal.Plans.LinkAdd.Ref("  "), Goal.Plans.LinkAdd.Note("why")),
+      None
+    )
+    val ls = List(
+      GoalLink(LinkKind.Source, Goal.Plans.GoalLink.Ref("a")),
+      GoalLink(LinkKind.Query, Goal.Plans.GoalLink.Ref("q")),
+      GoalLink(LinkKind.Source, Goal.Plans.GoalLink.Ref("b"))
+    )
     assertEquals(GoalsView.linksOf(ls, LinkKind.Source).map(_.ref.value), List("a", "b"))
 
   test("every goal stage has a meaning, in the order a goal moves through them"):

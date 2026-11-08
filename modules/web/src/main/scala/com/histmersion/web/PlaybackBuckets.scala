@@ -20,6 +20,7 @@ object PlaybackBuckets:
   object Seconds extends Newtype[Double, Pure]
   type YearsPerSecond = YearsPerSecond.T
   object YearsPerSecond extends Newtype[Double, Pure]
+
   /** Pure: the bucket of `yearsPerSecond` × `seconds`, up to a round 1, 2 or 5 × 10ⁿ years (at least 1). */
 
   def years(yearsPerSecond: YearsPerSecond, seconds: Seconds): BucketYears =
@@ -29,7 +30,10 @@ object PlaybackBuckets:
     BucketYears(math.max(1L, math.round(step)))
 
   /** Pure: `span` widened outwards to whole buckets of `bucket` years. */
-  def widen(span: (Years.Astronomical, Years.Astronomical), bucket: BucketYears): (Years.Astronomical, Years.Astronomical) =
+  def widen(
+      span: (Years.Astronomical, Years.Astronomical),
+      bucket: BucketYears
+  ): (Years.Astronomical, Years.Astronomical) =
     val (lo, hi) = (span._1.value.min(span._2.value), span._1.value.max(span._2.value))
     val b = bucket.value.max(1)
     (Years.Astronomical(Math.floorDiv(lo, b) * b), Years.Astronomical(Math.floorDiv(hi, b) * b + b - 1))

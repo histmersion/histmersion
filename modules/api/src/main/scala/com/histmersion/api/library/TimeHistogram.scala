@@ -21,7 +21,8 @@ final case class TimeHistogram(
     asOf: Option[Year] = None,
     tree: List[Bucket] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object TimeHistogram:
   type From = From.T

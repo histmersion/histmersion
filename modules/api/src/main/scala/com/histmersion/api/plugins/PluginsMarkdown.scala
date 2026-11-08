@@ -6,7 +6,6 @@ import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
 object PluginsMarkdown:
 
-
   def line(p: PluginStatus): String =
     val what = PluginState.parse(PluginState.Wire(p.state.value)) match
       case Some(PluginState.Registered) =>
@@ -18,8 +17,9 @@ object PluginsMarkdown:
 
   def summary(r: PluginsReport): List[String] =
     val enabled = r.plugins.count((refactorCallback2 => ((refactorCallback2.enabled) == PluginStatus.Enabled(true))))
-    val head = s"- plugins: ${Plural.count(Plural.CountN((r.plugins.size).toLong), Plural.CountSingular("plugin"))} in this binary · $enabled enabled" +
-      (if ((r.ok) == (true)) then "" else " · PROBLEMS")
+    val head =
+      s"- plugins: ${Plural.count(Plural.CountN((r.plugins.size).toLong), Plural.CountSingular("plugin"))} in this binary · $enabled enabled" +
+        (if (r.ok) == (true) then "" else " · PROBLEMS")
     (head :: s"  - plugin set: ${PluginSet.describe(r.set)}" :: (r.plugins.map(p => s"  - ${line(p)}") ++
       r.plugins.flatMap(p => p.warnings.map(w => s"  - warning: $w")) ++
       r.warnings.map(w => s"  - warning: $w"))).map(refactorValue => (refactorValue))
@@ -28,13 +28,16 @@ object PluginsMarkdown:
     val plugins = r.plugins.flatMap { p =>
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))
     }
-    val verdict = if ((r.ok) == (true)) && checks.forall((refactorCallback => (refactorCallback._1))) then "self-check passed" else "self-check FAILED"
+    val verdict = if ((r.ok) == (true)) && checks.forall((refactorCallback => (refactorCallback._1))) then
+      "self-check passed"
+    else "self-check FAILED"
     ((List(
       "# Histmersion self-check",
       "",
       s"- config file: ${ConfigFileInfo.describe(file)}",
       s"- plugin SPI: ${r.spiVersion}",
-      s"- plugins: ${Plural.count(Plural.Count((r.plugins.size).toLong), Plural.Noun.Singular("plugin"))} · ${r.plugins.count((refactorCallback3 => ((refactorCallback3.enabled) == PluginStatus.Enabled(true))))} enabled",
+      s"- plugins: ${Plural.count(Plural.Count((r.plugins.size).toLong), Plural.Noun.Singular("plugin"))} · ${r.plugins
+          .count((refactorCallback3 => ((refactorCallback3.enabled) == PluginStatus.Enabled(true))))} enabled",
       s"- plugin set: ${PluginSet.describe(r.set)}",
       s"- plugin-set digest: ${r.set.fold(PluginSet.EmptyDigest)(_.digest)}"
     ) ++ checks.map((_, l) => s"- $l") ++ List("") ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List(

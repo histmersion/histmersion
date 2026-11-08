@@ -11,10 +11,16 @@ import scala.jdk.CollectionConverters.*
 /** Running the kit's scripts and curl. Behind a trait so the commands can be tested without them. */
 trait Runner:
   /** stdout on success; on failure the exit code and stderr. */
-  def capture(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] = Map.empty): Either[(Cli.Error.ExitCode, String), String]
+  def capture(
+      cmd: List[String],
+      env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] = Map.empty
+  ): Either[(Cli.Error.ExitCode, String), String]
 
   /** The process's output goes to this terminal; its exit code. */
-  def interactive(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] = Map.empty): Cli.Error.ExitCode
+  def interactive(
+      cmd: List[String],
+      env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] = Map.empty
+  ): Cli.Error.ExitCode
 
 object Runner:
 
@@ -34,7 +40,10 @@ object Runner:
           if rc == 0 then Right(out) else Left(Cli.Error.ExitCode(rc) -> err.get().trim.take(2000))
         }
         .fold[Either[(Cli.Error.ExitCode, String), String]](
-          e => Left(Cli.Error.ExitCode(127) -> s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"),
+          e =>
+            Left(
+              Cli.Error.ExitCode(127) -> s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"
+            ),
           identity
         )
 

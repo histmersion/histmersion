@@ -26,7 +26,10 @@ class NoteServiceContractSuite extends PersonalServiceContract("note"):
         List(n1.id)
       )
       assertEquals(w.notes.list(me, None, Some(ItemKey("zz_pers_n")), everything, all).map(_.id), List(n1.id))
-      assertEquals(w.notes.list(me, None, None, SearchWords.of(Some(SearchWords.Query("langgut"))), all).map(_.id), List(n1.id))
+      assertEquals(
+        w.notes.list(me, None, None, SearchWords.of(Some(SearchWords.Query("langgut"))), all).map(_.id),
+        List(n1.id)
+      )
       assertEquals(n1.updatedAt.iso, "2026-10-30T12:00:00.123456Z")
       val edited = w.notes.edit(me, n1.id, Note.Text("Changed."), Some(n1.updatedAt), at(5))
       assertEquals(edited.map(_.text.value.toString), Right("Changed."))

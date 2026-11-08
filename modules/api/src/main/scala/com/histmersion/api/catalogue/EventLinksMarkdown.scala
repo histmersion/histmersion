@@ -57,7 +57,8 @@ object EventLinksMarkdown:
     else
       ((s"## Sources that may discuss ${l.label} (`${l.eventId}`)" :: "" ::
         "_Proposed from findings near it and passages naming it — unconfirmed until confirmed (an attestation)._" :: "" ::
-        l.candidates.map(line)).mkString("\n"))
+        l.candidates.map(line)).mkString("\n")
+    )
 
   def result(r: EventLinksResult): String =
     (List(

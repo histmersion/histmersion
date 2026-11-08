@@ -13,4 +13,5 @@ final case class CollectionRecordView(
     authors: List[AuthorName],
     year: Option[Year]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

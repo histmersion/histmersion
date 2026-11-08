@@ -24,14 +24,13 @@ object Period:
   type Start = Start.T
   object Start extends Newtype[Long, Pure]
 
-
   final case class Detail(
       period: HistoricalPeriod,
       parent: Option[HistoricalPeriod] = None,
       children: List[HistoricalPeriod] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   final case class ImportResult(
       periods: ImportResult.Periods,
@@ -41,7 +40,8 @@ object Period:
       skippedCount: ImportResult.SkippedCount = ImportResult.SkippedCount(0),
       removed: ImportResult.Removed = ImportResult.Removed(0)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ImportResult:
     type Periods = Periods.T
@@ -55,10 +55,8 @@ object Period:
     type Removed = Removed.T
     object Removed extends Newtype[Int, Pure]
 
-
   final case class Input(start: Year, end: Year) derives KindlingsSchema, com.histmersion.api.json.Schema
   object Input:
-
 
     given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])
 

@@ -33,7 +33,9 @@ object PlaybackAreas:
   /** Pure: the alpha drawn — `a` in steps of 1/`steps`, so a frame restyles only the states whose look changed (the map
     * recolours a state per change).
     */
-  def step(a: Opacity, steps: StepCount = StepCount(20)): Opacity = Opacity(math.round(a.value * steps.value).toDouble / steps.value)
+  def step(a: Opacity, steps: StepCount = StepCount(20)): Opacity = Opacity(
+    math.round(a.value * steps.value).toDouble / steps.value
+  )
 
   /** Pure: a playback state's key: its place and its years (one place's versions are different shapes). */
   def key(id: AreaKey, start: Option[FractionalYear], end: Option[FractionalYear]): AreaKey =

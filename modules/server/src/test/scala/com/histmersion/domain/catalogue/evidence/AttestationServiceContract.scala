@@ -35,8 +35,17 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
         Some(Attestation.Note("n"))
       )
     )
-    val second = a.create(Attestation.Put(Citekey("zzat2020_one"), Attestation.TargetType("event"), Attestation.TargetId("zz_battle"), quote = Some(Attestation.Quote("the battle"))))
-    val third = a.create(Attestation.Put(Citekey("zzat2021_two"), Attestation.TargetType("place"), Attestation.TargetId("zz_hill")))
+    val second = a.create(
+      Attestation.Put(
+        Citekey("zzat2020_one"),
+        Attestation.TargetType("event"),
+        Attestation.TargetId("zz_battle"),
+        quote = Some(Attestation.Quote("the battle"))
+      )
+    )
+    val third = a.create(
+      Attestation.Put(Citekey("zzat2021_two"), Attestation.TargetType("place"), Attestation.TargetId("zz_hill"))
+    )
     assert(first.id.value < second.id.value && second.id.value < third.id.value)
     assertEquals(a.get(first.id), Some(first))
     assertEquals(
@@ -46,16 +55,52 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     assertEquals(a.get(Attestation.Id(third.id.value + 100)), None)
     val all = a.list(None, None, None, PageSize(10), Offset(0))
     assertEquals(((all.total.value: Int), all.attestations.map(_.id)), (3, List(first.id, second.id, third.id)))
-    assertEquals(a.list(Some(com.histmersion.domain.library.Citekey("zzat2020_one")), None, None, PageSize(10), Offset(0)).attestations.map(_.id), List(first.id, second.id))
-    assertEquals(a.list(None, Some(Attestation.TargetType("place")), Some(Attestation.TargetId("zz_hill")), PageSize(10), Offset(0)).attestations.map(_.id), List(first.id, third.id))
-    assertEquals((a.list(Some(com.histmersion.domain.library.Citekey.assume(" ")), Some(Attestation.TargetType("")), None, PageSize(10), Offset(0)).total.value: Int), 3)
+    assertEquals(
+      a.list(Some(com.histmersion.domain.library.Citekey("zzat2020_one")), None, None, PageSize(10), Offset(0))
+        .attestations
+        .map(_.id),
+      List(first.id, second.id)
+    )
+    assertEquals(
+      a.list(
+        None,
+        Some(Attestation.TargetType("place")),
+        Some(Attestation.TargetId("zz_hill")),
+        PageSize(10),
+        Offset(0)
+      ).attestations
+        .map(_.id),
+      List(first.id, third.id)
+    )
+    assertEquals(
+      (a.list(
+        Some(com.histmersion.domain.library.Citekey.assume(" ")),
+        Some(Attestation.TargetType("")),
+        None,
+        PageSize(10),
+        Offset(0)
+      ).total
+        .value: Int),
+      3
+    )
     val page = a.list(None, None, None, PageSize(1), Offset(1))
-    assertEquals(((page.total.value: Int), page.attestations.map(_.id), (page.offset.value: Int)), (3, List(second.id), 1))
+    assertEquals(
+      ((page.total.value: Int), page.attestations.map(_.id), (page.offset.value: Int)),
+      (3, List(second.id), 1)
+    )
     assertEquals(a.list(None, None, None, PageSize.assume(0), Offset.assume(-5)).attestations.map(_.id), List(first.id))
-    val patched = a.patch(first.id, Attestation.Patch(note = Some(Attestation.Note("changed")), page = Some(Attestation.Page("13")))).toOption.get
-    assertEquals(patched, first.modify(_.note).setTo(Some(Attestation.Note("changed"))).modify(_.page).setTo(Some(Attestation.Page("13"))))
+    val patched = a
+      .patch(first.id, Attestation.Patch(note = Some(Attestation.Note("changed")), page = Some(Attestation.Page("13"))))
+      .toOption
+      .get
+    assertEquals(
+      patched,
+      first.modify(_.note).setTo(Some(Attestation.Note("changed"))).modify(_.page).setTo(Some(Attestation.Page("13")))
+    )
     assert(
-      a.patch(Attestation.Id(third.id.value + 100), Attestation.Patch(note = Some(Attestation.Note("x")))).left.exists(_.message.value.contains("No attestation"))
+      a.patch(Attestation.Id(third.id.value + 100), Attestation.Patch(note = Some(Attestation.Note("x"))))
+        .left
+        .exists(_.message.value.contains("No attestation"))
     )
     assert(a.delete(second.id))
     assert(!a.delete(second.id))

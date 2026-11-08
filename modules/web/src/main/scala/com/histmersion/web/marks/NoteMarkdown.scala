@@ -61,10 +61,16 @@ object NoteMarkdown:
       case Heading(h, t) :: rest   => loop(rest, Block.Heading(Block.Heading.Level(h.length), inlinesOf(t.trim)) :: out)
       case (l @ Bullet(_)) :: rest =>
         val (more, after) = rest.span { case Bullet(_) => true; case _ => false }
-        loop(after, Block.Items(Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlinesOf(t) }) :: out)
+        loop(
+          after,
+          Block.Items(Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlinesOf(t) }) :: out
+        )
       case (l @ Number(_)) :: rest =>
         val (more, after) = rest.span { case Number(_) => true; case _ => false }
-        loop(after, Block.Items(Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlinesOf(t) }) :: out)
+        loop(
+          after,
+          Block.Items(Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlinesOf(t) }) :: out
+        )
       case (l @ QuoteL(_)) :: rest =>
         val (more, after) = rest.span { case QuoteL(_) => true; case _ => false }
         loop(after, Block.Quote(inlinesOf((l :: more).collect { case QuoteL(t) => t }.mkString(" "))) :: out)

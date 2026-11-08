@@ -44,9 +44,12 @@ object PlanGoal:
 
   // ── the model's answer ──────────────────────────────────────────────────────────────────────────
 
-
-  final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
-      derives KindlingsCodecAsObject
+  final case class SubGoalAnswer(
+      slug: SubGoalAnswer.Slug,
+      title: SubGoalAnswer.Title,
+      notes: Option[SubGoalAnswer.Notes] = None,
+      tags: List[SubGoalAnswer.Tags] = Nil
+  ) derives KindlingsCodecAsObject
   object SubGoalAnswer:
     type Slug = Slug.T
     object Slug extends Newtype[String, Pure]
@@ -157,11 +160,12 @@ object PlanGoal:
           .parse(Option(g.slug).fold("")(_.value))
           .flatMap(s => Goal.Slug.either(s.value).left.map(Slug.Problem(_))) match
           case Left(m)                                                  => problems += s"sub-goal: $m"; acc
-          case Right(s) if Option(g.title).forall(_.value.trim.isEmpty) => problems += s"sub-goal '$s' has no title"; acc
-          case Right(s) if s == goal                                    => dropped += s"sub-goal '$s' is the goal itself"; acc
-          case Right(s) if acc.exists(_.slug.value == s.value)          => dropped += s"sub-goal '$s' proposed twice"; acc
-          case Right(s) if goalExists(s)                                => dropped += s"sub-goal '$s' is already a goal"; acc
-          case Right(s)                                                 =>
+          case Right(s) if Option(g.title).forall(_.value.trim.isEmpty) =>
+            problems += s"sub-goal '$s' has no title"; acc
+          case Right(s) if s == goal                           => dropped += s"sub-goal '$s' is the goal itself"; acc
+          case Right(s) if acc.exists(_.slug.value == s.value) => dropped += s"sub-goal '$s' proposed twice"; acc
+          case Right(s) if goalExists(s)                       => dropped += s"sub-goal '$s' is already a goal"; acc
+          case Right(s)                                        =>
             acc :+ PlannedGoal(
               com.histmersion.api.automation.Goal.Slug(s.value),
               com.histmersion.api.automation.Goal.Title(g.title.value.trim),
@@ -189,7 +193,7 @@ object PlanGoal:
         Doi.normalize(Option(w.doi).fold("")(_.value)) match
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
-          case Some(d)                           => acc :+ ProposedWork(d, ProposedWork.Why(Option(w.why).fold("")(_.value.trim)))
+          case Some(d) => acc :+ ProposedWork(d, ProposedWork.Why(Option(w.why).fold("")(_.value.trim)))
       }
       .toList
 
@@ -297,7 +301,8 @@ object PlanGoal:
       queued: QueuedCount,
       runId: Run.Id
   ): LogLine =
-    if !approved.value then LogLine(s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.value.take(8)})")
+    if !approved.value then
+      LogLine(s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.value.take(8)})")
     else
       LogLine(
         s"plan-goal $goal: approved — $created sub-goal(s), ${plan.queries.size} query link(s), " +

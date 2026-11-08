@@ -98,14 +98,16 @@ final class HttpApi(
     BasemapApi.status.serverLogicSuccess[Identity](_ => h.basemap.status),
     BasemapApi.fetch.serverLogic[Identity](q => h.basemap.fetch(q)),
     BasemapApi.remove.serverLogic[Identity](q => h.basemap.remove(q)),
-    BasemapApi.tile.serverLogic[Identity]((l, z, x, y, sub, keys) => h.basemap.tile(
+    BasemapApi.tile.serverLogic[Identity]((l, z, x, y, sub, keys) =>
+      h.basemap.tile(
         l,
         z,
         x,
         y,
         sub.map(v => Basemap.Subset.Spec(v.value)),
         keys.map(k => BasemapService.TileKeys(k.value))
-      )),
+      )
+    ),
     TilesApi.tile.serverLogic[Identity](q => h.tiles.tile(q))
   ) ++ LibraryRoutes(
     h.library.search,
@@ -121,10 +123,12 @@ final class HttpApi(
     Api.exportSource.serverLogic[Identity](ck =>
       h.mirror.note(LibraryData.SourceNotes, MirrorPlacement.RecordId(ck.value)).map(n => Source.Export(n.value))
     ),
-    Api.reindex.serverLogic[Identity]((after, limit) => h.upkeep.reindex(
+    Api.reindex.serverLogic[Identity]((after, limit) =>
+      h.upkeep.reindex(
         after.map(a => MaintenanceControllers.Cursor(a.value)),
         limit.flatMap(l => PageSize.option(l.value))
-      ))
+      )
+    )
   ) ++ List[ServerEndpoint[Any, Identity]](
     // ── backup / restore (plan §1.10); the listing route precedes the per-file download ──
     Api.configReload.serverLogic[Identity](_ => Right(h.instance.configReload())),
@@ -132,14 +136,20 @@ final class HttpApi(
     Api.maintenanceVacuum.serverLogic[Identity](in => h.upkeep.vacuum(in)),
     Api.backupStatus.serverLogic[Identity](_ => h.upkeep.backupStatus),
     Api.backups.serverLogic[Identity](_ => h.upkeep.backupList),
-    Api.downloadBackup.serverLogic[Identity](file => h.upkeep.backupFile(MaintenanceControllers.BackupFileName(file.value))),
+    Api.downloadBackup.serverLogic[Identity](file =>
+      h.upkeep.backupFile(MaintenanceControllers.BackupFileName(file.value))
+    ),
     Api.restore.serverLogic[Identity](req => h.upkeep.restore(req)),
     // ── portable bundles (M0–M2) ──────────────────────────────────────────────────────────────
     Api.instance.serverLogicSuccess[Identity](_ => h.bundles.instance),
     Api.setInstance.serverLogic[Identity](in => h.bundles.setInstance(in.label.map(l => InstanceInfo.Label(l.value)))),
-    Api.exportBundle.serverLogic[Identity](since => h.bundles.exportBundle(since.map(s => BundleScope.Since.At(s.value))).map((f, d) => (f, Api.FileName(d.value)))),
+    Api.exportBundle.serverLogic[Identity](since =>
+      h.bundles.exportBundle(since.map(s => BundleScope.Since.At(s.value))).map((f, d) => (f, Api.FileName(d.value)))
+    ),
     Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f)),
-    Api.importBundle.serverLogic[Identity]((dryRun, f) => h.bundles.importBundle(ImportOptions.DryRun(dryRun.value), f)),
+    Api.importBundle.serverLogic[Identity]((dryRun, f) =>
+      h.bundles.importBundle(ImportOptions.DryRun(dryRun.value), f)
+    ),
     // ── the merge plan (M3) ──
     Api.uploadBundle.serverLogic[Identity](f => h.bundles.upload(f)),
     Api.mergePlan.serverLogic[Identity](req => h.bundles.plan(req)),
@@ -148,19 +158,29 @@ final class HttpApi(
     Api.mergeApplyStatus.serverLogic[Identity](job => HttpApi.jobId(job.value).flatMap(h.bundles.applyStatus)),
     Api.mergeSession.serverLogic[Identity](b => h.bundles.session(b)),
     Api.putMergeSession.serverLogic[Identity]((b, r) => h.bundles.putSession(b, r)),
-    Api.parseResolutions.serverLogic[Identity](text => h.bundles.parseResolutions(MergeResolutionsFile.Text(text.value))),
+    Api.parseResolutions.serverLogic[Identity](text =>
+      h.bundles.parseResolutions(MergeResolutionsFile.Text(text.value))
+    ),
     // ── merge list | show | ledger (M7): `merges/ledger` before `merges/{id}` ──
     Api.merges.serverLogicSuccess[Identity](limit => h.bundles.merges(limit)),
-    Api.mergeLedger.serverLogic[Identity]((uid, merge, limit) => h.bundles.mergeLedger(
+    Api.mergeLedger.serverLogic[Identity]((uid, merge, limit) =>
+      h.bundles.mergeLedger(
         uid.map(u => MergeRepo.UidText(u.value)),
         merge.map(m => MergeRepo.MergeIdOrPrefix(m.value)),
         limit
-      )),
+      )
+    ),
     Api.mergeDetail.serverLogic[Identity](id => h.bundles.mergeDetail(MergeRepo.MergeIdOrPrefix(id.value))),
     // ── label renames (V042, V053) ──
-    Api.renameArticle.serverLogic[Identity]((slug, req) => HttpApi.articleSlug(slug.value).flatMap(s => h.research.articles.rename(s, req))),
-    Api.renameEvent.serverLogic[Identity]((id, req) => HttpApi.eventId(id.value).flatMap(e => h.events.renamed(e, req))),
-    Api.renameGoal.serverLogic[Identity]((slug, req) => HttpApi.goalSlug(slug.value).flatMap(g => h.goals.rename(g, req))),
+    Api.renameArticle.serverLogic[Identity]((slug, req) =>
+      HttpApi.articleSlug(slug.value).flatMap(s => h.research.articles.rename(s, req))
+    ),
+    Api.renameEvent.serverLogic[Identity]((id, req) =>
+      HttpApi.eventId(id.value).flatMap(e => h.events.renamed(e, req))
+    ),
+    Api.renameGoal.serverLogic[Identity]((slug, req) =>
+      HttpApi.goalSlug(slug.value).flatMap(g => h.goals.rename(g, req))
+    ),
     Api.renamePlace.serverLogic[Identity]((id, req) => HttpApi.placeId(id.value).flatMap(p => h.places.renamed(p, req)))
   ) ++ PlacesRoutes(
     h.places,
@@ -177,10 +197,11 @@ final class HttpApi(
         )
     ),
     () => h.bootstrap.gazetteerSources,
-    (source, apply) => h.bootstrap.loadGazetteer(
-      Gazetteer.Kind.Wire(source.value),
-      GazetteerLoad.LoadApply(apply.value)
-    )
+    (source, apply) =>
+      h.bootstrap.loadGazetteer(
+        Gazetteer.Kind.Wire(source.value),
+        GazetteerLoad.LoadApply(apply.value)
+      )
   ) ++ PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch.value))
     // ── events (plan §1.2) and attestations (plan §1.3) ──────────────────────────────────────
@@ -188,8 +209,12 @@ final class HttpApi(
     h.events,
     List(
       Api.getEvent.serverLogic[Identity](id => HttpApi.eventId(id.value).flatMap(h.eventCard.get)),
-      Api.putEvent.serverLogic[Identity]((id, in) => HttpApi.eventId(id.value).flatMap(e => h.eventCard.put(Caller.Local, e, in))),
-      Api.patchEvent.serverLogic[Identity]((id, p) => HttpApi.eventId(id.value).flatMap(e => h.eventCard.patch(Caller.Local, e, p)))
+      Api.putEvent.serverLogic[Identity]((id, in) =>
+        HttpApi.eventId(id.value).flatMap(e => h.eventCard.put(Caller.Local, e, in))
+      ),
+      Api.patchEvent.serverLogic[Identity]((id, p) =>
+        HttpApi.eventId(id.value).flatMap(e => h.eventCard.patch(Caller.Local, e, p))
+      )
     )
   ) ++ AttestationsRoutes(h.attestations) ++ List[ServerEndpoint[Any, Identity]](
     // ── goals (plan §1.5) ─────────────────────────────────────────────────────────────────────
@@ -207,14 +232,23 @@ final class HttpApi(
     Api.ingest.serverLogic[Identity]((p, file) =>
       h.ingest.controllers.ingest(p, Upload.handed(HandedFile.snapshot(file)))
     ),
-    Api.reocr.serverLogic[Identity]((ck, quality) => HttpApi.citekey(ck).flatMap(c => h.ingest.controllers.reocr(c, Ingest.Params.Quality(quality.value)))),
+    Api.reocr.serverLogic[Identity]((ck, quality) =>
+      HttpApi.citekey(ck).flatMap(c => h.ingest.controllers.reocr(c, Ingest.Params.Quality(quality.value)))
+    ),
     Api.original.serverLogic[Identity](ck =>
       // the stored original is served from where the store keeps it (the HTTP layer streams a file)
-      HttpApi.citekey(ck).flatMap(h.ingest.controllers.original).map((blob, disposition) => (java.io.File(blob.where.value), Api.FileName(disposition.value)))
+      HttpApi
+        .citekey(ck)
+        .flatMap(h.ingest.controllers.original)
+        .map((blob, disposition) => (java.io.File(blob.where.value), Api.FileName(disposition.value)))
     ),
     Api.job.serverLogic[Identity](id => HttpApi.jobId(id.value).flatMap(h.jobs.job)),
-    Api.jobControl.serverLogic[Identity]((id, action) => HttpApi.jobId(id.value).flatMap(j => h.jobControl.control(j, JobAction.Wire(action.value)))),
-    ConfigEditApi.get.serverLogic[Identity](prefix => h.settings.page(prefix.map(p => SettingsService.ConfigPath(p.value)))),
+    Api.jobControl.serverLogic[Identity]((id, action) =>
+      HttpApi.jobId(id.value).flatMap(j => h.jobControl.control(j, JobAction.Wire(action.value)))
+    ),
+    ConfigEditApi.get.serverLogic[Identity](prefix =>
+      h.settings.page(prefix.map(p => SettingsService.ConfigPath(p.value)))
+    ),
     ConfigEditApi.write.serverLogic[Identity](w => h.settings.write(w)),
     ConfigEditApi.restart.serverLogic[Identity](_ => h.settings.restart())
   ) ++ PersonalRoutes(h.personal) ++ List[ServerEndpoint[Any, Identity]](
@@ -283,7 +317,9 @@ final class HttpApi(
               (
                 sttp.model.StatusCode.MovedPermanently,
                 Some(to.value),
-                s"""<p>Moved to <a href="${ArticleHtml.esc(HtmlRender.Text(to.value)).value}">${ArticleHtml.esc(HtmlRender.Text(now.value)).value}</a>.</p>"""
+                s"""<p>Moved to <a href="${ArticleHtml
+                    .esc(HtmlRender.Text(to.value))
+                    .value}">${ArticleHtml.esc(HtmlRender.Text(now.value)).value}</a>.</p>"""
               )
             else
               pages.source(
@@ -325,7 +361,8 @@ final class HttpApi(
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogic[Identity] { segments =>
         val path = segments.filter(_.nonEmpty)
-        if WebPaths.isApp(path.map(WebPaths.Segment(_))) then Right(Static.read(Static.ReadPath("web/index.html")).value)
+        if WebPaths.isApp(path.map(WebPaths.Segment(_))) then
+          Right(Static.read(Static.ReadPath("web/index.html")).value)
         else Left(s"not found: /${segments.mkString("/")}")
       }
 
@@ -346,17 +383,17 @@ final class HttpApi(
       ) ++ QueryRoutes(
         h.library.query
       ) ++ AgentsRoutes(h.agents) ++ ManagersRoutes(
-          h.agents.managing,
-          List(
-            AutopilotApi.autopilot.serverLogicSuccess[Identity](_ => h.autopilot.autopilot),
-            AutopilotApi.setAutopilot.serverLogic[Identity](in => h.autopilot.setAutopilot(in)),
-            AutopilotApi.setMode.serverLogic[Identity](in => h.autopilot.setMode(in))
-          ),
-          AcquisitionWorkRoutes(
-            EngineContributions.work(h.agents)
-          ),
-          List(AutopilotApi.drain.serverLogic[Identity](in => h.autopilot.drain(in)))
-        ) ++ acquireRoutes ++
+        h.agents.managing,
+        List(
+          AutopilotApi.autopilot.serverLogicSuccess[Identity](_ => h.autopilot.autopilot),
+          AutopilotApi.setAutopilot.serverLogic[Identity](in => h.autopilot.setAutopilot(in)),
+          AutopilotApi.setMode.serverLogic[Identity](in => h.autopilot.setMode(in))
+        ),
+        AcquisitionWorkRoutes(
+          EngineContributions.work(h.agents)
+        ),
+        List(AutopilotApi.drain.serverLogic[Identity](in => h.autopilot.drain(in)))
+      ) ++ acquireRoutes ++
       IiifRoutes(h.media.iiif) ++
       List(sourcePage, static, apiNotFound, index)
 

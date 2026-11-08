@@ -21,11 +21,11 @@ final case class EventRederiveReport(
     examples: List[EventRederiveReport.Examples] = Nil,
     corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object EventRederiveReport:
   type Report = Report.T
   object Report extends Newtype[String, Pure]
-
 
   /** An events re-dating job's report, in its detail. */
 
@@ -56,7 +56,7 @@ object EventRederiveReport:
         s"${r.providers.mkString(", ")}: ${r.records} record(s) re-derived (${r.fromRaw} from the catalogue's own record)"
       ),
       Some(
-        s"${r.changed} dating(s) ${if ((r.dryRun) == DryRun(true)) then "would change" else "changed"}, ${r.updated} event(s) refreshed"
+        s"${r.changed} dating(s) ${if (r.dryRun) == DryRun(true) then "would change" else "changed"}, ${r.updated} event(s) refreshed"
       ),
       Option.when(r.after.nonEmpty)(s"precision ${counts(r.before)} → ${counts(r.after)}"),
       Option.when((r.offMap).value > 0)(s"${r.offMap} imprecise (off the map, on the list)"),
@@ -65,5 +65,7 @@ object EventRederiveReport:
 
   def markdown(r: EventRederiveReport): Report =
     val head =
-      s"## Event re-derivation — ${r.providers.mkString(", ")}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"
+      s"## Event re-derivation — ${r.providers.mkString(", ")}${
+          if (r.dryRun).value then " (dry run: nothing stored)" else ""
+        }"
     Report((head :: "" :: (summary(r)).split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n"))

@@ -365,9 +365,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       deps,
       media.assets,
       catalogue.placeStore,
-      SourceTextFormatting(targets =>
-        research.articles.pageLinks(targets)
-      ),
+      SourceTextFormatting(targets => research.articles.pageLinks(targets)),
       mentionedIn,
       storedOriginals
     )
@@ -415,8 +413,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       eventStore,
       EventCardView.cited(
         eventLinks.context,
-        (citekeys, limit) =>
-          research.articles.store.citing(citekeys, limit)
+        (citekeys, limit) => research.articles.store.citing(citekeys, limit)
       ),
       (k, id) =>
         Event.Id
@@ -590,7 +587,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       backups,
       seenMarks,
       basemap,
-      () => agents.lease.status.map((o, u, expired, mine) =>
+      () =>
+        agents.lease.status.map((o, u, expired, mine) =>
           AgentLeaseInfo(
             AgentLeaseInfo.Owner(o.value),
             AgentLeaseInfo.Until(u.value),
@@ -633,8 +631,10 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       library,
       (body, citekeys, period) => eventLinks.articleLeads(body, citekeys, period),
       slug =>
-        mirror.note(
-          ResearchData.ArticleNotes,
-          MirrorPlacement.RecordId(slug.value)
-        ).map(n => com.histmersion.domain.research.Article.Note(n.value))
+        mirror
+          .note(
+            ResearchData.ArticleNotes,
+            MirrorPlacement.RecordId(slug.value)
+          )
+          .map(n => com.histmersion.domain.research.Article.Note(n.value))
     )

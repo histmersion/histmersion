@@ -31,12 +31,11 @@ final case class Coverage(
     eventLeads: List[ArticleEventLead] = Nil,
     critiques: List[CritiquePair] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def capped: Boolean = ((checked).value < (total).value)
   def unplaced: List[Citekey] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
-
-
 
   type FilterLine = FilterLine.T
   object FilterLine extends Newtype[String, Pure]
@@ -45,21 +44,27 @@ object Coverage:
   type Checked = Checked.T
   object Checked extends Newtype[Int, Pure]
 
-  final case class Drift(kind: DriftKind, citekeys: List[Citekey]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Drift(kind: DriftKind, citekeys: List[Citekey])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
-
-  final case class Edge(from: Citekey, kind: Edge.Kind, to: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Edge(from: Citekey, kind: Edge.Kind, to: Citekey)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Edge:
-    export com.histmersion.api.library.Edge.Kind.{Wire as Kind}
+    export com.histmersion.api.library.Edge.Kind.Wire as Kind
 
-
-  final case class Entry(source: Source, reason: Option[Entry.Reason]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Entry(source: Source, reason: Option[Entry.Reason])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Entry:
     type Reason = Reason.T
     object Reason extends Newtype[String, Pure]
-
 
   final case class Reason(citekey: Citekey, reason: Entry.Reason) derives KindlingsCodecAsObject
   object Reason:
@@ -79,7 +84,8 @@ object Coverage:
     def merge(current: Map[Citekey, Entry.Reason], stated: List[Reason]): Either[String, Map[Citekey, Entry.Reason]] =
       stated.foldLeft[Either[String, Map[Citekey, Entry.Reason]]](Right(current)) { (acc, r) =>
         acc.flatMap { m =>
-          val ck = Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
+          val ck =
+            Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
           if !((Article.Links.isCitekeyShaped((ck))) == (true)) then Left(s"reason for '${r.citekey}': not a citekey")
           else if text.length > MaxChars then
@@ -98,4 +104,5 @@ object Coverage:
       status: com.histmersion.api.library.Source.Status,
       authors: List[AuthorName] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

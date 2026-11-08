@@ -48,7 +48,9 @@ class MaintenanceLockSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))) }
+  private lazy val cfg = {
+    val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+  }
   private lazy val deps =
     val ds = testPool(cfg.db)
     Migrate.run(ds)
@@ -57,7 +59,9 @@ class MaintenanceLockSuite extends DbSuite:
   private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -78,38 +82,82 @@ class MaintenanceLockSuite extends DbSuite:
     assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.message}")
 
   private val png =
-    AssetInput(Bundle.Asset.FileName("f.png"), Bundle.Asset.MimeText("image/png"), AssetInput.Base64(java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3))), None, None, None)
+    AssetInput(
+      Bundle.Asset.FileName("f.png"),
+      Bundle.Asset.MimeText("image/png"),
+      AssetInput.Base64(java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3))),
+      None,
+      None,
+      None
+    )
 
   test("every source write is refused while a restore holds the lock"):
-    refused("put_source")(h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = com.histmersion.api.library.Title("T"))))
-    refused("patch_source")(h.library.sources.patch(Citekey("zzlock_src"), Source.Patch(summary = Some(Source.Summary("x")))))
-    refused("import")(h.library.sources.importNote(NoteImport(text = NoteImport.Text("---\ncitekey: zzlock_src\n---\n"))))
+    refused("put_source")(
+      h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = com.histmersion.api.library.Title("T")))
+    )
+    refused("patch_source")(
+      h.library.sources.patch(Citekey("zzlock_src"), Source.Patch(summary = Some(Source.Summary("x"))))
+    )
+    refused("import")(
+      h.library.sources.importNote(NoteImport(text = NoteImport.Text("---\ncitekey: zzlock_src\n---\n")))
+    )
     refused("seed")(h.seeding.seed(SeedRequest(dir = SeedRequest.Dir("/tmp"))))
     refused("reindex")(h.upkeep.reindex(None, None))
     refused("edges/resolve")(h.library.citations.resolveEdges)
-    refused("delete_source")(h.library.sources.delete(Citekey("zzlock_src"), Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))))
+    refused("delete_source")(
+      h.library.sources.delete(Citekey("zzlock_src"), Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+    )
 
   test("every ARTICLE write is refused too — these had no guard at all"):
     refused("put_article")(
-      h.research.articles.put(Slug("zzlock-art"), Article.Put(title = Article.Title("T"), kind = Article.Kind.Wire("concept"), body = Article.Body("b")))
+      h.research.articles.put(
+        Slug("zzlock-art"),
+        Article.Put(title = Article.Title("T"), kind = Article.Kind.Wire("concept"), body = Article.Body("b"))
+      )
     )
-    refused("patch_article")(h.research.articles.patch(Slug("zzlock-art"), Article.Patch(body = Some(Article.Body("x")))))
+    refused("patch_article")(
+      h.research.articles.patch(Slug("zzlock-art"), Article.Patch(body = Some(Article.Body("x"))))
+    )
     refused("delete_article")(h.research.articles.delete(Slug("zzlock-art")))
-    refused("import_article")(h.research.articles.importNote(Article.Import(text = Article.Import.Text("---\nslug: zzlock-art\n---\n"))))
+    refused("import_article")(
+      h.research.articles.importNote(Article.Import(text = Article.Import.Text("---\nslug: zzlock-art\n---\n")))
+    )
 
   test("the gazetteer writes are refused"):
     refused("places/import")(
-      h.places.importPlaces(Caller.Local, None, None, PlacesControllers.DatasetBody("""{"type":"FeatureCollection","features":[]}"""))
+      h.places.importPlaces(
+        Caller.Local,
+        None,
+        None,
+        PlacesControllers.DatasetBody("""{"type":"FeatureCollection","features":[]}""")
+      )
     )
     refused("places/rebuild")(h.places.rebuild(Caller.Local))
     refused("places/names/add")(
-      h.places.addName(Caller.Local, Place.Id("zzlock_place"), com.histmersion.api.catalogue.Place.NameAdd(com.histmersion.api.catalogue.Place.NameAdd.Name("X")))
+      h.places.addName(
+        Caller.Local,
+        Place.Id("zzlock_place"),
+        com.histmersion.api.catalogue.Place.NameAdd(com.histmersion.api.catalogue.Place.NameAdd.Name("X"))
+      )
     )
     refused("places/names/remove")(
-      h.places.removeName(Caller.Local, Place.Id("zzlock_place"), com.histmersion.api.catalogue.Place.NameRemove(com.histmersion.api.catalogue.Place.NameRemove.Name("X")))
+      h.places.removeName(
+        Caller.Local,
+        Place.Id("zzlock_place"),
+        com.histmersion.api.catalogue.Place.NameRemove(com.histmersion.api.catalogue.Place.NameRemove.Name("X"))
+      )
     )
     refused("places/add")(
-      h.places.add(Caller.Local, com.histmersion.api.catalogue.Place.Add(com.histmersion.api.catalogue.Place.Add.Label("Zzlock"), com.histmersion.api.catalogue.Place.Add.Kind(Place.Kind.Site), Longitude(0), Latitude(0), com.histmersion.api.catalogue.Place.Add.Source("fixture")))
+      h.places.add(
+        Caller.Local,
+        com.histmersion.api.catalogue.Place.Add(
+          com.histmersion.api.catalogue.Place.Add.Label("Zzlock"),
+          com.histmersion.api.catalogue.Place.Add.Kind(Place.Kind.Site),
+          Longitude(0),
+          Latitude(0),
+          com.histmersion.api.catalogue.Place.Add.Source("fixture")
+        )
+      )
     )
 
   test("the ingest surface is refused"):
@@ -118,7 +166,10 @@ class MaintenanceLockSuite extends DbSuite:
     try
       refused("ingest")(
         h.ingest.controllers
-          .ingest(Ingest.Params(com.histmersion.api.library.Citekey("zzlock_src"), Some(Bundle.Asset.FileName("a.pdf"))), Upload.handed(HandedFile.snapshot(f)))
+          .ingest(
+            Ingest.Params(com.histmersion.api.library.Citekey("zzlock_src"), Some(Bundle.Asset.FileName("a.pdf"))),
+            Upload.handed(HandedFile.snapshot(f))
+          )
       )
       refused("reocr")(h.ingest.controllers.reocr(Citekey("zzlock_src"), Ingest.Params.Quality(false)))
       refused("put_assets")(h.media.assets.putFigures(Citekey("zzlock_src"), List(png)))
@@ -126,14 +177,24 @@ class MaintenanceLockSuite extends DbSuite:
 
   test("the ops writes are refused, while the READS still answer"):
     refused("lint/fix")(h.checks.guardedLintFix())
-    refused("queue/add")(h.workLists.add(WorkListControllers.ListName("tasks"), Queue.QueueAdd(text = Queue.QueueItem.Text("zzlock item"))))
-    refused("queue/patch")(h.workLists.patch(QueueItemId(1), Queue.QueuePatch(status = Some(Queue.QueueItem.Status("done")))))
+    refused("queue/add")(
+      h.workLists.add(WorkListControllers.ListName("tasks"), Queue.QueueAdd(text = Queue.QueueItem.Text("zzlock item")))
+    )
+    refused("queue/patch")(
+      h.workLists.patch(QueueItemId(1), Queue.QueuePatch(status = Some(Queue.QueueItem.Status("done"))))
+    )
     refused("queue/delete")(h.workLists.delete(QueueItemId(1)))
-    refused("queue/import")(h.workLists.importText(Queue.Kind.Label("tasks"), Queue.QueueImport(text = Queue.QueueItem.Text(""))))
+    refused("queue/import")(
+      h.workLists.importText(Queue.Kind.Label("tasks"), Queue.QueueImport(text = Queue.QueueItem.Text("")))
+    )
     // reads are NOT blocked: a restore stops writes, it does not take the service down
     val reads = underLock(h.checks.lint(Nil))
     assert(reads.isRight, s"lint (a read) must still answer: $reads")
-    assert(underLock(h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))).isRight)
+    assert(
+      underLock(
+        h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+      ).isRight
+    )
 
   test("the OCR pool is paused for the duration of a restore, and resumed after"):
     assert(!h.ingest.queue.paused, "the pool starts running")
@@ -147,5 +208,7 @@ class MaintenanceLockSuite extends DbSuite:
     assert(!h.ingest.queue.paused, "…and it must come back, whatever the restore did")
 
   test("once the lock is released, the same writes go through"):
-    assert(h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = com.histmersion.api.library.Title("T"))).isRight)
+    assert(
+      h.library.sources.put(Citekey("zzlock_src"), Source.Put(title = com.histmersion.api.library.Title("T"))).isRight
+    )
     assert(h.places.rebuild(Caller.Local).isRight)

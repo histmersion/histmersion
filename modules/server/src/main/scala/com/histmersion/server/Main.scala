@@ -54,11 +54,17 @@ import com.histmersion.util.console.Console
   // the environment the settings were read with, and the paths and the clock: the only reads of them
   val environment = Environment.of(loadedConfig.env)
   val system =
-    SystemContext(startupClock, environment, UserPaths(environment, UserPaths.OsName(System.getProperty("os.name", ""))))
+    SystemContext(
+      startupClock,
+      environment,
+      UserPaths(environment, UserPaths.OsName(System.getProperty("os.name", "")))
+    )
   mode match
     case ServerMode.SelfCheck =>
       val zones = TimeZoneCheck.jdk()
-      console.out.println(PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report, List((zones._1, zones._2.value))))
+      console.out.println(
+        PluginsMarkdown.selfCheck(loadedConfig.file.info, generation.report, List((zones._1, zones._2.value)))
+      )
       sys.exit(if generation.report.ok && zones._1 then 0 else 2)
     case _ => ()
   val reread = () =>

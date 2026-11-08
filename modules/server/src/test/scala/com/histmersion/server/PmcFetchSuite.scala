@@ -34,13 +34,23 @@ class PmcFetchSuite extends munit.FunSuite:
   /** A fake upstream: answers by URL prefix, records every request and the headers it carried. */
   final private class FakeUpstream(cfg: AcquireConfig, routes: PartialFunction[String, Either[String, Array[Byte]]])
       extends Http:
-    var asked: List[(Http.Url, Map[CoreQuota.HeaderName, CoreQuota.HeaderValue])] = Nil // a test double: the simplest record of calls
-    private def answer(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Array[Byte]] =
+    var asked: List[(Http.Url, Map[CoreQuota.HeaderName, CoreQuota.HeaderValue])] =
+      Nil // a test double: the simplest record of calls
+    private def answer(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, Array[Byte]] =
       asked = asked :+ (url -> headers)
       routes.applyOrElse(url.value, (u: String) => Left(s"$u: offline")).left.map(Http.Problem(_))
-    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, HttpAnswer.Body] =
+    def bytes(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, HttpAnswer.Body] =
       answer(url, headers).map(HttpAnswer.Body(_))
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Http.Text] =
+    def text(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, Http.Text] =
       answer(url, headers).map(b => Http.Text(new String(b, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Http.Problem(e.getMessage)))
@@ -60,7 +70,7 @@ class PmcFetchSuite extends munit.FunSuite:
     case u if u.startsWith(c.pmcDataset.url.value + "/metadata/")        => Right(fixture(record).getBytes("UTF-8"))
     case u if u.startsWith(c.pmcDataset.url.value) && u.endsWith(".pdf") => pdf
     case u if u.startsWith(c.pmcDataset.url.value) && u.endsWith(".xml") => xml
-    case u if u.startsWith("https://europepmc.org/")               =>
+    case u if u.startsWith("https://europepmc.org/")                     =>
       Left(s"$u: HTTP 403 bot-protection challenge — treated as no copy")
 
   private def recordId(record: String) = if record.contains("manuscript") then "PMC6748862" else "PMC6091220"
@@ -71,7 +81,11 @@ class PmcFetchSuite extends munit.FunSuite:
     fixture(record).replaceAll("(\\." + ext + "\\?md5=)[0-9a-f]{32}", "$1" + md5)
 
   private def fetch(c: AcquireConfig, http: Http, doi: Doi, arxiv: Option[ArxivId] = None) =
-    OaFetch(loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), arxiv)
+    OaFetch(
+      loaded(s"histmersion.acquire.contact-email = \"${c.contactEmail}\""),
+      http,
+      core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
+    ).fetch(Some(doi), arxiv)
 
   private def loaded(text: String): LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
@@ -86,7 +100,8 @@ class PmcFetchSuite extends munit.FunSuite:
       }.orElse(routes(c, "europepmc_oa.json", "pmc_dataset_oa.json", Right(Pdf)))
     )
     val got =
-      fetch(c, http, Doi("10.1038/nature25778")).fold(e => fail(s"$e\n" + http.asked.map(_._1).mkString("\n")), identity)
+      fetch(c, http, Doi("10.1038/nature25778"))
+        .fold(e => fail(s"$e\n" + http.asked.map(_._1).mkString("\n")), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "pdf")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6091220.1/PMC6091220.1.pdf"))
@@ -141,7 +156,8 @@ class PmcFetchSuite extends munit.FunSuite:
         case u if u.startsWith(c.pmcDataset.url.value + "/metadata/") => Right(record.getBytes("UTF-8"))
       }.orElse(routes(c, "europepmc_free.json", "pmc_dataset_manuscript.json", Left("no pdf")))
     )
-    val got = fetch(c, http, Doi("10.1126/science.aar7711"), arxiv = Some(ArxivId("1805.00001"))).fold(e => fail(e.value), identity)
+    val got = fetch(c, http, Doi("10.1126/science.aar7711"), arxiv = Some(ArxivId("1805.00001")))
+      .fold(e => fail(e.value), identity)
     assertEquals(got.source, "pmc")
     assertEquals(got.extension, "xml")
     assertEquals(got.url, Some(s"${c.pmcDataset.url}/PMC6748862.1/PMC6748862.1.xml"))
@@ -207,15 +223,33 @@ class PmcFetchSuite extends munit.FunSuite:
       val other = Files.write(dir.resolve("list.xml"), "<?xml version=\"1.0\"?><ListBucketResult/>".getBytes("UTF-8"))
       val side = Sidecar()
       val conv = JatsConverter(side)
-      val doc = conv.convert(OfflineConverter.blob(xml), ConverterClient.Filename("paper.xml"), quality = ConverterClient.HighQuality(false)).fold(e => fail(e.value), identity)
+      val doc = conv
+        .convert(
+          OfflineConverter.blob(xml),
+          ConverterClient.Filename("paper.xml"),
+          quality = ConverterClient.HighQuality(false)
+        )
+        .fold(e => fail(e.value), identity)
       assert(doc.markdown.value.startsWith("# The first horse herders"), doc.markdown.value.take(200))
       assertEquals(doc.images, Nil)
       assertEquals(
-        conv.convert(OfflineConverter.blob(pdf), ConverterClient.Filename("paper.pdf"), quality = ConverterClient.HighQuality(false)).map(_.markdown),
+        conv
+          .convert(
+            OfflineConverter.blob(pdf),
+            ConverterClient.Filename("paper.pdf"),
+            quality = ConverterClient.HighQuality(false)
+          )
+          .map(_.markdown),
         Right("from the sidecar")
       )
       assertEquals(
-        conv.convert(OfflineConverter.blob(other), ConverterClient.Filename("list.xml"), quality = ConverterClient.HighQuality(false)).map(_.markdown),
+        conv
+          .convert(
+            OfflineConverter.blob(other),
+            ConverterClient.Filename("list.xml"),
+            quality = ConverterClient.HighQuality(false)
+          )
+          .map(_.markdown),
         Right("from the sidecar")
       )
       assertEquals(side.calls, List("paper.pdf", "list.xml"))

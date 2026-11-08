@@ -21,7 +21,10 @@ final private[periods] case class PeriodRow(
       id,
       label,
       authority,
-      Period(com.histmersion.api.catalogue.Year(periodStart.value.toLong), com.histmersion.api.catalogue.Year(periodEnd.value.toLong)),
+      Period(
+        com.histmersion.api.catalogue.Year(periodStart.value.toLong),
+        com.histmersion.api.catalogue.Year(periodEnd.value.toLong)
+      ),
       region,
       parentId,
       preset.flatMap(PresetRegion.fromWire)

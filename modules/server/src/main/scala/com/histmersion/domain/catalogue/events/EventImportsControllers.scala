@@ -41,12 +41,15 @@ final class EventImportsControllers(
     for
       provider <- imports.resolve(CatalogRecord.Provider(req.provider.value)).left.map(p => invalid(p.value))
       area <- req.bbox.map(_.value.trim).filter(_.nonEmpty) match
-        case Some(b) => BBox.parse(BBox.Text(b)).toRight(invalid(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat")).map(Some(_))
-        case None    => Right(None)
+        case Some(b) =>
+          BBox.parse(BBox.Text(b)).toRight(invalid(s"--bbox '$b' is not minLon,minLat,maxLon,maxLat")).map(Some(_))
+        case None => Right(None)
       job <- jobs.start(
         EventImportsControllers.ImportJobKind,
         JobKinds.Subject(
-          s"${imports.infoOf(provider).fold(provider.value)(_.title.value)} events${if req.dryRun.value then " (dry run)" else ""}"
+          s"${imports.infoOf(provider).fold(provider.value)(_.title.value)} events${
+              if req.dryRun.value then " (dry run)" else ""
+            }"
         ),
         write = !req.dryRun.value
       ) { (job, progress) =>
@@ -60,12 +63,14 @@ final class EventImportsControllers(
     for
       provider <- req.provider.map(_.value.trim).filter(_.nonEmpty) match
         // no network: a built-in catalogue switched off since still has its records to re-derive
-        case Some(p) => imports.resolveStored(CatalogRecord.Provider(p)).left.map(why => invalid(why.value)).map(Some(_))
-        case None    => Right(None)
+        case Some(p) =>
+          imports.resolveStored(CatalogRecord.Provider(p)).left.map(why => invalid(why.value)).map(Some(_))
+        case None => Right(None)
       job <- jobs.start(
         EventImportsControllers.RederiveJobKind,
         JobKinds.Subject(
-          s"re-derive the dating of ${provider.fold("every catalogue's")(p => imports.infoOf(p).fold(p.value)(_.title.value) + "'s")} " +
+          s"re-derive the dating of ${provider
+              .fold("every catalogue's")(p => imports.infoOf(p).fold(p.value)(_.title.value) + "'s")} " +
             s"events${if req.dryRun.value then " (dry run)" else ""}"
         ),
         write = !req.dryRun.value

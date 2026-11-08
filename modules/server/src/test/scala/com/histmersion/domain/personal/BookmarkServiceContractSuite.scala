@@ -13,7 +13,13 @@ class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
 
   both("an item is bookmarked once; a retitled source keeps its bookmark and shows its new title") { w =>
     w.addSource("zz_pers_a", "Zz the first title")
-    val b1 = w.bookmarks.add(me, item(MarkKind.Source, "zz_pers_a"), None, TargetLabel.tidy(TargetLabel.Label("as I saw it")), at(0))
+    val b1 = w.bookmarks.add(
+      me,
+      item(MarkKind.Source, "zz_pers_a"),
+      None,
+      TargetLabel.tidy(TargetLabel.Label("as I saw it")),
+      at(0)
+    )
     assertEquals(b1.title.value: String, "Zz the first title")
     val b2 = w.bookmarks.add(me, item(MarkKind.Source, "zz_pers_a"), Some(Bookmark.Label("mine")), None, at(1))
     assertEquals(b2.id, b1.id)
@@ -47,7 +53,13 @@ class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
   both(
     "an item the collection does not hold keeps the name it was bookmarked with; views and points are each their own"
   ) { w =>
-    w.bookmarks.add(me, item(MarkKind.Place, "zz_place_1"), None, TargetLabel.tidy(TargetLabel.Label("Zz Tiryns")), at(0))
+    w.bookmarks.add(
+      me,
+      item(MarkKind.Place, "zz_place_1"),
+      None,
+      TargetLabel.tidy(TargetLabel.Label("Zz Tiryns")),
+      at(0)
+    )
     val v = MarkTarget.View(
       Some(ViewState("from=-1300&to=-1100&tag=zz")),
       Some(Latitude(37.6)),
@@ -63,12 +75,21 @@ class BookmarkServiceContractSuite extends PersonalServiceContract("bookmark"):
     assertEquals(listed.map(_.wire.name), List("Place on the map", "Argolid again", "Argolid", "Zz Tiryns"))
     assertEquals(listed(1).target, v)
     assertEquals(w.bookmarks.list(me, Some(MarkKind.View), SearchWords.Everything, all).size, 2)
-    assertEquals(w.bookmarks.list(me, None, SearchWords.of(Some(SearchWords.Query("tiryns"))), all).map(_.wire.name), List("Zz Tiryns"))
+    assertEquals(
+      w.bookmarks.list(me, None, SearchWords.of(Some(SearchWords.Query("tiryns"))), all).map(_.wire.name),
+      List("Zz Tiryns")
+    )
     assertEquals(w.bookmarks.list(me, None, SearchWords.Everything, PageSize(2)).size, 2)
   }
 
   both("a removed bookmark leaves the list; bookmarking the item again makes a new one") { w =>
-    val b = w.bookmarks.add(me, item(MarkKind.Article, "zz_art"), None, TargetLabel.tidy(TargetLabel.Label("Zz article")), at(0))
+    val b = w.bookmarks.add(
+      me,
+      item(MarkKind.Article, "zz_art"),
+      None,
+      TargetLabel.tidy(TargetLabel.Label("Zz article")),
+      at(0)
+    )
     assertEquals(w.bookmarks.remove(other, b.id, at(1)), None)
     assertEquals(w.bookmarks.remove(me, b.id, at(1)).map(_.id), Some(b.id))
     assertEquals(w.bookmarks.remove(me, b.id, at(2)), None)

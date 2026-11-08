@@ -66,13 +66,14 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
       bodyIssue: Option[MergeIssue.Id],
       q: PairQuestions
   ): Unit =
-    val alternatives: List[(Option[MergeDecision.Kind], Option[Bundle.Source.BodySha256], Option[IssueCondition])] = bodyIssue match
-      case Some(b) =>
-        List(
-          (Some(km.KeepLeft), l.bodySha256, Some(IssueCondition(b, km.KeepLeft))),
-          (Some(km.KeepRight), r.bodySha256, Some(IssueCondition(b, km.KeepRight)))
-        )
-      case None => List((None, l.bodySha256.orElse(r.bodySha256), cond))
+    val alternatives: List[(Option[MergeDecision.Kind], Option[Bundle.Source.BodySha256], Option[IssueCondition])] =
+      bodyIssue match
+        case Some(b) =>
+          List(
+            (Some(km.KeepLeft), l.bodySha256, Some(IssueCondition(b, km.KeepLeft))),
+            (Some(km.KeepRight), r.bodySha256, Some(IssueCondition(b, km.KeepRight)))
+          )
+        case None => List((None, l.bodySha256.orElse(r.bodySha256), cond))
     val atts = foreignAttsOf(q.here, q.toLocal).getOrElse(r.uid, Nil).map(_ -> true) ++
       localAttsOf.getOrElse(l.uid, Nil).map(_ -> false)
     anchors(r.uid) = alternatives.map { (alt, kept, c) =>
@@ -125,7 +126,9 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
                   if foreign then Some(MergeIssue.Detail.side(l)) else Some(att),
                   if foreign then Some(att) else Some(MergeIssue.Detail.side(r)),
                   List(if t.quote.exists(_.value.nonEmpty) then
-                    MergeIssue.Why("the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored")
+                    MergeIssue.Why(
+                      "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
+                    )
                   else MergeIssue.Why("it has a position but no quote, so it cannot be found again")),
                   List(km.Drop, km.KeepUnanchored),
                   None,
@@ -133,7 +136,11 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
                   detail = Some(
                     IssueDetail(
                       List(
-                        field("quote", if foreign then None else t.quote.map(_.value), if foreign then t.quote.map(_.value) else None),
+                        field(
+                          "quote",
+                          if foreign then None else t.quote.map(_.value),
+                          if foreign then t.quote.map(_.value) else None
+                        ),
                         field(
                           "before it",
                           if foreign then None else t.prefix.map(_.value),
@@ -175,13 +182,26 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
           tries.find(a => a.foreign && a.att.uid == t.uid) match
             case None                                  => ()
             case Some(AnchorTry(_, _, Some(a), co, _)) =>
-              attLine(t.uid) =
-                es => attIn(es, t.uid).modify(_.charStart).setTo(Some(Bundle.Attestation.CharStart(a.start.value))).modify(_.charEnd).setTo(Some(Bundle.Attestation.CharEnd(a.end.value))).modify(_.chunkOrd).setTo(co.map(o => Bundle.Attestation.ChunkOrd(o.value)))
+              attLine(t.uid) = es =>
+                attIn(es, t.uid)
+                  .modify(_.charStart)
+                  .setTo(Some(Bundle.Attestation.CharStart(a.start.value)))
+                  .modify(_.charEnd)
+                  .setTo(Some(Bundle.Attestation.CharEnd(a.end.value)))
+                  .modify(_.chunkOrd)
+                  .setTo(co.map(o => Bundle.Attestation.ChunkOrd(o.value)))
               f.count(_.modify(_.attestationsReanchored).using(n => MergeTally.AttestationsReanchored(n.value + 1)))
             case Some(AnchorTry(_, _, None, _, issue)) =>
               issue.flatMap(f.decisionIn).map(_.kind) match
                 case Some(km.KeepUnanchored) =>
-                  attLine(t.uid) = es => attIn(es, t.uid).modify(_.charStart).setTo(None).modify(_.charEnd).setTo(None).modify(_.chunkOrd).setTo(None)
+                  attLine(t.uid) = es =>
+                    attIn(es, t.uid)
+                      .modify(_.charStart)
+                      .setTo(None)
+                      .modify(_.charEnd)
+                      .setTo(None)
+                      .modify(_.chunkOrd)
+                      .setTo(None)
                 case _ =>
                   droppedUids += t.uid
                   f.count(_.modify(_.attestationsDropped).using(n => MergeTally.AttestationsDropped(n.value + 1)))
@@ -192,8 +212,9 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
         f.count(_.modify(_.attestationsReanchored).using(n => MergeTally.AttestationsReanchored(n.value + 1)))
       case AnchorTry(t, _, None, _, issue) =>
         issue.flatMap(f.decisionIn).map(_.kind) match
-          case Some(km.KeepUnanchored) => attFixes += AttestationFix(t.uid, None, None, drop = AttestationFix.Drop(false))
-          case _                       =>
+          case Some(km.KeepUnanchored) =>
+            attFixes += AttestationFix(t.uid, None, None, drop = AttestationFix.Drop(false))
+          case _ =>
             attFixes += AttestationFix(t.uid, None, None, drop = AttestationFix.Drop(true))
             f.count(_.modify(_.attestationsDropped).using(n => MergeTally.AttestationsDropped(n.value + 1)))
     }
@@ -214,7 +235,6 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
 object AttestationPlan:
 
   /** An attestation that points into the text (a quote, or offsets): it must move with a body. */
-
 
   def anchored(t: Bundle.Attestation): Boolean =
     t.quote.exists(_.value.nonEmpty) || t.charStart.isDefined

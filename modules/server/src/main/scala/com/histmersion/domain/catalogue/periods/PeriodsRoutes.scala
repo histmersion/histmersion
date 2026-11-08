@@ -24,13 +24,15 @@ object PeriodsRoutes:
       ),
       Api.period.serverLogic[Identity](id => periods.period(HistoricalPeriod.Id(id.value))),
       Api.seedPeriods.serverLogic[Identity](replace => periods.seed(me, PeriodImports.Replace(replace.value))),
-      Api.importPeriods.serverLogic[Identity]((cols, dataset, body) => 
+      Api.importPeriods.serverLogic[Identity]((cols, dataset, body) =>
         periods.importDataset(
           me,
           cols.map(c => PeriodSources.Collections(c.value)),
           dataset.map(d => PeriodImports.Dataset(d.value)),
           PeriodImports.DatasetBody(body.value)
-        )),
-      Api.fetchPeriods.serverLogic[Identity]((source, cols) => 
-        periods.fetch(me, PeriodSources.PeriodoUrl(source.value), cols.map(c => PeriodSources.Collections(c.value))))
+        )
+      ),
+      Api.fetchPeriods.serverLogic[Identity]((source, cols) =>
+        periods.fetch(me, PeriodSources.PeriodoUrl(source.value), cols.map(c => PeriodSources.Collections(c.value)))
+      )
     )

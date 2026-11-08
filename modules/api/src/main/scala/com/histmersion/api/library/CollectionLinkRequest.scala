@@ -12,7 +12,8 @@ final case class CollectionLinkRequest(
     citekey: Citekey,
     id: CollectionLinkRequest.Id
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionLinkRequest:
   type Id = Id.T

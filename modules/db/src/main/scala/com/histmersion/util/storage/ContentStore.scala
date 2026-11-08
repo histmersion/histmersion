@@ -23,8 +23,8 @@ object ContentStore:
   object Ext extends Newtype[String, Pure]
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
-  /** A server that stores no originals. */
 
+  /** A server that stores no originals. */
 
   val none: ContentStore = new ContentStore:
     def find(sha256: Sha256): Option[(ByteSource, Ext)] = None

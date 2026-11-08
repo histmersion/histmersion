@@ -119,7 +119,9 @@ object PromptBudget:
     val runs = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
     AgentGenerator.claudeCode(d, settings) ++
       runs.map(a => s"mcp-tools/${a.name}.json" -> Json.obj("tools" -> a.tools.map(toolJson).asJson).spaces2) ++
-      runs.flatMap(a => answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s).value))
+      runs.flatMap(a =>
+        answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s).value)
+      )
 
   def run(args: List[String]): Unit =
     val d = Generated.defs()

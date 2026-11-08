@@ -52,7 +52,9 @@ private[worklists] object QueueRepo:
   /** The open (with `all`, every) items of `kind` that serve goal `goal`: their own goal, or one of `linked` (the
     * references of the goal's `queue-item` links, compared with the id as text).
     */
-  def forGoal(kind: Kind, goal: GoalText, linked: List[Goal.Plans.GoalLink.Ref], all: Boolean)(using DbCon): Vector[QueueItem] =
+  def forGoal(kind: Kind, goal: GoalText, linked: List[Goal.Plans.GoalLink.Ref], all: Boolean)(using
+      DbCon
+  ): Vector[QueueItem] =
     sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND ($all OR status = $Open)
               AND (goal_slug = $goal OR id::text = ANY($linked::text[]))
@@ -82,8 +84,12 @@ private[worklists] object QueueRepo:
   def naming(kind: Kind, doi: Doi)(using DbCon): Vector[QueueItem] =
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
-    else sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} AND strpos(lower(text), $d) > 0
-                        ORDER BY id""".query[QueueItem].run().filter(i => Scheduling.dois(i.text.value).exists(_.value == d))
+    else
+      sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} AND strpos(lower(text), $d) > 0
+                        ORDER BY id"""
+        .query[QueueItem]
+        .run()
+        .filter(i => Scheduling.dois(i.text.value).exists(_.value == d))
 
   /** Insert one row. `createdAt` (an ISO instant) is honoured when given — an imported LOG entry keeps the date from
     * its heading, which is what orders the exported file.

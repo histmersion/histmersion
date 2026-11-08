@@ -59,9 +59,24 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("zzProbe=0/0"))).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
-    )
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.server)
+      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .modify(_.agents)
+      .setTo(
+        b.agents
+          .modify(_.enabled)
+          .setTo(AgentsConfig.Enabled(true))
+          .modify(_.prices)
+          .setTo(AgentsConfig.Prices("zzProbe=0/0"))
+      )
+      .modify(_.libraryAgents)
+      .setTo(
+        b.libraryAgents
+          .modify(_.enrich)
+          .setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
+      )
 
   private lazy val ds = testPool(cfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -80,7 +95,17 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
   private def handlers(c: ScriptedClient): AgentsControllers =
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(Year.apply))).isRight)
+    assert(
+      h.library.sources
+        .put(
+          Ck,
+          Source.Put(
+            title = com.histmersion.api.library.Title("A Catalogue of Fishes"),
+            year = (Some(1956)).map(Year.apply)
+          )
+        )
+        .isRight
+    )
     AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(c).toRight(PickFailure.Problem(s"no scripted client for ${ref.wire}"))
@@ -123,12 +148,26 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
     val client = ClaudeCodeClient(
       Haiku,
-      cfg.agents.providers.claudeCode.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)).modify(_.timeoutSeconds).setTo(ClaudeCodeConfig.TimeoutSeconds(30)),
+      cfg.agents.providers.claudeCode
+        .modify(_.command)
+        .setTo(ClaudeCodeConfig.Command(fake.script.toString))
+        .modify(_.timeoutSeconds)
+        .setTo(ClaudeCodeConfig.TimeoutSeconds(30)),
       rt
     )
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
-    assert(h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("A Catalogue of Fishes"), year = (Some(1956)).map(Year.apply))).isRight)
+    assert(
+      h.library.sources
+        .put(
+          Ck,
+          Source.Put(
+            title = com.histmersion.api.library.Title("A Catalogue of Fishes"),
+            year = (Some(1956)).map(Year.apply)
+          )
+        )
+        .isRight
+    )
     AgentsControllers(
       ServerEngineSite(deps, h),
       (_, ref) => Option.when(ref == Model)(client).toRight(PickFailure.Problem(s"no client for ${ref.wire}"))

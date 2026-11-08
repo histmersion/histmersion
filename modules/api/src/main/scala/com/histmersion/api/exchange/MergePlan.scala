@@ -26,12 +26,12 @@ final case class MergePlan(
     resolved: MergePlan.Resolved,
     changes: MergePlan.Changes = MergePlan.Changes(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def open: List[MergeIssue] = issues.filter((refactorCallback => ((refactorCallback.open) == (true))))
   def blocking: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Blocking)
   def defaults: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Default)
 object MergePlan:
-
 
   type FormatVersion = FormatVersion.T
   object FormatVersion extends Newtype[Int, Pure]
@@ -54,7 +54,8 @@ object MergePlan:
 
   final case class Request(bundle: Request.Bundle, resolutions: MergeResolutions = MergeResolutions())
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Request:
-    export com.histmersion.api.exchange.Bundle.{Name as Bundle}
+    export com.histmersion.api.exchange.Bundle.Name as Bundle

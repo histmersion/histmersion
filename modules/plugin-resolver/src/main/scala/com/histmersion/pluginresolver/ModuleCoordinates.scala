@@ -11,6 +11,7 @@ final case class ModuleCoordinates(key: ModuleKey, version: ModuleVersion):
 object ModuleCoordinates:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
+
   /** `group:artifact:version`. */
   type ParseResultPart1 = Resolver.Problem
   val ParseResultPart1: Resolver.Problem.type = Resolver.Problem

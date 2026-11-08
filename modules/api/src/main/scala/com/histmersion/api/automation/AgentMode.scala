@@ -28,7 +28,6 @@ object AgentMode:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[AgentMode] =
     val t = (s).value.trim.toLowerCase
     values.find(m => m.wire == Wire(t) || m.toString.toLowerCase == t)
@@ -49,13 +48,25 @@ object AgentMode:
       object On extends Newtype[Boolean, Pure]
 
   def steps(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On, to: AgentMode): List[Step] = to match
-    case Working   => Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(!((autopilotOn) == Step.Autopilot.On(true)))(Step.Autopilot(Step.Autopilot.On(true)))
-    case Finishing => Option.when(!(draining).value)(Step.Drain(Step.Drain.On(true))).toList ++ Option.when(!((autopilotOn) == Step.Autopilot.On(true)))(Step.Autopilot(Step.Autopilot.On(true)))
-    case Paused    => Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(((autopilotOn) == Step.Autopilot.On(true)))(Step.Autopilot(Step.Autopilot.On(false)))
+    case Working =>
+      Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(
+        !((autopilotOn) == Step.Autopilot.On(true))
+      )(Step.Autopilot(Step.Autopilot.On(true)))
+    case Finishing =>
+      Option.when(!(draining).value)(Step.Drain(Step.Drain.On(true))).toList ++ Option.when(
+        !((autopilotOn) == Step.Autopilot.On(true))
+      )(Step.Autopilot(Step.Autopilot.On(true)))
+    case Paused =>
+      Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(
+        ((autopilotOn) == Step.Autopilot.On(true))
+      )(Step.Autopilot(Step.Autopilot.On(false)))
 
-  final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ModeSet:
-    export AgentMode.{Wire as Mode}
+    export AgentMode.Wire as Mode
     type By = By.T
     object By extends Newtype[String, Pure]

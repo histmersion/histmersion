@@ -58,7 +58,8 @@ final class EventImports(
     PluginEvents.limits(registered().get(provider), present)
 
   /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
-  def infoOf(provider: CatalogRecord.Provider): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered())
+  def infoOf(provider: CatalogRecord.Provider): Option[CatalogProviderInfo] =
+    BuiltinCatalogues.info(provider, registered())
 
   def catalogues: List[CatalogProviderInfo] = BuiltinCatalogues.infos(registered())
 
@@ -209,7 +210,9 @@ final class EventImports(
               EventImportReport.Merged(merged),
               EventImportReport.Matched(matched),
               EventImportReport.Updated(saved.fold(0)(_.updated.value)),
-              EventCount.of(kept.map(r => EventCount.Key(EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value))),
+              EventCount.of(
+                kept.map(r => EventCount.Key(EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value))
+              ),
               EventCount.of(skipped),
               matchedIds.result().take(20).map(EventImportReport.MatchedEvents(_)),
               parts = EventImportReport.Parts(1),
@@ -321,7 +324,8 @@ final class EventImports(
       again.grouped(ec.rederiveBatch.value.max(1)).zipWithIndex.foreach { (batch, i) =>
         val s =
           store.save(
-            batch.map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, CatalogMerge.Placement.Why("re-derived")))
+            batch
+              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, CatalogMerge.Placement.Why("re-derived")))
           )
         updated += s.updated.value
         counts = counts + s.corrections
@@ -343,7 +347,9 @@ final class EventImports(
     } ++ Option.when(undecodable.value > 0)(s"$undecodable stored record(s) no longer decode — left alone").toList
     val out = EventRederiveReport(
       EventRederiveReport.DryRun(dryRun),
-      provider.toList.ifEmpty((CatalogProvider.all ++ registered().keys).distinct).map(p => EventRederiveReport.Providers(p.value)),
+      provider.toList
+        .ifEmpty((CatalogProvider.all ++ registered().keys).distinct)
+        .map(p => EventRederiveReport.Providers(p.value)),
       EventRederiveReport.Records(again.size),
       EventRederiveReport.Changed(changed.size),
       EventRederiveReport.FromRaw(again.count((_, a, _, reread) => a.raw.isDefined && reread)),
@@ -374,8 +380,7 @@ final class EventImports(
               EventProviders.WikidataEvents
                 .namesUrl(ec.wikidata.apiUrl.value, batch.map(_.value), ec.wikidata.languageList.map(_.value))
             )
-          )
-            .flatMap(EventProviders.WikidataEvents.names)
+          ).flatMap(EventProviders.WikidataEvents.names)
             .getOrElse(Map.empty)
             .toList
         }
@@ -384,7 +389,8 @@ final class EventImports(
         r.wikidata
           .flatMap(w => names.get(w.value))
           .fold(r)(ns =>
-            r.modify(_.names).setTo((r.names ++ ns.map(CatalogRecord.Names(_))).filterNot(_.value == r.label.value).distinct)
+            r.modify(_.names)
+              .setTo((r.names ++ ns.map(CatalogRecord.Names(_))).filterNot(_.value == r.label.value).distinct)
           )
       )
 

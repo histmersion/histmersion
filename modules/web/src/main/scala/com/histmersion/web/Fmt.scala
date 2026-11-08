@@ -22,7 +22,7 @@ object Fmt:
 
   type ColorT = RampPosition
   val ColorT: RampPosition.type = RampPosition
-  export com.histmersion.api.UiLabels.{Text as DisplayTagS}
+  export com.histmersion.api.UiLabels.Text as DisplayTagS
 
   def yr(y: Year): Years.Text = Years.Text(YearFmt(y))
 

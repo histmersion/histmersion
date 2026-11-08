@@ -13,7 +13,8 @@ final case class IssueHunk(
     left: List[IssueHunk.Left] = Nil,
     right: List[IssueHunk.Right] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object IssueHunk:
   type Conflict = Conflict.T

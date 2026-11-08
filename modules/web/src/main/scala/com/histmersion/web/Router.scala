@@ -12,7 +12,7 @@ import com.histmersion.api.Wording
   * the server's own pages (a source, an article) load.
   */
 object Router:
-  export UiState.{NavigatePush as Push}
+  export UiState.NavigatePush as Push
 
   private val current = Var[Route](Route.Explore)
 
@@ -50,7 +50,8 @@ object Router:
       case Some(Route.Landing(to, open)) =>
         if open != UiState.open.now() then UiState.open.set(open)
         UiState.navigate(
-          UiState.NavigatePathAndSearch(to.path + (if Route.parse(path).contains(to) then window.location.search else "")),
+          UiState.NavigatePathAndSearch(to.path + (if Route.parse(path).contains(to) then window.location.search
+                                                   else "")),
           push = Push(false)
         )
         query.set(Pages.UrlQuery(window.location.search))
@@ -96,8 +97,9 @@ object Router:
 
   /** A page's name, before its content has said a better one. */
   def title(r: Route): UiLabels.Text = r match
-    case Route.Explore     => UiLabels.Text("Explore")
-    case Route.Library(s)  => if s == LibrarySection.Sources then UiLabels.Text("Library") else UiLabels.Text(s.label.value)
+    case Route.Explore    => UiLabels.Text("Explore")
+    case Route.Library(s) =>
+      if s == LibrarySection.Sources then UiLabels.Text("Library") else UiLabels.Text(s.label.value)
     case Route.Research(s) => if s == ResearchSection.Overview then UiLabels.Text("Research") else s.label
     case Route.Activity(t) => UiLabels.Text(t.label)
     case Route.Settings(s) => s.label

@@ -72,39 +72,65 @@ class TimelineViewSuite extends munit.FunSuite:
   // ── realign: keeping a drawn curve under the span on screen ─────────────────────────────────
 
   test("realign is identity when nothing moved") {
-    assertEquals(TimelineView.realign((Years.Astronomical(-3000L), Years.Astronomical(-1000L), 800.0), (Years.Astronomical(-3000L), Years.Astronomical(-1000L), 800.0)), (0.0, 1.0))
+    assertEquals(
+      TimelineView.realign(
+        (Years.Astronomical(-3000L), Years.Astronomical(-1000L), 800.0),
+        (Years.Astronomical(-3000L), Years.Astronomical(-1000L), 800.0)
+      ),
+      (0.0, 1.0)
+    )
   }
 
   test("realign stretches a curve to a wider element") {
-    val (tx, scale) = TimelineView.realign((Years.Astronomical(0L), Years.Astronomical(100L), 400.0), (Years.Astronomical(0L), Years.Astronomical(100L), 800.0))
+    val (tx, scale) = TimelineView.realign(
+      (Years.Astronomical(0L), Years.Astronomical(100L), 400.0),
+      (Years.Astronomical(0L), Years.Astronomical(100L), 800.0)
+    )
     assertEquals(tx, 0.0)
     assertEquals(scale, 2.0)
   }
 
   test("realign shrinks and shifts a curve when the span widens (zoom out)") {
     // drawn for 0..100 at 1000px; now showing -100..200 → the old curve covers the middle third
-    val (tx, scale) = TimelineView.realign((Years.Astronomical(0L), Years.Astronomical(100L), 1000.0), (Years.Astronomical(-100L), Years.Astronomical(200L), 1000.0))
+    val (tx, scale) = TimelineView.realign(
+      (Years.Astronomical(0L), Years.Astronomical(100L), 1000.0),
+      (Years.Astronomical(-100L), Years.Astronomical(200L), 1000.0)
+    )
     assertEqualsDouble(scale, 1.0 / 3, 1e-9)
     assertEqualsDouble(tx, 1000.0 / 3, 1e-9)
   }
 
   test("realign shifts a curve when the span pans") {
-    val (tx, scale) = TimelineView.realign((Years.Astronomical(0L), Years.Astronomical(100L), 1000.0), (Years.Astronomical(50L), Years.Astronomical(150L), 1000.0))
+    val (tx, scale) = TimelineView.realign(
+      (Years.Astronomical(0L), Years.Astronomical(100L), 1000.0),
+      (Years.Astronomical(50L), Years.Astronomical(150L), 1000.0)
+    )
     assertEquals(scale, 1.0)
     assertEquals(tx, -500.0)
   }
 
   // ── underlayBuckets: the overview slice drawn beneath a stale detail curve ─────────────────
 
-  private val ov = (0 until 10).toList.map(i => TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100L + 99), TimeBucket.Count(i)))
+  private val ov = (0 until 10).toList.map(i =>
+    TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100L + 99), TimeBucket.Count(i))
+  )
 
   test("underlayBuckets keeps the overlapping buckets plus one neighbour each side") {
-    assertEquals(TimelineView.underlayBuckets(ov, Years.Astronomical(300), Years.Astronomical(450)).map(_.start), List(200L, 300L, 400L, 500L))
+    assertEquals(
+      TimelineView.underlayBuckets(ov, Years.Astronomical(300), Years.Astronomical(450)).map(_.start),
+      List(200L, 300L, 400L, 500L)
+    )
   }
 
   test("underlayBuckets clamps at the ends of the data") {
-    assertEquals(TimelineView.underlayBuckets(ov, Years.Astronomical(-50), Years.Astronomical(50)).map(_.start), List(0L, 100L))
-    assertEquals(TimelineView.underlayBuckets(ov, Years.Astronomical(950), Years.Astronomical(2000)).map(_.start), List(800L, 900L))
+    assertEquals(
+      TimelineView.underlayBuckets(ov, Years.Astronomical(-50), Years.Astronomical(50)).map(_.start),
+      List(0L, 100L)
+    )
+    assertEquals(
+      TimelineView.underlayBuckets(ov, Years.Astronomical(950), Years.Astronomical(2000)).map(_.start),
+      List(800L, 900L)
+    )
   }
 
   test("underlayBuckets is empty outside the data") {

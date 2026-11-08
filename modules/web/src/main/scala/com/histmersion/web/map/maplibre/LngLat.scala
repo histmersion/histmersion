@@ -13,4 +13,3 @@ trait LngLat extends js.Object:
   val lng: Geo.Longitude = js.native
   val lat: Geo.Latitude = js.native
   def wrap(): LngLat = js.native
-

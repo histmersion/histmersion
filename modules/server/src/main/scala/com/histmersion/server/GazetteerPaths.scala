@@ -15,7 +15,8 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
 
   /** The manifest's text, or why there is none. */
   def manifestText(): Either[GazetteerPaths.Problem, GazetteerPaths.ManifestText] =
-    if !Files.isRegularFile(manifest) then Left(GazetteerPaths.Problem(s"no gazetteer manifest at $manifest (set places.sources.manifest)"))
+    if !Files.isRegularFile(manifest) then
+      Left(GazetteerPaths.Problem(s"no gazetteer manifest at $manifest (set places.sources.manifest)"))
     else Right(GazetteerPaths.ManifestText(Files.readString(manifest)))
 
 object GazetteerPaths:
@@ -33,8 +34,8 @@ object GazetteerPaths:
   object ManifestText extends Newtype[String, Pure]
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
-  /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
 
+  /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
 
   def of(cfg: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName): GazetteerPaths =
     val data = UserPaths

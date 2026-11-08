@@ -27,9 +27,14 @@ object CompareRuns:
 
   type Seconds = Seconds.T
   object Seconds extends Newtype[Long, Pure]
-  export Step.{Name as OutputName}
+  export Step.Name as OutputName
 
-  final case class Tokens(input: Tokens.Input = Tokens.Input(0), output: Tokens.Output = Tokens.Output(0), cacheRead: Tokens.CacheRead = Tokens.CacheRead(0), cacheWrite: Tokens.CacheWrite = Tokens.CacheWrite(0)):
+  final case class Tokens(
+      input: Tokens.Input = Tokens.Input(0),
+      output: Tokens.Output = Tokens.Output(0),
+      cacheRead: Tokens.CacheRead = Tokens.CacheRead(0),
+      cacheWrite: Tokens.CacheWrite = Tokens.CacheWrite(0)
+  ):
     def +(o: Tokens): Tokens =
       Tokens(
         Tokens.Input(input.value + o.input.value),
@@ -107,7 +112,8 @@ object CompareRuns:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
     type Status = com.histmersion.domain.automation.Step.Status.Wire
-    val Status: com.histmersion.domain.automation.Step.Status.Wire.type = com.histmersion.domain.automation.Step.Status.Wire
+    val Status: com.histmersion.domain.automation.Step.Status.Wire.type =
+      com.histmersion.domain.automation.Step.Status.Wire
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type ActualModel = ActualModel.T
@@ -239,7 +245,12 @@ object CompareRuns:
     type UniqueClaims = UniqueClaims.T
     object UniqueClaims extends Newtype[String, Pure]
 
-  final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+  final case class ReviewerSide(
+      reviewer: ReviewerSide.Reviewer,
+      verdict: Option[ReviewerSide.Verdict],
+      majors: ReviewerSide.Majors,
+      minors: ReviewerSide.Minors
+  )
 
   object ReviewerSide:
     type Reviewer = Reviewer.T
@@ -277,7 +288,14 @@ object CompareRuns:
     object Majors extends Newtype[String, Pure]
 
   /** Round 1's major findings two runs share; `pairs` shows each match as `<a's id> ↔ <b's id>`. */
-  final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List[MajorOverlap.Pairs])
+  final case class MajorOverlap(
+      a: MajorOverlap.A,
+      b: MajorOverlap.B,
+      aMajors: MajorOverlap.AMajors,
+      bMajors: MajorOverlap.BMajors,
+      shared: MajorOverlap.Shared,
+      pairs: List[MajorOverlap.Pairs]
+  )
 
   object MajorOverlap:
     type A = A.T
@@ -327,13 +345,17 @@ object CompareRuns:
       _ <- runs
         .find(_.run.pipeline != first.pipeline)
         .map(o =>
-          Problem(s"run ${o.run.id.short} is ${o.run.pipeline}, run ${first.id.short} ${first.pipeline}: compare runs of one pipeline")
+          Problem(
+            s"run ${o.run.id.short} is ${o.run.pipeline}, run ${first.id.short} ${first.pipeline}: compare runs of one pipeline"
+          )
         )
         .toLeft(())
       _ <- runs
         .find(_.run.target != first.target)
         .map(o =>
-          Problem(s"run ${o.run.id.short} is on ${o.run.target}, run ${first.id.short} on ${first.target}: compare runs on one target")
+          Problem(
+            s"run ${o.run.id.short} is on ${o.run.target}, run ${first.id.short} on ${first.target}: compare runs on one target"
+          )
         )
         .toLeft(())
     yield
@@ -378,11 +400,13 @@ object CompareRuns:
       yield math.max(0L, b.getEpochSecond - a.getEpochSecond)).getOrElse(0L)
     )
 
-  private def costOf(steps: List[Step]): Step.CostUsd = Step.CostUsd(steps.foldLeft(0.0)((acc, s) => acc + s.costUsd.value))
+  private def costOf(steps: List[Step]): Step.CostUsd =
+    Step.CostUsd(steps.foldLeft(0.0)((acc, s) => acc + s.costUsd.value))
 
   private def secondsOf(steps: List[Step]): Seconds = Seconds(steps.foldLeft(0L)((acc, s) => acc + seconds(s).value))
 
-  private def failedIn(steps: List[Step]): Int = steps.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire)
+  private def failedIn(steps: List[Step]): Int =
+    steps.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire)
 
   private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
@@ -398,7 +422,9 @@ object CompareRuns:
       StepSide.Attempts(attempts.size),
       StepSide.Failures(failedIn(attempts)),
       attempts.flatMap(_.firstCallTokens).headOption,
-      Option.when(attempts.exists(_.turns.isDefined))(StepSide.Turns(attempts.flatMap(_.turns).foldLeft(0)((acc, t) => acc + t.value)))
+      Option.when(attempts.exists(_.turns.isDefined))(
+        StepSide.Turns(attempts.flatMap(_.turns).foldLeft(0)((acc, t) => acc + t.value))
+      )
     )
 
   private def runSide(d: Run): RunSide =
@@ -425,7 +451,12 @@ object CompareRuns:
       .flatMap(o => decode[O](o.value).toOption)
 
   private def words(s: String): Set[String] =
-    ComparedText.normalise(ComparedText.NormaliseS(Option(s).getOrElse(""))).value.split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
+    ComparedText
+      .normalise(ComparedText.NormaliseS(Option(s).getOrElse("")))
+      .value
+      .split("[^\\p{L}\\p{N}]+")
+      .filter(_.length > 2)
+      .toSet
 
   /** Jaccard similarity of two texts' words (0 when both have none). */
   def similarity(a: Text, b: Text): Similarity =

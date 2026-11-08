@@ -17,7 +17,9 @@ final class DiskLocalFiles extends LocalFiles:
     try LocalFiles.ReadPrefixResult(in.readNBytes(length.value))
     finally in.close()
 
-  def staged[A](name: LocalFiles.StagedName, bytes: LocalFiles.StagedBytes)(use: Path => Either[LocalFiles.StagedUseResultPart1, A]): Either[LocalFiles.StagedResultPart1, A] =
+  def staged[A](name: LocalFiles.StagedName, bytes: LocalFiles.StagedBytes)(
+      use: Path => Either[LocalFiles.StagedUseResultPart1, A]
+  ): Either[LocalFiles.StagedResultPart1, A] =
     val n = name.value
     if n.isEmpty || n == "." || n == ".." || n.contains('/') || n.contains('\\') || n.contains('\u0000') then
       Left(LocalFiles.StagedResultPart1("cannot stage the file: expected a single filename"))
@@ -31,7 +33,10 @@ final class DiskLocalFiles extends LocalFiles:
               .flatMap(p => use(p).left.map(e => LocalFiles.StagedResultPart1(e.value)))
           finally
             val entries = Files.list(dir)
-            try entries.forEach(p => { val _ = Files.deleteIfExists(p) })
+            try
+              entries.forEach { p =>
+                val _ = Files.deleteIfExists(p)
+              }
             finally entries.close()
             val _ = Files.deleteIfExists(dir)
         }

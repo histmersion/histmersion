@@ -37,24 +37,32 @@ object MergeMarkdown:
       section(("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(((issue)))),
       section(
         ("Defaults (applied unless overridden with --resolve)"),
-        (if ((all) == (true)) then defaults else defaults.take(5)).map(issue) ++
+        (if (all) == (true) then defaults else defaults.take(5)).map(issue) ++
           Option.when(!(all) && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
       ),
       section(
         ("Info"),
-        ((if ((all) == (true)) then p.info else p.info.take(8)).map(x => s"- $x") ++
-          Option.when(!(all) && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList).map(refactorValue5 => (refactorValue5))
+        ((if (all) == (true) then p.info else p.info.take(8)).map(x => s"- $x") ++
+          Option.when(!(all) && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList).map(refactorValue5 =>
+          (refactorValue5)
+        )
       ),
       section(
         ("Matches"),
-        RegisteredPlanMatches.kind.lines(p.sources, if ((all) == (true)) then PlanMatchKind.LineLimit(Int.MaxValue) else PlanMatchKind.LineLimit(20)).map(_.value)
+        RegisteredPlanMatches.kind
+          .lines(
+            p.sources,
+            if (all) == (true) then PlanMatchKind.LineLimit(Int.MaxValue) else PlanMatchKind.LineLimit(20)
+          )
+          .map(_.value)
       )
     ).flatten
     val next =
       if p.problems.nonEmpty then "_Next: fix the problems, export the bundle again._"
       else if open.nonEmpty || p.resolutionErrors.nonEmpty then
         "_Next: `histmersion merge plan <bundle> --write-template resolutions.yaml`, decide, then plan again with `--resolutions resolutions.yaml`._"
-      else if p.changes == MergePlan.Changes(0) then "_Nothing is open, and nothing to change: the bundle is merged already._"
+      else if p.changes == MergePlan.Changes(0) then
+        "_Nothing is open, and nothing to change: the bundle is merged already._"
       else
         s"_Nothing is open: `histmersion merge apply <bundle> --resolutions … --plan ${p.planHash}` carries it out " +
           s"(${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))}; a backup is taken first)._"
@@ -67,7 +75,7 @@ object MergeMarkdown:
     val head =
       if ((r.applied) == MergeApplyResult.Applied(true)) && r.mergeId.isEmpty then
         s"**Nothing to merge** — the bundle of ${who(r.from)} is merged already (plan ${r.planHash})."
-      else if ((r.applied) == MergeApplyResult.Applied(true)) then
+      else if (r.applied) == MergeApplyResult.Applied(true) then
         s"**Merged** the bundle of ${who(r.from)} as merge ${r.mergeId.fold("—")(_.toString)}" +
           r.backup.fold("")(b => s" (backup $b)")
       else s"**Not merged** (plan ${r.planHash}): nothing was written."
@@ -89,7 +97,8 @@ object MergeMarkdown:
             (if r.reviews.nonEmpty then r.reviews.map(s => s"`$s`").mkString(" (", ", ", ")") else "") +
             r.logEntry.fold("")(id => s" · log entry #$id"),
           r.replanChanges.fold("")(n =>
-            if n == MergeApplyResult.ReplanChanges(0) then "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
+            if n == MergeApplyResult.ReplanChanges(0) then
+              "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
             else
               s"**re-run** `histmersion merge plan` on this bundle → ${Plural.count(Plural.CountN(n.value.toLong), Plural.Noun.Singular("change"))} left (not idempotent — report it)"
           )
@@ -138,7 +147,8 @@ object MergeMarkdown:
       .map(r =>
         "**Resolutions**\n" + (r.policy.editions.map(e => s"- editions: ${e.toString.toLowerCase}").toList ++
           r.resolve.map(x =>
-            s"- `${x.issue}` = `${x.decision}`" + x.text.fold("")(t => s" (${t.value.length} characters of merged text)")
+            s"- `${x.issue}` = `${x.decision}`" + x.text
+              .fold("")(t => s" (${t.value.length} characters of merged text)")
           )).mkString("\n")
       )
     val rem = Option.when(d.remembered.nonEmpty)(
@@ -170,7 +180,7 @@ object MergeMarkdown:
       case Bundle.Kind.Article => "Article"
       case Bundle.Kind.Event   => "Event"
       case Bundle.Kind.Place   => "Place"
-      case _                                                => "Goal"
+      case _                   => "Goal"
     (s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
       (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else ""))
 

@@ -42,8 +42,11 @@ object ArticleNote:
       "period_start" -> a.period.map(p => Long.box(p.start.value)).orNull,
       "period_end" -> a.period.map(p => Long.box(p.end.value)).orNull
     ) ++ a.filter.map(f => "filter" -> filterMap(f)).toList ++ reasons.toList
-    val body = (a.body.value.trim :: generated.map(_.trim).filter(_.nonEmpty).toList).filter(_.nonEmpty).mkString("\n\n")
-    MirrorFrontmatter(fields.map((k, v) => MirrorFrontmatter.Key(k) -> v)).note(Option.when(body.nonEmpty)(MirrorFrontmatter.NoteBody(body))).value
+    val body =
+      (a.body.value.trim :: generated.map(_.trim).filter(_.nonEmpty).toList).filter(_.nonEmpty).mkString("\n\n")
+    MirrorFrontmatter(fields.map((k, v) => MirrorFrontmatter.Key(k) -> v))
+      .note(Option.when(body.nonEmpty)(MirrorFrontmatter.NoteBody(body)))
+      .value
 
   /** The filter as a frontmatter map: only the parts it has, in a fixed order. */
   private def filterMap(f: Article.Filter): java.util.Map[String, Any] =

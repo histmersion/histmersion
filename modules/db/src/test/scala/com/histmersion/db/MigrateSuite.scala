@@ -34,8 +34,12 @@ class MigrateSuite extends munit.FunSuite:
     }
     assertEquals((ok, calls), ("done", 3))
     calls = 0
-    intercept[java.sql.SQLException](Migrate.retrying(Migrate.RetryAttempts(5)) { calls += 1; throw java.sql.SQLException("no", "42601") })
+    intercept[java.sql.SQLException](Migrate.retrying(Migrate.RetryAttempts(5)) {
+      calls += 1; throw java.sql.SQLException("no", "42601")
+    })
     assertEquals(calls, 1)
     calls = 0
-    intercept[java.sql.SQLException](Migrate.retrying(Migrate.RetryAttempts(2)) { calls += 1; throw java.sql.SQLException("x", "40P01") })
+    intercept[java.sql.SQLException](Migrate.retrying(Migrate.RetryAttempts(2)) {
+      calls += 1; throw java.sql.SQLException("x", "40P01")
+    })
     assertEquals(calls, 2)

@@ -30,7 +30,8 @@ final class PolledList[A](
     id: A => PolledList.ItemId,
     live: (List[A], Paging.Page) => Boolean,
     after: (ListPaging.Listing[A], List[A]) => Unit = (_: ListPaging.Listing[A], _: List[A]) => (),
-    later: (Poll.Revision, () => Unit) => PolledList.TimerId = (ms, f) => PolledList.TimerId(dom.window.setTimeout(() => f(), ms.value)),
+    later: (Poll.Revision, () => Unit) => PolledList.TimerId = (ms, f) =>
+      PolledList.TimerId(dom.window.setTimeout(() => f(), ms.value)),
     cancel: PolledList.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 )(using ExecutionContext, CanEqual[A, A]):
 
@@ -110,11 +111,14 @@ final class PolledList[A](
           if mounted && latest.isCurrent(ticket) then
             older.set(PolledList.Older(false))
             r match
-              case Failure(e)            => failure.set(Some(PolledList.Problem(e.getMessage))); schedule(Some(Poll.Revision(Poll.MaxMs)))
+              case Failure(e) =>
+                failure.set(Some(PolledList.Problem(e.getMessage))); schedule(Some(Poll.Revision(Poll.MaxMs)))
               case Success((rows, page)) =>
                 failure.set(None)
                 listing.update(ListPaging.appended(_, rows, page, a => id(a).value))
-                schedule(Poll.next(delay, Poll.LiveMode(live(listing.now().rows, page)), changed = Poll.DataChanged(false)))
+                schedule(
+                  Poll.next(delay, Poll.LiveMode(live(listing.now().rows, page)), changed = Poll.DataChanged(false))
+                )
         }
     }
 
@@ -126,7 +130,8 @@ final class PolledList[A](
   def item: Signal[Option[A]] = listing.signal.map(_.rows.headOption)
 
   /** The "Show older" button under the list. */
-  def olderButton: HtmlElement = ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal.map(_.value), () => showOlder())
+  def olderButton: HtmlElement =
+    ListPaging.olderButton(listing.signal.map(_.hasOlder), older.signal.map(_.value), () => showOlder())
 
   /** The error line: what the last request answered, `what` naming the list. */
   def errorLine(what: UiLabels.Text): HtmlElement =

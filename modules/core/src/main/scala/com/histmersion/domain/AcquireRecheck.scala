@@ -40,9 +40,9 @@ object AcquireRecheck:
     * a day and a pass, the minutes between passes, the share (percent) of the shared daily legal ingest allowance the
     * re-check may take, and the hours after which a check that got no answer is due again.
     */
-  export LastCheck.{Generation as IsDueGeneration}
+  export LastCheck.Generation as IsDueGeneration
   export Settings.{EveryDays as IsDueEveryDays, RetryHours as IsDueRetryHours}
-  export LastCheck.{Generation as NextDueGeneration}
+  export LastCheck.Generation as NextDueGeneration
   export Settings.{EveryDays as NextDueEveryDays, RetryHours as NextDueRetryHours}
 
   final case class Settings(
@@ -74,7 +74,11 @@ object AcquireRecheck:
   /** An item's last check: when, under which fetcher generation ([[generation]]), and whether it got no answer
     * ([[Outcome.Failed]]: a rate limit, an upstream down).
     */
-  final case class LastCheck(at: Instant, generation: LastCheck.Generation, failed: LastCheck.Failed = LastCheck.Failed(false))
+  final case class LastCheck(
+      at: Instant,
+      generation: LastCheck.Generation,
+      failed: LastCheck.Failed = LastCheck.Failed(false)
+  )
 
   object LastCheck:
     type Generation = Generation.T
@@ -85,7 +89,12 @@ object AcquireRecheck:
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
     */
-  def dueAt(last: Option[LastCheck], generation: LastCheck.Generation, everyDays: Settings.EveryDays, retryHours: Settings.RetryHours): Option[Instant] =
+  def dueAt(
+      last: Option[LastCheck],
+      generation: LastCheck.Generation,
+      everyDays: Settings.EveryDays,
+      retryHours: Settings.RetryHours
+  ): Option[Instant] =
     last
       .filter(_.generation == generation)
       .map(l =>
@@ -93,7 +102,13 @@ object AcquireRecheck:
         else l.at.plusSeconds(math.max(1, everyDays.value).toLong * 86400L)
       )
 
-  def isDue(last: Option[LastCheck], generation: AcquireRecheck.IsDueGeneration, everyDays: AcquireRecheck.IsDueEveryDays, retryHours: AcquireRecheck.IsDueRetryHours, now: Instant): Boolean =
+  def isDue(
+      last: Option[LastCheck],
+      generation: AcquireRecheck.IsDueGeneration,
+      everyDays: AcquireRecheck.IsDueEveryDays,
+      retryHours: AcquireRecheck.IsDueRetryHours,
+      now: Instant
+  ): Boolean =
     dueAt(last, generation, everyDays, retryHours).forall(!_.isAfter(now))
 
   /** What the corpus holds under an item's DOI: the source, and whether it has its original (a converted body or a
@@ -123,7 +138,7 @@ object AcquireRecheck:
       case Some(doi) =>
         held(doi) match
           case Some(h) if h.hasOriginal.value => Action.Close(h.citekey)
-          case other                    => Action.Fetch(doi, other.map(_.citekey))
+          case other                          => Action.Fetch(doi, other.map(_.citekey))
 
   /** What a check found, as stored (`acquire_checks.outcome`). */
   enum Outcome(val wire: Outcome.Wire) derives CanEqual:
@@ -142,7 +157,6 @@ object AcquireRecheck:
   object Outcome:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
 
@@ -183,7 +197,12 @@ object AcquireRecheck:
     * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched
     * today.
     */
-  final case class Shared(left: Shared.Left, cap: Shared.Cap, backlogPending: Shared.BacklogPending, fetchedToday: Shared.FetchedToday)
+  final case class Shared(
+      left: Shared.Left,
+      cap: Shared.Cap,
+      backlogPending: Shared.BacklogPending,
+      fetchedToday: Shared.FetchedToday
+  )
 
   object Shared:
     type Left = Left.T
@@ -216,10 +235,17 @@ object AcquireRecheck:
     */
   def generation(parts: List[GenerationPart]): LastCheck.Generation =
     val md = java.security.MessageDigest.getInstance("SHA-256")
-    LastCheck.Generation(md.digest(parts.mkString("\n").getBytes(StandardCharsets.UTF_8)).take(8).map(b => f"${b & 0xff}%02x").mkString)
+    LastCheck.Generation(
+      md.digest(parts.mkString("\n").getBytes(StandardCharsets.UTF_8)).take(8).map(b => f"${b & 0xff}%02x").mkString
+    )
 
   /** The earliest time one of the checked items falls due again (None: none waits). */
-  def nextDue(checks: List[LastCheck], generation: AcquireRecheck.NextDueGeneration, everyDays: AcquireRecheck.NextDueEveryDays, retryHours: AcquireRecheck.NextDueRetryHours): Option[Instant] =
+  def nextDue(
+      checks: List[LastCheck],
+      generation: AcquireRecheck.NextDueGeneration,
+      everyDays: AcquireRecheck.NextDueEveryDays,
+      retryHours: AcquireRecheck.NextDueRetryHours
+  ): Option[Instant] =
     checks.flatMap(c => dueAt(Some(c), generation, everyDays, retryHours)).minOption
 
   // ── the re-check job ─────────────────────────────────────────────────────────────────────────────
@@ -287,9 +313,22 @@ object AcquireRecheck:
   ):
     def add(outcome: Outcome, detail: Detail): Tally = outcome match
       case Outcome.Closed  => this.modify(_.closed).setTo(Tally.Closed(closed.value + 1))
-      case Outcome.Fetched => this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.fetched).setTo(Tally.Fetched(fetched.value + 1))
-      case Outcome.NoCopy  => this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.noCopy).setTo(Tally.NoCopy(noCopy.value + 1))
-      case Outcome.Failed  => this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.failed).setTo(Tally.Failed(failed.value + 1)).modify(_.lastFailure).setTo(Some(detail))
+      case Outcome.Fetched =>
+        this
+          .modify(_.tried)
+          .setTo(Tally.Tried(tried.value + 1))
+          .modify(_.fetched)
+          .setTo(Tally.Fetched(fetched.value + 1))
+      case Outcome.NoCopy =>
+        this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.noCopy).setTo(Tally.NoCopy(noCopy.value + 1))
+      case Outcome.Failed =>
+        this
+          .modify(_.tried)
+          .setTo(Tally.Tried(tried.value + 1))
+          .modify(_.failed)
+          .setTo(Tally.Failed(failed.value + 1))
+          .modify(_.lastFailure)
+          .setTo(Some(detail))
 
   object Tally:
 
@@ -308,7 +347,8 @@ object AcquireRecheck:
 
   /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
   def progressLine(t: Tally): ProgressLine =
-    val why = t.lastFailure.map(_.value.trim).filter(_.nonEmpty).map(w => if w.length > 60 then w.take(60).trim + " …" else w)
+    val why =
+      t.lastFailure.map(_.value.trim).filter(_.nonEmpty).map(w => if w.length > 60 then w.take(60).trim + " …" else w)
     ProgressLine(
       s"${t.tried}/${t.total} items · ${t.closed} closed · ${t.fetched} fetched · ${t.noCopy} no legal copy · " +
         s"${t.failed} failed" + why.fold("")(w => s" ($w)")

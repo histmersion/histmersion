@@ -15,14 +15,14 @@ import com.histmersion.util.console.Console
   */
 object BasemapCmd:
 
-  private def statusCmd (using console: Console) =
+  private def statusCmd(using console: Console) =
     Opts.subcommand("status", "What is downloaded, where, the free space there, and which styles lack data") {
       Output.jsonFlag.map { json => (c: Client) =>
         c.basemapStatus().map(s => Output.emit(json, s)(BasemapMarkdown.status))
       }
     }
 
-  private def fetchCmd (using console: Console) = Opts.subcommand(
+  private def fetchCmd(using console: Console) = Opts.subcommand(
     "fetch",
     "Download the local base map (coast, water, rivers, land cover; relief; physical names; sea floor; with --keep-all roads, places and borders) as a server job — resumable; " +
       "refused when the disk would be left with less than basemap.min-free-gb"
@@ -83,7 +83,7 @@ object BasemapCmd:
       }
   }
 
-  private def rmCmd (using console: Console) = Opts.subcommand(
+  private def rmCmd(using console: Console) = Opts.subcommand(
     "rm",
     "Remove the downloaded base-map files (and an unfinished download), focus regions, the on-demand relief cache"
   ) {
@@ -104,15 +104,17 @@ object BasemapCmd:
         .orFalse
     ).mapN { (layer, focus, cache) => (c: Client) =>
       val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
-      c.basemapRemove(Basemap.RemoveQuery(
-        Basemap.RemoveQuery.Layer(l),
-        focus.map(Basemap.RemoveQuery.Focus(_)),
-        Basemap.RemoveQuery.Cache(cache)
-      )).map(r => Cli.out.println(BasemapMarkdown.removed(r)))
+      c.basemapRemove(
+        Basemap.RemoveQuery(
+          Basemap.RemoveQuery.Layer(l),
+          focus.map(Basemap.RemoveQuery.Focus(_)),
+          Basemap.RemoveQuery.Cache(cache)
+        )
+      ).map(r => Cli.out.println(BasemapMarkdown.removed(r)))
     }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("basemap", "The web UI's local base map (street maps and terrain): status, styles, fetch, rm") {
       statusCmd orElse fetchCmd orElse rmCmd
     }

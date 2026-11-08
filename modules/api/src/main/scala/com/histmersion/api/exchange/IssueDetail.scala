@@ -10,4 +10,5 @@ final case class IssueDetail(
     text: Option[IssueText] = None,
     place: Option[IssuePlace] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

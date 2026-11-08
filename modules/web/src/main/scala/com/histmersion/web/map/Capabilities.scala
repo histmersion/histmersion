@@ -10,7 +10,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * then breaks the interaction budgets (docs/research-map-styles.md §3.2) and the app draws its cheapest map.
   * `renderer` is the string it was told.
   */
-final case class Capabilities(webgl: Capabilities.Webgl, software: Capabilities.Software, renderer: Capabilities.Renderer, webgl2: Capabilities.Webgl2 = Capabilities.Webgl2(true))
+final case class Capabilities(
+    webgl: Capabilities.Webgl,
+    software: Capabilities.Software,
+    renderer: Capabilities.Renderer,
+    webgl2: Capabilities.Webgl2 = Capabilities.Webgl2(true)
+)
 
 object Capabilities:
   /** Pure: why an engine that needs WebGL 2 cannot draw in a browser with `c`, or None when it can. */
@@ -25,7 +30,8 @@ object Capabilities:
   object Webgl2 extends Newtype[Boolean, Pure]
 
   def withoutWebgl2(c: Capabilities): Option[MapEngine.Problem] =
-    if !c.webgl.value then Some(MapEngine.Problem("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)"))
+    if !c.webgl.value then
+      Some(MapEngine.Problem("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)"))
     else if !c.webgl2.value then Some(MapEngine.Problem("this browser draws WebGL 1 only, not WebGL 2"))
     else None
 

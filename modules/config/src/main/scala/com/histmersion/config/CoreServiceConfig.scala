@@ -35,4 +35,3 @@ final case class CoreServiceConfig(
     maxWaitSeconds: Seconds
 ) derives ConfigReader:
   def key: Option[ApiKey] = Option(apiKey.value: String).map(_.trim).filter(_.nonEmpty).map(ApiKey(_))
-

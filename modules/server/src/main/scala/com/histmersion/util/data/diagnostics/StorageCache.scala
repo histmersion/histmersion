@@ -32,7 +32,7 @@ final class StorageCache(
   def get(waitMillis: StorageCache.WaitMillis): Storage.Report =
     last.get match
       case Some((at, r)) if clock().value - at < ttlMillis().value => r
-      case Some((_, r))                                =>
+      case Some((_, r))                                            =>
         val _ = kick()
         r.modify(_.measuring).setTo(Storage.Report.Measuring(true))
       case None =>
@@ -77,4 +77,3 @@ object StorageCache:
   object WaitMillis extends Newtype[Long, Pure]
   type Instant = Instant.T
   object Instant extends Newtype[Long, Pure]
-

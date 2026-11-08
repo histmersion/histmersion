@@ -150,7 +150,9 @@ class AggregateRepoSuite extends DbSuite:
   )
 
   private def seed(): Unit =
-    List(dated, undatedSourceDatedFinding, undated, tagged).foreach(SourceFixtures.upsert(ds, _, Limits.ChunkChars(4000)))
+    List(dated, undatedSourceDatedFinding, undated, tagged).foreach(
+      SourceFixtures.upsert(ds, _, Limits.ChunkChars(4000))
+    )
 
   /** The window to bucket travels in the filter's `period` (as the handler sets it). */
   private def win(from: Year, to: Year, f: Filter = Filter()): Filter = f.modify(_.period).setTo(Some(Period(from, to)))
@@ -180,11 +182,23 @@ class AggregateRepoSuite extends DbSuite:
 
   test("region and bbox filter as geoWhen does (finding-level)"):
     seed()
-    val anatolia = SearchFixtures.periods(ds, SearchFixtures.AggregateUnit("sources"), win(Year(-2000), Year(-1000), Filter(places = List(Filter.Places("anatol")))))
+    val anatolia = SearchFixtures.periods(
+      ds,
+      SearchFixtures.AggregateUnit("sources"),
+      win(Year(-2000), Year(-1000), Filter(places = List(Filter.Places("anatol"))))
+    )
     assert(anatolia.contains(Period.Row(Some(Year(-1300)), Some(Year(-1200)))))
     assert(!anatolia.contains(Period.Row(Some(Year(-1500)), Some(Year(-1400)))))
     val bbox =
-      SearchFixtures.periods(ds, SearchFixtures.AggregateUnit("sources"), win(Year(-2000), Year(-1000), Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))))))
+      SearchFixtures.periods(
+        ds,
+        SearchFixtures.AggregateUnit("sources"),
+        win(
+          Year(-2000),
+          Year(-1000),
+          Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))))
+        )
+      )
     assert(bbox.contains(Period.Row(Some(Year(-1300)), Some(Year(-1200)))))
     assert(!bbox.contains(Period.Row(Some(Year(-1500)), Some(Year(-1400)))))
     // place filters are finding-level, so a source with no findings at all cannot match
@@ -200,14 +214,22 @@ class AggregateRepoSuite extends DbSuite:
 
   test("a source dated -1250 lands only in buckets covering -1250"):
     seed()
-    val rows = SearchFixtures.periods(ds, SearchFixtures.AggregateUnit("findings"), win(Year(-1600), Year(-1200), Filter(places = List(Filter.Places("anatol")))))
+    val rows = SearchFixtures.periods(
+      ds,
+      SearchFixtures.AggregateUnit("findings"),
+      win(Year(-1600), Year(-1200), Filter(places = List(Filter.Places("anatol"))))
+    )
     val hist = Aggregate.histogram(rows.toList, Year(-1600), Year(-1200), Aggregate.Width(100))
     assertEquals(hist.filter(_.count.value > 0).map(b => (b.start, b.end)), List((-1300L, -1201L)))
 
   test("tag= narrows the histogram (the same filter as /api/sources and /api/findings)"):
     seed()
     val all = SearchFixtures.periods(ds, SearchFixtures.AggregateUnit("sources"), win(Year(-2000), Year(-700)))
-    val tagged = SearchFixtures.periods(ds, SearchFixtures.AggregateUnit("sources"), win(Year(-2000), Year(-700), Filter(tags = List(Filter.Tags("zzaggtag")))))
+    val tagged = SearchFixtures.periods(
+      ds,
+      SearchFixtures.AggregateUnit("sources"),
+      win(Year(-2000), Year(-700), Filter(tags = List(Filter.Tags("zzaggtag"))))
+    )
     assert(all.contains(Period.Row(Some(Year(-1300)), Some(Year(-1200)))), all.toString)
     assert(all.contains(Period.Row(Some(Year(-900)), Some(Year(-800)))), all.toString)
     // only the tagged source survives — and its bucket is the only non-empty one

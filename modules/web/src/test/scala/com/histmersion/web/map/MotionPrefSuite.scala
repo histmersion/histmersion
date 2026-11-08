@@ -36,7 +36,9 @@ class MotionPrefSuite extends munit.FunSuite:
     assertEquals(MapMotion.attribute(true), "animate")
     assertEquals(MapMotion.attribute(false), "still")
     assertEquals(MapMotion.values.toList.map(_.wire), List("system", "always", "never"))
-    MapMotion.values.foreach(m => assertEquals(MapMotion.fromWire(MapMotion.Wire(s" ${m.wire.value.toUpperCase} ")), Some(m)))
+    MapMotion.values.foreach(m =>
+      assertEquals(MapMotion.fromWire(MapMotion.Wire(s" ${m.wire.value.toUpperCase} ")), Some(m))
+    )
     assertEquals(MapMotion.fromWire(MapMotion.Wire("sometimes")), None)
 
   test("MotionPref follows the choice and a change of the system's setting, live"):

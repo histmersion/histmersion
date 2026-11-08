@@ -17,7 +17,8 @@ final case class CollectionUpdateRow(
     changes: List[CollectionFieldChange],
     reason: Option[CollectionUpdateRow.Reason]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionUpdateRow:
   type Id = Id.T

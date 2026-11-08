@@ -64,7 +64,7 @@ object Article:
   object Slug extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export Kind.{Wire as KindValue}
+  export Kind.Wire as KindValue
   type Body = Body.T
   object Body extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SummaryText = SummaryText.T
@@ -75,7 +75,7 @@ object Article:
   object Regions extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.research.Coverage.Entry.{Reason as ReasonsValue}
+  export com.histmersion.api.research.Coverage.Entry.Reason as ReasonsValue
 
   object Coverage:
     type DisagreementKind = DisagreementKind.T
@@ -94,8 +94,8 @@ object Article:
     type DisagreementKinds = DisagreementKindsValue
     type DisagreementKindsValue = DisagreementKind
     val DisagreementKindsValue: DisagreementKind.type = DisagreementKind
-    export Article.{Slug as ComputeSlug}
-    export com.histmersion.api.research.Coverage.{Total as ComputeTotal}
+    export Article.Slug as ComputeSlug
+    export com.histmersion.api.research.Coverage.Total as ComputeTotal
     type SectionsResult = Sections
     val SectionsResult: Sections.type = Sections
     type ExportedResult = Export
@@ -107,7 +107,12 @@ object Article:
     type MarkdownResult = Markdown
     val MarkdownResult: Markdown.type = Markdown
 
-    val DisagreementKinds: scala.List[DisagreementKinds] = scala.List(DisagreementKind("challenges"), DisagreementKind("refutes"), DisagreementKind("updates"), DisagreementKind("superseded_by"))
+    val DisagreementKinds: scala.List[DisagreementKinds] = scala.List(
+      DisagreementKind("challenges"),
+      DisagreementKind("refutes"),
+      DisagreementKind("updates"),
+      DisagreementKind("superseded_by")
+    )
 
     private val Stated: Set[Source.Status] = Set(
       Source.Status.Contested,
@@ -138,7 +143,8 @@ object Article:
         .filterNot(s => citedSet(s.citekey))
         .map(s => com.histmersion.api.research.Coverage.Entry(s, reasons.get(s.citekey)))
       val capped = read.size < total.value
-      val outside = cited.distinct.filterNot(ck => citedInFilter(com.histmersion.api.library.Citekey((ck).value)) || readSet(ck))
+      val outside =
+        cited.distinct.filterNot(ck => citedInFilter(com.histmersion.api.library.Citekey((ck).value)) || readSet(ck))
       val statuses =
         Source.Status.values.toList.flatMap(st =>
           Option(read.count(_.status == st)).filter(_ > 0).map(n => StatusCount(st, StatusCount.Count(n)))
@@ -197,17 +203,27 @@ object Article:
       val src = Plural.noun(Plural.Count((c.total).value.toLong), Plural.Noun.Singular("source"))
       val citedN = c.cited.size
       val n = c.notUsed.size
-      val scope = if ((c.capped) == (true)) then s"; the first ${c.checked} (by citekey) were checked" else ""
+      val scope = if (c.capped) == (true) then s"; the first ${c.checked} (by citekey) were checked" else ""
       val lead =
         if c.total == com.histmersion.api.research.Coverage.Total(0) then "_The filter returns no source._"
         else if n == 0 then
-          if ((c.capped) == (true)) then s"_The filter returns ${c.total} $src; all ${c.checked} checked are cited above._"
+          if (c.capped) == (true) then
+            s"_The filter returns ${c.total} $src; all ${c.checked} checked are cited above._"
           else
-            s"_${if c.total == com.histmersion.api.research.Coverage.Total(1) then "The one source" else s"All ${c.total} sources"} the filter returns ${
+            s"_${
+                if c.total == com.histmersion.api.research.Coverage.Total(1) then "The one source"
+                else s"All ${c.total} sources"
+              } the filter returns ${
                 if c.total == com.histmersion.api.research.Coverage.Total(1) then "is" else "are"
               } cited above._"
         else
-          val citedText = if citedN == 0 then "None of them is" else Plural.count(Plural.CountN((citedN).toLong), Plural.CountSingular("of them is"), Plural.CountPlural("of them are"))
+          val citedText = if citedN == 0 then "None of them is"
+          else
+            Plural.count(
+              Plural.CountN((citedN).toLong),
+              Plural.CountSingular("of them is"),
+              Plural.CountPlural("of them are")
+            )
           s"The filter returns ${c.total} $src$scope. $citedText cited above; " +
             s"${if n == 1 then "the other one is" else s"the other $n are"} listed here with the reason ${
                 if n == 1 then "it is" else "each is"
@@ -215,7 +231,9 @@ object Article:
       val groups = c.notUsed.groupBy(_.reason).toList.sortBy((r, es) => (r.isEmpty, es.map(_.source.citekey.value).min))
       val lines = groups.map { (reason, es) =>
         val who =
-          es.sortBy(_.source.citekey.value).map(e => s"[[${e.source.citekey}]]${statusNote(e.source.status)}").mkString(", ")
+          es.sortBy(_.source.citekey.value)
+            .map(e => s"[[${e.source.citekey}]]${statusNote(e.source.status)}")
+            .mkString(", ")
         s"- $who — ${reason.fold("not yet assessed")(endSentence)}"
       }
       NotUsed(s"## $NotUsedHeading\n\n$lead" + (if lines.isEmpty then "" else "\n\n" + lines.mkString("\n")))
@@ -233,7 +251,7 @@ object Article:
           val have = c.statuses.map(s => s"${s.count} ${s.status.wire}").mkString(", ")
           val none = Disputed.filterNot(d => c.statuses.exists(_.status == d)).map(_.wire.value)
           val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
-          scala.List(s"statuses${if ((c.capped) == (true)) then s" of the ${c.checked} checked" else ""}: $have$noneText")
+          scala.List(s"statuses${if (c.capped) == (true) then s" of the ${c.checked} checked" else ""}: $have$noneText")
       val searches = c.searches.map { s =>
         val cites =
           if s.cited.isEmpty then "none of them cited" else s"cited: ${s.cited.map(ck => s"[[$ck]]").mkString(", ")}"
@@ -249,8 +267,9 @@ object Article:
           "no challenges, refutes, updates or superseded_by edge touches a cited source (not evidence of agreement)"
         else
           s"disagreement edges touching the cited sources: ${c.edges.map(e => s"[[${e.from}]] ${e.kind} [[${e.to}]]").mkString("; ")}"
-      val parts = s"${escape(c.filterLine.value)} → ${c.total}" :: statuses ++ searches ++ outside ++ scala.List(edges) ++
-        Critiques.methodPart(c.critiques).toList
+      val parts =
+        s"${escape(c.filterLine.value)} → ${c.total}" :: statuses ++ searches ++ outside ++ scala.List(edges) ++
+          Critiques.methodPart(c.critiques).toList
       Method(s"_Method: ${parts.mkString("; ")}._")
 
     private def orList(xs: scala.List[String]): String = xs match
@@ -285,7 +304,7 @@ object Article:
         val e = (body).value.indexOf(GeneratedEnd, s)
         val tail = if e < 0 then "" else (body).value.substring(e + GeneratedEnd.length)
         Body(((body).value.substring(0, s).stripTrailing + (if tail.trim.isEmpty then ""
-                                               else "\n\n" + tail.dropWhile(_.isWhitespace))).trim)
+                                                            else "\n\n" + tail.dropWhile(_.isWhitespace))).trim)
 
     def markdown(c: Coverage): Markdown =
       val drift =
@@ -301,17 +320,24 @@ object Article:
             }
             .mkString("\n")
       val critiques = Critiques.markdown(c.critiques)
-      Markdown(s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
-        s"${if ((c.capped) == (true)) then s", ${(c.total).value - (c.checked).value} not checked" else ""})\n\n### Drift\n\n$drift" +
-        (if critiques.value.isEmpty then "" else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
-        (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads)))
+      Markdown(
+        s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
+          s"${
+              if (c.capped) == (true) then s", ${(c.total).value - (c.checked).value} not checked" else ""
+            })\n\n### Drift\n\n$drift" +
+          (if critiques.value.isEmpty then ""
+           else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
+          (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))
+      )
 
-  final case class Deleted(slug: Slug, deleted: Deleted.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Deleted(slug: Slug, deleted: Deleted.Value)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Deleted:
     type Value = Value.T
     object Value extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   object Edits:
     type Anchor = Anchor.T
@@ -325,9 +351,7 @@ object Article:
     type Offset = Offset.T
     object Offset extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
-
-    export Article.{Body as OccurrencesText, Body as LocateText, Body as ApplyOneText}
+    export Article.{Body as ApplyOneText, Body as LocateText, Body as OccurrencesText}
     type MarkdownResult = Markdown
     val MarkdownResult: Markdown.type = Markdown
 
@@ -344,7 +368,6 @@ object Article:
       type Wire = Wire.T
       object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
       def parse(s: Wire): Option[Op] = values.find(_.wire.value.equalsIgnoreCase(s.value.trim))
       given WireEnumValues[Op]:
         def all: Array[Op] = values
@@ -354,7 +377,8 @@ object Article:
       given Decoder[Op] = WireEnum.decoder
       given Schema[Op] = WireEnum.schema
 
-    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
+    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None)
+        derives KindlingsCodecAsObject
     object EditAnswer:
       export Edits.{Anchor, NewText as Text}
 
@@ -396,27 +420,33 @@ object Article:
       object Delete:
         export Edits.Anchor
 
-
     /** A replace whose text is empty or null is not read as a delete: a strict-schema provider sends `null` (or `""`)
       * for a field it left out.
       */
     def parse(a: EditAnswer): Either[EditResult.Problem, Edit] =
       val anchor = Option(a.anchor).getOrElse(Anchor(""))
       val text = Option(a.text).flatten.getOrElse(NewText(""))
-      if anchor.value.trim.isEmpty then Left(EditResult.Problem("no anchor — copy the passage the edit is about from the body"))
+      if anchor.value.trim.isEmpty then
+        Left(EditResult.Problem("no anchor — copy the passage the edit is about from the body"))
       else
         a.op match
-          case Op.Delete                       => Right(Edit.Delete(anchor))
+          case Op.Delete                             => Right(Edit.Delete(anchor))
           case Op.Replace if text.value.trim.isEmpty =>
             Left(EditResult.Problem("a replace with no new text — give the text, or use delete to remove the passage"))
-          case Op.Replace             => Right(Edit.Replace(anchor, text))
+          case Op.Replace                   => Right(Edit.Replace(anchor, text))
           case _ if text.value.trim.isEmpty => Left(EditResult.Problem("no text to insert"))
-          case Op.InsertAfter         => Right(Edit.InsertAfter(anchor, text))
-          case Op.InsertBefore        => Right(Edit.InsertBefore(anchor, text))
+          case Op.InsertAfter               => Right(Edit.InsertAfter(anchor, text))
+          case Op.InsertBefore              => Right(Edit.InsertBefore(anchor, text))
 
-    final case class EditResult(index: EditResult.Index, op: Op, anchor: EditResult.Anchor, text: EditResult.Text, problem: Option[EditResult.Problem] = None)
-        derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema:
+    final case class EditResult(
+        index: EditResult.Index,
+        op: Op,
+        anchor: EditResult.Anchor,
+        text: EditResult.Text,
+        problem: Option[EditResult.Problem] = None
+    ) derives KindlingsCodecAsObject,
+          KindlingsSchema,
+          com.histmersion.api.json.Schema:
       def applied: Boolean = (problem.isEmpty)
       def label: String = (s"edit $index (${op.wire} \"$anchor\")")
 
@@ -428,10 +458,11 @@ object Article:
       type Problem = Problem.T
       object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
     final case class Applied(body: Body, results: scala.List[EditResult]):
-      def problems: scala.List[Applied.ProblemsResult] = results.flatMap(r => r.problem.map(p => Applied.ProblemsResult(s"${r.label}: $p")))
-      def appliedCount: Applied.Count = Applied.Count(results.count((refactorCallback => ((refactorCallback.applied) == (true)))))
+      def problems: scala.List[Applied.ProblemsResult] =
+        results.flatMap(r => r.problem.map(p => Applied.ProblemsResult(s"${r.label}: $p")))
+      def appliedCount: Applied.Count =
+        Applied.Count(results.count((refactorCallback => ((refactorCallback.applied) == (true)))))
 
     object Applied:
       type Count = Count.T
@@ -457,14 +488,22 @@ object Article:
       ((out.toString), (pos.result()))
 
     private def occurrences(text: Edits.OccurrencesText, needle: String): scala.List[Offset] =
-      (Iterator.iterate((text).value.indexOf(needle))(i => (text).value.indexOf(needle, i + 1)).takeWhile(_ >= 0).toList).map(refactorValue14 => Offset(refactorValue14))
+      (Iterator
+        .iterate((text).value.indexOf(needle))(i => (text).value.indexOf(needle, i + 1))
+        .takeWhile(_ >= 0)
+        .toList)
+        .map(refactorValue14 => Offset(refactorValue14))
 
     def locate(text: Edits.LocateText, anchor: Anchor): Either[EditResult.Problem, (Offset, Offset)] =
       val a = (anchor).value.trim
       occurrences(text, (a)) match
         case scala.List(i) => Right((i, Offset((i).value + a.length)))
         case _ :: _ :: _   =>
-          Left(EditResult.Problem(s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"))
+          Left(
+            EditResult.Problem(
+              s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"
+            )
+          )
         case Nil =>
           val (sq, pos) = squeeze(((text).value))
           val na = a.replaceAll("\\s+", " ")
@@ -473,8 +512,17 @@ object Article:
               val last = (i).value + na.length - 1
               Right((Offset(pos((i).value)), Offset(pos(last) + 1)))
             case Nil =>
-              Left(EditResult.Problem("the anchor is not in the article — copy it exactly from the current body (earlier edits included)"))
-            case more => Left(EditResult.Problem(s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once"))
+              Left(
+                EditResult.Problem(
+                  "the anchor is not in the article — copy it exactly from the current body (earlier edits included)"
+                )
+              )
+            case more =>
+              Left(
+                EditResult.Problem(
+                  s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once"
+                )
+              )
 
     private def cut(text: Body, s: Offset, e: Offset): Body =
       val before = (text).value.substring(0, (s).value)
@@ -495,10 +543,12 @@ object Article:
     def applyOne(text: Edits.ApplyOneText, e: Edit): Either[EditResult.Problem, Body] =
       locate(text, e.anchor).map { (s, end) =>
         e match
-          case Edit.Replace(_, t)      => Body(text.value.substring(0, s.value) + t.value + text.value.substring(end.value))
-          case Edit.InsertAfter(_, t)  => Body(text.value.substring(0, end.value) + t.value + text.value.substring(end.value))
-          case Edit.InsertBefore(_, t) => Body(text.value.substring(0, s.value) + t.value + text.value.substring(s.value))
-          case Edit.Delete(_)          => cut(text, s, end)
+          case Edit.Replace(_, t) => Body(text.value.substring(0, s.value) + t.value + text.value.substring(end.value))
+          case Edit.InsertAfter(_, t) =>
+            Body(text.value.substring(0, end.value) + t.value + text.value.substring(end.value))
+          case Edit.InsertBefore(_, t) =>
+            Body(text.value.substring(0, s.value) + t.value + text.value.substring(s.value))
+          case Edit.Delete(_) => cut(text, s, end)
       }
 
     def applyAll(
@@ -510,7 +560,12 @@ object Article:
         rest match
           case Nil       => Applied(cur, acc.toList)
           case a :: tail =>
-            val base = EditResult(EditResult.Index(number), a.op, EditResult.Anchor(head(Option(a.anchor).getOrElse(Anchor("")))), a.text.getOrElse(NewText("")))
+            val base = EditResult(
+              EditResult.Index(number),
+              a.op,
+              EditResult.Anchor(head(Option(a.anchor).getOrElse(Anchor("")))),
+              a.text.getOrElse(NewText(""))
+            )
             parse(a).flatMap(e => refuse(a).toLeft(e)).flatMap(applyOne(cur, _)) match
               case Right(t) => loop(tail, ((number) + 1), t, acc :+ base)
               case Left(p)  => loop(tail, ((number) + 1), cur, acc :+ base.copy(problem = Some(p)))
@@ -522,7 +577,7 @@ object Article:
 
     object Draft:
       object Body:
-        export Article.{Body as Text}
+        export Article.Body as Text
 
     final case class ArticleCheckRequest(
         edits: scala.List[EditAnswer] = Nil,
@@ -531,7 +586,8 @@ object Article:
     ) derives KindlingsCodecAsObject:
       def draft: Either[ArticleCheck.Problem, Draft] =
         (edits, body.filter(_.value.trim.nonEmpty)) match
-          case (Nil, None)       => Left(ArticleCheck.Problem("give `edits` (against the stored body) or `body` (a whole draft)"))
+          case (Nil, None) =>
+            Left(ArticleCheck.Problem("give `edits` (against the stored body) or `body` (a whole draft)"))
           case (_ :: _, Some(_)) => Left(ArticleCheck.Problem("give `edits` or `body`, not both"))
           case (es, None)        => Right(Draft.Edits(es))
           case (Nil, Some(b))    => Right(Draft.Body(b))
@@ -555,7 +611,8 @@ object Article:
         wordsAfter: ArticleCheck.WordsAfter,
         body: Body
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema:
+          KindlingsSchema,
+          com.histmersion.api.json.Schema:
       def clean: Boolean = (problems.isEmpty)
 
     object ArticleCheck:
@@ -571,17 +628,19 @@ object Article:
       type WordsAfter = WordsAfter.T
       object WordsAfter extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
     def markdown(c: ArticleCheck): Markdown =
       val edits =
         if c.edits.isEmpty then ""
         else "\n\n### Edits\n\n" + c.edits.map(r => s"- ${r.label}: ${r.problem.getOrElse("applies")}").mkString("\n")
       val verdict =
-        if ((c.clean) == (true)) then "No problems: these are the checks code runs on the answer, and it would pass them."
-        else if ((c.fatal) == ArticleCheck.Fatal(true)) then s"${Plural.count(Plural.CountN((c.problems.size).toLong), Plural.CountSingular("problem"))}, at least one FATAL (never written):"
+        if (c.clean) == (true) then "No problems: these are the checks code runs on the answer, and it would pass them."
+        else if (c.fatal) == ArticleCheck.Fatal(true) then
+          s"${Plural.count(Plural.CountN((c.problems.size).toLong), Plural.CountSingular("problem"))}, at least one FATAL (never written):"
         else s"${Plural.count(Plural.CountN((c.problems.size).toLong), Plural.CountSingular("problem"))}:"
-      val problems = if ((c.clean) == (true)) then "" else "\n\n" + c.problems.map(p => s"- $p").mkString("\n")
-      Markdown(s"## Check of [[${c.slug}]] (${c.kind})\n\n${c.wordsBefore} → ${c.wordsAfter} words.$edits\n\n### Result\n\n$verdict$problems")
+      val problems = if (c.clean) == (true) then "" else "\n\n" + c.problems.map(p => s"- $p").mkString("\n")
+      Markdown(
+        s"## Check of [[${c.slug}]] (${c.kind})\n\n${c.wordsBefore} → ${c.wordsAfter} words.$edits\n\n### Result\n\n$verdict$problems"
+      )
 
   final case class Filter(
       query: Option[Filter.Query] = None,
@@ -625,8 +684,7 @@ object Article:
     type Problem = Problem.T
     object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
-    export com.histmersion.api.library.Filter.{Q as Query, Topics, Tags, Status, Places, Authors}
+    export com.histmersion.api.library.Filter.{Authors, Places, Q as Query, Status, Tags, Topics}
     export com.histmersion.api.catalogue.{Year as From, Year as To}
     type ExtraQueries = ExtraQueries.T
     object ExtraQueries extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -666,11 +724,17 @@ object Article:
         clean(f.authors.map(_.value)).map(Authors(_)),
         f.from,
         f.to,
-        (f.extraQueries.map((_).value.trim).filter(_.nonEmpty).distinct).map(refactorValue19 => _root_.com.histmersion.api.research.Article.Filter.ExtraQueries(refactorValue19))
+        (f.extraQueries
+          .map((_).value.trim)
+          .filter(_.nonEmpty)
+          .distinct)
+          .map(refactorValue19 => _root_.com.histmersion.api.research.Article.Filter.ExtraQueries(refactorValue19))
       )
       if unknown.nonEmpty then
         Left(
-          Problem(s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${Source.Status.values.map(_.wire).mkString(", ")}")
+          Problem(
+            s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${Source.Status.values.map(_.wire).mkString(", ")}"
+          )
         )
       else if tidy.from.zip(tidy.to).exists((a, b) => a > b) then
         Left(Problem(s"the filter's from (${tidy.from.get}) is after its to (${tidy.to.get})"))
@@ -686,17 +750,17 @@ object Article:
       force: Import.Force = Import.Force(false),
       strict: Import.Strict = Import.Strict(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Import:
-    export Article.{Body as Text}
+    export Article.Body as Text
     type Mtime = Mtime.T
     object Mtime extends Newtype[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Force = Force.T
     object Force extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Strict = Strict.T
     object Strict extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   enum Kind derives CanEqual:
     case Concept, Myth, Culture, Region, Timeline, Report, Index
@@ -720,12 +784,14 @@ object Article:
     given Decoder[Kind] = WireEnum.decoder
     given Schema[Kind] = WireEnum.schema
 
-  final case class KindCount(kind: Kind.Wire, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class KindCount(kind: Kind.Wire, count: KindCount.Count)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object KindCount:
     type Count = Count.T
     object Count extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   final case class Link(targetKind: Link.TargetKind, target: Link.Target)
 
@@ -740,7 +806,7 @@ object Article:
 
     type ResolveMarkdownResult = Markdown
     val ResolveMarkdownResult: Markdown.type = Markdown
-    export Article.{Body as ResolveMarkdownMd}
+    export Article.Body as ResolveMarkdownMd
 
     val TargetArticle = "article"
     val TargetSource = "source"
@@ -756,10 +822,15 @@ object Article:
     def links(body: Body, isSource: Link.Target => Boolean): scala.List[Link] =
       classify(targets(com.histmersion.api.text.WikiLinks.Body((body).value)), isSource)
 
-    def hrefFor(target: Link.Target, citekeyOf: Link.Target => Option[com.histmersion.api.library.Citekey], isArticle: Link.Target => Boolean): Option[String] =
+    def hrefFor(
+        target: Link.Target,
+        citekeyOf: Link.Target => Option[com.histmersion.api.library.Citekey],
+        isArticle: Link.Target => Boolean
+    ): Option[String] =
       (citekeyOf(Link.Target((target).value))
         .map(ck => s"/source/$ck")
-        .orElse(Option.when(((isArticle(Link.Target((target).value))) == (true)))(s"/article/$target"))).map(refactorValue28 => (refactorValue28))
+        .orElse(Option.when(((isArticle(Link.Target((target).value))) == (true)))(s"/article/$target")))
+        .map(refactorValue28 => (refactorValue28))
 
     def linkMarkdown(
         md: Body,
@@ -768,7 +839,8 @@ object Article:
     ): String =
       val out = rewriteLinks(com.histmersion.api.text.WikiLinks.Body((md).value)) { (t, explicit, written) =>
         val label = explicit.getOrElse(written).value
-        val text = if label.isEmpty then displayLabel(t.value).getOrElse(Label.display(Label.Text(t.value)).value) else label
+        val text =
+          if label.isEmpty then displayLabel(t.value).getOrElse(Label.display(Label.Text(t.value)).value) else label
         href(t.value) match
           case Some(h) => s"[$text]($h)"
           case None    => s"""<span class="dangling" title="unresolved link">$text</span>"""
@@ -778,7 +850,12 @@ object Article:
     export com.histmersion.api.text.WikiLinks.{retarget, rewriteLinks}
 
     def resolveMarkdown(md: Links.ResolveMarkdownMd, isSource: Link.Target => Boolean): Markdown =
-      Markdown(linkMarkdown(md, t => Some(if isCitekeyShaped(t) && isSource(Link.Target(t)) then (s"/source/$t") else (s"/article/$t"))))
+      Markdown(
+        linkMarkdown(
+          md,
+          t => Some(if isCitekeyShaped(t) && isSource(Link.Target(t)) then (s"/source/$t") else (s"/article/$t"))
+        )
+      )
 
   /** The articles' lint rules: a thin or stand-in summary, filler phrases, uncited paragraphs, unpaired critiques. */
   object Lint:
@@ -833,7 +910,12 @@ object Article:
                 .toOption
                 .map(_ => s"stand-in summary: \"$s\"")
                 .orElse(Option.when(s.length < MinSummaryChars)(s"only ${s.length} chars: \"$s\""))
-          why.map(w => LintItem(com.histmersion.api.library.Citekey((slug).value), com.histmersion.api.checks.Lint.LintItem.Detail(w)))
+          why.map(w =>
+            LintItem(
+              com.histmersion.api.library.Citekey((slug).value),
+              com.histmersion.api.checks.Lint.LintItem.Detail(w)
+            )
+          )
         }
         .sortBy(_.citekey.value)
 
@@ -863,7 +945,14 @@ object Article:
           val paras = extractParagraphs(com.histmersion.api.checks.Lint.ProseBody((body).value))
           val uncited = paras.filter(p => WikilinkCitekey.findFirstIn((p).value).isEmpty)
           if uncited.isEmpty then None
-          else Some(LintItem(com.histmersion.api.library.Citekey((slug).value), com.histmersion.api.checks.Lint.LintItem.Detail(s"${uncited.size} paragraph(s) with no [[citekey]]: \"${(uncited.head).value.take(60)}…\"")))
+          else
+            Some(
+              LintItem(
+                com.histmersion.api.library.Citekey((slug).value),
+                com.histmersion.api.checks.Lint.LintItem
+                  .Detail(s"${uncited.size} paragraph(s) with no [[citekey]]: \"${(uncited.head).value.take(60)}…\"")
+              )
+            )
         }
         .sortBy(_.citekey.value)
 
@@ -874,7 +963,16 @@ object Article:
         work: com.histmersion.api.library.Citekey => Option[CritiquePairing.Work]
     ): scala.List[LintItem] =
       articles
-        .flatMap((slug, body) => CritiquePairing.hits(body, resolve, edges, work).map(h => LintItem(com.histmersion.api.library.Citekey((slug).value), com.histmersion.api.checks.Lint.LintItem.Detail(h.line))))
+        .flatMap((slug, body) =>
+          CritiquePairing
+            .hits(body, resolve, edges, work)
+            .map(h =>
+              LintItem(
+                com.histmersion.api.library.Citekey((slug).value),
+                com.histmersion.api.checks.Lint.LintItem.Detail(h.line)
+              )
+            )
+        )
         .sortBy(_.citekey.value)
 
   final case class List(
@@ -884,15 +982,30 @@ object Article:
       next: Option[com.histmersion.api.Offset] = None,
       kinds: scala.List[KindCount] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(articles.size))
   object List:
     type Total = Total.T
     object Total extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
-    def of(total: Total, rows: scala.List[Summary], offset: com.histmersion.api.personal.UnreadPage.Offset, kinds: scala.List[KindCount] = Nil): List =
-      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(rows.size)).next, kinds)
+    def of(
+        total: Total,
+        rows: scala.List[Summary],
+        offset: com.histmersion.api.personal.UnreadPage.Offset,
+        kinds: scala.List[KindCount] = Nil
+    ): List =
+      List(
+        com.histmersion.api.RowCount((total).value),
+        rows,
+        com.histmersion.api.Offset((offset).value),
+        OffsetPage(
+          com.histmersion.api.RowCount((total).value),
+          com.histmersion.api.Offset((offset).value),
+          com.histmersion.api.RowCount(rows.size)
+        ).next,
+        kinds
+      )
 
     def byKind(counts: scala.List[KindCount]): scala.List[KindCount] =
       counts.filter(_.count.value > 0).sortBy(k => (-(k.count).value, k.kind.value))
@@ -911,12 +1024,16 @@ object Article:
       filter: Option[Filter] = None,
       reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil,
       critiqueReasons: scala.List[CritiqueReason] = Nil
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema,
+        CanEqual:
     def onlyCritiques: Boolean =
-      (critiqueReasons.nonEmpty && this.modify(_.critiqueReasons).setTo(Nil).modify(_.ifUpdatedAt).setTo(None) == Patch())
+      (critiqueReasons.nonEmpty && this
+        .modify(_.critiqueReasons)
+        .setTo(Nil)
+        .modify(_.ifUpdatedAt)
+        .setTo(None) == Patch())
   object Patch:
-
-
 
     type Append = Append.T
     object Append extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -945,8 +1062,10 @@ object Article:
         missed: scala.List[FilterProposal.Missed] = Nil,
         sample: scala.List[FilterProposal.Sample] = Nil
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema:
-      def recall: FilterProposal.Recall = if cited == FilterProposal.Cited(0) then FilterProposal.Recall(1.0) else FilterProposal.Recall((citedIn).value.toDouble / (cited).value)
+          KindlingsSchema,
+          com.histmersion.api.json.Schema:
+      def recall: FilterProposal.Recall = if cited == FilterProposal.Cited(0) then FilterProposal.Recall(1.0)
+      else FilterProposal.Recall((citedIn).value.toDouble / (cited).value)
 
     object FilterProposal:
       type Recall = Recall.T
@@ -965,7 +1084,6 @@ object Article:
       type Sample = Sample.T
       object Sample extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
     final case class ProposedArticle(
         slug: Slug,
         title: Title,
@@ -976,7 +1094,8 @@ object Article:
         overlap: ProposedArticle.Overlap = ProposedArticle.Overlap(0.0),
         overlapWith: Option[ProposedArticle.OverlapWith] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object ProposedArticle:
       type Why = Why.T
@@ -988,24 +1107,23 @@ object Article:
       type OverlapWith = OverlapWith.T
       object OverlapWith extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
     final case class ArticlePlan(
         goal: ArticlePlan.Goal,
         rationale: ArticlePlan.Rationale = ArticlePlan.Rationale(""),
         articles: scala.List[ProposedArticle] = Nil,
         dropped: scala.List[ArticlePlan.Dropped] = Nil
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema:
+          KindlingsSchema,
+          com.histmersion.api.json.Schema:
       def isEmpty: Boolean = (articles.isEmpty)
 
     object ArticlePlan:
 
-      export ReviewGoal.{Slug as Goal}
+      export ReviewGoal.Slug as Goal
       type Rationale = Rationale.T
       object Rationale extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Dropped = Dropped.T
       object Dropped extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
     def filterLine(f: Filter): String = f.line
 
@@ -1014,8 +1132,10 @@ object Article:
         if p.missed.isEmpty then "" else s"\n- cited but not returned: ${p.missed.map(c => s"[[$c]]").mkString(", ")}"
       val sample = if p.sample.isEmpty then ""
       else s"\n- returned, not cited (a few): ${p.sample.map(c => s"[[$c]]").mkString(", ")}"
-      Markdown(s"${p.filter.line} → ${Plural.count(Plural.Count((p.total).value.toLong), Plural.CountSingular("source"))}; returns ${p.citedIn} of the ${Plural.count(Plural.Count((p.cited).value.toLong), Plural.CountSingular("cited source"))}" +
-        missed + sample)
+      Markdown(
+        s"${p.filter.line} → ${Plural.count(Plural.Count((p.total).value.toLong), Plural.CountSingular("source"))}; returns ${p.citedIn} of the ${Plural.count(Plural.Count((p.cited).value.toLong), Plural.CountSingular("cited source"))}" +
+          missed + sample
+      )
 
     def planBlock(p: ArticlePlan): Markdown =
       val as = p.articles.map { a =>
@@ -1024,9 +1144,11 @@ object Article:
           Option(a.why).filter(_.value.nonEmpty).fold("")(w => s": $w")
       }
       val dropped = p.dropped.map(d => s"- dropped: $d")
-      Markdown((Option(p.rationale.value).filter(_.nonEmpty).toList ++ scala.List((as ++ dropped).mkString("\n")))
-        .filter(_.nonEmpty)
-        .mkString("\n\n"))
+      Markdown(
+        (Option(p.rationale.value).filter(_.nonEmpty).toList ++ scala.List((as ++ dropped).mkString("\n")))
+          .filter(_.nonEmpty)
+          .mkString("\n\n")
+      )
 
   final case class Put(
       title: Title,
@@ -1039,12 +1161,12 @@ object Article:
       periodEnd: Option[Put.PeriodEnd] = None,
       filter: Option[Filter] = None,
       reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema
   object Put:
 
-
-    export Article.{Tags, Regions}
-    export com.histmersion.api.catalogue.{Year as PeriodStart, Year as PeriodEnd}
+    export Article.{Regions, Tags}
+    export com.histmersion.api.catalogue.{Year as PeriodEnd, Year as PeriodStart}
 
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
@@ -1072,11 +1194,11 @@ object Article:
       goals: scala.List[ReviewGoal] = Nil,
       approvals: scala.List[ReviewApproval] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
   object ReviewView:
     type Markdown = Markdown.T
     object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
     type MarkdownResult = Markdown
     val MarkdownResult: Markdown.type = Markdown
@@ -1096,19 +1218,23 @@ object Article:
 
     def outcomeLine(f: ReviewFinding): String =
       val base = f.outcome.value match
-        case "wont-fix"           => "won't fix"
-        case "set-aside"          => "set aside"
+        case "wont-fix"                                               => "won't fix"
+        case "set-aside"                                              => "set aside"
         case "open" if ((f.deferred) == ReviewFinding.Deferred(true)) => "open (left for the next run)"
-        case other                => other
+        case other                                                    => other
       val when = f.closedRunNumber.zip(f.closedRound).fold("")((run, round) => s" in run $run, round $round")
       val by = f.closedBy.filter(_.value.nonEmpty).fold("")(b => s" by ${named(b.value)}")
       val note = Option(f.note.value).map(_.trim).filter(_.nonEmpty).fold("")(n => s": $n")
-      val back = if (f.reopened).value > 0 then s" (reopened ${Plural.count(Plural.Count((f.reopened).value.toLong), Plural.CountSingular("time"))})" else ""
+      val back = if (f.reopened).value > 0 then
+        s" (reopened ${Plural.count(Plural.Count((f.reopened).value.toLong), Plural.CountSingular("time"))})"
+      else ""
       (s"$base$by$when$back$note")
 
     def markdown(r: ReviewView): Markdown =
       val head = s"## Review of [[${r.slug}]]\n\n**${r.badge.label}** — ${r.badge.detail}" +
-        r.outcome.filter((_).value.nonEmpty).fold("")(o => s"\n\nReview manager: $o" + r.updatedAt.fold("")(t => s" ($t)"))
+        r.outcome
+          .filter((_).value.nonEmpty)
+          .fold("")(o => s"\n\nReview manager: $o" + r.updatedAt.fold("")(t => s" ($t)"))
       val goals =
         if r.goals.isEmpty then ""
         else "\n\n### Research goals\n\n" + r.goals.map(g => s"- `${g.slug}` (${g.status}) ${g.title}").mkString("\n")
@@ -1125,8 +1251,9 @@ object Article:
                 rd.findings
                   .map(f =>
                     s"- **${f.id}** ${f.severity.value.toUpperCase} · ${reviewerName(f.reviewer)}" +
-                      (if f.kind.value.nonEmpty then s" · ${f.kind}" else "") + (if f.where.value.nonEmpty then s" · ${f.where}"
-                                                                           else "") +
+                      (if f.kind.value.nonEmpty then s" · ${f.kind}" else "") + (if f.where.value.nonEmpty then
+                                                                                   s" · ${f.where}"
+                                                                                 else "") +
                       s": ${f.problem} — *${outcomeLine(f)}*"
                   )
                   .mkString("\n")
@@ -1147,13 +1274,13 @@ object Article:
       updatedAt: Option[Row.UpdatedAt] = None,
       uid: Option[java.util.UUID] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Row:
-    export Article.{Tags, Regions}
-    export com.histmersion.api.catalogue.{Year as PeriodStart, Year as PeriodEnd}
+    export Article.{Regions, Tags}
+    export com.histmersion.api.catalogue.{Year as PeriodEnd, Year as PeriodStart}
     export Article.UpdatedAt
-
 
   final case class Summary(
       slug: Slug,
@@ -1167,13 +1294,13 @@ object Article:
       updatedAt: Option[Summary.UpdatedAt] = None,
       review: Option[ReviewBadge] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Summary:
-    export Article.{Tags, Regions}
-    export com.histmersion.api.catalogue.{Year as PeriodStart, Year as PeriodEnd}
+    export Article.{Regions, Tags}
+    export com.histmersion.api.catalogue.{Year as PeriodEnd, Year as PeriodStart}
     export Article.UpdatedAt
-
 
   final case class Version(
       id: Version.Id,
@@ -1183,7 +1310,8 @@ object Article:
       createdAt: Version.CreatedAt,
       wordCount: Version.WordCount
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Version:
     type Id = Id.T
@@ -1195,7 +1323,6 @@ object Article:
     type WordCount = WordCount.T
     object WordCount extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
   final case class VersionFull(
       id: VersionFull.Id,
       slug: Slug,
@@ -1204,11 +1331,11 @@ object Article:
       updatedAt: VersionFull.UpdatedAt,
       createdAt: VersionFull.CreatedAt
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object VersionFull:
-    export Version.{Id, UpdatedAt, CreatedAt}
-
+    export Version.{CreatedAt, Id, UpdatedAt}
 
   final case class View(
       article: Row,
@@ -1217,4 +1344,5 @@ object Article:
       formatting: scala.List[FormatIssue] = Nil,
       coverage: Option[Coverage] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

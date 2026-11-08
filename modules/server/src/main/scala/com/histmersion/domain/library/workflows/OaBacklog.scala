@@ -60,7 +60,10 @@ final class OaBacklog(
 
   private def watch = lib.managers.watch
   private def managerDefaults = ManagerDefaultsViews.defaults(cfg.managers)
-  private def watchDefaults = WatchManagerDefaults(WatchManagerDefaults.MaxRuns(watch.maxRuns.value), WatchManagerDefaults.AutoIngestPerDay(watch.autoIngestPerDay.value))
+  private def watchDefaults = WatchManagerDefaults(
+    WatchManagerDefaults.MaxRuns(watch.maxRuns.value),
+    WatchManagerDefaults.AutoIngestPerDay(watch.autoIngestPerDay.value)
+  )
 
   // ── adding ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -77,7 +80,8 @@ final class OaBacklog(
       .itemFor(managerId, ManagerItem.Kind(OaIngest), ManagerItem.Target(doi.value))
       .filter(i => ItemStatus.parse(i.status).exists(_.isFinal))
       .map(i => Placement.SettledBefore.Item(i.id.value))
-    val acquire = site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(i => Placement.JoinAcquire.Item(i.id.value))
+    val acquire =
+      site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(i => Placement.JoinAcquire.Item(i.id.value))
     IngestBacklog.place(
       site.sourceStore.citekeyOfDoi(doi),
       acquire,
@@ -161,7 +165,10 @@ final class OaBacklog(
       .map((k, v) => ManagerLight.Id(k.value) -> v.value)
     agents.managerStore
       .light()
-      .filter(m => m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true)))
+      .filter(m =>
+        m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value && m.config.autoIngest
+          .contains(ManagerConfig.AutoIngest(true))
+      )
       .map(m =>
         m.id -> IngestBacklog.Lane.LeftToday(
           watchDefaults.ingestAllowance(m.config, WatchManagerDefaults.IngestedToday(today.getOrElse(m.id, 0))).value
@@ -188,15 +195,16 @@ final class OaBacklog(
     )
 
   /** The backlog per watcher and in all, with the days to drain it ([[OaBacklog.Snapshot]]). */
-  def snapshot(now: Instant = Instant.now(agents.clock), extra: Map[ManagerLight.Id, IngestBacklog.Lane.Backlog] = Map.empty): Snapshot =
+  def snapshot(
+      now: Instant = Instant.now(agents.clock),
+      extra: Map[ManagerLight.Id, IngestBacklog.Lane.Backlog] = Map.empty
+  ): Snapshot =
     val stored = agents.managerStore.backlogCounts().map((k, v) => ManagerLight.Id(k.value) -> (v._1.value, v._2.value))
     // `extra` = pending items a dry run would add, per watcher
-    val counts = (stored.keySet ++ extra.keySet)
-      .map { id =>
-        val more = extra.get(id).fold(0)(_.value)
-        id -> stored.get(id).fold((more, 0))((p, hd) => (p + more, hd))
-      }
-      .toMap
+    val counts = (stored.keySet ++ extra.keySet).map { id =>
+      val more = extra.get(id).fold(0)(_.value)
+      id -> stored.get(id).fold((more, 0))((p, hd) => (p + more, hd))
+    }.toMap
     if counts.isEmpty then Snapshot(Map.empty, IngestBacklog.TotalBacklog(0), None)
     else
       val left = ownLeft(now)
@@ -217,7 +225,9 @@ final class OaBacklog(
       val per = counts.map { case (id, (p, held)) =>
         id -> (
           Lane.Backlog(p + held),
-          Option.when(p > 0)(IngestBacklog.daysToDrain(List(lane(id, p)), sharedCap, shared)).getOrElse(Some(IngestBacklog.DaysToDrain(0)))
+          Option
+            .when(p > 0)(IngestBacklog.daysToDrain(List(lane(id, p)), sharedCap, shared))
+            .getOrElse(Some(IngestBacklog.DaysToDrain(0)))
         )
       }
       val pendingAll = counts.toList.map { case (id, (p, _)) => lane(id, p) }
@@ -363,7 +373,9 @@ final class OaBacklog(
                     Some(i.id),
                     None,
                     ManagerEvent.Kind(Feed.Evaluated),
-                    ManagerEvent.Text(s"$doi (ingest backlog): not ingested (${n.value} of ${s.maxFailures}): $why; again after $nb")
+                    ManagerEvent.Text(
+                      s"$doi (ingest backlog): not ingested (${n.value} of ${s.maxFailures}): $why; again after $nb"
+                    )
                   )
 
                   Drained.Retried
@@ -404,7 +416,9 @@ final class OaBacklog(
                     w.year,
                     w.authors,
                     w.venue,
-                    isOa = WorkRef.IsOa(true), AcquisitionSweepRules.Candidate.Query(""), None
+                    isOa = WorkRef.IsOa(true),
+                    AcquisitionSweepRules.Candidate.Query(""),
+                    None
                   ),
                   g,
                   AcquisitionSweepRules.Pick.Why(w.why.value)
@@ -468,7 +482,11 @@ final class OaBacklog(
         RepairFacts.IsOa(rs.exists(_.isOa.value)),
         RepairFacts.Watcher(first.managerId.value),
         RepairFacts.WatcherExists(w.isDefined),
-        RepairFacts.WatcherAutoIngest(w.exists(m => m.state.value != State.Stopped.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true)))),
+        RepairFacts.WatcherAutoIngest(
+          w.exists(m =>
+            m.state.value != State.Stopped.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true))
+          )
+        ),
         site.sourceStore.citekeyOfDoi(first.doi)
       )
       def row(action: String, detail: String, backlogItem: Option[ManagerItem.Id] = None) =
@@ -529,8 +547,9 @@ final class OaBacklog(
 
                 row(Move, "legal open access", Some(id))
     }
-    val untouched = site.queues.list(Queue.Kind.Acquire, QueueScope.Open).size - (if dryRun then items.size
-                                                                                  else out.count(_.action.value == Keep))
+    val untouched =
+      site.queues.list(Queue.Kind.Acquire, QueueScope.Open).size - (if dryRun then items.size
+                                                                    else out.count(_.action.value == Keep))
     val snap = snapshot(extra =
       if dryRun then
         out
@@ -596,9 +615,7 @@ final class OaBacklog(
 
   private def removeAcquire(item: SweepAcquireItem.Item, goals: List[Goal.Slug]): Unit =
     val _ = site.workLists.delete(QueueItemId(item.value))
-    goals.foreach(g =>
-      agents.goals.unlink(g, Goal.LinkKind.QueueItem, GoalLink.Ref(item.value.toString))
-    )
+    goals.foreach(g => agents.goals.unlink(g, Goal.LinkKind.QueueItem, GoalLink.Ref(item.value.toString)))
 
 object OaBacklog:
   /** The backlog per watcher (pending + held, and the days its pending items take to drain at the current allowance),

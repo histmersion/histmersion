@@ -55,7 +55,12 @@ object EventTaxonomy:
     Kind(EventSummary.Kind(ClimateEvent), Kind.Group(Natural), Kind.Label("climate event"), Kind.Icon("thermometer")),
     Kind(EventSummary.Kind(Epidemic), Kind.Group(Natural), Kind.Label("epidemic"), Kind.Icon("skull")),
     Kind(EventSummary.Kind(Famine), Kind.Group(Natural), Kind.Label("famine"), Kind.Icon("wheat")),
-    Kind(EventSummary.Kind(NaturalGeneric), Kind.Group(Natural), Kind.Label("natural disaster"), Kind.Icon("cloud-lightning")),
+    Kind(
+      EventSummary.Kind(NaturalGeneric),
+      Kind.Group(Natural),
+      Kind.Label("natural disaster"),
+      Kind.Icon("cloud-lightning")
+    ),
     Kind(EventSummary.Kind(Battle), Kind.Group(Human), Kind.Label("battle"), Kind.Icon("swords")),
     Kind(EventSummary.Kind(NavalBattle), Kind.Group(Human), Kind.Label("naval battle"), Kind.Icon("sailboat")),
     Kind(EventSummary.Kind(Siege), Kind.Group(Human), Kind.Label("siege"), Kind.Icon("castle")),
@@ -117,7 +122,10 @@ object EventTaxonomy:
 
   def of(kind: EventSummary.Kind): Kind =
     val k = canonical(kind)
-    byKind.getOrElse(k, byKind(EventSummary.Kind(HumanGeneric)).copy(kind = k, label = Kind.Label((k).value.replace('_', ' '))))
+    byKind.getOrElse(
+      k,
+      byKind(EventSummary.Kind(HumanGeneric)).copy(kind = k, label = Kind.Label((k).value.replace('_', ' ')))
+    )
 
   def group(kind: EventSummary.Kind): Kind.Group = of(kind).group
   def icon(kind: EventSummary.Kind): Kind.Icon = of(kind).icon
@@ -143,5 +151,8 @@ object EventTaxonomy:
       else if f == Human then KindCondition(natural, negate = KindCondition.Negate(true))
       else
         val c = canonical(EventSummary.Kind(f))
-        KindCondition((c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sorted, negate = KindCondition.Negate(false))
+        KindCondition(
+          (c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sorted,
+          negate = KindCondition.Negate(false)
+        )
     }

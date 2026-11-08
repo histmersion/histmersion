@@ -64,7 +64,10 @@ object PluginAiClient:
   /** Pure: the conversation sttp-ai keeps → the provider's messages; the loop's iteration notes kept as user messages
     * (`[Iteration 2 of 6]`, as sttp-ai's own providers send them) when `markers`, else dropped.
     */
-  def messages(h: ConversationHistory, markers: AiCapabilities.IterationMarkers = AiCapabilities.IterationMarkers(false)): List[AiMessage] =
+  def messages(
+      h: ConversationHistory,
+      markers: AiCapabilities.IterationMarkers = AiCapabilities.IterationMarkers(false)
+  ): List[AiMessage] =
     h.entries.toList.collect {
       case ConversationEntry.IterationMarker(n, of) if markers.value =>
         AiMessage.User(AiMessage.User.Text(s"[Iteration $n of $of]"))
@@ -72,10 +75,16 @@ object PluginAiClient:
       case ConversationEntry.AssistantResponse(t, tcs) =>
         AiMessage.Assistant(
           AiMessage.Assistant.Text(t),
-          tcs.toList.map(c => AiTool.Call(AiTool.Call.Id(c.id), AiTool.Call.Tool(c.toolName), AiTool.Call.Input(c.input)))
+          tcs.toList.map(c =>
+            AiTool.Call(AiTool.Call.Id(c.id), AiTool.Call.Tool(c.toolName), AiTool.Call.Input(c.input))
+          )
         )
       case ConversationEntry.ToolResult(id, name, out) =>
-        AiMessage.ToolResult(AiMessage.ToolResult.CallId(id), AiMessage.ToolResult.Tool(name), AiMessage.ToolResult.Output(out))
+        AiMessage.ToolResult(
+          AiMessage.ToolResult.CallId(id),
+          AiMessage.ToolResult.Tool(name),
+          AiMessage.ToolResult.Output(out)
+        )
     }
 
   /** Pure: a tool as the provider is told about it. */
@@ -157,6 +166,6 @@ object PluginAiClient:
             until.map(u => java.time.Instant.ofEpochMilli(u.value)),
             ModelLimitReached.Message(s"${model.wire}: $m".take(300))
           )
-        case Left(AiFailure.Error(m)) if caps.verbatimFailures.value => throw VerbatimFailure(VerbatimFailure.Description(m.value))
+        case Left(AiFailure.Error(m)) if caps.verbatimFailures.value =>
+          throw VerbatimFailure(VerbatimFailure.Description(m.value))
         case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: $m".take(600))
-

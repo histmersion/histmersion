@@ -66,7 +66,7 @@ object AnthropicAnswer:
 
   private val block: Decoder[Block] = Decoder.instance { c =>
     c.downField("type").as[Option[String]].flatMap {
-      case Some("text")     => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(s => Block.Text(AiTurn.Text(s)))
+      case Some("text") => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(s => Block.Text(AiTurn.Text(s)))
       case Some("thinking") => objectAt(c).flatMap(_ => c.downField("thinking").as[String]).map(_ => Block.Other)
       case Some(t @ ("tool_use" | "server_tool_use")) =>
         for
@@ -75,7 +75,12 @@ object AnthropicAnswer:
           name <- c.downField("name").as[String]
           input <- c.downField("input").as[Map[String, Json]]
         yield
-          if t == "tool_use" then Block.ToolUse(AiTool.Call(AiTool.Call.Id(id), AiTool.Call.Tool(name), AiTool.Call.Input(Json.fromFields(input).noSpaces))) else Block.Other
+          if t == "tool_use" then
+            Block.ToolUse(
+              AiTool
+                .Call(AiTool.Call.Id(id), AiTool.Call.Tool(name), AiTool.Call.Input(Json.fromFields(input).noSpaces))
+            )
+          else Block.Other
       case Some(t) if Known(t) => Right(Block.Other)
       case other               => Left(DecodingFailure(s"no content block of type $other", c.history))
     }
@@ -92,7 +97,12 @@ object AnthropicAnswer:
       write <- optionalInt(c.downField("cache_creation_input_tokens"))
     yield
       val (r, w) = (read.getOrElse(0), write.getOrElse(0))
-      AiUsage(AiUsage.Input((in + r + w).toLong), AiUsage.Output(out.toLong), AiUsage.CacheRead(r.toLong), AiUsage.CacheWrite(w.toLong))
+      AiUsage(
+        AiUsage.Input((in + r + w).toLong),
+        AiUsage.Output(out.toLong),
+        AiUsage.CacheRead(r.toLong),
+        AiUsage.CacheWrite(w.toLong)
+      )
   }
 
   /** A message answer as the turn it says. */

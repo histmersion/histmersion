@@ -46,7 +46,8 @@ private[events] object EventRepo:
   /** How many events the catalogue holds. */
 
   type GeoTolerance = com.histmersion.domain.catalogue.events.GeoTolerance
-  val GeoTolerance: com.histmersion.domain.catalogue.events.GeoTolerance.type = com.histmersion.domain.catalogue.events.GeoTolerance
+  val GeoTolerance: com.histmersion.domain.catalogue.events.GeoTolerance.type =
+    com.histmersion.domain.catalogue.events.GeoTolerance
 
   def count()(using DbCon): EventCount = EventCount(sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong)
 
@@ -71,7 +72,11 @@ private[events] object EventRepo:
     val total = (Sql.raw(Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE ")) ++ where).frag.query[Int].run().head
     val rows = (Sql.raw(Sql.Text(s"SELECT $summaryCols FROM $fromEvents WHERE ")) ++ where ++
       Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label")) ++
-      Sql.of(Sql.Text(" LIMIT ? OFFSET ?"), Param.I(Param.I.V(limit.value.max(1))), Param.I(Param.I.V(offset.value.max(0))))).frag
+      Sql.of(
+        Sql.Text(" LIMIT ? OFFSET ?"),
+        Param.I(Param.I.V(limit.value.max(1))),
+        Param.I(Param.I.V(offset.value.max(0)))
+      )).frag
       .query[EventRow]
       .run()
       .toList
@@ -87,7 +92,8 @@ private[events] object EventRepo:
   def geo(listed: Sql, limit: PageSize, tolerance: GeoTolerance)(using DbCon): EventGeo.List =
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
-    val where = listed ++ Sql.of(Sql.OfText(" AND e.uncertainty <= ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))
+    val where =
+      listed ++ Sql.of(Sql.OfText(" AND e.uncertainty <= ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))
     val rows = (geoSelect ++ where ++
       Sql.raw(Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label")) ++
       Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(limit.value.max(1))))).frag.query[EventGeoRow].run().toList
@@ -97,7 +103,10 @@ private[events] object EventRepo:
     val imprecise = (Sql.raw(
       Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND ")
     ) ++
-      listed ++ Sql.of(Sql.Text(" AND e.uncertainty > ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))).frag.query[Int].run().head
+      listed ++ Sql.of(
+        Sql.Text(" AND e.uncertainty > ?"),
+        Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value))
+      )).frag.query[Int].run().head
     val items = rows.map(r => (r, r.toGeo))
     val wanted = items.collect { case (r, g) if r.hasArea && g.scale.value == EventScale.Regional => r.row.id }
     val outlines: Map[BEventRow.Id, BEventRow.Geom] =
@@ -172,7 +181,12 @@ private[events] object EventRepo:
         .query[EventParticipant]
         .run()
         .toList
-      val wikidata = sql"SELECT wikidata FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten.map(EventEntry.Wikidata(_))
+      val wikidata = sql"SELECT wikidata FROM events WHERE id = $id"
+        .query[Option[String]]
+        .run()
+        .headOption
+        .flatten
+        .map(EventEntry.Wikidata(_))
       EventEntry(
         r.toSummary,
         r.geometry.map(g => EventGeometry.Geojson(g.value)),
@@ -182,7 +196,9 @@ private[events] object EventRepo:
         edges,
         participants,
         wikidata,
-        corrections = CorrectionRepo.of(Correction.TargetKind(Correction.Target.Event), Correction.TargetId(id.value)).map(_.toDto())
+        corrections = CorrectionRepo
+          .of(Correction.TargetKind(Correction.Target.Event), Correction.TargetId(id.value))
+          .map(_.toDto())
       )
     }
 
@@ -193,7 +209,8 @@ private[events] object EventRepo:
       .run()
       .headOption
 
-  def exists(id: BEventRow.Id)(using DbCon): Boolean = sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
+  def exists(id: BEventRow.Id)(using DbCon): Boolean =
+    sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
 
   // ── writes ──────────────────────────────────────────────────────────────────────────────────
 
@@ -212,7 +229,17 @@ private[events] object EventRepo:
       EventImportRepo.upstreamOf(Event.Id.assume(id.value)).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)
         fields.foreach((f, v) =>
-          up.get(f).foreach(u => CorrectionRepo.record(Correction.TargetKind(Correction.Target.Event), Correction.TargetId(id.value), Correction.Field(f), v, u, Some(BCatalogueRow.Provider(provider.value))))
+          up.get(f)
+            .foreach(u =>
+              CorrectionRepo.record(
+                Correction.TargetKind(Correction.Target.Event),
+                Correction.TargetId(id.value),
+                Correction.Field(f),
+                v,
+                u,
+                Some(BCatalogueRow.Provider(provider.value))
+              )
+            )
         )
       }
 
@@ -360,8 +387,15 @@ private[events] object EventRepo:
     */
   def rename(oldId: BEventRow.Id, newId: BEventRow.Id)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[BEventRow.Id].run().headOption
-    if !exists(oldId) then Left(Api.Error(Api.Error.Message(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
-    else if exists(newId) then Left(Api.Error(Api.Error.Message(s"'$newId' is already the id of another event"), Some(Api.Error.Code(Write.CodeInvalid))))
+    if !exists(oldId) then
+      Left(Api.Error(Api.Error.Message(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    else if exists(newId) then
+      Left(
+        Api.Error(
+          Api.Error.Message(s"'$newId' is already the id of another event"),
+          Some(Api.Error.Code(Write.CodeInvalid))
+        )
+      )
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(

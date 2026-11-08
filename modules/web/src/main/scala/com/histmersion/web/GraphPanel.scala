@@ -26,7 +26,6 @@ object GraphPanel:
   type Citekey = com.histmersion.api.library.Citekey
   val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
 
-
   def open(citekey: Citekey): Unit =
     WindowManager.open(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)))
 
@@ -71,7 +70,12 @@ object GraphPanel:
           .find(_.id == g.root)
           .flatMap(_.title)
           .filter(_.value.trim.nonEmpty)
-          .foreach(t => WindowManager.retitle(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)), UiLabels.Text(s"Citation graph · ${t.value}")))
+          .foreach(t =>
+            WindowManager.retitle(
+              WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)),
+              UiLabels.Text(s"Citation graph · ${t.value}")
+            )
+          )
       case scala.util.Failure(e) => state.set(Load.Failed(Load.Failed.Message(e.getMessage)))
     }
     div(
@@ -373,18 +377,25 @@ object GraphPanel:
         val on = hover.contains(i)
         ctx.beginPath()
         ctx.arc(n.x, n.y, radius(i), 0, 2 * Math.PI)
-        ctx.fillStyle = ThemeTokens(ThemeTokens.Name(Palette.status(n.status.getOrElse(Source.Status.Unassessed).wire).value)).value
+        ctx.fillStyle = ThemeTokens(
+          ThemeTokens.Name(Palette.status(n.status.getOrElse(Source.Status.Unassessed).wire).value)
+        ).value
         ctx.fill()
         if on then
           ctx.strokeStyle = ThemeTokens(ThemeTokens.Name("--graph-hover")).value
           ctx.lineWidth = 2
           ctx.stroke()
-        val label = if n.title.length > GL.labelMaxLen.value then n.title.take(GL.labelTruncLen.value) + "…" else n.title
+        val label =
+          if n.title.length > GL.labelMaxLen.value then n.title.take(GL.labelTruncLen.value) + "…" else n.title
         ctx.font = if on then "bold 11px system-ui" else "10px system-ui"
-        ctx.fillStyle = ThemeTokens(if on then ThemeTokens.Name("--graph-label-hover") else ThemeTokens.Name("--graph-label")).value
+        ctx.fillStyle = ThemeTokens(
+          if on then ThemeTokens.Name("--graph-label-hover") else ThemeTokens.Name("--graph-label")
+        ).value
         ctx.textAlign = "center"
         ctx.fillText(label + n.year.fold("")(y => s" ($y)"), n.x, n.y + radius(i) + 12)
       ctx.restore()
 
     private def radius(i: Int): Double =
-      if i == rootIdx then GL.rootRadius.value else if nodes(i).depth <= 1 then GL.depth1Radius.value else GL.leafRadius.value
+      if i == rootIdx then GL.rootRadius.value
+      else if nodes(i).depth <= 1 then GL.depth1Radius.value
+      else GL.leafRadius.value

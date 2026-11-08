@@ -40,7 +40,11 @@ class PluginsHttpSuite extends munit.FunSuite:
         |}""".stripMargin)
     val env = ConfigFactory.parseMap(Map("PLUGINS_HTTP_TOKEN" -> "env-secret-value").asJava)
     val services = HostServices(
-      () => new Plugin.Http { def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) },
+      () =>
+        new Plugin.Http {
+          def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+            Left(Plugin.Http.GetResultPart1("offline"))
+        },
       env,
       (_, _, _) => ()
     )
@@ -52,7 +56,9 @@ class PluginsHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     supervised {
-      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = generation()).start()
+      val b = Composition
+        .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = generation())
+        .start()
       try
         val url = s"http://127.0.0.1:${b.port}"
         for path <- List("/api/about", "/api/config") do

@@ -16,12 +16,15 @@ class MirrorSuite extends munit.FunSuite:
 
   private val sources = new Mirror.Note:
     val records: Mirror.Records = LibraryData.SourceNotes
-    def note(citekey: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] = Right(Frontmatter.NoteBody(s"source $citekey"))
+    def note(citekey: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] = Right(
+      Frontmatter.NoteBody(s"source $citekey")
+    )
 
   private val articles = new Mirror.Note:
     val records: Mirror.Records = ResearchData.ArticleNotes
     def note(slug: MirrorPlacement.RecordId): Either[Api.Error, Frontmatter.NoteBody] =
-      if slug == MirrorPlacement.RecordId("gone") then Left(Api.Error(Api.Error.Message("no such article"))) else Right(Frontmatter.NoteBody(s"article $slug"))
+      if slug == MirrorPlacement.RecordId("gone") then Left(Api.Error(Api.Error.Message("no such article")))
+      else Right(Frontmatter.NoteBody(s"article $slug"))
 
   private val mirror = Mirror(Deps.data.mirror, List(sources, articles))
 
@@ -35,9 +38,15 @@ class MirrorSuite extends munit.FunSuite:
     )
 
   test("a note from the registered member of its kind"):
-    assertEquals(mirror.note(LibraryData.SourceNotes, MirrorPlacement.RecordId("anthony2007_horse")), Right("source anthony2007_horse"))
+    assertEquals(
+      mirror.note(LibraryData.SourceNotes, MirrorPlacement.RecordId("anthony2007_horse")),
+      Right("source anthony2007_horse")
+    )
     assertEquals(mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("zz")), Right("article zz"))
-    assertEquals(mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("gone")).left.map(_.message), Left("no such article"))
+    assertEquals(
+      mirror.note(ResearchData.ArticleNotes, MirrorPlacement.RecordId("gone")).left.map(_.message),
+      Left("no such article")
+    )
 
   test("a kind nobody registered is refused"):
     assert(mirror.note(Mirror.Records("events"), MirrorPlacement.RecordId("x")).isLeft)

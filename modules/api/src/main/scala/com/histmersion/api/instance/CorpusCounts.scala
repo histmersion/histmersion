@@ -17,7 +17,8 @@ final case class CorpusCounts(
     periods: CorpusCounts.Periods,
     presets: CorpusCounts.Presets = CorpusCounts.Presets(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CorpusCounts:
   type Sources = Sources.T

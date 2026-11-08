@@ -105,12 +105,22 @@ class BundleSuite extends DbSuite with Bounded:
     // the reference data both sides share (an event points into it)
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(Place(Place.Id("zzb_place"), Place.Label("Hattusa"), Place.KindValue("site"), Some(Place.Geometry("""{"type":"Point","coordinates":[34.61,40.02]}""")))))
+      List(
+        Place.Input(
+          Place(
+            Place.Id("zzb_place"),
+            Place.Label("Hattusa"),
+            Place.KindValue("site"),
+            Some(Place.Geometry("""{"type":"Point","coordinates":[34.61,40.02]}"""))
+          )
+        )
+      )
     )
     ds
 
   // every database a test makes: a copy of one migrated once (#3765)
-  private lazy val scratch = ScratchDatabases("histmersion_bundle", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+  private lazy val scratch =
+    ScratchDatabases("histmersion_bundle", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -217,25 +227,65 @@ class BundleSuite extends DbSuite with Bounded:
         A1,
         Some(Source.OcrMarkdown("# Alpha\n\nThe body of alpha, with Ünïcödé and a NUL-free tail.\n\n" + ("x" * 9000))),
         4,
-        List(Edge(com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.library.Citekey(B0.value), Edge.Kind.References), Edge(com.histmersion.api.library.Citekey(A1.value), com.histmersion.api.library.Citekey("zzbmissing2020_x"), Edge.Kind.Challenges)),
+        List(
+          Edge(
+            com.histmersion.api.library.Citekey(A1.value),
+            com.histmersion.api.library.Citekey(B0.value),
+            Edge.Kind.References
+          ),
+          Edge(
+            com.histmersion.api.library.Citekey(A1.value),
+            com.histmersion.api.library.Citekey("zzbmissing2020_x"),
+            Edge.Kind.Challenges
+          )
+        ),
         Some(Source.CalibreId(Calibre))
       )
     )
-    put(ds, source(G1, Some(Source.OcrMarkdown("# Gamma\n\nshort")), 0, List(Edge(com.histmersion.api.library.Citekey(G1.value), com.histmersion.api.library.Citekey(A1.value), Edge.Kind.SupersededBy))))
+    put(
+      ds,
+      source(
+        G1,
+        Some(Source.OcrMarkdown("# Gamma\n\nshort")),
+        0,
+        List(
+          Edge(
+            com.histmersion.api.library.Citekey(G1.value),
+            com.histmersion.api.library.Citekey(A1.value),
+            Edge.Kind.SupersededBy
+          )
+        )
+      )
+    )
     val _ = SourceFixtures.rename(ds, B0, Citekeys.RenameToNewRaw(B1.value))
     // a finding dropped by a later write leaves a tombstone
-    SourceFixtures.load(ds, A1).foreach(s => put(ds, s.modify(_.findings).setTo(s.findings.filterNot(_.id.value == s"$A1#3"))))
+    SourceFixtures
+      .load(ds, A1)
+      .foreach(s => put(ds, s.modify(_.findings).setTo(s.findings.filterNot(_.id.value == s"$A1#3"))))
     val _ =
       AcquisitionFixtures.putAssessment(
         ds,
-        AssessmentRecord(A1, AssessmentRecord.Verdict("current"), AssessmentRecord.Retracted(false), AssessmentRecord.NoticesJson("""{"notices":[{"kind":"x","n":1}]}"""), Some(AssessmentRecord.CitedBy(12)), Some(AssessmentRecord.Influential(3)))
+        AssessmentRecord(
+          A1,
+          AssessmentRecord.Verdict("current"),
+          AssessmentRecord.Retracted(false),
+          AssessmentRecord.NoticesJson("""{"notices":[{"kind":"x","n":1}]}"""),
+          Some(AssessmentRecord.CitedBy(12)),
+          Some(AssessmentRecord.Influential(3))
+        )
       )
     val _ = AssetFixtures.add(
       ds,
       A1,
       List(
         NewFigure(NewFigure.Name("fig1.png"), NewFigure.Mime("image/png"), NewFigure.Bytes(Png), None, None),
-        NewFigure(NewFigure.Name("fig2.png"), NewFigure.Mime("image/png"), NewFigure.Bytes(Png :+ 7.toByte), Some(NewFigure.Width(2)), Some(NewFigure.Height(3)))
+        NewFigure(
+          NewFigure.Name("fig2.png"),
+          NewFigure.Mime("image/png"),
+          NewFigure.Bytes(Png :+ 7.toByte),
+          Some(NewFigure.Width(2)),
+          Some(NewFigure.Height(3))
+        )
       )
     )
     val _ = AssetFixtures.patch(
@@ -253,7 +303,14 @@ class BundleSuite extends DbSuite with Bounded:
     val _ =
       AssetLinkFixtures.create(
         ds,
-        AssetLink.Put(com.histmersion.api.library.Citekey(A1.value), Bundle.Asset.FileName("fig1.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("finding"), MediaTarget.TargetId(s"$A1#0"), xywh = Some(AssetLink.Xywh("0,0,1,1")))
+        AssetLink.Put(
+          com.histmersion.api.library.Citekey(A1.value),
+          Bundle.Asset.FileName("fig1.png"),
+          AssetRelation.Wire("depicts"),
+          MediaTarget.TargetType("finding"),
+          MediaTarget.TargetId(s"$A1#0"),
+          xywh = Some(AssetLink.Xywh("0,0,1,1"))
+        )
       )
     val _ = AttestationRows.create(
       ds,
@@ -273,7 +330,16 @@ class BundleSuite extends DbSuite with Bounded:
     SourceFixtures.setSha256(ds, A1, Sha256.applyUnsafe(sha.value))
     Files.write(Files.createDirectories(originals).resolve(s"$sha.pdf"), OriginalBytes)
     val _ =
-      ArticleFixtures.put(ds, Article(Article.Slug("zzb_topic"), Article.Title("Topic"), Article.KindValue("concept"), Article.Body(s"First draft citing [[$A1]]."), Some(Article.SummaryText("v1"))))
+      ArticleFixtures.put(
+        ds,
+        Article(
+          Article.Slug("zzb_topic"),
+          Article.Title("Topic"),
+          Article.KindValue("concept"),
+          Article.Body(s"First draft citing [[$A1]]."),
+          Some(Article.SummaryText("v1"))
+        )
+      )
     val _ = ArticleFixtures.put(
       ds,
       Article(
@@ -287,8 +353,24 @@ class BundleSuite extends DbSuite with Bounded:
         Some(Period(Year(-1500), Year(-1100)))
       )
     )
-    val _ = ArticleFixtures.put(ds, Article(Article.Slug("zzb_gone"), Article.Title("Gone"), Article.KindValue("report"), Article.Body("to be deleted")))
-    val _ = ArticleFixtures.put(ds, Article(Article.Slug("zzb_gone"), Article.Title("Gone"), Article.KindValue("report"), Article.Body("to be deleted, v2")))
+    val _ = ArticleFixtures.put(
+      ds,
+      Article(
+        Article.Slug("zzb_gone"),
+        Article.Title("Gone"),
+        Article.KindValue("report"),
+        Article.Body("to be deleted")
+      )
+    )
+    val _ = ArticleFixtures.put(
+      ds,
+      Article(
+        Article.Slug("zzb_gone"),
+        Article.Title("Gone"),
+        Article.KindValue("report"),
+        Article.Body("to be deleted, v2")
+      )
+    )
     val _ = ArticleFixtures.delete(ds, Slug("zzb_gone"))
     EventFixtures.put(
       ds,
@@ -301,8 +383,22 @@ class BundleSuite extends DbSuite with Bounded:
         citekey = Some(com.histmersion.api.library.Citekey(A1.value)),
         description = Some(EventSummary.Description("d")),
         scale = Some(EventSummary.Scale("regional")),
-        datings = List(EventDating(Event.Id("zzb_e1"), com.histmersion.api.library.Citekey(A1.value), TimeSpan(Some(Year(-1210)), None, None, Some(Year(-1180))), Some(EventDating.Method("textual")))),
-        participants = List(EventParticipant(Event.Id("zzb_e1"), EventParticipant.Actor("Hattusili"), EventParticipant.Role("ruler"), Some(com.histmersion.api.library.Citekey(A1.value))))
+        datings = List(
+          EventDating(
+            Event.Id("zzb_e1"),
+            com.histmersion.api.library.Citekey(A1.value),
+            TimeSpan(Some(Year(-1210)), None, None, Some(Year(-1180))),
+            Some(EventDating.Method("textual"))
+          )
+        ),
+        participants = List(
+          EventParticipant(
+            Event.Id("zzb_e1"),
+            EventParticipant.Actor("Hattusili"),
+            EventParticipant.Role("ruler"),
+            Some(com.histmersion.api.library.Citekey(A1.value))
+          )
+        )
       )
     )
     EventFixtures.put(
@@ -312,16 +408,55 @@ class BundleSuite extends DbSuite with Bounded:
         EventSummary.Label("Aftermath"),
         geometry = Some(EventPatch.Geometry("""{"type":"Point","coordinates":[34.6,40.0]}""")),
         parentId = Some(Event.Id("zzb_e1")),
-        edges = List(EventEdge(Event.Id("zzb_e2"), Event.Id("zzb_e1"), EventEdge.Kind("after"), com.histmersion.api.library.Citekey(A1.value), Some(EventEdge.Note("n"))))
+        edges = List(
+          EventEdge(
+            Event.Id("zzb_e2"),
+            Event.Id("zzb_e1"),
+            EventEdge.Kind("after"),
+            com.histmersion.api.library.Citekey(A1.value),
+            Some(EventEdge.Note("n"))
+          )
+        )
       )
     )
     eventSets(ds)
     transact(ds)(
-      GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zzb_goal"), Goal.Put(Goal.Title("Hittites"), Goal.StatusValue("seeding"), Some(Goal.Notes("notes")), List(Goal.Tags("t")), Nil, Some(Year(-1650)), Some(Year(-1180))))
+      GoalRepo.put(
+        com.histmersion.domain.automation.Goal.Slug("zzb_goal"),
+        Goal.Put(
+          Goal.Title("Hittites"),
+          Goal.StatusValue("seeding"),
+          Some(Goal.Notes("notes")),
+          List(Goal.Tags("t")),
+          Nil,
+          Some(Year(-1650)),
+          Some(Year(-1180))
+        )
+      )
     )
-    transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zzb_goal_sub"), Goal.Put(Goal.Title("Sub"), parentSlug = Some(Goal.Slug("zzb_goal")))))
-    val q1 = QueueRows.add(ds, Kind.Tasks, QueueAdd(Queue.QueueItem.Text("read alpha"), Some(Queue.QueueItem.Topic("Hittites")), reason = Some(Queue.QueueItem.Reason("why"))))
-    val _ = QueueRows.add(ds, Kind.Log, QueueAdd(Queue.QueueItem.Text("2026-10-03: did things"), createdAt = Some(Queue.QueueItem.CreatedAt("2026-10-03T09:00:00Z"))))
+    transact(ds)(
+      GoalRepo.put(
+        com.histmersion.domain.automation.Goal.Slug("zzb_goal_sub"),
+        Goal.Put(Goal.Title("Sub"), parentSlug = Some(Goal.Slug("zzb_goal")))
+      )
+    )
+    val q1 = QueueRows.add(
+      ds,
+      Kind.Tasks,
+      QueueAdd(
+        Queue.QueueItem.Text("read alpha"),
+        Some(Queue.QueueItem.Topic("Hittites")),
+        reason = Some(Queue.QueueItem.Reason("why"))
+      )
+    )
+    val _ = QueueRows.add(
+      ds,
+      Kind.Log,
+      QueueAdd(
+        Queue.QueueItem.Text("2026-10-03: did things"),
+        createdAt = Some(Queue.QueueItem.CreatedAt("2026-10-03T09:00:00Z"))
+      )
+    )
     val q3 = QueueRows.add(ds, Kind.Acquire, QueueAdd(Queue.QueueItem.Text("buy a book")))
     val _ = QueueRows.patch(ds, q1.id, QueuePatch(status = Some(Queue.QueueItem.Status("done"))))
     val _ = QueueRows.delete(ds, q3.id)
@@ -476,7 +611,16 @@ class BundleSuite extends DbSuite with Bounded:
     assertEquals(kinds.get("queue-item"), Some(1))
     // V030: a change to an owned set moves its owner
     val t0 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
-    val _ = SourceFixtures.addEdges(ds, List(Edge(com.histmersion.api.library.Citekey(G1.value), com.histmersion.api.library.Citekey(B1.value), Edge.Kind.Challenges)))
+    val _ = SourceFixtures.addEdges(
+      ds,
+      List(
+        Edge(
+          com.histmersion.api.library.Citekey(G1.value),
+          com.histmersion.api.library.Citekey(B1.value),
+          Edge.Kind.Challenges
+        )
+      )
+    )
     val t1 = connect(ds)(sql"SELECT updated_at::text FROM sources WHERE citekey = $G1".query[String].run().head)
     assertNotEquals(t1, t0)
 
@@ -606,8 +750,13 @@ class BundleSuite extends DbSuite with Bounded:
     val out = java.io.ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
     val _ =
-      w.bytes(BundleTar.Entry.Name(Bundle.ManifestPath), BundleFormat.manifestBytes(m.modify(_.files).setTo(m.files.filterNot(f => gone(f.path.value)))))
-    entries(bundle).tail.filterNot(e => gone(e._1)).foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.value), identity))
+      w.bytes(
+        BundleTar.Entry.Name(Bundle.ManifestPath),
+        BundleFormat.manifestBytes(m.modify(_.files).setTo(m.files.filterNot(f => gone(f.path.value))))
+      )
+    entries(bundle).tail
+      .filterNot(e => gone(e._1))
+      .foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.value), identity))
     w.finish()
     out.toByteArray
 
@@ -703,7 +852,8 @@ class BundleSuite extends DbSuite with Bounded:
     assertEquals(count(a, "SELECT count(*)::int FROM merge_ledger"), 0)
     assert(java.util.Arrays.equals(exportOf(a, sa), before), "importing its own bundle changed the export")
     // …and after a local change, an OLD own bundle never wins over it
-    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("newer here"))), cfg.limits.chunkChars)
+    val _ =
+      SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("newer here"))), cfg.limits.chunkChars)
     val r2 = importInto(a, before, sa)
     assertEquals(r2.changed, 0)
     assertEquals(
@@ -718,7 +868,8 @@ class BundleSuite extends DbSuite with Bounded:
     populate(a, sa)
     val _ = importInto(b, exportOf(a, sa), sb)
     // changed over there only → fast-forward
-    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("work edit"))), cfg.limits.chunkChars)
+    val _ =
+      SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("work edit"))), cfg.limits.chunkChars)
     val r1 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
       r1.counts.find(_.kind == Bundle.Kind.Source).map(_.updated),
@@ -736,7 +887,8 @@ class BundleSuite extends DbSuite with Bounded:
     )
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.notes), Some("home edit"))
     // changed on both sides → an open issue: the import is refused, nothing written (M3)…
-    val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("work again"))), cfg.limits.chunkChars)
+    val _ =
+      SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("work again"))), cfg.limits.chunkChars)
     val third = exportOf(a, sa)
     val r3 = importInto(b, third, sb)
     assert(!r3.applied.value)
@@ -750,7 +902,9 @@ class BundleSuite extends DbSuite with Bounded:
     assert(r3.problems.exists(_.value.startsWith(conflict.id.value)), r3.problems.toString)
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // …until it is decided: keep-left keeps ours and records that it was decided
-    val keep = MergeResolutions(List(MergeResolution(MergeResolution.Issue(conflict.id.value), MergeResolution.Decision("keep-left"))))
+    val keep = MergeResolutions(
+      List(MergeResolution(MergeResolution.Issue(conflict.id.value), MergeResolution.Decision("keep-left")))
+    )
     val r3b = importInto(b, third, sb, resolutions = keep)
     assert(r3b.applied.value, r3b.problems.mkString("\n"))
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
@@ -815,12 +969,23 @@ class BundleSuite extends DbSuite with Bounded:
     val (sa, sc) = (spool("cla"), spool("clc"))
     populate(a, sa)
     put(c, source(A1, None, 1))
-    val _ = ArticleFixtures.put(c, Article(Article.Slug("zzb_topic"), Article.Title("Other topic"), Article.KindValue("concept"), Article.Body("other")))
+    val _ = ArticleFixtures.put(
+      c,
+      Article(
+        Article.Slug("zzb_topic"),
+        Article.Title("Other topic"),
+        Article.KindValue("concept"),
+        Article.Body("other")
+      )
+    )
     val before = exportOf(c, sc)
     val r = importInto(c, exportOf(a, sa), sc)
     assert(!r.applied.value)
     // the same work (same DOI) under another uid: merging is merge apply's (M5); its findings go with it
-    assert(r.problems.exists(p => p.value.contains(s"source $A1") && p.value.contains("merge apply")), r.problems.mkString("\n"))
+    assert(
+      r.problems.exists(p => p.value.contains(s"source $A1") && p.value.contains("merge apply")),
+      r.problems.mkString("\n")
+    )
     assert(r.problems.exists(_.value.contains("article zzb_topic")), r.problems.mkString("\n"))
     assert(r.issues.exists(i => i.kind == Issue.Kind.ArticleDiverged && i.open), r.issues.toString)
     assert(java.util.Arrays.equals(exportOf(c, sc), before), "a refused import wrote something")
@@ -851,10 +1016,10 @@ class BundleSuite extends DbSuite with Bounded:
       es.map(f).foreach((p, b) => w.bytes(BundleTar.Entry.Name(p), b).fold(e => fail(e.value), identity))
       w.finish()
       out.toByteArray
-    def verify(b: Array[Byte]) = BundleReader.verify(java.io.ByteArrayInputStream(b), Some(Bundle.Manifest.SchemaVersion("999")))
+    def verify(b: Array[Byte]) =
+      BundleReader.verify(java.io.ByteArrayInputStream(b), Some(Bundle.Manifest.SchemaVersion("999")))
     val edited = rebuild { case (p, b) =>
-      if p == Bundle.Kind.Goal.file then
-        p -> String(b, UTF_8).replace("Hittites", "Hattians").getBytes(UTF_8)
+      if p == Bundle.Kind.Goal.file then p -> String(b, UTF_8).replace("Hittites", "Hattians").getBytes(UTF_8)
       else p -> b
     }
     val v1 = verify(edited)
@@ -873,7 +1038,12 @@ class BundleSuite extends DbSuite with Bounded:
     assert(!v3.ok.value)
     assert(verify(whole).ok.value, verify(whole).problems.mkString("\n"))
     // and a server older than the bundle refuses it
-    assert(BundleReader.verify(java.io.ByteArrayInputStream(whole), Some(Bundle.Manifest.SchemaVersion("1"))).problems.exists(_.value.contains("newer")))
+    assert(
+      BundleReader
+        .verify(java.io.ByteArrayInputStream(whole), Some(Bundle.Manifest.SchemaVersion("1")))
+        .problems
+        .exists(_.value.contains("newer"))
+    )
 
   test("property: random corpora round-trip export → import → export, byte for byte"):
     val rnd = scala.util.Random(20261003L)
@@ -883,7 +1053,16 @@ class BundleSuite extends DbSuite with Bounded:
       val n = 2 + rnd.nextInt(6)
       val cks = (0 until n).map(k => Citekey.applyUnsafe(f"zzp${1900 + rnd.nextInt(120)}%d_s$k%d")).toList
       cks.foreach { ck =>
-        val edges = cks.filter(_ != ck).filter(_ => rnd.nextBoolean()).map(dst => Edge(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Citekey(dst.value), Edge.Kind.References))
+        val edges = cks
+          .filter(_ != ck)
+          .filter(_ => rnd.nextBoolean())
+          .map(dst =>
+            Edge(
+              com.histmersion.api.library.Citekey(ck.value),
+              com.histmersion.api.library.Citekey(dst.value),
+              Edge.Kind.References
+            )
+          )
         put(
           a,
           source(

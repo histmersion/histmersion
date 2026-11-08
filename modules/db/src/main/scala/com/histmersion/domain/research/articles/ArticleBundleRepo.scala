@@ -25,7 +25,6 @@ private[articles] object ArticleBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-
   def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
     (Sql.raw(Sql.RawText(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
                        ${rangeCols("a.period")}, ${ts("a.updated_at")}
@@ -84,7 +83,10 @@ private[articles] object ArticleBundleRepo:
     out =>
       out.write(
         Sql
-          .of(Sql.OfText("SELECT convert_to(body, 'UTF8') FROM article_versions WHERE uid = ?::uuid"), Param.S(Param.S.V(uid.toString)))
+          .of(
+            Sql.OfText("SELECT convert_to(body, 'UTF8') FROM article_versions WHERE uid = ?::uuid"),
+            Param.S(Param.S.V(uid.toString))
+          )
           .frag
           .query[Array[Byte]]
           .run()
@@ -105,12 +107,17 @@ private[articles] object ArticleBundleRepo:
   /** Rename what the other side renamed (the same uid, a new slug), through the ordinary rename path. */
   def articleRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.articles, _.uid, _.slug, w.local.articles.map(a => a.uid -> a.slug).toMap, PlanQuestions.LabelTakenWhat("article"))(
-      (old, now) =>
-        ArticleRepo.renameIn(
-          Slug.assume(old.value),
-          Slug.assume(now.value)
-        )
+    w.followRenames(
+      w.es.articles,
+      _.uid,
+      _.slug,
+      w.local.articles.map(a => a.uid -> a.slug).toMap,
+      PlanQuestions.LabelTakenWhat("article")
+    )((old, now) =>
+      ArticleRepo.renameIn(
+        Slug.assume(old.value),
+        Slug.assume(now.value)
+      )
     )
 
   /** The articles: the text a merge replaces kept as a version first, the rows, and an article kept beside one here

@@ -15,7 +15,8 @@ import com.histmersion.config.DbConfig
 class JobRunsDbSuite extends JobRunsContract("db"):
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val scratch = ScratchDatabases("histmersion_s7j", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
+  private lazy val scratch =
+    ScratchDatabases("histmersion_s7j", AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
   private val made = java.util.concurrent.atomic.AtomicInteger(0)
   private val sources = collection.concurrent.TrieMap.empty[JobRuns, DataSource]
   override def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
@@ -38,4 +39,9 @@ class JobRunsDbSuite extends JobRunsContract("db"):
         .run()
         .head
     )
-    (RunRow.Status(status), error.map(JobRunState.Error(_)), progress.map(JobRunState.Progress(_)), origin.map(RunRow.Origin(_)))
+    (
+      RunRow.Status(status),
+      error.map(JobRunState.Error(_)),
+      progress.map(JobRunState.Progress(_)),
+      origin.map(RunRow.Origin(_))
+    )

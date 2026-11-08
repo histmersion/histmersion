@@ -46,7 +46,8 @@ final class SchedulerService(
 ):
 
   /** A person's choice of strategy (name, by, at), if any. */
-  def chosen: Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] = agents.autopilotRow.strategy()
+  def chosen: Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
+    agents.autopilotRow.strategy()
 
   private def instantOf(text: String): Option[Instant] = ManagerPolicy.parseInstant(ManagerPolicy.InstantText(text))
 
@@ -55,7 +56,10 @@ final class SchedulerService(
     over.find(o => Role.parse(o.role).contains(role)).map(o => AgentsControllers.ModelName(o.model.value))
 
   /** The settings in effect now. */
-  def settings: Settings = SchedulerPolicy.settings(ManagerDefaultsViews.scheduler(cfg.scheduler), chosen.map(c => SchedulerPolicy.StrategyName(c._1.value)))
+  def settings: Settings = SchedulerPolicy.settings(
+    ManagerDefaultsViews.scheduler(cfg.scheduler),
+    chosen.map(c => SchedulerPolicy.StrategyName(c._1.value))
+  )
 
   /** One pass as shown: when, whether it was dry, its inputs and its decision. */
   final private case class Snapshot(at: Instant, dry: Boolean, in: Inputs, s: Settings, d: Decision)
@@ -80,9 +84,13 @@ final class SchedulerService(
         f.slug -> GoalInfo(
           f.priority.value + (if f.pinned.value then PinBoost else 0),
           instantOf(f.createdAt.value),
-          !GoalFocus.finished(f.status) && GoalFocus.stage(f, GoalFocus.Settings.MinSources(agents.sourcesToPlan.value)) == GoalFocus.Stage.Gathering,
+          !GoalFocus.finished(f.status) && GoalFocus
+            .stage(f, GoalFocus.Settings.MinSources(agents.sourcesToPlan.value)) == GoalFocus.Stage.Gathering,
           AutopilotPolicy
-            .articlesInProgress(AutopilotPolicy.NextFacts.Unreviewed(f.unreviewed.value), AutopilotPolicy.NextFacts.CompileOpen(f.compileOpen.value))
+            .articlesInProgress(
+              AutopilotPolicy.NextFacts.Unreviewed(f.unreviewed.value),
+              AutopilotPolicy.NextFacts.CompileOpen(f.compileOpen.value)
+            )
             .map(_.value)
         )
       )
@@ -95,7 +103,12 @@ final class SchedulerService(
   def budgetBlock(): Option[Block] =
     val (day, month) = agents.runs.spendDayMonth()
     if day >= BigDecimal(cfg.budgets.dailyUsd.value) then
-      Some(Block(Block.Code("budget"), Block.Why(s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})")))
+      Some(
+        Block(
+          Block.Code("budget"),
+          Block.Why(s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})")
+        )
+      )
     else if month >= BigDecimal(cfg.budgets.monthlyUsd.value) then
       Some(
         Block(
@@ -255,7 +268,9 @@ final class SchedulerService(
           )
           .value
       ),
-      poolCap = PlanQuota.PoolId.values.toList.map(p => Candidate.Pools(p.wire.value) -> Resources.PoolCapValue(poolCap(p))).toMap,
+      poolCap = PlanQuota.PoolId.values.toList
+        .map(p => Candidate.Pools(p.wire.value) -> Resources.PoolCapValue(poolCap(p)))
+        .toMap,
       poolUsed = runs
         .flatMap((p, _) => poolsOfRun(p))
         .groupMapReduce(p => Candidate.Pools(p.wire.value))(_ => 1)(_ + _)
@@ -263,8 +278,12 @@ final class SchedulerService(
         .mapValues(Resources.PoolUsedValue(_))
         .toMap,
       managerCap = caps.map((id, cap) => Candidate.ManagerId(id.value) -> cap),
-      managerUsed = caps.keys.map(id => Candidate.ManagerId(id.value) -> Resources.ManagerUsedValue(agents.managerStore.running(id).value)).toMap,
-      gatheringUsed = Resources.GatheringUsed(runs.count(_._2.exists(g => gs.get(DomainGoal.Slug.assume(g.value)).exists(_.gathering)))),
+      managerUsed = caps.keys
+        .map(id => Candidate.ManagerId(id.value) -> Resources.ManagerUsedValue(agents.managerStore.running(id).value))
+        .toMap,
+      gatheringUsed = Resources.GatheringUsed(
+        runs.count(_._2.exists(g => gs.get(DomainGoal.Slug.assume(g.value)).exists(_.gathering)))
+      ),
       stop = stop.orElse(budgetBlock()),
       recent = agents.managerStore
         .recentKinds(PageSize.assume(math.max(1, cfg.scheduler.shareWindow.value)))
@@ -352,7 +371,8 @@ final class SchedulerService(
     val res = snap.in.res
     SchedulerStatus(
       SchedulerStatus.Strategy(s.strategy.name.value),
-      if chosen.isDefined then AgentScheduler.SchedulerStatus.StrategyFrom("person") else AgentScheduler.SchedulerStatus.StrategyFrom("config"),
+      if chosen.isDefined then AgentScheduler.SchedulerStatus.StrategyFrom("person")
+      else AgentScheduler.SchedulerStatus.StrategyFrom("config"),
       Strategies.all.map(x => StrategyLine(StrategyLine.Name(x.name.value), StrategyLine.Describe(x.describe))),
       Some(SchedulerStatus.At(snap.at.toString)),
       SchedulerStatus.Dry(snap.dry),
@@ -360,7 +380,9 @@ final class SchedulerService(
       SchedulerStatus.Occupied(res.occupied.value),
       res.poolCap.toList
         .sortBy(_._1.value)
-        .map((p, cap) => PoolUse(PoolUse.Pool(p.value), PoolUse.Used(res.poolUsed.get(p).fold(0)(_.value)), PoolUse.Cap(cap.value))),
+        .map((p, cap) =>
+          PoolUse(PoolUse.Pool(p.value), PoolUse.Used(res.poolUsed.get(p).fold(0)(_.value)), PoolUse.Cap(cap.value))
+        ),
       JobType.values.toList.map(t =>
         TypeLine(
           TypeLine.JobType(t.wire.value),
@@ -470,12 +492,21 @@ final class SchedulerService(
                     else
                       notBefore match
                         case Some(t) =>
-                          say(base, AgentScheduler.Code.NotDue, s"not due before $t (a cooldown or a failed run's backoff)")
+                          say(
+                            base,
+                            AgentScheduler.Code.NotDue,
+                            s"not due before $t (a cooldown or a failed run's backoff)"
+                          )
                         case None =>
                           paused match
                             case Some(m) =>
-                              say(base, AgentScheduler.Code.Paused, s"its manager ${m.id} is ${m.state}: it starts nothing")
-                            case None => base.modify(_.why).setTo(WhyInfo.Why("not looked at yet: the next pass decides it"))
+                              say(
+                                base,
+                                AgentScheduler.Code.Paused,
+                                s"its manager ${m.id} is ${m.state}: it starts nothing"
+                              )
+                            case None =>
+                              base.modify(_.why).setTo(WhyInfo.Why("not looked at yet: the next pass decides it"))
           case Some(ItemStatus.Held) =>
             i.hold match
               case Some(hd) if hd.untilApproval.isDefined =>
@@ -508,7 +539,11 @@ final class SchedulerService(
                     "it holds no place until then"
                 ).modify(_.approval).setTo(open.lastOption.map(a => WhyInfo.Approval(a.id.value)))
               case Some(RunState.Paused) =>
-                say(base, AgentScheduler.Code.Paused, s"its run is paused: ${run.flatMap(_.error).fold("")(_.value)}".trim)
+                say(
+                  base,
+                  AgentScheduler.Code.Paused,
+                  s"its run is paused: ${run.flatMap(_.error).fold("")(_.value)}".trim
+                )
               case Some(st) => say(base, AgentScheduler.Code.Running, s"its run is ${st.wire}")
               case None     => say(base, AgentScheduler.Code.Running, "its run is being evaluated")
           case _ => say(base, AgentScheduler.Code.Settled, s"settled: ${i.outcome.fold(i.status.value)(_.value)}")
@@ -520,7 +555,10 @@ final class SchedulerService(
     * counts as progress), the one reason it stands still and what unblocks it ([[Stalls.classify]]): waiting for a
     * person, draining, paused, a budget, quota, the scheduler's queue, a block, a failed item, no candidates, idle.
     */
-  def stalls(days: Option[AgentAutopilotConfig.StallDays] = None, now: Instant = Instant.now(agents.clock)): Stalls.StallReport =
+  def stalls(
+      days: Option[AgentAutopilotConfig.StallDays] = None,
+      now: Instant = Instant.now(agents.clock)
+  ): Stalls.StallReport =
     val n = math.max(0, days.fold(cfg.autopilot.stallDays.value)(_.value))
     val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(DomainGoal.Status.Wire(g.status.value)))
     val progress = agents.managerStore.lastProgress()
@@ -534,7 +572,11 @@ final class SchedulerService(
       .groupMap(_._1)(_._2)
     val snap = last.getOrElse(dry(now))
     val waits = snap.d.waiting.groupMap(_._1.c.goal)(x =>
-      Stalls.SchedWait(Stalls.SchedWait.Code(x._2.code.value), Stalls.SchedWait.Why(x._2.why.value), Stalls.SchedWait.Position(x._2.position.value))
+      Stalls.SchedWait(
+        Stalls.SchedWait.Code(x._2.code.value),
+        Stalls.SchedWait.Why(x._2.why.value),
+        Stalls.SchedWait.Position(x._2.position.value)
+      )
     )
     val stops = agents.focusStore.lastStops()
     val sources = agents.focusStore.sourceCounts()
@@ -544,7 +586,8 @@ final class SchedulerService(
     val draining = agents.drain.draining
     val facts = goals.map { g =>
       val slug = DomainGoal.Slug.assume(g.slug.value)
-      val last = (progress.get(Goal.Slug(g.slug.value)).map(_.value).toList :+ g.createdAt.value).flatMap(instantOf).maxOption
+      val last =
+        (progress.get(Goal.Slug(g.slug.value)).map(_.value).toList :+ g.createdAt.value).flatMap(instantOf).maxOption
       val idle = last.map(t => java.time.Duration.between(t, now).toDays.toInt)
       val aps = (bySubj
         .getOrElse(Some(ApprovalDigest.Open.Subject(g.slug.value)), Nil) ++ articles
@@ -566,7 +609,9 @@ final class SchedulerService(
         stops.get(slug).map(w => Stalls.Facts.LastStop(w.value)),
         Stalls.Facts.Sources(sources.get(slug).fold(0)(_.value)),
         Stalls.Facts.NoCandidates(sweeps.get(slug).exists(_.value.contains("no new candidates"))),
-        Stalls.Facts.Open(List(seedId(Goal.Ref(g.slug.value)), watchId(Goal.Ref(g.slug.value))).flatMap(pace.get).map(_._1.value).sum),
+        Stalls.Facts.Open(
+          List(seedId(Goal.Ref(g.slug.value)), watchId(Goal.Ref(g.slug.value))).flatMap(pace.get).map(_._1.value).sum
+        ),
         Stalls.Facts.Running(running.get(slug).fold(0)(_.value))
       )
     }
@@ -591,15 +636,23 @@ final class SchedulerService(
           case None =>
             Left(
               Api.Error(
-                Api.Error.Message(s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)")
+                Api.Error.Message(
+                  s"unknown strategy '${in.strategy}' (one of: ${Strategies.names.mkString(", ")}, default)"
+                )
               )
             )
           case Some(st) =>
-            agents.autopilotRow.setStrategy(Some(AutopilotRepo.StrategyName(st.name.value)), AutopilotRepo.Row.ChangedBy(by))
+            agents.autopilotRow.setStrategy(
+              Some(AutopilotRepo.StrategyName(st.name.value)),
+              AutopilotRepo.Row.ChangedBy(by)
+            )
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None
-      val _ = agents.workLists.add(WorkListControllers.ListName(Queue.Kind.Log.label.value), QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))))
+      val _ = agents.workLists.add(
+        WorkListControllers.ListName(Queue.Kind.Log.label.value),
+        QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000)))
+      )
       scribe.info(s"agent scheduler: $line")
       agents.managers.nudge()
       status(None, now, List(SchedulerStatus.Changes(line)))

@@ -48,7 +48,17 @@ class ShelfSuite extends munit.FunSuite:
     )
 
   test("recently opened: the opened ones, last first"):
-    val a = ReadMark(ItemKind.Source, ItemKey("a"), ReadMark.Title("A"), openedAt = Some(ReadMark.OpenedAt("2026-10-30T10:00:00Z")))
-    val b = ReadMark(ItemKind.Article, ItemKey("b"), ReadMark.Title("B"), openedAt = Some(ReadMark.OpenedAt("2026-10-30T11:00:00Z")))
+    val a = ReadMark(
+      ItemKind.Source,
+      ItemKey("a"),
+      ReadMark.Title("A"),
+      openedAt = Some(ReadMark.OpenedAt("2026-10-30T10:00:00Z"))
+    )
+    val b = ReadMark(
+      ItemKind.Article,
+      ItemKey("b"),
+      ReadMark.Title("B"),
+      openedAt = Some(ReadMark.OpenedAt("2026-10-30T11:00:00Z"))
+    )
     val c = ReadMark(ItemKind.Source, ItemKey("c"), ReadMark.Title("C"), read = ReadMark.Read(true))
     assertEquals(ShelfRow.recent(List(a, b, c)).map(_.title), List("B", "A"))

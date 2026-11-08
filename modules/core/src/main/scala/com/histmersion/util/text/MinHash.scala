@@ -31,7 +31,8 @@ object MinHash:
   def of(text: Text, k: Size = Size(64), shingle: ShingleLength = ShingleLength(5)): MinHash =
     val ws = Fingerprint.tokens(Fingerprint.TokensS(text.value)).map(_.value)
     val shingles: Iterator[String] =
-      if ws.length <= shingle.value then Iterator.single(ws.mkString(" ")) else ws.sliding(shingle.value).map(_.mkString(" "))
+      if ws.length <= shingle.value then Iterator.single(ws.mkString(" "))
+      else ws.sliding(shingle.value).map(_.mkString(" "))
     val mins = Array.fill(k.value)(Int.MaxValue)
     shingles.foreach { sh =>
       val h = scala.util.hashing.MurmurHash3.stringHash(sh)

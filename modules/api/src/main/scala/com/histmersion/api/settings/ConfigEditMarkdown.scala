@@ -5,14 +5,13 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ConfigEditMarkdown:
 
-
   import ConfigEdit.*
 
   def shown(f: Field): String =
     f.credential match
       case Some(c) if !((c.isSet) == (true)) => ("not set")
-      case Some(c)             => ("set" + c.shown.fold("")(s => s" (`$s`)"))
-      case None                => (f.effective.fold("(nothing)")(v => s"`$v`"))
+      case Some(c)                           => ("set" + c.shown.fold("")(s => s" (`$s`)"))
+      case None                              => (f.effective.fold("(nothing)")(v => s"`$v`"))
 
   def field(f: Field): String =
     val from = Source.parse(f.source).fold(f.source)(_.label)
@@ -33,7 +32,7 @@ object ConfigEditMarkdown:
     val head = List(
       s"# Settings",
       "",
-      s"File: ${p.file.fold("none")(f => s"`$f`" + (if ((p.exists) == Page.Exists(true)) then "" else " (not there yet)"))}"
+      s"File: ${p.file.fold("none")(f => s"`$f`" + (if (p.exists) == Page.Exists(true) then "" else " (not there yet)"))}"
     )
     val problems = if p.problems.isEmpty then Nil else "" :: "**Problems:**" :: p.problems.map(x => s"- $x")
     val body = p.sections.flatMap { s =>
@@ -48,13 +47,18 @@ object ConfigEditMarkdown:
     def list(title: String, xs: List[String]) = if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
     val head =
       if w.changed.isEmpty then "# Settings unchanged — the file already says so"
-      else s"# Settings changed — ${Plural.count(Plural.CountN((w.changed.size).toLong), Plural.CountSingular("setting"))}"
+      else
+        s"# Settings changed — ${Plural.count(Plural.CountN((w.changed.size).toLong), Plural.CountSingular("setting"))}"
     (List(head, "", s"File: `${w.file}`") ++ w.backup.map(b => s"Previous version kept as `$b`").toList ++
       list(("Changed"), w.changed.map(_.value.stripPrefix("histmersion."))) ++
       list(("Already so"), w.unchanged.map(_.value.stripPrefix("histmersion."))) ++
-      list(("Takes effect after a restart"), w.restart.map(r => s"${r.key.value.stripPrefix("histmersion.")} — ${r.why}")) ++
+      list(
+        ("Takes effect after a restart"),
+        w.restart.map(r => s"${r.key.value.stripPrefix("histmersion.")} — ${r.why}")
+      ) ++
       list(("Warnings"), w.warnings.map(_.value)) ++
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
   def restart(r: Restart): String =
-    if ((r.accepted) == Restart.Accepted(true)) then (s"# Restarting\n\n${r.message}") else (s"# Not restarted\n\n${r.message}")
+    if (r.accepted) == Restart.Accepted(true) then (s"# Restarting\n\n${r.message}")
+    else (s"# Not restarted\n\n${r.message}")

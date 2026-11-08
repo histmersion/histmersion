@@ -35,4 +35,3 @@ final class MergeRuleSet(val all: List[MergeRules]):
       case r :: tail => loop(tail, r.gather(bundle, localized, acc, settings))
       case Nil       => acc
     loop(all, in)
-

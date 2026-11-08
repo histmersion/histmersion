@@ -26,11 +26,17 @@ final case class HeldPlace(
 
   /** Its names valid at `asOf`, distinct and by name, comma-joined — the `names` column of a summary. */
   def namesAt(asOf: Option[DeepTime.SignedYear]): Place.Summary.Names =
-    Place.Summary.Names(names.filter(n => HeldPlace.covers(n.period, asOf)).map(_.name.value).distinct.sorted.mkString(", "))
+    Place.Summary.Names(
+      names.filter(n => HeldPlace.covers(n.period, asOf)).map(_.name.value).distinct.sorted.mkString(", ")
+    )
 
   def contested: Boolean =
     place.properties.exists(p =>
-      io.circe.parser.parse(p.value).toOption.flatMap(_.hcursor.downField("contested").as[Boolean].toOption).contains(true)
+      io.circe.parser
+        .parse(p.value)
+        .toOption
+        .flatMap(_.hcursor.downField("contested").as[Boolean].toOption)
+        .contains(true)
     )
 
   def summary: Place.Summary =

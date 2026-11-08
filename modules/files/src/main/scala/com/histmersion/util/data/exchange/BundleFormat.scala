@@ -73,9 +73,11 @@ object BundleFormat:
             obj("rev").flatMap(_.asString) match
               case None                       => Left(BundleTar.Problem("no rev"))
               case Some(r) if r == revOf(obj) => Right(())
-              case Some(r)                    => Left(BundleTar.Problem(s"rev $r does not match its content (${revOf(obj)})"))
+              case Some(r) => Left(BundleTar.Problem(s"rev $r does not match its content (${revOf(obj)})"))
           }
-      revOk.flatMap(_ => dec.decodeJson(json).left.map(e => BundleTar.Problem(s"${e.message} at ${e.pathToRootString.getOrElse("")}")))
+      revOk.flatMap(_ =>
+        dec.decodeJson(json).left.map(e => BundleTar.Problem(s"${e.message} at ${e.pathToRootString.getOrElse("")}"))
+      )
     }
 
   // ── the bundle id ──────────────────────────────────────────────────────────────────────────
@@ -90,7 +92,12 @@ object BundleFormat:
     val bb = java.nio.ByteBuffer.wrap(d, 0, 16)
     UUID(bb.getLong, bb.getLong)
 
-  def bundleId(instance: UUID, since: Option[Bundle.Manifest.Since], files: List[Bundle.FileInfo], blobs: Seq[Sha256]): UUID =
+  def bundleId(
+      instance: UUID,
+      since: Option[Bundle.Manifest.Since],
+      files: List[Bundle.FileInfo],
+      blobs: Seq[Sha256]
+  ): UUID =
     contentUuid(
       Seq(Bundle.Format, instance.toString, since.map(_.value).getOrElse("")) ++
         files.map(f => s"${f.path} ${f.sha256}") ++ blobs.map(_.value)
@@ -102,7 +109,10 @@ object BundleFormat:
     (printer.print(Encoder.AsObject[Bundle.Manifest].apply(m)) + "\n").getBytes(UTF_8)
 
   def parseManifest(bytes: Array[Byte]): Either[BundleTar.Problem, Bundle.Manifest] =
-    parser.decode[Bundle.Manifest](String(bytes, UTF_8)).left.map(e => BundleTar.Problem(s"manifest.json: ${e.getMessage}"))
+    parser
+      .decode[Bundle.Manifest](String(bytes, UTF_8))
+      .left
+      .map(e => BundleTar.Problem(s"manifest.json: ${e.getMessage}"))
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.

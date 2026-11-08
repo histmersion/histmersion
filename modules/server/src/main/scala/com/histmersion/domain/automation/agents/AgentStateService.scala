@@ -35,7 +35,8 @@ object AgentStateService:
       db.read(AgentStateRepo.get(AgentStateRepo.StateKey(key.value)))
     def set(key: AgentStateRecord.Key, value: SetValue): Unit =
       db.transact(AgentStateRepo.set(AgentStateRepo.StateKey(key.value), AgentStateRepo.SetValue(value.value)))
-    def delete(key: AgentStateRecord.Key): Boolean = db.transact(AgentStateRepo.delete(AgentStateRepo.StateKey(key.value)))
+    def delete(key: AgentStateRecord.Key): Boolean =
+      db.transact(AgentStateRepo.delete(AgentStateRepo.StateKey(key.value)))
 
   /** The values in memory, printed back as `jsonb::text` prints them (an object's keys shortest first, then in byte
     * order, the last of a repeated key kept; `", "` and `": "` between); `clock` stands in for the database's `now()`.
@@ -69,7 +70,11 @@ object AgentStateService:
     private val printer =
       io.circe.Printer.noSpaces.copy(colonRight = " ", objectCommaRight = " ", arrayCommaRight = " ")
 
-    private def entry(key: AgentStateRecord.Key, r: AgentStateRecord) = AgentStateEntry(AgentStateEntry.Key(key.value), AgentStateEntry.Value(r.value.value), Some(updatedText(r.updatedAt)))
+    private def entry(key: AgentStateRecord.Key, r: AgentStateRecord) = AgentStateEntry(
+      AgentStateEntry.Key(key.value),
+      AgentStateEntry.Value(r.value.value),
+      Some(updatedText(r.updatedAt))
+    )
 
     def list(): List[AgentStateEntry] = state.get.agentState.toList.sortBy(_._1.value).map(entry)
     def get(key: AgentStateRecord.Key): Option[AgentStateEntry] = state.get.agentState.get(key).map(entry(key, _))
@@ -79,6 +84,9 @@ object AgentStateService:
         .fold(e => throw IllegalArgumentException(s"invalid input syntax for type json: $e"), identity)
       val at = Instant.now(clock)
       val _ =
-        state.updateAndGet(_.modify(_.agentState).using(_.updated(key, AgentStateRecord(AgentStateRecord.Value(printer.print(jsonb(j))), at))))
+        state.updateAndGet(
+          _.modify(_.agentState)
+            .using(_.updated(key, AgentStateRecord(AgentStateRecord.Value(printer.print(jsonb(j))), at)))
+        )
     def delete(key: AgentStateRecord.Key): Boolean =
       state.getAndUpdate(_.modify(_.agentState).using(_ - key)).agentState.contains(key)

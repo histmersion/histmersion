@@ -30,17 +30,32 @@ object ItemMenu:
   def markdown(origin: Origin, ref: ItemRef, byline: String): Markdown =
     val title = ref.title.value.replace("[", "\\[").replace("]", "\\]")
     val cite = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => s" [[${ck.value}]]")
-    Markdown(s"[$title](${link(origin, ref).value})" + Option(byline.trim).filter(_.nonEmpty).fold("")(b => s" — $b") + cite)
+    Markdown(
+      s"[$title](${link(origin, ref).value})" + Option(byline.trim).filter(_.nonEmpty).fold("")(b => s" — $b") + cite
+    )
 
   def entries(ref: ItemRef, byline: String): List[ContextMenu.Entry] =
     val origin = Origin(dom.window.location.origin)
     val marked = ref.identity.exists(i => MyItems.bookmarks.now().exists(_.target.identity.contains(i)))
     List(
-      ContextMenu.Entry(ContextMenu.Entry.Label("Copy the text"), () => Clipboard.copy(Clipboard.CopyText(text(ref, byline).value), Clipboard.CopyWhat("the text"))),
-      ContextMenu.Entry(ContextMenu.Entry.Label("Copy as Markdown"), () => Clipboard.copy(Clipboard.CopyText(markdown(origin, ref, byline).value), Clipboard.CopyWhat("the Markdown"))),
-      ContextMenu.Entry(ContextMenu.Entry.Label("Copy the link"), () => Clipboard.copy(Clipboard.CopyText(link(origin, ref).value), Clipboard.CopyWhat("the link"))),
+      ContextMenu.Entry(
+        ContextMenu.Entry.Label("Copy the text"),
+        () => Clipboard.copy(Clipboard.CopyText(text(ref, byline).value), Clipboard.CopyWhat("the text"))
+      ),
+      ContextMenu.Entry(
+        ContextMenu.Entry.Label("Copy as Markdown"),
+        () =>
+          Clipboard.copy(Clipboard.CopyText(markdown(origin, ref, byline).value), Clipboard.CopyWhat("the Markdown"))
+      ),
+      ContextMenu.Entry(
+        ContextMenu.Entry.Label("Copy the link"),
+        () => Clipboard.copy(Clipboard.CopyText(link(origin, ref).value), Clipboard.CopyWhat("the link"))
+      ),
       ContextMenu.Separator,
-      ContextMenu.Entry(if marked then ContextMenu.Entry.Label("Remove the bookmark") else ContextMenu.Entry.Label("Bookmark"), () => ItemActions.bookmark(ref)),
+      ContextMenu.Entry(
+        if marked then ContextMenu.Entry.Label("Remove the bookmark") else ContextMenu.Entry.Label("Bookmark"),
+        () => ItemActions.bookmark(ref)
+      ),
       ContextMenu.Entry(
         ContextMenu.Entry.Label("Open in a new tab"),
         () => { val _ = dom.window.open(ItemRef.page(ref.target).value, "_blank", "noopener") }

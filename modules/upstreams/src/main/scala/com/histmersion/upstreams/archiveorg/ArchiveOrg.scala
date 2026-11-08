@@ -41,7 +41,11 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   def info(id: ArchiveId): Either[ArchiveOrg.Problem, ArchiveItem] =
     val ident = identifier(ArchiveOrg.IdentifierS((id).value))
-    http.json(Url(Candidate.Url(archive.url.value), Url.UrlPath(s"/metadata/$ident")).value).left.map(ArchiveOrg.Problem(_)).map(AcquireParse.archiveItem(ident, _))
+    http
+      .json(Url(Candidate.Url(archive.url.value), Url.UrlPath(s"/metadata/$ident")).value)
+      .left
+      .map(ArchiveOrg.Problem(_))
+      .map(AcquireParse.archiveItem(ident, _))
 
   def download(id: ArchiveId, file: ArchiveOrg.DownloadFile): Either[ArchiveOrg.Problem, FetchedFile] =
     val ident = identifier(ArchiveOrg.IdentifierS((id).value))
@@ -54,8 +58,17 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       )
     )
     http.get(Plugin.Http.GetUrl(url.value)).left.map(e => ArchiveOrg.Problem(e.value)).flatMap { b =>
-      if b.value.length < 10240 then Left(ArchiveOrg.Problem(s"archive.org returned only ${b.value.length} bytes for $file"))
-      else Right(FetchedFile(FetchedFile.Source("archive_org"), Some(FetchedFile.Url(url.value)), FetchedFile.Bytes(b.value), FetchedFile.Extension((file).value.toLowerCase.split("\\.").lastOption.getOrElse("pdf"))))
+      if b.value.length < 10240 then
+        Left(ArchiveOrg.Problem(s"archive.org returned only ${b.value.length} bytes for $file"))
+      else
+        Right(
+          FetchedFile(
+            FetchedFile.Source("archive_org"),
+            Some(FetchedFile.Url(url.value)),
+            FetchedFile.Bytes(b.value),
+            FetchedFile.Extension((file).value.toLowerCase.split("\\.").lastOption.getOrElse("pdf"))
+          )
+        )
     }
 
 object ArchiveOrg:

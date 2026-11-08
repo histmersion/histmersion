@@ -18,7 +18,17 @@ class CertaintySuite extends munit.FunSuite:
 
   private val span = (Years.Astronomical(-3500L), Years.Astronomical(-500L))
   private def hit(conf: Option[Confidence]) =
-    GeoHit(Citekey("zz2020_x"), GeoHit.Title("Zz"), GeoHit.Claim("a claim"), None, Some(Longitude(30.0)), Some(Latitude(37.0)), Some(Year(-2100L)), Some(Year(-1900L)), conf)
+    GeoHit(
+      Citekey("zz2020_x"),
+      GeoHit.Title("Zz"),
+      GeoHit.Claim("a claim"),
+      None,
+      Some(Longitude(30.0)),
+      Some(Latitude(37.0)),
+      Some(Year(-2100L)),
+      Some(Year(-1900L)),
+      conf
+    )
   private val high = Certainty.Stated(Confidence.High)
   private val low = Certainty.Stated(Confidence.Low)
   private val contested = Certainty.Stated(Confidence.Contested)
@@ -34,7 +44,9 @@ class CertaintySuite extends munit.FunSuite:
     assertEquals(Certainty.ofAll(List(Some(Confidence.Contested), None, Some(Confidence.Medium))), contested)
     assertEquals(Certainty.ofAll(Nil), Certainty.NoSay)
     assertEquals(Certainty.NoSay, high)
-    val ranks = List(contested, low, Certainty.Stated(Confidence.Medium), Certainty.Unstated, high).map(c => Certainty.rank(c).value)
+    val ranks = List(contested, low, Certainty.Stated(Confidence.Medium), Certainty.Unstated, high).map(c =>
+      Certainty.rank(c).value
+    )
     assertEquals(ranks, ranks.sorted)
     assertEquals(ranks.distinct.size, 5)
 
@@ -45,7 +57,8 @@ class CertaintySuite extends munit.FunSuite:
     assertEquals(DotCluster.Contents(List(site)).certainty, Certainty.NoSay)
 
   test("drawn: unstated is the colour's luminance grey — unlike high, unlike every stated level"):
-    val stated = Confidence.values.toList.map(c => MapView.colorFor(Some(MapView.Mid(-2000.0)), span, Certainty.Stated(c)))
+    val stated =
+      Confidence.values.toList.map(c => MapView.colorFor(Some(MapView.Mid(-2000.0)), span, Certainty.Stated(c)))
     val unstated = MapView.colorFor(Some(MapView.Mid(-2000.0)), span, Certainty.Unstated)
     assert(!stated.contains(unstated), s"$unstated among $stated")
     val parts = "\\d+".r.findAllIn(unstated.value).toList
@@ -67,8 +80,17 @@ class CertaintySuite extends munit.FunSuite:
     )
 
   test("the marker: an unstated finding carries the dashed class; a stated one does not"):
-    assert(PointKinds.Findings.classes(Spot(Latitude(37.0), Longitude(30.0), List(hit(None)))).split(' ').contains("hd-unstated"))
-    assert(!PointKinds.Findings.classes(Spot(Latitude(37.0), Longitude(30.0), List(hit(Some(Confidence.High))))).contains("hd-unstated"))
+    assert(
+      PointKinds.Findings
+        .classes(Spot(Latitude(37.0), Longitude(30.0), List(hit(None))))
+        .split(' ')
+        .contains("hd-unstated")
+    )
+    assert(
+      !PointKinds.Findings
+        .classes(Spot(Latitude(37.0), Longitude(30.0), List(hit(Some(Confidence.High)))))
+        .contains("hd-unstated")
+    )
     assertEquals(Certainty.markerClass(low).value, "")
 
   test("the popup says the confidence is not stated instead of showing nothing"):

@@ -18,4 +18,8 @@ private[histmersion] object SourceColumns:
   )
 
   given apiEdgeKind: DbCodec[Edge.Kind] =
-    Vocab.codec(s => Edge.Kind.fromWire(Edge.Kind.Wire(s.value)), e => WireEnumValues.Wire(Edge.Kind.wireOf(e).value), Edge.Kind.References)
+    Vocab.codec(
+      s => Edge.Kind.fromWire(Edge.Kind.Wire(s.value)),
+      e => WireEnumValues.Wire(Edge.Kind.wireOf(e).value),
+      Edge.Kind.References
+    )

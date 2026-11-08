@@ -7,9 +7,13 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class EventCandidatesRequest(all: EventCandidatesRequest.All = EventCandidatesRequest.All(false), event: Option[Event.Id] = None, limit: Option[EventCandidatesRequest.Limit] = None)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class EventCandidatesRequest(
+    all: EventCandidatesRequest.All = EventCandidatesRequest.All(false),
+    event: Option[Event.Id] = None,
+    limit: Option[EventCandidatesRequest.Limit] = None
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventCandidatesRequest:
   type All = All.T

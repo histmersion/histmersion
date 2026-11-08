@@ -18,6 +18,9 @@ object EnvelopeSql:
         Param.D(Param.D.V(maxLat))
       )
     if b.crossesAntimeridian then
-      val both = List(env(b.minLon.value, b.minLat.value, 180.0, b.maxLat.value), env(-180.0, b.minLat.value, b.maxLon.value, b.maxLat.value))
+      val both = List(
+        env(b.minLon.value, b.minLat.value, 180.0, b.maxLat.value),
+        env(-180.0, b.minLat.value, b.maxLon.value, b.maxLat.value)
+      )
       Sql(Sql.Text(both.map(_.text.value).mkString(" OR ")), both.flatMap(_.params)).wrap("(", ")")
     else env(b.minLon.value, b.minLat.value, b.maxLon.value, b.maxLat.value)

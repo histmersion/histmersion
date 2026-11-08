@@ -16,7 +16,8 @@ object FormatSeverity:
 
   given WireEnumValues[FormatSeverity]:
     def all: Array[FormatSeverity] = values
-    def wire(e: FormatSeverity): WireEnumValues.Wire = WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
+    def wire(e: FormatSeverity): WireEnumValues.Wire =
+      WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
     def fromWire(s: WireEnumValues.Wire): Option[FormatSeverity] = values.find(_.toString.equalsIgnoreCase((s).value))
   given Encoder[FormatSeverity] = WireEnum.encoder
   given Decoder[FormatSeverity] = WireEnum.decoder

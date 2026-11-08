@@ -16,11 +16,19 @@ class HostCollectionSuite extends munit.FunSuite:
 
   private object Shelf extends SourceCollection:
     def title = SourceCollection.TitleResult("Shelf")
-    private val one = CollectionItem(CollectionId("b1"), Some(CollectionItem.Title("A book")), List(CollectionItem.Authors("An Author")))
+    private val one = CollectionItem(
+      CollectionId("b1"),
+      Some(CollectionItem.Title("A book")),
+      List(CollectionItem.Authors("An Author"))
+    )
     def search(query: CollectionQuery) = Right(List(one))
     def item(id: CollectionId) = if id.value == "boom" then throw IllegalStateException("broken") else Right(Some(one))
-    def file(item: CollectionItem, format: Option[SourceCollection.FileFormat]) = Right(CollectionFile(CollectionFile.Name("a.pdf")))
-    def original(item: CollectionItem, file: CollectionFile) = Right(FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf")))
+    def file(item: CollectionItem, format: Option[SourceCollection.FileFormat]) = Right(
+      CollectionFile(CollectionFile.Name("a.pdf"))
+    )
+    def original(item: CollectionItem, file: CollectionFile) = Right(
+      FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
+    )
     override def add(metadata: CollectionMetadata, file: FetchedFile) = Right(CollectionId("written"))
     override def readOnlyReason = SourceCollection.ReadOnlyReasonResult("the shelf is full")
 
@@ -29,7 +37,8 @@ class HostCollectionSuite extends munit.FunSuite:
   final private class ShelfPlugin(id: Plugin.Info.Id, name: Registry.AddId) extends Plugin:
     type Config = NoSettings
     val info = Plugin.Info(id, Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    def register(c: NoSettings, ctx: Plugin.Context) = ctx.sourceCollections.add(name, Shelf).left.map(e => Plugin.RegisterResultPart1(e.value))
+    def register(c: NoSettings, ctx: Plugin.Context) =
+      ctx.sourceCollections.add(name, Shelf).left.map(e => Plugin.RegisterResultPart1(e.value))
 
   private def build(p: Plugin, firstParty: Plugin.Info.Id => Boolean = _ => false) =
     PluginHost.build(
@@ -55,7 +64,10 @@ class HostCollectionSuite extends munit.FunSuite:
 
   test("Histmersion's own collection names are kept for the first-party plugins"):
     val third = build(ShelfPlugin(Plugin.Info.Id("zq-shelf"), Registry.AddId("calibre")))
-    assert(third.report.plugins.head.error.exists(_.value.contains("Histmersion's own source collections")), third.report)
+    assert(
+      third.report.plugins.head.error.exists(_.value.contains("Histmersion's own source collections")),
+      third.report
+    )
     val first = build(
       ShelfPlugin(Plugin.Info.Id("calibre"), Registry.AddId("calibre")),
       id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))
@@ -65,9 +77,19 @@ class HostCollectionSuite extends munit.FunSuite:
   test("the host refuses a write the collection does not declare, and catches what it throws"):
     val c = HostCollection(HostCollection.Name("shelf"), Shelf)
     assertEquals(
-      c.add(CollectionMetadata(CollectionMetadata.Key("k"), CollectionMetadata.Title("T"), List(CollectionMetadata.Authors("A"))), FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))),
+      c.add(
+        CollectionMetadata(
+          CollectionMetadata.Key("k"),
+          CollectionMetadata.Title("T"),
+          List(CollectionMetadata.Authors("A"))
+        ),
+        FetchedFile(FetchedFile.Source("t"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
+      ),
       Left("Shelf is read-only here: the shelf is full")
     )
     assert(c.item(CollectionId("boom")).left.exists(_.value.contains("source collection 'shelf' failed")))
     assertEquals(c.search(CollectionQuery(None)).map(_.size), Right(1))
-    assert(c.updateAll(Nil, apply = SourceCollection.UpdateAllApply(false)).isLeft, "the collection's own default refusal")
+    assert(
+      c.updateAll(Nil, apply = SourceCollection.UpdateAllApply(false)).isLeft,
+      "the collection's own default refusal"
+    )

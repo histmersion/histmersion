@@ -103,7 +103,8 @@ private[places] object PlaceBundleRepo:
             .getOrElse(r.id.value, Vector.empty)
             .toList
             .map((_, sc, ex, rel) =>
-              Bundle.PlaceLink(Bundle.PlaceLink.Scheme(sc), Bundle.PlaceLink.ExternalId(ex), Bundle.PlaceLink.Relation(rel))
+              Bundle
+                .PlaceLink(Bundle.PlaceLink.Scheme(sc), Bundle.PlaceLink.ExternalId(ex), Bundle.PlaceLink.Relation(rel))
             ),
           types
             .getOrElse(r.id, Vector.empty)
@@ -140,7 +141,8 @@ private[places] object PlaceBundleRepo:
       .query[(String, Option[String], Option[String])]
       .run()
       .map((id, v, c) =>
-        Bundle.SiteType(Bundle.SiteType.PlaceId(id), v.map(Bundle.SiteType.Value(_)), c.map(Bundle.SiteType.CheckedAt(_)))
+        Bundle
+          .SiteType(Bundle.SiteType.PlaceId(id), v.map(Bundle.SiteType.Value(_)), c.map(Bundle.SiteType.CheckedAt(_)))
       )
 
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
@@ -170,7 +172,8 @@ private[places] object PlaceBundleRepo:
   /** Which of `ids` name a place here. */
   def present(ids: List[BPlaceRow.Id])(using DbCon): Set[BPlaceRow.Id] =
     if ids.isEmpty then Set.empty
-    else sql"SELECT id FROM places WHERE id = ANY(${ids.distinct}::text[])"
+    else
+      sql"SELECT id FROM places WHERE id = ANY(${ids.distinct}::text[])"
         .query[BPlaceRow.Id]
         .run()
         .toSet
@@ -312,7 +315,9 @@ private[places] object PlaceBundleRepo:
     if w.es.siteTypes.nonEmpty then
       val placeHere = this.placeHere(w)
       val here = Sql
-        .raw(Sql.RawText(s"SELECT id, ${ts("site_type_checked_at")} FROM places WHERE site_type_checked_at IS NOT NULL"))
+        .raw(
+          Sql.RawText(s"SELECT id, ${ts("site_type_checked_at")} FROM places WHERE site_type_checked_at IS NOT NULL")
+        )
         .frag
         .query[(String, String)]
         .run()

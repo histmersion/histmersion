@@ -37,25 +37,47 @@ class AcquireSuite extends munit.FunSuite:
     ) // "The" and "of" are stop words, "End" and "Age" are too short
 
   test("citekey handles 'Surname, Given', non-ASCII and missing pieces"):
-    assertEquals(Acquire.citekey(List(AuthorName("Drews, Robert")), Some(Year(1993)), Some(Title("Collapse"))), "drews1993_collapse")
+    assertEquals(
+      Acquire.citekey(List(AuthorName("Drews, Robert")), Some(Year(1993)), Some(Title("Collapse"))),
+      "drews1993_collapse"
+    )
     assertEquals(
       Acquire.citekey(List(AuthorName("Kristian Kristiansen")), Some(Year(2022)), Some(Title("Archaeology"))),
       "kristiansen2022_archaeology"
     )
-    assertEquals(Acquire.citekey(List(AuthorName("Émilie Renard")), Some(Year(2001)), Some(Title("Étude des tombes"))), "renard2001_etude")
+    assertEquals(
+      Acquire.citekey(List(AuthorName("Émilie Renard")), Some(Year(2001)), Some(Title("Étude des tombes"))),
+      "renard2001_etude"
+    )
     // the pre-#878 generator dropped the accented letter; records created then keep that key
-    assertEquals(Acquire.legacyCitekey(List(AuthorName("Émilie Renard")), Some(Year(2001)), Some(Title("Étude des tombes"))), "renard2001_tude")
+    assertEquals(
+      Acquire.legacyCitekey(List(AuthorName("Émilie Renard")), Some(Year(2001)), Some(Title("Étude des tombes"))),
+      "renard2001_tude"
+    )
     assertEquals(Acquire.citekey(Nil, None, None), "anonnd")
-    assertEquals(Acquire.citekey(List(AuthorName(" ")), Some(Year(2015)), Some(Title("A New Study of the"))), "anon2015")
+    assertEquals(
+      Acquire.citekey(List(AuthorName(" ")), Some(Year(2015)), Some(Title("A New Study of the"))),
+      "anon2015"
+    )
 
   // #714: "Clunies Ross, Margaret" became `clunies…`, and Calibre's placeholder year 101 a key year
   test("citekey keeps a multi-word surname given as 'Surname, Given', and drops placeholder years"):
     assertEquals(
-      Acquire.citekey(List(AuthorName("Clunies Ross, Margaret (ed.)")), Some(Year(2018)), Some(Title("The Pre-Christian Religions"))),
+      Acquire.citekey(
+        List(AuthorName("Clunies Ross, Margaret (ed.)")),
+        Some(Year(2018)),
+        Some(Title("The Pre-Christian Religions"))
+      ),
       "cluniesross2018_christian"
     )
-    assertEquals(Acquire.citekey(List(AuthorName("Young, Ian")), Some(Year(101)), Some(Title("Twilight"))), "youngnd_twilight")
-    assertEquals(Acquire.citekey(List(AuthorName("Young, Ian")), Some(Year(1000)), Some(Title("Twilight"))), "young1000_twilight")
+    assertEquals(
+      Acquire.citekey(List(AuthorName("Young, Ian")), Some(Year(101)), Some(Title("Twilight"))),
+      "youngnd_twilight"
+    )
+    assertEquals(
+      Acquire.citekey(List(AuthorName("Young, Ian")), Some(Year(1000)), Some(Title("Twilight"))),
+      "young1000_twilight"
+    )
 
   // #699
   test("assess --apply: only unassessed is overwritten, unless forced; a retraction always is"):
@@ -69,10 +91,18 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(Acquire.statusDecision(Verdicts.LowImpact, Current, force = true), None)
 
   test("citekey is stable: the same metadata always yields the same key"):
-    val a = Acquire.citekey(List(AuthorName("Eric H. Cline")), Some(Year(2014)), Some(Title("1177 B.C.: The Year Civilization Collapsed")))
+    val a = Acquire.citekey(
+      List(AuthorName("Eric H. Cline")),
+      Some(Year(2014)),
+      Some(Title("1177 B.C.: The Year Civilization Collapsed"))
+    )
     assertEquals(
       a,
-      Acquire.citekey(List(AuthorName("Eric H. Cline")), Some(Year(2014)), Some(Title("1177 B.C.: The Year Civilization Collapsed")))
+      Acquire.citekey(
+        List(AuthorName("Eric H. Cline")),
+        Some(Year(2014)),
+        Some(Title("1177 B.C.: The Year Civilization Collapsed"))
+      )
     )
     assertEquals(a, "cline2014_year") // digits are not letters, so "1177" is skipped
 
@@ -93,7 +123,10 @@ class AcquireSuite extends munit.FunSuite:
   test("parseIdent prefers DOI, then arXiv, then citekey"):
     assertEquals(Ident.parse(Ident.Written("10.1038/nature14317")), Right(Ident.Doi(Doi("10.1038/nature14317"))))
     assertEquals(Ident.parse(Ident.Written("arxiv:2301.01234")), Right(Ident.Arxiv(ArxivId("2301.01234"))))
-    assertEquals(Ident.parse(Ident.Written("haak2015_massive")), Right(Ident.Citekey(Ident.Citekey.Value("haak2015_massive"))))
+    assertEquals(
+      Ident.parse(Ident.Written("haak2015_massive")),
+      Right(Ident.Citekey(Ident.Citekey.Value("haak2015_massive")))
+    )
     assert(Ident.parse(Ident.Written("")).isLeft)
     assert(Ident.parse(Ident.Written("Some Paper Title")).isLeft)
 
@@ -104,29 +137,53 @@ class AcquireSuite extends munit.FunSuite:
       oaRetracted: Boolean = false,
       cited: Option[Acquire.CitedByCount] = Some(Acquire.CitedByCount(10)),
       year: Option[Year] = Some(Year(2015))
-  ) = Acquire.verdict(retr, upd, oaRetracted, cited, year, wellCitedAt = Acquire.CitationThreshold(50), lowCitedAt = Acquire.CitationThreshold(3), staleBefore = Year(2018))
+  ) = Acquire.verdict(
+    retr,
+    upd,
+    oaRetracted,
+    cited,
+    year,
+    wellCitedAt = Acquire.CitationThreshold(50),
+    lowCitedAt = Acquire.CitationThreshold(3),
+    staleBefore = Year(2018)
+  )
 
   test("a Retraction Watch retraction, an OpenAlex flag or a Crossref retraction all mean retracted"):
-    assertEquals(v(retr = List(RetractionNotice(Some(RetractionNotice.Nature("Retraction")), None, None))), Verdicts.Retracted)
+    assertEquals(
+      v(retr = List(RetractionNotice(Some(RetractionNotice.Nature("Retraction")), None, None))),
+      Verdicts.Retracted
+    )
     assertEquals(v(oaRetracted = true), Verdicts.Retracted)
     assertEquals(v(upd = List(UpdateNotice(Some(UpdateNotice.Kind("retraction")), None, None))), Verdicts.Retracted)
     assertEquals(v(upd = List(UpdateNotice(Some(UpdateNotice.Kind("withdrawal")), None, None))), Verdicts.Retracted)
 
   test("a reinstatement is NOT a retraction"):
     assertEquals(
-      v(retr = List(RetractionNotice(Some(RetractionNotice.Nature("Reinstatement")), None, None)), cited = Some(Acquire.CitedByCount(80))),
+      v(
+        retr = List(RetractionNotice(Some(RetractionNotice.Nature("Reinstatement")), None, None)),
+        cited = Some(Acquire.CitedByCount(80))
+      ),
       Verdicts.Corrected
     )
 
   test("corrections and expressions of concern mean corrected"):
     assertEquals(v(upd = List(UpdateNotice(Some(UpdateNotice.Kind("correction")), None, None))), Verdicts.Corrected)
-    assertEquals(v(upd = List(UpdateNotice(Some(UpdateNotice.Kind("expression_of_concern")), None, None))), Verdicts.Corrected)
-    assertEquals(v(retr = List(RetractionNotice(Some(RetractionNotice.Nature("Correction")), None, None))), Verdicts.Corrected)
+    assertEquals(
+      v(upd = List(UpdateNotice(Some(UpdateNotice.Kind("expression_of_concern")), None, None))),
+      Verdicts.Corrected
+    )
+    assertEquals(
+      v(retr = List(RetractionNotice(Some(RetractionNotice.Nature("Correction")), None, None))),
+      Verdicts.Corrected
+    )
 
   test("citation metrics decide when nothing is flagged"):
     assertEquals(v(cited = Some(Acquire.CitedByCount(900))), Verdicts.Current)
     assertEquals(v(cited = Some(Acquire.CitedByCount(1)), year = Some(Year(2001))), Verdicts.LowImpact)
-    assertEquals(v(cited = Some(Acquire.CitedByCount(1)), year = Some(Year(2024))), Verdicts.Current) // too new to judge by citations
+    assertEquals(
+      v(cited = Some(Acquire.CitedByCount(1)), year = Some(Year(2024))),
+      Verdicts.Current
+    ) // too new to judge by citations
     assertEquals(v(cited = None), Verdicts.Unassessed)
 
   test("verdict → flagged, status and recommendation"):
@@ -186,7 +243,13 @@ class AcquireSuite extends munit.FunSuite:
     )
     // influential but published immediately after → not a superseding paper
     assertEquals(
-      c(Acquire.CitationContext("we reanalyse the samples"), List(Acquire.Intent.Wire("result")), infl = true, citing = Some(Year(2016)), target = Some(Year(2015))),
+      c(
+        Acquire.CitationContext("we reanalyse the samples"),
+        List(Acquire.Intent.Wire("result")),
+        infl = true,
+        citing = Some(Year(2016)),
+        target = Some(Year(2015))
+      ),
       EdgeKinds.Cites
     )
 
@@ -196,9 +259,17 @@ class AcquireSuite extends munit.FunSuite:
   test("rankFollowups: influential first, then result/method intent, then recency"):
     val rows = List(
       FollowupRow(title = Some(Title("old plain")), year = Some(Year(2016))),
-      FollowupRow(title = Some(Title("influential")), year = Some(Year(2017)), isInfluential = FollowupRow.IsInfluential(true)),
+      FollowupRow(
+        title = Some(Title("influential")),
+        year = Some(Year(2017)),
+        isInfluential = FollowupRow.IsInfluential(true)
+      ),
       FollowupRow(title = Some(Title("recent plain")), year = Some(Year(2024))),
-      FollowupRow(title = Some(Title("method")), year = Some(Year(2018)), intents = List(FollowupRow.Intents("methodology")))
+      FollowupRow(
+        title = Some(Title("method")),
+        year = Some(Year(2018)),
+        intents = List(FollowupRow.Intents("methodology"))
+      )
     )
     assertEquals(
       Acquire.rankFollowups(rows).flatMap(_.title),
@@ -242,7 +313,11 @@ class AcquireSuite extends munit.FunSuite:
       oaUrl = Some(WorkRef.OaUrl("https://www.mdpi.com/2077-1444/10/4/258/pdf"))
     )
     assertEquals(
-      Acquire.browserDownloadText(w, com.histmersion.api.library.Doi("10.3390/rel10040258"), Citekey("greener2019_archaeology")),
+      Acquire.browserDownloadText(
+        w,
+        com.histmersion.api.library.Doi("10.3390/rel10040258"),
+        Citekey("greener2019_archaeology")
+      ),
       Some(
         "Aaron Greener (2019). Archaeology and Religion in Late Bronze Age Canaan. https://doi.org/10.3390/rel10040258 — " +
           "gold open access at https://www.mdpi.com/2077-1444/10/4/258/pdf, but no script may download it: download it in the " +
@@ -250,15 +325,29 @@ class AcquireSuite extends munit.FunSuite:
       )
     )
     // the DOI link is not repeated as the location; no status says just "open access"; a closed work gets none
-    val doiOnly = w.modify(_.oaStatus).setTo(None).modify(_.oaUrl).setTo(Some(WorkRef.OaUrl("https://doi.org/10.3390/rel10040258"))).modify(_.authors).setTo(List("A", "B").map(AuthorName.apply))
+    val doiOnly = w
+      .modify(_.oaStatus)
+      .setTo(None)
+      .modify(_.oaUrl)
+      .setTo(Some(WorkRef.OaUrl("https://doi.org/10.3390/rel10040258")))
+      .modify(_.authors)
+      .setTo(List("A", "B").map(AuthorName.apply))
     assert(
       Acquire
         .browserDownloadText(doiOnly, com.histmersion.api.library.Doi("10.3390/REL10040258"), Citekey("k"))
         .exists(t =>
-          t.value.startsWith("A et al. (2019).") && t.value.contains("— open access, but") && !t.value.contains(" at https://doi.org")
+          t.value.startsWith("A et al. (2019).") && t.value.contains("— open access, but") && !t.value
+            .contains(" at https://doi.org")
         )
     )
-    assertEquals(Acquire.browserDownloadText(w.modify(_.isOa).setTo(WorkRef.IsOa(false)), com.histmersion.api.library.Doi("10.3390/rel10040258"), Citekey("k")), None)
+    assertEquals(
+      Acquire.browserDownloadText(
+        w.modify(_.isOa).setTo(WorkRef.IsOa(false)),
+        com.histmersion.api.library.Doi("10.3390/rel10040258"),
+        Citekey("k")
+      ),
+      None
+    )
 
   test("browserDownloadText: a fetcher's refusal says where to download it and under which licence"):
     val w = WorkRef(
@@ -268,8 +357,18 @@ class AcquireSuite extends munit.FunSuite:
       isOa = WorkRef.IsOa(true),
       oaStatus = Some(WorkRef.OaStatus("gold"))
     )
-    val refusal = Acquire.Refusal("oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
-      "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0")
-    val text = Acquire.browserDownloadText(w, com.histmersion.api.library.Doi("10.1515/zz"), Citekey("k"), List(refusal, refusal, Acquire.Refusal(" "))).getOrElse(fail("an item")).value
+    val refusal = Acquire.Refusal(
+      "oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
+        "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
+    )
+    val text = Acquire
+      .browserDownloadText(
+        w,
+        com.histmersion.api.library.Doi("10.1515/zz"),
+        Citekey("k"),
+        List(refusal, refusal, Acquire.Refusal(" "))
+      )
+      .getOrElse(fail("an item"))
+      .value
     assert(text.contains(s"download it in the browser ($refusal), then histmersion ingest <file> --citekey k"), text)
     assertEquals(text.sliding(refusal.value.length).count(_ == refusal.value), 1, "each refusal once")

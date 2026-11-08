@@ -9,6 +9,8 @@ class FiguresControllersSuite extends munit.FunSuite:
   test("a dry run answers under the lock; the fill itself does not"):
     val gate = WriteGate()
     val c = FiguresControllers(FigureService.InMemory(), gate)
-    val held = gate.exclusively(WriteGate.OperationName("restore"))(Right((c.fillLicences(apply = FigureService.Apply(false)), c.fillLicences(apply = FigureService.Apply(true)))))
+    val held = gate.exclusively(WriteGate.OperationName("restore"))(
+      Right((c.fillLicences(apply = FigureService.Apply(false)), c.fillLicences(apply = FigureService.Apply(true))))
+    )
     val (dry, wet) = held.fold(e => fail(e.message.value), identity)
     assert(dry.isRight && wet.isLeft, (dry, wet))

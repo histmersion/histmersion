@@ -18,7 +18,15 @@ class GoalPageSuite extends munit.FunSuite:
       kind: ManagerItem.Kind = ManagerItem.Kind("compile-article"),
       target: ManagerItem.Target = ManagerItem.Target("sea-peoples")
   ) =
-    Managers.ManagerItem(id, Managers.ManagerInfo.Id("seed:g"), kind, target, status, updatedAt = at, createdAt = ManagerItem.CreatedAt(at.value))
+    Managers.ManagerItem(
+      id,
+      Managers.ManagerInfo.Id("seed:g"),
+      kind,
+      target,
+      status,
+      updatedAt = at,
+      createdAt = ManagerItem.CreatedAt(at.value)
+    )
 
   test("the plan: what runs now first, then what is to do, then what was done, newest first in each"):
     val is = List(
@@ -36,11 +44,31 @@ class GoalPageSuite extends munit.FunSuite:
 
   test("a step's name is its kind of work and what it is on"):
     assertEquals(
-      GoalPage.stepName(item(ManagerItem.Id(1), ManagerItem.Status("done"), ManagerItem.UpdatedAt("t"), kind = ManagerItem.Kind("review-article"), target = ManagerItem.Target("sea-peoples"))).value,
+      GoalPage
+        .stepName(
+          item(
+            ManagerItem.Id(1),
+            ManagerItem.Status("done"),
+            ManagerItem.UpdatedAt("t"),
+            kind = ManagerItem.Kind("review-article"),
+            target = ManagerItem.Target("sea-peoples")
+          )
+        )
+        .value,
       "Review an article — sea-peoples"
     )
     assertEquals(
-      GoalPage.stepName(item(ManagerItem.Id(1), ManagerItem.Status("done"), ManagerItem.UpdatedAt("t"), kind = ManagerItem.Kind("currency-check"), target = ManagerItem.Target("seed:g"))).value,
+      GoalPage
+        .stepName(
+          item(
+            ManagerItem.Id(1),
+            ManagerItem.Status("done"),
+            ManagerItem.UpdatedAt("t"),
+            kind = ManagerItem.Kind("currency-check"),
+            target = ManagerItem.Target("seed:g")
+          )
+        )
+        .value,
       "Check sources are current"
     )
 
@@ -72,18 +100,37 @@ class GoalPageSuite extends munit.FunSuite:
       GoalPage.schedule(v, None, None, now).map(_.value),
       Some("checked for new publications 3 days ago · next check in 4 days")
     )
-    val watcher = Managers.ManagerInfo(Managers.ManagerInfo.Id("watch:g"), Managers.ManagerInfo.Kind("watch"), goal = Some(Goal.Slug("g")), nextTickAt = Some(Managers.ManagerInfo.NextTickAt("2026-10-31T13:00:00")))
-    assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), Some(watcher), None, now).map(_.value), Some("next check tomorrow"))
+    val watcher = Managers.ManagerInfo(
+      Managers.ManagerInfo.Id("watch:g"),
+      Managers.ManagerInfo.Kind("watch"),
+      goal = Some(Goal.Slug("g")),
+      nextTickAt = Some(Managers.ManagerInfo.NextTickAt("2026-10-31T13:00:00"))
+    )
+    assertEquals(
+      GoalPage.schedule(v.modify(_.schedules).setTo(Nil), Some(watcher), None, now).map(_.value),
+      Some("next check tomorrow")
+    )
     assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), None, None, now), None)
 
   test("a goal is paused when every agent working for it is; its lists and sources are filtered to it"):
     val ms = List(
-      Managers.ManagerInfo(Managers.ManagerInfo.Id("seed:g"), Managers.ManagerInfo.Kind("seed"), state = Managers.ManagerInfo.State("paused")),
-      Managers.ManagerInfo(Managers.ManagerInfo.Id("watch:g"), Managers.ManagerInfo.Kind("watch"), state = Managers.ManagerInfo.State("paused"))
+      Managers.ManagerInfo(
+        Managers.ManagerInfo.Id("seed:g"),
+        Managers.ManagerInfo.Kind("seed"),
+        state = Managers.ManagerInfo.State("paused")
+      ),
+      Managers.ManagerInfo(
+        Managers.ManagerInfo.Id("watch:g"),
+        Managers.ManagerInfo.Kind("watch"),
+        state = Managers.ManagerInfo.State("paused")
+      )
     )
     assert(GoalPage.paused(ms))
     assert(!GoalPage.paused(ms.updated(0, ms.head.copy(state = Managers.ManagerInfo.State("active")))))
     assert(!GoalPage.paused(Nil))
-    assertEquals(GoalPage.listOf(ResearchSection.Backlog, Goal.Slug("bronze age")).value, "/research/backlog?goal=bronze%20age")
+    assertEquals(
+      GoalPage.listOf(ResearchSection.Backlog, Goal.Slug("bronze age")).value,
+      "/research/backlog?goal=bronze%20age"
+    )
     assertEquals(GoalPage.libraryOf(Goal.Slug("g")).value, "/library#goal=g")
     assertEquals(GoalPage.mapOf(Goal.Slug("g")).value, "/explore#goal=g")

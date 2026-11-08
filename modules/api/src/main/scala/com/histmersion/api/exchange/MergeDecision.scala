@@ -8,14 +8,14 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
-  def wire: MergeDecision.Wire = MergeDecision.Wire(MergeDecision.Kind.wireOf(kind).value + argument.fold("")(a => s":${a.value}"))
+  def wire: MergeDecision.Wire =
+    MergeDecision.Wire(MergeDecision.Kind.wireOf(kind).value + argument.fold("")(a => s":${a.value}"))
 
 object MergeDecision:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
-
 
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]

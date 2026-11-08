@@ -27,19 +27,34 @@ class PlanRunsSuite extends munit.FunSuite:
 
   final private class Named(name: String, answers: Boolean) extends PlanRun:
     override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
-      es.modify(_.aliases).setTo(es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value(name), uid(name), com.histmersion.api.exchange.Bundle.Alias.CreatedAt("2026-01-01T00:00:00.000000Z"))
-      )
+      es.modify(_.aliases)
+        .setTo(
+          es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(
+            com.histmersion.api.exchange.Bundle.Alias.Value(name),
+            uid(name),
+            com.histmersion.api.exchange.Bundle.Alias.CreatedAt("2026-01-01T00:00:00.000000Z")
+          )
+        )
     override def notices: List[PairQuestions.InfoLine] = List(PairQuestions.InfoLine(s"$name notice"))
-    override def ownerSource(foreign: UUID, kind: com.histmersion.api.exchange.Bundle.Kind): Option[UUID] = Option.when(answers)(uid(name))
+    override def ownerSource(foreign: UUID, kind: com.histmersion.api.exchange.Bundle.Kind): Option[UUID] =
+      Option.when(answers)(uid(name))
     override def bodiesWanted(
         pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
-    ): Set[com.histmersion.api.exchange.Bundle.Source.BodySha256] = Set(com.histmersion.api.exchange.Bundle.Source.BodySha256(name))
-    override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+    ): Set[com.histmersion.api.exchange.Bundle.Source.BodySha256] = Set(
+      com.histmersion.api.exchange.Bundle.Source.BodySha256(name)
+    )
+    override def argument(
+        issue: MergeIssue,
+        decision: MergeDecision
+    ): Option[Either[MergePlan.ResolutionErrors, Unit]] =
       Option.when(answers)(Left(MergePlan.ResolutionErrors(name)))
     override def pairIssue(kind: MergeIssue.Kind): Boolean = answers && kind == MergeIssue.Kind.AttestationUnanchored
     override def dropped: Set[UUID] = Set(uid(name))
     override def bodyIssue(right: UUID): Option[MergeIssue.Id] = Option.when(answers)(MergeIssue.Id(name))
-    override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+    override def citekeyArgument(
+        issue: MergeIssue,
+        decision: MergeDecision
+    ): Option[Either[MergePlan.ResolutionErrors, Unit]] =
       Option.when(answers)(Left(MergePlan.ResolutionErrors(s"$name citekey")))
     override def foldSources(
         right: com.histmersion.api.exchange.Bundle.Source,
@@ -83,18 +98,30 @@ class PlanRunsSuite extends munit.FunSuite:
   test("the stages that transform or collect run every kind in order"):
     assertEquals(runs.localized(BundleEntities(), Map.empty).aliases.map(_.alias), List("a", "b", "c"))
     assertEquals(runs.notices, List("a notice", "b notice", "c notice").map(PairQuestions.InfoLine(_)))
-    assertEquals(runs.bodiesWanted(Nil), Set("a", "b", "c").map(com.histmersion.api.exchange.Bundle.Source.BodySha256(_)))
+    assertEquals(
+      runs.bodiesWanted(Nil),
+      Set("a", "b", "c").map(com.histmersion.api.exchange.Bundle.Source.BodySha256(_))
+    )
     assertEquals(runs.dropped, Set(uid("a"), uid("b"), uid("c")))
 
   test("the stages that ask take the first kind that answers"):
     assertEquals(runs.ownerSource(uid("x"), com.histmersion.api.exchange.Bundle.Kind.Attestation), Some(uid("b")))
-    assertEquals(runs.argument(issue, MergeDecision(MergeDecision.Kind.RenameRight, Some(MergeDecision.Argument("y")))), Some(Left(MergePlan.ResolutionErrors("b"))))
+    assertEquals(
+      runs.argument(issue, MergeDecision(MergeDecision.Kind.RenameRight, Some(MergeDecision.Argument("y")))),
+      Some(Left(MergePlan.ResolutionErrors("b")))
+    )
     assert(runs.pairIssue(MergeIssue.Kind.AttestationUnanchored))
     assert(!runs.pairIssue(MergeIssue.Kind.TitleDiffers))
     assertEquals(PlanRuns(Nil).ownerSource(uid("x"), com.histmersion.api.exchange.Bundle.Kind.Attestation), None)
     assertEquals(runs.bodyIssue(uid("x")), Some(MergeIssue.Id("b")))
-    assertEquals(runs.citekeyArgument(issue, MergeDecision(MergeDecision.Kind.Map, Some(MergeDecision.Argument("y")))), Some(Left(MergePlan.ResolutionErrors("b citekey"))))
-    assertEquals(PlanRuns(Nil).citekeyArgument(issue, MergeDecision(MergeDecision.Kind.Map, Some(MergeDecision.Argument("y")))), None)
+    assertEquals(
+      runs.citekeyArgument(issue, MergeDecision(MergeDecision.Kind.Map, Some(MergeDecision.Argument("y")))),
+      Some(Left(MergePlan.ResolutionErrors("b citekey")))
+    )
+    assertEquals(
+      PlanRuns(Nil).citekeyArgument(issue, MergeDecision(MergeDecision.Kind.Map, Some(MergeDecision.Argument("y")))),
+      None
+    )
 
   test("the sources' fold and rename reach every kind; the plan passes through each in turn"):
     seen.clear()
@@ -132,5 +159,20 @@ class PlanRunsSuite extends munit.FunSuite:
     )
     val inst = com.histmersion.api.exchange.Bundle.Instance(uid("i"), None)
     val plan =
-      MergePlan(uid("p"), inst, inst, MergePlan.FormatVersion(1), MergePlan.SchemaVersion("1"), None, MergePlan.PlanHash("h"), MatchCounts(), PlanMatches.empty, Nil, Nil, Nil, Nil, MergePlan.Resolved(0))
+      MergePlan(
+        uid("p"),
+        inst,
+        inst,
+        MergePlan.FormatVersion(1),
+        MergePlan.SchemaVersion("1"),
+        None,
+        MergePlan.PlanHash("h"),
+        MatchCounts(),
+        PlanMatches.empty,
+        Nil,
+        Nil,
+        Nil,
+        Nil,
+        MergePlan.Resolved(0)
+      )
     assertEquals(runs.planned(plan).info, List("a", "b", "c").map(MergePlan.Info(_)))

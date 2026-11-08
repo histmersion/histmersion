@@ -14,8 +14,11 @@ import scala.jdk.CollectionConverters.*
 
 object Trace:
 
-
-  def messages(h: ConversationHistory, latencies: Vector[AgentRepo.MessageRecord.LatencyMs], max: Int): List[AgentRepo.MessageRecord] =
+  def messages(
+      h: ConversationHistory,
+      latencies: Vector[AgentRepo.MessageRecord.LatencyMs],
+      max: Int
+  ): List[AgentRepo.MessageRecord] =
     def cut(s: String) = if s.length <= max then s else s.take(max) + s"… (${s.length - max} more chars)"
     // an assistant entry closes one LLM call: hand it that call's latency, in order
     val lat = latencies.iterator

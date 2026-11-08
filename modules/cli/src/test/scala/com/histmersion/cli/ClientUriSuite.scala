@@ -76,7 +76,9 @@ class ClientUriSuite extends munit.FunSuite:
     assert(u.contains("tag=a") && u.contains("tag=b"), u)
 
   test("facets carries field, prefix and the same filter"):
-    val u = uriOf(Api.facets)((Api.Facets.Field("tags"), Some(Api.Facets.Prefix("in")), Filter(status = List(Filter.Status("current")))))
+    val u = uriOf(Api.facets)(
+      (Api.Facets.Field("tags"), Some(Api.Facets.Prefix("in")), Filter(status = List(Filter.Status("current"))))
+    )
     assert(u.startsWith("http://example.invalid/api/facets?"), u)
     assert(u.contains("field=tags") && u.contains("prefix=in") && u.contains("status=current"), u)
 
@@ -113,11 +115,17 @@ class ClientUriSuite extends munit.FunSuite:
 
   test("/api/aggregate takes by + unit + the same filter params"):
     val u = uriOf(Api.aggregate)(
-      Api.AggregateQuery.time(Filter(tags = List(Filter.Tags("steppe")), period = Some(Period(Year(-3300), Year(-2600)))), Some(Api.AggregateQuery.Unit("sources")))
+      Api.AggregateQuery.time(
+        Filter(tags = List(Filter.Tags("steppe")), period = Some(Period(Year(-3300), Year(-2600)))),
+        Some(Api.AggregateQuery.Unit("sources"))
+      )
     )
     assert(u.startsWith("http://example.invalid/api/aggregate?"), u)
     List("by=time", "unit=sources", "tag=steppe", "from=-3300", "to=-2600")
       .foreach(p => assert(u.contains(p), s"$p missing from $u"))
 
   test("the legacy /api/search endpoint is untouched (the web page uses it)"):
-    assertEquals(uriOf(Api.search)((Some(Api.Search.Text("collapse")), Some(Api.Search.Limit(5)))), "http://example.invalid/api/search?q=collapse&limit=5")
+    assertEquals(
+      uriOf(Api.search)((Some(Api.Search.Text("collapse")), Some(Api.Search.Limit(5)))),
+      "http://example.invalid/api/search?q=collapse&limit=5"
+    )

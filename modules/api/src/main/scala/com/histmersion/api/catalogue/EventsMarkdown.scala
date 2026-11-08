@@ -17,7 +17,7 @@ object EventsMarkdown:
     OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine).value
 
   private[api] def eventScale(e: EventSummary): String =
-    (s"${e.scale} (${if ((e.scaleStated) == EventSummary.ScaleStated(true)) then "stated" else "derived"})")
+    (s"${e.scale} (${if (e.scaleStated) == EventSummary.ScaleStated(true) then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
   def event(d: EventCard, pictures: List[String] = Nil): String =
@@ -29,7 +29,9 @@ object EventsMarkdown:
     val scale = s"  \n**Scale:** ${eventScale(e)}"
     val dating = (e.datingNote.toList ++ EventPrecision
       .label(e.precision)
-      .map(l => if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l))
+      .map(l =>
+        if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l
+      ))
       .mkString(" · ")
     val datingLine = if dating.isEmpty then "" else s"  \n**Dating:** $dating"
     val corrections = if d.corrections.isEmpty then ""

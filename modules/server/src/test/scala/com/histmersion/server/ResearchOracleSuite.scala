@@ -69,13 +69,29 @@ class ResearchOracleSuite extends DbSuite:
   // ── the server ─────────────────────────────────────────────────────────────────────────────
 
   private def cfgFor(name: String): AppConfig =
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s11o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s11o_${name}_test")))
+      .modify(_.backups)
+      .setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString)))
+      .modify(_.bundles)
+      .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString)))
+      .modify(_.converter)
+      .setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString)))
+      .modify(_.acquire)
+      .setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString)))
+      .modify(_.init)
+      .setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false)))
+      .modify(_.runtime)
+      .setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString)))
+      .modify(_.basemap)
+      .setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString)))
 
   private def withServer[A](name: String)(body: String => A): A =
     supervised {
-      val b = Composition.server(cfgFor(name), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter()).start()
+      val b = Composition
+        .server(cfgFor(name), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter())
+        .start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -1163,7 +1179,12 @@ class ResearchOracleSuite extends DbSuite:
           if cs.isEmpty then Nil
           else
             connect(ds)(
-              Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cs FROM "$t") x""")).frag.query[String].run().toList
+              Sql
+                .raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cs FROM "$t") x"""))
+                .frag
+                .query[String]
+                .run()
+                .toList
             )
         val normed = rs.map(r => render(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")

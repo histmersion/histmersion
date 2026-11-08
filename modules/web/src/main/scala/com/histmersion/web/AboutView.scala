@@ -35,7 +35,12 @@ object AboutView:
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
   private[web] def check(label: String, text: Option[String]): Row =
     val st = ServiceState.of(text.map(ServiceState.Wire(_)))
-    Row(label, st.label.value, Some(st), text.map(_.trim).filter(t => t.nonEmpty && !t.equalsIgnoreCase(st.label.value)))
+    Row(
+      label,
+      st.label.value,
+      Some(st),
+      text.map(_.trim).filter(t => t.nonEmpty && !t.equalsIgnoreCase(st.label.value))
+    )
 
   /** The panel's content, as data — so what it says is a unit test. */
   def sections(a: About): List[Section] =
@@ -44,7 +49,10 @@ object AboutView:
       "Server",
       List(
         Row("version", s"${a.name} ${b.version}"),
-        Row("commit", b.gitCommit.fold("unknown")(c => if b.dirty.value then s"$c (with uncommitted changes)" else s"$c")),
+        Row(
+          "commit",
+          b.gitCommit.fold("unknown")(c => if b.dirty.value then s"$c (with uncommitted changes)" else s"$c")
+        ),
         Row("commit date", b.commitDate.fold("unknown")(_.value)),
         Row("licence", b.licence.fold("unknown")(_.value)),
         Row(
@@ -119,7 +127,11 @@ object AboutView:
       val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
         Option.when(r.measuring.value)("measuring…")).mkString(" · ")
       val total = Option.when(r.entries.nonEmpty)(
-        Row("in all", Backup.humanBytes(ByteCount(Storage.total(r.entries).value.toLong)), detail = Option.when(when.nonEmpty)(when))
+        Row(
+          "in all",
+          Backup.humanBytes(ByteCount(Storage.total(r.entries).value.toLong)),
+          detail = Option.when(when.nonEmpty)(when)
+        )
       )
       val rows = Storage.shown(r.entries).map { (e, depth) =>
         Row(

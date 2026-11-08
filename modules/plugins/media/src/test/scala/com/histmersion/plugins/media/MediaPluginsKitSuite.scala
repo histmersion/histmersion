@@ -74,7 +74,11 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     }
 
   test("a media plugin has no setting the host owns: an endpoint in its block is refused"):
-    val refused = PluginHarness.load(Plugin.Info.Id("media-met"), "api-url = \"https://elsewhere.example\"", http = HttpMode.Offline)
+    val refused = PluginHarness.load(
+      Plugin.Info.Id("media-met"),
+      "api-url = \"https://elsewhere.example\"",
+      http = HttpMode.Offline
+    )
     assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
 
   test("media-met: a search at the host's endpoint, each object read, judged as the server judges it"):
@@ -82,7 +86,11 @@ class MediaPluginsKitSuite extends munit.FunSuite:
     val ids = List(252448L, 248284L, 252447L, 252446L, 253574L)
     val obj = fixture("met-object.json")
     val stubs =
-      Map(at(MetCollection.searchUrl(api, MediaPlace.Label("Mycenae"), media.met.candidates)) -> json(fixture("met-search.json"))) ++
+      Map(
+        at(MetCollection.searchUrl(api, MediaPlace.Label("Mycenae"), media.met.candidates)) -> json(
+          fixture("met-search.json")
+        )
+      ) ++
         Map(
           at(MetCollection.objectUrl(api, MetCollection.ObjectId(252448L))) -> json(obj),
           at(MetCollection.objectUrl(api, MetCollection.ObjectId(248284L))) -> json(
@@ -90,7 +98,10 @@ class MediaPluginsKitSuite extends munit.FunSuite:
           )
         )
     val h = load(Plugin.Info.Id("media-met"), stubs)
-    val r = h.searchMedia(Registries.MediaCollectionsKey("met"), MediaPlace(MediaPlace.Id("pleiades_570491"), MediaPlace.Label("Mycenae")))
+    val r = h.searchMedia(
+      Registries.MediaCollectionsKey("met"),
+      MediaPlace(MediaPlace.Id("pleiades_570491"), MediaPlace.Label("Mycenae"))
+    )
     assertEquals(r.failure, None)
     assertEquals(
       r.requests,
@@ -111,10 +122,17 @@ class MediaPluginsKitSuite extends munit.FunSuite:
   test("media-opencontext: the host lends its licence reading — a record stated by its URL is read as CC BY 4.0"):
     val api = media.openContext.apiUrl
     val stubs = Map(
-      at(OpenContext.searchUrl(api, MediaPlace.Label("Petra"), media.openContext.candidates)) -> json(fixture("oc-search.json")),
-      at(OpenContext.itemUrl(api, OpenContext.Uuid("f589a368-62ed-43df-5738-4c84d2f5f765"))) -> json(fixture("oc-media.json"))
+      at(OpenContext.searchUrl(api, MediaPlace.Label("Petra"), media.openContext.candidates)) -> json(
+        fixture("oc-search.json")
+      ),
+      at(OpenContext.itemUrl(api, OpenContext.Uuid("f589a368-62ed-43df-5738-4c84d2f5f765"))) -> json(
+        fixture("oc-media.json")
+      )
     )
-    val r = load(Plugin.Info.Id("media-opencontext"), stubs).searchMedia(Registries.MediaCollectionsKey("opencontext"), MediaPlace(MediaPlace.Id("pleiades_697725"), MediaPlace.Label("Petra")))
+    val r = load(Plugin.Info.Id("media-opencontext"), stubs).searchMedia(
+      Registries.MediaCollectionsKey("opencontext"),
+      MediaPlace(MediaPlace.Id("pleiades_697725"), MediaPlace.Label("Petra"))
+    )
     val bowls = r.verdicts.find(_.key.value == "f589a368-62ed-43df-5738-4c84d2f5f765").getOrElse(fail(r.toString))
     assertEquals((bowls.licence, bowls.refused), (Some("CC-BY-4.0"), None))
     assert(bowls.item.exists(_.imageUrl.exists(_.value.contains("ia-previews"))), "completed from its media item")
@@ -122,7 +140,8 @@ class MediaPluginsKitSuite extends munit.FunSuite:
   test("media-smithsonian with a fixture key: registered, its key a header, never in a request line"):
     val key = "si-fixture-key-0123"
     val units = CollectionSettings.items(media.smithsonian.excludeProviders).map(i => Smithsonian.Unit(i.value))
-    val url = Smithsonian.searchUrl(media.smithsonian.apiUrl, MediaPlace.Label("Egypt"), media.smithsonian.candidates, units)
+    val url =
+      Smithsonian.searchUrl(media.smithsonian.apiUrl, MediaPlace.Label("Egypt"), media.smithsonian.candidates, units)
     val h = load(
       Plugin.Info.Id("media-smithsonian"),
       Map(at(url) -> json(fixture("si-search.json"))),
@@ -130,16 +149,24 @@ class MediaPluginsKitSuite extends munit.FunSuite:
       env = Map("ZQMT_SI_KEY" -> key)
     )
     assertEquals(h.contributions.mediaCollections, List("smithsonian"))
-    val r = h.searchMedia(Registries.MediaCollectionsKey("smithsonian"), MediaPlace(MediaPlace.Id("geonames_357994"), MediaPlace.Label("Egypt")))
+    val r = h.searchMedia(
+      Registries.MediaCollectionsKey("smithsonian"),
+      MediaPlace(MediaPlace.Id("geonames_357994"), MediaPlace.Label("Egypt"))
+    )
     assertEquals(r.requests, List(s"GET $url"))
     assert(r.requests.forall(!_.value.contains(key)))
     assertEquals(r.kept.map(_.key).headOption, Some("fsg_F1909.1185"))
     assertEquals(r.kept.flatMap(_.licence).distinct, List("CC0-1.0"))
 
   test("media-europeana with a fixture key: registered; switched off by its own block, not registered"):
-    val on = load(Plugin.Info.Id("media-europeana"), config = "api-key = \"env:ZQMT_EU_KEY\"", env = Map("ZQMT_EU_KEY" -> "eu-key"))
+    val on = load(
+      Plugin.Info.Id("media-europeana"),
+      config = "api-key = \"env:ZQMT_EU_KEY\"",
+      env = Map("ZQMT_EU_KEY" -> "eu-key")
+    )
     assertEquals(on.contributions.mediaCollections, List("europeana"))
-    val off = PluginHarness.load(Plugin.Info.Id("media-europeana"), "enabled = false", http = HttpMode.Offline, env = Map.empty)
+    val off =
+      PluginHarness.load(Plugin.Info.Id("media-europeana"), "enabled = false", http = HttpMode.Offline, env = Map.empty)
     assert(off.left.exists(_.value.contains("disabled")), off.toString)
     val unset = PluginHarness.load(
       Plugin.Info.Id("media-europeana"),

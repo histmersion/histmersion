@@ -28,5 +28,15 @@ class MapLibreCreditsSuite extends munit.FunSuite:
     assertEquals(MapLibreStyles.credits(style("""{"version":8}""")), Nil)
 
   test("the credits line: each once, trimmed, middle dots between"):
-    assertEquals(BaseMaps.creditsHtml(Seq(BaseMapSpec.Raster.Attribution(" © OSM "), BaseMapSpec.Raster.Attribution("Mapterhorn"), BaseMapSpec.Raster.Attribution("© OSM"), BaseMapSpec.Raster.Attribution(""))), "© OSM · Mapterhorn")
+    assertEquals(
+      BaseMaps.creditsHtml(
+        Seq(
+          BaseMapSpec.Raster.Attribution(" © OSM "),
+          BaseMapSpec.Raster.Attribution("Mapterhorn"),
+          BaseMapSpec.Raster.Attribution("© OSM"),
+          BaseMapSpec.Raster.Attribution("")
+        )
+      ),
+      "© OSM · Mapterhorn"
+    )
     assertEquals(BaseMaps.creditsHtml(Nil), "")

@@ -13,10 +13,10 @@ final case class CollectionSync(
     applied: CollectionSync.Applied,
     pushes: List[CollectionSync.Push]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionSync:
-
 
   /** One push of a sync: the item it became, or why it failed. */
   type Applied = Applied.T
@@ -27,7 +27,8 @@ object CollectionSync:
       id: Option[Push.Id],
       error: Option[Push.Error]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Push:
     type Id = Id.T
@@ -35,14 +36,13 @@ object CollectionSync:
     type Error = Error.T
     object Error extends Newtype[String, Pure]
 
-
-
   /** Push every counted gap into a collection (a dry run unless `apply`), considering at most `limit` gaps. */
   final case class Request(
       apply: Request.Apply = Request.Apply(false),
       limit: Option[Request.Limit] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Request:
     type Apply = Apply.T

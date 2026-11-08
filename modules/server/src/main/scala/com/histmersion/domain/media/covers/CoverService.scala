@@ -9,8 +9,16 @@ import io.github.iltotore.iron.constraint.any.Pure
   * ISBN or OCLC number and no cover yet (not asked of Open Library yet).
   */
 trait CoverService:
-  def illustrationCandidates(only: Option[Citekey], refresh: CoverService.CandidatesRefresh, limit: CoverService.CandidatesLimit): List[Citekey]
-  def coverCandidates(only: Option[Citekey], refresh: CoverService.CandidatesRefresh, limit: CoverService.CandidatesLimit): List[CoverKeys]
+  def illustrationCandidates(
+      only: Option[Citekey],
+      refresh: CoverService.CandidatesRefresh,
+      limit: CoverService.CandidatesLimit
+  ): List[Citekey]
+  def coverCandidates(
+      only: Option[Citekey],
+      refresh: CoverService.CandidatesRefresh,
+      limit: CoverService.CandidatesLimit
+  ): List[CoverKeys]
 
 object CoverService:
   type CandidatesLimit = CandidatesLimit.T
@@ -21,14 +29,33 @@ object CoverService:
   def apply(db: Transactor): CoverService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends CoverService:
-    def illustrationCandidates(only: Option[Citekey], refresh: CandidatesRefresh, limit: CandidatesLimit): List[Citekey] =
-      db.read(CoverRepo.illustrationCandidates(only.map(c => CoverRepo.Only(c.value)), CoverRepo.Refresh(refresh.value), CoverRepo.Limit(limit.value))).map(Citekey.assume(_))
+    def illustrationCandidates(
+        only: Option[Citekey],
+        refresh: CandidatesRefresh,
+        limit: CandidatesLimit
+    ): List[Citekey] =
+      db.read(
+        CoverRepo.illustrationCandidates(
+          only.map(c => CoverRepo.Only(c.value)),
+          CoverRepo.Refresh(refresh.value),
+          CoverRepo.Limit(limit.value)
+        )
+      ).map(Citekey.assume(_))
     def coverCandidates(only: Option[Citekey], refresh: CandidatesRefresh, limit: CandidatesLimit): List[CoverKeys] =
-      db.read(CoverRepo.coverCandidates(only.map(c => CoverRepo.Only(c.value)), CoverRepo.Refresh(refresh.value), CoverRepo.Limit(limit.value)))
-
+      db.read(
+        CoverRepo.coverCandidates(
+          only.map(c => CoverRepo.Only(c.value)),
+          CoverRepo.Refresh(refresh.value),
+          CoverRepo.Limit(limit.value)
+        )
+      )
 
   /** Media's rows alone, in memory: no source is held, so no source has figures or an ISBN to look at. */
   final class InMemory extends CoverService:
-    def illustrationCandidates(only: Option[Citekey], refresh: CandidatesRefresh, limit: CandidatesLimit): List[Citekey] = Nil
-    def coverCandidates(only: Option[Citekey], refresh: CandidatesRefresh, limit: CandidatesLimit): List[CoverKeys] = Nil
-
+    def illustrationCandidates(
+        only: Option[Citekey],
+        refresh: CandidatesRefresh,
+        limit: CandidatesLimit
+    ): List[Citekey] = Nil
+    def coverCandidates(only: Option[Citekey], refresh: CandidatesRefresh, limit: CandidatesLimit): List[CoverKeys] =
+      Nil

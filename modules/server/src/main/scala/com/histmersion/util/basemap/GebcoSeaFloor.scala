@@ -19,7 +19,12 @@ import io.github.iltotore.iron.constraint.any.Pure
   * 0…`gebco.max-zoom`. A tile reaching past the region takes its outside from ETOPO1's tile at `etopoUrl` (one GET), as
   * the ETOPO1 extract has it.
   */
-final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryConfig.Url, http: RangeHttp, maxRequestBytes: ByteCount):
+final class GebcoSeaFloor(
+    cfg: BasemapGebcoConfig,
+    etopoUrl: BasemapBathymetryConfig.Url,
+    http: RangeHttp,
+    maxRequestBytes: ByteCount
+):
 
   private val HeaderBytes = 256 * 1024
   private val TileSize = 256
@@ -65,7 +70,12 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryCo
   /** What a fetch would do, zoom by zoom — the dry run's answer. */
   def describe(p: GebcoPlan): GebcoSeaFloor.Description =
     val byZoom =
-      p.tiles.groupBy(_._2._1).toList.sortBy[Int](_._1.value).map((z, ts) => s"zoom ${z.value}: ${ts.size}").mkString(" · ")
+      p.tiles
+        .groupBy(_._2._1)
+        .toList
+        .sortBy[Int](_._1.value)
+        .map((z, ts) => s"zoom ${z.value}: ${ts.size}")
+        .mkString(" · ")
     GebcoSeaFloor.Description(
       s"bathymetry from GEBCO (zoom 0–${p.maxZoom.value}): would read ${human(p.readBytes.value)} of " +
         s"${count(p.parts.size.toLong, "GeoTIFF", "GeoTIFFs")} in ${count(p.parts.map(_.runs.size).sum.toLong, "range request", "range requests")}, " +
@@ -77,7 +87,12 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryCo
   def needs(p: GebcoPlan): ByteCount = ByteCount.applyUnsafe(p.readBytes.value + p.tiles.size * PngGuess)
 
   /** Read the rows still missing from `work`. */
-  def download(p: GebcoPlan, work: Store, gapMs: BasemapFetch.Pace.GapMs, note: GebcoSeaFloor.Note => Unit): Either[GebcoSeaFloor.Problem, Unit] =
+  def download(
+      p: GebcoPlan,
+      work: Store,
+      gapMs: BasemapFetch.Pace.GapMs,
+      note: GebcoSeaFloor.Note => Unit
+  ): Either[GebcoSeaFloor.Problem, Unit] =
     work.makeDirectory().left.foreach(e => throw IOException(e.message.value))
     val all = p.parts.flatMap(part => part.runs.map(part -> _))
     all.zipWithIndex.foldLeft[Either[GebcoSeaFloor.Problem, Unit]](Right(())) { case (acc, ((part, run), i)) =>
@@ -87,7 +102,9 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryCo
         else
           if Thread.interrupted() then throw InterruptedException()
           if i > 0 then Thread.sleep(gapMs.value)
-          note(GebcoSeaFloor.Note(s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${human(run.length.value)})"))
+          note(
+            GebcoSeaFloor.Note(s"reading GEBCO ${part.name}: part ${i + 1} of ${all.size} (${human(run.length.value)})")
+          )
           Using.resource(work.reserve(f).fold(e => throw IOException(e.message.value), identity)) { rows =>
             http.download(part.url, run.offset, ByteCount.applyUnsafe(run.length.value), rows).flatMap { _ =>
               Either
@@ -103,7 +120,12 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: BasemapBathymetryCo
     }
 
   /** Every tile of the plan from the rows in `work`, in tile-id order, handed to `add`. */
-  def build(p: GebcoPlan, work: Store, add: (GebcoSeaFloor.TileKey, PmTiles.TileBytes) => Unit, note: GebcoSeaFloor.Note => Unit): Either[GebcoSeaFloor.Problem, BasemapFetch.TileCount] =
+  def build(
+      p: GebcoPlan,
+      work: Store,
+      add: (GebcoSeaFloor.TileKey, PmTiles.TileBytes) => Unit,
+      note: GebcoSeaFloor.Note => Unit
+  ): Either[GebcoSeaFloor.Problem, BasemapFetch.TileCount] =
     val samplers = p.parts.map(part => GebcoSeaFloor.Rows(part, part.runs.map(r => r -> map(work, part.key(r)))))
     var etopoFailures = 0 // ETOPO1 tiles that could not be read: their outside stays at sea level
     p.tiles.zipWithIndex.foreach { case ((id, (z, x, y)), i) =>
@@ -181,7 +203,12 @@ object GebcoSeaFloor:
   val Zoom: GebcoPlan.Zoom.type = GebcoPlan.Zoom
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
-  def urlOf(template: BasemapGebcoConfig.Url, west: WholeDegrees, south: WholeDegrees, deg: WholeDegrees): GebcoPart.Url =
+  def urlOf(
+      template: BasemapGebcoConfig.Url,
+      west: WholeDegrees,
+      south: WholeDegrees,
+      deg: WholeDegrees
+  ): GebcoPart.Url =
     def f(v: Int) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
     GebcoPart.Url(
       template.value
@@ -241,7 +268,15 @@ object GebcoSeaFloor:
   /** The elevation under pixel (`px`, `py`) of tile (`z`, `x`, `y`): the mean of the grid's samples under four points
     * spread over the pixel (a pixel of a low zoom covers many samples). None when the rows read hold none of them.
     */
-  def sample(rows: List[Rows], z: Zoom, x: TileX, y: TileY, px: PixelX, py: PixelY, size: GridSize): Option[SampledElevation] =
+  def sample(
+      rows: List[Rows],
+      z: Zoom,
+      x: TileX,
+      y: TileY,
+      px: PixelX,
+      py: PixelY,
+      size: GridSize
+  ): Option[SampledElevation] =
     val n = math.pow(2, z.value) * size.value
     var sum = 0.0 // the samples found under the four points, and how many
     var found = 0

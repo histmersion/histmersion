@@ -71,12 +71,12 @@ class UiConfigViewsSuite extends munit.FunSuite:
         baseMapSource = UiConfig.BaseMapSource("local"),
         mapLanguage = UiConfig.MapLanguage("de"),
         MapStartConfig(
-            MapStartMode.Wire(ui.mapStart.mode.value),
-            Latitude(ui.mapStart.lat.value),
-            Longitude(ui.mapStart.lon.value),
-            MapStartConfig.Zoom(ui.mapStart.zoom.value),
-            MapStartConfig.Label(ui.mapStart.label.value)
-          ),
+          MapStartMode.Wire(ui.mapStart.mode.value),
+          Latitude(ui.mapStart.lat.value),
+          Longitude(ui.mapStart.lon.value),
+          MapStartConfig.Zoom(ui.mapStart.zoom.value),
+          MapStartConfig.Label(ui.mapStart.label.value)
+        ),
         setupDue = UiConfig.SetupDue(true)
       )
     )

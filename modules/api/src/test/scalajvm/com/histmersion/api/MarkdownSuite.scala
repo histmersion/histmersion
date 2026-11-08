@@ -61,7 +61,11 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("notes are rendered under a Notes heading, after the summary and before the findings"):
     val md =
-      SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(Source.Notes("  Our article about it.  "))), Vector(finding), fullText = false)
+      SourcesMarkdown.source(
+        detail.modify(_.notes).setTo(Some(Source.Notes("  Our article about it.  "))),
+        Vector(finding),
+        fullText = false
+      )
     assert(md.contains("## Notes\n\nOur article about it."), md)
     assert(md.indexOf("Systems collapse.") < md.indexOf("## Notes"), md)
     assert(md.indexOf("## Notes") < md.indexOf("## Findings (1)"), md)
@@ -69,14 +73,21 @@ class MarkdownSuite extends munit.FunSuite:
   test("no notes column, no heading"):
     val md = SourcesMarkdown.source(detail, Vector(finding), fullText = false)
     assert(!md.contains("## Notes"), md)
-    assertEquals(SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(Source.Notes("   "))), Vector.empty, false).contains("Notes"), false)
+    assertEquals(
+      SourcesMarkdown
+        .source(detail.modify(_.notes).setTo(Some(Source.Notes("   "))), Vector.empty, false)
+        .contains("Notes"),
+      false
+    )
 
   test("notes come before the full text, which stays last"):
-    val md = SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(Source.Notes("N"))), Vector.empty, fullText = true)
+    val md =
+      SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(Source.Notes("N"))), Vector.empty, fullText = true)
     assert(md.indexOf("## Notes") < md.indexOf("BODY TEXT"), md)
 
   test("the header still carries the metadata, topics, regions and DOI"):
-    val md = SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(Source.Notes("N"))), Vector.empty, fullText = false)
+    val md =
+      SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(Source.Notes("N"))), Vector.empty, fullText = false)
     assert(md.contains("# 1177 BC"), md)
     assert(md.contains("[Eric H. Cline](/#author=Eric%20H.%20Cline)"), md)
     assert(md.contains("2014 · PUP · current · 1300 BCE–1100 BCE"), md)
@@ -98,7 +109,9 @@ class MarkdownSuite extends munit.FunSuite:
       snippet = Some(Search.Snippet("…the **Uluburun** wreck…")),
       matchedHeading = Some(SearchHit.MatchedHeading("CHAPTER 3"))
     )
-    val md = SearchMarkdown.searchResults(SearchResult(RowCount(1), List(Hit(hit, Nil, List(Hit.Why("full text matches 'x'"))))))
+    val md = SearchMarkdown.searchResults(
+      SearchResult(RowCount(1), List(Hit(hit, Nil, List(Hit.Why("full text matches 'x'")))))
+    )
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
 
   // ── paging footer (A6) ────────────────────────────────────────────────────────────────────────
@@ -119,7 +132,17 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults(SearchResult) includes paging footer when total > hits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(Citekey(s"k$i"), Title(s"T$i"), (Some(2020)).map(Year.apply), Source.Status.Current, Nil, Nil, None, None, None)
+      val sh = SearchHit(
+        Citekey(s"k$i"),
+        Title(s"T$i"),
+        (Some(2020)).map(Year.apply),
+        Source.Status.Current,
+        Nil,
+        Nil,
+        None,
+        None,
+        None
+      )
       Hit(sh, Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult(RowCount(50), hits))
@@ -128,17 +151,44 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("searchResults: the footer follows the page's own offset — every page, not just the first (#1798)"):
     val hits = (1 to 3).map { i =>
-      Hit(SearchHit(Citekey(s"k$i"), Title(s"T$i"), (Some(2020)).map(Year.apply), Source.Status.Current, Nil, Nil, None, None, None), Nil, Nil)
+      Hit(
+        SearchHit(
+          Citekey(s"k$i"),
+          Title(s"T$i"),
+          (Some(2020)).map(Year.apply),
+          Source.Status.Current,
+          Nil,
+          Nil,
+          None,
+          None,
+          None
+        ),
+        Nil,
+        Nil
+      )
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult.of(SearchResult.Total(50), hits, UnreadPage.Offset(20)))
     assert(md.startsWith("### 3 of 50 source(s)"), md)
     assert(md.contains("showing 21–23 of 50 — next: offset=23"), md)
-    assertEquals(SearchResult.of(SearchResult.Total(50), hits, UnreadPage.Offset(20)).next.map(n => (n.value: Int)), Some(23))
+    assertEquals(
+      SearchResult.of(SearchResult.Total(50), hits, UnreadPage.Offset(20)).next.map(n => (n.value: Int)),
+      Some(23)
+    )
     assertEquals(SearchResult.of(SearchResult.Total(23), hits, UnreadPage.Offset(20)).next, None)
 
   test("searchResults(SearchResult) omits paging footer when everything fits"):
     val hits = (1 to 3).map { i =>
-      val sh = SearchHit(Citekey(s"k$i"), Title(s"T$i"), (Some(2020)).map(Year.apply), Source.Status.Current, Nil, Nil, None, None, None)
+      val sh = SearchHit(
+        Citekey(s"k$i"),
+        Title(s"T$i"),
+        (Some(2020)).map(Year.apply),
+        Source.Status.Current,
+        Nil,
+        Nil,
+        None,
+        None,
+        None
+      )
       Hit(sh, Nil, Nil)
     }.toList
     val md = SearchMarkdown.searchResults(SearchResult(RowCount(3), hits))
@@ -152,13 +202,23 @@ class MarkdownSuite extends munit.FunSuite:
   // ── histogram collapse (A16) ──────────────────────────────────────────────────────────────────
 
   test("collapseHistogram leaves short histograms unchanged"):
-    val buckets = (1 to 5).map(i => TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100 + 99L), TimeBucket.Count(i))).toList
+    val buckets = (1 to 5)
+      .map(i => TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100 + 99L), TimeBucket.Count(i)))
+      .toList
     val result = SearchMarkdown.collapseHistogram(buckets)
     assertEquals(result.size, 5)
     assert(result.forall(_.merged.value == 1))
 
   test("collapseHistogram collapses runs of identical counts when > 12 rows"):
-    val buckets = (1 to 20).map(i => TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100 + 99L), if i <= 10 then TimeBucket.Count(2) else TimeBucket.Count(5))).toList
+    val buckets = (1 to 20)
+      .map(i =>
+        TimeBucket(
+          TimeBucket.Start(i * 100L),
+          TimeBucket.End(i * 100 + 99L),
+          if i <= 10 then TimeBucket.Count(2) else TimeBucket.Count(5)
+        )
+      )
+      .toList
     val result = SearchMarkdown.collapseHistogram(buckets)
     assert(result.sizeIs < 20, s"expected fewer rows, got ${result.size}")
     assertEquals(result.head.count, 2)
@@ -202,15 +262,28 @@ class MarkdownHopsSuite extends munit.FunSuite:
     assert(md.contains("**Tags:** [sea peoples](/#tag=sea_peoples)"), md)
 
   test("Mentioned in articles lists the wiki pages that cite the source"):
-    val out = BacklinksMarkdown.sourceArticles(Vector(Backlink(Backlink.Kind("article"), Backlink.Id("sea_peoples"), Some(Backlink.Title("The Sea Peoples")))))
+    val out = BacklinksMarkdown.sourceArticles(
+      Vector(Backlink(Backlink.Kind("article"), Backlink.Id("sea_peoples"), Some(Backlink.Title("The Sea Peoples"))))
+    )
     assert(out.contains("## Mentioned in articles (1)"), out)
     assert(out.contains("[The Sea Peoples](/article/sea_peoples)"), out)
     assertEquals(BacklinksMarkdown.sourceArticles(Vector.empty), "")
 
   test("neighbors renders each row by its classified target: source, article, unresolved"):
     val rows = Vector(
-      NeighborRow(NeighborRow.Direction("out"), Edge.Kind.Challenges, Citekey("cline2014_year"), Some(Title("1177 BC")), Some(Source.Status.Current)),
-      NeighborRow(NeighborRow.Direction("in"), Edge.Kind.References, Citekey("drews1993_end"), Some(Title("The End of the Bronze Age"))),
+      NeighborRow(
+        NeighborRow.Direction("out"),
+        Edge.Kind.Challenges,
+        Citekey("cline2014_year"),
+        Some(Title("1177 BC")),
+        Some(Source.Status.Current)
+      ),
+      NeighborRow(
+        NeighborRow.Direction("in"),
+        Edge.Kind.References,
+        Citekey("drews1993_end"),
+        Some(Title("The End of the Bronze Age"))
+      ),
       NeighborRow(
         NeighborRow.Direction("out"),
         Edge.Kind.Updates,
@@ -218,7 +291,13 @@ class MarkdownHopsSuite extends munit.FunSuite:
         Some(Title("Bronze Age collapse")),
         target = NeighborTarget.Article
       ),
-      NeighborRow(NeighborRow.Direction("out"), Edge.Kind.Refutes, Citekey("ghost2019_absent"), None, target = NeighborTarget.Unresolved)
+      NeighborRow(
+        NeighborRow.Direction("out"),
+        Edge.Kind.Refutes,
+        Citekey("ghost2019_absent"),
+        None,
+        target = NeighborTarget.Unresolved
+      )
     )
     val out = SourcesMarkdown.neighbors(Citekey("x2020_y"), rows)
     assert(out.contains("**Outgoing (this → other)**\n- _challenges_ → [[cline2014_year]] — 1177 BC _(current)_"), out)

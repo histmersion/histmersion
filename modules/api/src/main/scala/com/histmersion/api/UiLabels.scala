@@ -19,7 +19,6 @@ object UiLabels:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-
   lazy val known: Map[Key, Text] =
     (Wording.schedulerJobTypes.toList.map((k, v) => (k.value: String) -> v) ++
       AgentScheduler.waitCodes.toList.map((k, v) => (k.value: String) -> v) ++
@@ -31,6 +30,8 @@ object UiLabels:
       Source.Status.values.toList.map(s => (s.wire.value: String) -> Wording.status(s)) ++
       Approval.State.values.toList.map(s => (s.wire.value: String) -> Wording.approvalState(s)) ++
       JobState.values.toList.map(s => (s.wire.value: String) -> Wording.jobState(s)) ++
-      Run.State.values.toList.map(s => (s.wire.value: String) -> Wording.runState(s))).map((k, v) => Key(k) -> Text(v)).toMap
+      Run.State.values.toList.map(s => (s.wire.value: String) -> Wording.runState(s)))
+      .map((k, v) => Key(k) -> Text(v))
+      .toMap
 
   def label(id: Key): Text = known.getOrElse(Key((id).value.trim), Text(Wording.humanize(id)))

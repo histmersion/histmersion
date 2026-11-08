@@ -127,9 +127,7 @@ object MobileChrome:
         title := "map layers and tools",
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.MapTools)),
         // the tools in that drawer: a window there has something new (Notices)
-        cls("has-news") <-- Notices.anyFresh(b =>
-          b != UiNotices.Board.Approvals || RunsView.enabled.now().value
-        ),
+        cls("has-news") <-- Notices.anyFresh(b => b != UiNotices.Board.Approvals || RunsView.enabled.now().value),
         Icon(Icon.Layers),
         onClick --> (_ => toggle(Drawer.MapTools))
       )
@@ -140,7 +138,11 @@ object MobileChrome:
     */
   private def spanLabel(config: UiConfig): Signal[SpanLabel] =
     UiState.from.signal.combineWith(UiState.to.signal).map { (a, b) =>
-      SpanLabel(Fmt.periodStr(Year(a.getOrElse(config.time.defaultFrom.value)), Year(b.getOrElse(config.time.defaultTo.value))).value)
+      SpanLabel(
+        Fmt
+          .periodStr(Year(a.getOrElse(config.time.defaultFrom.value)), Year(b.getOrElse(config.time.defaultTo.value)))
+          .value
+      )
     }
 
   /** A drawer's heading: its name and a close button. */

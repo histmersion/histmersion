@@ -20,9 +20,11 @@ private given pluginYearToWire: Transformer[Year, api.catalogue.Year] = y => api
 private given wireYearToPlugin: Transformer[api.catalogue.Year, Year] = y => Year(y.value.toInt)
 private given pluginAuthorToWire: Transformer[WorkKey.Authors, AuthorName] = a => AuthorName(a.value)
 private given wireAuthorToPlugin: Transformer[AuthorName, WorkKey.Authors] = a => WorkKey.Authors(a.value)
-private given pluginLicenceToWire: Transformer[Licence, api.library.WorkRef.OaLicence] = l => api.library.WorkRef.OaLicence(l.value)
+private given pluginLicenceToWire: Transformer[Licence, api.library.WorkRef.OaLicence] = l =>
+  api.library.WorkRef.OaLicence(l.value)
 private given wireLicenceToPlugin: Transformer[api.library.WorkRef.OaLicence, Licence] = l => Licence(l.value)
-private given arxivToWire: Transformer[ArxivId, api.library.FollowupRow.Arxiv] = a => api.library.FollowupRow.Arxiv(a.value)
+private given arxivToWire: Transformer[ArxivId, api.library.FollowupRow.Arxiv] = a =>
+  api.library.FollowupRow.Arxiv(a.value)
 private given citedByToWire: Transformer[FollowupRow.CitedBy, Acquire.CitedByCount] =
   c => Acquire.CitedByCount(c.value)
 private given refAuthorToWire: Transformer[RefRow.Authors, AuthorName] =
@@ -56,14 +58,10 @@ extension (w: api.library.WorkRef)
 extension (r: FollowupRow)
   def wire: api.library.FollowupRow = r.into[api.library.FollowupRow].enableDefaultValues.transform
 
-extension (r: RefRow)
-  def wire: api.library.RefRow = r.into[api.library.RefRow].enableDefaultValues.transform
+extension (r: RefRow) def wire: api.library.RefRow = r.into[api.library.RefRow].enableDefaultValues.transform
 
-extension (i: ArchiveItem)
-  def wire: api.library.ArchiveItem = i.transformInto[api.library.ArchiveItem]
+extension (i: ArchiveItem) def wire: api.library.ArchiveItem = i.transformInto[api.library.ArchiveItem]
 
-extension (f: ArchiveFile)
-  def wire: api.library.ArchiveFile = f.transformInto[api.library.ArchiveFile]
+extension (f: ArchiveFile) def wire: api.library.ArchiveFile = f.transformInto[api.library.ArchiveFile]
 
-extension (f: api.library.ArchiveFile)
-  def upstream: ArchiveFile = f.transformInto[ArchiveFile]
+extension (f: api.library.ArchiveFile) def upstream: ArchiveFile = f.transformInto[ArchiveFile]

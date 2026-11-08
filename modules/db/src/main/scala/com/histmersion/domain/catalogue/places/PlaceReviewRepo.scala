@@ -24,7 +24,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 private[places] object PlaceReviewRepo:
 
-
   final private case class Row(
       id: Evidence.Id,
       label: Evidence.Label,
@@ -149,9 +148,9 @@ private[places] object PlaceReviewRepo:
                 start_unknown = CASE WHEN $range::text IS NULL THEN start_unknown ELSE false END
               WHERE id = ${p.id} AND kind = ${p.from}""".update.run() > 0
       }
-      val mg = todo.collect { case p: Proposal.Merge => p }.filter(p =>
-        mergeIn(Place.Id.assume(p.id.value), Place.Id.assume(p.into.value))
-      )
+      val mg = todo
+        .collect { case p: Proposal.Merge => p }
+        .filter(p => mergeIn(Place.Id.assume(p.id.value), Place.Id.assume(p.into.value)))
       val _ = FindingPlaceRepo.materialisePlaces(
         (re.map(_.id) ++ mg.map(_.into)).map(i => BPlaceRow.Id(i.value)),
         FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
@@ -271,5 +270,8 @@ private[places] object PlaceReviewRepo:
                 AND abs(ST_X(geom) - ${r.fromLon}) < 1e-7 AND abs(ST_Y(geom) - ${r.fromLat}) < 1e-7""".update
           .run() > 0
       }
-      val _ = FindingPlaceRepo.materialisePlaces(moved.map(_.id), FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
+      val _ = FindingPlaceRepo.materialisePlaces(
+        moved.map(_.id),
+        FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
+      )
       RowCount(moved.size)

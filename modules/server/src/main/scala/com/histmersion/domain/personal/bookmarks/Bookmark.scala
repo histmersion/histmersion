@@ -28,11 +28,19 @@ final case class Bookmark(
   def matches(words: SearchWords): Boolean =
     words.matches(label.fold("")(_.value), title.value, target.itemRef.fold("")(_.key.value))
 
-  def wire: WireBookmark = WireBookmark(id, target.wire, com.histmersion.api.library.Title(title.value), label, WireBookmark.CreatedAt(createdAt.iso.value), WireBookmark.UpdatedAt(updatedAt.iso.value))
+  def wire: WireBookmark = WireBookmark(
+    id,
+    target.wire,
+    com.histmersion.api.library.Title(title.value),
+    label,
+    WireBookmark.CreatedAt(createdAt.iso.value),
+    WireBookmark.UpdatedAt(updatedAt.iso.value)
+  )
 
 object Bookmark:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** The id a client sent, checked here, once: a bookmark's id is a lower-case UUID. */
 
   def idOf(raw: WireBookmark.Id): Either[Problem, WireBookmark.Id] =

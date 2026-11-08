@@ -72,7 +72,11 @@ object SavedViews:
             cls := "btn save-view-btn",
             idAttr := "save-view",
             "Save this view…",
-            onClick --> (_ => naming.set(Some(suggestedName(UiState.q.now(), UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))))))
+            onClick --> (_ =>
+              naming.set(
+                Some(suggestedName(UiState.q.now(), UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))))
+              )
+            )
           )
         case Some(name0) =>
           val name = Var(name0.value: String)

@@ -23,8 +23,14 @@ object ServerModules:
   val ParseExcludes: Resolver.ManifestLine.type = Resolver.ManifestLine
 
   def parse(modules: List[ParseModules], excludes: List[ParseExcludes]): Either[ParseResultPart1, ServerModules] =
-    def entries(lines: List[ParseEntriesLines]) = lines.map((_).value.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
+    def entries(lines: List[ParseEntriesLines]) =
+      lines.map((_).value.trim).filter(l => l.nonEmpty && !l.startsWith("#"))
     for
-      shipped <- traverse(entries(modules))({ val refactorFunction = ModuleCoordinates.parse; (refactorValue5) => refactorFunction(ModuleCoordinates.Text(refactorValue5)) })
-      excluded <- traverse(entries(excludes))({ val refactorFunction2 = ModuleKey.parse; (refactorValue) => refactorFunction2(ModuleKey.Text(refactorValue)) })
+      shipped <- traverse(entries(modules)) {
+        val refactorFunction = ModuleCoordinates.parse;
+        (refactorValue5) => refactorFunction(ModuleCoordinates.Text(refactorValue5))
+      }
+      excluded <- traverse(entries(excludes)) {
+        val refactorFunction2 = ModuleKey.parse; (refactorValue) => refactorFunction2(ModuleKey.Text(refactorValue))
+      }
     yield ServerModules(shipped.map(c => c.key -> c.version).toMap, excluded.toSet)

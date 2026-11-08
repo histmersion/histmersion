@@ -6,4 +6,7 @@ import sttp.tapir.Schema
 
 import com.histmersion.api.given
 
-final case class MergePolicy(editions: Option[EditionsPolicy] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class MergePolicy(editions: Option[EditionsPolicy] = None)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

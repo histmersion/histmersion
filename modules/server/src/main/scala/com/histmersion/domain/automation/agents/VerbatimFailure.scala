@@ -11,10 +11,10 @@ final class VerbatimFailure(val description: VerbatimFailure.Description) extend
 object VerbatimFailure:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** How a failed provider call is described: a verbatim failure as it is, any other exception by class and message. */
   type Description = Problem
   val Description: Problem.type = Problem
-
 
   def describe(e: Throwable): Problem = e match
     case v: VerbatimFailure => v.description

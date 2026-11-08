@@ -7,9 +7,13 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class FormatCheck(text: FormatCheck.Text, field: FormatField = FormatField.Body, fix: FormatCheck.Fix = FormatCheck.Fix(false))
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class FormatCheck(
+    text: FormatCheck.Text,
+    field: FormatField = FormatField.Body,
+    fix: FormatCheck.Fix = FormatCheck.Fix(false)
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object FormatCheck:
   type Text = Text.T

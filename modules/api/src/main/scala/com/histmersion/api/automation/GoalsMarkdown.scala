@@ -5,7 +5,6 @@ import com.histmersion.api.Markdown.*
 
 object GoalsMarkdown:
 
-
   private[api] def goalLine(g: Goal): String =
     val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, ("")) match
       case "" => ""

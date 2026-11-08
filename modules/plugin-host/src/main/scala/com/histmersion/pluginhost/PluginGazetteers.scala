@@ -33,7 +33,10 @@ object PluginGazetteers:
     * whole (a dataset is one file).
     */
   def transport(places: PlacesConfig): HttpTransport =
-    JavaHttpTransport(HttpTransport.TimeoutSeconds(places.fetchTimeoutSeconds.value), Some(JavaHttpTransport.ConnectSeconds(places.fetchConnectTimeoutSeconds.value)))
+    JavaHttpTransport(
+      HttpTransport.TimeoutSeconds(places.fetchTimeoutSeconds.value),
+      Some(JavaHttpTransport.ConnectSeconds(places.fetchConnectTimeoutSeconds.value))
+    )
 
   /** The client the host lends a source's [[GazetteerSource.fetch]]: the one outbound policy with the gazetteer
     * import's User-Agent over `transport`. Its `fetch` asks once and answers as it came; its `get` asks again after a
@@ -76,7 +79,8 @@ object PluginGazetteers:
             names <- all(Option(p.names).getOrElse(Nil))(name).left.map(named)
             relations <- all(Option(p.relations).getOrElse(Nil))(relation).left.map(named)
           yield
-            val source = Option(p.source).flatten.map(_.value).orElse(Option(credit).map(_.value.trim).filter(_.nonEmpty))
+            val source =
+              Option(p.source).flatten.map(_.value).orElse(Option(credit).map(_.value.trim).filter(_.nonEmpty))
             Place.Input(
               Place(
                 Place.Id(id),
@@ -104,17 +108,29 @@ object PluginGazetteers:
     if n == null || Option(n.name).isEmpty then Left(Reason("a name that is null"))
     else
       span(Option(n.period).flatten, Option(n.open).flatten).map((period, open) =>
-        Place.Name(Place.Name.Value(n.name.value), Place.Name.Lang(Option(n.lang).map(_.value).getOrElse("")), period, open)
+        Place.Name(
+          Place.Name.Value(n.name.value),
+          Place.Name.Lang(Option(n.lang).map(_.value).getOrElse("")),
+          period,
+          open
+        )
       )
 
   private def relation(r: GazetteerRelation): Either[Reason, Place.Relation] =
     if r == null then Left(Reason("a relation that is null"))
     else if Option(r.childId).forall(_.value.trim.isEmpty) || Option(r.parentId).forall(_.value.trim.isEmpty) then
       Left(Reason("a relation without both its places"))
-    else if Option(r.kind).forall(_.value.trim.isEmpty) then Left(Reason(s"the relation to '${r.parentId.value}' has no kind"))
+    else if Option(r.kind).forall(_.value.trim.isEmpty) then
+      Left(Reason(s"the relation to '${r.parentId.value}' has no kind"))
     else
       span(Option(r.period).flatten, Option(r.open).flatten).map((period, open) =>
-        Place.Relation(Place.Relation.ChildId(r.childId.value), Place.Relation.ParentId(r.parentId.value), Place.Relation.Kind(r.kind.value), period, open)
+        Place.Relation(
+          Place.Relation.ChildId(r.childId.value),
+          Place.Relation.ParentId(r.parentId.value),
+          Place.Relation.Kind(r.kind.value),
+          period,
+          open
+        )
       )
 
   /** A plugin's period and open side as the host's: the period's ends checked again ([[SpiValues.periodOf]]); an open
@@ -130,7 +146,12 @@ object PluginGazetteers:
         case (None, Some(_)) => Left(Reason("an open side without a period"))
         case _               => Right(open.map(openSide))
     yield (
-      p.map(v => ApiPeriod(com.histmersion.api.catalogue.Year(v.start.value.toLong), com.histmersion.api.catalogue.Year(v.end.value.toLong))),
+      p.map(v =>
+        ApiPeriod(
+          com.histmersion.api.catalogue.Year(v.start.value.toLong),
+          com.histmersion.api.catalogue.Year(v.end.value.toLong)
+        )
+      ),
       side
     )
 

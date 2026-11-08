@@ -18,9 +18,9 @@ final case class EventLead(
     findingsNear: EventLead.FindingsNear = EventLead.FindingsNear(0),
     candidates: EventLead.Candidates = EventLead.Candidates(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object EventLead:
-
 
   type Label = Label.T
   object Label extends Newtype[String, Pure]
@@ -37,9 +37,14 @@ object EventLead:
   type Candidates = Candidates.T
   object Candidates extends Newtype[Int, Pure]
 
-  final case class Action(kind: Action.Kind, label: Action.Label, command: Action.Command, query: Option[Action.Query] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Action(
+      kind: Action.Kind,
+      label: Action.Label,
+      command: Action.Command,
+      query: Option[Action.Query] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Action:
     type Kind = Kind.T
@@ -51,8 +56,10 @@ object EventLead:
     type Query = Query.T
     object Query extends Newtype[String, Pure]
 
-
-  final case class List(total: List.Total, leads: scala.List[EventLead]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class List(total: List.Total, leads: scala.List[EventLead])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object List:
     type Total = Total.T

@@ -48,7 +48,10 @@ class ListFiltersSuite extends munit.FunSuite:
   test("a time bound: a day (until = the day included), an instant, or a time ago; anything else is refused"):
     assertEquals(timeBound(TimeBound("2026-10-01"), end = false, now), Right(Instant.parse("2026-10-01T00:00:00Z")))
     assertEquals(timeBound(TimeBound("2026-10-01"), end = true, now), Right(Instant.parse("2026-10-02T00:00:00Z")))
-    assertEquals(timeBound(TimeBound("2026-10-01T08:30:00Z"), end = true, now), Right(Instant.parse("2026-10-01T08:30:00Z")))
+    assertEquals(
+      timeBound(TimeBound("2026-10-01T08:30:00Z"), end = true, now),
+      Right(Instant.parse("2026-10-01T08:30:00Z"))
+    )
     assertEquals(timeBound(TimeBound("7d"), end = false, now), Right(Instant.parse("2026-10-16T12:00:00Z")))
     assertEquals(timeBound(TimeBound(" 12H "), end = false, now), Right(Instant.parse("2026-10-23T00:00:00Z")))
     assertEquals(timeBound(TimeBound("30m"), end = false, now), Right(Instant.parse("2026-10-23T11:30:00Z")))
@@ -58,20 +61,40 @@ class ListFiltersSuite extends munit.FunSuite:
       range(Some(TimeBound("2026-10-01")), Some(TimeBound("2026-10-01")), now).map(_._2),
       Right(Some(Instant.parse("2026-10-02T00:00:00Z")))
     )
-    assert(range(Some(TimeBound("2026-10-05")), Some(TimeBound("2026-10-01")), now).left.exists(_.value.contains("before")))
+    assert(
+      range(Some(TimeBound("2026-10-05")), Some(TimeBound("2026-10-01")), now).left.exists(_.value.contains("before"))
+    )
     assert(range(Some(TimeBound("soon")), None, now).left.exists(_.value.startsWith("since:")))
     assertEquals(range(None, None, now), Right((None, None)))
 
   test("a closed vocabulary names the first unknown value and the words allowed"):
-    assertEquals(known(FacetName("kind"), List(Term("edge")), List(Term("edge"), Term("goal-plan"))), Right(List("edge")))
-    assertEquals(known(FacetName("kind"), List(Term("edge"), Term("bogus")), List(Term("edge"))), Left("unknown kind 'bogus' (one of: edge)"))
+    assertEquals(
+      known(FacetName("kind"), List(Term("edge")), List(Term("edge"), Term("goal-plan"))),
+      Right(List("edge"))
+    )
+    assertEquals(
+      known(FacetName("kind"), List(Term("edge"), Term("bogus")), List(Term("edge"))),
+      Left("unknown kind 'bogus' (one of: edge)")
+    )
 
   test("who decided an approval, from its note and its result"):
     assertEquals(DecidedBy.of(Approval.State.Wire("open"), Some(Approval.Note("autopilot: x")), None), None)
-    assertEquals(DecidedBy.of(Approval.State.Wire("approved"), Some(Approval.Note("autopilot: approved — 2 articles")), None), Some(DecidedBy.Autopilot))
-    assertEquals(DecidedBy.of(Approval.State.Wire("approved"), None, Some(Approval.Outcome("applied automatically: edge added"))), Some(DecidedBy.Auto))
-    assertEquals(DecidedBy.of(Approval.State.Wire("approved"), None, Some(Approval.Outcome("applied: edge added"))), Some(DecidedBy.Person))
-    assertEquals(DecidedBy.of(Approval.State.Wire("rejected"), Some(Approval.Note("not the critic")), None), Some(DecidedBy.Person))
+    assertEquals(
+      DecidedBy.of(Approval.State.Wire("approved"), Some(Approval.Note("autopilot: approved — 2 articles")), None),
+      Some(DecidedBy.Autopilot)
+    )
+    assertEquals(
+      DecidedBy.of(Approval.State.Wire("approved"), None, Some(Approval.Outcome("applied automatically: edge added"))),
+      Some(DecidedBy.Auto)
+    )
+    assertEquals(
+      DecidedBy.of(Approval.State.Wire("approved"), None, Some(Approval.Outcome("applied: edge added"))),
+      Some(DecidedBy.Person)
+    )
+    assertEquals(
+      DecidedBy.of(Approval.State.Wire("rejected"), Some(Approval.Note("not the critic")), None),
+      Some(DecidedBy.Person)
+    )
     // the SQL writes the prefixes in (AgentRepo): nothing in them may need quoting or escaping
     List(DecidedBy.AutopilotNote, DecidedBy.AutoResult).foreach(p => assert(!p.exists("'%_\\".contains(_)), p))
 
@@ -109,26 +132,57 @@ class ListFiltersSuite extends munit.FunSuite:
     assertEquals(p.facet(Facet.Name("kind")), List("goal-plan" -> 64))
     assertEquals(p.facet(Facet.Name("nothing")), Nil)
     assertEquals(
-      Paging.Page.filtered(List(Paging.Page.CountState("open") -> Paging.Count(2), Paging.Page.CountState("failed") -> Paging.Count(1), Paging.Page.CountState("done") -> Paging.Count(4)), List(Paging.Page.CountState("open"), Paging.Page.CountState("failed")), None).total,
+      Paging.Page
+        .filtered(
+          List(
+            Paging.Page.CountState("open") -> Paging.Count(2),
+            Paging.Page.CountState("failed") -> Paging.Count(1),
+            Paging.Page.CountState("done") -> Paging.Count(4)
+          ),
+          List(Paging.Page.CountState("open"), Paging.Page.CountState("failed")),
+          None
+        )
+        .total,
       3
     )
-    assertEquals(Paging.Page.filtered(List(Paging.Page.CountState("open") -> Paging.Count(2), Paging.Page.CountState("done") -> Paging.Count(4)), Nil, None).total, 6)
-    assertEquals(facetLine(FacetName("By kind"), List(Term("goal-plan") -> RowCount(64), Term("edge") -> RowCount(3))), "By kind: goal-plan 64 · edge 3")
+    assertEquals(
+      Paging.Page
+        .filtered(
+          List(Paging.Page.CountState("open") -> Paging.Count(2), Paging.Page.CountState("done") -> Paging.Count(4)),
+          Nil,
+          None
+        )
+        .total,
+      6
+    )
+    assertEquals(
+      facetLine(FacetName("By kind"), List(Term("goal-plan") -> RowCount(64), Term("edge") -> RowCount(3))),
+      "By kind: goal-plan 64 · edge 3"
+    )
     assertEquals(facetLine(FacetName("By kind"), Nil), "")
 
   test("what a heading and a next-page line say about a filter"):
     assertEquals(ApprovalFilter().qualifier, Some("open"))
     assertEquals(
-      ApprovalFilter(state = Some(Approval.State.Wire("all")), kind = List(Approval.Kind.Wire("goal-plan"), Approval.Kind.Wire("edge"))).qualifier,
+      ApprovalFilter(
+        state = Some(Approval.State.Wire("all")),
+        kind = List(Approval.Kind.Wire("goal-plan"), Approval.Kind.Wire("edge"))
+      ).qualifier,
       Some("goal-plan/edge")
     )
     assertEquals(
-      RunFilter(status = List(RunFilter.Status("failed")), pipeline = List(RunFilter.Pipeline("review-article"))).qualifier,
+      RunFilter(
+        status = List(RunFilter.Status("failed")),
+        pipeline = List(RunFilter.Pipeline("review-article"))
+      ).qualifier,
       Some("failed review-article")
     )
     assertEquals(JobFilter().qualifier, None)
     assertEquals(
-      ApprovalFilter(kind = List(Approval.Kind.Wire("edge,goal-plan")), decidedBy = List(Approval.DecidedBy.Wire("person"))).options,
+      ApprovalFilter(
+        kind = List(Approval.Kind.Wire("edge,goal-plan")),
+        decidedBy = List(Approval.DecidedBy.Wire("person"))
+      ).options,
       List[(String, Option[String])](
         "state" -> None,
         "kind" -> Some("edge"),
@@ -140,5 +194,10 @@ class ListFiltersSuite extends munit.FunSuite:
     )
     assertEquals(
       JobFilter(kind = List(JobKinds.Wire("ingest")), since = Some(JobFilter.Since("7d"))).options,
-      List[(String, Option[String])]("kind" -> Some("ingest"), "since" -> Some("7d"), "until" -> None, "subject" -> None)
+      List[(String, Option[String])](
+        "kind" -> Some("ingest"),
+        "since" -> Some("7d"),
+        "until" -> None,
+        "subject" -> None
+      )
     )

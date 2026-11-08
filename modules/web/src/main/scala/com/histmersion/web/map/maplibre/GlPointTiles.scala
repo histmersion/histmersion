@@ -16,7 +16,12 @@ import com.histmersion.api.catalogue.TileProps
   * the tiles of the view's zoom (`api.TileProps.Zoom`, which every feature carries — MapLibre keeps a coarser tile
   * drawn while the finer ones come in), once each.
   */
-final private[maplibre] class GlPointTiles(gl: GlMap, id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom) extends PointTiles:
+final private[maplibre] class GlPointTiles(
+    gl: GlMap,
+    id: MapSurface.LayerId,
+    layer: MapSurface.LayerId,
+    maxZoom: MapSurface.PointTilesMaxZoom
+) extends PointTiles:
   private val sourceId: String = id.value
   private val tileLayer: String = layer.value
   private val zoomCap: Int = maxZoom.value
@@ -34,7 +39,8 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: MapSurface.LayerId, la
   gl.on(
     "sourcedata",
     (e: GlEvent) =>
-      if e.asInstanceOf[js.Dynamic].sourceId.asInstanceOf[js.UndefOr[String]].contains(sourceId) && loaded then notifyLater()
+      if e.asInstanceOf[js.Dynamic].sourceId.asInstanceOf[js.UndefOr[String]].contains(sourceId) && loaded then
+        notifyLater()
   )
   gl.on("moveend", (_: GlEvent) => if loaded then notifyLater())
 

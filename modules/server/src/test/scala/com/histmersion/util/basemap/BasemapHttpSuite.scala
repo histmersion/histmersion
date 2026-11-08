@@ -42,16 +42,31 @@ class BasemapHttpSuite extends DbSuite:
 
   private def withServer(dir: Path, onDemand: Boolean = true)(body: String => Unit): Unit =
     val base = AppConfig.load()
-    val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("k3y"))).modify(_.basemap).setTo(base.basemap.copy(
-        dir = BasemapConfig.Dir(dir.toString),
-        terrain = base.basemap.terrain.modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(onDemand && base.basemap.terrain.onDemand.enabled.value))
-        ),
-        // the map and the sea floor outside the extract are read from the network: never in this suite (#3760)
-        vector = base.basemap.vector.modify(_.onDemand).setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(false))),
-        bathymetry = base.basemap.bathymetry.modify(_.onDemand).setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(false)))
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.auth)
+      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey("k3y")))
+      .modify(_.basemap)
+      .setTo(
+        base.basemap.copy(
+          dir = BasemapConfig.Dir(dir.toString),
+          terrain = base.basemap.terrain
+            .modify(_.onDemand)
+            .setTo(
+              base.basemap.terrain.onDemand
+                .modify(_.enabled)
+                .setTo(BasemapOnDemandConfig.Enabled(onDemand && base.basemap.terrain.onDemand.enabled.value))
+            ),
+          // the map and the sea floor outside the extract are read from the network: never in this suite (#3760)
+          vector = base.basemap.vector
+            .modify(_.onDemand)
+            .setTo(base.basemap.vector.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(false))),
+          bathymetry = base.basemap.bathymetry
+            .modify(_.onDemand)
+            .setTo(base.basemap.bathymetry.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(false)))
+        )
       )
-    )
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}/api/basemap")
@@ -135,10 +150,13 @@ class BasemapHttpSuite extends DbSuite:
       // the page's cut: only the kinds and properties it reads
       val t = get(s"$url/vector/3/4/3?layers=water:p~sea&keys=kind,name")
       assertEquals(t.statusCode, 200)
-      val fs = Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(t.body)).toOption.get).fold(e => fail(e.value), identity)
+      val fs =
+        Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(t.body)).toOption.get).fold(e => fail(e.value), identity)
       assert(
         fs.nonEmpty && fs.forall((l, g, p) =>
-          l == Mvt.LayerName("water") && g == Mvt.GeomType(1) && p.get(Mvt.PropKey("kind")).contains(Mvt.PropText("sea")) && p.keySet.subsetOf(Set(Mvt.PropKey("kind"), Mvt.PropKey("name")))
+          l == Mvt.LayerName("water") && g == Mvt.GeomType(1) && p
+            .get(Mvt.PropKey("kind"))
+            .contains(Mvt.PropText("sea")) && p.keySet.subsetOf(Set(Mvt.PropKey("kind"), Mvt.PropKey("name")))
         ),
         fs.toString
       )
@@ -173,14 +191,20 @@ class BasemapHttpSuite extends DbSuite:
         assertEquals((focus.get[Int]("minZoom"), focus.get[Int]("maxZoom")), (Right(9), Right(11)))
         assert(focus.get[Long]("bytes").exists(_ > 0), focus.focus.toString)
         val od = t.downField("onDemand")
-        assertEquals(od.get[Boolean]("enabled"), Right(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled.value))
+        assertEquals(
+          od.get[Boolean]("enabled"),
+          Right(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled.value)
+        )
         assertEquals(od.get[Int]("maxZoom"), Right(AppConfig.load().basemap.terrain.onDemand.maxZoom))
         assert(od.get[Long]("maxBytes").isRight && od.get[String]("dir").isRight, od.focus.toString)
         // and the typed status a page decodes says the same
         val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
         val info = st.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get
         assertEquals(info.focus.map(_.name), List("argolid"))
-        assertEquals(info.onDemand.map(_.enabled), Some(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled.value))
+        assertEquals(
+          info.onDemand.map(_.enabled),
+          Some(onDemand && AppConfig.load().basemap.terrain.onDemand.enabled.value)
+        )
       }
 
   test("the relief deeper than any archive holds: cut from its nearest ancestor, resampled in metres, a terrarium PNG"):
@@ -215,7 +239,10 @@ class BasemapHttpSuite extends DbSuite:
       val mycenae = tile(Basemap.Zoom(10), Longitude(22.756), Latitude(37.73))
       assertEquals((mycenae.statusCode, mycenae.headers.firstValue("content-type").orElse("")), (200, "image/webp"))
       // zoom 11 at the Argolid's edge outside it (Nafplio's gulf, south of the region): cut from the extract
-      assertEquals(tile(Basemap.Zoom(11), Longitude(22.80), Latitude(37.50)).headers.firstValue("content-type").orElse(""), "image/png")
+      assertEquals(
+        tile(Basemap.Zoom(11), Longitude(22.80), Latitude(37.50)).headers.firstValue("content-type").orElse(""),
+        "image/png"
+      )
       // deeper than every archive: none (the map draws its deepest tile larger)
       assertEquals(tile(Basemap.Zoom(12), Longitude(25.45), Latitude(37.05)).statusCode, 204)
       // outside every region: none

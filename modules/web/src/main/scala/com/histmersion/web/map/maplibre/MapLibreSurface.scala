@@ -12,8 +12,12 @@ import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.BaseMapSpec
 
 /** A [[MapSurface]] over one MapLibre map. */
-final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pixelRatio: Option[MapEngine.PixelRatio], caps: Capabilities)
-    extends MapSurface:
+final class MapLibreSurface(
+    el: dom.HTMLElement,
+    maxZoom0: MapEngine.MaxZoom,
+    pixelRatio: Option[MapEngine.PixelRatio],
+    caps: Capabilities
+) extends MapSurface:
   import MapLibreEngine.ZoomShift
 
   private val gl: GlMap =
@@ -62,7 +66,12 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
   def center: LatLon = { val c = gl.getCenter(); LatLon(c.lat, c.lng) }
   def bounds: GeoBounds =
     val b = gl.getBounds()
-    GeoBounds(GeoBounds.South(b.getSouth()), GeoBounds.West(b.getWest()), GeoBounds.North(b.getNorth()), GeoBounds.East(b.getEast()))
+    GeoBounds(
+      GeoBounds.South(b.getSouth()),
+      GeoBounds.West(b.getWest()),
+      GeoBounds.North(b.getNorth()),
+      GeoBounds.East(b.getEast())
+    )
   private def sizeNow(): (MapSurface.Dimension, MapSurface.Dimension) =
     (MapSurface.Dimension(el.clientWidth.toDouble), MapSurface.Dimension(el.clientHeight.toDouble))
   // the container's size, read when it changes (a layout read per marker per frame forced a layout each)
@@ -78,10 +87,18 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
     if MapLibreSurface.eases(animate.value) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
     else { val _ = gl.jumpTo(o.asInstanceOf[js.Object]) }
 
-  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate): Unit =
+  def fitBounds(
+      b: GeoBounds,
+      padding: MapSurface.FitBoundsPadding,
+      maxZoom: MapSurface.MaxZoom,
+      animate: MapSurface.FitBoundsAnimate
+  ): Unit =
     val _ = gl.fitBounds(
       js.Array(js.Array(b.west.value, b.south.value), js.Array(b.east.value, b.north.value)),
-      MapLibreSurface.motion(animate.value, js.Dynamic.literal(padding = padding.value, maxZoom = maxZoom.value - ZoomShift))
+      MapLibreSurface.motion(
+        animate.value,
+        js.Dynamic.literal(padding = padding.value, maxZoom = maxZoom.value - ZoomShift)
+      )
     )
 
   def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate): Unit =
@@ -131,7 +148,11 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
           js.Dynamic.literal(layers = symbols).asInstanceOf[js.Object]
         ).toSeq
           .flatMap(f =>
-            f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(t => MapSurface.LabelText(t.toString))
+            f.properties
+              .get(key)
+              .orElse(f.properties.get("name:en"))
+              .orElse(f.properties.get("name"))
+              .map(t => MapSurface.LabelText(t.toString))
           )
           .distinct
   def baseMapLabels: Seq[(MapSurface.LabelText, MapSurface.LabelText, ScreenPt)] =
@@ -165,7 +186,8 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
                 val cs = g.coordinates.asInstanceOf[js.Array[js.Array[js.Array[Double]]]].flatMap(identity)
                 cs.lift(cs.length / 2).map(c => LatLon(LatLon.Lat(c(1)), LatLon.Lon(c(0))))
               case _ => None
-            for t <- text; a <- at yield (MapSurface.LabelText(f.layer.id.toString), MapSurface.LabelText(t), project(a))
+            for t <- text; a <- at
+            yield (MapSurface.LabelText(f.layer.id.toString), MapSurface.LabelText(t), project(a))
           }
           .distinctBy((l, t, _) => (l, t))
   def baseMapAreasAt(p: ScreenPt): Seq[MapSurface.LayerId] =
@@ -181,14 +203,20 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
         .map(_.id.toString)
       if fills.isEmpty then Nil
       else
-        gl.queryRenderedFeatures(js.Array(p.x.value, p.y.value), js.Dynamic.literal(layers = fills).asInstanceOf[js.Object])
-          .toSeq
+        gl.queryRenderedFeatures(
+          js.Array(p.x.value, p.y.value),
+          js.Dynamic.literal(layers = fills).asInstanceOf[js.Object]
+        ).toSeq
           .map(f => MapSurface.LayerId(s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}"))
           .distinct
   def baseMapLayer(id: MapSurface.LayerId): Option[MapSurface.LayerId] =
     gl.getLayer(id.value)
       .toOption
-      .map(_ => MapSurface.LayerId(Option(gl.getLayoutProperty(id.value, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString)))
+      .map(_ =>
+        MapSurface.LayerId(
+          Option(gl.getLayoutProperty(id.value, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString)
+        )
+      )
   def baseMapDrawn(id: MapSurface.LayerId): MapSurface.DrawnCount =
     if gl.getLayer(id.value).isEmpty then MapSurface.DrawnCount(0)
     else

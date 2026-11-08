@@ -28,7 +28,8 @@ import com.histmersion.api.catalogue.Year
   */
 class PlaceReviewSuite extends RegionCleanupFixtures:
 
-  private def mine(ps: List[Proposal]) = ps.filter(p => p.id.value.startsWith("pleiades_99910") || p.id.value.startsWith("zzrc"))
+  private def mine(ps: List[Proposal]) =
+    ps.filter(p => p.id.value.startsWith("pleiades_99910") || p.id.value.startsWith("zzrc"))
 
   test("place-kind: a dry run lists people, polities, a settlement and a merge, and changes nothing"):
     seed()
@@ -41,7 +42,11 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     assertEquals(byId(Peir).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Site)
     assertEquals(byId(Dup).asInstanceOf[Proposal.Merge].into, Into)
     assert(byId(Aiantis).describe.value.startsWith(s"$Aiantis Zzrc Aiantis: region → people"), byId(Aiantis).describe)
-    assertEquals(PlaceFixtures.get(ds, AiantisId).map(_.place.kind), Some(Place.Kind.Region), "a dry run writes nothing")
+    assertEquals(
+      PlaceFixtures.get(ds, AiantisId).map(_.place.kind),
+      Some(Place.Kind.Region),
+      "a dry run writes nothing"
+    )
 
   test("place-kind --fix: kinds change, the duplicate merges (links, alias), findings are matched again"):
     seed()
@@ -86,7 +91,8 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     val rs = PlaceFixtures.relocations(ds).filter(_.id.value.startsWith("pleiades_99910"))
     assertEquals(rs.map(_.id), List(Thess), "a linked point on a grid centre itself is no better")
     assert(
-      rs.head.describe.value.contains("wikidata:Q999100004's point 47.6200 S") || rs.head.describe.value.contains("-47.6200"),
+      rs.head.describe.value.contains("wikidata:Q999100004's point 47.6200 S") || rs.head.describe.value
+        .contains("-47.6200"),
       rs.head.describe
     )
     // a finding ON the linked record's point: the moved place takes it by its new point
@@ -126,14 +132,28 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       cfg.limits.chunkChars,
       cfg.places.pointToleranceKm
     )
-    assertEquals(PlaceFixtures.placesOf(ds, Finding.Id("zzrc_src2#0")).map(_.id).filter(_.value.startsWith("pleiades_99910")).toList, Nil)
+    assertEquals(
+      PlaceFixtures
+        .placesOf(ds, Finding.Id("zzrc_src2#0"))
+        .map(_.id)
+        .filter(_.value.startsWith("pleiades_99910"))
+        .toList,
+      Nil
+    )
     assertEquals(PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm), 1)
     assertEquals(
-      PlaceFixtures.placesOf(ds, Finding.Id("zzrc_src2#0")).map(_.id).filter(_.value.startsWith("pleiades_99910")).toList,
+      PlaceFixtures
+        .placesOf(ds, Finding.Id("zzrc_src2#0"))
+        .map(_.id)
+        .filter(_.value.startsWith("pleiades_99910"))
+        .toList,
       List(Thess),
       "the moved place's findings are matched again at once"
     )
-    assertEquals(PlaceFixtures.get(ds, ThessId).map(_.locationPrecision), Some(com.histmersion.api.catalogue.Place.Precision.Stated))
+    assertEquals(
+      PlaceFixtures.get(ds, ThessId).map(_.locationPrecision),
+      Some(com.histmersion.api.catalogue.Place.Precision.Stated)
+    )
     assertEquals(PlaceFixtures.relocations(ds).filter(_.id.value.startsWith("pleiades_99910")), Nil)
     assertEquals(
       PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm),

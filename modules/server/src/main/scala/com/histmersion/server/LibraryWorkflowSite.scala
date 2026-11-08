@@ -39,9 +39,12 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
     h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))
 
   def citedSources(slug: Slug): List[Citekey] =
-    h.research.articles.get(slug).toOption.toList.flatMap(_.sourcesCited.filter(_.title.isDefined).flatMap(c => Citekey.option(c.citekey.value)))
+    h.research.articles
+      .get(slug)
+      .toOption
+      .toList
+      .flatMap(_.sourcesCited.filter(_.title.isDefined).flatMap(c => Citekey.option(c.citekey.value)))
 
   def articleExists(slug: Slug): Boolean = h.research.articleStore.exists(slug)
 
   def upstreamQuotas(now: Instant): List[UpstreamQuota] = h.upstreamQuotas(now)
-

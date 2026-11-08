@@ -48,7 +48,10 @@ class OnDemandTilesSuite extends munit.FunSuite:
     Thread.sleep(5)
     assert(lru.get(DiskLru.Key("1/0/0")).exists(_.exists(_.value.head == 1)), "read: now the most recently used")
     Thread.sleep(5)
-    lru.put(DiskLru.Key("1/1/1"), Some(ByteSource.Content(Array.fill(15)(3)))) // 35 > 30: the least recently used (1/0/1) goes
+    lru.put(
+      DiskLru.Key("1/1/1"),
+      Some(ByteSource.Content(Array.fill(15)(3)))
+    ) // 35 > 30: the least recently used (1/0/1) goes
     assertEquals(lru.get(DiskLru.Key("1/0/1")), None)
     assert(!Files.exists(root.resolve("1/0/1.webp")))
     assertEquals(lru.get(DiskLru.Key("1/1/0")), Some(None))
@@ -87,12 +90,21 @@ class OnDemandTilesSuite extends munit.FunSuite:
 
   test("a tile is read once from the provider and then from the cache — also by a new instance (offline)"):
     val (od, p, dir, _, _) = setup()
-    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/12")))
+    assertEquals(
+      od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).map(_.map(b => String(b.value))),
+      Right(Some("RIFF5/18/12"))
+    )
     val first = p.local.requests.get
     assert(first >= 2, "the header and root, then the tile")
-    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/12")))
+    assertEquals(
+      od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).map(_.map(b => String(b.value))),
+      Right(Some("RIFF5/18/12"))
+    )
     assertEquals(p.local.requests.get, first, "the second time from the cache")
-    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(13)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/13")))
+    assertEquals(
+      od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(13)).map(_.map(b => String(b.value))),
+      Right(Some("RIFF5/18/13"))
+    )
     assertEquals(p.local.requests.get, first + 1, "the planet's directory is read once: one request a tile")
     p.fail = true
     val restarted =
@@ -112,7 +124,12 @@ class OnDemandTilesSuite extends munit.FunSuite:
   test("outside the configured zooms or switched off: nothing is asked"):
     val (od, p, _, _, _) = setup(cfg(maxZoom = BasemapOnDemandConfig.MaxZoom(4)))
     assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)), Right(None))
-    assert(!od.serves(PmTiles.Zoom(5), BasemapFetch.Plan.MaxZoom(3)) && od.serves(PmTiles.Zoom(4), BasemapFetch.Plan.MaxZoom(3)) && !od.serves(PmTiles.Zoom(3), BasemapFetch.Plan.MaxZoom(3)))
+    assert(
+      !od.serves(PmTiles.Zoom(5), BasemapFetch.Plan.MaxZoom(3)) && od.serves(
+        PmTiles.Zoom(4),
+        BasemapFetch.Plan.MaxZoom(3)
+      ) && !od.serves(PmTiles.Zoom(3), BasemapFetch.Plan.MaxZoom(3))
+    )
     val (off, p2, _, _, _) = setup(cfg(enabled = BasemapOnDemandConfig.Enabled(false)))
     assertEquals(off.tile(PmTiles.Zoom(4), PmTiles.TileColumn(9), PmTiles.TileRow(6)), Right(None))
     assertEquals(p.local.requests.get + p2.local.requests.get, 0)
@@ -127,13 +144,19 @@ class OnDemandTilesSuite extends munit.FunSuite:
     assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).isLeft, "still within the pause")
     assertEquals(p.local.requests.get, before)
     clock.addAndGet(31000)
-    assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).toOption.flatten.isDefined, "asked again after the pause")
+    assert(
+      od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).toOption.flatten.isDefined,
+      "asked again after the pause"
+    )
 
   test("the provider replaced its file (another ETag): its directory is read again, the tile still served"):
     val (od, p, _, _, _) = setup()
     assert(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12)).toOption.flatten.isDefined)
     p.local.etag = RemoteFile.Etag("\"v2\"")
-    assertEquals(od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(13)).map(_.map(b => String(b.value))), Right(Some("RIFF5/18/13")))
+    assertEquals(
+      od.tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(13)).map(_.map(b => String(b.value))),
+      Right(Some("RIFF5/18/13"))
+    )
 
   test("the request rate: requests begin at most requests-per-second apart"):
     val (od, _, _, _, slept) = setup(cfg(rps = BasemapOnDemandConfig.RequestsPerSecond(4)))
@@ -161,15 +184,26 @@ class OnDemandTilesSuite extends munit.FunSuite:
       BasemapTerrainConfig.MaxZoom(8),
       BasemapTerrainConfig.Attribution(""),
       cfg(maxZoom = BasemapOnDemandConfig.MaxZoom(12)),
-      List(BasemapTerrainConfig.FocusRegions("aegean 21.5,35,28.5,41.5"), BasemapTerrainConfig.FocusRegions("argolid 22.5,37.4,23.2,37.9"))
+      List(
+        BasemapTerrainConfig.FocusRegions("aegean 21.5,35,28.5,41.5"),
+        BasemapTerrainConfig.FocusRegions("argolid 22.5,37.4,23.2,37.9")
+      )
     )
     val box = BBox(Longitude(22.5), Latitude(37.4), Longitude(23.2), Latitude(37.9))
     assertEquals(
       BasemapService.focusOf(Some(Basemap.Focus.Name("Aegean")), None, false, None, t),
       Right(Some(("aegean", BBox(Longitude(21.5), Latitude(35), Longitude(28.5), Latitude(41.5)))))
     )
-    assertEquals(BasemapService.focusOf(Some(Basemap.Focus.Name("mine")), Some(box), false, None, t), Right(Some(("mine", box))))
-    assert(BasemapService.focusOf(Some(Basemap.Focus.Name("nowhere")), None, false, None, t).left.exists(_.value.contains("give its --bbox")))
+    assertEquals(
+      BasemapService.focusOf(Some(Basemap.Focus.Name("mine")), Some(box), false, None, t),
+      Right(Some(("mine", box)))
+    )
+    assert(
+      BasemapService
+        .focusOf(Some(Basemap.Focus.Name("nowhere")), None, false, None, t)
+        .left
+        .exists(_.value.contains("give its --bbox"))
+    )
     assert(BasemapService.focusOf(Some(Basemap.Focus.Name("bad name!")), Some(box), false, None, t).isLeft)
     assertEquals(
       BasemapService.focusOf(None, Some(box), true, Some(BasemapFetch.Plan.MaxZoom(12)), t),
@@ -185,8 +219,13 @@ class OnDemandTilesSuite extends munit.FunSuite:
       Right(None),
       "with other layers: the extract"
     )
-    assertEquals(Basemap.focusRegion(Basemap.Focus.Spec("nile-delta 29,30,32.5,31.7")), Right(("nile-delta", BBox(Longitude(29), Latitude(30), Longitude(32.5), Latitude(31.7)))))
-    assert(Basemap.focusRegion(Basemap.Focus.Spec("x")).isLeft && Basemap.focusRegion(Basemap.Focus.Spec("x 1,2,3")).isLeft)
+    assertEquals(
+      Basemap.focusRegion(Basemap.Focus.Spec("nile-delta 29,30,32.5,31.7")),
+      Right(("nile-delta", BBox(Longitude(29), Latitude(30), Longitude(32.5), Latitude(31.7))))
+    )
+    assert(
+      Basemap.focusRegion(Basemap.Focus.Spec("x")).isLeft && Basemap.focusRegion(Basemap.Focus.Spec("x 1,2,3")).isLeft
+    )
 
   test("#3760: a tile URL source — one GET a tile, a 404 kept as none, each transformed before it is kept"):
     val dir = Files.createTempDirectory("ondemand-get")
@@ -206,8 +245,14 @@ class OnDemandTilesSuite extends munit.FunSuite:
       ext = DiskLru.Ext("png"),
       transform = b => Right(Some(PmTiles.TileBytes(("T:" + String(b.value)).getBytes)))
     )(using java.time.Clock.systemUTC())
-    assertEquals(od.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))), Right(Some("T:fake://sea/2/1/3.png")))
-    assertEquals(od.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))), Right(Some("T:fake://sea/2/1/3.png")))
+    assertEquals(
+      od.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))),
+      Right(Some("T:fake://sea/2/1/3.png"))
+    )
+    assertEquals(
+      od.tile(PmTiles.Zoom(2), PmTiles.TileColumn(1), PmTiles.TileRow(3)).map(_.map(b => String(b.value))),
+      Right(Some("T:fake://sea/2/1/3.png"))
+    )
     assertEquals(od.tile(PmTiles.Zoom(1), PmTiles.TileColumn(0), PmTiles.TileRow(0)), Right(None))
     assertEquals(od.tile(PmTiles.Zoom(1), PmTiles.TileColumn(0), PmTiles.TileRow(0)), Right(None))
     assertEquals(gets.get, 2, "each tile asked once")

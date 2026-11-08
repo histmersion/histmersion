@@ -22,7 +22,6 @@ object ConfigEdit:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
@@ -65,7 +64,7 @@ object ConfigEdit:
       extension (key: Key)
         /** The key with the `histmersion.` prefix every full key has. */
         def qualified: Key = if key.value.startsWith("histmersion.") then key else Key(s"histmersion.${key.value}")
-    export ConfigEdit.Section.{Id as Section}
+    export ConfigEdit.Section.Id as Section
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     type Doc = Doc.T
@@ -76,7 +75,7 @@ object ConfigEdit:
     object Value extends Newtype[String, Pure]
     type Effective = Effective.T
     object Effective extends Newtype[String, Pure]
-    export ConfigEdit.Source.{Wire as Source}
+    export ConfigEdit.Source.Wire as Source
     type EnvVar = EnvVar.T
     object EnvVar extends Newtype[String, Pure]
     type Restart = Restart.T
@@ -103,7 +102,8 @@ object ConfigEdit:
       restartable: Page.Restartable = Page.Restartable(false),
       setupDue: Page.SetupDue = Page.SetupDue(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
     def field(key: Field.Key): Option[Field] =
       fields.find(_.key == key.qualified)
@@ -125,9 +125,9 @@ object ConfigEdit:
     type SetupDue = SetupDue.T
     object SetupDue extends Newtype[Boolean, Pure]
 
-
-
-  final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives KindlingsCodecAsObject, KindlingsSchema
+  final case class Change(key: Change.Key, value: Option[Change.Value] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
 
   object Change:
     export Field.Key
@@ -140,7 +140,8 @@ object ConfigEdit:
       literalConsent: Write.LiteralConsent = Write.LiteralConsent(false),
       reload: Write.Reload = Write.Reload(true)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Write:
     type Version = Version.T
@@ -150,9 +151,9 @@ object ConfigEdit:
     type Reload = Reload.T
     object Reload extends Newtype[Boolean, Pure]
 
-
-
-  final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives KindlingsCodecAsObject, KindlingsSchema
+  final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema
 
   object RestartNote:
     export Field.Key
@@ -171,7 +172,8 @@ object ConfigEdit:
       reload: Option[ReloadReport] = None,
       restartable: Written.Restartable = Written.Restartable(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Written:
     type File = File.T
@@ -191,17 +193,16 @@ object ConfigEdit:
     type Restartable = Restartable.T
     object Restartable extends Newtype[Boolean, Pure]
 
-
-
-  final case class Restart(accepted: Restart.Accepted, message: Restart.Message) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Restart(accepted: Restart.Accepted, message: Restart.Message)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Restart:
     type Accepted = Accepted.T
     object Accepted extends Newtype[Boolean, Pure]
     type Message = Message.T
     object Message extends Newtype[String, Pure]
-
-
 
   val CodeChanged = "settings_changed"
 

@@ -20,12 +20,20 @@ import com.histmersion.api.jobs.JobKinds
   */
 class AcquireChecksSuite extends munit.FunSuite:
 
-  private val item = Queue.QueueItem(Queue.QueueItem.Id(7), Queue.QueueItem.List("acquire"), Queue.QueueItem.Text("Zz 2019, Tin — https://doi.org/10.1/zz"), Some(Queue.QueueItem.Topic("tin")), Queue.QueueItem.Status(Queue.Open))
+  private val item = Queue.QueueItem(
+    Queue.QueueItem.Id(7),
+    Queue.QueueItem.List("acquire"),
+    Queue.QueueItem.Text("Zz 2019, Tin — https://doi.org/10.1/zz"),
+    Some(Queue.QueueItem.Topic("tin")),
+    Queue.QueueItem.Status(Queue.Open)
+  )
   private val check = AcquireCheck(
     Queue.QueueItem.Id(7),
     Acquire.Checks.AcquireCheck.CheckedAt("2026-10-27T10:00:00Z"),
     Acquire.Checks.AcquireCheck.Outcome(NoCopy),
-    Queue.QueueItem.Reason("checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"),
+    Queue.QueueItem.Reason(
+      "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
+    ),
     Acquire.Checks.AcquireCheck.Checks(2)
   )
 
@@ -67,8 +75,20 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
 
   test("the autopilot status and about carry the line; the re-check's finds are named among the day's ingests"):
-    val r = RecheckStatus(enabled = Acquire.Checks.RecheckStatus.Enabled(true), withDoi = Acquire.Checks.RecheckStatus.WithDoi(3), due = Acquire.Checks.RecheckStatus.Due(1), triedToday = Acquire.Checks.RecheckStatus.TriedToday(2), perDay = Acquire.Checks.RecheckStatus.PerDay(40), fetchedToday = Acquire.Checks.RecheckStatus.FetchedToday(2))
-    val st = AutopilotStatus(on = AutopilotStatus.On(true), ingestedToday = AutopilotStatus.IngestedToday(9), ingestCap = AutopilotStatus.IngestCap(60), acquireRecheck = Some(r))
+    val r = RecheckStatus(
+      enabled = Acquire.Checks.RecheckStatus.Enabled(true),
+      withDoi = Acquire.Checks.RecheckStatus.WithDoi(3),
+      due = Acquire.Checks.RecheckStatus.Due(1),
+      triedToday = Acquire.Checks.RecheckStatus.TriedToday(2),
+      perDay = Acquire.Checks.RecheckStatus.PerDay(40),
+      fetchedToday = Acquire.Checks.RecheckStatus.FetchedToday(2)
+    )
+    val st = AutopilotStatus(
+      on = AutopilotStatus.On(true),
+      ingestedToday = AutopilotStatus.IngestedToday(9),
+      ingestCap = AutopilotStatus.IngestCap(60),
+      acquireRecheck = Some(r)
+    )
     val md = st.markdown
     assert(
       md.contains(
@@ -90,9 +110,26 @@ class AcquireChecksSuite extends munit.FunSuite:
       fetched = Acquire.Checks.RecheckResult.Fetched(1),
       noCopy = Acquire.Checks.RecheckResult.NoCopy(1),
       rows = List(
-        RecheckRow(Acquire.Checks.RecheckRow.Item(1), Some(Doi("10.1/a")), Acquire.Checks.RecheckRow.Action(Closed), Acquire.Checks.RecheckRow.Detail("in the corpus with its original"), Some(Citekey("a2020_x"))),
-        RecheckRow(Acquire.Checks.RecheckRow.Item(2), Some(Doi("10.1/b")), Acquire.Checks.RecheckRow.Action(Fetched), Acquire.Checks.RecheckRow.Detail("checked 2026-10-27: a legal copy found (unpaywall)"), Some(Citekey("b2021_y"))),
-        RecheckRow(Acquire.Checks.RecheckRow.Item(3), Some(Doi("10.1/c")), Acquire.Checks.RecheckRow.Action(NoCopy), Acquire.Checks.RecheckRow.Detail("checked 2026-10-27: no legal copy"))
+        RecheckRow(
+          Acquire.Checks.RecheckRow.Item(1),
+          Some(Doi("10.1/a")),
+          Acquire.Checks.RecheckRow.Action(Closed),
+          Acquire.Checks.RecheckRow.Detail("in the corpus with its original"),
+          Some(Citekey("a2020_x"))
+        ),
+        RecheckRow(
+          Acquire.Checks.RecheckRow.Item(2),
+          Some(Doi("10.1/b")),
+          Acquire.Checks.RecheckRow.Action(Fetched),
+          Acquire.Checks.RecheckRow.Detail("checked 2026-10-27: a legal copy found (unpaywall)"),
+          Some(Citekey("b2021_y"))
+        ),
+        RecheckRow(
+          Acquire.Checks.RecheckRow.Item(3),
+          Some(Doi("10.1/c")),
+          Acquire.Checks.RecheckRow.Action(NoCopy),
+          Acquire.Checks.RecheckRow.Detail("checked 2026-10-27: no legal copy")
+        )
       )
     )
     val md = AcquireChecksMarkdown.result(r)
@@ -105,7 +142,17 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
     assert(md.contains("- #1 https://doi.org/10.1/a · closed [[a2020_x]]: in the corpus with its original"), md)
     val dry = AcquireChecksMarkdown.result(
-      RecheckResult(dryRun = Acquire.Checks.RecheckResult.DryRun(true), rows = List(RecheckRow(Acquire.Checks.RecheckRow.Item(3), Some(Doi("10.1/c")), Acquire.Checks.RecheckRow.Action(WouldTry), Acquire.Checks.RecheckRow.Detail("never checked"))))
+      RecheckResult(
+        dryRun = Acquire.Checks.RecheckResult.DryRun(true),
+        rows = List(
+          RecheckRow(
+            Acquire.Checks.RecheckRow.Item(3),
+            Some(Doi("10.1/c")),
+            Acquire.Checks.RecheckRow.Action(WouldTry),
+            Acquire.Checks.RecheckRow.Detail("never checked")
+          )
+        )
+      )
     )
     assert(
       dry.contains("dry run: no fetcher asked, nothing stored") && dry.contains(
@@ -113,13 +160,33 @@ class AcquireChecksSuite extends munit.FunSuite:
       ),
       dry
     )
-    assert(AcquireChecksMarkdown.result(RecheckResult(dryRun = Acquire.Checks.RecheckResult.DryRun(false))).contains("_Nothing to do._"))
+    assert(
+      AcquireChecksMarkdown
+        .result(RecheckResult(dryRun = Acquire.Checks.RecheckResult.DryRun(false)))
+        .contains("_Nothing to do._")
+    )
 
   test("a pass that runs as a job: what it re-checks and how to follow it; the jobs list names it"):
-    val detail = RecheckJob(all = Acquire.Checks.RecheckJob.All(true), since = Acquire.Checks.RecheckJob.Since("2026-10-27T10:00:00Z"), by = Acquire.Checks.RecheckJob.By("cli"))
-    val job = JobInfo(SpatialHierarchyResult.Job.Id("j-1"), JobKinds.Wire(RecheckJob.JobKind), JobInfo.Status("running"), detail = Some(RecheckJob.Detail(Some(detail))))
+    val detail = RecheckJob(
+      all = Acquire.Checks.RecheckJob.All(true),
+      since = Acquire.Checks.RecheckJob.Since("2026-10-27T10:00:00Z"),
+      by = Acquire.Checks.RecheckJob.By("cli")
+    )
+    val job = JobInfo(
+      SpatialHierarchyResult.Job.Id("j-1"),
+      JobKinds.Wire(RecheckJob.JobKind),
+      JobInfo.Status("running"),
+      detail = Some(RecheckJob.Detail(Some(detail)))
+    )
     val md = AcquireChecksMarkdown.result(
-      RecheckResult(dryRun = Acquire.Checks.RecheckResult.DryRun(false), open = Acquire.Checks.RecheckResult.Open(460), withDoi = Acquire.Checks.RecheckResult.WithDoi(453), due = Acquire.Checks.RecheckResult.Due(453), allowance = Acquire.Checks.RecheckResult.Allowance(453), job = Some(job))
+      RecheckResult(
+        dryRun = Acquire.Checks.RecheckResult.DryRun(false),
+        open = Acquire.Checks.RecheckResult.Open(460),
+        withDoi = Acquire.Checks.RecheckResult.WithDoi(453),
+        due = Acquire.Checks.RecheckResult.Due(453),
+        allowance = Acquire.Checks.RecheckResult.Allowance(453),
+        job = Some(job)
+      )
     )
     assert(md.contains("- 460 open items, 453 with a DOI; 453 to try"), md)
     assert(
@@ -131,14 +198,30 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
     assertEquals(JobDetail.subject(job), Some("the acquisition list's legal re-check of every open item with a DOI"))
     assertEquals(
-      RecheckJob.describe(RecheckJob(all = Acquire.Checks.RecheckJob.All(false), upTo = Acquire.Checks.RecheckJob.UpTo(5), resumes = Some(Acquire.Checks.RecheckJob.Resumes("j-0")))),
+      RecheckJob.describe(
+        RecheckJob(
+          all = Acquire.Checks.RecheckJob.All(false),
+          upTo = Acquire.Checks.RecheckJob.UpTo(5),
+          resumes = Some(Acquire.Checks.RecheckJob.Resumes("j-0"))
+        )
+      ),
       "the acquisition list's legal re-check of up to 5 due items (resuming job j-0)"
     )
 
   test("the status line names the re-check job running, on or off"):
     val running =
-      Some(SpatialHierarchyResult.Job.Id("job j-1 running: 120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429)"))
-    val s = RecheckStatus(enabled = Acquire.Checks.RecheckStatus.Enabled(true), withDoi = Acquire.Checks.RecheckStatus.WithDoi(453), due = Acquire.Checks.RecheckStatus.Due(300), perDay = Acquire.Checks.RecheckStatus.PerDay(40), job = running)
+      Some(
+        SpatialHierarchyResult.Job.Id(
+          "job j-1 running: 120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429)"
+        )
+      )
+    val s = RecheckStatus(
+      enabled = Acquire.Checks.RecheckStatus.Enabled(true),
+      withDoi = Acquire.Checks.RecheckStatus.WithDoi(453),
+      due = Acquire.Checks.RecheckStatus.Due(300),
+      perDay = Acquire.Checks.RecheckStatus.PerDay(40),
+      job = running
+    )
     assert(
       AcquireChecksMarkdown
         .line(s)
@@ -149,6 +232,11 @@ class AcquireChecksSuite extends munit.FunSuite:
       AcquireChecksMarkdown.line(s)
     )
     assertEquals(
-      AcquireChecksMarkdown.line(RecheckStatus(enabled = Acquire.Checks.RecheckStatus.Enabled(false), job = Some(SpatialHierarchyResult.Job.Id("job j-1 running: 0/2 items")))),
+      AcquireChecksMarkdown.line(
+        RecheckStatus(
+          enabled = Acquire.Checks.RecheckStatus.Enabled(false),
+          job = Some(SpatialHierarchyResult.Job.Id("job j-1 running: 0/2 items"))
+        )
+      ),
       "acquire re-check: off (acquire.recheck.enabled = false) — job j-1 running: 0/2 items"
     )

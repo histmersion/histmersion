@@ -10,7 +10,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** A Crossref `update-to` entry. */
 final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[Doi])
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object UpdateNotice:
   type Kind = Kind.T

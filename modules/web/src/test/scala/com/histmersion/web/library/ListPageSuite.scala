@@ -16,7 +16,10 @@ class ListPageSuite extends munit.FunSuite:
   test("the range line: loading, nothing, or which rows of how many"):
     assertEquals(ListPage.rangeLine(ListPage[Int](), "sources"), "Loading…")
     assertEquals(ListPage.rangeLine(ListPage[Int](loaded = true), "sources"), "No sources")
-    assertEquals(ListPage.rangeLine(ListPage(List.fill(50)(0), Offset(0), RowCount(1026), loaded = true), "sources"), "1–50 of 1,026")
+    assertEquals(
+      ListPage.rangeLine(ListPage(List.fill(50)(0), Offset(0), RowCount(1026), loaded = true), "sources"),
+      "1–50 of 1,026"
+    )
     assertEquals(
       ListPage.rangeLine(ListPage(List.fill(26)(0), Offset(1000), RowCount(1026), loaded = true), "sources"),
       "1,001–1,026 of 1,026"

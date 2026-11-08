@@ -72,7 +72,9 @@ object PassageFinder:
       compile(Query(q), regex).flatMap { pattern =>
         val text = body(segments).value
         val folded = Folded(text)
-        val until = timer.after(scala.concurrent.duration.FiniteDuration(timeoutMs.value.max(1L), scala.concurrent.duration.MILLISECONDS))
+        val until = timer.after(
+          scala.concurrent.duration.FiniteDuration(timeoutMs.value.max(1L), scala.concurrent.duration.MILLISECONDS)
+        )
         try
           val (spans, capped) = matches(pattern, folded, text, maxMatches.value.max(1), until)
           val ranges = merge(spans, text, context.value.max(0))
@@ -192,9 +194,14 @@ object PassageFinder:
     def subSequence(a: Int, b: Int): CharSequence = new Bounded(s.subSequence(a, b), until)
     override def toString: String = s.toString
 
-
   /** Every non-empty match as `[start, end)` in the ORIGINAL body, in order, up to `max`. */
-  private def matches(p: Pattern, f: Folded, source: String, max: Int, until: Timer.Deadline): (Vector[(Int, Int)], Boolean) =
+  private def matches(
+      p: Pattern,
+      f: Folded,
+      source: String,
+      max: Int,
+      until: Timer.Deadline
+  ): (Vector[(Int, Int)], Boolean) =
     val m: Matcher = p.matcher(new Bounded(f.text, until))
     val out = Vector.newBuilder[(Int, Int)]
     // the Matcher is itself a cursor, so the loop around it counts with two local vars

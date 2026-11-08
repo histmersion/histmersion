@@ -13,7 +13,9 @@ class PomSuite extends munit.FunSuite:
   test("a POM's own coordinates"):
     assertEquals(
       Pom
-        .coordinates(PluginArtifact.Pom(pom("<groupId>com.example</groupId><artifactId>p_3</artifactId><version>1.0</version>")))
+        .coordinates(
+          PluginArtifact.Pom(pom("<groupId>com.example</groupId><artifactId>p_3</artifactId><version>1.0</version>"))
+        )
         .map(_.toString),
       Right("com.example:p_3:1.0")
     )

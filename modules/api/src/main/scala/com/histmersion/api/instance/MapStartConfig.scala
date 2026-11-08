@@ -15,7 +15,8 @@ final case class MapStartConfig(
     zoom: MapStartConfig.Zoom = MapStartConfig.Zoom(5.0),
     label: MapStartConfig.Label = MapStartConfig.Label("")
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, CanEqual
+      KindlingsSchema,
+      CanEqual
 
 object MapStartConfig:
   type Zoom = Zoom.T

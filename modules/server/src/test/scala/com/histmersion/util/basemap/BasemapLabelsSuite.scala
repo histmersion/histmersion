@@ -142,17 +142,38 @@ class BasemapLabelsSuite extends munit.FunSuite:
 
   test("rivers: simplified to about a pixel, clipped to each tile they cross, relative to its corner"):
     val l = Vector((X(0.0), Y(0.0)), (X(1.0), Y(0.01)), (X(2.0), Y(0.0)), (X(3.0), Y(5.0)), (X(4.0), Y(0.0)))
-    assertEquals(BasemapLabels.simplify(l, BasemapLabels.Tolerance(0.5)), Vector((0.0, 0.0), (2.0, 0.0), (3.0, 5.0), (4.0, 0.0)))
+    assertEquals(
+      BasemapLabels.simplify(l, BasemapLabels.Tolerance(0.5)),
+      Vector((0.0, 0.0), (2.0, 0.0), (3.0, 5.0), (4.0, 0.0))
+    )
     val across = Vector((X(100.0), Y(100.0)), (X(8000.0), Y(100.0)), (X(8000.0), Y(12000.0)))
-    assertEquals(BasemapLabels.clip(across, PmTiles.TileColumn(0), PmTiles.TileRow(0), BasemapLabels.Buffer(64)), Vector(Vector((100, 100), (8000, 100))))
-    assertEquals(BasemapLabels.clip(across, PmTiles.TileColumn(1), PmTiles.TileRow(0), BasemapLabels.Buffer(64)), Vector(Vector((-3996, 100), (3904, 100), (3904, 12000))))
-    assertEquals(BasemapLabels.clip(across, PmTiles.TileColumn(1), PmTiles.TileRow(2), BasemapLabels.Buffer(64)), Vector(Vector((3904, -8092), (3904, 3808))))
-    assertEquals(BasemapLabels.clip(across, PmTiles.TileColumn(0), PmTiles.TileRow(2), BasemapLabels.Buffer(64)), Vector.empty)
+    assertEquals(
+      BasemapLabels.clip(across, PmTiles.TileColumn(0), PmTiles.TileRow(0), BasemapLabels.Buffer(64)),
+      Vector(Vector((100, 100), (8000, 100)))
+    )
+    assertEquals(
+      BasemapLabels.clip(across, PmTiles.TileColumn(1), PmTiles.TileRow(0), BasemapLabels.Buffer(64)),
+      Vector(Vector((-3996, 100), (3904, 100), (3904, 12000)))
+    )
+    assertEquals(
+      BasemapLabels.clip(across, PmTiles.TileColumn(1), PmTiles.TileRow(2), BasemapLabels.Buffer(64)),
+      Vector(Vector((3904, -8092), (3904, 3808)))
+    )
+    assertEquals(
+      BasemapLabels.clip(across, PmTiles.TileColumn(0), PmTiles.TileRow(2), BasemapLabels.Buffer(64)),
+      Vector.empty
+    )
 
   test("geometry commands: a point, a line in two parts (deltas carried across parts)"):
     assertEquals(Mvt.pointGeometry(Mvt.PointX(5), Mvt.PointY(-3)), Vector(9, 10, 5))
     assertEquals(
-      Mvt.lineGeometry(List(List((Mvt.PointX(1), Mvt.PointY(1)), (Mvt.PointX(3), Mvt.PointY(1))), List((Mvt.PointX(3), Mvt.PointY(4)), (Mvt.PointX(3), Mvt.PointY(6)), (Mvt.PointX(0), Mvt.PointY(6))), List((Mvt.PointX(9), Mvt.PointY(9))))),
+      Mvt.lineGeometry(
+        List(
+          List((Mvt.PointX(1), Mvt.PointY(1)), (Mvt.PointX(3), Mvt.PointY(1))),
+          List((Mvt.PointX(3), Mvt.PointY(4)), (Mvt.PointX(3), Mvt.PointY(6)), (Mvt.PointX(0), Mvt.PointY(6))),
+          List((Mvt.PointX(9), Mvt.PointY(9)))
+        )
+      ),
       Vector(9, 2, 2, 10, 4, 0, 9, 0, 6, 18, 0, 4, 5, 0)
     )
     assertEquals(Mvt.zigzag(Mvt.SignedNumber(-1)), 1L)
@@ -172,7 +193,14 @@ class BasemapLabelsSuite extends munit.FunSuite:
       BasemapLabels.Label.MinZoom(7),
       elevation = Some(BasemapLabels.Label.Elevation(2917))
     )
-    val world = BasemapLabels.Label(BasemapLabels.Label.Kind("continent"), List(BasemapLabels.Language("name") -> BasemapLabels.Name("Europe")), BasemapLabels.Label.Lon(15), BasemapLabels.Label.Lat(50), BasemapLabels.Label.MinZoom(1), maxZoom = Some(BasemapLabels.Label.MaxZoom(3)))
+    val world = BasemapLabels.Label(
+      BasemapLabels.Label.Kind("continent"),
+      List(BasemapLabels.Language("name") -> BasemapLabels.Name("Europe")),
+      BasemapLabels.Label.Lon(15),
+      BasemapLabels.Label.Lat(50),
+      BasemapLabels.Label.MinZoom(1),
+      maxZoom = Some(BasemapLabels.Label.MaxZoom(3))
+    )
     val axios = BasemapLabels.Label(
       BasemapLabels.Label.Kind("river"),
       List(BasemapLabels.Language("name") -> BasemapLabels.Name("Axios")),
@@ -182,13 +210,20 @@ class BasemapLabelsSuite extends munit.FunSuite:
       line = Vector(Vector((Lon(21.0), Lat(42.0)), (Lon(22.6), Lat(40.6))))
     )
     assert(
-      !BasemapLabels.inTile(olympus, PmTiles.Zoom(5), PmTiles.Zoom(8)) && BasemapLabels.inTile(olympus, PmTiles.Zoom(6), PmTiles.Zoom(8)) && BasemapLabels.inTile(
+      !BasemapLabels.inTile(olympus, PmTiles.Zoom(5), PmTiles.Zoom(8)) && BasemapLabels
+        .inTile(olympus, PmTiles.Zoom(6), PmTiles.Zoom(8)) && BasemapLabels.inTile(
         olympus.modify(_.minZoom).setTo(BasemapLabels.Label.MinZoom(12)),
         PmTiles.Zoom(8),
         PmTiles.Zoom(8)
       )
     )
-    assert(BasemapLabels.inTile(world, PmTiles.Zoom(2), PmTiles.Zoom(8)) && !BasemapLabels.inTile(world, PmTiles.Zoom(3), PmTiles.Zoom(8)))
+    assert(
+      BasemapLabels.inTile(world, PmTiles.Zoom(2), PmTiles.Zoom(8)) && !BasemapLabels.inTile(
+        world,
+        PmTiles.Zoom(3),
+        PmTiles.Zoom(8)
+      )
+    )
     val tiles = BasemapLabels.tiles(List(olympus, world, axios), PmTiles.Zoom(8))
     assertEquals(tiles.map(_._1), tiles.map(_._1).sortBy[Long](_.value), "in tile-id order, as the archive is written")
     def at(z: PmTiles.Zoom, lon: Longitude, lat: Latitude) =
@@ -197,11 +232,26 @@ class BasemapLabelsSuite extends munit.FunSuite:
         PmTiles.TileColumn(Basemap.tileX(lon, Basemap.Zoom(z.value)).value),
         PmTiles.TileRow(Basemap.tileY(lat, Basemap.Zoom(z.value)).value)
       )
-      tiles.find(_._1 == id).map(t => PmTiles.gunzip(PmTiles.CompressedBytes(t._2.value)).fold(e => fail(e.value), identity))
-    assertEquals(at(PmTiles.Zoom(6), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, Mvt.LayerName("physical"))), Some(Right(List("peak"))))
-    assertEquals(at(PmTiles.Zoom(5), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, Mvt.LayerName("physical"))), Some(Right(Nil)), "the river's tile, no peak yet")
-    assertEquals(at(PmTiles.Zoom(4), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, Mvt.LayerName("rivers"))), Some(Right(List("river"))))
-    assertEquals(at(PmTiles.Zoom(2), Longitude(15), Latitude(50)).map(Mvt.kinds(_, Mvt.LayerName("physical"))), Some(Right(List("continent"))))
+      tiles
+        .find(_._1 == id)
+        .map(t => PmTiles.gunzip(PmTiles.CompressedBytes(t._2.value)).fold(e => fail(e.value), identity))
+    assertEquals(
+      at(PmTiles.Zoom(6), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, Mvt.LayerName("physical"))),
+      Some(Right(List("peak")))
+    )
+    assertEquals(
+      at(PmTiles.Zoom(5), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, Mvt.LayerName("physical"))),
+      Some(Right(Nil)),
+      "the river's tile, no peak yet"
+    )
+    assertEquals(
+      at(PmTiles.Zoom(4), Longitude(22.35), Latitude(40.08)).map(Mvt.kinds(_, Mvt.LayerName("rivers"))),
+      Some(Right(List("river")))
+    )
+    assertEquals(
+      at(PmTiles.Zoom(2), Longitude(15), Latitude(50)).map(Mvt.kinds(_, Mvt.LayerName("physical"))),
+      Some(Right(List("continent")))
+    )
     assertEquals(at(PmTiles.Zoom(8), Longitude(15), Latitude(50)), None, "the continent is gone deeper")
     val t8 = at(PmTiles.Zoom(8), Longitude(22.35), Latitude(40.08)).get
     assertEquals(Mvt.layerNames(t8), Right(List("physical", "rivers")), "the Axios ends in this tile")

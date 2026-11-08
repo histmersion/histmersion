@@ -29,7 +29,8 @@ final class FetchChain(
     steps: List[FetchChain.Step],
     allowUnauthorised: FetchChain.AllowUnauthorised,
     log: HostLog = HostLog.scribe,
-    registered: Fetch.Context.RegisteredPluginId => Fetch.Context.RegisteredResult = _ => Fetch.Context.RegisteredResult(false)
+    registered: Fetch.Context.RegisteredPluginId => Fetch.Context.RegisteredResult = _ =>
+      Fetch.Context.RegisteredResult(false)
 ) extends OaFetcher:
 
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
@@ -58,10 +59,22 @@ final class FetchChain(
       case None          =>
         val refused = tried.collect { case (id, Fetch.Refused(why)) => s"${id.value}: ${why.value}" }.toList
         FetchChain.Outcome(
-          Left(OaFetcher.Problem(FetchChain.NoCopy + (if refused.isEmpty then "" else refused.mkString(" (", "; ", ")")))),
+          Left(
+            OaFetcher.Problem(FetchChain.NoCopy + (if refused.isEmpty then "" else refused.mkString(" (", "; ", ")")))
+          ),
           tried.toList.collect {
-            case (id, Fetch.Miss(why))    => FetchChain.Answer(FetchChain.Answer.Fetcher(id.value), FetchChain.Answer.Kind.Miss, FetchChain.Answer.Why(why.value))
-            case (id, Fetch.Refused(why)) => FetchChain.Answer(FetchChain.Answer.Fetcher(id.value), FetchChain.Answer.Kind.Refused, FetchChain.Answer.Why(why.value))
+            case (id, Fetch.Miss(why)) =>
+              FetchChain.Answer(
+                FetchChain.Answer.Fetcher(id.value),
+                FetchChain.Answer.Kind.Miss,
+                FetchChain.Answer.Why(why.value)
+              )
+            case (id, Fetch.Refused(why)) =>
+              FetchChain.Answer(
+                FetchChain.Answer.Fetcher(id.value),
+                FetchChain.Answer.Kind.Refused,
+                FetchChain.Answer.Why(why.value)
+              )
           }
         )
 
@@ -78,12 +91,17 @@ final class FetchChain(
     val ctx = new Fetch.Context:
       def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = shared.get(key)(compute)
       val log: Plugin.Log = new Plugin.Log:
-        def info(message: Plugin.Log.InfoMessage) = FetchChain.this.log.info(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
-        def warn(message: Plugin.Log.WarnMessage) = FetchChain.this.log.warn(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
-      override def registered(pluginId: Fetch.Context.RegisteredPluginId): Fetch.Context.RegisteredResult = FetchChain.this.registered(pluginId)
+        def info(message: Plugin.Log.InfoMessage) =
+          FetchChain.this.log.info(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
+        def warn(message: Plugin.Log.WarnMessage) =
+          FetchChain.this.log.warn(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
+      override def registered(pluginId: Fetch.Context.RegisteredPluginId): Fetch.Context.RegisteredResult =
+        FetchChain.this.registered(pluginId)
     val answer =
       try s.fetcher.fetch(work, ctx)
-      catch case NonFatal(e) => Fetch.Miss(Fetch.Miss.Why(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+      catch
+        case NonFatal(e) =>
+          Fetch.Miss(Fetch.Miss.Why(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
     answer match
       case Fetch.Found(f) if f.extension.value.equalsIgnoreCase("pdf") && !FetchChain.looksLikePdf(f.bytes) =>
         log.info(
@@ -145,7 +163,11 @@ object FetchChain:
   /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no copy, the answer of
     * each fetcher that ran, in chain order; the fetcher that found the copy.
     */
-  final case class Outcome(file: Either[OaFetcher.Problem, FetchedFile], answers: List[Answer], foundBy: Option[Outcome.FoundBy] = None)
+  final case class Outcome(
+      file: Either[OaFetcher.Problem, FetchedFile],
+      answers: List[Answer],
+      foundBy: Option[Outcome.FoundBy] = None
+  )
 
   object Outcome:
     type FoundBy = FoundBy.T
@@ -158,7 +180,8 @@ object FetchChain:
       steps: List[(Step.Id, SourceFetcher)],
       allowUnauthorised: AllowUnauthorised = AllowUnauthorised(false),
       log: HostLog = HostLog.scribe,
-      registered: Fetch.Context.RegisteredPluginId => Fetch.Context.RegisteredResult = _ => Fetch.Context.RegisteredResult(false)
+      registered: Fetch.Context.RegisteredPluginId => Fetch.Context.RegisteredResult = _ =>
+        Fetch.Context.RegisteredResult(false)
   ): FetchChain =
     new FetchChain(steps.map(Step(_, _)), allowUnauthorised, log, registered)
 
@@ -196,7 +219,10 @@ object FetchChain:
   /** Pure: the run order — the ids `acquire.chain` names that are registered, as listed, then the other registered ids
     * in registration order; with a note naming the listed ids nothing registered (a disabled plugin's, or a typo).
     */
-  def order(registered: List[com.histmersion.util.plugins.Plugin.Id], chain: List[com.histmersion.util.plugins.Plugin.Id]): (List[com.histmersion.util.plugins.Plugin.Id], List[Problem]) =
+  def order(
+      registered: List[com.histmersion.util.plugins.Plugin.Id],
+      chain: List[com.histmersion.util.plugins.Plugin.Id]
+  ): (List[com.histmersion.util.plugins.Plugin.Id], List[Problem]) =
     val listed = chain.distinct
     val notes = listed.filterNot(registered.contains) match
       case Nil     => Nil
@@ -248,4 +274,3 @@ object FetchChain:
           val v = compute
           values.update(key, v)
           v
-

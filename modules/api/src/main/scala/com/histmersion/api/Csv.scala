@@ -6,7 +6,6 @@ package api
   */
 object Csv:
 
-
   def parse(text: String): List[List[String]] =
     val rows = List.newBuilder[List[String]]
     var row = List.newBuilder[String]

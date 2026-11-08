@@ -28,8 +28,10 @@ class LandingFetchSuite extends munit.FunSuite:
     private def answer(url: Http.Url): Either[Http.Problem, Array[Byte]] =
       asked = asked :+ url.value
       routes.applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404")).left.map(Http.Problem(_))
-    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url).map(HttpAnswer.Body(_))
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url).map(b => Http.Text(new String(b, "UTF-8")))
+    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
+      answer(url).map(HttpAnswer.Body(_))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
+      answer(url).map(b => Http.Text(new String(b, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Http.Problem(e.getMessage)))
 
@@ -40,7 +42,8 @@ class LandingFetchSuite extends munit.FunSuite:
   private def openalexOf(c: AcquireConfig, doi: Doi) = s"${c.openalex.url}/works/https://doi.org/$doi"
 
   private def fetch(c: AcquireConfig, http: Http, doi: Doi, settings: String = "") =
-    OaFetch(loaded(settings), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))).fetch(Some(doi), None)
+    OaFetch(loaded(settings), http, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+      .fetch(Some(doi), None)
 
   private def loaded(text: String): LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
@@ -87,9 +90,10 @@ class LandingFetchSuite extends munit.FunSuite:
     val page = "https://www.repository.cam.ac.uk/handle/1810/265228"
     val pdf = "https://www.repository.cam.ac.uk/bitstreams/635fb0e4-fed6-4dd0-a369-16067170b87f/download"
     val http = FakeUpstream {
-      case u if u.startsWith(openalexOf(c, Doi("10.17863/CAM.11325"))) => bytes(fixture("openalex_10_17863_CAM_11325.json"))
-      case `page`                                                 => bytes(fixture("apollo_cam_item.html"))
-      case `pdf`                                                  => Right(Pdf)
+      case u if u.startsWith(openalexOf(c, Doi("10.17863/CAM.11325"))) =>
+        bytes(fixture("openalex_10_17863_CAM_11325.json"))
+      case `page` => bytes(fixture("apollo_cam_item.html"))
+      case `pdf`  => Right(Pdf)
     }
     val got = fetch(c, http, Doi("10.17863/CAM.11325")).fold(fail2(http), identity)
     assertEquals((got.source, got.url, got.extension), ("repository", Some(pdf), "pdf"))
@@ -109,7 +113,10 @@ class LandingFetchSuite extends munit.FunSuite:
     assertEquals((got.source, got.url), ("repository", Some(pdf)))
     // only the direct step's `oa_url` is the DOI link; the landing step resolves it through DataCite
     assertEquals(http.asked.count(_.startsWith("https://doi.org/")), 1, http.asked.mkString("\n"))
-    assert(http.asked.indexWhere(_.startsWith(c.datacite.url.value)) < http.asked.indexOf(page), http.asked.mkString("\n"))
+    assert(
+      http.asked.indexWhere(_.startsWith(c.datacite.url.value)) < http.asked.indexOf(page),
+      http.asked.mkString("\n")
+    )
     assertEquals(http.asked.count(_.startsWith(c.datacite.url.value)), 1, "DataCite is asked once per fetch")
 
   test("a DOI known only to DataCite (OpenAlex has nothing) still reaches its repository page"):
@@ -223,13 +230,18 @@ class LandingFetchSuite extends munit.FunSuite:
     val c = cfg
     val page = "https://www.repository.cam.ac.uk/handle/1810/265228"
     val http = FakeUpstream {
-      case u if u.startsWith(openalexOf(c, Doi("10.17863/CAM.11325"))) => bytes(fixture("openalex_10_17863_CAM_11325.json"))
+      case u if u.startsWith(openalexOf(c, Doi("10.17863/CAM.11325"))) =>
+        bytes(fixture("openalex_10_17863_CAM_11325.json"))
       case `page` => Left(s"$page: HTTP 403 bot-protection challenge — treated as no copy")
     }
     assertEquals(fetch(c, http, Doi("10.17863/CAM.11325")), Left("no legal open-access PDF found"))
     assert(!http.asked.exists(_.contains("/bitstreams/")), http.asked.mkString("\n"))
     assert(
-      Challenge.isChallenge(HttpPolicy.StatusCode(403), Map.empty, Challenge.Body(fixture("challenge_synthetic.html").getBytes("UTF-8"))),
+      Challenge.isChallenge(
+        HttpPolicy.StatusCode(403),
+        Map.empty,
+        Challenge.Body(fixture("challenge_synthetic.html").getBytes("UTF-8"))
+      ),
       "the fixture is what the layer refuses"
     )
 

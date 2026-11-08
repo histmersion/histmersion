@@ -13,4 +13,3 @@ import com.histmersion.domain.research.Slug
 final class ArticleObjectives(articles: => ArticleService, ledgers: => ReviewLedgerService) extends ObjectiveProgress:
   def linked(): Map[Goal.Slug, List[Slug]] = articles.articlesByGoal
   def finished(): Set[Slug] = ledgers.passedReview(ReviewLedgerService.ReviewId(ReviewId))
-

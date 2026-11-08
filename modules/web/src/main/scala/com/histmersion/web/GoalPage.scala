@@ -62,7 +62,8 @@ object GoalPage:
   def stepName(i: ManagerItem): Agents.StepInfo.Name =
     val what = UiLabels.label(Wording.Id(i.kind.value)).value
     Agents.StepInfo.Name(
-      if i.target.value.isEmpty || i.target.value == i.managerId.value then what else s"$what — ${Wording.value(i.target.value)}"
+      if i.target.value.isEmpty || i.target.value == i.managerId.value then what
+      else s"$what — ${Wording.value(i.target.value)}"
     )
 
   /** The steps the plan shows: going now first, then still to do, then done, newest first in each. */
@@ -72,7 +73,9 @@ object GoalPage:
       case Mark.Todo    => 1
       case Mark.Stopped => 2
       case Mark.Done    => 3
-    items.sortBy(i => (rank(i), -js.Date.parse(Option(i.updatedAt.value).filter(_.nonEmpty).getOrElse(i.createdAt.value))))
+    items.sortBy(i =>
+      (rank(i), -js.Date.parse(Option(i.updatedAt.value).filter(_.nonEmpty).getOrElse(i.createdAt.value)))
+    )
 
   /** `3 days ago`, `today`, `in 2 days`, from two instants in epoch ms: calendar days in the reader's time zone. */
   def days(thenMs: Millis, nowMs: Millis): DaysText =
@@ -84,7 +87,12 @@ object GoalPage:
     else DaysText(s"in ${-d} days")
 
   /** When it was last checked for new publications and when next: the currency schedule, else the watcher. */
-  def schedule(v: GoalView, watcher: Option[ManagerInfo], lastCheck: Option[LastCheck], nowMs: ScheduleNowMs): Option[ScheduleText] =
+  def schedule(
+      v: GoalView,
+      watcher: Option[ManagerInfo],
+      lastCheck: Option[LastCheck],
+      nowMs: ScheduleNowMs
+  ): Option[ScheduleText] =
     val currency = v.schedules.find(_.kind == ScheduleKind.Currency)
     val last = currency.flatMap(_.lastRunAt).map(_.value).orElse(lastCheck.map(_.value))
     val next = currency.flatMap(_.nextRunAt).map(_.value).orElse(watcher.flatMap(_.nextTickAt).map(_.value))
@@ -102,7 +110,9 @@ object GoalPage:
   /** Library and the map, filtered to the goal's sources. */
   def libraryOf(goal: Goal.Slug): LinkTarget =
     LinkTarget(s"${Route.Library(LibrarySection.Sources).path}#goal=${js.URIUtils.encodeURIComponent(goal.value)}")
-  def mapOf(goal: Goal.Slug): LinkTarget = LinkTarget(s"${Route.Explore.path}#goal=${js.URIUtils.encodeURIComponent(goal.value)}")
+  def mapOf(goal: Goal.Slug): LinkTarget = LinkTarget(
+    s"${Route.Explore.path}#goal=${js.URIUtils.encodeURIComponent(goal.value)}"
+  )
 
   // ── the page ────────────────────────────────────────────────────────────────────────────────────
 
@@ -131,17 +141,34 @@ object GoalPage:
         }
 
     def checkNow(): Unit = write { () =>
-      ApiClient.startRun(Agents.RunRequest(Agents.RunRequest.Pipeline(Agents.Pipeline.CurrencyCheck.wire.value), Agents.RunRequest.Target(slug.value))).onComplete {
-        case scala.util.Success(r) =>
-          note.set(Some(HeaderNote(s"Checking for new publications: agent work ${r.id.value.take(8)} started."))); load()
-        case scala.util.Failure(e) => note.set(Some(HeaderNote(s"Could not start the check: ${e.getMessage}")))
-      }
+      ApiClient
+        .startRun(
+          Agents.RunRequest(
+            Agents.RunRequest.Pipeline(Agents.Pipeline.CurrencyCheck.wire.value),
+            Agents.RunRequest.Target(slug.value)
+          )
+        )
+        .onComplete {
+          case scala.util.Success(r) =>
+            note.set(Some(HeaderNote(s"Checking for new publications: agent work ${r.id.value.take(8)} started.")));
+            load()
+          case scala.util.Failure(e) => note.set(Some(HeaderNote(s"Could not start the check: ${e.getMessage}")))
+        }
     }
 
     def pauseOrResume(): Unit = write { () =>
       val resume = paused(managers.now())
       scala.concurrent.Future
-        .sequence(managers.now().map(m => ApiClient.managerAction(m.id, if resume then ManagersApi.ActionPart1Part2("resume") else ManagersApi.ActionPart1Part2("pause"))))
+        .sequence(
+          managers
+            .now()
+            .map(m =>
+              ApiClient.managerAction(
+                m.id,
+                if resume then ManagersApi.ActionPart1Part2("resume") else ManagersApi.ActionPart1Part2("pause")
+              )
+            )
+        )
         .onComplete { r =>
           note.set(
             r.failed.toOption
@@ -240,7 +267,10 @@ object GoalPage:
             val pr = ResearchOverview.progressOf(g.slug, ms)
             val watcher = ms.find(_.id == Managers.watchId(ref))
             val lastCheck =
-              is.filter(i => i.kind.value == Managers.CurrencyCheck && i.status.value == "done").map(_.updatedAt.value).maxOption.map(LastCheck(_))
+              is.filter(i => i.kind.value == Managers.CurrencyCheck && i.status.value == "done")
+                .map(_.updatedAt.value)
+                .maxOption
+                .map(LastCheck(_))
             val parts = List(
               if paused(ms) then Some("Paused") else None,
               Option.when(pr.total.value > 0)(s"${pr.done} of ${pr.total} steps done"),
@@ -291,7 +321,11 @@ object GoalPage:
                   s"${Plural.count(Plural.CountN(pl.works.size), Plural.CountSingular("work"))} to read."
               )
           )
-        else ol(cls := "goal-steps-list", steps(is).take(StepLimit).zipWithIndex.map((i, n) => step(i, Agents.StepInfo.Seq(n + 1))))
+        else
+          ol(
+            cls := "goal-steps-list",
+            steps(is).take(StepLimit).zipWithIndex.map((i, n) => step(i, Agents.StepInfo.Seq(n + 1)))
+          )
       }
     )
 
@@ -318,10 +352,13 @@ object GoalPage:
           mark match
             case Mark.Done    => span("Done", i.outcome.filter(_.value.nonEmpty).map(o => s" · ${o.value.take(160)}"))
             case Mark.Going   => span("Running now")
-            case Mark.Stopped => span("Stopped", i.outcome.filter(_.value.nonEmpty).map(o => s" · ${o.value.take(160)}"))
-            case Mark.Todo    =>
+            case Mark.Stopped =>
+              span("Stopped", i.outcome.filter(_.value.nonEmpty).map(o => s" · ${o.value.take(160)}"))
+            case Mark.Todo =>
               span(
-                i.hold.map(h => s"Waiting: ${Option(h.reason.value).filter(_.nonEmpty).getOrElse("held")}").getOrElse("To do")
+                i.hold
+                  .map(h => s"Waiting: ${Option(h.reason.value).filter(_.nonEmpty).getOrElse("held")}")
+                  .getOrElse("To do")
               ),
           i.runId.map(id => span(" · ", RouteLink(Route.Run(Route.Run.Id(id.value)), "see what it did")))
         )
@@ -335,7 +372,11 @@ object GoalPage:
           onClick --> (_ =>
             write { () =>
               busy.set(true)
-              i.runId.foreach(id => ApiClient.jobControl(SpatialHierarchyResult.Job.Id(id.value), Api.JobControl.Action("pause")).onComplete(_ => busy.set(false)))
+              i.runId.foreach(id =>
+                ApiClient
+                  .jobControl(SpatialHierarchyResult.Job.Id(id.value), Api.JobControl.Action("pause"))
+                  .onComplete(_ => busy.set(false))
+              )
             }
           )
         )
@@ -377,7 +418,10 @@ object GoalPage:
             articles
               .take(4)
               .flatMap(l =>
-                List[HtmlElement](span(" · "), ArticleLink(Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value)))
+                List[HtmlElement](
+                  span(" · "),
+                  ArticleLink(Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value))
+                )
               )
               .drop(1),
             Option.when(articles.size > 4)(span(cls := "muted", s" and ${articles.size - 4} more"))
@@ -409,12 +453,22 @@ object GoalPage:
       div(
         cls := "li",
         span(cls := "li-what", "Open backlog items"),
-        countLink(backlog, Plural.Noun.Singular("item"), Plural.Noun.Plural("items"), listOf(ResearchSection.Backlog, slug))
+        countLink(
+          backlog,
+          Plural.Noun.Singular("item"),
+          Plural.Noun.Plural("items"),
+          listOf(ResearchSection.Backlog, slug)
+        )
       ),
       div(
         cls := "li",
         span(cls := "li-what", "Waiting for you to acquire"),
-        countLink(acquire, Plural.Noun.Singular("item"), Plural.Noun.Plural("items"), listOf(ResearchSection.Acquire, slug))
+        countLink(
+          acquire,
+          Plural.Noun.Singular("item"),
+          Plural.Noun.Plural("items"),
+          listOf(ResearchSection.Acquire, slug)
+        )
       )
     )
 

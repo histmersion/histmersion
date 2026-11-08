@@ -70,6 +70,8 @@ object ConfigFileWriter:
 
   /** The first lines of a config file Settings creates. */
   val NewFileHeader: ConfigFileState.Text =
-    ConfigFileState.Text("""# Histmersion's settings. Settings in the web UI and `histmersion config set` change this file and keep
+    ConfigFileState.Text(
+      """# Histmersion's settings. Settings in the web UI and `histmersion config set` change this file and keep
       |# everything else in it as it is: comments, order, and anything written by hand.
-      |""".stripMargin)
+      |""".stripMargin
+    )

@@ -22,7 +22,8 @@ trait JobControlService:
   def control(id: Job.Id, action: JobAction): Either[Api.Error, JobInfo]
 
 object JobControlService:
-  private def notFound(id: Job.Id) = Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def notFound(id: Job.Id) =
+    Api.Error(Api.Error.Message(s"No job '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
   private def conflict(why: String) =
     Api.Error(Api.Error.Message(why), Some(Api.Error.Code(JobActions.CodeConflict)))
 
@@ -61,7 +62,6 @@ object JobControlService:
         }
       }
 
-
   /** The same answers over jobs held in memory (tests). A running job's body is the test's: it asks
     * [[JobStops.requestedFor]] between its parts and reports how it stopped with [[stopped]].
     */
@@ -93,7 +93,8 @@ object JobControlService:
             m + (key -> j.copy(
               status = to.wire,
               progress = progress.orElse(j.progress),
-              error = Option.when(to == JobState.Cancelled)(JobInfo.Error(JobControlRules.CancelledByPerson)).orElse(j.error)
+              error =
+                Option.when(to == JobState.Cancelled)(JobInfo.Error(JobControlRules.CancelledByPerson)).orElse(j.error)
             ))
           )
       ): Unit

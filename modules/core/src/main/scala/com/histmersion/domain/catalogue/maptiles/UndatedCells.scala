@@ -16,7 +16,7 @@ object UndatedCells:
     * one site is that site, any other its count, with how many of it have no known date.
     */
 
-  export TileCoord.{Z as MergeZ}
+  export TileCoord.Z as MergeZ
 
   def merge(z: UndatedCells.MergeZ, dated: List[GridCell], undated: List[GridCell]): List[TileCell] =
     val byUndated = undated.iterator.map(u => (u.gx, u.gy) -> u).toMap
@@ -43,11 +43,13 @@ object UndatedCells:
     val n = d + u
     Option.when(n > 0) {
       val sumX =
-        dated.fold(0.0)(_.sumX.value) + undated.fold(0.0)(_.sumX.value) - (if undated.isDefined then dated.fold(0.0)(_.dupX.value)
-                                                               else 0.0)
+        dated.fold(0.0)(_.sumX.value) + undated.fold(0.0)(_.sumX.value) - (if undated.isDefined then
+                                                                             dated.fold(0.0)(_.dupX.value)
+                                                                           else 0.0)
       val sumY =
-        dated.fold(0.0)(_.sumY.value) + undated.fold(0.0)(_.sumY.value) - (if undated.isDefined then dated.fold(0.0)(_.dupY.value)
-                                                               else 0.0)
+        dated.fold(0.0)(_.sumY.value) + undated.fold(0.0)(_.sumY.value) - (if undated.isDefined then
+                                                                             dated.fold(0.0)(_.dupY.value)
+                                                                           else 0.0)
       val both = dated.toList ++ undated.toList
       val key = TileCell.Key(
         if n > 1 then s"c$z/${both.head.gx}/${both.head.gy}"

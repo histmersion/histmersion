@@ -152,7 +152,10 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
   /** The transport of one channel: `live` is built only when a request goes to the network. */
   def transport(live: => HttpTransport): HttpTransport = new HttpTransport:
     private lazy val network = live
-    def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+    def get(
+        url: HttpTransport.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[HttpTransport.Problem, HttpAnswer] =
       val shown = scrub(url.value)
       synchronized(asked += PluginHarness.Request(s"GET $shown"))
       mode match
@@ -166,8 +169,18 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
           Right(
             answers
               .get(url)
-              .fold(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(s"no stub answer for ${url.value}".getBytes(UTF_8))))(a =>
-                HttpAnswer(a.status, a.headers.map((k, v) => CoreQuota.HeaderName(k.value.toLowerCase(Locale.ROOT)) -> v), a.body)
+              .fold(
+                HttpAnswer(
+                  HttpAnswer.Code(404),
+                  Map.empty,
+                  HttpAnswer.Body(s"no stub answer for ${url.value}".getBytes(UTF_8))
+                )
+              )(a =>
+                HttpAnswer(
+                  a.status,
+                  a.headers.map((k, v) => CoreQuota.HeaderName(k.value.toLowerCase(Locale.ROOT)) -> v),
+                  a.body
+                )
               )
           )
 
@@ -180,11 +193,15 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
     val exchange = answer match
       case Left(error) => RecordedExchange("GET", HttpTransport.Url(url), None, Nil, None, Some(scrub(error.value)))
       case Right(a)    =>
-        val kept = RecordedExchange.KeptHeaders.flatMap(h => a.header(h).map(v => h -> CoreQuota.HeaderValue(scrub(v.value))))
+        val kept =
+          RecordedExchange.KeptHeaders.flatMap(h => a.header(h).map(v => h -> CoreQuota.HeaderValue(scrub(v.value))))
         val contentType = a.header(CoreQuota.HeaderName("content-type"))
         val bodyFile = Option.when(a.body.value.nonEmpty)(s"$base.${RecordedExchange.extension(contentType)}")
         bodyFile.foreach(f =>
-          Files.write(dir.resolve(f), if RecordedExchange.isText(contentType) then scrub.bytes(a.body.value) else a.body.value)
+          Files.write(
+            dir.resolve(f),
+            if RecordedExchange.isText(contentType) then scrub.bytes(a.body.value) else a.body.value
+          )
         )
         RecordedExchange("GET", HttpTransport.Url(url), Some(a.code), kept, bodyFile, None)
     Files.writeString(dir.resolve(base + RecordedExchange.Suffix), RecordedExchange.render(exchange), UTF_8)
@@ -204,7 +221,8 @@ final private[testkit] class Wire(mode: HttpMode, scrub: Scrubber):
           case (Some(code), _) =>
             val body = e.body.map(f => Files.readAllBytes(dir.resolve(f))).getOrElse(Array.emptyByteArray)
             Right(HttpAnswer(code, e.headers.toMap, HttpAnswer.Body(body)))
-          case (None, error) => Left(HttpTransport.Problem(error.getOrElse(s"$url: recorded with neither a status nor an error")))
+          case (None, error) =>
+            Left(HttpTransport.Problem(error.getOrElse(s"$url: recorded with neither a status nor an error")))
   }
 
 private[testkit] object Wire:

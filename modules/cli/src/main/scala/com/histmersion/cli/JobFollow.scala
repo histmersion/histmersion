@@ -30,22 +30,27 @@ object JobFollow:
   object Progress:
 
     val Width = 72
-    def line(text: String)(using console: Console) : Unit = Cli.err.print(s"\r${" " * Width}\r$text")
-    def clear()(using console: Console) : Unit = Cli.err.print("\r" + " " * Width + "\r")
+    def line(text: String)(using console: Console): Unit = Cli.err.print(s"\r${" " * Width}\r$text")
+    def clear()(using console: Console): Unit = Cli.err.print("\r" + " " * Width + "\r")
 
   private def failed(what: String, why: Option[String]): Cli.Error =
-    Cli.Error(Cli.Error.Message(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"), ExitCode.Refused)
+    Cli.Error(
+      Cli.Error.Message(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"),
+      ExitCode.Refused
+    )
 
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
-  def job(using console: Console)(
+  def job(using
+      console: Console
+  )(
       fetch: SpatialHierarchyResult.Job.Id => Either[Cli.Error, JobInfo],
       id: SpatialHierarchyResult.Job.Id,
       waited: Long = 0,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = Progress.line,
       clear: () => Unit = () => Progress.clear()
-  ) : Either[Cli.Error, JobInfo] =
+  ): Either[Cli.Error, JobInfo] =
     fetch(id) match
       case Left(e)  => clear(); Left(e)
       case Right(j) =>
@@ -62,13 +67,15 @@ object JobFollow:
     * checksum, is `ExitCode.Refused`.
     */
   @annotation.tailrec
-  def backup(using console: Console)(
+  def backup(using
+      console: Console
+  )(
       fetch: () => Either[Cli.Error, Backup.Status],
       s: Backup.Status,
       pollMs: BackupPollMs = BackupPoll,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = l => Cli.err.println(l)
-  ) : Either[Cli.Error, Backup.Result] =
+  ): Either[Cli.Error, Backup.Result] =
     s.stateOf match
       case Some(Backup.State.Running) =>
         progress(s"backup ${s.file} running for ${s.durationMs.value / 1000} s…")
@@ -77,5 +84,7 @@ object JobFollow:
           case Right(next) => backup(fetch, next, pollMs, sleep, progress)
           case Left(e)     => Left(e)
       case Some(Backup.State.Done) =>
-        s.result.toRight(Cli.Error(Cli.Error.Message(s"backup ${s.file} finished without a checksum"), ExitCode.Refused))
+        s.result.toRight(
+          Cli.Error(Cli.Error.Message(s"backup ${s.file} finished without a checksum"), ExitCode.Refused)
+        )
       case _ => Left(failed(s"backup ${s.file}", s.error.map(_.value)))

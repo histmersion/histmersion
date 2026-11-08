@@ -31,7 +31,13 @@ trait ManagerContext:
 
   // ── the managers' items, events and hints ─────────────────────────────────────────────────────
 
-  def event(id: ManagerLight.Id, item: Option[ManagerContext.ItemId], run: Option[Run.Id], feed: ManagerContext.EventFeed, text: ManagerContext.EventText): Unit
+  def event(
+      id: ManagerLight.Id,
+      item: Option[ManagerContext.ItemId],
+      run: Option[Run.Id],
+      feed: ManagerContext.EventFeed,
+      text: ManagerContext.EventText
+  ): Unit
   def lastEventOf(id: ManagerLight.Id, feed: ManagerContext.EventFeed): Option[ManagerEvent]
   def countEvents(id: ManagerLight.Id, feed: ManagerContext.EventFeed, since: Instant): RowCount
   def upsert(
@@ -44,7 +50,11 @@ trait ManagerContext:
       state: ItemState = ItemState()
   ): (ManagerContext.ItemId, Boolean)
   def item(itemId: ManagerContext.ItemId): Option[ManagerItem]
-  def itemFor(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Option[ManagerItem]
+  def itemFor(
+      id: ManagerLight.Id,
+      kind: ManagerContext.ItemKind,
+      target: ManagerContext.ItemTarget
+  ): Option[ManagerItem]
   def hasItem(id: ManagerLight.Id, kind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget): Boolean
   def restale(itemId: ManagerContext.ItemId, priority: ManagerContext.Priority, why: ManagerRepo.RestaleReason): Boolean
   def pending(id: ManagerLight.Id): RowCount
@@ -67,15 +77,30 @@ trait ManagerContext:
   def nudge(): Unit
 
   /** The review selection's article queries (the review kind's, until research owns them). */
-  def openMajorArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[Goal.Slug], limit: ManagerContext.Limit): List[(Slug, RowCount)]
-  def unreviewedArticles(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[Goal.Slug], limit: ManagerContext.Limit): List[Slug]
+  def openMajorArticles(
+      id: ManagerLight.Id,
+      tags: List[GoalRow.Tags],
+      goal: Option[Goal.Slug],
+      limit: ManagerContext.Limit
+  ): List[(Slug, RowCount)]
+  def unreviewedArticles(
+      id: ManagerLight.Id,
+      tags: List[GoalRow.Tags],
+      goal: Option[Goal.Slug],
+      limit: ManagerContext.Limit
+  ): List[Slug]
   def staleCandidates(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
       goal: Option[Goal.Slug],
       limit: ManagerContext.Limit
   ): List[(Slug, ManagerRepo.ProgressText, Option[ItemState.FilterHits], Option[ManagerContext.ItemId])]
-  def extendCandidates(id: ManagerLight.Id, tags: List[GoalRow.Tags], goal: Option[Goal.Slug], limit: ManagerContext.Limit): List[(Slug, Option[ManagerRepo.ProgressText])]
+  def extendCandidates(
+      id: ManagerLight.Id,
+      tags: List[GoalRow.Tags],
+      goal: Option[Goal.Slug],
+      limit: ManagerContext.Limit
+  ): List[(Slug, Option[ManagerRepo.ProgressText])]
   def articleFacets(slug: Slug): (List[EnrichSource.Tag], List[Goal.Slug])
 
   // ── runs, steps and approvals ─────────────────────────────────────────────────────────────────
@@ -113,13 +138,23 @@ trait ManagerContext:
   def ensure(k: Kind, id: ManagerLight.Id, goal: Option[Goal.Slug]): Boolean
 
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened. */
-  def chainReview(id: ManagerLight.Id, slug: Slug, why: ManagerContext.ChainReviewWhy, out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]): Unit
+  def chainReview(
+      id: ManagerLight.Id,
+      slug: Slug,
+      why: ManagerContext.ChainReviewWhy,
+      out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
+  ): Unit
 
   /** An approved `article-plan`'s compile items. */
   def applyPlan(a: ApprovalInfo, out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]): RowCount
 
   /** Settle a pending item without a run. */
-  def settleNow(m: ManagerInfo, item: ManagerItem, status: ItemStatus, why: ManagerContext.SettleNowWhy): Option[ManagerLight.Id]
+  def settleNow(
+      m: ManagerInfo,
+      item: ManagerItem,
+      status: ItemStatus,
+      why: ManagerContext.SettleNowWhy
+  ): Option[ManagerLight.Id]
 
   /** A failed run's item back in the queue after `notBefore`. */
   def retry(

@@ -12,9 +12,9 @@ final case class ListPatch(
     add: List[ListPatch.Add] = Nil,
     remove: List[ListPatch.Remove] = Nil,
     replace: Option[List[ListPatch.Replace]] = None
-) derives KindlingsSchema, com.histmersion.api.json.Schema
+) derives KindlingsSchema,
+      com.histmersion.api.json.Schema
 object ListPatch:
-
 
   export Write.{ListItem as Add, ListItem as Remove, ListItem as Replace}
 

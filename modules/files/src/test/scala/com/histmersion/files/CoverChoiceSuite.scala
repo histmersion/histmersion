@@ -11,17 +11,33 @@ class CoverChoiceSuite extends munit.FunSuite:
   test("a book's cover: Calibre's own file first, then Open Library by ISBN, then by OCLC"):
     val exists: CoverChoice.Pick.Calibre.Path => Boolean = p => Set("/lib/A/cover.jpg")(p.value)
     assertEquals(
-      CoverChoice.choose(Some(CoverChoice.Pick.Calibre.Path("/lib/A/cover.jpg")), exists, List(Isbn("978-0-691-16838-8")), Some(OpenLibrary.Oclc("123"))),
+      CoverChoice.choose(
+        Some(CoverChoice.Pick.Calibre.Path("/lib/A/cover.jpg")),
+        exists,
+        List(Isbn("978-0-691-16838-8")),
+        Some(OpenLibrary.Oclc("123"))
+      ),
       Some(CoverChoice.Pick.Calibre(CoverChoice.Pick.Calibre.Path("/lib/A/cover.jpg")))
     )
     assertEquals(
-      CoverChoice.choose(Some(CoverChoice.Pick.Calibre.Path("/lib/B/cover.jpg")), exists, List(Isbn("bad"), Isbn("978-0-691-16838-8")), Some(OpenLibrary.Oclc("123"))),
-      Some(CoverChoice.Pick.OpenLibrary(CoverChoice.Pick.OpenLibrary.Kind("isbn"), CoverChoice.Pick.OpenLibrary.Id("9780691168388"))),
+      CoverChoice.choose(
+        Some(CoverChoice.Pick.Calibre.Path("/lib/B/cover.jpg")),
+        exists,
+        List(Isbn("bad"), Isbn("978-0-691-16838-8")),
+        Some(OpenLibrary.Oclc("123"))
+      ),
+      Some(
+        CoverChoice.Pick
+          .OpenLibrary(CoverChoice.Pick.OpenLibrary.Kind("isbn"), CoverChoice.Pick.OpenLibrary.Id("9780691168388"))
+      ),
       "the file is gone: the first usable ISBN"
     )
     assertEquals(
       CoverChoice.choose(None, exists, Nil, Some(OpenLibrary.Oclc("(OCoLC)00012345"))),
-      Some(CoverChoice.Pick.OpenLibrary(CoverChoice.Pick.OpenLibrary.Kind("oclc"), CoverChoice.Pick.OpenLibrary.Id("12345")))
+      Some(
+        CoverChoice.Pick
+          .OpenLibrary(CoverChoice.Pick.OpenLibrary.Kind("oclc"), CoverChoice.Pick.OpenLibrary.Id("12345"))
+      )
     )
     assertEquals(CoverChoice.choose(None, exists, List(Isbn("12")), None), None)
 
@@ -31,10 +47,19 @@ class CoverChoiceSuite extends munit.FunSuite:
     assertEquals(OpenLibrary.oclc(OpenLibrary.Oclc("ocm00012345")), Some("12345"))
     assertEquals(OpenLibrary.key(Some(Isbn("x")), Some(OpenLibrary.Oclc("ocm9"))), Some("oclc" -> "9"))
     assertEquals(
-      OpenLibrary.coverUrl(OpenLibrary.BaseUrl("https://covers.openlibrary.org/"), CoverChoice.Pick.OpenLibrary.Kind("isbn"), CoverChoice.Pick.OpenLibrary.Id("9780691168388"), OpenLibrary.CoverSize("l")),
+      OpenLibrary.coverUrl(
+        OpenLibrary.BaseUrl("https://covers.openlibrary.org/"),
+        CoverChoice.Pick.OpenLibrary.Kind("isbn"),
+        CoverChoice.Pick.OpenLibrary.Id("9780691168388"),
+        OpenLibrary.CoverSize("l")
+      ),
       "https://covers.openlibrary.org/b/isbn/9780691168388-L.jpg?default=false"
     )
     assertEquals(
-      OpenLibrary.pageUrl(OpenLibrary.BaseUrl("https://openlibrary.org"), CoverChoice.Pick.OpenLibrary.Kind("isbn"), CoverChoice.Pick.OpenLibrary.Id("9780691168388")),
+      OpenLibrary.pageUrl(
+        OpenLibrary.BaseUrl("https://openlibrary.org"),
+        CoverChoice.Pick.OpenLibrary.Kind("isbn"),
+        CoverChoice.Pick.OpenLibrary.Id("9780691168388")
+      ),
       "https://openlibrary.org/isbn/9780691168388"
     )

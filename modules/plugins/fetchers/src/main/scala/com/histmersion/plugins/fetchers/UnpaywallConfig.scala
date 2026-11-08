@@ -10,9 +10,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * nothing else); `null` = Histmersion's own `acquire.contact-email`, and with neither Unpaywall is not asked (it
   * answers 422). Per install, never in the repository.
   */
-final case class UnpaywallConfig(contactEmail: Option[UnpaywallConfig.ContactEmail], acquire: UpstreamSettings) derives ConfigReader:
+final case class UnpaywallConfig(contactEmail: Option[UnpaywallConfig.ContactEmail], acquire: UpstreamSettings)
+    derives ConfigReader:
   /** The contact Unpaywall is asked with: the plugin's own, else Histmersion's. */
-  def email: Option[UnpaywallConfig.ContactEmail] = UnpaywallConfig.own(contactEmail).orElse(acquire.contact.map(c => UnpaywallConfig.ContactEmail(c.value)))
+  def email: Option[UnpaywallConfig.ContactEmail] =
+    UnpaywallConfig.own(contactEmail).orElse(acquire.contact.map(c => UnpaywallConfig.ContactEmail(c.value)))
 
 object UnpaywallConfig:
   /** A contact as a block states it: trimmed, a blank one none. */
@@ -20,4 +22,5 @@ object UnpaywallConfig:
   type ContactEmail = ContactEmail.T
   object ContactEmail extends Newtype[String, Pure]
 
-  def own(contact: Option[ContactEmail]): Option[ContactEmail] = contact.map(c => ContactEmail(c.value.trim)).filter(_.value.nonEmpty)
+  def own(contact: Option[ContactEmail]): Option[ContactEmail] =
+    contact.map(c => ContactEmail(c.value.trim)).filter(_.value.nonEmpty)

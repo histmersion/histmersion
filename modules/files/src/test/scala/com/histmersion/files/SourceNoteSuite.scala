@@ -58,7 +58,8 @@ class SourceNoteSuite extends munit.FunSuite:
       Finding(Finding.Id(s"$ck#1"), ck, Finding.Claim("An undated, unplaced claim."), None, None, None, None, Nil, None)
     ),
     edges = List(Edge(ck, Citekey("anthony2007_horse"), Edge.Kind.References)),
-    notes = Some(Source.Notes("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one")),
+    notes =
+      Some(Source.Notes("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one")),
     updatedAt = Some(Source.UpdatedAt("2026-08-25T10:00:00.000000Z"))
   )
 

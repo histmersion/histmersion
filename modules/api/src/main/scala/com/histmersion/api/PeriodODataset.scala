@@ -22,9 +22,11 @@ final case class PeriodODataset(
   def only(ids: Set[HistoricalPeriod.Id]): PeriodODataset =
     if ids.isEmpty then this
     else
-      this.modify(
-        _.authorities).setTo(authorities.filter(a => ids.contains(a.id))).modify(_.skipped).setTo(skipped.filter(s => ids.exists(i => s.id.value.startsWith(i.value)))
-      )
+      this
+        .modify(_.authorities)
+        .setTo(authorities.filter(a => ids.contains(a.id)))
+        .modify(_.skipped)
+        .setTo(skipped.filter(s => ids.exists(i => s.id.value.startsWith(i.value))))
 
 object PeriodODataset:
   type PeriodCount = PeriodCount.T

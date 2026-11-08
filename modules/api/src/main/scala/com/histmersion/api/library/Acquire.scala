@@ -34,7 +34,6 @@ object Acquire:
   type YearGap = YearGap.T
   object YearGap extends Newtype[Int, Pure]
 
-
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
 
   val MinCitekeyYear = 1000
@@ -43,7 +42,11 @@ object Acquire:
     * stored paper lands on its existing citekey instead of a duplicate.
     */
   def citekey(authors: List[AuthorName], year: Option[Year], title: Option[Title]): Citekey =
-    legacyCitekey(authors.map(a => AuthorName(LatinFold.fold((a).value))), year, title.map(t => Title(LatinFold.fold((t).value))))
+    legacyCitekey(
+      authors.map(a => AuthorName(LatinFold.fold((a).value))),
+      year,
+      title.map(t => Title(LatinFold.fold((t).value)))
+    )
 
   /** Records created before accented letters were folded keep keys that dropped them (`gterbock1938`), so a lookup by
     * generated key tries this form too.
@@ -70,7 +73,7 @@ object Acquire:
     List(citekey(authors, year, title), legacyCitekey(authors, year, title)).distinct
 
   object Verdicts:
-    export Assessment.{Verdict as Wire}
+    export Assessment.Verdict as Wire
 
     val Retracted: Wire = Wire("retracted")
     val Corrected: Wire = Wire("corrected")
@@ -113,10 +116,10 @@ object Acquire:
     else if retractions.nonEmpty || kinds.exists(CorrectingUpdate.contains) then Verdicts.Corrected
     else
       citedByCount match
-        case None                                                      => Verdicts.Unassessed
-        case Some(c) if (c).value >= (wellCitedAt).value               => Verdicts.Current
+        case None                                                                               => Verdicts.Unassessed
+        case Some(c) if (c).value >= (wellCitedAt).value                                        => Verdicts.Current
         case Some(c) if (c).value < (lowCitedAt).value && year.exists(y => (y) < (staleBefore)) => Verdicts.LowImpact
-        case Some(_)                                                   => Verdicts.Current
+        case Some(_)                                                                            => Verdicts.Current
 
   /** Some publishers answer scripts with a 403, an empty file or a challenge, so an open-access work they host is
     * downloaded in the browser, under its licence.
@@ -125,19 +128,23 @@ object Acquire:
 
   def browserDownloadText(work: WorkRef, doi: Doi, citekey: Citekey, refusals: List[Refusal] = Nil): Option[Outcome] =
     Option.when(((work.isOa) == Source.Candidate.IsOa(true))) {
-      val who = work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
+      val who =
+        work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
       val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
       val title = work.title.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse((doi).value)
-      val oa = work.oaStatus.map(_.value.trim.toLowerCase).filter(_.nonEmpty).fold("open access")(s => s"$s open access")
+      val oa =
+        work.oaStatus.map(_.value.trim.toLowerCase).filter(_.nonEmpty).fold("open access")(s => s"$s open access")
       val at = work.oaUrl
         .map(_.value.trim)
         .filter(u => u.nonEmpty && !u.toLowerCase.contains((doi).value.toLowerCase))
         .fold("")(u => s" at $u")
       val said = refusals.map((_).value.trim).filter(_.nonEmpty).distinct.mkString("; ")
-      Outcome(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
-        s"it: download it in the browser${
-            if said.isEmpty then "" else s" ($said)"
-          }, then histmersion ingest <file> --citekey $citekey")
+      Outcome(
+        s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
+          s"it: download it in the browser${
+              if said.isEmpty then "" else s" ($said)"
+            }, then histmersion ingest <file> --citekey $citekey"
+      )
     }
 
   def flagged(verdict: Verdicts.Wire): Boolean = (verdict == Verdicts.Retracted || verdict == Verdicts.Corrected)
@@ -146,12 +153,17 @@ object Acquire:
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")
     verdict match
       case Verdicts.Retracted =>
-        Recommendation("EXCLUDE — a retraction, withdrawal or removal notice exists; set status=retracted and stop citing it")
+        Recommendation(
+          "EXCLUDE — a retraction, withdrawal or removal notice exists; set status=retracted and stop citing it"
+        )
       case Verdicts.Corrected =>
-        Recommendation("CHECK — an amendment (correction / erratum / expression of concern) exists; read it before relying on the paper")
+        Recommendation(
+          "CHECK — an amendment (correction / erratum / expression of concern) exists; read it before relying on the paper"
+        )
       case Verdicts.Current   => Recommendation(s"KEEP — $cited, no amendment on record")
-      case Verdicts.LowImpact => Recommendation(s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic")
-      case _                  => Recommendation(s"UNASSESSED — $cited; judge relevance to the topic by hand")
+      case Verdicts.LowImpact =>
+        Recommendation(s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic")
+      case _ => Recommendation(s"UNASSESSED — $cited; judge relevance to the topic by hand")
 
   def statusFor(verdict: Verdicts.Wire): Option[Source.Status] = verdict match
     case Verdicts.Retracted => Some(Source.Status.Retracted)
@@ -242,7 +254,8 @@ object Acquire:
 
     if has((RefutesCues).map(refactorValue7 => (refactorValue7))) then EdgeKinds.Wire(EdgeKinds.Refutes)
     else if has((SupersedeCues).map(refactorValue8 => (refactorValue8))) then EdgeKinds.Wire(EdgeKinds.Supersedes)
-    else if ((isInfluential) == (true)) && strong && newer && has((ReviseCues).map(refactorValue2 => (refactorValue2))) then EdgeKinds.Wire(EdgeKinds.Supersedes)
+    else if ((isInfluential) == (true)) && strong && newer && has((ReviseCues).map(refactorValue2 => (refactorValue2)))
+    then EdgeKinds.Wire(EdgeKinds.Supersedes)
     else if has((ChallengeCues).map(refactorValue4 => (refactorValue4))) then EdgeKinds.Wire(EdgeKinds.Challenges)
     else if has((ConfirmCues).map(refactorValue5 => (refactorValue5))) then EdgeKinds.Wire(EdgeKinds.Confirms)
     else EdgeKinds.Wire(EdgeKinds.Cites)
@@ -253,15 +266,20 @@ object Acquire:
       (if (r.isInfluential).value then 0 else 1, if strong then 0 else 1, -r.year.fold(0L)(y => (y).value))
     }
 
-  final case class RetractionRow(doi: Doi, reason: Option[RetractionRow.Reason], date: Option[RetractionRow.Date], nature: Option[RetractionRow.Nature])
+  final case class RetractionRow(
+      doi: Doi,
+      reason: Option[RetractionRow.Reason],
+      date: Option[RetractionRow.Date],
+      nature: Option[RetractionRow.Nature]
+  )
 
   object RetractionRow:
-    export RetractionNotice.{Reason, Date, Nature}
+    export RetractionNotice.{Date, Nature, Reason}
 
   private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
-  /** DOIs are case-insensitive, so they are stored lower-case: the DOI a text gives (bare, `doi:`, or as a resolver URL),
-    * without the punctuation a sentence leaves after it; `None` when it gives none.
+  /** DOIs are case-insensitive, so they are stored lower-case: the DOI a text gives (bare, `doi:`, or as a resolver
+    * URL), without the punctuation a sentence leaves after it; `None` when it gives none.
     */
   private def normalizeDoi(raw: String): Option[String] =
     val s = Option(raw)
@@ -296,7 +314,12 @@ object Acquire:
           idx.get(name).flatMap(r.lift).map(_.trim).filter(_.nonEmpty)
         rows.flatMap { r =>
           col(r, "OriginalPaperDOI").flatMap(normalizeDoi).map { doi =>
-            RetractionRow(Doi(doi), col(r, "Reason").map(x => RetractionRow.Reason(x)), col(r, "RetractionDate").map(x => RetractionRow.Date(x)), col(r, "RetractionNature").map(x => RetractionRow.Nature(x)))
+            RetractionRow(
+              Doi(doi),
+              col(r, "Reason").map(x => RetractionRow.Reason(x)),
+              col(r, "RetractionDate").map(x => RetractionRow.Date(x)),
+              col(r, "RetractionNature").map(x => RetractionRow.Nature(x))
+            )
           }
         }
 
@@ -313,9 +336,15 @@ object Acquire:
 
   object Checks:
 
-    final case class AcquireCheck(item: Queue.QueueItem.Id, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: Queue.QueueItem.Reason, checks: AcquireCheck.Checks = AcquireCheck.Checks(1))
-        derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+    final case class AcquireCheck(
+        item: Queue.QueueItem.Id,
+        checkedAt: AcquireCheck.CheckedAt,
+        outcome: AcquireCheck.Outcome,
+        reason: Queue.QueueItem.Reason,
+        checks: AcquireCheck.Checks = AcquireCheck.Checks(1)
+    ) derives KindlingsCodecAsObject,
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object AcquireCheck:
       type CheckedAt = CheckedAt.T
@@ -325,7 +354,6 @@ object Acquire:
       type Checks = Checks.T
       object Checks extends Newtype[Int, Pure]
 
-
     final case class RecheckRequest(
         dryRun: RecheckRequest.DryRun = RecheckRequest.DryRun(false),
         limit: Option[RecheckRequest.Limit] = None,
@@ -333,7 +361,8 @@ object Acquire:
         by: Option[RecheckRequest.By] = None,
         all: RecheckRequest.All = RecheckRequest.All(false)
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object RecheckRequest:
       type DryRun = DryRun.T
@@ -347,7 +376,6 @@ object Acquire:
       type All = All.T
       object All extends Newtype[Boolean, Pure]
 
-
     final case class RecheckRow(
         item: RecheckRow.Item,
         doi: Option[Doi] = None,
@@ -355,7 +383,8 @@ object Acquire:
         detail: RecheckRow.Detail = RecheckRow.Detail(""),
         citekey: Option[Citekey] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object RecheckRow:
       type Item = Item.T
@@ -364,7 +393,6 @@ object Acquire:
       object Action extends Newtype[String, Pure]
       type Detail = Detail.T
       object Detail extends Newtype[String, Pure]
-
 
     final case class RecheckResult(
         dryRun: RecheckResult.DryRun,
@@ -380,7 +408,8 @@ object Acquire:
         note: Option[RecheckResult.Note] = None,
         job: Option[JobInfo] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object RecheckResult:
       type DryRun = DryRun.T
@@ -404,7 +433,6 @@ object Acquire:
       type Note = Note.T
       object Note extends Newtype[String, Pure]
 
-
     final case class RecheckJob(
         all: RecheckJob.All,
         upTo: RecheckJob.UpTo = RecheckJob.UpTo(0),
@@ -412,15 +440,15 @@ object Acquire:
         by: RecheckJob.By = RecheckJob.By(""),
         resumes: Option[RecheckJob.Resumes] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
     object RecheckJob:
-
 
       /** A re-check job's plan, in its detail. */
 
       type All = All.T
       object All extends Newtype[Boolean, Pure]
-      export Plural.{Count as UpTo}
+      export Plural.Count as UpTo
       type Since = Since.T
       object Since extends Newtype[String, Pure]
       type By = By.T
@@ -435,7 +463,8 @@ object Acquire:
 
       def describe(j: RecheckJob): String =
         "the acquisition list's legal re-check of " +
-          (if (j.all).value then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, Plural.CountSingular("due item"))}") +
+          (if (j.all).value then "every open item with a DOI"
+           else s"up to ${Plural.count(j.upTo, Plural.CountSingular("due item"))}") +
           j.resumes.fold("")(id => s" (resuming job $id)")
 
     final case class RecheckStatus(
@@ -452,7 +481,8 @@ object Acquire:
         note: Option[RecheckStatus.Note] = None,
         job: Option[RecheckStatus.Job] = None
     ) derives KindlingsCodecAsObject,
-          KindlingsSchema, com.histmersion.api.json.Schema
+          KindlingsSchema,
+          com.histmersion.api.json.Schema
 
     object RecheckStatus:
       type Enabled = Enabled.T
@@ -477,8 +507,7 @@ object Acquire:
       object NextPass extends Newtype[String, Pure]
       type Note = Note.T
       object Note extends Newtype[String, Pure]
-      export com.histmersion.api.SpatialHierarchyResult.Job.{Id as Job}
-
+      export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
 
     val Closed = "closed"
     val Fetched = "fetched"

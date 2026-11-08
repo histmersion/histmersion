@@ -55,10 +55,51 @@ class StorageProbeSuite extends munit.FunSuite:
   /** A config whose every directory is under `d` (the defaults left empty resolve under `d` too). */
   private def config(d: Path, bundled: Boolean = false): AppConfig =
     val base = AppConfig.load()
-    base.modify(
-      _.runtime).setTo(base.runtime
-        .modify(_.enabled).setTo(RuntimeConfig.Enabled(bundled)).modify(_.home).setTo(RuntimeConfig.Home(d.resolve("install").toString)).modify(_.dataDir).setTo(RuntimeConfig.DataDir(d.resolve("data").toString))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(d.resolve("data/backups").toString)).modify(_.keep).setTo(BackupsConfig.Keep(3))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(d.resolve("data/uploads").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(d.resolve("data/bundles").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(""))).modify(_.corpus).setTo(base.corpus.modify(_.dir).setTo(CorpusConfig.Dir(""))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(""))).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("")).modify(_.lpfDir).setTo(PlaceSourcesConfig.LpfDir("")))).modify(_.agents).setTo(base.agents.modify(_.runtimes).setTo(base.agents.runtimes.modify(_.dir).setTo(AgentRuntimesConfig.Dir("")))
-    )
+    base
+      .modify(_.runtime)
+      .setTo(
+        base.runtime
+          .modify(_.enabled)
+          .setTo(RuntimeConfig.Enabled(bundled))
+          .modify(_.home)
+          .setTo(RuntimeConfig.Home(d.resolve("install").toString))
+          .modify(_.dataDir)
+          .setTo(RuntimeConfig.DataDir(d.resolve("data").toString))
+      )
+      .modify(_.backups)
+      .setTo(
+        base.backups
+          .modify(_.dir)
+          .setTo(BackupsConfig.Dir(d.resolve("data/backups").toString))
+          .modify(_.keep)
+          .setTo(BackupsConfig.Keep(3))
+      )
+      .modify(_.converter)
+      .setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(d.resolve("data/uploads").toString)))
+      .modify(_.bundles)
+      .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(d.resolve("data/bundles").toString)))
+      .modify(_.acquire)
+      .setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir("")))
+      .modify(_.corpus)
+      .setTo(base.corpus.modify(_.dir).setTo(CorpusConfig.Dir("")))
+      .modify(_.basemap)
+      .setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir("")))
+      .modify(_.places)
+      .setTo(
+        base.places
+          .modify(_.sources)
+          .setTo(
+            base.places.sources
+              .modify(_.dir)
+              .setTo(PlaceSourcesConfig.Dir(""))
+              .modify(_.lpfDir)
+              .setTo(PlaceSourcesConfig.LpfDir(""))
+          )
+      )
+      .modify(_.agents)
+      .setTo(
+        base.agents.modify(_.runtimes).setTo(base.agents.runtimes.modify(_.dir).setTo(AgentRuntimesConfig.Dir("")))
+      )
 
   private def env(d: Path): UserPaths.Lookup =
     Map(
@@ -92,10 +133,15 @@ class StorageProbeSuite extends munit.FunSuite:
     assertEquals(locs(ShownStore.Key("plugins")), Some("data/plugins"))
     assertEquals(locs(ShownStore.Key("agents")), Some("data/agents"))
     assertEquals(locs(ShownStore.Key("logs")), Some("data/logs"))
-    assert(!locs.contains(ShownStore.Key("acquire-spool")) && !locs.contains(ShownStore.Key("corpus")), locs) // not configured: nothing of ours
+    assert(
+      !locs.contains(ShownStore.Key("acquire-spool")) && !locs.contains(ShownStore.Key("corpus")),
+      locs
+    ) // not configured: nothing of ours
     // not bundled: no cluster, no install
     val dev =
-      figures.spots(StorageLocations.measured(config(d), env(d), UserPaths.OsName("Linux"), None), StorageLocations.install).map(_.key.value)
+      figures
+        .spots(StorageLocations.measured(config(d), env(d), UserPaths.OsName("Linux"), None), StorageLocations.install)
+        .map(_.key.value)
     assert(!dev.contains("database-cluster") && !dev.contains("install") && !dev.contains("relink-kit"), dev)
 
   tmp.test("the leftovers: other cache folders are listed one by one, the rest of the data dir together"): d =>
@@ -104,7 +150,10 @@ class StorageProbeSuite extends munit.FunSuite:
     file(d.resolve("data/signing/gpg-key"), 5)
     file(d.resolve("data/relink.conf"), 5)
     file(d.resolve("data/logs/server.log"), 5)
-    val locs = figures.spots(StorageLocations.measured(config(d), env(d), UserPaths.OsName("Linux"), None), StorageLocations.install)
+    val locs = figures.spots(
+      StorageLocations.measured(config(d), env(d), UserPaths.OsName("Linux"), None),
+      StorageLocations.install
+    )
     assertEquals(locs.filter(_.key.value.startsWith("cache:")).map(_.key), List("cache:thumbs"))
     val rest = locs.find(_.key.value == "data-other").getOrElse(fail(s"no data-other: $locs"))
     assertEquals(rest.stores.map(s => Path.of(s.where().value).getFileName.toString), List("relink.conf", "signing"))
@@ -125,11 +174,31 @@ class StorageProbeSuite extends munit.FunSuite:
       val p = StorageLocations.measured(cfg, env(d), UserPaths.OsName("Linux"), None)
       val bs = BackupFixtures.service(cfg)
       val r =
-        figures.measure(p, StorageLocations.install, cfg, None, bs.list.left.map(_.message.value), MeasureBudget.unlimited)
+        figures.measure(
+          p,
+          StorageLocations.install,
+          cfg,
+          None,
+          bs.list.left.map(_.message.value),
+          MeasureBudget.unlimited
+        )
       def entry(k: String) = r.entries.find(_.key.value == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))
       assertEquals(entry("backups").bytes, Some(7000L))
-      assertEquals(entry("backups").shrink.map(_.value: String), Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(3)).map(_.value: String))
-      assertEquals(r.backups, Some(BackupsUsage(BackupsUsage.Count(2), ByteCount(7000L), Some(BackupsUsage.Newest("histmersion-20261002T100000Z.dump")), BackupsUsage.Keep(3))))
+      assertEquals(
+        entry("backups").shrink.map(_.value: String),
+        Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(3)).map(_.value: String)
+      )
+      assertEquals(
+        r.backups,
+        Some(
+          BackupsUsage(
+            BackupsUsage.Count(2),
+            ByteCount(7000L),
+            Some(BackupsUsage.Newest("histmersion-20261002T100000Z.dump")),
+            BackupsUsage.Keep(3)
+          )
+        )
+      )
       assertEquals(entry("database-cluster").bytes, Some(7000L))
       assertEquals(entry("install").bytes, Some(2000L))
       assertEquals(entry("relink-kit").within, Some("install"))
@@ -166,7 +235,12 @@ class StorageProbeSuite extends munit.FunSuite:
   test("the cache: the first request waits for the first measurement; then it is reused until the TTL"):
     val runs = AtomicInteger(0)
     var now = 0L
-    val c = StorageCache(() => () => report(runs.incrementAndGet()), () => StorageCache.TimeToLive(60000L), () => StorageCache.Instant(now), r => r())
+    val c = StorageCache(
+      () => () => report(runs.incrementAndGet()),
+      () => StorageCache.TimeToLive(60000L),
+      () => StorageCache.Instant(now),
+      r => r()
+    )
     assertEquals(c.get(StorageCache.WaitMillis(1000)).measuredAt, Some("m1"))
     now = 59999
     assertEquals(c.get(StorageCache.WaitMillis(1000)).measuredAt, Some("m1"))
@@ -180,7 +254,12 @@ class StorageProbeSuite extends munit.FunSuite:
   test("the cache: a request that cannot wait says measuring; many requests start ONE measurement"):
     val runs = AtomicInteger(0)
     val pending = scala.collection.mutable.ListBuffer.empty[() => Unit]
-    val c = StorageCache(() => () => report(runs.incrementAndGet()), () => StorageCache.TimeToLive(60000L), () => StorageCache.Instant(0L), r => pending += r)
+    val c = StorageCache(
+      () => () => report(runs.incrementAndGet()),
+      () => StorageCache.TimeToLive(60000L),
+      () => StorageCache.Instant(0L),
+      r => pending += r
+    )
     assertEquals(c.get(StorageCache.WaitMillis(0)), Storage.Report(measuring = Storage.Report.Measuring(true)))
     assertEquals(c.get(StorageCache.WaitMillis(5)), Storage.Report(measuring = Storage.Report.Measuring(true)))
     assertEquals(pending.size, 1)

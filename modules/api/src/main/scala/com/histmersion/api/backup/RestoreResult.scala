@@ -18,7 +18,8 @@ final case class RestoreResult(
     durationMs: RestoreResult.DurationMs,
     warnings: List[RestoreResult.Warnings] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object RestoreResult:
   export Backup.Result.File

@@ -26,7 +26,10 @@ class LibraryAddressSuite extends munit.FunSuite:
     assertEquals(LibraryAddress.item(Pages.UrlQuery("item=x")), Some("x"))
 
   test("a list's address with its chosen item"):
-    assertEquals(LibraryAddress.href(LibrarySection.Sources, Some(ItemKey("cline2014_year"))), "/library?item=cline2014_year")
+    assertEquals(
+      LibraryAddress.href(LibrarySection.Sources, Some(ItemKey("cline2014_year"))),
+      "/library?item=cline2014_year"
+    )
     assertEquals(
       LibraryAddress.href(LibrarySection.Articles, Some(ItemKey("sea-peoples"))),
       "/library/articles?item=sea-peoples"

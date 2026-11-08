@@ -23,7 +23,10 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       .find(d => Files.isDirectory(d.resolve("db/places")))
       .getOrElse(fail("no db/places above the working directory"))
     Lpf
-      .parse(Files.readString(root.resolve("db/places/03-pleiades.json")), com.histmersion.api.catalogue.Place.KindValue(Place.Kind.Region))
+      .parse(
+        Files.readString(root.resolve("db/places/03-pleiades.json")),
+        com.histmersion.api.catalogue.Place.KindValue(Place.Kind.Region)
+      )
       .fold(e => fail(e.value), identity)
 
   private def prop(in: com.histmersion.api.catalogue.Place.Input, key: String): List[String] =
@@ -52,9 +55,28 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
 
   test("the seed carries the reclassified kinds and none of Pleiades' withdrawn duplicates"):
     val byId = pleiades.map(in => in.place.id -> in.place).toMap
-    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_330976685")).map(_.kind), Some(Place.Kind.People), "Aiantis")
-    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_992074")).map(_.kind), Some(Place.Kind.Polity), "Viennensis (diocese)")
-    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_580062")).map(_.kind), Some(Place.Kind.Site), "Peiraieus")
-    assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_307963010")).map(_.kind), Some(Place.Kind.Region), "Regio I (Porta Capena)")
-    assert(!byId.contains(com.histmersion.api.catalogue.Place.Id("pleiades_981515")), "Withdrawn (duplicate): Creta et Cyrene")
+    assertEquals(
+      byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_330976685")).map(_.kind),
+      Some(Place.Kind.People),
+      "Aiantis"
+    )
+    assertEquals(
+      byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_992074")).map(_.kind),
+      Some(Place.Kind.Polity),
+      "Viennensis (diocese)"
+    )
+    assertEquals(
+      byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_580062")).map(_.kind),
+      Some(Place.Kind.Site),
+      "Peiraieus"
+    )
+    assertEquals(
+      byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_307963010")).map(_.kind),
+      Some(Place.Kind.Region),
+      "Regio I (Porta Capena)"
+    )
+    assert(
+      !byId.contains(com.histmersion.api.catalogue.Place.Id("pleiades_981515")),
+      "Withdrawn (duplicate): Creta et Cyrene"
+    )
     assert(pleiades.forall(in => PlaceReview.duplicateOf(PlaceReview.Evidence.Label(in.place.label.value)).isEmpty))

@@ -28,7 +28,9 @@ final class SearchControllers(
     * the evidence, so there is ONE query path (FTS ranking and snippets included). New callers should use [[sources]].
     */
   def search(q: Option[Search.Query], limit: Option[Filter.Limit]): List[SearchHit] =
-    sources(Filter(q = q.map(_.value.trim).filter(_.nonEmpty).map(Filter.Q(_)), limit = limit.getOrElse(Filter.Limit(0)))).hits.map(_.source)
+    sources(
+      Filter(q = q.map(_.value.trim).filter(_.nonEmpty).map(Filter.Q(_)), limit = limit.getOrElse(Filter.Limit(0)))
+    ).hits.map(_.source)
 
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
   def sources(f: Filter): SearchResult =
@@ -113,8 +115,10 @@ final class SearchControllers(
     val ui = cfg().ui
     val window = q.filter.modify(_.period).setTo(Some(Period(from, to)))
     val scope = filters.scope(window)
-    val depth = Tree.Depth(q.depth.map(_.value).filter(_ > 0).getOrElse(ui.treeDepth.value).max(1).min(Tree.MaxDepth.value))
-    val samples = Tree.MaxSamplesCount(q.samples.map(_.value).getOrElse(ui.treeSamples.value).max(0).min(Tree.MaxSamples.value))
+    val depth =
+      Tree.Depth(q.depth.map(_.value).filter(_ > 0).getOrElse(ui.treeDepth.value).max(1).min(Tree.MaxDepth.value))
+    val samples =
+      Tree.MaxSamplesCount(q.samples.map(_.value).getOrElse(ui.treeSamples.value).max(0).min(Tree.MaxSamples.value))
     // `unit=starts` is the SOURCE unit counted a different way (plan §1.7): same rows, one bar each,
     // by where the period begins. The rows query therefore still asks for sources.
     val starts = unit == Aggregate.UnitStarts
@@ -155,7 +159,8 @@ final class SearchControllers(
   ): TimeHistogram =
     val rows = search.treeRows(AggregateRepo.Unit(unit), window, scope)
     // the gazetteer slice these rows hang off — one upward closure, not the whole 16 k-place table
-    def gaz = places.gazetteer(rows.flatMap(_.placeIds.map(p => com.histmersion.domain.catalogue.Place.Id.assume(p.value))))
+    def gaz =
+      places.gazetteer(rows.flatMap(_.placeIds.map(p => com.histmersion.domain.catalogue.Place.Id.assume(p.value))))
     // `by=region` reads the hierarchy at ONE year: the caller's, else the middle of the window
     val asOf = askedAsOf.orElse(Some(Tree.midpoint(from, to)))
     // LAZY DEEPER LEVELS: `place=<one gazetteer id>` roots the region tree AT that place, so

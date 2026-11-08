@@ -56,7 +56,9 @@ class MergeApplyJobsSuite extends munit.FunSuite:
 
   test("a run that throws ends failed, with why"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val j = jobs.start(sha('b'), plan('a'))(() => throw IllegalStateException("boom")).fold(e => fail(e.message.value), identity)
+    val j = jobs
+      .start(sha('b'), plan('a'))(() => throw IllegalStateException("boom"))
+      .fold(e => fail(e.message.value), identity)
     assertEquals(j.state, MergeJobState.Failed)
     assert(j.error.exists(_.value.contains("boom")), j.toString)
     assertEquals(jobs.status(Job.Id.applyUnsafe(UUID.randomUUID().toString)), None)

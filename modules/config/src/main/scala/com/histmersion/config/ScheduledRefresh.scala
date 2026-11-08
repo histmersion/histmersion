@@ -13,6 +13,7 @@ enum ScheduledRefresh derives CanEqual:
 object ScheduledRefresh:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** The configured minutes: 0 = off. */
 
   def fromMinutes(minutes: Minutes): Either[Problem, ScheduledRefresh] =

@@ -74,17 +74,32 @@ class RepoSuite extends DbSuite:
 
   test("findingsFor (the map feed): period overlap + bbox"):
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
-    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), limit = Filter.Limit(10))
+    val box = Filter(
+      bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))),
+      limit = Filter.Limit(10)
+    )
     val hit = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1750), Year(-1750)))))
     val miss = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1000), Year(-900)))))
     assert(hit.exists(_.citekey.value == "zz_test_source")); assert(!miss.exists(_.citekey.value == "zz_test_source"))
 
   test("the map feed says what each finding's source is (core.SourceKinds): its DOI, else its provenance"):
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some(Doi("10.1007/978-3-030-12345-6_7"))), AppConfig.load().limits.chunkChars)
-    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), period = Some(Period(Year(-1750), Year(-1750))), limit = Filter.Limit(10))
+    SourceFixtures.upsert(
+      ds,
+      src.modify(_.doi).setTo(Some(Doi("10.1007/978-3-030-12345-6_7"))),
+      AppConfig.load().limits.chunkChars
+    )
+    val box = Filter(
+      bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))),
+      period = Some(Period(Year(-1750), Year(-1750))),
+      limit = Filter.Limit(10)
+    )
     def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey.value == "zz_test_source").flatMap(_.sourceKind)
     assertEquals(kind, Some(Source.Kinds.Chapter))
-    SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))), AppConfig.load().limits.chunkChars)
+    SourceFixtures.upsert(
+      ds,
+      src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))),
+      AppConfig.load().limits.chunkChars
+    )
     assertEquals(kind, Some(Source.Kinds.Book))
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars)
     assertEquals(kind, Some(Source.Kinds.Unknown))
@@ -94,5 +109,7 @@ class RepoSuite extends DbSuite:
     assert(
       CitationFixtures
         .neighbors(ds, com.histmersion.domain.library.Citekey("zz_test_source"))
-        .exists(n => n.direction.value == "out" && n.citekey.value == "zz_other" && n.target == NeighborTarget.Unresolved)
+        .exists(n =>
+          n.direction.value == "out" && n.citekey.value == "zz_other" && n.target == NeighborTarget.Unresolved
+        )
     )

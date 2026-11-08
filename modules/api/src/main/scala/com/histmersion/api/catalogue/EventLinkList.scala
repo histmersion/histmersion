@@ -9,7 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventLinkList(eventId: Event.Id, label: EventLinkList.Label, candidates: List[EventLinkCandidate])
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventLinkList:
   type Label = Label.T

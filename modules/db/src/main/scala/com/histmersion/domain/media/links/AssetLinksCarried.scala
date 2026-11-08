@@ -19,4 +19,7 @@ object AssetLinksCarried:
     Bundle.Kind.AssetLink,
     TableName("asset_links"),
     List(RowsIn(ImportStage.AfterBlobs, ImportRank(102), AssetLinkBundleRepo.assetLinksIn))
-  )(scope => AssetLinkBundleRepo.assetLinks(scope).toList)(l => CarriedKind.RecordsClock(l.updatedAt.value), (es, ls) => es.modify(_.assetLinks).setTo(ls))
+  )(scope => AssetLinkBundleRepo.assetLinks(scope).toList)(
+    l => CarriedKind.RecordsClock(l.updatedAt.value),
+    (es, ls) => es.modify(_.assetLinks).setTo(ls)
+  )

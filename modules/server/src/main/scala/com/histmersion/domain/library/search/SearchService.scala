@@ -35,4 +35,3 @@ object SearchService:
       db.read(AggregateRepo.periods(unit, filter, scope)).toList
     def treeRows(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow] =
       db.read(AggregateRepo.treeRows(unit, filter, scope)).toList
-

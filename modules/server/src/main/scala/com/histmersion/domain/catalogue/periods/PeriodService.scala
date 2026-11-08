@@ -69,17 +69,16 @@ object PeriodService:
     def count(): RowCount = db.read(PeriodRepo.count)
     def presetCount(): RowCount = db.read(PeriodRepo.presetCount)
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
-      db.read(PeriodRepo.placement(ids.map(i => PeriodRow.Id(i.value)))).map((k, v) =>
-        HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value))
-      )
+      db.read(PeriodRepo.placement(ids.map(i => PeriodRow.Id(i.value))))
+        .map((k, v) => HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value)))
     def write(rows: List[HistoricalPeriod], dataset: Dataset): RowCount = db.transact(PeriodRepo.upsert(rows, dataset))
     def retainPresets(ids: List[HistoricalPeriod.Id]): RowCount = db.transact(PeriodRepo.retainPresets(ids))
     def deleteSeedExcept(ids: List[HistoricalPeriod.Id]): RowCount = db.transact(PeriodRepo.deleteSeedExcept(ids))
-    def seedVersion(name: SeedName): Option[SeedVersion] = db.read(PeriodRepo.seedVersion(PeriodRepo.SeedVersionName(name.value))).map(v => SeedVersion(v.value))
+    def seedVersion(name: SeedName): Option[SeedVersion] =
+      db.read(PeriodRepo.seedVersion(PeriodRepo.SeedVersionName(name.value))).map(v => SeedVersion(v.value))
     def setSeedVersion(name: SeedName, version: SeedVersion): Unit = db.transact(
       PeriodRepo.setSeedVersion(PeriodRepo.SetSeedVersionName(name.value), PeriodRepo.SeedVersion(version.value))
     )
-
 
   /** The same rules over the shared in-memory state: a part whose parent is unknown is refused as the foreign key
     * refuses it, and the whole write with it.
@@ -90,7 +89,9 @@ object PeriodService:
       ps.sortBy(p => (p.period.start.value: Long, p.label.value: String)).toList
 
     def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod] = all.find(_.id == id)
-    def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = ordered(all.filter(_.parentId.exists(_.value == id.value)))
+    def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = ordered(
+      all.filter(_.parentId.exists(_.value == id.value))
+    )
 
     def search(q: PeriodSearch): List[HistoricalPeriod] =
       def lower(s: String) = s.toLowerCase(Locale.ROOT)
@@ -140,13 +141,17 @@ object PeriodService:
       val _ = state.updateAndGet(
         _.modify(_.periods).using(
           _.filterNot(s => goneIds(s.period.id.value))
-            .map(s => if s.period.parentId.exists(pid => goneIds(pid.value)) then s.modify(_.period.parentId).setTo(None) else s)
+            .map(s =>
+              if s.period.parentId.exists(pid => goneIds(pid.value)) then s.modify(_.period.parentId).setTo(None) else s
+            )
         )
       )
       RowCount(gone.size)
 
-    def seedVersion(name: SeedName): Option[SeedVersion] = state.get.seedVersions.get(CatalogueState.SeedVersionsKey(name.value)).map(v => SeedVersion(v.value))
+    def seedVersion(name: SeedName): Option[SeedVersion] =
+      state.get.seedVersions.get(CatalogueState.SeedVersionsKey(name.value)).map(v => SeedVersion(v.value))
     def setSeedVersion(name: SeedName, version: SeedVersion): Unit =
-      val _ = state.updateAndGet(_.modify(_.seedVersions).using(_.updated(CatalogueState.SeedVersionsKey(name.value), CatalogueState.SeedVersionsValue(version.value))))
-
-
+      val _ = state.updateAndGet(
+        _.modify(_.seedVersions)
+          .using(_.updated(CatalogueState.SeedVersionsKey(name.value), CatalogueState.SeedVersionsValue(version.value)))
+      )

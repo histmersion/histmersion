@@ -39,7 +39,8 @@ final class PlanPools(
     cfg: => AgentsConfig,
     codexHome: () => Option[java.nio.file.Path],
     seams: PlanPools.Seams = PlanPools.Seams.Real
-)(using JvmHome) extends PoolSink:
+)(using JvmHome)
+    extends PoolSink:
 
   private val slots = ConcurrentHashMap[PoolId, Semaphore]()
   private val lastPoll = AtomicLong(0L)
@@ -49,8 +50,10 @@ final class PlanPools(
   private def now0: PlanQuota.Now = PlanQuota.Now(System.currentTimeMillis())
 
   private def poolCfg(p: PoolId): (Floors.Wire, Int) = p match
-    case PoolId.ClaudePlan  => (Floors.Wire(cfg.quota.claudePlan.floors.value), cfg.quota.claudePlan.maxCallsInFlight.value)
-    case PoolId.ChatgptPlan => (Floors.Wire(cfg.quota.chatgptPlan.floors.value), cfg.quota.chatgptPlan.maxCallsInFlight.value)
+    case PoolId.ClaudePlan =>
+      (Floors.Wire(cfg.quota.claudePlan.floors.value), cfg.quota.claudePlan.maxCallsInFlight.value)
+    case PoolId.ChatgptPlan =>
+      (Floors.Wire(cfg.quota.chatgptPlan.floors.value), cfg.quota.chatgptPlan.maxCallsInFlight.value)
 
   private def staleMs: Long = math.max(1, cfg.quota.staleMinutes.value).toLong * 60000L
 
@@ -69,11 +72,17 @@ final class PlanPools(
     val saved = Transactor(ds).read(PlanQuotaRepo.pool(p)).floors
     saved.map(f => Floors.parse(Floors.Wire(f.value))) match
       case Some(Right(f)) => (f, PoolStatus.FloorsSource("saved"), None)
-      case Some(Left(m))  => (Floors.Empty, PoolStatus.FloorsSource("saved"), Some(PlanPools.Problem(s"saved floors do not parse: $m")))
-      case None           =>
+      case Some(Left(m))  =>
+        (Floors.Empty, PoolStatus.FloorsSource("saved"), Some(PlanPools.Problem(s"saved floors do not parse: $m")))
+      case None =>
         Floors.parse(poolCfg(p)._1) match
           case Right(f) => (f, PoolStatus.FloorsSource("config"), None)
-          case Left(m)  => (Floors.Empty, PoolStatus.FloorsSource("config"), Some(PlanPools.Problem(s"agents.quota.${p.wire}.floors: $m")))
+          case Left(m)  =>
+            (
+              Floors.Empty,
+              PoolStatus.FloorsSource("config"),
+              Some(PlanPools.Problem(s"agents.quota.${p.wire}.floors: $m"))
+            )
 
   def rules(p: PoolId): Rules =
     Rules(
@@ -93,7 +102,9 @@ final class PlanPools(
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => Verdict.Blocked.Reason(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r =>
+        Verdict.Blocked.Reason(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
+      ),
       rules(p),
       now,
       model
@@ -105,7 +116,9 @@ final class PlanPools(
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
       PoolStatus.Held(pool.held.value),
-      pool.refusal.map(r => Verdict.Blocked.Reason(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))),
+      pool.refusal.map(r =>
+        Verdict.Blocked.Reason(r.value) -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
+      ),
       rules(p),
       now,
       model
@@ -136,9 +149,13 @@ final class PlanPools(
   def record(p: PoolId, rs: List[Reading]): Unit = Transactor(ds).transact(PlanQuotaRepo.record(p, rs))
 
   /** When `p`'s newest reading was observed (epoch ms), if it has one. */
-  def lastObserved(p: PoolId): Option[Reading.ObservedAt] = Transactor(ds).read(PlanQuotaRepo.readings(p)).map(_.observedAt).maxOption
+  def lastObserved(p: PoolId): Option[Reading.ObservedAt] =
+    Transactor(ds).read(PlanQuotaRepo.readings(p)).map(_.observedAt).maxOption
 
-  def blocked(p: PoolId, model: Option[AgentsControllers.ModelName]): Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])] =
+  def blocked(
+      p: PoolId,
+      model: Option[AgentsControllers.ModelName]
+  ): Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])] =
     verdict(p, model.map(m => ChainEntry.Model(m.value)))._1 match
       case Verdict.Blocked(why, until) =>
         Some((PoolSink.BlockedReason(why.value), until.map(u => PlanQuotaRepo.EpochMillis(u.value))))
@@ -150,7 +167,8 @@ final class PlanPools(
 
   /** Whether a person holds `p` (no run draws on it until it is released). */
   def held(p: PoolId): Boolean = Transactor(ds).read(PlanQuotaRepo.pool(p)).held.value
-  def setFloors(p: PoolId, f: Option[PlanQuotaRepo.Pool.Floors]): Unit = Transactor(ds).transact(PlanQuotaRepo.setFloors(p, f))
+  def setFloors(p: PoolId, f: Option[PlanQuotaRepo.Pool.Floors]): Unit =
+    Transactor(ds).transact(PlanQuotaRepo.setFloors(p, f))
 
   // ── logins ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -193,7 +211,11 @@ final class PlanPools(
   private def claudeMode: Either[PlanPools.Problem, RefreshMode] =
     RefreshMode
       .parse(RefreshMode.Wire(cfg.quota.claudePlan.refresh.value))
-      .toRight(PlanPools.Problem(s"agents.quota.claude-plan.refresh: '${cfg.quota.claudePlan.refresh}' is not auto, probe or off"))
+      .toRight(
+        PlanPools.Problem(
+          s"agents.quota.claude-plan.refresh: '${cfg.quota.claudePlan.refresh}' is not auto, probe or off"
+        )
+      )
 
   /** How `p` takes a fresh reading, for `agent quota`; None = it takes none. */
   def refreshMode(p: PoolId): Option[Refreshed.Mode] = p match
@@ -208,7 +230,9 @@ final class PlanPools(
         )
     case PoolId.ChatgptPlan =>
       Option.when(cfg.providers.codex.appServer.value)(
-        Refreshed.Mode("app-server: account/rateLimits/read, spends nothing" + PlanPools.scheduleText(schedule(p)).value)
+        Refreshed.Mode(
+          "app-server: account/rateLimits/read, spends nothing" + PlanPools.scheduleText(schedule(p)).value
+        )
       )
 
   def schedule(p: PoolId): ScheduledRefresh = p match
@@ -249,7 +273,14 @@ final class PlanPools(
             )
             .left
             .map(e => PlanPools.Problem(e.value))
-            .map(_ => takeAndLog(p, RefreshTrigger.Schedule, PlanPools.Reason(RefreshTrigger.Schedule.wire.value), PlanQuota.Now(at)))
+            .map(_ =>
+              takeAndLog(
+                p,
+                RefreshTrigger.Schedule,
+                PlanPools.Reason(RefreshTrigger.Schedule.wire.value),
+                PlanQuota.Now(at)
+              )
+            )
     }
 
   /** Take a fresh reading of `p` now — when the decision table says so ([[PlanQuota.refreshDecision]]): single flight,
@@ -305,7 +336,11 @@ final class PlanPools(
       poll(now, force = PlanPools.Force(true)) match
         case Some(why) => Refreshed(Refreshed.Mode("app-server"), ok = Refreshed.Ok(false), why)
         case None      =>
-          Refreshed(Refreshed.Mode("app-server"), ok = Refreshed.Ok(true), PlanPools.summary(Transactor(ds).read(PlanQuotaRepo.readings(p)), now))
+          Refreshed(
+            Refreshed.Mode("app-server"),
+            ok = Refreshed.Ok(true),
+            PlanPools.summary(Transactor(ds).read(PlanQuotaRepo.readings(p)), now)
+          )
     case PoolId.ClaudePlan =>
       val cc = cfg.providers.claudeCode
       val qc = cfg.quota.claudePlan
@@ -330,14 +365,19 @@ final class PlanPools(
   def poll(now: PlanQuota.Now, force: PlanPools.Force = PlanPools.Force(false)): Option[Refreshed.Detail] =
     val every = math.max(1, cfg.quota.pollSeconds.value).toLong * 1000L
     val last = lastPoll.get()
-    if !cfg.providers.codex.appServer.value then Some(Refreshed.Detail("app-server reads are off (agents.providers.codex.app-server)"))
+    if !cfg.providers.codex.appServer.value then
+      Some(Refreshed.Detail("app-server reads are off (agents.providers.codex.app-server)"))
     else if (!force.value && now.value - last < every) || !lastPoll.compareAndSet(last, now.value) then None
     else
       codexHome() match
         case None       => Some(Refreshed.Detail("no CODEX_HOME to read"))
         case Some(home) =>
           Codex.Home.using(home)(
-            seams.readCodex(cfg.providers.codex.command, home, AgentsConfig.DoctorTimeoutSeconds(math.max(5, cfg.doctorTimeoutSeconds.value)))
+            seams.readCodex(
+              cfg.providers.codex.command,
+              home,
+              AgentsConfig.DoctorTimeoutSeconds(math.max(5, cfg.doctorTimeoutSeconds.value))
+            )
           ) match
             case Left(why) =>
               scribe.info(s"codex app-server rate-limit read failed: $why")
@@ -352,7 +392,10 @@ final class PlanPools(
 
   /** A mod's report: recorded, and answered with whether the run may go on. */
   def guard(report: ModReport, now: PlanQuota.Now = now0): GuardAnswer =
-    val src = Source.parse(Source.Wire(report.source.value)).filter(s => s == Source.Mod || s == Source.Interactive).getOrElse(Source.Mod)
+    val src = Source
+      .parse(Source.Wire(report.source.value))
+      .filter(s => s == Source.Mod || s == Source.Interactive)
+      .getOrElse(Source.Mod)
     record(PoolId.ClaudePlan, PlanPools.modReadings(report.rateLimits, src, now))
     verdict(PoolId.ClaudePlan, None, now)._1 match
       case Verdict.Usable(_)           => GuardAnswer(allow = GuardAnswer.Allow(true))
@@ -454,8 +497,17 @@ object PlanPools:
     */
   final case class Seams(
       readCodex: (CodexConfig.Command, java.nio.file.Path, AgentsConfig.DoctorTimeoutSeconds) => Either[Problem, Json],
-      runProbe: (List[ClaudeCode.Argument], java.util.Map[String, String] => Unit, CliProcess.RunStdin, CliProcess.RunTimeoutSeconds) => Either[Problem, CliProcess.Run],
-      runCommand: (List[ProcessLaunch.Command], Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]], AgentsConfig.DoctorTimeoutSeconds) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)],
+      runProbe: (
+          List[ClaudeCode.Argument],
+          java.util.Map[String, String] => Unit,
+          CliProcess.RunStdin,
+          CliProcess.RunTimeoutSeconds
+      ) => Either[Problem, CliProcess.Run],
+      runCommand: (
+          List[ProcessLaunch.Command],
+          Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]],
+          AgentsConfig.DoctorTimeoutSeconds
+      ) => Either[AgentDoctor.Problem, (ProcessResult.ExitCode, AgentDoctor.Output)],
       refreshes: Seams.Refreshes = Seams.Refreshes(true)
   )
 
@@ -490,13 +542,16 @@ object PlanPools:
             env,
             stdin,
             timeoutSeconds,
-            CliProcess.RunHint("install Claude Code or set agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND)")
+            CliProcess.RunHint(
+              "install Claude Code or set agents.providers.claude-code.command (HISTMERSION_AGENTS_CLAUDE_COMMAND)"
+            )
           )
         )
       }
     catch
       case e: InterruptedException => throw e
-      case e: Exception => Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+      case e: Exception            =>
+        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
 
   /** The model whose OWN runtime spends the pool needs that runtime's login: claude-code on the Claude plan, codex on
     * the ChatGPT plan (opencode on a ChatGPT login signs in by itself).
@@ -507,7 +562,9 @@ object PlanPools:
     case _                                            => false
 
   /** The `claude` CLI's environment for `auth status`: no API key unless asked, its own config dir. */
-  def claudeEnv(cc: ClaudeCodeConfig)(using JvmHome): Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
+  def claudeEnv(cc: ClaudeCodeConfig)(using
+      JvmHome
+  ): Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
     val dropped: Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]] =
       if cc.useApiKey.value then Map.empty
       else
@@ -518,7 +575,11 @@ object PlanPools:
     dropped ++
       Option(cc.configDir.value.trim)
         .filter(_.nonEmpty)
-        .map(d => ProcessLaunch.EnvironmentKey("CLAUDE_CONFIG_DIR") -> Some(ProcessLaunch.EnvironmentValue(AgentTrees.expand(d))))
+        .map(d =>
+          ProcessLaunch.EnvironmentKey("CLAUDE_CONFIG_DIR") -> Some(
+            ProcessLaunch.EnvironmentValue(AgentTrees.expand(d))
+          )
+        )
         .toMap
 
   /** `claude auth status` (JSON) → the login (the doctor's reading of it, [[AgentDoctor.login]]): logged out, or on an
@@ -534,19 +595,29 @@ object PlanPools:
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
-    case None    => Login.Missing(PlanQuota.Login.Missing.Why("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home"))
+    case None =>
+      Login.Missing(
+        PlanQuota.Login.Missing.Why("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
+      )
     case Some(h) =>
-      if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then Login.Present(Login.Present.Detail(s"$h has a login"))
+      if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then
+        Login.Present(Login.Present.Detail(s"$h has a login"))
       else Login.Missing(Login.Missing.Why(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
 
   /** The probe's output → the readings to record: its `rate_limit_event` windows; when it carried none but ended on the
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about
     * the plan.
     */
-  def probeReadings(run: CliProcess.Run, now: PlanQuota.Now, cooldownMinutes: ClaudeCodeConfig.LimitCooldownMinutes): Either[Problem, List[Reading]] =
+  def probeReadings(
+      run: CliProcess.Run,
+      now: PlanQuota.Now,
+      cooldownMinutes: ClaudeCodeConfig.LimitCooldownMinutes
+  ): Either[Problem, List[Reading]] =
     val o = ClaudeCode.parse(run.lines)
     if o.readings.nonEmpty then
-      Right(o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(Reading.ObservedAt(now.value))))
+      Right(
+        o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(Reading.ObservedAt(now.value)))
+      )
     else
       o.result.flatMap(ClaudeCode.usageLimit) match
         case Some(l) =>
@@ -555,9 +626,23 @@ object PlanPools:
               .map(_.toEpochMilli)
               .filter(_ > now.value)
               .getOrElse(now.value + math.max(1, cooldownMinutes.value).toLong * 60000L)
-          Right(List(Reading(Reading.Limit("claude"), Reading.Kind("usage_limit"), Reading.UsedPct(100), Some(Reading.ResetsAt(until)), rejected = Reading.Rejected(true), Reading.ObservedAt(now.value), Source.Probe)))
+          Right(
+            List(
+              Reading(
+                Reading.Limit("claude"),
+                Reading.Kind("usage_limit"),
+                Reading.UsedPct(100),
+                Some(Reading.ResetsAt(until)),
+                rejected = Reading.Rejected(true),
+                Reading.ObservedAt(now.value),
+                Source.Probe
+              )
+            )
+          )
         case None =>
-          val said = o.result.map(r => (r.text.value :: r.errors.map(_.value)).filter(_.nonEmpty).mkString("; ")).filter(_.nonEmpty)
+          val said = o.result
+            .map(r => (r.text.value :: r.errors.map(_.value)).filter(_.nonEmpty).mkString("; "))
+            .filter(_.nonEmpty)
           Left(
             Problem(
               s"the probe printed no rate_limit_event (exit ${run.exit}" +
@@ -577,7 +662,11 @@ object PlanPools:
               if r.limit.value == "claude" || r.limit.value == "codex" then r.kind.value
               else s"${r.limit}/${r.kind}"
             val pct =
-              java.math.BigDecimal(r.usedPct.value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
+              java.math
+                .BigDecimal(r.usedPct.value)
+                .setScale(1, java.math.RoundingMode.HALF_UP)
+                .stripTrailingZeros
+                .toPlainString
             s"$name $pct% used${if r.rejected.value then " (refused)" else ""}"
           }
           .mkString(", ")
@@ -615,22 +704,59 @@ object PlanPools:
         val used = num(info, "utilization").map(_ * 100)
         // without a utilization the representative window says only "allowed" or "rejected"
         if status.contains("rejected") then
-          List(Reading(Reading.Limit("claude"), Reading.Kind(kind), Reading.UsedPct(used.getOrElse(100.0)), repReset, rejected = Reading.Rejected(true), Reading.ObservedAt(now.value), source))
-        else used.map(u => Reading(Reading.Limit("claude"), Reading.Kind(kind), Reading.UsedPct(u), repReset, rejected = Reading.Rejected(false), Reading.ObservedAt(now.value), source)).toList
+          List(
+            Reading(
+              Reading.Limit("claude"),
+              Reading.Kind(kind),
+              Reading.UsedPct(used.getOrElse(100.0)),
+              repReset,
+              rejected = Reading.Rejected(true),
+              Reading.ObservedAt(now.value),
+              source
+            )
+          )
+        else
+          used
+            .map(u =>
+              Reading(
+                Reading.Limit("claude"),
+                Reading.Kind(kind),
+                Reading.UsedPct(u),
+                repReset,
+                rejected = Reading.Rejected(false),
+                Reading.ObservedAt(now.value),
+                source
+              )
+            )
+            .toList
       }
 
   /** A mod's `rateLimits` (`percentUsed`, `resetsAt` ISO) → readings. */
   def modReadings(ws: List[ModWindow], source: Source, now: PlanQuota.Now): List[Reading] =
     ws.map { w =>
-      val reset = w.resetsAt.flatMap(t => scala.util.Try(java.time.Instant.parse(t.value).toEpochMilli).toOption).map(Reading.ResetsAt(_))
-      Reading(Reading.Limit("claude"), Reading.Kind(w.kind.value), w.percentUsed, reset, rejected = Reading.Rejected(false), Reading.ObservedAt(now.value), source)
+      val reset = w.resetsAt
+        .flatMap(t => scala.util.Try(java.time.Instant.parse(t.value).toEpochMilli).toOption)
+        .map(Reading.ResetsAt(_))
+      Reading(
+        Reading.Limit("claude"),
+        Reading.Kind(w.kind.value),
+        w.percentUsed,
+        reset,
+        rejected = Reading.Rejected(false),
+        Reading.ObservedAt(now.value),
+        source
+      )
     }
 
   /** `account/rateLimits/read`'s result → readings (windows keyed by LENGTH, `300m`/`10080m`: primary is not always the
     * 5-hour one), the refusal (`ordinaryUsageAllowed: false`; a reached limit marks its windows refused) and the plan
     * type. Reset credits and upsells are ignored — never acted on.
     */
-  def codexReadings(result: Json, now: PlanQuota.Now): (List[Reading], Option[(PlanQuotaRepo.Pool.Refusal, Option[PlanQuotaRepo.Pool.RefusalUntil])], Option[PlanQuotaRepo.Pool.PlanType]) =
+  def codexReadings(result: Json, now: PlanQuota.Now): (
+      List[Reading],
+      Option[(PlanQuotaRepo.Pool.Refusal, Option[PlanQuotaRepo.Pool.RefusalUntil])],
+      Option[PlanQuotaRepo.Pool.PlanType]
+  ) =
     val c = result.hcursor
     val buckets: List[Json] =
       c.downField("rateLimitsByLimitId")
@@ -668,18 +794,26 @@ object PlanPools:
       .filter(!_)
       .map(_ =>
         (
-          PlanQuotaRepo.Pool.Refusal("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"),
+          PlanQuotaRepo.Pool
+            .Refusal("the ChatGPT plan does not allow ordinary usage now (ordinaryUsageAllowed: false)"),
           Option.empty[PlanQuotaRepo.Pool.RefusalUntil]
         )
       )
-    val plan = buckets.flatMap(_.hcursor.downField("planType").as[String].toOption).headOption.map(PlanQuotaRepo.Pool.PlanType(_))
+    val plan = buckets
+      .flatMap(_.hcursor.downField("planType").as[String].toOption)
+      .headOption
+      .map(PlanQuotaRepo.Pool.PlanType(_))
     (rs, refusal, plan)
 
   /** One `account/rateLimits/read` through `codex app-server` (stdio JSON-RPC: `initialize` → `initialized` → the
     * read), with `CODEX_HOME` = the runs' home. Nothing else is ever sent — in particular never
     * `account/rateLimitResetCredit/consume`.
     */
-  def readCodex(command: CodexConfig.Command, home: java.nio.file.Path, timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds): Either[Problem, Json] =
+  def readCodex(
+      command: CodexConfig.Command,
+      home: java.nio.file.Path,
+      timeoutSeconds: AgentsConfig.DoctorTimeoutSeconds
+  ): Either[Problem, Json] =
     try
       val pb = ProcessBuilder(command.value, "app-server").redirectError(ProcessBuilder.Redirect.DISCARD)
       val env = pb.environment()
@@ -719,8 +853,10 @@ object PlanPools:
         if !p.waitFor(3, TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
     catch
       case e: InterruptedException                  => throw e
-      case e: java.util.concurrent.TimeoutException => Left(Problem(s"codex app-server did not answer within $timeoutSeconds s"))
-      case e: Exception => Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
+      case e: java.util.concurrent.TimeoutException =>
+        Left(Problem(s"codex app-server did not answer within $timeoutSeconds s"))
+      case e: Exception =>
+        Left(Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300)))
 
   /** The three messages of a read — and the only ones Histmersion ever sends the app-server. */
   val ReadRequests: List[String] = List(

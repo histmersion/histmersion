@@ -16,7 +16,8 @@ final case class RefsResult(
     edgesAdded: RefsResult.EdgesAdded,
     references: List[RefRow]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object RefsResult:
   type Target = Target.T

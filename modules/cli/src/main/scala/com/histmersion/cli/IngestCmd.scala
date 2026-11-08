@@ -29,11 +29,13 @@ object IngestCmd:
     * [[ExitCode.Refused]].
     */
 
-  def pollJob(c: Client, id: Job.Id, waited: Int)(using console: Console) : Either[Cli.Error, Unit] =
+  def pollJob(c: Client, id: Job.Id, waited: Int)(using console: Console): Either[Cli.Error, Unit] =
     JobFollow.job(c.job, id, waited * 1000L).map(j => Cli.out.println(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
-  def upload(using console: Console)(
+  def upload(using
+      console: Console
+  )(
       c: Client,
       file: Path,
       citekey: Citekey,
@@ -46,9 +48,11 @@ object IngestCmd:
       noWait: Cli.NoWait,
       provenance: Option[Ingest.Params.Provenance] = None,
       acquireItem: Option[Ingest.Params.AcquireItem] = None
-  ) : Either[Cli.Error, Unit] =
+  ): Either[Cli.Error, Unit] =
     if citekey.value.trim.isEmpty then
-      Left(Cli.Error(Cli.Error.Message("uploading a file needs --citekey to store it under"), exitCode = ExitCode.Usage))
+      Left(
+        Cli.Error(Cli.Error.Message("uploading a file needs --citekey to store it under"), exitCode = ExitCode.Usage)
+      )
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
     // connection mis-framed, so the NEXT upload on it reads as empty too (see
     // ZeroLengthUploadSuite). Never sending one keeps that hazard off our own wire entirely.
@@ -77,7 +81,7 @@ object IngestCmd:
         if noWait.value then Right(()) else pollJob(c, a.jobId, 0)
       }
 
-  private def reocr (using console: Console) =
+  private def reocr(using console: Console) =
     Opts.subcommand("reocr", "Convert a source's stored original again (e.g. under the slow, accurate OCR path)") {
       (
         Opts.argument[String]("citekey"),
@@ -92,31 +96,39 @@ object IngestCmd:
         }
     }
 
-  private def assets (using console: Console) =
+  private def assets(using console: Console) =
     Opts.subcommand("assets", "The figures stored with a source, and the URLs they are served at") {
       Opts
         .argument[String]("citekey")
-        .map(ck => (c: Client) => c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector))))
+        .map(ck =>
+          (c: Client) =>
+            c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector)))
+        )
     }
 
   /** `histmersion jobs pause|resume|cancel <id>`. */
-  private def control(action: Api.JobControl.Action, help: String)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  private def control(action: Api.JobControl.Action, help: String)(using
+      console: Console
+  ): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(action.value, help) {
       (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
         c.call(Api.jobControl)((Job.Id(id), action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
       }
     }
 
-  private def controls (using console: Console) =
+  private def controls(using console: Console) =
     control(
       Api.JobControl.Action("pause"),
       "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
         "re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did"
     ) orElse
       control(Api.JobControl.Action("resume"), "Resume a paused job: it goes on with the parts it had not done") orElse
-      control(Api.JobControl.Action("cancel"), "Cancel a job: a background job stops after the part it is on and is recorded as cancelled")
+      control(
+        Api.JobControl.Action("cancel"),
+        "Cancel a job: a background job stops after the part it is on and is recorded as cancelled"
+      )
 
-  private def jobs (using console: Console) = Opts.subcommand(
+  private def jobs(using console: Console) = Opts.subcommand(
     "jobs",
     "Recent background jobs (OCR, imports, agent runs, …), filtered on the server, " +
       "or one job by id; `jobs pause|resume|cancel <id>` controls one"
@@ -140,11 +152,17 @@ object IngestCmd:
                   js.toVector,
                   page,
                   f.qualifier.map(q => Ingest.JobStatus(q.value)),
-                  PageCmd.older(page, "jobs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => Ingest.JobAge(t.value))
+                  PageCmd
+                    .older(
+                      page,
+                      "jobs",
+                      f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))
+                    )
+                    .map(t => Ingest.JobAge(t.value))
                 )
               )
             }
       }
   }
 
-  def all(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = reocr orElse assets orElse jobs
+  def all(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = reocr orElse assets orElse jobs

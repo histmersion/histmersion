@@ -10,8 +10,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The model's PLAN said no (the `claude-code` CLI's "usage limit reached"): not a broken provider but an exhausted one
   * — the engine skips the model until `until` (or `limit-cooldown-minutes`) and tries the chain's next one.
   */
-final class ModelLimitReached(val model: ModelRef, val until: Option[java.time.Instant], message: ModelLimitReached.Message)
-    extends RuntimeException(message.value)
+final class ModelLimitReached(
+    val model: ModelRef,
+    val until: Option[java.time.Instant],
+    message: ModelLimitReached.Message
+) extends RuntimeException(message.value)
 
 object ModelLimitReached:
   type Problem = Problem.T

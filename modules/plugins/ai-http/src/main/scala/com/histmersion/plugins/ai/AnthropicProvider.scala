@@ -12,7 +12,12 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
   def title: AiProvider.TitleResult = AiProvider.TitleResult("Anthropic API")
 
   override def capabilities: AiCapabilities =
-    AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(true), iterationMarkers = AiCapabilities.IterationMarkers(true), verbatimFailures = AiCapabilities.VerbatimFailures(true))
+    AiCapabilities(
+      tools = AiCapabilities.Tools(true),
+      structuredOutput = AiCapabilities.StructuredOutput(true),
+      iterationMarkers = AiCapabilities.IterationMarkers(true),
+      verbatimFailures = AiCapabilities.VerbatimFailures(true)
+    )
 
   private def base: Either[BaseUrl.Problem, BaseUrl] =
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting("agents.providers.anthropic.base-url"))
@@ -46,10 +51,15 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
           AiHttp.PostTimeoutSeconds(math.max(1, settings.timeoutSeconds.value))
         )
         .left
-        .map(e => SendFailure(SendFailure.Reported(e.value)).describe(SendFailure.Method("POST"), AiHttp.GetUrl(url.value)).value)
-      turn <- AnthropicAnswer(AnthropicAnswer.Status(answer.status.value), AnthropicAnswer.Body(answer.body.value)).turn.left.map(why =>
-        s"RuntimeException: Claude API error: ${why.value}"
-      )
+        .map(e =>
+          SendFailure(SendFailure.Reported(e.value))
+            .describe(SendFailure.Method("POST"), AiHttp.GetUrl(url.value))
+            .value
+        )
+      turn <- AnthropicAnswer(
+        AnthropicAnswer.Status(answer.status.value),
+        AnthropicAnswer.Body(answer.body.value)
+      ).turn.left.map(why => s"RuntimeException: Claude API error: ${why.value}")
     yield turn
     sent.left.map(m => AiFailure.Error(AiFailure.Error.Message(m)))
 
@@ -80,7 +90,8 @@ object AnthropicProvider:
     WithoutStructuredOutputValue("claude-opus-4-20250514")
   )
 
-  def structuredOutput(model: AiTurn.Request.Model): Boolean = (!WithoutStructuredOutput(WithoutStructuredOutputValue((model).value)))
+  def structuredOutput(model: AiTurn.Request.Model): Boolean =
+    (!WithoutStructuredOutput(WithoutStructuredOutputValue((model).value)))
 
   def noStructuredOutput(model: AiTurn.Request.Model): AiFailure.Error.Message =
     AiFailure.Error.Message(

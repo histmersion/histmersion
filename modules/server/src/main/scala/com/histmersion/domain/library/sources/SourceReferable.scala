@@ -18,5 +18,7 @@ object SourceReferable:
       RecordTable.Key("t.citekey"),
       RecordTable.Title("t.title"),
       Some(RecordTable.Uid("t.uid")),
-      Some(AliasColumns(AliasColumns.Table("source_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("citekey")))
+      Some(
+        AliasColumns(AliasColumns.Table("source_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("citekey"))
+      )
     )

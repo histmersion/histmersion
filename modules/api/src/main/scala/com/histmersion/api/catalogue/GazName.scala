@@ -4,7 +4,12 @@ package api.catalogue
 import com.histmersion.api.Span
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-final case class GazName(name: GazName.Name, lang: GazName.Lang = GazName.Lang(""), span: Span = Span.always, citation: Option[GazName.Citation] = None)
+final case class GazName(
+    name: GazName.Name,
+    lang: GazName.Lang = GazName.Lang(""),
+    span: Span = Span.always,
+    citation: Option[GazName.Citation] = None
+)
 
 object GazName:
   type Name = Name.T

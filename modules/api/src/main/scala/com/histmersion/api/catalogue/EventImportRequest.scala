@@ -18,7 +18,8 @@ final case class EventImportRequest(
     minMagnitude: Option[EventImportRequest.MinMagnitude] = None,
     refresh: EventImportRequest.Refresh = EventImportRequest.Refresh(false)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventImportRequest:
   export EventImportReport.Provider

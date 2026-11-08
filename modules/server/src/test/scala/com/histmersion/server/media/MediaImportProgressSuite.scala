@@ -21,7 +21,14 @@ import com.histmersion.api.catalogue.Event
 class MediaImportProgressSuite extends munit.FunSuite:
 
   private val r =
-    MediaImportReport(MediaItem.Provider(MediaProvider.Commons), dryRun = RepairAcquire.RepairRequest.DryRun(false), targets = MediaImportReport.Targets(100), stored = MediaImportReport.Stored(80), linked = MediaImportReport.Linked(82), batches = MediaImportReport.Batches(2))
+    MediaImportReport(
+      MediaItem.Provider(MediaProvider.Commons),
+      dryRun = RepairAcquire.RepairRequest.DryRun(false),
+      targets = MediaImportReport.Targets(100),
+      stored = MediaImportReport.Stored(80),
+      linked = MediaImportReport.Linked(82),
+      batches = MediaImportReport.Batches(2)
+    )
 
   test("progress: n/total asked, the batch, what was written, the requests"):
     assertEquals(
@@ -31,9 +38,24 @@ class MediaImportProgressSuite extends munit.FunSuite:
 
   test("progress: failures are counted; an unknown total is left out; a total passed is the count"):
     val failed = r.modify(_.failed).setTo(List(MediaImportReport.Failed("a"), MediaImportReport.Failed("b")))
-    assert(ImportsControllers.progressLine(failed, ImportsControllers.TotalCount(300), Polite.RequestCount(1)).value.contains(" · 2 failed · "))
-    assert(ImportsControllers.progressLine(r, ImportsControllers.TotalCount(0), Polite.RequestCount(1)).value.startsWith("100 place(s)/event(s) asked"))
-    assert(ImportsControllers.progressLine(r, ImportsControllers.TotalCount(40), Polite.RequestCount(1)).value.startsWith("100/100 "))
+    assert(
+      ImportsControllers
+        .progressLine(failed, ImportsControllers.TotalCount(300), Polite.RequestCount(1))
+        .value
+        .contains(" · 2 failed · ")
+    )
+    assert(
+      ImportsControllers
+        .progressLine(r, ImportsControllers.TotalCount(0), Polite.RequestCount(1))
+        .value
+        .startsWith("100 place(s)/event(s) asked")
+    )
+    assert(
+      ImportsControllers
+        .progressLine(r, ImportsControllers.TotalCount(40), Polite.RequestCount(1))
+        .value
+        .startsWith("100/100 ")
+    )
 
   test("single: a place or an event, not blanks"):
     assert(ImportsControllers.single(MediaImportRequest(place = Some(Place.Id("pleiades_1")))))

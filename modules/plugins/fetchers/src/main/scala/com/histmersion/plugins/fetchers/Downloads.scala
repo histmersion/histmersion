@@ -8,11 +8,19 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** One download the fetchers make, checked: a copy only when it is a PDF. Any other answer is logged and is no copy. */
 final class Downloads(http: Plugin.Http):
 
-  def pdf(log: Plugin.Log, source: FetchedFile.Source, url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2] = Map.empty): Option[FetchedFile] =
+  def pdf(
+      log: Plugin.Log,
+      source: FetchedFile.Source,
+      url: Plugin.Http.GetUrl,
+      headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2] = Map.empty
+  ): Option[FetchedFile] =
     http.get(url, headers).map(body => FetchedFile.Bytes(body.value)) match
-      case Right(b) if Downloads.looksLikePdf(b) => Some(FetchedFile(source, Some(FetchedFile.Url(url.value)), b, FetchedFile.Extension("pdf")))
-      case Right(b)                              =>
-        log.info(Plugin.Log.InfoMessage(s"$source: $url returned ${b.value.length} bytes that are not a PDF — skipping"))
+      case Right(b) if Downloads.looksLikePdf(b) =>
+        Some(FetchedFile(source, Some(FetchedFile.Url(url.value)), b, FetchedFile.Extension("pdf")))
+      case Right(b) =>
+        log.info(
+          Plugin.Log.InfoMessage(s"$source: $url returned ${b.value.length} bytes that are not a PDF — skipping")
+        )
         None
       case Left(e) =>
         log.info(Plugin.Log.InfoMessage(s"$source fetch failed ($e)"))
@@ -31,4 +39,7 @@ object Downloads:
     * is then skipped, never failed).
     */
   def md5(b: FetchedFile.Bytes): Option[Md5] =
-    scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b.value).map("%02x".format(_)).mkString).toOption.map(h => Md5(h))
+    scala.util
+      .Try(java.security.MessageDigest.getInstance("MD5").digest(b.value).map("%02x".format(_)).mkString)
+      .toOption
+      .map(h => Md5(h))

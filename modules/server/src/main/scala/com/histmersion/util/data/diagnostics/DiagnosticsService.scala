@@ -29,12 +29,14 @@ object DiagnosticsService:
   type TableLimit = TableLimit.T
   object TableLimit extends Newtype[Int, Pure]
 
-
   def apply(registry: DataContributions, transactor: Transactor): DiagnosticsService =
     Implementation(registry, transactor)
 
   /** The tables of `registry` in `sized` (every table by size, largest first), in that order. */
-  private def registered(registry: DataContributions, sized: List[(TableName, ByteCount)]): List[(TableName, ByteCount)] =
+  private def registered(
+      registry: DataContributions,
+      sized: List[(TableName, ByteCount)]
+  ): List[(TableName, ByteCount)] =
     val names: Set[TableName] = registry.tables.map(t => t._2.name).toSet
     sized.filter((name, _) => names.contains(name))
 
@@ -62,7 +64,6 @@ object DiagnosticsService:
           .map((name, bytes) => TableSize(TableSize.Name(name.value), com.histmersion.api.ByteCount(bytes.value)))
 
     def ownerTables: List[(DataOwner, ByteCount)] = perOwner(registry, transactor.read(StatsRepo.tableBytes))
-
 
   /** Figures given up front: `counts` by owner, the database `database` with `tables` (largest first). */
   final class InMemory(

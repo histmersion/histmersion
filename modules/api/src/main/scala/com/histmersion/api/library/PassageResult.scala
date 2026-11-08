@@ -17,7 +17,8 @@ final case class PassageResult(
     passages: List[PassageHit],
     bodyChars: PassageResult.BodyChars
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object PassageResult:
   type Query = Query.T

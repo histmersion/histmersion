@@ -29,7 +29,10 @@ final case class UpstreamSettings(
 ) derives ConfigReader:
 
   /** The contact e-mail, when one is configured: a blank one means anonymous (no polite pool, no Unpaywall). */
-  def contact: Option[UpstreamSettings.ContactEmail] = (Option(contactEmail).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => UpstreamSettings.ContactEmail(refactorValue))
+  def contact: Option[UpstreamSettings.ContactEmail] = (Option(contactEmail)
+    .map((_).value.trim)
+    .filter(_.nonEmpty))
+    .map(refactorValue => UpstreamSettings.ContactEmail(refactorValue))
 
   /** The `mailto` value; empty without a contact, and [[Url]] drops an empty parameter. */
   def mailto: UpstreamSettings.ContactEmail = contact.getOrElse(UpstreamSettings.ContactEmail(""))

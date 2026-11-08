@@ -14,7 +14,8 @@ final case class EventsWikidataConfig(
     languages: EventsWikidataConfig.Languages,
     batch: EventsWikidataConfig.Batch
 ) derives ConfigReader:
-  def languageList: List[EventsWikidataConfig.Language] = languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList.map(EventsWikidataConfig.Language(_))
+  def languageList: List[EventsWikidataConfig.Language] =
+    languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList.map(EventsWikidataConfig.Language(_))
 
 object EventsWikidataConfig:
   type Language = Language.T

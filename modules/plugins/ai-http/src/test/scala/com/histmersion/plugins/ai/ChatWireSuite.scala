@@ -9,15 +9,26 @@ import com.histmersion.plugin.*
 class ChatWireSuite extends munit.FunSuite:
 
   private val tool =
-    AiTool(AiTool.Name("facets"), AiTool.Description("Values"), AiTool.InputSchema("""{"type":"object","properties":{"field":{"type":"string"}},"required":["field"]}"""))
+    AiTool(
+      AiTool.Name("facets"),
+      AiTool.Description("Values"),
+      AiTool.InputSchema("""{"type":"object","properties":{"field":{"type":"string"}},"required":["field"]}""")
+    )
 
   private val r = AiTurn.Request(
     AiTurn.Request.Model("gpt-x"),
     AiTurn.Request.System("SYS"),
     List(
       AiMessage.User(AiMessage.User.Text("u")),
-      AiMessage.Assistant(AiMessage.Assistant.Text("looking"), List(AiTool.Call(AiTool.Call.Id("c1"), AiTool.Call.Tool("facets"), AiTool.Call.Input("""{"field":"tags"}""")))),
-      AiMessage.ToolResult(AiMessage.ToolResult.CallId("c1"), AiMessage.ToolResult.Tool("facets"), AiMessage.ToolResult.Output("ok"))
+      AiMessage.Assistant(
+        AiMessage.Assistant.Text("looking"),
+        List(AiTool.Call(AiTool.Call.Id("c1"), AiTool.Call.Tool("facets"), AiTool.Call.Input("""{"field":"tags"}""")))
+      ),
+      AiMessage.ToolResult(
+        AiMessage.ToolResult.CallId("c1"),
+        AiMessage.ToolResult.Tool("facets"),
+        AiMessage.ToolResult.Output("ok")
+      )
     ),
     List(tool),
     Some(AiTurn.Request.AnswerSchema("""{"type":"object","properties":{"w":{"type":"string"}}}""")),
@@ -49,8 +60,18 @@ class ChatWireSuite extends munit.FunSuite:
       ),
       strict
     )
-    val bare = ChatRequest.of(r.copy(tools = Nil, maxTokens = AiTurn.Request.MaxTokens(0), answerSchema = None), ProviderSettings.StrictTools(false)).body
-    assert(!bare.value.contains("tools") && !bare.value.contains("max_completion") && !bare.value.contains("response_format"), bare)
+    val bare = ChatRequest
+      .of(
+        r.copy(tools = Nil, maxTokens = AiTurn.Request.MaxTokens(0), answerSchema = None),
+        ProviderSettings.StrictTools(false)
+      )
+      .body
+    assert(
+      !bare.value.contains("tools") && !bare.value.contains("max_completion") && !bare.value.contains(
+        "response_format"
+      ),
+      bare
+    )
 
   private val ok =
     """{"id":"c","object":"chat.completion","created":1,"model":"gpt-y","choices":[{"index":0,"message":{"role":"assistant",""" +
@@ -64,9 +85,20 @@ class ChatWireSuite extends munit.FunSuite:
       Right(
         AiTurn(
           AiTurn.Text(""),
-          List(AiTool.Call(AiTool.Call.Id("call_0"), AiTool.Call.Tool("a"), AiTool.Call.Input("{}")), AiTool.Call(AiTool.Call.Id("k"), AiTool.Call.Tool("unknown"), AiTool.Call.Input("{}"))),
+          List(
+            AiTool.Call(AiTool.Call.Id("call_0"), AiTool.Call.Tool("a"), AiTool.Call.Input("{}")),
+            AiTool.Call(AiTool.Call.Id("k"), AiTool.Call.Tool("unknown"), AiTool.Call.Input("{}"))
+          ),
           AiStop.ToolUse,
-          Some(AiUsage(AiUsage.Input(9), AiUsage.Output(3), AiUsage.CacheRead(4), AiUsage.CacheWrite(0), AiUsage.Reasoning(2))),
+          Some(
+            AiUsage(
+              AiUsage.Input(9),
+              AiUsage.Output(3),
+              AiUsage.CacheRead(4),
+              AiUsage.CacheWrite(0),
+              AiUsage.Reasoning(2)
+            )
+          ),
           Some(AiTurn.ServedBy("gpt-y"))
         )
       )
@@ -83,10 +115,16 @@ class ChatWireSuite extends munit.FunSuite:
     )
 
   test("an error status: its message; none, the status and body; another shape, its body's first 500 characters"):
-    assertEquals(ChatAnswer(ChatAnswer.Status(429), ChatAnswer.Body("""{"error":{"message":"slow down"}}""")).turn, Left("slow down"))
+    assertEquals(
+      ChatAnswer(ChatAnswer.Status(429), ChatAnswer.Body("""{"error":{"message":"slow down"}}""")).turn,
+      Left("slow down")
+    )
     assertEquals(
       ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":{"type":"server_error"}}""")).turn,
       Left("""statusCode: 500, response: {"error":{"type":"server_error"}}""")
     )
-    assertEquals(ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":null}""")).turn, Left("""{"error":null}"""))
+    assertEquals(
+      ChatAnswer(ChatAnswer.Status(500), ChatAnswer.Body("""{"error":null}""")).turn,
+      Left("""{"error":null}""")
+    )
     assertEquals(ChatAnswer(ChatAnswer.Status(400), ChatAnswer.Body("x" * 700)).turn, Left("x" * 500))

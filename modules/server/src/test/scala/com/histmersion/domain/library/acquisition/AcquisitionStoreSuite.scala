@@ -64,5 +64,8 @@ object AcquisitionStoreSuite:
           val queues = QueueService(db)
           def goal(slug: String) =
             val _ = GoalService(db)
-              .put(Goal.Slug.applyUnsafe(slug), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Goal $slug")))
+              .put(
+                Goal.Slug.applyUnsafe(slug),
+                com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Goal $slug"))
+              )
       }

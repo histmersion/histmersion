@@ -13,7 +13,8 @@ final case class SeedResult(
     edgesResolved: SeedResult.EdgesResolved,
     skipped: List[SeedResult.Skipped] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object SeedResult:
   type Imported = Imported.T

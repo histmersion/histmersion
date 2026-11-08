@@ -28,10 +28,10 @@ final case class MediaImportReport(
     batches: MediaImportReport.Batches = MediaImportReport.Batches(0),
     samples: List[MediaSample] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MediaImportReport:
-
 
   type Targets = Targets.T
   object Targets extends Newtype[Int, Pure]
@@ -63,7 +63,15 @@ object MediaImportReport:
       (x ++ y)
         .groupBy(_.key)
         .toList
-        .map((k, cs) => MediaCount(k, MediaCount.N(cs.map(_.n.value).sum), MediaCount.Allowed(cs.forall((refactorCallback => ((refactorCallback.allowed) == MediaCount.Allowed(true)))))))
+        .map((k, cs) =>
+          MediaCount(
+            k,
+            MediaCount.N(cs.map(_.n.value).sum),
+            MediaCount.Allowed(
+              cs.forall((refactorCallback => ((refactorCallback.allowed) == MediaCount.Allowed(true))))
+            )
+          )
+        )
         .sortBy[(Int, String)](c => (-c.n.value, c.key.value))
     MediaImportReport(
       b.provider,

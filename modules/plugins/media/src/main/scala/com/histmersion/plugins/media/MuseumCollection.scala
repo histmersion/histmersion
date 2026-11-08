@@ -14,9 +14,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param key
   *   its settings' path (`media.met`), named when it is switched off
   */
-abstract class MuseumCollection(conf: CollectionSettings, provider: MuseumCollection.Provider, key: MuseumCollection.Key) extends MediaCollection:
+abstract class MuseumCollection(
+    conf: CollectionSettings,
+    provider: MuseumCollection.Provider,
+    key: MuseumCollection.Key
+) extends MediaCollection:
   override def perPlace: MediaCollection.PerPlaceResult = MediaCollection.PerPlaceResult(conf.perPlace.value)
-  override def requestIntervalMs: MediaCollection.RequestIntervalMsResult = MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
+  override def requestIntervalMs: MediaCollection.RequestIntervalMsResult =
+    MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
   override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] =
     conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMsResult(ms.value))
   override def check: Either[MediaCollection.CheckResultPart1, Unit] =

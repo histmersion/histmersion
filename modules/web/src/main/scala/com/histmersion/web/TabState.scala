@@ -31,7 +31,8 @@ final case class TabState[Row](
   /** The count line ([[ResultsPaging.countLine]]); `loading…` before the first answer. */
   def countLine(singular: Plural.Noun.Singular, plural: Plural.Noun.Plural): UiLabels.Text =
     if !loaded.value then UiLabels.Text("loading…")
-    else ResultsPaging.countLine(
+    else
+      ResultsPaging.countLine(
         Paging.Shown(shown.value),
         Paging.Page.Total(math.max(total.value, rows.size)),
         singular,
@@ -42,6 +43,7 @@ final case class TabState[Row](
 object TabState:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** A new query was sent: what is shown stays until the answer comes; any old error is gone. */
 
   type Loading = Loading.T

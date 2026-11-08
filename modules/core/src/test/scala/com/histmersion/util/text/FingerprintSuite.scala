@@ -16,6 +16,12 @@ class FingerprintSuite extends munit.FunSuite:
 
   test("a fingerprint ignores order, repetition, case and punctuation"):
     assertEquals(Fingerprint.of(Fingerprint.OfS("Fall of Hattusa")).value, "fall hattusa of")
-    assertEquals(Fingerprint.of(Fingerprint.OfS("hattusa, FALL of — of")), Fingerprint.of(Fingerprint.OfS("Fall of Hattusa")))
-    assertNotEquals(Fingerprint.of(Fingerprint.OfS("Sack of Hattusa")), Fingerprint.of(Fingerprint.OfS("Fall of Hattusa")))
+    assertEquals(
+      Fingerprint.of(Fingerprint.OfS("hattusa, FALL of — of")),
+      Fingerprint.of(Fingerprint.OfS("Fall of Hattusa"))
+    )
+    assertNotEquals(
+      Fingerprint.of(Fingerprint.OfS("Sack of Hattusa")),
+      Fingerprint.of(Fingerprint.OfS("Fall of Hattusa"))
+    )
     assertEquals(Fingerprint.of(Fingerprint.OfS("  ")).value, "")

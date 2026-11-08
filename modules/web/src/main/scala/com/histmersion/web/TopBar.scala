@@ -149,20 +149,24 @@ object TopBar:
 
   /** The only standing notice: the proposals that wait for a person, shown while there is one. */
   private def decisionsPill(inApp: Boolean): Modifier[HtmlElement] =
-    child.maybe <-- Notices.counter(UiNotices.Board.Approvals).map(_.flatMap(_.count).map(_.value).getOrElse(0)).distinct.map { n =>
-      Wording.decisions(Wording.Decisions.Open(n)).map { text =>
-        link(
-          Route.Research(ResearchSection.Decisions),
-          inApp,
-          cls := "pill pill--attn decisions-pill",
-          title := text,
-          aria.label := text,
-          span(cls := "pill-long", text),
-          span(cls := "pill-short", aria.hidden := true, Wording.decisionsShort(Wording.Decisions.Open(n))),
-          span(cls := "pill-count", aria.hidden := true, n.toString)
-        )
+    child.maybe <-- Notices
+      .counter(UiNotices.Board.Approvals)
+      .map(_.flatMap(_.count).map(_.value).getOrElse(0))
+      .distinct
+      .map { n =>
+        Wording.decisions(Wording.Decisions.Open(n)).map { text =>
+          link(
+            Route.Research(ResearchSection.Decisions),
+            inApp,
+            cls := "pill pill--attn decisions-pill",
+            title := text,
+            aria.label := text,
+            span(cls := "pill-long", text),
+            span(cls := "pill-short", aria.hidden := true, Wording.decisionsShort(Wording.Decisions.Open(n))),
+            span(cls := "pill-count", aria.hidden := true, n.toString)
+          )
+        }
       }
-    }
 
   /** `/` focuses the search from anywhere, unless the reader is typing somewhere already. Installed once. */
   def installShortcut(): Unit =

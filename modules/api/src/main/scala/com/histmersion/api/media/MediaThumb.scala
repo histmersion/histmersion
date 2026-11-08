@@ -19,7 +19,8 @@ final case class MediaThumb(
     width: Option[ImageSize.Width] = None,
     height: Option[ImageSize.Height] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
 
   /** The picture's line on an event's or a place's page: its role, credit, licence, source and address. */
   def markdownLine: MediaThumb.MarkdownLine =
@@ -34,7 +35,6 @@ object MediaThumb:
   object MarkdownLine extends Newtype[String, Pure]
   type ThumbPath = ThumbPath.T
   object ThumbPath extends Newtype[String, Pure]
-
 
   type MarkdownLineResult = MarkdownLine
   val MarkdownLineResult: MarkdownLine.type = MarkdownLine

@@ -13,7 +13,8 @@ import com.histmersion.plugin.Processes
 
 final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
-  val info = Plugin.Info(Plugin.Info.Id("keepassxc"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
+  val info =
+    Plugin.Info(Plugin.Info.Id("keepassxc"), Plugin.Info.Version(Vaults.Version), Plugin.Info.SpiVersion(Spi.Version))
 
   def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     given files: LocalFiles = ctx.files
@@ -65,19 +66,26 @@ final class KeePassXcPlugin extends Plugin:
   /** `ykman`, when it can be found: a bare name missing from the PATH only means the keys are tried in order; a path
     * that was given and is wrong is an error.
     */
-  private def detector(ykman: KeePassXcConfig.Ykman, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Option[Vaults.Path]] =
+  private def detector(
+      ykman: KeePassXcConfig.Ykman,
+      ctx: Plugin.Context
+  ): Either[Plugin.RegisterResultPart1, Option[Vaults.Path]] =
     given files: LocalFiles = ctx.files
     val t = Option(ykman).map((_).value.trim).getOrElse("")
     if t.isEmpty then
-      ctx.log.info(Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order"))
+      ctx.log.info(
+        Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order")
+      )
       Right(None)
     else
       Subprocess.locate(Subprocess.Tool(t), ctx.env(Plugin.Context.EnvName("PATH"))) match
         case Right(p)                    => Right(Some(p))
         case Left(_) if !t.contains('/') =>
           ctx.log.info(
-            Plugin.Log.InfoMessage("the configured YubiKeys are tried in order, the one that opened the database last first " +
-              "(optional: with ykman on the PATH, only the connected ones are tried)")
+            Plugin.Log.InfoMessage(
+              "the configured YubiKeys are tried in order, the one that opened the database last first " +
+                "(optional: with ykman on the PATH, only the connected ones are tried)"
+            )
           )
           Right(None)
         case Left(e) => Left(Plugin.RegisterResultPart1(s"ykman: ${e.value}"))

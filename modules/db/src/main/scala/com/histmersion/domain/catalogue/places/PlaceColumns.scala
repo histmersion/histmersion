@@ -9,6 +9,9 @@ private[places] object PlaceColumns:
     * point no nearness may be read from — not "as stated".
     */
   given given_DbCodec_PlacePrecision: DbCodec[Place.Precision] = DbCodec[Option[String]].biMap(
-    s => s.fold(Place.Precision.Stated)(v => Place.Precision.parse(Place.Precision.Wire(v.trim)).getOrElse(Place.Precision.GridCell)),
+    s =>
+      s.fold(Place.Precision.Stated)(v =>
+        Place.Precision.parse(Place.Precision.Wire(v.trim)).getOrElse(Place.Precision.GridCell)
+      ),
     p => Option.when(p != Place.Precision.Stated)(p.wire.value)
   )

@@ -13,7 +13,12 @@ import com.histmersion.domain.library.Doi
 final class OpenAlexDiscovery(client: OpenAlexCrossref) extends DiscoveryClient:
   private def problem(p: WorkLookup.Problem) = DiscoveryClient.Problem(p.value)
 
-  def search(query: Search.Query, since: Option[Year], sort: Option[DiscoveryClient.SearchSort], limit: DiscoveryClient.SearchLimit): Either[DiscoveryClient.Problem, List[WorkRef]] =
+  def search(
+      query: Search.Query,
+      since: Option[Year],
+      sort: Option[DiscoveryClient.SearchSort],
+      limit: DiscoveryClient.SearchLimit
+  ): Either[DiscoveryClient.Problem, List[WorkRef]] =
     client
       .search(
         OpenAlexCrossref.SearchQuery(query.value),

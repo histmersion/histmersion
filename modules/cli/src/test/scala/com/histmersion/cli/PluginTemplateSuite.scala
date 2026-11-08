@@ -63,8 +63,14 @@ class PluginTemplateSuite extends munit.FunSuite:
     )
 
   test("the plugin class is named after the id, without doubling 'Plugin'"):
-    assertEquals(PluginTemplate.pluginClass(PluginId.parse("mirror").toOption.get), PluginTemplate.ClassName("MirrorPlugin"))
-    assertEquals(PluginTemplate.pluginClass(PluginId.parse("my-plugin").toOption.get), PluginTemplate.ClassName("MyPlugin"))
+    assertEquals(
+      PluginTemplate.pluginClass(PluginId.parse("mirror").toOption.get),
+      PluginTemplate.ClassName("MirrorPlugin")
+    )
+    assertEquals(
+      PluginTemplate.pluginClass(PluginId.parse("my-plugin").toOption.get),
+      PluginTemplate.ClassName("MyPlugin")
+    )
 
   test("the project is its build, two Scala files, a README, a .gitignore and the resources a plugin jar carries"):
     assertEquals(
@@ -82,7 +88,8 @@ class PluginTemplateSuite extends munit.FunSuite:
     )
 
   test("the native-image metadata sits under the published group and artifact, as GraalVM's convention has it"):
-    val files = PluginTemplate.files(request("my-mirror").modify(_.pkg).setTo(ScalaPackage.parse("org.example").toOption.get))
+    val files =
+      PluginTemplate.files(request("my-mirror").modify(_.pkg).setTo(ScalaPackage.parse("org.example").toOption.get))
     assert(
       files.exists(_.path.value == "resources/META-INF/native-image/org.example/my-mirror/reachability-metadata.json"),
       files.map(_.path)
@@ -91,7 +98,8 @@ class PluginTemplateSuite extends munit.FunSuite:
     assert(build.contains("//> using publish.organization org.example\n//> using publish.name my-mirror\n"), build)
 
   test("agent notes are written only when asked for"):
-    val paths = PluginTemplate.files(request("mirror", agentNotes = PluginTemplate.Request.AgentNotes(true))).map(_.path.value)
+    val paths =
+      PluginTemplate.files(request("mirror", agentNotes = PluginTemplate.Request.AgentNotes(true))).map(_.path.value)
     assert(paths.contains("AGENTS.md") && paths.contains("CLAUDE.md"), paths)
     val notes = file(
       PluginTemplate.files(request("mirror", agentNotes = PluginTemplate.Request.AgentNotes(true))),
@@ -156,7 +164,10 @@ class PluginTemplateSuite extends munit.FunSuite:
 
   test("a repository named with --repo is written as given"):
     val build =
-      file(PluginTemplate.files(request("mirror").modify(_.repository).setTo(remote)), TemplateFile.Path("project.scala"))
+      file(
+        PluginTemplate.files(request("mirror").modify(_.repository).setTo(remote)),
+        TemplateFile.Path("project.scala")
+      )
     assert(build.contains("\n//> using repository https://repo.example.org/m2/\n") && !build.contains("m2Local"), build)
 
   test("the test file checks the plugin as the server loads it, and the packaging"):
@@ -221,14 +232,17 @@ class PluginTemplateSuite extends munit.FunSuite:
     )
 
   test("the services file names the plugin class in its package"):
-    val files = PluginTemplate.files(request("my-mirror").modify(_.pkg).setTo(ScalaPackage.parse("org.example").toOption.get))
+    val files =
+      PluginTemplate.files(request("my-mirror").modify(_.pkg).setTo(ScalaPackage.parse("org.example").toOption.get))
     assertEquals(file(files, TemplateFile.Path(PluginTemplate.ServicesPath)), "org.example.MyMirrorPlugin\n")
     assert(file(files, TemplateFile.Path("MyMirror.scala")).contains("package org.example\n"))
 
   PluginKind.values.foreach { kind =>
     test(s"${kind.name}: every placeholder is filled, and the plugin registers under its id"):
       val files = PluginTemplate.files(request("my-thing", kind))
-      files.foreach(f => assert(!"@[A-Za-z]+@".r.findFirstIn(f.content.value).isDefined, s"${f.path} keeps a placeholder"))
+      files.foreach(f =>
+        assert(!"@[A-Za-z]+@".r.findFirstIn(f.content.value).isDefined, s"${f.path} keeps a placeholder")
+      )
       val main = file(files, TemplateFile.Path("MyThing.scala"))
       assert(main.contains("final class MyThingPlugin extends Plugin:"), main)
       assert(main.contains("Plugin.Info(\"my-thing\", \"0.1.0\", Spi.Version)"), main)
@@ -343,7 +357,11 @@ class PluginTemplateSuite extends munit.FunSuite:
       )
       assertEquals(
         PluginAuthoring
-          .repository(Some("https://example.org/m2"), Left(Cli.Error(Cli.Error.Message("no install"))), Left(Cli.Error(Cli.Error.Message("no HOME"))))
+          .repository(
+            Some("https://example.org/m2"),
+            Left(Cli.Error(Cli.Error.Message("no install"))),
+            Left(Cli.Error(Cli.Error.Message("no HOME")))
+          )
           .map(_._1),
         Right(TemplateRepository.Remote(PluginRepository.parse("https://example.org/m2", _ => false).toOption.get))
       )

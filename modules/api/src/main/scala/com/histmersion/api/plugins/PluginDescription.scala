@@ -15,7 +15,8 @@ final case class PluginDescription(
     access: List[PluginDescription.Access] = Nil,
     error: Option[PluginDescription.Error] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object PluginDescription:
   type Id = Id.T

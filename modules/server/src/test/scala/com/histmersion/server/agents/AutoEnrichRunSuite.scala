@@ -72,16 +72,33 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1"))).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-autoenrich").toString))).modify(_.agents).setTo(b.agents.copy(
-        enabled = AgentsConfig.Enabled(true),
-        autoEnrich = AgentsConfig.AutoEnrich(true),
-        prices = AgentsConfig.Prices("zzautoenrich=0/0"),
-        roles = b.agents.roles.modify(_.extractor).setTo(AgentRolesConfig.Extractor("local:zzautoenrich")),
-        // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
-        managers = b.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(false))
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
-    )
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.server)
+      .setTo(b.server.modify(_.host).setTo(ServerConfig.Host("127.0.0.1")))
+      .modify(_.converter)
+      .setTo(
+        b.converter
+          .modify(_.spoolDir)
+          .setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-autoenrich").toString))
+      )
+      .modify(_.agents)
+      .setTo(
+        b.agents.copy(
+          enabled = AgentsConfig.Enabled(true),
+          autoEnrich = AgentsConfig.AutoEnrich(true),
+          prices = AgentsConfig.Prices("zzautoenrich=0/0"),
+          roles = b.agents.roles.modify(_.extractor).setTo(AgentRolesConfig.Extractor("local:zzautoenrich")),
+          // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
+          managers = b.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(false))
+        )
+      )
+      .modify(_.libraryAgents)
+      .setTo(
+        b.libraryAgents
+          .modify(_.enrich)
+          .setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(AgentEnrichConfig.Upstream(false)))
+      )
 
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -114,7 +131,10 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
   /** Ingest the fixture file and wait for its job to settle. */
   private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
-      .ingest(Ingest.Params(IngestCk, Some(Bundle.Asset.FileName("tin.pdf"))), Upload.handed(HandedFile.snapshot(pdf.toFile)))
+      .ingest(
+        Ingest.Params(IngestCk, Some(Bundle.Asset.FileName("tin.pdf"))),
+        Upload.handed(HandedFile.snapshot(pdf.toFile))
+      )
       .fold(e => fail(e.message.value), identity)
     def go(n: Int): JobInfo =
       val j = h.jobs.job(Job.Id.applyUnsafe(accepted.jobId.value)).fold(e => fail(e.message.value), identity)
@@ -131,7 +151,10 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
       val rs = runs
       assertEquals(rs.size, 1, rs)
       val run = rs.head
-      assertEquals((run.status, run.origin.map(_.value: String), run.target.value: String), ("queued", Some(Origin.FromIngest.wire.value: String), Ck))
+      assertEquals(
+        (run.status, run.origin.map(_.value: String), run.target.value: String),
+        ("queued", Some(Origin.FromIngest.wire.value: String), Ck)
+      )
       assert(job.progress.exists(_.value.contains(s"enrichment queued: run ${run.id}")), job.progress)
       assert(IngestMarkdown.job(job).contains(s"enrichment queued: run ${run.id}"), "jobs <id> shows it")
       // the same file again: the source is re-converted, the pending run covers it
@@ -146,7 +169,13 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
   test(
     "managers on (phase 2): the ingest hands the source to the enrich manager — an item, no run — and says it is paused"
   ):
-    val on = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.managers).setTo(baseCfg.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(true))))
+    val on = baseCfg
+      .modify(_.agents)
+      .setTo(
+        baseCfg.agents
+          .modify(_.managers)
+          .setTo(baseCfg.agents.managers.modify(_.enabled).setTo(AgentManagersConfig.Enabled(true)))
+      )
     withHandlers(on) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil, "the manager starts it, not the ingest")

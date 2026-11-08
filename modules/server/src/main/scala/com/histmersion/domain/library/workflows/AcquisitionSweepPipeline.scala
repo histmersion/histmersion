@@ -114,7 +114,8 @@ final class AcquisitionSweepPipeline(
   ): Either[Halt, String] =
     for
       took <-
-        if allowed.value > 0 then ctx.code[List[Ingested]](StepRecord.Name("ingest"))(Right(ingest(ctx, goal, picks, allowed)))
+        if allowed.value > 0 then
+          ctx.code[List[Ingested]](StepRecord.Name("ingest"))(Right(ingest(ctx, goal, picks, allowed)))
         else Right(Nil)
       added <- ctx.code[Int](StepRecord.Name("queue"))(
         Right(queue(ctx, goal, picks.filterNot(p => took.exists(_.doi == p.candidate.doi))))
@@ -145,7 +146,8 @@ final class AcquisitionSweepPipeline(
   ): Either[Halt, String] =
     for
       tried <-
-        if allowed.value > 0 then ctx.code[Tried](StepRecord.Name("ingest"))(Right(ingestOa(ctx, goal, picks, allowed))) else Right(Tried())
+        if allowed.value > 0 then ctx.code[Tried](StepRecord.Name("ingest"))(Right(ingestOa(ctx, goal, picks, allowed)))
+        else Right(Tried())
       noCopy = tried.failed.filter(_.noCopy).map(_.doi).toSet
       waiting = picks.filter(p =>
         p.candidate.isOa.value && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
@@ -161,7 +163,8 @@ final class AcquisitionSweepPipeline(
             s"${found.candidates.size} new candidate(s), ${picks.size} picked, " +
             s"${tried.ingested.size} ingested (legal open access${tried.ingested.map(i => s" [[${i.citekey}]]").mkString}), " +
             s"${parked.waiting} to the ingest backlog (legal open access past today's allowance)" +
-            (if parked.known.value > 0 then s", ${parked.known} in the corpus or on the acquisition list already" else "") +
+            (if parked.known.value > 0 then s", ${parked.known} in the corpus or on the acquisition list already"
+             else "") +
             s", $added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.value.take(8)})"
         )
       )
@@ -224,7 +227,9 @@ final class AcquisitionSweepPipeline(
             g.notes,
             queries,
             cands,
-            sw.skipped.map((k, n) => AcquisitionSweepRules.SkipReason(k.value) -> AcquisitionSweepRules.SkipCount(n.value)) ++
+            sw.skipped.map((k, n) =>
+              AcquisitionSweepRules.SkipReason(k.value) -> AcquisitionSweepRules.SkipCount(n.value)
+            ) ++
               Option
                 .when(gone.nonEmpty)(
                   AcquisitionSweepRules.SkipReason("already queued") -> AcquisitionSweepRules.SkipCount(gone.size)
@@ -280,7 +285,12 @@ final class AcquisitionSweepPipeline(
     * through the LEGAL chain only. One that has no legal file (or fails) is left for the queue step, and the next
     * open-access pick is tried.
     */
-  private def ingest(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked], allowed: AcquisitionSweepRules.Allowance): List[Ingested] =
+  private def ingest(
+      ctx: RunCtx,
+      goal: Goal.Slug,
+      picks: List[Picked],
+      allowed: AcquisitionSweepRules.Allowance
+  ): List[Ingested] =
     AcquisitionSweepRules
       .ingestPicks(picks, (p: Picked) => p.candidate.isOa.value, allowed) { p =>
         ingestOne(ctx, goal, p) match
@@ -294,7 +304,11 @@ final class AcquisitionSweepPipeline(
   /** One open-access pick through the legal chain: linked to the goal and recorded as an `ingested` event of the
     * watcher (what its daily cap counts). Left = why not.
     */
-  private def ingestOne(ctx: RunCtx, goal: Goal.Slug, p: Picked): Either[AcquisitionSweepRules.IngestFailure, Ingested] =
+  private def ingestOne(
+      ctx: RunCtx,
+      goal: Goal.Slug,
+      p: Picked
+  ): Either[AcquisitionSweepRules.IngestFailure, Ingested] =
     val doi = p.candidate.doi
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
@@ -324,14 +338,23 @@ final class AcquisitionSweepPipeline(
   /** [[ingest]] for a watcher with a backlog: what failed is kept too (a missing legal file → the acquisition list;
     * anything else → the backlog, tried again on a later day).
     */
-  private def ingestOa(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked], allowed: AcquisitionSweepRules.Allowance): Tried =
+  private def ingestOa(
+      ctx: RunCtx,
+      goal: Goal.Slug,
+      picks: List[Picked],
+      allowed: AcquisitionSweepRules.Allowance
+  ): Tried =
     val (ok, ko) =
       AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa.value, allowed)(ingestOne(ctx, goal, _))
     ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — $why"))
     Tried(
       ok.map(_._2),
       ko.map((p, why) =>
-        Failed(p.candidate.doi, Failed.Why(why.value.take(500)), IngestBacklog.isNoLegalCopy(IngestBacklog.Problem(why.value)))
+        Failed(
+          p.candidate.doi,
+          Failed.Why(why.value.take(500)),
+          IngestBacklog.isNoLegalCopy(IngestBacklog.Problem(why.value))
+        )
       )
     )
 
@@ -387,7 +410,9 @@ object AcquisitionSweepPipeline:
 
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
   def picked(c: ManagerContext, run: Run.Id): List[Picked] =
-    c.stepOutput(run, StepRecord.Name("rank")).flatMap(o => io.circe.parser.decode[List[Picked]](o.value).toOption).getOrElse(Nil)
+    c.stepOutput(run, StepRecord.Name("rank"))
+      .flatMap(o => io.circe.parser.decode[List[Picked]](o.value).toOption)
+      .getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
   final case class Found(

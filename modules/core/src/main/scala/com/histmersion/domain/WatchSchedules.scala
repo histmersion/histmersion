@@ -33,7 +33,12 @@ object WatchSchedules:
   /** The watcher a goal's schedules become: its config (sweeps, per-run budget), its cron and next firing, and what was
     * carried over or left out (the migration's event and log line).
     */
-  final case class Plan(config: ManagerConfig, cron: Option[Cron.Text], nextTick: Option[ManagerPolicy.InstantText], notes: List[Plan.Notes])
+  final case class Plan(
+      config: ManagerConfig,
+      cron: Option[Cron.Text],
+      nextTick: Option[ManagerPolicy.InstantText],
+      notes: List[Plan.Notes]
+  )
 
   object Plan:
     type Notes = Notes.T
@@ -54,14 +59,24 @@ object WatchSchedules:
     val had = existing.fold(List.empty[Sweep])(e => Sweep.of(e.config))
     val sweeps = Sweep.values.toList.filter(s => had.contains(s) || on.exists(x => sweepOf(x.kind) == s))
     def gap(s: GoalSchedule): Cron.GapMinutes =
-      Cron.parse(Cron.Text(s.cron.value)).toOption.flatMap(_.shortestGapMinutes(now)).getOrElse(Cron.GapMinutes(Long.MaxValue))
+      Cron
+        .parse(Cron.Text(s.cron.value))
+        .toOption
+        .flatMap(_.shortestGapMinutes(now))
+        .getOrElse(Cron.GapMinutes(Long.MaxValue))
     val pick = (if on.nonEmpty then on else ordered).sortBy(s => (gap(s).value: Long, s.kind.ordinal)).headOption
     val keepOwn = existing.flatMap(_.cron).isDefined
     val cron = existing.flatMap(_.cron).orElse(pick.map(s => Cron.Text(s.cron.value)))
     val next =
-      if keepOwn then existing.flatMap(_.nextTick) else pick.flatMap(s => Option.when(s.enabled.value)(s.nextRunAt).flatten.map(n => ManagerPolicy.InstantText(n.value)))
+      if keepOwn then existing.flatMap(_.nextTick)
+      else
+        pick.flatMap(s =>
+          Option.when(s.enabled.value)(s.nextRunAt).flatten.map(n => ManagerPolicy.InstantText(n.value))
+        )
     val budget = base.budgetUsd
-      .orElse(ordered.find(_.kind == ScheduleKind.Acquisition).flatMap(_.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value))))
+      .orElse(
+        ordered.find(_.kind == ScheduleKind.Acquisition).flatMap(_.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value)))
+      )
       .orElse(ordered.flatMap(_.budgetUsd).headOption.map(b => ManagerConfig.BudgetUsd(b.value)))
     val notes =
       on.map(s => s"${s.kind.wire} schedule `${s.cron}` → the ${sweepOf(s.kind).itemKind} sweep") ++
@@ -77,7 +92,12 @@ object WatchSchedules:
              .map(s =>
                s"one cron for both: `${pick.get.cron}` (fires most often) over the ${s.kind.wire} schedule's `${s.cron}`"
              ))
-    Plan(base.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(budget), cron, next, notes.map(Plan.Notes(_)))
+    Plan(
+      base.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(budget),
+      cron,
+      next,
+      notes.map(Plan.Notes(_))
+    )
 
   /** A watcher as the goal surfaces show its schedules: one per sweep it runs, with its cron, its next firing, its last
     * run (the item's) and a note saying whether it is paused.

@@ -19,7 +19,12 @@ object JsonFields:
   object Year extends Newtype[Long, Pure]
 
   def str(c: ACursor, k: Key): Option[Text] =
-    c.downField(k.value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty).map(t => Text(t))
+    c.downField(k.value)
+      .focus
+      .flatMap(j => j.asString.orElse(j.asNumber.map(_.toString)))
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .map(t => Text(t))
 
   def long(c: ACursor, k: Key): Option[Integer] =
     c.downField(k.value)
@@ -32,10 +37,16 @@ object JsonFields:
       .map(n => Integer(n))
 
   def dbl(c: ACursor, k: Key): Option[Decimal] =
-    c.downField(k.value).focus.flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption))).map(d => Decimal(d))
+    c.downField(k.value)
+      .focus
+      .flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
+      .map(d => Decimal(d))
 
   /** A year as the SPI states it; `None` beyond what a `Year` holds. */
-  def year(y: Year): Option[com.histmersion.plugin.Year] = Option.when(y.value.isValidInt)(com.histmersion.plugin.Year(y.value.toInt))
+  def year(y: Year): Option[com.histmersion.plugin.Year] =
+    Option.when(y.value.isValidInt)(com.histmersion.plugin.Year(y.value.toInt))
 
-  def latitude(l: Option[Decimal]): Option[Latitude] = l.filter(d => d.value >= -90.0 && d.value <= 90.0).map(d => Latitude(d.value))
-  def longitude(l: Option[Decimal]): Option[Longitude] = l.filter(d => d.value >= -180.0 && d.value <= 180.0).map(d => Longitude(d.value))
+  def latitude(l: Option[Decimal]): Option[Latitude] =
+    l.filter(d => d.value >= -90.0 && d.value <= 90.0).map(d => Latitude(d.value))
+  def longitude(l: Option[Decimal]): Option[Longitude] =
+    l.filter(d => d.value >= -180.0 && d.value <= 180.0).map(d => Longitude(d.value))

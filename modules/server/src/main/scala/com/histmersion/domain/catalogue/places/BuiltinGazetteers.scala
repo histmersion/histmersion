@@ -27,8 +27,16 @@ object BuiltinGazetteers:
     object Title extends Newtype[String, Pure]
 
   val entries: List[Entry] = List(
-    Entry(Plugin.Id("gazetteer-cliopatria"), Entry.Name("cliopatria"), Entry.Title("Seshat Cliopatria polity polygons")),
-    Entry(Plugin.Id("gazetteer-awmc"), Entry.Name("awmc"), Entry.Title("AWMC classical-world regional names and features")),
+    Entry(
+      Plugin.Id("gazetteer-cliopatria"),
+      Entry.Name("cliopatria"),
+      Entry.Title("Seshat Cliopatria polity polygons")
+    ),
+    Entry(
+      Plugin.Id("gazetteer-awmc"),
+      Entry.Name("awmc"),
+      Entry.Title("AWMC classical-world regional names and features")
+    ),
     Entry(Plugin.Id("gazetteer-chronontology"), Entry.Name("chronontology"), Entry.Title("ChronOntology named periods"))
   )
 
@@ -51,7 +59,8 @@ object BuiltinGazetteers:
   /** Pure: the names a fetch may ask for — the first-party ones in their order (one switched off says so when asked),
     * then the plugins' in registration order.
     */
-  def available(registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource]): List[Entry.Name] = names ++ thirdParty(registered)
+  def available(registered: ListMap[Registries.GazetteerSourcesKey, GazetteerSource]): List[Entry.Name] =
+    names ++ thirdParty(registered)
 
   /** The registered source `name` (trimmed, lower case) names, or why none: a first-party one switched off, else
     * `unknown`.

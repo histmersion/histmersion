@@ -38,7 +38,8 @@ final class Polite(
   private var count = 0
 
   /** The interval between two requests to `h` now, ms: the configured one, times its slow-down. */
-  def intervalMs(h: Polite.Host): Polite.IntervalMs = Polite.IntervalMs(cfg.requestIntervalMs.value.toLong * slowdown.getOrElse(h, 1))
+  def intervalMs(h: Polite.Host): Polite.IntervalMs =
+    Polite.IntervalMs(cfg.requestIntervalMs.value.toLong * slowdown.getOrElse(h, 1))
 
   /** Requests sent so far (retries included). */
   def requests: Polite.RequestCount = Polite.RequestCount(count)
@@ -56,7 +57,10 @@ final class Polite(
   /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the configured one (a
     * plugin's request too).
     */
-  def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(
+      url: HttpTransport.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
+  ): Either[HttpTransport.Problem, HttpAnswer] =
     val h = host(url)
     val sent =
       headers.filterNot(_._1.value.equalsIgnoreCase("User-Agent")) +
@@ -100,13 +104,22 @@ final class Polite(
   /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in the URL (which
     * an error line or a log may show).
     */
-  def json(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, Json] =
+  def json(
+      url: HttpTransport.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty
+  ): Either[HttpTransport.Problem, Json] =
     get(url, headers).flatMap(a =>
-      io.circe.parser.parse(a.text.value).left.map(e => HttpTransport.Problem(s"${host(url).value}: unparseable JSON (${e.getMessage})"))
+      io.circe.parser
+        .parse(a.text.value)
+        .left
+        .map(e => HttpTransport.Problem(s"${host(url).value}: unparseable JSON (${e.getMessage})"))
     )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
-  def file(url: HttpTransport.Url, fallbackMime: Polite.Mime): Either[HttpTransport.Problem, (HttpAnswer.Body, Polite.Mime)] =
+  def file(
+      url: HttpTransport.Url,
+      fallbackMime: Polite.Mime
+  ): Either[HttpTransport.Problem, (HttpAnswer.Body, Polite.Mime)] =
     get(url).map(a =>
       (
         a.body,

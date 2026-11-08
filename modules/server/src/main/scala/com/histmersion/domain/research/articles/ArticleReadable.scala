@@ -24,7 +24,11 @@ final class ArticleReadable(db: Transactor) extends Readable:
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
       val rows = (Sql.raw(Sql.Text("SELECT i.slug, i.title, lower(i.period), upper(i.period) - 1")) ++ notRead(read) ++
-        Sql.of(Sql.Text(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?"), Param.I(Param.I.V(size.value)), Param.I(Param.I.V(from.value)))).frag
+        Sql.of(
+          Sql.Text(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?"),
+          Param.I(Param.I.V(size.value)),
+          Param.I(Param.I.V(from.value))
+        )).frag
         .query[(String, String, Option[Long], Option[Long])]
         .run()
         .toList

@@ -37,7 +37,9 @@ object ListQueries:
           ApprovalState
             .parse(s)
             .map(Some(_))
-            .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire.value) :+ "all").mkString(", ")})"))
+            .toRight(
+              bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire.value) :+ "all").mkString(", ")})")
+            )
       kinds <- known("kind", n.kind.map(_.value), ApprovalKind.values.map(_.wire.value).toSeq)
       by <- known("decidedBy", n.decidedBy.map(_.value), DecidedBy.values.map(_.wire.value).toSeq)
     yield ApprovalQuery(
@@ -55,7 +57,10 @@ object ListQueries:
       st <- known("status", n.status.map(_.value), RunState.values.map(_.wire.value).toSeq)
       ps <- known("pipeline", n.pipeline.map(_.value), Pipeline.values.map(_.wire.value).toSeq)
       os <- known("origin", n.origin.map(_.value), Origin.values.map(_.wire.value).toSeq)
-      tr <- ListFilters.range(n.since.map(v => ListFilters.TimeBound(v.value)), n.until.map(v => ListFilters.TimeBound(v.value)), now).left.map(p => bad(p.value))
+      tr <- ListFilters
+        .range(n.since.map(v => ListFilters.TimeBound(v.value)), n.until.map(v => ListFilters.TimeBound(v.value)), now)
+        .left
+        .map(p => bad(p.value))
     yield RunQuery(
       st.map(RunQuery.Status(_)),
       ps.map(RunQuery.Pipelines(_)),

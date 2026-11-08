@@ -45,19 +45,32 @@ trait ImportService:
       pleiadesOnly: ImportService.PleiadesOnly
   ): Either[ImportService.TargetsText, List[Target]]
 
-  def collectionPending(check: ImportService.CheckName, places: ImportService.Places, since: Option[ImportService.Since], pleiadesOnly: ImportService.PleiadesOnly): ImportService.PendingCount
+  def collectionPending(
+      check: ImportService.CheckName,
+      places: ImportService.Places,
+      since: Option[ImportService.Since],
+      pleiadesOnly: ImportService.PleiadesOnly
+  ): ImportService.PendingCount
 
   def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts]
   def mapPlacesNamed(keys: List[ImportService.PlaceKey]): Map[ImportService.PlaceKey, List[PlaceFacts]]
   def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ImportService.ExternalId)]]
   def pleiadesIds(ids: List[Place.Id]): Map[Place.Id, List[ImportService.ExternalId]]
-  def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ImportService.ExternalId)]): Map[(ExternalIds.Scheme, ImportService.ExternalId), List[PlaceFacts]]
+  def mapPlacesWithIds(
+      ids: List[(ExternalIds.Scheme, ImportService.ExternalId)]
+  ): Map[(ExternalIds.Scheme, ImportService.ExternalId), List[PlaceFacts]]
 
   /** A place's Commons category recorded as a link of the place; whether it is new. */
   def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id): Boolean
 
   /** That `provider` was asked about a target, and how many pictures it gave. */
-  def checked(provider: ImportService.Provider, targetType: ImportService.TargetType, targetId: ImportService.TargetId, found: ImportService.FoundCount, qid: Option[Wikidata.Id]): Unit
+  def checked(
+      provider: ImportService.Provider,
+      targetType: ImportService.TargetType,
+      targetId: ImportService.TargetId,
+      found: ImportService.FoundCount,
+      qid: Option[Wikidata.Id]
+  ): Unit
 
 object ImportService:
   type ExternalId = ExternalIds.ExternalId
@@ -103,8 +116,21 @@ object ImportService:
         limit: TargetsLimit,
         refresh: Refresh,
         since: Option[Since]
-    ): Either[TargetsText, List[Target]] = db.read(ImportRepo.targets(provider, place, event, ImportRepo.Limit(limit.value), ImportRepo.Refresh(refresh.value), since.map(s => ImportRepo.Since(s.value)))).left.map(p => TargetsText(p.value))
-    def pending(provider: Provider, since: Option[Since]): PendingCount = db.read(ImportRepo.pending(provider, since.map(s => ImportRepo.Since(s.value))))
+    ): Either[TargetsText, List[Target]] = db
+      .read(
+        ImportRepo.targets(
+          provider,
+          place,
+          event,
+          ImportRepo.Limit(limit.value),
+          ImportRepo.Refresh(refresh.value),
+          since.map(s => ImportRepo.Since(s.value))
+        )
+      )
+      .left
+      .map(p => TargetsText(p.value))
+    def pending(provider: Provider, since: Option[Since]): PendingCount =
+      db.read(ImportRepo.pending(provider, since.map(s => ImportRepo.Since(s.value))))
     def collectionTargets(
         check: CheckName,
         places: Places,
@@ -115,19 +141,53 @@ object ImportService:
         since: Option[Since],
         pleiadesOnly: PleiadesOnly
     ): Either[TargetsText, List[Target]] =
-      db.read(ImportRepo.collectionTargets(MediaItemRow.Provider(check.value), ImportRepo.Places(places.value), place, event, ImportRepo.Limit(limit.value), ImportRepo.Refresh(refresh.value), since.map(s => ImportRepo.Since(s.value)), ImportRepo.PleiadesOnly(pleiadesOnly.value))).left.map(p => TargetsText(p.value))
-    def collectionPending(check: CheckName, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly): PendingCount =
-      db.read(ImportRepo.collectionPending(MediaItemRow.Provider(check.value), ImportRepo.Places(places.value), since.map(s => ImportRepo.Since(s.value)), ImportRepo.PleiadesOnly(pleiadesOnly.value)))
+      db.read(
+        ImportRepo.collectionTargets(
+          MediaItemRow.Provider(check.value),
+          ImportRepo.Places(places.value),
+          place,
+          event,
+          ImportRepo.Limit(limit.value),
+          ImportRepo.Refresh(refresh.value),
+          since.map(s => ImportRepo.Since(s.value)),
+          ImportRepo.PleiadesOnly(pleiadesOnly.value)
+        )
+      ).left
+        .map(p => TargetsText(p.value))
+    def collectionPending(
+        check: CheckName,
+        places: Places,
+        since: Option[Since],
+        pleiadesOnly: PleiadesOnly
+    ): PendingCount =
+      db.read(
+        ImportRepo.collectionPending(
+          MediaItemRow.Provider(check.value),
+          ImportRepo.Places(places.value),
+          since.map(s => ImportRepo.Since(s.value)),
+          ImportRepo.PleiadesOnly(pleiadesOnly.value)
+        )
+      )
     def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts] = db.read(ImportRepo.placeFacts(ids))
-    def mapPlacesNamed(keys: List[PlaceKey]): Map[PlaceKey, List[PlaceFacts]] = db.read(ImportRepo.mapPlacesNamed(keys.map(k => ImportRepo.NameKey(k.value)))).map((k, v) => PlaceKey(k.value) -> v)
+    def mapPlacesNamed(keys: List[PlaceKey]): Map[PlaceKey, List[PlaceFacts]] = db
+      .read(ImportRepo.mapPlacesNamed(keys.map(k => ImportRepo.NameKey(k.value))))
+      .map((k, v) => PlaceKey(k.value) -> v)
     def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ExternalId)]] =
       db.read(ImportRepo.placeExternalIds(ids))
     def pleiadesIds(ids: List[Place.Id]): Map[Place.Id, List[ExternalId]] = db.read(ImportRepo.pleiadesIds(ids))
-    def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalId)]): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] =
+    def mapPlacesWithIds(
+        ids: List[(ExternalIds.Scheme, ExternalId)]
+    ): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] =
       db.read(ImportRepo.mapPlacesWithIds(ids))
     def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id): Boolean =
       db.transact(ImportRepo.commonsCategory(placeId, ImportRepo.Category(category.value), Target.Qid(qid.value)))
-    def checked(provider: Provider, targetType: TargetType, targetId: TargetId, found: FoundCount, qid: Option[Wikidata.Id]): Unit =
+    def checked(
+        provider: Provider,
+        targetType: TargetType,
+        targetId: TargetId,
+        found: FoundCount,
+        qid: Option[Wikidata.Id]
+    ): Unit =
       db.transact(ImportRepo.checked(provider, targetType, targetId, found, qid.map(q => Target.Qid(q.value))))
 
   /** Media's checks alone, in memory: no place, event or finding is held, so nothing is on the map to ask about — a
@@ -164,19 +224,40 @@ object ImportService:
       (place.map(_.value.trim).filter(_.nonEmpty), event.map(_.value.trim).filter(_.nonEmpty)) match
         case (Some(_), _) if !places.value   => Left(TargetsText("this import is about events: name one with --event"))
         case (None, Some(_)) if places.value => Left(TargetsText("this import is about places: name one with --place"))
-        case _                         => one(place, event).toLeft(Nil)
-    def collectionPending(check: CheckName, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly): PendingCount = PendingCount(0)
+        case _                               => one(place, event).toLeft(Nil)
+    def collectionPending(
+        check: CheckName,
+        places: Places,
+        since: Option[Since],
+        pleiadesOnly: PleiadesOnly
+    ): PendingCount = PendingCount(0)
     def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts] = Map.empty
     def mapPlacesNamed(keys: List[PlaceKey]): Map[PlaceKey, List[PlaceFacts]] = Map.empty
     def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ExternalId)]] = Map.empty
     def pleiadesIds(ids: List[Place.Id]): Map[Place.Id, List[ExternalId]] = Map.empty
-    def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalId)]): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] = Map.empty
+    def mapPlacesWithIds(
+        ids: List[(ExternalIds.Scheme, ExternalId)]
+    ): Map[(ExternalIds.Scheme, ExternalId), List[PlaceFacts]] = Map.empty
     def commonsCategory(placeId: Place.Id, category: CommonsCategory, qid: Wikidata.Id): Boolean = false
 
-    def checked(provider: Provider, targetType: TargetType, targetId: TargetId, found: FoundCount, qid: Option[Wikidata.Id]): Unit =
+    def checked(
+        provider: Provider,
+        targetType: TargetType,
+        targetId: TargetId,
+        found: FoundCount,
+        qid: Option[Wikidata.Id]
+    ): Unit =
       val at = Instant.now(clock)
-      val held = HeldCheck(HeldCheck.Provider(provider.value), HeldCheck.TargetType(targetType.value), HeldCheck.TargetId(targetId.value), HeldCheck.Found(found.value), qid.map(q => HeldCheck.Qid(q.value)), at)
-      def same(c: HeldCheck) = c.provider == held.provider && c.targetType == held.targetType && c.targetId == held.targetId
+      val held = HeldCheck(
+        HeldCheck.Provider(provider.value),
+        HeldCheck.TargetType(targetType.value),
+        HeldCheck.TargetId(targetId.value),
+        HeldCheck.Found(found.value),
+        qid.map(q => HeldCheck.Qid(q.value)),
+        at
+      )
+      def same(c: HeldCheck) =
+        c.provider == held.provider && c.targetType == held.targetType && c.targetId == held.targetId
       val _ = state.updateAndGet { s =>
         if s.checks.exists(same) then
           s.modify(_.checks)

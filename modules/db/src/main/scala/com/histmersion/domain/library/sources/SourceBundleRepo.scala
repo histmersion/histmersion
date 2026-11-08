@@ -42,9 +42,7 @@ import com.histmersion.util.ocr.Chunker
 private[sources] object SourceBundleRepo:
   private given CanEqual[UUID, UUID] = CanEqual.derived
 
-
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
-
 
   def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =
     (Sql.raw(
@@ -175,7 +173,11 @@ private[sources] object SourceBundleRepo:
     w.merged.renames.foreach { (_, from, to) =>
       w.asLocal {
         SourceRepo
-          .renameIn(com.histmersion.domain.library.Citekey.assume(from.value), com.histmersion.domain.library.Citekey.assume(to.value), referrers)
+          .renameIn(
+            com.histmersion.domain.library.Citekey.assume(from.value),
+            com.histmersion.domain.library.Citekey.assume(to.value),
+            referrers
+          )
           .left
           .foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"source $from → $to: ${e.message}"))))
         sql"DELETE FROM source_aliases WHERE alias = $from".update.run(): Unit
@@ -188,7 +190,11 @@ private[sources] object SourceBundleRepo:
       localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
         w.asLocal {
           SourceRepo
-            .renameIn(com.histmersion.domain.library.Citekey.assume(old.value), com.histmersion.domain.library.Citekey.assume(s.citekey.value), referrers)
+            .renameIn(
+              com.histmersion.domain.library.Citekey.assume(old.value),
+              com.histmersion.domain.library.Citekey.assume(s.citekey.value),
+              referrers
+            )
             .left
             .foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"source $old → ${s.citekey}: ${e.message}"))))
         }
@@ -256,13 +262,14 @@ private[sources] object SourceBundleRepo:
 
   def aliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.aliases.filterNot(a => w.skipsAlias(com.histmersion.domain.library.Citekey.assume(a.alias.value))).foreach { a =>
-      // never an alias equal to the source's own citekey (a key renamed back here, #827)
-      val n = sql"""INSERT INTO source_aliases (alias, citekey, created_at)
+    w.es.aliases.filterNot(a => w.skipsAlias(com.histmersion.domain.library.Citekey.assume(a.alias.value))).foreach {
+      a =>
+        // never an alias equal to the source's own citekey (a key renamed back here, #827)
+        val n = sql"""INSERT INTO source_aliases (alias, citekey, created_at)
             SELECT ${a.alias}, citekey, ${a.createdAt}::timestamptz FROM sources
             WHERE uid = ${a.sourceUid} AND citekey <> ${a.alias}
             ON CONFLICT (alias) DO NOTHING""".update.run()
-      if n > 0 then sql"DELETE FROM alias_tombstones WHERE alias = ${a.alias}".update.run(): Unit
+        if n > 0 then sql"DELETE FROM alias_tombstones WHERE alias = ${a.alias}".update.run(): Unit
     }
 
   def findingsIn(w: BundleImport.Writer): Unit =
@@ -277,7 +284,7 @@ private[sources] object SourceBundleRepo:
               CASE WHEN ${f.lon}::float8 IS NULL OR ${f.lat}::float8 IS NULL THEN NULL
                    ELSE ST_SetSRID(ST_MakePoint(${f.lon}::float8, ${f.lat}::float8), 4326) END,
               ${rangeLiteral(f.period)}::int8range,
-              ${f.periodName}, ${f.tags}::text[], ${confidence}, ${f.significance}, ${f.updatedAt}::timestamptz)
+              ${f.periodName}, ${f.tags}::text[], $confidence, ${f.significance}, ${f.updatedAt}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, id = EXCLUDED.id,
               citekey = EXCLUDED.citekey, claim = EXCLUDED.claim, region_name = EXCLUDED.region_name,
               geom = EXCLUDED.geom, period = EXCLUDED.period, period_name = EXCLUDED.period_name,
@@ -317,7 +324,10 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     bodiesChanged(w).foreach { u =>
       val (ck, md) =
-        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(com.histmersion.domain.library.Citekey, Option[Chunker.ChunkMarkdown])].run().head
+        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u"
+          .query[(com.histmersion.domain.library.Citekey, Option[Chunker.ChunkMarkdown])]
+          .run()
+          .head
       val _ = SourceRepo.replaceChunks(ck, md, Chunker.ChunkMaxChars(w.opts.chunkChars.value))
     }
     w.touchedSources.foreach { u =>
@@ -336,5 +346,13 @@ private[sources] object SourceBundleRepo:
           )
         )
       case BlobUse.Original(_, ext) =>
-        Some(BlobSink.Streamed(in => files.store(sha, ContentStore.Ext(ext.value), in).left.toOption.map(m => ImportAbort.Problem(s"original $sha: $m"))))
+        Some(
+          BlobSink.Streamed(in =>
+            files
+              .store(sha, ContentStore.Ext(ext.value), in)
+              .left
+              .toOption
+              .map(m => ImportAbort.Problem(s"original $sha: $m"))
+          )
+        )
       case _ => None

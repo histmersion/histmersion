@@ -61,7 +61,6 @@ class CompareRunsSuite extends munit.FunSuite:
       case "anthropic:x"       => Some(CompareRuns.StepSide.Billing("price: 1/5 USD per million tokens"))
       case _                   => None
 
-
   /** The runs compared as `agent compare` does: enrich-source's outputs by the library's comparison. */
   private def compare(runs: List[Run]) =
     CompareRuns.compare(
@@ -91,12 +90,23 @@ class CompareRunsSuite extends munit.FunSuite:
       CompareRuns.unionInOrder(
         List(
           List(Step.Name("load"), Step.Name("classify"), Step.Name("findings-1"), Step.Name("geocode")),
-          List(Step.Name("load"), Step.Name("classify"), Step.Name("findings-1"), Step.Name("findings-2"), Step.Name("geocode"))
+          List(
+            Step.Name("load"),
+            Step.Name("classify"),
+            Step.Name("findings-1"),
+            Step.Name("findings-2"),
+            Step.Name("geocode")
+          )
         )
       ),
       List("load", "classify", "findings-1", "findings-2", "geocode")
     )
-    assertEquals(CompareRuns.unionInOrder(List(List(Step.Name("a"), Step.Name("c")), List(Step.Name("b"), Step.Name("c"), Step.Name("d")))), List("b", "a", "c", "d"))
+    assertEquals(
+      CompareRuns.unionInOrder(
+        List(List(Step.Name("a"), Step.Name("c")), List(Step.Name("b"), Step.Name("c"), Step.Name("d")))
+      ),
+      List("b", "a", "c", "d")
+    )
 
   test("a step's attempts are summed: models tried, what served them, how each was paid, tokens, time, failures"):
     val s = CompareRuns.stepSide(
@@ -127,7 +137,10 @@ class CompareRunsSuite extends munit.FunSuite:
       CompareRuns.StepSide(
         List(Step.Model("claude-code:haiku"), Step.Model("anthropic:x")),
         List(Step.ActualModel("claude-haiku-5-5"), Step.ActualModel("x-2026")),
-        List(CompareRuns.StepSide.Billing("plan pool: claude-plan"), CompareRuns.StepSide.Billing("price: 1/5 USD per million tokens")),
+        List(
+          CompareRuns.StepSide.Billing("plan pool: claude-plan"),
+          CompareRuns.StepSide.Billing("price: 1/5 USD per million tokens")
+        ),
         Tokens(Tokens.Input(30), Tokens.Output(6), Tokens.CacheRead(5)),
         CompareRuns.StepSide.CostUsd(0.01),
         CompareRuns.StepSide.Seconds(6),
@@ -138,11 +151,30 @@ class CompareRunsSuite extends munit.FunSuite:
     assertEquals(CompareRuns.seconds(step(1, Step.Name("x"), started = Step.StartedAt("bad"))), 0L)
 
   test("V072: a step's first call is its first attempt's that recorded one, its turns every recorded attempt's"):
-    val before = step(3, Step.Name("classify"), Step.Status("failed"), model = Some(Step.Model("claude-code:haiku")), error = Some(Step.Error("bad")))
-    val a1 = step(3, Step.Name("classify"), Step.Status("failed"), model = Some(Step.Model("claude-code:haiku")), error = Some(Step.Error("bad")), attempt = 2)
-      .modify(_.firstCallTokens).setTo(Some(Step.FirstCallTokens(6200L))).modify(_.turns).setTo(Some(Step.Turns(7)))
+    val before = step(
+      3,
+      Step.Name("classify"),
+      Step.Status("failed"),
+      model = Some(Step.Model("claude-code:haiku")),
+      error = Some(Step.Error("bad"))
+    )
+    val a1 = step(
+      3,
+      Step.Name("classify"),
+      Step.Status("failed"),
+      model = Some(Step.Model("claude-code:haiku")),
+      error = Some(Step.Error("bad")),
+      attempt = 2
+    )
+      .modify(_.firstCallTokens)
+      .setTo(Some(Step.FirstCallTokens(6200L)))
+      .modify(_.turns)
+      .setTo(Some(Step.Turns(7)))
     val a2 = step(3, Step.Name("classify"), model = Some(Step.Model("claude-code:haiku")), attempt = 3)
-      .modify(_.firstCallTokens).setTo(Some(Step.FirstCallTokens(6900L))).modify(_.turns).setTo(Some(Step.Turns(5)))
+      .modify(_.firstCallTokens)
+      .setTo(Some(Step.FirstCallTokens(6900L)))
+      .modify(_.turns)
+      .setTo(Some(Step.Turns(5)))
     val s = CompareRuns.stepSide(List(before, a1, a2), billing)
     assertEquals((s.firstCallTokens, s.turns), (Some(6200L), Some(12)))
     val old = CompareRuns.stepSide(List(before), billing)
@@ -150,13 +182,43 @@ class CompareRunsSuite extends munit.FunSuite:
 
   // ── enrich-source ──────────────────────────────────────────────────────────────────────────────
 
-  private def vf(claim: VerifiedFinding.Claim) = VerifiedFinding(claim, VerifiedFinding.Quote(s"quote of ${claim.value}"), AgentVerify.Ratio(1.0), None, None, None, None, Nil, EnrichSource.VerifiedFinding.Confidence("high"))
+  private def vf(claim: VerifiedFinding.Claim) = VerifiedFinding(
+    claim,
+    VerifiedFinding.Quote(s"quote of ${claim.value}"),
+    AgentVerify.Ratio(1.0),
+    None,
+    None,
+    None,
+    None,
+    Nil,
+    EnrichSource.VerifiedFinding.Confidence("high")
+  )
 
   test("the quote check reads accepted answers (their own counts) and rejected ones (the verifier's reasons)"):
     val rejected = Findings(
       List(
-        FindingProposal(EnrichSource.FindingProposal.Claim("a"), AgentProposals.Proposal.Quote("q1"), None, None, None, None, None, Nil, Confidence.Wire("high")),
-        FindingProposal(EnrichSource.FindingProposal.Claim("b"), AgentProposals.Proposal.Quote("q2"), None, None, None, None, None, Nil, Confidence.Wire("high"))
+        FindingProposal(
+          EnrichSource.FindingProposal.Claim("a"),
+          AgentProposals.Proposal.Quote("q1"),
+          None,
+          None,
+          None,
+          None,
+          None,
+          Nil,
+          Confidence.Wire("high")
+        ),
+        FindingProposal(
+          EnrichSource.FindingProposal.Claim("b"),
+          AgentProposals.Proposal.Quote("q2"),
+          None,
+          None,
+          None,
+          None,
+          None,
+          Nil,
+          Confidence.Wire("high")
+        )
       )
     ).asJson.noSpaces
     val steps = List(
@@ -171,20 +233,54 @@ class CompareRunsSuite extends munit.FunSuite:
       step(
         4,
         Step.Name("findings-1"),
-        output = Some(Step.Output(VerifiedFindings(List(vf(VerifiedFinding.Claim("a"))), Some(EnrichSource.VerifiedFindings.Proposed(1)), Some(EnrichSource.VerifiedFindings.QuoteFailed(0))).asJson.noSpaces)),
+        output = Some(
+          Step.Output(
+            VerifiedFindings(
+              List(vf(VerifiedFinding.Claim("a"))),
+              Some(EnrichSource.VerifiedFindings.Proposed(1)),
+              Some(EnrichSource.VerifiedFindings.QuoteFailed(0))
+            ).asJson.noSpaces
+          )
+        ),
         model = Some(Step.Model("m")),
         attempt = 2
       ),
       step(
         5,
         Step.Name("findings-2"),
-        output = Some(Step.Output(VerifiedFindings(List(vf(VerifiedFinding.Claim("c"))), Some(EnrichSource.VerifiedFindings.Proposed(3)), Some(EnrichSource.VerifiedFindings.QuoteFailed(2))).asJson.noSpaces)),
+        output = Some(
+          Step.Output(
+            VerifiedFindings(
+              List(vf(VerifiedFinding.Claim("c"))),
+              Some(EnrichSource.VerifiedFindings.Proposed(3)),
+              Some(EnrichSource.VerifiedFindings.QuoteFailed(2))
+            ).asJson.noSpaces
+          )
+        ),
         model = Some(Step.Model("m"))
       ),
       // a checkpoint older than the counts: what it kept is what it checked
-      step(6, Step.Name("findings-3"), output = Some(Step.Output(io.circe.Json.obj("findings" -> List(vf(VerifiedFinding.Claim("d")), vf(VerifiedFinding.Claim("e"))).asJson).noSpaces)), model = Some(Step.Model("m"))),
+      step(
+        6,
+        Step.Name("findings-3"),
+        output = Some(
+          Step.Output(
+            io.circe.Json
+              .obj("findings" -> List(vf(VerifiedFinding.Claim("d")), vf(VerifiedFinding.Claim("e"))).asJson)
+              .noSpaces
+          )
+        ),
+        model = Some(Step.Model("m"))
+      ),
       // an answer that was not JSON checked nothing
-      step(7, Step.Name("findings-4"), Step.Status("failed"), output = None, model = Some(Step.Model("m")), error = Some(Step.Error("the answer is not the JSON")))
+      step(
+        7,
+        Step.Name("findings-4"),
+        Step.Status("failed"),
+        output = None,
+        model = Some(Step.Model("m")),
+        error = Some(Step.Error("the answer is not the JSON"))
+      )
     )
     assertEquals(EnrichComparison.quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))
 
@@ -203,38 +299,66 @@ class CompareRunsSuite extends munit.FunSuite:
           1,
           Step.Name("classify"),
           model = Some(Step.Model("anthropic:x")),
-          output = Some(Step.Output(
-            Classified(
-              EnrichSource.Classified.Summary("A summary."),
-              Nil,
-              Nil,
-              Nil,
-              Some(Period(Year(-1600), Year(-1200))),
-              None,
-              Source.Status.Current,
-              EnrichSource.Classified.StatusEvidence("")
-            ).asJson.noSpaces)
+          output = Some(
+            Step.Output(
+              Classified(
+                EnrichSource.Classified.Summary("A summary."),
+                Nil,
+                Nil,
+                Nil,
+                Some(Period(Year(-1600), Year(-1200))),
+                None,
+                Source.Status.Current,
+                EnrichSource.Classified.StatusEvidence("")
+              ).asJson.noSpaces
+            )
           )
         ),
         step(
           2,
           Step.Name("findings-1"),
           model = Some(Step.Model("anthropic:x")),
-          output = Some(Step.Output(VerifiedFindings(claims.map(c => vf(VerifiedFinding.Claim(c.claim.value))), Some(EnrichSource.VerifiedFindings.Proposed(claims.size)), Some(EnrichSource.VerifiedFindings.QuoteFailed(0))).asJson.noSpaces))
+          output = Some(
+            Step.Output(
+              VerifiedFindings(
+                claims.map(c => vf(VerifiedFinding.Claim(c.claim.value))),
+                Some(EnrichSource.VerifiedFindings.Proposed(claims.size)),
+                Some(EnrichSource.VerifiedFindings.QuoteFailed(0))
+              ).asJson.noSpaces
+            )
+          )
         ),
         step(3, Step.Name("geocode"), output = Some(Step.Output(Geocoded(claims, choices).asJson.noSpaces))),
-        step(4, Step.Name("notes"), model = Some(Step.Model("anthropic:x")), output = Some(Step.Output(notes.asJson.noSpaces)))
+        step(
+          4,
+          Step.Name("notes"),
+          model = Some(Step.Model("anthropic:x")),
+          output = Some(Step.Output(notes.asJson.noSpaces))
+        )
       )
     )
     val a = enrich(
       RunHead.Id("a"),
       List(
-        com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Tin came by sea."), periodStart = Some(Year(-1300))),
+        com.histmersion.api.library.Finding
+          .Input(com.histmersion.api.library.Finding.Claim("Tin came by sea."), periodStart = Some(Year(-1300))),
         com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Copper came from Cyprus."))
       ),
       List(
-        GeocodeChoice(EnrichSource.GeocodeChoice.Claim("Tin came by sea."), EnrichSource.GeocodeChoice.Asked("Uluburun"), Some(Place.Id.assume("p1")), Some(EnrichSource.GeocodeChoice.Label("Uluburun")), None),
-        GeocodeChoice(EnrichSource.GeocodeChoice.Claim("Copper came from Cyprus."), EnrichSource.GeocodeChoice.Asked("Atlantis"), None, None, None)
+        GeocodeChoice(
+          EnrichSource.GeocodeChoice.Claim("Tin came by sea."),
+          EnrichSource.GeocodeChoice.Asked("Uluburun"),
+          Some(Place.Id.assume("p1")),
+          Some(EnrichSource.GeocodeChoice.Label("Uluburun")),
+          None
+        ),
+        GeocodeChoice(
+          EnrichSource.GeocodeChoice.Claim("Copper came from Cyprus."),
+          EnrichSource.GeocodeChoice.Asked("Atlantis"),
+          None,
+          None,
+          None
+        )
       ),
       "Notes [[x2020]]."
     )
@@ -251,8 +375,32 @@ class CompareRunsSuite extends munit.FunSuite:
     assertEquals(
       cmp.enrich,
       List(
-        CompareRuns.EnrichSide(CompareRuns.EnrichSide.Findings(2), CompareRuns.EnrichSide.QuotesChecked(2), CompareRuns.EnrichSide.QuotesPassed(2), CompareRuns.EnrichSide.PlacesAsked(2), CompareRuns.EnrichSide.PlacesResolved(1), CompareRuns.EnrichSide.DatedFindings(1), Some(Year(-1600)), Some(Year(-1200)), CompareRuns.EnrichSide.SummaryChars(10), CompareRuns.EnrichSide.NotesChars(16), List(CompareRuns.EnrichSide.UniqueClaims("Copper came from Cyprus."))),
-        CompareRuns.EnrichSide(CompareRuns.EnrichSide.Findings(2), CompareRuns.EnrichSide.QuotesChecked(2), CompareRuns.EnrichSide.QuotesPassed(2), CompareRuns.EnrichSide.PlacesAsked(0), CompareRuns.EnrichSide.PlacesResolved(0), CompareRuns.EnrichSide.DatedFindings(0), Some(Year(-1600)), Some(Year(-1200)), CompareRuns.EnrichSide.SummaryChars(10), CompareRuns.EnrichSide.NotesChars(2), List(CompareRuns.EnrichSide.UniqueClaims("Tin was rare.")))
+        CompareRuns.EnrichSide(
+          CompareRuns.EnrichSide.Findings(2),
+          CompareRuns.EnrichSide.QuotesChecked(2),
+          CompareRuns.EnrichSide.QuotesPassed(2),
+          CompareRuns.EnrichSide.PlacesAsked(2),
+          CompareRuns.EnrichSide.PlacesResolved(1),
+          CompareRuns.EnrichSide.DatedFindings(1),
+          Some(Year(-1600)),
+          Some(Year(-1200)),
+          CompareRuns.EnrichSide.SummaryChars(10),
+          CompareRuns.EnrichSide.NotesChars(16),
+          List(CompareRuns.EnrichSide.UniqueClaims("Copper came from Cyprus."))
+        ),
+        CompareRuns.EnrichSide(
+          CompareRuns.EnrichSide.Findings(2),
+          CompareRuns.EnrichSide.QuotesChecked(2),
+          CompareRuns.EnrichSide.QuotesPassed(2),
+          CompareRuns.EnrichSide.PlacesAsked(0),
+          CompareRuns.EnrichSide.PlacesResolved(0),
+          CompareRuns.EnrichSide.DatedFindings(0),
+          Some(Year(-1600)),
+          Some(Year(-1200)),
+          CompareRuns.EnrichSide.SummaryChars(10),
+          CompareRuns.EnrichSide.NotesChars(2),
+          List(CompareRuns.EnrichSide.UniqueClaims("Tin was rare."))
+        )
       ),
       "the same claim worded with other case and spacing is not unique"
     )
@@ -261,8 +409,19 @@ class CompareRunsSuite extends munit.FunSuite:
     assertEquals(cmp.runs.map(_.seconds), List(12L, 12L))
 
   test("a run that did not finish is compared with a note saying so"):
-    val a = run(RunHead.Id("aaaaaaaa1"), RunHead.Pipeline("enrich-source"), RunHead.Target("x2020"), List(step(1, Step.Name("load"))))
-    val b = run(RunHead.Id("bbbbbbbb2"), RunHead.Pipeline("enrich-source"), RunHead.Target("x2020"), List(step(1, Step.Name("load"))), status = RunHead.Status("paused"))
+    val a = run(
+      RunHead.Id("aaaaaaaa1"),
+      RunHead.Pipeline("enrich-source"),
+      RunHead.Target("x2020"),
+      List(step(1, Step.Name("load")))
+    )
+    val b = run(
+      RunHead.Id("bbbbbbbb2"),
+      RunHead.Pipeline("enrich-source"),
+      RunHead.Target("x2020"),
+      List(step(1, Step.Name("load"))),
+      status = RunHead.Status("paused")
+    )
     val cmp = compare(List(a, b)).fold(p => fail(p.value), identity)
     assertEquals(cmp.notes, List("run bbbbbbbb is paused, not done: its outputs are what it had so far"))
     assertEquals(
@@ -271,8 +430,30 @@ class CompareRunsSuite extends munit.FunSuite:
         CompareRuns.StepRow(
           CompareRuns.StepRow.Name("load"),
           List(
-            Some(CompareRuns.StepSide(Nil, Nil, Nil, Tokens.Zero, CompareRuns.StepSide.CostUsd(0), CompareRuns.StepSide.Seconds(3), CompareRuns.StepSide.Attempts(1), CompareRuns.StepSide.Failures(0))),
-            Some(CompareRuns.StepSide(Nil, Nil, Nil, Tokens.Zero, CompareRuns.StepSide.CostUsd(0), CompareRuns.StepSide.Seconds(3), CompareRuns.StepSide.Attempts(1), CompareRuns.StepSide.Failures(0)))
+            Some(
+              CompareRuns.StepSide(
+                Nil,
+                Nil,
+                Nil,
+                Tokens.Zero,
+                CompareRuns.StepSide.CostUsd(0),
+                CompareRuns.StepSide.Seconds(3),
+                CompareRuns.StepSide.Attempts(1),
+                CompareRuns.StepSide.Failures(0)
+              )
+            ),
+            Some(
+              CompareRuns.StepSide(
+                Nil,
+                Nil,
+                Nil,
+                Tokens.Zero,
+                CompareRuns.StepSide.CostUsd(0),
+                CompareRuns.StepSide.Seconds(3),
+                CompareRuns.StepSide.Attempts(1),
+                CompareRuns.StepSide.Failures(0)
+              )
+            )
           )
         )
       )
@@ -280,11 +461,20 @@ class CompareRunsSuite extends munit.FunSuite:
 
   // ── review-article ─────────────────────────────────────────────────────────────────────────────
 
-  private def f(id: Finding.Id, sev: Severity, where: Finding.Where, problem: Finding.Problem, quote: Finding.Quote = Finding.Quote(""), kind: Finding.Kind = Finding.Kind("term")) =
+  private def f(
+      id: Finding.Id,
+      sev: Severity,
+      where: Finding.Where,
+      problem: Finding.Problem,
+      quote: Finding.Quote = Finding.Quote(""),
+      kind: Finding.Kind = Finding.Kind("term")
+  ) =
     Finding(
       id,
       Reviewer
-        .parse(if id.value.startsWith("R") then ReviewArticle.Reviewer.Wire("rules") else if id.value.startsWith("S") then ReviewArticle.Reviewer.Wire("skeptic") else ReviewArticle.Reviewer.Wire("cold-reader"))
+        .parse(if id.value.startsWith("R") then ReviewArticle.Reviewer.Wire("rules")
+        else if id.value.startsWith("S") then ReviewArticle.Reviewer.Wire("skeptic")
+        else ReviewArticle.Reviewer.Wire("cold-reader"))
         .get,
       sev,
       kind,
@@ -315,14 +505,29 @@ class CompareRunsSuite extends munit.FunSuite:
     )
     assert(
       ReviewComparison.sameMajor(
-        f(Finding.Id("S1"), Severity.Major, Finding.Where("A"), Finding.Problem("x"), Finding.Quote("Its cargo dates to 1320")),
-        f(Finding.Id("R4"), Severity.Major, Finding.Where("B"), Finding.Problem("y"), Finding.Quote("its cargo dates to 1320"))
+        f(
+          Finding.Id("S1"),
+          Severity.Major,
+          Finding.Where("A"),
+          Finding.Problem("x"),
+          Finding.Quote("Its cargo dates to 1320")
+        ),
+        f(
+          Finding.Id("R4"),
+          Severity.Major,
+          Finding.Where("B"),
+          Finding.Problem("y"),
+          Finding.Quote("its cargo dates to 1320")
+        )
       )
     )
     assertEquals(CompareRuns.similarity(CompareRuns.Text(""), CompareRuns.Text("")), 0.0)
     // one-to-one: a finding is matched once
     val pairs = ReviewComparison.overlap(
-      List(f(Finding.Id("R1"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here")), f(Finding.Id("R2"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here"))),
+      List(
+        f(Finding.Id("R1"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here")),
+        f(Finding.Id("R2"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here"))
+      ),
       List(f(Finding.Id("R9"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here")))
     )
     assertEquals(pairs.map((a, b) => (a.id, b.id)), List(("R1", "R9")))
@@ -335,29 +540,60 @@ class CompareRunsSuite extends munit.FunSuite:
       rounds.flatMap { m =>
         List(step(m.round.value * 10, Step.Name(s"merge-${m.round}"), output = Some(Step.Output(m.asJson.noSpaces))))
       } ++ reports.map(r =>
-        step(5, Step.Name(s"${r.reviewer.wire}-1"), model = Some(Step.Model("anthropic:x")), output = Some(Step.Output(r.asJson.noSpaces)))
+        step(
+          5,
+          Step.Name(s"${r.reviewer.wire}-1"),
+          model = Some(Step.Model("anthropic:x")),
+          output = Some(Step.Output(r.asJson.noSpaces))
+        )
       ) ++
         List(
           step(
             4,
             Step.Name("mechanical-1"),
-            output = Some(Step.Output(List(f(Finding.Id("M1"), Severity.Minor, Finding.Where("Body"), Finding.Problem("no Disagreements"), kind = Finding.Kind("structure"))).asJson.noSpaces))
+            output = Some(
+              Step.Output(
+                List(
+                  f(
+                    Finding.Id("M1"),
+                    Severity.Minor,
+                    Finding.Where("Body"),
+                    Finding.Problem("no Disagreements"),
+                    kind = Finding.Kind("structure")
+                  )
+                ).asJson.noSpaces
+              )
+            )
           )
         )
     )
     val r1 = f(Finding.Id("R1"), Severity.Major, Finding.Where("Intro"), Finding.Problem("tin is not defined"))
-    val s1 = f(Finding.Id("S1"), Severity.Major, Finding.Where("Dates"), Finding.Problem("the date is wrong"), kind = Finding.Kind("date"))
+    val s1 = f(
+      Finding.Id("S1"),
+      Severity.Major,
+      Finding.Where("Dates"),
+      Finding.Problem("the date is wrong"),
+      kind = Finding.Kind("date")
+    )
     val c1 = f(Finding.Id("C1"), Severity.Minor, Finding.Where("Intro"), Finding.Problem("what is bronze"))
     val a = review(
       RunHead.Id("a"),
-      List(Merged(ReviewArticle.Merged.Round(1), Verdict.Major, List(r1, s1, c1), None, Nil, Nil), Merged(ReviewArticle.Merged.Round(2), Verdict.Pass, Nil, None, Nil, Nil)),
+      List(
+        Merged(ReviewArticle.Merged.Round(1), Verdict.Major, List(r1, s1, c1), None, Nil, Nil),
+        Merged(ReviewArticle.Merged.Round(2), Verdict.Pass, Nil, None, Nil, Nil)
+      ),
       List(
         Report(Reviewer.Rules, Verdict.Major, List(r1)),
         Report(Reviewer.ColdReader, Verdict.Minor, List(c1)),
         Report(Reviewer.Skeptic, Verdict.Major, List(s1))
       )
     )
-    val r1b = f(Finding.Id("R1"), Severity.Major, Finding.Where("intro"), Finding.Problem("Tin is never defined, tin is not defined"))
+    val r1b = f(
+      Finding.Id("R1"),
+      Severity.Major,
+      Finding.Where("intro"),
+      Finding.Problem("Tin is never defined, tin is not defined")
+    )
     val b = review(
       RunHead.Id("b"),
       List(Merged(ReviewArticle.Merged.Round(1), Verdict.Major, List(r1b), None, Nil, Nil)),
@@ -374,10 +610,28 @@ class CompareRunsSuite extends munit.FunSuite:
         ("mechanical", None, 0, 1)
       )
     )
-    assertEquals(cmp.review.head.kinds, List(CompareRuns.KindCount(CompareRuns.KindCount.Kind("term"), CompareRuns.KindCount.Count(2)), CompareRuns.KindCount(CompareRuns.KindCount.Kind("date"), CompareRuns.KindCount.Count(1))))
+    assertEquals(
+      cmp.review.head.kinds,
+      List(
+        CompareRuns.KindCount(CompareRuns.KindCount.Kind("term"), CompareRuns.KindCount.Count(2)),
+        CompareRuns.KindCount(CompareRuns.KindCount.Kind("date"), CompareRuns.KindCount.Count(1))
+      )
+    )
     assertEquals(
       cmp.review.head.majors,
       List("R1 major (Intro): tin is not defined", "S1 major (Dates): the date is wrong")
     )
-    assertEquals(cmp.overlaps, List(CompareRuns.MajorOverlap(CompareRuns.MajorOverlap.A("a"), CompareRuns.MajorOverlap.B("b"), CompareRuns.MajorOverlap.AMajors(2), CompareRuns.MajorOverlap.BMajors(1), CompareRuns.MajorOverlap.Shared(1), List(CompareRuns.MajorOverlap.Pairs("R1 ↔ R1")))))
+    assertEquals(
+      cmp.overlaps,
+      List(
+        CompareRuns.MajorOverlap(
+          CompareRuns.MajorOverlap.A("a"),
+          CompareRuns.MajorOverlap.B("b"),
+          CompareRuns.MajorOverlap.AMajors(2),
+          CompareRuns.MajorOverlap.BMajors(1),
+          CompareRuns.MajorOverlap.Shared(1),
+          List(CompareRuns.MajorOverlap.Pairs("R1 ↔ R1"))
+        )
+      )
+    )
     assertEquals(cmp.enrich, Nil)

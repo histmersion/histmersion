@@ -51,7 +51,9 @@ trait RunService:
   ): Either[AgentRepo.CursorProblem, (Vector[RunInfo], Boolean)]
 
   /** Per state, and the pipeline, origin, manager, model and provider facets, each without its own filter. */
-  def runFacets(q: RunQuery): (List[(Run.State.Wire, RunService.Count)], List[(String, List[(String, RunService.Count)])])
+  def runFacets(
+      q: RunQuery
+  ): (List[(Run.State.Wire, RunService.Count)], List[(String, List[(String, RunService.Count)])])
 
   /** Runs per state (of one goal). */
   def stateCounts(goal: Option[Goal.Slug] = None): List[(Run.State.Wire, RunService.Count)]
@@ -60,13 +62,20 @@ trait RunService:
   def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo]
 
   /** The runs a manager dispatched, newest first (`active`: those not settled yet). */
-  def forManager(managerId: ManagerLight.Id, active: RunService.Active = RunService.Active(false), limit: RunQuery.Limit = RunQuery.Limit(200)): Vector[RunInfo]
+  def forManager(
+      managerId: ManagerLight.Id,
+      active: RunService.Active = RunService.Active(false),
+      limit: RunQuery.Limit = RunQuery.Limit(200)
+  ): Vector[RunInfo]
 
   /** Every run on `target` that has not settled. */
   def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo]
 
   /** Step `seq`'s checkpoint: its name and output, when an attempt finished. */
-  def checkpoint(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)]
+  def checkpoint(
+      jobId: Job.Id,
+      seq: AgentRepo.StepRecord.Seq
+  ): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)]
 
   /** How many attempts step `seq` has. */
   def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): RunService.Count
@@ -167,18 +176,26 @@ object RunService:
       (states.map((s, n) => (s, count(n))), facets.map((name, vs) => (name, vs.map((v, n) => (v, count(n))))))
     def stateCounts(goal: Option[Goal.Slug]): List[(Run.State.Wire, Count)] =
       db.read(AgentRepo.stateCounts(goal)).map((s, n) => (s, count(n)))
-    def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo] = db.read(AgentRepo.forTarget(p, RunInfo.Target(target.value)))
+    def forTarget(p: Pipeline, target: AgentsControllers.Target): Vector[RunInfo] =
+      db.read(AgentRepo.forTarget(p, RunInfo.Target(target.value)))
     def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
-      db.read(AgentRepo.forManager(Managers.ManagerInfo.Id(managerId.value), AgentRepo.ActiveOnly(active.value), size(limit)))
-    def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] = db.read(AgentRepo.unsettledOn(RunInfo.Target(target.value)))
-    def checkpoint(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)] =
+      db.read(
+        AgentRepo.forManager(Managers.ManagerInfo.Id(managerId.value), AgentRepo.ActiveOnly(active.value), size(limit))
+      )
+    def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] =
+      db.read(AgentRepo.unsettledOn(RunInfo.Target(target.value)))
+    def checkpoint(
+        jobId: Job.Id,
+        seq: AgentRepo.StepRecord.Seq
+    ): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)] =
       db.read(AgentRepo.checkpoint(jobId, StepInfo.Seq(seq.value)))
         .map((name, output) => (AgentRepo.StepRecord.Name(name.value), AgentRepo.StepRecord.Output(output.value)))
     def attempts(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Count =
       Count(db.read(AgentRepo.attempts(jobId, StepInfo.Seq(seq.value))).value)
     def record(jobId: Job.Id, step: AgentRepo.StepRecord, messages: List[AgentRepo.MessageRecord]): Unit =
       db.transact(AgentRepo.record(jobId, step, messages))
-    def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo] = db.read(AgentRepo.steps(jobId, outputChars))
+    def steps(jobId: Job.Id, outputChars: AgentRepo.OutputChars): List[StepInfo] =
+      db.read(AgentRepo.steps(jobId, outputChars))
     def messages(jobId: Job.Id): List[MessageInfo] = db.read(AgentRepo.messages(jobId))
     def runSpend(jobId: Job.Id): (Usage, BigDecimal) = db.read(AgentRepo.runSpend(jobId))
     def spendDayMonth(): (BigDecimal, BigDecimal) = db.read(AgentRepo.spendDayMonth())
@@ -276,7 +293,9 @@ object RunService:
       any("manager", q.managers.map(_.value), r.row.managerId.map(_.value)) &&
       (except == "goal" || q.goal.forall(g => r.row.goal.exists(_.value == g.value))) &&
       (except == "model" || q.models.isEmpty || models(r).exists(q.models.map(_.value).contains)) &&
-      (except == "provider" || q.providers.isEmpty || models(r).map(provider).exists(q.providers.map(_.value).contains)) &&
+      (except == "provider" || q.providers.isEmpty || models(r)
+        .map(provider)
+        .exists(q.providers.map(_.value).contains)) &&
       any("origin", q.origins.map(_.value), Some(r.row.origin.value)) &&
       (except == "time" || q.since.forall(s => !r.createdAt.isBefore(s)) && q.until.forall(u =>
         r.createdAt.isBefore(u)
@@ -307,7 +326,13 @@ object RunService:
           Right((shown.map(info), older))
 
     private def facet(values: List[String]): List[(String, Count)] =
-      values.groupBy(identity).toList.map((v, n) => (v, n.size)).sortBy((v, n) => (-n, v)).take(ListFilters.FacetMax).map((v, n) => (v, count(n)))
+      values
+        .groupBy(identity)
+        .toList
+        .map((v, n) => (v, n.size))
+        .sortBy((v, n) => (-n, v))
+        .take(ListFilters.FacetMax)
+        .map((v, n) => (v, count(n)))
     def runFacets(q: RunQuery): (List[(Run.State.Wire, Count)], List[(String, List[(String, Count)])]) =
       def of(except: String) = runs.filter(matches(q, except))
       (
@@ -332,13 +357,20 @@ object RunService:
         .toVector
         .map(info)
     def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
-      newest(runs.filter(r => r.row.managerId.exists(_.value == managerId.value) && (!active.value || Unsettled(r.row.status.value))))
+      newest(
+        runs.filter(r =>
+          r.row.managerId.exists(_.value == managerId.value) && (!active.value || Unsettled(r.row.status.value))
+        )
+      )
         .take(math.max(1, limit.value))
         .toVector
         .map(info)
     def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] =
       runs.filter(r => r.row.target.value == target.value && Unsettled(r.row.status.value)).toVector.map(info)
-    def checkpoint(jobId: Job.Id, seq: AgentRepo.StepRecord.Seq): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)] =
+    def checkpoint(
+        jobId: Job.Id,
+        seq: AgentRepo.StepRecord.Seq
+    ): Option[(AgentRepo.StepRecord.Name, AgentRepo.StepRecord.Output)] =
       stepsOf(jobId)
         .filter(s => s.step.seq == seq && s.step.status == StepStatus.Done)
         .sortBy[Int](_.step.attempt.value)

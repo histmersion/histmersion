@@ -29,7 +29,6 @@ object HintProposals:
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
 
-
   final case class HintAnswer(
       action: HintAnswer.Action,
       why: HintAnswer.Why = HintAnswer.Why(""),
@@ -115,7 +114,9 @@ object HintProposals:
           Problem(s"$action: name the items (targets) or a tag")
         ),
         Option.when(
-          action == HintEffect.HoldAction && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(_.value.trim.isEmpty)
+          action == HintEffect.HoldAction && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(
+            _.value.trim.isEmpty
+          )
         )(Problem("hold: give `until` (a date) or `untilSource` (a DOI or citekey)")),
         a.until
           .map(_.value.trim)
@@ -128,7 +129,8 @@ object HintProposals:
           .map(p => Problem(s"prioritise: priority $p is outside ±$MaxPriority"))
       ).flatten
       if problems.nonEmpty then fail(problems)
-      else if good.isEmpty && tag.isEmpty && item.isEmpty then fail(List(Problem(s"$action: none of the items it names exists")))
+      else if good.isEmpty && tag.isEmpty && item.isEmpty then
+        fail(List(Problem(s"$action: none of the items it names exists")))
       else
         Right(
           (
@@ -139,10 +141,13 @@ object HintProposals:
                 tag.map(HintEffect.Tag(_)),
                 until = a.until.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
                 untilSource = a.untilSource.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_)),
-                priority = a.priority.filter(_ => action == HintEffect.Prioritise).map(p => HintEffect.Priority(p.value))
+                priority =
+                  a.priority.filter(_ => action == HintEffect.Prioritise).map(p => HintEffect.Priority(p.value))
               )
             ),
-            Option.when(unknown.nonEmpty)(Description(s"dropped, not among the manager's items: ${unknown.mkString(", ")}")).toList
+            Option
+              .when(unknown.nonEmpty)(Description(s"dropped, not among the manager's items: ${unknown.mkString(", ")}"))
+              .toList
           )
         )
 

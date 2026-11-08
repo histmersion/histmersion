@@ -21,7 +21,7 @@ object JobKindEntry:
   type SubjectResult = JobKinds.Subject
   val SubjectResult: JobKinds.Subject.type = JobKinds.Subject
 
-  export com.histmersion.api.jobs.{JobKindMeaning as OfMeaning}
+  export com.histmersion.api.jobs.JobKindMeaning as OfMeaning
   type OfStoppable = Stoppable
   val OfStoppable: Stoppable.type = Stoppable
   type OfSubjectResult = JobKinds.Subject
@@ -41,4 +41,14 @@ object JobKindEntry:
       stoppable: OfStoppable = OfStoppable(false),
       subject: JobDetail => Option[JobKinds.Subject] = _ => None,
       ownControl: OfOwnControl = OfOwnControl(false)
-  ): JobKindEntry = JobKindEntry(kind, JobKindName((name).value), JobKindMeaning((meaning).value), stoppable, { val refactorFunction2 = subject; (refactorValue3) => (refactorFunction2(refactorValue3)).map(refactorValue4 => JobKinds.Subject((refactorValue4).value)) }, ownControl)
+  ): JobKindEntry = JobKindEntry(
+    kind,
+    JobKindName((name).value),
+    JobKindMeaning((meaning).value),
+    stoppable, {
+      val refactorFunction2 = subject;
+      (refactorValue3) =>
+        (refactorFunction2(refactorValue3)).map(refactorValue4 => JobKinds.Subject((refactorValue4).value))
+    },
+    ownControl
+  )

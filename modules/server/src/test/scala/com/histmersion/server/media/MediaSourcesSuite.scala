@@ -70,9 +70,19 @@ class MediaSourcesSuite extends DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)).modify(_.importBatch).setTo(MediaConfig.ImportBatch(1)).modify(_.covers).setTo(base.media.covers.modify(_.requestIntervalMs).setTo(MediaCoversConfig.RequestIntervalMs(0)))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.media)
+      .setTo(
+        base.media
+          .modify(_.requestIntervalMs)
+          .setTo(MediaConfig.RequestIntervalMs(0))
+          .modify(_.importBatch)
+          .setTo(MediaConfig.ImportBatch(1))
+          .modify(_.covers)
+          .setTo(base.media.covers.modify(_.requestIntervalMs).setTo(MediaCoversConfig.RequestIntervalMs(0)))
+      )
   private lazy val ds =
     val d = testPool(cfg.db)
     Migrate.run(d)
@@ -110,10 +120,23 @@ class MediaSourcesSuite extends DbSuite:
     ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
       ConverterClient.Problem("not used")
     )
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
-    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
+    override def thumbnail(
+        bytes: ConverterClient.DocumentBytes,
+        filename: ConverterClient.Filename,
+        maxPx: Pixels
+    ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
       calls += filename -> maxPx
-      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(Jpeg ++ Array[Byte](42)), ConverterClient.Thumb.Mime("image/jpeg"), ConverterClient.Thumb.Width(330), ConverterClient.Thumb.Height(250)))
+      Right(
+        ConverterClient.Thumb(
+          ConverterClient.Thumb.Bytes(Jpeg ++ Array[Byte](42)),
+          ConverterClient.Thumb.Mime("image/jpeg"),
+          ConverterClient.Thumb.Width(330),
+          ConverterClient.Thumb.Height(250)
+        )
+      )
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM media_links WHERE target_id LIKE 'zqms%'".update.run()
@@ -145,7 +168,13 @@ class MediaSourcesSuite extends DbSuite:
             Some(NewFigure.Width(80)),
             Some(NewFigure.Height(80))
           ), // a logo, on every page
-          NewFigure(NewFigure.Name("fig-0002-01.png"), NewFigure.Mime("image/png"), NewFigure.Bytes(Png ++ Array[Byte](2)), Some(NewFigure.Width(900)), Some(NewFigure.Height(650)))
+          NewFigure(
+            NewFigure.Name("fig-0002-01.png"),
+            NewFigure.Mime("image/png"),
+            NewFigure.Bytes(Png ++ Array[Byte](2)),
+            Some(NewFigure.Width(900)),
+            Some(NewFigure.Height(650))
+          )
         )
       ) // the map
       val _ = PlaceFixtures.upsertPlaces(
@@ -177,18 +206,42 @@ class MediaSourcesSuite extends DbSuite:
     val conv = ThumbConverter()
     val h = MediaWiring(Deps(cfg, ds), FakeMediaHttp(u => Left(s"unexpected $u")), conv)
     val dry =
-      h.covers.covers(MediaCoversRequest(citekey = Some(ApiPaper), covers = MediaCoversRequest.Covers(false))).fold(e => fail(e.message.value), identity)
-    assertEquals(dry.lines, List(MediaSourceLine(ApiPaper,MediaSourceLine.Role("illustration"), MediaItem.Provider("source"), MediaSourceLine.Detail("fig-0002-01.png"))))
+      h.covers
+        .covers(MediaCoversRequest(citekey = Some(ApiPaper), covers = MediaCoversRequest.Covers(false)))
+        .fold(e => fail(e.message.value), identity)
+    assertEquals(
+      dry.lines,
+      List(
+        MediaSourceLine(
+          ApiPaper,
+          MediaSourceLine.Role("illustration"),
+          MediaItem.Provider("source"),
+          MediaSourceLine.Detail("fig-0002-01.png")
+        )
+      )
+    )
     assertEquals(AssetFixtures.sourceThumb(ds, Paper), None, "a dry run links nothing")
     val done = h.covers
-      .covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiPaper), covers = MediaCoversRequest.Covers(false)))
+      .covers(
+        MediaCoversRequest(
+          dryRun = RepairAcquire.RepairRequest.DryRun(false),
+          citekey = Some(ApiPaper),
+          covers = MediaCoversRequest.Covers(false)
+        )
+      )
       .fold(e => fail(e.message.value), identity)
     assertEquals(done.illustrations, 1)
-    assertEquals(conv.calls.toList.map((file, px) => file -> px.value), List("fig-0002-01.png" -> cfg.media.thumbPx.value))
+    assertEquals(
+      conv.calls.toList.map((file, px) => file -> px.value),
+      List("fig-0002-01.png" -> cfg.media.thumbPx.value)
+    )
     val t = AssetFixtures.sourceThumb(ds, Paper).get
     assertEquals((t.role, t.width, t.height), ("illustration", Some(330), Some(250)))
     assertEquals(AssetFixtures.thumb(ds, MediaItemRow.Uid(t.uid.value)).map(_._1), Some("image/jpeg"))
-    assert(h.covers.covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false))).isLeft, "a run over every source is a job")
+    assert(
+      h.covers.covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false))).isLeft,
+      "a run over every source is a job"
+    )
 
   test("Open Library: the cover by ISBN, at its own pace, as the source's cover; a 404 is 'none'"):
     val fake = FakeMediaHttp { url =>
@@ -198,9 +251,25 @@ class MediaSourcesSuite extends DbSuite:
     }
     val h = MediaWiring(Deps(cfg, ds), fake, ThumbConverter())
     val r = h.covers
-      .covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiBook), illustrations = MediaCoversRequest.Illustrations(false)))
+      .covers(
+        MediaCoversRequest(
+          dryRun = RepairAcquire.RepairRequest.DryRun(false),
+          citekey = Some(ApiBook),
+          illustrations = MediaCoversRequest.Illustrations(false)
+        )
+      )
       .fold(e => fail(e.message.value), identity)
-    assertEquals(r.lines, List(MediaSourceLine(ApiBook,MediaSourceLine.Role("cover"), MediaItem.Provider("open-library"), MediaSourceLine.Detail("isbn:9780000000002"))))
+    assertEquals(
+      r.lines,
+      List(
+        MediaSourceLine(
+          ApiBook,
+          MediaSourceLine.Role("cover"),
+          MediaItem.Provider("open-library"),
+          MediaSourceLine.Detail("isbn:9780000000002")
+        )
+      )
+    )
     assert(
       fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent.value)),
       "the project's User-Agent, nothing else"
@@ -219,7 +288,12 @@ class MediaSourcesSuite extends DbSuite:
     // another ISBN Open Library has no cover for: none, and remembered as asked
     val none = h.covers
       .covers(
-        MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ApiPaper), illustrations = MediaCoversRequest.Illustrations(false), isbn = Some(MediaCoversRequest.Isbn("9780000000019")))
+        MediaCoversRequest(
+          dryRun = RepairAcquire.RepairRequest.DryRun(false),
+          citekey = Some(ApiPaper),
+          illustrations = MediaCoversRequest.Illustrations(false),
+          isbn = Some(MediaCoversRequest.Isbn("9780000000019"))
+        )
       )
       .fold(e => fail(e.message.value), identity)
     assertEquals((none.covers, none.skipped.map(_.key)), (0, List("cover: Open Library has no cover")))
@@ -247,7 +321,10 @@ class MediaSourcesSuite extends DbSuite:
         assertEquals(ok, 200, ob)
         val m = decode[MediaItem](ob).fold(e => fail(e.getMessage), identity)
         assertEquals((m.provider, m.providerKey, m.license), (Some("calibre"), Some("zqms77"), None))
-        assertEquals(m.targets.map(t => (t.targetType, t.targetId.value: String, t.role)), List(("source", Paper, "cover")))
+        assertEquals(
+          m.targets.map(t => (t.targetType, t.targetId.value: String, t.role)),
+          List(("source", Paper, "cover"))
+        )
         val (ss, sb) = get(s"$url/api/sources/$Paper?body=false")
         assertEquals(ss, 200, sb)
         val sw = decode[Source.WithFindings](sb).fold(e => fail(e.getMessage), identity)
@@ -287,7 +364,16 @@ class MediaSourcesSuite extends DbSuite:
       ),
       (Target.TargetType("place"), Target.Id("zqms_dup"))
     )
-    AssetFixtures.link(ds, uid, Target.TargetType("place"), Target.Id("zqms_dup"), MediaRole.Wire(MediaRole.Image), Some(AssetFixtures.LinkProperty("P18")), Some(AssetFixtures.LinkItem("Q90000077")), AssetFixtures.LinkRank(0))
+    AssetFixtures.link(
+      ds,
+      uid,
+      Target.TargetType("place"),
+      Target.Id("zqms_dup"),
+      MediaRole.Wire(MediaRole.Image),
+      Some(AssetFixtures.LinkProperty("P18")),
+      Some(AssetFixtures.LinkItem("Q90000077")),
+      AssetFixtures.LinkRank(0)
+    )
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -306,9 +392,16 @@ class MediaSourcesSuite extends DbSuite:
       else Left(s"unexpected $url")
     }
     val h = MediaWiring(Deps(cfg, ds), fake)
-    assert(h.imports.importJob(MediaImportRequest(dryRun = MediaImportRequest.DryRun(true))).isLeft, "a dry run is not a job")
+    assert(
+      h.imports.importJob(MediaImportRequest(dryRun = MediaImportRequest.DryRun(true))).isLeft,
+      "a dry run is not a job"
+    )
     val j =
-      h.imports.importJob(MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), limit = Some(MediaImportRequest.Limit(3)))).fold(e => fail(e.message.value), identity)
+      h.imports
+        .importJob(
+          MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), limit = Some(MediaImportRequest.Limit(3)))
+        )
+        .fold(e => fail(e.message.value), identity)
     assertEquals(j.kind.value: String, ImportsControllers.ImportJobKind.value: String)
     assert(
       j.detail.flatMap(ImportJobKinds.Media.of).exists(_.value.contains("up to 3")),
@@ -321,7 +414,10 @@ class MediaSourcesSuite extends DbSuite:
     val end = await(300)
     assertEquals(end.status, "done", end.toString)
     val pendingNow = ImportFixtures.pending(ds, MediaItemRow.Provider(MediaProvider.Commons))
-    assert(end.progress.exists(p => p.value.contains("asked in") && p.value.contains(s"$pendingNow not asked yet")), end.toString)
+    assert(
+      end.progress.exists(p => p.value.contains("asked in") && p.value.contains(s"$pendingNow not asked yet")),
+      end.toString
+    )
     val batches = "in (\\d+) batch".r.findFirstMatchIn(end.progress.get.value).map(_.group(1).toInt).get
     assert(batches <= 3, end.toString)
     assertEquals(fake.requests.count(_._1.contains("wbgetentities")), batches, "one Wikidata call per batch of 1")

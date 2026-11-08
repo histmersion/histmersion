@@ -44,14 +44,14 @@ object AcquisitionSweepRules:
 
   /** A candidate a sweep found, as the ranking step sees it. */
   final case class Candidate(
-    doi: Doi,
-    title: Title,
-    year: Option[Year],
-    authors: List[AuthorName],
-    venue: Option[Source.Venue],
-    isOa: WorkRef.IsOa,
-    query: Candidate.Query,
-    abstractText: Option[WorkRef.AbstractText]
+      doi: Doi,
+      title: Title,
+      year: Option[Year],
+      authors: List[AuthorName],
+      venue: Option[Source.Venue],
+      isOa: WorkRef.IsOa,
+      query: Candidate.Query,
+      abstractText: Option[WorkRef.AbstractText]
   ) derives KindlingsCodecAsObject
 
   object Candidate:
@@ -62,17 +62,21 @@ object AcquisitionSweepRules:
     * (open or done), each once (the first query that found it). Returns the candidates and how many were left out for
     * each reason.
     */
-  def candidates(found: List[(Candidate.Query, WorkRef)], queued: Set[Doi], max: Limit): (List[Candidate], Map[SkipReason, SkipCount]) =
+  def candidates(
+      found: List[(Candidate.Query, WorkRef)],
+      queued: Set[Doi],
+      max: Limit
+  ): (List[Candidate], Map[SkipReason, SkipCount]) =
     val seen = scala.collection.mutable.LinkedHashMap.empty[Doi, Candidate] // insertion-ordered dedupe
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (q, w) =>
       w.doi.flatMap(d => Doi.normalize(d.value)) match
-        case None                          => skipped("no DOI") += 1
+        case None                           => skipped("no DOI") += 1
         case Some(_) if w.isRetracted.value => skipped("retracted") += 1
         case Some(_) if w.inDb.value        => skipped("in the corpus") += 1
-        case Some(d) if queued.contains(d) => skipped("already queued") += 1
-        case Some(d) if seen.contains(d)   => ()
-        case Some(d)                       =>
+        case Some(d) if queued.contains(d)  => skipped("already queued") += 1
+        case Some(d) if seen.contains(d)    => ()
+        case Some(d)                        =>
           seen(d) = Candidate(
             d,
             w.title.getOrElse(Title(d.value)),
@@ -121,7 +125,9 @@ object AcquisitionSweepRules:
     val byDoi = offered.map(c => c.doi -> c).toMap
     val parsed = r.picks.map(p => (p, Doi.normalize(p.doi.value).flatMap(byDoi.get)))
     val problems = parsed.collect { case (p, None) => Problem(s"'${p.doi}' is not one of the listed candidates") }
-    val kept = parsed.collect { case (p, Some(c)) => (c, Pick.Why(Option(p.why).map(_.value.trim).getOrElse(""))) }.distinctBy(_._1.doi)
+    val kept = parsed
+      .collect { case (p, Some(c)) => (c, Pick.Why(Option(p.why).map(_.value.trim).getOrElse(""))) }
+      .distinctBy(_._1.doi)
     if problems.nonEmpty && !last.value then Left(problems)
     else Right((kept, problems.map(p => Dropped(s"rank: dropped — $p"))))
 
@@ -145,7 +151,11 @@ object AcquisitionSweepRules:
   def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: Allowance)(
       ingest: A => Either[IngestFailure, B]
   ): (List[(A, B)], List[(A, IngestFailure)]) =
-    @tailrec def loop(rest: List[A], ok: Vector[(A, B)], ko: Vector[(A, IngestFailure)]): (List[(A, B)], List[(A, IngestFailure)]) =
+    @tailrec def loop(
+        rest: List[A],
+        ok: Vector[(A, B)],
+        ko: Vector[(A, IngestFailure)]
+    ): (List[(A, B)], List[(A, IngestFailure)]) =
       rest match
         case p :: tail if ok.size < allowed.value =>
           ingest(p) match
@@ -162,4 +172,6 @@ object AcquisitionSweepRules:
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")
     val oa = if c.isOa.value then " (open access)" else ""
     val reason = Option(why).map(_.value.trim).filter(_.nonEmpty).fold("")(w => s": $w")
-    AcquireText(s"${if head.isEmpty then "" else s"$head. "}${c.title}. https://doi.org/${c.doi}$oa — for goal $goal$reason")
+    AcquireText(
+      s"${if head.isEmpty then "" else s"$head. "}${c.title}. https://doi.org/${c.doi}$oa — for goal $goal$reason"
+    )

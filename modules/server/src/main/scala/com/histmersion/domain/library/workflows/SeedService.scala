@@ -55,7 +55,11 @@ final class SeedService(
       )
       .filter((_, slug) => lastSweep(slug).forall(t => !t.plusSeconds(every).isAfter(now)))
       .sortBy((g, slug) =>
-        (-(g.priority.value + (if g.pinned.value then SchedulerPolicy.PinBoost else 0)), g.createdAt.value: String, slug.value: String)
+        (
+          -(g.priority.value + (if g.pinned.value then SchedulerPolicy.PinBoost else 0)),
+          g.createdAt.value: String,
+          slug.value: String
+        )
       )
       .map(_._2)
 
@@ -95,7 +99,10 @@ final class SeedService(
         seed(g)
       }
       if lines.nonEmpty then
-        val _ = site.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000))))
+        val _ = site.workLists.add(
+          WorkListControllers.ListName("log"),
+          QueueAdd(Queue.QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000)))
+        )
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
@@ -126,5 +133,11 @@ final class SeedService(
         val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
           s"${Plural.count(Plural.CountN(queued.toLong), Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
-        agents.managerStore.event(watcherOf(goal), None, None, ManagerEvent.Kind(Feed.Swept), ManagerEvent.Text(s"seed before the plan — $line".take(2000)))
+        agents.managerStore.event(
+          watcherOf(goal),
+          None,
+          None,
+          ManagerEvent.Kind(Feed.Swept),
+          ManagerEvent.Text(s"seed before the plan — $line".take(2000))
+        )
         Some(line)

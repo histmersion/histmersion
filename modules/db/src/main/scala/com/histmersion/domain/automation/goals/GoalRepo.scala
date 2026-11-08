@@ -18,8 +18,6 @@ import com.histmersion.util.identity.AliasTable
 
 object GoalRepo:
 
-
-
   private val cols =
     "g.slug, g.title, g.status, g.notes, g.tags, g.regions, " +
       s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
@@ -77,7 +75,9 @@ object GoalRepo:
       .getOrElse(Right((None, None)))
       .map((s, e) => putIn(slug, in, RangeSql.literal(s, e)))
 
-  private def putIn(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put, period: Option[String])(using DbCon): Unit =
+  private def putIn(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put, period: Option[String])(using
+      DbCon
+  ): Unit =
     sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
           VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                   ${in.tags}::text[], ${in.regions}::text[],
@@ -91,7 +91,8 @@ object GoalRepo:
   def patchIn(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
     locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
-      if !exists then Left(Api.Error(Api.Error.Message(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      if !exists then
+        Left(Api.Error(Api.Error.Message(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       else
         p.title.foreach(v => sql"UPDATE goals SET title = $v, updated_at = now() WHERE slug = $slug".update.run())
         p.status.foreach(v => sql"UPDATE goals SET status = $v, updated_at = now() WHERE slug = $slug".update.run())
@@ -135,14 +136,19 @@ object GoalRepo:
   /** Rename a goal (V042), inside the caller's transaction: the slug moves with one UPDATE (its sub-goals' parent
     * cascades). What a bundle import does when a goal was renamed on the other side.
     */
-  private[histmersion] def renameIn(oldSlug: com.histmersion.domain.automation.Goal.Slug, newSlug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Either[Api.Error, Unit] =
-    def exists(s: com.histmersion.domain.automation.Goal.Slug) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
+  private[histmersion] def renameIn(
+      oldSlug: com.histmersion.domain.automation.Goal.Slug,
+      newSlug: com.histmersion.domain.automation.Goal.Slug
+  )(using DbCon): Either[Api.Error, Unit] =
+    def exists(s: com.histmersion.domain.automation.Goal.Slug) =
+      sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT goal_slug FROM goal_aliases WHERE alias = $newSlug"
       .query[String]
       .run()
       .headOption
       .map(com.histmersion.domain.automation.Goal.Slug.assume(_))
-    if !exists(oldSlug) then Left(Api.Error(Api.Error.Message(s"No goal '${oldSlug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    if !exists(oldSlug) then
+      Left(Api.Error(Api.Error.Message(s"No goal '${oldSlug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else if exists(newSlug) then
       Left(
         Api.Error(
@@ -153,7 +159,9 @@ object GoalRepo:
     else if aliasOf.exists(_ != oldSlug) then
       Left(
         Api.Error(
-          Api.Error.Message(s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"),
+          Api.Error.Message(
+            s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"
+          ),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
@@ -165,7 +173,9 @@ object GoalRepo:
       Right(())
 
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
-  def renamedTo(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
+  def renamedTo(
+      slug: com.histmersion.domain.automation.Goal.Slug
+  )(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
     GoalAliasTable.table
       .renamedToIn(AliasTable.Id(slug.value))
       .map(id => com.histmersion.domain.automation.Goal.Slug.assume(id.value))

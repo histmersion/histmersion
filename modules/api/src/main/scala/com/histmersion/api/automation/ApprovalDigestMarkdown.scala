@@ -4,7 +4,7 @@ package api.automation
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ApprovalDigestMarkdown:
-  export Approval.DecidedBy.{Wire as DeciderDecidedBy}
+  export Approval.DecidedBy.Wire as DeciderDecidedBy
 
   import ApprovalDigest.*
 
@@ -32,10 +32,14 @@ object ApprovalDigestMarkdown:
     ((head :: kinds).mkString("\n\n"))
 
   def bulk(r: BulkResult): String =
-    val verb = if r.dryRun.value then s"would ${r.decision}" else if r.decision.value == "approve" then "approved" else "rejected"
-    s"# ${Plural.count(Plural.CountN(r.matched.value.toLong), Plural.CountSingular("open approval"))} matched: $verb ${r.decided.size}" + (if r.dryRun.value then
-                                                                                           " (dry run: nothing decided)"
-                                                                                         else "") +
+    val verb = if r.dryRun.value then s"would ${r.decision}"
+    else if r.decision.value == "approve" then "approved"
+    else "rejected"
+    s"# ${Plural.count(Plural.CountN(r.matched.value.toLong), Plural.CountSingular("open approval"))} matched: $verb ${r.decided.size}" + (if r.dryRun.value
+                                                                                                                                           then
+                                                                                                                                             " (dry run: nothing decided)"
+                                                                                                                                           else
+                                                                                                                                             "") +
       (if r.decided.isEmpty then "" else s"\n\n- ${r.decided.map(i => s"#$i").mkString(", ")}") +
       (if r.failed.isEmpty then ""
        else "\n\n## Not decided\n\n" + r.failed.map(f => s"- #${f.id}: ${f.error}").mkString("\n")) +

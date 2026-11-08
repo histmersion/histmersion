@@ -37,4 +37,3 @@ final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () =>
       millis = millis :+ AgentRepo.MessageRecord.LatencyMs(t0.elapsed.toMillis.toInt)
       slots.release()
       beat()
-

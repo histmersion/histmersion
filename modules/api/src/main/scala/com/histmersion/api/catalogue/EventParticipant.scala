@@ -14,7 +14,8 @@ final case class EventParticipant(
     role: EventParticipant.Role = EventParticipant.Role("participant"),
     citekey: Option[Citekey] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventParticipant:
   type Actor = Actor.T

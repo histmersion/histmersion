@@ -57,4 +57,3 @@ object Field:
   object Label extends Newtype[String, Pure]
   type Chip = Chip.T
   object Chip extends Newtype[Boolean, Pure]
-

@@ -23,17 +23,27 @@ object Pager:
     else RangeText(s"${offset.value + 1}–${offset.value + shown.value} of ${total.value}")
 
   /** The offset of the previous page (never below 0), and of the next one (None past the end). Pure. */
-  def previous(offset: Offset, limit: Paging.Limit): Offset = Offset(math.max(0, offset.value - math.max(1, limit.value)))
+  def previous(offset: Offset, limit: Paging.Limit): Offset = Offset(
+    math.max(0, offset.value - math.max(1, limit.value))
+  )
   def next(offset: Offset, limit: Paging.Limit, total: Paging.Page.Total): Option[Offset] =
     Option(Offset(offset.value + math.max(1, limit.value))).filter(_.value < total.value)
 
   /** The controls: `offset` moves; `limit` and `total` come from the last page read. */
-  def apply(label: Label, offset: Var[Offset], limit: Paging.Limit, shown: Signal[Paging.Shown], total: Signal[Paging.Page.Total]): HtmlElement =
+  def apply(
+      label: Label,
+      offset: Var[Offset],
+      limit: Paging.Limit,
+      shown: Signal[Paging.Shown],
+      total: Signal[Paging.Page.Total]
+  ): HtmlElement =
     div(
       cls := "toolbar pager",
       span(
         cls := "muted pager-range",
-        child.text <-- offset.signal.combineWith(shown, total).map((o, s, t) => s"${label.value} ${range(o, s, t).value}")
+        child.text <-- offset.signal
+          .combineWith(shown, total)
+          .map((o, s, t) => s"${label.value} ${range(o, s, t).value}")
       ),
       div(
         cls := "btn-group",

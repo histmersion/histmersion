@@ -59,7 +59,8 @@ object AttestationService:
         offset
       )
     )
-    def get(id: Attestation.Id): Option[Attestation] = db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
+    def get(id: Attestation.Id): Option[Attestation] =
+      db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
     def create(in: Attestation.Put): Attestation = db.transact(AttestationRepo.create(in))
     def patch(id: Attestation.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
       db.transact:
@@ -67,8 +68,8 @@ object AttestationService:
         else
           AttestationRepo.update(AttestationRepo.AttestationId(id.value), p)
           Right(AttestationRepo.get(AttestationRepo.AttestationId(id.value)).get)
-    def delete(id: Attestation.Id): Boolean = db.transact(AttestationRepo.delete(AttestationRepo.AttestationId(id.value)))
-
+    def delete(id: Attestation.Id): Boolean =
+      db.transact(AttestationRepo.delete(AttestationRepo.AttestationId(id.value)))
 
   /** The same rules over the shared in-memory state; ids are given in order, as the database's sequence gives them. */
   final class InMemory(state: AtomicReference[CatalogueState]) extends AttestationService:
@@ -150,5 +151,3 @@ object AttestationService:
       val had = get(id).isDefined
       val _ = state.updateAndGet(_.modify(_.attestations).using(_.filterNot(_.id == id)))
       had
-
-

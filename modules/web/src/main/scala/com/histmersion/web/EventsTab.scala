@@ -38,7 +38,15 @@ object EventsTab:
     fetch = (q, offset) =>
       ApiClient
         .events(q.modify(_.filter.offset).setTo(offset))
-        .map(r => TabPage(r.events, r.total, List(TabPage.Extras(ResultsPaging.span(UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))).value)))),
+        .map(r =>
+          TabPage(
+            r.events,
+            r.total,
+            List(
+              TabPage.Extras(ResultsPaging.span(UiState.from.now().map(Year(_)), UiState.to.now().map(Year(_))).value)
+            )
+          )
+        ),
     render = renderEvent,
     empty = FilterTab.Empty("No events relate to the current filter."),
     page = ResultsPaging.PageNumber(Layout.tabPage.value),
@@ -48,7 +56,8 @@ object EventsTab:
   def pane: HtmlElement = tab.pane
 
   /** How many the list holds, once it has an answer (its tab's count). */
-  val total: Signal[Option[RowCount]] = tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
+  val total: Signal[Option[RowCount]] =
+    tab.state.signal.map(s => Option.when(s.loaded.value)(RowCount(math.max(s.total.value, s.rows.size))))
 
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`), else its
     * four-point span.
@@ -72,7 +81,9 @@ object EventsTab:
         href := Route.Event(Route.Event.Id(evt.id.value)).path,
         dataAttr("event") := evt.id.value,
         onClick --> { ev =>
-          if Router.plain(ev) then { ev.preventDefault(); ResultsPanel.show(Preview.Target.Event(Preview.Target.Event.Id(evt.id.value))) }
+          if Router.plain(ev) then {
+            ev.preventDefault(); ResultsPanel.show(Preview.Target.Event(Preview.Target.Event.Id(evt.id.value)))
+          }
         },
         // its kind's icon and its tier, as on the map (#1449)
         span(
@@ -80,7 +91,9 @@ object EventsTab:
           title := s"${EventTaxonomy.of(evt.kind).label} · ${
               if evt.tier.value == EventTier.Catalogue then "catalogue only" else "attested"
             }",
-          onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.badge(Glyphs.BadgeName(EventTaxonomy.icon(evt.kind).value)).value)
+          onMountCallback(ctx =>
+            ctx.thisNode.ref.innerHTML = Glyphs.badge(Glyphs.BadgeName(EventTaxonomy.icon(evt.kind).value)).value
+          )
         ),
         evt.label.value
       ),

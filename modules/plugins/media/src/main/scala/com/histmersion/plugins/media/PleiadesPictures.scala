@@ -28,10 +28,14 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
     Either.cond(
       conf.enabled.value,
       (),
-      MediaCollection.CheckResultPart1("Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)")
+      MediaCollection.CheckResultPart1(
+        "Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)"
+      )
     )
 
-  def search(place: MediaPlace, http: Plugin.Http) = Left(MediaCollection.SearchResultPart1("the Pleiades pictures are found for a batch of places"))
+  def search(place: MediaPlace, http: Plugin.Http) = Left(
+    MediaCollection.SearchResultPart1("the Pleiades pictures are found for a batch of places")
+  )
 
   private def placeTarget(p: MediaPlace): MediaTarget.Id =
     MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value(p.id.value))
@@ -39,25 +43,23 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
   override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
     // 1. each place's record(s): the picture links, in order
     val read = places.map { p =>
-      val pids = p.ids.collect { case (scheme, id) if scheme.value == PleiadesPictures.Scheme => GazetteerPlace.Id(id.value) }
+      val pids = p.ids.collect {
+        case (scheme, id) if scheme.value == PleiadesPictures.Scheme => GazetteerPlace.Id(id.value)
+      }
       (
         p,
         pids,
-        pids.map(pid =>
-          pid -> http.askJson(PleiadesLinks.placeUrl(conf.apiUrl, pid)).flatMap(PleiadesLinks.links)
-        )
+        pids.map(pid => pid -> http.askJson(PleiadesLinks.placeUrl(conf.apiUrl, pid)).flatMap(PleiadesLinks.links))
       )
     }
     // 2. the Commons files, at most per-place; the rest counted by reason
     val found = read.flatMap { (p, _, answers) =>
       answers
-        .flatMap((pid, a) =>
-          a.toOption.toList.flatten.flatMap(l => l.file.toOption.map(f => (pid, l, f)))
-        )
+        .flatMap((pid, a) => a.toOption.toList.flatten.flatMap(l => l.file.toOption.map(f => (pid, l, f))))
         .distinctBy(_._3)
         .take(conf.perPlace.value.max(0))
         .zipWithIndex
-        .map { case ((pid, l, f), i) => (p, f, i, s"Pleiades place ${pid} links it (${l.citation.value})") }
+        .map { case ((pid, l, f), i) => (p, f, i, s"Pleiades place $pid links it (${l.citation.value})") }
     }
     val (files, judged) = Commons.Files(http, media, licences).items(found.map(_._2).distinct)
     MediaFound(
@@ -73,10 +75,12 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       asked = places.map(placeTarget),
       unanswered = read.collect { case (p, _, as) if as.exists(_._2.isLeft) => placeTarget(p) }.toSet,
       read = MediaFound.Read(read.map(_._3.count(_._2.isRight)).sum),
-      failed = read.flatMap { (p, pids, answers) =>
-        (if pids.isEmpty then List(s"place ${p.id.value} (${p.label.value}): no Pleiades id") else Nil) ++
-          answers.collect { case (pid, Left(e)) => s"Pleiades place ${pid.value} (${p.id.value}): $e" }
-      }.map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.value)),
+      failed = read
+        .flatMap { (p, pids, answers) =>
+          (if pids.isEmpty then List(s"place ${p.id.value} (${p.label.value}): no Pleiades id") else Nil) ++
+            answers.collect { case (pid, Left(e)) => s"Pleiades place ${pid.value} (${p.id.value}): $e" }
+        }
+        .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.value)),
       notTaken = read
         .flatMap(_._3.flatMap(_._2.toOption.toList.flatten.flatMap(_.file.left.toOption)))
         .map(why => MediaFound.NotTaken(s"$why"))

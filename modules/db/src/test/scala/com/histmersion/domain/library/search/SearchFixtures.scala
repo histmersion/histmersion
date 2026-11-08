@@ -17,10 +17,14 @@ import com.histmersion.util.database.Sql
 
 /** The db suites' reads of the search on a database of their own. */
 object SearchFixtures:
-  private given Timer = new Timer { def start(): Timer.Measure = new Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero } }
+  private given Timer = new Timer {
+    def start(): Timer.Measure = new Timer.Measure {
+      def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero
+    }
+  }
 
-  export QueryRepo.{MaxRows, MaxCellChars, Statement}
-  export AggregateRepo.{Unit as AggregateUnit}
+  export QueryRepo.{MaxCellChars, MaxRows, Statement}
+  export AggregateRepo.Unit as AggregateUnit
 
   def sources(
       ds: DataSource,

@@ -84,11 +84,21 @@ class SourceNoteParseSuite extends munit.FunSuite:
     assertEquals(s.topics, List("indo-european", "refutes_anthony2007", "bronze_age_collapse"))
     // an already-declared topic is not duplicated
     val dup = withTopic.replace("topics: [indo-european,", "topics: [Bronze_Age_Collapse, indo-european,")
-    assertEquals(SourceNote.parseNote(SourceNote.Text(dup), Citekey("x")).get.topics.count(_.value.equalsIgnoreCase("bronze_age_collapse")), 1)
+    assertEquals(
+      SourceNote
+        .parseNote(SourceNote.Text(dup), Citekey("x"))
+        .get
+        .topics
+        .count(_.value.equalsIgnoreCase("bronze_age_collapse")),
+      1
+    )
 
   test("no frontmatter → None; fallback citekey from filename"):
     assertEquals(SourceNote.parseNote(SourceNote.Text("just text"), Citekey("x")), None)
-    assertEquals(SourceNote.parseNote(SourceNote.Text("---\ntitle: T\n---\n"), Citekey("fromfile")).get.citekey, "fromfile")
+    assertEquals(
+      SourceNote.parseNote(SourceNote.Text("---\ntitle: T\n---\n"), Citekey("fromfile")).get.citekey,
+      "fromfile"
+    )
 
   // ── a note whose deep-time bounds are the wrong way round ────────────────────────────────────
 
@@ -120,4 +130,7 @@ class SourceNoteParseSuite extends munit.FunSuite:
         |period_end: -1200
         |---
         |""".stripMargin
-    assertEquals(SourceNote.parseNote(SourceNote.Text(note), Citekey("zz_ordered")).get.period, Some(Period(Year(-1400), Year(-1200))))
+    assertEquals(
+      SourceNote.parseNote(SourceNote.Text(note), Citekey("zz_ordered")).get.period,
+      Some(Period(Year(-1400), Year(-1200)))
+    )

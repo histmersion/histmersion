@@ -56,7 +56,8 @@ object TileDecode:
   def site(f: TilePointFeature): Option[SitePoint] =
     val p = f.props
     str(p, P.Id).map { id =>
-      val period = for a <- num(p, P.PeriodStart); b <- num(p, P.PeriodEnd) yield (PlaybackAreas.FractionalYear(a), PlaybackAreas.FractionalYear(b))
+      val period = for a <- num(p, P.PeriodStart); b <- num(p, P.PeriodEnd)
+      yield (PlaybackAreas.FractionalYear(a), PlaybackAreas.FractionalYear(b))
       SitePoint(
         Some(SitePoint.Id(id)),
         SitePoint.Label(str(p, P.Label).getOrElse("")),

@@ -154,9 +154,23 @@ class HardeningHttpSuite extends munit.FunSuite:
     // reachable only when the CONFIGURED span itself is enormous — which is exactly the case the
     // cap exists for, since the clamp above bounds everything a caller can ask for.
     val base = AppConfig.load()
-    val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.ui).setTo(base.ui.modify(_.maxBuckets).setTo(UiSettings.MaxBuckets(5)).modify(_.time).setTo(base.ui.time.modify(_.min).setTo(UiTimeSettings.Min((-1000000L: Long))).modify(_.max).setTo(UiTimeSettings.Max((1000000L: Long))))
-    )
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.ui)
+      .setTo(
+        base.ui
+          .modify(_.maxBuckets)
+          .setTo(UiSettings.MaxBuckets(5))
+          .modify(_.time)
+          .setTo(
+            base.ui.time
+              .modify(_.min)
+              .setTo(UiTimeSettings.Min((-1000000L: Long)))
+              .modify(_.max)
+              .setTo(UiTimeSettings.Max((1000000L: Long)))
+          )
+      )
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -210,7 +224,9 @@ class HardeningHttpSuite extends munit.FunSuite:
       converter = base.converter.modify(_.url).setTo(ConverterConfig.Url("http://192.0.2.1:1"))
     )
     supervised {
-      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), ConverterWiring.client(cfg.converter)).start()
+      val b = Composition
+        .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), ConverterWiring.client(cfg.converter))
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val started = System.nanoTime()
@@ -234,7 +250,11 @@ class HardeningHttpSuite extends munit.FunSuite:
   test("with corpus.dir configured, `seed {dir}` cannot read outside it"):
     val corpus = java.nio.file.Files.createTempDirectory("histmersion-corpus-test")
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.corpus).setTo(base.corpus.modify(_.dir).setTo(CorpusConfig.Dir(corpus.toString)))
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.corpus)
+      .setTo(base.corpus.modify(_.dir).setTo(CorpusConfig.Dir(corpus.toString)))
     supervised {
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"

@@ -48,14 +48,16 @@ final private[findings] case class GeoFeedRow(
       apiDoi,
       Some(
         GeoHit.SourceKind(
-          Source.Kinds.of(
-            apiDoi,
-            venue.map(v => Source.Venue(v.value)),
-            provenance.map(p => Source.Provenance(p.value)),
-            tags.map(t => Source.Tags(t.value)),
-            topics.map(t => Source.Topics(t.value)),
-            hasCover.value
-          ).value
+          Source.Kinds
+            .of(
+              apiDoi,
+              venue.map(v => Source.Venue(v.value)),
+              provenance.map(p => Source.Provenance(p.value)),
+              tags.map(t => Source.Tags(t.value)),
+              topics.map(t => Source.Topics(t.value)),
+              hasCover.value
+            )
+            .value
         )
       )
     )

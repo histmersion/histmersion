@@ -12,7 +12,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param megabytes
   *   its size, when the collection says
   */
-final case class CollectionFile(name: CollectionFile.Name, format: Option[CollectionFile.Format] = None, megabytes: Option[CollectionFile.Megabytes] = None)
+final case class CollectionFile(
+    name: CollectionFile.Name,
+    format: Option[CollectionFile.Format] = None,
+    megabytes: Option[CollectionFile.Megabytes] = None
+)
 
 object CollectionFile:
   type Name = Name.T

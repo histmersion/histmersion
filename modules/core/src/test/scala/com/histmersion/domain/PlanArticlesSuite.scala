@@ -56,14 +56,24 @@ class PlanArticlesSuite extends munit.FunSuite:
         assertEquals(cs.map(c => (c.slug, c.kind)), List(("good", "concept")))
         assert(dropped.exists(_.value.contains("proposed twice")))
       case other => fail(other.toString)
-    assert(check(ArticlesAnswer(ArticlesAnswer.Rationale(""), Nil), Limits.MaxArticles(6), last = LastRound(false)).isLeft)
     assert(
-      check(ArticlesAnswer(ArticlesAnswer.Rationale("r"), List(art(slug("a"), topics("x")), art(slug("b"), topics("y")))), Limits.MaxArticles(1), last = LastRound(false)).left
+      check(ArticlesAnswer(ArticlesAnswer.Rationale(""), Nil), Limits.MaxArticles(6), last = LastRound(false)).isLeft
+    )
+    assert(
+      check(
+        ArticlesAnswer(ArticlesAnswer.Rationale("r"), List(art(slug("a"), topics("x")), art(slug("b"), topics("y")))),
+        Limits.MaxArticles(1),
+        last = LastRound(false)
+      ).left
         .exists(_.exists(_.value.contains("at most 1")))
     )
 
   test("verify: slug taken, too few sources, too much overlap with an area article or an earlier proposal are dropped"):
-    val lim = Limits(minSources = Limits.MinSources(3), maxOverlap = Limits.MaxOverlap(0.5), maxArticles = Limits.MaxArticles(6))
+    val lim = Limits(
+      minSources = Limits.MinSources(3),
+      maxOverlap = Limits.MaxOverlap(0.5),
+      maxArticles = Limits.MaxArticles(6)
+    )
     val sets = Map(
       Article.Filter.Topics("tin") -> citekeys("a", "b", "c", "d"),
       Article.Filter.Topics("copper") -> citekeys("e", "f", "g"),
@@ -71,7 +81,13 @@ class PlanArticlesSuite extends munit.FunSuite:
       Article.Filter.Topics("old") -> citekeys("a", "b", "c", "x"),
       Article.Filter.Topics("dup") -> citekeys("e", "f", "g", "h")
     )
-    def c(slug: Article.Slug, topic: Article.Filter.Topics) = Candidate(slug, Article.Title(slug.value), Article.Kind.Wire("concept"), Article.Filter(topics = List(topic)), Article.Plans.ProposedArticle.Why("w"))
+    def c(slug: Article.Slug, topic: Article.Filter.Topics) = Candidate(
+      slug,
+      Article.Title(slug.value),
+      Article.Kind.Wire("concept"),
+      Article.Filter(topics = List(topic)),
+      Article.Plans.ProposedArticle.Why("w")
+    )
     val plan = verify(
       Goal.Slug("goal"),
       ArticlesAnswer.Rationale(" r "),
@@ -110,5 +126,8 @@ class PlanArticlesSuite extends munit.FunSuite:
     assert(p2.dropped.head.value.contains("75%"), p2.dropped)
 
   test("overlap: the share of mine the other holds"):
-    assertEquals(overlap(Set(Citekey.assume("a"), Citekey.assume("b")), Set(Citekey.assume("b"), Citekey.assume("c"))), 0.5)
+    assertEquals(
+      overlap(Set(Citekey.assume("a"), Citekey.assume("b")), Set(Citekey.assume("b"), Citekey.assume("c"))),
+      0.5
+    )
     assertEquals(overlap(Set.empty, Set(Citekey.assume("a"))), 0.0)

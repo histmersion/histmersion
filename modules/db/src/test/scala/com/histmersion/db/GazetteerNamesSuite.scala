@@ -107,7 +107,10 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
       val st = Files.list(dir)
       try
         st.iterator.asScala.toList
-          .map(p => PlaceSeed.Entry(PlaceSeed.Entry.Name(p.getFileName.toString), PlaceSeed.Entry.Directory(Files.isDirectory(p)), p))
+          .map(p =>
+            PlaceSeed
+              .Entry(PlaceSeed.Entry.Name(p.getFileName.toString), PlaceSeed.Entry.Directory(Files.isDirectory(p)), p)
+          )
           .filter(e => e.directory.value || Files.isRegularFile(e.at))
       finally st.close()
     PlaceSeed.files(entries(root.resolve("db/places")), entries).flatMap { (f, kind) =>
@@ -192,10 +195,14 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
 
   test("a name added by hand survives a re-seed; an import never deletes it, and the seed's own are replaced"):
     val before = names(Galilee)
-    val r = PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).fold(e => fail(e.message.value), identity)
+    val r = PlaceFixtures
+      .addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en"))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((r.changed, r.wasImported, r.label), (true, false, "Sea of Galilee"))
     // a name the seed already gives becomes manual: kept even when a later seed drops it
-    val again = PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en")).fold(e => fail(e.message.value), identity)
+    val again = PlaceFixtures
+      .addName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en"))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((again.changed, again.wasImported), (true, true))
     assertEquals(
       PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).map(_.changed),
@@ -207,7 +214,9 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assert(names(Galilee).contains(("Kinnereth", "en", true)), names(Galilee))
     val newer = seed.map(in =>
-      if in.place.id.value == Galilee then in.modify(_.names).setTo(in.names.filterNot(_.name.value == "Sea of Tiberias")) else in
+      if in.place.id.value == Galilee then
+        in.modify(_.names).setTo(in.names.filterNot(_.name.value == "Sea of Tiberias"))
+      else in
     )
     val _ = PlaceFixtures.upsertPlaces(ds, newer)
     val after = names(Galilee)
@@ -218,7 +227,10 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
 
     // removal: only a name added by hand; an imported one is refused
     assertEquals(
-      PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Lake Tiberias"), PlaceFixtures.Lang("en")).left.map(_.code),
+      PlaceFixtures
+        .removeName(ds, GalileeId, PlaceFixtures.Name("Lake Tiberias"), PlaceFixtures.Lang("en"))
+        .left
+        .map(_.code),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
@@ -226,11 +238,16 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
       Left(Some(Write.CodeNotFound))
     )
     assert(PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).isRight)
-    assert(PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en")).isRight)
+    assert(
+      PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en")).isRight
+    )
     val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assertEquals(names(Galilee), before, "after removing them, a re-seed restores exactly the seed's names")
     assertEquals(
-      PlaceFixtures.addName(ds, Place.Id("zzgn_no_such_place"), PlaceFixtures.Name("X"), PlaceFixtures.Lang("")).left.map(_.code),
+      PlaceFixtures
+        .addName(ds, Place.Id("zzgn_no_such_place"), PlaceFixtures.Name("X"), PlaceFixtures.Lang(""))
+        .left
+        .map(_.code),
       Left(Some(Write.CodeNotFound))
     )
 
@@ -265,7 +282,17 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
   // ── the fill ───────────────────────────────────────────────────────────────────────────────
 
   private def finding(n: Int, region: String, at: Option[GeoPoint], period: Option[Period] = None) =
-    Finding(Finding.Id(s"$Ck#$n"), Citekey(Ck), Finding.Claim(s"claim $n about $region"), Some(Finding.Region(region)), at, period, None, Nil, Some(Confidence.High))
+    Finding(
+      Finding.Id(s"$Ck#$n"),
+      Citekey(Ck),
+      Finding.Claim(s"claim $n about $region"),
+      Some(Finding.Region(region)),
+      at,
+      period,
+      None,
+      Nil,
+      Some(Confidence.High)
+    )
 
   private def pointOf(n: Int): Option[(Double, Double)] = connect(ds):
     sql"SELECT ST_X(geom), ST_Y(geom) FROM findings WHERE id = ${s"$Ck#$n"} AND geom IS NOT NULL"
@@ -293,7 +320,11 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
       calibreId = None,
       findings = List(
         finding(0, "Dead Sea", None, Some(Period(Year(-1200), Year(-1100)))),
-        finding(1, "Balkans", Some(GeoPoint(Longitude(-40.0), Latitude(10.0)))), // placed by hand (in the Atlantic): never touched
+        finding(
+          1,
+          "Balkans",
+          Some(GeoPoint(Longitude(-40.0), Latitude(10.0)))
+        ), // placed by hand (in the Atlantic): never touched
         finding(2, "Zzgn nowhere at all", None), // unknown: stays unplaced, never guessed
         finding(3, "northern Levant", None),
         finding(4, "Kraków", None)
@@ -308,7 +339,14 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     )
     assert(ps.find(_.region.value == "northern Levant").exists(_.to.isApproximate))
 
-    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.Rule.Name(Lint.FindingUnplaced)).get), Lint.ItemLimit(500), Lint.ItemLimit(3), (_, _, _) => Nil, settings)
+    val rep = SourceCheckFixtures.run(
+      ds,
+      List(Lint.rule(Lint.Rule.Name(Lint.FindingUnplaced)).get),
+      Lint.ItemLimit(500),
+      Lint.ItemLimit(3),
+      (_, _, _) => Nil,
+      settings
+    )
     val items = rep.rules.head.items.filter(_.citekey.value == Ck)
     assertEquals(items.size, 3, items)
     assert(items.exists(_.detail.value.startsWith(s"$Ck#4: 'Kraków' → Kraków [$Krakow]")), items)

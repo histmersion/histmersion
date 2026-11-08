@@ -63,14 +63,20 @@ object Scheduling:
       case None    =>
         if spentDay >= BigDecimal(dailyUsd.value) then
           Decision.Skip(
-            Decision.Skip.Reason(s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd")
+            Decision.Skip.Reason(
+              s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd"
+            )
           )
         else if spentMonth >= BigDecimal(monthlyUsd.value) then
           Decision.Skip(
-            Decision.Skip.Reason(s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd")
+            Decision.Skip.Reason(
+              s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd"
+            )
           )
         else if active.value >= math.max(1, maxConcurrent.value) then
-          Decision.Defer(Decision.Defer.Reason(s"$active run(s) already queued or running (agents.max-concurrent-runs)"))
+          Decision.Defer(
+            Decision.Defer.Reason(s"$active run(s) already queued or running (agents.max-concurrent-runs)")
+          )
         else Decision.Start
 
   /** The cost cap of a scheduled run: the schedule's own, else the goal's, else the server default. */

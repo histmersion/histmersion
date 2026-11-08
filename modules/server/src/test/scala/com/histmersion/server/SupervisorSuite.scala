@@ -22,8 +22,17 @@ class SupervisorSuite extends munit.FunSuite:
   // independent of the environment the suite runs in (CI sets HISTMERSION_PG_BIN_DIR, HISTMERSION_BIND, …)
   private val base =
     val c = AppConfig.load()
-    c.modify(_.backups).setTo(c.backups.modify(_.dir).setTo(BackupsConfig.Dir("backups")).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir("")))
-  private def rc(home: String = "", data: String = "") = base.runtime.modify(_.enabled).setTo(RuntimeConfig.Enabled(true)).modify(_.home).setTo(RuntimeConfig.Home(home)).modify(_.dataDir).setTo(RuntimeConfig.DataDir(data))
+    c.modify(_.backups)
+      .setTo(
+        c.backups.modify(_.dir).setTo(BackupsConfig.Dir("backups")).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(""))
+      )
+  private def rc(home: String = "", data: String = "") = base.runtime
+    .modify(_.enabled)
+    .setTo(RuntimeConfig.Enabled(true))
+    .modify(_.home)
+    .setTo(RuntimeConfig.Home(home))
+    .modify(_.dataDir)
+    .setTo(RuntimeConfig.DataDir(data))
   private def env(m: (String, String)*): UserPaths.Lookup =
     m.map((k, v) => Environment.VariablesKey(k) -> Environment.VariablesValue(v)).toMap.get
 
@@ -45,7 +54,9 @@ class SupervisorSuite extends munit.FunSuite:
       Right(Path.of("/Users/u/Library/Application Support/Histmersion"))
     )
     assertEquals(
-      Supervisor.layout(rc(), exe, env("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xdg"), UserPaths.OsName("Linux")).map(_.data),
+      Supervisor
+        .layout(rc(), exe, env("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xdg"), UserPaths.OsName("Linux"))
+        .map(_.data),
       Right(Path.of("/xdg/histmersion"))
     )
     assertEquals(
@@ -57,7 +68,10 @@ class SupervisorSuite extends munit.FunSuite:
     val l = Supervisor.layout(rc("/h", "/d"), None, env(), UserPaths.OsName("Linux"))
     assertEquals(l.map(x => (x.home, x.cluster, x.logs)), Right((Path.of("/h"), Path.of("/d/pg"), Path.of("/d/logs"))))
     assert(
-      Supervisor.layout(rc(), Some(Path.of("/b/bin/x")), env(), UserPaths.OsName("Linux")).left.exists(_.value.contains("HISTMERSION_DATA_DIR"))
+      Supervisor
+        .layout(rc(), Some(Path.of("/b/bin/x")), env(), UserPaths.OsName("Linux"))
+        .left
+        .exists(_.value.contains("HISTMERSION_DATA_DIR"))
     )
 
   test("postgres listens on loopback TCP only — no Unix socket (macOS caps its path at 103 bytes)"):
@@ -79,13 +93,27 @@ class SupervisorSuite extends munit.FunSuite:
     assertEquals(Supervisor.pgSettings(auto, Some(ByteCount.applyUnsafe(1 * GB))).head, "shared_buffers" -> "128MB")
     // the RAM unknown: `auto` is left to Postgres, an explicit size still applies
     assertEquals(Supervisor.pgSettings(auto, None), List("work_mem" -> "16MB"))
-    assertEquals(Supervisor.pgSettings(PgTuning(PgTuning.SharedBuffers("1GB"), PgTuning.EffectiveCacheSize(""), PgTuning.WorkMem("")), None), List("shared_buffers" -> "1GB"))
+    assertEquals(
+      Supervisor.pgSettings(
+        PgTuning(PgTuning.SharedBuffers("1GB"), PgTuning.EffectiveCacheSize(""), PgTuning.WorkMem("")),
+        None
+      ),
+      List("shared_buffers" -> "1GB")
+    )
     // anything that is not a size never reaches the -o string
     assertEquals(
-      Supervisor.pgSettings(PgTuning(PgTuning.SharedBuffers("1GB -c fsync=off"), PgTuning.EffectiveCacheSize("lots"), PgTuning.WorkMem("4 MB")), Some(ByteCount.applyUnsafe(GB))),
+      Supervisor.pgSettings(
+        PgTuning(
+          PgTuning.SharedBuffers("1GB -c fsync=off"),
+          PgTuning.EffectiveCacheSize("lots"),
+          PgTuning.WorkMem("4 MB")
+        ),
+        Some(ByteCount.applyUnsafe(GB))
+      ),
       List("work_mem" -> "4MB")
     )
-    val o = Supervisor.pgOptions(RuntimeConfig.PgPort(5433), List("shared_buffers" -> "2048MB", "work_mem" -> "16MB")).value
+    val o =
+      Supervisor.pgOptions(RuntimeConfig.PgPort(5433), List("shared_buffers" -> "2048MB", "work_mem" -> "16MB")).value
     assert(o.endsWith(" -c shared_buffers=2048MB -c work_mem=16MB"), o)
     assertEquals(base.runtime.postgres, auto, "reference.conf: auto, auto, 16MB")
 
@@ -98,21 +126,42 @@ class SupervisorSuite extends munit.FunSuite:
     assertEquals(c.backups.pgBinDir, "/h/pg/bin")
     assertEquals(c.converter.spoolDir, "/d/uploads")
     assertEquals(c.server.host, "127.0.0.1", "a desktop install is private unless HISTMERSION_BIND says otherwise")
-    assertEquals(Supervisor.configure(base.modify(_.runtime).setTo(rc()), l, Some(ServerConfig.Host("0.0.0.0"))).server.host, "0.0.0.0")
-    val custom = base.modify(_.runtime).setTo(rc()).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir("/mine")).modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir("/opt/pg/bin")))
+    assertEquals(
+      Supervisor.configure(base.modify(_.runtime).setTo(rc()), l, Some(ServerConfig.Host("0.0.0.0"))).server.host,
+      "0.0.0.0"
+    )
+    val custom = base
+      .modify(_.runtime)
+      .setTo(rc())
+      .modify(_.backups)
+      .setTo(
+        base.backups
+          .modify(_.dir)
+          .setTo(BackupsConfig.Dir("/mine"))
+          .modify(_.pgBinDir)
+          .setTo(BackupsConfig.PgBinDir("/opt/pg/bin"))
+      )
     assertEquals(Supervisor.configure(custom, l).backups.dir, "/mine")
     assertEquals(Supervisor.configure(custom, l).backups.pgBinDir, "/opt/pg/bin")
 
   test("a bundled server builds bundles under <data>/bundles unless told otherwise"):
     val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))
     assertEquals(Supervisor.configure(base.modify(_.runtime).setTo(rc()), l).bundles.dir, "/d/bundles")
-    val custom = base.modify(_.runtime).setTo(rc()).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir("/srv/bundles")))
+    val custom = base
+      .modify(_.runtime)
+      .setTo(rc())
+      .modify(_.bundles)
+      .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir("/srv/bundles")))
     assertEquals(Supervisor.configure(custom, l).bundles.dir, "/srv/bundles")
 
   test("a bundled server reads its first-run data from the bundle's db/ unless told otherwise (#720)"):
     val l = Supervisor.Layout(Path.of("/h"), Path.of("/d"))
     assertEquals(Supervisor.configure(base.modify(_.runtime).setTo(rc()), l).init.dataDir, "/h/db")
-    val custom = base.modify(_.runtime).setTo(rc()).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(InitConfig.DataDir("/srv/seed")))
+    val custom = base
+      .modify(_.runtime)
+      .setTo(rc())
+      .modify(_.init)
+      .setTo(base.init.modify(_.dataDir).setTo(InitConfig.DataDir("/srv/seed")))
     assertEquals(Supervisor.configure(custom, l).init.dataDir, "/srv/seed")
 
   test("a server inside a bundle (pg/bin/pg_ctl beside bin/) enables the runtime by itself"):

@@ -33,7 +33,9 @@ trait EventImportService:
   def records(provider: Option[CatalogRecord.Provider]): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount)
 
   /** The kind each stored record of `provider` has, by key. */
-  def storedKinds(provider: CatalogRecord.Provider): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind]
+  def storedKinds(
+      provider: CatalogRecord.Provider
+  ): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind]
 
   def partsDone(provider: CatalogRecord.Provider): Set[EventImportRepo.PartName]
   def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount): Unit
@@ -46,10 +48,16 @@ object EventImportService:
     def stored(): List[StoredEvent] = db.read(EventImportRepo.stored)
     def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
       db.transact(EventImportRepo.save(placed))
-    def records(provider: Option[CatalogRecord.Provider]): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
+    def records(
+        provider: Option[CatalogRecord.Provider]
+    ): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
       db.read(EventImportRepo.records(provider))
-    def storedKinds(provider: CatalogRecord.Provider): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] = db.read(EventImportRepo.storedKinds(provider))
-    def partsDone(provider: CatalogRecord.Provider): Set[EventImportRepo.PartName] = db.read(EventImportRepo.partsDone(provider))
+    def storedKinds(
+        provider: CatalogRecord.Provider
+    ): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
+      db.read(EventImportRepo.storedKinds(provider))
+    def partsDone(provider: CatalogRecord.Provider): Set[EventImportRepo.PartName] =
+      db.read(EventImportRepo.partsDone(provider))
     def markPart(provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount): Unit =
       db.transact(EventImportRepo.markPart(provider, part, records))
     def clearParts(provider: CatalogRecord.Provider): Unit = db.transact(EventImportRepo.clearParts(provider))
@@ -77,11 +85,17 @@ object EventImportService:
           )
         }
 
-    private def merged(names: List[BEventRow.Names], more: List[BEventRow.Names]): List[BEventRow.Names] = (names ++ more).distinct.sorted
+    private def merged(names: List[BEventRow.Names], more: List[BEventRow.Names]): List[BEventRow.Names] =
+      (names ++ more).distinct.sorted
 
     private def keyOrder(r: CatalogRecord): (String, String) = (r.key._1.value, r.key._2.value)
 
-    private def fill(s: CatalogueState, id: Event.Id, names: List[BEventRow.Names], wd: Option[Wikidata.Id]): CatalogueState =
+    private def fill(
+        s: CatalogueState,
+        id: Event.Id,
+        names: List[BEventRow.Names],
+        wd: Option[Wikidata.Id]
+    ): CatalogueState =
       s.modify(_.events)
         .using(
           _.map(e =>
@@ -104,7 +118,9 @@ object EventImportService:
       )
       def json(t: String) = io.circe.parser.parse(t).getOrElse(io.circe.Json.Null)
       val outcomes = applied.flatMap(c =>
-        now.get(c.field.value).map(up => (c, Corrections.reconcile(json(c.value.value), json(c.upstreamValue.value), up), up))
+        now
+          .get(c.field.value)
+          .map(up => (c, Corrections.reconcile(json(c.value.value), json(c.upstreamValue.value), up), up))
       )
       val keep = outcomes.collect {
         case (c, o, _) if o != Corrections.Outcome.Retire => (c.field.value: String) -> json(c.value.value)
@@ -164,7 +180,13 @@ object EventImportService:
         })
       (refreshed, Corrections.counts(outcomes.map(_._2)))
 
-    private def inserted(s: CatalogueState, id: Event.Id, r: CatalogRecord, names: List[BEventRow.Names], wd: Option[Wikidata.Id]) =
+    private def inserted(
+        s: CatalogueState,
+        id: Event.Id,
+        r: CatalogRecord,
+        names: List[BEventRow.Names],
+        wd: Option[Wikidata.Id]
+    ) =
       val e = HeldEvent(
         id,
         HeldEvent.Label(r.label.value),
@@ -187,7 +209,8 @@ object EventImportService:
       s.modify(_.events).using(_ :+ e)
 
     private def upsertRecord(s: CatalogueState, eventId: Event.Id, r: CatalogRecord): CatalogueState =
-      s.modify(_.catalogueRecords).using(rs => rs.filterNot(_._2.key == r.key) :+ (CatalogueState.CatalogueRecordsPart1(eventId.value) -> r))
+      s.modify(_.catalogueRecords)
+        .using(rs => rs.filterNot(_._2.key == r.key) :+ (CatalogueState.CatalogueRecordsPart1(eventId.value) -> r))
 
     /** One event's placed records written: the state after, whether the event was created, and what became of its
       * corrections when it was refreshed.
@@ -248,7 +271,11 @@ object EventImportService:
             updated + refreshed.size,
             refreshed.fold(counts)(counts + _)
           )
-        case Nil => (s, EventSaved(EventSaved.Created(created), EventSaved.Updated(updated), EventSaved.Rows(placed.size), counts))
+        case Nil =>
+          (
+            s,
+            EventSaved(EventSaved.Created(created), EventSaved.Updated(updated), EventSaved.Rows(placed.size), counts)
+          )
       // the answer of the attempt that took: a contended update runs the loop again on the newer state
       val answer = AtomicReference[EventSaved]()
       val _ = state.updateAndGet { s0 =>
@@ -258,7 +285,9 @@ object EventImportService:
       }
       answer.get
 
-    def records(provider: Option[CatalogRecord.Provider]): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
+    def records(
+        provider: Option[CatalogRecord.Provider]
+    ): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
       val s = state.get
       val rows = s.catalogueRecords
         .filter((_, r) => provider.forall(_ == r.provider))
@@ -271,7 +300,9 @@ object EventImportService:
         )
       (rows, RowCount(0))
 
-    def storedKinds(provider: CatalogRecord.Provider): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
+    def storedKinds(
+        provider: CatalogRecord.Provider
+    ): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
       state.get.catalogueRecords.collect {
         case (_, r) if r.provider == provider =>
           r.key -> EventTaxonomy.canonical(EventSummary.Kind(r.kind.value))
@@ -287,7 +318,8 @@ object EventImportService:
       val key = CatalogueState.ImportPartsKey(provider.value)
       val _ = state.updateAndGet(
         _.modify(_.importParts).using(ps =>
-          ps + (key -> (ps.getOrElse(key, Map.empty) + (CatalogueState.ImportPartsValueKey(part.value) -> CatalogueState.ImportPartsValueValue(records.value))))
+          ps + (key -> (ps.getOrElse(key, Map.empty) + (CatalogueState.ImportPartsValueKey(part.value) -> CatalogueState
+            .ImportPartsValueValue(records.value))))
         )
       )
 

@@ -24,9 +24,17 @@ class CalibreCollectionSuite extends munit.FunSuite:
     Files.createTempDirectory(Files.createDirectories(Path.of("target/calibre-plugin").toAbsolutePath), "lib-")
 
   private def library(f: CalibreFixture) =
-    Calibre.Library(Calibre.Library.Value(f.dir.toString), Calibre.Settings.ExecutablePath(f.calibredb.toString), Calibre.Settings.Sqlite(f.sqlite3.toString), Shell.ProcessMatch("/no/such/calibre-gui-process"))
+    Calibre.Library(
+      Calibre.Library.Value(f.dir.toString),
+      Calibre.Settings.ExecutablePath(f.calibredb.toString),
+      Calibre.Settings.Sqlite(f.sqlite3.toString),
+      Shell.ProcessMatch("/no/such/calibre-gui-process")
+    )
 
-  private def collection(f: CalibreFixture, writeBack: CalibreCollection.WriteBack = CalibreCollection.WriteBack(true)) =
+  private def collection(
+      f: CalibreFixture,
+      writeBack: CalibreCollection.WriteBack = CalibreCollection.WriteBack(true)
+  ) =
     CalibreFixture.refuseRealLibrary(f.dir)
     HostCollection(HostCollection.Name("calibre"), CalibreCollection(library(f), writeBack, Shell.system))
 
@@ -40,7 +48,9 @@ class CalibreCollectionSuite extends munit.FunSuite:
 
   test("search, one item, its file and cover: the books as the library holds them"):
     val c = collection(master)
-    val found = c.search(CollectionQuery(Some(CollectionQuery.Text("Bronze")), Some(CollectionQuery.Limit(20)))).fold(e => fail(e.value), identity)
+    val found = c
+      .search(CollectionQuery(Some(CollectionQuery.Text("Bronze")), Some(CollectionQuery.Limit(20))))
+      .fold(e => fail(e.value), identity)
     assertEquals(found.map(_.id.value), List("1", "6"))
     val one = c.item(CollectionId("5")).fold(e => fail(e.value), identity).getOrElse(fail("no book 5"))
     assertEquals(
@@ -69,7 +79,9 @@ class CalibreCollectionSuite extends munit.FunSuite:
   test("the GUI holds the library: reading falls back to sqlite3, read-only"):
     val f = master.copyTo(scratch().resolve("locked"))
     f.lock(true)
-    val found = collection(f).search(CollectionQuery(Some(CollectionQuery.Text("Bronze")), Some(CollectionQuery.Limit(20)))).fold(e => fail(e.value), identity)
+    val found = collection(f)
+      .search(CollectionQuery(Some(CollectionQuery.Text("Bronze")), Some(CollectionQuery.Limit(20))))
+      .fold(e => fail(e.value), identity)
     assertEquals(found.map(_.id.value).sorted, List("1", "6"))
     val calls = f.takeLog()
     assertEquals(calls.map(_.takeWhile(_ != ' ')), List("calibredb", "sqlite3"))
@@ -78,15 +90,39 @@ class CalibreCollectionSuite extends munit.FunSuite:
   test("writes: add, replace, update, set — the commands run on a copy of the library"):
     val f = master.copyTo(scratch().resolve("writes"))
     val c = collection(f)
-    val pdf = FetchedFile(FetchedFile.Source("original"), None, FetchedFile.Bytes(("%PDF-1.4\n" + "x" * 2048).getBytes("UTF-8")), FetchedFile.Extension("pdf"))
+    val pdf = FetchedFile(
+      FetchedFile.Source("original"),
+      None,
+      FetchedFile.Bytes(("%PDF-1.4\n" + "x" * 2048).getBytes("UTF-8")),
+      FetchedFile.Extension("pdf")
+    )
     val meta =
-      CollectionMetadata(CollectionMetadata.Key("zz_new"), CollectionMetadata.Title("A new book"), List(CollectionMetadata.Authors("Author New")), doi = Some(CollectionMetadata.Doi("10.1/new")), year = Some(Year(2001)))
+      CollectionMetadata(
+        CollectionMetadata.Key("zz_new"),
+        CollectionMetadata.Title("A new book"),
+        List(CollectionMetadata.Authors("Author New")),
+        doi = Some(CollectionMetadata.Doi("10.1/new")),
+        year = Some(Year(2001))
+      )
     val id = c.add(meta, pdf).fold(e => fail(e.value), identity)
     assertEquals(id.value, "9")
     assertEquals(c.replace(CollectionId("1"), SourceCollection.ReplaceKey("zz_linked"), pdf), Right("pdf"))
-    assertEquals(c.update(id, meta.copy(title = CollectionMetadata.Title("A renamed book"))).map(_.map(_.field)), Right(List("title")))
-    assertEquals(c.set(CollectionId("1"), List(SourceCollection.SetFieldsPart1("languages") -> SourceCollection.SetFieldsPart2("eng"))), Right(()))
-    assert(c.set(CollectionId("1"), List(SourceCollection.SetFieldsPart1("bogus") -> SourceCollection.SetFieldsPart2("x"))).left.exists(_.value.startsWith("cannot set bogus")))
+    assertEquals(
+      c.update(id, meta.copy(title = CollectionMetadata.Title("A renamed book"))).map(_.map(_.field)),
+      Right(List("title"))
+    )
+    assertEquals(
+      c.set(
+        CollectionId("1"),
+        List(SourceCollection.SetFieldsPart1("languages") -> SourceCollection.SetFieldsPart2("eng"))
+      ),
+      Right(())
+    )
+    assert(
+      c.set(CollectionId("1"), List(SourceCollection.SetFieldsPart1("bogus") -> SourceCollection.SetFieldsPart2("x")))
+        .left
+        .exists(_.value.startsWith("cannot set bogus"))
+    )
     val calls = f.takeLog().map(_.split(' ').take(2).mkString(" "))
     assertEquals(
       calls,
@@ -106,13 +142,35 @@ class CalibreCollectionSuite extends munit.FunSuite:
     val f = master.copyTo(scratch().resolve("readonly"))
     val c = collection(f, writeBack = CalibreCollection.WriteBack(false))
     assertEquals(c.capabilities, Set(CollectionCapability.Read))
-    val pdf = FetchedFile(FetchedFile.Source("original"), None, FetchedFile.Bytes(Array[Byte](1, 2, 3)), FetchedFile.Extension("pdf"))
+    val pdf = FetchedFile(
+      FetchedFile.Source("original"),
+      None,
+      FetchedFile.Bytes(Array[Byte](1, 2, 3)),
+      FetchedFile.Extension("pdf")
+    )
     val refusals = List(
-      c.add(CollectionMetadata(CollectionMetadata.Key("k"), CollectionMetadata.Title("T"), List(CollectionMetadata.Authors("A"))), pdf),
+      c.add(
+        CollectionMetadata(
+          CollectionMetadata.Key("k"),
+          CollectionMetadata.Title("T"),
+          List(CollectionMetadata.Authors("A"))
+        ),
+        pdf
+      ),
       c.replace(CollectionId("1"), SourceCollection.ReplaceKey("k"), pdf),
-      c.update(CollectionId("1"), CollectionMetadata(CollectionMetadata.Key("k"), CollectionMetadata.Title("T"), List(CollectionMetadata.Authors("A")))),
+      c.update(
+        CollectionId("1"),
+        CollectionMetadata(
+          CollectionMetadata.Key("k"),
+          CollectionMetadata.Title("T"),
+          List(CollectionMetadata.Authors("A"))
+        )
+      ),
       c.updateAll(Nil, apply = SourceCollection.UpdateAllApply(true)),
-      c.set(CollectionId("1"), List(SourceCollection.SetFieldsPart1("languages") -> SourceCollection.SetFieldsPart2("eng")))
+      c.set(
+        CollectionId("1"),
+        List(SourceCollection.SetFieldsPart1("languages") -> SourceCollection.SetFieldsPart2("eng"))
+      )
     )
     refusals.foreach(r => assert(r.left.exists(_.value.contains("histmersion.plugins.calibre.write-back = true")), r))
     assertEquals(f.takeLog(), Nil, "nothing ran")
@@ -121,13 +179,34 @@ class CalibreCollectionSuite extends munit.FunSuite:
   test("audit and update-all read the library once"):
     val c = collection(master)
     val recs = List(
-      CollectionRecord(CollectionRecord.Key("zz_tin"), CollectionId("1"), CollectionRecord.Title("Bronze Age tin and its trade"), List(CollectionRecord.Authors("Stocker, Sharon R.")), None),
-      CollectionRecord(CollectionRecord.Key("zz_lost"), CollectionId("99"), CollectionRecord.Title("Lost"), List(CollectionRecord.Authors("Nobody")), None)
+      CollectionRecord(
+        CollectionRecord.Key("zz_tin"),
+        CollectionId("1"),
+        CollectionRecord.Title("Bronze Age tin and its trade"),
+        List(CollectionRecord.Authors("Stocker, Sharon R.")),
+        None
+      ),
+      CollectionRecord(
+        CollectionRecord.Key("zz_lost"),
+        CollectionId("99"),
+        CollectionRecord.Title("Lost"),
+        List(CollectionRecord.Authors("Nobody")),
+        None
+      )
     )
     val found = c.audit(recs).fold(e => fail(e.value), identity)
     assertEquals(found.map(f => f.id.value -> f.issues.map(_.code)), List("99" -> List("Missing")))
     master.takeLog(): Unit
-    val links = List(CollectionLink(CollectionId("1"), CollectionMetadata(CollectionMetadata.Key("zz_tin"), CollectionMetadata.Title("Bronze Age tin"), List(CollectionMetadata.Authors("S")))))
+    val links = List(
+      CollectionLink(
+        CollectionId("1"),
+        CollectionMetadata(
+          CollectionMetadata.Key("zz_tin"),
+          CollectionMetadata.Title("Bronze Age tin"),
+          List(CollectionMetadata.Authors("S"))
+        )
+      )
+    )
     val plan = c.updateAll(links, apply = SourceCollection.UpdateAllApply(false)).fold(e => fail(e.value), identity)
     assert(plan.head.outcome.isInstanceOf[CollectionUpdateOutcome.Change], plan)
     assertEquals(master.takeLog().size, 1)
@@ -150,21 +229,36 @@ class CalibreCollectionSuite extends munit.FunSuite:
 
   test("the plugin loads with its defaults — on, writing back — and registers the calibre collection"):
     val h = PluginHarness
-      .load(Plugin.Info.Id("calibre"), s"""library-path = "${master.dir}"""", http = HttpMode.Stub(Map.empty), env = Map.empty)
+      .load(
+        Plugin.Info.Id("calibre"),
+        s"""library-path = "${master.dir}"""",
+        http = HttpMode.Stub(Map.empty),
+        env = Map.empty
+      )
       .fold(e => fail(e.value), identity)
     assert(h.log.forall(!_.toString.contains("unknown")), h.log)
     val added = List.newBuilder[(String, SourceCollection)]
     val ctx = new Plugin.Context:
       override def files: LocalFiles = summon[LocalFiles]
       override def processes: Processes = summon[Processes]
-      def http = new Plugin.Http { def get(u: Plugin.Http.GetUrl, hs: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) }
+      def http = new Plugin.Http {
+        def get(u: Plugin.Http.GetUrl, hs: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+          Left(Plugin.Http.GetResultPart1("offline"))
+      }
       def log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage) = (); def warn(m: Plugin.Log.WarnMessage) = () }
-      def env(name: Plugin.Context.EnvName) = Option.when(name.value == "HOME")(Plugin.Context.EnvResult("/home/someone"))
+      def env(name: Plugin.Context.EnvName) =
+        Option.when(name.value == "HOME")(Plugin.Context.EnvResult("/home/someone"))
       def secret(s: Secret) = Left(Plugin.Context.SecretResultPart1("none"))
       def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
       override def sourceCollections = new Registry[SourceCollection]:
         def add(id: Registry.AddId, a: SourceCollection) = Right(added += id.value -> a)
-    val settings = Calibre.Settings(Calibre.Settings.LibraryPath("~/Calibre Library"), Calibre.Settings.Calibredb("calibredb"), Calibre.Settings.Sqlite("sqlite3"), writeBack = Calibre.Settings.WriteBack(true), Calibre.Settings.GuiProcess("gui"))
+    val settings = Calibre.Settings(
+      Calibre.Settings.LibraryPath("~/Calibre Library"),
+      Calibre.Settings.Calibredb("calibredb"),
+      Calibre.Settings.Sqlite("sqlite3"),
+      writeBack = Calibre.Settings.WriteBack(true),
+      Calibre.Settings.GuiProcess("gui")
+    )
     assertEquals(CalibrePlugin().register(settings, ctx), Right(()))
     val (id, c) = added.result().headOption.getOrElse(fail("nothing registered"))
     assertEquals((id, c.title, c.capabilities.size), ("calibre", "Calibre", 3))

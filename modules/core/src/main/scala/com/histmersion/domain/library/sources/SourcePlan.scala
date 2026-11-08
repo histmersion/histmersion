@@ -88,7 +88,13 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       val basis =
         if p.evidence.strongKey then p.evidence.strong.mkString(", ")
         else s"score ${signedScore(p.evidence.score)}"
-      SourcePair(p.right.source, p.left.source, gate.map(g => SourcePair.Gate(g.value)), SourcePair.ByKey(p.evidence.strongKey), SourcePair.Basis(basis))
+      SourcePair(
+        p.right.source,
+        p.left.source,
+        gate.map(g => SourcePair.Gate(g.value)),
+        SourcePair.ByKey(p.evidence.strongKey),
+        SourcePair.Basis(basis)
+      )
     }
 
   private def gateOf(p: Pair): MergeIssue.Id = MergePlanner.issueId(
@@ -126,7 +132,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           (ev.why.map(_.value) ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${signedScore(sc)})"))
             .map(MergeIssue.Why(_)),
           List(km.Map, km.Both),
-          Option.when(ev.score.value >= cfg.autoMerge.value)(MergeDecision.withArg(km.Map, MergeDecision.Argument(p.left.source.citekey.value))),
+          Option.when(ev.score.value >= cfg.autoMerge.value)(
+            MergeDecision.withArg(km.Map, MergeDecision.Argument(p.left.source.citekey.value))
+          ),
           detail = Some(IssueDetail(MergeIssue.Detail.sourceFields(p.left.source, p.right.source)))
         ),
         Set(km.Both)
@@ -139,13 +147,18 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         case SourceFate.Gate(p, g) =>
           fieldIssues(pairOf(p.right.uid), Some(IssueCondition(MergeIssue.Id(g.value), km.Map)), sketches)
             .foreach(questions.ask(_, Set.empty))
-          collision(s, Some(IssueCondition(MergeIssue.Id(g.value), km.Both)), sketches, cfg).foreach(questions.ask(_, Set.empty))
+          collision(s, Some(IssueCondition(MergeIssue.Id(g.value), km.Both)), sketches, cfg)
+            .foreach(questions.ask(_, Set.empty))
         case SourceFate.New => collision(s, None, sketches, cfg).foreach(questions.ask(_, Set.empty))
         case _              => ()
     }
 
   /** The questions about the fields of a pair; their ids are kept by pair, for the fold. */
-  private def fieldIssues(p: Pair, cond: Option[IssueCondition], sketches: Map[Bundle.Source.BodySha256, MinHash]): List[MergeIssue] =
+  private def fieldIssues(
+      p: Pair,
+      cond: Option[IssueCondition],
+      sketches: Map[Bundle.Source.BodySha256, MinHash]
+  ): List[MergeIssue] =
     val (r, l) = (p.right.source, p.left.source)
     val (fu, lu) = (List(r.uid), List(l.uid))
     val (rr, ll) = (rightRev(r), leftRev(l.uid))
@@ -194,21 +207,37 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         )
       },
       Option.when(r.status != l.status && r.status != Source.Status.Unassessed && l.status != Source.Status.Unassessed)(
-        mk(MergeIssue.Kind.StatusDiffers, MergeIssue.Title(s"status differs: ${l.status.wire} here, ${r.status.wire} in the bundle"), lr)
+        mk(
+          MergeIssue.Kind.StatusDiffers,
+          MergeIssue.Title(s"status differs: ${l.status.wire} here, ${r.status.wire} in the bundle"),
+          lr
+        )
       ),
       Option.when(p.evidence.titleDiffers.value)(
-        mk(MergeIssue.Kind.TitleDiffers, MergeIssue.Title("title differs"), lr, why = List(MergeIssue.Why(s"here: ${l.title}"), MergeIssue.Why(s"bundle: ${r.title}")))
+        mk(
+          MergeIssue.Kind.TitleDiffers,
+          MergeIssue.Title("title differs"),
+          lr,
+          why = List(MergeIssue.Why(s"here: ${l.title}"), MergeIssue.Why(s"bundle: ${r.title}"))
+        )
       ),
       Option.when(p.evidence.authors == MergeText.AuthorAgreement.Disjoint)(
         mk(
           MergeIssue.Kind.AuthorsDiffers,
           MergeIssue.Title("no author in common"),
           lr,
-          why = List(MergeIssue.Why(s"here: ${l.authors.mkString("; ")}"), MergeIssue.Why(s"bundle: ${r.authors.mkString("; ")}"))
+          why = List(
+            MergeIssue.Why(s"here: ${l.authors.mkString("; ")}"),
+            MergeIssue.Why(s"bundle: ${r.authors.mkString("; ")}")
+          )
         )
       ),
       differs(r.summary, l.summary)(_.value).map(_ =>
-        mk(MergeIssue.Kind.SummaryDiffers, MergeIssue.Title("summary differs"), List(km.KeepLeft, km.KeepRight, km.Concat))
+        mk(
+          MergeIssue.Kind.SummaryDiffers,
+          MergeIssue.Title("summary differs"),
+          List(km.KeepLeft, km.KeepRight, km.Concat)
+        )
       ),
       differs(r.notes, l.notes)(_.value).map(_ =>
         mk(MergeIssue.Kind.NotesDiffers, MergeIssue.Title("notes differ"), List(km.KeepLeft, km.KeepRight, km.Concat))
@@ -230,7 +259,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val sim = sketches
           .get(a)
           .zip(sketches.get(b))
-          .map((x, y) => s" (MinHash ${SourceMatcher.fixed(SourceMatcher.Figure(x.similarity(y).value), SourceMatcher.Decimals(2))})")
+          .map((x, y) =>
+            s" (MinHash ${SourceMatcher.fixed(SourceMatcher.Figure(x.similarity(y).value), SourceMatcher.Decimals(2))})"
+          )
           .getOrElse("")
         mk(
           MergeIssue.Kind.BodyDiffers,
@@ -238,7 +269,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           lr,
           Some(MergeDecision.of(km.KeepLeft)),
           MergeIssue.Severity.Default,
-          List(MergeIssue.Why("by default this collection's body stays; keep-right takes the bundle's (and its figures)"))
+          List(
+            MergeIssue.Why("by default this collection's body stays; keep-right takes the bundle's (and its figures)")
+          )
         )
       }
     ).flatten
@@ -281,7 +314,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         title,
         Some(MergeIssue.Detail.side(o)),
         Some(MergeIssue.Detail.side(s)),
-        if asAlias then List(MergeIssue.Why("rename-left cannot free an old citekey: the bundle's source takes a new one"))
+        if asAlias then
+          List(MergeIssue.Why("rename-left cannot free an old citekey: the bundle's source takes a new one"))
         else Nil,
         if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
         Some(MergeDecision.withArg(km.RenameRight, MergeDecision.Argument(suggestion.value))),
@@ -307,13 +341,11 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       questions.localized.sources.filter(s => questions.here(s.uid)),
       (s: Bundle.Source) => s.uid,
       (s: Bundle.Source) => PlanQuestions.LabelTakenLabelResult(s.citekey.value),
-      (s: Bundle.Source) =>
-        in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
+      (s: Bundle.Source) => in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
       PlanQuestions.LabelTakenWhat("citekey"),
       lr,
       (_: Bundle.Source, _: UUID) => None,
-      (s: Bundle.Source, o: UUID) =>
-        sourcesByUid.get(o).map(l => IssueDetail(MergeIssue.Detail.sourceFields(l, s)))
+      (s: Bundle.Source, o: UUID) => sourcesByUid.get(o).map(l => IssueDetail(MergeIssue.Detail.sourceFields(l, s)))
     )
 
   override def citekeyArgument(i: MergeIssue, dec: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
@@ -324,17 +356,31 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val leftUid = i.left.map(_.uid)
         Some(
           if !allowed.contains(ck) then
-            Left(MergePlan.ResolutionErrors(s"map takes one of the two citekeys: ${allowed.map(c => s"map:$c").mkString(" or ")}"))
-          else if in.labels.citekeys.get(wire(ck)).orElse(in.labels.aliases.get(wire(ck))).exists(o => !leftUid.contains(o))
-          then Left(MergePlan.ResolutionErrors(s"'$ck' is a citekey (or an old one) of another source here — merge under the other citekey"))
+            Left(
+              MergePlan.ResolutionErrors(
+                s"map takes one of the two citekeys: ${allowed.map(c => s"map:$c").mkString(" or ")}"
+              )
+            )
+          else if in.labels.citekeys
+              .get(wire(ck))
+              .orElse(in.labels.aliases.get(wire(ck)))
+              .exists(o => !leftUid.contains(o))
+          then
+            Left(
+              MergePlan.ResolutionErrors(
+                s"'$ck' is a citekey (or an old one) of another source here — merge under the other citekey"
+              )
+            )
           else Right(())
         )
       case km.RenameRight | km.RenameLeft =>
         val ck = dec.argument.map(_.value).getOrElse("")
         val labelsHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey)
         Some(
-          if !Citekeys.valid(Citekeys.ValidCk(ck)) then Left(MergePlan.ResolutionErrors(s"'$ck' is not a citekey (lower-case letters, digits and _)"))
-          else if labelsHere(wire(ck)) then Left(MergePlan.ResolutionErrors(s"'$ck' is already a citekey (or an old one) here or in the bundle"))
+          if !Citekeys.valid(Citekeys.ValidCk(ck)) then
+            Left(MergePlan.ResolutionErrors(s"'$ck' is not a citekey (lower-case letters, digits and _)"))
+          else if labelsHere(wire(ck)) then
+            Left(MergePlan.ResolutionErrors(s"'$ck' is already a citekey (or an old one) here or in the bundle"))
           else Right(())
         )
       case _ => None
@@ -357,8 +403,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     merged.bodySha256 != left.bodySha256
 
   override def renamed(source: UUID, citekey: Citekey): Unit =
-    sourceLine(source) = es =>
-      es.sources.find(_.uid == source).get.modify(_.citekey).setTo(wire(citekey.value))
+    sourceLine(source) = es => es.sources.find(_.uid == source).get.modify(_.citekey).setTo(wire(citekey.value))
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.sources)
@@ -418,7 +463,6 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 
 object SourcePlan:
   private given CanEqual[UUID, UUID] = CanEqual.derived
-
 
   private def wire(ck: String): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck)
 
@@ -490,7 +534,9 @@ object SourcePlan:
     def score(as: List[AuthorName]) =
       (
         as.size,
-        as.flatMap(a => MergeText.person(com.histmersion.domain.AuthorName(a.value))).map(p => p.forenames.map(_.value.length).sum).sum,
+        as.flatMap(a => MergeText.person(com.histmersion.domain.AuthorName(a.value)))
+          .map(p => p.forenames.map(_.value.length).sum)
+          .sum,
         as.map(_.value.count(c => c.isLetter && c > 127)).sum
       )
     if summon[Ordering[(Int, Int, Int)]].gt(score(r), score(l)) then r else l
@@ -585,7 +631,8 @@ object SourcePlan:
       .modify(_.bodySha256)
       .setTo(if keepRightBody then r.bodySha256 else l.bodySha256.orElse(r.bodySha256))
       .modify(_.originalSha256)
-      .setTo(if keepRightBody then r.originalSha256.orElse(l.originalSha256) else l.originalSha256.orElse(r.originalSha256))
+      .setTo(if keepRightBody then r.originalSha256.orElse(l.originalSha256)
+      else l.originalSha256.orElse(r.originalSha256))
       .modify(_.originalExt)
       .setTo(if keepRightBody then r.originalExt.orElse(l.originalExt) else l.originalExt.orElse(r.originalExt))
       .modify(_.isbns)

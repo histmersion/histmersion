@@ -9,7 +9,6 @@ object SourcesMarkdown:
   object SourceRenamedListXs:
     inline def apply(v: String): String = v
 
-
   def sourceFindingsOnly(findings: Vector[Finding.Row]): String =
     if findings.isEmpty then ("_(no findings)_")
     else
@@ -31,7 +30,12 @@ object SourcesMarkdown:
 
   def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: Boolean): String =
     val authorLinks = if s.authors.map(_.value).nonEmpty then chipLinks(s.authors.map(_.value), "author") else ""
-    val meta = List(authorLinks, year(s.year.map(_.value.toInt)), s.venue.map(_.value).getOrElse(""), s.status.wire.value).filter(_.nonEmpty).mkString(" · ")
+    val meta = List(
+      authorLinks,
+      year(s.year.map(_.value.toInt)),
+      s.venue.map(_.value).getOrElse(""),
+      s.status.wire.value
+    ).filter(_.nonEmpty).mkString(" · ")
     val per = period(s.periodStart, s.periodEnd)
     val header = s"# ${s.title}\n\n_$meta${if per.nonEmpty then s" · $per" else ""}_"
     val topics = if s.topics.nonEmpty then s"\n\n**Topics:** ${chipLinks(s.topics.map(_.value), "topic")}" else ""
@@ -66,7 +70,9 @@ object SourcesMarkdown:
       if !(fullText) then ""
       else
         s.ocrMarkdown
-          .map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(AssetLinks.Body(t.value), AssetLinks.Title(s.title.value))}")
+          .map(t =>
+            s"\n\n---\n\n${AssetLinks.normalizeBody(AssetLinks.Body(t.value), AssetLinks.Title(s.title.value))}"
+          )
           .getOrElse("\n\n_(no full text stored)_")
     (header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body)
 
@@ -75,19 +81,36 @@ object SourcesMarkdown:
       (s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
         "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view.")
     else
-      def block(title: String, rs: Vector[NeighborRow])(item: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line): String =
-        if rs.isEmpty then ("") else (s"\n\n**$title**\n${rs.map(r => s"- _${com.histmersion.api.library.Edge.Kind.wireOf(r.kind)}_ → ${item(r)}").mkString("\n")}")
-      def sources(dir: com.histmersion.api.library.ContradictionRow.Direction.Wire) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
+      def block(title: String, rs: Vector[NeighborRow])(
+          item: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line
+      ): String =
+        if rs.isEmpty then ("")
+        else
+          (s"\n\n**$title**\n${rs.map(r => s"- _${com.histmersion.api.library.Edge.Kind.wireOf(r.kind)}_ → ${item(r)}").mkString("\n")}"
+        )
+      def sources(dir: com.histmersion.api.library.ContradictionRow.Direction.Wire) =
+        rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
       val sourceItem: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line = r =>
         val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
-        _root_.com.histmersion.api.library.Source.Neighbor.Line(s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st")
+        _root_.com.histmersion.api.library.Source.Neighbor
+          .Line(s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st")
       s"### Sources · $citekey" +
-        block(("Outgoing (this → other)"), sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out")))(sourceItem) +
-        block("Incoming (other → this)", sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("in")))(sourceItem) +
+        block(
+          ("Outgoing (this → other)"),
+          sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out"))
+        )(sourceItem) +
+        block(
+          "Incoming (other → this)",
+          sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("in"))
+        )(sourceItem) +
         block("Articles", rows.filter(_.target == NeighborTarget.Article))(r =>
-          Source.Neighbor.Line(s"[${r.title.getOrElse(Label.display(Label.Text(r.citekey.value)))}](/article/${r.citekey})")
+          Source.Neighbor.Line(
+            s"[${r.title.getOrElse(Label.display(Label.Text(r.citekey.value)))}](/article/${r.citekey})"
+          )
         ) +
-        block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => Source.Neighbor.Line(s"**${r.citekey}**"))
+        block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r =>
+          Source.Neighbor.Line(s"**${r.citekey}**")
+        )
 
   def graph(g: Source.Graph): String =
     if g.nodes.isEmpty then (s"_No graph data for **${g.root}**._")
@@ -122,7 +145,8 @@ object SourcesMarkdown:
       val items = result.rows.map { r =>
         val edge = (r.direction, r.kind, r.otherCitekey) match
           case (Some(dir), Some(k), Some(other)) =>
-            val arrow = if dir == _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out") then "→" else "←"
+            val arrow =
+              if dir == _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out") then "→" else "←"
             val otherInfo = List(
               r.otherTitle.map(_.value).getOrElse(""),
               r.otherYear.map(_.toString).getOrElse(""),

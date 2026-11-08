@@ -40,4 +40,19 @@ object AutopilotRowState:
   object DrainBy extends Newtype[String, Pure]
 
   def made(now: Instant): AutopilotRowState =
-    AutopilotRowState(Enabled(false), now, ChangedBy(""), Nil, None, None, None, None, None, None, None, None, None, None)
+    AutopilotRowState(
+      Enabled(false),
+      now,
+      ChangedBy(""),
+      Nil,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None
+    )

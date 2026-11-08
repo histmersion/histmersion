@@ -18,17 +18,26 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   def parse(wire: JobKinds.Wire): Option[JobKindEntry] = byWire.get(JobKinds.Wire((wire).value.trim.toLowerCase))
 
   /** May a person pause and cancel a job of the kind `wire` names? */
-  def stoppable(wire: JobKinds.Wire): Boolean = (byWire.get(JobKinds.Wire((wire).value)).exists((refactorCallback2 => ((refactorCallback2.stoppable) == JobKindEntry.Stoppable(true)))))
+  def stoppable(wire: JobKinds.Wire): Boolean = (byWire
+    .get(JobKinds.Wire((wire).value))
+    .exists((refactorCallback2 => ((refactorCallback2.stoppable) == JobKindEntry.Stoppable(true)))))
 
   /** Do the pause, resume and cancel of a job of the kind `wire` names go to the kind's own runner? */
-  def ownControl(wire: JobKinds.Wire): Boolean = (byWire.get(JobKinds.Wire((wire).value)).exists((refactorCallback2 => ((refactorCallback2.ownControl) == JobKindEntry.OwnControl(true)))))
+  def ownControl(wire: JobKinds.Wire): Boolean = (byWire
+    .get(JobKinds.Wire((wire).value))
+    .exists((refactorCallback2 => ((refactorCallback2.ownControl) == JobKindEntry.OwnControl(true)))))
 
   /** The identifiers of the kinds a person may pause and cancel. */
-  def stoppableKinds: Set[JobKinds.Wire] = entries.filter((refactorCallback => ((refactorCallback.stoppable) == JobKindEntry.Stoppable(true)))).map(_.kind).toSet
+  def stoppableKinds: Set[JobKinds.Wire] = entries
+    .filter((refactorCallback => ((refactorCallback.stoppable) == JobKindEntry.Stoppable(true))))
+    .map(_.kind)
+    .toSet
 
   /** What a job is about: its source, else what its detail says. */
   def subject(job: JobInfo): Option[JobKinds.Subject] =
-    job.citekey.map(c => JobKinds.Subject(c.value.toString)).orElse(job.detail.flatMap(d => entries.iterator.flatMap(_.subject(d)).nextOption()))
+    job.citekey
+      .map(c => JobKinds.Subject(c.value.toString))
+      .orElse(job.detail.flatMap(d => entries.iterator.flatMap(_.subject(d)).nextOption()))
 
 object JobKinds:
   type Subject = Subject.T

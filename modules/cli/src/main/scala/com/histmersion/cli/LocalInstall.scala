@@ -25,9 +25,12 @@ final case class LocalInstall(home: Path, data: Path):
 
   /** The Maven repository a plugin compiles against: the plugin API and the plugin platform (`maven/`). */
   def mavenRepo: Path = home.resolve("maven")
-  def apiJar: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".jar").value)
-  def apiSources: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), "-sources.jar").value)
-  def apiPom: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".pom").value)
+  def apiJar: Path =
+    mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".jar").value)
+  def apiSources: Path =
+    mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), "-sources.jar").value)
+  def apiPom: Path =
+    mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".pom").value)
 
   /** The plugins' own dependencies, which `histmersion-relink --resolve` installs. */
   def lib: Path = plugins.resolve("lib")
@@ -44,6 +47,7 @@ object LocalInstall:
   object EnvSetting extends Newtype[String, Pure]
   type EnvVariable = EnvVariable.T
   object EnvVariable extends Newtype[String, Pure]
+
   /** The install: `cli.plugins.install-dir`, else the one this executable sits in (`<home>/bin/histmersion`, through
     * the `~/bin` symlink), else the platform default. It must hold the relink kit.
     */

@@ -31,7 +31,12 @@ class AliasesSuite extends munit.FunSuite:
     )
     assertEquals(Aliases.followed(AliasKinds.EventRecords, Aliases.Id(" zz_new "), Aliases.Id("zz_new")), None)
     assertEquals(Aliases.note(AliasKinds.GoalRecords, Aliases.Id("a"), Aliases.Id("a"))(Aliases.Note("md")), "md")
-    assert(Aliases.note(AliasKinds.GoalRecords, Aliases.Id("a"), Aliases.Id("b"))(Aliases.Note("md")).value.endsWith("\n\nmd"))
+    assert(
+      Aliases
+        .note(AliasKinds.GoalRecords, Aliases.Id("a"), Aliases.Id("b"))(Aliases.Note("md"))
+        .value
+        .endsWith("\n\nmd")
+    )
 
   test("every label kind of a bundle that can be renamed has an alias kind"):
     assertEquals(

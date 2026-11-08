@@ -40,7 +40,10 @@ class PmcParseSuite extends munit.FunSuite:
     assertEquals(AcquireParse.europepmcHit(json("europepmc_oa.json"), Doi("not a doi")), None)
 
   test("the newest published version of a PMCID, from the bucket listing"):
-    assertEquals(AcquireParse.pmcLatestVersion(Jats.Xml(text("pmc_dataset_list.xml")), WorkKey.Pmcid("PMC6091220")), Some(1))
+    assertEquals(
+      AcquireParse.pmcLatestVersion(Jats.Xml(text("pmc_dataset_list.xml")), WorkKey.Pmcid("PMC6091220")),
+      Some(1)
+    )
     val two = "<Key>metadata/PMC12.1.json</Key><Key>metadata/PMC12.2.json</Key><Key>metadata/PMC123.9.json</Key>"
     assertEquals(AcquireParse.pmcLatestVersion(Jats.Xml(two), WorkKey.Pmcid("PMC12")), Some(2))
     assertEquals(AcquireParse.pmcLatestVersion(Jats.Xml("<ListBucketResult/>"), WorkKey.Pmcid("PMC12")), None)
@@ -50,7 +53,15 @@ class PmcParseSuite extends munit.FunSuite:
     val r = AcquireParse.pmcRecord(json("pmc_dataset_oa.json")).getOrElse(fail("no record"))
     assertEquals(r.pmcid, "PMC6091220")
     assert(r.openAccess.value && r.manuscript.value)
-    assertEquals(r.pdf, Some(PmcObject(PmcObject.Key("PMC6091220.1/PMC6091220.1.pdf"), Some(PmcObject.Md5("e06195e6382220ee664cb57bf77cdaa2")))))
+    assertEquals(
+      r.pdf,
+      Some(
+        PmcObject(
+          PmcObject.Key("PMC6091220.1/PMC6091220.1.pdf"),
+          Some(PmcObject.Md5("e06195e6382220ee664cb57bf77cdaa2"))
+        )
+      )
+    )
     assertEquals(r.xml.map(_.key), Some("PMC6091220.1/PMC6091220.1.xml"))
 
   test("an author manuscript outside the OA subset has only its XML"):
@@ -58,7 +69,15 @@ class PmcParseSuite extends munit.FunSuite:
     assert(!r.openAccess.value)
     assertEquals(r.license, Some("TDM"))
     assertEquals(r.pdf, None)
-    assertEquals(r.xml, Some(PmcObject(PmcObject.Key("PMC6748862.1/PMC6748862.1.xml"), Some(PmcObject.Md5("54c09d202efe4376a7b22efe601ff2c3")))))
+    assertEquals(
+      r.xml,
+      Some(
+        PmcObject(
+          PmcObject.Key("PMC6748862.1/PMC6748862.1.xml"),
+          Some(PmcObject.Md5("54c09d202efe4376a7b22efe601ff2c3"))
+        )
+      )
+    )
 
   test("a dataset URL outside an article's own folder is refused"):
     assertEquals(AcquireParse.pmcObject(PmcObject.Key("s3://pmc-oa-opendata/PMC1.1/../secret")), None)

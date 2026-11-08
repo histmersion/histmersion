@@ -86,7 +86,8 @@ object HeldEvent:
   type Kind = EventRow.Kind
   val Kind: EventRow.Kind.type = EventRow.Kind
   type Historicity = com.histmersion.domain.catalogue.Historicity.Wire
-  val Historicity: com.histmersion.domain.catalogue.Historicity.Wire.type = com.histmersion.domain.catalogue.Historicity.Wire
+  val Historicity: com.histmersion.domain.catalogue.Historicity.Wire.type =
+    com.histmersion.domain.catalogue.Historicity.Wire
   type Geometry = EventDetailRow.Geometry
   val Geometry: EventDetailRow.Geometry.type = EventDetailRow.Geometry
   type ParentId = EventRow.ParentId
@@ -96,7 +97,8 @@ object HeldEvent:
   type Scale = EventRow.Scale
   val Scale: EventRow.Scale.type = EventRow.Scale
   type Wikidata = com.histmersion.domain.catalogue.places.Wikidata.Id
-  val Wikidata: com.histmersion.domain.catalogue.places.Wikidata.Id.type = com.histmersion.domain.catalogue.places.Wikidata.Id
+  val Wikidata: com.histmersion.domain.catalogue.places.Wikidata.Id.type =
+    com.histmersion.domain.catalogue.places.Wikidata.Id
   type Names = BEventRow.Names
   val Names: BEventRow.Names.type = BEventRow.Names
   type Catalogue = BEventRow.Catalogue
@@ -122,10 +124,13 @@ object HeldEvent:
       val c = j.hcursor
       if !c.get[String]("type").toOption.contains("Point") then None
       else
-        c.get[List[Double]]("coordinates").toOption.collect { case lon :: lat :: _ => (lat, lon) }.flatMap((lat, lon) =>
-          for
-            la <- Latitude.option(lat)
-            lo <- Longitude.option(lon)
-          yield (la, lo)
-        )
+        c.get[List[Double]]("coordinates")
+          .toOption
+          .collect { case lon :: lat :: _ => (lat, lon) }
+          .flatMap((lat, lon) =>
+            for
+              la <- Latitude.option(lat)
+              lo <- Longitude.option(lon)
+            yield (la, lo)
+          )
     }

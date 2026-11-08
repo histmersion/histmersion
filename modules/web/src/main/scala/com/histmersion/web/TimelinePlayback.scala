@@ -52,7 +52,8 @@ object TimelinePlayback:
     UiLabels.Text(s"$n×")
 
   /** The speed an option stands for; one that is not offered is refused. Pure. */
-  private[web] def parseSpeed(label: UiLabels.Text): Option[Speed] = Speeds.find(speedLabel(_).value == label.value.trim)
+  private[web] def parseSpeed(label: UiLabels.Text): Option[Speed] =
+    Speeds.find(speedLabel(_).value == label.value.trim)
 
   private val playheadPos = Var(Option.empty[Years.Astronomical])
 
@@ -137,7 +138,10 @@ object TimelinePlayback:
     MapView.setPlaybackMode(MapView.Playback(true))
     // the filter's events over the span played, fetched once; each frame then draws them locally
     if eventsConfig != null then
-      EventLayer.start(eventsConfig, Api.EventQuery(UiState.toFilter().copy(period = Some(Period(Year(sf.value), Year(st.value))))))
+      EventLayer.start(
+        eventsConfig,
+        Api.EventQuery(UiState.toFilter().copy(period = Some(Period(Year(sf.value), Year(st.value)))))
+      )
     playing.set(true)
     lastTs = ResearchOverview.EpochMillis(0.0)
     tick(ResearchOverview.EpochMillis(0.0))
@@ -217,7 +221,8 @@ object TimelinePlayback:
       val f = UiState.toFilter()
       // the filter changed while it played: what is held was asked with the old one
       if !filter.contains(f) then { reset(); filter = Some(f) }
-      val chunk = PlaybackFeed.chunkYears(wh, yearsPerSecond, PlaybackBuckets.Seconds(Layout.playbackFetchSeconds.value))
+      val chunk =
+        PlaybackFeed.chunkYears(wh, yearsPerSecond, PlaybackBuckets.Seconds(Layout.playbackFetchSeconds.value))
       if !asking && dom.window.performance.now() >= retryAt then
         PlaybackFeed.next(coveredTo, ph, wh, chunk, spanTo).foreach(ask(f, _))
       if coveredTo.exists(_.value >= ph.value + half.value) then
@@ -238,7 +243,12 @@ object TimelinePlayback:
       asking = true
       val mine = generation
       val q =
-        Api.FindingsQuery.of(f.modify(_.period).setTo(Some(Period(Year(period._1.value), Year(period._2.value)))).modify(_.limit).setTo(Filter.Limit(Layout.playbackFetchLimit.value)))
+        Api.FindingsQuery.of(
+          f.modify(_.period)
+            .setTo(Some(Period(Year(period._1.value), Year(period._2.value))))
+            .modify(_.limit)
+            .setTo(Filter.Limit(Layout.playbackFetchLimit.value))
+        )
       ApiClient.findings(q).onComplete { r =>
         if mine == generation then
           asking = false

@@ -247,50 +247,50 @@ object Hot:
             .left
             .map(p => Problem(p.value))
             .flatMap { plan =>
-            val byName = specs.map(d => d.name -> d).toMap
-            val gen = Generation(s.generation.value + 1)
-            val built = scala.collection.mutable.LinkedHashMap.empty[Def.Name, Instance]
-            val failure = plan.iterator
-              .map { name =>
-                val d = byName(name)
-                val ctx = BuildCtx[C, Any](
-                  next,
-                  s.nodes.get(name).map(_.value),
-                  Some(s.config),
-                  changed,
-                  n =>
-                    built
-                      .get(n)
-                      .orElse(s.nodes.get(n))
-                      .map(_.value)
-                      .getOrElse(throw IllegalStateException(s"hot graph: $name depends on $n, which has no value"))
-                )
-                instantiate(d, ctx, gen).map(i => built.update(name, i)).left.map(e => Problem(s"$name: $e"))
-              }
-              .collectFirst { case Left(e) => e }
-            failure match
-              case Some(e) =>
-                // nobody has seen these: close them now, dependents first
-                built.values.toList.reverse.foreach(_.close(log))
-                log.warn(Log.Message(s"config reload: nothing changed — $e"))
-                Left(e)
-              case None =>
-                val published = Snap(gen, next, s.nodes ++ built)
-                current.set(published)
-                val retired = plan.flatMap(s.nodes.get)
-                // the hooks run on the NEW generation, whatever the reloading thread is pinned to
-                val onNew = Pin(published)
-                published.acquire()
-                val notes =
-                  try
-                    within(onNew)(plan.flatMap { name =>
-                      try { byName(name).onPublish(built(name).value); None }
-                      catch case NonFatal(e) => Some(Outcome.Warnings(s"$name: after the swap: ${e.getMessage}"))
-                    })
-                  finally onNew.release()
-                notes.foreach(w => log.warn(Log.Message(w.value)))
-                Right(Outcome(gen, plan, retire(retired.reverse, drain), notes))
-          }
+              val byName = specs.map(d => d.name -> d).toMap
+              val gen = Generation(s.generation.value + 1)
+              val built = scala.collection.mutable.LinkedHashMap.empty[Def.Name, Instance]
+              val failure = plan.iterator
+                .map { name =>
+                  val d = byName(name)
+                  val ctx = BuildCtx[C, Any](
+                    next,
+                    s.nodes.get(name).map(_.value),
+                    Some(s.config),
+                    changed,
+                    n =>
+                      built
+                        .get(n)
+                        .orElse(s.nodes.get(n))
+                        .map(_.value)
+                        .getOrElse(throw IllegalStateException(s"hot graph: $name depends on $n, which has no value"))
+                  )
+                  instantiate(d, ctx, gen).map(i => built.update(name, i)).left.map(e => Problem(s"$name: $e"))
+                }
+                .collectFirst { case Left(e) => e }
+              failure match
+                case Some(e) =>
+                  // nobody has seen these: close them now, dependents first
+                  built.values.toList.reverse.foreach(_.close(log))
+                  log.warn(Log.Message(s"config reload: nothing changed — $e"))
+                  Left(e)
+                case None =>
+                  val published = Snap(gen, next, s.nodes ++ built)
+                  current.set(published)
+                  val retired = plan.flatMap(s.nodes.get)
+                  // the hooks run on the NEW generation, whatever the reloading thread is pinned to
+                  val onNew = Pin(published)
+                  published.acquire()
+                  val notes =
+                    try
+                      within(onNew)(plan.flatMap { name =>
+                        try { byName(name).onPublish(built(name).value); None }
+                        catch case NonFatal(e) => Some(Outcome.Warnings(s"$name: after the swap: ${e.getMessage}"))
+                      })
+                    finally onNew.release()
+                  notes.foreach(w => log.warn(Log.Message(w.value)))
+                  Right(Outcome(gen, plan, retire(retired.reverse, drain), notes))
+            }
       }
 
     /** Close the retired instances (dependents first) once each is free; wait for that up to `bound` and name what is
@@ -314,9 +314,11 @@ object Hot:
           finally done.countDown()
         }
         val deadline = System.nanoTime() + bound.toNanos
-        def settled = old.forall(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
+        def settled =
+          old.forall(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
         while !settled && System.nanoTime() < deadline do Thread.sleep(DrainPollMs)
-        val busy = old.filterNot(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
+        val busy =
+          old.filterNot(i => i.isClosed || i.freeBut(if own(i) then Instance.PinCount(1) else Instance.PinCount(0)))
         busy.foreach(i =>
           log.warn(
             Log.Message(
@@ -409,7 +411,12 @@ object Hot:
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
       * use when it stopped waiting, and the `onPublish` failures.
       */
-    final case class Outcome(generation: Generation, rebuilt: List[Def.Name], draining: List[Instance.Description], warnings: List[Outcome.Warnings])
+    final case class Outcome(
+        generation: Generation,
+        rebuilt: List[Def.Name],
+        draining: List[Instance.Description],
+        warnings: List[Outcome.Warnings]
+    )
 
     object Outcome:
       type Warnings = Warnings.T
@@ -450,7 +457,8 @@ object Hot:
 
       /** Free but for `own` pins the asking thread holds itself. */
       def freeBut(own: Instance.PinCount): Boolean = users.get() <= own.value && idleNow
-      def describe: Instance.Description = Instance.Description(s"$name (generation $generation, ${users.get()} pinned)")
+      def describe: Instance.Description =
+        Instance.Description(s"$name (generation $generation, ${users.get()} pinned)")
       def close(log: Log): Unit =
         if closedFlag.compareAndSet(false, true) then
           release.countDown()

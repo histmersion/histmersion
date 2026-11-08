@@ -72,7 +72,6 @@ object Referable:
       val r = records.get
       refs.flatMap(ref => r.describe(ref).map(ref -> _)).toMap
 
-
   /** One record: its uid (where its kind has uids) and its title. */
   final case class Record(uid: Option[ItemUid], title: Title)
 
@@ -119,6 +118,5 @@ object Referable:
 
   object Records:
     /** How many merges in a row are followed: a chain longer than this is a loop the merge never writes. */
-
 
     val MaxHops = 16

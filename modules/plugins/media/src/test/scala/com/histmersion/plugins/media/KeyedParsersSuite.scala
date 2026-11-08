@@ -54,17 +54,30 @@ class KeyedParsersSuite extends munit.FunSuite:
   // ── Smithsonian ──────────────────────────────────────────────────────────────────────────────
 
   test("Smithsonian: the search URL — the name as a phrase, images only, edanmdm objects; the key is NOT in it"):
-    val u = Smithsonian.searchUrl(CollectionSettings.ApiUrl("https://api.si.edu/openaccess/api/v1.0/"), MediaPlace.Label("Tell el-Amarna"), CollectionSettings.Candidates(20))
+    val u = Smithsonian.searchUrl(
+      CollectionSettings.ApiUrl("https://api.si.edu/openaccess/api/v1.0/"),
+      MediaPlace.Label("Tell el-Amarna"),
+      CollectionSettings.Candidates(20)
+    )
     assertEquals(
       u,
       "https://api.si.edu/openaccess/api/v1.0/search?q=%22Tell+el-Amarna%22+AND+online_media_type%3AImages" +
         "&rows=20&type=edanmdm&row_group=objects"
     )
     assert(!u.value.contains("api_key"))
-    assert(Smithsonian.searchUrl(CollectionSettings.ApiUrl("x"), MediaPlace.Label("a"), CollectionSettings.Candidates(5000)).value.contains("rows=1000"), "the documented maximum")
+    assert(
+      Smithsonian
+        .searchUrl(CollectionSettings.ApiUrl("x"), MediaPlace.Label("a"), CollectionSettings.Candidates(5000))
+        .value
+        .contains("rows=1000"),
+      "the documented maximum"
+    )
 
   test("Smithsonian: records — CC0 from the media item's usage.access, its screen image stored, places and dates"):
-    val rs = Smithsonian.records(fixture("si-search.json")).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
+    val rs = Smithsonian
+      .records(fixture("si-search.json"))
+      .fold(e => fail(e.value), identity)
+      .map(_.fold(e => fail(e.value), identity))
     assertEquals(rs.map(_.key), List("fsg_F1909.1185", "fsg_F1908.119", "fsg_F1916.118"))
     val bead = rs.head
     assertEquals(bead.title, "Bead")
@@ -80,7 +93,10 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
     val rights = bead.rights.fold(e => fail(e.value), identity)
     assertEquals(rights.licence, Licence("CC0-1.0"))
-    assertEquals(licences.readName(LicenceReader.ReadNameName(rights.licence.value)), Licence.Read(Licence.Read.Id("CC0-1.0"), Licence.Read.Family(Licence.Read.Cc0)))
+    assertEquals(
+      licences.readName(LicenceReader.ReadNameName(rights.licence.value)),
+      Licence.Read(Licence.Read.Id("CC0-1.0"), Licence.Read.Family(Licence.Read.Cc0))
+    )
     assertEquals(
       rights.credit,
       "Bead, National Museum of Asian Art, Smithsonian Institution, Gift of Charles Lang Freer, CC0"
@@ -142,14 +158,21 @@ class KeyedParsersSuite extends munit.FunSuite:
   private val api = CollectionSettings.ApiUrl("https://api.europeana.eu")
 
   test("Europeana: the search URL — where:(name), reusability=open, media and thumbnail, images, rich profile; no key"):
-    val u = Europeana.searchUrl(CollectionSettings.ApiUrl(api.value + "/"),MediaPlace.Label("Tell el-Amarna"), CollectionSettings.Candidates(20))
+    val u = Europeana.searchUrl(
+      CollectionSettings.ApiUrl(api.value + "/"),
+      MediaPlace.Label("Tell el-Amarna"),
+      CollectionSettings.Candidates(20)
+    )
     assertEquals(
       u,
       "https://api.europeana.eu/record/v2/search.json?query=where%3A%28%22Tell+el-Amarna%22%29" +
         "&reusability=open&media=true&thumbnail=true&qf=TYPE%3AIMAGE&profile=rich&rows=20"
     )
     assert(!u.value.contains("wskey"))
-    assert(Europeana.searchUrl(api, MediaPlace.Label("a"), CollectionSettings.Candidates(500)).value.endsWith("rows=100"), "the documented maximum")
+    assert(
+      Europeana.searchUrl(api, MediaPlace.Label("a"), CollectionSettings.Candidates(500)).value.endsWith("rows=100"),
+      "the documented maximum"
+    )
     assertEquals(
       Europeana.recordUrl(api, MediaItem.Key("/9200999/fixture_mycenae_lion_gate")),
       "https://api.europeana.eu/record/v2/9200999/fixture_mycenae_lion_gate.json"
@@ -157,12 +180,18 @@ class KeyedParsersSuite extends munit.FunSuite:
 
   test("Europeana: the Thumbnail API v3 URL hashes the media URL with MD5 (the documentation's own example)"):
     assertEquals(
-      Europeana.thumbnailUrl(api, Europeana.Source("http://www.mimo-db.eu/media/UEDIN/IMAGE/0032195c.jpg"), MediaRendition.Width(200)),
+      Europeana.thumbnailUrl(
+        api,
+        Europeana.Source("http://www.mimo-db.eu/media/UEDIN/IMAGE/0032195c.jpg"),
+        MediaRendition.Width(200)
+      ),
       "https://api.europeana.eu/thumbnail/v3/200/820911931db3ccb20e1b7a022ee6dd33.jpg"
     )
     assertEquals(
       Europeana.previewSource(
-        Europeana.Preview("https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fa.example%2Fb.jpg&type=IMAGE")
+        Europeana.Preview(
+          "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fa.example%2Fb.jpg&type=IMAGE"
+        )
       ),
       Some("https://a.example/b.jpg")
     )
@@ -170,7 +199,10 @@ class KeyedParsersSuite extends munit.FunSuite:
 
   test("Europeana: items — each one's own rights URL as its licence, places and ids, signed years, renditions"):
     val rs =
-      Europeana.records(fixture("eu-search.json"), api, licences).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
+      Europeana
+        .records(fixture("eu-search.json"), api, licences)
+        .fold(e => fail(e.value), identity)
+        .map(_.fold(e => fail(e.value), identity))
     assertEquals(rs.size, 3)
     val gate = rs.head
     assertEquals(gate.key, "9200999/fixture_mycenae_lion_gate")
@@ -190,12 +222,41 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
     assertEquals(gate.ids, List("geonames" -> "256075"))
     assertEquals(gate.period, Period.span(-1250L, -1250L))
-    assertEquals(gate.imageUrl.map(_.value), Some(Europeana.thumbnailUrl(api, Europeana.Source("https://images.fixture.example/lion-gate.jpg"), MediaRendition.Width(400)).value))
-    assertEquals(gate.thumbUrl.map(_.value), Some(Europeana.thumbnailUrl(api, Europeana.Source("https://images.fixture.example/lion-gate.jpg"), MediaRendition.Width(200)).value))
+    assertEquals(
+      gate.imageUrl.map(_.value),
+      Some(
+        Europeana
+          .thumbnailUrl(
+            api,
+            Europeana.Source("https://images.fixture.example/lion-gate.jpg"),
+            MediaRendition.Width(400)
+          )
+          .value
+      )
+    )
+    assertEquals(
+      gate.thumbUrl.map(_.value),
+      Some(
+        Europeana
+          .thumbnailUrl(
+            api,
+            Europeana.Source("https://images.fixture.example/lion-gate.jpg"),
+            MediaRendition.Width(200)
+          )
+          .value
+      )
+    )
     assertEquals(gate.originalUrl, Some("https://images.fixture.example/lion-gate.jpg"))
     val r = gate.rights.fold(e => fail(e.value), identity)
     assertEquals(r.licence, Licence("http://creativecommons.org/licenses/by-sa/4.0/"), "its edm:rights URL")
-    assertEquals(licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value)),Licence.Read(Licence.Read.Id("CC-BY-SA-4.0"), Licence.Read.Family("cc-by-sa"), needsAttribution = Licence.Read.NeedsAttribution(true)))
+    assertEquals(
+      licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value)),
+      Licence.Read(
+        Licence.Read.Id("CC-BY-SA-4.0"),
+        Licence.Read.Family("cc-by-sa"),
+        needsAttribution = Licence.Read.NeedsAttribution(true)
+      )
+    )
     assertEquals(r.author, Some("Fixture Photographer"))
     assertEquals(r.credit, "The Lion Gate, Mycenae, Fixture Photographer, Fixture Archive, via Europeana, CC BY-SA 4.0")
     assertEquals(
@@ -214,10 +275,17 @@ class KeyedParsersSuite extends munit.FunSuite:
   test("Europeana: licence short names for the credit line"):
     assertEquals(Europeana.shortName(licences.readName(LicenceReader.ReadNameName("cc-by-4.0"))), "CC BY 4.0")
     assertEquals(
-      Europeana.shortName(licences.readUrl(LicenceReader.ReadUrlUrl("http://creativecommons.org/licenses/by-sa/3.0/de/"))),
+      Europeana.shortName(
+        licences.readUrl(LicenceReader.ReadUrlUrl("http://creativecommons.org/licenses/by-sa/3.0/de/"))
+      ),
       "CC BY-SA 3.0 DE"
     )
-    assertEquals(Europeana.shortName(licences.readUrl(LicenceReader.ReadUrlUrl("http://creativecommons.org/publicdomain/zero/1.0/"))), "CC0")
+    assertEquals(
+      Europeana.shortName(
+        licences.readUrl(LicenceReader.ReadUrlUrl("http://creativecommons.org/publicdomain/zero/1.0/"))
+      ),
+      "CC0"
+    )
 
   test("Europeana: errors — a refused key is a Left with Europeana's message; no items is an empty list"):
     val bad = parse(
@@ -264,7 +332,12 @@ class KeyedParsersSuite extends munit.FunSuite:
       "where:(\"Orkney\") NOT PROVIDER:(\"OpenUp!\") NOT proxy_dc_type:(\"PreservedSpecimen\" OR \"Preserved Specimen\")"
     )
     assertEquals(Europeana.query(MediaPlace.Label("Orkney")), "where:(\"Orkney\")")
-    assert(Europeana.searchUrl(api, MediaPlace.Label("Orkney"), CollectionSettings.Candidates(20), ex).value.contains(Europeana.query(MediaPlace.Label("Orkney"), ex).value.enc))
+    assert(
+      Europeana
+        .searchUrl(api, MediaPlace.Label("Orkney"), CollectionSettings.Candidates(20), ex)
+        .value
+        .contains(Europeana.query(MediaPlace.Label("Orkney"), ex).value.enc)
+    )
 
   test("Europeana: a specimen record — its aggregator or its institution excluded — is withheld with the reason"):
     val rs = Europeana
@@ -291,7 +364,13 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
 
   test("Europeana: an excluded dc:type is compared by its letters, any case; the Record API refuses such a record"):
-    assertEquals(Europeana.excludedType(List(Europeana.Exclusions.Types("Sculpture"), Europeana.Exclusions.Types("preserved_specimen")), ex), Some("preserved_specimen"))
+    assertEquals(
+      Europeana.excludedType(
+        List(Europeana.Exclusions.Types("Sculpture"), Europeana.Exclusions.Types("preserved_specimen")),
+        ex
+      ),
+      Some("preserved_specimen")
+    )
     assertEquals(Europeana.excludedType(List(Europeana.Exclusions.Types("Sculpture")), ex), None)
     val rec = Europeana.records(fixture("eu-search.json"), api, licences).toOption.get.head.toOption.get
     val specimen = parse(

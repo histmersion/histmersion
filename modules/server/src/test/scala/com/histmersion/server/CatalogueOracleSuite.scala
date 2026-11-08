@@ -78,9 +78,29 @@ class CatalogueOracleSuite extends DbSuite:
     d
 
   private def cfgFor(name: String): AppConfig =
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s8o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(InitConfig.Auto(false)).modify(_.dataDir).setTo(InitConfig.DataDir(dataDir.toString))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s8o_${name}_test")))
+      .modify(_.backups)
+      .setTo(base.backups.modify(_.dir).setTo(BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString)))
+      .modify(_.bundles)
+      .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString)))
+      .modify(_.converter)
+      .setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString)))
+      .modify(_.acquire)
+      .setTo(base.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString)))
+      .modify(_.init)
+      .setTo(
+        base.init
+          .modify(_.auto)
+          .setTo(InitConfig.Auto(false))
+          .modify(_.dataDir)
+          .setTo(InitConfig.DataDir(dataDir.toString))
+      )
+      .modify(_.runtime)
+      .setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString)))
+      .modify(_.basemap)
+      .setTo(base.basemap.modify(_.dir).setTo(BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString)))
 
   private def withServer[A](name: String)(body: String => A): A = withServerOn(cfgFor(name))(body)
 
@@ -453,14 +473,25 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = step("event delete", send("DELETE", s"$url/api/events/zz_gone", ""))
     // the catalogue import, then a person's edit of an imported event: a correction
     val catalog = CatalogueWiring(
-      Deps(cfgFor(name), ds, ds, plugins = ServerPlugins.load(oracleLoaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))),
+      Deps(
+        cfgFor(name),
+        ds,
+        ds,
+        plugins =
+          ServerPlugins.load(oracleLoaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+      ),
       FakeMediaHttp(gvp),
       () => DeepTime.SignedYear(2026L)
     )
     val job = catalog.eventImports
       .importJob(
         Caller.Local,
-        EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false), from = Some(EventImportRequest.From(-2000)), to = Some(EventImportRequest.To(-1000)))
+        EventImportRequest(
+          EventImportRequest.Provider("gvp"),
+          dryRun = EventImportRequest.DryRun(false),
+          from = Some(EventImportRequest.From(-2000)),
+          to = Some(EventImportRequest.To(-1000))
+        )
       )
       .fold(e => fail(e.message.value), identity)
     val _ = step("events import gvp", awaitJob(url, job.id))
@@ -761,7 +792,9 @@ class CatalogueOracleSuite extends DbSuite:
       scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
-      dss.flatMap((n, ds) => run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n"))
+      dss.flatMap((n, ds) =>
+        run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n")
+      )
     (records ++ instances).distinctBy(_._1).toMap
 
   private def normalise(text: String, names: Map[String, String]): String =
@@ -869,7 +902,8 @@ class CatalogueOracleSuite extends DbSuite:
       .map { t =>
         if !present(t) then s"## $t (no such table)"
         else
-          val rs = connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
+          val rs =
+            connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
           val normed = rs.map(r => json(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
           (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }
@@ -997,7 +1031,16 @@ class CatalogueOracleSuite extends DbSuite:
         Gazetteer.Extract.Licence("CC BY 4.0"),
         Some(Gazetteer.Extract.Attribution("GeoNames (geonames.org)"))
       ),
-      Gazetteer.Extract(Gazetteer.Extract.Name("tgn"), Gazetteer.Extract.File("tgn-absent.ndjson.gz"), Gazetteer.Extract.Sha256("0" * 64), Gazetteer.Extract.Bytes(1), Gazetteer.Extract.Features(1), Gazetteer.Extract.Version("fixture-2"), Gazetteer.Extract.Title("TGN fixture"), Gazetteer.Extract.Licence("ODC-By 1.0"))
+      Gazetteer.Extract(
+        Gazetteer.Extract.Name("tgn"),
+        Gazetteer.Extract.File("tgn-absent.ndjson.gz"),
+        Gazetteer.Extract.Sha256("0" * 64),
+        Gazetteer.Extract.Bytes(1),
+        Gazetteer.Extract.Features(1),
+        Gazetteer.Extract.Version("fixture-2"),
+        Gazetteer.Extract.Title("TGN fixture"),
+        Gazetteer.Extract.Licence("ODC-By 1.0")
+      )
     )
     val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), Gazetteer.Manifest(pins).asJson.spaces2, UTF_8)
     val extracts = tmp.resolve("gaz-extracts")
@@ -1009,9 +1052,20 @@ class CatalogueOracleSuite extends DbSuite:
       copyFixture(s"lpf/$f", lpf.resolve(f))
     )
     val c = cfgFor("gaz")
-    c.modify(
-      _.init).setTo(c.init.modify(_.dataDir).setTo(InitConfig.DataDir(d.toString))).modify(_.places).setTo(c.places.modify(_.sources).setTo(c.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir(extracts.toString)).modify(_.lpfDir).setTo(PlaceSourcesConfig.LpfDir(lpf.toString)))
-    )
+    c.modify(_.init)
+      .setTo(c.init.modify(_.dataDir).setTo(InitConfig.DataDir(d.toString)))
+      .modify(_.places)
+      .setTo(
+        c.places
+          .modify(_.sources)
+          .setTo(
+            c.places.sources
+              .modify(_.dir)
+              .setTo(PlaceSourcesConfig.Dir(extracts.toString))
+              .modify(_.lpfDir)
+              .setTo(PlaceSourcesConfig.LpfDir(lpf.toString))
+          )
+      )
 
   private def gazetteer(url: String, ds: DataSource): String =
     val log = StringBuilder()
@@ -1235,7 +1289,9 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       home,
-      Sql.Text("INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')")
+      Sql.Text(
+        "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+      )
     )
     val _ = step(
       "home: event tremor",
@@ -1322,7 +1378,9 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       cat,
-      Sql.Text("INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')")
+      Sql.Text(
+        "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+      )
     )
     val _ = step(
       "cat: event quake",
@@ -1419,7 +1477,8 @@ class CatalogueOracleSuite extends DbSuite:
   private def exchangeRows(ds: DataSource, names: Map[String, String]): String =
     ExchangeTables
       .map { t =>
-        val rs = connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
+        val rs =
+          connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
         val normed = rs.map(r => exchanged(json(r, names), names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }

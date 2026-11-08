@@ -36,7 +36,9 @@ object ArticleRoutes:
       Api.articles.serverLogicSuccess[Identity](q => articles.list(q)),
       Api.articleSlugs.serverLogicSuccess[Identity](_ => articles.slugs.map(s => ReviewGoal.Slug(s.value))),
       Api.importArticle.serverLogic[Identity](req => articles.importNote(req)),
-      Api.exportArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.exportNote).map(n => Article.Export(n.value))),
+      Api.exportArticle.serverLogic[Identity](slug =>
+        read(slug).flatMap(articles.exportNote).map(n => Article.Export(n.value))
+      ),
       Api.articleVersions.serverLogic[Identity](slug => read(slug).flatMap(articles.versions)),
       Api.articleVersion.serverLogic[Identity]((slug, id) =>
         read(slug).flatMap(s => articles.version(s, ArticleRepo.VersionId(id.value)))

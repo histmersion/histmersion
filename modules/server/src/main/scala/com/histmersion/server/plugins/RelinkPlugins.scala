@@ -50,7 +50,8 @@ import com.histmersion.pluginhost.SystemProcesses
   * learn what it contributes and on what terms: that runs the plugin's code, in this short-lived JVM, as installing it
   * will.
   */
-@main def pluginTool(args: String*): Unit = sys.exit(RelinkPlugins.exitCode(args.toList.map(RelinkPlugins.Argument(_)))(using Console.system).value)
+@main def pluginTool(args: String*): Unit =
+  sys.exit(RelinkPlugins.exitCode(args.toList.map(RelinkPlugins.Argument(_)))(using Console.system).value)
 
 object RelinkPlugins:
   private given CanEqual[Path, Path] = CanEqual.derived
@@ -75,15 +76,16 @@ object RelinkPlugins:
       |       pluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
   def exitCode(args: List[Argument])(using console: Console): ExitCode = try run(args)(using console)
-    catch
-      case NonFatal(e) =>
-        console.errorLine(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        ExitCode(3)
+  catch
+    case NonFatal(e) =>
+      console.errorLine(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
+      ExitCode(3)
 
   private def run(args: List[Argument])(using console: Console): ExitCode = args match
-    case cmd :: flag :: lib :: rest if flag.value == "--lib" => run(cmd, rest, dependencyJars(Path.of(lib.value)))(using console)
-    case cmd :: rest                   => run(cmd, rest, Nil)(using console)
-    case Nil                           => console.errorLine(Usage); ExitCode(1)
+    case cmd :: flag :: lib :: rest if flag.value == "--lib" =>
+      run(cmd, rest, dependencyJars(Path.of(lib.value)))(using console)
+    case cmd :: rest => run(cmd, rest, Nil)(using console)
+    case Nil         => console.errorLine(Usage); ExitCode(1)
 
   private def run(cmd: Argument, args: List[Argument], deps: List[Path])(using console: Console): ExitCode =
     val loader = withDependencies(deps, getClass.getClassLoader)
@@ -206,20 +208,29 @@ object RelinkPlugins:
     Try(Path.of(c.getProtectionDomain.getCodeSource.getLocation.toURI).toAbsolutePath.normalize == jar).getOrElse(false)
 
   private val NoHttp: Plugin.Http = new Plugin.Http:
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("no HTTP while a plugin is being described"))
+    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(
+      Plugin.Http.GetResultPart1("no HTTP while a plugin is being described")
+    )
 
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its
     * source fetchers declare.
     */
   def dryRun(p: Plugin): PluginDescription =
     val info = p.info
-    val user = Try(ConfigFactory.parseString(s"histmersion.plugins.${ConfigUtil.quoteString(info.id.value)}.enabled = true"))
-      .getOrElse(ConfigFactory.empty("plugin-tool"))
+    val user =
+      Try(ConfigFactory.parseString(s"histmersion.plugins.${ConfigUtil.quoteString(info.id.value)}.enabled = true"))
+        .getOrElse(ConfigFactory.empty("plugin-tool"))
     val g = PluginHost.build(
       List(p),
       user,
       ConfigFactory.empty("plugin-tool"),
-      HostServices(() => NoHttp, ConfigFactory.empty("plugin-tool"), (_, _, _) => (), files = new DiskLocalFiles, processes = new SystemProcesses)
+      HostServices(
+        () => NoHttp,
+        ConfigFactory.empty("plugin-tool"),
+        (_, _, _) => (),
+        files = new DiskLocalFiles,
+        processes = new SystemProcesses
+      )
     )
     val st = g.report.plugins.find(_.id.value == info.id.value)
     val access =
@@ -233,7 +244,8 @@ object RelinkPlugins:
       PluginDescription.SpiVersion(info.spiVersion.value),
       st.map(_.provides).getOrElse(Nil),
       access,
-      st.filter(s => s.state.value == PluginState.Failed.wire.value || s.state.value == PluginState.Refused.wire.value).flatMap(_.error)
+      st.filter(s => s.state.value == PluginState.Failed.wire.value || s.state.value == PluginState.Refused.wire.value)
+        .flatMap(_.error)
     )
 
   // ── check ─────────────────────────────────────────────────────────────────────────────────────
@@ -254,7 +266,11 @@ object RelinkPlugins:
     * loader: a second copy of a class is a conflict, never a choice (§7.1).
     */
   def duplicates(kit: Set[ClassName], plugins: List[(PluginJar.File, Set[ClassName])]): List[PluginKit.Problem] =
-    @tailrec def loop(rest: List[(PluginJar.File, Set[ClassName])], seen: Set[(ClassName, String)], acc: List[PluginKit.Problem]): List[PluginKit.Problem] =
+    @tailrec def loop(
+        rest: List[(PluginJar.File, Set[ClassName])],
+        seen: Set[(ClassName, String)],
+        acc: List[PluginKit.Problem]
+    ): List[PluginKit.Problem] =
       rest match
         case Nil                     => acc
         case (name, classes) :: tail =>
@@ -282,7 +298,11 @@ object RelinkPlugins:
     val described = jars.map(j => describe(j, loader))
     val taken = hostIds(loader)
     // an id provided twice among the plugin jars, or already in the binary
-    @tailrec def idRefusals(rest: List[PluginJar], t: Map[PluginDescription.Id, String], acc: List[PluginKit.Problem]): List[PluginKit.Problem] =
+    @tailrec def idRefusals(
+        rest: List[PluginJar],
+        t: Map[PluginDescription.Id, String],
+        acc: List[PluginKit.Problem]
+    ): List[PluginKit.Problem] =
       rest match
         case Nil       => acc
         case j :: tail =>
@@ -297,11 +317,13 @@ object RelinkPlugins:
     val dups = duplicates(kitClasses, (deps ++ jars).map(j => PluginJar.File(j.getFileName.toString) -> classesOf(j)))
     val lines = described.flatMap(j =>
       j.plugins.map(p =>
-        Note(s"plugin: ${p.id} ${p.version} (SPI ${p.spiVersion}) in ${j.file} · access ${
-            if p.access.isEmpty then "none declared" else p.access.mkString(", ")
-          }" +
-          (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}") +
-          p.error.fold("")(e => s" · with its defaults alone: $e"))
+        Note(
+          s"plugin: ${p.id} ${p.version} (SPI ${p.spiVersion}) in ${j.file} · access ${
+              if p.access.isEmpty then "none declared" else p.access.mkString(", ")
+            }" +
+            (if p.provides.isEmpty then "" else s" · provides ${p.provides.mkString(", ")}") +
+            p.error.fold("")(e => s" · with its defaults alone: $e")
+        )
       )
     )
     (lines, idProblems ++ dups)
@@ -314,7 +336,9 @@ object RelinkPlugins:
     val supplied = HostProvided.Ids.map(id => PluginDescription.Id(id.value))
     (discovered ++ supplied).map(_ -> "this Histmersion (a first-party plugin)").toMap ++
       LegacyPlugins.All.map(s =>
-        PluginDescription.Id(s.id.value) -> s"this Histmersion (a former first-party plugin, now ${s.into.mkString(", ")})"
+        PluginDescription.Id(
+          s.id.value
+        ) -> s"this Histmersion (a former first-party plugin, now ${s.into.mkString(", ")})"
       )
 
   /** The plugin-set jar written to `out`, through a temporary file beside it and a rename. */
@@ -341,10 +365,16 @@ object RelinkPlugins:
 
   private def kitLabel(kit: Path): Option[PluginSet.Kit] =
     val f = kit.resolve("kit.json")
-    if Files.isRegularFile(f) then PluginKit.parseKit(Files.readString(f)).toOption.map(m => PluginSet.Kit(m.label)) else None
+    if Files.isRegularFile(f) then PluginKit.parseKit(Files.readString(f)).toOption.map(m => PluginSet.Kit(m.label))
+    else None
 
   /** The manifest over every file under `kit` (the manifests themselves excluded). */
-  def kitManifest(kit: Path, version: PluginKit.KitManifest.Version, commit: Option[PluginKit.KitManifest.Commit], graalvm: PluginKit.KitManifest.Graalvm): PluginKit.KitManifest =
+  def kitManifest(
+      kit: Path,
+      version: PluginKit.KitManifest.Version,
+      commit: Option[PluginKit.KitManifest.Commit],
+      graalvm: PluginKit.KitManifest.Graalvm
+  ): PluginKit.KitManifest =
     val files = Files
       .walk(kit)
       .iterator()

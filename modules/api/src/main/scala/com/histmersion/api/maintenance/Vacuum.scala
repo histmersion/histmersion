@@ -19,7 +19,6 @@ object Vacuum:
   type Table = Table.T
   object Table extends Newtype[String, Pure]
 
-
   val JobKind = MaintenanceJobKinds.Vacuum.kind.value
 
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
@@ -28,9 +27,11 @@ object Vacuum:
   private def invalid(msg: String) = Api.Error(Api.Error.Message(msg), Some(Api.Error.Code(Write.CodeInvalid)))
 
   def plan(in: Request, defaults: List[Table], existing: Set[Table]): Either[Api.Error, VacuumPlan] =
-    val asked = in.tables.flatMap(_.value.split(",").toList).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
-    val tables = (if asked.isEmpty then defaults.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
-                  else asked).distinct
+    val asked =
+      in.tables.flatMap(_.value.split(",").toList).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
+    val tables =
+      (if asked.isEmpty then defaults.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
+       else asked).distinct
     val shape = tables.filterNot(TableShape.matches)
     val absent = tables.filterNot(existing.map(_.value).contains)
     if tables.isEmpty then Left(invalid("no table to vacuum: name one, or set maintenance.vacuum-tables"))
@@ -43,7 +44,7 @@ object Vacuum:
     if (analyze).value then (s"VACUUM (ANALYZE) $q") else (s"VACUUM $q")
 
   def describe(p: VacuumPlan): String =
-    (s"${if ((p.analyze) == Request.Analyze(true)) then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
+    (s"${if (p.analyze) == Request.Analyze(true) then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
 
   def tableLine(
       table: Table,

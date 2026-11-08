@@ -30,7 +30,8 @@ final class SiteTypesControllers(
   private def ec = settings().events
 
   /** A polite client at `intervalMs` between requests to one host; the media politeness otherwise. */
-  private def polite(intervalMs: PluginEvents.IntervalMs): Polite = PluginEvents.polite(http, settings().media, intervalMs)
+  private def polite(intervalMs: PluginEvents.IntervalMs): Polite =
+    PluginEvents.polite(http, settings().media, intervalMs)
 
   def refineSiteTypes(caller: Caller, req: SiteTypes.Request): Either[Api.Error, JobInfo] =
     jobs.start(
@@ -44,7 +45,11 @@ final class SiteTypesControllers(
   def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit): SiteTypes.Report =
     val started = DeepTime.SignedYear(clock.millis())
     val refresh = SiteTypeService.Refresh(req.refresh.value)
-    if req.dryRun.value then SiteTypes.Report(dryRun = SiteTypes.Report.DryRun(true), pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, None).value))
+    if req.dryRun.value then
+      SiteTypes.Report(
+        dryRun = SiteTypes.Report.DryRun(true),
+        pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, None).value)
+      )
     else
       val c = polite(MediaConfig.RequestIntervalMs(ec.wikidata.apiIntervalMs.value))
       val cap = req.limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue)
@@ -67,14 +72,22 @@ final class SiteTypesControllers(
       /** The superclasses of `classes` within `depth` P279 steps, nearest first (cached per run). */
       def supers(classes: List[CatalogRecord.Wikidata.Class]): List[CatalogRecord.Wikidata.Class] =
         val unknown = classes.filterNot(SiteTypes.wikidataClasses.contains)
-        @tailrec def walk(steps: Int, frontier: List[CatalogRecord.Wikidata.Class], acc: List[CatalogRecord.Wikidata.Class]): List[CatalogRecord.Wikidata.Class] =
+        @tailrec def walk(
+            steps: Int,
+            frontier: List[CatalogRecord.Wikidata.Class],
+            acc: List[CatalogRecord.Wikidata.Class]
+        ): List[CatalogRecord.Wikidata.Class] =
           if steps <= 0 then acc
           else
             val ask = frontier.filterNot(q => superCache.contains(q.value)).distinct
             if ask.nonEmpty then
               val got = claims(ask.map(q => WikidataItem.Id(q.value)), EventProviders.WikidataProperty("P279"))
               superCache ++= ask.map(q => q.value -> got.getOrElse(q.value, Nil))
-            val next = frontier.flatMap(q => superCache.getOrElse(q.value, Nil)).map(CatalogRecord.Wikidata.Class(_)).distinct.filterNot(acc.contains)
+            val next = frontier
+              .flatMap(q => superCache.getOrElse(q.value, Nil))
+              .map(CatalogRecord.Wikidata.Class(_))
+              .distinct
+              .filterNot(acc.contains)
             walk(steps - 1, next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
         walk(math.max(0, ec.siteTypes.superclassDepth.value), unknown, Nil)
       def next(limit: Int) =
@@ -94,12 +107,17 @@ final class SiteTypesControllers(
           asked = SiteTypes.Report.Asked(report.asked.value + answered.size),
           typed = EventCount.add(report.typed, EventCount.of(types.flatMap(_._2).map(t => EventCount.Key(t.value)))),
           untyped = SiteTypes.Report.Untyped(report.untyped.value + types.count(_._2.isEmpty)),
-          failed = report.failed ++ Option.when(answered.isEmpty)(SiteTypes.Report.Failed(s"no answer for ${batch.head._2}…")).toList
+          failed = report.failed ++ Option
+            .when(answered.isEmpty)(SiteTypes.Report.Failed(s"no answer for ${batch.head._2}…"))
+            .toList
         )
         progress(JobInfo.Progress(s"${report.asked} site(s) asked · ${c.requests} request(s)"))
         batch = if answered.isEmpty then Nil
         else next(math.min(ec.siteTypes.batch.value, math.max(0, cap - report.asked.value)))
-      report.copy(pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, Some(started)).value), requests = SiteTypes.Report.Requests(c.requests.value))
+      report.copy(
+        pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, Some(started)).value),
+        requests = SiteTypes.Report.Requests(c.requests.value)
+      )
 
 object SiteTypesControllers:
   val SiteTypesJobKind: Job.Kind = Job.Kind.assume(PlacesJobKinds.SiteTypes.kind.value)

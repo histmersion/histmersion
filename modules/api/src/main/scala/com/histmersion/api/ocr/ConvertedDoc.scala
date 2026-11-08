@@ -13,10 +13,11 @@ final case class ConvertedDoc(
     images: List[ConvertedImage] = Nil,
     filename: Option[ConvertedDoc.Filename] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ConvertedDoc:
-  export com.histmersion.api.library.Source.{OcrMarkdown as Markdown}
+  export com.histmersion.api.library.Source.OcrMarkdown as Markdown
   type Pages = Pages.T
   object Pages extends Newtype[Int, Pure]
   type Filename = Filename.T

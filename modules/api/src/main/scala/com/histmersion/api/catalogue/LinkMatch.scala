@@ -12,6 +12,7 @@ enum LinkMatch derives CanEqual:
 object LinkMatch:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
+
   /** LPF `links[].type`; anything else (`primaryTopicOf`, `subjectOf`, `seeAlso`) is no identity. */
 
   def ofLpf(t: Wire): Option[LinkMatch] = (t).value.trim.toLowerCase(java.util.Locale.ROOT) match

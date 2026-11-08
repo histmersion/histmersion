@@ -4,12 +4,20 @@ package plugin
 import scala.concurrent.duration.FiniteDuration
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** Argument-vector execution supplied by the host. Implementations never interpret argv through a shell.
-  * stdout and stderr remain separate; stdout may contain secrets and must not be included in errors.
+/** Argument-vector execution supplied by the host. Implementations never interpret argv through a shell. stdout and
+  * stderr remain separate; stdout may contain secrets and must not be included in errors.
   */
 trait Processes:
-  def run(argv: List[Processes.RunArgv], env: Map[Processes.RunEnvPart1, Processes.RunEnvPart2], stdin: Option[Processes.RunStdin], timeout: FiniteDuration): Either[Processes.RunResultPart1, Processes.Result]
-  def start(argv: List[Processes.StartArgv], env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]): Either[Processes.StartResultPart1, Processes.Session]
+  def run(
+      argv: List[Processes.RunArgv],
+      env: Map[Processes.RunEnvPart1, Processes.RunEnvPart2],
+      stdin: Option[Processes.RunStdin],
+      timeout: FiniteDuration
+  ): Either[Processes.RunResultPart1, Processes.Result]
+  def start(
+      argv: List[Processes.StartArgv],
+      env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]
+  ): Either[Processes.StartResultPart1, Processes.Session]
 
   /** Capture a command without a time limit, closing stdin immediately. The caller explicitly chooses this mode. */
   def capture(argv: List[Processes.CaptureArgv]): Either[Processes.CaptureResultPart1, Processes.Result]
@@ -54,7 +62,9 @@ object Processes:
     def err: Session.ErrResult
     def alive: Session.AliveResult
     def send(line: Session.SendLine): Either[Session.SendResultPart1, Unit]
-    def awaitOut(timeout: FiniteDuration)(ready: Session.AwaitOutReadyArg1 => Session.AwaitOutReadyResult): Session.AwaitOutResult
+    def awaitOut(timeout: FiniteDuration)(
+        ready: Session.AwaitOutReadyArg1 => Session.AwaitOutReadyResult
+    ): Session.AwaitOutResult
     def awaitErr(length: Session.AwaitErrLength, timeout: FiniteDuration): Unit
     def close(timeout: FiniteDuration): Option[Session.CloseResult]
     def exit(timeout: FiniteDuration): Option[Session.ExitResult]
@@ -84,10 +94,29 @@ object Processes:
     object ExitResult extends Newtype[Int, Pure]
 
   object Unavailable extends Processes:
-    export Processes.{RunResultPart1, RunArgv, RunEnvPart1, RunEnvPart2, RunStdin, StartResultPart1, StartArgv, StartEnvPart1, StartEnvPart2, CaptureResultPart1, CaptureArgv}
+    export Processes.{
+      CaptureArgv,
+      CaptureResultPart1,
+      RunArgv,
+      RunEnvPart1,
+      RunEnvPart2,
+      RunResultPart1,
+      RunStdin,
+      StartArgv,
+      StartEnvPart1,
+      StartEnvPart2,
+      StartResultPart1
+    }
 
-    def run(argv: List[RunArgv], env: Map[RunEnvPart1, RunEnvPart2], stdin: Option[RunStdin], timeout: FiniteDuration): Either[RunResultPart1, Result] =
+    def run(
+        argv: List[RunArgv],
+        env: Map[RunEnvPart1, RunEnvPart2],
+        stdin: Option[RunStdin],
+        timeout: FiniteDuration
+    ): Either[RunResultPart1, Result] =
       Left(RunResultPart1("this host supplies no processes"))
     def start(argv: List[StartArgv], env: Map[StartEnvPart1, StartEnvPart2]): Either[StartResultPart1, Session] =
       Left(StartResultPart1("this host supplies no processes"))
-    def capture(argv: List[CaptureArgv]): Either[CaptureResultPart1, Result] = Left(CaptureResultPart1("this host supplies no processes"))
+    def capture(argv: List[CaptureArgv]): Either[CaptureResultPart1, Result] = Left(
+      CaptureResultPart1("this host supplies no processes")
+    )

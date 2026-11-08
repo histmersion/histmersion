@@ -108,37 +108,46 @@ object ManagersView:
   def managerMeaning(id: Managers.ManagerInfo.Id): Option[ManagerMeaning] =
     val goal = id.value.dropWhile(_ != ':').drop(1)
     Kind.parse(Kind.Wire(id.value.takeWhile(_ != ':'))).map {
-      case Kind.Review => ManagerMeaning("The review manager: reviews the library's articles until their reviews converge.")
-      case Kind.Enrich => ManagerMeaning("The enrich manager: enriches the library's sources until each one is enriched.")
-      case Kind.Seed   =>
-        ManagerMeaning(s"Seeds the research area $goal: plans it, proposes its new articles and, once approved, compiles them.")
-      case Kind.Watch => ManagerMeaning(s"Watches the research area $goal: an acquisition sweep and a currency check on its schedule.")
+      case Kind.Review =>
+        ManagerMeaning("The review manager: reviews the library's articles until their reviews converge.")
+      case Kind.Enrich =>
+        ManagerMeaning("The enrich manager: enriches the library's sources until each one is enriched.")
+      case Kind.Seed =>
+        ManagerMeaning(
+          s"Seeds the research area $goal: plans it, proposes its new articles and, once approved, compiles them."
+        )
+      case Kind.Watch =>
+        ManagerMeaning(s"Watches the research area $goal: an acquisition sweep and a currency check on its schedule.")
     }
 
   /** What each status of a manager's item means; a tooltip on the items' filter buttons. */
   def itemStatusMeaning(s: ItemStatus): StatusMeaning = s match
     case ItemStatus.Pending => StatusMeaning("Waiting to start; the scheduler picks the order.")
-    case ItemStatus.Held    => StatusMeaning("Held: it does not start until released, its approval is decided, or its hold ends.")
+    case ItemStatus.Held    =>
+      StatusMeaning("Held: it does not start until released, its approval is decided, or its hold ends.")
     case ItemStatus.Active  => StatusMeaning("A run is working on it now.")
     case ItemStatus.Done    => StatusMeaning("Settled: its runs got it where the manager wanted it.")
     case ItemStatus.Stopped =>
       StatusMeaning("Settled without being done: skipped, or the manager gave up on it. Re-open brings it back.")
     case ItemStatus.Failed    => StatusMeaning("Settled because its run failed. Re-open brings it back.")
-    case ItemStatus.Cancelled => StatusMeaning("Settled because the work is moot: its target is gone, or its sweep was removed.")
+    case ItemStatus.Cancelled =>
+      StatusMeaning("Settled because the work is moot: its target is gone, or its sweep was removed.")
 
   /** What a person can do to this item: by its status — but an item the autopilot's focus holds is not released by hand
     * (pin its goal instead).
     */
   def itemActionsFor(i: ManagerItem): List[ItemAction] =
-    if i.hold.exists(_.focus.isDefined) then itemActions(i.status).filterNot(_ == ItemAction("release")) else itemActions(i.status)
+    if i.hold.exists(_.focus.isDefined) then itemActions(i.status).filterNot(_ == ItemAction("release"))
+    else itemActions(i.status)
 
   /** What a person can do to an item in this status. */
-  def itemActions(status: com.histmersion.api.automation.ItemStatus.Wire): List[ItemAction] = ItemStatus.parse(status) match
-    case Some(ItemStatus.Pending) => List(ItemAction("hold"), ItemAction("priority"), ItemAction("skip"))
-    case Some(ItemStatus.Held)    => List(ItemAction("release"), ItemAction("priority"), ItemAction("skip"))
-    case Some(ItemStatus.Active)  => List(ItemAction("priority"), ItemAction("skip"))
-    case Some(s) if s.isFinal     => List(ItemAction("reopen"))
-    case _                        => Nil
+  def itemActions(status: com.histmersion.api.automation.ItemStatus.Wire): List[ItemAction] =
+    ItemStatus.parse(status) match
+      case Some(ItemStatus.Pending) => List(ItemAction("hold"), ItemAction("priority"), ItemAction("skip"))
+      case Some(ItemStatus.Held)    => List(ItemAction("release"), ItemAction("priority"), ItemAction("skip"))
+      case Some(ItemStatus.Active)  => List(ItemAction("priority"), ItemAction("skip"))
+      case Some(s) if s.isFinal     => List(ItemAction("reopen"))
+      case _                        => Nil
 
   /** A whole number the person typed, or nothing. */
   private def whole(s: String): Option[Int] = s.trim.toIntOption.filter(_ >= 0)
@@ -183,11 +192,13 @@ object ManagersView:
     yield (i, ai, aa)
     val usd = g("budgetUsd")
     val daily = g("dailyUsd")
-    val models = list(g("models"), ";").getOrElse(Nil).map(w => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(w)))
+    val models =
+      list(g("models"), ";").getOrElse(Nil).map(w => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(w)))
     val result: Either[String, ManagerConfig] =
       if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
       else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left("budget USD is not a positive number")
-      else if daily.nonEmpty && daily.toDoubleOption.forall(_ < 0) then Left("daily cap USD is not a number (0 = no cap)")
+      else if daily.nonEmpty && daily.toDoubleOption.forall(_ < 0) then
+        Left("daily cap USD is not a number (0 = no cap)")
       else
         infer.flatMap((inf, ai, aa) =>
           models.collectFirst { case Left(e) => e } match
@@ -324,7 +335,8 @@ object ManagersView:
     val a = action.value.trim.toLowerCase
     val itemText = Option(item.value.trim).filter(_.nonEmpty).map(HintAdd.Item(_))
     if t.isEmpty then Left(Managers.HintAdd.Text("a hint needs text"))
-    else if suggest.value && a.nonEmpty && a != "none" then Left(Managers.HintAdd.Text("choose an action, or let the model suggest one — not both"))
+    else if suggest.value && a.nonEmpty && a != "none" then
+      Left(Managers.HintAdd.Text("choose an action, or let the model suggest one — not both"))
     else if suggest.value then Right(HintAdd(HintAdd.Text(t), itemText, Some(once), suggest = Some(suggest)))
     else if a.isEmpty || a == "none" then Right(HintAdd(HintAdd.Text(t), itemText, Some(once)))
     else if !HintEffect.Actions.contains(a) then Left(Managers.HintAdd.Text(s"unknown action $a"))
@@ -340,7 +352,8 @@ object ManagersView:
       )
       if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
         Left(Managers.HintAdd.Text("hold: give a date or a source"))
-      else if e.targets.isEmpty && e.tag.isEmpty && item.value.trim.isEmpty then Left(Managers.HintAdd.Text(s"$a: name the articles or a tag"))
+      else if e.targets.isEmpty && e.tag.isEmpty && item.value.trim.isEmpty then
+        Left(Managers.HintAdd.Text(s"$a: name the articles or a tag"))
       else Right(HintAdd(HintAdd.Text(t), itemText, Some(once), Some(e)))
 
   // ── the page buttons: Review, Extend, Enrich ────────────────────────────────────────────────────
@@ -366,13 +379,20 @@ object ManagersView:
   /** Buttons that hand a target to a manager (only where the server runs agents), with the line saying what was queued
     * and a link to the manager.
     */
-  def enqueueButtons(target: Managers.EnqueueRequest.Target, buttons: List[(EnqueueKind, Icon, ButtonLabel, Hint)]): HtmlElement =
+  def enqueueButtons(
+      target: Managers.EnqueueRequest.Target,
+      buttons: List[(EnqueueKind, Icon, ButtonLabel, Hint)]
+  ): HtmlElement =
     val note = Var(Option.empty[(String, String)])
     def go(kind: EnqueueKind): Unit =
       ApiClient
         .enqueue(kind, target)
         .onComplete(r =>
-          note.set(Some(r.fold(e => (s"not queued: ${e.getMessage}", ""), x => (enqueuedNote(kind, x).value, x.managerId.value))))
+          note.set(
+            Some(
+              r.fold(e => (s"not queued: ${e.getMessage}", ""), x => (enqueuedNote(kind, x).value, x.managerId.value))
+            )
+          )
         )
     div(
       cls := "wm-actions",
@@ -409,14 +429,24 @@ object ManagersView:
     enqueueButtons(
       EnqueueRequest.Target(slug.value),
       List(
-        (EnqueueKind.Review, Icon.Managers, ButtonLabel("review"), Hint("queue this article for the review manager (first in line)")),
+        (
+          EnqueueKind.Review,
+          Icon.Managers,
+          ButtonLabel("review"),
+          Hint("queue this article for the review manager (first in line)")
+        ),
         (
           EnqueueKind.Extend,
           Icon.Edit,
           ButtonLabel("extend"),
           Hint("compile the new sources of its filter into this article, then review it")
         ),
-        (EnqueueKind.Enrich, Icon.Runs, ButtonLabel("enrich"), Hint("enrich the sources this article cites that are not enriched yet"))
+        (
+          EnqueueKind.Enrich,
+          Icon.Runs,
+          ButtonLabel("enrich"),
+          Hint("enrich the sources this article cites that are not enriched yet")
+        )
       )
     )
 
@@ -433,7 +463,12 @@ object ManagersView:
           ButtonLabel("extend"),
           Hint("propose the next articles of this research area (you approve the plan)")
         ),
-        (EnqueueKind.Enrich, Icon.Runs, ButtonLabel("enrich"), Hint("enrich the sources linked to this goal that are not enriched yet"))
+        (
+          EnqueueKind.Enrich,
+          Icon.Runs,
+          ButtonLabel("enrich"),
+          Hint("enrich the sources linked to this goal that are not enriched yet")
+        )
       )
     )
 
@@ -601,7 +636,11 @@ object ManagersView:
   /** The goals by stage, in the order a goal moves through them: how many in each. */
   def stages(gs: List[Autopilot.GoalProgress]): Stages =
     Stages(
-      Goal.Status.all.map(st => st -> gs.count(_.status.value == st.value)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
+      Goal.Status.all
+        .map(st => st -> gs.count(_.status.value == st.value))
+        .filter(_._2 > 0)
+        .map((st, n) => s"$n $st")
+        .mkString(" · ")
     )
 
   /** The switch and the status: on/off (the click shows the new state at once; the server's answer follows), the
@@ -727,7 +766,9 @@ object ManagersView:
                     WinLink(
                       WindowKey.Goal(WindowKey.Goal.Slug(g.slug.value)),
                       title := g.slug.value,
-                      Option(g.title.value).filter(_.trim.nonEmpty).getOrElse(Wording.humanize(Wording.Id(g.slug.value)))
+                      Option(g.title.value)
+                        .filter(_.trim.nonEmpty)
+                        .getOrElse(Wording.humanize(Wording.Id(g.slug.value)))
                     )
                   ),
                   div(cls := "job-meta muted", goalLine(g).value),
@@ -766,41 +807,69 @@ object ManagersView:
 
   /** What each job type of the scheduler's queue is; a tooltip on its filter chip. */
   def jobTypeMeaning(jobType: JobKinds.Wire): Option[JobTypeMeaning] = jobType.value match
-    case "goal-plan" => Some(JobTypeMeaning("Planning a research goal: its sub-goals, search queries and works (plan-goal runs)."))
-    case "propose"   => Some(JobTypeMeaning("Proposing the articles a research area should have (propose-articles runs)."))
-    case "sweep"     =>
-      Some(JobTypeMeaning("Acquisition sweeps: discovering new works for a goal and ranking them (acquisition-sweep runs)."))
+    case "goal-plan" =>
+      Some(JobTypeMeaning("Planning a research goal: its sub-goals, search queries and works (plan-goal runs)."))
+    case "propose" =>
+      Some(JobTypeMeaning("Proposing the articles a research area should have (propose-articles runs)."))
+    case "sweep" =>
+      Some(
+        JobTypeMeaning(
+          "Acquisition sweeps: discovering new works for a goal and ranking them (acquisition-sweep runs)."
+        )
+      )
     case "currency" =>
-      Some(JobTypeMeaning("Currency checks: retractions and newer critiques of a goal's sources (currency-check runs)."))
-    case "enrich"  => Some(JobTypeMeaning("Enriching a source: summary, findings, dates, places, status (enrich-source runs)."))
+      Some(
+        JobTypeMeaning("Currency checks: retractions and newer critiques of a goal's sources (currency-check runs).")
+      )
+    case "enrich" =>
+      Some(JobTypeMeaning("Enriching a source: summary, findings, dates, places, status (enrich-source runs)."))
     case "compile" => Some(JobTypeMeaning("Compiling a new article from the corpus (compile-article runs)."))
-    case "extend"  => Some(JobTypeMeaning("Appending a section to an article from its new sources (compile-article runs)."))
-    case "filter"  => Some(JobTypeMeaning("Inferring an article's coverage filter (infer-filter runs)."))
-    case "review"  => Some(JobTypeMeaning("Reviewing articles and revising them (review-article runs)."))
-    case _         => None
+    case "extend"  =>
+      Some(JobTypeMeaning("Appending a section to an article from its new sources (compile-article runs)."))
+    case "filter" => Some(JobTypeMeaning("Inferring an article's coverage filter (infer-filter runs)."))
+    case "review" => Some(JobTypeMeaning("Reviewing articles and revising them (review-article runs)."))
+    case _        => None
 
   /** Why an item waits, by its code (the queue's, and an item's own); a tooltip on the "why" chips. */
   def waitMeaning(code: AgentScheduler.Waiting.Code): Option[WaitMeaning] = code.value match
     case "capacity" =>
-      Some(WaitMeaning("No place free: the most runs at once are running. It starts when one finishes, in the order shown."))
-    case "pool"        => Some(WaitMeaning("The subscription plan its models draw on already carries as many runs as it takes."))
-    case "manager-cap" => Some(WaitMeaning("Its manager already has as many runs in flight as its own runs-at-once setting allows."))
-    case "blocked"     =>
-      Some(WaitMeaning("Cannot start yet; its row says why (a spending cap, a model's allowance, or work that must come first)."))
+      Some(
+        WaitMeaning(
+          "No place free: the most runs at once are running. It starts when one finishes, in the order shown."
+        )
+      )
+    case "pool" =>
+      Some(WaitMeaning("The subscription plan its models draw on already carries as many runs as it takes."))
+    case "manager-cap" =>
+      Some(WaitMeaning("Its manager already has as many runs in flight as its own runs-at-once setting allows."))
+    case "blocked" =>
+      Some(
+        WaitMeaning(
+          "Cannot start yet; its row says why (a spending cap, a model's allowance, or work that must come first)."
+        )
+      )
     case "busy" =>
-      Some(WaitMeaning("Could not start in the last pass (another run is writing its target, say); the next pass tries again."))
+      Some(
+        WaitMeaning(
+          "Could not start in the last pass (another run is writing its target, say); the next pass tries again."
+        )
+      )
     case "budget" => Some(WaitMeaning("Nothing starts: today's or this month's agent spending cap is reached."))
-    case "drain"  => Some(WaitMeaning("Nothing new starts: draining, so the runs in flight finish first, until a person lifts it."))
-    case AgentScheduler.Code.Person  => Some(WaitMeaning("Waits for a person to decide an approval; it holds no place."))
-    case AgentScheduler.Code.Held    => Some(WaitMeaning("Held by a person; it holds no place."))
-    case AgentScheduler.Code.NotDue  => Some(WaitMeaning("Not due yet: a cooldown, or a failed run's backoff."))
+    case "drain"  =>
+      Some(WaitMeaning("Nothing new starts: draining, so the runs in flight finish first, until a person lifts it."))
+    case AgentScheduler.Code.Person => Some(WaitMeaning("Waits for a person to decide an approval; it holds no place."))
+    case AgentScheduler.Code.Held   => Some(WaitMeaning("Held by a person; it holds no place."))
+    case AgentScheduler.Code.NotDue => Some(WaitMeaning("Not due yet: a cooldown, or a failed run's backoff."))
     case AgentScheduler.Code.Running => Some(WaitMeaning("Started: its run is in flight."))
     case AgentScheduler.Code.Settled => Some(WaitMeaning("Settled: done, stopped, failed or cancelled."))
     case AgentScheduler.Code.Paused  => Some(WaitMeaning("Its manager or its run is paused."))
     case _                           => None
 
   /** A facet of the queue as the filter chips count it: each value with its items, the most first. */
-  def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => Facet.Value): List[(Facet.Value, Facet.Count)] =
+  def facet(
+      ws: List[AgentScheduler.Waiting],
+      of: AgentScheduler.Waiting => Facet.Value
+  ): List[(Facet.Value, Facet.Count)] =
     ws.groupMapReduce(of)(_ => 1)(_ + _)
       .toList
       .sortBy((v, n) => (-n, v.value))
@@ -816,11 +885,14 @@ object ManagersView:
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
   def schedulerHead(s: AgentScheduler.SchedulerStatus): SchedulerHead =
     SchedulerHead(
-      s"Scheduler: ${strategyLabel(AgentScheduler.StrategyLine.Name(s.strategy.value))}" + (if s.strategyFrom.value == "person" then " (set by a person)" else "") +
+      s"Scheduler: ${strategyLabel(AgentScheduler.StrategyLine.Name(s.strategy.value))}" + (if s.strategyFrom.value == "person"
+                                                                                            then " (set by a person)"
+                                                                                            else "") +
         s" · ${s.occupied} of ${s.maxRuns} runs at once" +
         (if s.pools.isEmpty then ""
          else " · " + s.pools.map(p => s"${Wording.pool(p.pool)} ${p.used}/${p.cap}").mkString(", ")) +
-        (if s.forPerson.value > 0 then s" · ${counted(s.forPerson.value, "item")} wait for a person (no place held)" else "")
+        (if s.forPerson.value > 0 then s" · ${counted(s.forPerson.value, "item")} wait for a person (no place held)"
+         else "")
     )
 
   /** The central scheduler: the strategy switch (behind the write gate), the resources, what the last pass started
@@ -914,7 +986,11 @@ object ManagersView:
               .map(x =>
                 li(
                   cls := "job-row",
-                  span(cls := s"job-state state-${x.code}", title := x.code.value, Wording.humanize(Wording.Id(x.code.value))),
+                  span(
+                    cls := s"job-state state-${x.code}",
+                    title := x.code.value,
+                    Wording.humanize(Wording.Id(x.code.value))
+                  ),
                   div(
                     cls := "job-main",
                     div(
@@ -1102,7 +1178,8 @@ object ManagersView:
                     s" · ${counted(m.inFlight.value, "run")} in flight",
                     s" · ${ManagersMarkdown.today(m)}"
                   ),
-                  Option.when(m.backlog.value > 0)(div(cls := "muted", ManagersMarkdown.backlog(m.backlog, m.backlogDays))),
+                  Option
+                    .when(m.backlog.value > 0)(div(cls := "muted", ManagersMarkdown.backlog(m.backlog, m.backlogDays))),
                   m.lastEvent.map(e => div(cls := "muted", s"${e.at} · ${e.kind}: ${e.text.value.take(160)}"))
                 )
               )
@@ -1164,9 +1241,7 @@ object ManagersView:
                 Poll.LiveMode(d.manager.inFlight.value > 0 || d.current.nonEmpty),
                 Poll.DataChanged(moved)
               )
-              delay.foreach(ms =>
-                timer = dom.window.setTimeout(() => refresh(Poll.DataChanged(false)), ms.value)
-              )
+              delay.foreach(ms => timer = dom.window.setTimeout(() => refresh(Poll.DataChanged(false)), ms.value))
             }
           )
       }
@@ -1260,7 +1335,9 @@ object ManagersView:
                 typ := "button",
                 cls := "btn btn--toggle btn--sm",
                 aria.pressed <-- status.signal.map(v => (v == s).toString),
-                title := s.flatMap(ItemStatus.parse).fold("Every item, whatever its status.")(st => itemStatusMeaning(st).value),
+                title := s
+                  .flatMap(ItemStatus.parse)
+                  .fold("Every item, whatever its status.")(st => itemStatusMeaning(st).value),
                 s.fold("all")(_.value),
                 onClick --> (_ => status.set(s))
               )
@@ -1395,7 +1472,11 @@ object ManagersView:
                         "pause",
                         disabled <-- busy,
                         title := "start no new runs; its runs in flight go on",
-                        onClick --> (_ => write(WriteLabel("pause"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"))))
+                        onClick --> (_ =>
+                          write(WriteLabel("pause"))(
+                            ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"))
+                          )
+                        )
                       ),
                       button(
                         typ := "button",
@@ -1404,7 +1485,9 @@ object ManagersView:
                         disabled <-- busy,
                         title := "also pause its runs in flight",
                         onClick --> (_ =>
-                          write(WriteLabel("pause with its runs"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"), runs = true))
+                          write(WriteLabel("pause with its runs"))(
+                            ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"), runs = true)
+                          )
                         )
                       )
                     )
@@ -1417,7 +1500,9 @@ object ManagersView:
                     cls := "btn btn--primary",
                     "resume",
                     disabled <-- busy,
-                    onClick --> (_ => write(WriteLabel("resume"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("resume"))))
+                    onClick --> (_ =>
+                      write(WriteLabel("resume"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("resume")))
+                    )
                   )
                 ),
                 Option.when(!st.contains(State.Stopped))(
@@ -1501,8 +1586,13 @@ object ManagersView:
                         onClick --> { _ =>
                           val u = until.now().trim
                           val patch = if u.isEmpty then ItemPatch(Managers.ItemPatch.Action("hold"))
-                          else if ManagerPolicyText.isDate(u) then ItemPatch(Managers.ItemPatch.Action("hold"), until = Some(Managers.ItemPatch.Until(u)))
-                          else ItemPatch(Managers.ItemPatch.Action("hold"), untilSource = Some(Managers.ItemPatch.UntilSource(u)))
+                          else if ManagerPolicyText.isDate(u) then
+                            ItemPatch(Managers.ItemPatch.Action("hold"), until = Some(Managers.ItemPatch.Until(u)))
+                          else
+                            ItemPatch(
+                              Managers.ItemPatch.Action("hold"),
+                              untilSource = Some(Managers.ItemPatch.UntilSource(u))
+                            )
                           write(WriteLabel(s"hold ${i.target}"))(ApiClient.managerPatchItem(mid, i.id, patch))
                         }
                       )
@@ -1688,7 +1778,8 @@ object ManagersView:
                   case Left(e)  => error.set(Some(e.value))
                   case Right(h) =>
                     error.set(None)
-                    write(if h.suggest.exists(_.value) then WriteLabel("hint (a model suggests its action: see Approvals)")
+                    write(if h.suggest.exists(_.value) then
+                      WriteLabel("hint (a model suggests its action: see Approvals)")
                     else WriteLabel("hint"))(ApiClient.managerAddHint(id, h))
                     text.set(""); targets.set(""); tag.set(""); until.set(""); source.set(""); suggest.set(false)
               }

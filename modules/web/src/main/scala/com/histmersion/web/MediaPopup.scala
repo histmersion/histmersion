@@ -25,8 +25,8 @@ object MediaPopup:
   object Html extends Newtype[String, Pure]
   type PeriodText = PeriodText.T
   object PeriodText extends Newtype[String, Pure]
-  /** Pure: what the picture's full-size view shows. */
 
+  /** Pure: what the picture's full-size view shows. */
 
   def full(h: MediaGeoHit): Option[Lightbox.Item] =
     h.fileUrl.map(u =>
@@ -50,7 +50,9 @@ object MediaPopup:
     Html(h.citekey match
       case Some(ck) =>
         // the source as the app's one source link: its card on hover, its window on a click
-        title(s"""${SourceLink.html(ck, None, UiLabels.Text(ck.value))} / ${Fmt.esc(h.assetName.value)}""") + s"$kind · $period$caption"
+        title(
+          s"""${SourceLink.html(ck, None, UiLabels.Text(ck.value))} / ${Fmt.esc(h.assetName.value)}"""
+        ) + s"$kind · $period$caption"
       case None =>
         val zoom = full(h).fold("")(i => s""" title="open full size"${Lightbox.attrs(i)}""")
         val img = h.thumbUrl.fold("")(u =>
@@ -61,5 +63,6 @@ object MediaPopup:
         val credit = h.credit.fold("")(c => s"""<span class="media-credit">${Fmt.esc(c.value)}</span><br>""")
         val lic = h.license.fold("")(l => s"""${LicenseName.html(l.value, h.licenseUrl.map(_.value))} · """)
         title(Fmt.esc(h.assetName.value)) +
-          s"""$img$credit$lic${Fmt.esc(MediaProvider.title(MediaProvider.Id(h.provider.map(_.value).getOrElse(""))).value)}<br>$kind · $period$caption"""
-    )
+          s"""$img$credit$lic${Fmt.esc(
+              MediaProvider.title(MediaProvider.Id(h.provider.map(_.value).getOrElse(""))).value
+            )}<br>$kind · $period$caption""")

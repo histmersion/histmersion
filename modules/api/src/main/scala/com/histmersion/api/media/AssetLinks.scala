@@ -29,27 +29,33 @@ object AssetLinks:
   val NormalizeBodyTitle: Title.type = Title
   type ToWebMd = Body
   val ToWebMd: Body.type = Body
-  export com.histmersion.api.library.{Citekey as ToWebCitekey}
+  export com.histmersion.api.library.Citekey as ToWebCitekey
   type ToAbsoluteMd = Body
   val ToAbsoluteMd: Body.type = Body
   export com.histmersion.api.library.{Citekey as ToAbsoluteCitekey, Citekey as UrlCitekey}
-  export com.histmersion.api.exchange.Bundle.Asset.{FileName as UrlName}
+  export com.histmersion.api.exchange.Bundle.Asset.FileName as UrlName
 
   private val ImageLink = """!\[([^\]]*)\]\(\s*<?([^)>\s]+)>?(\s+"[^"]*")?\s*\)""".r
 
   val Prefix = "assets/"
 
   private def mapImages(md: Body)(f: (String, Target, String) => String): Body =
-    Body(ImageLink.replaceAllIn(
-      (md).value,
-      m => java.util.regex.Matcher.quoteReplacement((f((m.group(1)), Target(m.group(2)), (Option(m.group(3)).getOrElse("")))))
-    ))
+    Body(
+      ImageLink.replaceAllIn(
+        (md).value,
+        m =>
+          java.util.regex.Matcher
+            .quoteReplacement((f((m.group(1)), Target(m.group(2)), (Option(m.group(3)).getOrElse("")))))
+      )
+    )
 
   private def retarget(md: Body, from: Url, to: Url): Body =
-    Body((mapImages(Body((md).value))((alt, target, title) =>
-      if !(target).value.startsWith((from).value) then (s"![$alt]($target$title)")
-      else (s"![$alt]($to${(target).value.drop((from).value.length)}$title)")
-    )).value)
+    Body(
+      (mapImages(Body((md).value))((alt, target, title) =>
+        if !(target).value.startsWith((from).value) then (s"![$alt]($target$title)")
+        else (s"![$alt]($to${(target).value.drop((from).value.length)}$title)")
+      )).value
+    )
 
   private val FiguresTarget = """^(?:[a-z]+:)?(?:[^?#]*[/\\])?figures[/\\]([^/\\?#]+)$""".r
 
@@ -81,13 +87,15 @@ object AssetLinks:
     * render the rest as prose.
     */
   def collapsePictureText(md: Body): Body =
-    Body(PictureText.replaceAllIn(
-      (md).value,
-      m =>
-        val inner = m.group(1).replaceAll("(?s)\\R\\s*\\R", "<br>").replaceAll("\\R", " ").trim
-        java.util.regex.Matcher
-          .quoteReplacement(s"""<details class="figtext"><summary>figure text</summary><div>$inner</div></details>""")
-    ))
+    Body(
+      PictureText.replaceAllIn(
+        (md).value,
+        m =>
+          val inner = m.group(1).replaceAll("(?s)\\R\\s*\\R", "<br>").replaceAll("\\R", " ").trim
+          java.util.regex.Matcher
+            .quoteReplacement(s"""<details class="figtext"><summary>figure text</summary><div>$inner</div></details>""")
+      )
+    )
 
   private val BoilerplateHeading =
     """(?i)^(original\s+|research\s+|review\s+|short\s+)?(article|paper|research|communication|report)$""".r
@@ -109,14 +117,18 @@ object AssetLinks:
   def normalizeBody(md: NormalizeBodyMd, title: NormalizeBodyTitle = NormalizeBodyTitle("")): Body =
     Body((dropBoilerplateHeadings(Body((collapsePictureText(Body((fromFigures(md)).value))).value), title)).value)
 
-  def toWeb(md: ToWebMd, citekey: AssetLinks.ToWebCitekey): Body = Body((retarget(md, Url(Prefix), Url((webBase(citekey)).value))).value)
+  def toWeb(md: ToWebMd, citekey: AssetLinks.ToWebCitekey): Body = Body(
+    (retarget(md, Url(Prefix), Url((webBase(citekey)).value))).value
+  )
 
   def toAbsolute(md: ToAbsoluteMd, citekey: AssetLinks.ToAbsoluteCitekey, publicUrl: Url): Body =
     Body((retarget(md, Url(Prefix), Url((publicUrl).value.trim.stripSuffix("/") + webBase(citekey)))).value)
 
   def webBase(citekey: Citekey): Url = Url(s"/source/${enc(((citekey).value))}/assets/")
 
-  def url(citekey: AssetLinks.UrlCitekey, name: AssetLinks.UrlName): Url = Url((webBase(citekey)).value + enc(name.value))
+  def url(citekey: AssetLinks.UrlCitekey, name: AssetLinks.UrlName): Url = Url(
+    (webBase(citekey)).value + enc(name.value)
+  )
 
   private def enc(s: String): String =
     (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))

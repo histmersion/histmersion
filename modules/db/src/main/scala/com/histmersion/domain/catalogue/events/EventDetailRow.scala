@@ -7,7 +7,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An event's row with its own geometry as GeoJSON. */
-final private[events] case class EventDetailRow(row: EventRow, geometry: Option[EventDetailRow.Geometry]) derives DbCodec:
+final private[events] case class EventDetailRow(row: EventRow, geometry: Option[EventDetailRow.Geometry])
+    derives DbCodec:
   def toSummary: EventSummary = row.toSummary
 
 object EventDetailRow:

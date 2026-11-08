@@ -17,7 +17,11 @@ final class Draft:
   def clear(): Unit = held.set(Map.empty)
   def isEmpty: Signal[Boolean] = held.signal.map(_.isEmpty)
   def count: Signal[Draft.Count] = held.signal.map(m => Draft.Count(m.size))
-  def changes: List[ConfigEdit.Change] = held.now().toList.sortBy(_._1.value).map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), v.map(t => ConfigEdit.Change.Value(t.value))))
+  def changes: List[ConfigEdit.Change] = held
+    .now()
+    .toList
+    .sortBy(_._1.value)
+    .map((k, v) => ConfigEdit.Change(ConfigEdit.Change.Key(k.value), v.map(t => ConfigEdit.Change.Value(t.value))))
 
   /** What the form shows for `f`: the change held, else what the file says, else what applies. */
   def shown(f: ConfigEdit.Field): Signal[Draft.Text] =
@@ -26,7 +30,10 @@ final class Draft:
       case Some(None)    => Draft.plain(f.default.map(d => Draft.Text(d.value)))
       case None          =>
         Draft.plain(
-          f.value.map(x => Draft.Text(x.value)).orElse(f.effective.map(x => Draft.Text(x.value))).orElse(f.default.map(x => Draft.Text(x.value)))
+          f.value
+            .map(x => Draft.Text(x.value))
+            .orElse(f.effective.map(x => Draft.Text(x.value)))
+            .orElse(f.default.map(x => Draft.Text(x.value)))
         ))
 
 object Draft:
@@ -34,6 +41,7 @@ object Draft:
   object Count extends Newtype[Int, Pure]
   type Text = Text.T
   object Text extends Newtype[String, Pure]
+
   /** A value as HOCON writes it, as a person types it: a string without its quotes. Pure. */
 
   def plain(v: Option[Text]): Text =

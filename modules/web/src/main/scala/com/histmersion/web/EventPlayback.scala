@@ -49,7 +49,9 @@ object EventPlayback:
     )
 
   /** Pure: the years a fade of `seconds` of playback takes at `yearsPerSecond`. */
-  def fadeYears(seconds: Seconds, yearsPerSecond: YearsPerSecond): FadeYears = FadeYears((seconds.value * yearsPerSecond.value).max(0.0))
+  def fadeYears(seconds: Seconds, yearsPerSecond: YearsPerSecond): FadeYears = FadeYears(
+    (seconds.value * yearsPerSecond.value).max(0.0)
+  )
 
   /** Pure: `alpha` rounded to twentieths — what the page is told, so a slow fade does not rewrite the same element on
     * every frame.
@@ -101,12 +103,16 @@ object EventPlayback:
       s"${e.label} — ${note(e)}${e.dating.fold("")(d => s" · $d")}${e.placeLabel.fold("")(p => s" · $p")} (${e.historicity})"
     // the dot carries the kind's icon (#1449): what happened reads before the name does
     val dot = if local then
-      s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(Glyphs.BadgeName(EventTaxonomy.icon(EventSummary.Kind(e.kind.value)).value))}</span>"""
+      s"""<span class="hd-event-dot hd-badge">${Glyphs.badge(
+          Glyphs.BadgeName(EventTaxonomy.icon(EventSummary.Kind(e.kind.value)).value)
+        )}</span>"""
     else ""
     val approx = if e.precision.value == EventPrecision.Approximate then " hd-event--approximate" else ""
-    Html(s"""<span class="hd-event ${
-        if local then "hd-event--local" else "hd-event--regional"
-      }$approx" style="--a:$alpha" """ +
-      s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
-      s"""<span class="hd-area-point-name">${Fmt.esc(e.label.value)}</span>""" +
-      s"""<span class="hd-area-point-note">${Fmt.esc(note(e).value)}</span></span></span>""")
+    Html(
+      s"""<span class="hd-event ${
+          if local then "hd-event--local" else "hd-event--regional"
+        }$approx" style="--a:$alpha" """ +
+        s"""title="${Fmt.esc(title)}">$dot<span class="hd-area-point is-culled">""" +
+        s"""<span class="hd-area-point-name">${Fmt.esc(e.label.value)}</span>""" +
+        s"""<span class="hd-area-point-note">${Fmt.esc(note(e).value)}</span></span></span>"""
+    )

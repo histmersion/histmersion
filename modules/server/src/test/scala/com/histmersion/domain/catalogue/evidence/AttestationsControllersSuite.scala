@@ -22,7 +22,9 @@ import com.histmersion.domain.catalogue.evidence.passages.Passage
   */
 class AttestationsControllersSuite extends munit.FunSuite:
   private val renamed: Map[(AliasKind, AttestationsControllers.Alias), AttestationsControllers.Alias] = Map(
-    (AliasKinds.SourceRecords, AttestationsControllers.Alias("zzold1990_x")) -> AttestationsControllers.Alias("zznew1990_x"),
+    (AliasKinds.SourceRecords, AttestationsControllers.Alias("zzold1990_x")) -> AttestationsControllers.Alias(
+      "zznew1990_x"
+    ),
     (AliasKinds.PlaceRecords, AttestationsControllers.Alias("zz_old_hill")) -> AttestationsControllers.Alias("zz_hill")
   )
   private def current(k: AliasKind, id: AttestationsControllers.Alias) = renamed.getOrElse((k, id), id)
@@ -43,20 +45,67 @@ class AttestationsControllersSuite extends munit.FunSuite:
 
   test("old identifiers resolve before they are stored; a kind is normalised; a finding id is kept"):
     val c = controllers()
-    val a = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zzold1990_x"), Attestation.TargetType(" Place "), Attestation.TargetId("zz_old_hill"))).toOption.get
+    val a = c
+      .create(
+        Caller.Local,
+        Attestation.Put(
+          com.histmersion.api.library.Citekey("zzold1990_x"),
+          Attestation.TargetType(" Place "),
+          Attestation.TargetId("zz_old_hill")
+        )
+      )
+      .toOption
+      .get
     assertEquals((a.citekey, a.targetType, a.targetId), ("zznew1990_x", "place", "zz_hill"))
-    val f = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zznew1990_x"), Attestation.TargetType("finding"), Attestation.TargetId("zz_old_hill"))).toOption.get
+    val f = c
+      .create(
+        Caller.Local,
+        Attestation.Put(
+          com.histmersion.api.library.Citekey("zznew1990_x"),
+          Attestation.TargetType("finding"),
+          Attestation.TargetId("zz_old_hill")
+        )
+      )
+      .toOption
+      .get
     assertEquals(f.targetId, "zz_old_hill")
-    assertEquals(c.list(Some(com.histmersion.api.library.Citekey("zzold1990_x")), Some(Attestation.TargetType("place")), Some(Attestation.TargetId("zz_old_hill")), None, None).attestations, List(a))
+    assertEquals(
+      c.list(
+        Some(com.histmersion.api.library.Citekey("zzold1990_x")),
+        Some(Attestation.TargetType("place")),
+        Some(Attestation.TargetId("zz_old_hill")),
+        None,
+        None
+      ).attestations,
+      List(a)
+    )
     assertEquals(c.list(None, None, None, Some(PageSize(1)), None).attestations, List(a))
     assertEquals(c.get(f.id).map(_.id), Right(f.id))
     assert(c.get(Attestation.Id(999)).left.exists(_.message.value == "No attestation 999"))
 
   test("an unknown kind is invalid, a missing source not found; a held lock refuses every write"):
     val c = controllers()
-    val bad = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zznew1990_x"), Attestation.TargetType("planet"), Attestation.TargetId("x")))
-    assert(bad.left.exists(e => e.message.value.startsWith("unknown target type 'planet'") && e.code.exists(_.value == "invalid")))
-    val none = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zzgone1900_y"), Attestation.TargetType("place"), Attestation.TargetId("zz_hill")))
+    val bad = c.create(
+      Caller.Local,
+      Attestation.Put(
+        com.histmersion.api.library.Citekey("zznew1990_x"),
+        Attestation.TargetType("planet"),
+        Attestation.TargetId("x")
+      )
+    )
+    assert(
+      bad.left.exists(e =>
+        e.message.value.startsWith("unknown target type 'planet'") && e.code.exists(_.value == "invalid")
+      )
+    )
+    val none = c.create(
+      Caller.Local,
+      Attestation.Put(
+        com.histmersion.api.library.Citekey("zzgone1900_y"),
+        Attestation.TargetType("place"),
+        Attestation.TargetId("zz_hill")
+      )
+    )
     assertEquals(none.left.map(_.message), Left("No source 'zzgone1900_y'"))
     assert(c.delete(Caller.Local, Attestation.Id(5)).left.exists(_.message.value == "No attestation 5"))
     val gate = WriteGate()
@@ -64,7 +113,16 @@ class AttestationsControllersSuite extends munit.FunSuite:
     val held = gate.exclusively(WriteGate.OperationName("restore"))(
       Right(
         List(
-          locked.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zznew1990_x"), Attestation.TargetType("place"), Attestation.TargetId("zz_hill"))).isLeft,
+          locked
+            .create(
+              Caller.Local,
+              Attestation.Put(
+                com.histmersion.api.library.Citekey("zznew1990_x"),
+                Attestation.TargetType("place"),
+                Attestation.TargetId("zz_hill")
+              )
+            )
+            .isLeft,
           locked.patch(Caller.Local, Attestation.Id(1), Attestation.Patch()).isLeft,
           locked.delete(Caller.Local, Attestation.Id(1)).isLeft
         )

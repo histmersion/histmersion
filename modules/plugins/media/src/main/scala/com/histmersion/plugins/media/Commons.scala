@@ -50,9 +50,17 @@ object Commons:
   /** Pure: the `imageinfo` URL for a batch of titles, with the rendition `width`; `meta` adds the licence fields (the
     * thumbnail call needs only the URL). `maxlag` 0 = not sent.
     */
-  def imageInfoUrl(api: Settings.ApiUrl, titles: List[File.Title], width: File.Width, maxlag: Settings.Maxlag, meta: ImageInfoUrlMeta): Plugin.Http.GetUrl =
+  def imageInfoUrl(
+      api: Settings.ApiUrl,
+      titles: List[File.Title],
+      width: File.Width,
+      maxlag: Settings.Maxlag,
+      meta: ImageInfoUrlMeta
+  ): Plugin.Http.GetUrl =
     val props = if meta.value then "url|size|mime|extmetadata" else "url|size|mime"
-    val ext = if meta.value then s"&iiextmetadatafilter=${MetaFields.map(_.value).mkString("|").enc}&iiextmetadatalanguage=en" else ""
+    val ext = if meta.value then
+      s"&iiextmetadatafilter=${MetaFields.map(_.value).mkString("|").enc}&iiextmetadatalanguage=en"
+    else ""
     val lag = if maxlag.value > 0 then s"&maxlag=${maxlag.value}" else ""
     Plugin.Http.GetUrl(
       s"${api.value}?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=${props.enc}&iiurlwidth=${width.value}" +
@@ -164,7 +172,9 @@ object Commons:
           .value
       )
 
-    def search(place: MediaPlace, http: Plugin.Http) = Left(MediaCollection.SearchResultPart1("the depictions are about events"))
+    def search(place: MediaPlace, http: Plugin.Http) = Left(
+      MediaCollection.SearchResultPart1("the depictions are about events")
+    )
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
       val asked = events.flatMap(e => e.wikidata.map(q => (e, q)))
@@ -250,7 +260,6 @@ object Commons:
     override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
       Files(http, media, licences).thumbnails(items)
 
-
   /** Wikimedia Commons files that DEPICT an event: structured data's `P180 depicts` searched by CirrusSearch's
     * documented `haswbstatement` keyword through the action API (no login), and Wikidata's `P1299 depicted by` on the
     * event's own item (a work whose own image, P18, is the picture). URL building and parsing. Pure.
@@ -262,7 +271,12 @@ object Commons:
     val Depicts = "P180"
     val DepictedBy = "P1299"
 
-    def searchUrl(api: Settings.ApiUrl, qid: WikidataId, limit: DepictsSettings.SearchLimit, maxlag: Settings.Maxlag): Plugin.Http.GetUrl =
+    def searchUrl(
+        api: Settings.ApiUrl,
+        qid: WikidataId,
+        limit: DepictsSettings.SearchLimit,
+        maxlag: Settings.Maxlag
+    ): Plugin.Http.GetUrl =
       val lag = if maxlag.value > 0 then s"&maxlag=${maxlag.value}" else ""
       Plugin.Http.GetUrl(
         s"${api.value}?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=${limit.value.max(1)}" +
@@ -412,16 +426,21 @@ object Commons:
           def field(k: File.MetaKey): Option[String] =
             info.meta.get(k).map(v => MediaText.plain(MediaText.Html(v.value)).value).filter(_.nonEmpty)
           val licence = licences.readFirst(
-            (info.meta.get(File.MetaKey("License")).map(_.value).toList ++ field(File.MetaKey("LicenseShortName")).toList)
+            (info.meta.get(File.MetaKey("License")).map(_.value).toList ++ field(
+              File.MetaKey("LicenseShortName")
+            ).toList)
               .map(LicenceReader.ReadFirstStatements(_))
           )
-          val required = info.meta.get(File.MetaKey("AttributionRequired")).exists(_.value.trim.equalsIgnoreCase("true")) ||
-            licence.needsAttribution.value
+          val required =
+            info.meta.get(File.MetaKey("AttributionRequired")).exists(_.value.trim.equalsIgnoreCase("true")) ||
+              licence.needsAttribution.value
           val author = field(File.MetaKey("Attribution")).orElse(field(File.MetaKey("Artist")))
           val refused =
-            if info.meta.get(File.MetaKey("NonFree")).exists(_.value.trim.equalsIgnoreCase("true")) then Some("marked non-free on Commons")
+            if info.meta.get(File.MetaKey("NonFree")).exists(_.value.trim.equalsIgnoreCase("true")) then
+              Some("marked non-free on Commons")
             else if licence.family.value == Licence.Read.Unknown then
-              Some(if licence.id.value.isEmpty then "no licence stated" else s"licence not recognised (${licence.id.value})")
+              Some(if licence.id.value.isEmpty then "no licence stated"
+              else s"licence not recognised (${licence.id.value})")
             else if licence.family.value == Licence.Read.AllRights then Some("all rights reserved")
             else if required && author.isEmpty then Some("no author to credit")
             else None
@@ -457,7 +476,8 @@ object Commons:
 
     /** The items to store with their thumbnails — Commons' own `thumb-px` renditions, asked in batches. */
     def thumbnails(items: List[MediaItem]): MediaCompleted =
-      val (infos, failed) = imageInfo(items.map(i => File.Title(i.key.value)), File.Width(media.thumbPx.value), ImageInfoUrlMeta(false))
+      val (infos, failed) =
+        imageInfo(items.map(i => File.Title(i.key.value)), File.Width(media.thumbPx.value), ImageInfoUrlMeta(false))
       MediaCompleted(
         items.flatMap { it =>
           infos.get(File.Title(it.key.value)).flatMap(_.toOption).map { i =>
@@ -476,7 +496,8 @@ object Commons:
       )
 
   /** `histmersion.media.commons`: the action API, titles per `imageinfo` call, and `maxlag`. */
-  final case class Settings(apiUrl: Settings.ApiUrl, batch: Settings.Batch, maxlag: Settings.Maxlag) derives ConfigReader
+  final case class Settings(apiUrl: Settings.ApiUrl, batch: Settings.Batch, maxlag: Settings.Maxlag)
+      derives ConfigReader
 
   object Settings:
     type ApiUrl = ApiUrl.T

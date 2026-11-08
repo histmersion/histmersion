@@ -67,12 +67,13 @@ object ThemeTokens:
       "\\d+".r.findAllIn(v).take(3).map(_.toInt).toList match
         case r :: g :: b :: Nil if v.startsWith("rgb") =>
           Some((Wcag.Channel(r), Wcag.Channel(g), Wcag.Channel(b)))
-        case _                                         => None
+        case _ => None
 
   /** The period ramp's stops, in order. */
   def ramp: Vector[(Wcag.Channel, Wcag.Channel, Wcag.Channel)] =
     rampCache.getOrElse {
-      val stops = (0 until Palette.rampStops.value).toVector.flatMap(i => rgb(Wcag.Hex(apply(Name(s"--ramp-$i")).value)))
+      val stops =
+        (0 until Palette.rampStops.value).toVector.flatMap(i => rgb(Wcag.Hex(apply(Name(s"--ramp-$i")).value)))
       rampCache = Some(stops)
       stops
     }

@@ -17,7 +17,6 @@ object SeaFloorSource:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Either[Problem, SeaFloorSource] =
     values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))

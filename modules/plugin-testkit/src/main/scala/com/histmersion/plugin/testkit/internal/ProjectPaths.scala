@@ -11,10 +11,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 object ProjectPaths:
   type ProjectDir = ProjectDir.T
   object ProjectDir extends Newtype[String, Pure]
+
   /** `dir` as given when it is absolute; else under the project directory when the build names one, else under the
     * working directory.
     */
 
   def resolve(dir: Path, projectDir: Option[ProjectDir]): Path =
     if dir.isAbsolute then dir
-    else projectDir.map(_.value.trim).filter(_.nonEmpty).fold(dir.toAbsolutePath)(p => Path.of(p).resolve(dir)).normalize
+    else
+      projectDir.map(_.value.trim).filter(_.nonEmpty).fold(dir.toAbsolutePath)(p => Path.of(p).resolve(dir)).normalize

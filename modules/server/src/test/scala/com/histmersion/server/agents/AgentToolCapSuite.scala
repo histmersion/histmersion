@@ -44,7 +44,11 @@ class AgentToolCapSuite extends DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Ck = "zztool2020_dragon"
-  private val Caps = AgentToolsConfig(resultMaxChars = AgentToolsConfig.ResultMaxChars(3000), bodyChars = AgentToolsConfig.BodyChars(1200), queryMaxRows = AgentToolsConfig.QueryMaxRows(5))
+  private val Caps = AgentToolsConfig(
+    resultMaxChars = AgentToolsConfig.ResultMaxChars(3000),
+    bodyChars = AgentToolsConfig.BodyChars(1200),
+    queryMaxRows = AgentToolsConfig.QueryMaxRows(5)
+  )
 
   private lazy val cfg =
     val b = AppConfig.load()
@@ -56,7 +60,9 @@ class AgentToolCapSuite extends DbSuite:
   private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,

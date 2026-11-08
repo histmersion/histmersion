@@ -17,10 +17,11 @@ final case class NoteImport(
     force: NoteImport.Force = NoteImport.Force(false),
     assets: List[AssetInput] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object NoteImport:
-  export Source.{Notes as Text, Notes as Body}
+  export Source.{Notes as Body, Notes as Text}
   type Mtime = Mtime.T
   object Mtime extends Newtype[Long, Pure]
   type Force = Force.T

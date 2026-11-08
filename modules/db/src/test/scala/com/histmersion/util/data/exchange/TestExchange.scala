@@ -15,7 +15,9 @@ import com.histmersion.domain.library.sources.SourceFixtures
   */
 object TestExchange:
   val carried: List[CarriedKind] =
-    AutomationExchange.carried ++ CatalogueExchange.carried ++ MediaExchange.carried ++ LibraryExchange.carried(SourceFixtures.referrers) ++
+    AutomationExchange.carried ++ CatalogueExchange.carried ++ MediaExchange.carried ++ LibraryExchange.carried(
+      SourceFixtures.referrers
+    ) ++
       ResearchExchange.carried :+ TombstonesCarried.tombstones
   val kinds: CarriedKinds = CarriedKinds(carried)
   val rules: MergeRuleSet = MergeRuleSet(

@@ -13,7 +13,8 @@ final case class IssuePlace(
     leftSpan: Option[IssueSpan] = None,
     rightSpan: Option[IssueSpan] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object IssuePlace:
   type LeftGeometry = LeftGeometry.T

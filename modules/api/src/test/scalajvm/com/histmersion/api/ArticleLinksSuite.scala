@@ -26,7 +26,10 @@ class ArticleLinksSuite extends munit.FunSuite:
     )
 
   test("image embeds and anchor-only links are not links"):
-    assertEquals(Article.Links.targets(WikiLinks.Body("![[migrations_timeline.png]] and [[#Source catalog|the catalog]]")), Nil)
+    assertEquals(
+      Article.Links.targets(WikiLinks.Body("![[migrations_timeline.png]] and [[#Source catalog|the catalog]]")),
+      Nil
+    )
 
   test("a bracketed phrase that is not slug-shaped is left alone"):
     assertEquals(Article.Links.targets(WikiLinks.Body("[[Not A Key]] [[wiki/sources/]]")), Nil)
@@ -67,7 +70,10 @@ class ArticleLinksSuite extends munit.FunSuite:
       Article.Links.resolveMarkdown(Article.Links.ResolveMarkdownMd("[[cline2014_year|Cline 2014]]"), isSource),
       "[Cline 2014](/source/cline2014_year)"
     )
-    assertEquals(Article.Links.resolveMarkdown(Article.Links.ResolveMarkdownMd("[[europe#Neolithic]]"), isSource), "[europe](/article/europe)")
+    assertEquals(
+      Article.Links.resolveMarkdown(Article.Links.ResolveMarkdownMd("[[europe#Neolithic]]"), isSource),
+      "[europe](/article/europe)"
+    )
     assertEquals(
       Article.Links.resolveMarkdown(Article.Links.ResolveMarkdownMd("""\[\[haak2015_massive\]\]"""), isSource),
       "[haak2015_massive](/source/haak2015_massive)"
@@ -111,6 +117,11 @@ class ArticleLinkResolutionSuite extends munit.FunSuite:
     assertEquals(Article.Links.linkMarkdown(Article.Body("![[map.png]]"), _ => Some("/x")), "![[map.png]]")
 
   test("the wave-1 two-way form still behaves as it did"):
-    val out = Article.Links.resolveMarkdown(Article.Links.ResolveMarkdownMd("[[a2015_x]] [[concept]]"), Set(Article.Link.Target("a2015_x")).contains).value
+    val out = Article.Links
+      .resolveMarkdown(
+        Article.Links.ResolveMarkdownMd("[[a2015_x]] [[concept]]"),
+        Set(Article.Link.Target("a2015_x")).contains
+      )
+      .value
     assert(out.contains("[a2015_x](/source/a2015_x)"), out)
     assert(out.contains("[concept](/article/concept)"), out)

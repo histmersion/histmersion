@@ -27,7 +27,7 @@ object Subprocess:
   type Tool = Tool.T
   object Tool extends Newtype[String, Pure]
 
-  export com.histmersion.plugin.Processes.{RunResultPart1, RunEnvPart1, RunEnvPart2}
+  export com.histmersion.plugin.Processes.{RunEnvPart1, RunEnvPart2, RunResultPart1}
   type ValueResult = ValueResult.T
   object ValueResult extends Newtype[String, Pure]
   type ValueOut = ValueOut.T
@@ -39,9 +39,14 @@ object Subprocess:
   /** Pure: the executable for `tool` — a path as given (`/opt/kp/keepassxc-cli`), or a bare name looked up in `path`
     * (the PATH the server started with).
     */
-  def locate(tool: Tool, path: Option[Plugin.Context.EnvResult])(using files: LocalFiles): Either[Problem, Vaults.Path] =
+  def locate(tool: Tool, path: Option[Plugin.Context.EnvResult])(using
+      files: LocalFiles
+  ): Either[Problem, Vaults.Path] =
     val t = Option((tool).value).getOrElse("").trim
-    def runnable(p: Path) = ((files.isFile(p)) == LocalFiles.IsFileResult(true)) && ((files.isExecutable(p)) == LocalFiles.IsExecutableResult(true))
+    def runnable(p: Path) =
+      ((files.isFile(p)) == LocalFiles.IsFileResult(true)) && ((files.isExecutable(p)) == LocalFiles.IsExecutableResult(
+        true
+      ))
     if t.isEmpty then Left(Problem("no command is configured (cli = \"…\")"))
     else if t.contains('/') then
       val p = Path.of(t)
@@ -53,7 +58,10 @@ object Subprocess:
         .map(d => Path.of(d, t))
         .find(runnable)
         .map(_.toString)
-        .toRight(s"$t was not found on the PATH")).left.map(refactorError => Problem(refactorError))).map(refactorValue => Vaults.Path(refactorValue))
+        .toRight(s"$t was not found on the PATH"))
+        .left
+        .map(refactorError => Problem(refactorError)))
+        .map(refactorValue => Vaults.Path(refactorValue))
 
   /** Run `argv` with `env` added to the server's environment, `stdin` written and closed (no stdin: closed at once, so
     * a tool that would prompt sees end-of-file instead of waiting), within `timeout`. `Left` = it could not start or
@@ -75,15 +83,16 @@ object Subprocess:
 
   object Session:
     /** Start `argv` (no shell) with `env` added to the server's environment. */
-    export Processes.{StartResultPart1, StartEnvPart1, StartEnvPart2}
+    export Processes.{StartEnvPart1, StartEnvPart2, StartResultPart1}
 
-    def start(argv: List[Processes.StartArgv], env: Map[StartEnvPart1, StartEnvPart2])(using processes: Processes): Either[StartResultPart1, Session] =
+    def start(argv: List[Processes.StartArgv], env: Map[StartEnvPart1, StartEnvPart2])(using
+        processes: Processes
+    ): Either[StartResultPart1, Session] =
       processes.start(argv, env)
 
   /** Read a stream to its end on a thread of its own (a full pipe would block the tool), and hand the text over when
     * asked.
     */
-
 
   /** Pure: the tool's own message for a log line — the first non-blank stderr line, bounded. */
   def problem(err: Problem): Problem =

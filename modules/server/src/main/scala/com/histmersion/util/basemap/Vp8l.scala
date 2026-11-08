@@ -65,8 +65,9 @@ object Vp8l:
         val n = le32(i + 4)
         if n < 0 || i + 8 + n > b.length then { found = Left(Problem("truncated WebP chunk")); done = true }
         else if t == "VP8L" then { found = Right((i + 8, n)); done = true }
-        else if t == "VP8 " then { found = Left(Problem("a lossy (VP8) WebP: only lossless WebP is read")); done = true }
-        else i += 8 + n + (n & 1)
+        else if t == "VP8 " then {
+          found = Left(Problem("a lossy (VP8) WebP: only lossless WebP is read")); done = true
+        } else i += 8 + n + (n & 1)
       found
 
   // ── the bit reader: least significant bit first ──────────────────────────────────────────────
@@ -292,7 +293,8 @@ object Vp8l:
           if second >= size then fail("a symbol outside its alphabet")
           lengths(second) = 1
         else lengths(first) = 0
-        if two then build(lengths).fold(p => fail(p.value), identity) else Code(Array.empty, Array.empty, Array.empty, single = first)
+        if two then build(lengths).fold(p => fail(p.value), identity)
+        else Code(Array.empty, Array.empty, Array.empty, single = first)
       else
         val clLengths = new Array[Int](19)
         val n = r.read(4) + 4

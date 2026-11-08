@@ -135,6 +135,8 @@ class UiRepoSuite extends DbSuite:
     assertEquals(g.count, None, "goals are not counted")
 
   test("a board's counter carries the seen mark it is given, and none for a board never opened"):
-    val cs = Transactor(ds).read(UiRepo.counters(Map(Board.Log.wire -> UiNotices.Counter.Seen("2026-10-31T12:00:00.000000Z")))).boards
+    val cs = Transactor(ds)
+      .read(UiRepo.counters(Map(Board.Log.wire -> UiNotices.Counter.Seen("2026-10-31T12:00:00.000000Z"))))
+      .boards
     assertEquals(cs.find(_.key == Board.Log.wire).flatMap(_.seen), Some("2026-10-31T12:00:00.000000Z"))
     assertEquals(cs.find(_.key == Board.Tasks.wire).flatMap(_.seen), None)

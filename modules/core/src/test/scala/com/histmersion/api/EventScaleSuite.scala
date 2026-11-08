@@ -62,7 +62,9 @@ class EventScaleSuite extends munit.FunSuite:
       "period",
       "reign"
     ).foreach(k => assertEquals(EventScale.ofKind(EventSummary.Kind(k)), Some(EventScale.Regional), k))
-    List("event", "natural_disaster", "treaty", "").foreach(k => assertEquals(EventScale.ofKind(EventSummary.Kind(k)), None, k))
+    List("event", "natural_disaster", "treaty", "").foreach(k =>
+      assertEquals(EventScale.ofKind(EventSummary.Kind(k)), None, k)
+    )
 
   test("the place's kind: a site or feature is local, a region, polity or people regional"):
     assertEquals(EventScale.ofPlaceKind(Place.Kind.Wire("site")), Some("local"))
@@ -84,36 +86,77 @@ class EventScaleSuite extends munit.FunSuite:
         geom: Option[EventScale.GeometryType] = None
     ) =
       EventScale.effective(stated, kind, parent, place, geom)
-    assertEquals(eff(stated = Some(EventSummary.Scale("regional")), kind = EventScale.EffectiveKind("battle")), "regional")
-    assertEquals(eff(stated = Some(EventSummary.Scale("nonsense")), kind = EventScale.EffectiveKind("battle")), "local", "an unparsable stated value is ignored")
-    assertEquals(eff(kind = EventScale.EffectiveKind("battle"), place = Some(Place.Kind.Wire("region"))), "local", "a battle at a region is still local")
-    assertEquals(eff(kind = EventScale.EffectiveKind("war"), place = Some(Place.Kind.Wire("site"))), "regional", "a war at its capital is still regional")
-    assertEquals(eff(kind = EventScale.EffectiveKind("event"), parent = true), "local", "a part of a larger event, nothing else said")
+    assertEquals(
+      eff(stated = Some(EventSummary.Scale("regional")), kind = EventScale.EffectiveKind("battle")),
+      "regional"
+    )
+    assertEquals(
+      eff(stated = Some(EventSummary.Scale("nonsense")), kind = EventScale.EffectiveKind("battle")),
+      "local",
+      "an unparsable stated value is ignored"
+    )
+    assertEquals(
+      eff(kind = EventScale.EffectiveKind("battle"), place = Some(Place.Kind.Wire("region"))),
+      "local",
+      "a battle at a region is still local"
+    )
+    assertEquals(
+      eff(kind = EventScale.EffectiveKind("war"), place = Some(Place.Kind.Wire("site"))),
+      "regional",
+      "a war at its capital is still regional"
+    )
+    assertEquals(
+      eff(kind = EventScale.EffectiveKind("event"), parent = true),
+      "local",
+      "a part of a larger event, nothing else said"
+    )
     assertEquals(
       eff(kind = EventScale.EffectiveKind("natural_disaster"), parent = true, place = Some(Place.Kind.Wire("region"))),
       "regional",
       "a drought within a collapse, at a region, is regional"
     )
     assertEquals(
-      eff(kind = EventScale.EffectiveKind("event"), place = Some(Place.Kind.Wire("region")), geom = Some(EventScale.GeometryType("POINT"))),
+      eff(
+        kind = EventScale.EffectiveKind("event"),
+        place = Some(Place.Kind.Wire("region")),
+        geom = Some(EventScale.GeometryType("POINT"))
+      ),
       "local",
       "its own point is what the map draws it at"
     )
-    assertEquals(eff(kind = EventScale.EffectiveKind("natural_disaster"), place = Some(Place.Kind.Wire("site"))), "local")
-    assertEquals(eff(kind = EventScale.EffectiveKind("natural_disaster"), place = Some(Place.Kind.Wire("region"))), "regional")
-    assertEquals(eff(kind = EventScale.EffectiveKind("event"), geom = Some(EventScale.GeometryType("POLYGON"))), "regional")
+    assertEquals(
+      eff(kind = EventScale.EffectiveKind("natural_disaster"), place = Some(Place.Kind.Wire("site"))),
+      "local"
+    )
+    assertEquals(
+      eff(kind = EventScale.EffectiveKind("natural_disaster"), place = Some(Place.Kind.Wire("region"))),
+      "regional"
+    )
+    assertEquals(
+      eff(kind = EventScale.EffectiveKind("event"), geom = Some(EventScale.GeometryType("POLYGON"))),
+      "regional"
+    )
     assertEquals(eff(kind = EventScale.EffectiveKind("event")), "local")
 
   test("EventGeometry: a point is GeoJSON, longitude first; lat/lon and geometry exclude each other"):
-    assertEquals(EventGeometry.point(Latitude(36.5), Longitude(-1.25)), Right("""{"type":"Point","coordinates":[-1.25,36.5]}"""))
-    assertEquals(EventGeometry.point(Latitude(1e-4), Longitude(0.0)), Right("""{"type":"Point","coordinates":[0,0.0001]}"""))
+    assertEquals(
+      EventGeometry.point(Latitude(36.5), Longitude(-1.25)),
+      Right("""{"type":"Point","coordinates":[-1.25,36.5]}""")
+    )
+    assertEquals(
+      EventGeometry.point(Latitude(1e-4), Longitude(0.0)),
+      Right("""{"type":"Point","coordinates":[0,0.0001]}""")
+    )
     assert(EventGeometry.point(Latitude(91), Longitude(0)).isLeft)
     assert(EventGeometry.point(Latitude(0), Longitude(181)).isLeft)
     assertEquals(EventGeometry.of(None, None, None), Right(None))
     assertEquals(EventGeometry.of(Some(EventGeometry.Geojson(" {} ")), None, None), Right(Some("{}")))
     assert(EventGeometry.of(Some(EventGeometry.Geojson("{}")), Some(Latitude(1)), Some(Longitude(2))).isLeft)
     assert(EventGeometry.of(None, Some(Latitude(1)), None).isLeft)
-    assertEquals(EventGeometry.of(None, Some(Latitude(1)), Some(Longitude(2))), Right(Some("""{"type":"Point","coordinates":[2,1]}""")))
+    assertEquals(
+      EventGeometry.of(None, Some(Latitude(1)), Some(Longitude(2))),
+      Right(Some("""{"type":"Point","coordinates":[2,1]}"""))
+    )
 
   test("EventGeometry.check: GeoJSON geometries pass; WKT, Features and non-JSON are refused (#2554)"):
     val pt = """{"type":"Point","coordinates":[36.5,34.55]}"""
@@ -121,15 +164,35 @@ class EventScaleSuite extends munit.FunSuite:
     assert(EventGeometry.check(EventGeometry.Geojson("""{"type":"MultiPolygon","coordinates":[]}""")).isRight)
     val wkt = EventGeometry.check(EventGeometry.Geojson("POINT(36.5 34.55)"))
     assert(wkt.left.exists(_.value.contains("not WKT")), wkt.toString)
-    assert(EventGeometry.check(EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))")).left.exists(_.value.contains("not WKT")))
-    assert(EventGeometry.check(EventGeometry.Geojson("""{"type":"Feature","geometry":null}""")).left.exists(_.value.contains("not a Feature")))
-    assert(EventGeometry.check(EventGeometry.Geojson("""{"type":"Circle"}""")).left.exists(_.value.contains("'Circle'")))
-    assert(EventGeometry.check(EventGeometry.Geojson("""{"coordinates":[1,2]}""")).left.exists(_.value.contains("no \"type\"")))
+    assert(
+      EventGeometry
+        .check(EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))"))
+        .left
+        .exists(_.value.contains("not WKT"))
+    )
+    assert(
+      EventGeometry
+        .check(EventGeometry.Geojson("""{"type":"Feature","geometry":null}"""))
+        .left
+        .exists(_.value.contains("not a Feature"))
+    )
+    assert(
+      EventGeometry.check(EventGeometry.Geojson("""{"type":"Circle"}""")).left.exists(_.value.contains("'Circle'"))
+    )
+    assert(
+      EventGeometry
+        .check(EventGeometry.Geojson("""{"coordinates":[1,2]}"""))
+        .left
+        .exists(_.value.contains("no \"type\""))
+    )
     assert(EventGeometry.check(EventGeometry.Geojson("[1,2]")).isLeft)
     assert(EventGeometry.check(EventGeometry.Geojson("near Kadesh")).left.exists(_.value.contains("not GeoJSON")))
 
   test("EventGeo.outer: the outer span, one known end alone, nothing when undated"):
-    assertEquals((TimeSpan(Some(Year(-1300)), Some(Year(-1290)), Some(Year(-1260)), Some(Year(-1250)))).outer, Some((-1300L, -1250L)))
+    assertEquals(
+      (TimeSpan(Some(Year(-1300)), Some(Year(-1290)), Some(Year(-1260)), Some(Year(-1250)))).outer,
+      Some((-1300L, -1250L))
+    )
     assertEquals((TimeSpan(beginBy = Some(Year(-1290)), endFrom = Some(Year(-1260)))).outer, Some((-1290L, -1260L)))
     assertEquals((TimeSpan(notBefore = Some(Year(-1274)))).outer, Some((-1274L, -1274L)))
     assertEquals((TimeSpan()).outer, None)
@@ -148,9 +211,20 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals(EventGeo.missingEnd(TimeSpan()), None)
 
   test("the wire: a patch and a put take scale; a summary carries it with whether it is stated"):
-    assertEquals(decode[EventPatch]("""{"scale":"regional"}"""), Right(EventPatch(scale = Some(EventSummary.Scale("regional")))))
+    assertEquals(
+      decode[EventPatch]("""{"scale":"regional"}"""),
+      Right(EventPatch(scale = Some(EventSummary.Scale("regional"))))
+    )
     assertEquals(decode[EventPut]("""{"label":"x","scale":"local"}""").map(_.scale), Right(Some("local")))
-    val s = EventSummary(Event.Id("e"), EventSummary.Label("E"), EventSummary.Kind("battle"), TimeSpan(), EventSummary.Historicity("attested"), scale = EventSummary.Scale("local"), scaleStated = EventSummary.ScaleStated(true))
+    val s = EventSummary(
+      Event.Id("e"),
+      EventSummary.Label("E"),
+      EventSummary.Kind("battle"),
+      TimeSpan(),
+      EventSummary.Historicity("attested"),
+      scale = EventSummary.Scale("local"),
+      scaleStated = EventSummary.ScaleStated(true)
+    )
     assertEquals(decode[EventSummary](s.asJson.noSpaces), Right(s))
     // an older client's summary without the fields still reads
     assertEquals(
@@ -173,7 +247,14 @@ class EventScaleSuite extends munit.FunSuite:
     assert(EventsMarkdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
     assert(
       EventsMarkdown
-        .event(EventDetail(e.modify(_.scale).setTo(EventSummary.Scale("regional")).modify(_.scaleStated).setTo(EventSummary.ScaleStated(true))))
+        .event(
+          EventDetail(
+            e.modify(_.scale)
+              .setTo(EventSummary.Scale("regional"))
+              .modify(_.scaleStated)
+              .setTo(EventSummary.ScaleStated(true))
+          )
+        )
         .contains("**Scale:** regional (stated)")
     )
 
@@ -202,5 +283,13 @@ class EventScaleSuite extends munit.FunSuite:
     )
     val line = BundleFormat.stamp(ev).line
     assert(!line.contains("scale"), line)
-    assert(BundleFormat.stamp(ev.modify(_.scale).setTo(Some(Bundle.Event.Scale("regional")))).line.contains("\"scale\":\"regional\""))
-    assertNotEquals(BundleFormat.stamp(ev.modify(_.scale).setTo(Some(Bundle.Event.Scale("regional")))).rev, BundleFormat.stamp(ev).rev)
+    assert(
+      BundleFormat
+        .stamp(ev.modify(_.scale).setTo(Some(Bundle.Event.Scale("regional"))))
+        .line
+        .contains("\"scale\":\"regional\"")
+    )
+    assertNotEquals(
+      BundleFormat.stamp(ev.modify(_.scale).setTo(Some(Bundle.Event.Scale("regional")))).rev,
+      BundleFormat.stamp(ev).rev
+    )

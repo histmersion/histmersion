@@ -60,15 +60,42 @@ class BaseMapsSuite extends munit.FunSuite:
       Basemap.Status.Dir("/x"),
       Basemap.Status.Bbox("-12,20,90,62"),
       List(
-        Basemap.LayerInfo(Basemap.LayerInfo.Layer("vector"), Basemap.LayerInfo.Present(available), Basemap.LayerInfo.File("/x/vector.pmtiles"), maxZoom = Some(Basemap.LayerInfo.MaxZoom(10)), version = Some(Basemap.LayerInfo.Version("v1"))),
+        Basemap.LayerInfo(
+          Basemap.LayerInfo.Layer("vector"),
+          Basemap.LayerInfo.Present(available),
+          Basemap.LayerInfo.File("/x/vector.pmtiles"),
+          maxZoom = Some(Basemap.LayerInfo.MaxZoom(10)),
+          version = Some(Basemap.LayerInfo.Version("v1"))
+        ),
         Basemap.LayerInfo(
           Basemap.LayerInfo.Layer("terrain"),
           Basemap.LayerInfo.Present(available),
           Basemap.LayerInfo.File("/x/terrain.pmtiles"),
           maxZoom = Some(Basemap.LayerInfo.MaxZoom(8)),
           version = Some(Basemap.LayerInfo.Version("t1")),
-          onDemand = Some(Basemap.OnDemand(Basemap.OnDemand.Enabled(onDemand), Basemap.OnDemand.MaxZoom(12), Basemap.OnDemand.Dir("/x/terrain-cache"), Basemap.OnDemand.Tiles(0), ByteCount(0), Basemap.OnDemand.MaxBytes(1000))),
-          focus = if focus then List(Basemap.Focus(Basemap.Focus.Name("argolid"), Basemap.Focus.File("/x/f.pmtiles"), ByteCount(1), Basemap.Focus.Bbox("22,37,23,38"), Basemap.Focus.MinZoom(9), Basemap.Focus.MaxZoom(12), Basemap.Focus.Tiles(10))) else Nil
+          onDemand = Some(
+            Basemap.OnDemand(
+              Basemap.OnDemand.Enabled(onDemand),
+              Basemap.OnDemand.MaxZoom(12),
+              Basemap.OnDemand.Dir("/x/terrain-cache"),
+              Basemap.OnDemand.Tiles(0),
+              ByteCount(0),
+              Basemap.OnDemand.MaxBytes(1000)
+            )
+          ),
+          focus = if focus then
+            List(
+              Basemap.Focus(
+                Basemap.Focus.Name("argolid"),
+                Basemap.Focus.File("/x/f.pmtiles"),
+                ByteCount(1),
+                Basemap.Focus.Bbox("22,37,23,38"),
+                Basemap.Focus.MinZoom(9),
+                Basemap.Focus.MaxZoom(12),
+                Basemap.Focus.Tiles(10)
+              )
+            )
+          else Nil
         ),
         Basemap.LayerInfo(
           Basemap.LayerInfo.Layer("bathymetry"),
@@ -90,7 +117,13 @@ class BaseMapsSuite extends munit.FunSuite:
     assertEquals(BaseMaps.choices(local = true), List(BaseMap.Readable, BaseMap.Physical))
     assertEquals(
       BaseMaps.choices(local = false).map(_.wire),
-      List(BaseMap.Wire("readable"), BaseMap.Wire("physical"), BaseMap.Wire("standard"), BaseMap.Wire("muted"), BaseMap.Wire("dark"))
+      List(
+        BaseMap.Wire("readable"),
+        BaseMap.Wire("physical"),
+        BaseMap.Wire("standard"),
+        BaseMap.Wire("muted"),
+        BaseMap.Wire("dark")
+      )
     )
     assertEquals(BaseMap.fromWire(BaseMap.Wire("terrain")), Some(BaseMap.Readable))
     assertEquals(summon[FieldCodec[BaseMap]].decode(List(FieldCodec.Token("physical"))), Some(BaseMap.Physical))
@@ -99,7 +132,10 @@ class BaseMapsSuite extends munit.FunSuite:
 
   test("a local page draws a kept online choice as its best local style: Readable when whole, else Physical"):
     assertEquals(BaseMaps.effective(BaseMap.Dark, local = true, Some(status(true))), BaseMap.Readable)
-    assertEquals(BaseMaps.effective(BaseMap.Dark, local = true, Some(status(true, List(Basemap.StyleState.Missing("roads"))))), BaseMap.Physical)
+    assertEquals(
+      BaseMaps.effective(BaseMap.Dark, local = true, Some(status(true, List(Basemap.StyleState.Missing("roads"))))),
+      BaseMap.Physical
+    )
     assertEquals(BaseMaps.effective(BaseMap.Dark, local = false, Some(status(true))), BaseMap.Dark)
     assertEquals(BaseMaps.effective(BaseMap.Physical, local = true, Some(status(true))), BaseMap.Physical)
 
@@ -136,12 +172,26 @@ class BaseMapsSuite extends munit.FunSuite:
     assertEquals((notice.map(_._1), z), (Some(BaseMaps.PastNotice), Basemap.Zoom(16)))
     // a lacking download says so; without a GPU the cheapest drawing
     val (s2, n2, _) =
-      BaseMaps.plan(BaseMap.Readable, Some(status(true, List(Basemap.StyleState.Missing("roads")))), MapPrefs(), ui, local = false, soft = true)
+      BaseMaps.plan(
+        BaseMap.Readable,
+        Some(status(true, List(Basemap.StyleState.Missing("roads")))),
+        MapPrefs(),
+        ui,
+        local = false,
+        soft = true
+      )
     assert(s2.asInstanceOf[BaseMapSpec.Vector].reduced.value)
     assert(n2.exists((t, warn) => warn && t.contains("roads")))
     // the configured language (`basemap.labels.language`) unless the viewer chose one; offered in the menu
     BaseMaps
-      .plan(BaseMap.Readable, Some(status(true)), MapPrefs(), ui.modify(_.mapLanguage).setTo(UiConfig.MapLanguage("de")), local = false, soft = false)
+      .plan(
+        BaseMap.Readable,
+        Some(status(true)),
+        MapPrefs(),
+        ui.modify(_.mapLanguage).setTo(UiConfig.MapLanguage("de")),
+        local = false,
+        soft = false
+      )
       ._1 match
       case BaseMapSpec.Vector(_, _, lang, _, _, seaDepth, _)
           if lang == BaseMapSpec.Vector.Lang("de") && seaDepth == BaseMapSpec.Vector.SeaDepth(false) =>
@@ -167,7 +217,10 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(std.attribution.value.contains("OpenStreetMap") && !std.attribution.value.contains("Humanitarian"))
     assert(BaseMaps.raster(BaseMap.Muted, ui).attribution.value.contains("Humanitarian"))
     assert(BaseMaps.raster(BaseMap.Dark, ui).dark.value)
-    assert(!BaseMaps.raster(BaseMap.Dark, ui.modify(_.tilesTone).setTo(UiConfig.TilesTone("dark"))).dark.value, "dark tiles already")
+    assert(
+      !BaseMaps.raster(BaseMap.Dark, ui.modify(_.tilesTone).setTo(UiConfig.TilesTone("dark"))).dark.value,
+      "dark tiles already"
+    )
     assertEquals(
       BaseMaps.plan(BaseMap.Muted, None, MapPrefs(), ui, local = false, soft = false)._2,
       None,
@@ -210,8 +263,19 @@ class BaseMapsSuite extends munit.FunSuite:
       "read on demand there"
     )
     assertEquals(BaseMaps.contoursNote(Some(status(true, onDemand = true)), 11, naxos), None)
-    assert(BaseMaps.meets(GeoBounds(GeoBounds.South(37.0), GeoBounds.West(21.0), GeoBounds.North(37.5), GeoBounds.East(22.1)), BBox(Longitude(22), Latitude(37), Longitude(23), Latitude(38))), "touching at the corner")
-    assert(!BaseMaps.meets(GeoBounds(GeoBounds.South(38.1), GeoBounds.West(22.0), GeoBounds.North(39.0), GeoBounds.East(23.0)), BBox(Longitude(22), Latitude(37), Longitude(23), Latitude(38))))
+    assert(
+      BaseMaps.meets(
+        GeoBounds(GeoBounds.South(37.0), GeoBounds.West(21.0), GeoBounds.North(37.5), GeoBounds.East(22.1)),
+        BBox(Longitude(22), Latitude(37), Longitude(23), Latitude(38))
+      ),
+      "touching at the corner"
+    )
+    assert(
+      !BaseMaps.meets(
+        GeoBounds(GeoBounds.South(38.1), GeoBounds.West(22.0), GeoBounds.North(39.0), GeoBounds.East(23.0)),
+        BBox(Longitude(22), Latitude(37), Longitude(23), Latitude(38))
+      )
+    )
 
   test(
     "the sea's depth: on in Physical and off in Readable by default, the viewer's choice per style; needs the sea floor and a GPU"
@@ -221,8 +285,15 @@ class BaseMapsSuite extends munit.FunSuite:
     val r = MapPrefs().withSeaDepth(VectorStyle.Readable, on = MapPrefs.SeaDepth(true))
     assertEquals(r, MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true))))
     assert(r.seaDepth(VectorStyle.Readable) && r.seaDepth(VectorStyle.Physical))
-    assertEquals(r.withSeaDepth(VectorStyle.Readable, on = MapPrefs.SeaDepth(false)), MapPrefs(), "the default again is no choice")
-    assertEquals(MapPrefs().withSeaDepth(VectorStyle.Physical, on = MapPrefs.SeaDepth(false)), MapPrefs(depthPhysical = Some(MapPrefs.DepthPhysical(false))))
+    assertEquals(
+      r.withSeaDepth(VectorStyle.Readable, on = MapPrefs.SeaDepth(false)),
+      MapPrefs(),
+      "the default again is no choice"
+    )
+    assertEquals(
+      MapPrefs().withSeaDepth(VectorStyle.Physical, on = MapPrefs.SeaDepth(false)),
+      MapPrefs(depthPhysical = Some(MapPrefs.DepthPhysical(false)))
+    )
     BaseMaps.plan(BaseMap.Readable, Some(status(true)), r, ui, local = false, soft = false)._1 match
       case v: BaseMapSpec.Vector => assert(v.seaDepth.value)
       case other                 => fail(other.toString)
@@ -261,7 +332,13 @@ class BaseMapsSuite extends munit.FunSuite:
 
   test("a folding overlay's button names what it opens and says whether it is open"):
     val closed =
-      MapFold.toggleHtml(MapFold.ClassName("hd-legend-toggle"), MapFold.ControlsId("hd-legend-body"), MapFold.Label("map legend"), MapFold.InnerHtml("<span>legend</span>"), open = MapFold.Open(false))
+      MapFold.toggleHtml(
+        MapFold.ClassName("hd-legend-toggle"),
+        MapFold.ControlsId("hd-legend-body"),
+        MapFold.Label("map legend"),
+        MapFold.InnerHtml("<span>legend</span>"),
+        open = MapFold.Open(false)
+      )
     assert(closed.value.startsWith("""<button type="button" class="btn btn--sm hd-legend-toggle" """), closed)
     assert(closed.value.contains("""aria-controls="hd-legend-body""""), closed)
     assert(closed.value.contains("""aria-expanded="false""""), closed)
@@ -269,7 +346,13 @@ class BaseMapsSuite extends munit.FunSuite:
     assert(closed.value.endsWith("<span>legend</span></button>"), closed)
     assert(
       MapFold
-        .toggleHtml(MapFold.ClassName("x"), MapFold.ControlsId("y"), MapFold.Label("a \"b\" & c"), MapFold.InnerHtml(""), open = MapFold.Open(true))
+        .toggleHtml(
+          MapFold.ClassName("x"),
+          MapFold.ControlsId("y"),
+          MapFold.Label("a \"b\" & c"),
+          MapFold.InnerHtml(""),
+          open = MapFold.Open(true)
+        )
         .value
         .contains("""aria-expanded="true" aria-label="a &quot;b&quot; &amp; c"""")
     )
@@ -282,7 +365,10 @@ class BaseMapsSuite extends munit.FunSuite:
       Some(MapPrefs(Some(MapPrefs.Names(false)), Some(MapPrefs.Language("local"))))
     )
     assertEquals(c.decode(List(FieldCodec.Token("{oops"))), Some(MapPrefs()))
-    assertEquals(c.decode(c.encode(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true))))), Some(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true)))))
+    assertEquals(
+      c.decode(c.encode(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true))))),
+      Some(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true))))
+    )
     assertEquals(
       c.decode(List(FieldCodec.Token("""{"names":false}"""))),
       Some(MapPrefs(names = Some(MapPrefs.Names(false)))),

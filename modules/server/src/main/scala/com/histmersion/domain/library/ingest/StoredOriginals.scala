@@ -32,7 +32,10 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
       )
     val acquired = plan.keys.filter(k => Citekey.valid(k.value)).flatMap { k =>
       Store.Key.of(k.value).toOption.filter(s.isDirectory).toList.flatMap { dir =>
-        s.list(dir).filter(_.isFile).sortBy(f => s.where(f.key).value).map(f => SourceOriginals.FindResult(s.where(f.key).value)) :+
+        s.list(dir)
+          .filter(_.isFile)
+          .sortBy(f => s.where(f.key).value)
+          .map(f => SourceOriginals.FindResult(s.where(f.key).value)) :+
           SourceOriginals.FindResult(s.where(dir).value)
       }
     }
@@ -50,7 +53,8 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
       at.flatMap { (st, k) =>
         // a directory still holding a file stays, as the file system refuses to remove it
         val why =
-          if st.isDirectory(k) then Option.when(st.names(k).nonEmpty || st.deleteTree(k).isEmpty)(SourceOriginals.RemoveResult(s"$f: $f"))
+          if st.isDirectory(k) then
+            Option.when(st.names(k).nonEmpty || st.deleteTree(k).isEmpty)(SourceOriginals.RemoveResult(s"$f: $f"))
           else Option.when(!st.delete(k) && st.exists(k))(SourceOriginals.RemoveResult(s"$f: it could not be removed"))
         why.foreach(w => scribe.warn(s"delete: the stored original could not be removed — ${w.value}"))
         why

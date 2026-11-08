@@ -60,7 +60,14 @@ class SettingsHttpSuite extends DbSuite:
           ServerConfig.Host("127.0.0.1"),
           ServerConfig.Port(0),
           OfflineConverter(),
-          source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(e => ConfigSource.Problem(e.value)))))
+          source = Some(
+            (
+              l,
+              ConfigSource(() =>
+                AppConfig.loadWithUserFile(env, Some(file)).left.map(e => ConfigSource.Problem(e.value))
+              )
+            )
+          )
         )
         .start()
       try run(s"http://127.0.0.1:${b.port}")

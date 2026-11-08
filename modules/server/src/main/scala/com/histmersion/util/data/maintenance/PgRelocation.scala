@@ -36,7 +36,6 @@ object PgRelocation:
   type PatchTo = Replacement
   val PatchTo: Replacement.type = Replacement
 
-
   val Marker = ".prefix"
 
   final case class Result(files: Result.Files, signed: Result.Signed, tooLong: Result.TooLong)
@@ -80,7 +79,8 @@ object PgRelocation:
     */
   def relocate(pg: Store, macOS: MacOsMode, processes: Processes): Option[Result] =
     val marker = Store.Key.applyUnsafe(Marker)
-    val here = pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message.value), _.toRealPath().toString)
+    val here =
+      pg.onDisk(Store.Key.Root).fold(e => throw IllegalStateException(e.message.value), _.toRealPath().toString)
     val recorded = if pg.isFile(marker) then pg.get(marker).map(_.text().value.trim).filter(_.nonEmpty) else None
     recorded.filter(_ != here).map { from =>
       val (fb, tb) = (from.getBytes(UTF_8), here.getBytes(UTF_8))
@@ -92,7 +92,9 @@ object PgRelocation:
           val bytes = pg.get(k).fold(Array.emptyByteArray)(_.bytes().value)
           if indexOf(bytes, fb, 0) >= 0 then
             val (out, skipped) = patch(FileBytes(bytes), PatchFrom(fb), PatchTo(tb))
-            pg.write(k, ByteSource.Content(out.value)).left.foreach(e => throw java.io.IOException(e.message.value)) // in place: keeps the permissions
+            pg.write(k, ByteSource.Content(out.value))
+              .left
+              .foreach(e => throw java.io.IOException(e.message.value)) // in place: keeps the permissions
             files += 1
             tooLong += skipped.value
             if macOS.value && isMachO(out.value) then
@@ -108,7 +110,9 @@ object PgRelocation:
               if rc.value != 0 then throw IllegalStateException(s"codesign failed on $file (exit $rc)")
               signed += 1
         }
-      pg.write(marker, ByteSource.Content(here.getBytes(UTF_8))).left.foreach(e => throw java.io.IOException(e.message.value))
+      pg.write(marker, ByteSource.Content(here.getBytes(UTF_8)))
+        .left
+        .foreach(e => throw java.io.IOException(e.message.value))
       Result(Result.Files(files), Result.Signed(signed), Result.TooLong(tooLong))
     }
 

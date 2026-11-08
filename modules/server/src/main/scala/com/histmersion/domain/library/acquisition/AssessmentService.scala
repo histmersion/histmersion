@@ -41,9 +41,12 @@ object AssessmentService:
       db.transact(AssessmentRepo.replaceRetractionWatch(rows))
     def retractionCount: RowCount = db.read(AssessmentRepo.retractionCount())
     def retractionsFor(doi: Doi): List[RetractionNotice] = db.read(AssessmentRepo.retractionsFor(doi))
-    def record(assessment: AssessmentRecord): CheckedAt = CheckedAt(db.transact(AssessmentRepo.putAssessment(assessment)))
+    def record(assessment: AssessmentRecord): CheckedAt = CheckedAt(
+      db.transact(AssessmentRepo.putAssessment(assessment))
+    )
     def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, CheckedAt)] =
-      db.read(AssessmentRepo.assessmentFor(citekey)).map((v, at) => (AssessmentRecord.Verdict(v.value), CheckedAt(at.value)))
+      db.read(AssessmentRepo.assessmentFor(citekey))
+        .map((v, at) => (AssessmentRecord.Verdict(v.value), CheckedAt(at.value)))
 
   /** The mirror and the verdicts in memory; `clock` stands in for the database's `now()`. */
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends AssessmentService:
@@ -63,9 +66,14 @@ object AssessmentService:
       val at = Stamp.format(clock.instant())
       val _ = state.updateAndGet(
         _.modify(_.assessments).using(
-          _.updated(AcquisitionState.AssessmentsKey(assessment.citekey.value), (assessment, AcquisitionState.AssessmentsValuePart2(at)))
+          _.updated(
+            AcquisitionState.AssessmentsKey(assessment.citekey.value),
+            (assessment, AcquisitionState.AssessmentsValuePart2(at))
+          )
         )
       )
       CheckedAt(at)
     def lastFor(citekey: Citekey): Option[(AssessmentRecord.Verdict, CheckedAt)] =
-      state.get.assessments.get(AcquisitionState.AssessmentsKey(citekey.value)).map((a, at) => (a.verdict, CheckedAt(at.value)))
+      state.get.assessments
+        .get(AcquisitionState.AssessmentsKey(citekey.value))
+        .map((a, at) => (a.verdict, CheckedAt(at.value)))

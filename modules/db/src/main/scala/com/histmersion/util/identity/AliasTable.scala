@@ -12,7 +12,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   * table and its column naming the record. ONE resolution of an old identifier for every kind, so the rule cannot
   * differ between them. The names are the owner's constants, never input.
   */
-final case class AliasTable(kind: AliasKind, table: AliasTable.Table, idColumn: AliasTable.IdColumn, aliasTable: AliasTable.Value, targetColumn: AliasTable.TargetColumn):
+final case class AliasTable(
+    kind: AliasKind,
+    table: AliasTable.Table,
+    idColumn: AliasTable.IdColumn,
+    aliasTable: AliasTable.Value,
+    targetColumn: AliasTable.TargetColumn
+):
 
   /** The identifier an OLD one was renamed to — `None` when `id` is a live identifier, or names nothing. */
   def renamedTo(ds: DataSource, id: AliasTable.Id): Option[AliasTable.Id] = connect(ds)(renamedToIn(id))

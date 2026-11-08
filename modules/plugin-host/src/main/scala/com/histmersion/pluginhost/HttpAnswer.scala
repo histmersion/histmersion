@@ -8,7 +8,11 @@ import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One HTTP answer: the status, the headers (names in lower case, first value) and the body. */
-final case class HttpAnswer(code: HttpAnswer.Code, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue], body: HttpAnswer.Body):
+final case class HttpAnswer(
+    code: HttpAnswer.Code,
+    headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue],
+    body: HttpAnswer.Body
+):
   def header(name: CoreQuota.HeaderName): Option[CoreQuota.HeaderValue] =
     headers.get(CoreQuota.HeaderName(name.value.toLowerCase(Locale.ROOT)))
   def text: HttpAnswer.Text = HttpAnswer.Text(new String(body.value, UTF_8))

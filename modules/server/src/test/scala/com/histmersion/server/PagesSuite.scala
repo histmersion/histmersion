@@ -43,7 +43,11 @@ class PagesSuite extends munit.FunSuite:
     com.histmersion.api.library.Title("The End of the Bronze Age"),
     Source.Status.Contested
   )
-  private val topic = Article.Ref(Article.Slug("bronze_age_collapse"), Article.Title("The Bronze Age Collapse"), Some(Article.SummaryText("Around 1200 BCE.")))
+  private val topic = Article.Ref(
+    Article.Slug("bronze_age_collapse"),
+    Article.Title("The Bronze Age Collapse"),
+    Some(Article.SummaryText("Around 1200 BCE."))
+  )
   private val links: WikiLinks.Occurrence.Target => Option[LinkTarget] =
     Map[WikiLinks.Occurrence.Target, LinkTarget](
       WikiLinks.Occurrence.Target("cline2014_year") -> cline,
@@ -123,7 +127,8 @@ class PagesSuite extends munit.FunSuite:
   test("prose wikilinks become typed anchors: source (readable label), article (title), unresolved (text)"):
     val out = Pages
       .linkProse(
-        FullText.Shown.Markdown("[[cline2014]] and [[bronze_age_collapse]] and [[nothing_here]] and [[drews1993_end|Drews]]"),
+        FullText.Shown
+          .Markdown("[[cline2014]] and [[bronze_age_collapse]] and [[nothing_here]] and [[drews1993_end|Drews]]"),
         links
       )
       .value
@@ -152,8 +157,7 @@ class PagesSuite extends munit.FunSuite:
     )
 
   test("citations are numbered by first appearance; 'Not used' entries get the same anchor, no number"):
-    val body = Article.Body(
-      """# The Sea Peoples
+    val body = Article.Body("""# The Sea Peoples
         |
         |Drews argued it [[drews1993_end]]; Cline disagreed [[cline2014]], again [[drews1993_end]].
         |
@@ -162,43 +166,60 @@ class PagesSuite extends munit.FunSuite:
         |- **[[cline2014_year]]**: already cited above.
         |- **[[drews1993_end]]**: superseded.
         |""".stripMargin)
-    val html = Pages.article(
-      articlePage(
-        body,
-        List(
-          CitedSource(
-            Citekey("cline2014_year"),
-            Some(cline.title),
-            (Some(2014)).map(Year.apply),
-            Some(Source.Status.Current),
-            cline.authors,
-            cline.doi
-          ),
-          CitedSource(Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(Year.apply), Some(Source.Status.Contested), drews.authors)
-        )
-      ),
-      links
-    ).value
+    val html = Pages
+      .article(
+        articlePage(
+          body,
+          List(
+            CitedSource(
+              Citekey("cline2014_year"),
+              Some(cline.title),
+              (Some(2014)).map(Year.apply),
+              Some(Source.Status.Current),
+              cline.authors,
+              cline.doi
+            ),
+            CitedSource(
+              Citekey("drews1993_end"),
+              Some(drews.title),
+              (Some(1993)).map(Year.apply),
+              Some(Source.Status.Contested),
+              drews.authors
+            )
+          )
+        ),
+        links
+      )
+      .value
     assert(
       html.contains(
-        HtmlRender.sourceRef(
-          drews,
-          HtmlRender.Label("Drews 1993")
-        ).value + """<sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>"""
+        HtmlRender
+          .sourceRef(
+            drews,
+            HtmlRender.Label("Drews 1993")
+          )
+          .value + """<sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>"""
       ),
       html
     )
     assert(
       html.contains(
-        HtmlRender.sourceRef(
-          cline,
-          HtmlRender.Label("Cline 2014")
-        ).value + """<sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>"""
+        HtmlRender
+          .sourceRef(
+            cline,
+            HtmlRender.Label("Cline 2014")
+          )
+          .value + """<sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>"""
       ),
       html
     )
     // under "Not used": the same anchor (so the same preview), bold, and no number
-    assert(html.contains("<strong>" + HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).value + "</strong>: already cited"), html)
+    assert(
+      html.contains(
+        "<strong>" + HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).value + "</strong>: already cited"
+      ),
+      html
+    )
     assertEquals("href=\"#cite-".r.findAllIn(html).size, 3, html)
     // the footer: numbered entries in number order, each with its identifier
     val footer = html.drop(html.indexOf("Sources cited"))
@@ -213,13 +234,23 @@ class PagesSuite extends munit.FunSuite:
     assert(html.contains(">sea peoples</a>"), html)
 
   test("a trailing hand-written Sources list is dropped under the generated footer"):
-    val html = Pages.article(
-      articlePage(
-        Article.Body("# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n"),
-        List(CitedSource(Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(Year.apply), Some(Source.Status.Contested), drews.authors))
-      ),
-      links
-    ).value
+    val html = Pages
+      .article(
+        articlePage(
+          Article.Body("# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n"),
+          List(
+            CitedSource(
+              Citekey("drews1993_end"),
+              Some(drews.title),
+              (Some(1993)).map(Year.apply),
+              Some(Source.Status.Contested),
+              drews.authors
+            )
+          )
+        ),
+        links
+      )
+      .value
     assertEquals("<h2[^>]*>Sources".r.findAllIn(html).size, 1, html)
     assert(html.contains("""<h2 id="sources-cited">Sources cited ("""), html)
 
@@ -269,9 +300,16 @@ class PagesSuite extends munit.FunSuite:
     assert(!html.replaceAll("<[^>]*>", "").contains("_"), "no underscore reaches the reader: " + html)
 
   test("Cites / Cited by merge typed edges, unresolved edges and the articles citing the source"):
-    val p = sourcePage.modify(
-      _.cites).setTo(List(Citation.ToSource(drews, Citation.ToSource.Kind("challenges")), Citation.Unresolved(Citation.Unresolved.Id("ghost2019_x"), Citation.Unresolved.Kind("references")))).modify(_.citedBy).setTo(List(Citation.ToArticle(topic, None))
-    )
+    val p = sourcePage
+      .modify(_.cites)
+      .setTo(
+        List(
+          Citation.ToSource(drews, Citation.ToSource.Kind("challenges")),
+          Citation.Unresolved(Citation.Unresolved.Id("ghost2019_x"), Citation.Unresolved.Kind("references"))
+        )
+      )
+      .modify(_.citedBy)
+      .setTo(List(Citation.ToArticle(topic, None)))
     val html = Pages.source(p, links).value
     assert(html.contains("""<h2 id="cites">Cites (2)</h2>"""), html)
     assert(html.contains("""<h2 id="cited-by">Cited by (1)</h2>"""), html)
@@ -334,11 +372,19 @@ class PagesSuite extends munit.FunSuite:
         )
       )
     ),
-    goals = List(ReviewGoal(ReviewGoal.Slug("sea-peoples-goal"), ReviewGoal.Title("The Sea Peoples & the collapse"), ReviewGoal.Status("compiled")))
+    goals = List(
+      ReviewGoal(
+        ReviewGoal.Slug("sea-peoples-goal"),
+        ReviewGoal.Title("The Sea Peoples & the collapse"),
+        ReviewGoal.Status("compiled")
+      )
+    )
   )
 
   test("the article page shows the review badge with its meaning, and the goals that link it, under the title"):
-    val html = Pages.article(articlePage(Article.Body("# The Sea Peoples\n\nText.")).modify(_.review).setTo(Some(review)), links).value
+    val html = Pages
+      .article(articlePage(Article.Body("# The Sea Peoples\n\nText.")).modify(_.review).setTo(Some(review)), links)
+      .value
     assert(
       html.contains(
         """<span class="job-state review-state state-majors-open" title="Reviewed: 1 MAJOR finding is still open.">1 major open</span>"""
@@ -356,7 +402,12 @@ class PagesSuite extends munit.FunSuite:
       ),
       html
     )
-    assert(!Pages.article(articlePage(Article.Body("# The Sea Peoples\n\nText.")), links).value.contains("article-review-line"))
+    assert(
+      !Pages
+        .article(articlePage(Article.Body("# The Sea Peoples\n\nText.")), links)
+        .value
+        .contains("article-review-line")
+    )
 
   test("the review history: collapsed, counted, run by run, each finding with reviewer, kind, place and fate"):
     val html = Pages.reviewHistory(review).value

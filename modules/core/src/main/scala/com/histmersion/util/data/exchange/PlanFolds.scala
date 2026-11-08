@@ -38,4 +38,3 @@ trait PlanFolds:
 
   /** This collection's row of a line stays as it is. */
   def keepLocal(foreign: UUID): Unit
-

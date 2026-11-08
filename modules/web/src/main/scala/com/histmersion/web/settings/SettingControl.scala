@@ -19,7 +19,12 @@ object SettingControl:
   def nameOf(key: ConfigEdit.Field.Key): SettingsForm.Item.Name =
     SettingsForm.Item.Name(Wording.humanize(Wording.Id(key.value.split('.').lastOption.getOrElse(key.value))))
 
-  def apply(f: ConfigEdit.Field, draft: Draft, name: Option[SettingsForm.Item.Name] = None, help: Option[SettingsForm.Item.Help] = None): HtmlElement =
+  def apply(
+      f: ConfigEdit.Field,
+      draft: Draft,
+      name: Option[SettingsForm.Item.Name] = None,
+      help: Option[SettingsForm.Item.Help] = None
+  ): HtmlElement =
     val id = "set-" + f.key.value.replaceAll("[^A-Za-z0-9_-]", "-")
     val locked = f.locked.isDefined
     div(
@@ -29,7 +34,13 @@ object SettingControl:
       div(
         cls := "setting-head",
         if f.kind.value == "flag" then
-          label(forId := id, cls := "setting-name", control(f, draft, id, locked), " ", name.getOrElse(nameOf(f.key)).value)
+          label(
+            forId := id,
+            cls := "setting-name",
+            control(f, draft, id, locked),
+            " ",
+            name.getOrElse(nameOf(f.key)).value
+          )
         else label(forId := id, cls := "setting-name", name.getOrElse(nameOf(f.key)).value),
         span(cls := "setting-key muted", f.relative.value)
       ),
@@ -58,7 +69,10 @@ object SettingControl:
           cls := "field setting-input setting-number",
           disabled := locked,
           inputMode := "decimal",
-          controlled(value <-- draft.shown(f).map(_.value), onInput.mapToValue --> (v => draft.set(f.key, Some(Draft.Text(v)))))
+          controlled(
+            value <-- draft.shown(f).map(_.value),
+            onInput.mapToValue --> (v => draft.set(f.key, Some(Draft.Text(v))))
+          )
         )
       case _ =>
         input(
@@ -67,7 +81,10 @@ object SettingControl:
           cls := "field setting-input",
           disabled := locked,
           placeholder := (if f.kind.value == "list" then "[a, b, c]" else ""),
-          controlled(value <-- draft.shown(f).map(_.value), onInput.mapToValue --> (v => draft.set(f.key, Some(Draft.Text(v)))))
+          controlled(
+            value <-- draft.shown(f).map(_.value),
+            onInput.mapToValue --> (v => draft.set(f.key, Some(Draft.Text(v))))
+          )
         )
 
   /** Where the value comes from, and the way back to the default. */
@@ -97,7 +114,7 @@ object SettingControl:
               case None if f.source == ConfigEdit.Source.File.wire =>
                 s"Set in the settings file. ${defaultText(f.kind, dflt)}"
               case None if f.kind.value == "flag" => defaultText(f.kind, dflt).value
-              case None                     => s"The default${if dflt.value.isEmpty then "" else s": $dflt"}."
+              case None                           => s"The default${if dflt.value.isEmpty then "" else s": $dflt"}."
           )
         )
       ),

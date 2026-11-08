@@ -20,4 +20,3 @@ trait MapLayer:
     * absent.
     */
   def features(keys: List[MapTiles.TileKey]): Map[MapTiles.TileKey, TileCell => TilePoint]
-

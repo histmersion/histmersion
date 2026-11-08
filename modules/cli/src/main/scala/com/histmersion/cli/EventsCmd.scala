@@ -44,7 +44,7 @@ object EventsCmd:
     * searches the event's label and description.
     */
 
-  private def search (using console: Console) = Opts.subcommand(
+  private def search(using console: Console) = Opts.subcommand(
     "search",
     "Find events by label or description (the filter flags select their sources)"
   ) {
@@ -79,7 +79,7 @@ object EventsCmd:
       }
   }
 
-  private def showCmd (using console: Console) = Opts.subcommand("show", "One event: datings, edges, participants") {
+  private def showCmd(using console: Console) = Opts.subcommand("show", "One event: datings, edges, participants") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
       c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown.value))
     }
@@ -125,7 +125,9 @@ object EventsCmd:
           _ <- scale
             .filter(v => EventScale.parse(EventSummary.Scale(v)).isEmpty)
             .fold(Right(()))(v =>
-              Left(Cli.Error(Cli.Error.Message(s"--scale: '$v' is not local, regional or auto"), exitCode = ExitCode.Usage))
+              Left(
+                Cli.Error(Cli.Error.Message(s"--scale: '$v' is not local, regional or auto"), exitCode = ExitCode.Usage)
+              )
             )
           p = EventPatch(
             label = label.map(EventSummary.Label(_)),
@@ -149,7 +151,7 @@ object EventsCmd:
       }
 
   /** `events patch <id>`: the fields given change, the rest stay — `PATCH /api/events/{id}`. */
-  private def patchCmd (using console: Console) = Opts.subcommand(
+  private def patchCmd(using console: Console) = Opts.subcommand(
     "patch",
     "Change fields of one event: its scale, place, point, kind, label… (the rest stay); on a catalogue " +
       "event the changes are kept across re-imports (`events corrections` lists them)"
@@ -165,7 +167,7 @@ object EventsCmd:
   // ── catalogues, links and leads (#1449) ──
 
   /** Follow a job, then print what it left (an import's report). */
-  private[cli] def follow(c: Client, j: JobInfo, noWait: Cli.NoWait)(using console: Console) : Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, j: JobInfo, noWait: Cli.NoWait)(using console: Console): Either[Cli.Error, Unit] =
     Cli.out.println(
       s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
@@ -175,7 +177,7 @@ object EventsCmd:
         done.detail.flatMap(EventImportReport.Detail.of).foreach(r => Cli.out.println(EventImportReport.markdown(r)))
       }
 
-  private def importCmd (using console: Console) = Opts.subcommand(
+  private def importCmd(using console: Console) = Opts.subcommand(
     "import",
     "Bring in every event a catalogue knows — gvp (Smithsonian Holocene eruptions), noaa (NCEI earthquakes, " +
       "eruptions, tsunamis), wikidata (battles, sieges, wars, treaties, revolts, disasters), or a plugin's catalogue " +
@@ -215,12 +217,11 @@ object EventsCmd:
             mag.map(EventImportRequest.MinMagnitude(_)),
             EventImportRequest.Refresh(refresh)
           )
-        )
-          .flatMap(follow(c, _, Cli.NoWait(noWait)))
+        ).flatMap(follow(c, _, Cli.NoWait(noWait)))
       }
   }
 
-  private def rederiveCmd (using console: Console) = Opts.subcommand(
+  private def rederiveCmd(using console: Console) = Opts.subcommand(
     "rederive",
     "Compute the dating of the stored catalogue records again from the records as read — NO network — and " +
       "refresh the events the catalogues created (corrections by hand kept): the step after an importer's " +
@@ -232,20 +233,24 @@ object EventsCmd:
       Opts.flag("no-wait", "Print the job id and return").orFalse
     )
       .mapN { (p, dry, noWait) => (c: Client) =>
-        c.call(EventsApi.rederive)(EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))).flatMap { j =>
+        c.call(EventsApi.rederive)(
+          EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))
+        ).flatMap { j =>
           Cli.out.println(
             s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
           )
           if noWait then Right(())
           else
             IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
-              done.detail.flatMap(EventRederiveReport.Detail.of).foreach(r => Cli.out.println(EventRederiveReport.markdown(r)))
+              done.detail
+                .flatMap(EventRederiveReport.Detail.of)
+                .foreach(r => Cli.out.println(EventRederiveReport.markdown(r)))
             }
         }
       }
   }
 
-  private def correctionsCmd (using console: Console) = Opts.subcommand(
+  private def correctionsCmd(using console: Console) = Opts.subcommand(
     "corrections",
     "The fields of catalogue events corrected by hand (kept over the catalogue on a re-import): conflicts " +
       "first — the catalogue changed a corrected field to something else"
@@ -256,11 +261,13 @@ object EventsCmd:
       Opts.option[Int]("limit", "At most this many").orNone
     )
       .mapN { (st, ev, limit) => (c: Client) =>
-        c.call(EventsApi.corrections)((st.map(Event.Id(_)), ev.map(EventCorrection.Status(_)), limit.map(UnreadPage.Offset(_)), None)).map(l => Cli.out.println(Corrections.markdown(l)))
+        c.call(EventsApi.corrections)(
+          (st.map(Event.Id(_)), ev.map(EventCorrection.Status(_)), limit.map(UnreadPage.Offset(_)), None)
+        ).map(l => Cli.out.println(Corrections.markdown(l)))
       }
   }
 
-  private def cataloguesCmd (using console: Console) = Opts.subcommand(
+  private def cataloguesCmd(using console: Console) = Opts.subcommand(
     "catalogues",
     "The event catalogues `events import` can read on this server (the built-in ones and any a plugin registered), their licences and how to cite them"
   ) {
@@ -276,7 +283,7 @@ object EventsCmd:
     }
   }
 
-  private def linksCmd (using console: Console) = Opts.subcommand(
+  private def linksCmd(using console: Console) = Opts.subcommand(
     "links",
     "The sources that may discuss an event (findings near it, passages naming it) — proposed, unconfirmed; " +
       "--apply confirms one (an attestation from a passage naming the event), --reject stops proposing one"
@@ -298,13 +305,12 @@ object EventsCmd:
                 reject.map(EventLinksRequest.Reject(_))
               )
             )
-          )
-            .map(r => Cli.out.println(EventLinksMarkdown.result(r)))
+          ).map(r => Cli.out.println(EventLinksMarkdown.result(r)))
         else c.call(EventsApi.links)(Event.Id(id)).map(l => Cli.out.println(EventLinksMarkdown.list(l)))
       }
   }
 
-  private def candidatesCmd (using console: Console) = Opts.subcommand(
+  private def candidatesCmd(using console: Console) = Opts.subcommand(
     "candidates",
     "Compute the proposed links of the events not checked yet (--all: every event), as a server job"
   ) {
@@ -316,12 +322,16 @@ object EventsCmd:
     )
       .mapN { (all, ev, limit, noWait) => (c: Client) =>
         c.call(EventsApi.candidatesJob)(
-          EventCandidatesRequest(EventCandidatesRequest.All(all), ev.map(Event.Id(_)), limit.map(EventCandidatesRequest.Limit(_)))
+          EventCandidatesRequest(
+            EventCandidatesRequest.All(all),
+            ev.map(Event.Id(_)),
+            limit.map(EventCandidatesRequest.Limit(_))
+          )
         ).flatMap(follow(c, _, Cli.NoWait(noWait)))
       }
   }
 
-  private def leadsCmd (using console: Console) = Opts.subcommand(
+  private def leadsCmd(using console: Console) = Opts.subcommand(
     "leads",
     "Questions the events raise: catalogue events no source in the corpus discusses, with the findings around " +
       "them counted and the commands that act on them (the filter flags select as for search)"
@@ -333,12 +343,18 @@ object EventsCmd:
       FilterFlags.opts
     )
       .mapN { (kind, tier, area, f) => (c: Client) =>
-        c.call(EventsApi.leads)(Api.EventQuery(f, kind = kind.map(Api.EventQuery.Kind(_)), tier = tier.map(Api.EventQuery.Tier(_)), area = area.map(Api.EventQuery.Area(_))))
-          .map(l => Cli.out.println(EventLeads.markdown(l)))
+        c.call(EventsApi.leads)(
+          Api.EventQuery(
+            f,
+            kind = kind.map(Api.EventQuery.Kind(_)),
+            tier = tier.map(Api.EventQuery.Tier(_)),
+            area = area.map(Api.EventQuery.Area(_))
+          )
+        ).map(l => Cli.out.println(EventLeads.markdown(l)))
       }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "events",
       "Historical events: search, show, patch, rename; import and re-derive catalogues, corrections, links to sources, leads"

@@ -20,9 +20,13 @@ class AutoEnrichSuite extends munit.FunSuite:
     assertEquals(note(Skip.Off), None, "nothing asked for, nothing said")
 
   test("findings or notes mean enriched; an abstract-as-summary or tags do not count"):
-    assert(decide(true, true, FindingCount(2), None, Nil).left.exists(_ == Skip.Enriched(Skip.Enriched.Why("it already has 2 findings"))))
     assert(
-      decide(true, true, FindingCount(0), Some(Notes("Tin by sea [[x]].")), Nil).left.exists(_ == Skip.Enriched(Skip.Enriched.Why("it already has notes")))
+      decide(true, true, FindingCount(2), None, Nil).left
+        .exists(_ == Skip.Enriched(Skip.Enriched.Why("it already has 2 findings")))
+    )
+    assert(
+      decide(true, true, FindingCount(0), Some(Notes("Tin by sea [[x]].")), Nil).left
+        .exists(_ == Skip.Enriched(Skip.Enriched.Why("it already has notes")))
     )
     assertEquals(decide(true, true, FindingCount(0), Some(Notes("   ")), Nil), Right(()))
 
@@ -34,10 +38,22 @@ class AutoEnrichSuite extends munit.FunSuite:
       )
     }
     assertEquals(
-      decide(true, true, FindingCount(0), None, List(PriorRun(PriorRun.Id("r1"), Run.State.Failed), PriorRun(PriorRun.Id("r2"), Run.State.Cancelled))),
+      decide(
+        true,
+        true,
+        FindingCount(0),
+        None,
+        List(PriorRun(PriorRun.Id("r1"), Run.State.Failed), PriorRun(PriorRun.Id("r2"), Run.State.Cancelled))
+      ),
       Right(())
     )
 
   test("progress notes"):
-    assertEquals(queued(Run.Id("90015098-3cd2-4fb0-d696-3f7d28e17f72")), "enrichment queued: run 90015098-3cd2-4fb0-d696-3f7d28e17f72")
-    assertEquals(note(Skip.Enriched(Skip.Enriched.Why("it already has notes"))), Some("enrichment not queued: it already has notes"))
+    assertEquals(
+      queued(Run.Id("90015098-3cd2-4fb0-d696-3f7d28e17f72")),
+      "enrichment queued: run 90015098-3cd2-4fb0-d696-3f7d28e17f72"
+    )
+    assertEquals(
+      note(Skip.Enriched(Skip.Enriched.Why("it already has notes"))),
+      Some("enrichment not queued: it already has notes")
+    )

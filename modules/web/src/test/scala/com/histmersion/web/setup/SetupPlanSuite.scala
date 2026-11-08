@@ -17,7 +17,14 @@ import com.histmersion.api.instance.EventsUiConfig
 class SetupPlanSuite extends munit.FunSuite:
 
   private val before =
-    SetupChoices(email = SetupChoices.Email(""), finders = Map(SetupChoices.FindersKey("oa-unpaywall") -> SetupChoices.FindersValue(true), SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(true)), area = Some(SetupChoices.Area("world")))
+    SetupChoices(
+      email = SetupChoices.Email(""),
+      finders = Map(
+        SetupChoices.FindersKey("oa-unpaywall") -> SetupChoices.FindersValue(true),
+        SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(true)
+      ),
+      area = Some(SetupChoices.Area("world"))
+    )
 
   test("the seven steps in order, two of them optional"):
     assertEquals(SetupStep.values.length, 7)
@@ -36,12 +43,26 @@ class SetupPlanSuite extends munit.FunSuite:
 
   test("what was chosen is written; only what differs, and always the mark"):
     val c = before
-      .modify(_.email).setTo(SetupChoices.Email("someone@example.org"))
-      .modify(_.finders).setTo(before.finders + (SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(false)))
-      .modify(_.area).setTo(Some(SetupChoices.Area("-12,20,90,62")))
-      .modify(_.agents).setTo(SetupChoices.Agents(true))
-      .modify(_.calibre).setTo(SetupChoices.Calibre("~/Books"))
-      .modify(_.start).setTo(MapStartConfig(MapStartMode.Wire("place"), Latitude(37), Longitude(30), MapStartConfig.Zoom(5), MapStartConfig.Label("Anatolia")))
+      .modify(_.email)
+      .setTo(SetupChoices.Email("someone@example.org"))
+      .modify(_.finders)
+      .setTo(before.finders + (SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(false)))
+      .modify(_.area)
+      .setTo(Some(SetupChoices.Area("-12,20,90,62")))
+      .modify(_.agents)
+      .setTo(SetupChoices.Agents(true))
+      .modify(_.calibre)
+      .setTo(SetupChoices.Calibre("~/Books"))
+      .modify(_.start)
+      .setTo(
+        MapStartConfig(
+          MapStartMode.Wire("place"),
+          Latitude(37),
+          Longitude(30),
+          MapStartConfig.Zoom(5),
+          MapStartConfig.Label("Anatolia")
+        )
+      )
     val ch = SetupPlan.changes(c, before).toMap
     assertEquals(ch(ConfigEdit.Field.Key("acquire.contact-email")), Some("someone@example.org"))
     assertEquals(ch(ConfigEdit.Field.Key("plugins.arxiv.enabled")), Some("false"))
@@ -57,8 +78,29 @@ class SetupPlanSuite extends munit.FunSuite:
       SetupPlan.downloads(before),
       List(SetupDownload.Map(SetupDownload.Map.Area("world")), SetupDownload.Boundaries, SetupDownload.Events)
     )
-    assertEquals(SetupPlan.downloads(before.modify(_.area).setTo(None).modify(_.boundaries).setTo(SetupChoices.Boundaries(false)).modify(_.events).setTo(SetupChoices.Events(false))), Nil)
-    assert(SetupPlan.downloads(before.modify(_.pictures).setTo(SetupChoices.Pictures(true)).modify(_.morePlaces).setTo(SetupChoices.MorePlaces(true))).contains(SetupDownload.MorePlaces))
+    assertEquals(
+      SetupPlan.downloads(
+        before
+          .modify(_.area)
+          .setTo(None)
+          .modify(_.boundaries)
+          .setTo(SetupChoices.Boundaries(false))
+          .modify(_.events)
+          .setTo(SetupChoices.Events(false))
+      ),
+      Nil
+    )
+    assert(
+      SetupPlan
+        .downloads(
+          before
+            .modify(_.pictures)
+            .setTo(SetupChoices.Pictures(true))
+            .modify(_.morePlaces)
+            .setTo(SetupChoices.MorePlaces(true))
+        )
+        .contains(SetupDownload.MorePlaces)
+    )
     val areas = List(MapArea(MapArea.Label("The whole world"), MapArea.Bbox("world"), MapArea.ApproxGb(8.8)))
     assertEquals(SetupPlan.mapGb(before, areas), 8.8)
     assertEquals(SetupPlan.mapGb(before.modify(_.area).setTo(None), areas), 0.0)
@@ -73,9 +115,16 @@ class SetupPlanSuite extends munit.FunSuite:
               ConfigEdit.Field.Key("histmersion.basemap.setup-areas"),
               ConfigEdit.Field.Section("basemap"),
               ConfigEdit.Field.Kind("list"),
-              effective = Some(ConfigEdit.Field.Effective("[\"The whole world|world|8.8\",\"Europe|-12,20,90,62|2.0\",\"broken\"]"))
+              effective = Some(
+                ConfigEdit.Field.Effective("[\"The whole world|world|8.8\",\"Europe|-12,20,90,62|2.0\",\"broken\"]")
+              )
             ),
-            ConfigEdit.Field(ConfigEdit.Field.Key("histmersion.basemap.bbox"), ConfigEdit.Field.Section("basemap"), ConfigEdit.Field.Kind("text"), effective = Some(ConfigEdit.Field.Effective("\"-12,20,90,62\"")))
+            ConfigEdit.Field(
+              ConfigEdit.Field.Key("histmersion.basemap.bbox"),
+              ConfigEdit.Field.Section("basemap"),
+              ConfigEdit.Field.Kind("text"),
+              effective = Some(ConfigEdit.Field.Effective("\"-12,20,90,62\""))
+            )
           )
         ),
         ConfigEdit.Section(
@@ -102,12 +151,22 @@ class SetupPlanSuite extends munit.FunSuite:
       UiConfig.TreeDepth(1),
       UiConfig.TreeSamples(1),
       UiConfig.MaxBuckets(1),
-      DebounceConfig(DebounceConfig.SuggestMs(1), DebounceConfig.SearchMs(1), DebounceConfig.ReloadMs(1), DebounceConfig.PreviewMs(1)),
+      DebounceConfig(
+        DebounceConfig.SuggestMs(1),
+        DebounceConfig.SearchMs(1),
+        DebounceConfig.ReloadMs(1),
+        DebounceConfig.PreviewMs(1)
+      ),
       TimeConfig(Year(0), Year(1), Year(0), Year(1)),
       UiConfig.NarrowMaxWidthPx(1),
       UiConfig.NarrowMaxHeightPx(1),
       UiConfig.TabletMaxWidthPx(1),
-      EventsUiConfig(EventsUiConfig.LocalFadeSeconds(1), EventsUiConfig.RegionalFadeSeconds(1), EventsUiConfig.MapLimit(1), EventsUiConfig.OutlineToleranceDeg(1))
+      EventsUiConfig(
+        EventsUiConfig.LocalFadeSeconds(1),
+        EventsUiConfig.RegionalFadeSeconds(1),
+        EventsUiConfig.MapLimit(1),
+        EventsUiConfig.OutlineToleranceDeg(1)
+      )
     )
     val c = SetupPage.choicesOf(page, ui)
     assertEquals(c.email, "someone@example.org")

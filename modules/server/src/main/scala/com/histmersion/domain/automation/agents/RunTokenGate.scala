@@ -18,7 +18,12 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
   // `var`: this connection is between a refused request's head and its last chunk
   private var discarding = false
 
-  private def refuse(ctx: ChannelHandlerContext, req: HttpRequest, status: HttpResponseStatus, msg: RunTokenGate.Problem): Unit =
+  private def refuse(
+      ctx: ChannelHandlerContext,
+      req: HttpRequest,
+      status: HttpResponseStatus,
+      msg: RunTokenGate.Problem
+  ): Unit =
     discarding = !req.isInstanceOf[LastHttpContent]
     val keepAlive = HttpUtil.isKeepAlive(req)
     val _ = ReferenceCountUtil.release(req)
@@ -43,7 +48,12 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
               refuse(ctx, req, HttpResponseStatus.UNAUTHORIZED, RunTokenGate.Problem("a live run token is required"))
             case Some(g) if path != RunTokens.Path && path != s"${RunTokens.Path}/${g.agent}" =>
               scribe.warn(s"agent MCP: a token of ${g.agent} (run ${g.run.getOrElse("-")}) asked for $path — refused")
-              refuse(ctx, req, HttpResponseStatus.FORBIDDEN, RunTokenGate.Problem("this run token is not for that agent"))
+              refuse(
+                ctx,
+                req,
+                HttpResponseStatus.FORBIDDEN,
+                RunTokenGate.Problem("this run token is not for that agent")
+              )
             case Some(g) =>
               if path == RunTokens.Path then
                 req.setUri(s"${RunTokens.Path}/${g.agent}" + (if q < 0 then "" else uri.substring(q)))

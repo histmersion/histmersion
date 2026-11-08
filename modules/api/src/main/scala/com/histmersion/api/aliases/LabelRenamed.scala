@@ -9,9 +9,14 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class LabelRenamed(entity: Bundle.Kind, from: LabelRenamed.From, to: LabelRenamed.To, rewritten: List[LabelRenamed.Rewritten] = Nil)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class LabelRenamed(
+    entity: Bundle.Kind,
+    from: LabelRenamed.From,
+    to: LabelRenamed.To,
+    rewritten: List[LabelRenamed.Rewritten] = Nil
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object LabelRenamed:
   export com.histmersion.api.library.Label.{Text as From, Text as To}

@@ -48,7 +48,8 @@ final class SourceRepairs(db: Transactor):
     def go(after: Option[Citekey], sources: Int, chunks: Int): ReindexResult =
       val r = reindexChunks(chunkChars, after)
       val (s, c) = (sources + r.sources.value, chunks + r.chunks.value)
-      if r.remaining.value > 0 && r.lastCitekey.isDefined then go(r.lastCitekey.map(ck => Citekey.assume(ck.value)), s, c)
+      if r.remaining.value > 0 && r.lastCitekey.isDefined then
+        go(r.lastCitekey.map(ck => Citekey.assume(ck.value)), s, c)
       else ReindexResult(ReindexResult.Sources(s), ReindexResult.Chunks(c), r.lastCitekey, r.remaining)
     go(None, 0, 0)
 
@@ -84,11 +85,20 @@ final class SourceRepairs(db: Transactor):
   /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
   def resolveEdgesFix(): LintFixResult =
     val resolved = db.transact(SourceRepo.resolveEdges())
-    LintFixResult(List(LintFixResult.Applied(s"resolve-edges: ${resolved.value} edge target(s) rewritten")), LintFixResult.EdgesResolved(resolved.value), LintFixResult.SourcesReindexed(0), LintFixResult.ChunksWritten(0), LintFixResult.Remaining(0))
+    LintFixResult(
+      List(LintFixResult.Applied(s"resolve-edges: ${resolved.value} edge target(s) rewritten")),
+      LintFixResult.EdgesResolved(resolved.value),
+      LintFixResult.SourcesReindexed(0),
+      LintFixResult.ChunksWritten(0),
+      LintFixResult.Remaining(0)
+    )
 
   /** `stale-chunks`: re-chunk a bounded batch of the sources with a body and no chunks. */
   def reindexFix(cfg: AppConfig): LintFixResult =
-    val r = reindexStale(Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val r = reindexStale(
+      Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
+      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+    )
     val left = if r.remaining.value > 0 then s", ${r.remaining.value} still stale" else ""
     LintFixResult(
       List(LintFixResult.Applied(s"reindex: ${r.sources.value} source(s) → ${r.chunks.value} chunk(s)$left")),
@@ -101,9 +111,18 @@ final class SourceRepairs(db: Transactor):
   /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */
   def regeocodeFix(cfg: AppConfig): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
-    val moved = db.transact(FindingPlacement.move(FindingPlacement.movesIn(s), FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)))
+    val moved = db.transact(
+      FindingPlacement.move(
+        FindingPlacement.movesIn(s),
+        FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
+      )
+    )
     LintFixResult(
-      List(LintFixResult.Applied(s"$FindingGeocode: ${moved.value} finding(s) moved to the place the current geocoder chooses")),
+      List(
+        LintFixResult.Applied(
+          s"$FindingGeocode: ${moved.value} finding(s) moved to the place the current geocoder chooses"
+        )
+      ),
       LintFixResult.EdgesResolved(0),
       LintFixResult.SourcesReindexed(0),
       LintFixResult.ChunksWritten(0),
@@ -114,9 +133,16 @@ final class SourceRepairs(db: Transactor):
   /** `finding-unplaced`: give the findings the rule lists the point of the place they name. */
   def placeFix(cfg: AppConfig): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
-    val placed = db.transact(FindingPlacement.place(FindingPlacement.placementsIn(s), FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)))
+    val placed = db.transact(
+      FindingPlacement.place(
+        FindingPlacement.placementsIn(s),
+        FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)
+      )
+    )
     LintFixResult(
-      List(LintFixResult.Applied(s"$FindingUnplaced: ${placed.value} finding(s) given the point of the place they name")),
+      List(
+        LintFixResult.Applied(s"$FindingUnplaced: ${placed.value} finding(s) given the point of the place they name")
+      ),
       LintFixResult.EdgesResolved(0),
       LintFixResult.SourcesReindexed(0),
       LintFixResult.ChunksWritten(0),
@@ -132,10 +158,10 @@ object SourceRepairs:
 
   /** The citekeys of `pending` (in order) whose bodies fit in `maxChars` together. */
 
-
   def budget(pending: Vector[(Citekey, SourceRepo.BodyChars)], maxChars: MaxChars): List[Citekey] =
     @annotation.tailrec
     def loop(rest: List[(Citekey, SourceRepo.BodyChars)], spent: Long, out: List[Citekey]): List[Citekey] = rest match
-      case (ck, len) :: tail if spent + len.value.toLong <= maxChars.value => loop(tail, spent + len.value.toLong, ck :: out)
-      case _                                                               => out.reverse
+      case (ck, len) :: tail if spent + len.value.toLong <= maxChars.value =>
+        loop(tail, spent + len.value.toLong, ck :: out)
+      case _ => out.reverse
     loop(pending.toList, 0L, Nil)
