@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.exchange.EditionsPolicy
 
@@ -10,6 +11,7 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.text.MinHash
 
 import java.util.UUID
+import com.histmersion.domain.library.Citekey
 
 /** One plan's run of a kind's rules ([[PlanRules]]): what the planner asks of the kind at each stage, in the planner's
   * order. A run may keep what it learns between the stages; every member defaults to "nothing of that kind".
@@ -51,8 +53,8 @@ trait PlanRun:
 
   /** What a pair of sources that are (or may be) one owns of this kind, asked before every kind's [[pair]]. */
   def pairFirst(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       cond: Option[IssueCondition],
       cfg: MergeSettings,
       questions: PairQuestions
@@ -68,29 +70,29 @@ trait PlanRun:
     * takes the bundle's body.
     */
   def foldSources(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
-      citekey: com.histmersion.domain.library.Citekey,
+      right: Bundle.Source,
+      left: Bundle.Source,
+      citekey: Citekey,
       folds: PlanFolds
   ): Boolean = false
 
   /** A source of the bundle that arrives under another citekey (a collision decided `rename-right`). */
-  def renamed(source: UUID, citekey: com.histmersion.domain.library.Citekey): Unit = ()
+  def renamed(source: UUID, citekey: Citekey): Unit = ()
 
   /** The bundle's source that a line of this kind belongs to (its fate decides whether the line is held). */
   def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = None
 
   /** The bodies of the sources here (by sha256) the plan reads for this kind: of the pairs whose bodies differ. */
   def bodiesWanted(
-      pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
+      pairs: List[(Bundle.Source, Bundle.Source)]
   ): Set[Bundle.Source.BodySha256] = Set.empty
 
   /** What a pair of sources that are (or may be) one owns of this kind: its questions under each alternative of the
     * body question (`bodyIssue`), `cond` the pair's own condition. `right` is the bundle's source, `left` the one here.
     */
   def pair(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       cond: Option[IssueCondition],
       bodyIssue: Option[MergeIssue.Id],
       questions: PairQuestions
@@ -120,16 +122,16 @@ trait PlanRun:
     * the folded source takes the bundle's body.
     */
   def foldPairFirst(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       keepsBundleBody: Boolean,
       folds: PlanFolds
   ): Unit = ()
 
   /** What a pair that folds does with the kind's lines; `alt` is the body question's decision, when there is one. */
   def foldPair(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       alt: Option[MergeDecision.Kind],
       folds: PlanFolds
   ): Unit = ()
@@ -169,4 +171,4 @@ trait PlanRun:
   /** A text of the bundle the merge writes here, its links to sources pointed at the citekeys those sources have here
     * (`citekeys`: the bundle's citekey → this collection's, of the sources whose citekey changes).
     */
-  def relinked(text: Bundle.Article.Body, citekeys: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey]): Bundle.Article.Body = text
+  def relinked(text: Bundle.Article.Body, citekeys: Map[Citekey, Citekey]): Bundle.Article.Body = text

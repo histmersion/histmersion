@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.api.library.{Acquire, FollowupRow}
 import com.histmersion.api.given
@@ -6,6 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.automation.Goal
 
 /** The pure rules of a currency check (docs/research-embedded-agents.md §14): what it makes of the papers citing a
   * source, and the acquisition item a disagreeing paper outside the corpus becomes.
@@ -18,14 +23,14 @@ object CurrencyCheckRules:
     * records. Evidence is the citation context: code never invents a quote.
     */
   type AcquireText = AcquireText.T
-  object AcquireText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AcquireText extends RefinedType[String, Pure]
 
   enum CurrencyAction:
     case Propose(p: Proposal)
     case Fetch(row: FollowupRow)
     case Ignore
 
-  def currencyAction(target: com.histmersion.domain.library.Citekey, row: FollowupRow): CurrencyAction =
+  def currencyAction(target: Citekey, row: FollowupRow): CurrencyAction =
     val kind = row.proposedKind.value.trim.toLowerCase
     val disagreement = kind == Acquire.EdgeKinds.Refutes || kind == Acquire.EdgeKinds.Challenges ||
       kind == Acquire.EdgeKinds.Supersedes
@@ -35,7 +40,7 @@ object CurrencyCheckRules:
         case None if row.doi.isDefined => CurrencyAction.Fetch(row)
         case None                      => CurrencyAction.Ignore
         case Some(citingKey)           =>
-          com.histmersion.domain.library.Citekey.option(citingKey.value).fold(CurrencyAction.Ignore) { citing =>
+          Citekey.option(citingKey.value).fold(CurrencyAction.Ignore) { citing =>
           val context = row.contexts.map(_.value.trim).filter(_.nonEmpty).headOption
           val evidence = s"followups: the citing paper reads as '$kind'" +
             (if row.intents.nonEmpty then s" (intents: ${row.intents.mkString(", ")})" else "") +
@@ -49,7 +54,7 @@ object CurrencyCheckRules:
           }
 
   /** The acquisition item a disagreeing paper outside the corpus becomes. */
-  def acquireText(row: FollowupRow, target: com.histmersion.domain.library.Citekey, goal: com.histmersion.domain.automation.Goal.Slug): com.histmersion.domain.library.workflows.CurrencyCheckRules.AcquireText =
+  def acquireText(row: FollowupRow, target: Citekey, goal: Goal.Slug): AcquireText =
     val year = row.year.fold("")(y => s" ($y)")
     AcquireText(
       s"${row.title.getOrElse("untitled")}$year. https://doi.org/${row.doi.getOrElse("")} — " +

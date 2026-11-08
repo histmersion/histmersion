@@ -1,6 +1,9 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.automation.Managers.{ManagerConfig, Sweep}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A research area's watcher when it saves no settings of its own (`agents.managers.watch`): its runs at once and the
   * daily cap of its opt-in auto-ingest.
@@ -22,17 +25,17 @@ final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, aut
   /** How many legal open-access works a watcher's next acquisition sweep may ingest: none unless it opted in
     * (`autoIngest`, default off), else what is left of its daily cap after the ones it ingested today.
     */
-  def ingestAllowance(c: ManagerConfig, ingestedToday: com.histmersion.domain.WatchManagerDefaults.IngestedToday): com.histmersion.domain.WatchManagerDefaults.IngestAllowance =
-    if !c.autoIngest.contains(ManagerConfig.AutoIngest(true)) then com.histmersion.domain.WatchManagerDefaults.IngestAllowance(0)
-    else com.histmersion.domain.WatchManagerDefaults.IngestAllowance(math.max(0, c.autoIngestPerDay.fold(autoIngestPerDay.value)(_.value) - math.max(0, ingestedToday.value)))
+  def ingestAllowance(c: ManagerConfig, ingestedToday: WatchManagerDefaults.IngestedToday): WatchManagerDefaults.IngestAllowance =
+    if !c.autoIngest.contains(ManagerConfig.AutoIngest(true)) then WatchManagerDefaults.IngestAllowance(0)
+    else WatchManagerDefaults.IngestAllowance(math.max(0, c.autoIngestPerDay.fold(autoIngestPerDay.value)(_.value) - math.max(0, ingestedToday.value)))
 
 object WatchManagerDefaults:
   type IngestAllowance = IngestAllowance.T
-  object IngestAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestAllowance extends RefinedType[Int, Pure]
   type IngestedToday = IngestedToday.T
-  object IngestedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestedToday extends RefinedType[Int, Pure]
 
   type MaxRuns = MaxRuns.T
-  object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxRuns extends RefinedType[Int, Pure]
   type AutoIngestPerDay = AutoIngestPerDay.T
-  object AutoIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AutoIngestPerDay extends RefinedType[Int, Pure]

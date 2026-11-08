@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -30,7 +31,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   // question): the attestations tried against the body it keeps
   private val anchors = scala.collection.mutable.Map.empty[UUID, Map[Option[MergeDecision.Kind], List[AnchorTry]]]
   private val attLine =
-    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Attestation]
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => Bundle.Attestation]
   private val droppedUids = scala.collection.mutable.LinkedHashSet.empty[UUID] // bundle uids left out for good
   private val attFixes = List.newBuilder[AttestationFix]
   private val attSource = in.foreign.attestations.map(t => t.uid -> t.sourceUid).toMap
@@ -41,14 +42,14 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
   private def foreignAttsOf(
       here: UUID => Boolean,
       toLocal: UUID => UUID
-  ): Map[UUID, List[com.histmersion.api.exchange.Bundle.Attestation]] =
+  ): Map[UUID, List[Bundle.Attestation]] =
     in.foreign.attestations.filterNot(t => here(toLocal(t.uid))).groupBy(_.sourceUid)
 
   override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] =
     if kind == Bundle.Kind.Attestation then attSource.get(foreign) else None
 
   override def bodiesWanted(
-      pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
+      pairs: List[(Bundle.Source, Bundle.Source)]
   ): Set[Bundle.Source.BodySha256] =
     val withAtts = (in.foreign.attestations ++ in.local.attestations).filter(anchored).map(_.sourceUid).toSet
     pairs.flatMap { (r, l) =>
@@ -57,8 +58,8 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
     }.toSet
 
   override def pair(
-      r: com.histmersion.api.exchange.Bundle.Source,
-      l: com.histmersion.api.exchange.Bundle.Source,
+      r: Bundle.Source,
+      l: Bundle.Source,
       cond: Option[IssueCondition],
       bodyIssue: Option[MergeIssue.Id],
       q: PairQuestions
@@ -156,14 +157,14 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
 
   // attestations: re-anchored into the body kept, or as decided; one already here is one
   override def foldPair(
-      r: com.histmersion.api.exchange.Bundle.Source,
-      l: com.histmersion.api.exchange.Bundle.Source,
+      r: Bundle.Source,
+      l: Bundle.Source,
       alt: Option[MergeDecision.Kind],
       f: PlanFolds
   ): Unit =
     val tries = anchors.get(r.uid).flatMap(_.get(alt)).getOrElse(Nil)
     val localAtts = localAttsOf.getOrElse(l.uid, Nil)
-    def targetKey(t: com.histmersion.api.exchange.Bundle.Attestation): String =
+    def targetKey(t: Bundle.Attestation): String =
       t.targetUid.map(u => f.foldedTo(u).getOrElse(f.toLocal(u)).toString).getOrElse(t.targetId.value)
     foreignAttsOf(f.here, f.toLocal).getOrElse(r.uid, Nil).foreach { t =>
       localAtts.find(x => x.targetType == t.targetType && targetKey(x) == targetKey(t) && x.quote == t.quote) match
@@ -213,7 +214,7 @@ object AttestationPlan:
   /** An attestation that points into the text (a quote, or offsets): it must move with a body. */
 
 
-  def anchored(t: com.histmersion.api.exchange.Bundle.Attestation): Boolean =
+  def anchored(t: Bundle.Attestation): Boolean =
     t.quote.exists(_.value.nonEmpty) || t.charStart.isDefined
 
   private def field(name: String, ours: Option[String], theirs: Option[String]): IssueField =
@@ -221,7 +222,7 @@ object AttestationPlan:
 
   /** An attestation of a pair tried against the body one alternative keeps. */
   final private case class AnchorTry(
-      att: com.histmersion.api.exchange.Bundle.Attestation,
+      att: Bundle.Attestation,
       foreign: Boolean,
       anchor: Option[Anchor],
       chunkOrd: Option[Chunk.Ord],

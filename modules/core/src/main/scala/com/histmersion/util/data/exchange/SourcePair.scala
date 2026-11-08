@@ -1,4 +1,8 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source of the bundle (`right`) and one here (`left`) that the sources' rules found to be, or perhaps to be, one
   * work: `gate` is the question that decides it when a person must, `byKey` whether a strong key (a DOI, the original
@@ -14,8 +18,8 @@ final case class SourcePair(
 
 object SourcePair:
   type Gate = Gate.T
-  object Gate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Gate extends RefinedType[String, Pure]
   type ByKey = ByKey.T
-  object ByKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ByKey extends RefinedType[Boolean, Pure]
   type Basis = Basis.T
-  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Basis extends RefinedType[String, Pure]

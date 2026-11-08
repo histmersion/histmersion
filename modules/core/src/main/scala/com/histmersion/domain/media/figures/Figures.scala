@@ -1,7 +1,11 @@
-package com.histmersion.domain.media.figures
+package com.histmersion
+package domain.media.figures
 
 import com.histmersion.api.media.{AssetLinks, ImageSize}
 import com.histmersion.domain.media.assets.NewFigure
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.exchange.Bundle
 
 /** The figures the OLD file pipeline already produced (plan §1.8, last bullet).
   *
@@ -14,11 +18,11 @@ import com.histmersion.domain.media.assets.NewFigure
 object Figures:
 
   type NoteText = NoteText.T
-  object NoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NoteText extends RefinedType[String, Pure]
   type MdPath = MdPath.T
-  object MdPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MdPath extends RefinedType[String, Pure]
   type FileName = FileName.T
-  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FileName extends RefinedType[String, Pure]
 
   private val MdPathLine = """(?m)^md_path:\s*"?([^"\n\r]+)"?\s*$""".r
 
@@ -29,10 +33,10 @@ object Figures:
   /** The images among a figures folder's files (by name, in name order), each at most `maxBytes`, with the size read
     * off its header.
     */
-  def of(files: List[(FileName, NewFigure.Bytes)], maxBytes: com.histmersion.ByteCount): List[NewFigure] =
+  def of(files: List[(FileName, NewFigure.Bytes)], maxBytes: ByteCount): List[NewFigure] =
     files.sortBy(_._1.value).flatMap { (file, b) =>
       val name = AssetLinks.safeName(file.value)
-      val mime = AssetLinks.mimeOf(com.histmersion.api.exchange.Bundle.Asset.Extension(name.value))
+      val mime = AssetLinks.mimeOf(Bundle.Asset.Extension(name.value))
       Option
         .when(mime.value.startsWith("image/") && b.value.nonEmpty && b.value.length <= maxBytes.value)(b)
         .map { b =>

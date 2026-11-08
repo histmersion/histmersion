@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.domain.{AgentVerify, CompareRuns}
 import com.histmersion.domain.CompareRuns.{EnrichSide, Run, Step}
@@ -47,7 +48,7 @@ object EnrichComparison extends OutputComparison:
   /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
   private def claims(d: Run): List[String] =
     CompareRuns
-      .output[Geocoded](d, com.histmersion.domain.CompareRuns.OutputName("geocode"))
+      .output[Geocoded](d, CompareRuns.OutputName("geocode"))
       .map(_.findings.map(_.claim.value))
       .getOrElse(
         d.steps
@@ -61,8 +62,8 @@ object EnrichComparison extends OutputComparison:
     val all = runs.map(d => claims(d).map(c => AgentVerify.normalise(AgentVerify.Text(c)) -> c))
     runs.zip(all).zipWithIndex.map { case ((d, mine), i) =>
       val others = all.patch(i, Nil, 1).flatten.map(_._1).toSet
-      val geo = CompareRuns.output[Geocoded](d, com.histmersion.domain.CompareRuns.OutputName("geocode"))
-      val cls = CompareRuns.output[Classified](d, com.histmersion.domain.CompareRuns.OutputName("classify"))
+      val geo = CompareRuns.output[Geocoded](d, CompareRuns.OutputName("geocode"))
+      val cls = CompareRuns.output[Classified](d, CompareRuns.OutputName("classify"))
       val (checked, passed) = quoteCheck(d.steps)
       EnrichSide(
         findings = EnrichSide.Findings(mine.size),
@@ -74,7 +75,7 @@ object EnrichComparison extends OutputComparison:
         periodStart = cls.flatMap(_.period).map(_.start),
         periodEnd = cls.flatMap(_.period).map(_.end),
         summaryChars = EnrichSide.SummaryChars(cls.fold(0)(_.summary.value.trim.length)),
-        notesChars = EnrichSide.NotesChars(CompareRuns.output[String](d, com.histmersion.domain.CompareRuns.OutputName("notes")).fold(0)(_.trim.length)),
+        notesChars = EnrichSide.NotesChars(CompareRuns.output[String](d, CompareRuns.OutputName("notes")).fold(0)(_.trim.length)),
         uniqueClaims = mine.filterNot((n, _) => others.contains(n)).map(_._2).distinct.map(EnrichSide.UniqueClaims(_))
       )
     }

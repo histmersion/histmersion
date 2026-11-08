@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.workflows
+package com.histmersion
+package domain.library.workflows
 
 import com.histmersion.domain.library.Doi
 
@@ -9,6 +10,13 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Title
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Source
+import com.histmersion.domain.automation.Goal
 
 /** The pure rules of an acquisition sweep (docs/research-embedded-agents.md §14): what a sweep may offer the ranking
   * model (never a work already in the corpus or the queue), the model's answer and its check, which open-access picks
@@ -17,31 +25,31 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 object AcquisitionSweepRules:
 
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type Allowance = Allowance.T
-  object Allowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Allowance extends RefinedType[Int, Pure]
   type LastAttempt = LastAttempt.T
-  object LastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastAttempt extends RefinedType[Boolean, Pure]
   type SkipReason = SkipReason.T
-  object SkipReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SkipReason extends RefinedType[String, Pure]
   type SkipCount = SkipCount.T
-  object SkipCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SkipCount extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Dropped = Dropped.T
-  object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dropped extends RefinedType[String, Pure]
   type IngestFailure = IngestFailure.T
-  object IngestFailure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestFailure extends RefinedType[String, Pure]
   type AcquireText = AcquireText.T
-  object AcquireText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AcquireText extends RefinedType[String, Pure]
 
   /** A candidate a sweep found, as the ranking step sees it. */
   final case class Candidate(
     doi: Doi,
-    title: com.histmersion.api.library.Title,
-    year: Option[com.histmersion.api.catalogue.Year],
-    authors: List[com.histmersion.api.library.AuthorName],
-    venue: Option[com.histmersion.api.library.Source.Venue],
+    title: Title,
+    year: Option[Year],
+    authors: List[AuthorName],
+    venue: Option[Source.Venue],
     isOa: WorkRef.IsOa,
     query: Candidate.Query,
     abstractText: Option[WorkRef.AbstractText]
@@ -49,7 +57,7 @@ object AcquisitionSweepRules:
 
   object Candidate:
     type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Query extends RefinedType[String, Pure]
 
   /** The works a sweep may consider: with a DOI, not retracted, not in the corpus, not already in the acquisition queue
     * (open or done), each once (the first query that found it). Returns the candidates and how many were left out for
@@ -68,7 +76,7 @@ object AcquisitionSweepRules:
         case Some(d)                       =>
           seen(d) = Candidate(
             d,
-            w.title.getOrElse(com.histmersion.api.library.Title(d.value)),
+            w.title.getOrElse(Title(d.value)),
             w.year,
             w.authors.take(4),
             w.venue,
@@ -85,9 +93,9 @@ object AcquisitionSweepRules:
   final case class Pick(doi: Pick.DoiText, why: Pick.Why) derives KindlingsCodecAsObject
   object Pick:
     type DoiText = DoiText.T
-    object DoiText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DoiText extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
     given sttp.tapir.Schema[Pick] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
       .derived[Pick]
@@ -150,7 +158,7 @@ object AcquisitionSweepRules:
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so
     * [[com.histmersion.domain.Scheduling.dois]] finds it).
     */
-  def acquireText(c: Candidate, goal: com.histmersion.domain.automation.Goal.Slug, why: Pick.Why): AcquireText =
+  def acquireText(c: Candidate, goal: Goal.Slug, why: Pick.Why): AcquireText =
     val who = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")
     val oa = if c.isOa.value then " (open access)" else ""

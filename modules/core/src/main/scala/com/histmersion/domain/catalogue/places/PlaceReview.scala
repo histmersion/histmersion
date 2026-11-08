@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.domain.*
 
@@ -6,6 +7,9 @@ import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.Period
 import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a point-only seed region IS, from what its sources say (`lint --rule place-kind`, 2026-10-09). Pleiades files a
   * people, a civic tribe, a province, a deme and a district alike as a "region" with one representative point; this
@@ -63,8 +67,8 @@ object PlaceReview:
 
   private def periodText(p: Period): String =
     YearFmt.period(
-      Some(com.histmersion.api.catalogue.Year(p.start.value.toLong)),
-      Some(com.histmersion.api.catalogue.Year(p.end.value.toLong))
+      Some(Year(p.start.value.toLong)),
+      Some(Year(p.end.value.toLong))
     )
 
   /** A Wikidata (or other) record linked to the place: its id, its class, and its dates. */
@@ -72,11 +76,11 @@ object PlaceReview:
 
   object LinkedItem:
     type Ref = Ref.T
-    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ref extends RefinedType[String, Pure]
     type ItemClass = ItemClass.T
-    object ItemClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ItemClass extends RefinedType[String, Pure]
     type ClassLabel = ClassLabel.T
-    object ClassLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ClassLabel extends RefinedType[String, Pure]
 
   /** What is known about one point-only seed place. `featureTypes`/`timePeriods` are Pleiades'; `start`/`end` the
     * stored period (`None` = open on that side).
@@ -95,16 +99,16 @@ object PlaceReview:
 
   object Evidence:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type FeatureTypes = FeatureTypes.T
-    object FeatureTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    object FeatureTypes extends RefinedType[String, Pure]:
       given Ordering[T] = Ordering.by[T, String](_.value)
     type TimePeriods = TimePeriods.T
-    object TimePeriods extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TimePeriods extends RefinedType[String, Pure]
     type Descriptions = Descriptions.T
-    object Descriptions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Descriptions extends RefinedType[String, Pure]
 
   /** A seed place a withdrawn duplicate could be merged into. */
   final case class Candidate(id: Evidence.Id, label: Evidence.Label, kind: Place.Kind.Wire)
@@ -153,11 +157,11 @@ object PlaceReview:
 
   object Proposal:
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
     type EvidenceLine = EvidenceLine.T
-    object EvidenceLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object EvidenceLine extends RefinedType[String, Pure]
     type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends RefinedType[String, Pure]
 
   /** The duplicate's name, when the title says "Withdrawn (duplicate): X". */
   def duplicateOf(label: Evidence.Label): Option[Evidence.Label] = label.value.trim match

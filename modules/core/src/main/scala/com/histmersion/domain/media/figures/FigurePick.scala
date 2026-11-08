@@ -1,4 +1,8 @@
-package com.histmersion.domain.media.figures
+package com.histmersion
+package domain.media.figures
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which of a paper's own figures illustrates it on a hover card (#1446). Pure: the figures come from the OCR
   * conversion (the converter names them after their page, `fig-0004-03.png` = page 4, picture 3; docling's scans
@@ -14,15 +18,15 @@ package com.histmersion.domain.media.figures
 object FigurePick:
 
   type Page = Page.T
-  object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Page extends RefinedType[Int, Pure]
   type Order = Order.T
-  object Order extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Order extends RefinedType[Int, Pure]
   type Rejection = Rejection.T
-  object Rejection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Rejection extends RefinedType[String, Pure]
   type Score = Score.T
-  object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Score extends RefinedType[Double, Pure]
   type ConvertedText = ConvertedText.T
-  object ConvertedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConvertedText extends RefinedType[String, Pure]
 
   /** One stored figure of a source. `refs`: how many times the text links it; `firstAt`: where the first link sits, as
     * a share of the text (0 = its start); both `None`/0 when the text has none.
@@ -31,45 +35,45 @@ object FigurePick:
       name: Figure.Name,
       width: Option[Figure.Width],
       height: Option[Figure.Height],
-      refs: Figure.Refs = com.histmersion.domain.media.figures.FigurePick.Figure.Refs(1),
+      refs: Figure.Refs = Figure.Refs(1),
       firstAt: Option[Figure.FirstAt] = None
   )
 
   object Figure:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Width = Width.T
-    object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Width extends RefinedType[Int, Pure]
     type Height = Height.T
-    object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Height extends RefinedType[Int, Pure]
     type Refs = Refs.T
-    object Refs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Refs extends RefinedType[Int, Pure]
     type FirstAt = FirstAt.T
-    object FirstAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FirstAt extends RefinedType[Double, Pure]
 
   /** The thresholds (`media.illustrations`). */
   final case class Rules(
-      minSide: Rules.MinSide = com.histmersion.domain.media.figures.FigurePick.Rules.MinSide(160),
-      minArea: Rules.MinArea = com.histmersion.domain.media.figures.FigurePick.Rules.MinArea(40000),
-      maxAspect: Rules.MaxAspect = com.histmersion.domain.media.figures.FigurePick.Rules.MaxAspect(4.0),
-      maxRefs: Rules.MaxRefs = com.histmersion.domain.media.figures.FigurePick.Rules.MaxRefs(2),
-      earlyPages: Rules.EarlyPages = com.histmersion.domain.media.figures.FigurePick.Rules.EarlyPages(6),
-      pageScanMin: Rules.PageScanMin = com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin(5)
+      minSide: Rules.MinSide = Rules.MinSide(160),
+      minArea: Rules.MinArea = Rules.MinArea(40000),
+      maxAspect: Rules.MaxAspect = Rules.MaxAspect(4.0),
+      maxRefs: Rules.MaxRefs = Rules.MaxRefs(2),
+      earlyPages: Rules.EarlyPages = Rules.EarlyPages(6),
+      pageScanMin: Rules.PageScanMin = Rules.PageScanMin(5)
   )
 
   object Rules:
     type MinSide = MinSide.T
-    object MinSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinSide extends RefinedType[Int, Pure]
     type MinArea = MinArea.T
-    object MinArea extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinArea extends RefinedType[Int, Pure]
     type MaxAspect = MaxAspect.T
-    object MaxAspect extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxAspect extends RefinedType[Double, Pure]
     type MaxRefs = MaxRefs.T
-    object MaxRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxRefs extends RefinedType[Int, Pure]
     type EarlyPages = EarlyPages.T
-    object EarlyPages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object EarlyPages extends RefinedType[Int, Pure]
     type PageScanMin = PageScanMin.T
-    object PageScanMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PageScanMin extends RefinedType[Int, Pure]
 
   private val PageName = """^fig-(\d{1,5})-\d+(?:-\d+)?\.[A-Za-z0-9]+$""".r
   private val SeqName = """^image_(\d{1,7})(?:_.*)?\.[A-Za-z0-9]+$""".r
@@ -150,4 +154,4 @@ object FigurePick:
   /** Pure: the figures with their links counted in `body`. */
   def withRefs(figs: List[Figure], body: ConvertedText): List[Figure] =
     val r = refs(body)
-    figs.map(f => r.get(f.name).fold(f.copy(refs = com.histmersion.domain.media.figures.FigurePick.Figure.Refs(0), firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at))))
+    figs.map(f => r.get(f.name).fold(f.copy(refs = Figure.Refs(0), firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at))))

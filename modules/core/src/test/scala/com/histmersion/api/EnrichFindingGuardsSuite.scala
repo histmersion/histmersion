@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -11,6 +12,11 @@ import com.histmersion.domain.given
 
 import com.histmersion.domain.EnrichSource.*
 import com.histmersion.api.catalogue.{Geocode, Period}
+import com.histmersion.domain.EnrichSource
+import com.histmersion.domain.AgentProposals
+import com.histmersion.domain.library.Confidence
+import com.histmersion.domain.AgentVerify
+import com.histmersion.api.catalogue.Year
 
 /** #1424: the findings step's guards against what a smaller extractor (Haiku) got wrong — places the gazetteer does not
   * know, centuries stored as years, claims that point at a table. Each sends the answer back while attempts remain and
@@ -22,7 +28,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE. " +
       "The town was walled in the 11th century. Vesuvius buried Pompeii in 79 CE. " +
       "Rainfall rose sharply in the next period. The hoard was buried in the 15th c. by its owners."
-  private val window = Window(com.histmersion.domain.EnrichSource.Window.Index(1), None, com.histmersion.domain.EnrichSource.Window.Text(text))
+  private val window = Window(EnrichSource.Window.Index(1), None, EnrichSource.Window.Text(text))
 
   private val known = Set("Uluburun", "Pompeii")
   private def guards(
@@ -41,7 +47,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       end: Option[StatedYear] = None,
       periodName: Option[String] = None
   ) =
-    FindingProposal(FindingProposal.Claim(claim), com.histmersion.domain.AgentProposals.Proposal.Quote(quote), place.map(FindingProposal.Place(_)), None, start, end, periodName.map(FindingProposal.PeriodName(_)), Nil, com.histmersion.domain.library.Confidence.Wire("high"))
+    FindingProposal(FindingProposal.Claim(claim), AgentProposals.Proposal.Quote(quote), place.map(FindingProposal.Place(_)), None, start, end, periodName.map(FindingProposal.PeriodName(_)), Nil, Confidence.Wire("high"))
 
   private val copper = "The Uluburun ship carried ten tons of copper and one ton of tin."
   private val cargo = "Its cargo dates to about 1320 BCE."
@@ -56,7 +62,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       within: Option[Period] = None,
       last: Boolean = false
   ) =
-    checkFindings(Findings(fs), window, com.histmersion.domain.EnrichSource.MinRatio(0.9), com.histmersion.domain.EnrichSource.CheckFindingsMaxAbsYear(3000000), within, Set.empty, g, com.histmersion.domain.EnrichSource.Last(last))
+    checkFindings(Findings(fs), window, EnrichSource.MinRatio(0.9), EnrichSource.CheckFindingsMaxAbsYear(3000000), within, Set.empty, g, EnrichSource.Last(last))
 
   // ── 1. places the gazetteer knows ─────────────────────────────────────────────────────────────
 
@@ -82,7 +88,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
   test("placement: at the share it passes; findings with no place are non-spatial and do not count"):
     val half = List(
       finding("A ship carried copper.", copper, Some("Uluburun")),
-      finding("Vesuvius buried Pompeii.", pompeii, Some("Pompeii"), Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(79), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE")))),
+      finding("Vesuvius buried Pompeii.", pompeii, Some("Pompeii"), Some(StatedYear(AgentVerify.ToSignedYearValue(79), AgentVerify.YearUnit.Wire("CE")))),
       finding("The cargo is Late Bronze Age.", cargo, Some("eastern shipping lanes")),
       finding("Rainfall rose.", rain, Some("the hinterland"))
     )
@@ -102,16 +108,16 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
 
   test("placement: the kind hint and the finding's period reach the gazetteer"):
     var asked = List.empty[(String, Geocode.KindHint, Option[Period])] // records the calls for the assertion
-    val g = FindingGuards(FindingGuards.MinPlacedShare(0.5), com.histmersion.domain.EnrichSource.FindingGuards.CenturyGapYears(500), Nil, (n, k, at) => { asked = asked :+ (n.value, k, at); true })
-    val f = finding("A ship carried copper.", cargo, Some(" Uluburun "), Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(1320), com.histmersion.domain.AgentVerify.YearUnit.Wire("BCE"))))
-      .modify(_.placeKind).setTo(Some(com.histmersion.api.catalogue.Geocode.KindHint.Wire("site")))
+    val g = FindingGuards(FindingGuards.MinPlacedShare(0.5), EnrichSource.FindingGuards.CenturyGapYears(500), Nil, (n, k, at) => { asked = asked :+ (n.value, k, at); true })
+    val f = finding("A ship carried copper.", cargo, Some(" Uluburun "), Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE"))))
+      .modify(_.placeKind).setTo(Some(Geocode.KindHint.Wire("site")))
     assert(check(List(f), g).isRight)
-    assertEquals(asked, List(("Uluburun", Geocode.KindHint.Site, Some(Period(com.histmersion.api.catalogue.Year(-1320), com.histmersion.api.catalogue.Year(-1320))))))
+    assertEquals(asked, List(("Uluburun", Geocode.KindHint.Site, Some(Period(Year(-1320), Year(-1320))))))
 
   // ── 2. centuries stored as years ──────────────────────────────────────────────────────────────
 
   test("century: a year below 100 for a claim or period name that mentions a century is sent back"):
-    val claim = finding("The town was walled in the 11th century.", walled, start = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(11), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))))
+    val claim = finding("The town was walled in the 11th century.", walled, start = Some(StatedYear(AgentVerify.ToSignedYearValue(11), AgentVerify.YearUnit.Wire("CE"))))
     val ps = check(List(claim)).left.toOption.get
     assertEquals(ps.size, 1, ps)
     assert(ps.head.value.startsWith("finding 1 (The town was walled"), ps)
@@ -122,46 +128,46 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       ps
     )
     // the period name alone is enough, and "15th c." is a century too
-    val named = finding("A hoard was buried.", hoard, start = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(15), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))), periodName = Some("15th c."))
+    val named = finding("A hoard was buried.", hoard, start = Some(StatedYear(AgentVerify.ToSignedYearValue(15), AgentVerify.YearUnit.Wire("CE"))), periodName = Some("15th c."))
     assert(check(List(named)).left.exists(_.head.value.contains("'15th century' is the years 1401–1500")), check(List(named)))
     // a BCE century stored as -5
-    val bce = finding("Copper reached the coast in the fifth century BCE.", copper, start = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(5), com.histmersion.domain.AgentVerify.YearUnit.Wire("BCE"))))
+    val bce = finding("Copper reached the coast in the fifth century BCE.", copper, start = Some(StatedYear(AgentVerify.ToSignedYearValue(5), AgentVerify.YearUnit.Wire("BCE"))))
     assert(check(List(bce)).left.exists(_.head.value.contains("the year -5 looks like a century")), check(List(bce)))
 
   test("century: any year below 100 in a source whose own period is far later is sent back"):
-    val f = finding("Rainfall rose sharply.", rain, start = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(12), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))))
+    val f = finding("Rainfall rose sharply.", rain, start = Some(StatedYear(AgentVerify.ToSignedYearValue(12), AgentVerify.YearUnit.Wire("CE"))))
     assert(
-      check(List(f), within = Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1500)))).left
+      check(List(f), within = Some(Period(Year(1000), Year(1500)))).left
         .exists(_.head.value.contains("'12th century' is the years 1101–1200"))
     )
     // not far enough: a source on 300–600 CE may well cite a year 79
-    assert(check(List(f), within = Some(Period(com.histmersion.api.catalogue.Year(300), com.histmersion.api.catalogue.Year(600)))).isRight)
+    assert(check(List(f), within = Some(Period(Year(300), Year(600)))).isRight)
     assert(check(List(f)).isRight) // no source period, no century mentioned
 
   test("century: a real early-CE year the text states, a first century, and a century stored right are valid"):
-    val pompeiiFinding = finding("Vesuvius buried Pompeii in 79 CE.", pompeii, start = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(79), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))))
-    assert(check(List(pompeiiFinding), within = Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1500)))).isRight)
+    val pompeiiFinding = finding("Vesuvius buried Pompeii in 79 CE.", pompeii, start = Some(StatedYear(AgentVerify.ToSignedYearValue(79), AgentVerify.YearUnit.Wire("CE"))))
+    assert(check(List(pompeiiFinding), within = Some(Period(Year(1000), Year(1500)))).isRight)
     // stated in the quote only, as "AD 79", with a century mentioned beside it
-    assert(statesYear(com.histmersion.domain.EnrichSource.StatesYearText("buried in AD 79, rediscovered in the 18th century"), com.histmersion.api.catalogue.Year(79)))
-    assert(statesYear(com.histmersion.domain.EnrichSource.StatesYearText("in 79 B.C. the town"), com.histmersion.api.catalogue.Year(-79)))
-    assert(!statesYear(com.histmersion.domain.EnrichSource.StatesYearText("in 179 CE"), com.histmersion.api.catalogue.Year(79)) && !statesYear(com.histmersion.domain.EnrichSource.StatesYearText("the 79th entry"), com.histmersion.api.catalogue.Year(79)))
+    assert(statesYear(EnrichSource.StatesYearText("buried in AD 79, rediscovered in the 18th century"), Year(79)))
+    assert(statesYear(EnrichSource.StatesYearText("in 79 B.C. the town"), Year(-79)))
+    assert(!statesYear(EnrichSource.StatesYearText("in 179 CE"), Year(79)) && !statesYear(EnrichSource.StatesYearText("the 79th entry"), Year(79)))
     val first = finding(
       "Copper came in the 1st century CE.",
       copper,
-      start = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(1), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))),
-      end = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(100), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE")))
+      start = Some(StatedYear(AgentVerify.ToSignedYearValue(1), AgentVerify.YearUnit.Wire("CE"))),
+      end = Some(StatedYear(AgentVerify.ToSignedYearValue(100), AgentVerify.YearUnit.Wire("CE")))
     )
     assert(check(List(first)).isRight, check(List(first)))
     val right = finding(
       "The town was walled in the 11th century.",
       walled,
-      start = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(1001), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))),
-      end = Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(1100), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE")))
+      start = Some(StatedYear(AgentVerify.ToSignedYearValue(1001), AgentVerify.YearUnit.Wire("CE"))),
+      end = Some(StatedYear(AgentVerify.ToSignedYearValue(1100), AgentVerify.YearUnit.Wire("CE")))
     )
     assert(check(List(right)).isRight)
-    assertEquals(centuriesMentioned(com.histmersion.domain.EnrichSource.Text("the eleventh and twelfth centuries")), List(11, 12))
-    assertEquals(centuriesMentioned(com.histmersion.domain.EnrichSource.Text("11th–12th centuries")), List(11, 12))
-    assertEquals(centuriesMentioned(com.histmersion.domain.EnrichSource.Text("the 3rd millennium")), Nil)
+    assertEquals(centuriesMentioned(EnrichSource.Text("the eleventh and twelfth centuries")), List(11, 12))
+    assertEquals(centuriesMentioned(EnrichSource.Text("11th–12th centuries")), List(11, 12))
+    assertEquals(centuriesMentioned(EnrichSource.Text("the 3rd millennium")), Nil)
 
   // ── 3. claims that point at a table ───────────────────────────────────────────────────────────
 
@@ -179,13 +185,13 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     // whole words only, and the quote (the source's own words) is not checked
     assert(check(List(finding("Rainfall rose in this dated layer.", rain))).isRight)
     assert(check(List(finding("Rainfall rose.", "Rainfall rose sharply in the next period."))).isRight)
-    assertEquals(pointerPhrase(com.histmersion.domain.EnrichSource.FindingProposal.Claim("See THE NEXT COLUMN."), List(com.histmersion.domain.EnrichSource.FindingGuards.PointerPhrases("the next column"))), Some("the next column"))
+    assertEquals(pointerPhrase(EnrichSource.FindingProposal.Claim("See THE NEXT COLUMN."), List(EnrichSource.FindingGuards.PointerPhrases("the next column"))), Some("the next column"))
 
   // ── the last attempt ──────────────────────────────────────────────────────────────────────────
 
   test("last attempt: the answer is kept, each guard's problem a warning"):
     val fs = List(
-      finding("The town was walled in the 11th century.", walled, Some("the citadel area"), Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(11), com.histmersion.domain.AgentVerify.YearUnit.Wire("CE")))),
+      finding("The town was walled in the 11th century.", walled, Some("the citadel area"), Some(StatedYear(AgentVerify.ToSignedYearValue(11), AgentVerify.YearUnit.Wire("CE")))),
       finding("Rainfall rose around this date.", rain, Some("the hinterland"))
     )
     val (kept, ws) = check(fs, last = true).toOption.get

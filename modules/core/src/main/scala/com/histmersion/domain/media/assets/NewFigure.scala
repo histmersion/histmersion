@@ -1,8 +1,11 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
 import scala.annotation.tailrec
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One figure of a source as the caller supplies it — decoded bytes, not base64 — to be stored with the source's
   * Markdown (plan §1.8): keyed by `(citekey, name)`, which is exactly the `assets/<name>` link the body carries.
@@ -10,28 +13,28 @@ import scala.annotation.tailrec
 final case class NewFigure(name: NewFigure.Name, mime: NewFigure.Mime, bytes: NewFigure.Bytes, width: Option[NewFigure.Width], height: Option[NewFigure.Height]):
 
   /** The digest the store deduplicates a source's figures by. */
-  def sha256: com.histmersion.Sha256 = NewFigure.sha256(bytes)
+  def sha256: Sha256 = NewFigure.sha256(bytes)
 
 object NewFigure:
 
   /** Why a payload is unusable. */
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Bytes extends RefinedType[Array[Byte], Pure]
 
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Mime = Mime.T
-  object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mime extends RefinedType[String, Pure]
   type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Width extends RefinedType[Int, Pure]
   type Height = Height.T
-  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Height extends RefinedType[Int, Pure]
 
   /** Decode a wire [[AssetInput]]; `Left` with a readable reason when the payload is unusable. */
-  def of(in: AssetInput, maxBytes: com.histmersion.ByteCount): Either[Problem, NewFigure] =
+  def of(in: AssetInput, maxBytes: ByteCount): Either[Problem, NewFigure] =
     val name = AssetLinks.safeName(in.name.value)
     scala.util
       .Try(java.util.Base64.getDecoder.decode(in.base64.value.trim))
@@ -56,8 +59,8 @@ object NewFigure:
           )
       }
 
-  def sha256(bytes: Bytes): com.histmersion.Sha256 =
-    com.histmersion.Sha256.assume(
+  def sha256(bytes: Bytes): Sha256 =
+    Sha256.assume(
       java.security.MessageDigest
         .getInstance("SHA-256")
         .digest(bytes.value)
@@ -70,7 +73,7 @@ object NewFigure:
   def dedupe(figures: List[NewFigure]): List[NewFigure] =
     @tailrec def loop(
         rest: List[NewFigure],
-        shas: Set[com.histmersion.Sha256],
+        shas: Set[Sha256],
         names: Set[Name],
         acc: List[NewFigure]
     ): List[NewFigure] =

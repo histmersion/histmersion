@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -15,6 +16,9 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.WireEnumValues
 import com.histmersion.domain.research.workflows.ReviewComparison
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
   * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer
@@ -27,31 +31,31 @@ import com.histmersion.domain.research.workflows.ReviewComparison
   */
 object ReviewLedger:
   type ClosedLimit = ClosedLimit.T
-  object ClosedLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClosedLimit extends RefinedType[Int, Pure]
   type PassageMargin = PassageMargin.T
-  object PassageMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PassageMargin extends RefinedType[Int, Pure]
   type StubbornLimit = StubbornLimit.T
-  object StubbornLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StubbornLimit extends RefinedType[Int, Pure]
   type TaskText = TaskText.T
-  object TaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TaskText extends RefinedType[String, Pure]
   type TaskTextLimit = TaskTextLimit.T
-  object TaskTextLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TaskTextLimit extends RefinedType[Int, Pure]
 
 
   export com.histmersion.domain.automation.Run.{Id as ApplyChecksRun}
-  export com.histmersion.domain.ReviewArticle.Merged.{Round as ApplyChecksRound}
+  export ReviewArticle.Merged.{Round as ApplyChecksRound}
   export com.histmersion.domain.automation.Run.{Id as RecheckMechanicalRun}
-  export com.histmersion.domain.ReviewArticle.Merged.{Round as RecheckMechanicalRound}
+  export ReviewArticle.Merged.{Round as RecheckMechanicalRound}
   export com.histmersion.domain.automation.Run.{Id as RecheckTermCountRun}
-  export com.histmersion.domain.ReviewArticle.Merged.{Round as RecheckTermCountRound}
+  export ReviewArticle.Merged.{Round as RecheckTermCountRound}
   export com.histmersion.domain.automation.Run.{Id as ApplyFixRun}
-  export com.histmersion.domain.ReviewArticle.Merged.{Round as ApplyFixRound}
+  export ReviewArticle.Merged.{Round as ApplyFixRound}
   export com.histmersion.domain.automation.Run.{Id as LearnRun}
-  export com.histmersion.domain.ReviewArticle.Merged.{Round as LearnRound}
+  export ReviewArticle.Merged.{Round as LearnRound}
   export com.histmersion.domain.automation.Run.{Id as ApplyRecheckRun}
-  export com.histmersion.domain.ReviewArticle.Merged.{Round as ApplyRecheckRound}
-  type ArticleTaskSlug = _root_.com.histmersion.domain.research.Slug
-  val ArticleTaskSlug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  export ReviewArticle.Merged.{Round as ApplyRecheckRound}
+  type ArticleTaskSlug = com.histmersion.domain.research.Slug
+  val ArticleTaskSlug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
 
   enum Status(val wire: WireEnumValues.Wire):
     case Open extends Status(WireEnumValues.Wire("open"))
@@ -67,9 +71,9 @@ object ReviewLedger:
   object Status:
     def parse(s: WireEnumValues.Wire): Option[Status] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[Status]:
-      def all: Array[Status] = Status.values
-      def wire(e: Status): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Status] = parse(s)
+      def all: Array[Status] = values
+      def wire(e: Status): WireEnumValues.Wire = e.wire
+      def fromWire(s: WireEnumValues.Wire): Option[Status] = parse(s)
     given Encoder[Status] = WireEnum.encoder
     given Decoder[Status] = WireEnum.decoder
 
@@ -81,9 +85,9 @@ object ReviewLedger:
   object LessonSource:
     def parse(s: WireEnumValues.Wire): Option[LessonSource] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[LessonSource]:
-      def all: Array[LessonSource] = LessonSource.values
-      def wire(e: LessonSource): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[LessonSource] = parse(s)
+      def all: Array[LessonSource] = values
+      def wire(e: LessonSource): WireEnumValues.Wire = e.wire
+      def fromWire(s: WireEnumValues.Wire): Option[LessonSource] = parse(s)
     given Encoder[LessonSource] = WireEnum.encoder
     given Decoder[LessonSource] = WireEnum.decoder
 
@@ -95,22 +99,22 @@ object ReviewLedger:
       by: Closure.By,
       round: Closure.Round,
       run: Closure.Run,
-      note: Closure.Note = com.histmersion.domain.ReviewLedger.Closure.Note(""),
-      quote: Closure.Quote = com.histmersion.domain.ReviewLedger.Closure.Quote(""),
-      citekey: Option[com.histmersion.domain.library.Citekey] = None
+      note: Closure.Note = Closure.Note(""),
+      quote: Closure.Quote = Closure.Quote(""),
+      citekey: Option[Citekey] = None
   ) derives KindlingsCodecAsObject
 
   object Closure:
-    type By = com.histmersion.domain.ReviewArticle.Reviewer.Wire
-    val By: _root_.com.histmersion.domain.ReviewArticle.Reviewer.Wire.type = _root_.com.histmersion.domain.ReviewArticle.Reviewer.Wire
-    type Round = com.histmersion.domain.ReviewArticle.Merged.Round
-    val Round: _root_.com.histmersion.domain.ReviewArticle.Merged.Round.type = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
+    type By = ReviewArticle.Reviewer.Wire
+    val By: ReviewArticle.Reviewer.Wire.type = ReviewArticle.Reviewer.Wire
+    type Round = ReviewArticle.Merged.Round
+    val Round: ReviewArticle.Merged.Round.type = ReviewArticle.Merged.Round
     type Run = com.histmersion.domain.automation.Run.Id
-    val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
+    val Run: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quote = com.histmersion.domain.ReviewArticle.Evidence.Quote
-    val Quote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
+    object Note extends RefinedType[String, Pure]
+    type Quote = ReviewArticle.Evidence.Quote
+    val Quote: ReviewArticle.Evidence.Quote.type = ReviewArticle.Evidence.Quote
 
   /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not checked it yet.
     * `notFixed`: the last check's word that it is not (or the rejection it was raised again after); `notFixedCount`:
@@ -124,14 +128,14 @@ object ReviewLedger:
       run: Entry.Run,
       round: Entry.Round,
       status: Status = Status.Open,
-      claimed: Entry.Claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
+      claimed: Entry.Claimed = Entry.Claimed(false),
       notFixed: Option[Entry.NotFixed] = None,
-      reopened: Entry.Reopened = com.histmersion.domain.ReviewLedger.Entry.Reopened(0),
+      reopened: Entry.Reopened = Entry.Reopened(0),
       closed: Option[Closure] = None,
-      notFixedCount: Entry.NotFixedCount = com.histmersion.domain.ReviewLedger.Entry.NotFixedCount(0),
+      notFixedCount: Entry.NotFixedCount = Entry.NotFixedCount(0),
       deferred: Option[Entry.Deferred] = None
   ) derives KindlingsCodecAsObject:
-    def id: com.histmersion.domain.ReviewArticle.Finding.Id = finding.id
+    def id: Finding.Id = finding.id
     def open: Boolean = status == Status.Open
     def major: Boolean = finding.major
     def reviewer: Reviewer = finding.reviewer
@@ -142,29 +146,29 @@ object ReviewLedger:
   object Entry:
 
     type Run = com.histmersion.domain.automation.Run.Id
-    val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-    type Round = com.histmersion.domain.ReviewLedger.Closure.Round
-    val Round: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+    val Run: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
+    type Round = Closure.Round
+    val Round: Closure.Round.type = Closure.Round
     type Claimed = Claimed.T
-    object Claimed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Claimed extends RefinedType[Boolean, Pure]
     type NotFixed = NotFixed.T
-    object NotFixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotFixed extends RefinedType[String, Pure]
     type Reopened = Reopened.T
-    object Reopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reopened extends RefinedType[Int, Pure]
     type NotFixedCount = NotFixedCount.T
-    object NotFixedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotFixedCount extends RefinedType[Int, Pure]
     type Deferred = com.histmersion.domain.automation.Run.Id
-    val Deferred: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
+    val Deferred: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
 
   final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round) derives KindlingsCodecAsObject
 
   object Lesson:
-    type Text = com.histmersion.domain.ReviewArticle.Recheck.Lessons
-    val Text: _root_.com.histmersion.domain.ReviewArticle.Recheck.Lessons.type = _root_.com.histmersion.domain.ReviewArticle.Recheck.Lessons
+    type Text = ReviewArticle.Recheck.Lessons
+    val Text: ReviewArticle.Recheck.Lessons.type = ReviewArticle.Recheck.Lessons
     type Run = com.histmersion.domain.automation.Run.Id
-    val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
-    type Round = com.histmersion.domain.ReviewLedger.Closure.Round
-    val Round: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+    val Run: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
+    type Round = Closure.Round
+    val Round: Closure.Round.type = Closure.Round
 
   /** `task`: the article's one backlog item (#934), while it has one. */
   final case class Ledger(
@@ -175,7 +179,7 @@ object ReviewLedger:
   ) derives KindlingsCodecAsObject:
     def open: List[Entry] = entries.filter(_.open)
     def openMajors: List[Entry] = open.filter(_.major)
-    def entry(id: com.histmersion.domain.ReviewArticle.Finding.Id): Option[Entry] = entries.find(_.id == id)
+    def entry(id: Finding.Id): Option[Entry] = entries.find(_.id == id)
 
     /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
     def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed.value && e.reviewer == r)
@@ -184,9 +188,9 @@ object ReviewLedger:
   object Ledger:
 
     type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
     type Task = Task.T
-    object Task extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Task extends RefinedType[Int, Pure]
 
   /** At most this many lessons are kept (the newest). */
   val MaxLessons = 15
@@ -225,13 +229,13 @@ object ReviewLedger:
     }
 
   /** The next ledger id of a reviewer: its letter and one more than the highest number it used. */
-  def nextId(l: Ledger, r: Reviewer): com.histmersion.domain.ReviewArticle.Finding.Id =
+  def nextId(l: Ledger, r: Reviewer): Finding.Id =
     val used = l.entries.map(_.id.value).filter(_.startsWith(r.prefix.value)).flatMap(_.drop(r.prefix.value.length).toIntOption)
     Finding.Id(s"${r.prefix}${used.maxOption.getOrElse(0) + 1}")
 
   // ── transitions ────────────────────────────────────────────────────────────────────────────────
 
-  private def update(l: Ledger, id: com.histmersion.domain.ReviewArticle.Finding.Id)(f: Entry => Entry): Ledger =
+  private def update(l: Ledger, id: Finding.Id)(f: Entry => Entry): Ledger =
     l.modify(_.entries).setTo(l.entries.map(e => if e.id == id then f(e) else e))
 
   /** Record a pass's findings (ids per pass, as the reviewers' answers were numbered). A finding the ledger has
@@ -240,7 +244,7 @@ object ReviewLedger:
     * back MAJOR. Anything else is a new entry with the next id. Returns the ledger and the findings under their ledger
     * ids, in the order given.
     */
-  def absorb(l: Ledger, fs: List[Finding], run: com.histmersion.domain.automation.Run.Id, round: com.histmersion.domain.ReviewLedger.Closure.Round): (Ledger, List[Finding]) =
+  def absorb(l: Ledger, fs: List[Finding], run: com.histmersion.domain.automation.Run.Id, round: Closure.Round): (Ledger, List[Finding]) =
     @tailrec def absorbAll(
         rest: List[Finding],
         led: Ledger,
@@ -260,14 +264,14 @@ object ReviewLedger:
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
-                    claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
+                    claimed = Entry.Claimed(false),
                     notFixed = Some(Entry.NotFixed(s"fixed in pass ${e.closed.fold(0)(_.round.value)}, raised again in pass $round")),
                     reopened = Entry.Reopened(e.reopened.value + 1),
                     closed = None
                   )
                 case Status.Rejected =>
                   e.copy(
-                    finding = f.copy(id = id, escalated = com.histmersion.domain.ReviewArticle.Finding.Escalated(true)),
+                    finding = f.copy(id = id, escalated = Finding.Escalated(true)),
                     status = Status.Open,
                     claimed = Entry.Claimed(false),
                     notFixed = e.closed.map(c =>
@@ -279,7 +283,7 @@ object ReviewLedger:
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
-                    claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
+                    claimed = Entry.Claimed(false),
                     notFixed = e.closed
                       .filter(_ => e.status == Status.SetAside)
                       .map(c => Entry.NotFixed(s"set aside before: ${c.note}".take(300))),
@@ -297,7 +301,7 @@ object ReviewLedger:
     * text); not fixed → open, unclaimed, with the reviewer's note. A check of another reviewer's finding, or of a
     * closed one, changes nothing.
     */
-  def applyChecks(l: Ledger, r: Reviewer, checks: List[Check], run: com.histmersion.domain.ReviewLedger.ApplyChecksRun, round: com.histmersion.domain.ReviewLedger.ApplyChecksRound): Ledger =
+  def applyChecks(l: Ledger, r: Reviewer, checks: List[Check], run: ReviewLedger.ApplyChecksRun, round: ReviewLedger.ApplyChecksRound): Ledger =
     checks.foldLeft(l) { (led, c) =>
       led.entry(c.id).filter(e => e.open && e.reviewer == r).fold(led) { _ =>
         update(led, c.id) { e =>
@@ -321,15 +325,15 @@ object ReviewLedger:
   /** The mechanical re-check, by code: an open mechanical finding that no longer recurs is fixed; one that recurs stays
     * open (unclaimed); a new one is opened.
     */
-  def recheckMechanical(l: Ledger, now: List[Finding], run: com.histmersion.domain.ReviewLedger.RecheckMechanicalRun, round: com.histmersion.domain.ReviewLedger.RecheckMechanicalRound): (Ledger, List[Finding]) =
+  def recheckMechanical(l: Ledger, now: List[Finding], run: ReviewLedger.RecheckMechanicalRun, round: ReviewLedger.RecheckMechanicalRound): (Ledger, List[Finding]) =
     val gone = l.open.filter(_.reviewer == Reviewer.Mechanical).filterNot(e => now.exists(same(e.finding, _)))
     val closed = gone.foldLeft(l)((led, e) =>
       update(led, e.id)(
         _.copy(
           status = Status.Fixed,
-          claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
+          claimed = Entry.Claimed(false),
           notFixed = None,
-          closed = Some(Closure(Reviewer.Mechanical.wire, round, run, com.histmersion.domain.ReviewLedger.Closure.Note("no longer found by the checks")))
+          closed = Some(Closure(Reviewer.Mechanical.wire, round, run, Closure.Note("no longer found by the checks")))
         )
       )
     )
@@ -339,7 +343,7 @@ object ReviewLedger:
     * entry the pass did not raise again (8 terms or fewer now) is fixed. One it did raise again is matched by
     * [[absorb]], which replaces it — a MAJOR stored by an earlier run becomes the pass's minor one under the same id.
     */
-  def recheckTermCount(l: Ledger, cold: List[Finding], run: com.histmersion.domain.ReviewLedger.RecheckTermCountRun, round: com.histmersion.domain.ReviewLedger.RecheckTermCountRound): Ledger =
+  def recheckTermCount(l: Ledger, cold: List[Finding], run: ReviewLedger.RecheckTermCountRun, round: ReviewLedger.RecheckTermCountRound): Ledger =
     if cold.exists(TermCount.is) then l
     else
       l.open
@@ -348,7 +352,7 @@ object ReviewLedger:
           update(led, e.id)(
             _.copy(
               status = Status.Fixed,
-              claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
+              claimed = Entry.Claimed(false),
               notFixed = None,
               closed = Some(
                 Closure(
@@ -365,7 +369,7 @@ object ReviewLedger:
   /** The fixer's verified revision: what it applied is claimed (its reviewer re-checks it), a rejection code verified
     * closes the finding with the record's sentence (and teaches a lesson), a declined minor is closed as won't fix.
     */
-  def applyFix(l: Ledger, f: Fix, run: com.histmersion.domain.ReviewLedger.ApplyFixRun, round: com.histmersion.domain.ReviewLedger.ApplyFixRound): Ledger =
+  def applyFix(l: Ledger, f: Fix, run: ReviewLedger.ApplyFixRun, round: ReviewLedger.ApplyFixRound): Ledger =
     // what the fixer applied, and what code's pairing repair answered (§6.9): both re-checked by the reviewer
     val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) =>
       led.entry(id).filter(_.open).fold(led)(_ => update(led, id)(_.copy(claimed = Entry.Claimed(true))))
@@ -426,7 +430,7 @@ object ReviewLedger:
   /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice, the newest
     * [[MaxLessons]] kept.
     */
-  def learn(l: Ledger, texts: List[com.histmersion.domain.ReviewLedger.Lesson.Text], source: LessonSource, run: com.histmersion.domain.ReviewLedger.LearnRun, round: com.histmersion.domain.ReviewLedger.LearnRound): Ledger =
+  def learn(l: Ledger, texts: List[Lesson.Text], source: LessonSource, run: ReviewLedger.LearnRun, round: ReviewLedger.LearnRound): Ledger =
     val fresh = texts.map(_.value.trim.replaceAll("\\s+", " ").take(LessonChars)).filter(_.nonEmpty)
     val all = fresh.foldLeft(l.lessons.toVector) { (acc, t) =>
       if acc.exists(x => normalised(x.text.value) == normalised(t)) then acc
@@ -435,7 +439,7 @@ object ReviewLedger:
     l.modify(_.lessons).setTo(all.takeRight(MaxLessons).toList)
 
   /** A verification pass, for one reviewer: its checks, then its new findings and its lessons. */
-  def applyRecheck(l: Ledger, rc: Recheck, run: com.histmersion.domain.ReviewLedger.ApplyRecheckRun, round: com.histmersion.domain.ReviewLedger.ApplyRecheckRound): Ledger =
+  def applyRecheck(l: Ledger, rc: Recheck, run: ReviewLedger.ApplyRecheckRun, round: ReviewLedger.ApplyRecheckRound): Ledger =
     val checked = applyChecks(l, rc.reviewer, rc.checks, run, round)
     learn(absorb(checked, rc.findings, run, round)._1, rc.lessons, LessonSource.Recheck, run, round)
 
@@ -447,9 +451,9 @@ object ReviewLedger:
     */
   def merged(
       l: Ledger,
-      round: com.histmersion.domain.ReviewLedger.Closure.Round,
-      explainBack: Option[com.histmersion.domain.ReviewArticle.ColdReaderAnswer.ExplainBack] = None,
-      emptySlots: List[com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots] = Nil,
+      round: Closure.Round,
+      explainBack: Option[ReviewArticle.ColdReaderAnswer.ExplainBack] = None,
+      emptySlots: List[ReviewArticle.ColdReaderAnswer.EmptySlots] = Nil,
       proposals: List[AgentProposals.Proposal] = Nil,
       run: Option[com.histmersion.domain.automation.Run.Id] = None
   ): Merged =
@@ -464,7 +468,7 @@ object ReviewLedger:
   /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found wanting, a
     * regression, a rejection it was raised again after.
     */
-  def notes(l: Ledger): Map[com.histmersion.domain.ReviewArticle.Finding.Id, String] =
+  def notes(l: Ledger): Map[Finding.Id, String] =
     l.open
       .flatMap(e =>
         e.notFixed
@@ -491,7 +495,7 @@ object ReviewLedger:
     * reviewer's), the newest `closedMax` closed ones as one line each, and the lessons. Empty when there is nothing to
     * show.
     */
-  def promptText(l: Ledger, style: OpenStyle, closedMax: com.histmersion.domain.ReviewLedger.ClosedLimit, only: Option[Reviewer] = None): String =
+  def promptText(l: Ledger, style: OpenStyle, closedMax: ClosedLimit, only: Option[Reviewer] = None): String =
     val mine = (e: Entry) => only.forall(_ == e.reviewer)
     val open = l.open.filter(mine)
     val closed = l.entries.filterNot(_.open).filter(mine).takeRight(math.max(0, closedMax.value))
@@ -503,7 +507,7 @@ object ReviewLedger:
           .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.value.trim.take(160)}")
           .mkString("\n")
       case OpenStyle.Full =>
-        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), com.histmersion.domain.ReviewLedger.Closure.Round(0)), notes(l).map((id, n) => id.value -> n)) +
+        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), Closure.Round(0)), notes(l).map((id, n) => id.value -> n)) +
           (if open.exists(_.claimed.value) then
              "\n(The fixer claims to have fixed: " + open.filter(_.claimed.value).map(_.id).mkString(", ") + ".)"
            else "")
@@ -522,14 +526,14 @@ object ReviewLedger:
 
   object Passage:
     type Heading = Heading.T
-    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Heading extends RefinedType[String, Pure]
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]
   final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives KindlingsCodecAsObject:
     def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
     /** The text a finding's quote is looked up in (to scope it). */
-    def text: com.histmersion.domain.ReviewArticle.Fix.Body = com.histmersion.domain.ReviewArticle.Fix.Body(passages.map(_.text.value).mkString("\n\n"))
+    def text: ReviewArticle.Fix.Body = ReviewArticle.Fix.Body(passages.map(_.text.value).mkString("\n\n"))
 
     /** As a prompt shows it. */
     def render: String =
@@ -541,9 +545,9 @@ object ReviewLedger:
   object Edited:
 
     type Removed = Removed.T
-    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Removed extends RefinedType[String, Pure]
 
-  private def paragraphs(body: com.histmersion.domain.ReviewArticle.Fix.Body): Vector[String] =
+  private def paragraphs(body: ReviewArticle.Fix.Body): Vector[String] =
     body.value.replace("\r\n", "\n").split("\n[ \t]*\n").map(_.trim).filter(_.nonEmpty).toVector
 
   private val Heading = "^#{1,6}\\s+(.+?)\\s*#*\\s*$".r
@@ -552,7 +556,7 @@ object ReviewLedger:
     * whitespace-normalised paragraphs), each changed paragraph of `after` widened by `margin` paragraphs on each side,
     * adjacent ones joined; plus the paragraphs of `before` that are gone.
     */
-  def editedPassages(before: com.histmersion.domain.ReviewArticle.Fix.Body, after: com.histmersion.domain.ReviewArticle.Fix.Body, margin: com.histmersion.domain.ReviewLedger.PassageMargin = com.histmersion.domain.ReviewLedger.PassageMargin(1)): Edited =
+  def editedPassages(before: ReviewArticle.Fix.Body, after: ReviewArticle.Fix.Body, margin: PassageMargin = PassageMargin(1)): Edited =
     val a = paragraphs(before)
     val b = paragraphs(after)
     def key(p: String) = p.replaceAll("\\s+", " ")
@@ -578,7 +582,7 @@ object ReviewLedger:
       }
       .reverse
       .map(_.reverse)
-    def headingOf(i: Int): Option[com.histmersion.domain.ReviewLedger.Passage.Heading] =
+    def headingOf(i: Int): Option[Passage.Heading] =
       (i to 0 by -1).iterator.map(b(_)).collectFirst {
         case p if p.linesIterator.nextOption().exists(Heading.matches) =>
           Passage.Heading(p.linesIterator.next() match { case Heading(h) => h.trim; case h => h })
@@ -598,7 +602,7 @@ object ReviewLedger:
     * MAJOR — logged, in the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
     * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids.
     */
-  def deferFinal(before: Ledger, after: Ledger, run: com.histmersion.domain.automation.Run.Id, regression: Finding => Boolean): (Ledger, List[com.histmersion.domain.ReviewArticle.Finding.Id]) =
+  def deferFinal(before: Ledger, after: Ledger, run: com.histmersion.domain.automation.Run.Id, regression: Finding => Boolean): (Ledger, List[Finding.Id]) =
     val fresh = after.open
       .filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
       .filterNot(e => regression(e.finding))
@@ -616,10 +620,10 @@ object ReviewLedger:
 
   object Regression:
 
-    type Id = com.histmersion.domain.ReviewArticle.Finding.Id
-    val Id: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
+    type Id = Finding.Id
+    val Id: Finding.Id.type = Finding.Id
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
   /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has closed as fixed —
     * checked by code, before any reviewer reads it:
@@ -632,13 +636,13 @@ object ReviewLedger:
     */
   def guard(
       l: Ledger,
-      before: com.histmersion.domain.ReviewArticle.Fix.Body,
-      after: com.histmersion.domain.ReviewArticle.Fix.Body,
-      answered: (com.histmersion.domain.ReviewArticle.Fix.Body, CritiqueRef) => Boolean,
-      cites: (com.histmersion.domain.ReviewArticle.Fix.Body, com.histmersion.domain.library.Citekey) => Boolean,
-      minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio
+      before: ReviewArticle.Fix.Body,
+      after: ReviewArticle.Fix.Body,
+      answered: (ReviewArticle.Fix.Body, CritiqueRef) => Boolean,
+      cites: (ReviewArticle.Fix.Body, Citekey) => Boolean,
+      minRatio: ReviewArticle.CritiqueRule.MinRatio
   ): List[Regression] =
-    def in(q: String, body: com.histmersion.domain.ReviewArticle.Fix.Body) =
+    def in(q: String, body: ReviewArticle.Fix.Body) =
       AgentVerify.findQuote(AgentProposals.Proposal.Quote(q), AgentVerify.SourceBody(body.value), AgentVerify.MinRatio(minRatio.value)).accepted
     l.entries.filter(_.status == Status.Fixed).flatMap { e =>
       val pair = e.finding.pair
@@ -656,7 +660,7 @@ object ReviewLedger:
       val lost = e.closed.toList
         .flatMap(c => AgentVerify.wikilinks(AgentVerify.Text(c.quote.value)))
         .distinct
-        .flatMap(ck => com.histmersion.domain.library.Citekey.parse(ck.value).toOption)
+        .flatMap(ck => Citekey.parse(ck.value).toOption)
         .filter(ck => cites(before, ck) && !cites(after, ck))
         .map(ck => Regression(e.id, Regression.Why(s"[[$ck]], which its fix cites, is cited nowhere any more")))
       (pair.toList ++ back.toList ++ lost).take(1)
@@ -665,13 +669,13 @@ object ReviewLedger:
   /** Open missing-critique findings found not fixed at least `times` times whose pair is still open: the ones that get
     * code's pairing repair, else a precise instruction (§6.9).
     */
-  def stubborn(l: Ledger, times: com.histmersion.domain.ReviewLedger.StubbornLimit = com.histmersion.domain.ReviewLedger.StubbornLimit(2)): List[Entry] =
+  def stubborn(l: Ledger, times: StubbornLimit = StubbornLimit(2)): List[Entry] =
     l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount.value >= times.value)
 
   // ── the backlog item (#934) ────────────────────────────────────────────────────────────────────
 
   /** The article's one backlog item while a MAJOR is open: how many, and each one's line. */
-  def taskText(l: Ledger, runId: com.histmersion.domain.automation.Run.Id, maxChars: com.histmersion.domain.ReviewLedger.TaskTextLimit = com.histmersion.domain.ReviewLedger.TaskTextLimit(1500)): Option[com.histmersion.domain.ReviewLedger.TaskText] =
+  def taskText(l: Ledger, runId: com.histmersion.domain.automation.Run.Id, maxChars: TaskTextLimit = TaskTextLimit(1500)): Option[TaskText] =
     val majors = l.openMajors
     Option.when(majors.nonEmpty) {
       val lines = majors.map { e =>
@@ -680,7 +684,7 @@ object ReviewLedger:
         val at = Option(e.finding.where.value).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
         s"${e.id}$at: ${e.finding.problem.value.trim.take(160)}$esc"
       }
-      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(Plural.Count(majors.size.toLong), com.histmersion.api.Plural.Noun.Singular("MAJOR"))} — "
+      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(Plural.Count(majors.size.toLong), Plural.Noun.Singular("MAJOR"))} — "
       val tail = s" (agent run ${runId.value.take(8)})"
       val body = lines.mkString("; ")
       val room = math.max(40, maxChars.value - head.length - tail.length)
@@ -691,12 +695,12 @@ object ReviewLedger:
     * (`review-article <slug>: 2 open MAJORs — …`) — so a run whose ledger lost the item's id rewrites the open one
     * instead of adding a second. Not a [[legacyTask]] (those are closed).
     */
-  def articleTask(slug: com.histmersion.domain.ReviewLedger.ArticleTaskSlug, text: com.histmersion.domain.ReviewLedger.TaskText): Boolean =
+  def articleTask(slug: ArticleTaskSlug, text: TaskText): Boolean =
     val t = text.value.trim
     !legacyTask(slug, TaskText(t)) &&
     (t.startsWith(s"review-article [[$slug]]: ") || t.startsWith(s"review-article $slug: ")) &&
     "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
 
   /** The text of the per-finding items earlier runs left for the article (before #934). */
-  def legacyTask(slug: com.histmersion.domain.research.Slug, text: com.histmersion.domain.ReviewLedger.TaskText): Boolean =
+  def legacyTask(slug: com.histmersion.domain.research.Slug, text: TaskText): Boolean =
     text.value.startsWith(s"review-article [[$slug]]: MAJOR ")

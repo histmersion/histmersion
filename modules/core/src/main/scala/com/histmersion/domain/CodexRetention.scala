@@ -1,4 +1,8 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How long the Codex home of the agent runs keeps what each run leaves behind (#2582): every `codex exec` writes a
   * session transcript (`sessions/YYYY/MM/DD/rollout-*.jsonl`) and adds to its SQLite state (`state_*.sqlite`,
@@ -10,56 +14,56 @@ package com.histmersion.domain
   */
 object CodexRetention:
   type EveryHours = EveryHours.T
-  object EveryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EveryHours extends RefinedType[Int, Pure]
   type FileName = FileName.T
-  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FileName extends RefinedType[String, Pure]
   type KeepDays = KeepDays.T
-  object KeepDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeepDays extends RefinedType[Int, Pure]
   type LastMs = LastMs.T
-  object LastMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastMs extends RefinedType[Long, Pure]
   type NowMs = NowMs.T
-  object NowMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NowMs extends RefinedType[Long, Pure]
 
   /** The directories of run transcripts, relative to the home. */
   type SessionDirs = SessionDirsValue
   type SessionDirsValue = SessionDirsValue.T
-  object SessionDirsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SessionDirsValue extends RefinedType[String, Pure]
 
-  val SessionDirs: List[com.histmersion.domain.CodexRetention.SessionDirs] = List(com.histmersion.domain.CodexRetention.SessionDirsValue("sessions"), com.histmersion.domain.CodexRetention.SessionDirsValue("archived_sessions"))
+  val SessionDirs: List[SessionDirs] = List(SessionDirsValue("sessions"), SessionDirsValue("archived_sessions"))
 
   /** One file under the home: its path relative to the home (`/`-separated), size, last change. */
   final case class FileInfo(rel: FileInfo.Rel, bytes: FileInfo.Bytes, modifiedMs: FileInfo.ModifiedMs)
 
   object FileInfo:
     type Rel = Rel.T
-    object Rel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rel extends RefinedType[String, Pure]
     type Bytes = Bytes.T
-    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Bytes extends RefinedType[Long, Pure]
     type ModifiedMs = ModifiedMs.T
-    object ModifiedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ModifiedMs extends RefinedType[Long, Pure]
 
   private val DayMs = 24L * 60 * 60 * 1000
 
   /** Pure: is `rel` a file inside a transcript directory (never a file at the home's top level)? */
-  def inSessions(rel: com.histmersion.domain.CodexRetention.FileInfo.Rel): Boolean =
+  def inSessions(rel: FileInfo.Rel): Boolean =
     val segs = rel.value.replace('\\', '/').split('/').toList.filter(_.nonEmpty)
     segs.size >= 2 && SessionDirs.exists(_.value == segs.head) && !segs.contains("..")
 
   /** Pure: the transcripts last changed more than `keepDays` before `nowMs` — oldest first. A run in flight appends to
     * its own transcript, so its file is never this old. `keepDays` ≤ 0 keeps all.
     */
-  def stale(files: List[FileInfo], nowMs: com.histmersion.domain.CodexRetention.NowMs, keepDays: com.histmersion.domain.CodexRetention.KeepDays): List[FileInfo] =
+  def stale(files: List[FileInfo], nowMs: NowMs, keepDays: KeepDays): List[FileInfo] =
     if keepDays.value <= 0 then Nil
     else
       val cutoff = nowMs.value - keepDays.value.toLong * DayMs
       files.filter(f => inSessions(f.rel) && f.modifiedMs.value < cutoff).sortBy(f => f.modifiedMs.value: Long)
 
   /** Pure: the SQLite databases at the home's top level (`state_5.sqlite`), not their `-wal`/`-shm`. */
-  def sqliteFiles(names: List[com.histmersion.domain.CodexRetention.FileName]): List[com.histmersion.domain.CodexRetention.FileName] =
+  def sqliteFiles(names: List[FileName]): List[FileName] =
     names.filter(n => !n.value.contains('/') && n.value.endsWith(".sqlite")).sortBy(_.value)
 
   /** Pure: is a retention pass due — none yet, or the last one `everyHours` or more ago? `everyHours` ≤ 0 turns the
     * automatic pass off.
     */
-  def due(lastMs: Option[com.histmersion.domain.CodexRetention.LastMs], nowMs: com.histmersion.domain.CodexRetention.NowMs, everyHours: com.histmersion.domain.CodexRetention.EveryHours): Boolean =
+  def due(lastMs: Option[LastMs], nowMs: NowMs, everyHours: EveryHours): Boolean =
     everyHours.value > 0 && lastMs.forall(l => nowMs.value - l.value >= everyHours.value.toLong * 60 * 60 * 1000)

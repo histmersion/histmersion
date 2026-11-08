@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue
+package com.histmersion
+package domain.catalogue
 
 import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.catalogue.events.EventPlan

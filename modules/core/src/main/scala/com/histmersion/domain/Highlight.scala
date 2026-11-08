@@ -1,4 +1,8 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Highlighting of search terms inside already-rendered HTML — pure, no parser, no dependencies.
   *
@@ -10,25 +14,25 @@ package com.histmersion.domain
   */
 object Highlight:
   type Html = Html.T
-  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Html extends RefinedType[String, Pure]
   type MarkCount = MarkCount.T
-  object MarkCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MarkCount extends RefinedType[Int, Pure]
   type Term = Term.T
-  object Term extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Term extends RefinedType[String, Pure]
 
   /** Terms worth highlighting, from a `websearch_to_tsquery` style query: `"quoted phrases"` stay phrases, `-excluded`
     * terms and the `or`/`and` operators are dropped. Longest first, so a phrase wins over its own words.
     */
-  type ApplyHtml = _root_.com.histmersion.domain.Highlight.Html
-  val ApplyHtml: _root_.com.histmersion.domain.Highlight.Html.type = _root_.com.histmersion.domain.Highlight.Html
-  type ApplyQ = _root_.com.histmersion.domain.Highlight.Term
-  val ApplyQ: _root_.com.histmersion.domain.Highlight.Term.type = _root_.com.histmersion.domain.Highlight.Term
-  type MarksHtml = _root_.com.histmersion.domain.Highlight.Html
-  val MarksHtml: _root_.com.histmersion.domain.Highlight.Html.type = _root_.com.histmersion.domain.Highlight.Html
-  type MarksTerms = _root_.com.histmersion.domain.Highlight.Term
-  val MarksTerms: _root_.com.histmersion.domain.Highlight.Term.type = _root_.com.histmersion.domain.Highlight.Term
+  type ApplyHtml = Html
+  val ApplyHtml: Html.type = Html
+  type ApplyQ = Term
+  val ApplyQ: Term.type = Term
+  type MarksHtml = Html
+  val MarksHtml: Html.type = Html
+  type MarksTerms = Term
+  val MarksTerms: Term.type = Term
 
-  def terms(q: com.histmersion.domain.Highlight.Term): List[com.histmersion.domain.Highlight.Term] =
+  def terms(q: Term): List[Term] =
     val phrase = """(-?)"([^"]*)"""".r
     val src = Option(q).fold("")(_.value)
     val phrases = phrase.findAllMatchIn(src).filter(_.group(1).isEmpty).map(_.group(2)).toList
@@ -44,12 +48,12 @@ object Highlight:
   private val Operators = Set("or", "and", "not")
 
   /** Convenience: parse `q` and highlight in one step. Returns `(html, matchCount)`. */
-  def apply(html: com.histmersion.domain.Highlight.ApplyHtml, q: com.histmersion.domain.Highlight.ApplyQ): (com.histmersion.domain.Highlight.Html, com.histmersion.domain.Highlight.MarkCount) = marks(html, terms(q))
+  def apply(html: ApplyHtml, q: ApplyQ): (Html, MarkCount) = marks(html, terms(q))
 
   /** Wrap each occurrence of `terms` in the text of `html` in `<mark id="hl<n>">`. */
-  def marks(html: com.histmersion.domain.Highlight.MarksHtml, terms: List[com.histmersion.domain.Highlight.MarksTerms]): (com.histmersion.domain.Highlight.Html, com.histmersion.domain.Highlight.MarkCount) =
+  def marks(html: MarksHtml, terms: List[MarksTerms]): (Html, MarkCount) =
     val src = html.value
-    if src.isEmpty || terms.isEmpty then (html, com.histmersion.domain.Highlight.MarkCount(0))
+    if src.isEmpty || terms.isEmpty then (html, MarkCount(0))
     else
       val re = pattern(terms)
       // java.lang.StringBuilder: scala's has no append(CharSequence, from, to), and would
@@ -69,12 +73,12 @@ object Highlight:
               case k  => k
             n += markText(src.substring(i, end), re, sb, n)
             i = end
-      (com.histmersion.domain.Highlight.Html(sb.toString), com.histmersion.domain.Highlight.MarkCount(n))
+      (Html(sb.toString), MarkCount(n))
 
   /** Case-insensitive match of any term at a word start, extended over the rest of the word so a stemmed hit ("egypt" →
     * "Egyptian") is highlighted whole. Phrases allow any run of whitespace.
     */
-  private def pattern(terms: List[com.histmersion.domain.Highlight.Term]): scala.util.matching.Regex =
+  private def pattern(terms: List[Term]): scala.util.matching.Regex =
     val alts = terms
       .map(t => java.util.regex.Pattern.quote(t.value))
       .map(_.replaceAll("""\s+""", """\\E\\s+\\Q"""))

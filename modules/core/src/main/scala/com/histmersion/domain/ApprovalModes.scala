@@ -1,7 +1,8 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.domain.automation.Approval
 object ApprovalModes:
   /** A value that is not `auto` — a typo included — is the safe one. */
 
-  def configured(raw: com.histmersion.domain.automation.Approval.Mode.Wire): Approval.Mode = Approval.Mode.parse(raw).getOrElse(Approval.Mode.Manual)
+  def configured(raw: Approval.Mode.Wire): Approval.Mode = Approval.Mode.parse(raw).getOrElse(Approval.Mode.Manual)

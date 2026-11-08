@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +13,8 @@ import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.exchange.Bundle
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
   * queue items and articles, and the small rules every kind's folds share (a source's and a finding's are the library's
@@ -23,11 +26,11 @@ import com.histmersion.api.exchange.Bundle
   */
 object MergeFold:
   type ArticleBody = ArticleBody.T
-  object ArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticleBody extends RefinedType[String, Pure]
   type ConflictCount = ConflictCount.T
-  object ConflictCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConflictCount extends RefinedType[Int, Pure]
   type QueueKey = QueueKey.T
-  object QueueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QueueKey extends RefinedType[String, Pure]
 
   // ── small rules ─────────────────────────────────────────────────────────────────────────────
 
@@ -85,7 +88,7 @@ object MergeFold:
   def foldGoal(
       l: Bundle.Goal,
       r: Bundle.Goal,
-      from: com.histmersion.domain.MergePlanner.Row.Label,
+      from: MergePlanner.Row.Label,
       planDecision: Option[MergeDecision.Kind] = None
   ): Bundle.Goal =
     def rank(s: Bundle.Goal.Status) = Goal.Status.all.map(_.value).indexOf(s.value)
@@ -168,7 +171,7 @@ object MergeFold:
   // ── queue items ─────────────────────────────────────────────────────────────────────────────
 
   /** A queue item's text as compared: folded, whitespace collapsed. */
-  def queueKey(t: Bundle.QueueItem.Text): com.histmersion.domain.MergeFold.QueueKey =
+  def queueKey(t: Bundle.QueueItem.Text): QueueKey =
     QueueKey(Fingerprint.fold(Fingerprint.FoldS(t.value)).value.trim.replaceAll("\\s+", " "))
 
   /** One queue item out of two: `done` anywhere is done. */
@@ -209,22 +212,22 @@ object MergeFold:
 
   object ArticleOutcome:
     object Merged:
-      export com.histmersion.domain.MergeFold.{ArticleBody as Body}
-      type BaseSha = com.histmersion.Sha256
-      val BaseSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+      export MergeFold.{ArticleBody as Body}
+      type BaseSha = Sha256
+      val BaseSha: Sha256.type = Sha256
     object Conflict:
-      export com.histmersion.domain.MergeFold.{ConflictCount as Conflicts}
-      type BaseSha = com.histmersion.Sha256
-      val BaseSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+      export MergeFold.{ConflictCount as Conflicts}
+      type BaseSha = Sha256
+      val BaseSha: Sha256.type = Sha256
 
   /** `localHistory` is this collection's recorded versions of the article (sha256 of the body, the body), newest first;
     * `foreignHistory` the sha256s of the bundle's. The common base is the newest of ours the bundle's history also has.
     */
   def articleOutcome(
-      localBody: com.histmersion.domain.MergeFold.ArticleBody,
-      localHistory: List[(com.histmersion.Sha256, com.histmersion.domain.MergeFold.ArticleBody)],
-      foreignBody: com.histmersion.domain.MergeFold.ArticleBody,
-      foreignHistory: Set[com.histmersion.Sha256]
+      localBody: ArticleBody,
+      localHistory: List[(Sha256, ArticleBody)],
+      foreignBody: ArticleBody,
+      foreignHistory: Set[Sha256]
   ): ArticleOutcome =
     val (ls, fs) = (shaOf(localBody), shaOf(foreignBody))
     if ls == fs then ArticleOutcome.Same
@@ -238,13 +241,13 @@ object MergeFold:
           if m.clean then ArticleOutcome.Merged(ArticleBody(m.text.value), sha)
           else ArticleOutcome.Conflict(ConflictCount(m.conflicts.value), sha)
 
-  private def shaOf(body: com.histmersion.domain.MergeFold.ArticleBody): com.histmersion.Sha256 =
-    com.histmersion.Sha256.assume(BundleFormat.sha256Hex(body.value).value)
+  private def shaOf(body: ArticleBody): Sha256 =
+    Sha256.assume(BundleFormat.sha256Hex(body.value).value)
 
   /** The fields of an article folded around a chosen body: left's title and kind, the summary that is there, tags and
     * regions unioned.
     */
-  def foldArticle(l: Bundle.Article, r: Bundle.Article, body: com.histmersion.domain.MergeFold.ArticleBody): Bundle.Article =
+  def foldArticle(l: Bundle.Article, r: Bundle.Article, body: ArticleBody): Bundle.Article =
     l.modify(_.body)
       .setTo(Bundle.Article.Body(body.value))
       .modify(_.summary)

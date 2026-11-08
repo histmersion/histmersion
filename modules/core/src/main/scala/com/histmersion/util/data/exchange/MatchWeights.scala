@@ -1,4 +1,8 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How much each comparison of two sources counts when a merge asks whether they are one work (`merge.weights`). */
 final case class MatchWeights(
@@ -30,50 +34,50 @@ final case class MatchWeights(
 
 object MatchWeights:
   type TitleFingerprint = TitleFingerprint.T
-  object TitleFingerprint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleFingerprint extends RefinedType[Double, Pure]
   type TitleMain = TitleMain.T
-  object TitleMain extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleMain extends RefinedType[Double, Pure]
   type TitleSimilar = TitleSimilar.T
-  object TitleSimilar extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleSimilar extends RefinedType[Double, Pure]
   type TitleSimilarAtLeast = TitleSimilarAtLeast.T
-  object TitleSimilarAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleSimilarAtLeast extends RefinedType[Double, Pure]
   type TitleTokens = TitleTokens.T
-  object TitleTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleTokens extends RefinedType[Double, Pure]
   type TitleTokensAtLeast = TitleTokensAtLeast.T
-  object TitleTokensAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleTokensAtLeast extends RefinedType[Double, Pure]
   type TitleDiffers = TitleDiffers.T
-  object TitleDiffers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleDiffers extends RefinedType[Double, Pure]
   type AuthorsSame = AuthorsSame.T
-  object AuthorsSame extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorsSame extends RefinedType[Double, Pure]
   type AuthorsFirst = AuthorsFirst.T
-  object AuthorsFirst extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorsFirst extends RefinedType[Double, Pure]
   type AuthorsOverlap = AuthorsOverlap.T
-  object AuthorsOverlap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorsOverlap extends RefinedType[Double, Pure]
   type AuthorsDisjoint = AuthorsDisjoint.T
-  object AuthorsDisjoint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorsDisjoint extends RefinedType[Double, Pure]
   type YearEqual = YearEqual.T
-  object YearEqual extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearEqual extends RefinedType[Double, Pure]
   type YearNear = YearNear.T
-  object YearNear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearNear extends RefinedType[Double, Pure]
   type YearReprint = YearReprint.T
-  object YearReprint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearReprint extends RefinedType[Double, Pure]
   type YearFar = YearFar.T
-  object YearFar extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearFar extends RefinedType[Double, Pure]
   type VenueEqual = VenueEqual.T
-  object VenueEqual extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VenueEqual extends RefinedType[Double, Pure]
   type VenueDiffers = VenueDiffers.T
-  object VenueDiffers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VenueDiffers extends RefinedType[Double, Pure]
   type BodySame = BodySame.T
-  object BodySame extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodySame extends RefinedType[Double, Pure]
   type BodySameAtLeast = BodySameAtLeast.T
-  object BodySameAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodySameAtLeast extends RefinedType[Double, Pure]
   type BodyEdition = BodyEdition.T
-  object BodyEdition extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodyEdition extends RefinedType[Double, Pure]
   type BodyEditionAtLeast = BodyEditionAtLeast.T
-  object BodyEditionAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodyEditionAtLeast extends RefinedType[Double, Pure]
   type BodyDiffers = BodyDiffers.T
-  object BodyDiffers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodyDiffers extends RefinedType[Double, Pure]
   type BodyDiffersBelow = BodyDiffersBelow.T
-  object BodyDiffersBelow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodyDiffersBelow extends RefinedType[Double, Pure]
   type Alias = Alias.T
-  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Alias extends RefinedType[Double, Pure]

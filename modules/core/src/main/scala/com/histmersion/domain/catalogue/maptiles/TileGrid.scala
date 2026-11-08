@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a layer's items become a tile's features ([[com.histmersion.api.catalogue.TileLayer]]): below `maxZoom` a tile
   * holding more than `maxPoints` items counts them by square cells of `cellUnits` tile units, one feature a cell; at
@@ -12,16 +16,16 @@ object TileGrid:
   /** A tile is 512 CSS pixels a side where MapLibre draws it at its own zoom. */
   type TilePx = TilePxValue
   type TilePxValue = TilePxValue.T
-  object TilePxValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TilePxValue extends RefinedType[Int, Pure]
 
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxZoom extends RefinedType[Int, Pure]
   type MaxPoints = MaxPoints.T
-  object MaxPoints extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxPoints extends RefinedType[Int, Pure]
   type CellPx = CellPx.T
-  object CellPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CellPx extends RefinedType[Int, Pure]
   type CellUnits = CellUnits.T
-  object CellUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CellUnits extends RefinedType[Int, Pure]
 
   val TilePx: TilePx = TilePxValue(512)
 

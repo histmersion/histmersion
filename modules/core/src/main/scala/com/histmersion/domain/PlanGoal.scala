@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -11,6 +12,11 @@ import sttp.tapir.Schema
 import com.histmersion.api.automation.Goal.Plans.{Plan, PlannedGoal, PlannedWork}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.research.Slug
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.automation.Run
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner
   * proposes sub-goals, search queries and candidate works (DOIs) for one goal; code validates the vocabulary (slugs,
@@ -19,23 +25,23 @@ import com.histmersion.domain.research.Slug
   */
 object PlanGoal:
   type AcquireText = AcquireText.T
-  object AcquireText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AcquireText extends RefinedType[String, Pure]
   type Approved = Approved.T
-  object Approved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Approved extends RefinedType[Boolean, Pure]
   type CreatedCount = CreatedCount.T
-  object CreatedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CreatedCount extends RefinedType[Int, Pure]
   type LastRound = LastRound.T
-  object LastRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastRound extends RefinedType[Boolean, Pure]
   type LinkedCount = LinkedCount.T
-  object LinkedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkedCount extends RefinedType[Int, Pure]
   type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogLine extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Query extends RefinedType[String, Pure]
   type QueuedCount = QueuedCount.T
-  object QueuedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QueuedCount extends RefinedType[Int, Pure]
 
   // ── the model's answer ──────────────────────────────────────────────────────────────────────────
 
@@ -44,13 +50,13 @@ object PlanGoal:
       derives KindlingsCodecAsObject
   object SubGoalAnswer:
     type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Slug extends RefinedType[String, Pure]
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
 
     given Schema[SubGoalAnswer] = KindlingsSchema
       .derived[SubGoalAnswer]
@@ -63,9 +69,9 @@ object PlanGoal:
   final case class WorkAnswer(doi: WorkAnswer.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
   object WorkAnswer:
     type Doi = Doi.T
-    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Doi extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
     given Schema[WorkAnswer] = KindlingsSchema
       .derived[WorkAnswer]
@@ -81,9 +87,9 @@ object PlanGoal:
   ) derives KindlingsCodecAsObject
   object PlanAnswer:
     type Rationale = Rationale.T
-    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rationale extends RefinedType[String, Pure]
     type Queries = Queries.T
-    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Queries extends RefinedType[String, Pure]
 
     given Schema[PlanAnswer] = KindlingsSchema
       .derived[PlanAnswer]
@@ -95,11 +101,11 @@ object PlanGoal:
 
   // ── checked (checkpointed before the upstream lookups) ──────────────────────────────────────────
 
-  final case class ProposedWork(doi: com.histmersion.domain.library.Doi, why: ProposedWork.Why) derives KindlingsCodecAsObject
+  final case class ProposedWork(doi: Doi, why: ProposedWork.Why) derives KindlingsCodecAsObject
 
   object ProposedWork:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
   final case class Proposed(
@@ -112,24 +118,24 @@ object PlanGoal:
 
   object Proposed:
     type Rationale = Rationale.T
-    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rationale extends RefinedType[String, Pure]
     type Queries = Queries.T
-    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Queries extends RefinedType[String, Pure]
     type Dropped = Dropped.T
-    object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Dropped extends RefinedType[String, Pure]
 
   /** The caps on a plan (config `agents.plan.*`). */
   final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
 
   object Caps:
     type SubGoals = SubGoals.T
-    object SubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SubGoals extends RefinedType[Int, Pure]
     type Queries = Queries.T
-    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Queries extends RefinedType[Int, Pure]
     type Works = Works.T
-    object Works extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Works extends RefinedType[Int, Pure]
     type QueryChars = QueryChars.T
-    object QueryChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object QueryChars extends RefinedType[Int, Pure]
 
   /** Check a plan answer. Problems a retry can fix (an invalid slug or DOI, an empty title, a cap exceeded, nothing
     * proposed) send it back; things a retry cannot change (a slug that is already a goal, a query the goal already has,
@@ -137,12 +143,12 @@ object PlanGoal:
     */
   def check(
       a: PlanAnswer,
-      goal: com.histmersion.domain.automation.Goal.Slug,
-      goalExists: com.histmersion.domain.automation.Goal.Slug => Boolean,
-      knownQueries: Set[com.histmersion.domain.PlanGoal.Query],
+      goal: Goal.Slug,
+      goalExists: Goal.Slug => Boolean,
+      knownQueries: Set[Query],
       caps: Caps,
-      last: com.histmersion.domain.PlanGoal.LastRound
-  ): Either[List[com.histmersion.domain.PlanGoal.Problem], (Proposed, List[com.histmersion.domain.PlanGoal.Problem])] =
+      last: LastRound
+  ): Either[List[Problem], (Proposed, List[Problem])] =
     val problems = List.newBuilder[String]
     val dropped = List.newBuilder[String]
 
@@ -150,7 +156,7 @@ object PlanGoal:
       .foldLeft(Vector.empty[PlannedGoal]) { (acc, g) =>
         Slug
           .parse(Option(g.slug).fold("")(_.value))
-          .flatMap(s => com.histmersion.domain.automation.Goal.Slug.either(s.value).left.map(Slug.Problem(_))) match
+          .flatMap(s => Goal.Slug.either(s.value).left.map(Slug.Problem(_))) match
           case Left(m)                                                  => problems += s"sub-goal: $m"; acc
           case Right(s) if Option(g.title).forall(_.value.trim.isEmpty) => problems += s"sub-goal '$s' has no title"; acc
           case Right(s) if s == goal                                    => dropped += s"sub-goal '$s' is the goal itself"; acc
@@ -184,7 +190,7 @@ object PlanGoal:
         Doi.normalize(Option(w.doi).fold("")(_.value)) match
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
-          case Some(d)                           => acc :+ ProposedWork(d, com.histmersion.domain.PlanGoal.ProposedWork.Why(Option(w.why).fold("")(_.value.trim)))
+          case Some(d)                           => acc :+ ProposedWork(d, ProposedWork.Why(Option(w.why).fold("")(_.value.trim)))
       }
       .toList
 
@@ -201,7 +207,7 @@ object PlanGoal:
     if ps.nonEmpty && !last.value then Left(ps.map(Problem(_)))
     else
       val kept = Proposed(
-        com.histmersion.domain.PlanGoal.Proposed.Rationale(Option(a.rationale).fold("")(_.value.trim)),
+        Proposed.Rationale(Option(a.rationale).fold("")(_.value.trim)),
         goals.take(caps.subGoals.value),
         queries.take(caps.queries.value).map(Proposed.Queries(_)),
         works.take(caps.works.value),
@@ -219,9 +225,9 @@ object PlanGoal:
     */
   final case class Work(
       title: Option[Work.Title],
-      year: Option[com.histmersion.Year],
+      year: Option[Year],
       authors: List[Work.Authors],
-      citekey: Option[com.histmersion.domain.library.Citekey],
+      citekey: Option[Citekey],
       inDb: Work.InDb,
       isOa: Work.IsOa,
       isRetracted: Work.IsRetracted
@@ -229,20 +235,20 @@ object PlanGoal:
 
   object Work:
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Authors = Authors.T
-    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Authors extends RefinedType[String, Pure]
     type InDb = InDb.T
-    object InDb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object InDb extends RefinedType[Boolean, Pure]
     type IsOa = IsOa.T
-    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object IsOa extends RefinedType[Boolean, Pure]
     type IsRetracted = IsRetracted.T
-    object IsRetracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object IsRetracted extends RefinedType[Boolean, Pure]
 
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
   type Lookup = Doi => Either[Problem, Work]
 
-  def verify(p: Proposed, goal: com.histmersion.domain.automation.Goal.Slug, lookup: Lookup): Plan =
+  def verify(p: Proposed, goal: Goal.Slug, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))
     val works = looked.collect {
       case (w, Right(r)) if !r.isRetracted.value =>
@@ -275,26 +281,26 @@ object PlanGoal:
   /** The acquisition item a planned work outside the corpus becomes. The DOI is written as a resolver URL so
     * [[Scheduling.dois]] (and a person) find it again.
     */
-  def acquireText(w: PlannedWork, goal: com.histmersion.domain.automation.Goal.Slug): com.histmersion.domain.PlanGoal.AcquireText =
+  def acquireText(w: PlannedWork, goal: Goal.Slug): AcquireText =
     val who = w.authors.headOption.map(a => if w.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, w.year.map(y => s"($y)")).flatten.mkString(" ")
     val title = w.title.fold(w.doi.value)(_.value)
     val why = Option(w.why).map(_.value.trim).filter(_.nonEmpty).fold("")(r => s": $r")
-    com.histmersion.domain.PlanGoal.AcquireText(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/${w.doi} — for goal $goal$why")
+    AcquireText(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/${w.doi} — for goal $goal$why")
 
   /** The log line of an applied (or rejected) plan. */
   def logLine(
-      goal: com.histmersion.domain.automation.Goal.Slug,
+      goal: Goal.Slug,
       plan: Plan,
-      approved: com.histmersion.domain.PlanGoal.Approved,
-      created: com.histmersion.domain.PlanGoal.CreatedCount,
-      linked: com.histmersion.domain.PlanGoal.LinkedCount,
-      queued: com.histmersion.domain.PlanGoal.QueuedCount,
-      runId: com.histmersion.domain.automation.Run.Id
-  ): com.histmersion.domain.PlanGoal.LogLine =
-    if !approved.value then com.histmersion.domain.PlanGoal.LogLine(s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.value.take(8)})")
+      approved: Approved,
+      created: CreatedCount,
+      linked: LinkedCount,
+      queued: QueuedCount,
+      runId: Run.Id
+  ): LogLine =
+    if !approved.value then LogLine(s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.value.take(8)})")
     else
-      com.histmersion.domain.PlanGoal.LogLine(
+      LogLine(
         s"plan-goal $goal: approved — $created sub-goal(s), ${plan.queries.size} query link(s), " +
           s"$linked work(s) in the corpus linked, $queued queued for acquisition (agent run ${runId.value.take(8)})"
       )

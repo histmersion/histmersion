@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.library.Citekey
@@ -14,6 +15,10 @@ import sttp.tapir.Schema
 
 import com.histmersion.api.research.Article.Plans.{ArticlePlan, ProposedArticle}
 import com.histmersion.api.research.Article
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.Run
 
 /** The `propose-articles` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (b), phase
   * 2): a planner proposes the articles a research area (a goal) should have — each a new slug, a title, a kind and the
@@ -23,13 +28,13 @@ import com.histmersion.api.research.Article
   */
 object PlanArticles:
   type LastRound = LastRound.T
-  object LastRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastRound extends RefinedType[Boolean, Pure]
   type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogLine extends RefinedType[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Outcome extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
 
 
@@ -40,23 +45,23 @@ object PlanArticles:
       query: Option[ArticleAnswer.Query] = None,
       topics: List[ArticleAnswer.Topics] = Nil,
       tags: List[ArticleAnswer.Tags] = Nil,
-      why: ArticleAnswer.Why = com.histmersion.domain.PlanArticles.ArticleAnswer.Why("")
+      why: ArticleAnswer.Why = ArticleAnswer.Why("")
   ) derives KindlingsCodecAsObject
   object ArticleAnswer:
     type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Slug extends RefinedType[String, Pure]
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Query extends RefinedType[String, Pure]
     type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Topics extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
     given Schema[ArticleAnswer] = KindlingsSchema
       .derived[ArticleAnswer]
@@ -74,7 +79,7 @@ object PlanArticles:
   final case class ArticlesAnswer(rationale: ArticlesAnswer.Rationale, articles: List[ArticleAnswer] = Nil) derives KindlingsCodecAsObject
   object ArticlesAnswer:
     type Rationale = Rationale.T
-    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rationale extends RefinedType[String, Pure]
 
     given Schema[ArticlesAnswer] = KindlingsSchema
       .derived[ArticlesAnswer]
@@ -89,11 +94,11 @@ object PlanArticles:
 
   object Limits:
     type MinSources = MinSources.T
-    object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinSources extends RefinedType[Int, Pure]
     type MaxOverlap = MaxOverlap.T
-    object MaxOverlap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxOverlap extends RefinedType[Double, Pure]
     type MaxArticles = MaxArticles.T
-    object MaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxArticles extends RefinedType[Int, Pure]
 
   /** One proposal whose shape passed: what [[verify]] measures. */
   final case class Candidate(
@@ -158,7 +163,7 @@ object PlanArticles:
     * is kept, and the next ones are measured against it too.
     */
   def verify(
-      goal: com.histmersion.domain.automation.Goal.Slug,
+      goal: Goal.Slug,
       rationale: ArticlesAnswer.Rationale,
       cs: List[Candidate],
       dropped: List[ArticlePlan.Dropped],
@@ -226,7 +231,7 @@ object PlanArticles:
     loop(cs, Vector.empty, Vector.empty)
 
   /** The worklog line of a run. */
-  def logLine(goal: com.histmersion.domain.automation.Goal.Slug, plan: ArticlePlan, outcome: Outcome, runId: com.histmersion.domain.automation.Run.Id): LogLine =
+  def logLine(goal: Goal.Slug, plan: ArticlePlan, outcome: Outcome, runId: Run.Id): LogLine =
     LogLine(
       s"propose-articles $goal: ${Plural.count(Plural.CountN(plan.articles.size.toLong), Plural.CountSingular("article"))} proposed, ${plan.dropped.size} dropped — $outcome " +
         s"(agent run ${runId.value.take(8)})"

@@ -1,4 +1,5 @@
-package com.histmersion.util.time
+package com.histmersion
+package util.time
 
 import scala.concurrent.duration.*
 

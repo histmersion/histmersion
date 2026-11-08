@@ -1,4 +1,8 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SchedulerDefaults(
     strategy: SchedulerDefaults.Strategy,
@@ -14,20 +18,20 @@ final case class SchedulerDefaults(
 
 object SchedulerDefaults:
   type Strategy = Strategy.T
-  object Strategy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Strategy extends RefinedType[String, Pure]
   type AgingHours = AgingHours.T
-  object AgingHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AgingHours extends RefinedType[Int, Pure]
   type MaxWaitHours = MaxWaitHours.T
-  object MaxWaitHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxWaitHours extends RefinedType[Int, Pure]
   type MinShare = MinShare.T
-  object MinShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinShare extends RefinedType[Double, Pure]
   type BuiltInWeights = BuiltInWeights.T
-  object BuiltInWeights extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BuiltInWeights extends RefinedType[String, Pure]
   type TypeWeights = TypeWeights.T
-  object TypeWeights extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TypeWeights extends RefinedType[String, Pure]
   type BuiltInPriorities = BuiltInPriorities.T
-  object BuiltInPriorities extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BuiltInPriorities extends RefinedType[String, Pure]
   type TypePriorities = TypePriorities.T
-  object TypePriorities extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TypePriorities extends RefinedType[String, Pure]
   type GatheringSlots = GatheringSlots.T
-  object GatheringSlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GatheringSlots extends RefinedType[Int, Pure]

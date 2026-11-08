@@ -1,8 +1,14 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import scala.annotation.tailrec
 import com.histmersion.util.text.Fingerprint
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.Title
+import com.histmersion.domain.AuthorName
+import com.histmersion.domain.library.Isbn
 
 /** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding, OpenRefine
   * fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash. All pure; JVM-only because of
@@ -12,39 +18,39 @@ object MergeText:
 
   /** A name, title or venue as written, before it is folded for comparison. */
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
   /** A text in lower case with its diacritics removed (`Güterbock` → `guterbock`). */
   type Folded = Folded.T
-  object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Folded extends RefinedType[String, Pure]
 
   /** One folded alphanumeric word. */
   type Token = Token.T
-  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Token extends RefinedType[String, Pure]
 
   /** A text as its folded words joined by single spaces. */
   type Words = Words.T
-  object Words extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Words extends RefinedType[String, Pure]
 
   /** The blocking key of a title: its first three significant words, sorted. */
   type TitleKey = TitleKey.T
-  object TitleKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TitleKey extends RefinedType[String, Pure]
 
   /** A surname as one word (`lopezruiz`), or its last word. */
   type SurnameKey = SurnameKey.T
-  object SurnameKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SurnameKey extends RefinedType[String, Pure]
 
   /** How alike two texts are, in [0, 1]. */
   type Similarity = Similarity.T
-  object Similarity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Similarity extends RefinedType[Double, Pure]
 
   /** A DOI as a source writes it: bare, `doi:`-prefixed or as a resolver URL. */
   type WrittenDoi = WrittenDoi.T
-  object WrittenDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WrittenDoi extends RefinedType[String, Pure]
 
   /** A DOI as a key: no resolver prefix, no `doi:`, lower case. */
   type DoiKey = DoiKey.T
-  object DoiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DoiKey extends RefinedType[String, Pure]
 
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
 
@@ -118,13 +124,13 @@ object MergeText:
   // ── titles ───────────────────────────────────────────────────────────────────────────────────
 
   /** The main title: cut at the first `:`, ` - `, ` — `, ` – ` or `. ` (a subtitle follows). */
-  def mainTitle(title: com.histmersion.domain.Title): com.histmersion.domain.Title =
+  def mainTitle(title: Title): Title =
     val text = title.value
     val cuts = List(":", " - ", " — ", " – ", ". ", "? ").flatMap(c => Option(text.indexOf(c)).filter(_ > 0))
-    com.histmersion.domain.Title(cuts.minOption.fold(text)(i => text.take(i)).trim)
+    Title(cuts.minOption.fold(text)(i => text.take(i)).trim)
 
   /** The blocking key of a title: the first three significant tokens of the main title, sorted. */
-  def titleKey(title: com.histmersion.domain.Title): TitleKey =
+  def titleKey(title: Title): TitleKey =
     TitleKey(significant(tokens(Text(mainTitle(title).value))).take(3).map(_.value).sorted.mkString(" "))
 
   // ── personal names ───────────────────────────────────────────────────────────────────────────
@@ -140,7 +146,7 @@ object MergeText:
 
   object Person:
     type SurnameKnown = SurnameKnown.T
-    object SurnameKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SurnameKnown extends RefinedType[Boolean, Pure]
 
   /** Words that belong to a surname when they come before it (`van`, `de la`). */
   private val particles: Set[String] =
@@ -179,7 +185,7 @@ object MergeText:
     * Jr./Sr. are dropped; hyphens split a double surname into its words, so `López-Ruiz` and `Lopez Ruiz` compare
     * equal. `None` for an empty name.
     */
-  def person(name: com.histmersion.domain.AuthorName): Option[Person] =
+  def person(name: AuthorName): Option[Person] =
     val raw = name.value
     val parts = raw.split(",").toList.map(_.trim).filter(_.nonEmpty)
     parts match
@@ -224,14 +230,14 @@ object MergeText:
     }
 
   /** The blocking keys of a first author: the surname as one word and its last word. */
-  def surnameKeys(name: com.histmersion.domain.AuthorName): Set[SurnameKey] =
+  def surnameKeys(name: AuthorName): Set[SurnameKey] =
     person(name).toSet.flatMap(p => Set(p.key, SurnameKey(p.surname.last.value)))
 
   /** How two author lists agree, as the score of §5.2 reads it. */
   enum AuthorAgreement:
     case Same, FirstAuthor, Overlap, Disjoint, Unknown
 
-  def authors(a: List[com.histmersion.domain.AuthorName], b: List[com.histmersion.domain.AuthorName]): AuthorAgreement =
+  def authors(a: List[AuthorName], b: List[AuthorName]): AuthorAgreement =
     val pa = a.flatMap(person)
     val pb = b.flatMap(person)
     if pa.isEmpty || pb.isEmpty then AuthorAgreement.Unknown
@@ -294,17 +300,17 @@ object MergeText:
     ).filter(_.nonEmpty).map(k => DoiKey(k))
 
   /** An ISBN as ISBN-13 digits; an ISBN-10 is converted. `None` when it is not a valid ISBN. */
-  def isbn13(raw: com.histmersion.domain.library.Isbn): Option[com.histmersion.domain.library.Isbn] =
+  def isbn13(raw: Isbn): Option[Isbn] =
     val s = raw.value.filter(c => c.isDigit || c == 'X' || c == 'x').toUpperCase(java.util.Locale.ROOT)
     def check13(d: String): Boolean =
       d.length == 13 && d.forall(_.isDigit) &&
         d.zipWithIndex.map((c, i) => (c - '0') * (if i % 2 == 0 then 1 else 3)).sum % 10 == 0
-    if s.length == 13 then Option.when(check13(s))(com.histmersion.domain.library.Isbn(s))
+    if s.length == 13 then Option.when(check13(s))(Isbn(s))
     else if s.length == 10 && s.init.forall(_.isDigit) then
       val ok = s.zipWithIndex.map((c, i) => (if c == 'X' then 10 else c - '0') * (10 - i)).sum % 11 == 0
       Option.when(ok) {
         val core = "978" + s.init
         val sum = core.zipWithIndex.map((c, i) => (c - '0') * (if i % 2 == 0 then 1 else 3)).sum
-        com.histmersion.domain.library.Isbn(core + ((10 - sum % 10) % 10).toString)
+        Isbn(core + ((10 - sum % 10) % 10).toString)
       }
     else None

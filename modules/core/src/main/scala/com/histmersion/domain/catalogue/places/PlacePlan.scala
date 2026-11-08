@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -27,9 +28,9 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   private val lr = List(km.KeepLeft, km.KeepRight)
   private val localPlace = in.local.places.map(p => p.uid -> p).toMap
   private val placeLine =
-    scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Place]
+    scala.collection.mutable.Map.empty[UUID, BundleEntities => Bundle.Place]
   private val renames =
-    scala.collection.mutable.ListBuffer.empty[(com.histmersion.api.exchange.Bundle.Place, Bundle.Place.Id, Boolean)]
+    scala.collection.mutable.ListBuffer.empty[(Bundle.Place, Bundle.Place.Id, Boolean)]
   private def placeIn(es: BundleEntities, u: UUID) = es.places.find(_.uid == u).get
 
   /** The same place: ours, with the bundle's names, parents, external ids and types. */
@@ -127,7 +128,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.places)
       .setTo(
-        MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: com.histmersion.api.exchange.Bundle.Place) => true)
+        MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: Bundle.Place) => true)
       )
 
 object PlacePlan:
@@ -153,10 +154,10 @@ object PlacePlan:
     * place a redirect maps (`mapped`) is localized already. Pure.
     */
   def renamedPlaces(
-      bundle: List[com.histmersion.api.exchange.Bundle.Place],
-      here: List[com.histmersion.api.exchange.Bundle.Place],
+      bundle: List[Bundle.Place],
+      here: List[Bundle.Place],
       mapped: Set[UUID]
-  ): List[(com.histmersion.api.exchange.Bundle.Place, Bundle.Place.Id, Boolean)] =
+  ): List[(Bundle.Place, Bundle.Place.Id, Boolean)] =
     val ourId = here.map(p => p.uid -> p.id).toMap
     val owner = here.map(p => p.id -> p.uid).toMap
     bundle
@@ -168,16 +169,16 @@ object PlacePlan:
       )
 
   /** What decides whether two records of one place id are the same place: where and when. */
-  def samePlace(l: com.histmersion.api.exchange.Bundle.Place, r: com.histmersion.api.exchange.Bundle.Place): Boolean =
+  def samePlace(l: Bundle.Place, r: Bundle.Place): Boolean =
     l.geom == r.geom && l.period == r.period
 
   /** One place out of two that are the same place: ours, with the bundle's names, parents, external ids and types that
     * ours lacks.
     */
   def foldPlace(
-      l: com.histmersion.api.exchange.Bundle.Place,
-      r: com.histmersion.api.exchange.Bundle.Place
-  ): com.histmersion.api.exchange.Bundle.Place =
+      l: Bundle.Place,
+      r: Bundle.Place
+  ): Bundle.Place =
     l.modify(
       _.names).setTo((l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
         .sortBy(n => (n.name.value, n.lang.fold("")(_.value)))).modify(_.relations).setTo((l.relations ++ r.relations.filterNot(x =>

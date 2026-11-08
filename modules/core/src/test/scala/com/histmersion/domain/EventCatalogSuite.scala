@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -14,6 +15,16 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.api.catalogue.{CatalogRecord, EventCount, EventImportReport, EventTaxonomy}
+import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.domain.catalogue.events.EventProviders
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.catalogue.events.CatalogMerge
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.domain.catalogue.events.StoredEvent
+import com.histmersion.api.catalogue.EventEntry
+import com.histmersion.api.catalogue.CatalogProviderInfo
 
 /** #1449, the host's pure half: the kind taxonomy, the thresholds, and the merge of records into one event per thing.
   * The catalogues' own answers are their plugins' suites'.
@@ -37,69 +48,69 @@ class EventCatalogSuite extends munit.FunSuite:
       "invasion"
     )
     first.foreach { k =>
-      val e = EventTaxonomy.of(com.histmersion.api.catalogue.EventSummary.Kind(k))
+      val e = EventTaxonomy.of(EventSummary.Kind(k))
       assert(EventTaxonomy.kinds.exists(_.kind == e.kind), s"$k → ${e.kind} is not a kind of the table")
       assert(e.icon.value.nonEmpty)
     }
-    assertEquals(EventTaxonomy.canonical(com.histmersion.api.catalogue.EventSummary.Kind("diplomatic_era")), EventTaxonomy.Era)
-    assertEquals(EventTaxonomy.canonical(com.histmersion.api.catalogue.EventSummary.Kind("Naval battle")), EventTaxonomy.NavalBattle)
-    assertEquals(EventTaxonomy.canonical(com.histmersion.api.catalogue.EventSummary.Kind("Rebellion")), EventTaxonomy.Revolt)
-    assertEquals(EventTaxonomy.group(com.histmersion.api.catalogue.EventSummary.Kind("eruption")), EventTaxonomy.Natural)
-    assertEquals(EventTaxonomy.group(com.histmersion.api.catalogue.EventSummary.Kind("siege")), EventTaxonomy.Human)
-    assertEquals(EventTaxonomy.group(com.histmersion.api.catalogue.EventSummary.Kind("coronation")), EventTaxonomy.Human, "an unknown kind is human, generic icon")
-    assertEquals(EventTaxonomy.icon(com.histmersion.api.catalogue.EventSummary.Kind("coronation")), "circle-dot")
+    assertEquals(EventTaxonomy.canonical(EventSummary.Kind("diplomatic_era")), EventTaxonomy.Era)
+    assertEquals(EventTaxonomy.canonical(EventSummary.Kind("Naval battle")), EventTaxonomy.NavalBattle)
+    assertEquals(EventTaxonomy.canonical(EventSummary.Kind("Rebellion")), EventTaxonomy.Revolt)
+    assertEquals(EventTaxonomy.group(EventSummary.Kind("eruption")), EventTaxonomy.Natural)
+    assertEquals(EventTaxonomy.group(EventSummary.Kind("siege")), EventTaxonomy.Human)
+    assertEquals(EventTaxonomy.group(EventSummary.Kind("coronation")), EventTaxonomy.Human, "an unknown kind is human, generic icon")
+    assertEquals(EventTaxonomy.icon(EventSummary.Kind("coronation")), "circle-dot")
 
   test("a natural_disaster becomes the sub-kind its label names, else stays generic"):
-    assertEquals(EventTaxonomy.refine(com.histmersion.api.catalogue.EventSummary.Kind("natural_disaster"), com.histmersion.api.catalogue.EventSummary.Label("Minoan eruption of Thera")), "eruption")
-    assertEquals(EventTaxonomy.refine(com.histmersion.api.catalogue.EventSummary.Kind("natural_disaster"), com.histmersion.api.catalogue.EventSummary.Label("4.2 kiloyear climate event")), "climate_event")
-    assertEquals(EventTaxonomy.refine(com.histmersion.api.catalogue.EventSummary.Kind("natural_disaster"), com.histmersion.api.catalogue.EventSummary.Label("Severe drought coincident with Hittite collapse")), "drought")
-    assertEquals(EventTaxonomy.refine(com.histmersion.api.catalogue.EventSummary.Kind("natural_disaster"), com.histmersion.api.catalogue.EventSummary.Label("Late Bronze Age environmental crisis")), "natural_disaster")
-    assertEquals(EventTaxonomy.refine(com.histmersion.api.catalogue.EventSummary.Kind("battle"), com.histmersion.api.catalogue.EventSummary.Label("Battle near a volcano")), "battle", "only the generic kind is refined")
+    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Minoan eruption of Thera")), "eruption")
+    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("4.2 kiloyear climate event")), "climate_event")
+    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Severe drought coincident with Hittite collapse")), "drought")
+    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Late Bronze Age environmental crisis")), "natural_disaster")
+    assertEquals(EventTaxonomy.refine(EventSummary.Kind("battle"), EventSummary.Label("Battle near a volcano")), "battle", "only the generic kind is refined")
 
   test("a kind filter: a group selects its kinds (human = every non-natural one), a kind its aliases"):
-    val nat = EventTaxonomy.condition(Some(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("natural"))).get
+    val nat = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("natural"))).get
     assert(!nat.negate.value && nat.kinds.contains("eruption") && nat.kinds.contains("plague"))
-    val hum = EventTaxonomy.condition(Some(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("human"))).get
+    val hum = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("human"))).get
     assert(hum.negate.value && hum.kinds == nat.kinds)
-    assertEquals(EventTaxonomy.condition(Some(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("revolt"))).get.kinds.toSet, Set("revolt", "rebellion", "uprising"))
-    assertEquals(EventTaxonomy.condition(Some(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter(" "))), None)
-    assert(EventTaxonomy.matches(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("natural"), com.histmersion.api.catalogue.EventSummary.Kind("tsunami")) && !EventTaxonomy.matches(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("human"), com.histmersion.api.catalogue.EventSummary.Kind("tsunami")))
+    assertEquals(EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("revolt"))).get.kinds.toSet, Set("revolt", "rebellion", "uprising"))
+    assertEquals(EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter(" "))), None)
+    assert(EventTaxonomy.matches(EventTaxonomy.KindCondition.Filter("natural"), EventSummary.Kind("tsunami")) && !EventTaxonomy.matches(EventTaxonomy.KindCondition.Filter("human"), EventSummary.Kind("tsunami")))
 
   test("thresholds: all inside the region, large ones outside, nothing without a position"):
-    val region = BBox.parse(com.histmersion.api.BBox.Text("-25,20,90,70"))
-    val t = EventProviders.Thresholds(region, com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionVei(0), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideVei(4), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionMagnitude(0), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideMagnitude(6.5))
-    def erup(lat: com.histmersion.api.catalogue.Latitude, lon: com.histmersion.api.catalogue.Longitude, vei: Option[CatalogRecord.Vei]) =
+    val region = BBox.parse(BBox.Text("-25,20,90,70"))
+    val t = EventProviders.Thresholds(region, EventProviders.Thresholds.RegionVei(0), EventProviders.Thresholds.OutsideVei(4), EventProviders.Thresholds.RegionMagnitude(0), EventProviders.Thresholds.OutsideMagnitude(6.5))
+    def erup(lat: Latitude, lon: Longitude, vei: Option[CatalogRecord.Vei]) =
       CatalogRecord(
-        com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"),
-        com.histmersion.api.catalogue.CatalogRecord.ProviderId("1"),
-        com.histmersion.api.catalogue.CatalogRecord.Url(""),
-        com.histmersion.api.catalogue.CatalogRecord.Label("x"),
-        com.histmersion.api.catalogue.CatalogRecord.Kind("eruption"),
-        TimeSpan(Some(com.histmersion.api.catalogue.Year(-1)), None, None, Some(com.histmersion.api.catalogue.Year(-1))),
+        CatalogRecord.Provider("gvp"),
+        CatalogRecord.ProviderId("1"),
+        CatalogRecord.Url(""),
+        CatalogRecord.Label("x"),
+        CatalogRecord.Kind("eruption"),
+        TimeSpan(Some(Year(-1)), None, None, Some(Year(-1))),
         Some(lat),
         Some(lon),
         vei = vei
       )
-    assert(EventProviders.keep(erup(com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(25), Some(CatalogRecord.Vei(1))), t).isRight)
-    assert(EventProviders.keep(erup(com.histmersion.api.catalogue.Latitude(-10), com.histmersion.api.catalogue.Longitude(120), Some(CatalogRecord.Vei(3))), t).isLeft)
-    assert(EventProviders.keep(erup(com.histmersion.api.catalogue.Latitude(-10), com.histmersion.api.catalogue.Longitude(120), Some(CatalogRecord.Vei(4))), t).isRight)
-    assert(EventProviders.keep(erup(com.histmersion.api.catalogue.Latitude(-10), com.histmersion.api.catalogue.Longitude(120), None), t).isLeft)
-    assertEquals(EventProviders.keep(erup(com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(25), None).modify(_.lat).setTo(None: Option[com.histmersion.api.catalogue.Latitude]), t), Left("no position"))
+    assert(EventProviders.keep(erup(Latitude(37), Longitude(25), Some(CatalogRecord.Vei(1))), t).isRight)
+    assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), Some(CatalogRecord.Vei(3))), t).isLeft)
+    assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), Some(CatalogRecord.Vei(4))), t).isRight)
+    assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), None), t).isLeft)
+    assertEquals(EventProviders.keep(erup(Latitude(37), Longitude(25), None).modify(_.lat).setTo(None: Option[Latitude]), t), Left("no position"))
     assertEquals(
-      EventProviders.keep(erup(com.histmersion.api.catalogue.Latitude(37), com.histmersion.api.catalogue.Longitude(25), Some(CatalogRecord.Vei(5))), t.modify(_.area).setTo(BBox.parse(BBox.Text("0,0,10,10")))),
+      EventProviders.keep(erup(Latitude(37), Longitude(25), Some(CatalogRecord.Vei(5))), t.modify(_.area).setTo(BBox.parse(BBox.Text("0,0,10,10")))),
       Left("outside --bbox")
     )
 
   test("thresholds over the default region, the world: a small eruption or quake anywhere is kept"):
-    val world = EventProviders.Thresholds(BBox.parse(com.histmersion.api.BBox.Text("-180,-90,180,90")), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionVei(0), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideVei(4), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionMagnitude(0), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideMagnitude(6.5))
-    def at(kind: CatalogRecord.Kind, lat: com.histmersion.api.catalogue.Latitude, lon: com.histmersion.api.catalogue.Longitude) =
+    val world = EventProviders.Thresholds(BBox.parse(BBox.Text("-180,-90,180,90")), EventProviders.Thresholds.RegionVei(0), EventProviders.Thresholds.OutsideVei(4), EventProviders.Thresholds.RegionMagnitude(0), EventProviders.Thresholds.OutsideMagnitude(6.5))
+    def at(kind: CatalogRecord.Kind, lat: Latitude, lon: Longitude) =
       CatalogRecord(
-        com.histmersion.api.catalogue.CatalogRecord.Provider("x"),
-        com.histmersion.api.catalogue.CatalogRecord.ProviderId("1"),
-        com.histmersion.api.catalogue.CatalogRecord.Url(""),
-        com.histmersion.api.catalogue.CatalogRecord.Label("x"),
+        CatalogRecord.Provider("x"),
+        CatalogRecord.ProviderId("1"),
+        CatalogRecord.Url(""),
+        CatalogRecord.Label("x"),
         kind,
-        TimeSpan(Some(com.histmersion.api.catalogue.Year(-1)), None, None, Some(com.histmersion.api.catalogue.Year(-1))),
+        TimeSpan(Some(Year(-1)), None, None, Some(Year(-1))),
         Some(lat),
         Some(lon),
         vei = Some(CatalogRecord.Vei(1)),
@@ -112,28 +123,28 @@ class EventCatalogSuite extends munit.FunSuite:
         (35.4, 138.7),
         (-3.1, 37.4),
         (64.0, -19.0)
-      ).map((la, lo) => (com.histmersion.api.catalogue.Latitude(la), com.histmersion.api.catalogue.Longitude(lo)))
+      ).map((la, lo) => (Latitude(la), Longitude(lo)))
     do
       assert(EventProviders.keep(at(CatalogRecord.Kind("eruption"), lat, lon), world).isRight, s"eruption at $lat,$lon")
       assert(EventProviders.keep(at(CatalogRecord.Kind("earthquake"), lat, lon), world).isRight, s"earthquake at $lat,$lon")
 
   // ── merging ─────────────────────────────────────────────────────────────────────────────────
 
-  private val tol = CatalogMerge.Tolerance(com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(60), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(30))
+  private val tol = CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
   private def rec(
       p: CatalogRecord.Provider,
       id: CatalogRecord.ProviderId,
       kind: CatalogRecord.Kind,
-      y: com.histmersion.api.catalogue.Year,
-      lat: com.histmersion.api.catalogue.Latitude,
-      lon: com.histmersion.api.catalogue.Longitude,
+      y: Year,
+      lat: Latitude,
+      lon: Longitude,
       wd: Option[CatalogRecord.Wikidata] = None,
       group: Option[CatalogRecord.Group] = None
   ) =
     CatalogRecord(
       p,
       id,
-      com.histmersion.api.catalogue.CatalogRecord.Url(""),
+      CatalogRecord.Url(""),
       CatalogRecord.Label(s"$p $id"),
       kind,
       TimeSpan(Some(y), Some(y), Some(y), Some(y)),
@@ -144,51 +155,51 @@ class EventCatalogSuite extends munit.FunSuite:
     )
 
   test("merge: one catalogue's two records are two events; another catalogue's record of the same thing joins"):
-    val a = rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), CatalogRecord.Kind("eruption"), com.histmersion.api.catalogue.Year(-1610), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4), group = Some(CatalogRecord.Group("volcano:212040")))
-    val b = rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("2"), CatalogRecord.Kind("eruption"), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4), group = Some(CatalogRecord.Group("volcano:212040")))
-    val c = rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:1351"), CatalogRecord.Kind("eruption"), com.histmersion.api.catalogue.Year(-1610), com.histmersion.api.catalogue.Latitude(36.404), com.histmersion.api.catalogue.Longitude(25.396), group = Some(CatalogRecord.Group("volcano:212040")))
+    val a = rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), CatalogRecord.Kind("eruption"), Year(-1610), Latitude(36.4), Longitude(25.4), group = Some(CatalogRecord.Group("volcano:212040")))
+    val b = rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("2"), CatalogRecord.Kind("eruption"), Year(-1600), Latitude(36.4), Longitude(25.4), group = Some(CatalogRecord.Group("volcano:212040")))
+    val c = rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:1351"), CatalogRecord.Kind("eruption"), Year(-1610), Latitude(36.404), Longitude(25.396), group = Some(CatalogRecord.Group("volcano:212040")))
     val placed = CatalogMerge.place(List(a, b, c), Nil, tol)
     assertEquals(placed.map(_._2.eventId), List("gvp_1", "gvp_2", "gvp_1"))
     assert(placed(2)._2.isInstanceOf[CatalogMerge.Placement.New])
 
   test("merge: a stored event is matched by key, by Wikidata item, or by kind+time+space — never by another kind"):
     val compiled = StoredEvent(
-      com.histmersion.domain.catalogue.Event.Id("thera_eruption"),
-      com.histmersion.domain.catalogue.events.StoredEvent.Kind("eruption"),
-      TimeSpan(Some(com.histmersion.api.catalogue.Year(-1620)), None, None, Some(com.histmersion.api.catalogue.Year(-1600))),
+      Event.Id("thera_eruption"),
+      StoredEvent.Kind("eruption"),
+      TimeSpan(Some(Year(-1620)), None, None, Some(Year(-1600))),
       Some(com.histmersion.Latitude(36.4)),
       Some(com.histmersion.Longitude(25.4)),
       None,
       Set.empty,
-      catalogue = com.histmersion.domain.catalogue.events.StoredEvent.Catalogue(false)
+      catalogue = StoredEvent.Catalogue(false)
     )
     val battle = StoredEvent(
-      com.histmersion.domain.catalogue.Event.Id("alesia"),
-      com.histmersion.domain.catalogue.events.StoredEvent.Kind("battle"),
-      TimeSpan(Some(com.histmersion.api.catalogue.Year(-52)), None, None, Some(com.histmersion.api.catalogue.Year(-52))),
+      Event.Id("alesia"),
+      StoredEvent.Kind("battle"),
+      TimeSpan(Some(Year(-52)), None, None, Some(Year(-52))),
       Some(com.histmersion.Latitude(47.5)),
       Some(com.histmersion.Longitude(4.5)),
-      Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q131386")),
+      Some(EventEntry.Wikidata("Q131386")),
       Set.empty,
-      catalogue = com.histmersion.domain.catalogue.events.StoredEvent.Catalogue(false)
+      catalogue = StoredEvent.Catalogue(false)
     )
     val known = StoredEvent(
-      com.histmersion.domain.catalogue.Event.Id("gvp_9"),
-      com.histmersion.domain.catalogue.events.StoredEvent.Kind("eruption"),
-      TimeSpan(Some(com.histmersion.api.catalogue.Year(-79)), None, None, Some(com.histmersion.api.catalogue.Year(-79))),
+      Event.Id("gvp_9"),
+      StoredEvent.Kind("eruption"),
+      TimeSpan(Some(Year(-79)), None, None, Some(Year(-79))),
       Some(com.histmersion.Latitude(40.8)),
       Some(com.histmersion.Longitude(14.4)),
       None,
       Set(CatalogRecord.Provider("gvp") -> CatalogRecord.ProviderId("9")),
-      catalogue = com.histmersion.domain.catalogue.events.StoredEvent.Catalogue(true)
+      catalogue = StoredEvent.Catalogue(true)
     )
     val stored = List(compiled, battle, known)
     val placed = CatalogMerge.place(
       List(
-        rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), CatalogRecord.Kind("eruption"), com.histmersion.api.catalogue.Year(-1610), com.histmersion.api.catalogue.Latitude(36.41), com.histmersion.api.catalogue.Longitude(25.39)),
-        rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q131386"), CatalogRecord.Kind("siege"), com.histmersion.api.catalogue.Year(-52), com.histmersion.api.catalogue.Latitude(10), com.histmersion.api.catalogue.Longitude(10), wd = Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q131386"))),
-        rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("9"), CatalogRecord.Kind("eruption"), com.histmersion.api.catalogue.Year(-79), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0)),
-        rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("earthquake:5"), CatalogRecord.Kind("earthquake"), com.histmersion.api.catalogue.Year(-1610), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4))
+        rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), CatalogRecord.Kind("eruption"), Year(-1610), Latitude(36.41), Longitude(25.39)),
+        rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q131386"), CatalogRecord.Kind("siege"), Year(-52), Latitude(10), Longitude(10), wd = Some(EventEntry.Wikidata("Q131386"))),
+        rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("9"), CatalogRecord.Kind("eruption"), Year(-79), Latitude(0), Longitude(0)),
+        rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("earthquake:5"), CatalogRecord.Kind("earthquake"), Year(-1610), Latitude(36.4), Longitude(25.4))
       ),
       stored,
       tol
@@ -198,47 +209,47 @@ class EventCatalogSuite extends munit.FunSuite:
 
   test("merge: a stored event that a record of the SAME catalogue made is no match for another of its records"):
     val g1 = StoredEvent(
-      com.histmersion.domain.catalogue.Event.Id("gvp_1"),
-      com.histmersion.domain.catalogue.events.StoredEvent.Kind("eruption"),
-      TimeSpan(Some(com.histmersion.api.catalogue.Year(-1610)), None, None, Some(com.histmersion.api.catalogue.Year(-1610))),
+      Event.Id("gvp_1"),
+      StoredEvent.Kind("eruption"),
+      TimeSpan(Some(Year(-1610)), None, None, Some(Year(-1610))),
       Some(com.histmersion.Latitude(36.4)),
       Some(com.histmersion.Longitude(25.4)),
       None,
       Set(CatalogRecord.Provider("gvp") -> CatalogRecord.ProviderId("1")),
-      catalogue = com.histmersion.domain.catalogue.events.StoredEvent.Catalogue(true)
+      catalogue = StoredEvent.Catalogue(true)
     )
-    val placed = CatalogMerge.place(List(rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("2"), CatalogRecord.Kind("eruption"), com.histmersion.api.catalogue.Year(-1605), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4))), List(g1), tol)
+    val placed = CatalogMerge.place(List(rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("2"), CatalogRecord.Kind("eruption"), Year(-1605), Latitude(36.4), Longitude(25.4))), List(g1), tol)
     assertEquals(placed.head._2.eventId, "gvp_2")
 
   test("event ids from records are stable and safe"):
-    assertEquals(CatalogRecord.eventId(rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:1351"), CatalogRecord.Kind("eruption"), com.histmersion.api.catalogue.Year(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0))), "noaa_volcano_1351")
-    assertEquals(CatalogRecord.eventId(rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q131386"), CatalogRecord.Kind("battle"), com.histmersion.api.catalogue.Year(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0))), "wikidata_q131386")
+    assertEquals(CatalogRecord.eventId(rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:1351"), CatalogRecord.Kind("eruption"), Year(0), Latitude(0), Longitude(0))), "noaa_volcano_1351")
+    assertEquals(CatalogRecord.eventId(rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q131386"), CatalogRecord.Kind("battle"), Year(0), Latitude(0), Longitude(0))), "wikidata_q131386")
 
   test("an import report adds up and reads as one line"):
     val a = EventImportReport(
-      com.histmersion.api.catalogue.EventImportReport.Provider("gvp"),
-      dryRun = com.histmersion.api.catalogue.EventImportReport.DryRun(true),
-      records = com.histmersion.api.catalogue.EventImportReport.Records(10),
-      kept = com.histmersion.api.catalogue.EventImportReport.Kept(4),
-      created = com.histmersion.api.catalogue.EventImportReport.Created(3),
-      merged = com.histmersion.api.catalogue.EventImportReport.Merged(1),
-      byKind = List(EventCount(com.histmersion.api.catalogue.EventCount.Key("eruption"), com.histmersion.api.catalogue.EventCount.N(4))),
-      skipped = List(EventCount(com.histmersion.api.catalogue.EventCount.Key("no position"), com.histmersion.api.catalogue.EventCount.N(6))),
-      parts = com.histmersion.api.catalogue.EventImportReport.Parts(1)
+      EventImportReport.Provider("gvp"),
+      dryRun = EventImportReport.DryRun(true),
+      records = EventImportReport.Records(10),
+      kept = EventImportReport.Kept(4),
+      created = EventImportReport.Created(3),
+      merged = EventImportReport.Merged(1),
+      byKind = List(EventCount(EventCount.Key("eruption"), EventCount.N(4))),
+      skipped = List(EventCount(EventCount.Key("no position"), EventCount.N(6))),
+      parts = EventImportReport.Parts(1)
     )
     val b =
-      a.modify(_.records).setTo(com.histmersion.api.catalogue.EventImportReport.Records(5)).modify(_.kept).setTo(com.histmersion.api.catalogue.EventImportReport.Kept(5)).modify(_.created).setTo(com.histmersion.api.catalogue.EventImportReport.Created(5)).modify(_.merged).setTo(com.histmersion.api.catalogue.EventImportReport.Merged(0)).modify(_.byKind).setTo(List(EventCount(com.histmersion.api.catalogue.EventCount.Key("eruption"), com.histmersion.api.catalogue.EventCount.N(5)))).modify(_.skipped).setTo(Nil)
+      a.modify(_.records).setTo(EventImportReport.Records(5)).modify(_.kept).setTo(EventImportReport.Kept(5)).modify(_.created).setTo(EventImportReport.Created(5)).modify(_.merged).setTo(EventImportReport.Merged(0)).modify(_.byKind).setTo(List(EventCount(EventCount.Key("eruption"), EventCount.N(5)))).modify(_.skipped).setTo(Nil)
     val c = EventImportReport.combine(a, b)
     assertEquals((c.records, c.kept, c.created, c.merged, c.parts), (15, 9, 8, 1, 2))
-    assertEquals(c.byKind, List(EventCount(com.histmersion.api.catalogue.EventCount.Key("eruption"), com.histmersion.api.catalogue.EventCount.N(9))))
+    assertEquals(c.byKind, List(EventCount(EventCount.Key("eruption"), EventCount.N(9))))
     assert(EventImportReport.summary(c).contains("would create 8 event(s)"))
     assert(EventImportReport.markdown(c).value.contains("dry run: nothing stored"))
-    assertEquals(CatalogProvider.parse(com.histmersion.api.catalogue.CatalogProviderInfo.Id(" Smithsonian ")), Right("gvp"))
-    assert(CatalogProvider.parse(com.histmersion.api.catalogue.CatalogProviderInfo.Id("usgs")).isLeft)
+    assertEquals(CatalogProvider.parse(CatalogProviderInfo.Id(" Smithsonian ")), Right("gvp"))
+    assert(CatalogProvider.parse(CatalogProviderInfo.Id("usgs")).isLeft)
 
   test("#6561: a part read under other thresholds is not read in this scope"):
-    val world = EventProviders.Thresholds(None, com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionVei(0), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideVei(4), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionMagnitude(0.0), com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideMagnitude(6.5))
-    val window = world.modify(_.region).setTo(Some(BBox(com.histmersion.api.catalogue.Longitude(-25), com.histmersion.api.catalogue.Latitude(5), com.histmersion.api.catalogue.Longitude(100), com.histmersion.api.catalogue.Latitude(72))))
+    val world = EventProviders.Thresholds(None, EventProviders.Thresholds.RegionVei(0), EventProviders.Thresholds.OutsideVei(4), EventProviders.Thresholds.RegionMagnitude(0.0), EventProviders.Thresholds.OutsideMagnitude(6.5))
+    val window = world.modify(_.region).setTo(Some(BBox(Longitude(-25), Latitude(5), Longitude(100), Latitude(72))))
     val (w, n) = (EventProviders.scope(world), EventProviders.scope(window))
     assertNotEquals(w, n)
     val recorded = Set(EventProviders.scopedPart("years:-3000..-2000", n), "years:-2000..-1000")

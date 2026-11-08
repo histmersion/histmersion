@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,6 +13,7 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.library.Citekey
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.
@@ -25,19 +27,19 @@ class BundleMergeSuite extends munit.FunSuite:
   // ── the event-catalogue sets (#1647) ─────────────────────────────────────────────────────────
 
   private def event(
-      extra: com.histmersion.api.exchange.Bundle.Event => com.histmersion.api.exchange.Bundle.Event = identity
+      extra: Bundle.Event => Bundle.Event = identity
   ) = extra(
-    com.histmersion.api.exchange.Bundle.Event(
+    Bundle.Event(
       U1,
       I,
-      com.histmersion.api.exchange.Bundle.Event.Id("e1"),
-      com.histmersion.api.exchange.Bundle.Event.Label("Eruption"),
-      com.histmersion.api.exchange.Bundle.Event.Kind("eruption"),
-      Some(com.histmersion.api.exchange.Bundle.Event.NotBefore(-1600)),
+      Bundle.Event.Id("e1"),
+      Bundle.Event.Label("Eruption"),
+      Bundle.Event.Kind("eruption"),
+      Some(Bundle.Event.NotBefore(-1600)),
       None,
       None,
-      Some(com.histmersion.api.exchange.Bundle.Event.NotAfter(-1500)),
-      com.histmersion.api.exchange.Bundle.Event.Historicity("attested"),
+      Some(Bundle.Event.NotAfter(-1500)),
+      Bundle.Event.Historicity("attested"),
       None,
       None,
       None,
@@ -47,22 +49,20 @@ class BundleMergeSuite extends munit.FunSuite:
       Nil,
       Nil,
       Nil,
-      com.histmersion.api.exchange.Bundle.Event.UpdatedAt("2026-10-03T00:00:00.000000Z")
+      Bundle.Event.UpdatedAt("2026-10-03T00:00:00.000000Z")
     )
   )
 
   test("the event-catalogue sets localize: a matched event's uid is replaced by the local one"):
     val es = BundleEntities(
       eventCatalogue = List(
-        com.histmersion.api.exchange.Bundle.EventCatalogue(
+        Bundle.EventCatalogue(
           U1,
-          com.histmersion.api.exchange.Bundle.EventCatalogue.Provider("gvp"),
-          com.histmersion.api.exchange.Bundle.EventCatalogue.ProviderId("1"),
+          Bundle.EventCatalogue.Provider("gvp"),
+          Bundle.EventCatalogue.ProviderId("1"),
           None,
-          com.histmersion.api.exchange.Bundle.EventCatalogue.Label("x"),
-          com.histmersion.api.exchange.Bundle.EventCatalogue.Kind("eruption"),
-          None,
-          None,
+          Bundle.EventCatalogue.Label("x"),
+          Bundle.EventCatalogue.Kind("eruption"),
           None,
           None,
           None,
@@ -70,38 +70,40 @@ class BundleMergeSuite extends munit.FunSuite:
           None,
           None,
           None,
-          com.histmersion.api.exchange.Bundle.EventCatalogue.Historicity("attested"),
+          None,
+          None,
+          Bundle.EventCatalogue.Historicity("attested"),
           io.circe.Json.obj(),
-          com.histmersion.api.exchange.Bundle.EventCatalogue.RetrievedAt("2026-10-05T00:00:00.000000Z")
+          Bundle.EventCatalogue.RetrievedAt("2026-10-05T00:00:00.000000Z")
         )
       ),
       eventCandidates = List(
-        com.histmersion.api.exchange.Bundle.EventCandidate(
+        Bundle.EventCandidate(
           U1,
           U2,
-          com.histmersion.api.library.Citekey("ck"),
-          com.histmersion.api.exchange.Bundle.EventCandidate.Score(1.0),
-          com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed"),
+          Citekey("ck"),
+          Bundle.EventCandidate.Score(1.0),
+          Bundle.EventCandidate.Status("proposed"),
           Nil,
           io.circe.Json.arr(),
           Nil,
-          com.histmersion.api.exchange.Bundle.EventCandidate.ComputedAt("2026-10-05T00:00:00.000000Z")
+          Bundle.EventCandidate.ComputedAt("2026-10-05T00:00:00.000000Z")
         )
       ),
-      eventChecks = List(com.histmersion.api.exchange.Bundle.EventCheck(U1, com.histmersion.api.exchange.Bundle.EventCheck.CheckedAt("2026-10-05T00:00:00.000000Z"))),
+      eventChecks = List(Bundle.EventCheck(U1, Bundle.EventCheck.CheckedAt("2026-10-05T00:00:00.000000Z"))),
       corrections = List(
-        com.histmersion.api.exchange.Bundle.Correction(
-          com.histmersion.api.exchange.Bundle.Correction.TargetKind("event"),
-          com.histmersion.api.exchange.Bundle.Correction.TargetId("e1"),
+        Bundle.Correction(
+          Bundle.Correction.TargetKind("event"),
+          Bundle.Correction.TargetId("e1"),
           Some(U1),
-          com.histmersion.api.exchange.Bundle.Correction.Field("label"),
-          com.histmersion.api.exchange.Bundle.Correction.Value("1"),
+          Bundle.Correction.Field("label"),
+          Bundle.Correction.Value("1"),
           None,
-          com.histmersion.api.exchange.Bundle.Correction.UpstreamValue("2"),
+          Bundle.Correction.UpstreamValue("2"),
           None,
-          com.histmersion.api.exchange.Bundle.Correction.Status("active"),
-          com.histmersion.api.exchange.Bundle.Correction.CreatedAt("2026-10-05T00:00:00.000000Z"),
-          com.histmersion.api.exchange.Bundle.Correction.UpdatedAt("2026-10-05T00:00:00.000000Z"),
+          Bundle.Correction.Status("active"),
+          Bundle.Correction.CreatedAt("2026-10-05T00:00:00.000000Z"),
+          Bundle.Correction.UpdatedAt("2026-10-05T00:00:00.000000Z"),
           None
         )
       )
@@ -113,47 +115,47 @@ class BundleMergeSuite extends munit.FunSuite:
     assertEquals(l.corrections.map(_.targetUid), List(Some(U3)))
 
   test("folding two events keeps one stated dating whole and both sets of names"):
-    val w = event(_.modify(_.names).setTo(Some(List(com.histmersion.api.exchange.Bundle.Event.Names("Thera")))).modify(_.catalogue).setTo(None))
+    val w = event(_.modify(_.names).setTo(Some(List(Bundle.Event.Names("Thera")))).modify(_.catalogue).setTo(None))
     val o = event(
       _.modify(
-        _.uid).setTo(U2).modify(_.names).setTo(Some(List(com.histmersion.api.exchange.Bundle.Event.Names("Santorini"), com.histmersion.api.exchange.Bundle.Event.Names("Thera")))).modify(_.catalogue).setTo(Some(com.histmersion.api.exchange.Bundle.Event.Catalogue("gvp"))).modify(_.central).setTo(Some(com.histmersion.api.exchange.Bundle.Event.Central(-1560L))).modify(_.plusMinus).setTo(Some(com.histmersion.api.exchange.Bundle.Event.PlusMinus(10L))).modify(_.datingMethod).setTo(Some(com.histmersion.api.exchange.Bundle.Event.DatingMethod("radiocarbon"))
+        _.uid).setTo(U2).modify(_.names).setTo(Some(List(Bundle.Event.Names("Santorini"), Bundle.Event.Names("Thera")))).modify(_.catalogue).setTo(Some(Bundle.Event.Catalogue("gvp"))).modify(_.central).setTo(Some(Bundle.Event.Central(-1560L))).modify(_.plusMinus).setTo(Some(Bundle.Event.PlusMinus(10L))).modify(_.datingMethod).setTo(Some(Bundle.Event.DatingMethod("radiocarbon"))
       )
     )
     val f = EventPlan.foldEvent(w, o)
-    assertEquals(f.names, Some(List(com.histmersion.api.exchange.Bundle.Event.Names("Thera"), com.histmersion.api.exchange.Bundle.Event.Names("Santorini"))))
-    assertEquals(f.catalogue, Some(com.histmersion.api.exchange.Bundle.Event.Catalogue("gvp")))
-    assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(com.histmersion.api.exchange.Bundle.Event.Central(-1560L)), Some(com.histmersion.api.exchange.Bundle.Event.PlusMinus(10L)), Some(com.histmersion.api.exchange.Bundle.Event.DatingMethod("radiocarbon"))))
-    val w2 = w.modify(_.plusMinus).setTo(Some(com.histmersion.api.exchange.Bundle.Event.PlusMinus(50L)))
+    assertEquals(f.names, Some(List(Bundle.Event.Names("Thera"), Bundle.Event.Names("Santorini"))))
+    assertEquals(f.catalogue, Some(Bundle.Event.Catalogue("gvp")))
+    assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(Bundle.Event.Central(-1560L)), Some(Bundle.Event.PlusMinus(10L)), Some(Bundle.Event.DatingMethod("radiocarbon"))))
+    val w2 = w.modify(_.plusMinus).setTo(Some(Bundle.Event.PlusMinus(50L)))
     assertEquals(EventPlan.foldEvent(w2, o).central, None, "the winner's own statement is not mixed with the other's")
 
   import BundlePlan.{Decision, Ledger, Local}
 
   test("decisions: the whole table of a two-way merge with the ledger as ancestor"):
     def d(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None, own: Boolean = false) =
-      BundlePlan.entity(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger), BundlePlan.EntityOwnBundle(own))
+      BundlePlan.entity(Ledger.ForeignRev("F"), Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger), BundlePlan.EntityOwnBundle(own))
     assertEquals(d(None), Decision.Insert)
     assertEquals(d(None, tomb = true), Decision.SkipDeleted)
     assertEquals(d(Some("F")), Decision.Unchanged)
     assertEquals(d(Some("L"), own = true), Decision.KeepLocal)
-    assertEquals(d(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("X"))))), Decision.KeepLocal) // theirs unchanged
-    assertEquals(d(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("L"))))), Decision.FastForward) // ours unchanged
-    assertEquals(d(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("X"))))), Decision.Conflict) // both changed
+    assertEquals(d(Some("L"), ledger = Some(Ledger(Ledger.ForeignRev("F"), Some(BundlePlan.Rev("X"))))), Decision.KeepLocal) // theirs unchanged
+    assertEquals(d(Some("L"), ledger = Some(Ledger(Ledger.ForeignRev("E"), Some(BundlePlan.Rev("L"))))), Decision.FastForward) // ours unchanged
+    assertEquals(d(Some("L"), ledger = Some(Ledger(Ledger.ForeignRev("E"), Some(BundlePlan.Rev("X"))))), Decision.Conflict) // both changed
     assertEquals(d(Some("L")), Decision.Conflict) // never merged
 
   test("tombstones: delete only what is still as the last merge left it; record the rest"):
     def t(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None) =
-      BundlePlan.tombstone(Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger), ownBundle = com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle(false))
-    assertEquals(t(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("L"))))), Decision.Delete)
-    assertEquals(t(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("X"))))), Decision.Conflict)
+      BundlePlan.tombstone(Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger), ownBundle = BundlePlan.TombstoneOwnBundle(false))
+    assertEquals(t(Some("L"), ledger = Some(Ledger(Ledger.ForeignRev("E"), Some(BundlePlan.Rev("L"))))), Decision.Delete)
+    assertEquals(t(Some("L"), ledger = Some(Ledger(Ledger.ForeignRev("E"), Some(BundlePlan.Rev("X"))))), Decision.Conflict)
     assertEquals(t(Some("L")), Decision.Conflict)
     assertEquals(t(None), Decision.RecordTombstone)
     assertEquals(t(None, tomb = true), Decision.Unchanged)
 
   test("the ledger keeps the old ancestor for a kept row, so a later change over there is a conflict"):
-    assertEquals(BundlePlan.ledgerAfter(Decision.KeepLocal, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(false)), None)
-    assertEquals(BundlePlan.ledgerAfter(Decision.Insert, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(false)), Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("F")))))
-    assertEquals(BundlePlan.ledgerAfter(Decision.Unchanged, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("deleted"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(true)), Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("deleted"), None)))
-    assertEquals(BundlePlan.ledgerAfter(Decision.Conflict, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(false)), None)
+    assertEquals(BundlePlan.ledgerAfter(Decision.KeepLocal, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned(false)), None)
+    assertEquals(BundlePlan.ledgerAfter(Decision.Insert, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned(false)), Some(Ledger(Ledger.ForeignRev("F"), Some(BundlePlan.Rev("F")))))
+    assertEquals(BundlePlan.ledgerAfter(Decision.Unchanged, Ledger.ForeignRev("deleted"), tombstone = Local.Tombstoned(true)), Some(Ledger(Ledger.ForeignRev("deleted"), None)))
+    assertEquals(BundlePlan.ledgerAfter(Decision.Conflict, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned(false)), None)
 
   test("cascade: a line needing a row deleted here is skipped too, transitively; optional links are not"):
     val (src, asset, link, ev) = (U1, U2, UUID.randomUUID(), UUID.randomUUID())
@@ -180,7 +182,7 @@ class BundleMergeSuite extends munit.FunSuite:
     )
     assertEquals(
       c,
-      com.histmersion.api.exchange.Bundle
-        .KindCounts(Bundle.Kind.Goal, inserted = com.histmersion.api.exchange.Bundle.KindCounts.Inserted(2), conflicts = com.histmersion.api.exchange.Bundle.KindCounts.Conflicts(1), unchanged = com.histmersion.api.exchange.Bundle.KindCounts.Unchanged(1), deleted = com.histmersion.api.exchange.Bundle.KindCounts.Deleted(1))
+      Bundle
+        .KindCounts(Bundle.Kind.Goal, inserted = Bundle.KindCounts.Inserted(2), conflicts = Bundle.KindCounts.Conflicts(1), unchanged = Bundle.KindCounts.Unchanged(1), deleted = Bundle.KindCounts.Deleted(1))
     )
     assertEquals(c.changed, 3)

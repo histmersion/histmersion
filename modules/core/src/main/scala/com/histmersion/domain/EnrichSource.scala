@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -14,6 +15,11 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.research.Slug
 
 /** The `enrich-source` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.2): what each
   * LLM step must return, how the body is cut into windows, how an answer is verified, and how the verified result
@@ -21,45 +27,45 @@ import com.histmersion.api.library.Finding
   */
 object EnrichSource:
   type Century = Century.T
-  object Century extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Century extends RefinedType[Int, Pure]
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type FindingCount = FindingCount.T
-  object FindingCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingCount extends RefinedType[Int, Pure]
   type Last = Last.T
-  object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Last extends RefinedType[Boolean, Pure]
   type MaxWindows = MaxWindows.T
-  object MaxWindows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxWindows extends RefinedType[Int, Pure]
   type MaxAbsYear = AgentVerify.MaxAbsYear
   val MaxAbsYear: AgentVerify.MaxAbsYear.type = AgentVerify.MaxAbsYear
   export AgentVerify.{MinRatio, Problem, SourceBody}
   type Topic = Topic.T
-  object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topic extends RefinedType[String, Pure]
   type Region = Region.T
-  object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Region extends RefinedType[String, Pure]
   type PlaceQuery = FindingProposal.Place
   val PlaceQuery: FindingProposal.Place.type = FindingProposal.Place
   type Tag = Tag.T
-  object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tag extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type WindowChars = WindowChars.T
-  object WindowChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WindowChars extends RefinedType[Int, Pure]
 
-  type CheckClassificationMaxAbsYear = _root_.com.histmersion.domain.EnrichSource.MaxAbsYear
-  val CheckClassificationMaxAbsYear: _root_.com.histmersion.domain.EnrichSource.MaxAbsYear.type = _root_.com.histmersion.domain.EnrichSource.MaxAbsYear
-  type MentionsCenturyText = _root_.com.histmersion.domain.EnrichSource.Text
-  val MentionsCenturyText: _root_.com.histmersion.domain.EnrichSource.Text.type = _root_.com.histmersion.domain.EnrichSource.Text
-  type StatesYearText = _root_.com.histmersion.domain.EnrichSource.Text
-  val StatesYearText: _root_.com.histmersion.domain.EnrichSource.Text.type = _root_.com.histmersion.domain.EnrichSource.Text
-  type CenturyAsYearText = _root_.com.histmersion.domain.EnrichSource.Text
-  val CenturyAsYearText: _root_.com.histmersion.domain.EnrichSource.Text.type = _root_.com.histmersion.domain.EnrichSource.Text
-  type CheckFindingsMaxAbsYear = _root_.com.histmersion.domain.EnrichSource.MaxAbsYear
-  val CheckFindingsMaxAbsYear: _root_.com.histmersion.domain.EnrichSource.MaxAbsYear.type = _root_.com.histmersion.domain.EnrichSource.MaxAbsYear
+  type CheckClassificationMaxAbsYear = MaxAbsYear
+  val CheckClassificationMaxAbsYear: MaxAbsYear.type = MaxAbsYear
+  type MentionsCenturyText = Text
+  val MentionsCenturyText: Text.type = Text
+  type StatesYearText = Text
+  val StatesYearText: Text.type = Text
+  type CenturyAsYearText = Text
+  val CenturyAsYearText: Text.type = Text
+  type CheckFindingsMaxAbsYear = MaxAbsYear
+  val CheckFindingsMaxAbsYear: MaxAbsYear.type = MaxAbsYear
   type PatchNotes = PatchNotes.T
-  object PatchNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PatchNotes extends RefinedType[String, Pure]
 
   import AgentVerify.*
 
@@ -82,7 +88,7 @@ object EnrichSource:
 
   object StatedPeriod:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
 
 
   final case class Classification(
@@ -96,9 +102,9 @@ object EnrichSource:
   ) derives KindlingsCodecAsObject
   object Classification:
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type StatusEvidence = StatusEvidence.T
-    object StatusEvidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StatusEvidence extends RefinedType[String, Pure]
 
     given Schema[Classification] = KindlingsSchema
       .derived[Classification]
@@ -126,11 +132,11 @@ object EnrichSource:
   ) derives KindlingsCodecAsObject
   object FindingProposal:
     type Claim = Claim.T
-    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Claim extends RefinedType[String, Pure]
     type Place = Place.T
-    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Place extends RefinedType[String, Pure]
     type PeriodName = PeriodName.T
-    object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PeriodName extends RefinedType[String, Pure]
 
     given Schema[FindingProposal] = KindlingsSchema
       .derived[FindingProposal]
@@ -152,7 +158,7 @@ object EnrichSource:
 
   object Notes:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[String, Pure]
 
 
   // ── checkpointed intermediate values ───────────────────────────────────────────────────────────
@@ -162,17 +168,17 @@ object EnrichSource:
 
   object Window:
     type Index = Index.T
-    object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Index extends RefinedType[Int, Pure]
     type Heading = Heading.T
-    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Heading extends RefinedType[String, Pure]
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]
 
   /** What `load` records: enough of the source for every later step, and its `updatedAt` for the final patch's
     * precondition.
     */
   final case class Loaded(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       title: Loaded.Title,
       authors: List[AuthorName],
       year: Option[com.histmersion.Year],
@@ -189,24 +195,24 @@ object EnrichSource:
       head: Loaded.Head,
       windows: List[Window],
       tags: List[Tag] = Nil,
-      doi: Option[com.histmersion.domain.library.Doi] = None
+      doi: Option[Doi] = None
   ) derives KindlingsCodecAsObject
 
   object Loaded:
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Venue = Venue.T
-    object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Venue extends RefinedType[String, Pure]
     type HasSummary = HasSummary.T
-    object HasSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HasSummary extends RefinedType[Boolean, Pure]
     type HasNotes = HasNotes.T
-    object HasNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HasNotes extends RefinedType[Boolean, Pure]
     type HasPeriod = HasPeriod.T
-    object HasPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HasPeriod extends RefinedType[Boolean, Pure]
     type ExistingClaims = ExistingClaims.T
-    object ExistingClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExistingClaims extends RefinedType[String, Pure]
     type Head = Head.T
-    object Head extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Head extends RefinedType[String, Pure]
 
   /** A finding that passed verification, with its quote's match ratio. `placeKind` is the model's judgement of what
     * `place` is (`None` = no hint; absent from checkpoints older than #981).
@@ -232,15 +238,15 @@ object EnrichSource:
 
   object VerifiedFinding:
     type Claim = Claim.T
-    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Claim extends RefinedType[String, Pure]
     type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Quote extends RefinedType[String, Pure]
     type Place = Place.T
-    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Place extends RefinedType[String, Pure]
     type PeriodName = PeriodName.T
-    object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PeriodName extends RefinedType[String, Pure]
     type Confidence = Confidence.T
-    object Confidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Confidence extends RefinedType[String, Pure]
 
   /** One window's verified findings. `proposed` = how many the accepted answer held, `quoteFailed` = how many of those
     * quotes were not found in the window (dropped on a last attempt) — what `agent compare` reads the verifier's pass
@@ -254,9 +260,9 @@ object EnrichSource:
 
   object VerifiedFindings:
     type Proposed = Proposed.T
-    object Proposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Proposed extends RefinedType[Int, Pure]
     type QuoteFailed = QuoteFailed.T
-    object QuoteFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object QuoteFailed extends RefinedType[Int, Pure]
 
   /** What the geocoder chose for one finding's place, for a person to audit in the run trace: `placeId`/`label` empty
     * when the name is unknown, `approximate` saying why the point is only near what was asked (a qualifier dropped, a
@@ -272,13 +278,13 @@ object EnrichSource:
 
   object GeocodeChoice:
     type Claim = Claim.T
-    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Claim extends RefinedType[String, Pure]
     type Asked = Asked.T
-    object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Asked extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Approximate = Approximate.T
-    object Approximate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Approximate extends RefinedType[String, Pure]
 
   /** The `geocode` step: the findings with their points, and every choice behind them. */
   final case class Geocoded(findings: List[Finding.Input], choices: List[GeocodeChoice]) derives KindlingsCodecAsObject
@@ -297,45 +303,45 @@ object EnrichSource:
 
   object Classified:
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type StatusEvidence = StatusEvidence.T
-    object StatusEvidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StatusEvidence extends RefinedType[String, Pure]
 
   final case class Patched(findingsAdded: Patched.FindingsAdded, fieldsSet: List[Patched.FieldsSet], statusProposal: Option[Patched.StatusProposal])
       derives KindlingsCodecAsObject
 
   object Patched:
     type FindingsAdded = FindingsAdded.T
-    object FindingsAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FindingsAdded extends RefinedType[Int, Pure]
     type FieldsSet = FieldsSet.T
-    object FieldsSet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FieldsSet extends RefinedType[String, Pure]
     type StatusProposal = StatusProposal.T
-    object StatusProposal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StatusProposal extends RefinedType[String, Pure]
 
   /** The `metadata` step: the record against OpenAlex/Crossref. `checked = false` with a `note` when it could not be
     * (no DOI, upstream off or down); the differences are run warnings, never writes.
     */
-  final case class MetaChecked(checked: MetaChecked.Checked, differences: List[MetaChecked.Differences], note: MetaChecked.Note = com.histmersion.domain.EnrichSource.MetaChecked.Note(""))
+  final case class MetaChecked(checked: MetaChecked.Checked, differences: List[MetaChecked.Differences], note: MetaChecked.Note = MetaChecked.Note(""))
       derives KindlingsCodecAsObject
 
   object MetaChecked:
     type Checked = Checked.T
-    object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Checked extends RefinedType[Boolean, Pure]
     type Differences = Differences.T
-    object Differences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Differences extends RefinedType[String, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
 
   /** What `refs` / `assess` did (or why they were skipped). */
-  final case class Upstreamed(ran: Upstreamed.Ran, summary: Upstreamed.Summary, retracted: Upstreamed.Retracted = com.histmersion.domain.EnrichSource.Upstreamed.Retracted(false)) derives KindlingsCodecAsObject
+  final case class Upstreamed(ran: Upstreamed.Ran, summary: Upstreamed.Summary, retracted: Upstreamed.Retracted = Upstreamed.Retracted(false)) derives KindlingsCodecAsObject
 
   object Upstreamed:
     type Ran = Ran.T
-    object Ran extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ran extends RefinedType[Boolean, Pure]
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type Retracted = Retracted.T
-    object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Retracted extends RefinedType[Boolean, Pure]
 
   /** The `status` step: whether the classify step's status proposal was applied, recorded for a person (`approval` id),
     * or needed nothing.
@@ -345,22 +351,22 @@ object EnrichSource:
 
   object StatusRouted:
     type Applied = Applied.T
-    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Applied extends RefinedType[String, Pure]
     type Approval = Approval.T
-    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Approval extends RefinedType[Long, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
 
   /** The `close` step: the per-source lint, the acquisition item and the log line. */
   final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire]) derives KindlingsCodecAsObject
 
   object Closed:
     type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends RefinedType[String, Pure]
     type Lint = Lint.T
-    object Lint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lint extends RefinedType[String, Pure]
     type Acquire = Acquire.T
-    object Acquire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Acquire extends RefinedType[String, Pure]
 
   // ── pure logic ─────────────────────────────────────────────────────────────────────────────────
 
@@ -370,7 +376,7 @@ object EnrichSource:
     * `maxWindows` of them spread evenly from the first to the last (a book's argument is not all in chapter one). Each
     * window remembers the heading it falls under.
     */
-  def windows(body: com.histmersion.domain.EnrichSource.SourceBody, windowChars: com.histmersion.domain.EnrichSource.WindowChars, maxWindows: com.histmersion.domain.EnrichSource.MaxWindows): List[Window] =
+  def windows(body: SourceBody, windowChars: WindowChars, maxWindows: MaxWindows): List[Window] =
     val size = math.max(500, windowChars.value)
     val paras = body.value
       .split("\\n\\s*\\n")
@@ -402,7 +408,7 @@ object EnrichSource:
     picked.zipWithIndex.map { case ((h, t), i) => Window(Window.Index(i + 1), h.map(Window.Heading(_)), Window.Text(t)) }
 
   /** Turn a stated period into signed years, or say why not. A point (no end) is `start..start`. */
-  def convert(p: StatedPeriod, maxAbsYear: com.histmersion.domain.EnrichSource.MaxAbsYear, within: Option[Period]): Either[com.histmersion.domain.EnrichSource.Problem, Period] =
+  def convert(p: StatedPeriod, maxAbsYear: MaxAbsYear, within: Option[Period]): Either[Problem, Period] =
     for
       su <- YearUnit.parse(p.start.unit).toRight(AgentVerify.Problem(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)"))
       eu <- YearUnit.parse(p.end.unit).toRight(AgentVerify.Problem(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)"))
@@ -419,9 +425,9 @@ object EnrichSource:
     */
   def checkClassification(
       c: Classification,
-      maxAbsYear: com.histmersion.domain.EnrichSource.CheckClassificationMaxAbsYear,
-      last: com.histmersion.domain.EnrichSource.Last
-  ): Either[List[com.histmersion.domain.EnrichSource.Problem], (Classified, List[com.histmersion.domain.EnrichSource.Description])] =
+      maxAbsYear: CheckClassificationMaxAbsYear,
+      last: Last
+  ): Either[List[Problem], (Classified, List[Description])] =
     val status = AgentVerify.status(c.status)
     val period = c.period.map(p => convert(p, maxAbsYear, None))
     val summary = Option(c.summary.value).map(_.trim).filter(_.nonEmpty)
@@ -454,7 +460,7 @@ object EnrichSource:
     else Left(problems)
 
   /** Tags are lowercase_snake_case in this corpus (the `non-canonical-tag` lint rule). */
-  def normaliseTag(t: com.histmersion.domain.EnrichSource.Tag): com.histmersion.domain.EnrichSource.Tag =
+  def normaliseTag(t: Tag): Tag =
     Tag(t.value.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^\\p{L}\\p{N}]+", "_").replaceAll("^_+|_+$", ""))
 
   private def normalised(s: String): NormalisedText = normalise(AgentVerify.Text(s))
@@ -471,15 +477,15 @@ object EnrichSource:
   )
 
   object FindingGuards:
-    type PlaceQuery = com.histmersion.domain.EnrichSource.PlaceQuery
-    val PlaceQuery: _root_.com.histmersion.domain.EnrichSource.PlaceQuery.type = _root_.com.histmersion.domain.EnrichSource.PlaceQuery
+    type PlaceQuery = EnrichSource.PlaceQuery
+    val PlaceQuery: EnrichSource.PlaceQuery.type = EnrichSource.PlaceQuery
 
     type MinPlacedShare = MinPlacedShare.T
-    object MinPlacedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MinPlacedShare extends RefinedType[Double, Pure]
     type CenturyGapYears = CenturyGapYears.T
-    object CenturyGapYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CenturyGapYears extends RefinedType[Long, Pure]
     type PointerPhrases = PointerPhrases.T
-    object PointerPhrases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PointerPhrases extends RefinedType[String, Pure]
 
   private val CenturyMention = "(?i)\\bcentur(?:y|ies)\\b|\\b\\d{1,2}\\s*(?:st|nd|rd|th)\\s*c\\.".r
   private val OrdinalDigits = "(?i)\\b(\\d{1,2})\\s*(?:st|nd|rd|th)\\b".r
@@ -515,7 +521,7 @@ object EnrichSource:
   /** The centuries `text` mentions ("11th century", "15th c.", "eleventh and twelfth centuries"), as their ordinal
     * numbers; empty when it mentions no century.
     */
-  def centuriesMentioned(text: com.histmersion.domain.EnrichSource.Text): List[com.histmersion.domain.EnrichSource.Century] =
+  def centuriesMentioned(text: Text): List[Century] =
     val words = OrdinalWord
       .findAllMatchIn(text.value)
       .flatMap(m => OrdinalWords.get(m.group(1).toLowerCase(java.util.Locale.ROOT)))
@@ -526,11 +532,11 @@ object EnrichSource:
     (digits ++ words).filter(_ > 0).distinct.map(Century(_))
 
   /** Whether `text` mentions a century at all (an ordinal or just the word). */
-  def mentionsCentury(text: com.histmersion.domain.EnrichSource.MentionsCenturyText): Boolean =
+  def mentionsCentury(text: MentionsCenturyText): Boolean =
     CenturyMention.findFirstIn(text.value).isDefined || OrdinalWord.findFirstIn(text.value).isDefined
 
   /** Whether `text` states `year` (its absolute value) as a year with its era: "79 CE", "AD 79", "79 B.C.". */
-  def statesYear(text: com.histmersion.domain.EnrichSource.StatesYearText, year: Year): Boolean =
+  def statesYear(text: StatesYearText, year: Year): Boolean =
     val n = math.abs(year.value).toString
     s"(?i)(?:\\b$Era\\s*$n(?!\\d)|(?<!\\d)$n\\s*$Era(?![A-Za-z]))".r.findFirstIn(text.value).isDefined
 
@@ -549,7 +555,7 @@ object EnrichSource:
     * `gap` years after it. A year the text states with its era ("79 CE") is valid. The problem names the century as
     * years, e.g. "'11th century' is the years 1001–1100 (BCE negative)".
     */
-  def centuryAsYear(start: Year, end: Year, text: com.histmersion.domain.EnrichSource.CenturyAsYearText, within: Option[Period], gap: com.histmersion.domain.EnrichSource.FindingGuards.CenturyGapYears): Option[com.histmersion.domain.EnrichSource.Description] =
+  def centuryAsYear(start: Year, end: Year, text: CenturyAsYearText, within: Option[Period], gap: FindingGuards.CenturyGapYears): Option[Description] =
     val centuries = centuriesMentioned(text)
     def inMentioned(y: Year) = centuries.exists { c =>
       val a = math.abs(y.value)
@@ -568,7 +574,7 @@ object EnrichSource:
     }
 
   /** The first of `phrases` (lowercase) the claim contains as whole words, if any. */
-  def pointerPhrase(claim: com.histmersion.domain.EnrichSource.FindingProposal.Claim, phrases: List[com.histmersion.domain.EnrichSource.FindingGuards.PointerPhrases]): Option[com.histmersion.domain.EnrichSource.FindingGuards.PointerPhrases] =
+  def pointerPhrase(claim: FindingProposal.Claim, phrases: List[FindingGuards.PointerPhrases]): Option[FindingGuards.PointerPhrases] =
     val lower = claim.value.toLowerCase(java.util.Locale.ROOT)
     phrases.find(p =>
       s"(?<![\\p{L}\\p{N}])${java.util.regex.Pattern.quote(p.value)}(?![\\p{L}\\p{N}])".r.findFirstIn(lower).isDefined
@@ -577,7 +583,7 @@ object EnrichSource:
   /** The placement guard: of the proposals that name a place, how many resolve; a problem when fewer than `minShare`
     * do, listing the names that did not.
     */
-  def placementProblem(named: List[(com.histmersion.domain.EnrichSource.Count, com.histmersion.domain.EnrichSource.FindingProposal.Place, Boolean)], minShare: com.histmersion.domain.EnrichSource.FindingGuards.MinPlacedShare): Option[com.histmersion.domain.EnrichSource.Problem] =
+  def placementProblem(named: List[(Count, FindingProposal.Place, Boolean)], minShare: FindingGuards.MinPlacedShare): Option[Problem] =
     val total = named.size
     val resolved = named.count(_._3)
     Option.when(total > 0 && minShare.value > 0 && resolved.toDouble < minShare.value * total) {
@@ -601,19 +607,19 @@ object EnrichSource:
   def checkFindings(
       f: Findings,
       window: Window,
-      minRatio: com.histmersion.domain.EnrichSource.MinRatio,
-      maxAbsYear: com.histmersion.domain.EnrichSource.CheckFindingsMaxAbsYear,
+      minRatio: MinRatio,
+      maxAbsYear: CheckFindingsMaxAbsYear,
       within: Option[Period],
-      existingClaims: Set[com.histmersion.domain.EnrichSource.Loaded.ExistingClaims],
+      existingClaims: Set[Loaded.ExistingClaims],
       guards: FindingGuards,
-      last: com.histmersion.domain.EnrichSource.Last
-  ): Either[List[com.histmersion.domain.EnrichSource.Problem], (VerifiedFindings, List[com.histmersion.domain.EnrichSource.Description])] =
+      last: Last
+  ): Either[List[Problem], (VerifiedFindings, List[Description])] =
     val windowBody = AgentVerify.SourceBody(window.text.value)
     val quotes = f.findings.map(p => findQuote(p.quote, windowBody, minRatio))
     val checked = f.findings.zip(quotes).zipWithIndex.map { case ((p, quote), i) =>
       val label = s"finding ${i + 1} (${p.claim.value.take(60)})"
       val conf = AgentVerify.confidence(p.confidence)
-      val per: Either[com.histmersion.domain.EnrichSource.Problem, Option[Period]] = (p.start, p.end) match
+      val per: Either[Problem, Option[Period]] = (p.start, p.end) match
         case (None, None)    => Right(None)
         case (Some(s), e)    => convert(StatedPeriod(s, e.getOrElse(s)), maxAbsYear, None).map(Some(_))
         case (None, Some(e)) => convert(StatedPeriod(e, e), maxAbsYear, None).map(Some(_))
@@ -629,7 +635,7 @@ object EnrichSource:
       val said = List(Some(p.claim.value), Some(p.quote.value), p.periodName.map(_.value)).flatten.mkString("\n")
       val century =
         per.toOption.flatten.flatMap(pd =>
-          centuryAsYear(pd.start, pd.end, com.histmersion.domain.EnrichSource.Text(said), within, guards.centuryGapYears)
+          centuryAsYear(pd.start, pd.end, Text(said), within, guards.centuryGapYears)
         )
       val pointer = pointerPhrase(p.claim, guards.pointerPhrases).map(ph =>
         s"'$ph' only makes sense next to the table: a finding must stand alone on the map: name the date/event instead of pointing at the table"
@@ -689,9 +695,9 @@ object EnrichSource:
       )
 
   /** `notes`: non-empty, and every `[[link]]` names a citekey or an article. */
-  def checkNotes(n: Notes, isCitekey: com.histmersion.domain.library.Citekey => Boolean, isSlug: com.histmersion.domain.research.Slug => Boolean): Either[List[com.histmersion.domain.EnrichSource.Problem], com.histmersion.domain.EnrichSource.Description] =
+  def checkNotes(n: Notes, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): Either[List[Problem], Description] =
     val text = Option(n.notes.value).map(_.trim).getOrElse("")
-    if text.isEmpty then Left(List(com.histmersion.domain.EnrichSource.Problem("the notes are empty")))
+    if text.isEmpty then Left(List(Problem("the notes are empty")))
     else
       linkProblems(LinkProblemsText(text), isCitekey, isSlug) match
         case Nil => Right(Description(text))
@@ -705,8 +711,8 @@ object EnrichSource:
       l: Loaded,
       c: Classified,
       findings: List[Finding.Input],
-      notes: Option[com.histmersion.domain.EnrichSource.PatchNotes]
-  ): (com.histmersion.api.library.Source.Patch, List[com.histmersion.domain.EnrichSource.Description], Option[com.histmersion.domain.EnrichSource.Description]) =
+      notes: Option[PatchNotes]
+  ): (Source.Patch, List[Description], Option[Description]) =
     def merge[A](have: List[A], add: List[A]): Option[List[A]] =
       Option.when(add.exists(a => !have.contains(a)))((have ++ add).distinct)
     val setStatus = Option.when(
@@ -716,7 +722,7 @@ object EnrichSource:
     val proposal = Option.when(setStatus.isEmpty && c.status != Source.Status.Unassessed && c.status.wire != l.status)(
       Description(s"${c.status.wire}: ${c.statusEvidence}")
     )
-    val p = com.histmersion.api.library.Source.Patch(
+    val p = Source.Patch(
       metadata = setStatus.map(s => MetadataPatch(status = Some(s))),
       summary = Option.when(!l.hasSummary.value)(Source.Summary(c.summary.value)),
       notes = notes.filter(_ => !l.hasNotes.value).map(n => Source.Notes(n.value)),
@@ -744,19 +750,19 @@ object EnrichSource:
     * they agree. Nothing is written from here — a rename or a metadata fix stays a person's call.
     */
   def compareMetadata(
-      citekey: com.histmersion.domain.library.Citekey,
-      title: com.histmersion.domain.Title,
+      citekey: Citekey,
+      title: Title,
       authors: List[AuthorName],
       year: Option[com.histmersion.Year],
       upstream: WorkRef
-  ): List[com.histmersion.domain.EnrichSource.Description] =
+  ): List[Description] =
     def surname(a: String): String =
       val t = a.trim
       val s = if t.contains(",") then t.takeWhile(_ != ',') else t.split("\\s+").lastOption.getOrElse(t)
       AgentVerify.normalise(AgentVerify.Text(s)).value
     val ourYear = year.map(y => Year(y.value.toLong))
     val titleDiff = upstream.title
-      .filter(t => !AgentVerify.sameTitle(com.histmersion.domain.Title(t.value), title))
+      .filter(t => !AgentVerify.sameTitle(Title(t.value), title))
       .map(t => s"title differs from the upstream record: \"$t\"")
     val yearDiff = for u <- upstream.year; y <- ourYear if u != y yield s"year $y differs from the upstream record's $u"
     val yearMissing =
@@ -772,7 +778,7 @@ object EnrichSource:
   /** The lint rules `close` runs for this one source (`no-findings`, `no-period`, `unassessed-status`): each hit is a
     * run warning.
     */
-  def closeLint(findings: com.histmersion.domain.EnrichSource.FindingCount, hasPeriod: com.histmersion.domain.EnrichSource.Loaded.HasPeriod, status: Source.Status): List[com.histmersion.domain.EnrichSource.Description] =
+  def closeLint(findings: FindingCount, hasPeriod: Loaded.HasPeriod, status: Source.Status): List[Description] =
     List(
       Option.when(findings.value == 0)(s"${Lint.NoFindings}: the source has no findings"),
       Option.when(!hasPeriod.value)(s"${Lint.NoPeriod}: the source has no period"),

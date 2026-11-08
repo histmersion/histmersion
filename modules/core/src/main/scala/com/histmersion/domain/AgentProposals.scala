@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
@@ -11,6 +12,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Changes an agent run PROPOSES to the corpus rather than makes — a source's status, a typed disagreement edge — and
   * the pure rules that decide whether code applies one at once or records it for a person
@@ -18,8 +21,8 @@ import com.histmersion.api.library.Source
   */
 object AgentProposals:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.domain.AgentVerify.Problem
+  object Description extends RefinedType[String, Pure]
+  export AgentVerify.Problem
 
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
     * code's business (`refs`), never a model's.
@@ -39,12 +42,12 @@ object AgentProposals:
       status: Option[Source.Status] = None,
       edgeKind: Option[Edge.Kind] = None,
       target: Option[com.histmersion.domain.library.Citekey] = None,
-      evidence: Proposal.Evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence(""),
+      evidence: Proposal.Evidence = Proposal.Evidence(""),
       quote: Option[Proposal.Quote] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
-    def describe: com.histmersion.domain.AgentProposals.Description = kind match
+    def describe: Description = kind match
       case Approval.Kind.StatusChange => Description(s"[[$citekey]] status → ${status.fold("?")(_.wire)}")
       case Approval.Kind.Edge         =>
         Description(s"edge [[$citekey]] ${edgeKind.fold("?")(Edge.Kind.wireOf)} [[${target.fold("?")(_.value)}]]")
@@ -52,20 +55,20 @@ object AgentProposals:
       case k => Description(s"${k.wire} (not a source change)")
 
     /** The one patch that applies it, on `citekey`. An edge is patched on its source. */
-    def patch: com.histmersion.api.library.Source.Patch = kind match
+    def patch: Source.Patch = kind match
       case Approval.Kind.StatusChange =>
-        com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(status = status)))
+        Source.Patch(metadata = Some(MetadataPatch(status = status)))
       case Approval.Kind.Edge =>
-        com.histmersion.api.library.Source.Patch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target
-        yield com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey(t.value), k)).toList)))
-      case _ => com.histmersion.api.library.Source.Patch()
+        Source.Patch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target
+        yield Edge.Input(com.histmersion.api.library.Citekey(t.value), k)).toList)))
+      case _ => Source.Patch()
 
   object Proposal:
 
     type Evidence = Evidence.T
-    object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Evidence extends RefinedType[String, Pure]
     type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Quote extends RefinedType[String, Pure]
 
 
 
@@ -83,7 +86,7 @@ object AgentProposals:
   object Route:
     object Skip:
       type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Reason extends RefinedType[String, Pure]
 
   /** A status is APPLIED without a person only when it fills an `unassessed` source with `current` or `foundational` —
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows
@@ -116,19 +119,19 @@ object AgentProposals:
   ) derives KindlingsCodecAsObject
   object ProposalAnswer:
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Citekey = Citekey.T
-    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Citekey extends RefinedType[String, Pure]
     type Status = com.histmersion.domain.library.Source.Status.Wire
-    val Status: _root_.com.histmersion.domain.library.Source.Status.Wire.type = _root_.com.histmersion.domain.library.Source.Status.Wire
-    type EdgeKind = com.histmersion.api.library.Edge.Kind.Wire
-    val EdgeKind: _root_.com.histmersion.api.library.Edge.Kind.Wire.type = _root_.com.histmersion.api.library.Edge.Kind.Wire
+    val Status: com.histmersion.domain.library.Source.Status.Wire.type = com.histmersion.domain.library.Source.Status.Wire
+    type EdgeKind = Edge.Kind.Wire
+    val EdgeKind: Edge.Kind.Wire.type = Edge.Kind.Wire
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Evidence = Evidence.T
-    object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Evidence extends RefinedType[String, Pure]
     type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Quote extends RefinedType[String, Pure]
 
     given Schema[ProposalAnswer] = KindlingsSchema
       .derived[ProposalAnswer]
@@ -158,10 +161,10 @@ object AgentProposals:
       isCitekey: com.histmersion.domain.library.Citekey => Boolean,
       text: com.histmersion.domain.library.Citekey => Option[AgentVerify.SourceBody],
       minRatio: AgentVerify.MinRatio
-  ): Either[com.histmersion.domain.AgentProposals.Problem, Proposal] =
+  ): Either[AgentProposals.Problem, Proposal] =
     val raw = a.citekey.value.trim
     val label = s"proposal for ${if raw.isEmpty then "?" else raw}"
-    def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[com.histmersion.domain.AgentProposals.Problem, com.histmersion.domain.AgentProposals.Proposal.Quote] =
+    def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[AgentProposals.Problem, Proposal.Quote] =
       val q = Proposal.Quote(a.quote.value.trim)
       if q.value.isEmpty then Left(Problem(s"$label: no quote"))
       else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)

@@ -1,4 +1,5 @@
-package com.histmersion.domain.activity
+package com.histmersion
+package domain.activity
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,6 +9,9 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
 
 import java.time.Instant
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.automation.ListFilters
 
 class ActivityRulesSuite extends munit.FunSuite:
 
@@ -15,13 +19,13 @@ class ActivityRulesSuite extends munit.FunSuite:
   private def at(min: Int) = Entry.At(now.minusSeconds(min * 60L).toString)
 
   private val entries = List(
-    Entry(com.histmersion.api.automation.Activity.Entry.Key("run:r1"), com.histmersion.api.automation.Activity.Entry.Kind("run"), at(1), state = com.histmersion.api.automation.Activity.Entry.State("running"), what = com.histmersion.api.automation.Activity.Entry.What("review-article"), goal = Some(com.histmersion.api.automation.Goal.Slug("g1")), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("r1"))),
-    Entry(com.histmersion.api.automation.Activity.Entry.Key("job:j1"), com.histmersion.api.automation.Activity.Entry.Kind("job"), at(2), state = com.histmersion.api.automation.Activity.Entry.State("failed"), what = com.histmersion.api.automation.Activity.Entry.What("media-import"), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1")), error = Some(com.histmersion.api.automation.Activity.Entry.Error("HTTP 500"))),
-    Entry(com.histmersion.api.automation.Activity.Entry.Key("log:10"), com.histmersion.api.automation.Activity.Entry.Kind("log"), at(3), text = com.histmersion.api.automation.Activity.Entry.Text("a run's line"), goal = Some(com.histmersion.api.automation.Goal.Slug("g1")), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("r1")), by = Some(com.histmersion.api.automation.Activity.Entry.By("agent"))),
-    Entry(com.histmersion.api.automation.Activity.Entry.Key("log:11"), com.histmersion.api.automation.Activity.Entry.Kind("log"), at(3), text = com.histmersion.api.automation.Activity.Entry.Text("a job's line"), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1")), by = Some(com.histmersion.api.automation.Activity.Entry.By("job"))),
-    Entry(com.histmersion.api.automation.Activity.Entry.Key("log:12"), com.histmersion.api.automation.Activity.Entry.Kind("log"), at(3), text = com.histmersion.api.automation.Activity.Entry.Text("a person's line")),
-    Entry(com.histmersion.api.automation.Activity.Entry.Key("decision:5"), com.histmersion.api.automation.Activity.Entry.Kind("decision"), at(4), state = com.histmersion.api.automation.Activity.Entry.State("approved"), what = com.histmersion.api.automation.Activity.Entry.What("edge"), goal = Some(com.histmersion.api.automation.Goal.Slug("g1"))),
-    Entry(com.histmersion.api.automation.Activity.Entry.Key("job:j0"), com.histmersion.api.automation.Activity.Entry.Kind("job"), at(60 * 24 * 9), state = com.histmersion.api.automation.Activity.Entry.State("failed"), what = com.histmersion.api.automation.Activity.Entry.What("basemap-fetch"))
+    Entry(Entry.Key("run:r1"), Entry.Kind("run"), at(1), state = Entry.State("running"), what = Entry.What("review-article"), goal = Some(Goal.Slug("g1")), job = Some(SpatialHierarchyResult.Job.Id("r1"))),
+    Entry(Entry.Key("job:j1"), Entry.Kind("job"), at(2), state = Entry.State("failed"), what = Entry.What("media-import"), job = Some(SpatialHierarchyResult.Job.Id("j1")), error = Some(Entry.Error("HTTP 500"))),
+    Entry(Entry.Key("log:10"), Entry.Kind("log"), at(3), text = Entry.Text("a run's line"), goal = Some(Goal.Slug("g1")), job = Some(SpatialHierarchyResult.Job.Id("r1")), by = Some(Entry.By("agent"))),
+    Entry(Entry.Key("log:11"), Entry.Kind("log"), at(3), text = Entry.Text("a job's line"), job = Some(SpatialHierarchyResult.Job.Id("j1")), by = Some(Entry.By("job"))),
+    Entry(Entry.Key("log:12"), Entry.Kind("log"), at(3), text = Entry.Text("a person's line")),
+    Entry(Entry.Key("decision:5"), Entry.Kind("decision"), at(4), state = Entry.State("approved"), what = Entry.What("edge"), goal = Some(Goal.Slug("g1"))),
+    Entry(Entry.Key("job:j0"), Entry.Kind("job"), at(60 * 24 * 9), state = Entry.State("failed"), what = Entry.What("basemap-fetch"))
   )
 
   private def keys(p: Activity.Page) = p.entries.map(_.key)
@@ -45,7 +49,7 @@ class ActivityRulesSuite extends munit.FunSuite:
         s"page size $size"
       )
     assertEquals(
-      ActivityRules.page(entries, ActivityQuery(limit = com.histmersion.domain.activity.ActivityQuery.Limit(7)), Activity.Counts()).next,
+      ActivityRules.page(entries, ActivityQuery(limit = ActivityQuery.Limit(7)), Activity.Counts()).next,
       None,
       "the last page has no next"
     )
@@ -61,7 +65,7 @@ class ActivityRulesSuite extends munit.FunSuite:
 
   test("a goal's slice and a time bound"):
     assertEquals(
-      keys(ActivityRules.page(entries, ActivityQuery(goal = Some(com.histmersion.domain.activity.ActivityQuery.Goal("g1"))), Activity.Counts())),
+      keys(ActivityRules.page(entries, ActivityQuery(goal = Some(ActivityQuery.Goal("g1"))), Activity.Counts())),
       List("run:r1", "log:10", "decision:5")
     )
     assertEquals(
@@ -72,26 +76,26 @@ class ActivityRulesSuite extends munit.FunSuite:
   test("the counts: running now, and the problems of the last 7 days only"):
     assertEquals(
       ActivityRules.counts(entries, now.minusSeconds(7 * 86400)),
-      Activity.Counts(running = com.histmersion.api.automation.Activity.Counts.Running(1), problemsWeek = com.histmersion.api.automation.Activity.Counts.ProblemsWeek(1))
+      Activity.Counts(running = Activity.Counts.Running(1), problemsWeek = Activity.Counts.ProblemsWeek(1))
     )
 
   test("a cursor round-trips; a bad one is refused"):
-    val c = ActivityCursor(Instant.parse("2026-10-30T11:58:00.123456Z"), com.histmersion.domain.activity.ActivityCursor.Key("log:12"))
+    val c = ActivityCursor(Instant.parse("2026-10-30T11:58:00.123456Z"), ActivityCursor.Key("log:12"))
     assertEquals(ActivityCursor.parse(c.wire), Right(c))
-    assert(ActivityCursor.parse(com.histmersion.domain.activity.ActivityCursor.Wire("yesterday~log:1")).isLeft)
-    assert(ActivityCursor.parse(com.histmersion.domain.activity.ActivityCursor.Wire("2026-10-30T11:58:00Z")).isLeft)
+    assert(ActivityCursor.parse(ActivityCursor.Wire("yesterday~log:1")).isLeft)
+    assert(ActivityCursor.parse(ActivityCursor.Wire("2026-10-30T11:58:00Z")).isLeft)
 
   test("the query: the chips' words, a time ago, a capped limit; anything else a 400 naming what is allowed"):
     assertEquals(
-      ActivityRules.query(Some(com.histmersion.api.automation.Activity.Show.Wire("problems")), Some(com.histmersion.api.automation.ListFilters.TimeBound("7d")), Some(com.histmersion.domain.activity.ActivityQuery.Goal(" g1 ")), Some(com.histmersion.domain.activity.ActivityQuery.Limit(1000)), None, now),
-      Right(ActivityQuery(Show.Problems, Some(now.minusSeconds(7 * 86400)), Some(com.histmersion.domain.activity.ActivityQuery.Goal("g1")), ActivityQuery.Limit(Activity.MaxLimit), None))
+      ActivityRules.query(Some(Show.Wire("problems")), Some(ListFilters.TimeBound("7d")), Some(ActivityQuery.Goal(" g1 ")), Some(ActivityQuery.Limit(1000)), None, now),
+      Right(ActivityQuery(Show.Problems, Some(now.minusSeconds(7 * 86400)), Some(ActivityQuery.Goal("g1")), ActivityQuery.Limit(Activity.MaxLimit), None))
     )
     assertEquals(ActivityRules.query(None, None, None, None, None, now), Right(ActivityQuery()))
     assert(
       ActivityRules
-        .query(Some(com.histmersion.api.automation.Activity.Show.Wire("everything else")), None, None, None, None, now)
+        .query(Some(Show.Wire("everything else")), None, None, None, None, now)
         .left
         .exists(_.message.value.contains("running"))
     )
-    assert(ActivityRules.query(None, Some(com.histmersion.api.automation.ListFilters.TimeBound("last week")), None, None, None, now).isLeft)
-    assert(ActivityRules.query(None, None, None, None, Some(com.histmersion.domain.activity.ActivityCursor.Wire("nope")), now).isLeft)
+    assert(ActivityRules.query(None, Some(ListFilters.TimeBound("last week")), None, None, None, now).isLeft)
+    assert(ActivityRules.query(None, None, None, None, Some(ActivityCursor.Wire("nope")), now).isLeft)

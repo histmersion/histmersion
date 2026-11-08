@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
 
 import com.histmersion.domain.Licence
 
@@ -15,4 +16,4 @@ final case class LicencePolicy(allowed: Set[Licence.Family]):
 object LicencePolicy:
 
   /** The policy a settings value names (`"cc0,public-domain,cc-by,cc-by-sa"`). */
-  def of(csv: com.histmersion.domain.Licence.AllowList): LicencePolicy = LicencePolicy(Licence.allowList(csv))
+  def of(csv: Licence.AllowList): LicencePolicy = LicencePolicy(Licence.allowList(csv))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -28,6 +29,8 @@ import java.util.UUID
 import scala.collection.mutable
 import com.histmersion.api.library.Source
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.AuthorName
 
 /** How a merge plan treats the sources themselves (docs/research-merge-import.md §5.2–§5.3): the bundle's sources
   * matched with the ones here ([[SourceMatcher]]), the question whether a pair is one work, the fields of a pair that
@@ -45,11 +48,11 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   private val pairOf = mutable.LinkedHashMap.empty[UUID, Pair] // the bundle's source → its pair
   private val pairFieldIds = mutable.Map.empty[UUID, Map[MergeIssue.Kind, MergeIssue.Id]] // the fields' issues, by pair
   private val fatesSeen = mutable.Map.empty[UUID, SourceFate]
-  private val sourceLine = mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Source]
+  private val sourceLine = mutable.Map.empty[UUID, BundleEntities => Bundle.Source]
 
   private def leftRev(u: UUID): BundlePlan.Local.Rev =
     BundlePlan.Local.Rev(sourcesByUid.get(u).map(s => BundleFormat.stamp(s).rev).getOrElse(""))
-  private def rightRev(s: com.histmersion.api.exchange.Bundle.Source): BundlePlan.Ledger.ForeignRev =
+  private def rightRev(s: Bundle.Source): BundlePlan.Ledger.ForeignRev =
     BundlePlan.Ledger.ForeignRev(BundleFormat.stamp(s).rev)
 
   override def sketchesWanted(cfg: MergeSettings): Set[Bundle.Source.BodySha256] =
@@ -185,7 +188,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           MergeIssue.Title(s"year differs: $b here, $a in the bundle"),
           lr,
           Some(MergeDecision.of(earliest)),
-          why = List(com.histmersion.api.exchange.MergeIssue.Why("the suggestion keeps the earliest year (the first edition)"))
+          why = List(MergeIssue.Why("the suggestion keeps the earliest year (the first edition)"))
         )
       },
       Option.when(r.status != l.status && r.status != Source.Status.Unassessed && l.status != Source.Status.Unassessed)(
@@ -225,7 +228,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val sim = sketches
           .get(a)
           .zip(sketches.get(b))
-          .map((x, y) => s" (MinHash ${SourceMatcher.fixed(SourceMatcher.Figure(x.similarity(y).value), com.histmersion.domain.library.sources.SourceMatcher.Decimals(2))})")
+          .map((x, y) => s" (MinHash ${SourceMatcher.fixed(SourceMatcher.Figure(x.similarity(y).value), SourceMatcher.Decimals(2))})")
           .getOrElse("")
         mk(
           MergeIssue.Kind.BodyDiffers,
@@ -242,7 +245,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 
   /** A bundle source that would be new: is its citekey taken here? */
   private def collision(
-      s: com.histmersion.api.exchange.Bundle.Source,
+      s: Bundle.Source,
       cond: Option[IssueCondition],
       sketches: Map[Bundle.Source.BodySha256, MinHash],
       cfg: MergeSettings
@@ -300,14 +303,14 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     questions.labelTaken(
       Bundle.Kind.Source,
       questions.localized.sources.filter(s => questions.here(s.uid)),
-      (s: com.histmersion.api.exchange.Bundle.Source) => s.uid,
-      (s: com.histmersion.api.exchange.Bundle.Source) => PlanQuestions.LabelTakenLabelResult(s.citekey.value),
-      (s: com.histmersion.api.exchange.Bundle.Source) =>
+      (s: Bundle.Source) => s.uid,
+      (s: Bundle.Source) => PlanQuestions.LabelTakenLabelResult(s.citekey.value),
+      (s: Bundle.Source) =>
         in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
-      com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("citekey"),
+      PlanQuestions.LabelTakenWhat("citekey"),
       lr,
-      (_: com.histmersion.api.exchange.Bundle.Source, _: UUID) => None,
-      (s: com.histmersion.api.exchange.Bundle.Source, o: UUID) =>
+      (_: Bundle.Source, _: UUID) => None,
+      (s: Bundle.Source, o: UUID) =>
         sourcesByUid.get(o).map(l => IssueDetail(MergeIssue.Detail.sourceFields(l, s)))
     )
 
@@ -337,9 +340,9 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   override def pairIssue(kind: MergeIssue.Kind): Boolean = PairKinds(kind)
 
   override def foldSources(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
-      citekey: com.histmersion.domain.library.Citekey,
+      right: Bundle.Source,
+      left: Bundle.Source,
+      citekey: Citekey,
       folds: PlanFolds
   ): Boolean =
     pairOf
@@ -351,7 +354,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     sourceLine(left.uid) = _ => merged
     merged.bodySha256 != left.bodySha256
 
-  override def renamed(source: UUID, citekey: com.histmersion.domain.library.Citekey): Unit =
+  override def renamed(source: UUID, citekey: Citekey): Unit =
     sourceLine(source) = es =>
       es.sources.find(_.uid == source).get.modify(_.citekey).setTo(wire(citekey.value))
 
@@ -359,30 +362,30 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.sources)
       .setTo(
         MergePlanner
-          .replaced(es0.sources, _.uid, sourceLine, es0, (_: com.histmersion.api.exchange.Bundle.Source) => true)
+          .replaced(es0.sources, _.uid, sourceLine, es0, (_: Bundle.Source) => true)
       )
 
   override def planned(plan: MergePlan): MergePlan =
-    plan.modify(_.sources).setTo(com.histmersion.api.library.Source.Match.Matches.matches(matches))
+    plan.modify(_.sources).setTo(Source.Match.Matches.matches(matches))
 
   /** How each of the bundle's sources was matched, by citekey; one known by its uid or the ledger is not listed. */
-  private def matches: List[com.histmersion.api.library.Source.Match] = fes.sources.sortBy(_.citekey.value).flatMap { s =>
+  private def matches: List[Source.Match] = fes.sources.sortBy(_.citekey.value).flatMap { s =>
     fatesSeen.get(s.uid).flatMap {
       case SourceFate.Same(_, _) => None
       case SourceFate.Deleted    =>
         Some(
-          com.histmersion.api.library.Source
+          Source
             .Match(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.DeletedHere)
         )
       case SourceFate.New =>
         Some(
-          com.histmersion.api.library.Source
+          Source
             .Match(s.uid, s.citekey, None, None, MatchMethod.Unmatched, MatchOutcome.New)
         )
       case SourceFate.Auto(p) =>
         val ev = pairOf(s.uid).evidence
         Some(
-          com.histmersion.api.library.Source.Match(
+          Source.Match(
             s.uid,
             s.citekey,
             Some(p.left.uid),
@@ -396,7 +399,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       case SourceFate.Gate(p, g) =>
         val ev = pairOf(s.uid).evidence
         Some(
-          com.histmersion.api.library.Source.Match(
+          Source.Match(
             s.uid,
             s.citekey,
             Some(p.left.uid),
@@ -447,8 +450,8 @@ object SourcePlan:
       .map(s => Side(s, citekeysOf(localAliases.getOrElse(s.uid, Nil))))
     (rights, lefts)
 
-  private def citekeysOf(aliases: List[com.histmersion.api.library.Citekey]): Set[com.histmersion.domain.library.Citekey] =
-    aliases.flatMap(a => com.histmersion.domain.library.Citekey.option(a.value)).toSet
+  private def citekeysOf(aliases: List[com.histmersion.api.library.Citekey]): Set[Citekey] =
+    aliases.flatMap(a => Citekey.option(a.value)).toSet
 
   private def signedScore(score: SourceMatcher.Evidence.Score): SourceMatcher.Written =
     SourceMatcher.signed(SourceMatcher.Evidence.Weight(score.value))
@@ -464,7 +467,7 @@ object SourcePlan:
     * in the bundle. Pure.
     */
   def renameSuggestion(
-      s: com.histmersion.api.exchange.Bundle.Source,
+      s: Bundle.Source,
       in: MergePlanner.Input,
       fes: BundleEntities
   ): com.histmersion.api.library.Citekey =
@@ -479,8 +482,8 @@ object SourcePlan:
     byWord.getOrElse(Iterator.from(0).map(i => wire(s.citekey.value + ('b' + i).toChar)).find(c => !usedHere(c)).get)
 
   /** The richer author list: as many names, then the longer written-out names (`Hans G.` over `H. G.`). */
-  def richerAuthors(l: List[com.histmersion.api.library.AuthorName], r: List[com.histmersion.api.library.AuthorName]): List[com.histmersion.api.library.AuthorName] =
-    def score(as: List[com.histmersion.api.library.AuthorName]) =
+  def richerAuthors(l: List[AuthorName], r: List[AuthorName]): List[AuthorName] =
+    def score(as: List[AuthorName]) =
       (
         as.size,
         as.flatMap(a => MergeText.person(com.histmersion.domain.AuthorName(a.value))).map(p => p.forenames.map(_.value.length).sum).sum,
@@ -493,11 +496,11 @@ object SourcePlan:
     * rule. `citekey` is the label the survivor keeps (`map:<citekey>`). The survivor is this collection's (left).
     */
   def fold(
-      l: com.histmersion.api.exchange.Bundle.Source,
-      r: com.histmersion.api.exchange.Bundle.Source,
+      l: Bundle.Source,
+      r: Bundle.Source,
       decided: Map[MergeIssue.Kind, MergeDecision],
-      citekey: com.histmersion.domain.library.Citekey
-  ): com.histmersion.api.exchange.Bundle.Source =
+      citekey: Citekey
+  ): Bundle.Source =
     def pick[A](k: MergeIssue.Kind, auto: => A, left: => A, right: => A): A = decided.get(k).map(_.kind) match
       case Some(MergeDecision.Kind.KeepRight) => right
       case Some(MergeDecision.Kind.KeepLeft)  => left
@@ -514,7 +517,7 @@ object SourcePlan:
         case _            => a
     val keepRightBody = decided.get(MergeIssue.Kind.BodyDiffers).exists(_.kind == MergeDecision.Kind.KeepRight) ||
       (l.bodySha256.isEmpty && r.bodySha256.isDefined)
-    val period: Option[com.histmersion.api.exchange.Bundle.Range] = (l.period, r.period) match
+    val period: Option[Bundle.Range] = (l.period, r.period) match
       case (Some(a), Some(b)) if a != b =>
         decided.get(MergeIssue.Kind.PeriodDiffers).map(_.kind) match
           case Some(MergeDecision.Kind.KeepRight) => Some(b)

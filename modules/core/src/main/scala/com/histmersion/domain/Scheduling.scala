@@ -1,10 +1,13 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.given
 
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.automation.Run
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The pure parts of a goal's schedules (docs/research-embedded-agents.md §14): whether a due schedule may start a run
   * now (the previous run, the daily/monthly cost caps, `max-concurrent-runs`), its cost cap, and the DOIs an
@@ -13,15 +16,15 @@ import com.histmersion.domain.automation.Run
   */
 object Scheduling:
   type ActiveCount = ActiveCount.T
-  object ActiveCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ActiveCount extends RefinedType[Int, Pure]
   type Budget = Budget.T
-  object Budget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Budget extends RefinedType[Double, Pure]
   type DailyBudget = DailyBudget.T
-  object DailyBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DailyBudget extends RefinedType[Double, Pure]
   type MaxConcurrent = MaxConcurrent.T
-  object MaxConcurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxConcurrent extends RefinedType[Int, Pure]
   type MonthlyBudget = MonthlyBudget.T
-  object MonthlyBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MonthlyBudget extends RefinedType[Double, Pure]
 
   /** What the scheduler does with a due schedule. `Skip` moves the schedule on to its next time; `Defer` leaves it due,
     * for the next tick.
@@ -35,10 +38,10 @@ object Scheduling:
   object Decision:
     object Skip:
       type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Reason extends RefinedType[String, Pure]
     object Defer:
       type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Reason extends RefinedType[String, Pure]
 
   /** A run that has not settled: a schedule does not start another beside it. */
   def unsettled(s: Run.State): Boolean = !s.isTerminal
@@ -51,10 +54,10 @@ object Scheduling:
       previous: Option[Run.State],
       spentDay: BigDecimal,
       spentMonth: BigDecimal,
-      dailyUsd: com.histmersion.domain.Scheduling.DailyBudget,
-      monthlyUsd: com.histmersion.domain.Scheduling.MonthlyBudget,
-      active: com.histmersion.domain.Scheduling.ActiveCount,
-      maxConcurrent: com.histmersion.domain.Scheduling.MaxConcurrent
+      dailyUsd: DailyBudget,
+      monthlyUsd: MonthlyBudget,
+      active: ActiveCount,
+      maxConcurrent: MaxConcurrent
   ): Decision =
     previous.filter(unsettled) match
       case Some(s) => Decision.Skip(Decision.Skip.Reason(s"its previous run is still ${s.wire}"))
@@ -72,7 +75,7 @@ object Scheduling:
         else Decision.Start
 
   /** The cost cap of a scheduled run: the schedule's own, else the goal's, else the server default. */
-  def budget(schedule: Option[com.histmersion.domain.Scheduling.Budget], goal: Option[com.histmersion.domain.Scheduling.Budget], default: com.histmersion.domain.Scheduling.Budget): com.histmersion.domain.Scheduling.Budget =
+  def budget(schedule: Option[Budget], goal: Option[Budget], default: Budget): Budget =
     schedule.orElse(goal).filter(_.value > 0).getOrElse(default)
 
   // ── the acquisition items ───────────────────────────────────────────────────────────────────────
@@ -80,5 +83,5 @@ object Scheduling:
   private val DoiIn = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
   /** Every DOI written in a text (an acquisition item), normalised — how the queue is deduplicated. */
-  def dois(text: String): Set[com.histmersion.domain.library.Doi] =
+  def dois(text: String): Set[Doi] =
     DoiIn.findAllIn(Option(text).getOrElse("")).flatMap(Doi.normalize).toSet

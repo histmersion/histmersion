@@ -1,7 +1,15 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.{TimeSpan, Years}
 import com.histmersion.api.catalogue.{CatalogRecord, EventGeo, EventTaxonomy, Geocode}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.EventSummary
 
 /** The pure half of events from catalogues: the providers' identities and terms, the mapping of their datings onto the
   * four-point time-span, and how records from several catalogues and the events already stored are merged into ONE
@@ -18,26 +26,26 @@ object CatalogMerge:
 
   object Tolerance:
     type Km = Km.T
-    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Km extends RefinedType[Double, Pure]
     type Years = Years.T
-    object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Years extends RefinedType[Long, Pure]
 
   /** Where one record goes: into a stored event (`existing`), or into the NEW event `id` (several records of one thing
     * share it). `why` says what matched.
     */
   enum Placement:
-    case Existing(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.Why)
-    case New(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.Why)
-    def eventId: com.histmersion.domain.catalogue.Event.Id
+    case Existing(eventId: Event.Id, why: Placement.Why)
+    case New(eventId: Event.Id, why: Placement.Why)
+    def eventId: Event.Id
 
   object Placement:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
-  private def outer(ts: TimeSpan): Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] = ts.outer
+  private def outer(ts: TimeSpan): Option[(Year, Year)] = ts.outer
 
-  private def point(e: StoredEvent): (Option[com.histmersion.api.catalogue.Latitude], Option[com.histmersion.api.catalogue.Longitude]) =
-    (e.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)), e.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)))
+  private def point(e: StoredEvent): (Option[Latitude], Option[Longitude]) =
+    (e.lat.map(l => Latitude(l.value)), e.lon.map(l => Longitude(l.value)))
 
   private def outerYears(ts: TimeSpan): Option[(Long, Long)] = outer(ts).map((a, b) => (a.value, b.value))
 
@@ -52,7 +60,7 @@ object CatalogMerge:
       case _ => false
 
   /** Pure: are two points within `km`? An unplaced one is near nothing. */
-  def near(a: (Option[com.histmersion.api.catalogue.Latitude], Option[com.histmersion.api.catalogue.Longitude]), b: (Option[com.histmersion.api.catalogue.Latitude], Option[com.histmersion.api.catalogue.Longitude]), km: Tolerance.Km): Boolean =
+  def near(a: (Option[Latitude], Option[Longitude]), b: (Option[Latitude], Option[Longitude]), km: Tolerance.Km): Boolean =
     (a, b) match
       case ((Some(la), Some(lo)), (Some(lb), Some(ob))) => Geocode.distanceKm(lo, la, ob, lb).value <= km.value
       case _                                            => false
@@ -60,8 +68,8 @@ object CatalogMerge:
   /** Two kinds are the same thing when their canonical kinds are equal (a siege is no battle here: Wikidata lists both
     * for one fight only when it says so through the item).
     */
-  private def canonical(kind: String): com.histmersion.api.catalogue.EventSummary.Kind =
-    EventTaxonomy.canonical(com.histmersion.api.catalogue.EventSummary.Kind(kind))
+  private def canonical(kind: String): EventSummary.Kind =
+    EventTaxonomy.canonical(EventSummary.Kind(kind))
 
   private def sameKind(a: String, b: String): Boolean = canonical(a) == canonical(b)
 
@@ -73,18 +81,18 @@ object CatalogMerge:
   final case class Fit(score: Fit.Score, years: Fit.Years, km: Fit.Km, id: Fit.Id)
   object Fit:
     type Score = Score.T
-    object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Score extends RefinedType[Double, Pure]
     type Years = Years.T
-    object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Years extends RefinedType[Double, Pure]
     type Km = Km.T
-    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Id = com.histmersion.domain.catalogue.Event.Id
-    val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
+    object Km extends RefinedType[Double, Pure]
+    type Id = Event.Id
+    val Id: Event.Id.type = Event.Id
 
     given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score.value, f.years.value: Double, f.km.value: Double, f.id.value: String))
 
   /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */
-  def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[com.histmersion.api.catalogue.Latitude], lon: Option[com.histmersion.api.catalogue.Longitude], id: Fit.Id): Fit =
+  def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[Latitude], lon: Option[Longitude], id: Fit.Id): Fit =
     val (score, years) = (outerYears(r.timeSpan), outerYears(ts)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
         val inter = (a1.min(b1) - a0.max(b0) + 1).max(0).toDouble
@@ -164,7 +172,7 @@ object CatalogMerge:
             case Placement.Existing(id, _) => Placement.Existing(id, Placement.Why("merged with another record of this run"))
             case Placement.New(id, _)      => Placement.New(id, Placement.Why("merged with another catalogue's record of it"))
           }
-      val p = storedMatch.orElse(runMatch).getOrElse(Placement.New(com.histmersion.domain.catalogue.Event.Id.assume(CatalogRecord.eventId(r).value), Placement.Why("new")))
+      val p = storedMatch.orElse(runMatch).getOrElse(Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), Placement.Why("new")))
       acc :+ ((i, r, p))
     }
     placed.sortBy(_._1).map((_, r, p) => r -> p).toList

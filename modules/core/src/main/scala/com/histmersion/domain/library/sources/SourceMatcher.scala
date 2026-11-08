@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.api.exchange.EditionsPolicy
 
@@ -15,6 +16,9 @@ import com.histmersion.util.text.{Fingerprint, MinHash}
 
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *
@@ -32,26 +36,26 @@ object SourceMatcher:
 
   /** A number written out in the evidence text: a weight or a similarity. */
   type Figure = Figure.T
-  object Figure extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Figure extends RefinedType[Double, Pure]
 
   /** How many decimals a figure is written with. */
   type Decimals = Decimals.T
-  object Decimals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Decimals extends RefinedType[Int, Pure]
 
   /** A figure as it is written out. */
   type Written = Written.T
-  object Written extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Written extends RefinedType[String, Pure]
 
   /** A blocking key: the pairs that share one are compared. */
   type BlockingKey = BlockingKey.T
-  object BlockingKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BlockingKey extends RefinedType[String, Pure]
 
   /** The letters of a citekey before its year. */
   type Stem = Stem.T
-  object Stem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Stem extends RefinedType[String, Pure]
 
   /** A source with the old citekeys (aliases) that still name it. */
-  final case class Side(source: Bundle.Source, aliases: Set[com.histmersion.domain.library.Citekey]):
+  final case class Side(source: Bundle.Source, aliases: Set[Citekey]):
     def uid: UUID = source.uid
     def aliasLabels: Set[Side.Label] = aliases.map(a => Side.Label(a.value))
     def labels: Set[Side.Label] = aliasLabels + Side.Label(source.citekey.value)
@@ -59,7 +63,7 @@ object SourceMatcher:
   object Side:
     /** A citekey a source is known by: its own, or an old one. */
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    object Label extends RefinedType[String, Pure]:
       given Ordering[Label] = Ordering.by(_.value)
 
   /** The evidence about one pair. `parts` is the score's waterfall, in the order it was added up. */
@@ -79,29 +83,29 @@ object SourceMatcher:
   object Evidence:
     /** The sum of the weights of the parts. */
     type Score = Score.T
-    object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Score extends RefinedType[Double, Pure]
 
     /** One line of the score's explanation. */
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
     /** The name of a strong key (`DOI`, `ISBN`). */
     type Strong = Strong.T
-    object Strong extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strong extends RefinedType[String, Pure]
     type DoiConflict = DoiConflict.T
-    object DoiConflict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DoiConflict extends RefinedType[Boolean, Pure]
     type YearGap = YearGap.T
-    object YearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object YearGap extends RefinedType[Boolean, Pure]
     type TitleDiffers = TitleDiffers.T
-    object TitleDiffers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TitleDiffers extends RefinedType[Boolean, Pure]
 
     /** What a comparison found, in words. */
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
 
     /** What a comparison adds to the score. */
     type Weight = Weight.T
-    object Weight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Weight extends RefinedType[Double, Pure]
 
   /** `x` with `places` decimals, a dot whatever the JVM's locale. */
   def fixed(x: Figure, places: Decimals): Written = Written(s"%.${places}f".formatLocal(java.util.Locale.ROOT, x.value))
@@ -263,7 +267,7 @@ object SourceMatcher:
 
   object Pair:
     type Flags = Flags.T
-    object Flags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Flags extends RefinedType[String, Pure]
 
   final case class Matching(pairs: List[Pair], unmatched: List[Side])
 

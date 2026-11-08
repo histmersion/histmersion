@@ -1,9 +1,12 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a kind's rules of a plan see when the bundle's labels a different record has here are given new ones: the rows
   * as first decided, the bundle's lines in this collection's terms, and where the plan says what was relabelled.
@@ -20,13 +23,13 @@ trait PlanRelabels:
   def writesInitially(foreign: UUID): Boolean
 
   /** A line of the plan's notes. */
-  def info(line: com.histmersion.util.data.exchange.PlanRelabels.InfoLine): Unit
+  def info(line: PlanRelabels.InfoLine): Unit
 
   /** A line of what the plan relabels. */
-  def relabelled(line: com.histmersion.util.data.exchange.PlanRelabels.RelabelledLine): Unit
+  def relabelled(line: PlanRelabels.RelabelledLine): Unit
 
 object PlanRelabels:
   type InfoLine = InfoLine.T
-  object InfoLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfoLine extends RefinedType[String, Pure]
   type RelabelledLine = RelabelledLine.T
-  object RelabelledLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RelabelledLine extends RefinedType[String, Pure]

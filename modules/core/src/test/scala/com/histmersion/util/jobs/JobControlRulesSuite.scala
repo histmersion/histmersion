@@ -1,19 +1,30 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.jobs.Job
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.automation.AgentJobKinds
+import com.histmersion.api.library.IngestJobKinds
+import com.histmersion.api.maintenance.MaintenanceJobKinds
+import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.api.catalogue.EventsJobKinds
+import com.histmersion.api.basemap.BasemapJobKinds
+import com.histmersion.api.library.AcquisitionJobKinds
+import com.histmersion.api.exchange.ExchangeJobKinds
 
 class JobControlRulesSuite extends munit.FunSuite:
 
-  private def job(kind: JobInfo.Kind, status: JobInfo.Status) = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), com.histmersion.api.jobs.JobKinds.Wire(kind.value), status, None)
+  private def job(kind: JobInfo.Kind, status: JobInfo.Status) = JobInfo(SpatialHierarchyResult.Job.Id("j1"), JobKinds.Wire(kind.value), status, None)
 
   test("an agent run takes its own control, whatever it is asked"):
     JobAction.values.foreach(a =>
       assertEquals(
         JobControlRules
-          .decide(job(com.histmersion.api.automation.AgentJobKinds.Agent.kind, JobInfo.Status("running")), a, resumable = false),
+          .decide(job(AgentJobKinds.Agent.kind, JobInfo.Status("running")), a, resumable = false),
         Right(JobControlStep.Run(a))
       )
     )
@@ -22,7 +33,7 @@ class JobControlRulesSuite extends munit.FunSuite:
     assert(
       JobControlRules
         .decide(
-          job(com.histmersion.api.library.IngestJobKinds.Ingest.kind, JobInfo.Status("running")),
+          job(IngestJobKinds.Ingest.kind, JobInfo.Status("running")),
           JobAction.Pause,
           resumable = false
         )
@@ -32,7 +43,7 @@ class JobControlRulesSuite extends munit.FunSuite:
     assert(
       JobControlRules
         .decide(
-          job(com.histmersion.api.maintenance.MaintenanceJobKinds.Vacuum.kind, JobInfo.Status("running")),
+          job(MaintenanceJobKinds.Vacuum.kind, JobInfo.Status("running")),
           JobAction.Cancel,
           resumable = false
         )
@@ -41,11 +52,11 @@ class JobControlRulesSuite extends munit.FunSuite:
 
   test("the long jobs: pause and cancel are asked of a running one; a paused or queued one is cancelled at once"):
     List(
-      com.histmersion.api.media.ImportJobKinds.MediaImport.kind,
-      com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind,
-      com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind,
-      com.histmersion.api.library.AcquisitionJobKinds.AcquireRecheck.kind,
-      com.histmersion.api.exchange.ExchangeJobKinds.Init.kind
+      ImportJobKinds.MediaImport.kind,
+      EventsJobKinds.EventsImport.kind,
+      BasemapJobKinds.BasemapFetch.kind,
+      AcquisitionJobKinds.AcquireRecheck.kind,
+      ExchangeJobKinds.Init.kind
     )
       .foreach { k =>
         assertEquals(
@@ -69,13 +80,13 @@ class JobControlRulesSuite extends munit.FunSuite:
       }
 
   test("resume: only a paused job this server can go on with"):
-    val paused = job(com.histmersion.api.media.ImportJobKinds.MediaImport.kind, JobInfo.Status("paused"))
+    val paused = job(ImportJobKinds.MediaImport.kind, JobInfo.Status("paused"))
     assertEquals(JobControlRules.decide(paused, JobAction.Resume, resumable = true), Right(JobControlStep.Resume))
     assert(JobControlRules.decide(paused, JobAction.Resume, resumable = false).left.exists(_.value.contains("restarted")))
     assert(
       JobControlRules
         .decide(
-          job(com.histmersion.api.media.ImportJobKinds.MediaImport.kind, JobInfo.Status("running")),
+          job(ImportJobKinds.MediaImport.kind, JobInfo.Status("running")),
           JobAction.Resume,
           resumable = true
         )
@@ -88,7 +99,7 @@ class JobControlRulesSuite extends munit.FunSuite:
       JobAction.values.foreach(a =>
         assert(
           JobControlRules
-            .decide(job(com.histmersion.api.media.ImportJobKinds.MediaImport.kind, s), a, resumable = true)
+            .decide(job(ImportJobKinds.MediaImport.kind, s), a, resumable = true)
             .left
             .exists(_.value.contains("ended")),
           s"$s $a"
@@ -98,7 +109,7 @@ class JobControlRulesSuite extends munit.FunSuite:
     assert(
       JobControlRules
         .decide(
-          job(com.histmersion.api.media.ImportJobKinds.MediaImport.kind, JobInfo.Status("paused")),
+          job(ImportJobKinds.MediaImport.kind, JobInfo.Status("paused")),
           JobAction.Pause,
           resumable = true
         )
@@ -108,7 +119,7 @@ class JobControlRulesSuite extends munit.FunSuite:
     assert(
       JobControlRules
         .decide(
-          job(com.histmersion.api.media.ImportJobKinds.MediaImport.kind, JobInfo.Status("queued")),
+          job(ImportJobKinds.MediaImport.kind, JobInfo.Status("queued")),
           JobAction.Pause,
           resumable = true
         )
@@ -117,7 +128,7 @@ class JobControlRulesSuite extends munit.FunSuite:
     )
 
   test("a stopped job keeps what it had done in its progress line"):
-    assertEquals(JobControlRules.stoppedLine(JobStop.Pause, Some(com.histmersion.api.jobs.JobInfo.Progress("12/40 places"))), "paused after: 12/40 places")
+    assertEquals(JobControlRules.stoppedLine(JobStop.Pause, Some(JobInfo.Progress("12/40 places"))), "paused after: 12/40 places")
     assertEquals(JobControlRules.stoppedLine(JobStop.Cancel, None), "cancelled")
-    assertEquals(JobAction.parse(com.histmersion.util.jobs.JobAction.Wire(" Pause ")), Some(JobAction.Pause))
-    assertEquals(JobAction.parse(com.histmersion.util.jobs.JobAction.Wire("stop")), None)
+    assertEquals(JobAction.parse(JobAction.Wire(" Pause ")), Some(JobAction.Pause))
+    assertEquals(JobAction.parse(JobAction.Wire("stop")), None)

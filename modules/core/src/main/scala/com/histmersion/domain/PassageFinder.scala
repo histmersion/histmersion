@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.util.ocr.Chunk
 
@@ -8,6 +9,10 @@ import com.histmersion.api.library.{PassageHit, PassageResult}
 import com.histmersion.api.given
 
 import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.util.time.Timer
 
 /** Finds passages inside ONE source's converted body (#954) — pure, no I/O.
   *
@@ -31,37 +36,37 @@ import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
   */
 object PassageFinder:
   type ContextChars = ContextChars.T
-  object ContextChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ContextChars extends RefinedType[Int, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type MaxMatches = MaxMatches.T
-  object MaxMatches extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxMatches extends RefinedType[Int, Pure]
   type Passage = Passage.T
-  object Passage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Passage extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Query extends RefinedType[String, Pure]
   type Regex = Regex.T
-  object Regex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regex extends RefinedType[Boolean, Pure]
   type TimeoutMs = TimeoutMs.T
-  object TimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutMs extends RefinedType[Long, Pure]
 
   /** The body `get_source` reads — chunks in order, joined by a blank line (`SourceRepo.bodyText`). */
-  def body(segments: Seq[Chunk]): com.histmersion.domain.PassageFinder.Passage = Passage(segments.map(_.body.value).mkString(Separator))
+  def body(segments: Seq[Chunk]): Passage = Passage(segments.map(_.body.value).mkString(Separator))
 
   private val Separator = "\n\n"
 
   def find(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       segments: Seq[Chunk],
-      query: com.histmersion.domain.PassageFinder.Query,
-      regex: com.histmersion.domain.PassageFinder.Regex,
-      limit: com.histmersion.domain.PassageFinder.Limit,
-      context: com.histmersion.domain.PassageFinder.ContextChars,
-      maxMatches: com.histmersion.domain.PassageFinder.MaxMatches,
-      timeoutMs: com.histmersion.domain.PassageFinder.TimeoutMs
-  )(using timer: com.histmersion.util.time.Timer): Either[com.histmersion.domain.PassageFinder.Problem, PassageResult] =
+      query: Query,
+      regex: Regex,
+      limit: Limit,
+      context: ContextChars,
+      maxMatches: MaxMatches,
+      timeoutMs: TimeoutMs
+  )(using timer: Timer): Either[Problem, PassageResult] =
     val q = Option(query.value).getOrElse("").trim
     if q.isEmpty then Left(Problem("the query is empty — give the words to find"))
     else
@@ -104,7 +109,7 @@ object PassageFinder:
       }
 
   /** The query as a pattern over the FOLDED body. */
-  private[domain] def compile(q: com.histmersion.domain.PassageFinder.Query, regex: com.histmersion.domain.PassageFinder.Regex): Either[com.histmersion.domain.PassageFinder.Problem, Pattern] =
+  private[domain] def compile(q: Query, regex: Regex): Either[Problem, Pattern] =
     val flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.MULTILINE
     if regex.value then
       try Right(Pattern.compile(fold(q.value), flags))
@@ -177,7 +182,7 @@ object PassageFinder:
   /** A view of the folded body that gives up once `until` (System.nanoTime) has passed: the regex engine reads every
     * character through `charAt`, so a pathological pattern is stopped mid-scan.
     */
-  final private class Bounded(s: CharSequence, until: com.histmersion.util.time.Timer.Deadline) extends CharSequence:
+  final private class Bounded(s: CharSequence, until: Timer.Deadline) extends CharSequence:
     // a counter, so the clock is read once per 64 Ki characters rather than on every one
     private var reads = 0
     def length: Int = s.length
@@ -190,7 +195,7 @@ object PassageFinder:
 
 
   /** Every non-empty match as `[start, end)` in the ORIGINAL body, in order, up to `max`. */
-  private def matches(p: Pattern, f: Folded, source: String, max: Int, until: com.histmersion.util.time.Timer.Deadline): (Vector[(Int, Int)], Boolean) =
+  private def matches(p: Pattern, f: Folded, source: String, max: Int, until: Timer.Deadline): (Vector[(Int, Int)], Boolean) =
     val m: Matcher = p.matcher(new Bounded(f.text, until))
     val out = Vector.newBuilder[(Int, Int)]
     // the Matcher is itself a cursor, so the loop around it counts with two local vars

@@ -1,8 +1,12 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.domain.automation.Run
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.Manager
 
 /** `agents.auto-enrich`: after an ingest job stores a source, an `enrich-source` run is queued for it — unless agents
   * are off, the switch is off, or the source is ALREADY ENRICHED. Pure: the server gathers the facts, this decides and
@@ -18,15 +22,15 @@ import com.histmersion.domain.automation.Run
   */
 object AutoEnrich:
   type FindingCount = FindingCount.T
-  object FindingCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingCount extends RefinedType[Int, Pure]
   type ItemId = ItemId.T
-  object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemId extends RefinedType[Long, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   type Notes = Notes.T
-  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Notes extends RefinedType[String, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
 
   /** Why no run is queued. `Off` is silent: nothing was asked for. */
 
@@ -36,14 +40,14 @@ object AutoEnrich:
 
   object Skip:
     object Enriched:
-      export com.histmersion.domain.AutoEnrich.{Reason as Why}
+      export AutoEnrich.{Reason as Why}
 
   /** One earlier `enrich-source` run of the source: its id and state. */
   final case class PriorRun(id: PriorRun.Id, state: Run.State)
 
   object PriorRun:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
 
   /** Whether to queue; Left = why not. */
   def decide(
@@ -57,7 +61,7 @@ object AutoEnrich:
     else enrichedBy(findings, notes, runs).map(Skip.Enriched(_)).toLeft(())
 
   /** Why the source counts as already enriched, if it does. */
-  def enrichedBy(findings: com.histmersion.domain.AutoEnrich.FindingCount, notes: Option[com.histmersion.domain.AutoEnrich.Notes], runs: List[PriorRun]): Option[Reason] =
+  def enrichedBy(findings: FindingCount, notes: Option[Notes], runs: List[PriorRun]): Option[Reason] =
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
     if findings.value > 0 then
       Some(Reason(s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"))
@@ -65,18 +69,18 @@ object AutoEnrich:
     else live.map(r => Reason(s"enrich-source run ${r.id} is ${r.state.wire}"))
 
   /** The job's progress note for what happened. */
-  def queued(runId: com.histmersion.domain.automation.Run.Id): Note = Note(s"enrichment queued: run $runId")
+  def queued(runId: Run.Id): Note = Note(s"enrichment queued: run $runId")
   def notQueued(why: Reason): Note = Note(s"enrichment not queued: $why")
 
   /** The note when the source went to the enrich manager (docs/research-process-managers.md, phase 2): its item, and —
     * unless the manager is active — that nothing runs until a person resumes it.
     */
-  def managed(item: com.histmersion.domain.AutoEnrich.ItemId, managerState: com.histmersion.domain.automation.Manager.State.Wire): Note =
+  def managed(item: ItemId, managerState: Manager.State.Wire): Note =
     Note(
       s"enrichment queued: item #$item of the enrich manager" +
         (if managerState.value == "active" then "" else s" ($managerState — resume it in the Managers window to start)")
     )
 
-  def note(skip: Skip): Option[com.histmersion.domain.AutoEnrich.Note] = skip match
+  def note(skip: Skip): Option[Note] = skip match
     case Skip.Off           => None
     case Skip.Enriched(why) => Some(notQueued(why))

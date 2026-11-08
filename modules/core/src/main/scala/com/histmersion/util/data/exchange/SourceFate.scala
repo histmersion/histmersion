@@ -1,6 +1,9 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import java.util.UUID
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What became of one of the bundle's sources in a plan: the same record as one here (by its uid, or by the ledger),
   * deleted here, one with a source here by itself, one with a source here if a person says so, or new.
@@ -15,7 +18,7 @@ enum SourceFate:
 object SourceFate:
   object Same:
     type ByLedger = ByLedger.T
-    object ByLedger extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ByLedger extends RefinedType[Boolean, Pure]
   object Gate:
     type Issue = Issue.T
-    object Issue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Issue extends RefinedType[String, Pure]

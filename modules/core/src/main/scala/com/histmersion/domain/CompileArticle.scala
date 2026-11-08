@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +19,12 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.StoredIdCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import io.circe.KeyEncoder
+import io.circe.KeyDecoder
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.automation.Run
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code
@@ -28,22 +35,22 @@ import com.histmersion.util.json.StoredIdCodecs.given
   */
 object CompileArticle:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Last = Last.T
-  object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Last extends RefinedType[Boolean, Pure]
   type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogLine extends RefinedType[String, Pure]
   type MaxClaims = MaxClaims.T
-  object MaxClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxClaims extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
   type Written = Written.T
-  object Written extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Written extends RefinedType[Boolean, Pure]
 
-  given citekeyKeyEncoder: _root_.io.circe.KeyEncoder[Citekey] = _root_.io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
-  given citekeyKeyDecoder: _root_.io.circe.KeyDecoder[Citekey] = _root_.io.circe.KeyDecoder.instance(Citekey.option(_))
+  given citekeyKeyEncoder: KeyEncoder[Citekey] = KeyEncoder.encodeKeyString.contramap(_.value)
+  given citekeyKeyDecoder: KeyDecoder[Citekey] = KeyDecoder.instance(Citekey.option(_))
 
   // ── phase 1: extraction ─────────────────────────────────────────────────────────────────────────
 
@@ -56,11 +63,11 @@ object CompileArticle:
   ) derives KindlingsCodecAsObject
   object ClaimAnswer:
     type Claim = Claim.T
-    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Claim extends RefinedType[String, Pure]
     type Date = Date.T
-    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Date extends RefinedType[String, Pure]
     type Place = Place.T
-    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Place extends RefinedType[String, Pure]
 
     given Schema[ClaimAnswer] = KindlingsSchema
       .derived[ClaimAnswer]
@@ -77,9 +84,9 @@ object CompileArticle:
       derives KindlingsCodecAsObject
   object ExtractAnswer:
     type Relevant = Relevant.T
-    object Relevant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Relevant extends RefinedType[Boolean, Pure]
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
 
     given Schema[ExtractAnswer] = KindlingsSchema
       .derived[ExtractAnswer]
@@ -92,7 +99,7 @@ object CompileArticle:
 
   /** A claim whose quote code found in the record. `ratio` is the OCR-tolerant match share. */
   final case class Claim(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       claim: ClaimAnswer.Claim,
       quote: AgentProposals.Proposal.Quote,
       date: Option[ClaimAnswer.Date],
@@ -102,7 +109,7 @@ object CompileArticle:
   ) derives KindlingsCodecAsObject
 
   /** One source's verified extraction (checkpointed): its claims, or why it is not used. */
-  final case class Extracted(citekey: com.histmersion.domain.library.Citekey, claims: List[Claim], notUsed: Option[Coverage.Entry.Reason])
+  final case class Extracted(citekey: Citekey, claims: List[Claim], notUsed: Option[Coverage.Entry.Reason])
       derives KindlingsCodecAsObject
 
   /** Check one extraction: every quote must be in `record` (summary, findings, notes, body excerpt), every confidence
@@ -111,7 +118,7 @@ object CompileArticle:
     */
   def checkExtract(
       a: ExtractAnswer,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       record: AgentVerify.SourceBody,
       minRatio: AgentVerify.MinRatio,
       maxClaims: MaxClaims,
@@ -156,33 +163,33 @@ object CompileArticle:
   // ── phase 2: the evidence model (code, from the database) ───────────────────────────────────────
 
   /** What the database says about one source the filter returned. */
-  final case class SourceFact(citekey: com.histmersion.domain.library.Citekey, title: com.histmersion.domain.Title, year: Option[com.histmersion.Year], status: Source.Status)
+  final case class SourceFact(citekey: Citekey, title: Title, year: Option[Year], status: Source.Status)
       derives KindlingsCodecAsObject
 
   /** A disagreement edge between two sources of the filter (only citekey targets count). */
-  final case class EdgeFact(from: com.histmersion.domain.library.Citekey, kind: Article.Coverage.DisagreementKind, to: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject
+  final case class EdgeFact(from: Citekey, kind: Article.Coverage.DisagreementKind, to: Citekey) derives KindlingsCodecAsObject
 
   /** The evidence model: the sources with their statuses and claim counts (due weight), the disagreement edges among
     * them, the disputed ones (a non-current status), and the Not-used list with reasons. `filter` is the filter line
     * for the `_Method_` note.
     */
   /** A source the article leaves out, and why. */
-  final case class NotUsed(citekey: com.histmersion.domain.library.Citekey, reason: Coverage.Entry.Reason) derives KindlingsCodecAsObject
+  final case class NotUsed(citekey: Citekey, reason: Coverage.Entry.Reason) derives KindlingsCodecAsObject
 
   final case class Evidence(
       filter: ArticleDraft.Filter,
-      total: com.histmersion.RowCount,
+      total: RowCount,
       sources: List[SourceFact],
-      claims: Map[com.histmersion.domain.library.Citekey, Evidence.ClaimCount],
+      claims: Map[Citekey, Evidence.ClaimCount],
       edges: List[EdgeFact],
-      disputed: List[com.histmersion.domain.library.Citekey],
+      disputed: List[Citekey],
       notUsed: List[NotUsed]
   ) derives KindlingsCodecAsObject:
-    def used: List[com.histmersion.domain.library.Citekey] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Evidence.ClaimCount(0)).hasClaims)
+    def used: List[Citekey] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Evidence.ClaimCount(0)).hasClaims)
 
   object Evidence:
     type ClaimCount = ClaimCount.T
-    object ClaimCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    object ClaimCount extends RefinedType[Int, Pure]:
       extension (n: ClaimCount) def hasClaims: Boolean = n.value > 0
 
   /** The statuses a first citation must state (writing guide rule 2). */
@@ -198,7 +205,7 @@ object CompileArticle:
 
   def evidence(
       filter: ArticleDraft.Filter,
-      total: com.histmersion.RowCount,
+      total: RowCount,
       facts: List[SourceFact],
       extracted: List[Extracted],
       edges: List[EdgeFact]
@@ -316,7 +323,7 @@ object CompileArticle:
   /** The inputs of the self-check that come from the corpus. */
   final case class Corpus(
       isCitekey: Citekey => Boolean,
-      isTarget: com.histmersion.domain.research.Slug => Boolean,
+      isTarget: Slug => Boolean,
       statusOf: Citekey => Option[Source.Status]
   )
 
@@ -331,7 +338,7 @@ object CompileArticle:
     */
   def checkDraft(
       a: DraftAnswer,
-      slug: com.histmersion.domain.research.Slug,
+      slug: Slug,
       mode: DraftMode,
       kind: Article.Kind.Wire,
       currentTitle: Option[Title],
@@ -371,7 +378,7 @@ object CompileArticle:
       slug,
       if mode == DraftMode.Create then kind else Article.Kind.Wire("index"),
       body,
-      t => com.histmersion.domain.research.Slug.option(t.value).exists(corpus.isTarget),
+      t => Slug.option(t.value).exists(corpus.isTarget),
       generated = ReviewArticle.MechanicalGenerated(true)
     )
     val citesHere = cited(text, corpus.isCitekey)
@@ -429,7 +436,7 @@ object CompileArticle:
       Right(
         (
           ArticleDraft(
-            com.histmersion.api.research.Article.Slug(slug.value),
+            Article.Slug(slug.value),
             mode,
             Article.Title(title.value),
             kind,
@@ -466,7 +473,7 @@ object CompileArticle:
       .orElse(existingTitle.flatMap(t => Article.Filter.normalise(Article.Filter(query = Some(Article.Filter.Query(t.value)))).toOption.flatten))
 
   /** The log line of a compile run. */
-  def logLine(d: ArticleDraft, written: Written, why: Reason, review: Option[com.histmersion.domain.automation.Run.Id], runId: com.histmersion.domain.automation.Run.Id): LogLine =
+  def logLine(d: ArticleDraft, written: Written, why: Reason, review: Option[Run.Id], runId: Run.Id): LogLine =
     val what = d.mode match
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"
       case DraftMode.Extend =>

@@ -1,6 +1,9 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.automation.Managers.ManagerConfig
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The checks a seeding manager's plan is held to when it saves none (`agents.seed.*`). */
 final case class SeedPlanDefaults(maxArticles: SeedPlanDefaults.MaxArticles, minSources: SeedPlanDefaults.MinSources):
@@ -18,6 +21,6 @@ final case class SeedPlanDefaults(maxArticles: SeedPlanDefaults.MaxArticles, min
 
 object SeedPlanDefaults:
   type MaxArticles = MaxArticles.T
-  object MaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxArticles extends RefinedType[Int, Pure]
   type MinSources = MinSources.T
-  object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinSources extends RefinedType[Int, Pure]

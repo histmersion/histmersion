@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -13,6 +14,10 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.api.library.Filter
+import com.histmersion.domain.automation.Run
 
 /** compile-article's pure logic: the claim table (quotes found in the record), the evidence model, and the code
   * self-check of a draft — fatal problems always sent back, the rest sent back until the last attempt, then listed for
@@ -20,83 +25,83 @@ import com.histmersion.api.research.Coverage
   */
 class CompileArticleSuite extends munit.FunSuite:
 
-  private val record = com.histmersion.domain.AgentVerify.SourceBody(
+  private val record = AgentVerify.SourceBody(
     "Summary:\nThe Uluburun ship carried ten tons of copper and one ton of tin.\n\nText:\nIts cargo dates to about 1320 BCE."
   )
-  private val minRatio = com.histmersion.domain.AgentVerify.MinRatio(0.9)
+  private val minRatio = AgentVerify.MinRatio(0.9)
 
   test("extraction: a claim stands only on a quote found in the record; confidence is a vocabulary"):
     val good = ClaimAnswer(
-      com.histmersion.domain.CompileArticle.ClaimAnswer.Claim("The ship carried tin."),
-      com.histmersion.domain.AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin."),
+      ClaimAnswer.Claim("The ship carried tin."),
+      AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin."),
       None,
-      Some(com.histmersion.domain.CompileArticle.ClaimAnswer.Place("Uluburun")),
+      Some(ClaimAnswer.Place("Uluburun")),
       com.histmersion.domain.library.Confidence.Wire("high")
     )
     val made = ClaimAnswer(
-      com.histmersion.domain.CompileArticle.ClaimAnswer.Claim("Tin came from Cornwall."),
-      com.histmersion.domain.AgentProposals.Proposal.Quote("Cornish tin was shipped east every summer by traders."),
+      ClaimAnswer.Claim("Tin came from Cornwall."),
+      AgentProposals.Proposal.Quote("Cornish tin was shipped east every summer by traders."),
       None,
       None,
       com.histmersion.domain.library.Confidence.Wire("medium")
     )
     val conf =
-      ClaimAnswer(com.histmersion.domain.CompileArticle.ClaimAnswer.Claim("It dates to 1320 BCE."), com.histmersion.domain.AgentProposals.Proposal.Quote("Its cargo dates to about 1320 BCE."), Some(com.histmersion.domain.CompileArticle.ClaimAnswer.Date("1320 BCE")), None, com.histmersion.domain.library.Confidence.Wire("certain"))
+      ClaimAnswer(ClaimAnswer.Claim("It dates to 1320 BCE."), AgentProposals.Proposal.Quote("Its cargo dates to about 1320 BCE."), Some(ClaimAnswer.Date("1320 BCE")), None, com.histmersion.domain.library.Confidence.Wire("certain"))
     val sent =
-      checkExtract(ExtractAnswer(com.histmersion.domain.CompileArticle.ExtractAnswer.Relevant(true), com.histmersion.domain.CompileArticle.ExtractAnswer.Reason("tin trade"), List(good, made, conf)), com.histmersion.domain.library.Citekey("ck"), record, minRatio, com.histmersion.domain.CompileArticle.MaxClaims(10), last = com.histmersion.domain.CompileArticle.Last(false))
+      checkExtract(ExtractAnswer(ExtractAnswer.Relevant(true), ExtractAnswer.Reason("tin trade"), List(good, made, conf)), Citekey("ck"), record, minRatio, MaxClaims(10), last = Last(false))
     assert(sent.left.exists(ps => ps.exists(_.value.contains("not in the record")) && ps.exists(_.value.contains("certain"))), sent)
     val (kept, warns) = checkExtract(
-      ExtractAnswer(com.histmersion.domain.CompileArticle.ExtractAnswer.Relevant(true), com.histmersion.domain.CompileArticle.ExtractAnswer.Reason("tin trade"), List(good, made, conf)),
-      com.histmersion.domain.library.Citekey("ck"),
+      ExtractAnswer(ExtractAnswer.Relevant(true), ExtractAnswer.Reason("tin trade"), List(good, made, conf)),
+      Citekey("ck"),
       record,
       minRatio,
-      com.histmersion.domain.CompileArticle.MaxClaims(10),
-      last = com.histmersion.domain.CompileArticle.Last(true)
+      MaxClaims(10),
+      last = Last(true)
     ).toOption.get
     assertEquals(kept.claims.map(_.claim), List("The ship carried tin."))
     assertEquals(kept.claims.head.confidence, Confidence.High)
     assertEquals(warns.size, 2)
 
   test("extraction: an irrelevant source must say why, and lands in Not used"):
-    assert(checkExtract(ExtractAnswer(com.histmersion.domain.CompileArticle.ExtractAnswer.Relevant(false), com.histmersion.domain.CompileArticle.ExtractAnswer.Reason(" "), Nil), com.histmersion.domain.library.Citekey("ck"), record, minRatio, com.histmersion.domain.CompileArticle.MaxClaims(10), last = com.histmersion.domain.CompileArticle.Last(false)).isLeft)
+    assert(checkExtract(ExtractAnswer(ExtractAnswer.Relevant(false), ExtractAnswer.Reason(" "), Nil), Citekey("ck"), record, minRatio, MaxClaims(10), last = Last(false)).isLeft)
     val (e, _) = checkExtract(
-      ExtractAnswer(com.histmersion.domain.CompileArticle.ExtractAnswer.Relevant(false), com.histmersion.domain.CompileArticle.ExtractAnswer.Reason("about Egypt, not the Aegean"), Nil),
-      com.histmersion.domain.library.Citekey("ck"),
+      ExtractAnswer(ExtractAnswer.Relevant(false), ExtractAnswer.Reason("about Egypt, not the Aegean"), Nil),
+      Citekey("ck"),
       record,
       minRatio,
-      com.histmersion.domain.CompileArticle.MaxClaims(10),
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      MaxClaims(10),
+      last = Last(false)
     ).toOption.get
     assertEquals(e.notUsed, Some("about Egypt, not the Aegean"))
 
   private val facts = List(
-    SourceFact(com.histmersion.domain.library.Citekey("a2019_tin"), com.histmersion.domain.Title("Tin"), Some(com.histmersion.Year(2019)), Source.Status.Current),
-    SourceFact(com.histmersion.domain.library.Citekey("b2024_iso"), com.histmersion.domain.Title("Isotopes"), Some(com.histmersion.Year(2024)), Source.Status.Contested),
-    SourceFact(com.histmersion.domain.library.Citekey("c2001_old"), com.histmersion.domain.Title("Old"), Some(com.histmersion.Year(2001)), Source.Status.Current)
+    SourceFact(Citekey("a2019_tin"), Title("Tin"), Some(Year(2019)), Source.Status.Current),
+    SourceFact(Citekey("b2024_iso"), Title("Isotopes"), Some(Year(2024)), Source.Status.Contested),
+    SourceFact(Citekey("c2001_old"), Title("Old"), Some(Year(2001)), Source.Status.Current)
   )
-  private def claim(ck: com.histmersion.domain.library.Citekey) = Claim(ck, com.histmersion.domain.CompileArticle.ClaimAnswer.Claim(s"claim of $ck"), com.histmersion.domain.AgentProposals.Proposal.Quote("q"), None, None, Confidence.Medium, com.histmersion.domain.AgentVerify.Ratio(1.0))
+  private def claim(ck: Citekey) = Claim(ck, ClaimAnswer.Claim(s"claim of $ck"), AgentProposals.Proposal.Quote("q"), None, None, Confidence.Medium, AgentVerify.Ratio(1.0))
   private val extracted = List(
-    Extracted(com.histmersion.domain.library.Citekey("a2019_tin"), List(claim(com.histmersion.domain.library.Citekey("a2019_tin")), claim(com.histmersion.domain.library.Citekey("a2019_tin"))), None),
-    Extracted(com.histmersion.domain.library.Citekey("b2024_iso"), List(claim(com.histmersion.domain.library.Citekey("b2024_iso"))), None),
-    Extracted(com.histmersion.domain.library.Citekey("c2001_old"), Nil, Some(com.histmersion.api.research.Coverage.Entry.Reason("about Egypt")))
+    Extracted(Citekey("a2019_tin"), List(claim(Citekey("a2019_tin")), claim(Citekey("a2019_tin"))), None),
+    Extracted(Citekey("b2024_iso"), List(claim(Citekey("b2024_iso"))), None),
+    Extracted(Citekey("c2001_old"), Nil, Some(Coverage.Entry.Reason("about Egypt")))
   )
   private val ev = evidence(
-    com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("search {topics:[tin]}"),
-    com.histmersion.RowCount(3),
+    Goal.Plans.ArticleDraft.Filter("search {topics:[tin]}"),
+    RowCount(3),
     facts,
     extracted,
     List(
-      EdgeFact(com.histmersion.domain.library.Citekey("b2024_iso"), com.histmersion.api.research.Article.Coverage.DisagreementKind("challenges"), com.histmersion.domain.library.Citekey("a2019_tin")),
-      EdgeFact(com.histmersion.domain.library.Citekey("a2019_tin"), com.histmersion.api.research.Article.Coverage.DisagreementKind("references"), com.histmersion.domain.library.Citekey("c2001_old")),
-      EdgeFact(com.histmersion.domain.library.Citekey("b2024_iso"), com.histmersion.api.research.Article.Coverage.DisagreementKind("refutes"), com.histmersion.domain.library.Citekey("z_outside"))
+      EdgeFact(Citekey("b2024_iso"), Article.Coverage.DisagreementKind("challenges"), Citekey("a2019_tin")),
+      EdgeFact(Citekey("a2019_tin"), Article.Coverage.DisagreementKind("references"), Citekey("c2001_old")),
+      EdgeFact(Citekey("b2024_iso"), Article.Coverage.DisagreementKind("refutes"), Citekey("z_outside"))
     )
   )
 
   test("evidence: disagreement edges among the filter's sources only, statuses, weight, Not used"):
-    assertEquals(ev.edges, List(EdgeFact(com.histmersion.domain.library.Citekey("b2024_iso"), com.histmersion.api.research.Article.Coverage.DisagreementKind("challenges"), com.histmersion.domain.library.Citekey("a2019_tin"))))
+    assertEquals(ev.edges, List(EdgeFact(Citekey("b2024_iso"), Article.Coverage.DisagreementKind("challenges"), Citekey("a2019_tin"))))
     assertEquals(ev.disputed, List("b2024_iso"))
     assertEquals(ev.claims, Map("a2019_tin" -> 2, "b2024_iso" -> 1, "c2001_old" -> 0))
-    assertEquals(ev.notUsed, List(NotUsed(com.histmersion.domain.library.Citekey("c2001_old"), com.histmersion.api.research.Coverage.Entry.Reason("about Egypt"))))
+    assertEquals(ev.notUsed, List(NotUsed(Citekey("c2001_old"), Coverage.Entry.Reason("about Egypt"))))
     assertEquals(ev.used, List("a2019_tin", "b2024_iso"))
     val text = evidenceText(ev, extracted)
     assert(text.value.contains("[[b2024_iso]] challenges [[a2019_tin]]") && text.value.contains("status **contested**"), text)
@@ -117,38 +122,38 @@ class CompileArticleSuite extends munit.FunSuite:
       |Where the tin was mined is open [[a2019_tin]].""".stripMargin
 
   private def draft(body: Article.Body, section: Option[Article.Section] = None, reasons: List[Coverage.Reason] = Nil) =
-    DraftAnswer(com.histmersion.domain.Title("Tin"), com.histmersion.api.research.Article.SummaryText("Where Aegean tin came from."), body, section, reasons)
+    DraftAnswer(Title("Tin"), Article.SummaryText("Where Aegean tin came from."), body, section, reasons)
 
   test("self-check: a clean new article passes, with no Not used section or Method note (code generates both)"):
     val checked =
-      checkDraft(draft(Article.Body(goodBody)), com.histmersion.domain.research.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Kind.Wire("concept"), None, com.histmersion.api.research.Article.Body(""), ev, com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"), corpus, last = com.histmersion.domain.CompileArticle.Last(false))
+      checkDraft(draft(Article.Body(goodBody)), Slug("tin"), DraftMode.Create, Article.Kind.Wire("concept"), None, Article.Body(""), ev, Goal.Plans.ArticleDraft.Filter("f"), corpus, last = Last(false))
     val (d, warns) = checked.fold(ps => fail(ps.mkString("; ")), identity)
     assertEquals(warns, Nil)
     assertEquals(d.cited.toSet, Set("a2019_tin", "b2024_iso"))
     assertEquals(d.problems, Nil)
     assertEquals(d.notUsed, List("c2001_old: about Egypt"))
     // the extraction's reason is what the article stores for the source it leaves out
-    assertEquals(d.reasons, List(Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), com.histmersion.api.research.Coverage.Entry.Reason("about Egypt"))))
+    assertEquals(d.reasons, List(Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("about Egypt"))))
 
   test("self-check (#958): a hand-written Not used section or Method note is sent back"):
     val old = goodBody + "\n\n## Not used\n\n- [[c2001_old]]: about Egypt\n\n_Method: search {topics:[tin]} → 3._"
     val ps = checkDraft(
       draft(Article.Body(old)),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Create,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      Article.Kind.Wire("concept"),
       None,
-      com.histmersion.api.research.Article.Body(""),
+      Article.Body(""),
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      last = Last(false)
     ).left.toOption.get
     assert(ps.exists(_.value.startsWith("a Not used section: code generates it")), ps)
     assert(ps.exists(_.value.startsWith("a _Method_ note: code generates it")), ps)
     // a source listed there is not cited
     val (d, _) =
-      checkDraft(draft(Article.Body(old)), com.histmersion.domain.research.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Kind.Wire("concept"), None, com.histmersion.api.research.Article.Body(""), ev, com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"), corpus, last = com.histmersion.domain.CompileArticle.Last(true)).toOption.get
+      checkDraft(draft(Article.Body(old)), Slug("tin"), DraftMode.Create, Article.Kind.Wire("concept"), None, Article.Body(""), ev, Goal.Plans.ArticleDraft.Filter("f"), corpus, last = Last(true)).toOption.get
     assertEquals(d.cited.toSet, Set("a2019_tin", "b2024_iso"))
 
   test("self-check (#958): a claim-table source the draft leaves out needs the writer's reason; reasons are checked"):
@@ -158,54 +163,54 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     val ps = checkDraft(
       draft(Article.Body(noIso)),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Create,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      Article.Kind.Wire("concept"),
       None,
-      com.histmersion.api.research.Article.Body(""),
+      Article.Body(""),
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      last = Last(false)
     ).left.toOption.get
     assertEquals(ps, List("[[b2024_iso]] has claims in the table but is neither cited nor given a reason"))
-    val why = Coverage.Reason(com.histmersion.api.library.Citekey("b2024_iso"), com.histmersion.api.research.Coverage.Entry.Reason("Its isotopes speak to a later period."))
+    val why = Coverage.Reason(com.histmersion.api.library.Citekey("b2024_iso"), Coverage.Entry.Reason("Its isotopes speak to a later period."))
     val (d, _) = checkDraft(
       draft(Article.Body(noIso), reasons = List(why)),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Create,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      Article.Kind.Wire("concept"),
       None,
-      com.histmersion.api.research.Article.Body(""),
+      Article.Body(""),
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      last = Last(false)
     ).fold(ps => fail(ps.mkString("; ")), identity)
     assertEquals(
       d.reasons,
       List(
-        Coverage.Reason(com.histmersion.api.library.Citekey("b2024_iso"), com.histmersion.api.research.Coverage.Entry.Reason("Its isotopes speak to a later period.")),
-        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), com.histmersion.api.research.Coverage.Entry.Reason("about Egypt"))
+        Coverage.Reason(com.histmersion.api.library.Citekey("b2024_iso"), Coverage.Entry.Reason("Its isotopes speak to a later period.")),
+        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("about Egypt"))
       ).sortBy(_.citekey.value)
     )
     // the writer's reason wins over the extraction's; a reason for a cited source or one outside the table is a problem
     val bad = List(
-      Coverage.Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), com.histmersion.api.research.Coverage.Entry.Reason("not needed")),
-      Coverage.Reason(com.histmersion.api.library.Citekey("zz1999_nope"), com.histmersion.api.research.Coverage.Entry.Reason("never read")),
-      Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), com.histmersion.api.research.Coverage.Entry.Reason("covers Egypt only"))
+      Coverage.Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), Coverage.Entry.Reason("not needed")),
+      Coverage.Reason(com.histmersion.api.library.Citekey("zz1999_nope"), Coverage.Entry.Reason("never read")),
+      Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("covers Egypt only"))
     )
     val ps2 = checkDraft(
       draft(Article.Body(goodBody), reasons = bad),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Create,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      Article.Kind.Wire("concept"),
       None,
-      com.histmersion.api.research.Article.Body(""),
+      Article.Body(""),
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      last = Last(false)
     ).left.toOption.get
     assertEquals(
       ps2,
@@ -216,29 +221,29 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     val (d2, _) = checkDraft(
       draft(Article.Body(goodBody), reasons = bad),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Create,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      Article.Kind.Wire("concept"),
       None,
-      com.histmersion.api.research.Article.Body(""),
+      Article.Body(""),
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(true)
+      last = Last(true)
     ).toOption.get
-    assertEquals(d2.reasons, List(Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), com.histmersion.api.research.Coverage.Entry.Reason("covers Egypt only"))))
+    assertEquals(d2.reasons, List(Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("covers Egypt only"))))
 
   test("self-check: fatal problems are always sent back, even on the last attempt"):
     val dangling = goodBody.replace("[[a2019_tin]].\n", "[[nowhere_2020]].\n")
     assert(
-      checkDraft(draft(Article.Body(dangling)), com.histmersion.domain.research.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Kind.Wire("concept"), None, com.histmersion.api.research.Article.Body(""), ev, com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"), corpus, last = com.histmersion.domain.CompileArticle.Last(true)).isLeft
+      checkDraft(draft(Article.Body(dangling)), Slug("tin"), DraftMode.Create, Article.Kind.Wire("concept"), None, Article.Body(""), ev, Goal.Plans.ArticleDraft.Filter("f"), corpus, last = Last(true)).isLeft
     )
     val sourcesCited = goodBody + "\n\n## Sources cited\n\n- [[a2019_tin]]"
     assert(
-      checkDraft(draft(Article.Body(sourcesCited)), com.histmersion.domain.research.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Kind.Wire("concept"), None, com.histmersion.api.research.Article.Body(""), ev, com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"), corpus, last = com.histmersion.domain.CompileArticle.Last(true)).left
+      checkDraft(draft(Article.Body(sourcesCited)), Slug("tin"), DraftMode.Create, Article.Kind.Wire("concept"), None, Article.Body(""), ev, Goal.Plans.ArticleDraft.Filter("f"), corpus, last = Last(true)).left
         .exists(_.exists(_.value.contains("Sources cited")))
     )
-    assert(checkDraft(draft(Article.Body("  ")), com.histmersion.domain.research.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Kind.Wire("concept"), None, com.histmersion.api.research.Article.Body(""), ev, com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"), corpus, last = com.histmersion.domain.CompileArticle.Last(true)).isLeft)
+    assert(checkDraft(draft(Article.Body("  ")), Slug("tin"), DraftMode.Create, Article.Kind.Wire("concept"), None, Article.Body(""), ev, Goal.Plans.ArticleDraft.Filter("f"), corpus, last = Last(true)).isLeft)
 
   test("self-check: a silent status, an uncited paragraph, a missing section are sent back, then kept and listed"):
     val silent = goodBody
@@ -247,21 +252,21 @@ class CompileArticleSuite extends munit.FunSuite:
       .replace("Where the tin was mined is open [[a2019_tin]].", "Nobody knows.")
     val ps = checkDraft(
       draft(Article.Body(silent)),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Create,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      Article.Kind.Wire("concept"),
       None,
-      com.histmersion.api.research.Article.Body(""),
+      Article.Body(""),
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      last = Last(false)
     ).left.toOption.get
     assert(ps.exists(_.value.contains("does not say it is contested")), ps)
     assert(ps.exists(_.value.contains("no [[citekey]]")), ps)
     assert(ps.exists(_.value.contains("'unresolved' or 'open questions'")), ps)
     val (d, warns) =
-      checkDraft(draft(Article.Body(silent)), com.histmersion.domain.research.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Kind.Wire("concept"), None, com.histmersion.api.research.Article.Body(""), ev, com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"), corpus, last = com.histmersion.domain.CompileArticle.Last(true)).toOption.get
+      checkDraft(draft(Article.Body(silent)), Slug("tin"), DraftMode.Create, Article.Kind.Wire("concept"), None, Article.Body(""), ev, Goal.Plans.ArticleDraft.Filter("f"), corpus, last = Last(true)).toOption.get
     assertEquals(d.problems.size, ps.size)
     assertEquals(warns.size, ps.size)
 
@@ -272,15 +277,15 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     val ps = checkDraft(
       draft(Article.Body(outside)),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Create,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      Article.Kind.Wire("concept"),
       None,
-      com.histmersion.api.research.Article.Body(""),
+      Article.Body(""),
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      last = Last(false)
     ).left.toOption.get
     assert(ps.exists(_.value.contains("[[c2001_old]] is cited but no claim")), ps)
 
@@ -291,80 +296,80 @@ class CompileArticleSuite extends munit.FunSuite:
     val add = Article.Body("A newer study disputes the origin [[b2024_iso]] (contested).")
     val (d, _) = checkDraft(
       draft(add, Some(Article.Section("## Disagreements"))),
-      com.histmersion.domain.research.Slug("tin"),
+      Slug("tin"),
       DraftMode.Extend,
-      com.histmersion.api.research.Article.Kind.Wire("concept"),
-      Some(com.histmersion.domain.Title("Tin")),
+      Article.Kind.Wire("concept"),
+      Some(Title("Tin")),
       current,
       ev,
-      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+      Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = com.histmersion.domain.CompileArticle.Last(false)
+      last = Last(false)
     ).toOption.get
     assertEquals((d.mode, d.section, d.title), (DraftMode.Extend, Some("## Disagreements"), "Tin"))
-    val whole = combined(DraftMode.Extend, current, add, Some(com.histmersion.api.research.Article.Section("## Disagreements"))).toOption.get
+    val whole = combined(DraftMode.Extend, current, add, Some(Article.Section("## Disagreements"))).toOption.get
     assert(whole.value.indexOf(add.value) < whole.value.indexOf("## Open questions"), whole)
     // a heading the article does not have is fatal: the append would fail
     assert(
       checkDraft(
         draft(add, Some(Article.Section("## Nope"))),
-        com.histmersion.domain.research.Slug("tin"),
+        Slug("tin"),
         DraftMode.Extend,
-        com.histmersion.api.research.Article.Kind.Wire("concept"),
-        Some(com.histmersion.domain.Title("Tin")),
+        Article.Kind.Wire("concept"),
+        Some(Title("Tin")),
         current,
         ev,
-        com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+        Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = com.histmersion.domain.CompileArticle.Last(true)
+        last = Last(true)
       ).left.exists(_.exists(_.value.contains("no heading")))
     )
     // the required sections are not demanded of an extension
     assert(
       checkDraft(
         draft(add),
-        com.histmersion.domain.research.Slug("tin"),
+        Slug("tin"),
         DraftMode.Extend,
-        com.histmersion.api.research.Article.Kind.Wire("concept"),
-        Some(com.histmersion.domain.Title("Tin")),
-        com.histmersion.api.research.Article.Body("Intro [[a2019_tin]]."),
+        Article.Kind.Wire("concept"),
+        Some(Title("Tin")),
+        Article.Body("Intro [[a2019_tin]]."),
         ev,
-        com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter("f"),
+        Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = com.histmersion.domain.CompileArticle.Last(false)
+        last = Last(false)
       ).isRight
     )
 
   test("the first citation of a non-current source must state its status"):
-    val st = (ck: com.histmersion.domain.library.Citekey) => statuses.get(ck)
+    val st = (ck: Citekey) => statuses.get(ck)
     assertEquals(
-      statusesSilent(com.histmersion.api.research.Article.Body("[[b2024_iso]] says X.\n\n[[b2024_iso]] (contested) again."), st),
+      statusesSilent(Article.Body("[[b2024_iso]] says X.\n\n[[b2024_iso]] (contested) again."), st),
       List("the first citation of [[b2024_iso]] does not say it is contested")
     )
-    assertEquals(statusesSilent(com.histmersion.api.research.Article.Body("[[b2024_iso]], contested by others, says X."), st), Nil)
-    assertEquals(statusesSilent(com.histmersion.api.research.Article.Body("[[a2019_tin]] says X."), st), Nil)
+    assertEquals(statusesSilent(Article.Body("[[b2024_iso]], contested by others, says X."), st), Nil)
+    assertEquals(statusesSilent(Article.Body("[[a2019_tin]] says X."), st), Nil)
 
   test("the run's filter: its own, else the article's recorded one, else the title; and the log line"):
-    val stored = Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("tin")), status = List(com.histmersion.api.library.Filter.Status("current")))
+    val stored = Article.Filter(topics = List(Filter.Topics("tin")), status = List(Filter.Status("current")))
     assertEquals(
-      runFilter(Some(com.histmersion.api.library.Filter.Q("tin")), List(com.histmersion.api.library.Filter.Topics("trade")), Nil, Some(stored), Some(com.histmersion.domain.Title("Tin"))),
-      Some(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin")), topics = List(com.histmersion.api.library.Filter.Topics("trade"))))
+      runFilter(Some(Filter.Q("tin")), List(Filter.Topics("trade")), Nil, Some(stored), Some(Title("Tin"))),
+      Some(Article.Filter(query = Some(Filter.Q("tin")), topics = List(Filter.Topics("trade"))))
     )
-    assertEquals(runFilter(None, Nil, Nil, Some(stored), Some(com.histmersion.domain.Title("Tin"))), Some(stored))
-    assertEquals(runFilter(None, Nil, Nil, None, Some(com.histmersion.domain.Title("Tin"))), Some(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("Tin")))))
-    assertEquals(runFilter(Some(com.histmersion.api.library.Filter.Q(" ")), Nil, Nil, None, None), None)
+    assertEquals(runFilter(None, Nil, Nil, Some(stored), Some(Title("Tin"))), Some(stored))
+    assertEquals(runFilter(None, Nil, Nil, None, Some(Title("Tin"))), Some(Article.Filter(query = Some(Filter.Q("Tin")))))
+    assertEquals(runFilter(Some(Filter.Q(" ")), Nil, Nil, None, None), None)
     assertEquals(
-      Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin")), topics = List(com.histmersion.api.library.Filter.Topics("trade"))).line,
+      Article.Filter(query = Some(Filter.Q("tin")), topics = List(Filter.Topics("trade"))).line,
       "search {query: \"tin\", topics: [\"trade\"]}"
     )
-    val d = Goal.Plans.ArticleDraft(com.histmersion.api.research.Article.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Title("Tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text("x"), cited = List(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b")))
+    val d = Goal.Plans.ArticleDraft(Article.Slug("tin"), DraftMode.Create, Article.Title("Tin"), Article.Kind.Wire("concept"), Goal.Plans.ArticleDraft.Text("x"), cited = List(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b")))
     assert(
-      logLine(d, written = com.histmersion.domain.CompileArticle.Written(true), com.histmersion.domain.CompileArticle.Reason("created"), Some(com.histmersion.domain.automation.Run.Id("abcdef12-fc74-0955-ef4d-fad670250ff4")), com.histmersion.domain.automation.Run.Id("bc1cc32f-a9bb-9592-ac46-36b5b5c5da01")).value.contains(
+      logLine(d, written = Written(true), Reason("created"), Some(Run.Id("abcdef12-fc74-0955-ef4d-fad670250ff4")), Run.Id("bc1cc32f-a9bb-9592-ac46-36b5b5c5da01")).value.contains(
         "compiled a new article from 2 source(s); review run abcdef12 started"
       )
     )
     assert(
-      logLine(d, written = com.histmersion.domain.CompileArticle.Written(false), com.histmersion.domain.CompileArticle.Reason("the draft was rejected"), None, com.histmersion.domain.automation.Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231")).value.contains(
+      logLine(d, written = Written(false), Reason("the draft was rejected"), None, Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231")).value.contains(
         "nothing written — the draft was rejected"
       )
     )

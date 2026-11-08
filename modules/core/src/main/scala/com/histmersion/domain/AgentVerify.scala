@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Period
@@ -6,6 +7,10 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.util.text.ComparedText
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
 
 /** The deterministic checks every LLM answer passes through before code writes anything
   * (docs/research-embedded-agents.md §4.4). All pure; the engine supplies the corpus facts (the body, the set of
@@ -15,35 +20,35 @@ import com.histmersion.api.library.Source
   */
 object AgentVerify:
   type MaxAbsYear = MaxAbsYear.T
-  object MaxAbsYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxAbsYear extends RefinedType[Long, Pure]
   type MinRatio = MinRatio.T
-  object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinRatio extends RefinedType[Double, Pure]
   type NormalisedText = NormalisedText.T
-  object NormalisedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NormalisedText extends RefinedType[String, Pure]
   type PeriodEnd = PeriodEnd.T
-  object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodEnd extends RefinedType[Long, Pure]
   type PeriodStart = PeriodStart.T
-  object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodStart extends RefinedType[Long, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Ratio = Ratio.T
-  object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ratio extends RefinedType[Double, Pure]
   type SignedYear = SignedYear.T
-  object SignedYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SignedYear extends RefinedType[Long, Pure]
   type SourceBody = SourceBody.T
-  object SourceBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceBody extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Wikilink = Wikilink.T
-  object Wikilink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wikilink extends RefinedType[String, Pure]
 
   /** A tool call an LLM step made, as the engine records it ([[com.histmersion.domain.automation.agents.ToolUse]]). */
   type SimilarWordA = String
   type SimilarWordB = String
-  type LinkProblemsText = _root_.com.histmersion.domain.AgentVerify.Text
-  val LinkProblemsText: _root_.com.histmersion.domain.AgentVerify.Text.type = _root_.com.histmersion.domain.AgentVerify.Text
+  type LinkProblemsText = Text
+  val LinkProblemsText: Text.type = Text
   type ToSignedYearValue = ToSignedYearValue.T
-  object ToSignedYearValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ToSignedYearValue extends RefinedType[Long, Pure]
 
   export com.histmersion.domain.automation.agents.ToolUse
 
@@ -57,7 +62,7 @@ object AgentVerify:
     case Fuzzy(matched: QuoteMatch.Fuzzy.Matched)
     case Missing(best: QuoteMatch.Missing.Best)
 
-    def ratio: com.histmersion.domain.AgentVerify.Ratio = this match
+    def ratio: Ratio = this match
       case Verbatim   => Ratio(1.0)
       case Fuzzy(r)   => r
       case Missing(r) => r
@@ -68,25 +73,25 @@ object AgentVerify:
 
   object QuoteMatch:
     object Fuzzy:
-      export com.histmersion.domain.AgentVerify.{Ratio as Matched}
+      export AgentVerify.{Ratio as Matched}
 
     object Missing:
-      export com.histmersion.domain.AgentVerify.{Ratio as Best}
+      export AgentVerify.{Ratio as Best}
 
 
   /** The text an OCR'd body and a model's quote are compared in ([[ComparedText.normalise]]). */
-  def normalise(s: com.histmersion.domain.AgentVerify.Text): com.histmersion.domain.AgentVerify.NormalisedText = normalised(s.value)
+  def normalise(s: Text): NormalisedText = normalised(s.value)
 
   private def normalised(s: String): NormalisedText =
     NormalisedText(ComparedText.normalise(ComparedText.NormaliseS(s)).value)
 
-  private def words(normalised: com.histmersion.domain.AgentVerify.NormalisedText): Array[String] =
+  private def words(normalised: NormalisedText): Array[String] =
     normalised.value.split("[^\\p{L}\\p{N}']+").filter(_.nonEmpty)
 
   /** Two words match if equal, or — at four letters or more — one OCR slip apart (`tbe`/`the` is too short to trust;
     * `Mycenaean`/`Mycenacan` is not).
     */
-  private[domain] def similarWord(a: com.histmersion.domain.AgentVerify.SimilarWordA, b: com.histmersion.domain.AgentVerify.SimilarWordB): Boolean =
+  private[domain] def similarWord(a: SimilarWordA, b: SimilarWordB): Boolean =
     a == b || (math.min(a.length, b.length) >= 4 && math.abs(a.length - b.length) <= 1 && editDistanceAtMostOne(a, b))
 
   private def editDistanceAtMostOne(a: String, b: String): Boolean =
@@ -119,14 +124,14 @@ object AgentVerify:
     * those windows is the ratio. `minRatio` decides Fuzzy/Missing. A quote of fewer than 4 words must be verbatim: a
     * short quote matches anywhere by chance.
     */
-  def findQuote(quote: com.histmersion.domain.AgentProposals.Proposal.Quote, body: com.histmersion.domain.AgentVerify.SourceBody, minRatio: com.histmersion.domain.AgentVerify.MinRatio): QuoteMatch =
+  def findQuote(quote: AgentProposals.Proposal.Quote, body: SourceBody, minRatio: MinRatio): QuoteMatch =
     val q = normalised(quote.value)
     val b = normalised(body.value)
-    if q.value.isEmpty then QuoteMatch.Missing(com.histmersion.domain.AgentVerify.QuoteMatch.Missing.Best(0))
+    if q.value.isEmpty then QuoteMatch.Missing(QuoteMatch.Missing.Best(0))
     else if b.value.contains(q.value) then QuoteMatch.Verbatim
     else
       val qw = words(q)
-      if qw.length < 4 then QuoteMatch.Missing(com.histmersion.domain.AgentVerify.QuoteMatch.Missing.Best(0))
+      if qw.length < 4 then QuoteMatch.Missing(QuoteMatch.Missing.Best(0))
       else
         val bw = words(b)
         val heads = qw.take(3).toSet
@@ -141,7 +146,7 @@ object AgentVerify:
         if best >= minRatio.value then QuoteMatch.Fuzzy(QuoteMatch.Fuzzy.Matched(best)) else QuoteMatch.Missing(QuoteMatch.Missing.Best(best))
 
   /** Titles compared the way a person would: normalised, punctuation ignored. */
-  def sameTitle(a: com.histmersion.domain.Title, b: com.histmersion.domain.Title): Boolean =
+  def sameTitle(a: Title, b: Title): Boolean =
     words(normalised(a.value)).mkString(" ") == words(normalised(b.value)).mkString(" ")
 
   // ── vocabularies and links ───────────────────────────────────────────────────────────────────
@@ -149,27 +154,27 @@ object AgentVerify:
   /** A model-proposed status, against the enum. Statuses the DB does not know are rejected, never coerced
     * (`SourceStatus.fromString` would quietly turn a typo into `unassessed`).
     */
-  def status(s: com.histmersion.domain.library.Source.Status.Wire): Either[com.histmersion.domain.AgentVerify.Problem, Source.Status] =
+  def status(s: com.histmersion.domain.library.Source.Status.Wire): Either[Problem, Source.Status] =
     Source.Status.values
       .find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
       .toRight(Problem(s"'$s' is not a status (one of: ${Source.Status.values.map(_.wire).mkString(", ")})"))
 
-  def confidence(s: com.histmersion.domain.library.Confidence.Wire): Either[com.histmersion.domain.AgentVerify.Problem, Confidence] =
+  def confidence(s: com.histmersion.domain.library.Confidence.Wire): Either[Problem, Confidence] =
     Confidence.fromString(Confidence.Wire(s.value.trim)).toRight(Problem(s"'$s' is not a confidence (one of: high, medium, low, contested)"))
 
   /** `[[x]]` targets in a text. */
-  def wikilinks(text: com.histmersion.domain.AgentVerify.Text): List[com.histmersion.domain.AgentVerify.Wikilink] =
+  def wikilinks(text: Text): List[Wikilink] =
     "\\[\\[([^\\]|]+)(?:\\|[^\\]]*)?\\]\\]".r.findAllMatchIn(text.value).map(m => Wikilink(m.group(1).trim)).toList.distinct
 
   /** Every problem with a text's links: a target that is neither a citekey nor an article slug, and escaped links
     * (`\[\[…\]\]`), which render as text and link nothing.
     */
-  def linkProblems(text: com.histmersion.domain.AgentVerify.LinkProblemsText, isCitekey: com.histmersion.domain.library.Citekey => Boolean, isSlug: com.histmersion.domain.research.Slug => Boolean): List[com.histmersion.domain.AgentVerify.Problem] =
+  def linkProblems(text: LinkProblemsText, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): List[Problem] =
     val escaped = Option.when(text.value.contains("\\[\\["))(Problem("escaped link brackets (\\[\\[…\\]\\]) link nothing"))
     val dangling = wikilinks(text)
       .filterNot(t =>
-        com.histmersion.domain.library.Citekey.option(t.value).exists(isCitekey) ||
-          com.histmersion.domain.research.Slug.option(t.value).exists(isSlug)
+        Citekey.option(t.value).exists(isCitekey) ||
+          Slug.option(t.value).exists(isSlug)
       )
       .map(t => Problem(s"[[$t]] is neither a citekey nor an article"))
     escaped.toList ++ dangling
@@ -180,17 +185,17 @@ object AgentVerify:
     * cannot be turned into a calendar year without a calibration curve.
     */
   enum YearUnit(val wire: YearUnit.Wire):
-    case BCE extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("BCE"))
-    case CE extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))
-    case CalBP extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("calBP"))
-    case BP extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("BP"))
+    case BCE extends YearUnit(YearUnit.Wire("BCE"))
+    case CE extends YearUnit(YearUnit.Wire("CE"))
+    case CalBP extends YearUnit(YearUnit.Wire("calBP"))
+    case BP extends YearUnit(YearUnit.Wire("BP"))
 
   object YearUnit:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.domain.AgentVerify.YearUnit.Wire): Option[YearUnit] =
+    def parse(s: Wire): Option[YearUnit] =
       s.value.trim match
         case "BCE" | "BC" | "bce" | "bc" | "B.C." | "B.C.E."        => Some(BCE)
         case "CE" | "AD" | "ce" | "ad" | "A.D." | "C.E."            => Some(CE)
@@ -202,7 +207,7 @@ object AgentVerify:
     * is astronomical `1950 − BP` (which has a year 0) mapped to historical. Raw `BP` is refused: it needs calibration,
     * and a guess would sit on the map as if it were a date.
     */
-  def toSignedYear(value: com.histmersion.domain.AgentVerify.ToSignedYearValue, unit: YearUnit): Either[com.histmersion.domain.AgentVerify.Problem, com.histmersion.domain.AgentVerify.SignedYear] = unit match
+  def toSignedYear(value: ToSignedYearValue, unit: YearUnit): Either[Problem, SignedYear] = unit match
     case YearUnit.BCE if value.value <= 0 => Left(Problem(s"$value BCE: a BCE year is a positive number"))
     case YearUnit.CE if value.value <= 0  => Left(Problem(s"$value CE: there is no year 0 (or a negative CE year); use BCE"))
     case YearUnit.BCE                     => Right(SignedYear(-value.value))
@@ -214,7 +219,7 @@ object AgentVerify:
   /** A proposed period's problems (empty = sane): start after end, a year 0, a year beyond `maxAbsYear`, and — when the
     * source has a period of its own — a finding outside it.
     */
-  def periodProblems(start: com.histmersion.domain.AgentVerify.PeriodStart, end: com.histmersion.domain.AgentVerify.PeriodEnd, maxAbsYear: com.histmersion.domain.AgentVerify.MaxAbsYear, within: Option[Period] = None): List[com.histmersion.domain.AgentVerify.Problem] =
+  def periodProblems(start: PeriodStart, end: PeriodEnd, maxAbsYear: MaxAbsYear, within: Option[Period] = None): List[Problem] =
     List(
       Option.when(start.value > end.value)(Problem(s"starts ($start) after it ends ($end)")),
       Option.when(start.value == 0 || end.value == 0)(Problem("year 0 does not exist (1 BCE is -1, 1 CE is 1)")),

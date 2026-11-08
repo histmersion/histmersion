@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -28,7 +29,7 @@ class PeriodPlanSuite extends munit.FunSuite:
       Some(Bundle.Range(Some(from), Some(to))),
       None,
       parent,
-      com.histmersion.api.exchange.Bundle.Period.UpdatedAt("2026-01-01T00:00:00.000000Z")
+      Bundle.Period.UpdatedAt("2026-01-01T00:00:00.000000Z")
     )
 
   test(

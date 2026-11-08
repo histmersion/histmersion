@@ -1,10 +1,15 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Doi
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"): the legal
   * open-access works a sweep picked past the day's ingest allowance wait as `oa-ingest` items of the watcher that found
@@ -14,21 +19,21 @@ import java.time.Instant
   */
 object IngestBacklog:
   type DaysToDrain = DaysToDrain.T
-  object DaysToDrain extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DaysToDrain extends RefinedType[Int, Pure]
   type DrainHorizon = DrainHorizon.T
-  object DrainHorizon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DrainHorizon extends RefinedType[Int, Pure]
   type DrainLimit = DrainLimit.T
-  object DrainLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DrainLimit extends RefinedType[Int, Pure]
   type OwnAllowance = OwnAllowance.T
-  object OwnAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OwnAllowance extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type SharedAllowance = SharedAllowance.T
-  object SharedAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SharedAllowance extends RefinedType[Int, Pure]
   type SweepAllowance = SweepAllowance.T
-  object SweepAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SweepAllowance extends RefinedType[Int, Pure]
   type TotalBacklog = TotalBacklog.T
-  object TotalBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TotalBacklog extends RefinedType[Int, Pure]
 
   /** How the legal chain says a work has no legal file (`AcquisitionControllers.ingestLegal`): such a work goes to the
     * acquisition list at once; any other failure is tried again later.
@@ -37,7 +42,7 @@ object IngestBacklog:
 
   val NoLegalCopy = "no legal open-access copy of"
 
-  def isNoLegalCopy(message: com.histmersion.domain.IngestBacklog.Problem): Boolean =
+  def isNoLegalCopy(message: Problem): Boolean =
     Option(message).exists(m => startsWithNoLegalCopy(m.value))
 
   private def startsWithNoLegalCopy(text: String): Boolean = text.trim.startsWith(NoLegalCopy)
@@ -46,7 +51,7 @@ object IngestBacklog:
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
     * the watcher's own pending items (`ownBacklog`) and every drainable watcher's (`allBacklog`). Never negative.
     */
-  def sweepAllowance(own: com.histmersion.domain.IngestBacklog.OwnAllowance, shared: Option[com.histmersion.domain.IngestBacklog.SharedAllowance], ownBacklog: com.histmersion.domain.IngestBacklog.Lane.Backlog, allBacklog: com.histmersion.domain.IngestBacklog.TotalBacklog): com.histmersion.domain.IngestBacklog.SweepAllowance =
+  def sweepAllowance(own: OwnAllowance, shared: Option[SharedAllowance], ownBacklog: Lane.Backlog, allBacklog: TotalBacklog): SweepAllowance =
     val mine = own.value - math.max(0, ownBacklog.value)
     val all = shared.fold(Int.MaxValue)(_.value - math.max(0, allBacklog.value))
     SweepAllowance(math.max(0, math.min(mine, all)))
@@ -56,18 +61,18 @@ object IngestBacklog:
 
   object Entry:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[Long, Pure]
     type ManagerId = ManagerId.T
-    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ManagerId extends RefinedType[String, Pure]
     type Priority = Priority.T
-    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Priority extends RefinedType[Int, Pure]
 
   /** The backlog items to ingest now, in order: the due ones (`notBefore` passed), highest priority first, then the
     * oldest; each within what is left of its watcher's own allowance today (`ownLeft`; a watcher missing there —
     * paused, auto-ingest off — drains nothing) and of the shared one (None = no shared cap); at most `max` (one tick's
     * share: an ingest fetches a file, so a tick takes only a few).
     */
-  def drain(entries: List[Entry], ownLeft: Map[com.histmersion.domain.IngestBacklog.Entry.ManagerId, com.histmersion.domain.IngestBacklog.Lane.LeftToday], shared: Option[com.histmersion.domain.IngestBacklog.SharedAllowance], now: Instant, max: com.histmersion.domain.IngestBacklog.DrainLimit): List[Entry] =
+  def drain(entries: List[Entry], ownLeft: Map[Entry.ManagerId, Lane.LeftToday], shared: Option[SharedAllowance], now: Instant, max: DrainLimit): List[Entry] =
     val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority.value, e.id.value: Long))
     @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[Entry.ManagerId, Int], sh: Option[Int]): List[Entry] =
       rest match
@@ -84,7 +89,7 @@ object IngestBacklog:
     * skipped it; an ingested one is in the corpus) — else a new entry.
     */
   enum Placement:
-    case InCorpus(citekey: com.histmersion.domain.library.Citekey)
+    case InCorpus(citekey: Citekey)
     case JoinAcquire(item: Placement.JoinAcquire.Item)
     case JoinBacklog(item: Placement.JoinBacklog.Item)
     case SettledBefore(item: Placement.SettledBefore.Item)
@@ -93,19 +98,19 @@ object IngestBacklog:
   object Placement:
     object JoinAcquire:
       type Item = Item.T
-      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Item extends RefinedType[Int, Pure]
     object JoinBacklog:
       type Item = Item.T
-      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Item extends RefinedType[Long, Pure]
     object SettledBefore:
       type Item = Item.T
-      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Item extends RefinedType[Long, Pure]
 
   def place(
-      inCorpus: Option[com.histmersion.domain.library.Citekey],
-      acquire: Option[com.histmersion.domain.IngestBacklog.Placement.JoinAcquire.Item],
-      openBacklog: Option[com.histmersion.domain.IngestBacklog.Placement.JoinBacklog.Item],
-      settledHere: Option[com.histmersion.domain.IngestBacklog.Placement.SettledBefore.Item]
+      inCorpus: Option[Citekey],
+      acquire: Option[Placement.JoinAcquire.Item],
+      openBacklog: Option[Placement.JoinBacklog.Item],
+      settledHere: Option[Placement.SettledBefore.Item]
   ): Placement =
     inCorpus
       .map(Placement.InCorpus(_))
@@ -123,17 +128,17 @@ object IngestBacklog:
 
   object Failure:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
     object Retry:
       type Failures = Failures.T
-      object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Failures extends RefinedType[Int, Pure]
 
   def onFailure(
-      message: com.histmersion.domain.IngestBacklog.Problem,
-      failures: com.histmersion.domain.IngestBacklog.Failure.Retry.Failures,
-      maxFailures: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxFailures,
-      backoffMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes,
-      maxBackoffMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes,
+      message: Problem,
+      failures: Failure.Retry.Failures,
+      maxFailures: ManagerPolicy.ReviewSettings.MaxFailures,
+      backoffMinutes: ManagerPolicy.ReviewSettings.BackoffMinutes,
+      maxBackoffMinutes: ManagerPolicy.ReviewSettings.MaxBackoffMinutes,
       now: Instant
   ): Failure =
     val why = Option(message).map(_.value.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
@@ -158,11 +163,11 @@ object IngestBacklog:
 
   object Lane:
     type Backlog = Backlog.T
-    object Backlog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Backlog extends RefinedType[Int, Pure]
     type PerDay = PerDay.T
-    object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PerDay extends RefinedType[Int, Pure]
     type LeftToday = LeftToday.T
-    object LeftToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LeftToday extends RefinedType[Int, Pure]
 
   /** How many more UTC days the backlogs take to drain at the current allowance: 0 = today, None = never (no cap leaves
     * room). Day by day: each lane takes up to what its own cap leaves (today: `leftToday`, then `perDay`), the largest
@@ -171,10 +176,10 @@ object IngestBacklog:
     */
   def daysToDrain(
       lanes: List[Lane],
-      sharedPerDay: Option[com.histmersion.domain.IngestBacklog.Lane.PerDay],
-      sharedLeftToday: Option[com.histmersion.domain.IngestBacklog.Lane.LeftToday],
-      horizon: com.histmersion.domain.IngestBacklog.DrainHorizon = com.histmersion.domain.IngestBacklog.DrainHorizon(3650)
-  ): Option[com.histmersion.domain.IngestBacklog.DaysToDrain] =
+      sharedPerDay: Option[Lane.PerDay],
+      sharedLeftToday: Option[Lane.LeftToday],
+      horizon: DrainHorizon = DrainHorizon(3650)
+  ): Option[DaysToDrain] =
     @annotation.tailrec
     def go(bs: Vector[Int], day: Int): Option[DaysToDrain] =
       if bs.forall(_ <= 0) then Some(DaysToDrain(math.max(0, day - 1)))
@@ -206,32 +211,32 @@ object IngestBacklog:
     */
   final case class RepairFacts(
       item: RepairFacts.Item,
-      doi: com.histmersion.domain.library.Doi,
+      doi: Doi,
       isOa: RepairFacts.IsOa,
       watcher: RepairFacts.Watcher,
       watcherExists: RepairFacts.WatcherExists,
       watcherAutoIngest: RepairFacts.WatcherAutoIngest,
-      inCorpus: Option[com.histmersion.domain.library.Citekey]
+      inCorpus: Option[Citekey]
   )
 
   object RepairFacts:
     type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Item extends RefinedType[Int, Pure]
     type IsOa = IsOa.T
-    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object IsOa extends RefinedType[Boolean, Pure]
     type Watcher = Watcher.T
-    object Watcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Watcher extends RefinedType[String, Pure]
     type WatcherExists = WatcherExists.T
-    object WatcherExists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WatcherExists extends RefinedType[Boolean, Pure]
     type WatcherAutoIngest = WatcherAutoIngest.T
-    object WatcherAutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WatcherAutoIngest extends RefinedType[Boolean, Pure]
 
   enum RepairAction:
     /** Into the watcher's ingest backlog; the acquisition item leaves the list. */
     case Move
 
     /** In the corpus already: the acquisition item leaves the list. */
-    case Remove(citekey: com.histmersion.domain.library.Citekey)
+    case Remove(citekey: Citekey)
 
     /** It stays on the list, with why. */
     case Keep(why: RepairAction.Keep.Why)
@@ -239,10 +244,10 @@ object IngestBacklog:
   object RepairAction:
     object Keep:
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends RefinedType[String, Pure]
 
   def repairAction(f: RepairFacts): RepairAction =
-    if !f.isOa.value then RepairAction.Keep(com.histmersion.domain.IngestBacklog.RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
+    if !f.isOa.value then RepairAction.Keep(RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
     else
       f.inCorpus match
         case Some(ck)                     => RepairAction.Remove(ck)

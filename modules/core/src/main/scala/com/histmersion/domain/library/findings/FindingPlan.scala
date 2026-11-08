@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.findings
+package com.histmersion
+package domain.library.findings
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
@@ -22,6 +23,12 @@ import java.util.UUID
 import scala.annotation.tailrec
 import scala.collection.mutable
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.exchange.MergeTally
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
 
 /** How a merge plan treats findings (docs/research-merge-import.md §5.4): a finding belongs to its source; inside a
   * pair of sources that are (or may be) one, each of the bundle's findings is matched with at most one here — the same
@@ -37,7 +44,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   private val localFindingsOf = in.local.findings.groupBy(_.sourceUid)
   private val nearIssue = mutable.Map.empty[UUID, MergeIssue.Id] // the bundle's finding → its question
   private val findingMatches = mutable.Map.empty[UUID, List[Match]] // the bundle's source → its findings' matches
-  private val findingLine = mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Finding]
+  private val findingLine = mutable.Map.empty[UUID, BundleEntities => Bundle.Finding]
   private val assignedIds = mutable.Set.from(in.local.findings.map(_.id))
   private def findingIn(es: BundleEntities, u: UUID) = es.findings.find(_.uid == u).get
 
@@ -46,8 +53,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 
   // rows of the bundle that already have their own uid here are not matched again inside a pair
   override def pairFirst(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
+      right: Bundle.Source,
+      left: Bundle.Source,
       cond: Option[IssueCondition],
       cfg: MergeSettings,
       questions: PairQuestions
@@ -79,9 +86,9 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
             MergeIssue.Title(s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(SourceMatcher.Figure(j.value), SourceMatcher.Decimals(2))})"),
             Some(IssueSide(IssueSide.Label(lf.id.value), lf.uid, List(IssueSide.Lines(MergeIssue.Detail.preview(lf.claim.value))))),
             Some(IssueSide(IssueSide.Label(rf.id.value), rf.uid, List(IssueSide.Lines(MergeIssue.Detail.preview(rf.claim.value))))),
-            List(com.histmersion.api.exchange.MergeIssue.Why("by default both are kept; merge makes them one finding")),
+            List(MergeIssue.Why("by default both are kept; merge makes them one finding")),
             List(km.Both, km.Merge),
-            Some(com.histmersion.api.exchange.MergeDecision.of(km.Both)),
+            Some(MergeDecision.of(km.Both)),
             cond,
             detail =
               Some(
@@ -119,13 +126,13 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   // the same claim folds, a near duplicate folds when decided `merge`, the rest arrive under the survivor's citekey,
   // numbered after its last
   override def foldSources(
-      right: com.histmersion.api.exchange.Bundle.Source,
-      left: com.histmersion.api.exchange.Bundle.Source,
-      citekey: com.histmersion.domain.library.Citekey,
+      right: Bundle.Source,
+      left: Bundle.Source,
+      citekey: Citekey,
       folds: PlanFolds
   ): Boolean =
     val ms = findingMatches.getOrElse(right.uid, Nil)
-    def merging(rf: com.histmersion.api.exchange.Bundle.Finding) =
+    def merging(rf: Bundle.Finding) =
       nearIssue.get(rf.uid).flatMap(id => folds.decisionIn(id)).exists(_.kind == km.Merge)
     val renumbered =
       localFindingsOf.getOrElse(left.uid, Nil).map(f => Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}")).toSet
@@ -139,15 +146,15 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     ms.foreach {
       case Match.Same(rf, lf) =>
         folds.fold(rf.uid, lf.uid, Bundle.Kind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
-        folds.count(_.modify(_.findingsMerged).using(n => com.histmersion.api.exchange.MergeTally.FindingsMerged(n.value + 1)))
+        folds.count(_.modify(_.findingsMerged).using(n => MergeTally.FindingsMerged(n.value + 1)))
       case Match.Near(rf, lf, _) if merging(rf) =>
         folds.fold(rf.uid, lf.uid, Bundle.Kind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
-        folds.count(_.modify(_.findingsMerged).using(n => com.histmersion.api.exchange.MergeTally.FindingsMerged(n.value + 1)))
+        folds.count(_.modify(_.findingsMerged).using(n => MergeTally.FindingsMerged(n.value + 1)))
       case _ => ()
     }
     false
 
-  override def renamed(source: UUID, citekey: com.histmersion.domain.library.Citekey): Unit =
+  override def renamed(source: UUID, citekey: Citekey): Unit =
     in.foreign.findings
       .filter(_.sourceUid == source)
       .foreach(f =>
@@ -188,40 +195,40 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.findings)
       .setTo(
         MergePlanner
-          .replaced(es0.findings, _.uid, findingLine, es0, (_: com.histmersion.api.exchange.Bundle.Finding) => true)
+          .replaced(es0.findings, _.uid, findingLine, es0, (_: Bundle.Finding) => true)
       )
 
 object FindingPlan:
 
   type ClaimKey = ClaimKey.T
-  object ClaimKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClaimKey extends RefinedType[String, Pure]
   type IdCount = IdCount.T
-  object IdCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IdCount extends RefinedType[Int, Pure]
 
   /** A great-circle distance in km. */
   type Distance = Distance.T
-  object Distance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object Distance extends RefinedType[Double, Pure]:
     extension (d: Distance) def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
   enum Match:
     /** The same claim (and a compatible time and place): one finding. */
-    case Same(right: com.histmersion.api.exchange.Bundle.Finding, left: com.histmersion.api.exchange.Bundle.Finding)
+    case Same(right: Bundle.Finding, left: Bundle.Finding)
 
     /** Nearly the same claim at an overlapping time: kept apart unless the user says `merge`. */
     case Near(
-        right: com.histmersion.api.exchange.Bundle.Finding,
-        left: com.histmersion.api.exchange.Bundle.Finding,
+        right: Bundle.Finding,
+        left: Bundle.Finding,
         jaccard: Match.Near.Jaccard
     )
 
     /** Nothing here like it: a new finding of the survivor. */
-    case Unmatched(right: com.histmersion.api.exchange.Bundle.Finding)
+    case Unmatched(right: Bundle.Finding)
 
   object Match:
     object Near:
       type Jaccard = Jaccard.T
-      object Jaccard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Jaccard extends RefinedType[Double, Pure]
 
   private def text(o: Option[Bundle.Finding.Region]): Option[Bundle.Finding.Region] =
     o.map(r => Bundle.Finding.Region(r.value.trim)).filter(_.value.nonEmpty)
@@ -232,7 +239,7 @@ object FindingPlan:
   private def claimWords(claim: Bundle.Finding.Claim): Set[String] = MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).toSet
 
   /** Great-circle distance in km. */
-  def km(lon1: com.histmersion.api.catalogue.Longitude, lat1: com.histmersion.api.catalogue.Latitude, lon2: com.histmersion.api.catalogue.Longitude, lat2: com.histmersion.api.catalogue.Latitude): Distance =
+  def km(lon1: Longitude, lat1: Latitude, lon2: Longitude, lat2: Latitude): Distance =
     val (p1, p2) = (math.toRadians(lat1.value), math.toRadians(lat2.value))
     val dp = p2 - p1
     val dl = math.toRadians(lon2.value - lon1.value)
@@ -243,8 +250,8 @@ object FindingPlan:
     * one of them says nothing about where.
     */
   def samePlace(
-      a: com.histmersion.api.exchange.Bundle.Finding,
-      b: com.histmersion.api.exchange.Bundle.Finding,
+      a: Bundle.Finding,
+      b: Bundle.Finding,
       withinKm: MergeSettings.FindingWithinKm
   ): Boolean =
     val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v).within(withinKm)
@@ -262,18 +269,18 @@ object FindingPlan:
     * near-duplicate (token Jaccard ≥ `nearAtLeast` and overlapping periods).
     */
   def matches(
-      lefts: List[com.histmersion.api.exchange.Bundle.Finding],
-      rights: List[com.histmersion.api.exchange.Bundle.Finding],
+      lefts: List[Bundle.Finding],
+      rights: List[Bundle.Finding],
       withinKm: MergeSettings.FindingWithinKm,
       nearAtLeast: MergeSettings.FindingNearAtLeast
   ): List[Match] =
     val rs = rights.sortBy(_.id.value)
     val ls = lefts.sortBy(_.id.value)
     @tailrec def pairSame(
-        rest: List[com.histmersion.api.exchange.Bundle.Finding],
-        acc: Map[UUID, com.histmersion.api.exchange.Bundle.Finding],
+        rest: List[Bundle.Finding],
+        acc: Map[UUID, Bundle.Finding],
         taken: Set[UUID]
-    ): (Map[UUID, com.histmersion.api.exchange.Bundle.Finding], Set[UUID]) =
+    ): (Map[UUID, Bundle.Finding], Set[UUID]) =
       rest match
         case Nil       => (acc, taken)
         case r :: tail =>
@@ -285,10 +292,10 @@ object FindingPlan:
             case None    => pairSame(tail, acc, taken)
     val (same, takenBySame) = pairSame(rs, Map.empty, Set.empty)
     @tailrec def pairNear(
-        rest: List[com.histmersion.api.exchange.Bundle.Finding],
-        acc: Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Match.Near.Jaccard)],
+        rest: List[Bundle.Finding],
+        acc: Map[UUID, (Bundle.Finding, Match.Near.Jaccard)],
         taken: Set[UUID]
-    ): Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Match.Near.Jaccard)] =
+    ): Map[UUID, (Bundle.Finding, Match.Near.Jaccard)] =
       rest match
         case Nil       => acc
         case r :: tail =>
@@ -314,9 +321,9 @@ object FindingPlan:
     * where only one has it, the more cautious confidence.
     */
   def fold(
-      l: com.histmersion.api.exchange.Bundle.Finding,
-      r: com.histmersion.api.exchange.Bundle.Finding
-  ): com.histmersion.api.exchange.Bundle.Finding =
+      l: Bundle.Finding,
+      r: Bundle.Finding
+  ): Bundle.Finding =
     val period = MergeFold.narrower(l.period, r.period)
     val conf = (l.confidence, r.confidence) match
       case (Some(a), Some(b)) => Some(if caution(b) < caution(a) then b else a)

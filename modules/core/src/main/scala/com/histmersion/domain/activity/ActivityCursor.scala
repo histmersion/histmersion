@@ -1,23 +1,26 @@
-package com.histmersion.domain.activity
+package com.histmersion
+package domain.activity
 
 import java.time.Instant
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where an older page of the activity list starts: the entry it follows, by its time and its key (entries are ordered
   * by time, then key, both descending). On the wire: `<ISO instant>~<key>`.
   */
 final case class ActivityCursor(at: Instant, key: ActivityCursor.Key):
-  def wire: com.histmersion.domain.activity.ActivityCursor.Wire = ActivityCursor.Wire(s"$at~$key")
+  def wire: ActivityCursor.Wire = ActivityCursor.Wire(s"$at~$key")
 
 object ActivityCursor:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
 
-  def parse(s: com.histmersion.domain.activity.ActivityCursor.Wire): Either[com.histmersion.domain.activity.ActivityCursor.Problem, ActivityCursor] =
+  def parse(s: Wire): Either[Problem, ActivityCursor] =
     s.value.trim.split("~", 2) match
       case Array(at, key) if key.nonEmpty =>
         scala.util

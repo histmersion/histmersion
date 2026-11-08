@@ -1,4 +1,5 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import com.histmersion.UserId
 import com.histmersion.domain.automation.Run
@@ -23,4 +24,4 @@ object Caller:
 
 
   /** The one person a server without accounts runs for: every request is theirs, with every permission. */
-  val Local: Caller.Person = Caller.Person(UserId.Local, Role.Admin)
+  val Local: Person = Person(UserId.Local, Role.Admin)

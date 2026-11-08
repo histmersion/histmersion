@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the kept counts of the undated sites were built from: the version of the writes to undated sites they include,
   * the squares a tile side they count by, the deepest zoom they hold. Counts built from another version or grid are not
@@ -6,14 +10,14 @@ package com.histmersion.domain.catalogue.maptiles
   */
 final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom):
   /** Do they answer for the writes up to `current`, on a grid of `wantedPerSide` squares to `wantedMaxZoom`? */
-  def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, wantedMaxZoom: com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom): Boolean =
+  def answers(current: UndatedBuild.Version, wantedPerSide: UndatedBuild.PerSide, wantedMaxZoom: UndatedBuild.MaxZoom): Boolean =
     version == current && perSide == wantedPerSide && maxZoom.value >= wantedMaxZoom.value
 
 object UndatedBuild:
 
   type Version = Version.T
-  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Version extends RefinedType[Long, Pure]
   type PerSide = PerSide.T
-  object PerSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PerSide extends RefinedType[Int, Pure]
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxZoom extends RefinedType[Int, Pure]

@@ -1,10 +1,13 @@
-package com.histmersion.domain
+package com.histmersion
+package domain
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Managers.*
 
 import java.time.{Duration, Instant}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The central agent scheduler, pure (docs/research-goal-advancement.md "As built"): ONE decision per managers' tick
   * about which pending manager items start a run now, across every job type — goal plans, article proposals, candidate
@@ -32,7 +35,7 @@ import java.time.{Duration, Instant}
   */
 object SchedulerPolicy:
   type StartedNote = StartedNote.T
-  object StartedNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StartedNote extends RefinedType[String, Pure]
   export SchedulerDefaults.{Strategy as StrategyName}
 
   /** A pin is worth this many priority levels. */
@@ -42,27 +45,27 @@ object SchedulerPolicy:
 
   /** What kind of work an item is, for the priorities and the shares. */
   enum JobType(val wire: JobType.Wire, val label: JobType.Label):
-    case GoalPlan extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("goal-plan"), com.histmersion.domain.SchedulerPolicy.JobType.Label("goal plans"))
-    case Propose extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("propose"), com.histmersion.domain.SchedulerPolicy.JobType.Label("article proposals"))
-    case Sweep extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("sweep"), com.histmersion.domain.SchedulerPolicy.JobType.Label("candidate sweeps and their ranking"))
-    case Currency extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("currency"), com.histmersion.domain.SchedulerPolicy.JobType.Label("currency checks"))
-    case Enrich extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("enrich"), com.histmersion.domain.SchedulerPolicy.JobType.Label("source enrichment"))
-    case Compile extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("compile"), com.histmersion.domain.SchedulerPolicy.JobType.Label("article compiles"))
-    case Extend extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("extend"), com.histmersion.domain.SchedulerPolicy.JobType.Label("article extensions"))
-    case Filter extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("filter"), com.histmersion.domain.SchedulerPolicy.JobType.Label("coverage filters"))
-    case Review extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("review"), com.histmersion.domain.SchedulerPolicy.JobType.Label("reviews and their revisions"))
+    case GoalPlan extends JobType(JobType.Wire("goal-plan"), JobType.Label("goal plans"))
+    case Propose extends JobType(JobType.Wire("propose"), JobType.Label("article proposals"))
+    case Sweep extends JobType(JobType.Wire("sweep"), JobType.Label("candidate sweeps and their ranking"))
+    case Currency extends JobType(JobType.Wire("currency"), JobType.Label("currency checks"))
+    case Enrich extends JobType(JobType.Wire("enrich"), JobType.Label("source enrichment"))
+    case Compile extends JobType(JobType.Wire("compile"), JobType.Label("article compiles"))
+    case Extend extends JobType(JobType.Wire("extend"), JobType.Label("article extensions"))
+    case Filter extends JobType(JobType.Wire("filter"), JobType.Label("coverage filters"))
+    case Review extends JobType(JobType.Wire("review"), JobType.Label("reviews and their revisions"))
 
   object JobType:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.domain.SchedulerPolicy.JobType.Wire): Option[JobType] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: Wire): Option[JobType] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 
     /** The job type of a manager item kind. */
-    def of(itemKind: com.histmersion.domain.SchedulerPolicy.Candidate.Kind): JobType = itemKind.value match
+    def of(itemKind: Candidate.Kind): JobType = itemKind.value match
       case PlanGoalItem     => GoalPlan
       case ProposeArticles  => Propose
       case AcquisitionSweep => Sweep
@@ -110,14 +113,14 @@ object SchedulerPolicy:
       kind: Candidate.Kind,
       target: Candidate.Target,
       goal: Option[Candidate.Goal] = None,
-      goalPriority: Candidate.GoalPriority = com.histmersion.domain.SchedulerPolicy.Candidate.GoalPriority(0),
+      goalPriority: Candidate.GoalPriority = Candidate.GoalPriority(0),
       goalCreated: Option[Instant] = None,
-      gathering: Candidate.Gathering = com.histmersion.domain.SchedulerPolicy.Candidate.Gathering(false),
-      itemPriority: Candidate.ItemPriority = com.histmersion.domain.SchedulerPolicy.Candidate.ItemPriority(0),
+      gathering: Candidate.Gathering = Candidate.Gathering(false),
+      itemPriority: Candidate.ItemPriority = Candidate.ItemPriority(0),
       waitingSince: Instant = Instant.EPOCH,
       pools: List[Candidate.Pools] = Nil,
       block: Option[Block] = None,
-      person: Candidate.Person = com.histmersion.domain.SchedulerPolicy.Candidate.Person(false)
+      person: Candidate.Person = Candidate.Person(false)
   ):
     def jobType: JobType = JobType.of(kind)
     def label: String = s"#$id $kind $target"
@@ -125,34 +128,34 @@ object SchedulerPolicy:
   object Candidate:
 
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[Long, Pure]
     type ManagerId = ManagerId.T
-    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ManagerId extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Goal extends RefinedType[String, Pure]
     type GoalPriority = GoalPriority.T
-    object GoalPriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object GoalPriority extends RefinedType[Int, Pure]
     type Gathering = Gathering.T
-    object Gathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Gathering extends RefinedType[Boolean, Pure]
     type ItemPriority = ItemPriority.T
-    object ItemPriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ItemPriority extends RefinedType[Int, Pure]
     type Pools = Pools.T
-    object Pools extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pools extends RefinedType[String, Pure]
     type Person = Person.T
-    object Person extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Person extends RefinedType[Boolean, Pure]
 
   /** Why an item cannot start now whatever the order: a code and a sentence. */
   final case class Block(code: Block.Code, why: Block.Why)
 
   object Block:
     type Code = Code.T
-    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Code extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
   /** The [[Block]] code of an item whose role chains are all below their plans' floors. */
   val QuotaBlock: Block.Code = Block.Code("quota")
@@ -161,7 +164,7 @@ object SchedulerPolicy:
     * its plans' floors, the pools its role chains draw on (`chainPools`), since a fresh reading may show the window has
     * reset. A candidate blocked for any other reason wants none.
     */
-  def poolsWanted(waiting: List[Candidate], chainPools: Candidate => List[com.histmersion.domain.SchedulerPolicy.Candidate.Pools]): Set[com.histmersion.domain.SchedulerPolicy.Candidate.Pools] =
+  def poolsWanted(waiting: List[Candidate], chainPools: Candidate => List[Candidate.Pools]): Set[Candidate.Pools] =
     waiting.flatMap { c =>
       c.block match
         case None                            => c.pools
@@ -181,7 +184,7 @@ object SchedulerPolicy:
       poolUsed: Map[Candidate.Pools, Resources.PoolUsedValue] = Map.empty,
       managerCap: Map[Candidate.ManagerId, Resources.ManagerCapValue] = Map.empty,
       managerUsed: Map[Candidate.ManagerId, Resources.ManagerUsedValue] = Map.empty,
-      gatheringUsed: Resources.GatheringUsed = com.histmersion.domain.SchedulerPolicy.Resources.GatheringUsed(0),
+      gatheringUsed: Resources.GatheringUsed = Resources.GatheringUsed(0),
       stop: Option[Block] = None,
       recent: List[JobType] = Nil
   ):
@@ -190,31 +193,31 @@ object SchedulerPolicy:
   object Resources:
 
     type MaxRuns = MaxRuns.T
-    object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxRuns extends RefinedType[Int, Pure]
     type Occupied = Occupied.T
-    object Occupied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Occupied extends RefinedType[Int, Pure]
     type Room = Room.T
-    object Room extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Room extends RefinedType[Int, Pure]
     type PoolCapValue = PoolCapValue.T
-    object PoolCapValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PoolCapValue extends RefinedType[Int, Pure]
     type PoolUsedValue = PoolUsedValue.T
-    object PoolUsedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PoolUsedValue extends RefinedType[Int, Pure]
     type ManagerCapValue = ManagerCapValue.T
-    object ManagerCapValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ManagerCapValue extends RefinedType[Int, Pure]
     type ManagerUsedValue = ManagerUsedValue.T
-    object ManagerUsedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ManagerUsedValue extends RefinedType[Int, Pure]
     type GatheringUsed = GatheringUsed.T
-    object GatheringUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object GatheringUsed extends RefinedType[Int, Pure]
 
   /** The scheduler's settings ([[AgentSchedulerConfig]] parsed). */
   final case class Settings(
       strategy: Strategy,
-      agingHours: Settings.AgingHours = com.histmersion.domain.SchedulerPolicy.Settings.AgingHours(24),
-      maxWaitHours: Settings.MaxWaitHours = com.histmersion.domain.SchedulerPolicy.Settings.MaxWaitHours(72),
-      minShare: Settings.MinShare = com.histmersion.domain.SchedulerPolicy.Settings.MinShare(0.05),
+      agingHours: Settings.AgingHours = Settings.AgingHours(24),
+      maxWaitHours: Settings.MaxWaitHours = Settings.MaxWaitHours(72),
+      minShare: Settings.MinShare = Settings.MinShare(0.05),
       weights: Map[JobType, Settings.WeightsValue] = Map.empty,
       typePriority: Map[JobType, Settings.TypePriorityValue] = Map.empty,
-      gatheringSlots: Settings.GatheringSlots = com.histmersion.domain.SchedulerPolicy.Settings.GatheringSlots(1)
+      gatheringSlots: Settings.GatheringSlots = Settings.GatheringSlots(1)
   ):
     def weight(t: JobType): Settings.WeightsValue =
       Settings.WeightsValue(math.max(0, weights.get(t).fold(1)(_.value)))
@@ -229,9 +232,9 @@ object SchedulerPolicy:
     type MinShare = SchedulerDefaults.MinShare
     val MinShare: SchedulerDefaults.MinShare.type = SchedulerDefaults.MinShare
     type WeightsValue = WeightsValue.T
-    object WeightsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WeightsValue extends RefinedType[Int, Pure]
     type TypePriorityValue = TypePriorityValue.T
-    object TypePriorityValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TypePriorityValue extends RefinedType[Int, Pure]
     type GatheringSlots = SchedulerDefaults.GatheringSlots
     val GatheringSlots: SchedulerDefaults.GatheringSlots.type = SchedulerDefaults.GatheringSlots
 
@@ -244,13 +247,13 @@ object SchedulerPolicy:
 
   object Scored:
     type WaitedMinutes = WaitedMinutes.T
-    object WaitedMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WaitedMinutes extends RefinedType[Long, Pure]
     type Aging = Aging.T
-    object Aging extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Aging extends RefinedType[Int, Pure]
     type Effective = Effective.T
-    object Effective extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Effective extends RefinedType[Int, Pure]
     type Overdue = Overdue.T
-    object Overdue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Overdue extends RefinedType[Boolean, Pure]
 
   def score(c: Candidate, s: Settings, now: Instant): Scored =
     val mins = math.max(0L, Duration.between(c.waitingSince, now).toMinutes)
@@ -286,14 +289,14 @@ object SchedulerPolicy:
 
   object PassState:
     type StartedValue = StartedValue.T
-    object StartedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StartedValue extends RefinedType[Int, Pure]
 
   /** A strategy picks the next candidate from those that may still start, and says why. The rest of the pass — the
     * resources, aging, max wait, minimum shares, the gathering places and the explanations — is the same for every
     * strategy.
     */
   trait Strategy:
-    def name: com.histmersion.domain.SchedulerPolicy.StrategyName
+    def name: SchedulerPolicy.StrategyName
     def describe: String
     def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, String)]
 
@@ -312,7 +315,7 @@ object SchedulerPolicy:
     */
   object GoalFirst extends Strategy:
 
-    val name = com.histmersion.domain.SchedulerPolicy.StrategyName("goal-first")
+    val name = SchedulerPolicy.StrategyName("goal-first")
     val describe =
       "depth first: the highest-priority goals, oldest first, take the allowance; newer goals of the same " +
         "priority wait until the older ones have nothing to run (aging and max-wait bound the wait)"
@@ -327,7 +330,7 @@ object SchedulerPolicy:
     */
   object TypeBalanced extends Strategy:
 
-    val name = com.histmersion.domain.SchedulerPolicy.StrategyName("type-balanced")
+    val name = SchedulerPolicy.StrategyName("type-balanced")
     val describe = "breadth: the allowance is spread over the job types by weight (agents.scheduler.type-weights); " +
       "inside each type the highest-priority goals first, oldest as tiebreak, so every goal advances"
 
@@ -361,16 +364,16 @@ object SchedulerPolicy:
   object Strategies:
 
     val all: List[Strategy] = List(TypeBalanced, GoalFirst)
-    def parse(s: com.histmersion.domain.SchedulerPolicy.StrategyName): Option[Strategy] =
+    def parse(s: SchedulerPolicy.StrategyName): Option[Strategy] =
       all.find(_.name.value == Option(s).fold("")(_.value).trim.toLowerCase(java.util.Locale.ROOT))
-    def names: List[com.histmersion.domain.SchedulerPolicy.StrategyName] = all.map(_.name)
+    def names: List[SchedulerPolicy.StrategyName] = all.map(_.name)
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** Why a candidate did not start: a code ([[Code]]), a sentence, the items it waits behind (labels), and its place in
     * the order (1 = next).
     */
-  final case class Wait(code: Wait.Code, why: Wait.Why, behind: List[Wait.Behind] = Nil, position: Wait.Position = com.histmersion.domain.SchedulerPolicy.Wait.Position(0))
+  final case class Wait(code: Wait.Code, why: Wait.Why, behind: List[Wait.Behind] = Nil, position: Wait.Position = Wait.Position(0))
 
   object Wait:
     type Code = Block.Code
@@ -378,9 +381,9 @@ object SchedulerPolicy:
     type Why = Block.Why
     val Why: Block.Why.type = Block.Why
     type Behind = Behind.T
-    object Behind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Behind extends RefinedType[String, Pure]
     type Position = Position.T
-    object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Position extends RefinedType[Int, Pure]
 
   object Code:
     val Blocked: Block.Code = Block.Code("blocked")
@@ -394,12 +397,12 @@ object SchedulerPolicy:
     * waiting ones would start in.
     */
   final case class Decision(started: List[(Scored, StartedNote)], waiting: List[(Scored, Wait)]):
-    def waitOf(id: com.histmersion.domain.SchedulerPolicy.Candidate.Id): Option[Wait] = waiting.find(_._1.c.id == id).map(_._2)
+    def waitOf(id: Candidate.Id): Option[Wait] = waiting.find(_._1.c.id == id).map(_._2)
 
   /** Does a job type with work need its minimum share now: among the last ⌈1/minShare⌉ starts (the recent ones, newest
     * first, and this pass's) none was of type `t` — and that many starts have been made.
     */
-  def shareDue(t: JobType, started: List[JobType], minShare: com.histmersion.domain.SchedulerPolicy.Settings.MinShare): Boolean =
+  def shareDue(t: JobType, started: List[JobType], minShare: Settings.MinShare): Boolean =
     minShare.value > 0 && {
       val n = math.ceil(1.0 / math.min(1.0, minShare.value)).toInt
       started.size >= n && !started.take(n).contains(t)
@@ -584,7 +587,7 @@ object SchedulerPolicy:
     go(cands, res.recent, res.gatheringUsed.value, Vector.empty).toList
 
   /** `95` minutes → `1 h 35 min`. */
-  def hours(minutes: com.histmersion.domain.SchedulerPolicy.Scored.WaitedMinutes): String =
+  def hours(minutes: Scored.WaitedMinutes): String =
     val m = minutes.value
     if m < 60 then s"$m min"
     else s"${m / 60} h" + (if m % 60 != 0 then s" ${m % 60} min" else "")
