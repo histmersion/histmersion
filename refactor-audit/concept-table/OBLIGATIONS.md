@@ -245,3 +245,5 @@ The sample plugins (plugin-fixtures/hello, hello-ai) show what a plugin author n
 - `AgentGetSourceInput` decodes a model-supplied citekey with assume (a test requires leniency): make it parse at the boundary instead.
 - Contract snapshots regenerated: only int32/int64 format hints changed (Year and ByteCount now Long; ProbeAnswer.year kept int32 for the recorded traffic). Two regressions fixed: CandidateSweep.skipped and CollectionEntry.identifiers Map schemas.
 - BundleHttpSuite "review draft" is not idempotent against a reused test database (leaves a merge_sessions row).
+- Storage.Advice.shrink returns Storage.Hint where Entry.shrink is Entry.Shrink: one concept, unify in api and server.
+- Universal apply fails on non-case classes in several modules ("object X does not take parameters"): worked around with `new` at call sites (DomMarker, PointSet, Dot, Client, DirSize.Budget, SourceProposals, PeriodImports, Prompts). Find the cause (compiler option or companion shape) before the style pass.
