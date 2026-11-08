@@ -14,7 +14,7 @@ object Period:
 
   def point(year: Year): Period = new Period(year, year)
 
-  enum Error:
+  enum Error derives CanEqual:
     case EndsBeforeStart(start: Year, end: Year)
 
     def message: Problem = this match

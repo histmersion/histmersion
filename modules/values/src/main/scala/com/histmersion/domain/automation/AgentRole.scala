@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-enum AgentRole(val wire: AgentRole.Wire):
+enum AgentRole(val wire: AgentRole.Wire) derives CanEqual:
   case Probe extends AgentRole(AgentRole.Wire("probe"))
   case Extractor extends AgentRole(AgentRole.Wire("extractor"))
   case Reviewer extends AgentRole(AgentRole.Wire("reviewer"))

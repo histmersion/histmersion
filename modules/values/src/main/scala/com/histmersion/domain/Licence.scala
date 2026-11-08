@@ -109,7 +109,7 @@ object Licence:
   /** What a licence allows, as an allowlist names it (`cc-by-sa`): a new version of an allowed licence needs no config
     * change. Two families are never stored, whatever a config says: an unreadable licence and all rights reserved.
     */
-  enum Family(val wire: Family.Wire):
+  enum Family(val wire: Family.Wire) derives CanEqual:
     case Cc0 extends Family(Family.Wire("cc0"))
     case PublicDomain extends Family(Family.Wire("public-domain"))
     case CcBy extends Family(Family.Wire("cc-by"))

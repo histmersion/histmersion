@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-enum TargetKind(val wire: TargetKind.Wire):
+enum TargetKind(val wire: TargetKind.Wire) derives CanEqual:
   case Source extends TargetKind(TargetKind.Wire("source"))
   case Article extends TargetKind(TargetKind.Wire("article"))
   case Goal extends TargetKind(TargetKind.Wire("goal"))
