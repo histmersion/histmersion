@@ -1,0 +1,15 @@
+### ApprovalServiceContract.scala
+81|(o.id.value: String, o.kind, o.subject)|(o.id.value: Long, o.kind, o.subject)
+83|(plan.id.value: String,|(plan.id.value: Long,
+84|(filter.id.value: String,|(filter.id.value: Long,
+85|(again.id.value: String,|(again.id.value: Long,
+### GazetteerLoadSuite.scala
+243|(Some(-1650L), Some(-1180L))|(Some(-1650), Some(-1180))
+### PlaceServiceContract.scala
+168|c.periodBefore, c.periodAfter)|c.periodBefore.value: String, c.periodAfter.value: String)
+### BootstrapSuite.scala
+122|.map(_.value: String), PeriodO.parse(seedText).toOption.get.version.map(_.value: String))|.map(_.value: Int), PeriodO.parse(seedText).toOption.get.version.map(_.value: Int))
+### SchedulerDbSuite.scala
+301|assertEquals(next, Set(("review-article", Art), ("propose-articles", g(15)), ("acquisition-sweep", g(15))))|assertEquals(next.map((pipeline, target) => (pipeline.value: String, target.value: String)), Set(("review-article", Art.value: String), ("propose-articles", g(15).value: String), ("acquisition-sweep", g(15).value: String)))
+### CollectionsSuite.scala
+331|(MediaRole.all.toSet -- Set(MediaRole.Cover, MediaRole.Illustration)).map(_.value: String))|MediaRole.all.map(_.value: String).toSet -- Set(MediaRole.Cover, MediaRole.Illustration))

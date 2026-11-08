@@ -1,0 +1,75 @@
+### SourceServiceContract.scala
+246|assertEquals(|assertEquals(
+### BootstrapSuite.scala
+139|assertEquals(asked, List(base.periods.periodoUrl))|assertEquals(asked.map(_.value: String), List(base.periods.periodoUrl.value: String))
+163|assertEquals(job.kind, Bootstrap.JobKind)|assertEquals(job.kind.value: String, Bootstrap.JobKind.value: String)
+### BundleHttpSuite.scala
+160|assertEquals(plan.matches.byUid, plan.matches.sources)|assertEquals(plan.matches.byUid.value, plan.matches.sources.value)
+### CritiqueReasonsSuite.scala
+122|      stored,|      stored.map((src, dst, reason, by) => (src.value: String, dst.value: String, reason, by)),
+156|assertEquals(stored.map(_._1), List(Brown))|assertEquals(stored.map(_._1.value: String), List(Brown))
+### ManagersHttpSuite.scala
+80|assertEquals(m.effective.minSources, Some(cfg.libraryAgents.seed.minSources))|assertEquals(m.effective.minSources.map(_.value), Some(cfg.libraryAgents.seed.minSources.value))
+134|(st.strategy, st.strategyFrom), (cfg.agents.scheduler.strategy, "config")|(st.strategy.value: String, st.strategyFrom), (cfg.agents.scheduler.strategy.value: String, "config")
+### PagesSuite.scala
+81|assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)), cline.title)|assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)).value: String, cline.title.value: String)
+### PassagesHttpSuite.scala
+112|assertEquals(PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)), SourceFixtures.bodyText(ds, Ck))|assertEquals(PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)).value: String, SourceFixtures.bodyText(ds, Ck).value: String)
+119|(r.citekey, r.matches, r.total)|(r.citekey.value: String, r.matches, r.total)
+### PlacesHttpSuite.scala
+226|assertEquals(about.build.version, Version.version)|assertEquals(about.build.version.value: String, Version.version.value: String)
+230|        about.build.sourceUrl,|        about.build.sourceUrl.map(_.value: String),
+231|BuildMeta.gitCommit.map(CorrespondingSource.Commit(_))))|BuildMeta.gitCommit.map(CorrespondingSource.Commit(_))).value: String)
+### PmcFetchSuite.scala
+110|assertEquals(h.get(Http.UserAgent), Some(c.publicUserAgent), u)|assertEquals(h.get(Http.UserAgent).map(_.value: String), Some(c.publicUserAgent.value: String), u)
+### SourceDeleteSuite.scala
+225|d.counts.map(c => c.part -> c.rows).toMap|d.counts.map(c => c.part -> (c.rows.value: Int)).toMap
+275|(b.kind, b.id)|(b.kind, b.id.value: String)
+275|(DeleteBlocker.Kind.Article, slug)|(DeleteBlocker.Kind.Article, slug.value: String)
+### StorageProbeSuite.scala
+131|assertEquals(entry("backups").shrink, Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(3)))|assertEquals(entry("backups").shrink.map(_.value: String), Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(3)).map(_.value: String))
+### UiNoticesHttpSuite.scala
+103|assertEquals(read.seen, Some(latest))|assertEquals(read.seen.map(_.value), Some(latest.value))
+### VacuumHttpSuite.scala
+68|assertEquals(started.kind, Vacuum.JobKind)|assertEquals(started.kind.value: String, Vacuum.JobKind: String)
+### AcquireRecheckDbSuite.scala
+243|assertEquals(byId.rows.map(_.item), List(one))|assertEquals(byId.rows.map(_.item.value), List(one.value))
+455|assertEquals(job.kind, RecheckJob.JobKind)|assertEquals(job.kind.value: String, RecheckJob.JobKind: String)
+500|      Set(ids(3))|      Set(ids(3).value)
+582|.flatMap(_.resumes), Some(job.id))|.flatMap(_.resumes).map(_.value), Some(job.id.value))
+### AutoEnrichRunSuite.scala
+134|(run.status, run.origin, run.target)|(run.status, run.origin.map(_.value: String), run.target.value: String)
+134|Some(Origin.FromIngest.wire)|Some(Origin.FromIngest.wire.value: String)
+### GoalAgentsRunSuite.scala
+289|(run.goal, run.targetKind)|(run.goal.map(_.value: String), run.targetKind)
+315|.flatMap(_.parentSlug), Some(Goal))|.flatMap(_.parentSlug).map(_.value: String), Some(Goal))
+318|links.map(l => (l.kind, l.ref))|links.map(l => (l.kind, l.ref.value: String))
+431|(child.pipeline, child.target, child.params.fixes, child.origin, child.goal)|(child.pipeline, child.target.value: String, child.params.fixes, child.origin, child.goal.map(_.value: String))
+443|cov.cited.map(_.citekey).toSet|cov.cited.map(_.citekey.value: String).toSet
+476|(e.source.citekey, e.reason)|(e.source.citekey.value: String, e.reason)
+### IngestBacklogDbSuite.scala
+214|(w.goals, w.title, w.foundBy)|(w.goals.map(_.value: String), w.title, w.foundBy.map(_.value: String))
+214|Some(run.id))))|Some(run.id.value: String))))
+296|(x.managerId, x.state.oa.map(_.goals))|(x.managerId, x.state.oa.map(_.goals.map(_.value: String)))
+409|assertEquals(entry.head.state.oa.map(_.goals), Some|assertEquals(entry.head.state.oa.map(_.goals.map(_.value: String)), Some
+411|.flatMap(_.backlogItem), Some(entry.head.id))|.flatMap(_.backlogItem).map(_.value), Some(entry.head.id.value))
+### ManagerAutopilotSuite.scala
+288|(seedM.state, seedM.cron)|(seedM.state, seedM.cron.map(_.value: String))
+527|.flatMap(_.cron),|.flatMap(_.cron).map(_.value: String),
+### ManagerDefaultsViewsSuite.scala
+106|(d.maxFailures, d.review.maxRuns, d.watch.maxRuns)|(d.maxFailures.value, d.review.maxRuns.value, d.watch.maxRuns.value)
+107|(agents.managers.maxFailures, agents.managers.review.maxRuns, agents.managers.watch.maxRuns)|(agents.managers.maxFailures.value, agents.managers.review.maxRuns.value, agents.managers.watch.maxRuns.value)
+### ManagerPhase2Suite.scala
+249|.hold.flatMap(_.untilApproval), Some(appr.id))|.hold.flatMap(_.untilApproval).map(_.value), Some(appr.id.value))
+316|(m.id, m.kind, m.goal)|(m.id, m.kind, m.goal.map(_.value: String))
+321|(run.pipeline, run.goal)|(run.pipeline, run.goal.map(_.value: String))
+351|(crun.pipeline, crun.params.chainReview, crun.goal, crun.params.title)|(crun.pipeline, crun.params.chainReview, crun.goal.map(_.value: String), crun.params.title)
+413|assertEquals(r.items.map(_.target), List(Ck2))|assertEquals(r.items.map(_.target.value: String), List(Ck2))
+466|(again.priority, again.origin), (ReviewManagerPolicy.StalePriority, "selection")|(again.priority.value, again.origin), (ReviewManagerPolicy.StalePriority.value, "selection")
+### ManagerPhase3Suite.scala
+173|(m.id, m.kind, m.goal, m.state, m.cron)|(m.id, m.kind, m.goal.map(_.value: String), m.state, m.cron)
+182|.map(i => (i.kind, i.target, i.status))|.map(i => (i.kind, i.target.value: String, i.status))
+438|(ap.head.subject, ap.head.hintEffect.map(p => (p.hint, p.effect.action, p.by)))|(ap.head.subject, ap.head.hintEffect.map(p => (p.hint.value, p.effect.action, p.by)))
+439|Some((hint.id, "hold", "mcp"))|Some((hint.id.value, "hold", "mcp"))
+441|assertEquals(hint.proposal, Some(ap.head.id))|assertEquals(hint.proposal.map(_.value), Some(ap.head.id.value))
+526|(run.target, run.origin, run.params.hint), (EnrichId, Some("person"), Some(hint.id))|(run.target, run.origin, run.params.hint.map(_.value)), (EnrichId, Some("person"), Some(hint.id.value))
