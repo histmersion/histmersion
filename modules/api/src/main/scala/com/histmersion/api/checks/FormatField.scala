@@ -1,21 +1,24 @@
-package com.histmersion.api.checks
+package com.histmersion
+package api.checks
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 enum FormatField:
   case Body, Summary, Notes
 
 object FormatField:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
   given WireEnumValues[FormatField]:
-    def all: Array[FormatField] = FormatField.values
-    def wire(e: FormatField): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((_root_.com.histmersion.api.checks.FormatField.Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[FormatField] = FormatField.values.find(_.toString.equalsIgnoreCase((s).value))
+    def all: Array[FormatField] = values
+    def wire(e: FormatField): WireEnumValues.Wire = WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
+    def fromWire(s: WireEnumValues.Wire): Option[FormatField] = values.find(_.toString.equalsIgnoreCase((s).value))
   given Encoder[FormatField] = WireEnum.encoder
   given Decoder[FormatField] = WireEnum.decoder
   given Schema[FormatField] = WireEnum.schema

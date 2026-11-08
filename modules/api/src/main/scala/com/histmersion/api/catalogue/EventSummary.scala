@@ -1,25 +1,29 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventSummary(
-    id: com.histmersion.api.catalogue.Event.Id,
+    id: Event.Id,
     label: EventSummary.Label,
     kind: EventSummary.Kind,
     timeSpan: TimeSpan,
     historicity: EventSummary.Historicity,
-    placeId: Option[com.histmersion.api.catalogue.Place.Id] = None,
-    parentId: Option[com.histmersion.api.catalogue.Event.Id] = None,
+    placeId: Option[Place.Id] = None,
+    parentId: Option[Event.Id] = None,
     description: Option[EventSummary.Description] = None,
-    citekey: Option[com.histmersion.api.library.Citekey] = None,
-    scale: EventSummary.Scale = _root_.com.histmersion.api.catalogue.EventSummary.Scale(EventScale.Local),
-    scaleStated: EventSummary.ScaleStated = _root_.com.histmersion.api.catalogue.EventSummary.ScaleStated(false),
-    tier: EventSummary.Tier = _root_.com.histmersion.api.catalogue.EventSummary.Tier(EventTier.Attested),
-    precision: EventSummary.Precision = _root_.com.histmersion.api.catalogue.EventSummary.Precision(EventPrecision.Precise),
+    citekey: Option[Citekey] = None,
+    scale: EventSummary.Scale = EventSummary.Scale(EventScale.Local),
+    scaleStated: EventSummary.ScaleStated = EventSummary.ScaleStated(false),
+    tier: EventSummary.Tier = EventSummary.Tier(EventTier.Attested),
+    precision: EventSummary.Precision = EventSummary.Precision(EventPrecision.Precise),
     central: Option[EventSummary.Central] = None,
     plusMinus: Option[EventSummary.PlusMinus] = None,
     datingMethod: Option[EventSummary.DatingMethod] = None
@@ -30,24 +34,24 @@ final case class EventSummary(
 object EventSummary:
 
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Historicity = Historicity.T
-  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Historicity extends RefinedType[String, Pure]
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Scale = Scale.T
-  object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Scale extends RefinedType[String, Pure]
   type ScaleStated = ScaleStated.T
-  object ScaleStated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ScaleStated extends RefinedType[Boolean, Pure]
   type Tier = Tier.T
-  object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tier extends RefinedType[String, Pure]
   type Precision = Precision.T
-  object Precision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Precision extends RefinedType[String, Pure]
   type Central = Central.T
-  object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Central extends RefinedType[Long, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlusMinus extends RefinedType[Long, Pure]
   type DatingMethod = DatingMethod.T
-  object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DatingMethod extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.api.personal
+package com.histmersion
+package api.personal
 
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -9,28 +10,29 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Title
 
 final case class Note(
-    id: com.histmersion.api.personal.Note.Id,
+    id: Note.Id,
     target: Target,
-    text: com.histmersion.api.personal.Note.Text,
-    title: com.histmersion.api.library.Title,
-    createdAt: Note.CreatedAt = _root_.com.histmersion.api.personal.Note.CreatedAt(""),
-    updatedAt: Note.UpdatedAt = _root_.com.histmersion.api.personal.Note.UpdatedAt("")
+    text: Note.Text,
+    title: Title,
+    createdAt: Note.CreatedAt = Note.CreatedAt(""),
+    updatedAt: Note.UpdatedAt = Note.UpdatedAt("")
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object Note:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
 
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CreatedAt extends RefinedType[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]
 
-  final case class Edit(text: Text, ifUpdatedAt: Option[com.histmersion.api.personal.Note.UpdatedAt] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Edit(text: Text, ifUpdatedAt: Option[UpdatedAt] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
 
@@ -41,7 +43,7 @@ object Note:
     given Decoder[Id] = Decoder.decodeString.map(Id(_))
     given Schema[Id] = Schema.string[Id]
 
-  final case class New(target: Target, text: Text, title: Option[com.histmersion.api.library.Title] = None)
+  final case class New(target: Target, text: Text, title: Option[Title] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -50,15 +52,15 @@ object Note:
   type Text = Text.T
 
   object Text extends RefinedType[String, Pure]:
-    export com.histmersion.api.personal.Note.{Problem as TidyResultPart1}
+    export Note.{Problem as TidyResultPart1}
 
     val MaxChars = 50000
 
     /** A note's text as given, with Unix line ends and no trailing space; refused when empty or too long. */
-    def tidy(raw: Text): Either[com.histmersion.api.personal.Note.Problem, Text] =
+    def tidy(raw: Text): Either[Problem, Text] =
       val t = raw.value.replace("\r\n", "\n").stripTrailing
-      if t.trim.isEmpty then Left(_root_.com.histmersion.api.personal.Note.Problem("a note needs some text"))
-      else if t.length > MaxChars then Left(_root_.com.histmersion.api.personal.Note.Problem(s"a note is at most $MaxChars characters (this one: ${t.length})"))
+      if t.trim.isEmpty then Left(Problem("a note needs some text"))
+      else if t.length > MaxChars then Left(Problem(s"a note is at most $MaxChars characters (this one: ${t.length})"))
       else Right(Text(t))
     given Encoder[Text] = Encoder.encodeString.contramap(_.value)
     given Decoder[Text] = Decoder.decodeString.map(Text(_))

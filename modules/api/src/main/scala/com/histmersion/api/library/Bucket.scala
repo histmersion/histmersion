@@ -1,20 +1,24 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Bucket(
     label: Bucket.Label,
     key: Bucket.Key,
     kind: Bucket.Kind,
-    start: Option[com.histmersion.api.catalogue.Year] = None,
-    end: Option[com.histmersion.api.catalogue.Year] = None,
+    start: Option[Year] = None,
+    end: Option[Year] = None,
     placeId: Option[Bucket.PlaceId] = None,
-    count: Bucket.Count = _root_.com.histmersion.api.library.Bucket.Count(0),
-    overlap: Bucket.Overlap = _root_.com.histmersion.api.library.Bucket.Overlap(0),
-    contested: Bucket.Contested = _root_.com.histmersion.api.library.Bucket.Contested(false),
+    count: Bucket.Count = Bucket.Count(0),
+    overlap: Bucket.Overlap = Bucket.Overlap(0),
+    contested: Bucket.Contested = Bucket.Contested(false),
     alsoUnder: List[Bucket.AlsoUnder] = Nil,
     children: List[Bucket] = Nil,
     samples: List[Bucket.Sample] = Nil
@@ -27,21 +31,21 @@ object Bucket:
     * the same way). Ask for it with `Bucket.schema`; do not add a given `Schema[Bucket]` here.
     */
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   export com.histmersion.api.catalogue.Place.{Id as PlaceId}
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type Overlap = Overlap.T
-  object Overlap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Overlap extends RefinedType[Int, Pure]
   type Contested = Contested.T
-  object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Contested extends RefinedType[Boolean, Pure]
   type AlsoUnder = AlsoUnder.T
-  object AlsoUnder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AlsoUnder extends RefinedType[String, Pure]
 
   def schema: Schema[Bucket] = summon[KindlingsSchema[Bucket]].schema
 
-  final case class Sample(citekey: com.histmersion.api.library.Citekey, title: com.histmersion.api.library.Title) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Sample(citekey: Citekey, title: Title) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

@@ -1,4 +1,5 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -10,15 +11,25 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Json
 import java.util.UUID
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Sha256
+import com.histmersion.api.ByteCount
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Doi
 object Bundle:
   type ChangedCount = ChangedCount.T
-  object ChangedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChangedCount extends RefinedType[Int, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]
 
   /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
     * kebab-case (`article-version`), as the V031 trigger writes them.
@@ -32,7 +43,7 @@ object Bundle:
       */
     case Place, Period
 
-    def wire: com.histmersion.api.exchange.Bundle.Kind.Wire = _root_.com.histmersion.api.exchange.Bundle.Kind.Wire((Kind.wireOf(this)).value)
+    def wire: Kind.Wire = Kind.Wire((Kind.wireOf(this)).value)
 
     /** The NDJSON file holding this kind's lines. */
     def file: String = (s"entities/${Kind.fileStem(this)}.ndjson")
@@ -42,21 +53,21 @@ object Bundle:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    def wireOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.Wire = k match
-      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("source")
-      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("finding")
-      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("article")
-      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("article-version")
-      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("asset")
-      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("asset-link")
-      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("attestation")
-      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("event")
-      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("goal")
-      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("queue-item")
-      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("place")
-      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("period")
+    def wireOf(k: Kind): Wire = k match
+      case Source         => Wire("source")
+      case Finding        => Wire("finding")
+      case Article        => Wire("article")
+      case ArticleVersion => Wire("article-version")
+      case Asset          => Wire("asset")
+      case AssetLink      => Wire("asset-link")
+      case Attestation    => Wire("attestation")
+      case Event          => Wire("event")
+      case Goal           => Wire("goal")
+      case QueueItem      => Wire("queue-item")
+      case Place          => Wire("place")
+      case Period         => Wire("period")
 
     private def fileStem(k: Kind): String = k match
       case Source         => ("sources")
@@ -86,20 +97,20 @@ object Bundle:
       case Place          => ("P")
       case Period         => ("N")
 
-    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.Wire): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.exchange.Bundle.Kind.Wire((s).value.trim.toLowerCase))
+    def fromWire(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
-      def all: Array[Kind] = Kind.values
-      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.api.exchange.Bundle.Kind.Wire((s).value))
+      def all: Array[Kind] = values
+      def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: WireEnumValues.Wire): Option[Kind] = Kind.fromWire(Wire((s).value))
   val Format = "histmersion-bundle"
   val FormatVersion = 1
   val Extension = ".hmx"
   val ManifestPath = "manifest.json"
 
-  def blobPath(sha256: com.histmersion.api.Sha256): String = (s"blobs/sha256/${(sha256).value.take(2)}/$sha256")
+  def blobPath(sha256: Sha256): String = (s"blobs/sha256/${(sha256).value.take(2)}/$sha256")
 
-  def blobSha(path: String): Option[com.histmersion.api.Sha256] =
+  def blobSha(path: String): Option[Sha256] =
     val prefix = "blobs/sha256/"
     (Option
       .when((path).startsWith(prefix)) {
@@ -108,15 +119,15 @@ object Bundle:
       }
       .filter(s =>
         s.length == 64 && s.forall(c => c.isDigit || ('a' to 'f').contains(c)) &&
-          path == blobPath(_root_.com.histmersion.api.Sha256(s))
-      )).map(refactorValue => _root_.com.histmersion.api.Sha256(refactorValue))
+          path == blobPath(Sha256(s))
+      )).map(refactorValue => Sha256(refactorValue))
 
   final case class Alias(alias: Alias.Value, sourceUid: UUID, createdAt: Alias.CreatedAt) derives KindlingsCodecAsObject
 
   object Alias:
     export com.histmersion.api.library.{Citekey as Value}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
 
   final case class Article(
       uid: UUID,
@@ -130,30 +141,30 @@ object Bundle:
       regions: List[Article.Regions],
       period: Option[Range],
       updatedAt: Article.UpdatedAt,
-      rev: Article.Rev = _root_.com.histmersion.api.exchange.Bundle.Article.Rev("")
+      rev: Article.Rev = Article.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Article:
     export com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     export com.histmersion.api.research.Article.Kind.{Wire as Kind}
     export com.histmersion.api.research.Article.{Body, SummaryText as Summary}
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Regions extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   final case class ArticleAlias(alias: ArticleAlias.Alias, articleUid: UUID, createdAt: ArticleAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object ArticleAlias:
     export com.histmersion.api.research.ReviewGoal.{Slug as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
 
   final case class ArticleVersion(
       uid: UUID,
@@ -163,19 +174,19 @@ object Bundle:
       summary: Option[ArticleVersion.Summary],
       versionOf: ArticleVersion.VersionOf,
       updatedAt: ArticleVersion.UpdatedAt,
-      rev: ArticleVersion.Rev = _root_.com.histmersion.api.exchange.Bundle.ArticleVersion.Rev("")
+      rev: ArticleVersion.Rev = ArticleVersion.Rev("")
   ) derives KindlingsCodecAsObject
 
   object ArticleVersion:
     type BodySha256 = BodySha256.T
-    object BodySha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BodySha256 extends RefinedType[String, Pure]
     export com.histmersion.api.research.Article.{SummaryText as Summary}
     type VersionOf = VersionOf.T
-    object VersionOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object VersionOf extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   final case class Assessment(
       sourceUid: UUID,
@@ -189,14 +200,14 @@ object Bundle:
 
   object Assessment:
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CheckedAt extends RefinedType[String, Pure]
     type Retracted = Retracted.T
-    object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Retracted extends RefinedType[Boolean, Pure]
     export com.histmersion.api.library.Acquire.{CitedByCount as CitedBy}
     type Influential = Influential.T
-    object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Influential extends RefinedType[Int, Pure]
     type Verdict = Verdict.T
-    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Verdict extends RefinedType[String, Pure]
 
   final case class Asset(
       uid: UUID,
@@ -204,7 +215,7 @@ object Bundle:
       sourceUid: UUID,
       name: Asset.Name,
       mime: Asset.Mime,
-      sha256: com.histmersion.api.Sha256,
+      sha256: Sha256,
       width: Option[Asset.Width],
       height: Option[Asset.Height],
       kind: Option[Asset.Kind],
@@ -214,36 +225,36 @@ object Bundle:
       geom: Option[Asset.Geom],
       period: Option[Range],
       updatedAt: Asset.UpdatedAt,
-      rev: Asset.Rev = _root_.com.histmersion.api.exchange.Bundle.Asset.Rev("")
+      rev: Asset.Rev = Asset.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Asset:
     type Extension = Extension.T
-    object Extension extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Extension extends RefinedType[String, Pure]
     type FileName = FileName.T
-    object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FileName extends RefinedType[String, Pure]
     type MimeText = MimeText.T
-    object MimeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MimeText extends RefinedType[String, Pure]
     type Uid = Uid.T
-    object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Uid extends RefinedType[String, Pure]
     type Variant = Variant.T
-    object Variant extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Variant extends RefinedType[String, Pure]
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Mime = com.histmersion.api.exchange.Bundle.Asset.MimeText
-    val Mime: _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText.type = _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText
+    object Name extends RefinedType[String, Pure]
+    type Mime = MimeText
+    val Mime: MimeText.type = MimeText
     export com.histmersion.api.media.ImageSize.{Width, Height}
     export com.histmersion.api.media.AssetKind.{Wire as Kind}
     type Caption = Caption.T
-    object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Caption extends RefinedType[String, Pure]
     type License = License.T
-    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object License extends RefinedType[String, Pure]
     type Geom = Geom.T
-    object Geom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Geom extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   final case class AssetLink(
       uid: UUID,
@@ -256,23 +267,23 @@ object Bundle:
       xywh: Option[AssetLink.Xywh],
       notes: Option[AssetLink.Notes],
       updatedAt: AssetLink.UpdatedAt,
-      rev: AssetLink.Rev = _root_.com.histmersion.api.exchange.Bundle.AssetLink.Rev("")
+      rev: AssetLink.Rev = AssetLink.Rev("")
   ) derives KindlingsCodecAsObject
 
   object AssetLink:
     export com.histmersion.api.media.AssetRelation.{Wire as Relation}
     type TargetType = TargetType.T
-    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetType extends RefinedType[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetId extends RefinedType[String, Pure]
     type Xywh = Xywh.T
-    object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Xywh extends RefinedType[String, Pure]
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   final case class Attestation(
       uid: UUID,
@@ -294,48 +305,48 @@ object Bundle:
       note: Option[Attestation.Note],
       createdAt: Attestation.CreatedAt,
       updatedAt: Attestation.UpdatedAt,
-      rev: Attestation.Rev = _root_.com.histmersion.api.exchange.Bundle.Attestation.Rev("")
+      rev: Attestation.Rev = Attestation.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Attestation:
     type TargetType = TargetType.T
-    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetType extends RefinedType[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetId extends RefinedType[String, Pure]
     type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Quote extends RefinedType[String, Pure]
     type Prefix = Prefix.T
-    object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Prefix extends RefinedType[String, Pure]
     type Suffix = Suffix.T
-    object Suffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Suffix extends RefinedType[String, Pure]
     type CharStart = CharStart.T
-    object CharStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CharStart extends RefinedType[Int, Pure]
     type CharEnd = CharEnd.T
-    object CharEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CharEnd extends RefinedType[Int, Pure]
     type ChunkOrd = ChunkOrd.T
-    object ChunkOrd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ChunkOrd extends RefinedType[Int, Pure]
     type Page = Page.T
-    object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Page extends RefinedType[String, Pure]
     type Canvas = Canvas.T
-    object Canvas extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Canvas extends RefinedType[String, Pure]
     type Xywh = Xywh.T
-    object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Xywh extends RefinedType[String, Pure]
     type CtsUrn = CtsUrn.T
-    object CtsUrn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CtsUrn extends RefinedType[String, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
-  final case class Blobs(count: Blobs.Count, bytes: com.histmersion.api.ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Blobs(count: Blobs.Count, bytes: ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Blobs:
     type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends RefinedType[Int, Pure]
 
 
   final case class Correction(
@@ -355,26 +366,26 @@ object Bundle:
 
   object Correction:
     type TargetKind = TargetKind.T
-    object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetKind extends RefinedType[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetId extends RefinedType[String, Pure]
     type Field = Field.T
-    object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Field extends RefinedType[String, Pure]
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[String, Pure]
     type Upstream = Upstream.T
-    object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Upstream extends RefinedType[String, Pure]
     type UpstreamValue = UpstreamValue.T
-    object UpstreamValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpstreamValue extends RefinedType[String, Pure]
     type UpstreamNow = UpstreamNow.T
-    object UpstreamNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpstreamNow extends RefinedType[String, Pure]
     export com.histmersion.api.catalogue.EventCorrection.Status
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CheckedAt extends RefinedType[String, Pure]
 
   final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives KindlingsCodecAsObject
 
@@ -396,13 +407,13 @@ object Bundle:
       placeId: Option[Event.PlaceId],
       parentUid: Option[UUID],
       description: Option[Event.Description],
-      citekey: Option[com.histmersion.api.library.Citekey],
+      citekey: Option[Citekey],
       sourceUid: Option[UUID],
       datings: List[EventDating],
       edges: List[EventEdge],
       participants: List[EventParticipant],
       updatedAt: Event.UpdatedAt,
-      rev: Event.Rev = _root_.com.histmersion.api.exchange.Bundle.Event.Rev(""),
+      rev: Event.Rev = Event.Rev(""),
       /** Absent from the JSON when empty, so the rev of an event that states none stays what older bundles computed. */
       scale: Option[Event.Scale] = None,
       /** Each absent from the JSON when empty, so the rev of an event compiled from sources stays what older bundles
@@ -419,53 +430,53 @@ object Bundle:
   object Event:
     export com.histmersion.api.catalogue.Event.Id
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type NotBefore = NotBefore.T
-    object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotBefore extends RefinedType[Long, Pure]
     type BeginBy = BeginBy.T
-    object BeginBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BeginBy extends RefinedType[Long, Pure]
     type EndFrom = EndFrom.T
-    object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object EndFrom extends RefinedType[Long, Pure]
     type NotAfter = NotAfter.T
-    object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotAfter extends RefinedType[Long, Pure]
     export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
     type Geom = Geom.T
-    object Geom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Geom extends RefinedType[String, Pure]
     export com.histmersion.api.catalogue.Place.{Id as PlaceId}
     type Description = Description.T
-    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Description extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
     type Scale = Scale.T
-    object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Scale extends RefinedType[String, Pure]
     type Catalogue = Catalogue.T
-    object Catalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Catalogue extends RefinedType[String, Pure]
     type Names = Names.T
-    object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Names extends RefinedType[String, Pure]
     type Wikidata = Wikidata.T
-    object Wikidata extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wikidata extends RefinedType[String, Pure]
     type Central = Central.T
-    object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Central extends RefinedType[Long, Pure]
     type PlusMinus = PlusMinus.T
-    object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlusMinus extends RefinedType[Long, Pure]
     type DatingMethod = DatingMethod.T
-    object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DatingMethod extends RefinedType[String, Pure]
 
   final case class EventAlias(alias: EventAlias.Alias, eventUid: UUID, createdAt: EventAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object EventAlias:
     export com.histmersion.api.catalogue.Event.{Id as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
 
   final case class EventCandidate(
       eventUid: UUID,
       sourceUid: UUID,
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       score: EventCandidate.Score,
       status: EventCandidate.Status,
       findings: List[EventCandidate.Findings],
@@ -476,15 +487,15 @@ object Bundle:
 
   object EventCandidate:
     type Score = Score.T
-    object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Score extends RefinedType[Double, Pure]
     type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Status extends RefinedType[String, Pure]
     type Findings = Findings.T
-    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Findings extends RefinedType[String, Pure]
     type Reasons = Reasons.T
-    object Reasons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reasons extends RefinedType[String, Pure]
     type ComputedAt = ComputedAt.T
-    object ComputedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ComputedAt extends RefinedType[String, Pure]
 
   final case class EventCatalogue(
       eventUid: UUID,
@@ -497,8 +508,8 @@ object Bundle:
       beginBy: Option[EventCatalogue.BeginBy],
       endFrom: Option[EventCatalogue.EndFrom],
       notAfter: Option[EventCatalogue.NotAfter],
-      lat: Option[com.histmersion.api.catalogue.Latitude],
-      lon: Option[com.histmersion.api.catalogue.Longitude],
+      lat: Option[Latitude],
+      lon: Option[Longitude],
       vei: Option[EventCatalogue.Vei],
       magnitude: Option[EventCatalogue.Magnitude],
       deaths: Option[EventCatalogue.Deaths],
@@ -509,41 +520,41 @@ object Bundle:
 
   object EventCatalogue:
     type Provider = Provider.T
-    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Provider extends RefinedType[String, Pure]
     type ProviderId = ProviderId.T
-    object ProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ProviderId extends RefinedType[String, Pure]
     type Url = Url.T
-    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Url extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type NotBefore = NotBefore.T
-    object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotBefore extends RefinedType[Long, Pure]
     type BeginBy = BeginBy.T
-    object BeginBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BeginBy extends RefinedType[Long, Pure]
     type EndFrom = EndFrom.T
-    object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object EndFrom extends RefinedType[Long, Pure]
     type NotAfter = NotAfter.T
-    object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotAfter extends RefinedType[Long, Pure]
     type Vei = Vei.T
-    object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Vei extends RefinedType[Int, Pure]
     type Magnitude = Magnitude.T
-    object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Magnitude extends RefinedType[Double, Pure]
     type Deaths = Deaths.T
-    object Deaths extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Deaths extends RefinedType[Long, Pure]
     export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
     type RetrievedAt = RetrievedAt.T
-    object RetrievedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RetrievedAt extends RefinedType[String, Pure]
 
   final case class EventCheck(eventUid: UUID, checkedAt: EventCheck.CheckedAt) derives KindlingsCodecAsObject
 
   object EventCheck:
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CheckedAt extends RefinedType[String, Pure]
 
   final case class EventDating(
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       sourceUid: Option[UUID],
       notBefore: Option[EventDating.NotBefore],
       beginBy: Option[EventDating.BeginBy],
@@ -555,61 +566,61 @@ object Bundle:
 
   object EventDating:
     type NotBefore = NotBefore.T
-    object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotBefore extends RefinedType[Long, Pure]
     type BeginBy = BeginBy.T
-    object BeginBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BeginBy extends RefinedType[Long, Pure]
     type EndFrom = EndFrom.T
-    object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object EndFrom extends RefinedType[Long, Pure]
     type NotAfter = NotAfter.T
-    object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotAfter extends RefinedType[Long, Pure]
     type Method = Method.T
-    object Method extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Method extends RefinedType[String, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
 
   final case class EventEdge(
       dstUid: UUID,
       kind: EventEdge.Kind,
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       sourceUid: Option[UUID],
       note: Option[EventEdge.Note]
   ) derives KindlingsCodecAsObject
 
   object EventEdge:
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
 
-  final case class EventParticipant(actor: EventParticipant.Actor, role: EventParticipant.Role, citekey: Option[com.histmersion.api.library.Citekey], sourceUid: Option[UUID])
+  final case class EventParticipant(actor: EventParticipant.Actor, role: EventParticipant.Role, citekey: Option[Citekey], sourceUid: Option[UUID])
       derives KindlingsCodecAsObject
 
   object EventParticipant:
     type Actor = Actor.T
-    object Actor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Actor extends RefinedType[String, Pure]
     type Role = Role.T
-    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Role extends RefinedType[String, Pure]
 
   object EventSets:
 
-    def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventCandidate.Status, there: com.histmersion.api.exchange.Bundle.EventCandidate.Status): com.histmersion.api.exchange.Bundle.EventCandidate.Status =
-      if here == _root_.com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed") then _root_.com.histmersion.api.exchange.Bundle.EventCandidate.Status((there).value) else _root_.com.histmersion.api.exchange.Bundle.EventCandidate.Status((here).value)
+    def candidateStatus(here: EventCandidate.Status, there: EventCandidate.Status): EventCandidate.Status =
+      if here == EventCandidate.Status("proposed") then EventCandidate.Status((there).value) else EventCandidate.Status((here).value)
 
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
-    def newer(here: Option[com.histmersion.api.exchange.Bundle.UpdatedAt], there: Option[com.histmersion.api.exchange.Bundle.UpdatedAt]): Boolean = (here, there) match
+    def newer(here: Option[UpdatedAt], there: Option[UpdatedAt]): Boolean = (here, there) match
       case (None, Some(_))    => (true)
       case (Some(h), Some(t)) => ((t).value > (h).value)
       case _                  => (false)
 
-  final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: com.histmersion.api.ByteCount, sha256: com.histmersion.api.Sha256)
+  final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: ByteCount, sha256: Sha256)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object FileInfo:
     type Path = Path.T
-    object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Path extends RefinedType[String, Pure]
     type Lines = Lines.T
-    object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lines extends RefinedType[Int, Pure]
 
 
   object Files:
@@ -634,7 +645,7 @@ object Bundle:
     val Tombstones = "entities/tombstones.ndjson"
 
     val all: List[String] =
-      com.histmersion.api.exchange.Bundle.Kind.values.toList.map(_.file) ++
+      Kind.values.toList.map(_.file) ++
         List(
           Edges,
           UnresolvedEdges,
@@ -659,33 +670,33 @@ object Bundle:
       id: Finding.Id,
       claim: Finding.Claim,
       region: Option[Finding.Region],
-      lon: Option[com.histmersion.api.catalogue.Longitude],
-      lat: Option[com.histmersion.api.catalogue.Latitude],
+      lon: Option[Longitude],
+      lat: Option[Latitude],
       period: Option[Range],
       periodName: Option[Finding.PeriodName],
       tags: List[Finding.Tags],
       confidence: Option[Confidence],
       significance: Option[Finding.Significance],
       updatedAt: Finding.UpdatedAt,
-      rev: Finding.Rev = _root_.com.histmersion.api.exchange.Bundle.Finding.Rev("")
+      rev: Finding.Rev = Finding.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Finding:
     export com.histmersion.api.library.Finding.Id
     type Claim = Claim.T
-    object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Claim extends RefinedType[String, Pure]
     type Region = Region.T
-    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Region extends RefinedType[String, Pure]
     type PeriodName = PeriodName.T
-    object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PeriodName extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type Significance = Significance.T
-    object Significance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Significance extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   final case class Goal(
       uid: UUID,
@@ -700,7 +711,7 @@ object Bundle:
       parentUid: Option[UUID],
       createdAt: Goal.CreatedAt,
       updatedAt: Goal.UpdatedAt,
-      rev: Goal.Rev = _root_.com.histmersion.api.exchange.Bundle.Goal.Rev(""),
+      rev: Goal.Rev = Goal.Rev(""),
       /** The four fields below are absent when empty, so a line written before they existed keeps its `rev`. */
       plan: Option[Json] = None,
       planApprovedAt: Option[Goal.PlanApprovedAt] = None,
@@ -712,31 +723,31 @@ object Bundle:
   object Goal:
     export com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     export com.histmersion.api.automation.Goal.{StatusValue as Status}
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Regions extends RefinedType[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
     type PlanApprovedAt = PlanApprovedAt.T
-    object PlanApprovedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlanApprovedAt extends RefinedType[String, Pure]
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BudgetUsd extends RefinedType[Double, Pure]
 
   final case class GoalAlias(alias: GoalAlias.Alias, goalUid: UUID, createdAt: GoalAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object GoalAlias:
     export com.histmersion.api.research.ReviewGoal.{Slug as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
 
   final case class GoalLink(
       kind: GoalLink.Kind,
@@ -749,11 +760,11 @@ object Bundle:
   object GoalLink:
     export com.histmersion.api.automation.Goal.LinkKind.{Wire as Kind}
     type Ref = Ref.T
-    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ref extends RefinedType[String, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
 
   final case class GoalSchedule(kind: GoalSchedule.Kind, cron: GoalSchedule.Cron, enabled: GoalSchedule.Enabled, budgetUsd: Option[GoalSchedule.BudgetUsd])
       derives KindlingsCodecAsObject
@@ -761,11 +772,11 @@ object Bundle:
   object GoalSchedule:
     export com.histmersion.api.automation.ScheduleKind.{Wire as Kind}
     type Cron = Cron.T
-    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Cron extends RefinedType[String, Pure]
     type Enabled = Enabled.T
-    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Enabled extends RefinedType[Boolean, Pure]
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BudgetUsd extends RefinedType[Double, Pure]
 
   final case class ImportResult(
       bundleId: UUID,
@@ -782,64 +793,64 @@ object Bundle:
       planHash: Option[ImportResult.PlanHash] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: com.histmersion.api.exchange.Bundle.ChangedCount = _root_.com.histmersion.api.exchange.Bundle.ChangedCount(counts.map(c => (c.changed.value: Int)).sum)
+    def changed: ChangedCount = ChangedCount(counts.map(c => (c.changed.value: Int)).sum)
 
   object ImportResult:
 
     type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DryRun extends RefinedType[Boolean, Pure]
     type Applied = Applied.T
-    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Applied extends RefinedType[Boolean, Pure]
     type Blobs = Blobs.T
-    object Blobs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Blobs extends RefinedType[Int, Pure]
     type Problems = Problems.T
-    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problems extends RefinedType[String, Pure]
     type Conflicts = Conflicts.T
-    object Conflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Conflicts extends RefinedType[String, Pure]
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.exchange.MergePlan.PlanHash
+    object Notes extends RefinedType[String, Pure]
+    export MergePlan.PlanHash
 
 
   final case class Instance(id: UUID, label: Option[Instance.Label] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Instance:
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
 
 
   final case class KindCounts(
-      kind: com.histmersion.api.exchange.Bundle.Kind,
-      inserted: KindCounts.Inserted = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Inserted(0),
-      updated: KindCounts.Updated = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Updated(0),
-      unchanged: KindCounts.Unchanged = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Unchanged(0),
-      keptLocal: KindCounts.KeptLocal = _root_.com.histmersion.api.exchange.Bundle.KindCounts.KeptLocal(0),
-      conflicts: KindCounts.Conflicts = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Conflicts(0),
-      deleted: KindCounts.Deleted = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Deleted(0),
-      skippedDeleted: KindCounts.SkippedDeleted = _root_.com.histmersion.api.exchange.Bundle.KindCounts.SkippedDeleted(0),
-      held: KindCounts.Held = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Held(0)
+      kind: Kind,
+      inserted: KindCounts.Inserted = KindCounts.Inserted(0),
+      updated: KindCounts.Updated = KindCounts.Updated(0),
+      unchanged: KindCounts.Unchanged = KindCounts.Unchanged(0),
+      keptLocal: KindCounts.KeptLocal = KindCounts.KeptLocal(0),
+      conflicts: KindCounts.Conflicts = KindCounts.Conflicts(0),
+      deleted: KindCounts.Deleted = KindCounts.Deleted(0),
+      skippedDeleted: KindCounts.SkippedDeleted = KindCounts.SkippedDeleted(0),
+      held: KindCounts.Held = KindCounts.Held(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: com.histmersion.api.exchange.Bundle.ChangedCount = _root_.com.histmersion.api.exchange.Bundle.ChangedCount((inserted).value + (updated).value + (deleted).value)
+    def changed: ChangedCount = ChangedCount((inserted).value + (updated).value + (deleted).value)
 
   object KindCounts:
 
     type Inserted = Inserted.T
-    object Inserted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Inserted extends RefinedType[Int, Pure]
     type Updated = Updated.T
-    object Updated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Updated extends RefinedType[Int, Pure]
     type Unchanged = Unchanged.T
-    object Unchanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unchanged extends RefinedType[Int, Pure]
     type KeptLocal = KeptLocal.T
-    object KeptLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object KeptLocal extends RefinedType[Int, Pure]
     type Conflicts = Conflicts.T
-    object Conflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Conflicts extends RefinedType[Int, Pure]
     type Deleted = Deleted.T
-    object Deleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Deleted extends RefinedType[Int, Pure]
     type SkippedDeleted = SkippedDeleted.T
-    object SkippedDeleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SkippedDeleted extends RefinedType[Int, Pure]
     type Held = Held.T
-    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Held extends RefinedType[Int, Pure]
 
 
   final case class Manifest(
@@ -858,15 +869,15 @@ object Bundle:
 
   object Manifest:
     type Format = Format.T
-    object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Format extends RefinedType[String, Pure]
     type FormatVersion = FormatVersion.T
-    object FormatVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FormatVersion extends RefinedType[Int, Pure]
     type SchemaVersion = SchemaVersion.T
-    object SchemaVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SchemaVersion extends RefinedType[String, Pure]
     type Since = Since.T
-    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Since extends RefinedType[String, Pure]
     type AsOf = AsOf.T
-    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AsOf extends RefinedType[String, Pure]
 
 
   final case class Period(
@@ -879,24 +890,24 @@ object Bundle:
       region: Option[Period.Region],
       parentId: Option[Period.ParentId],
       updatedAt: Period.UpdatedAt,
-      rev: Period.Rev = _root_.com.histmersion.api.exchange.Bundle.Period.Rev("")
+      rev: Period.Rev = Period.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Period:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Authority = Authority.T
-    object Authority extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Authority extends RefinedType[String, Pure]
     type Region = Region.T
-    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Region extends RefinedType[String, Pure]
     type ParentId = ParentId.T
-    object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ParentId extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   final case class Place(
       uid: UUID,
@@ -913,60 +924,60 @@ object Bundle:
       links: List[PlaceLink],
       types: List[PlaceType],
       updatedAt: Place.UpdatedAt,
-      rev: Place.Rev = _root_.com.histmersion.api.exchange.Bundle.Place.Rev("")
+      rev: Place.Rev = Place.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Place:
     export com.histmersion.api.catalogue.Place.Id
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     export com.histmersion.api.catalogue.Place.Kind.{Wire as Kind}
     type Geom = Geom.T
-    object Geom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Geom extends RefinedType[String, Pure]
     type Source = Source.T
-    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Source extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   final case class PlaceAlias(alias: PlaceAlias.Alias, placeUid: UUID, createdAt: PlaceAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object PlaceAlias:
     export com.histmersion.api.catalogue.Place.{Id as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
 
   final case class PlaceLink(scheme: PlaceLink.Scheme, externalId: PlaceLink.ExternalId, relation: PlaceLink.Relation) derives KindlingsCodecAsObject
 
   object PlaceLink:
     export com.histmersion.api.catalogue.LinkScheme.{Wire as Scheme}
     type ExternalId = ExternalId.T
-    object ExternalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExternalId extends RefinedType[String, Pure]
     type Relation = Relation.T
-    object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Relation extends RefinedType[String, Pure]
 
   final case class PlaceName(name: PlaceName.Name, lang: Option[PlaceName.Lang], period: Option[Range]) derives KindlingsCodecAsObject
 
   object PlaceName:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Lang = Lang.T
-    object Lang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lang extends RefinedType[String, Pure]
 
   final case class PlaceRelation(parentId: PlaceRelation.ParentId, kind: PlaceRelation.Kind, period: Option[Range]) derives KindlingsCodecAsObject
 
   object PlaceRelation:
     export com.histmersion.api.catalogue.Place.{Id as ParentId}
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
 
-  final case class PlaceType(typeLabel: PlaceType.TypeLabel, period: Option[Range], citekey: Option[com.histmersion.api.library.Citekey])
+  final case class PlaceType(typeLabel: PlaceType.TypeLabel, period: Option[Range], citekey: Option[Citekey])
       derives KindlingsCodecAsObject
 
   object PlaceType:
     type TypeLabel = TypeLabel.T
-    object TypeLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TypeLabel extends RefinedType[String, Pure]
 
   final case class QueueItem(
       uid: UUID,
@@ -979,32 +990,32 @@ object Bundle:
       createdAt: QueueItem.CreatedAt,
       doneAt: Option[QueueItem.DoneAt],
       updatedAt: QueueItem.UpdatedAt,
-      rev: QueueItem.Rev = _root_.com.histmersion.api.exchange.Bundle.QueueItem.Rev("")
+      rev: QueueItem.Rev = QueueItem.Rev("")
   ) derives KindlingsCodecAsObject
 
   object QueueItem:
     export com.histmersion.api.automation.Queue.{Wire as List}
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]
     type Topic = Topic.T
-    object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Topic extends RefinedType[String, Pure]
     type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Status extends RefinedType[String, Pure]
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
     type DoneAt = DoneAt.T
-    object DoneAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DoneAt extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
 
   /** Both bounds inclusive: Postgres keeps an `int8range` as `[lower, upper)`, so `upper − 1` is applied on the way out
     * and undone on the way in.
     */
-  final case class Range(start: Option[com.histmersion.api.catalogue.Year] = None, end: Option[com.histmersion.api.catalogue.Year] = None) derives KindlingsCodecAsObject
+  final case class Range(start: Option[Year] = None, end: Option[Year] = None) derives KindlingsCodecAsObject
 
   final case class Reference(places: Reference.Places, placesDigest: Reference.PlacesDigest, periods: Reference.Periods, periodsDigest: Reference.PeriodsDigest)
       derives KindlingsCodecAsObject,
@@ -1012,13 +1023,13 @@ object Bundle:
 
   object Reference:
     type Places = Places.T
-    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Places extends RefinedType[Int, Pure]
     type PlacesDigest = PlacesDigest.T
-    object PlacesDigest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlacesDigest extends RefinedType[String, Pure]
     type Periods = Periods.T
-    object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Periods extends RefinedType[Int, Pure]
     type PeriodsDigest = PeriodsDigest.T
-    object PeriodsDigest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PeriodsDigest extends RefinedType[String, Pure]
 
 
   final case class SiteType(placeId: SiteType.PlaceId, siteType: Option[SiteType.Value], checkedAt: Option[SiteType.CheckedAt])
@@ -1027,18 +1038,18 @@ object Bundle:
   object SiteType:
     export com.histmersion.api.catalogue.Place.{Id as PlaceId}
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[String, Pure]
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CheckedAt extends RefinedType[String, Pure]
 
   final case class Source(
       uid: UUID,
       origin: UUID,
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       title: com.histmersion.api.library.Title,
-      authors: List[com.histmersion.api.library.AuthorName],
-      doi: Option[com.histmersion.api.library.Doi],
-      year: Option[com.histmersion.api.catalogue.Year],
+      authors: List[AuthorName],
+      doi: Option[Doi],
+      year: Option[Year],
       venue: Option[com.histmersion.api.library.Source.Venue],
       status: com.histmersion.api.library.Source.Status,
       topics: List[Source.Topics],
@@ -1055,67 +1066,67 @@ object Bundle:
       originalSha256: Option[Source.OriginalSha256],
       originalExt: Option[Source.OriginalExt],
       updatedAt: Source.UpdatedAt,
-      rev: Source.Rev = _root_.com.histmersion.api.exchange.Bundle.Source.Rev(""),
+      rev: Source.Rev = Source.Rev(""),
       /** Absent when there are none, so a line written before the field existed keeps its rev. */
       isbns: Option[List[Source.Isbns]] = None
   ) derives KindlingsCodecAsObject
 
   object Source:
     type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Topics extends RefinedType[String, Pure]
     type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Regions extends RefinedType[String, Pure]
     type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tags extends RefinedType[String, Pure]
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]
     type Provenance = Provenance.T
-    object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Provenance extends RefinedType[String, Pure]
     export com.histmersion.api.library.Acquire.CitedByCount
     type InfluentialCitations = InfluentialCitations.T
-    object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object InfluentialCitations extends RefinedType[Int, Pure]
     type AddedDate = AddedDate.T
-    object AddedDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AddedDate extends RefinedType[String, Pure]
     type BodySha256 = BodySha256.T
-    object BodySha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BodySha256 extends RefinedType[String, Pure]
     type OriginalSha256 = OriginalSha256.T
-    object OriginalSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OriginalSha256 extends RefinedType[String, Pure]
     type OriginalExt = OriginalExt.T
-    object OriginalExt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OriginalExt extends RefinedType[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
     type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rev extends RefinedType[String, Pure]
     type Isbns = Isbns.T
-    object Isbns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Isbns extends RefinedType[String, Pure]
 
   final case class Tombstone(
       uid: UUID,
-      kind: com.histmersion.api.exchange.Bundle.Kind,
+      kind: Kind,
       origin: UUID,
       deletedAt: Tombstone.DeletedAt
   ) derives KindlingsCodecAsObject
 
   object Tombstone:
     type DeletedAt = DeletedAt.T
-    object DeletedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DeletedAt extends RefinedType[String, Pure]
 
   final case class UnresolvedEdge(srcUid: UUID, dst: UnresolvedEdge.Dst, kind: UnresolvedEdge.Kind) derives KindlingsCodecAsObject
 
   object UnresolvedEdge:
     type Dst = Dst.T
-    object Dst extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Dst extends RefinedType[String, Pure]
     export com.histmersion.api.library.Edge.Kind.{Wire as Kind}
 
-  final case class Upload(sha256: com.histmersion.api.Sha256, bytes: com.histmersion.api.ByteCount, manifest: Option[Manifest], problems: List[Upload.Problems])
+  final case class Upload(sha256: Sha256, bytes: ByteCount, manifest: Option[Manifest], problems: List[Upload.Problems])
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Upload:
     type Problems = Problems.T
-    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problems extends RefinedType[String, Pure]
 
 
   final case class VerifyResult(
@@ -1128,8 +1139,8 @@ object Bundle:
 
   object VerifyResult:
     type Ok = Ok.T
-    object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ok extends RefinedType[Boolean, Pure]
     type BlobsChecked = BlobsChecked.T
-    object BlobsChecked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BlobsChecked extends RefinedType[Int, Pure]
     type Problems = Problems.T
-    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problems extends RefinedType[String, Pure]

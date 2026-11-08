@@ -1,12 +1,15 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
-final case class TableSize(name: TableSize.Name, bytes: com.histmersion.api.ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class TableSize(name: TableSize.Name, bytes: ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 object TableSize:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]

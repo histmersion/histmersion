@@ -1,50 +1,53 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Facet(
     value: Facet.Value,
     count: Facet.Count,
     id: Option[Facet.Id] = None,
-    contested: Facet.Contested = _root_.com.histmersion.api.library.Facet.Contested(false)
+    contested: Facet.Contested = Facet.Contested(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object Facet:
   type FieldText = FieldText.T
-  object FieldText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldText extends RefinedType[String, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
 
 
   type Value = Value.T
-  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Value extends RefinedType[String, Pure]
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Contested = Contested.T
-  object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Contested extends RefinedType[Boolean, Pure]
 
   enum Field:
     case Tags, Authors, Places, Topics, Status, Provenance
 
   object Field:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    def label(f: Field): com.histmersion.api.library.Facet.Field.Wire = f match
-      case Tags       => _root_.com.histmersion.api.library.Facet.Field.Wire("tags");
-      case Authors    => _root_.com.histmersion.api.library.Facet.Field.Wire("authors");
-      case Places     => _root_.com.histmersion.api.library.Facet.Field.Wire("places")
-      case Topics     => _root_.com.histmersion.api.library.Facet.Field.Wire("topics");
-      case Status     => _root_.com.histmersion.api.library.Facet.Field.Wire("status");
-      case Provenance => _root_.com.histmersion.api.library.Facet.Field.Wire("provenance")
+    def label(f: Field): Wire = f match
+      case Tags       => Wire("tags");
+      case Authors    => Wire("authors");
+      case Places     => Wire("places")
+      case Topics     => Wire("topics");
+      case Status     => Wire("status");
+      case Provenance => Wire("provenance")
 
-    def parse(s: com.histmersion.api.library.Facet.Field.Wire): Option[Field] =
-      values.find(f => label(f) == _root_.com.histmersion.api.library.Facet.Field.Wire((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
+    def parse(s: Wire): Option[Field] =
+      values.find(f => label(f) == Wire((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
 
-    val all: List[com.histmersion.api.library.Facet.Field.Wire] = values.toList.map(label)
+    val all: List[Wire] = values.toList.map(label)

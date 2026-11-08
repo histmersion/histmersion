@@ -1,9 +1,12 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsUiConfig(
     localFadeSeconds: EventsUiConfig.LocalFadeSeconds,
@@ -15,10 +18,10 @@ final case class EventsUiConfig(
 
 object EventsUiConfig:
   type LocalFadeSeconds = LocalFadeSeconds.T
-  object LocalFadeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LocalFadeSeconds extends RefinedType[Double, Pure]
   type RegionalFadeSeconds = RegionalFadeSeconds.T
-  object RegionalFadeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RegionalFadeSeconds extends RefinedType[Double, Pure]
   type MapLimit = MapLimit.T
-  object MapLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MapLimit extends RefinedType[Int, Pure]
   type OutlineToleranceDeg = OutlineToleranceDeg.T
-  object OutlineToleranceDeg extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OutlineToleranceDeg extends RefinedType[Double, Pure]

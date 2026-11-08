@@ -1,12 +1,15 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 
 import com.histmersion.api.Span
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class GazRecord(
     ref: GazRecord.Ref,
     own: Option[ExternalId],
-    placeId: com.histmersion.api.catalogue.Place.Id,
+    placeId: Place.Id,
     label: GazRecord.Label,
     kind: GazRecord.Kind,
     geometry: Option[GazGeometry],
@@ -25,14 +28,14 @@ final case class GazRecord(
 
 object GazRecord:
   type Ref = Ref.T
-  object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ref extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Source = Source.T
-  object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Source extends RefinedType[String, Pure]
   type Properties = Properties.T
-  object Properties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Properties extends RefinedType[String, Pure]
   type ItemClass = ItemClass.T
-  object ItemClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemClass extends RefinedType[String, Pure]

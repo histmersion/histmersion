@@ -1,4 +1,5 @@
-package com.histmersion.api.settings
+package com.histmersion
+package api.settings
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -6,10 +7,12 @@ import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ConfigFileInfo(
     path: Option[ConfigFileInfo.Path] = None,
-    loaded: ConfigFileInfo.Loaded = _root_.com.histmersion.api.settings.ConfigFileInfo.Loaded(false),
+    loaded: ConfigFileInfo.Loaded = ConfigFileInfo.Loaded(false),
     unknownKeys: List[ConfigFileInfo.UnknownKeys] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -18,11 +21,11 @@ object ConfigFileInfo:
 
 
   type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Path extends RefinedType[String, Pure]
   type Loaded = Loaded.T
-  object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Loaded extends RefinedType[Boolean, Pure]
   type UnknownKeys = UnknownKeys.T
-  object UnknownKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UnknownKeys extends RefinedType[String, Pure]
 
   def describe(c: ConfigFileInfo): String =
     c.path match
@@ -30,5 +33,5 @@ object ConfigFileInfo:
       case Some(p) =>
         val state = if (c.loaded).value then "read" else "not found: defaults and environment only"
         val keys = if c.unknownKeys.isEmpty then ""
-        else s"; ignored unknown ${Plural.noun(_root_.com.histmersion.api.Plural.Count((c.unknownKeys.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("key"))}: ${c.unknownKeys.mkString(", ")}"
+        else s"; ignored unknown ${Plural.noun(Plural.Count((c.unknownKeys.size).toLong), Plural.Noun.Singular("key"))}: ${c.unknownKeys.mkString(", ")}"
         (s"$p ($state$keys)")

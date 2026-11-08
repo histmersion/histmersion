@@ -1,21 +1,25 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventEdge(
-    srcId: com.histmersion.api.catalogue.Event.Id,
-    dstId: com.histmersion.api.catalogue.Event.Id,
+    srcId: Event.Id,
+    dstId: Event.Id,
     kind: EventEdge.Kind,
-    citekey: com.histmersion.api.library.Citekey,
+    citekey: Citekey,
     note: Option[EventEdge.Note] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventEdge:
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]

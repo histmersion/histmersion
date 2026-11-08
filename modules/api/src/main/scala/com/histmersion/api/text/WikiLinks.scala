@@ -1,17 +1,21 @@
-package com.histmersion.api.text
+package com.histmersion
+package api.text
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 object WikiLinks:
   type Alias = Alias.T
-  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Alias extends RefinedType[String, Pure]
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends RefinedType[String, Pure]
   type RetargetCount = RetargetCount.T
-  object RetargetCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RetargetCount extends RefinedType[Int, Pure]
 
 
   type NormalizeRaw = NormalizeRaw.T
-  object NormalizeRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RewriteLinksRenderArg3 = com.histmersion.api.text.WikiLinks.Alias
-  val RewriteLinksRenderArg3: _root_.com.histmersion.api.text.WikiLinks.Alias.type = _root_.com.histmersion.api.text.WikiLinks.Alias
+  object NormalizeRaw extends RefinedType[String, Pure]
+  type RewriteLinksRenderArg3 = Alias
+  val RewriteLinksRenderArg3: Alias.type = Alias
 
   private val Citekey =
     """^(?=.*(?:_|\d{4}))[a-z][a-z0-9_]*$""".r
@@ -35,73 +39,73 @@ object WikiLinks:
 
   object Occurrence:
     type Start = Start.T
-    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Start extends RefinedType[Int, Pure]
     type End = End.T
-    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object End extends RefinedType[Int, Pure]
     type Raw = Raw.T
-    object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Raw extends RefinedType[String, Pure]
     type Embed = Embed.T
-    object Embed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Embed extends RefinedType[Boolean, Pure]
     type Escaped = Escaped.T
-    object Escaped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Escaped extends RefinedType[Boolean, Pure]
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
 
-  def occurrences(md: com.histmersion.api.text.WikiLinks.Body): List[Occurrence] =
+  def occurrences(md: Body): List[Occurrence] =
     Link
       .findAllMatchIn((md).value)
       .map { m =>
         val raw = m.group(2)
         Occurrence(
-          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Start(m.start),
-          _root_.com.histmersion.api.text.WikiLinks.Occurrence.End(m.end),
-          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Raw(raw),
-          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Embed(m.group(1).nonEmpty),
-          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Escaped(m.matched.contains('\\')),
-          normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(raw.takeWhile(_ != '|')))
+          Occurrence.Start(m.start),
+          Occurrence.End(m.end),
+          Occurrence.Raw(raw),
+          Occurrence.Embed(m.group(1).nonEmpty),
+          Occurrence.Escaped(m.matched.contains('\\')),
+          normalize(NormalizeRaw(raw.takeWhile(_ != '|')))
         )
       }
       .toList
 
   /** A link's target as it is stored: no label, no anchor, lower case; none for an in-page anchor or a file name. */
-  def normalize(raw: com.histmersion.api.text.WikiLinks.NormalizeRaw): Option[com.histmersion.api.text.WikiLinks.Occurrence.Target] =
+  def normalize(raw: NormalizeRaw): Option[Occurrence.Target] =
     val noLabel = (raw).value.takeWhile(_ != '|')
     val noAnchor = noLabel.takeWhile(_ != '#')
     val t = noAnchor.trim.toLowerCase
-    if t.isEmpty || !SlugShape.matches(t) then None else Some(_root_.com.histmersion.api.text.WikiLinks.Occurrence.Target(t))
+    if t.isEmpty || !SlugShape.matches(t) then None else Some(Occurrence.Target(t))
 
   /** The distinct targets a text links, in order; embeds are not links. */
-  def targets(body: com.histmersion.api.text.WikiLinks.Body): List[com.histmersion.api.text.WikiLinks.Occurrence.Target] =
+  def targets(body: Body): List[Occurrence.Target] =
     (Link
       .findAllMatchIn((body).value)
       .filter(_.group(1).isEmpty)
-      .flatMap(m => normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(m.group(2))))
+      .flatMap(m => normalize(NormalizeRaw(m.group(2))))
       .toList
-      .distinct).map(refactorValue7 => _root_.com.histmersion.api.text.WikiLinks.Occurrence.Target((refactorValue7).value))
+      .distinct).map(refactorValue7 => Occurrence.Target((refactorValue7).value))
 
   /** Every link replaced by what `render` makes of its target, explicit label and written target; embeds and links to
     * no target are kept as written.
     */
-  def rewriteLinks(md: com.histmersion.api.text.WikiLinks.Body)(render: (com.histmersion.api.text.WikiLinks.Occurrence.Target, Option[com.histmersion.api.text.WikiLinks.Alias], com.histmersion.api.text.WikiLinks.Alias) => String): com.histmersion.api.text.WikiLinks.Body =
-    _root_.com.histmersion.api.text.WikiLinks.Body(Link.replaceAllIn(
+  def rewriteLinks(md: Body)(render: (Occurrence.Target, Option[Alias], Alias) => String): Body =
+    Body(Link.replaceAllIn(
       (md).value,
       m =>
         val raw = m.group(2)
         val (targetPart, explicit) = raw.indexOf('|') match
           case -1 => (raw, None)
           case i  => (raw.take(i), Some(raw.drop(i + 1).trim))
-        java.util.regex.Matcher.quoteReplacement(normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(targetPart)) match
-          case Some(t) if m.group(1).isEmpty => (render(_root_.com.histmersion.api.text.WikiLinks.Occurrence.Target((t).value), (explicit).map(refactorValue => _root_.com.histmersion.api.text.WikiLinks.Alias(refactorValue)), _root_.com.histmersion.api.text.WikiLinks.Alias(targetPart.takeWhile(_ != '#').trim)))
+        java.util.regex.Matcher.quoteReplacement(normalize(NormalizeRaw(targetPart)) match
+          case Some(t) if m.group(1).isEmpty => (render(Occurrence.Target((t).value), (explicit).map(refactorValue => Alias(refactorValue)), Alias(targetPart.takeWhile(_ != '#').trim)))
           case _                             => m.matched)
     ))
 
   /** The links whose target `to` moves pointed at the new target, labels and anchors kept; with how many moved. */
-  def retarget(md: com.histmersion.api.text.WikiLinks.Body, to: com.histmersion.api.text.WikiLinks.Occurrence.Target => Option[com.histmersion.api.text.WikiLinks.Occurrence.Target]): (com.histmersion.api.text.WikiLinks.Body, com.histmersion.api.text.WikiLinks.RetargetCount) =
-    def moved(m: scala.util.matching.Regex.Match): Option[com.histmersion.api.text.WikiLinks.Occurrence.Target] =
+  def retarget(md: Body, to: Occurrence.Target => Option[Occurrence.Target]): (Body, RetargetCount) =
+    def moved(m: scala.util.matching.Regex.Match): Option[Occurrence.Target] =
       if m.group(1).nonEmpty then None
-      else normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(m.group(2).takeWhile(_ != '|'))).flatMap(to)
+      else normalize(NormalizeRaw(m.group(2).takeWhile(_ != '|'))).flatMap(to)
     val count = Link.findAllMatchIn((md).value).count(moved(_).isDefined)
-    if count == 0 then (_root_.com.histmersion.api.text.WikiLinks.Body((md).value), _root_.com.histmersion.api.text.WikiLinks.RetargetCount(0))
+    if count == 0 then (Body((md).value), RetargetCount(0))
     else
       val out = Link.replaceAllIn(
         (md).value,
@@ -117,7 +121,7 @@ object WikiLinks:
               val (s, e) = (m.start(2) - m.start, m.end(2) - m.start)
               m.matched.take(s) + newRaw + m.matched.drop(e))
       )
-      (_root_.com.histmersion.api.text.WikiLinks.Body(out), _root_.com.histmersion.api.text.WikiLinks.RetargetCount(count))
+      (Body(out), RetargetCount(count))
 
   /** Whether a text links `ck` (any case). */
-  def links(text: com.histmersion.api.text.WikiLinks.Body, ck: com.histmersion.api.library.Citekey): Boolean = targets(text).exists(_.value.equalsIgnoreCase(ck.value))
+  def links(text: Body, ck: com.histmersion.api.library.Citekey): Boolean = targets(text).exists(_.value.equalsIgnoreCase(ck.value))

@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -7,6 +8,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Rewrite the item source `citekey` is linked to from its record. */
 final case class CollectionUpdateOne(
-    citekey: com.histmersion.api.library.Citekey
+    citekey: Citekey
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

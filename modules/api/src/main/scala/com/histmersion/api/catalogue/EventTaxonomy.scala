@@ -1,20 +1,24 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.ItemKind
 object EventTaxonomy:
 
   val Natural = "natural"
   val Human = "human"
-  val groups: List[com.histmersion.api.catalogue.EventTaxonomy.Kind.Group] = List(_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human))
+  val groups: List[Kind.Group] = List(Kind.Group(Natural), Kind.Group(Human))
 
-  final case class Kind(kind: com.histmersion.api.catalogue.EventSummary.Kind, group: Kind.Group, label: Kind.Label, icon: Kind.Icon)
+  final case class Kind(kind: EventSummary.Kind, group: Kind.Group, label: Kind.Label, icon: Kind.Icon)
 
   object Kind:
     type Group = Group.T
-    object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Group extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Icon = Icon.T
-    object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Icon extends RefinedType[String, Pure]
 
   val Eruption = "eruption"
   val Earthquake = "earthquake"
@@ -44,101 +48,101 @@ object EventTaxonomy:
   val HumanGeneric = "event"
 
   val kinds: List[Kind] = List(
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Eruption), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("eruption"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("mountain")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Earthquake), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("earthquake"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("activity")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Tsunami), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("tsunami"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("waves")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Flood), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("flood"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("droplets")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Drought), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("drought"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("sun")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(ClimateEvent), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("climate event"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("thermometer")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Epidemic), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("epidemic"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("skull")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Famine), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("famine"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("wheat")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(NaturalGeneric), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("natural disaster"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("cloud-lightning")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Battle), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("battle"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("swords")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(NavalBattle), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("naval battle"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("sailboat")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Siege), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("siege"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("castle")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(War), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("war"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("shield")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Revolt), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("revolt"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("megaphone")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Treaty), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("treaty"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("scroll")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(PolityFormation), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("polity formation"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("crown")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Collapse), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("collapse"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("trending-down")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Destruction), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("destruction"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("flame")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Migration), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("migration"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("footprints")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Invasion), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("invasion"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("arrow-big-right")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(TechChange), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("technological change"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("lightbulb")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(CulturalShift), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("cultural shift"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("sparkles")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Era), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("era"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("hourglass")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Construction), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("construction"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("hammer")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Founding), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("founding"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("flag")),
-    Kind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(HumanGeneric), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label("event"), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon("circle-dot"))
+    Kind(EventSummary.Kind(Eruption), Kind.Group(Natural), Kind.Label("eruption"), Kind.Icon("mountain")),
+    Kind(EventSummary.Kind(Earthquake), Kind.Group(Natural), Kind.Label("earthquake"), Kind.Icon("activity")),
+    Kind(EventSummary.Kind(Tsunami), Kind.Group(Natural), Kind.Label("tsunami"), Kind.Icon("waves")),
+    Kind(EventSummary.Kind(Flood), Kind.Group(Natural), Kind.Label("flood"), Kind.Icon("droplets")),
+    Kind(EventSummary.Kind(Drought), Kind.Group(Natural), Kind.Label("drought"), Kind.Icon("sun")),
+    Kind(EventSummary.Kind(ClimateEvent), Kind.Group(Natural), Kind.Label("climate event"), Kind.Icon("thermometer")),
+    Kind(EventSummary.Kind(Epidemic), Kind.Group(Natural), Kind.Label("epidemic"), Kind.Icon("skull")),
+    Kind(EventSummary.Kind(Famine), Kind.Group(Natural), Kind.Label("famine"), Kind.Icon("wheat")),
+    Kind(EventSummary.Kind(NaturalGeneric), Kind.Group(Natural), Kind.Label("natural disaster"), Kind.Icon("cloud-lightning")),
+    Kind(EventSummary.Kind(Battle), Kind.Group(Human), Kind.Label("battle"), Kind.Icon("swords")),
+    Kind(EventSummary.Kind(NavalBattle), Kind.Group(Human), Kind.Label("naval battle"), Kind.Icon("sailboat")),
+    Kind(EventSummary.Kind(Siege), Kind.Group(Human), Kind.Label("siege"), Kind.Icon("castle")),
+    Kind(EventSummary.Kind(War), Kind.Group(Human), Kind.Label("war"), Kind.Icon("shield")),
+    Kind(EventSummary.Kind(Revolt), Kind.Group(Human), Kind.Label("revolt"), Kind.Icon("megaphone")),
+    Kind(EventSummary.Kind(Treaty), Kind.Group(Human), Kind.Label("treaty"), Kind.Icon("scroll")),
+    Kind(EventSummary.Kind(PolityFormation), Kind.Group(Human), Kind.Label("polity formation"), Kind.Icon("crown")),
+    Kind(EventSummary.Kind(Collapse), Kind.Group(Human), Kind.Label("collapse"), Kind.Icon("trending-down")),
+    Kind(EventSummary.Kind(Destruction), Kind.Group(Human), Kind.Label("destruction"), Kind.Icon("flame")),
+    Kind(EventSummary.Kind(Migration), Kind.Group(Human), Kind.Label("migration"), Kind.Icon("footprints")),
+    Kind(EventSummary.Kind(Invasion), Kind.Group(Human), Kind.Label("invasion"), Kind.Icon("arrow-big-right")),
+    Kind(EventSummary.Kind(TechChange), Kind.Group(Human), Kind.Label("technological change"), Kind.Icon("lightbulb")),
+    Kind(EventSummary.Kind(CulturalShift), Kind.Group(Human), Kind.Label("cultural shift"), Kind.Icon("sparkles")),
+    Kind(EventSummary.Kind(Era), Kind.Group(Human), Kind.Label("era"), Kind.Icon("hourglass")),
+    Kind(EventSummary.Kind(Construction), Kind.Group(Human), Kind.Label("construction"), Kind.Icon("hammer")),
+    Kind(EventSummary.Kind(Founding), Kind.Group(Human), Kind.Label("founding"), Kind.Icon("flag")),
+    Kind(EventSummary.Kind(HumanGeneric), Kind.Group(Human), Kind.Label("event"), Kind.Icon("circle-dot"))
   )
 
-  private val byKind: Map[com.histmersion.api.catalogue.EventSummary.Kind, Kind] = kinds.map(k => k.kind -> k).toMap
+  private val byKind: Map[EventSummary.Kind, Kind] = kinds.map(k => k.kind -> k).toMap
 
-  private val aliases: Map[com.histmersion.api.catalogue.EventSummary.Kind, com.histmersion.api.catalogue.EventSummary.Kind] = Map(
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("rebellion") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Revolt),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("uprising") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Revolt),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("revolt") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Revolt),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("naval_battle") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(NavalBattle),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("sea_battle") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(NavalBattle),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("volcanic_eruption") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Eruption),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("plague") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Epidemic),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("pandemic") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Epidemic),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("climate_change") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(ClimateEvent),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("climatic_event") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(ClimateEvent),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("reign") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Era),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("period") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Era),
-    _root_.com.histmersion.api.catalogue.EventSummary.Kind("diplomatic_era") -> _root_.com.histmersion.api.catalogue.EventSummary.Kind(Era)
+  private val aliases: Map[EventSummary.Kind, EventSummary.Kind] = Map(
+    EventSummary.Kind("rebellion") -> EventSummary.Kind(Revolt),
+    EventSummary.Kind("uprising") -> EventSummary.Kind(Revolt),
+    EventSummary.Kind("revolt") -> EventSummary.Kind(Revolt),
+    EventSummary.Kind("naval_battle") -> EventSummary.Kind(NavalBattle),
+    EventSummary.Kind("sea_battle") -> EventSummary.Kind(NavalBattle),
+    EventSummary.Kind("volcanic_eruption") -> EventSummary.Kind(Eruption),
+    EventSummary.Kind("plague") -> EventSummary.Kind(Epidemic),
+    EventSummary.Kind("pandemic") -> EventSummary.Kind(Epidemic),
+    EventSummary.Kind("climate_change") -> EventSummary.Kind(ClimateEvent),
+    EventSummary.Kind("climatic_event") -> EventSummary.Kind(ClimateEvent),
+    EventSummary.Kind("reign") -> EventSummary.Kind(Era),
+    EventSummary.Kind("period") -> EventSummary.Kind(Era),
+    EventSummary.Kind("diplomatic_era") -> EventSummary.Kind(Era)
   )
 
-  def canonical(kind: com.histmersion.api.catalogue.EventSummary.Kind): com.histmersion.api.catalogue.EventSummary.Kind =
+  def canonical(kind: EventSummary.Kind): EventSummary.Kind =
     val k = EventScale.normKind(kind)
-    aliases.get(k).orElse(Option.when(k.value.endsWith("_era"))(_root_.com.histmersion.api.catalogue.EventSummary.Kind(Era))).getOrElse(k)
+    aliases.get(k).orElse(Option.when(k.value.endsWith("_era"))(EventSummary.Kind(Era))).getOrElse(k)
 
-  val labelRules: List[(com.histmersion.api.ItemKind.Label.Pattern, com.histmersion.api.catalogue.EventSummary.Kind)] = List(
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("erupt|volcan"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(Eruption)),
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("earthquake|seism|quake"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(Earthquake)),
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("tsunami"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(Tsunami)),
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("flood|deluge"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(Flood)),
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("drought|aridi"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(Drought)),
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("kiloyear|climat|cooling|warming"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(ClimateEvent)),
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("plague|epidemic|pandemic|pestilence"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(Epidemic)),
-    (_root_.com.histmersion.api.ItemKind.Label.Pattern("famine"), _root_.com.histmersion.api.catalogue.EventSummary.Kind(Famine))
+  val labelRules: List[(ItemKind.Label.Pattern, EventSummary.Kind)] = List(
+    (ItemKind.Label.Pattern("erupt|volcan"), EventSummary.Kind(Eruption)),
+    (ItemKind.Label.Pattern("earthquake|seism|quake"), EventSummary.Kind(Earthquake)),
+    (ItemKind.Label.Pattern("tsunami"), EventSummary.Kind(Tsunami)),
+    (ItemKind.Label.Pattern("flood|deluge"), EventSummary.Kind(Flood)),
+    (ItemKind.Label.Pattern("drought|aridi"), EventSummary.Kind(Drought)),
+    (ItemKind.Label.Pattern("kiloyear|climat|cooling|warming"), EventSummary.Kind(ClimateEvent)),
+    (ItemKind.Label.Pattern("plague|epidemic|pandemic|pestilence"), EventSummary.Kind(Epidemic)),
+    (ItemKind.Label.Pattern("famine"), EventSummary.Kind(Famine))
   )
 
-  def refine(kind: com.histmersion.api.catalogue.EventSummary.Kind, label: com.histmersion.api.catalogue.EventSummary.Label): com.histmersion.api.catalogue.EventSummary.Kind =
+  def refine(kind: EventSummary.Kind, label: EventSummary.Label): EventSummary.Kind =
     val k = canonical(kind)
     if k.value != NaturalGeneric then k
     else
       val l = (label).value.toLowerCase(java.util.Locale.ROOT)
       labelRules.collectFirst { case (re, sub) if (re).value.r.findFirstIn(l).isDefined => sub }.getOrElse(k)
 
-  def of(kind: com.histmersion.api.catalogue.EventSummary.Kind): Kind =
+  def of(kind: EventSummary.Kind): Kind =
     val k = canonical(kind)
-    byKind.getOrElse(k, byKind(_root_.com.histmersion.api.catalogue.EventSummary.Kind(HumanGeneric)).copy(kind = k, label = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Label((k).value.replace('_', ' '))))
+    byKind.getOrElse(k, byKind(EventSummary.Kind(HumanGeneric)).copy(kind = k, label = Kind.Label((k).value.replace('_', ' '))))
 
-  def group(kind: com.histmersion.api.catalogue.EventSummary.Kind): com.histmersion.api.catalogue.EventTaxonomy.Kind.Group = of(kind).group
-  def icon(kind: com.histmersion.api.catalogue.EventSummary.Kind): com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon = of(kind).icon
-  def isNatural(kind: com.histmersion.api.catalogue.EventSummary.Kind): Boolean = group(kind) == _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural)
+  def group(kind: EventSummary.Kind): Kind.Group = of(kind).group
+  def icon(kind: EventSummary.Kind): Kind.Icon = of(kind).icon
+  def isNatural(kind: EventSummary.Kind): Boolean = group(kind) == Kind.Group(Natural)
 
-  def matches(filter: com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter, kind: com.histmersion.api.catalogue.EventSummary.Kind): Boolean =
+  def matches(filter: KindCondition.Filter, kind: EventSummary.Kind): Boolean =
     val f = (filter).value.trim.toLowerCase(java.util.Locale.ROOT)
-    f.isEmpty || f == group(kind).value || canonical(_root_.com.histmersion.api.catalogue.EventSummary.Kind(f)) == canonical(kind)
+    f.isEmpty || f == group(kind).value || canonical(EventSummary.Kind(f)) == canonical(kind)
 
-  final case class KindCondition(kinds: List[com.histmersion.api.catalogue.EventSummary.Kind], negate: KindCondition.Negate)
+  final case class KindCondition(kinds: List[EventSummary.Kind], negate: KindCondition.Negate)
 
   object KindCondition:
     type Filter = Filter.T
-    object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Filter extends RefinedType[String, Pure]
     type Negate = Negate.T
-    object Negate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Negate extends RefinedType[Boolean, Pure]
 
-  def condition(filter: Option[com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter]): Option[KindCondition] =
+  def condition(filter: Option[KindCondition.Filter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
-      val natural = (kinds.filter(_.group == _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural)).map(_.kind) ++
-        aliases.collect { case (a, v) if byKind.get(v).exists(_.group == _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural)) => a }).distinct.sortBy(_.value)
-      if f == Natural then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
-      else if f == Human then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(true))
+      val natural = (kinds.filter(_.group == Kind.Group(Natural)).map(_.kind) ++
+        aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Kind.Group(Natural)) => a }).distinct.sortBy(_.value)
+      if f == Natural then KindCondition(natural, negate = KindCondition.Negate(false))
+      else if f == Human then KindCondition(natural, negate = KindCondition.Negate(true))
       else
-        val c = canonical(_root_.com.histmersion.api.catalogue.EventSummary.Kind(f))
-        KindCondition((c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sortBy(_.value), negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
+        val c = canonical(EventSummary.Kind(f))
+        KindCondition((c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sortBy(_.value), negate = KindCondition.Negate(false))
     }

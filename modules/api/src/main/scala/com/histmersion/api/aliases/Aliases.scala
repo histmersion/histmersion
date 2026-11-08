@@ -1,32 +1,35 @@
-package com.histmersion.api.aliases
+package com.histmersion
+package api.aliases
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Aliases:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   type RuleText = RuleText.T
-  object RuleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RuleText extends RefinedType[String, Pure]
 
   type Rule = RuleValue
-  type RuleValue = com.histmersion.api.aliases.Aliases.RuleText
-  val RuleValue: _root_.com.histmersion.api.aliases.Aliases.RuleText.type = _root_.com.histmersion.api.aliases.Aliases.RuleText
-  type RuleResult = com.histmersion.api.aliases.Aliases.RuleText
-  val RuleResult: _root_.com.histmersion.api.aliases.Aliases.RuleText.type = _root_.com.histmersion.api.aliases.Aliases.RuleText
+  type RuleValue = RuleText
+  val RuleValue: RuleText.type = RuleText
+  type RuleResult = RuleText
+  val RuleResult: RuleText.type = RuleText
 
-  val Rule: com.histmersion.api.aliases.Aliases.Rule =
-    _root_.com.histmersion.api.aliases.Aliases.RuleText("The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +
+  val Rule: Rule =
+    RuleText("The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +
       "reference) goes to the record under its new one, and the answer names the new one.")
 
-  def rule(k: AliasKind): com.histmersion.api.aliases.Aliases.RuleText =
-    _root_.com.histmersion.api.aliases.Aliases.RuleText((Rule).value.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}"))
+  def rule(k: AliasKind): RuleText =
+    RuleText((Rule).value.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}"))
 
-  def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.Id, now: com.histmersion.api.aliases.Aliases.Id): Option[com.histmersion.api.aliases.Aliases.Note] =
+  def followed(k: AliasKind, asked: Id, now: Id): Option[Note] =
     val a = (asked).value.trim
     Option.when(a.nonEmpty && a != (now).value)(
-      _root_.com.histmersion.api.aliases.Aliases.Note(s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._")
+      Note(s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._")
     )
 
-  def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.Id, now: com.histmersion.api.aliases.Aliases.Id)(md: com.histmersion.api.aliases.Aliases.Note): com.histmersion.api.aliases.Aliases.Note =
-    followed(k, asked, now).fold(md)(n => _root_.com.histmersion.api.aliases.Aliases.Note(s"$n\n\n$md"))
+  def note(k: AliasKind, asked: Id, now: Id)(md: Note): Note =
+    followed(k, asked, now).fold(md)(n => Note(s"$n\n\n$md"))

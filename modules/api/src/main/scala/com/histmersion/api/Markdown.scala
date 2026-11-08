@@ -1,17 +1,26 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.api.backup.{Backup, RestoreResult}
 import com.histmersion.api.library.Label
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.library.Source
+import com.histmersion.api.personal.UnreadPage
 object Markdown:
   type CharLimit = CharLimit.T
-  object CharLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CharLimit extends RefinedType[Int, Pure]
 
   private[api] def year(y: Option[Int]): String = (y.map(_.toString).getOrElse("n.d."))
-  private[api] def fmtYear(v: com.histmersion.api.catalogue.Year): String = YearFmt(v)
-  private[api] def period(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year]): String = ((periodLabel(start, end)))
+  private[api] def fmtYear(v: Year): String = YearFmt(v)
+  private[api] def period(start: Option[Year], end: Option[Year]): String = ((periodLabel(start, end)))
 
-  def periodLabel(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year]): String = YearFmt.period(start, end)
-  private[api] def place(region: Option[com.histmersion.api.catalogue.Place.Region], lat: Option[com.histmersion.api.catalogue.Latitude], lon: Option[com.histmersion.api.catalogue.Longitude]): String =
+  def periodLabel(start: Option[Year], end: Option[Year]): String = YearFmt.period(start, end)
+  private[api] def place(region: Option[Place.Region], lat: Option[Latitude], lon: Option[Longitude]): String =
     (lat, lon) match
       case (Some(la), Some(lo)) => (s"${region.map((_).value + " ").getOrElse("")}($la, $lo)")
       case _                    => region.map(_.value).getOrElse("")
@@ -29,7 +38,7 @@ object Markdown:
 
   private[api] def enc(s: String): String = (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))
 
-  def bodySlice(text: com.histmersion.api.library.Source.Body, offset: com.histmersion.api.personal.UnreadPage.Offset, total: Int): String =
+  def bodySlice(text: Source.Body, offset: UnreadPage.Offset, total: Int): String =
     val remaining = (total) - (offset).value - (text).value.length
     if remaining > 0 then (s"$text\n\n_…$remaining more chars — pass offset=${(offset).value + (text).value.length}_")
     else ((text).value)
@@ -74,5 +83,5 @@ object Markdown:
   def contestedMark(contested: Boolean, label: String = ("")): String =
     if ((contested) == (true)) && !(label).toLowerCase.contains("contested") then (" (contested)") else ("")
 
-  private[api] def asOfNote(asOf: Option[com.histmersion.api.catalogue.Year]): String =
+  private[api] def asOfNote(asOf: Option[Year]): String =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")

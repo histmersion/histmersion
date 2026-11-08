@@ -1,4 +1,5 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -6,24 +7,24 @@ object AgentSchedulerMarkdown:
 
   import AgentScheduler.*
 
-  private def goal(g: Option[com.histmersion.api.automation.Goal.Slug]) = g.fold("library work")(x => s"goal $x")
+  private def goal(g: Option[Goal.Slug]) = g.fold("library work")(x => s"goal $x")
 
   def waiting(w: Waiting): String =
     val place = if (w.position).value > 0 then s"${w.position}. " else "- "
     s"$place#${w.item} ${w.jobType} **${w.target}** (${w.manager}; ${goal(w.goal)}; priority ${w.priority}; " +
-      s"waited ${AgentSchedulerMarkdown.minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
+      s"waited ${minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
 
-  def minutes(m: com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes): String =
+  def minutes(m: Waiting.WaitedMinutes): String =
     if (m).value < 60 then (s"$m min") else (s"${(m).value / 60} h" + (if (m).value % 60 != 0 then s" ${(m).value % 60} min" else ""))
 
   def status(s: SchedulerStatus): String =
-    val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("person") then " (set by a person)"
+    val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == SchedulerStatus.StrategyFrom("person") then " (set by a person)"
                                                 else " (agents.scheduler.strategy)")
     val facts = List(
       Some(
         s.at.fold("- no pass yet")(t =>
-          s"- ${if ((s.dry) == _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry(true)) then "what a pass would do now (nothing started)" else s"last pass $t"}"
+          s"- ${if ((s.dry) == SchedulerStatus.Dry(true)) then "what a pass would do now (nothing started)" else s"last pass $t"}"
         )
       ),
       s.stop.map(x => s"- **nothing starts: $x**"),
@@ -35,7 +36,7 @@ object AgentSchedulerMarkdown:
         "- plan pools: " + s.pools.map(p => s"${p.pool} ${p.used} of ${p.cap}").mkString(", ")
       ),
       Option.when((s.forPerson).value > 0)(
-        s"- ${Plural.count(Plural.Count(s.forPerson.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("item"))} wait for a person (an approval or a hold): they hold no place"
+        s"- ${Plural.count(Plural.Count(s.forPerson.value.toLong), Plural.Noun.Singular("item"))} wait for a person (an approval or a hold): they hold no place"
       ),
       Option.when(s.settings.nonEmpty)("- " + s.settings.mkString(" · "))
     ).flatten

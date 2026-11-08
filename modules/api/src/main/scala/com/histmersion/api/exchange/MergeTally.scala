@@ -1,69 +1,72 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeTally(
-    sourcesMerged: MergeTally.SourcesMerged = _root_.com.histmersion.api.exchange.MergeTally.SourcesMerged(0),
-    sourcesByScore: MergeTally.SourcesByScore = _root_.com.histmersion.api.exchange.MergeTally.SourcesByScore(0),
-    sourcesRenamed: MergeTally.SourcesRenamed = _root_.com.histmersion.api.exchange.MergeTally.SourcesRenamed(0),
-    aliases: MergeTally.Aliases = _root_.com.histmersion.api.exchange.MergeTally.Aliases(0),
-    findingsMerged: MergeTally.FindingsMerged = _root_.com.histmersion.api.exchange.MergeTally.FindingsMerged(0),
-    assetsMerged: MergeTally.AssetsMerged = _root_.com.histmersion.api.exchange.MergeTally.AssetsMerged(0),
-    attestationsReanchored: MergeTally.AttestationsReanchored = _root_.com.histmersion.api.exchange.MergeTally.AttestationsReanchored(0),
-    attestationsDropped: MergeTally.AttestationsDropped = _root_.com.histmersion.api.exchange.MergeTally.AttestationsDropped(0),
-    selfLoopsDropped: MergeTally.SelfLoopsDropped = _root_.com.histmersion.api.exchange.MergeTally.SelfLoopsDropped(0),
-    articlesThreeWay: MergeTally.ArticlesThreeWay = _root_.com.histmersion.api.exchange.MergeTally.ArticlesThreeWay(0),
-    articlesFastForward: MergeTally.ArticlesFastForward = _root_.com.histmersion.api.exchange.MergeTally.ArticlesFastForward(0),
-    articlesBoth: MergeTally.ArticlesBoth = _root_.com.histmersion.api.exchange.MergeTally.ArticlesBoth(0),
-    articlesFromFile: MergeTally.ArticlesFromFile = _root_.com.histmersion.api.exchange.MergeTally.ArticlesFromFile(0),
-    eventsMerged: MergeTally.EventsMerged = _root_.com.histmersion.api.exchange.MergeTally.EventsMerged(0),
-    goalsMerged: MergeTally.GoalsMerged = _root_.com.histmersion.api.exchange.MergeTally.GoalsMerged(0),
-    queueMerged: MergeTally.QueueMerged = _root_.com.histmersion.api.exchange.MergeTally.QueueMerged(0),
-    redirects: MergeTally.Redirects = _root_.com.histmersion.api.exchange.MergeTally.Redirects(0),
-    placesMerged: MergeTally.PlacesMerged = _root_.com.histmersion.api.exchange.MergeTally.PlacesMerged(0),
-    periodsMerged: MergeTally.PeriodsMerged = _root_.com.histmersion.api.exchange.MergeTally.PeriodsMerged(0)
+    sourcesMerged: MergeTally.SourcesMerged = MergeTally.SourcesMerged(0),
+    sourcesByScore: MergeTally.SourcesByScore = MergeTally.SourcesByScore(0),
+    sourcesRenamed: MergeTally.SourcesRenamed = MergeTally.SourcesRenamed(0),
+    aliases: MergeTally.Aliases = MergeTally.Aliases(0),
+    findingsMerged: MergeTally.FindingsMerged = MergeTally.FindingsMerged(0),
+    assetsMerged: MergeTally.AssetsMerged = MergeTally.AssetsMerged(0),
+    attestationsReanchored: MergeTally.AttestationsReanchored = MergeTally.AttestationsReanchored(0),
+    attestationsDropped: MergeTally.AttestationsDropped = MergeTally.AttestationsDropped(0),
+    selfLoopsDropped: MergeTally.SelfLoopsDropped = MergeTally.SelfLoopsDropped(0),
+    articlesThreeWay: MergeTally.ArticlesThreeWay = MergeTally.ArticlesThreeWay(0),
+    articlesFastForward: MergeTally.ArticlesFastForward = MergeTally.ArticlesFastForward(0),
+    articlesBoth: MergeTally.ArticlesBoth = MergeTally.ArticlesBoth(0),
+    articlesFromFile: MergeTally.ArticlesFromFile = MergeTally.ArticlesFromFile(0),
+    eventsMerged: MergeTally.EventsMerged = MergeTally.EventsMerged(0),
+    goalsMerged: MergeTally.GoalsMerged = MergeTally.GoalsMerged(0),
+    queueMerged: MergeTally.QueueMerged = MergeTally.QueueMerged(0),
+    redirects: MergeTally.Redirects = MergeTally.Redirects(0),
+    placesMerged: MergeTally.PlacesMerged = MergeTally.PlacesMerged(0),
+    periodsMerged: MergeTally.PeriodsMerged = MergeTally.PeriodsMerged(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object MergeTally:
   type SourcesMerged = SourcesMerged.T
-  object SourcesMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourcesMerged extends RefinedType[Int, Pure]
   type SourcesByScore = SourcesByScore.T
-  object SourcesByScore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourcesByScore extends RefinedType[Int, Pure]
   type SourcesRenamed = SourcesRenamed.T
-  object SourcesRenamed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourcesRenamed extends RefinedType[Int, Pure]
   type Aliases = Aliases.T
-  object Aliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Aliases extends RefinedType[Int, Pure]
   type FindingsMerged = FindingsMerged.T
-  object FindingsMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingsMerged extends RefinedType[Int, Pure]
   type AssetsMerged = AssetsMerged.T
-  object AssetsMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AssetsMerged extends RefinedType[Int, Pure]
   type AttestationsReanchored = AttestationsReanchored.T
-  object AttestationsReanchored extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AttestationsReanchored extends RefinedType[Int, Pure]
   type AttestationsDropped = AttestationsDropped.T
-  object AttestationsDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AttestationsDropped extends RefinedType[Int, Pure]
   type SelfLoopsDropped = SelfLoopsDropped.T
-  object SelfLoopsDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SelfLoopsDropped extends RefinedType[Int, Pure]
   type ArticlesThreeWay = ArticlesThreeWay.T
-  object ArticlesThreeWay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticlesThreeWay extends RefinedType[Int, Pure]
   type ArticlesFastForward = ArticlesFastForward.T
-  object ArticlesFastForward extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticlesFastForward extends RefinedType[Int, Pure]
   type ArticlesBoth = ArticlesBoth.T
-  object ArticlesBoth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticlesBoth extends RefinedType[Int, Pure]
   type ArticlesFromFile = ArticlesFromFile.T
-  object ArticlesFromFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ArticlesFromFile extends RefinedType[Int, Pure]
   type EventsMerged = EventsMerged.T
-  object EventsMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventsMerged extends RefinedType[Int, Pure]
   type GoalsMerged = GoalsMerged.T
-  object GoalsMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GoalsMerged extends RefinedType[Int, Pure]
   type QueueMerged = QueueMerged.T
-  object QueueMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QueueMerged extends RefinedType[Int, Pure]
   type Redirects = Redirects.T
-  object Redirects extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Redirects extends RefinedType[Int, Pure]
   type PlacesMerged = PlacesMerged.T
-  object PlacesMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlacesMerged extends RefinedType[Int, Pure]
   type PeriodsMerged = PeriodsMerged.T
-  object PeriodsMerged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodsMerged extends RefinedType[Int, Pure]

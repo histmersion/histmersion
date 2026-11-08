@@ -1,9 +1,12 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class IssuePlace(
     leftGeometry: Option[IssuePlace.LeftGeometry] = None,
@@ -15,6 +18,6 @@ final case class IssuePlace(
 
 object IssuePlace:
   type LeftGeometry = LeftGeometry.T
-  object LeftGeometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LeftGeometry extends RefinedType[String, Pure]
   type RightGeometry = RightGeometry.T
-  object RightGeometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RightGeometry extends RefinedType[String, Pure]

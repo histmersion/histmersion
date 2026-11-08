@@ -1,20 +1,21 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.api.settings.{ReloadMarkdown, ReloadReport}
 class ReloadMarkdownSuite extends munit.FunSuite:
 
   test("ReloadMarkdown: failed, unchanged and published reports"):
-    val failed = ReloadMarkdown.report(ReloadReport(com.histmersion.api.settings.ReloadReport.Published(false), com.histmersion.api.settings.ReloadReport.Generation(3), errors = List(com.histmersion.api.settings.ReloadReport.Errors("pool: connection refused"))))
+    val failed = ReloadMarkdown.report(ReloadReport(ReloadReport.Published(false), ReloadReport.Generation(3), errors = List(ReloadReport.Errors("pool: connection refused"))))
     assert(failed.contains("failed — generation 3 stays") && failed.contains("connection refused"), failed)
-    assert(ReloadMarkdown.report(ReloadReport(com.histmersion.api.settings.ReloadReport.Published(false), com.histmersion.api.settings.ReloadReport.Generation(3))).contains("Nothing in the config differs"))
+    assert(ReloadMarkdown.report(ReloadReport(ReloadReport.Published(false), ReloadReport.Generation(3))).contains("Nothing in the config differs"))
     val ok = ReloadMarkdown.report(
       ReloadReport(
-        com.histmersion.api.settings.ReloadReport.Published(true),
-        com.histmersion.api.settings.ReloadReport.Generation(4),
-        applied = List(com.histmersion.api.settings.ReloadReport.Applied("histmersion.db.url")),
-        restartOnly = List(com.histmersion.api.settings.ReloadReport.RestartOnly("histmersion.server.port")),
-        rebuilt = List(com.histmersion.api.settings.ReloadReport.Rebuilt("pool"), com.histmersion.api.settings.ReloadReport.Rebuilt("migrations")),
-        plugins = List(com.histmersion.api.settings.ReloadReport.Plugins("pmc"))
+        ReloadReport.Published(true),
+        ReloadReport.Generation(4),
+        applied = List(ReloadReport.Applied("histmersion.db.url")),
+        restartOnly = List(ReloadReport.RestartOnly("histmersion.server.port")),
+        rebuilt = List(ReloadReport.Rebuilt("pool"), ReloadReport.Rebuilt("migrations")),
+        plugins = List(ReloadReport.Plugins("pmc"))
       )
     )
     assert(

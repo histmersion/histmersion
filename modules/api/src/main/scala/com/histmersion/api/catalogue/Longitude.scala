@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure

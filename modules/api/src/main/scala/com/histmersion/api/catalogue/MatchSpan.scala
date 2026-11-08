@@ -1,15 +1,18 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MatchSpan(start: MatchSpan.Start, end: MatchSpan.End) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 object MatchSpan:
   type Start = Start.T
-  object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
+  object Start extends RefinedType[Int, Pure]:
+    given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
   type End = End.T
-  object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object End extends RefinedType[Int, Pure]

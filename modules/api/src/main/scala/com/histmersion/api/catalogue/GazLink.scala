@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.given

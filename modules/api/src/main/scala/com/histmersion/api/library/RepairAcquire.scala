@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -6,82 +7,85 @@ import com.histmersion.api.Plural
 import com.histmersion.api.automation.ManagersMarkdown
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Managers
 
 object RepairAcquire:
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
 
 
-  final case class RepairRequest(dryRun: RepairRequest.DryRun = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), by: Option[RepairRequest.By] = None)
+  final case class RepairRequest(dryRun: RepairRequest.DryRun = RepairRequest.DryRun(false), by: Option[RepairRequest.By] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RepairRequest:
     type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DryRun extends RefinedType[Boolean, Pure]
     export com.histmersion.api.automation.Activity.{Actor as By}
 
 
   final case class RepairRow(
       item: RepairRow.Item,
-      doi: com.histmersion.api.library.Doi,
+      doi: Doi,
       goals: List[RepairRow.Goals] = Nil,
-      watcher: RepairRow.Watcher = _root_.com.histmersion.api.library.RepairAcquire.RepairRow.Watcher(""),
-      action: RepairRow.Action = _root_.com.histmersion.api.library.RepairAcquire.RepairRow.Action(""),
-      detail: RepairRow.Detail = _root_.com.histmersion.api.library.RepairAcquire.RepairRow.Detail(""),
+      watcher: RepairRow.Watcher = RepairRow.Watcher(""),
+      action: RepairRow.Action = RepairRow.Action(""),
+      detail: RepairRow.Detail = RepairRow.Detail(""),
       backlogItem: Option[RepairRow.BacklogItem] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RepairRow:
-    export com.histmersion.api.library.Acquire.{ItemNumber as Item}
+    export Acquire.{ItemNumber as Item}
     type Goals = Goals.T
-    object Goals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Goals extends RefinedType[String, Pure]
     type Watcher = Watcher.T
-    object Watcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Watcher extends RefinedType[String, Pure]
     type Action = Action.T
-    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Action extends RefinedType[String, Pure]
     type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Detail extends RefinedType[String, Pure]
     type BacklogItem = BacklogItem.T
-    object BacklogItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BacklogItem extends RefinedType[Long, Pure]
 
 
   final case class RepairResult(
       dryRun: RepairResult.DryRun,
-      moved: RepairResult.Moved = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Moved(0),
-      removed: RepairResult.Removed = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Removed(0),
-      kept: RepairResult.Kept = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Kept(0),
-      untouched: RepairResult.Untouched = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Untouched(0),
+      moved: RepairResult.Moved = RepairResult.Moved(0),
+      removed: RepairResult.Removed = RepairResult.Removed(0),
+      kept: RepairResult.Kept = RepairResult.Kept(0),
+      untouched: RepairResult.Untouched = RepairResult.Untouched(0),
       rows: List[RepairRow] = Nil,
-      backlog: com.histmersion.api.automation.Managers.ManagerInfo.Backlog = _root_.com.histmersion.api.automation.Managers.ManagerInfo.Backlog(0),
-      backlogDays: Option[com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays] = None
+      backlog: Managers.ManagerInfo.Backlog = Managers.ManagerInfo.Backlog(0),
+      backlogDays: Option[Managers.ManagerInfo.BacklogDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RepairResult:
-    export com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
+    export RepairRequest.DryRun
     type Moved = Moved.T
-    object Moved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Moved extends RefinedType[Int, Pure]
     type Removed = Removed.T
-    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Removed extends RefinedType[Int, Pure]
     type Kept = Kept.T
-    object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kept extends RefinedType[Int, Pure]
     type Untouched = Untouched.T
-    object Untouched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Untouched extends RefinedType[Int, Pure]
 
 
   val Move = "move"
   val Remove = "remove"
   val Keep = "keep"
 
-  def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.Markdown =
-    val verb = if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true)) then "would " else ""
-    val head = s"# Repair of the acquisition list${if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true)) then " (dry run: nothing changed)" else ""}\n\n" +
-      s"- ${verb}move ${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.moved.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +
-      s"- ${verb}remove ${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.removed.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("item"))} already in the corpus\n" +
-      s"- keep ${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.kept.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("sweep item"))} on the list (no legal open-access copy known, or a watcher that does not ingest)\n" +
-      s"- ${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.untouched.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("open acquisition item"))} not created by a watcher's sweep: untouched\n" +
+  def markdown(r: RepairResult): Markdown =
+    val verb = if ((r.dryRun) == RepairRequest.DryRun(true)) then "would " else ""
+    val head = s"# Repair of the acquisition list${if ((r.dryRun) == RepairRequest.DryRun(true)) then " (dry run: nothing changed)" else ""}\n\n" +
+      s"- ${verb}move ${Plural.count(Plural.CountN(r.moved.value.toLong), Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +
+      s"- ${verb}remove ${Plural.count(Plural.CountN(r.removed.value.toLong), Plural.CountSingular("item"))} already in the corpus\n" +
+      s"- keep ${Plural.count(Plural.CountN(r.kept.value.toLong), Plural.CountSingular("sweep item"))} on the list (no legal open-access copy known, or a watcher that does not ingest)\n" +
+      s"- ${Plural.count(Plural.CountN(r.untouched.value.toLong), Plural.CountSingular("open acquisition item"))} not created by a watcher's sweep: untouched\n" +
       s"- ${ManagersMarkdown.backlog(r.backlog, r.backlogDays)}"
     val rows = r.rows.map { row =>
       val what = row.action.value match

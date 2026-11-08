@@ -1,18 +1,26 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.exchange.Bundle
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.RowCount
+import com.histmersion.api.Offset
+import com.histmersion.api.personal.UnreadPage
 
 final case class AssetLink(
     id: AssetLink.Id,
-    citekey: com.histmersion.api.library.Citekey,
-    assetName: com.histmersion.api.exchange.Bundle.Asset.FileName,
+    citekey: Citekey,
+    assetName: Bundle.Asset.FileName,
     relation: AssetLink.Relation,
-    targetType: com.histmersion.api.media.MediaTarget.TargetType,
-    targetId: com.histmersion.api.media.MediaTarget.TargetId,
+    targetType: MediaTarget.TargetType,
+    targetId: MediaTarget.TargetId,
     xywh: Option[AssetLink.Xywh] = None,
     notes: Option[AssetLink.Notes] = None
 ) derives KindlingsCodecAsObject,
@@ -22,47 +30,47 @@ object AssetLink:
 
 
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.media.AssetRelation.{Wire as Relation}
+  object Id extends RefinedType[Long, Pure]
+  export AssetRelation.{Wire as Relation}
   type Xywh = Xywh.T
-  object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Xywh extends RefinedType[String, Pure]
   type Notes = Notes.T
-  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Notes extends RefinedType[String, Pure]
 
   final case class Deleted(
-      id: com.histmersion.api.media.AssetLink.Id,
+      id: Id,
       deleted: Deleted.Value
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Deleted:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends RefinedType[Boolean, Pure]
 
 
 
   final case class List(
-      total: com.histmersion.api.RowCount,
+      total: RowCount,
       links: scala.List[AssetLink],
-      offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
-      next: Option[com.histmersion.api.Offset] = None
+      offset: Offset = Offset(0),
+      next: Option[Offset] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(links.size))
+    def page: OffsetPage = OffsetPage(total, offset, RowCount(links.size))
 
   object List:
 
 
-    def of(total: com.histmersion.api.RowCount, rows: scala.List[AssetLink], offset: com.histmersion.api.personal.UnreadPage.Offset): List =
-      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(rows.size)).next)
+    def of(total: RowCount, rows: scala.List[AssetLink], offset: UnreadPage.Offset): List =
+      List(RowCount((total).value), rows, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next)
 
   final case class Put(
-      citekey: com.histmersion.api.library.Citekey,
-      assetName: com.histmersion.api.exchange.Bundle.Asset.FileName,
-      relation: com.histmersion.api.media.AssetRelation.Wire,
-      targetType: com.histmersion.api.media.MediaTarget.TargetType,
-      targetId: com.histmersion.api.media.MediaTarget.TargetId,
-      xywh: Option[com.histmersion.api.media.AssetLink.Xywh] = None,
-      notes: Option[com.histmersion.api.media.AssetLink.Notes] = None
+      citekey: Citekey,
+      assetName: Bundle.Asset.FileName,
+      relation: AssetRelation.Wire,
+      targetType: MediaTarget.TargetType,
+      targetId: MediaTarget.TargetId,
+      xywh: Option[Xywh] = None,
+      notes: Option[Notes] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

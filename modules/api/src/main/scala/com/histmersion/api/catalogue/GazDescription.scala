@@ -1,8 +1,11 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.given
-final case class GazDescription(text: GazDescription.Text, lang: GazDescription.Lang = _root_.com.histmersion.api.catalogue.GazName.Lang(""))
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+final case class GazDescription(text: GazDescription.Text, lang: GazDescription.Lang = GazName.Lang(""))
 
 object GazDescription:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.catalogue.GazName.Lang
+  object Text extends RefinedType[String, Pure]
+  export GazName.Lang

@@ -1,9 +1,12 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SeedResult(
     imported: SeedResult.Imported,
@@ -15,10 +18,10 @@ final case class SeedResult(
 
 object SeedResult:
   type Imported = Imported.T
-  object Imported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Imported extends RefinedType[Int, Pure]
   type Failed = Failed.T
-  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Failed extends RefinedType[String, Pure]
   type EdgesResolved = EdgesResolved.T
-  object EdgesResolved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgesResolved extends RefinedType[Int, Pure]
   type Skipped = Skipped.T
-  object Skipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Skipped extends RefinedType[String, Pure]

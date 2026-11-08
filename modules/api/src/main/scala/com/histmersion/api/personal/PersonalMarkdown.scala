@@ -1,4 +1,7 @@
-package com.histmersion.api.personal
+package com.histmersion
+package api.personal
+
+import com.histmersion.api.checks.FormatIssue
 
 object PersonalMarkdown:
   def minute(at: String): String = at.take(16).replace('T', ' ')
@@ -19,7 +22,7 @@ object PersonalMarkdown:
     if bs.isEmpty then ("_No bookmarks._")
     else ((s"**Bookmarks** — ${bs.size}" :: "" :: bs.map(bookmarkLine)).mkString("\n"))
 
-  def excerpt(text: com.histmersion.api.personal.Note.Text, chars: com.histmersion.api.checks.FormatIssue.Excerpt.Length = _root_.com.histmersion.api.checks.FormatIssue.Excerpt.Length(120)): String =
+  def excerpt(text: Note.Text, chars: FormatIssue.Excerpt.Length = FormatIssue.Excerpt.Length(120)): String =
     val first = (text).value.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse("")
     if first.length <= (chars).value then (first) else (first.take((chars).value - 1).trim + "…")
 
@@ -41,7 +44,7 @@ object PersonalMarkdown:
     ).mkString("\n")
 
   def readLine(m: ReadMark): String =
-    val state = if ((m.read) == _root_.com.histmersion.api.personal.ReadMark.Read(true)) then s"read ${m.readAt.fold("")(a => minute(a.value))}" else "not read yet"
+    val state = if ((m.read) == ReadMark.Read(true)) then s"read ${m.readAt.fold("")(a => minute(a.value))}" else "not read yet"
     s"- **${m.title}** — ${m.kind.label.value.toLowerCase} `${m.id.value}` · $state" + m.openedAt.fold("")(o =>
       s" · opened ${minute(o.value)}"
     )

@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import com.histmersion.api.library.Label

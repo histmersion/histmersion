@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 import com.histmersion.api.jobs.JobInfo
 
 import com.histmersion.api.automation.Pipeline
@@ -8,21 +9,28 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.automation.AgentScheduler
+import com.histmersion.api.automation.PlanQuota
+import com.histmersion.api.automation.AgentMode
+import com.histmersion.api.automation.ProviderKind
 
 object Wording:
   object Decisions:
     type Open = Open.T
-    object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Open extends RefinedType[Int, Pure]
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
 
 
-  type ManagerId = _root_.com.histmersion.api.Wording.Id
-  val ManagerId: _root_.com.histmersion.api.Wording.Id.type = _root_.com.histmersion.api.Wording.Id
-  type PluginId = _root_.com.histmersion.api.Wording.Id
-  val PluginId: _root_.com.histmersion.api.Wording.Id.type = _root_.com.histmersion.api.Wording.Id
+  type ManagerId = Id
+  val ManagerId: Id.type = Id
+  type PluginId = Id
+  val PluginId: Id.type = Id
 
-  def humanize(id: com.histmersion.api.Wording.Id): String =
+  def humanize(id: Id): String =
     val words =
       (id).value.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
     ((capitalize((words))))
@@ -32,7 +40,7 @@ object Wording:
   def value(s: String): String = Label.display(Label.Text(s)).value
 
   def heading(s: String): String =
-    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s))))) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).trim)).value)
+    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(Id((s))))) else capitalize(Label.display(Label.Text((s).trim)).value)
 
   def status(s: Source.Status): String = s match
     case Source.Status.Foundational => ("Foundational")
@@ -43,8 +51,8 @@ object Wording:
     case Source.Status.Retracted    => ("Retracted")
     case Source.Status.Unassessed   => ("Not assessed")
 
-  def statusOf(wire: com.histmersion.api.Api.GoalQuery.Status): String =
-    Source.Status.values.find(_.wire == _root_.com.histmersion.api.library.Source.Status.Wire((wire).value.trim.toLowerCase)).fold(humanize(_root_.com.histmersion.api.Wording.Id((wire).value)))(status)
+  def statusOf(wire: Api.GoalQuery.Status): String =
+    Source.Status.values.find(_.wire == Source.Status.Wire((wire).value.trim.toLowerCase)).fold(humanize(Id((wire).value)))(status)
 
   def pipeline(p: Pipeline): String = p match
     case Pipeline.EnrichSource     => ("Enrich a source")
@@ -87,40 +95,40 @@ object Wording:
     case Manager.Kind.Watch  => ("Watch manager")
     case Manager.Kind.Enrich => ("Enrich manager")
 
-  def manager(id: com.histmersion.api.Wording.ManagerId): String =
+  def manager(id: ManagerId): String =
     val (kind, rest) = (id).value.span(_ != ':')
     Manager.Kind
-      .parse(_root_.com.histmersion.api.automation.Manager.Kind.Wire(kind))
+      .parse(Manager.Kind.Wire(kind))
       .fold(humanize(id))(k =>
-        (managerKind(k)) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(_root_.com.histmersion.api.Wording.Id(g))}")
+        (managerKind(k)) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(Id(g))}")
       )
 
-  val schedulerJobTypes: Map[com.histmersion.api.jobs.JobKinds.Wire, String] = Map(
-    { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple23._1), (refactorTuple23._2)) },
-    { val refactorTuple2 = "propose" -> "Propose articles"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple2._1), (refactorTuple2._2)) },
-    { val refactorTuple25 = "sweep" -> "Look for copies to fetch"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple25._1), (refactorTuple25._2)) },
-    { val refactorTuple26 = "currency" -> "Check sources are current"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple26._1), (refactorTuple26._2)) },
-    { val refactorTuple5 = "enrich" -> "Enrich a source"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple5._1), (refactorTuple5._2)) },
-    { val refactorTuple6 = "compile" -> "Write an article"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple6._1), (refactorTuple6._2)) },
-    { val refactorTuple29 = "extend" -> "Extend an article"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple29._1), (refactorTuple29._2)) },
-    { val refactorTuple8 = "filter" -> "Work out an article's filter"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple8._1), (refactorTuple8._2)) },
-    { val refactorTuple9 = "review" -> "Review an article"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple9._1), (refactorTuple9._2)) }
+  val schedulerJobTypes: Map[JobKinds.Wire, String] = Map(
+    { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (JobKinds.Wire(refactorTuple23._1), (refactorTuple23._2)) },
+    { val refactorTuple2 = "propose" -> "Propose articles"; (JobKinds.Wire(refactorTuple2._1), (refactorTuple2._2)) },
+    { val refactorTuple25 = "sweep" -> "Look for copies to fetch"; (JobKinds.Wire(refactorTuple25._1), (refactorTuple25._2)) },
+    { val refactorTuple26 = "currency" -> "Check sources are current"; (JobKinds.Wire(refactorTuple26._1), (refactorTuple26._2)) },
+    { val refactorTuple5 = "enrich" -> "Enrich a source"; (JobKinds.Wire(refactorTuple5._1), (refactorTuple5._2)) },
+    { val refactorTuple6 = "compile" -> "Write an article"; (JobKinds.Wire(refactorTuple6._1), (refactorTuple6._2)) },
+    { val refactorTuple29 = "extend" -> "Extend an article"; (JobKinds.Wire(refactorTuple29._1), (refactorTuple29._2)) },
+    { val refactorTuple8 = "filter" -> "Work out an article's filter"; (JobKinds.Wire(refactorTuple8._1), (refactorTuple8._2)) },
+    { val refactorTuple9 = "review" -> "Review an article"; (JobKinds.Wire(refactorTuple9._1), (refactorTuple9._2)) }
   )
 
-  val strategies: Map[com.histmersion.api.automation.AgentScheduler.StrategyLine.Name, String] = Map(
-    { val refactorTuple10 = "type-balanced" -> "Balance the kinds of work"; (_root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Name(refactorTuple10._1), (refactorTuple10._2)) },
-    { val refactorTuple11 = "goal-first" -> "One goal at a time"; (_root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Name(refactorTuple11._1), (refactorTuple11._2)) },
-    { val refactorTuple12 = "default" -> "The configured strategy"; (_root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Name(refactorTuple12._1), (refactorTuple12._2)) }
+  val strategies: Map[AgentScheduler.StrategyLine.Name, String] = Map(
+    { val refactorTuple10 = "type-balanced" -> "Balance the kinds of work"; (AgentScheduler.StrategyLine.Name(refactorTuple10._1), (refactorTuple10._2)) },
+    { val refactorTuple11 = "goal-first" -> "One goal at a time"; (AgentScheduler.StrategyLine.Name(refactorTuple11._1), (refactorTuple11._2)) },
+    { val refactorTuple12 = "default" -> "The configured strategy"; (AgentScheduler.StrategyLine.Name(refactorTuple12._1), (refactorTuple12._2)) }
   )
 
-  def pool(id: com.histmersion.api.automation.AgentScheduler.PoolUse.Pool): String = (id).value.trim.toLowerCase match
+  def pool(id: AgentScheduler.PoolUse.Pool): String = (id).value.trim.toLowerCase match
     case "claude-plan"  => ("Claude plan")
     case "chatgpt-plan" => ("ChatGPT plan")
-    case other          => ((humanize(_root_.com.histmersion.api.Wording.Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
+    case other          => ((humanize(Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
 
-  def allowanceWindow(kind: com.histmersion.api.automation.PlanQuota.WindowStatus.Kind): String =
+  def allowanceWindow(kind: PlanQuota.WindowStatus.Kind): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
-    def span(minutes: com.histmersion.api.AllowanceWindow.Minutes): String = (minutes.value: Long) match
+    def span(minutes: AllowanceWindow.Minutes): String = (minutes.value: Long) match
       case 10080              => ("This week's limit")
       case 1440               => ("Today's limit")
       case m if m % 1440 == 0 => (s"${m / 1440}-day limit")
@@ -128,30 +136,30 @@ object Wording:
       case m                  => (s"$m-minute limit")
     val minutes = """^(\d+)m$""".r
     k match
-      case minutes(n)                      => span(_root_.com.histmersion.api.AllowanceWindow.Minutes(n.toLong))
+      case minutes(n)                      => span(AllowanceWindow.Minutes(n.toLong))
       case "five_hour"                     => ("5-hour limit")
       case "seven_day"                     => ("This week's limit")
       case "one_day" | "daily"             => ("Today's limit")
-      case s if s.startsWith("seven_day_") => (s"This week's limit (${humanize(_root_.com.histmersion.api.Wording.Id(s.stripPrefix("seven_day_")))})")
-      case s if s.startsWith("five_hour_") => (s"5-hour limit (${humanize(_root_.com.histmersion.api.Wording.Id(s.stripPrefix("five_hour_")))})")
-      case other                           => ((humanize(_root_.com.histmersion.api.Wording.Id(other))))
+      case s if s.startsWith("seven_day_") => (s"This week's limit (${humanize(Id(s.stripPrefix("seven_day_")))})")
+      case s if s.startsWith("five_hour_") => (s"5-hour limit (${humanize(Id(s.stripPrefix("five_hour_")))})")
+      case other                           => ((humanize(Id(other))))
 
-  def agentsState(autopilotOn: com.histmersion.api.automation.AgentMode.Step.Autopilot.On, draining: com.histmersion.api.automation.AgentMode.Step.Drain.On): String =
+  def agentsState(autopilotOn: AgentMode.Step.Autopilot.On, draining: AgentMode.Step.Drain.On): String =
     if (draining).value then ("Agents: finishing current work, then pausing")
     else if (autopilotOn).value then ("Agents: working")
     else ("Agents: paused")
 
-  def decisions(open: com.histmersion.api.Wording.Decisions.Open): Option[String] =
-    Option.when((open).value > 0)(if open == _root_.com.histmersion.api.Wording.Decisions.Open(1) then ("1 needs your decision") else (s"$open need your decision"))
+  def decisions(open: Decisions.Open): Option[String] =
+    Option.when((open).value > 0)(if open == Decisions.Open(1) then ("1 needs your decision") else (s"$open need your decision"))
 
-  def decisionsShort(open: com.histmersion.api.Wording.Decisions.Open): String = if open == _root_.com.histmersion.api.Wording.Decisions.Open(1) then ("1 needs you") else (s"$open need you")
+  def decisionsShort(open: Decisions.Open): String = if open == Decisions.Open(1) then ("1 needs you") else (s"$open need you")
 
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
   def jobKind(k: JobInfo.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(Id(k.value)))(_.name.value)
 
-  def jobKindOf(wire: com.histmersion.api.jobs.JobKinds.Wire): String = RegisteredJobKinds.all.parse(wire).fold(humanize(Id(wire.value)))(_.name.value)
+  def jobKindOf(wire: JobKinds.Wire): String = RegisteredJobKinds.all.parse(wire).fold(humanize(Id(wire.value)))(_.name.value)
 
   def jobState(s: JobState): String = s match
     case JobState.Queued    => ("Queued")
@@ -161,24 +169,24 @@ object Wording:
     case JobState.Paused    => ("Paused")
     case JobState.Cancelled => ("Cancelled")
 
-  def plugin(id: com.histmersion.api.Wording.PluginId): String =
+  def plugin(id: PluginId): String =
     val families = List("ai-" -> "AI provider", "oa-" -> "Open access", "media-" -> "Pictures", "events-" -> "Events")
     pluginNames
-      .get(_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id((id).value))
+      .get(ProviderKind.Plugin.Id((id).value))
       .orElse(families.collectFirst {
-        case (prefix, family) if (id).value.startsWith(prefix) => s"$family: ${humanize(_root_.com.histmersion.api.Wording.Id((id).value.stripPrefix(prefix)))}"
+        case (prefix, family) if (id).value.startsWith(prefix) => s"$family: ${humanize(Id((id).value.stripPrefix(prefix)))}"
       })
       .getOrElse(humanize(id))
 
-  private val pluginNames: Map[com.histmersion.api.automation.ProviderKind.Plugin.Id, String] = Map(
-    { val refactorTuple35 = "archive-org" -> "Internet Archive"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple35._1), (refactorTuple35._2)) },
-    { val refactorTuple14 = "oa-unpaywall" -> "Open access: Unpaywall"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple14._1), (refactorTuple14._2)) },
-    { val refactorTuple15 = "oa-core" -> "Open access: CORE"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple15._1), (refactorTuple15._2)) },
-    { val refactorTuple38 = "oa-openalex" -> "Open access: OpenAlex"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple38._1), (refactorTuple38._2)) },
-    { val refactorTuple17 = "oa-landing" -> "Open access: publishers' own pages"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple17._1), (refactorTuple17._2)) },
-    { val refactorTuple18 = "pmc" -> "PubMed Central"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple18._1), (refactorTuple18._2)) },
-    { val refactorTuple41 = "arxiv" -> "arXiv"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple41._1), (refactorTuple41._2)) },
-    { val refactorTuple42 = "keepassxc" -> "KeePassXC"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple42._1), (refactorTuple42._2)) },
-    { val refactorTuple43 = "1password" -> "1Password"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple43._1), (refactorTuple43._2)) },
-    { val refactorTuple44 = "bitwarden" -> "Bitwarden"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple44._1), (refactorTuple44._2)) }
+  private val pluginNames: Map[ProviderKind.Plugin.Id, String] = Map(
+    { val refactorTuple35 = "archive-org" -> "Internet Archive"; (ProviderKind.Plugin.Id(refactorTuple35._1), (refactorTuple35._2)) },
+    { val refactorTuple14 = "oa-unpaywall" -> "Open access: Unpaywall"; (ProviderKind.Plugin.Id(refactorTuple14._1), (refactorTuple14._2)) },
+    { val refactorTuple15 = "oa-core" -> "Open access: CORE"; (ProviderKind.Plugin.Id(refactorTuple15._1), (refactorTuple15._2)) },
+    { val refactorTuple38 = "oa-openalex" -> "Open access: OpenAlex"; (ProviderKind.Plugin.Id(refactorTuple38._1), (refactorTuple38._2)) },
+    { val refactorTuple17 = "oa-landing" -> "Open access: publishers' own pages"; (ProviderKind.Plugin.Id(refactorTuple17._1), (refactorTuple17._2)) },
+    { val refactorTuple18 = "pmc" -> "PubMed Central"; (ProviderKind.Plugin.Id(refactorTuple18._1), (refactorTuple18._2)) },
+    { val refactorTuple41 = "arxiv" -> "arXiv"; (ProviderKind.Plugin.Id(refactorTuple41._1), (refactorTuple41._2)) },
+    { val refactorTuple42 = "keepassxc" -> "KeePassXC"; (ProviderKind.Plugin.Id(refactorTuple42._1), (refactorTuple42._2)) },
+    { val refactorTuple43 = "1password" -> "1Password"; (ProviderKind.Plugin.Id(refactorTuple43._1), (refactorTuple43._2)) },
+    { val refactorTuple44 = "bitwarden" -> "Bitwarden"; (ProviderKind.Plugin.Id(refactorTuple44._1), (refactorTuple44._2)) }
   )

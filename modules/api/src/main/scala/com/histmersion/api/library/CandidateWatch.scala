@@ -1,9 +1,12 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CandidateWatch(
     goal: CandidateWatch.Goal,
@@ -13,21 +16,21 @@ final case class CandidateWatch(
     watermark: Option[CandidateWatch.Watermark] = None,
     lastRun: Option[CandidateWatch.LastRun] = None,
     lastError: Option[CandidateWatch.LastError] = None,
-    lastFound: CandidateWatch.LastFound = _root_.com.histmersion.api.library.CandidateWatch.LastFound(0)
+    lastFound: CandidateWatch.LastFound = CandidateWatch.LastFound(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CandidateWatch:
   export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
-  export com.histmersion.api.library.Candidates.WatchKind.{Wire as Kind}
+  export Candidates.WatchKind.{Wire as Kind}
   type Subject = Subject.T
-  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.library.Candidates.Index
+  object Subject extends RefinedType[String, Pure]
+  export Candidates.Index
   type Watermark = Watermark.T
-  object Watermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Watermark extends RefinedType[String, Pure]
   type LastRun = LastRun.T
-  object LastRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastRun extends RefinedType[String, Pure]
   type LastError = LastError.T
-  object LastError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastError extends RefinedType[String, Pure]
   type LastFound = LastFound.T
-  object LastFound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastFound extends RefinedType[Int, Pure]

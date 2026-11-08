@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.{Csv, LatinFold}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -7,27 +8,32 @@ import com.histmersion.api.jobs.JobInfo
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.jobs.JobDetail
 
 object Acquire:
   object Intent:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
   type CitationContext = CitationContext.T
-  object CitationContext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitationContext extends RefinedType[String, Pure]
   type CitationThreshold = CitationThreshold.T
-  object CitationThreshold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitationThreshold extends RefinedType[Int, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedByCount extends RefinedType[Int, Pure]
   type ItemNumber = ItemNumber.T
-  object ItemNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemNumber extends RefinedType[Int, Pure]
   type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Outcome extends RefinedType[String, Pure]
   type Recommendation = Recommendation.T
-  object Recommendation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Recommendation extends RefinedType[String, Pure]
   type Refusal = Refusal.T
-  object Refusal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refusal extends RefinedType[String, Pure]
   type YearGap = YearGap.T
-  object YearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearGap extends RefinedType[Int, Pure]
 
 
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
@@ -37,13 +43,13 @@ object Acquire:
   /** Follows the convention every existing key uses (`drews1993_collapse`, `haak2015_massive`), so a re-ingest of a
     * stored paper lands on its existing citekey instead of a duplicate.
     */
-  def citekey(authors: List[com.histmersion.api.library.AuthorName], year: Option[com.histmersion.api.catalogue.Year], title: Option[com.histmersion.api.library.Title]): com.histmersion.api.library.Citekey =
-    legacyCitekey(authors.map(a => _root_.com.histmersion.api.library.AuthorName(LatinFold.fold((a).value))), year, title.map(t => _root_.com.histmersion.api.library.Title(LatinFold.fold((t).value))))
+  def citekey(authors: List[AuthorName], year: Option[Year], title: Option[Title]): Citekey =
+    legacyCitekey(authors.map(a => AuthorName(LatinFold.fold((a).value))), year, title.map(t => Title(LatinFold.fold((t).value))))
 
   /** Records created before accented letters were folded keep keys that dropped them (`gterbock1938`), so a lookup by
     * generated key tries this form too.
     */
-  def legacyCitekey(authors: List[com.histmersion.api.library.AuthorName], year: Option[com.histmersion.api.catalogue.Year], title: Option[com.histmersion.api.library.Title]): com.histmersion.api.library.Citekey =
+  def legacyCitekey(authors: List[AuthorName], year: Option[Year], title: Option[Title]): Citekey =
     val first = authors.map((_).value.trim).find(_.nonEmpty)
     val surname = first
       .map { a =>
@@ -59,13 +65,13 @@ object Acquire:
       .findAllIn(title.fold("")(t => (t).value))
       .map(_.toLowerCase)
       .find(w => w.length > 3 && !Stop.contains(w))
-    _root_.com.histmersion.api.library.Citekey(s"$surname$yr" + word.fold("")("_" + _))
+    Citekey(s"$surname$yr" + word.fold("")("_" + _))
 
-  def citekeyCandidates(authors: List[com.histmersion.api.library.AuthorName], year: Option[com.histmersion.api.catalogue.Year], title: Option[com.histmersion.api.library.Title]): List[com.histmersion.api.library.Citekey] =
+  def citekeyCandidates(authors: List[AuthorName], year: Option[Year], title: Option[Title]): List[Citekey] =
     List(citekey(authors, year, title), legacyCitekey(authors, year, title)).distinct
 
   object Verdicts:
-    export com.histmersion.api.library.Assessment.{Verdict as Wire}
+    export Assessment.{Verdict as Wire}
 
     val Retracted: Wire = Wire("retracted")
     val Corrected: Wire = Wire("corrected")
@@ -87,7 +93,7 @@ object Acquire:
       "partial retraction"
     )
 
-  private def isRetractingNature(n: com.histmersion.api.library.RetractionNotice.Nature): Boolean =
+  private def isRetractingNature(n: RetractionNotice.Nature): Boolean =
     val s = (n).value.toLowerCase
     (s.contains("retraction") && !s.contains("reinstatement") || s.contains("withdrawal"))
 
@@ -95,12 +101,12 @@ object Acquire:
       retractions: List[RetractionNotice],
       updates: List[UpdateNotice],
       openalexRetracted: Boolean,
-      citedByCount: Option[com.histmersion.api.library.Acquire.CitedByCount],
-      year: Option[com.histmersion.api.catalogue.Year],
-      wellCitedAt: com.histmersion.api.library.Acquire.CitationThreshold,
-      lowCitedAt: com.histmersion.api.library.Acquire.CitationThreshold,
-      staleBefore: com.histmersion.api.catalogue.Year
-  ): com.histmersion.api.library.Acquire.Verdicts.Wire =
+      citedByCount: Option[CitedByCount],
+      year: Option[Year],
+      wellCitedAt: CitationThreshold,
+      lowCitedAt: CitationThreshold,
+      staleBefore: Year
+  ): Verdicts.Wire =
     val kinds = updates.flatMap(_.kind).map(_.value.trim.toLowerCase)
     if openalexRetracted || retractions.exists(r => r.nature.exists(isRetractingNature)) ||
       kinds.exists(RetractingUpdate.contains)
@@ -118,8 +124,8 @@ object Acquire:
     */
   val BrowserDownloadTopic = "browser download"
 
-  def browserDownloadText(work: WorkRef, doi: com.histmersion.api.library.Doi, citekey: com.histmersion.api.library.Citekey, refusals: List[com.histmersion.api.library.Acquire.Refusal] = Nil): Option[com.histmersion.api.library.Acquire.Outcome] =
-    Option.when(((work.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true))) {
+  def browserDownloadText(work: WorkRef, doi: Doi, citekey: Citekey, refusals: List[Refusal] = Nil): Option[Outcome] =
+    Option.when(((work.isOa) == Source.Candidate.IsOa(true))) {
       val who = work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
       val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
       val title = work.title.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse((doi).value)
@@ -129,52 +135,52 @@ object Acquire:
         .filter(u => u.nonEmpty && !u.toLowerCase.contains((doi).value.toLowerCase))
         .fold("")(u => s" at $u")
       val said = refusals.map((_).value.trim).filter(_.nonEmpty).distinct.mkString("; ")
-      _root_.com.histmersion.api.library.Acquire.Outcome(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
+      Outcome(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
         s"it: download it in the browser${
             if said.isEmpty then "" else s" ($said)"
           }, then histmersion ingest <file> --citekey $citekey")
     }
 
-  def flagged(verdict: com.histmersion.api.library.Acquire.Verdicts.Wire): Boolean = (verdict == Verdicts.Retracted || verdict == Verdicts.Corrected)
+  def flagged(verdict: Verdicts.Wire): Boolean = (verdict == Verdicts.Retracted || verdict == Verdicts.Corrected)
 
-  def recommendation(verdict: com.histmersion.api.library.Acquire.Verdicts.Wire, citedByCount: Option[com.histmersion.api.library.Acquire.CitedByCount]): com.histmersion.api.library.Acquire.Recommendation =
+  def recommendation(verdict: Verdicts.Wire, citedByCount: Option[CitedByCount]): Recommendation =
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")
     verdict match
       case Verdicts.Retracted =>
-        _root_.com.histmersion.api.library.Acquire.Recommendation("EXCLUDE — a retraction, withdrawal or removal notice exists; set status=retracted and stop citing it")
+        Recommendation("EXCLUDE — a retraction, withdrawal or removal notice exists; set status=retracted and stop citing it")
       case Verdicts.Corrected =>
-        _root_.com.histmersion.api.library.Acquire.Recommendation("CHECK — an amendment (correction / erratum / expression of concern) exists; read it before relying on the paper")
-      case Verdicts.Current   => _root_.com.histmersion.api.library.Acquire.Recommendation(s"KEEP — $cited, no amendment on record")
-      case Verdicts.LowImpact => _root_.com.histmersion.api.library.Acquire.Recommendation(s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic")
-      case _                  => _root_.com.histmersion.api.library.Acquire.Recommendation(s"UNASSESSED — $cited; judge relevance to the topic by hand")
+        Recommendation("CHECK — an amendment (correction / erratum / expression of concern) exists; read it before relying on the paper")
+      case Verdicts.Current   => Recommendation(s"KEEP — $cited, no amendment on record")
+      case Verdicts.LowImpact => Recommendation(s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic")
+      case _                  => Recommendation(s"UNASSESSED — $cited; judge relevance to the topic by hand")
 
-  def statusFor(verdict: com.histmersion.api.library.Acquire.Verdicts.Wire): Option[com.histmersion.api.library.Source.Status] = verdict match
-    case Verdicts.Retracted => Some(com.histmersion.api.library.Source.Status.Retracted)
-    case Verdicts.Corrected => Some(com.histmersion.api.library.Source.Status.Contested)
-    case Verdicts.Current   => Some(com.histmersion.api.library.Source.Status.Current)
+  def statusFor(verdict: Verdicts.Wire): Option[Source.Status] = verdict match
+    case Verdicts.Retracted => Some(Source.Status.Retracted)
+    case Verdicts.Corrected => Some(Source.Status.Contested)
+    case Verdicts.Current   => Some(Source.Status.Current)
     case _                  => None
 
   def statusDecision(
-      verdict: com.histmersion.api.library.Acquire.Verdicts.Wire,
-      current: com.histmersion.api.library.Source.Status,
+      verdict: Verdicts.Wire,
+      current: Source.Status,
       force: Boolean
-  ): Option[Either[com.histmersion.api.library.Source.Status, com.histmersion.api.library.Source.Status]] =
+  ): Option[Either[Source.Status, Source.Status]] =
     statusFor(verdict).map { target =>
-      if target == com.histmersion.api.library.Source.Status.Retracted || force || current == com.histmersion.api.library.Source.Status.Unassessed || current == target
+      if target == Source.Status.Retracted || force || current == Source.Status.Unassessed || current == target
       then Right(target)
       else Left(current)
     }
 
   object EdgeKinds:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
     val Confirms = "confirms"
     val Challenges = "challenges"
     val Refutes = "refutes"
     val Supersedes = "supersedes"
     val Cites = "cites"
-    val all: List[com.histmersion.api.library.Acquire.EdgeKinds.Wire] = List(_root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(Confirms), _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(Challenges), _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(Refutes), _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(Supersedes), _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(Cites))
+    val all: List[Wire] = List(Wire(Confirms), Wire(Challenges), Wire(Refutes), Wire(Supersedes), Wire(Cites))
 
   private val RefutesCues = List(
     "refut",
@@ -221,13 +227,13 @@ object Acquire:
   )
 
   def classify(
-      intents: List[com.histmersion.api.library.Acquire.Intent.Wire],
-      contexts: List[com.histmersion.api.library.Acquire.CitationContext],
+      intents: List[Intent.Wire],
+      contexts: List[CitationContext],
       isInfluential: Boolean,
-      citingYear: Option[com.histmersion.api.catalogue.Year],
-      targetYear: Option[com.histmersion.api.catalogue.Year],
-      gapYears: com.histmersion.api.library.Acquire.YearGap = _root_.com.histmersion.api.library.Acquire.YearGap(5)
-  ): com.histmersion.api.library.Acquire.EdgeKinds.Wire =
+      citingYear: Option[Year],
+      targetYear: Option[Year],
+      gapYears: YearGap = YearGap(5)
+  ): EdgeKinds.Wire =
     val text = contexts.mkString(" ").toLowerCase
     val strong = intents.map((_).value.toLowerCase).exists(i => i == "result" || i == "methodology")
     val newer = (citingYear, targetYear) match
@@ -235,12 +241,12 @@ object Acquire:
       case _                  => false
     def has(cues: List[String]) = cues.exists(text.contains)
 
-    if has((RefutesCues).map(refactorValue7 => (refactorValue7))) then _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(EdgeKinds.Refutes)
-    else if has((SupersedeCues).map(refactorValue8 => (refactorValue8))) then _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(EdgeKinds.Supersedes)
-    else if ((isInfluential) == (true)) && strong && newer && has((ReviseCues).map(refactorValue2 => (refactorValue2))) then _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(EdgeKinds.Supersedes)
-    else if has((ChallengeCues).map(refactorValue4 => (refactorValue4))) then _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(EdgeKinds.Challenges)
-    else if has((ConfirmCues).map(refactorValue5 => (refactorValue5))) then _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(EdgeKinds.Confirms)
-    else _root_.com.histmersion.api.library.Acquire.EdgeKinds.Wire(EdgeKinds.Cites)
+    if has((RefutesCues).map(refactorValue7 => (refactorValue7))) then EdgeKinds.Wire(EdgeKinds.Refutes)
+    else if has((SupersedeCues).map(refactorValue8 => (refactorValue8))) then EdgeKinds.Wire(EdgeKinds.Supersedes)
+    else if ((isInfluential) == (true)) && strong && newer && has((ReviseCues).map(refactorValue2 => (refactorValue2))) then EdgeKinds.Wire(EdgeKinds.Supersedes)
+    else if has((ChallengeCues).map(refactorValue4 => (refactorValue4))) then EdgeKinds.Wire(EdgeKinds.Challenges)
+    else if has((ConfirmCues).map(refactorValue5 => (refactorValue5))) then EdgeKinds.Wire(EdgeKinds.Confirms)
+    else EdgeKinds.Wire(EdgeKinds.Cites)
 
   def rankFollowups(rows: List[FollowupRow]): List[FollowupRow] =
     rows.sortBy { r =>
@@ -248,10 +254,10 @@ object Acquire:
       (if (r.isInfluential).value then 0 else 1, if strong then 0 else 1, -r.year.fold(0L)(y => (y).value))
     }
 
-  final case class RetractionRow(doi: com.histmersion.api.library.Doi, reason: Option[RetractionRow.Reason], date: Option[RetractionRow.Date], nature: Option[RetractionRow.Nature])
+  final case class RetractionRow(doi: Doi, reason: Option[RetractionRow.Reason], date: Option[RetractionRow.Date], nature: Option[RetractionRow.Nature])
 
   object RetractionRow:
-    export com.histmersion.api.library.RetractionNotice.{Reason, Date, Nature}
+    export RetractionNotice.{Reason, Date, Nature}
 
   private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
@@ -291,86 +297,86 @@ object Acquire:
           idx.get(name).flatMap(r.lift).map(_.trim).filter(_.nonEmpty)
         rows.flatMap { r =>
           col(r, "OriginalPaperDOI").flatMap(normalizeDoi).map { doi =>
-            RetractionRow(_root_.com.histmersion.api.library.Doi(doi), col(r, "Reason").map(x => RetractionRow.Reason(x)), col(r, "RetractionDate").map(x => RetractionRow.Date(x)), col(r, "RetractionNature").map(x => RetractionRow.Nature(x)))
+            RetractionRow(Doi(doi), col(r, "Reason").map(x => RetractionRow.Reason(x)), col(r, "RetractionDate").map(x => RetractionRow.Date(x)), col(r, "RetractionNature").map(x => RetractionRow.Nature(x)))
           }
         }
 
   /** Retraction Watch writes dates as `MM/DD/YYYY 0:00`; Postgres wants `YYYY-MM-DD`. */
-  def rwDate(raw: Option[com.histmersion.api.library.Acquire.RetractionRow.Date]): Option[com.histmersion.api.library.Acquire.RetractionRow.Date] =
+  def rwDate(raw: Option[RetractionRow.Date]): Option[RetractionRow.Date] =
     raw.map((_).value.trim.takeWhile(_ != ' ')).flatMap { s =>
       s.split("[/-]").toList match
         case m :: d :: y :: Nil if y.length == 4 && m.forall(_.isDigit) && d.forall(_.isDigit) =>
-          Some(_root_.com.histmersion.api.library.Acquire.RetractionRow.Date(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d"))
+          Some(RetractionRow.Date(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d"))
         case y :: m :: d :: Nil if y.length == 4 && m.forall(_.isDigit) && d.forall(_.isDigit) =>
-          Some(_root_.com.histmersion.api.library.Acquire.RetractionRow.Date(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d"))
+          Some(RetractionRow.Date(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d"))
         case _ => None
     }
 
   object Checks:
 
-    final case class AcquireCheck(item: com.histmersion.api.automation.Queue.QueueItem.Id, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: com.histmersion.api.automation.Queue.QueueItem.Reason, checks: AcquireCheck.Checks = _root_.com.histmersion.api.library.Acquire.Checks.AcquireCheck.Checks(1))
+    final case class AcquireCheck(item: Queue.QueueItem.Id, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: Queue.QueueItem.Reason, checks: AcquireCheck.Checks = AcquireCheck.Checks(1))
         derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
     object AcquireCheck:
       type CheckedAt = CheckedAt.T
-      object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object CheckedAt extends RefinedType[String, Pure]
       type Outcome = Outcome.T
-      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Outcome extends RefinedType[String, Pure]
       type Checks = Checks.T
-      object Checks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Checks extends RefinedType[Int, Pure]
 
 
     final case class RecheckRequest(
-        dryRun: RecheckRequest.DryRun = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRequest.DryRun(false),
+        dryRun: RecheckRequest.DryRun = RecheckRequest.DryRun(false),
         limit: Option[RecheckRequest.Limit] = None,
         id: Option[RecheckRequest.Id] = None,
         by: Option[RecheckRequest.By] = None,
-        all: RecheckRequest.All = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRequest.All(false)
+        all: RecheckRequest.All = RecheckRequest.All(false)
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
     object RecheckRequest:
       type DryRun = DryRun.T
-      object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object DryRun extends RefinedType[Boolean, Pure]
       type Limit = Limit.T
-      object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Limit extends RefinedType[Int, Pure]
       type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Id extends RefinedType[Int, Pure]
       type By = By.T
-      object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object By extends RefinedType[String, Pure]
       type All = All.T
-      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object All extends RefinedType[Boolean, Pure]
 
 
     final case class RecheckRow(
         item: RecheckRow.Item,
-        doi: Option[com.histmersion.api.library.Doi] = None,
-        action: RecheckRow.Action = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRow.Action(""),
-        detail: RecheckRow.Detail = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRow.Detail(""),
-        citekey: Option[com.histmersion.api.library.Citekey] = None
+        doi: Option[Doi] = None,
+        action: RecheckRow.Action = RecheckRow.Action(""),
+        detail: RecheckRow.Detail = RecheckRow.Detail(""),
+        citekey: Option[Citekey] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
     object RecheckRow:
       type Item = Item.T
-      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Item extends RefinedType[Int, Pure]
       type Action = Action.T
-      object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Action extends RefinedType[String, Pure]
       type Detail = Detail.T
-      object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Detail extends RefinedType[String, Pure]
 
 
     final case class RecheckResult(
         dryRun: RecheckResult.DryRun,
-        open: RecheckResult.Open = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Open(0),
-        withDoi: RecheckResult.WithDoi = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.WithDoi(0),
-        due: RecheckResult.Due = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Due(0),
-        allowance: RecheckResult.Allowance = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Allowance(0),
-        closed: RecheckResult.Closed = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Closed(0),
-        fetched: RecheckResult.Fetched = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Fetched(0),
-        noCopy: RecheckResult.NoCopy = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.NoCopy(0),
-        failed: RecheckResult.Failed = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Failed(0),
+        open: RecheckResult.Open = RecheckResult.Open(0),
+        withDoi: RecheckResult.WithDoi = RecheckResult.WithDoi(0),
+        due: RecheckResult.Due = RecheckResult.Due(0),
+        allowance: RecheckResult.Allowance = RecheckResult.Allowance(0),
+        closed: RecheckResult.Closed = RecheckResult.Closed(0),
+        fetched: RecheckResult.Fetched = RecheckResult.Fetched(0),
+        noCopy: RecheckResult.NoCopy = RecheckResult.NoCopy(0),
+        failed: RecheckResult.Failed = RecheckResult.Failed(0),
         rows: List[RecheckRow] = Nil,
         note: Option[RecheckResult.Note] = None,
         job: Option[JobInfo] = None
@@ -379,32 +385,32 @@ object Acquire:
 
     object RecheckResult:
       type DryRun = DryRun.T
-      object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object DryRun extends RefinedType[Boolean, Pure]
       type Open = Open.T
-      object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Open extends RefinedType[Int, Pure]
       type WithDoi = WithDoi.T
-      object WithDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object WithDoi extends RefinedType[Int, Pure]
       type Due = Due.T
-      object Due extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Due extends RefinedType[Int, Pure]
       type Allowance = Allowance.T
-      object Allowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Allowance extends RefinedType[Int, Pure]
       type Closed = Closed.T
-      object Closed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Closed extends RefinedType[Int, Pure]
       type Fetched = Fetched.T
-      object Fetched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Fetched extends RefinedType[Int, Pure]
       type NoCopy = NoCopy.T
-      object NoCopy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object NoCopy extends RefinedType[Int, Pure]
       type Failed = Failed.T
-      object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Failed extends RefinedType[Int, Pure]
       type Note = Note.T
-      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Note extends RefinedType[String, Pure]
 
 
     final case class RecheckJob(
         all: RecheckJob.All,
-        upTo: RecheckJob.UpTo = _root_.com.histmersion.api.library.Acquire.Checks.RecheckJob.UpTo(0),
-        since: RecheckJob.Since = _root_.com.histmersion.api.library.Acquire.Checks.RecheckJob.Since(""),
-        by: RecheckJob.By = _root_.com.histmersion.api.library.Acquire.Checks.RecheckJob.By(""),
+        upTo: RecheckJob.UpTo = RecheckJob.UpTo(0),
+        since: RecheckJob.Since = RecheckJob.Since(""),
+        by: RecheckJob.By = RecheckJob.By(""),
         resumes: Option[RecheckJob.Resumes] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
@@ -414,35 +420,35 @@ object Acquire:
       /** A re-check job's plan, in its detail. */
 
       type All = All.T
-      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      export com.histmersion.api.Plural.{Count as UpTo}
+      object All extends RefinedType[Boolean, Pure]
+      export Plural.{Count as UpTo}
       type Since = Since.T
-      object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Since extends RefinedType[String, Pure]
       type By = By.T
-      object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object By extends RefinedType[String, Pure]
       type Resumes = Resumes.T
-      object Resumes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Resumes extends RefinedType[String, Pure]
 
-      val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[RecheckJob]] =
-        new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("recheck"), None)
+      val Detail: JobDetail.Field[Option[RecheckJob]] =
+        new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("recheck"), None)
 
-      val JobKind = com.histmersion.api.library.AcquisitionJobKinds.AcquireRecheck.kind.value
+      val JobKind = AcquisitionJobKinds.AcquireRecheck.kind.value
 
       def describe(j: RecheckJob): String =
         "the acquisition list's legal re-check of " +
-          (if (j.all).value then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, _root_.com.histmersion.api.Plural.CountSingular("due item"))}") +
+          (if (j.all).value then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, Plural.CountSingular("due item"))}") +
           j.resumes.fold("")(id => s" (resuming job $id)")
 
     final case class RecheckStatus(
         enabled: RecheckStatus.Enabled,
-        withDoi: RecheckStatus.WithDoi = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.WithDoi(0),
-        due: RecheckStatus.Due = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.Due(0),
-        triedToday: RecheckStatus.TriedToday = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.TriedToday(0),
-        perDay: RecheckStatus.PerDay = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.PerDay(0),
-        fetchedToday: RecheckStatus.FetchedToday = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.FetchedToday(0),
-        closedWeek: RecheckStatus.ClosedWeek = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.ClosedWeek(0),
-        fetchedWeek: RecheckStatus.FetchedWeek = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.FetchedWeek(0),
-        everyDays: RecheckStatus.EveryDays = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.EveryDays(0),
+        withDoi: RecheckStatus.WithDoi = RecheckStatus.WithDoi(0),
+        due: RecheckStatus.Due = RecheckStatus.Due(0),
+        triedToday: RecheckStatus.TriedToday = RecheckStatus.TriedToday(0),
+        perDay: RecheckStatus.PerDay = RecheckStatus.PerDay(0),
+        fetchedToday: RecheckStatus.FetchedToday = RecheckStatus.FetchedToday(0),
+        closedWeek: RecheckStatus.ClosedWeek = RecheckStatus.ClosedWeek(0),
+        fetchedWeek: RecheckStatus.FetchedWeek = RecheckStatus.FetchedWeek(0),
+        everyDays: RecheckStatus.EveryDays = RecheckStatus.EveryDays(0),
         nextPass: Option[RecheckStatus.NextPass] = None,
         note: Option[RecheckStatus.Note] = None,
         job: Option[RecheckStatus.Job] = None
@@ -451,27 +457,27 @@ object Acquire:
 
     object RecheckStatus:
       type Enabled = Enabled.T
-      object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Enabled extends RefinedType[Boolean, Pure]
       type WithDoi = WithDoi.T
-      object WithDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object WithDoi extends RefinedType[Int, Pure]
       type Due = Due.T
-      object Due extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Due extends RefinedType[Int, Pure]
       type TriedToday = TriedToday.T
-      object TriedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object TriedToday extends RefinedType[Int, Pure]
       type PerDay = PerDay.T
-      object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object PerDay extends RefinedType[Int, Pure]
       type FetchedToday = FetchedToday.T
-      object FetchedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object FetchedToday extends RefinedType[Int, Pure]
       type ClosedWeek = ClosedWeek.T
-      object ClosedWeek extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object ClosedWeek extends RefinedType[Int, Pure]
       type FetchedWeek = FetchedWeek.T
-      object FetchedWeek extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object FetchedWeek extends RefinedType[Int, Pure]
       type EveryDays = EveryDays.T
-      object EveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object EveryDays extends RefinedType[Int, Pure]
       type NextPass = NextPass.T
-      object NextPass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object NextPass extends RefinedType[String, Pure]
       type Note = Note.T
-      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Note extends RefinedType[String, Pure]
       export com.histmersion.api.SpatialHierarchyResult.Job.{Id as Job}
 
 

@@ -1,6 +1,9 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.{Ascii, WireEnumValues}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 enum MatchMethod:
   /** The same uid. */
@@ -20,9 +23,9 @@ enum MatchMethod:
 
 object MatchMethod:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
   given WireEnumValues[MatchMethod]:
-    def all: Array[MatchMethod] = MatchMethod.values
-    def wire(e: MatchMethod): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((Ascii.lower((e.toString))))
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+    def all: Array[MatchMethod] = values
+    def wire(e: MatchMethod): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
+    def fromWire(s: WireEnumValues.Wire): Option[MatchMethod] = values.find(_.toString.equalsIgnoreCase((s).value.trim))

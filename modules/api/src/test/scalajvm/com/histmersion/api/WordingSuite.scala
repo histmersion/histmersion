@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,6 +17,13 @@ import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Acquire
+import com.histmersion.api.basemap.BasemapJobKinds
+import com.histmersion.api.catalogue.EventsJobKinds
+import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.automation.PlanQuota
+import com.histmersion.api.automation.AgentScheduler
+import com.histmersion.api.automation.AgentMode
 
 /** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without
   * wording fails here, not in front of a reader.
@@ -49,14 +57,14 @@ class WordingSuite extends munit.FunSuite:
     RegisteredJobKinds.all.kinds.foreach(k => readable(Wording.jobKind(k), k.value))
     assertEquals(RegisteredJobKinds.all.kinds.map(_.value).distinct.length, RegisteredJobKinds.all.kinds.length)
     assertEquals(
-      Wording.jobKind(com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind),
+      Wording.jobKind(BasemapJobKinds.BasemapFetch.kind),
       "Download the background map"
     )
     assertEquals(
-      Wording.jobKind(com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind),
+      Wording.jobKind(EventsJobKinds.EventsImport.kind),
       "Import events"
     )
-    assertEquals(Wording.jobKind(com.histmersion.api.media.ImportJobKinds.MediaImport.kind), "Fetch pictures")
+    assertEquals(Wording.jobKind(ImportJobKinds.MediaImport.kind), "Fetch pictures")
     // the constants the api module names are registered kinds
     assertEquals(
       List(
@@ -67,7 +75,7 @@ class WordingSuite extends munit.FunSuite:
         Agents.JobKind,
         MergeApplyJob.JobKind,
         Acquire.Checks.RecheckJob.JobKind
-      ).filterNot(k => RegisteredJobKinds.all.parse(com.histmersion.api.jobs.JobKinds.Wire(k)).isDefined),
+      ).filterNot(k => RegisteredJobKinds.all.parse(JobKinds.Wire(k)).isDefined),
       Nil
     )
 
@@ -81,46 +89,46 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.runState(Run.State.WaitingApproval), "Waiting for a decision")
 
   test("allowance windows read as the limit they are"):
-    assertEquals(Wording.allowanceWindow(com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("seven_day")), "This week's limit")
-    assertEquals(Wording.allowanceWindow(com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("five_hour")), "5-hour limit")
-    assertEquals(Wording.allowanceWindow(com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("10080m")), "This week's limit")
-    assertEquals(Wording.allowanceWindow(com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("codex/300m")), "5-hour limit")
-    assertEquals(Wording.allowanceWindow(com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("seven_day_opus")), "This week's limit (Opus)")
-    assertEquals(Wording.allowanceWindow(com.histmersion.api.automation.PlanQuota.WindowStatus.Kind("90m")), "90-minute limit")
+    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("seven_day")), "This week's limit")
+    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("five_hour")), "5-hour limit")
+    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("10080m")), "This week's limit")
+    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("codex/300m")), "5-hour limit")
+    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("seven_day_opus")), "This week's limit (Opus)")
+    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("90m")), "90-minute limit")
 
   test("the scheduler, the agents' state and pools are plain words"):
-    assertEquals(Wording.strategies(com.histmersion.api.automation.AgentScheduler.StrategyLine.Name("type-balanced")), "Balance the kinds of work")
-    assertEquals(Wording.strategies(com.histmersion.api.automation.AgentScheduler.StrategyLine.Name("goal-first")), "One goal at a time")
-    assertEquals(Wording.pool(com.histmersion.api.automation.AgentScheduler.PoolUse.Pool("claude-plan")), "Claude plan")
-    assertEquals(Wording.pool(com.histmersion.api.automation.AgentScheduler.PoolUse.Pool("chatgpt-plan")), "ChatGPT plan")
-    assertEquals(Wording.agentsState(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(false)), "Agents: working")
+    assertEquals(Wording.strategies(AgentScheduler.StrategyLine.Name("type-balanced")), "Balance the kinds of work")
+    assertEquals(Wording.strategies(AgentScheduler.StrategyLine.Name("goal-first")), "One goal at a time")
+    assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("claude-plan")), "Claude plan")
+    assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("chatgpt-plan")), "ChatGPT plan")
+    assertEquals(Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On(true), draining = AgentMode.Step.Drain.On(false)), "Agents: working")
     assertEquals(
-      Wording.agentsState(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(true)),
+      Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On(true), draining = AgentMode.Step.Drain.On(true)),
       "Agents: finishing current work, then pausing"
     )
     assertEquals(Wording.Drain, "Finish current work, then pause")
-    val glance = UiNotices.AgentsGlance(running = com.histmersion.api.instance.UiNotices.AgentsGlance.Running(3), queued = com.histmersion.api.instance.UiNotices.AgentsGlance.Queued(12), on = com.histmersion.api.instance.UiNotices.AgentsGlance.On(true))
+    val glance = UiNotices.AgentsGlance(running = UiNotices.AgentsGlance.Running(3), queued = UiNotices.AgentsGlance.Queued(12), on = UiNotices.AgentsGlance.On(true))
     assertEquals(glance.wording, "Agents working · 3 runs")
-    assertEquals((glance.modify(_.running).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.Running(1))).wording, "Agents working · 1 run")
-    assertEquals((glance.modify(_.running).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.Running(0))).wording, "Agents working · 12 waiting")
-    assertEquals((glance.modify(_.running).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.Running(0)).modify(_.queued).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.Queued(0))).wording, "Agents on · nothing to do")
-    assertEquals((glance.modify(_.draining).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.Draining(true))).wording, "Agents finishing current work · 3 runs")
-    assertEquals((glance.modify(_.draining).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.Draining(true)).modify(_.running).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.Running(0))).wording, "Agents paused")
-    assertEquals((glance.modify(_.on).setTo(com.histmersion.api.instance.UiNotices.AgentsGlance.On(false))).wording, "Agents paused")
-    assertEquals(Wording.decisions(com.histmersion.api.Wording.Decisions.Open(0)), None)
-    assertEquals(Wording.decisions(com.histmersion.api.Wording.Decisions.Open(1)), Some("1 needs your decision"))
-    assertEquals(Wording.decisions(com.histmersion.api.Wording.Decisions.Open(2)), Some("2 need your decision"))
-    assertEquals(Wording.decisionsShort(com.histmersion.api.Wording.Decisions.Open(2)), "2 need you")
-    assertEquals(Wording.manager(com.histmersion.api.Wording.ManagerId("watch:bronze-age-collapse")), "Watch manager · Bronze age collapse")
-    assertEquals(Wording.manager(com.histmersion.api.Wording.ManagerId("review")), "Review manager")
-    assertEquals(Wording.plugin(com.histmersion.api.Wording.PluginId("ai-anthropic")), "AI provider: Anthropic")
-    assertEquals(Wording.plugin(com.histmersion.api.Wording.PluginId("keepassxc")), "KeePassXC")
-    assertEquals(Wording.plugin(com.histmersion.api.Wording.PluginId("oa-core")), "Open access: CORE")
+    assertEquals((glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(1))).wording, "Agents working · 1 run")
+    assertEquals((glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(0))).wording, "Agents working · 12 waiting")
+    assertEquals((glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(0)).modify(_.queued).setTo(UiNotices.AgentsGlance.Queued(0))).wording, "Agents on · nothing to do")
+    assertEquals((glance.modify(_.draining).setTo(UiNotices.AgentsGlance.Draining(true))).wording, "Agents finishing current work · 3 runs")
+    assertEquals((glance.modify(_.draining).setTo(UiNotices.AgentsGlance.Draining(true)).modify(_.running).setTo(UiNotices.AgentsGlance.Running(0))).wording, "Agents paused")
+    assertEquals((glance.modify(_.on).setTo(UiNotices.AgentsGlance.On(false))).wording, "Agents paused")
+    assertEquals(Wording.decisions(Wording.Decisions.Open(0)), None)
+    assertEquals(Wording.decisions(Wording.Decisions.Open(1)), Some("1 needs your decision"))
+    assertEquals(Wording.decisions(Wording.Decisions.Open(2)), Some("2 need your decision"))
+    assertEquals(Wording.decisionsShort(Wording.Decisions.Open(2)), "2 need you")
+    assertEquals(Wording.manager(Wording.ManagerId("watch:bronze-age-collapse")), "Watch manager · Bronze age collapse")
+    assertEquals(Wording.manager(Wording.ManagerId("review")), "Review manager")
+    assertEquals(Wording.plugin(Wording.PluginId("ai-anthropic")), "AI provider: Anthropic")
+    assertEquals(Wording.plugin(Wording.PluginId("keepassxc")), "KeePassXC")
+    assertEquals(Wording.plugin(Wording.PluginId("oa-core")), "Open access: CORE")
 
   test("an identifier the dictionary does not know is shown as words, never raw"):
-    assertEquals(UiLabels.label(com.histmersion.api.UiLabels.Key("some-new_kind")), "Some new kind")
-    assertEquals(UiLabels.label(com.histmersion.api.UiLabels.Key("review-article")), "Review an article")
-    assertEquals(Wording.humanize(com.histmersion.api.Wording.Id("watch:pie-origins")), "Watch: pie origins")
+    assertEquals(UiLabels.label(UiLabels.Key("some-new_kind")), "Some new kind")
+    assertEquals(UiLabels.label(UiLabels.Key("review-article")), "Review an article")
+    assertEquals(Wording.humanize(Wording.Id("watch:pie-origins")), "Watch: pie origins")
     assertEquals(Wording.heading("disputed-grand-theories"), "Disputed grand theories")
     assertEquals(Wording.heading("Indo-European origins"), "Indo-European origins")
     assertEquals(Wording.value("bronze_age_collapse"), "bronze age collapse")

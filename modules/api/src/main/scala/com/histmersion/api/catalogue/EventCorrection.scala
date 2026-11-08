@@ -1,5 +1,9 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object EventCorrection:
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]

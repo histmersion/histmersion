@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 /** Diacritic folding as a lookup table: this code is also compiled to Scala.js, which has no `java.text.Normalizer`.
   * The single-letter part was generated from Unicode NFD decompositions; the letters NFD does not decompose (`ß`, `æ`,
@@ -12,7 +13,7 @@ object LatinFold:
     inline def apply(v: String): String = v
   type FoldCharC = Char
 
-  private val Pairs: com.histmersion.api.LatinFold.Pairs =
+  private val Pairs: Pairs =
     // Latin-1 Supplement
     ("ÀAÁAÂAÃAÄAÅAÇCÈEÉEÊEËEÌIÍIÎIÏIÐDÑNÒOÓOÔOÕOÖOØOÙUÚUÛUÜUÝYàaáaâaãaäaåaçcèeéeêeëeìi" +
       "íiîiïiðdñnòoóoôoõoöoøoùuúuûuüuýyÿy" +
@@ -76,7 +77,7 @@ object LatinFold:
 
   private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
 
-  def foldChar(c: com.histmersion.api.LatinFold.FoldCharC): String =
+  def foldChar(c: FoldCharC): String =
     if ((isCombiningMark(c)) == (true)) then ("") else Table.getOrElse(((c)), c.toString)
 
   def fold(s: String): String =

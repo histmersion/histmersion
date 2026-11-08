@@ -1,10 +1,13 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.{HeaderNames, StatusCode}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object TilesApi:
 
@@ -19,7 +22,7 @@ object TilesApi:
       historicity: Option[TileQuery.Historicity] = None,
       context: Option[TileQuery.Context] = None,
       text: Option[TileQuery.Text] = None,
-      placeId: Option[com.histmersion.api.catalogue.Place.Id] = None,
+      placeId: Option[Place.Id] = None,
       siteType: Option[TileQuery.SiteType] = None,
       provider: Option[TileQuery.Provider] = None,
       license: Option[TileQuery.License] = None,
@@ -30,30 +33,30 @@ object TilesApi:
 
   object TileQuery:
 
-    export com.histmersion.api.catalogue.TileLayer.{Wire as Layer}
+    export TileLayer.{Wire as Layer}
     export com.histmersion.api.basemap.Basemap.{Zoom as Z}
     type X = X.T
-    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object X extends RefinedType[Long, Pure]
     type Y = Y.T
-    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Y extends RefinedType[Long, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Tier = Tier.T
-    object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Tier extends RefinedType[String, Pure]
     export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
     type Context = Context.T
-    object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.Api.Search.Text
+    object Context extends RefinedType[Boolean, Pure]
+    export Api.Search.Text
     type SiteType = SiteType.T
-    object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SiteType extends RefinedType[String, Pure]
     type Provider = Provider.T
-    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Provider extends RefinedType[String, Pure]
     type License = License.T
-    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object License extends RefinedType[String, Pure]
     type Undated = Undated.T
-    object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Undated extends RefinedType[Boolean, Pure]
     type IfNoneMatch = IfNoneMatch.T
-    object IfNoneMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object IfNoneMatch extends RefinedType[String, Pure]
 
   final case class TileAnswer(
       bytes: Api.FileBytes,
@@ -64,11 +67,11 @@ object TilesApi:
   )
 
   object TileAnswer:
-    export com.histmersion.api.Api.ContentType
+    export Api.ContentType
     type Etag = Etag.T
-    object Etag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Etag extends RefinedType[String, Pure]
     type CacheControl = CacheControl.T
-    object CacheControl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CacheControl extends RefinedType[String, Pure]
 
   val ContentType = "application/vnd.mapbox-vector-tile"
 
@@ -87,7 +90,7 @@ object TilesApi:
       .in(query[Option[String]]("license"))
       .in(query[Option[Boolean]]("undated"))
       .in(header[Option[String]](HeaderNames.IfNoneMatch))
-      .mapIn { case (layer, z, x, y, filter, kind, tier, historicity, context, text, placeId, siteType, provider, license, undated, ifNoneMatch) => TileQuery(TileQuery.Layer(layer), TileQuery.Z(z), TileQuery.X(x), TileQuery.Y(y), filter, kind.map(TileQuery.Kind(_)), tier.map(TileQuery.Tier(_)), historicity.map(TileQuery.Historicity(_)), context.map(TileQuery.Context(_)), text.map(TileQuery.Text(_)), placeId.map(com.histmersion.api.catalogue.Place.Id(_)), siteType.map(TileQuery.SiteType(_)), provider.map(TileQuery.Provider(_)), license.map(TileQuery.License(_)), undated.map(TileQuery.Undated(_)), ifNoneMatch.map(TileQuery.IfNoneMatch(_))) }(v => (v.layer.value, v.z.value, v.x.value, v.y.value, v.filter, v.kind.map(_.value), v.tier.map(_.value), v.historicity.map(_.value), v.context.map(_.value), v.text.map(_.value), v.placeId.map(_.value), v.siteType.map(_.value), v.provider.map(_.value), v.license.map(_.value), v.undated.map(_.value), v.ifNoneMatch.map(_.value)))
+      .mapIn { case (layer, z, x, y, filter, kind, tier, historicity, context, text, placeId, siteType, provider, license, undated, ifNoneMatch) => TileQuery(TileQuery.Layer(layer), TileQuery.Z(z), TileQuery.X(x), TileQuery.Y(y), filter, kind.map(TileQuery.Kind(_)), tier.map(TileQuery.Tier(_)), historicity.map(TileQuery.Historicity(_)), context.map(TileQuery.Context(_)), text.map(TileQuery.Text(_)), placeId.map(Place.Id(_)), siteType.map(TileQuery.SiteType(_)), provider.map(TileQuery.Provider(_)), license.map(TileQuery.License(_)), undated.map(TileQuery.Undated(_)), ifNoneMatch.map(TileQuery.IfNoneMatch(_))) }(v => (v.layer.value, v.z.value, v.x.value, v.y.value, v.filter, v.kind.map(_.value), v.tier.map(_.value), v.historicity.map(_.value), v.context.map(_.value), v.text.map(_.value), v.placeId.map(_.value), v.siteType.map(_.value), v.provider.map(_.value), v.license.map(_.value), v.undated.map(_.value), v.ifNoneMatch.map(_.value)))
       .errorOut(statusCode(StatusCode.BadRequest))
       .errorOut(jsonBody[Api.Error])
       .out(

@@ -1,22 +1,25 @@
-package com.histmersion.api
+package com.histmersion
+package api
+
+import com.histmersion.api.catalogue.Year
 
 object YearFmt:
 
   export com.histmersion.api.catalogue.{Year as OpenPeriodStart, Year as OpenPeriodEnd}
 
-  def apply(v: com.histmersion.api.catalogue.Year): String =
+  def apply(v: Year): String =
     if (v).value < 0 then (s"${-(v).value} BCE")
     else if (v).value == 0 then ("1 BCE") // no year zero in historical reckoning
     else (s"$v CE")
 
-  def apply(v: Option[com.histmersion.api.catalogue.Year]): String = v.fold("?")(apply)
+  def apply(v: Option[Year]): String = v.fold("?")(apply)
 
-  def period(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year]): String =
+  def period(start: Option[Year], end: Option[Year]): String =
     (start, end) match
       case (Some(a), Some(b)) => if a == b then apply(a) else s"${apply(a)}–${apply(b)}"
       case _                  => ("")
 
-  def openPeriod(start: Option[com.histmersion.api.YearFmt.OpenPeriodStart], end: Option[com.histmersion.api.YearFmt.OpenPeriodEnd], none: String = ("undated")): String =
+  def openPeriod(start: Option[YearFmt.OpenPeriodStart], end: Option[YearFmt.OpenPeriodEnd], none: String = ("undated")): String =
     (start, end) match
       case (Some(_), Some(_)) => ((period(start, end)))
       case (Some(a), None)    => s"from ${apply(a)}"
@@ -24,7 +27,7 @@ object YearFmt:
       case (None, None)       => ((none))
 
   def span(ts: TimeSpan): String =
-    ts.outer.fold("undated")((a, b) => period(Some(_root_.com.histmersion.api.catalogue.Year(a.value)), Some(_root_.com.histmersion.api.catalogue.Year(b.value))))
+    ts.outer.fold("undated")((a, b) => period(Some(Year(a.value)), Some(Year(b.value))))
 
   def spanLong(ts: TimeSpan): String =
     val parts = List(

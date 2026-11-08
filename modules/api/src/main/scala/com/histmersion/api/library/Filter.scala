@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
@@ -7,6 +8,12 @@ import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.research.ReviewGoal
 
 final case class Filter(
     q: Option[Filter.Q] = None,
@@ -19,8 +26,8 @@ final case class Filter(
     period: Option[Period] = None,
     bbox: Option[BBox] = None,
     sort: Sort = Sort.Relevance,
-    limit: Filter.Limit = _root_.com.histmersion.api.library.Filter.Limit(0),
-    offset: Filter.Offset = _root_.com.histmersion.api.library.Filter.Offset(0),
+    limit: Filter.Limit = Filter.Limit(0),
+    offset: Filter.Offset = Filter.Offset(0),
     title: Option[Filter.Title] = None,
     goal: Option[Filter.Goal] = None
 ) derives KindlingsCodecAsObject,
@@ -37,84 +44,84 @@ final case class Filter(
 
 object Filter:
   type Last = Last.T
-  object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Last extends RefinedType[String, Pure]
   type YearFrom = YearFrom.T
-  object YearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearFrom extends RefinedType[Long, Pure]
   type YearTo = YearTo.T
-  object YearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object YearTo extends RefinedType[Long, Pure]
 
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
 
   type Q = Q.T
-  object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Q extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Authors extends RefinedType[String, Pure]
   type Places = Places.T
-  object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Places extends RefinedType[String, Pure]
   type Topics = Topics.T
-  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topics extends RefinedType[String, Pure]
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type Offset = Offset.T
-  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Offset extends RefinedType[Int, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
 
-  val Earliest: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(-1000000000L)
-  val Latest: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(1000000000L)
+  val Earliest: Year = Year(-1000000000L)
+  val Latest: Year = Year(1000000000L)
 
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.
     */
-  def clamp(v: com.histmersion.api.catalogue.Year): com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(math.max(Earliest.value, math.min(Latest.value, v.value)))
+  def clamp(v: Year): Year = Year(math.max(Earliest.value, math.min(Latest.value, v.value)))
 
-  def periodOf(from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year]): Option[Period] =
+  def periodOf(from: Option[Year], to: Option[Year]): Option[Period] =
     (from.map(clamp), to.map(clamp)) match
       case (None, None)       => None
       case (Some(a), Some(b)) => Some(if a.value <= b.value then Period(a, b) else Period(b, a))
       case (Some(a), None)    => Some(Period(a, Latest))
       case (None, Some(b))    => Some(Period(Earliest, b))
 
-  def lowerGiven(p: Option[Period]): Option[com.histmersion.api.catalogue.Year] = p.map(_.start).filter(_ != Earliest)
+  def lowerGiven(p: Option[Period]): Option[Year] = p.map(_.start).filter(_ != Earliest)
 
-  def upperGiven(p: Option[Period]): Option[com.histmersion.api.catalogue.Year] = p.map(_.end).filter(_ != Latest)
+  def upperGiven(p: Option[Period]): Option[Year] = p.map(_.end).filter(_ != Latest)
 
   def bboxOf(
-      minLon: Option[com.histmersion.api.catalogue.Longitude],
-      minLat: Option[com.histmersion.api.catalogue.Latitude],
-      maxLon: Option[com.histmersion.api.catalogue.Longitude],
-      maxLat: Option[com.histmersion.api.catalogue.Latitude]
+      minLon: Option[Longitude],
+      minLat: Option[Latitude],
+      maxLon: Option[Longitude],
+      maxLat: Option[Latitude]
   ): Option[BBox] =
     (minLon, minLat, maxLon, maxLat) match
       case (Some(a), Some(b), Some(c), Some(d)) => Some(BBox(a, b, c, d))
       case _                                    => None
 
   def of(
-      q: Option[com.histmersion.api.library.Filter.Q] = None,
-      tags: List[com.histmersion.api.library.Filter.Tags] = Nil,
-      authors: List[com.histmersion.api.library.Filter.Authors] = Nil,
-      places: List[com.histmersion.api.library.Filter.Places] = Nil,
-      topics: List[com.histmersion.api.library.Filter.Topics] = Nil,
-      status: List[com.histmersion.api.library.Filter.Status] = Nil,
-      yearFrom: Option[com.histmersion.api.catalogue.Year] = None,
-      yearTo: Option[com.histmersion.api.catalogue.Year] = None,
-      from: Option[com.histmersion.api.catalogue.Year] = None,
-      to: Option[com.histmersion.api.catalogue.Year] = None,
-      minLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      minLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      maxLon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      maxLat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      sort: Option[com.histmersion.api.library.Sort.Wire] = None,
-      limit: Option[com.histmersion.api.library.Filter.Limit] = None,
-      offset: Option[com.histmersion.api.library.Filter.Offset] = None,
-      title: Option[com.histmersion.api.library.Filter.Title] = None,
-      goal: Option[com.histmersion.api.research.ReviewGoal.Slug] = None
+      q: Option[Q] = None,
+      tags: List[Tags] = Nil,
+      authors: List[Authors] = Nil,
+      places: List[Places] = Nil,
+      topics: List[Topics] = Nil,
+      status: List[Status] = Nil,
+      yearFrom: Option[Year] = None,
+      yearTo: Option[Year] = None,
+      from: Option[Year] = None,
+      to: Option[Year] = None,
+      minLon: Option[Longitude] = None,
+      minLat: Option[Latitude] = None,
+      maxLon: Option[Longitude] = None,
+      maxLat: Option[Latitude] = None,
+      sort: Option[Sort.Wire] = None,
+      limit: Option[Limit] = None,
+      offset: Option[Offset] = None,
+      title: Option[Title] = None,
+      goal: Option[ReviewGoal.Slug] = None
   ): Filter =
     def clean[A](xs: List[A])(unwrap: A => String)(wrap: String => A): List[A] =
       xs.flatMap(x => unwrap(x).split(",")).map(_.trim).filter(_.nonEmpty).map(wrap)
@@ -141,76 +148,76 @@ object Filter:
 
     object Param:
       type Rest = Rest.T
-      object Rest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Rest extends RefinedType[String, Pure]
       type Mcp = Mcp.T
-      object Mcp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Mcp extends RefinedType[String, Pure]
       type Doc = Doc.T
-      object Doc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Doc extends RefinedType[String, Pure]
       type Brief = Brief.T
-      object Brief extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Brief extends RefinedType[String, Pure]
 
     val query = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("q"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("query"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Full text (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or), evaluated within one ~4 000-char chunk"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Free text: words AND-ed, \"a phrase\", -word, or")
+      Param.Rest("q"),
+      Param.Mcp("query"),
+      Param.Doc("Full text (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or), evaluated within one ~4 000-char chunk"),
+      Param.Brief("Free text: words AND-ed, \"a phrase\", -word, or")
     )
     val tags = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("tag"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("tags"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ALL required — every tag must be present on the source or one of its findings"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Every one required")
+      Param.Rest("tag"),
+      Param.Mcp("tags"),
+      Param.Doc("ALL required — every tag must be present on the source or one of its findings"),
+      Param.Brief("Every one required")
     )
     val authors = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("author"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("authors"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ANY matches — a case-insensitive substring of an author's name"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Any one, a substring of an author's name")
+      Param.Rest("author"),
+      Param.Mcp("authors"),
+      Param.Doc("ANY matches — a case-insensitive substring of an author's name"),
+      Param.Brief("Any one, a substring of an author's name")
     )
     val places = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("place"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("places"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Any one, a place id or name")
+      Param.Rest("place"),
+      Param.Mcp("places"),
+      Param.Doc("ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text"),
+      Param.Brief("Any one, a place id or name")
     )
     val topics =
-      Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("topic"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("topics"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ALL required — every topic must be present on the source"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Every one required"))
+      Param(Param.Rest("topic"), Param.Mcp("topics"), Param.Doc("ALL required — every topic must be present on the source"), Param.Brief("Every one required"))
     val status = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("status"),
+      Param.Rest("status"),
       _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("status"),
       _root_.com.histmersion.api.library.Filter.Docs.Param.Doc(s"ANY matches — ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}"),
       _root_.com.histmersion.api.library.Filter.Docs.Param.Brief(s"Any of ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}")
     )
-    val yearFrom = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("yearFrom"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("yearFrom"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Earliest publication year (inclusive)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Earliest publication year"))
-    val yearTo = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("yearTo"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("yearTo"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Latest publication year (inclusive)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Latest publication year"))
+    val yearFrom = Param(Param.Rest("yearFrom"), Param.Mcp("yearFrom"), Param.Doc("Earliest publication year (inclusive)"), Param.Brief("Earliest publication year"))
+    val yearTo = Param(Param.Rest("yearTo"), Param.Mcp("yearTo"), Param.Doc("Latest publication year (inclusive)"), Param.Brief("Latest publication year"))
     val from = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("from"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("from"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Period start, a signed year (BCE negative)")
+      Param.Rest("from"),
+      Param.Mcp("from"),
+      Param.Doc("Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)"),
+      Param.Brief("Period start, a signed year (BCE negative)")
     )
-    val to = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("to"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("to"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Deep-time end, a signed year (BCE negative)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Period end, a signed year"))
+    val to = Param(Param.Rest("to"), Param.Mcp("to"), Param.Doc("Deep-time end, a signed year (BCE negative)"), Param.Brief("Period end, a signed year"))
     val minLon = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("minLon"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("minLon"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: west longitude (a west above the east crosses the antimeridian)"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: west longitude")
+      Param.Rest("minLon"),
+      Param.Mcp("minLon"),
+      Param.Doc("Bounding box: west longitude (a west above the east crosses the antimeridian)"),
+      Param.Brief("Box: west longitude")
     )
-    val minLat = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("minLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("minLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: south latitude"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: south latitude"))
-    val maxLon = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("maxLon"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("maxLon"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: east longitude"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: east longitude"))
-    val maxLat = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("maxLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("maxLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: north latitude"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: north latitude"))
-    val sort = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("sort"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("sort"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc(s"Ordering: ${Sort.all.mkString("|")}"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief(Sort.all.mkString("|")))
+    val minLat = Param(Param.Rest("minLat"), Param.Mcp("minLat"), Param.Doc("Bounding box: south latitude"), Param.Brief("Box: south latitude"))
+    val maxLon = Param(Param.Rest("maxLon"), Param.Mcp("maxLon"), Param.Doc("Bounding box: east longitude"), Param.Brief("Box: east longitude"))
+    val maxLat = Param(Param.Rest("maxLat"), Param.Mcp("maxLat"), Param.Doc("Bounding box: north latitude"), Param.Brief("Box: north latitude"))
+    val sort = Param(Param.Rest("sort"), Param.Mcp("sort"), Param.Doc(s"Ordering: ${Sort.all.mkString("|")}"), Param.Brief(Sort.all.mkString("|")))
     val limit =
-      Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("limit"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("limit"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Results per page (default: the configured page size, at most 500)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Results per page"))
+      Param(Param.Rest("limit"), Param.Mcp("limit"), Param.Doc("Results per page (default: the configured page size, at most 500)"), Param.Brief("Results per page"))
     val offset = Param(
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("offset"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("offset"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)"),
-      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("The next page's offset, from the listing's footer")
+      Param.Rest("offset"),
+      Param.Mcp("offset"),
+      Param.Doc("Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)"),
+      Param.Brief("The next page's offset, from the listing's footer")
     )
     val title =
-      Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("title"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("title"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Case-insensitive substring of the listed item's title"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("A substring of the title"))
-    val goal = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("goal"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("goal"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Only the sources a research goal links (its slug)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("A research goal's slug"))
+      Param(Param.Rest("title"), Param.Mcp("title"), Param.Doc("Case-insensitive substring of the listed item's title"), Param.Brief("A substring of the title"))
+    val goal = Param(Param.Rest("goal"), Param.Mcp("goal"), Param.Doc("Only the sources a research goal links (its slug)"), Param.Brief("A research goal's slug"))
 
     val all: List[Param] =
       List(
@@ -246,28 +253,28 @@ object Filter:
     * parameters.
     */
   final case class Query(
-      q: Option[com.histmersion.api.library.Filter.Q],
-      tag: List[com.histmersion.api.library.Filter.Tags],
-      author: List[com.histmersion.api.library.Filter.Authors],
-      place: List[com.histmersion.api.library.Filter.Places],
-      topic: List[com.histmersion.api.library.Filter.Topics],
-      status: List[com.histmersion.api.library.Filter.Status],
-      yearFrom: Option[com.histmersion.api.catalogue.Year],
-      yearTo: Option[com.histmersion.api.catalogue.Year],
-      from: Option[com.histmersion.api.catalogue.Year],
-      to: Option[com.histmersion.api.catalogue.Year],
-      minLon: Option[com.histmersion.api.catalogue.Longitude],
-      minLat: Option[com.histmersion.api.catalogue.Latitude],
-      maxLon: Option[com.histmersion.api.catalogue.Longitude],
-      maxLat: Option[com.histmersion.api.catalogue.Latitude],
-      sort: Option[com.histmersion.api.library.Sort.Wire],
-      limit: Option[com.histmersion.api.library.Filter.Limit],
-      offset: Option[com.histmersion.api.library.Filter.Offset],
-      title: Option[com.histmersion.api.library.Filter.Title] = None,
-      goal: Option[com.histmersion.api.research.ReviewGoal.Slug] = None
+      q: Option[Q],
+      tag: List[Tags],
+      author: List[Authors],
+      place: List[Places],
+      topic: List[Topics],
+      status: List[Status],
+      yearFrom: Option[Year],
+      yearTo: Option[Year],
+      from: Option[Year],
+      to: Option[Year],
+      minLon: Option[Longitude],
+      minLat: Option[Latitude],
+      maxLon: Option[Longitude],
+      maxLat: Option[Latitude],
+      sort: Option[Sort.Wire],
+      limit: Option[Limit],
+      offset: Option[Offset],
+      title: Option[Title] = None,
+      goal: Option[ReviewGoal.Slug] = None
   ):
     def toFilter: Filter =
-      Filter.of(
+      of(
         q,
         tag,
         author,
@@ -291,8 +298,8 @@ object Filter:
 
   object Query:
     def from(f: Filter): Query =
-      def lo(p: Option[Period]) = Filter.lowerGiven(p)
-      def hi(p: Option[Period]) = Filter.upperGiven(p)
+      def lo(p: Option[Period]) = lowerGiven(p)
+      def hi(p: Option[Period]) = upperGiven(p)
       Query(
         q = f.q,
         tag = f.tags,

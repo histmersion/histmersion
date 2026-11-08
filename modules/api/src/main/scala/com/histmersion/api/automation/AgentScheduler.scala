@@ -1,20 +1,24 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.jobs.JobKinds
 
 object AgentScheduler:
 
 
-  final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = _root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe("")) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe("")) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object StrategyLine:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Describe = Describe.T
-    object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Describe extends RefinedType[String, Pure]
 
 
   final case class Started(
@@ -23,24 +27,24 @@ object AgentScheduler:
       kind: Started.Kind,
       jobType: Started.JobType,
       target: Started.Target,
-      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
-      why: Started.Why = _root_.com.histmersion.api.automation.AgentScheduler.Started.Why("")
+      goal: Option[Goal.Slug] = None,
+      why: Started.Why = Started.Why("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Started:
     type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Item extends RefinedType[Long, Pure]
     type Manager = Manager.T
-    object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Manager extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type JobType = com.histmersion.api.jobs.JobKinds.Wire
-    val JobType: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
+    object Kind extends RefinedType[String, Pure]
+    type JobType = JobKinds.Wire
+    val JobType: JobKinds.Wire.type = JobKinds.Wire
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
 
   final case class Waiting(
@@ -49,91 +53,91 @@ object AgentScheduler:
       kind: Waiting.Kind,
       jobType: Waiting.JobType,
       target: Waiting.Target,
-      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
-      priority: Waiting.Priority = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Priority(0),
-      waitedMinutes: Waiting.WaitedMinutes = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes((0).toLong),
-      code: Waiting.Code = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(""),
-      why: Waiting.Why = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Why(""),
+      goal: Option[Goal.Slug] = None,
+      priority: Waiting.Priority = Waiting.Priority(0),
+      waitedMinutes: Waiting.WaitedMinutes = Waiting.WaitedMinutes((0).toLong),
+      code: Waiting.Code = Waiting.Code(""),
+      why: Waiting.Why = Waiting.Why(""),
       behind: List[Waiting.Behind] = Nil,
-      position: Waiting.Position = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Position(0)
+      position: Waiting.Position = Waiting.Position(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Waiting:
     type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Item extends RefinedType[Long, Pure]
     type Manager = Manager.T
-    object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Manager extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type JobType = com.histmersion.api.jobs.JobKinds.Wire
-    val JobType: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
+    object Kind extends RefinedType[String, Pure]
+    type JobType = JobKinds.Wire
+    val JobType: JobKinds.Wire.type = JobKinds.Wire
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Priority = Priority.T
-    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Priority extends RefinedType[Int, Pure]
     type WaitedMinutes = WaitedMinutes.T
-    object WaitedMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WaitedMinutes extends RefinedType[Long, Pure]
     type Code = Code.T
-    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Code extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
     type Behind = Behind.T
-    object Behind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Behind extends RefinedType[String, Pure]
     type Position = Position.T
-    object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Position extends RefinedType[Int, Pure]
 
 
-  final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = _root_.com.histmersion.api.automation.AgentScheduler.PoolUse.Used(0), cap: PoolUse.Cap = _root_.com.histmersion.api.automation.AgentScheduler.PoolUse.Cap(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = PoolUse.Used(0), cap: PoolUse.Cap = PoolUse.Cap(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolUse:
     type Pool = Pool.T
-    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pool extends RefinedType[String, Pure]
     type Used = Used.T
-    object Used extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Used extends RefinedType[Int, Pure]
     type Cap = Cap.T
-    object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Cap extends RefinedType[Int, Pure]
 
 
   final case class TypeLine(
       jobType: TypeLine.JobType,
-      label: TypeLine.Label = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Label(""),
-      weight: TypeLine.Weight = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Weight(0),
-      priority: TypeLine.Priority = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Priority(0),
-      recent: TypeLine.Recent = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Recent(0),
-      waiting: TypeLine.Waiting = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Waiting(0)
+      label: TypeLine.Label = TypeLine.Label(""),
+      weight: TypeLine.Weight = TypeLine.Weight(0),
+      priority: TypeLine.Priority = TypeLine.Priority(0),
+      recent: TypeLine.Recent = TypeLine.Recent(0),
+      waiting: TypeLine.Waiting = TypeLine.Waiting(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object TypeLine:
-    type JobType = com.histmersion.api.jobs.JobKinds.Wire
-    val JobType: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
+    type JobType = JobKinds.Wire
+    val JobType: JobKinds.Wire.type = JobKinds.Wire
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Weight = Weight.T
-    object Weight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Weight extends RefinedType[Int, Pure]
     type Priority = Priority.T
-    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Priority extends RefinedType[Int, Pure]
     type Recent = Recent.T
-    object Recent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Recent extends RefinedType[Int, Pure]
     type Waiting = Waiting.T
-    object Waiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Waiting extends RefinedType[Int, Pure]
 
 
   final case class SchedulerStatus(
       strategy: SchedulerStatus.Strategy,
-      strategyFrom: SchedulerStatus.StrategyFrom = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("config"),
+      strategyFrom: SchedulerStatus.StrategyFrom = SchedulerStatus.StrategyFrom("config"),
       strategies: List[StrategyLine] = Nil,
       at: Option[SchedulerStatus.At] = None,
-      dry: SchedulerStatus.Dry = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry(false),
-      maxRuns: SchedulerStatus.MaxRuns = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.MaxRuns(0),
-      occupied: SchedulerStatus.Occupied = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Occupied(0),
+      dry: SchedulerStatus.Dry = SchedulerStatus.Dry(false),
+      maxRuns: SchedulerStatus.MaxRuns = SchedulerStatus.MaxRuns(0),
+      occupied: SchedulerStatus.Occupied = SchedulerStatus.Occupied(0),
       pools: List[PoolUse] = Nil,
       types: List[TypeLine] = Nil,
       started: List[Started] = Nil,
       waiting: List[Waiting] = Nil,
-      waitingTotal: SchedulerStatus.WaitingTotal = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.WaitingTotal(0),
-      forPerson: SchedulerStatus.ForPerson = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.ForPerson(0),
+      waitingTotal: SchedulerStatus.WaitingTotal = SchedulerStatus.WaitingTotal(0),
+      forPerson: SchedulerStatus.ForPerson = SchedulerStatus.ForPerson(0),
       stop: Option[SchedulerStatus.Stop] = None,
       settings: List[SchedulerStatus.Settings] = Nil,
       changes: List[SchedulerStatus.Changes] = Nil
@@ -142,27 +146,27 @@ object AgentScheduler:
 
   object SchedulerStatus:
     type Strategy = Strategy.T
-    object Strategy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strategy extends RefinedType[String, Pure]
     type StrategyFrom = StrategyFrom.T
-    object StrategyFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StrategyFrom extends RefinedType[String, Pure]
     type At = At.T
-    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object At extends RefinedType[String, Pure]
     type Dry = Dry.T
-    object Dry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Dry extends RefinedType[Boolean, Pure]
     type MaxRuns = MaxRuns.T
-    object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxRuns extends RefinedType[Int, Pure]
     type Occupied = Occupied.T
-    object Occupied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Occupied extends RefinedType[Int, Pure]
     type WaitingTotal = WaitingTotal.T
-    object WaitingTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WaitingTotal extends RefinedType[Int, Pure]
     type ForPerson = ForPerson.T
-    object ForPerson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ForPerson extends RefinedType[Int, Pure]
     type Stop = Stop.T
-    object Stop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Stop extends RefinedType[String, Pure]
     type Settings = Settings.T
-    object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Settings extends RefinedType[String, Pure]
     type Changes = Changes.T
-    object Changes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Changes extends RefinedType[String, Pure]
 
 
   final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
@@ -171,21 +175,21 @@ object AgentScheduler:
 
   object SchedulerSet:
     type Strategy = Strategy.T
-    object Strategy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strategy extends RefinedType[String, Pure]
     type By = By.T
-    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object By extends RefinedType[String, Pure]
 
 
   final case class WhyInfo(
       item: WhyInfo.Item,
-      manager: WhyInfo.Manager = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Manager(""),
-      kind: WhyInfo.Kind = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Kind(""),
-      target: WhyInfo.Target = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Target(""),
-      status: WhyInfo.Status = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Status(""),
-      code: WhyInfo.Code = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Code(""),
-      why: WhyInfo.Why = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Why(""),
+      manager: WhyInfo.Manager = WhyInfo.Manager(""),
+      kind: WhyInfo.Kind = WhyInfo.Kind(""),
+      target: WhyInfo.Target = WhyInfo.Target(""),
+      status: WhyInfo.Status = WhyInfo.Status(""),
+      code: WhyInfo.Code = WhyInfo.Code(""),
+      why: WhyInfo.Why = WhyInfo.Why(""),
       behind: List[WhyInfo.Behind] = Nil,
-      position: WhyInfo.Position = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Position(0),
+      position: WhyInfo.Position = WhyInfo.Position(0),
       run: Option[WhyInfo.Run] = None,
       approval: Option[WhyInfo.Approval] = None
   ) derives KindlingsCodecAsObject,
@@ -193,27 +197,27 @@ object AgentScheduler:
 
   object WhyInfo:
     type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Item extends RefinedType[Long, Pure]
     type Manager = Manager.T
-    object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Manager extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Status extends RefinedType[String, Pure]
     type Code = Code.T
-    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Code extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
     type Behind = Behind.T
-    object Behind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Behind extends RefinedType[String, Pure]
     type Position = Position.T
-    object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Position extends RefinedType[Int, Pure]
     type Run = Run.T
-    object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Run extends RefinedType[String, Pure]
     type Approval = Approval.T
-    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Approval extends RefinedType[Long, Pure]
 
 
   object Code:
@@ -225,18 +229,18 @@ object AgentScheduler:
     val Paused = "paused"
 
   /** What a scheduler's wait code means, as the managers' view says it. */
-  val waitCodes: Map[com.histmersion.api.automation.AgentScheduler.Waiting.Code, String] = Map(
-    { val refactorTuple14 = "capacity" -> "No free place"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple14._1), (refactorTuple14._2)) },
-    { val refactorTuple15 = "pool" -> "Plan is full"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple15._1), (refactorTuple15._2)) },
-    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple3._1), (refactorTuple3._2)) },
-    { val refactorTuple4 = "blocked" -> "Blocked"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple4._1), (refactorTuple4._2)) },
-    { val refactorTuple5 = "busy" -> "Busy"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple5._1), (refactorTuple5._2)) },
-    { val refactorTuple6 = "budget" -> "Spending cap reached"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple6._1), (refactorTuple6._2)) },
-    { val refactorTuple7 = "drain" -> "Finishing current work, then pausing"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple7._1), (refactorTuple7._2)) },
-    { val refactorTuple21 = Code.Person -> "Needs your decision"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple21._1), (refactorTuple21._2)) },
-    { val refactorTuple22 = Code.Held -> "Held by a person"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple22._1), (refactorTuple22._2)) },
-    { val refactorTuple23 = Code.NotDue -> "Not due yet"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple23._1), (refactorTuple23._2)) },
-    { val refactorTuple11 = Code.Running -> "Running"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple11._1), (refactorTuple11._2)) },
-    { val refactorTuple12 = Code.Settled -> "Settled"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple12._1), (refactorTuple12._2)) },
-    { val refactorTuple13 = Code.Paused -> "Paused"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple13._1), (refactorTuple13._2)) }
+  val waitCodes: Map[Waiting.Code, String] = Map(
+    { val refactorTuple14 = "capacity" -> "No free place"; (Waiting.Code(refactorTuple14._1), (refactorTuple14._2)) },
+    { val refactorTuple15 = "pool" -> "Plan is full"; (Waiting.Code(refactorTuple15._1), (refactorTuple15._2)) },
+    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (Waiting.Code(refactorTuple3._1), (refactorTuple3._2)) },
+    { val refactorTuple4 = "blocked" -> "Blocked"; (Waiting.Code(refactorTuple4._1), (refactorTuple4._2)) },
+    { val refactorTuple5 = "busy" -> "Busy"; (Waiting.Code(refactorTuple5._1), (refactorTuple5._2)) },
+    { val refactorTuple6 = "budget" -> "Spending cap reached"; (Waiting.Code(refactorTuple6._1), (refactorTuple6._2)) },
+    { val refactorTuple7 = "drain" -> "Finishing current work, then pausing"; (Waiting.Code(refactorTuple7._1), (refactorTuple7._2)) },
+    { val refactorTuple21 = Code.Person -> "Needs your decision"; (Waiting.Code(refactorTuple21._1), (refactorTuple21._2)) },
+    { val refactorTuple22 = Code.Held -> "Held by a person"; (Waiting.Code(refactorTuple22._1), (refactorTuple22._2)) },
+    { val refactorTuple23 = Code.NotDue -> "Not due yet"; (Waiting.Code(refactorTuple23._1), (refactorTuple23._2)) },
+    { val refactorTuple11 = Code.Running -> "Running"; (Waiting.Code(refactorTuple11._1), (refactorTuple11._2)) },
+    { val refactorTuple12 = Code.Settled -> "Settled"; (Waiting.Code(refactorTuple12._1), (refactorTuple12._2)) },
+    { val refactorTuple13 = Code.Paused -> "Paused"; (Waiting.Code(refactorTuple13._1), (refactorTuple13._2)) }
   )

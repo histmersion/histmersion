@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -21,6 +22,6 @@ class ItemCountsSuite extends munit.FunSuite:
         ItemStatus.Wire("weird") -> ItemCounts.Count(9)
       )
     )
-    assertEquals(c, ItemCounts(com.histmersion.api.automation.Managers.ItemCounts.Pending(12), com.histmersion.api.automation.Managers.ItemCounts.Held(1), com.histmersion.api.automation.Managers.ItemCounts.Active(3), com.histmersion.api.automation.Managers.ItemCounts.Done(40), com.histmersion.api.automation.Managers.ItemCounts.Stopped(5), com.histmersion.api.automation.Managers.ItemCounts.Failed(6), com.histmersion.api.automation.Managers.ItemCounts.Cancelled(7)))
+    assertEquals(c, ItemCounts(ItemCounts.Pending(12), ItemCounts.Held(1), ItemCounts.Active(3), ItemCounts.Done(40), ItemCounts.Stopped(5), ItemCounts.Failed(6), ItemCounts.Cancelled(7)))
     assertEquals(c.open, 16)
     assertEquals(ItemCounts.of(Nil), ItemCounts())

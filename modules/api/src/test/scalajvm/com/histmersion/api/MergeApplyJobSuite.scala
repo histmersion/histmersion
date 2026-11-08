@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,6 +7,9 @@ import java.util.UUID
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState, MergeMarkdown}
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.exchange.ExchangeJobKinds
+import com.histmersion.api.exchange.MergePlan
 
 /** #888: a merge apply is a `jobs` row, so `GET /api/merge/apply/{job}` answers across a restart. How a stored row
   * reads back ([[MergeApplyJob.of]]) — above all, an apply a restart cut short is `interrupted`, never `running`
@@ -15,13 +19,13 @@ class MergeApplyJobSuite extends munit.FunSuite:
 
   private val result = MergeApplyResult(
     UUID.fromString("00000000-0000-0000-0000-000000000001"),
-    Bundle.Instance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some(com.histmersion.api.exchange.Bundle.Instance.Label("work"))),
-    applied = com.histmersion.api.exchange.MergeApplyResult.Applied(true),
-    com.histmersion.api.exchange.MergeApplyResult.PlanHash("abc123")
+    Bundle.Instance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some(Bundle.Instance.Label("work"))),
+    applied = MergeApplyResult.Applied(true),
+    MergeApplyResult.PlanHash("abc123")
   )
 
   private def of(status: JobState, error: Option[MergeApplyJob.OfError] = None, r: Option[MergeApplyResult] = None) =
-    MergeApplyJob.of(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), status, MergeApplyJob.OfBundle("f" * 64), com.histmersion.api.exchange.MergeApplyJob.OfPlanHash("abc123"), com.histmersion.api.exchange.MergeApplyJob.OfElapsedMs(1500), error, r)
+    MergeApplyJob.of(SpatialHierarchyResult.Job.Id("j1"), status, MergeApplyJob.OfBundle("f" * 64), MergeApplyJob.OfPlanHash("abc123"), MergeApplyJob.OfElapsedMs(1500), error, r)
 
   test("a running row is running; a done one carries its report"):
     assertEquals(of(JobState.Running).state, MergeJobState.Running)
@@ -47,9 +51,9 @@ class MergeApplyJobSuite extends munit.FunSuite:
 
   test("the jobs list names what a merge apply is about: its plan"):
     val j = JobInfo(
-      com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
-      com.histmersion.api.jobs.JobKinds.Wire(MergeApplyJob.JobKind),
-      com.histmersion.api.jobs.JobInfo.Status("running"),
-      detail = Some(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some(com.histmersion.api.exchange.MergePlan.PlanHash("abc123"))))
+      SpatialHierarchyResult.Job.Id("j1"),
+      JobKinds.Wire(MergeApplyJob.JobKind),
+      JobInfo.Status("running"),
+      detail = Some(ExchangeJobKinds.PlanHash(Some(MergePlan.PlanHash("abc123"))))
     )
     assertEquals(JobDetail.subject(j), Some("merge plan abc123"))

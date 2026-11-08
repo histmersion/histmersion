@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.WireEnumValues
@@ -9,18 +10,20 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
-final case class Period(start: com.histmersion.api.catalogue.Year, end: com.histmersion.api.catalogue.Year):
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+final case class Period(start: Year, end: Year):
   def isPoint: Boolean = (start == end)
 
 object Period:
   type End = End.T
-  object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object End extends RefinedType[Long, Pure]
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type IsoYear = IsoYear.T
-  object IsoYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IsoYear extends RefinedType[Long, Pure]
   type Start = Start.T
-  object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Start extends RefinedType[Long, Pure]
 
 
   final case class Detail(
@@ -33,34 +36,34 @@ object Period:
 
   final case class ImportResult(
       periods: ImportResult.Periods,
-      roots: ImportResult.Roots = _root_.com.histmersion.api.catalogue.Period.ImportResult.Roots(0),
-      presets: ImportResult.Presets = _root_.com.histmersion.api.catalogue.Period.ImportResult.Presets(0),
+      roots: ImportResult.Roots = ImportResult.Roots(0),
+      presets: ImportResult.Presets = ImportResult.Presets(0),
       skipped: List[SkippedPeriod] = Nil,
-      skippedCount: ImportResult.SkippedCount = _root_.com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(0),
-      removed: ImportResult.Removed = _root_.com.histmersion.api.catalogue.Period.ImportResult.Removed(0)
+      skippedCount: ImportResult.SkippedCount = ImportResult.SkippedCount(0),
+      removed: ImportResult.Removed = ImportResult.Removed(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ImportResult:
     type Periods = Periods.T
-    object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Periods extends RefinedType[Int, Pure]
     type Roots = Roots.T
-    object Roots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Roots extends RefinedType[Int, Pure]
     type Presets = Presets.T
-    object Presets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Presets extends RefinedType[Int, Pure]
     type SkippedCount = SkippedCount.T
-    object SkippedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SkippedCount extends RefinedType[Int, Pure]
     type Removed = Removed.T
-    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Removed extends RefinedType[Int, Pure]
 
 
-  final case class Input(start: com.histmersion.api.catalogue.Year, end: com.histmersion.api.catalogue.Year) derives KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Input(start: Year, end: Year) derives KindlingsSchema, com.histmersion.api.json.Schema
   object Input:
 
 
     given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])
 
-  final case class Row(periodStart: Option[com.histmersion.api.catalogue.Year], periodEnd: Option[com.histmersion.api.catalogue.Year])
+  final case class Row(periodStart: Option[Year], periodEnd: Option[Year])
 
   enum Skip:
     case NoSpan
@@ -73,18 +76,18 @@ object Period:
 
   object Skip:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    def wireOf(p: Skip): com.histmersion.api.catalogue.Period.Skip.Wire = p match
-      case NoSpan          => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("no_span")
-      case EndsBeforeStart => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("ends_before_start")
-      case OutOfRange      => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("out_of_range")
-      case ImplausibleSpan => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("implausible_span")
+    def wireOf(p: Skip): Wire = p match
+      case NoSpan          => Wire("no_span")
+      case EndsBeforeStart => Wire("ends_before_start")
+      case OutOfRange      => Wire("out_of_range")
+      case ImplausibleSpan => Wire("implausible_span")
 
     given WireEnumValues[Skip]:
-      def all: Array[Skip] = Skip.values
-      def wire(e: Skip): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Skip] = Skip.values.find(wire(_) == s)
+      def all: Array[Skip] = values
+      def wire(e: Skip): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: WireEnumValues.Wire): Option[Skip] = values.find(wire(_) == s)
 
     given io.circe.Encoder[Skip] = WireEnum.encoder
     given io.circe.Decoder[Skip] = WireEnum.decoder

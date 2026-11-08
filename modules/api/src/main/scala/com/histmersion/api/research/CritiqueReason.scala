@@ -1,4 +1,5 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import hearth.kindlings.optics.syntax.*
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -6,17 +7,20 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
-final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, reason: CritiqueReason.Reason, by: Option[CritiqueReason.By] = None)
+final case class CritiqueReason(src: Citekey, dst: Citekey, reason: CritiqueReason.Reason, by: Option[CritiqueReason.By] = None)
     derives KindlingsCodecAsObject:
   def ref: CritiqueRef = CritiqueRef(src, dst)
 
 object CritiqueReason:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
   export com.histmersion.api.automation.Activity.{Actor as By}
 
   given Schema[CritiqueReason] = KindlingsSchema
@@ -38,18 +42,18 @@ object CritiqueReason:
 
   val MaxChars: Int = Coverage.Reason.MaxChars
 
-  def parse(s: com.histmersion.api.research.CritiqueReason.Reason): Either[com.histmersion.api.research.CritiqueReason.Problem, CritiqueReason] =
+  def parse(s: Reason): Either[Problem, CritiqueReason] =
     val i = (s).value.indexOf('=')
-    if i < 0 then Left(_root_.com.histmersion.api.research.CritiqueReason.Problem(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
-    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.Wire((s).value.take(i))).left.map(p => _root_.com.histmersion.api.research.CritiqueReason.Problem(p.value)).map(r => CritiqueReason(r.src, r.dst, _root_.com.histmersion.api.research.CritiqueReason.Reason((s).value.drop(i + 1).trim)))
+    if i < 0 then Left(Problem(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
+    else CritiqueRef.parse(CritiqueRef.Wire((s).value.take(i))).left.map(p => Problem(p.value)).map(r => CritiqueReason(r.src, r.dst, Reason((s).value.drop(i + 1).trim)))
 
-  def tidy(r: CritiqueReason): Either[com.histmersion.api.research.CritiqueReason.Problem, CritiqueReason] =
+  def tidy(r: CritiqueReason): Either[Problem, CritiqueReason] =
     val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
     if text.length > MaxChars then
-      Left(_root_.com.histmersion.api.research.CritiqueReason.Problem(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)"))
+      Left(Problem(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)"))
     else
       Right(
         r.modify(
-          _.src).setTo(com.histmersion.api.library.Citekey(r.src.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.dst).setTo(com.histmersion.api.library.Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.reason).setTo(Reason(text)
+          _.src).setTo(Citekey(r.src.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.dst).setTo(Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.reason).setTo(Reason(text)
         )
       )

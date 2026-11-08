@@ -1,21 +1,25 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.RowCount
+import com.histmersion.api.Offset
+import com.histmersion.api.personal.UnreadPage
 
 final case class GeoHitPage(
-    total: com.histmersion.api.RowCount,
+    total: RowCount,
     hits: List[GeoHit],
-    offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
-    next: Option[com.histmersion.api.Offset] = None
+    offset: Offset = Offset(0),
+    next: Option[Offset] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(hits.size))
+  def page: OffsetPage = OffsetPage(total, offset, RowCount(hits.size))
 object GeoHitPage:
 
 
-  def of(total: com.histmersion.api.library.SearchResult.Total, hits: List[GeoHit], offset: com.histmersion.api.personal.UnreadPage.Offset): GeoHitPage =
-    GeoHitPage(com.histmersion.api.RowCount((total).value), hits, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(hits.size)).next)
+  def of(total: SearchResult.Total, hits: List[GeoHit], offset: UnreadPage.Offset): GeoHitPage =
+    GeoHitPage(RowCount((total).value), hits, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next)

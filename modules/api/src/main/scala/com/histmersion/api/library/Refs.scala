@@ -1,5 +1,9 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Refs:
   type ReferenceText = ReferenceText.T
-  object ReferenceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReferenceText extends RefinedType[String, Pure]

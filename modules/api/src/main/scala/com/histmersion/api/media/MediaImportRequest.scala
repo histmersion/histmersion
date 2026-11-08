@@ -1,23 +1,29 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.RepairAcquire
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.Event
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaImportRequest(
-    provider: com.histmersion.api.media.MediaItem.Provider = _root_.com.histmersion.api.media.MediaItem.Provider("wikidata"),
-    dryRun: MediaImportRequest.DryRun = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true),
+    provider: MediaItem.Provider = MediaItem.Provider("wikidata"),
+    dryRun: MediaImportRequest.DryRun = RepairAcquire.RepairRequest.DryRun(true),
     limit: Option[MediaImportRequest.Limit] = None,
-    place: Option[com.histmersion.api.catalogue.Place.Id] = None,
-    event: Option[com.histmersion.api.catalogue.Event.Id] = None,
-    refresh: MediaImportRequest.Refresh = _root_.com.histmersion.api.media.MediaImportRequest.Refresh(false)
+    place: Option[Place.Id] = None,
+    event: Option[Event.Id] = None,
+    refresh: MediaImportRequest.Refresh = MediaImportRequest.Refresh(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object MediaImportRequest:
-  export com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
+  export RepairAcquire.RepairRequest.DryRun
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refresh extends RefinedType[Boolean, Pure]

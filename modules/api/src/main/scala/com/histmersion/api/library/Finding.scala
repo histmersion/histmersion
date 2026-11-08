@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
@@ -9,10 +10,16 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Place
 
 final case class Finding(
     id: Finding.Id,
-    citekey: com.histmersion.api.library.Citekey,
+    citekey: Citekey,
     claim: Finding.Claim,
     region: Option[Finding.Region],
     geo: Option[GeoPoint],
@@ -25,32 +32,32 @@ final case class Finding(
 
 object Finding:
   type Ordinal = Ordinal.T
-  object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ordinal extends RefinedType[Int, Pure]
 
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Claim = Claim.T
-  object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Claim extends RefinedType[String, Pure]
   type Region = Region.T
-  object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Region extends RefinedType[String, Pure]
   type PeriodName = PeriodName.T
-  object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodName extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Significance = Significance.T
-  object Significance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Significance extends RefinedType[String, Pure]
 
   final case class Input(
-      claim: com.histmersion.api.library.Finding.Claim,
-      region: Option[com.histmersion.api.library.Finding.Region] = None,
-      lon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      lat: Option[com.histmersion.api.catalogue.Latitude] = None,
-      periodStart: Option[com.histmersion.api.catalogue.Year] = None,
-      periodEnd: Option[com.histmersion.api.catalogue.Year] = None,
-      periodName: Option[com.histmersion.api.library.Finding.PeriodName] = None,
-      tags: List[com.histmersion.api.library.Finding.Tags] = Nil,
+      claim: Claim,
+      region: Option[Region] = None,
+      lon: Option[Longitude] = None,
+      lat: Option[Latitude] = None,
+      periodStart: Option[Year] = None,
+      periodEnd: Option[Year] = None,
+      periodName: Option[PeriodName] = None,
+      tags: List[Tags] = Nil,
       confidence: Option[Input.Confidence] = None,
-      significance: Option[com.histmersion.api.library.Finding.Significance] = None
+      significance: Option[Significance] = None
   )
   object Input:
     export com.histmersion.api.library.Confidence.{Wire as Confidence}
@@ -71,20 +78,20 @@ object Finding:
       periodEnd = f.period.map(_.end),
       periodName = f.periodName,
       tags = f.tags,
-      confidence = f.confidence.map(c => _root_.com.histmersion.api.library.Confidence.Wire(c.toString.toLowerCase)),
+      confidence = f.confidence.map(c => com.histmersion.api.library.Confidence.Wire(c.toString.toLowerCase)),
       significance = f.significance
     )
 
   final case class Match(
-      id: com.histmersion.api.library.Finding.Id,
-      claim: com.histmersion.api.library.Finding.Claim,
-      regionName: Option[com.histmersion.api.catalogue.Place.Region],
-      lon: Option[com.histmersion.api.catalogue.Longitude],
-      lat: Option[com.histmersion.api.catalogue.Latitude],
-      periodStart: Option[com.histmersion.api.catalogue.Year],
-      periodEnd: Option[com.histmersion.api.catalogue.Year],
-      periodName: Option[com.histmersion.api.library.Finding.PeriodName],
-      tags: List[com.histmersion.api.library.Finding.Tags],
+      id: Id,
+      claim: Claim,
+      regionName: Option[Place.Region],
+      lon: Option[Longitude],
+      lat: Option[Latitude],
+      periodStart: Option[Year],
+      periodEnd: Option[Year],
+      periodName: Option[PeriodName],
+      tags: List[Tags],
       why: List[Match.Why],
       places: List[Match.Places] = Nil
   ) derives KindlingsCodecAsObject,
@@ -92,22 +99,22 @@ object Finding:
 
   object Match:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
     type Places = Places.T
-    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Places extends RefinedType[String, Pure]
 
 
   final case class Row(
-      claim: com.histmersion.api.library.Finding.Claim,
-      regionName: Option[com.histmersion.api.catalogue.Place.Region],
-      lon: Option[com.histmersion.api.catalogue.Longitude],
-      lat: Option[com.histmersion.api.catalogue.Latitude],
-      periodStart: Option[com.histmersion.api.catalogue.Year],
-      periodEnd: Option[com.histmersion.api.catalogue.Year],
-      periodName: Option[com.histmersion.api.library.Finding.PeriodName],
-      tags: List[com.histmersion.api.library.Finding.Tags],
+      claim: Claim,
+      regionName: Option[Place.Region],
+      lon: Option[Longitude],
+      lat: Option[Latitude],
+      periodStart: Option[Year],
+      periodEnd: Option[Year],
+      periodName: Option[PeriodName],
+      tags: List[Tags],
       confidence: Option[Confidence],
-      significance: Option[com.histmersion.api.library.Finding.Significance] = None,
+      significance: Option[Significance] = None,
       uid: Option[java.util.UUID] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

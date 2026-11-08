@@ -1,34 +1,37 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReviewBadge(
     state: ReviewState,
     label: ReviewBadge.Label,
     detail: ReviewBadge.Detail,
-    openMajors: ReviewBadge.OpenMajors = _root_.com.histmersion.api.research.ReviewBadge.OpenMajors(0),
-    openMinors: ReviewBadge.OpenMinors = _root_.com.histmersion.api.research.ReviewBadge.OpenMinors(0),
-    findings: ReviewBadge.Findings = _root_.com.histmersion.api.research.ReviewBadge.Findings(0),
-    runs: ReviewBadge.Runs = _root_.com.histmersion.api.research.ReviewBadge.Runs(0),
+    openMajors: ReviewBadge.OpenMajors = ReviewBadge.OpenMajors(0),
+    openMinors: ReviewBadge.OpenMinors = ReviewBadge.OpenMinors(0),
+    findings: ReviewBadge.Findings = ReviewBadge.Findings(0),
+    runs: ReviewBadge.Runs = ReviewBadge.Runs(0),
     round: Option[ReviewBadge.Round] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ReviewBadge:
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Detail = Detail.T
-  object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Detail extends RefinedType[String, Pure]
   type OpenMajors = OpenMajors.T
-  object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenMajors extends RefinedType[Int, Pure]
   type OpenMinors = OpenMinors.T
-  object OpenMinors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OpenMinors extends RefinedType[Int, Pure]
   type Findings = Findings.T
-  object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Findings extends RefinedType[Int, Pure]
   type Runs = Runs.T
-  object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Round = com.histmersion.api.research.ReviewRound.Round
-  val Round: _root_.com.histmersion.api.research.ReviewRound.Round.type = _root_.com.histmersion.api.research.ReviewRound.Round
+  object Runs extends RefinedType[Int, Pure]
+  type Round = ReviewRound.Round
+  val Round: ReviewRound.Round.type = ReviewRound.Round

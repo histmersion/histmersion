@@ -1,29 +1,32 @@
-package com.histmersion.api
+package com.histmersion
+package api
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
-  case Source extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("source"), _root_.com.histmersion.api.ItemKind.Label("Source"))
-  case Article extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("article"), _root_.com.histmersion.api.ItemKind.Label("Article"))
-  case Event extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("event"), _root_.com.histmersion.api.ItemKind.Label("Event"))
-  case Place extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("place"), _root_.com.histmersion.api.ItemKind.Label("Place"))
-  case Picture extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("picture"), _root_.com.histmersion.api.ItemKind.Label("Picture"))
-  case Goal extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("goal"), _root_.com.histmersion.api.ItemKind.Label("Research goal"))
-  case View extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("view"), _root_.com.histmersion.api.ItemKind.Label("Saved view"))
-  case Point extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("point"), _root_.com.histmersion.api.ItemKind.Label("Place on the map"))
-  case Period extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("period"), _root_.com.histmersion.api.ItemKind.Label("Period"))
+  case Source extends ItemKind(ItemKind.Wire("source"), ItemKind.Label("Source"))
+  case Article extends ItemKind(ItemKind.Wire("article"), ItemKind.Label("Article"))
+  case Event extends ItemKind(ItemKind.Wire("event"), ItemKind.Label("Event"))
+  case Place extends ItemKind(ItemKind.Wire("place"), ItemKind.Label("Place"))
+  case Picture extends ItemKind(ItemKind.Wire("picture"), ItemKind.Label("Picture"))
+  case Goal extends ItemKind(ItemKind.Wire("goal"), ItemKind.Label("Research goal"))
+  case View extends ItemKind(ItemKind.Wire("view"), ItemKind.Label("Saved view"))
+  case Point extends ItemKind(ItemKind.Wire("point"), ItemKind.Label("Place on the map"))
+  case Period extends ItemKind(ItemKind.Wire("period"), ItemKind.Label("Period"))
 
   def isItem: Boolean = (ItemKind.Items.contains(this))
 
 object ItemKind:
   type Word = Word.T
-  object Word extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Word extends RefinedType[String, Pure]
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object Label extends RefinedType[String, Pure]:
     type Pattern = Pattern.T
-    object Pattern extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pattern extends RefinedType[String, Pure]
 
 
   val Items: Set[ItemKind] = Set(Source, Article, Event, Place, Picture, Goal)
@@ -34,14 +37,14 @@ object ItemKind:
 
   val Readable: Set[ItemKind] = Set(Source, Article)
 
-  def parse(s: com.histmersion.api.ItemKind.Wire): Option[ItemKind] =
+  def parse(s: Wire): Option[ItemKind] =
     val t = Option(s).fold("")((_).value.trim.toLowerCase)
-    values.find(k => k.wire == _root_.com.histmersion.api.ItemKind.Wire(t) || (t.endsWith("s") && k.wire == _root_.com.histmersion.api.ItemKind.Wire(t.dropRight(1))))
+    values.find(k => k.wire == Wire(t) || (t.endsWith("s") && k.wire == Wire(t.dropRight(1))))
 
   given WireEnumValues[ItemKind]:
-    def all: Array[ItemKind] = ItemKind.values
-    def wire(e: ItemKind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[ItemKind] = values.find(_.wire == _root_.com.histmersion.api.ItemKind.Wire((s).value.trim.toLowerCase))
+    def all: Array[ItemKind] = values
+    def wire(e: ItemKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+    def fromWire(s: WireEnumValues.Wire): Option[ItemKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given Encoder[ItemKind] = WireEnum.encoder
   given Decoder[ItemKind] = WireEnum.decoder
   given Schema[ItemKind] = WireEnum.schema

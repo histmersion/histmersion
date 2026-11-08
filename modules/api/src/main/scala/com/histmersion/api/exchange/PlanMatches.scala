@@ -1,4 +1,5 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import com.histmersion.api.RegisteredPlanMatches
 import io.circe.{Decoder, Encoder, Json}
 import sttp.tapir.Schema

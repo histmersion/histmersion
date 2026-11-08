@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.api.catalogue.EventsJobKinds

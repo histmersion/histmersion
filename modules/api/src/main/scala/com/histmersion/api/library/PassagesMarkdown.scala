@@ -1,16 +1,17 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object PassagesMarkdown:
   def render(r: PassageResult): String =
-    val what = if ((r.regex) == _root_.com.histmersion.api.library.PassageResult.Regex(true)) then s"/${r.query}/" else s"\"${r.query}\""
+    val what = if ((r.regex) == PassageResult.Regex(true)) then s"/${r.query}/" else s"\"${r.query}\""
     if r.passages.isEmpty then (s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._")
     else
       val counted =
-        if ((r.capped) == _root_.com.histmersion.api.library.PassageResult.Capped(true)) then s"${r.matches}+ matches (counting stopped)" else Plural.count(Plural.Count(r.matches.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("match"), _root_.com.histmersion.api.Plural.CountPlural("matches"))
+        if ((r.capped) == PassageResult.Capped(true)) then s"${r.matches}+ matches (counting stopped)" else Plural.count(Plural.Count(r.matches.value.toLong), Plural.CountSingular("match"), Plural.CountPlural("matches"))
       val head = s"## Passages: $what in `${r.citekey}`\n\n" +
-        s"_$counted in ${Plural.count(Plural.Count(r.total.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("passage"))} · showing ${r.passages.size} · " +
+        s"_$counted in ${Plural.count(Plural.Count(r.total.value.toLong), Plural.CountSingular("passage"))} · showing ${r.passages.size} · " +
         "matches in **bold** · `get_source` with a passage's `offset` reads on from it_"
       val items = r.passages.zipWithIndex.map { (p, i) =>
         val where = p.heading.map(h => s" · § $h").getOrElse("")

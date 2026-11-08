@@ -1,13 +1,16 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ArchiveImportRequest(
     id: ArchiveImportRequest.Id,
-    citekey: Option[com.histmersion.api.library.Citekey] = None,
+    citekey: Option[Citekey] = None,
     format: Option[ArchiveImportRequest.Format] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -15,4 +18,4 @@ final case class ArchiveImportRequest(
 object ArchiveImportRequest:
   export com.histmersion.api.library.{ArchiveId as Id}
   type Format = Format.T
-  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Format extends RefinedType[String, Pure]

@@ -1,16 +1,19 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 enum MapStartMode(val wire: MapStartMode.Wire, val label: MapStartMode.Label):
-  case Last extends MapStartMode(_root_.com.histmersion.api.instance.MapStartMode.Wire("last"), _root_.com.histmersion.api.instance.MapStartMode.Label("Where I last left it"))
-  case Place extends MapStartMode(_root_.com.histmersion.api.instance.MapStartMode.Wire("place"), _root_.com.histmersion.api.instance.MapStartMode.Label("At a place I choose"))
+  case Last extends MapStartMode(MapStartMode.Wire("last"), MapStartMode.Label("Where I last left it"))
+  case Place extends MapStartMode(MapStartMode.Wire("place"), MapStartMode.Label("At a place I choose"))
 
 object MapStartMode:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
 
 
-  def parse(s: com.histmersion.api.instance.MapStartMode.Wire): MapStartMode = values.find(_.wire == _root_.com.histmersion.api.instance.MapStartMode.Wire(Option(s).fold("")((_).value.trim.toLowerCase))).getOrElse(Last)
+  def parse(s: Wire): MapStartMode = values.find(_.wire == Wire(Option(s).fold("")((_).value.trim.toLowerCase))).getOrElse(Last)

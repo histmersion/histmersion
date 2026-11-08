@@ -1,9 +1,12 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SpatialHierarchyResult(
     edgesCreated: SpatialHierarchyResult.EdgesCreated,
@@ -16,10 +19,10 @@ final case class SpatialHierarchyResult(
 object SpatialHierarchyResult:
   object Job:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
   type EdgesCreated = EdgesCreated.T
-  object EdgesCreated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgesCreated extends RefinedType[Int, Pure]
   type PolygonPlaces = PolygonPlaces.T
-  object PolygonPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PolygonPlaces extends RefinedType[Int, Pure]
   type PointPlaces = PointPlaces.T
-  object PointPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointPlaces extends RefinedType[Int, Pure]

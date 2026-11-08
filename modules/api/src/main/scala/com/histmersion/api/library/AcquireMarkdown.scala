@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -9,7 +10,7 @@ object AcquireMarkdown:
   private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
   private def num(n: Option[Int]): String = (n.map(_.toString).getOrElse("—"))
 
-  private def doiLink(doi: Option[com.histmersion.api.library.Doi]): String =
+  private def doiLink(doi: Option[Doi]): String =
     (doi.map(d => s"[$d](https://doi.org/$d)").getOrElse("—"))
 
   private def table(header: List[String], rows: List[List[String]]): String =
@@ -48,7 +49,7 @@ object AcquireMarkdown:
     ).filter(_.nonEmpty).mkString(" · ")
     // OpenAlex and Unpaywall set `oaStatus` (`closed` when there is no copy); Crossref records no access at all.
     val oa =
-      if ((w.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true)) then s"open access (${w.oaStatus.getOrElse("?")})"
+      if ((w.isOa) == Source.Candidate.IsOa(true)) then s"open access (${w.oaStatus.getOrElse("?")})"
       else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
       else "no OA copy known"
     val lines = List(
@@ -60,8 +61,8 @@ object AcquireMarkdown:
       s"**Citekey (proposed):** `${w.citekey.map(_.value.toString).getOrElse("—")}`  ",
       s"**Cited by:** ${num(w.citedByCount.map(_.value))}  ",
       s"**Access:** $oa" + w.oaUrl.map(u => s" — $u").getOrElse(""),
-      if ((w.isRetracted) == _root_.com.histmersion.api.library.WorkRef.IsRetracted(true)) then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
-      if ((w.inDb) == _root_.com.histmersion.api.library.WorkRef.InDb(true)) then s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._" else "",
+      if ((w.isRetracted) == WorkRef.IsRetracted(true)) then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
+      if ((w.inDb) == WorkRef.InDb(true)) then s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._" else "",
       w.abstractText.map(a => s"\n## Abstract\n\n$a").getOrElse("")
     )
     lines.filter(_.nonEmpty).mkString("\n")
@@ -146,7 +147,7 @@ object AcquireMarkdown:
   def retractionsUpdate(r: RetractionsUpdate): String =
     r.error match
       case Some(e)           => (s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
-      case None if ((r.running) == _root_.com.histmersion.api.library.RetractionsUpdate.Running(true)) =>
+      case None if ((r.running) == RetractionsUpdate.Running(true)) =>
         (s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished.")
       case None => (s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
@@ -202,7 +203,7 @@ object AcquireMarkdown:
       else
         table(List(("file"), ("format"), ("MB")), i.files.map(f => List(esc(f.name.value), cell(f.format.map(_.value)), (f.megabytes.toString))))
     val restriction =
-      if ((i.lendingOnly) == _root_.com.histmersion.api.library.ArchiveItem.LendingOnly(true)) then
+      if ((i.lendingOnly) == ArchiveItem.LendingOnly(true)) then
         List(
           "",
           "> ⛔ **Lending-only item.** It must be BORROWED on archive.org; it is never " +
@@ -221,16 +222,16 @@ object AcquireMarkdown:
       .mkString("\n")
 
   def ingest(r: Ingest.Report): String =
-    val steps = r.steps.map(s => s"- ${if ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true)) then "✓" else "✗"} **${s.step}** — ${s.detail}")
+    val steps = r.steps.map(s => s"- ${if ((s.ok) == Ingest.Step.Ok(true)) then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>
-        s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(Plural.CountN(p.bytes.value), _root_.com.histmersion.api.Plural.CountSingular("byte"))})"
-      case None if r.steps.exists(s => s.step == _root_.com.histmersion.api.library.Ingest.StepName("fetch") && ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true))) =>
+        s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(Plural.CountN(p.bytes.value), Plural.CountSingular("byte"))})"
+      case None if r.steps.exists(s => s.step == Ingest.StepName("fetch") && ((s.ok) == Ingest.Step.Ok(true))) =>
         "**PDF:** not fetched — the source already has its original"
       case None => "**PDF:** none found through legal open access"
     // No stripMargin: `assessment` embeds tables, whose rows start with '|'.
     (List(
-      s"### ${if ((r.created) == _root_.com.histmersion.api.library.Ingest.Report.Created(true)) then "Ingested" else "Updated"} `${r.citekey}`",
+      s"### ${if ((r.created) == Ingest.Report.Created(true)) then "Ingested" else "Updated"} `${r.citekey}`",
       "",
       r.title.map(_.value).getOrElse("(untitled)") + "  ",
       s"**DOI:** ${doiLink(r.doi)}  ",

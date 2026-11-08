@@ -1,38 +1,41 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventImportRequest(
     provider: EventImportRequest.Provider,
-    dryRun: EventImportRequest.DryRun = _root_.com.histmersion.api.catalogue.EventImportRequest.DryRun(true),
+    dryRun: EventImportRequest.DryRun = EventImportRequest.DryRun(true),
     limit: Option[EventImportRequest.Limit] = None,
     bbox: Option[EventImportRequest.Bbox] = None,
     from: Option[EventImportRequest.From] = None,
     to: Option[EventImportRequest.To] = None,
     minVei: Option[EventImportRequest.MinVei] = None,
     minMagnitude: Option[EventImportRequest.MinMagnitude] = None,
-    refresh: EventImportRequest.Refresh = _root_.com.histmersion.api.catalogue.EventImportRequest.Refresh(false)
+    refresh: EventImportRequest.Refresh = EventImportRequest.Refresh(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventImportRequest:
-  export com.histmersion.api.catalogue.EventImportReport.Provider
+  export EventImportReport.Provider
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type Bbox = Bbox.T
-  object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Bbox extends RefinedType[String, Pure]
   type From = From.T
-  object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object From extends RefinedType[Long, Pure]
   type To = To.T
-  object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object To extends RefinedType[Long, Pure]
   type MinVei = MinVei.T
-  object MinVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinVei extends RefinedType[Int, Pure]
   type MinMagnitude = MinMagnitude.T
-  object MinMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MinMagnitude extends RefinedType[Double, Pure]
   type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refresh extends RefinedType[Boolean, Pure]

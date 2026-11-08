@@ -1,19 +1,22 @@
-package com.histmersion.api.jobs
+package com.histmersion
+package api.jobs
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 enum JobState:
   case Queued, Running, Done, Failed, Paused, Cancelled
 
-  def wire: com.histmersion.api.jobs.JobState.Wire = _root_.com.histmersion.api.jobs.JobState.Wire(toString.toLowerCase)
+  def wire: JobState.Wire = JobState.Wire(toString.toLowerCase)
   def isTerminal: Boolean = (this == Done || this == Failed || this == Cancelled)
 
 object JobState:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
   val Interrupted = "interrupted"
 
-  def parse(s: com.histmersion.api.jobs.JobState.Wire): Option[JobState] =
-    values.find(_.wire == _root_.com.histmersion.api.jobs.JobState.Wire((s).value.trim.toLowerCase))
+  def parse(s: Wire): Option[JobState] =
+    values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   def next(from: JobState, to: JobState): Option[JobState] = (from, to) match
     case (Queued, Running)    => Some(Running)

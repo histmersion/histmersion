@@ -1,4 +1,5 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -11,4 +12,4 @@ final case class MergeApplyRequest(bundle: MergeApplyRequest.Bundle, planHash: M
 
 object MergeApplyRequest:
   export com.histmersion.api.exchange.Bundle.{Name as Bundle}
-  export com.histmersion.api.exchange.MergePlan.PlanHash
+  export MergePlan.PlanHash

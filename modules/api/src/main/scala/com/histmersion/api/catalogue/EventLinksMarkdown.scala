@@ -1,10 +1,11 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.given
 object EventLinksMarkdown:
   private def km(d: Double): String = s"${math.round(d)} km"
 
-  def context(d: com.histmersion.api.catalogue.EventCard): String =
-    val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == _root_.com.histmersion.api.catalogue.EventGeo.Tier(EventTier.Catalogue) then
+  def context(d: EventCard): String =
+    val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == EventGeo.Tier(EventTier.Catalogue) then
                                                " — known from a catalogue only: a research lead, not evidence"
                                              else "")
     val names = if d.names.isEmpty then "" else s"  \n**Also called:** ${d.names.take(12).mkString(", ")}"

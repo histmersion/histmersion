@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
@@ -9,22 +10,23 @@ import sttp.tapir.Schema
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
 
 final case class MetadataPatch(
-    title: Option[com.histmersion.api.library.Title] = None,
-    authors: Option[List[com.histmersion.api.library.AuthorName]] = None,
-    year: Option[com.histmersion.api.catalogue.Year] = None,
-    venue: Option[com.histmersion.api.library.Source.Venue] = None,
-    doi: Option[com.histmersion.api.library.Doi] = None,
-    status: Option[com.histmersion.api.library.Source.Status] = None,
+    title: Option[Title] = None,
+    authors: Option[List[AuthorName]] = None,
+    year: Option[Year] = None,
+    venue: Option[Source.Venue] = None,
+    doi: Option[Doi] = None,
+    status: Option[Source.Status] = None,
     provenance: Option[MetadataPatch.Provenance] = None,
-    calibreId: Option[com.histmersion.api.library.Source.CalibreId] = None,
+    calibreId: Option[Source.CalibreId] = None,
     clear: List[MetadataField] = Nil
 ) derives KindlingsSchema,
       com.histmersion.api.json.Schema
 object MetadataPatch:
 
-  export com.histmersion.api.library.Source.Provenance
+  export Source.Provenance
 
   private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
 
@@ -34,7 +36,7 @@ object MetadataPatch:
         case None    => derived(c)
         case Some(o) =>
           val nulls = o.toList.collect { case (k, v) if v.isNull => k }
-          val (refused, cleared) = nulls.partitionMap(k => MetadataField.fromWire(_root_.com.histmersion.api.library.MetadataField.Wire(k)).toRight(k))
+          val (refused, cleared) = nulls.partitionMap(k => MetadataField.fromWire(MetadataField.Wire(k)).toRight(k))
           if refused.nonEmpty then
             Left(
               DecodingFailure(

@@ -1,4 +1,5 @@
-package com.histmersion.api.views
+package com.histmersion
+package api.views
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import com.histmersion.api.automation.{AgentMode, Autopilot, ManagersApi}

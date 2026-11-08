@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -6,20 +7,22 @@ import sttp.tapir.Schema
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class NoteImport(
     text: NoteImport.Text,
-    citekey: Option[com.histmersion.api.library.Citekey] = None,
+    citekey: Option[Citekey] = None,
     body: Option[NoteImport.Body] = None,
     mtime: Option[NoteImport.Mtime] = None,
-    force: NoteImport.Force = _root_.com.histmersion.api.library.NoteImport.Force(false),
+    force: NoteImport.Force = NoteImport.Force(false),
     assets: List[AssetInput] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object NoteImport:
-  export com.histmersion.api.library.Source.{Notes as Text, Notes as Body}
+  export Source.{Notes as Text, Notes as Body}
   type Mtime = Mtime.T
-  object Mtime extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mtime extends RefinedType[Long, Pure]
   type Force = Force.T
-  object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Force extends RefinedType[Boolean, Pure]

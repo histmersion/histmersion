@@ -1,7 +1,10 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SiteTile(
     id: SiteTile.Id,
@@ -9,18 +12,18 @@ final case class SiteTile(
     kind: SiteTile.Kind,
     siteType: Option[SiteTile.SiteType],
     basis: SiteTile.Basis,
-    periodStart: Option[com.histmersion.api.catalogue.Year],
-    periodEnd: Option[com.histmersion.api.catalogue.Year]
+    periodStart: Option[Year],
+    periodEnd: Option[Year]
 )
 
 object SiteTile:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type SiteType = SiteType.T
-  object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SiteType extends RefinedType[String, Pure]
   type Basis = Basis.T
-  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Basis extends RefinedType[String, Pure]

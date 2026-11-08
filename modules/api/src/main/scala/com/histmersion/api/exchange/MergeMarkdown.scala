@@ -1,4 +1,5 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import com.histmersion.api.library.MatchOutcome
 import com.histmersion.api.{Plural, RegisteredPlanMatches}
 import com.histmersion.api.aliases.LabelRenamed
@@ -20,12 +21,12 @@ object MergeMarkdown:
     val head = List(
       s"**Bundle** ${who(p.from)} → ${who(p.into)} · format ${p.formatVersion} · schema V${p.schemaVersion} · " +
         s"as of ${p.asOf.getOrElse("—")}",
-      s"**Matched** ${Plural.count(_root_.com.histmersion.api.Plural.CountN(m.sources.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("source"))}: ${m.byUid} by uid · ${m.byLedger} by ledger · " +
+      s"**Matched** ${Plural.count(Plural.CountN(m.sources.value.toLong), Plural.Noun.Singular("source"))}: ${m.byUid} by uid · ${m.byLedger} by ledger · " +
         s"${m.byStrongKey} by DOI/file/ISBN · ${m.byScore} by score · ${m.undecided} to decide · ${m.unmatched} new" +
         (if m.deletedHere.value > 0 then s" · ${m.deletedHere} deleted here" else ""),
       s"**Summary** ${open.size} blocking · ${p.resolutionErrors.size} stale or invalid · ${conditional.size} conditional · " +
-        s"${defaults.size} ${Plural.noun(_root_.com.histmersion.api.Plural.Count((defaults.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("default"))} · ${p.info.size} info · " +
-        s"${Plural.count(_root_.com.histmersion.api.Plural.Count((p.problems.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("problem"))} · plan ${p.planHash}" +
+        s"${defaults.size} ${Plural.noun(Plural.Count((defaults.size).toLong), Plural.Noun.Singular("default"))} · ${p.info.size} info · " +
+        s"${Plural.count(Plural.Count((p.problems.size).toLong), Plural.Noun.Singular("problem"))} · plan ${p.planHash}" +
         (if (p.resolved).value > 0 then s"+r(${p.resolved})" else "")
     ).mkString("  \n")
     val sections = List(
@@ -46,51 +47,51 @@ object MergeMarkdown:
       ),
       section(
         ("Matches"),
-        RegisteredPlanMatches.kind.lines(p.sources, if ((all) == (true)) then _root_.com.histmersion.api.exchange.PlanMatchKind.LineLimit(Int.MaxValue) else _root_.com.histmersion.api.exchange.PlanMatchKind.LineLimit(20)).map(_.value)
+        RegisteredPlanMatches.kind.lines(p.sources, if ((all) == (true)) then PlanMatchKind.LineLimit(Int.MaxValue) else PlanMatchKind.LineLimit(20)).map(_.value)
       )
     ).flatten
     val next =
       if p.problems.nonEmpty then "_Next: fix the problems, export the bundle again._"
       else if open.nonEmpty || p.resolutionErrors.nonEmpty then
         "_Next: `histmersion merge plan <bundle> --write-template resolutions.yaml`, decide, then plan again with `--resolutions resolutions.yaml`._"
-      else if p.changes == _root_.com.histmersion.api.exchange.MergePlan.Changes(0) then "_Nothing is open, and nothing to change: the bundle is merged already._"
+      else if p.changes == MergePlan.Changes(0) then "_Nothing is open, and nothing to change: the bundle is merged already._"
       else
         s"_Nothing is open: `histmersion merge apply <bundle> --resolutions … --plan ${p.planHash}` carries it out " +
-          s"(${Plural.count(_root_.com.histmersion.api.Plural.CountN(p.changes.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("change"))}; a backup is taken first)._"
+          s"(${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))}; a backup is taken first)._"
     (head :: sections ++ List(next)).mkString("\n\n")
 
   def applied(r: MergeApplyResult): String =
     val t = r.tally
-    def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => Bundle.KindCounts.Inserted): Bundle.KindCounts.Inserted =
+    def count(k: Bundle.Kind)(f: Bundle.KindCounts => Bundle.KindCounts.Inserted): Bundle.KindCounts.Inserted =
       r.counts.find(_.kind == k).fold(Bundle.KindCounts.Inserted(0))(f)
     val head =
-      if ((r.applied) == _root_.com.histmersion.api.exchange.MergeApplyResult.Applied(true)) && r.mergeId.isEmpty then
+      if ((r.applied) == MergeApplyResult.Applied(true)) && r.mergeId.isEmpty then
         s"**Nothing to merge** — the bundle of ${who(r.from)} is merged already (plan ${r.planHash})."
-      else if ((r.applied) == _root_.com.histmersion.api.exchange.MergeApplyResult.Applied(true)) then
+      else if ((r.applied) == MergeApplyResult.Applied(true)) then
         s"**Merged** the bundle of ${who(r.from)} as merge ${r.mergeId.fold("—")(_.toString)}" +
           r.backup.fold("")(b => s" (backup $b)")
       else s"**Not merged** (plan ${r.planHash}): nothing was written."
     val body = Option
-      .when(((r.applied) == _root_.com.histmersion.api.exchange.MergeApplyResult.Applied(true)) && r.mergeId.isDefined)(
+      .when(((r.applied) == MergeApplyResult.Applied(true)) && r.mergeId.isDefined)(
         List(
-          s"**sources** +${count(com.histmersion.api.exchange.Bundle.Kind.Source)(_.inserted)} new · ${t.sourcesMerged} merged (${t.sourcesByScore} by score) · " +
+          s"**sources** +${count(Bundle.Kind.Source)(_.inserted)} new · ${t.sourcesMerged} merged (${t.sourcesByScore} by score) · " +
             s"${t.sourcesRenamed} renamed · aliases +${t.aliases}",
-          s"**findings** +${count(com.histmersion.api.exchange.Bundle.Kind.Finding)(_.inserted)} · merged ${t.findingsMerged} · " +
-            s"**assets** +${count(com.histmersion.api.exchange.Bundle.Kind.Asset)(_.inserted)} · merged ${t.assetsMerged} · " +
+          s"**findings** +${count(Bundle.Kind.Finding)(_.inserted)} · merged ${t.findingsMerged} · " +
+            s"**assets** +${count(Bundle.Kind.Asset)(_.inserted)} · merged ${t.assetsMerged} · " +
             s"**attestations** re-anchored ${t.attestationsReanchored} · dropped ${t.attestationsDropped}",
-          s"**articles** +${count(com.histmersion.api.exchange.Bundle.Kind.Article)(_.inserted)} new · ${t.articlesThreeWay} three-way · " +
+          s"**articles** +${count(Bundle.Kind.Article)(_.inserted)} new · ${t.articlesThreeWay} three-way · " +
             s"${t.articlesFastForward} fast-forward · ${t.articlesBoth} both · ${t.articlesFromFile} from a file",
           s"**events** merged ${t.eventsMerged} · **goals** merged ${t.goalsMerged} · **queue** merged ${t.queueMerged} · " +
-            s"**places** +${count(com.histmersion.api.exchange.Bundle.Kind.Place)(_.inserted)} · merged ${t.placesMerged} · " +
-            s"**periods** +${count(com.histmersion.api.exchange.Bundle.Kind.Period)(_.inserted)} · merged ${t.periodsMerged} · " +
+            s"**places** +${count(Bundle.Kind.Place)(_.inserted)} · merged ${t.placesMerged} · " +
+            s"**periods** +${count(Bundle.Kind.Period)(_.inserted)} · merged ${t.periodsMerged} · " +
             s"self-loops dropped ${t.selfLoopsDropped} · redirects +${t.redirects}",
-          s"**queued** ${Plural.count(_root_.com.histmersion.api.Plural.Count((r.reviews.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("/review-article task"))}" +
+          s"**queued** ${Plural.count(Plural.Count((r.reviews.size).toLong), Plural.Noun.Singular("/review-article task"))}" +
             (if r.reviews.nonEmpty then r.reviews.map(s => s"`$s`").mkString(" (", ", ", ")") else "") +
             r.logEntry.fold("")(id => s" · log entry #$id"),
           r.replanChanges.fold("")(n =>
-            if n == _root_.com.histmersion.api.exchange.MergeApplyResult.ReplanChanges(0) then "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
+            if n == MergeApplyResult.ReplanChanges(0) then "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
             else
-              s"**re-run** `histmersion merge plan` on this bundle → ${Plural.count(_root_.com.histmersion.api.Plural.CountN(n.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("change"))} left (not idempotent — report it)"
+              s"**re-run** `histmersion merge plan` on this bundle → ${Plural.count(Plural.CountN(n.value.toLong), Plural.Noun.Singular("change"))} left (not idempotent — report it)"
           )
         ).filter(_.nonEmpty).mkString("  \n")
       )
@@ -129,7 +130,7 @@ object MergeMarkdown:
       s"**Merge** `${m.id}` · ${m.appliedAt} · from ${who(m.from)}",
       s"**bundle** `${m.bundleId}` (sha256 `${m.bundleSha256.value.take(12)}…`)" +
         m.planHash.fold(" · imported without matching")(h => s" · plan `$h`") + m.backup.fold("")(b => s" · backup $b"),
-      s"**left** ${Plural.count(_root_.com.histmersion.api.Plural.CountN(m.ledgerRows.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("ledger row"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(m.redirects.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("redirect"))}"
+      s"**left** ${Plural.count(Plural.CountN(m.ledgerRows.value.toLong), Plural.Noun.Singular("ledger row"))} · ${Plural.count(Plural.CountN(m.redirects.value.toLong), Plural.Noun.Singular("redirect"))}"
     ).mkString("  \n")
     val report = d.applied.map(applied).orElse(d.imported.map(BundleMarkdown.importResult)).toList
     val res = d.resolutions
@@ -166,9 +167,9 @@ object MergeMarkdown:
 
   def renamed(r: LabelRenamed): String =
     val what = r.entity match
-      case com.histmersion.api.exchange.Bundle.Kind.Article => "Article"
-      case com.histmersion.api.exchange.Bundle.Kind.Event   => "Event"
-      case com.histmersion.api.exchange.Bundle.Kind.Place   => "Place"
+      case Bundle.Kind.Article => "Article"
+      case Bundle.Kind.Event   => "Event"
+      case Bundle.Kind.Place   => "Place"
       case _                                                => "Goal"
     (s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
       (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else ""))

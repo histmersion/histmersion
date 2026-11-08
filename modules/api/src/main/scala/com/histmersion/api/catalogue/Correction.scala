@@ -1,10 +1,13 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.syntax.*
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Correction(
     id: Correction.Id,
@@ -17,7 +20,7 @@ final case class Correction(
     upstream: Option[Correction.Upstream] = None,
     upstreamNow: Option[Correction.UpstreamNow] = None,
     label: Option[Correction.Label] = None,
-    createdAt: Correction.CreatedAt = _root_.com.histmersion.api.catalogue.Correction.CreatedAt(""),
+    createdAt: Correction.CreatedAt = Correction.CreatedAt(""),
     checkedAt: Option[Correction.CheckedAt] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -25,35 +28,35 @@ object Correction:
 
 
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[Long, Pure]
   type TargetKind = TargetKind.T
-  object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetKind extends RefinedType[String, Pure]
   type TargetId = TargetId.T
-  object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetId extends RefinedType[String, Pure]
   type Field = Field.T
-  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Field extends RefinedType[String, Pure]
   type Value = Value.T
-  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Value extends RefinedType[String, Pure]
   type UpstreamValue = UpstreamValue.T
-  object UpstreamValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpstreamValue extends RefinedType[String, Pure]
   type StatusValue = StatusValue.T
-  object StatusValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusValue extends RefinedType[String, Pure]
   type Upstream = Upstream.T
-  object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Upstream extends RefinedType[String, Pure]
   type UpstreamNow = UpstreamNow.T
-  object UpstreamNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.catalogue.CatalogRecord.Label
+  object UpstreamNow extends RefinedType[String, Pure]
+  export CatalogRecord.Label
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CreatedAt extends RefinedType[String, Pure]
   type CheckedAt = CheckedAt.T
-  object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CheckedAt extends RefinedType[String, Pure]
 
-  final case class Counts(kept: Counts.Kept = _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0), retired: Counts.Retired = _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0), conflicts: Counts.Conflicts = _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0))
+  final case class Counts(kept: Counts.Kept = Counts.Kept(0), retired: Counts.Retired = Counts.Retired(0), conflicts: Counts.Conflicts = Counts.Conflicts(0))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
-      Counts(_root_.com.histmersion.api.catalogue.Correction.Counts.Kept((kept).value + (o.kept).value), _root_.com.histmersion.api.catalogue.Correction.Counts.Retired((retired).value + (o.retired).value), _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts((conflicts).value + (o.conflicts).value))
-    def isEmpty: Boolean = (kept == _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0) && retired == _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0) && conflicts == _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0))
+      Counts(Counts.Kept((kept).value + (o.kept).value), Counts.Retired((retired).value + (o.retired).value), Counts.Conflicts((conflicts).value + (o.conflicts).value))
+    def isEmpty: Boolean = (kept == Counts.Kept(0) && retired == Counts.Retired(0) && conflicts == Counts.Conflicts(0))
 
     def summary: Option[String] =
       Option.when(!(isEmpty))(
@@ -63,35 +66,35 @@ object Correction:
   object Counts:
 
     type Kept = Kept.T
-    object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kept extends RefinedType[Int, Pure]
     type Retired = Retired.T
-    object Retired extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Retired extends RefinedType[Int, Pure]
     type Conflicts = Conflicts.T
-    object Conflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Conflicts extends RefinedType[Int, Pure]
 
 
   final case class List(total: List.Total, corrections: scala.List[Correction]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object List:
     type Total = Total.T
-    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Total extends RefinedType[Int, Pure]
 
 
   object Status:
     type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object All extends RefinedType[String, Pure]
     type Applied = Applied.T
-    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Applied extends RefinedType[String, Pure]
 
     val Active = "active"
     val Agreed = "agreed"
     val Conflict = "conflict"
-    val all: scala.List[com.histmersion.api.catalogue.Correction.Status.All] = scala.List(_root_.com.histmersion.api.catalogue.Correction.Status.All(Active), _root_.com.histmersion.api.catalogue.Correction.Status.All(Agreed), _root_.com.histmersion.api.catalogue.Correction.Status.All(Conflict))
+    val all: scala.List[All] = scala.List(All(Active), All(Agreed), All(Conflict))
 
-    val applied: Set[com.histmersion.api.catalogue.Correction.Status.Applied] = Set(_root_.com.histmersion.api.catalogue.Correction.Status.Applied(Active), _root_.com.histmersion.api.catalogue.Correction.Status.Applied(Conflict))
+    val applied: Set[Applied] = Set(Applied(Active), Applied(Conflict))
 
   object Target:
 
     val Event = "event"
     val Place = "place"
-    val all: scala.List[com.histmersion.api.catalogue.Correction.TargetKind] = scala.List(_root_.com.histmersion.api.catalogue.Correction.TargetKind(Event), _root_.com.histmersion.api.catalogue.Correction.TargetKind(Place))
+    val all: scala.List[TargetKind] = scala.List(TargetKind(Event), TargetKind(Place))

@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,6 +7,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Stalls.*
 import com.histmersion.api.automation.StallsMarkdown
+import com.histmersion.api.automation.Stalls
 
 /** The stall report, pure (#3762 proposal 4): which goals count as stalled, the one reason each stands still (in order:
   * draining, a person, a hold, paused managers, a budget, quota, the queue, a block, running, a failed item, no
@@ -16,9 +18,9 @@ class StallsSuite extends munit.FunSuite:
   private def f(slug: Facts.Slug = Facts.Slug("g"), idle: Option[Facts.IdleDays] = Some(Facts.IdleDays(5))) = Facts(slug, idleDays = idle)
 
   test("stalled: no progress in N days, or never"):
-    assert(stalled(f(idle = Some(Facts.IdleDays(3))), com.histmersion.api.automation.Stalls.ReportDays(3)))
-    assert(!stalled(f(idle = Some(Facts.IdleDays(2))), com.histmersion.api.automation.Stalls.ReportDays(3)))
-    assert(stalled(f(idle = None), com.histmersion.api.automation.Stalls.ReportDays(3)))
+    assert(stalled(f(idle = Some(Facts.IdleDays(3))), Stalls.ReportDays(3)))
+    assert(!stalled(f(idle = Some(Facts.IdleDays(2))), Stalls.ReportDays(3)))
+    assert(stalled(f(idle = None), Stalls.ReportDays(3)))
 
   test("the first reason that holds is named, with its action"):
     def code(x: Facts) = classify(x)._1
@@ -63,12 +65,12 @@ class StallsSuite extends munit.FunSuite:
         f(Facts.Slug("d"), Some(Facts.IdleDays(1))),
         f(Facts.Slug("e"), Some(Facts.IdleDays(4))).modify(_.running).setTo(Facts.Running(1))
       ),
-      com.histmersion.api.automation.Stalls.ReportDays(3),
-      com.histmersion.api.automation.Stalls.ReportAt("now")
+      Stalls.ReportDays(3),
+      Stalls.ReportAt("now")
     )
     assertEquals(r.stalled.map(_.slug), List("b", "c", "a", "e"))
     assertEquals(r.goals, 5)
-    assertEquals(r.byReason, List(ReasonCount(ReasonCount.Code(Code.Idle), com.histmersion.api.automation.Stalls.ReasonCount.Count(3)), ReasonCount(ReasonCount.Code(Code.Running), com.histmersion.api.automation.Stalls.ReasonCount.Count(1))))
+    assertEquals(r.byReason, List(ReasonCount(ReasonCount.Code(Code.Idle), Stalls.ReasonCount.Count(3)), ReasonCount(ReasonCount.Code(Code.Running), Stalls.ReasonCount.Count(1))))
     val md = StallsMarkdown.report(r)
     assert(
       md.startsWith("# Stalled goals: 4 of 5 with no progress in 3 day(s)") && md.contains("**b**") && md.contains(
@@ -76,4 +78,4 @@ class StallsSuite extends munit.FunSuite:
       ),
       md
     )
-    assert(StallsMarkdown.report(report(Nil, com.histmersion.api.automation.Stalls.ReportDays(3), com.histmersion.api.automation.Stalls.ReportAt("now"))).contains("Every unfinished goal progressed"))
+    assert(StallsMarkdown.report(report(Nil, Stalls.ReportDays(3), Stalls.ReportAt("now"))).contains("Every unfinished goal progressed"))

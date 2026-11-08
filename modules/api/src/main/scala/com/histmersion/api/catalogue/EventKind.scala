@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.given
 object EventKind:
 
@@ -11,5 +12,5 @@ object EventKind:
   val Treaty = "treaty"
   val Reign = "reign"
   val EventPeriod = "period"
-  val all: List[com.histmersion.api.catalogue.CatalogRecord.Kind] =
-    List(_root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Event), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Battle), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Migration), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Construction), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Destruction), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Founding), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Treaty), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(Reign), _root_.com.histmersion.api.catalogue.CatalogRecord.Kind(EventPeriod))
+  val all: List[CatalogRecord.Kind] =
+    List(CatalogRecord.Kind(Event), CatalogRecord.Kind(Battle), CatalogRecord.Kind(Migration), CatalogRecord.Kind(Construction), CatalogRecord.Kind(Destruction), CatalogRecord.Kind(Founding), CatalogRecord.Kind(Treaty), CatalogRecord.Kind(Reign), CatalogRecord.Kind(EventPeriod))

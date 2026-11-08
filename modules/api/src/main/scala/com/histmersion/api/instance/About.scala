@@ -1,4 +1,5 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -13,6 +14,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.maintenance.Storage
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class About(
     name: About.Name,
@@ -37,8 +40,8 @@ final case class About(
 
 object About:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type LastBackupAgeSeconds = LastBackupAgeSeconds.T
-  object LastBackupAgeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LastBackupAgeSeconds extends RefinedType[Long, Pure]
   type Problems = Problems.T
-  object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problems extends RefinedType[String, Pure]

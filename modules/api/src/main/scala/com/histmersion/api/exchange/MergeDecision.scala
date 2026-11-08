@@ -1,22 +1,25 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import com.histmersion.api.WireEnumValues
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
-  def wire: com.histmersion.api.exchange.MergeDecision.Wire = _root_.com.histmersion.api.exchange.MergeDecision.Wire(MergeDecision.Kind.wireOf(kind).value + argument.fold("")(a => s":${a.value}"))
+  def wire: MergeDecision.Wire = MergeDecision.Wire(MergeDecision.Kind.wireOf(kind).value + argument.fold("")(a => s":${a.value}"))
 
 object MergeDecision:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
 
   type Argument = Argument.T
-  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Argument extends RefinedType[String, Pure]
 
   enum Kind:
     /** Keep this collection's version. */
@@ -62,43 +65,43 @@ object MergeDecision:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    def wireOf(k: Kind): com.histmersion.api.exchange.MergeDecision.Kind.Wire = k match
-      case KeepLeft       => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("keep-left")
-      case KeepRight      => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("keep-right")
-      case Both           => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("both")
-      case Concat         => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("concat")
-      case Hull           => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("hull")
-      case Map            => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("map")
-      case RenameRight    => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("rename-right")
-      case RenameLeft     => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("rename-left")
-      case File           => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("file")
-      case Merge          => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("merge")
-      case Drop           => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("drop")
-      case KeepUnanchored => _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire("keep-unanchored")
+    def wireOf(k: Kind): Wire = k match
+      case KeepLeft       => Wire("keep-left")
+      case KeepRight      => Wire("keep-right")
+      case Both           => Wire("both")
+      case Concat         => Wire("concat")
+      case Hull           => Wire("hull")
+      case Map            => Wire("map")
+      case RenameRight    => Wire("rename-right")
+      case RenameLeft     => Wire("rename-left")
+      case File           => Wire("file")
+      case Merge          => Wire("merge")
+      case Drop           => Wire("drop")
+      case KeepUnanchored => Wire("keep-unanchored")
 
     given WireEnumValues[Kind]:
-      def all: Array[Kind] = Kind.values
-      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire((s).value.trim))
-  def of(kind: MergeDecision.Kind): MergeDecision = MergeDecision(kind, None)
-  def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.Argument): MergeDecision = MergeDecision(kind, Some(_root_.com.histmersion.api.exchange.MergeDecision.Argument((arg).value)))
+      def all: Array[Kind] = values
+      def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: WireEnumValues.Wire): Option[Kind] = values.find(k => wireOf(k) == Wire((s).value.trim))
+  def of(kind: Kind): MergeDecision = MergeDecision(kind, None)
+  def withArg(kind: Kind, arg: Argument): MergeDecision = MergeDecision(kind, Some(Argument((arg).value)))
 
-  def parse(raw: com.histmersion.api.exchange.MergeDecision.Wire): Either[com.histmersion.api.exchange.MergeDecision.Problem, MergeDecision] =
+  def parse(raw: Wire): Either[Problem, MergeDecision] =
     val s = (raw).value.trim
     val (k, arg) = s.indexOf(':') match
       case -1 => (s, None)
       case i  => (s.take(i), Some(s.drop(i + 1).trim))
-    MergeDecision.Kind.values.find(d => MergeDecision.Kind.wireOf(d) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire(k)) match
+    Kind.values.find(d => Kind.wireOf(d) == Kind.Wire(k)) match
       case None =>
-        Left(_root_.com.histmersion.api.exchange.MergeDecision.Problem(s"'$s' is not a decision (${MergeDecision.Kind.values.map(MergeDecision.Kind.wireOf).mkString(", ")})"))
+        Left(Problem(s"'$s' is not a decision (${Kind.values.map(Kind.wireOf).mkString(", ")})"))
       case Some(d) if ((d.takesArgument) == (true)) && arg.forall(_.isEmpty) =>
-        Left(_root_.com.histmersion.api.exchange.MergeDecision.Problem(s"'$s': ${MergeDecision.Kind.wireOf(d)} needs an argument (${MergeDecision.Kind.wireOf(d)}:<value>)"))
+        Left(Problem(s"'$s': ${Kind.wireOf(d)} needs an argument (${Kind.wireOf(d)}:<value>)"))
       case Some(d) if !((d.takesArgument) == (true)) && arg.isDefined =>
-        Left(_root_.com.histmersion.api.exchange.MergeDecision.Problem(s"'$s': ${MergeDecision.Kind.wireOf(d)} takes no argument"))
-      case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.exchange.MergeDecision.Argument(refactorValue))))
+        Left(Problem(s"'$s': ${Kind.wireOf(d)} takes no argument"))
+      case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => Argument(refactorValue))))
 
   given Encoder[MergeDecision] = Encoder.encodeString.contramap((refactorCallback => (refactorCallback.wire).value))
-  given Decoder[MergeDecision] = Decoder.decodeString.emap(s => parse(_root_.com.histmersion.api.exchange.MergeDecision.Wire(s)).left.map(_.value))
+  given Decoder[MergeDecision] = Decoder.decodeString.emap(s => parse(Wire(s)).left.map(_.value))
   given Schema[MergeDecision] = Schema.string[MergeDecision]

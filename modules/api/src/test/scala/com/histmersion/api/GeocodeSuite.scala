@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,6 +9,9 @@ import com.histmersion.api.catalogue.Geocode.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
+import com.histmersion.api.catalogue.Geocode
+import com.histmersion.api.library.Finding
+import com.histmersion.api.library.Citekey
 
 /** The geocoder's pure half (#981): the name key, the readings of a name, and the ranking — each case mirrors a real
   * failure of 2026-10-06.
@@ -38,33 +42,33 @@ class GeocodeSuite extends munit.FunSuite:
   // ── attempts ─────────────────────────────────────────────────────────────────────────────────
 
   test("qualifiers: a directional prefix is dropped as a whole word, and something must remain"):
-    assertEquals(stripQualifier(com.histmersion.api.catalogue.Geocode.Attempt.Name("southern Levant")), Some(("southern", "Levant")))
-    assertEquals(stripQualifier(com.histmersion.api.catalogue.Geocode.Attempt.Name("Northern Albania")), Some(("Northern", "Albania")))
-    assertEquals(stripQualifier(com.histmersion.api.catalogue.Geocode.Attempt.Name("Western and Central Balkans")), Some(("Western and Central", "Balkans")))
-    assertEquals(stripQualifier(com.histmersion.api.catalogue.Geocode.Attempt.Name("North-western Anatolia")), Some(("North western", "Anatolia")))
-    assertEquals(stripQualifier(com.histmersion.api.catalogue.Geocode.Attempt.Name("Northern")), None)
-    assertEquals(stripQualifier(com.histmersion.api.catalogue.Geocode.Attempt.Name("Northumbria")), None)
-    assertEquals(stripQualifier(com.histmersion.api.catalogue.Geocode.Attempt.Name("Albania")), None)
+    assertEquals(stripQualifier(Geocode.Attempt.Name("southern Levant")), Some(("southern", "Levant")))
+    assertEquals(stripQualifier(Geocode.Attempt.Name("Northern Albania")), Some(("Northern", "Albania")))
+    assertEquals(stripQualifier(Geocode.Attempt.Name("Western and Central Balkans")), Some(("Western and Central", "Balkans")))
+    assertEquals(stripQualifier(Geocode.Attempt.Name("North-western Anatolia")), Some(("North western", "Anatolia")))
+    assertEquals(stripQualifier(Geocode.Attempt.Name("Northern")), None)
+    assertEquals(stripQualifier(Geocode.Attempt.Name("Northumbria")), None)
+    assertEquals(stripQualifier(Geocode.Attempt.Name("Albania")), None)
 
   test("attempts: the name, its aside, X within Y, the qualifier dropped, Y alone — in that order"):
     assertEquals(
-      attempts(com.histmersion.api.catalogue.Geocode.Attempt.Name("Ur (Tell el-Muqayyar)")).map(a => (a.name, a.within)),
+      attempts(Geocode.Attempt.Name("Ur (Tell el-Muqayyar)")).map(a => (a.name, a.within)),
       List(("Ur (Tell el-Muqayyar)", None), ("Tell el-Muqayyar", None))
     )
     assertEquals(
-      attempts(com.histmersion.api.catalogue.Geocode.Attempt.Name("Gornij, Croatia")),
+      attempts(Geocode.Attempt.Name("Gornij, Croatia")),
       List(
-        Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Gornij, Croatia")),
-        Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Gornij"), Some(com.histmersion.api.catalogue.Geocode.Attempt.Within("Croatia"))),
-        Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Croatia"), None, Some(Approximation.OnlyWithin(com.histmersion.api.catalogue.Geocode.Approximation.OnlyWithin.Missing("Gornij"))))
+        Attempt(Geocode.Attempt.Name("Gornij, Croatia")),
+        Attempt(Geocode.Attempt.Name("Gornij"), Some(Geocode.Attempt.Within("Croatia"))),
+        Attempt(Geocode.Attempt.Name("Croatia"), None, Some(Approximation.OnlyWithin(Geocode.Approximation.OnlyWithin.Missing("Gornij"))))
       )
     )
     assertEquals(
-      attempts(com.histmersion.api.catalogue.Geocode.Attempt.Name("southern Levant")),
-      List(Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("southern Levant")), Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Levant"), None, Some(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("southern")))))
+      attempts(Geocode.Attempt.Name("southern Levant")),
+      List(Attempt(Geocode.Attempt.Name("southern Levant")), Attempt(Geocode.Attempt.Name("Levant"), None, Some(Approximation.Qualifier(Geocode.Approximation.Qualifier.Dropped("southern")))))
     )
-    assertEquals(attempts(com.histmersion.api.catalogue.Geocode.Attempt.Name("Northern Albania")).last.approx, Some(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Northern"))))
-    assertEquals(attempts(com.histmersion.api.catalogue.Geocode.Attempt.Name("  ")), Nil)
+    assertEquals(attempts(Geocode.Attempt.Name("Northern Albania")).last.approx, Some(Approximation.Qualifier(Geocode.Approximation.Qualifier.Dropped("Northern"))))
+    assertEquals(attempts(Geocode.Attempt.Name("  ")), Nil)
 
   // ── ranking ──────────────────────────────────────────────────────────────────────────────────
 
@@ -120,12 +124,12 @@ class GeocodeSuite extends munit.FunSuite:
   test("Albania: the country labelled Albania, not the Iranian site that lists it among five names"):
     assertEquals(best(albania), "ne_country_alb")
     assertEquals(
-      best(albania, at = Some(Period(com.histmersion.api.catalogue.Year(800), com.histmersion.api.catalogue.Year(900)))),
+      best(albania, at = Some(Period(Year(800), Year(900)))),
       "ne_country_alb",
       "a dated point (Caucasian Albania, -330..2100) does not beat the country's shape"
     )
     assertEquals(
-      best(albania, at = Some(Period(com.histmersion.api.catalogue.Year(1925), com.histmersion.api.catalogue.Year(1925)))),
+      best(albania, at = Some(Period(Year(1925), Year(1925)))),
       "cliopatria_albania_1920_1935",
       "a dated snapshot that covers the finding is the more specific shape"
     )
@@ -143,8 +147,8 @@ class GeocodeSuite extends munit.FunSuite:
     val curated = c(Place.Id("mesopotamia"), Place.Label("Mesopotamia"), Candidate.Kind(Place.Kind.Region), area = Candidate.Area(50.0), lon = Longitude(43.74), lat = Latitude(33.15))
     assertEquals(best(ph :+ curated), "mesopotamia")
     // alone, a placeholder still resolves — and the choice says it is rough
-    val r = choose(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Mesopotamia"), Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Mesopotamia")), rank(ph, KindHint.Unknown, None, Min), Min).get
-    assertEquals(r.approximate, List(Approximation.Rough(com.histmersion.api.catalogue.Geocode.Approximation.Rough.Places(17))))
+    val r = choose(Geocode.Resolution.Asked("Mesopotamia"), Attempt(Geocode.Attempt.Name("Mesopotamia")), rank(ph, KindHint.Unknown, None, Min), Min).get
+    assertEquals(r.approximate, List(Approximation.Rough(Geocode.Approximation.Rough.Places(17))))
     assert(r.describe.contains("placeholder point shared by 17 places"), r.describe)
     assert(
       !isPlaceholder(c(Place.Id("x"), Place.Label("x"), Candidate.Kind(Place.Kind.Site), dim = Candidate.Dimension(0), shared = Approximation.Rough.Places(3)), Min),
@@ -158,11 +162,11 @@ class GeocodeSuite extends munit.FunSuite:
       .modify(_.gridCell).setTo(Candidate.GridCell(true))
     val region = c(Place.Id("pleiades_1332"), Place.Label("Thessalia"), Candidate.Kind(Place.Kind.Region), dim = Candidate.Dimension(0), area = Candidate.Area(0), lon = Longitude(22.29543), lat = Latitude(39.44387))
     assertEquals(best(List(province, region)), "pleiades_1332")
-    assertEquals(best(List(province, region), at = Some(Period(com.histmersion.api.catalogue.Year(400), com.histmersion.api.catalogue.Year(500)))), "pleiades_1332")
+    assertEquals(best(List(province, region), at = Some(Period(Year(400), Year(500)))), "pleiades_1332")
     val site = c(Place.Id("pleiades_x"), Place.Label("Thessalia"), Candidate.Kind(Place.Kind.Site), byLabel = Candidate.ByLabel(false), dim = Candidate.Dimension(0), area = Candidate.Area(0), lon = Longitude(22.4), lat = Latitude(39.6))
     assertEquals(best(List(province, site)), "pleiades_x", "a precise alias beats a grid-square label")
     // alone, it still resolves — marked approximate
-    val r = choose(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Thessalia"), Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Thessalia")), rank(List(province), KindHint.Unknown, None, Min), Min).get
+    val r = choose(Geocode.Resolution.Asked("Thessalia"), Attempt(Geocode.Attempt.Name("Thessalia")), rank(List(province), KindHint.Unknown, None, Min), Min).get
     assertEquals(r.approximate, List(Approximation.GridSquare))
     assert(r.describe.contains("atlas grid square"), r.describe)
 
@@ -170,25 +174,25 @@ class GeocodeSuite extends munit.FunSuite:
     val snaps = List((882L, 883L), (990L, 1017L), (1040L, 1235L), (1236L, 1240L)).map((a, b) =>
       c(Place.Id(s"cliopatria_kievan_rus_${a}_$b"), Place.Label("Kievan Rus'"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(a)), to = Some(Year(b)), area = Candidate.Area(1.0))
     )
-    assertEquals(best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))), "cliopatria_kievan_rus_990_1017")
-    assertEquals(best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1200)))), "cliopatria_kievan_rus_1040_1235")
+    assertEquals(best(snaps, at = Some(Period(Year(1000), Year(1000)))), "cliopatria_kievan_rus_990_1017")
+    assertEquals(best(snaps, at = Some(Period(Year(1100), Year(1200)))), "cliopatria_kievan_rus_1040_1235")
     assertEquals(
-      best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(1300), com.histmersion.api.catalogue.Year(1350)))),
+      best(snaps, at = Some(Period(Year(1300), Year(1350)))),
       "cliopatria_kievan_rus_1236_1240",
       "after the last: the last"
     )
     assertEquals(
-      best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(960), com.histmersion.api.catalogue.Year(970)))),
+      best(snaps, at = Some(Period(Year(960), Year(970)))),
       "cliopatria_kievan_rus_990_1017",
       "a gap: the nearer neighbour"
     )
     assertEquals(
-      best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(900), com.histmersion.api.catalogue.Year(910)))),
+      best(snaps, at = Some(Period(Year(900), Year(910)))),
       "cliopatria_kievan_rus_882_883",
       "a gap: the nearer neighbour"
     )
     assertEquals(
-      best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(800), com.histmersion.api.catalogue.Year(1300)))),
+      best(snaps, at = Some(Period(Year(800), Year(1300)))),
       "cliopatria_kievan_rus_1040_1235",
       "several overlap: the smaller area, then the id"
     )
@@ -201,7 +205,7 @@ class GeocodeSuite extends munit.FunSuite:
     val polity = c(Place.Id("ur_iii"), Place.Label("Ur"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(-2112)), to = Some(Year(-2004)))
     assertEquals(best(List(city, polity)), "ur_iii")
     assertEquals(best(List(city, polity), hint = KindHint.Site), "pleiades_912985")
-    assertEquals(best(List(city, polity), hint = KindHint.Site, at = Some(Period(com.histmersion.api.catalogue.Year(-2100), com.histmersion.api.catalogue.Year(-2000)))), "pleiades_912985")
+    assertEquals(best(List(city, polity), hint = KindHint.Site, at = Some(Period(Year(-2100), Year(-2000)))), "pleiades_912985")
 
   test("water: a feature before a site of the same name"):
     val sea = c(Place.Id("pleiades_697709"), Place.Label("Mortuum Mare"), Candidate.Kind(Place.Kind.Feature), dim = Candidate.Dimension(0), area = Candidate.Area(0))
@@ -216,13 +220,13 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(best(List(snap, ne)), "ne_country_dnk")
 
   test("a qualifier-stripped choice is approximate and says what was dropped"):
-    val a = attempts(com.histmersion.api.catalogue.Geocode.Attempt.Name("Northern Albania")).last
-    val r = choose(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Northern Albania"), a, rank(albania, KindHint.Unknown, None, Min), Min).get
+    val a = attempts(Geocode.Attempt.Name("Northern Albania")).last
+    val r = choose(Geocode.Resolution.Asked("Northern Albania"), a, rank(albania, KindHint.Unknown, None, Min), Min).get
     assertEquals((r.placeId, r.isApproximate), ("ne_country_alb", true))
     assertEquals(r.describe, "'Northern Albania' → Albania [ne_country_alb] (approximate: 'Northern' dropped)")
 
   test("nothing to rank, nothing chosen"):
-    assertEquals(choose(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Dead Sea"), Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Dead Sea")), Nil, Min), None)
+    assertEquals(choose(Geocode.Resolution.Asked("Dead Sea"), Attempt(Geocode.Attempt.Name("Dead Sea")), Nil, Min), None)
 
   test("period overlap and gap use inclusive bounds"):
     val p = c(Place.Id("p"), Place.Label("p"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(-100)), to = Some(Year(100)))
@@ -232,28 +236,28 @@ class GeocodeSuite extends munit.FunSuite:
     assert(c(Place.Id("u"), Place.Label("u"), Candidate.Kind(Place.Kind.Region)).overlaps(Period(Year(-5000), Year(-4000))), "undated is always valid")
 
   test("kind hints parse leniently: a model's synonym is a hint, anything else none"):
-    assertEquals(KindHint.parse(com.histmersion.api.catalogue.Geocode.KindHint.Wire("Site")), KindHint.Site)
-    assertEquals(KindHint.parse(com.histmersion.api.catalogue.Geocode.KindHint.Wire("city")), KindHint.Site)
-    assertEquals(KindHint.parse(com.histmersion.api.catalogue.Geocode.KindHint.Wire("country")), KindHint.Region)
-    assertEquals(KindHint.parse(com.histmersion.api.catalogue.Geocode.KindHint.Wire("kingdom")), KindHint.Polity)
-    assertEquals(KindHint.parse(com.histmersion.api.catalogue.Geocode.KindHint.Wire("lake")), KindHint.Water)
-    assertEquals(KindHint.parse(com.histmersion.api.catalogue.Geocode.KindHint.Wire("galaxy")), KindHint.Unknown)
+    assertEquals(KindHint.parse(Geocode.KindHint.Wire("Site")), KindHint.Site)
+    assertEquals(KindHint.parse(Geocode.KindHint.Wire("city")), KindHint.Site)
+    assertEquals(KindHint.parse(Geocode.KindHint.Wire("country")), KindHint.Region)
+    assertEquals(KindHint.parse(Geocode.KindHint.Wire("kingdom")), KindHint.Polity)
+    assertEquals(KindHint.parse(Geocode.KindHint.Wire("lake")), KindHint.Water)
+    assertEquals(KindHint.parse(Geocode.KindHint.Wire("galaxy")), KindHint.Unknown)
 
   // ── the repair ───────────────────────────────────────────────────────────────────────────────
 
   test("distance and the move line"):
-    assertEqualsDouble(distanceKm(com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(1)).value, 111.19, 0.01)
+    assertEqualsDouble(distanceKm(Longitude(0), Latitude(0), Longitude(0), Latitude(1)).value, 111.19, 0.01)
     val m = Move(
-      com.histmersion.api.library.Finding.Id("heraclides2025_ancient#0"),
-      com.histmersion.api.library.Citekey("heraclides2025_ancient"),
-      com.histmersion.api.catalogue.Geocode.Move.Asked("Albania"),
-      Some(com.histmersion.api.catalogue.Geocode.Move.Region("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania")),
+      Finding.Id("heraclides2025_ancient#0"),
+      Citekey("heraclides2025_ancient"),
+      Geocode.Move.Asked("Albania"),
+      Some(Geocode.Move.Region("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania")),
       Longitude(45.85589),
       Latitude(34.46511),
-      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Albania"), com.histmersion.api.catalogue.Place.Id("ne_country_alb"), com.histmersion.api.catalogue.Place.Label("Albania"), Longitude(19.97), Latitude(41.25))
+      Resolution(Geocode.Resolution.Asked("Albania"), Place.Id("ne_country_alb"), Place.Label("Albania"), Longitude(19.97), Latitude(41.25))
     )
     assert(m.km.value > 2000 && m.km.value < 2500, m.km)
-    assert(worthMoving(m, com.histmersion.api.catalogue.Geocode.Move.MinKm(25)) && !worthMoving(m.modify(_.to).setTo(m.to.modify(_.lon).setTo(Longitude(45.86)).modify(_.lat).setTo(Latitude(34.47))), com.histmersion.api.catalogue.Geocode.Move.MinKm(25)))
+    assert(worthMoving(m, Geocode.Move.MinKm(25)) && !worthMoving(m.modify(_.to).setTo(m.to.modify(_.lon).setTo(Longitude(45.86)).modify(_.lat).setTo(Latitude(34.47))), Geocode.Move.MinKm(25)))
     assertEquals(
       m.describe,
       "heraclides2025_ancient#0: 'Albania' (stored as '[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania') at 34.47 N 45.86 E → Albania [ne_country_alb] at 41.25 N 19.97 E, " +
@@ -264,36 +268,36 @@ class GeocodeSuite extends munit.FunSuite:
 
   test("a placement line names the finding, the stored name and where it lands"):
     val p = Placement(
-      com.histmersion.api.library.Finding.Id("meshel2025_dead#2"),
-      com.histmersion.api.library.Citekey("meshel2025_dead"),
-      com.histmersion.api.catalogue.Geocode.Placement.Region("Dead Sea"),
-      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Dead Sea"), com.histmersion.api.catalogue.Place.Id("ne_lake_1159126747"), com.histmersion.api.catalogue.Place.Label("Dead Sea"), Longitude(35.5), Latitude(31.5))
+      Finding.Id("meshel2025_dead#2"),
+      Citekey("meshel2025_dead"),
+      Geocode.Placement.Region("Dead Sea"),
+      Resolution(Geocode.Resolution.Asked("Dead Sea"), Place.Id("ne_lake_1159126747"), Place.Label("Dead Sea"), Longitude(35.5), Latitude(31.5))
     )
     assertEquals(p.describe, "meshel2025_dead#2: 'Dead Sea' → Dead Sea [ne_lake_1159126747] at 31.50 N 35.50 E")
     val q = Placement(
-      com.histmersion.api.library.Finding.Id("x#0"),
-      com.histmersion.api.library.Citekey("x"),
-      com.histmersion.api.catalogue.Geocode.Placement.Region("southern Levant"),
-      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("southern Levant"), com.histmersion.api.catalogue.Place.Id("levant"), com.histmersion.api.catalogue.Place.Label("Levant"), Longitude(36.0), Latitude(33.0), List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("southern"))))
+      Finding.Id("x#0"),
+      Citekey("x"),
+      Geocode.Placement.Region("southern Levant"),
+      Resolution(Geocode.Resolution.Asked("southern Levant"), Place.Id("levant"), Place.Label("Levant"), Longitude(36.0), Latitude(33.0), List(Approximation.Qualifier(Geocode.Approximation.Qualifier.Dropped("southern"))))
     )
     assert(q.describe.endsWith("(approximate: 'southern' dropped)"), q.describe)
 
   test("a stored finding's period for ranking: both ends, one end, or none"):
-    assertEquals(periodOf(Some(com.histmersion.api.catalogue.Year(-1200)), Some(com.histmersion.api.catalogue.Year(-1100))), Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100))))
-    assertEquals(periodOf(Some(com.histmersion.api.catalogue.Year(-1100)), Some(com.histmersion.api.catalogue.Year(-1200))), Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100))), "reversed ends are ordered")
-    assertEquals(periodOf(Some(com.histmersion.api.catalogue.Year(-1200)), None), Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1200))))
-    assertEquals(periodOf(None, Some(com.histmersion.api.catalogue.Year(500))), Some(Period(com.histmersion.api.catalogue.Year(500), com.histmersion.api.catalogue.Year(500))))
+    assertEquals(periodOf(Some(Year(-1200)), Some(Year(-1100))), Some(Period(Year(-1200), Year(-1100))))
+    assertEquals(periodOf(Some(Year(-1100)), Some(Year(-1200))), Some(Period(Year(-1200), Year(-1100))), "reversed ends are ordered")
+    assertEquals(periodOf(Some(Year(-1200)), None), Some(Period(Year(-1200), Year(-1200))))
+    assertEquals(periodOf(None, Some(Year(500))), Some(Period(Year(500), Year(500))))
     assertEquals(periodOf(None, None), None)
 
   test("a dropped compass qualifier names one part of the shape's box; two directions or none keep it whole"):
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Eastern")), Some((0.5, 0.0, 1.0, 1.0)))
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("southern")), Some((0.0, 0.0, 1.0, 0.5)))
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Northwestern")), Some((0.0, 0.5, 0.5, 1.0)))
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("south-east")), None, "two words, two directions")
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("central")), Some((0.25, 0.25, 0.75, 0.75)))
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Western and Central")), None)
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("upper")), None)
-    assertEquals(compassBox(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("coastal")), None)
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("Eastern")), Some((0.5, 0.0, 1.0, 1.0)))
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("southern")), Some((0.0, 0.0, 1.0, 0.5)))
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("Northwestern")), Some((0.0, 0.5, 0.5, 1.0)))
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("south-east")), None, "two words, two directions")
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("central")), Some((0.25, 0.25, 0.75, 0.75)))
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("Western and Central")), None)
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("upper")), None)
+    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("coastal")), None)
 
   // ── the external sources (#1064) ─────────────────────────────────────────────────────────────
 
@@ -302,12 +306,12 @@ class GeocodeSuite extends munit.FunSuite:
     val province =
       c(Place.Id("geonames_864563"), Place.Label("Varna"), Candidate.Kind(Place.Kind.Region), dim = Candidate.Dimension(0), area = Candidate.Area(0)).modify(_.tier).setTo(tierOf(Some(Place.Match.ImportSource("geonames"))))
     assertEquals(
-      rank(List(province, city), KindHint.Unknown, None, com.histmersion.api.catalogue.Geocode.Placeholder.Min(4)).map(_.id),
+      rank(List(province, city), KindHint.Unknown, None, Geocode.Placeholder.Min(4)).map(_.id),
       List("ne_city_varna", "geonames_864563")
     )
     assertEquals(tierOf(None), 0)
-    assertEquals(tierOf(Some(com.histmersion.api.catalogue.Place.Match.ImportSource("lpf:hittite"))), 1)
-    assertEquals(tierOf(Some(com.histmersion.api.catalogue.Place.Match.ImportSource("wikidata"))), 2)
+    assertEquals(tierOf(Some(Place.Match.ImportSource("lpf:hittite"))), 1)
+    assertEquals(tierOf(Some(Place.Match.ImportSource("wikidata"))), 2)
 
   test("a place matched by a DATED name is dated by it: the historical name wins in its own period"):
     // two places known as "Zzmikoyan" by an alternative name: one from 1935 to 1956, one undated
@@ -322,5 +326,5 @@ class GeocodeSuite extends munit.FunSuite:
       area = Candidate.Area(0)
     )
     val undated = c(Place.Id("geonames_100"), Place.Label("Mikoyan farm"), Candidate.Kind(Place.Kind.Site), byLabel = Candidate.ByLabel(false), dim = Candidate.Dimension(0), area = Candidate.Area(0))
-    assertEquals(rank(List(undated, dated), KindHint.Unknown, Some(Period(com.histmersion.api.catalogue.Year(1940), com.histmersion.api.catalogue.Year(1945))), com.histmersion.api.catalogue.Geocode.Placeholder.Min(4)).head.id, "geonames_174710")
-    assertEquals(rank(List(dated, undated), KindHint.Unknown, Some(Period(com.histmersion.api.catalogue.Year(1990), com.histmersion.api.catalogue.Year(2000))), com.histmersion.api.catalogue.Geocode.Placeholder.Min(4)).head.id, "geonames_100")
+    assertEquals(rank(List(undated, dated), KindHint.Unknown, Some(Period(Year(1940), Year(1945))), Geocode.Placeholder.Min(4)).head.id, "geonames_174710")
+    assertEquals(rank(List(dated, undated), KindHint.Unknown, Some(Period(Year(1990), Year(2000))), Geocode.Placeholder.Min(4)).head.id, "geonames_100")

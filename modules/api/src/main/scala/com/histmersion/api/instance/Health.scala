@@ -1,9 +1,12 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Health(
     status: Health.Status,
@@ -16,12 +19,12 @@ final case class Health(
 
 object Health:
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]
   type Db = Db.T
-  object Db extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Db extends RefinedType[String, Pure]
   type SchemaVersion = SchemaVersion.T
-  object SchemaVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SchemaVersion extends RefinedType[String, Pure]
   type Converter = Converter.T
-  object Converter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Converter extends RefinedType[String, Pure]
   type Warnings = Warnings.T
-  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Warnings extends RefinedType[String, Pure]

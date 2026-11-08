@@ -1,9 +1,12 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaTarget(
     targetType: MediaTarget.TargetType,
@@ -17,14 +20,14 @@ final case class MediaTarget(
 
 object MediaTarget:
   type TargetType = TargetType.T
-  object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetType extends RefinedType[String, Pure]
   type TargetId = TargetId.T
-  object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetId extends RefinedType[String, Pure]
   type Role = Role.T
-  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Role extends RefinedType[String, Pure]
   type Property = Property.T
-  object Property extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Property extends RefinedType[String, Pure]
   type Item = Item.T
-  object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Item extends RefinedType[String, Pure]
   type Basis = Basis.T
-  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Basis extends RefinedType[String, Pure]

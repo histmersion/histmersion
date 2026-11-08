@@ -1,13 +1,16 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 enum GazGeometry:
-  case GeoJson(text: GazGeometry.GeoJson.Text)
-  case Wkt(text: GazGeometry.Wkt.Text)
+  case GeoJson(text: GeoJson.Text)
+  case Wkt(text: Wkt.Text)
 
 object GazGeometry:
   object GeoJson:
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]
   object Wkt:
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]

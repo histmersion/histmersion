@@ -1,9 +1,12 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class LeadFacts(
-    eventId: com.histmersion.api.catalogue.Event.Id,
+    eventId: Event.Id,
     label: LeadFacts.Label,
     kind: LeadFacts.Kind,
     timeSpan: TimeSpan,
@@ -19,22 +22,22 @@ final case class LeadFacts(
 
 object LeadFacts:
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Tier = Tier.T
-  object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tier extends RefinedType[String, Pure]
   type Vei = Vei.T
-  object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Vei extends RefinedType[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Magnitude extends RefinedType[Double, Pure]
   type FindingsNear = FindingsNear.T
-  object FindingsNear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FindingsNear extends RefinedType[Int, Pure]
   type Km = Km.T
-  object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Km extends RefinedType[Double, Pure]
   type Years = Years.T
-  object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Years extends RefinedType[Long, Pure]
   type Proposed = Proposed.T
-  object Proposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Proposed extends RefinedType[Int, Pure]
   type Attesting = Attesting.T
-  object Attesting extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Attesting extends RefinedType[Int, Pure]

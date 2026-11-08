@@ -1,7 +1,11 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 object MediaRole:
   type Role = Role.T
-  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Role extends RefinedType[String, Pure]
 
   val Image = "image"
   val LocatorMap = "locator-map"
@@ -25,14 +29,14 @@ object MediaRole:
   val Map = "map"
 
   /** The roles a place's or event's picture can have — what `media.wikidata.*-properties` may name. */
-  val placeRoles: List[com.histmersion.api.media.MediaRole.Role] = List(_root_.com.histmersion.api.media.MediaRole.Role(Image), _root_.com.histmersion.api.media.MediaRole.Role(AerialView), _root_.com.histmersion.api.media.MediaRole.Role(Plan), _root_.com.histmersion.api.media.MediaRole.Role(LocatorMap), _root_.com.histmersion.api.media.MediaRole.Role(RouteMap))
+  val placeRoles: List[Role] = List(Role(Image), Role(AerialView), Role(Plan), Role(LocatorMap), Role(RouteMap))
 
   /** Every role, in card order: a place's own picture before an object found there and a map of it; a source shows its
     * cover before an illustration.
     */
-  val all: List[com.histmersion.api.media.MediaRole.Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration).map(Role(_))
+  val all: List[Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration).map(Role(_))
 
   /** Pure: the rank of a role on a card (unknown roles last). */
-  def order(role: com.histmersion.api.media.MediaRole.Role): Int = all.indexOf(role) match
+  def order(role: Role): Int = all.indexOf(role) match
     case -1 => (all.size)
     case i  => (i)

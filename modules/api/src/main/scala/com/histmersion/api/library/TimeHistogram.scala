@@ -1,9 +1,13 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class TimeHistogram(
     from: TimeHistogram.From,
@@ -11,26 +15,26 @@ final case class TimeHistogram(
     bucket: TimeHistogram.Bucket,
     buckets: List[TimeBucket],
     // Defaults keep the `by=time` JSON byte-identical for older clients.
-    by: TimeHistogram.By = _root_.com.histmersion.api.library.TimeHistogram.By("time"),
-    unit: TimeHistogram.Unit = _root_.com.histmersion.api.library.Histogram.Unit("sources"),
-    total: TimeHistogram.Total = _root_.com.histmersion.api.library.TimeHistogram.Total(0),
-    depth: TimeHistogram.Depth = _root_.com.histmersion.api.library.TimeHistogram.Depth(0),
-    asOf: Option[com.histmersion.api.catalogue.Year] = None,
+    by: TimeHistogram.By = TimeHistogram.By("time"),
+    unit: TimeHistogram.Unit = Histogram.Unit("sources"),
+    total: TimeHistogram.Total = TimeHistogram.Total(0),
+    depth: TimeHistogram.Depth = TimeHistogram.Depth(0),
+    asOf: Option[Year] = None,
     tree: List[Bucket] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object TimeHistogram:
   type From = From.T
-  object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object From extends RefinedType[Long, Pure]
   type To = To.T
-  object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object To extends RefinedType[Long, Pure]
   type Bucket = Bucket.T
-  object Bucket extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Bucket extends RefinedType[Long, Pure]
   type By = By.T
-  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.library.Histogram.Unit
+  object By extends RefinedType[String, Pure]
+  export Histogram.Unit
   type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Total extends RefinedType[Int, Pure]
   type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Depth extends RefinedType[Int, Pure]

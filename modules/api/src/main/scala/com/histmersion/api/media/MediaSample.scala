@@ -1,17 +1,20 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaSample(
-    targetType: com.histmersion.api.media.MediaTarget.TargetType,
-    targetId: com.histmersion.api.media.MediaTarget.TargetId,
+    targetType: MediaTarget.TargetType,
+    targetId: MediaTarget.TargetId,
     targetLabel: MediaSample.TargetLabel,
     key: MediaSample.Key,
     title: MediaSample.Title,
-    license: com.histmersion.api.media.MediaItem.License,
+    license: MediaItem.License,
     basis: MediaSample.Basis,
     url: MediaSample.Url
 ) derives KindlingsCodecAsObject,
@@ -19,12 +22,12 @@ final case class MediaSample(
 
 object MediaSample:
   type TargetLabel = TargetLabel.T
-  object TargetLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetLabel extends RefinedType[String, Pure]
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type Basis = Basis.T
-  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Basis extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]

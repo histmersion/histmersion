@@ -1,7 +1,10 @@
-package com.histmersion.api.personal
+package com.histmersion
+package api.personal
 
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.ItemKind
+import com.histmersion.api.library.Title
+import com.histmersion.api.checks.FormatIssue
 
 class PersonalMarkdownSuite extends munit.FunSuite:
 
@@ -11,10 +14,10 @@ class PersonalMarkdownSuite extends munit.FunSuite:
   test("a bookmark line: its name, the item's title when renamed, what and where, when, its id"):
     val b = Bookmark(
       id,
-      Target.item(ItemKind.Source, com.histmersion.api.personal.ItemKey("cline2014_1177")),
-      com.histmersion.api.library.Title("1177 B.C."),
+      Target.item(ItemKind.Source, ItemKey("cline2014_1177")),
+      Title("1177 B.C."),
       Some(Bookmark.Label("the collapse book")),
-      com.histmersion.api.personal.Bookmark.CreatedAt("2026-10-30T12:40:00.123456Z")
+      Bookmark.CreatedAt("2026-10-30T12:40:00.123456Z")
     )
     assertEquals(
       PersonalMarkdown.bookmarkLine(b),
@@ -27,19 +30,19 @@ class PersonalMarkdownSuite extends munit.FunSuite:
       nid,
       Target(ItemKind.Point, lat = Some(Latitude(37.5)), lon = Some(Longitude(22.75))),
       Note.Text("\n\nBridge here?\nSecond line."),
-      com.histmersion.api.library.Title("Place on the map"),
-      com.histmersion.api.personal.Note.CreatedAt("2026-10-30T12:40:00Z"),
-      com.histmersion.api.personal.Note.UpdatedAt("2026-10-31T09:00:00Z")
+      Title("Place on the map"),
+      Note.CreatedAt("2026-10-30T12:40:00Z"),
+      Note.UpdatedAt("2026-10-31T09:00:00Z")
     )
     assert(PersonalMarkdown.noteLine(n).endsWith("\n  Bridge here?"), PersonalMarkdown.noteLine(n))
     assert(PersonalMarkdown.note(n).contains("place on the map · 37.50° N, 22.75° E"), PersonalMarkdown.note(n))
     assert(PersonalMarkdown.note(n).contains("changed 2026-10-31 09:00"))
-    assertEquals(PersonalMarkdown.excerpt(Note.Text("x" * 200), com.histmersion.api.checks.FormatIssue.Excerpt.Length(10)), "x" * 9 + "…")
+    assertEquals(PersonalMarkdown.excerpt(Note.Text("x" * 200), FormatIssue.Excerpt.Length(10)), "x" * 9 + "…")
 
   test("read marks"):
     assertEquals(
       PersonalMarkdown.readLine(
-        ReadMark(ItemKind.Article, ItemKey("a"), com.histmersion.api.personal.ReadMark.Title("A"), read = com.histmersion.api.personal.ReadMark.Read(true), readAt = Some(com.histmersion.api.personal.ReadMark.ReadAt("2026-10-30T12:40:00Z")))
+        ReadMark(ItemKind.Article, ItemKey("a"), ReadMark.Title("A"), read = ReadMark.Read(true), readAt = Some(ReadMark.ReadAt("2026-10-30T12:40:00Z")))
       ),
       "- **A** — article `a` · read 2026-10-30 12:40"
     )

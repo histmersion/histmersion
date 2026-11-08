@@ -1,4 +1,5 @@
-package com.histmersion.api.aliases
+package com.histmersion
+package api.aliases
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema

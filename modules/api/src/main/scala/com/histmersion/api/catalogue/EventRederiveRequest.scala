@@ -1,15 +1,18 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
-final case class EventRederiveRequest(provider: Option[EventRederiveRequest.Provider] = None, dryRun: EventRederiveRequest.DryRun = _root_.com.histmersion.api.catalogue.EventRederiveRequest.DryRun(false))
+final case class EventRederiveRequest(provider: Option[EventRederiveRequest.Provider] = None, dryRun: EventRederiveRequest.DryRun = EventRederiveRequest.DryRun(false))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventRederiveRequest:
-  export com.histmersion.api.catalogue.EventImportReport.Provider
+  export EventImportReport.Provider
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]

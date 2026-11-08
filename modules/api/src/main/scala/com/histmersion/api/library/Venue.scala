@@ -1,3 +1,4 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
-export com.histmersion.api.library.Source.Venue
+export Source.Venue

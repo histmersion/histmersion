@@ -1,21 +1,27 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CritiqueSide(
-    citekey: com.histmersion.api.library.Citekey,
-    title: Option[com.histmersion.api.library.Title] = None,
-    year: Option[com.histmersion.api.catalogue.Year] = None,
-    cited: CritiqueSide.Cited = _root_.com.histmersion.api.research.CritiqueSide.Cited(false),
-    mentions: CritiqueSide.Mentions = _root_.com.histmersion.api.research.CritiqueSide.Mentions(0)
+    citekey: Citekey,
+    title: Option[Title] = None,
+    year: Option[Year] = None,
+    cited: CritiqueSide.Cited = CritiqueSide.Cited(false),
+    mentions: CritiqueSide.Mentions = CritiqueSide.Mentions(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CritiqueSide:
   type Cited = Cited.T
-  object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cited extends RefinedType[Boolean, Pure]
   type Mentions = Mentions.T
-  object Mentions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mentions extends RefinedType[Int, Pure]

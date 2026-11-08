@@ -1,18 +1,24 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import io.circe.KeyEncoder
+import io.circe.KeyDecoder
 
 /** One item of a collection as a listing shows it (a Calibre book): its id, title, authors, year, publisher, tags,
   * identifiers by scheme and its files.
   */
 final case class CollectionEntry(
     id: CollectionEntry.Id,
-    title: com.histmersion.api.library.Title,
-    authors: List[com.histmersion.api.library.AuthorName],
-    year: Option[com.histmersion.api.catalogue.Year],
+    title: Title,
+    authors: List[AuthorName],
+    year: Option[Year],
     publisher: Option[CollectionEntry.Publisher],
     tags: List[CollectionEntry.Tags],
     identifiers: Map[CollectionEntry.IdentifiersKey, CollectionEntry.IdentifiersValue],
@@ -23,16 +29,16 @@ final case class CollectionEntry(
 object CollectionEntry:
   given Schema[Map[IdentifiersKey, IdentifiersValue]] = Schema.schemaForMap[IdentifiersKey, IdentifiersValue](_.value).copy(name = None, isOptional = true)
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Publisher = Publisher.T
-  object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Publisher extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type IdentifiersKey = IdentifiersKey.T
-  object IdentifiersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.io.circe.KeyEncoder[T] = _root_.io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
-    given _root_.io.circe.KeyDecoder[T] = _root_.io.circe.KeyDecoder.decodeKeyString.map(IdentifiersKey(_))
+  object IdentifiersKey extends RefinedType[String, Pure]:
+    given KeyEncoder[T] = KeyEncoder.encodeKeyString.contramap(_.value)
+    given KeyDecoder[T] = KeyDecoder.decodeKeyString.map(IdentifiersKey(_))
   type IdentifiersValue = IdentifiersValue.T
-  object IdentifiersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IdentifiersValue extends RefinedType[String, Pure]
   type Formats = Formats.T
-  object Formats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Formats extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.catalogue.{
   Correction,
   EventArticleRef,
@@ -19,15 +20,15 @@ import com.histmersion.api.catalogue.{
   */
 trait EventCard:
   def event: EventSummary
-  def geometry: Option[com.histmersion.api.catalogue.EventGeometry.Geojson]
+  def geometry: Option[EventGeometry.Geojson]
   def parent: Option[EventSummary]
   def children: List[EventSummary]
   def datings: List[EventDating]
   def edges: List[EventEdge]
   def participants: List[EventParticipant]
-  def wikidata: Option[com.histmersion.api.catalogue.EventEntry.Wikidata]
-  def tier: com.histmersion.api.catalogue.EventGeo.Tier
-  def names: List[com.histmersion.api.catalogue.EventEntry.Names]
+  def wikidata: Option[EventEntry.Wikidata]
+  def tier: EventGeo.Tier
+  def names: List[EventEntry.Names]
   def catalogue: List[EventCatalogueRef]
   def sources: List[EventSourceRef]
   def findings: List[EventFindingRef]

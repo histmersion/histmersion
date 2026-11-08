@@ -1,22 +1,26 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventSourceRef(
-    citekey: com.histmersion.api.library.Citekey,
+    citekey: Citekey,
     title: Option[EventSourceRef.Title] = None,
-    year: Option[com.histmersion.api.catalogue.Year] = None,
-    via: EventSourceRef.Via = _root_.com.histmersion.api.catalogue.EventSourceRef.Via("citekey"),
+    year: Option[Year] = None,
+    via: EventSourceRef.Via = EventSourceRef.Via("citekey"),
     quote: Option[EventSourceRef.Quote] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventSourceRef:
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type Via = Via.T
-  object Via extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.catalogue.EventPassage.Quote
+  object Via extends RefinedType[String, Pure]
+  export EventPassage.Quote

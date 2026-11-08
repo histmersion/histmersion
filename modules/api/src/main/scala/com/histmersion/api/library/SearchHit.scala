@@ -1,29 +1,33 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SearchHit(
-    citekey: com.histmersion.api.library.Citekey,
-    title: com.histmersion.api.library.Title,
-    year: Option[com.histmersion.api.catalogue.Year],
-    status: com.histmersion.api.library.Source.Status,
+    citekey: Citekey,
+    title: Title,
+    year: Option[Year],
+    status: Source.Status,
     topics: List[SearchHit.Topics],
     regions: List[SearchHit.Regions],
-    periodStart: Option[com.histmersion.api.catalogue.Year],
-    periodEnd: Option[com.histmersion.api.catalogue.Year],
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
     summary: Option[SearchHit.Summary],
     snippet: Option[SearchHit.Snippet] = None,
     matchedHeading: Option[SearchHit.MatchedHeading] = None,
-    doi: Option[com.histmersion.api.library.Doi] = None,
-    authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply)
+    doi: Option[Doi] = None,
+    authors: List[AuthorName] = (Nil).map(AuthorName.apply)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object SearchHit:
-  export com.histmersion.api.library.Source.{Topics, Regions, Summary}
-  export com.histmersion.api.library.Search.Snippet
+  export Source.{Topics, Regions, Summary}
+  export Search.Snippet
   type MatchedHeading = MatchedHeading.T
-  object MatchedHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MatchedHeading extends RefinedType[String, Pure]

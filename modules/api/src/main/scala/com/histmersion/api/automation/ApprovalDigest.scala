@@ -1,51 +1,54 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object ApprovalDigest:
   type Line = Line.T
-  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Line extends RefinedType[String, Pure]
 
 
   final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object SubjectCount:
     type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Subject extends RefinedType[String, Pure]
     type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends RefinedType[Int, Pure]
 
 
   final case class KindGroup(
       kind: KindGroup.Kind,
       count: KindGroup.Count,
       oldest: Option[KindGroup.Oldest] = None,
-      decidedBy: KindGroup.DecidedBy = _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("person"),
+      decidedBy: KindGroup.DecidedBy = Approval.DecidedBy.Wire("person"),
       subjects: List[SubjectCount] = Nil,
       ids: List[KindGroup.Ids] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object KindGroup:
-    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
+    export Approval.Kind.{Wire as Kind}
     type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends RefinedType[Int, Pure]
     type Oldest = Oldest.T
-    object Oldest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.Approval.DecidedBy.{Wire as DecidedBy}
+    object Oldest extends RefinedType[String, Pure]
+    export Approval.DecidedBy.{Wire as DecidedBy}
     type Ids = Ids.T
-    object Ids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ids extends RefinedType[Long, Pure]
 
 
   final case class Digest(
       at: Digest.At,
-      total: Digest.Total = _root_.com.histmersion.api.automation.ApprovalDigest.Digest.Total(0),
+      total: Digest.Total = Digest.Total(0),
       kinds: List[KindGroup] = Nil,
-      heldForPerson: Digest.HeldForPerson = _root_.com.histmersion.api.automation.ApprovalDigest.Digest.HeldForPerson(0),
+      heldForPerson: Digest.HeldForPerson = Digest.HeldForPerson(0),
       lastWritten: Option[Digest.LastWritten] = None,
       goalPlansWait: Option[Digest.GoalPlansWait] = None
   ) derives KindlingsCodecAsObject,
@@ -53,15 +56,15 @@ object ApprovalDigest:
 
   object Digest:
     type At = At.T
-    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object At extends RefinedType[String, Pure]
     type Total = Total.T
-    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Total extends RefinedType[Int, Pure]
     type HeldForPerson = HeldForPerson.T
-    object HeldForPerson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HeldForPerson extends RefinedType[Int, Pure]
     type LastWritten = LastWritten.T
-    object LastWritten extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastWritten extends RefinedType[String, Pure]
     type GoalPlansWait = GoalPlansWait.T
-    object GoalPlansWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object GoalPlansWait extends RefinedType[String, Pure]
 
 
   final case class BulkDecide(
@@ -70,7 +73,7 @@ object ApprovalDigest:
       subject: Option[BulkDecide.Subject] = None,
       ids: List[BulkDecide.Ids] = Nil,
       note: Option[BulkDecide.Note] = None,
-      dryRun: BulkDecide.DryRun = _root_.com.histmersion.api.automation.ApprovalDigest.BulkDecide.DryRun(false),
+      dryRun: BulkDecide.DryRun = BulkDecide.DryRun(false),
       limit: Option[BulkDecide.Limit] = None,
       by: Option[BulkDecide.By] = None
   ) derives KindlingsCodecAsObject,
@@ -78,51 +81,51 @@ object ApprovalDigest:
 
   object BulkDecide:
     type Decision = Decision.T
-    object Decision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
+    object Decision extends RefinedType[String, Pure]
+    export Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Subject extends RefinedType[String, Pure]
     type Ids = Ids.T
-    object Ids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.Approval.Note
+    object Ids extends RefinedType[Long, Pure]
+    export Approval.Note
     type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DryRun extends RefinedType[Boolean, Pure]
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Limit extends RefinedType[Int, Pure]
     type By = By.T
-    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object By extends RefinedType[String, Pure]
 
 
   final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object BulkFailed:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[Long, Pure]
     type Error = Error.T
-    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Error extends RefinedType[String, Pure]
 
 
   final case class BulkResult(
       decision: BulkResult.Decision,
-      dryRun: BulkResult.DryRun = _root_.com.histmersion.api.automation.ApprovalDigest.BulkResult.DryRun(false),
-      matched: BulkResult.Matched = _root_.com.histmersion.api.automation.ApprovalDigest.BulkResult.Matched(0),
+      dryRun: BulkResult.DryRun = BulkResult.DryRun(false),
+      matched: BulkResult.Matched = BulkResult.Matched(0),
       decided: List[BulkResult.Decided] = Nil,
       failed: List[BulkFailed] = Nil,
-      left: BulkResult.Left = _root_.com.histmersion.api.automation.ApprovalDigest.BulkResult.Left(0)
+      left: BulkResult.Left = BulkResult.Left(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object BulkResult:
     type Decision = Decision.T
-    object Decision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Decision extends RefinedType[String, Pure]
     type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DryRun extends RefinedType[Boolean, Pure]
     type Matched = Matched.T
-    object Matched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Matched extends RefinedType[Int, Pure]
     type Decided = Decided.T
-    object Decided extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Decided extends RefinedType[Long, Pure]
     type Left = Left.T
-    object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Left extends RefinedType[Int, Pure]
 
 
   val Waits = "waits"
@@ -133,16 +136,16 @@ object ApprovalDigest:
 
   object Open:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
-    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
+    object Id extends RefinedType[Long, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    export Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+    object Subject extends RefinedType[String, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends RefinedType[String, Pure]
 
-  def group(open: List[Open], checked: com.histmersion.api.automation.Approval.Kind.Wire => Boolean, waiting: Set[com.histmersion.api.automation.Approval.Kind.Wire] = Set.empty): List[KindGroup] =
+  def group(open: List[Open], checked: Approval.Kind.Wire => Boolean, waiting: Set[Approval.Kind.Wire] = Set.empty): List[KindGroup] =
     open
       .groupBy(_.kind)
       .toList
@@ -157,9 +160,9 @@ object ApprovalDigest:
           .map((s, n) => SubjectCount(SubjectCount.Subject(s.value), SubjectCount.Count(n)))
         KindGroup(
           k,
-          _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.Count(as.size),
+          KindGroup.Count(as.size),
           sorted.headOption.map(o => KindGroup.Oldest(o.createdAt.value.take(10))),
-          if waiting(k) then _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire(Waits) else if checked(k) then _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("checked") else _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("person"),
+          if waiting(k) then Approval.DecidedBy.Wire(Waits) else if checked(k) then Approval.DecidedBy.Wire("checked") else Approval.DecidedBy.Wire("person"),
           subjects,
           sorted.take(IdsShown).map(o => KindGroup.Ids(o.id.value))
         )
@@ -175,10 +178,10 @@ object ApprovalDigest:
       .sortBy(_.id)
       .take(math.max(1, b.limit.map(_.value).getOrElse(Int.MaxValue)))
 
-  def line(d: Digest): com.histmersion.api.automation.ApprovalDigest.Line =
-    if d.total == _root_.com.histmersion.api.automation.ApprovalDigest.Digest.Total(0) && d.heldForPerson == _root_.com.histmersion.api.automation.ApprovalDigest.Digest.HeldForPerson(0) then _root_.com.histmersion.api.automation.ApprovalDigest.Line("approval digest: nothing waits for a person")
+  def line(d: Digest): Line =
+    if d.total == Digest.Total(0) && d.heldForPerson == Digest.HeldForPerson(0) then Line("approval digest: nothing waits for a person")
     else
-      _root_.com.histmersion.api.automation.ApprovalDigest.Line(s"approval digest: ${Plural.count(_root_.com.histmersion.api.Plural.CountN(d.total.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("approval"))} wait for a person" +
+      Line(s"approval digest: ${Plural.count(Plural.CountN(d.total.value.toLong), Plural.CountSingular("approval"))} wait for a person" +
         (if d.kinds.isEmpty then ""
          else
            " — " + d.kinds
@@ -189,6 +192,6 @@ object ApprovalDigest:
                   else "")
              )
              .mkString("; ")) +
-        (if d.heldForPerson.value > 0 then s"; ${Plural.count(_root_.com.histmersion.api.Plural.CountN(d.heldForPerson.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("manager item"))} held for a person" else "") +
+        (if d.heldForPerson.value > 0 then s"; ${Plural.count(Plural.CountN(d.heldForPerson.value.toLong), Plural.CountSingular("manager item"))} held for a person" else "") +
         d.goalPlansWait.fold("")(w => s"; $w") +
         "; decide a whole kind at once: histmersion agent decide-all approve --kind <kind> (or the Approvals window)")

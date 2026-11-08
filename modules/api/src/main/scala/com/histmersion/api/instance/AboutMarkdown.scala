@@ -1,4 +1,5 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import scala.annotation.tailrec
 import com.histmersion.api.{Plural, ServiceState}
 import com.histmersion.api.backup.Backup
@@ -18,7 +19,7 @@ object AboutMarkdown:
 
   def render(a: About): String =
     val b = a.build
-    val commit = b.gitCommit.fold("unknown")(c => if ((b.dirty) == _root_.com.histmersion.api.instance.BuildStamp.Dirty(true)) then s"$c (with uncommitted changes)" else c)
+    val commit = b.gitCommit.fold("unknown")(c => if ((b.dirty) == BuildStamp.Dirty(true)) then s"$c (with uncommitted changes)" else c)
     val conv = a.health.converter
     val backup = a.lastBackup.fold("none")(bk =>
       s"${bk.file} · ${Backup.humanBytes(bk.bytes)}" + a.lastBackupAgeSeconds.fold("")(s => s" · ${age(s.value)} ago")
@@ -46,9 +47,9 @@ object AboutMarkdown:
         a.plugins
       ) ++ a.counts.toList.flatMap(c =>
         List(
-          s"- corpus: ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.sources.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("source"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.findings.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("finding"))} · " +
-            s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.articles.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("article"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.events.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("event"))}",
-          s"- reference data: ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.places.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("place"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.periods.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("period"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.presets.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("preset"))}"
+          s"- corpus: ${Plural.count(Plural.CountN(c.sources.value.toLong), Plural.CountSingular("source"))} · ${Plural.count(Plural.CountN(c.findings.value.toLong), Plural.CountSingular("finding"))} · " +
+            s"${Plural.count(Plural.CountN(c.articles.value.toLong), Plural.CountSingular("article"))} · ${Plural.count(Plural.CountN(c.events.value.toLong), Plural.CountSingular("event"))}",
+          s"- reference data: ${Plural.count(Plural.CountN(c.places.value.toLong), Plural.CountSingular("place"))} · ${Plural.count(Plural.CountN(c.periods.value.toLong), Plural.CountSingular("period"))} · ${Plural.count(Plural.CountN(c.presets.value.toLong), Plural.CountSingular("preset"))}"
         )
       ) ++ StorageMarkdown.render(a.storage) ++
       (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))

@@ -1,9 +1,12 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A field to set on an item, by the collection's own field name. */
 final case class CollectionFieldValue(
@@ -14,6 +17,6 @@ final case class CollectionFieldValue(
 
 object CollectionFieldValue:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Value = Value.T
-  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Value extends RefinedType[String, Pure]

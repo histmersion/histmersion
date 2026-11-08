@@ -1,12 +1,15 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class PassageResult(
-    citekey: com.histmersion.api.library.Citekey,
+    citekey: Citekey,
     query: PassageResult.Query,
     regex: PassageResult.Regex,
     matches: PassageResult.Matches,
@@ -19,14 +22,14 @@ final case class PassageResult(
 
 object PassageResult:
   type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Query extends RefinedType[String, Pure]
   type Regex = Regex.T
-  object Regex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regex extends RefinedType[Boolean, Pure]
   type Matches = Matches.T
-  object Matches extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Matches extends RefinedType[Int, Pure]
   type Capped = Capped.T
-  object Capped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Capped extends RefinedType[Boolean, Pure]
   type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Total extends RefinedType[Int, Pure]
   type BodyChars = BodyChars.T
-  object BodyChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodyChars extends RefinedType[Int, Pure]

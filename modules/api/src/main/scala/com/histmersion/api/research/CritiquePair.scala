@@ -1,9 +1,12 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CritiquePair(
     src: CritiqueSide,
@@ -21,13 +24,13 @@ final case class CritiquePair(
 
   def critic: CritiqueSide = if Critiques.olderFirst(kinds) then dst else src
 
-  def bearing: Boolean = (((open) == (true)) && ((criticised.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)))
+  def bearing: Boolean = (((open) == (true)) && ((criticised.cited) == CritiqueSide.Cited(true)))
 
   def line: String = (s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]")
 
 object CritiquePair:
 
   type Kinds = Kinds.T
-  object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.research.CritiqueReason.Reason
+  object Kinds extends RefinedType[String, Pure]
+  export CritiqueReason.Reason
   export com.histmersion.api.automation.Activity.{Actor as ReasonBy}

@@ -1,4 +1,8 @@
-package com.histmersion.api
+package com.histmersion
+package api
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Read from a FeatureCollection's own keys or a sidecar `<file>.meta.json`: an LP-TSV file has nowhere else to say it.
   */
@@ -11,8 +15,8 @@ final case class LpfDataset(
 
 object LpfDataset:
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type Citation = Citation.T
-  object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Citation extends RefinedType[String, Pure]
   type Licence = Licence.T
-  object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Licence extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema

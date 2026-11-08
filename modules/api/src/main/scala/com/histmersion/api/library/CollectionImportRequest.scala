@@ -1,9 +1,12 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Import item `id` of a collection into the library: under `citekey` (else the generated one), its `format` (else the
   * collection's preference), converted unless `convert` is false, with its cover when `cover`, ticking off acquisition
@@ -11,22 +14,22 @@ import com.histmersion.api.json.NewtypeCodecs.given
   */
 final case class CollectionImportRequest(
     id: CollectionImportRequest.Id,
-    citekey: Option[com.histmersion.api.library.Citekey] = None,
+    citekey: Option[Citekey] = None,
     format: Option[CollectionImportRequest.Format] = None,
-    convert: CollectionImportRequest.Convert = _root_.com.histmersion.api.library.CollectionImportRequest.Convert(true),
-    cover: CollectionImportRequest.Cover = _root_.com.histmersion.api.library.CollectionImportRequest.Cover(true),
+    convert: CollectionImportRequest.Convert = CollectionImportRequest.Convert(true),
+    cover: CollectionImportRequest.Cover = CollectionImportRequest.Cover(true),
     acquireItem: Option[CollectionImportRequest.AcquireItem] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CollectionImportRequest:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Format = Format.T
-  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Format extends RefinedType[String, Pure]
   type Convert = Convert.T
-  object Convert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Convert extends RefinedType[Boolean, Pure]
   type Cover = Cover.T
-  object Cover extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cover extends RefinedType[Boolean, Pure]
   type AcquireItem = AcquireItem.T
-  object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AcquireItem extends RefinedType[Int, Pure]

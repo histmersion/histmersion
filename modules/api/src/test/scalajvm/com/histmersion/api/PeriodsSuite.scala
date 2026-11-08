@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -71,20 +72,20 @@ class PeriodsSuite extends munit.FunSuite:
 
   test("a definition's span is its outer bounds, in signed years"):
     val d = parsed.authorities.flatMap(_.periods).map(p => p.id -> p).toMap
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa01")).period, Period(com.histmersion.api.catalogue.Year(-3200), com.histmersion.api.catalogue.Year(-1050)))
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa02")).period, Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1050))) // earliest start, latest stop
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb01")).period, Period(com.histmersion.api.catalogue.Year(-3200), com.histmersion.api.catalogue.Year(-1))) // a numeric year is read too
+    assertEquals(d(HistoricalPeriod.Id("p0aaa01")).period, Period(Year(-3200), Year(-1050)))
+    assertEquals(d(HistoricalPeriod.Id("p0aaa02")).period, Period(Year(-1700), Year(-1050))) // earliest start, latest stop
+    assertEquals(d(HistoricalPeriod.Id("p0bbb01")).period, Period(Year(-3200), Year(-1))) // a numeric year is read too
 
   test("labels are the authority's own in English, else its English alternative"):
     val d = parsed.authorities.flatMap(_.periods).map(p => p.id -> p).toMap
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa01")).label, "Bronze Age") // ROAD lists "Late Stone Age" first for "Neolithic"
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb01")).label, "Early Bronze Age")
+    assertEquals(d(HistoricalPeriod.Id("p0aaa01")).label, "Bronze Age") // ROAD lists "Late Stone Age" first for "Neolithic"
+    assertEquals(d(HistoricalPeriod.Id("p0bbb01")).label, "Early Bronze Age")
 
   test("the region is the coverage description, else the coverage labels"):
     val d = parsed.authorities.flatMap(_.periods).map(p => p.id -> p).toMap
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb01")).region, Some("Ukraine"))
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa02")).region, Some("Crete"))
-    assertEquals(d(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa03")).region, None)
+    assertEquals(d(HistoricalPeriod.Id("p0bbb01")).region, Some("Ukraine"))
+    assertEquals(d(HistoricalPeriod.Id("p0aaa02")).region, Some("Crete"))
+    assertEquals(d(HistoricalPeriod.Id("p0aaa03")).region, None)
 
   test("a definition without a readable span is skipped and named, never guessed"):
     val ds = parsed
@@ -95,15 +96,15 @@ class PeriodsSuite extends munit.FunSuite:
 
   test("the authority citation names the PeriodO id, the source and its year"):
     val rows = byId(PeriodO.toPeriods(parsed))
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa01")).authority, Some("PeriodO p0aaa01 · Archaeological periods of Somewhere (2022)"))
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb01")).authority, Some("PeriodO p0bbb01 · FASTI (2004)"))
+    assertEquals(rows(HistoricalPeriod.Id("p0aaa01")).authority, Some("PeriodO p0aaa01 · Archaeological periods of Somewhere (2022)"))
+    assertEquals(rows(HistoricalPeriod.Id("p0bbb01")).authority, Some("PeriodO p0bbb01 · FASTI (2004)"))
 
   test("PeriodO `broader` links inside the batch are kept; everything else is a root"):
     val rows = byId(PeriodO.toPeriods(parsed))
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa02")).parentId, Some("p0aaa01"))
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa03")).parentId, Some("p0aaa02"))
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa01")).parentId, None)
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb01")).parentId, None)
+    assertEquals(rows(HistoricalPeriod.Id("p0aaa02")).parentId, Some("p0aaa01"))
+    assertEquals(rows(HistoricalPeriod.Id("p0aaa03")).parentId, Some("p0aaa02"))
+    assertEquals(rows(HistoricalPeriod.Id("p0aaa01")).parentId, None)
+    assertEquals(rows(HistoricalPeriod.Id("p0bbb01")).parentId, None)
 
   test("a broader period outside the batch is dropped, not left dangling"):
     val rows = byId(
@@ -115,7 +116,7 @@ class PeriodsSuite extends munit.FunSuite:
           .copy(authorities = parsed.authorities.map(a => a.modify(_.periods).setTo(a.periods.filterNot(_.id == HistoricalPeriod.Id("p0aaa01")))))
       )
     )
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa02")).parentId, None)
+    assertEquals(rows(HistoricalPeriod.Id("p0aaa02")).parentId, None)
 
   test("the curated overlay wins over `broader`"):
     val rows = byId(PeriodO.toPeriods(parsed.copy(parents = Map(PeriodODataset.ParentsKey("p0aaa03") -> PeriodODataset.ParentsValue("p0aaa01"), PeriodODataset.ParentsKey("p0bbb01") -> PeriodODataset.ParentsValue("p0aaa01")))))
@@ -125,12 +126,12 @@ class PeriodsSuite extends munit.FunSuite:
   test("with roots, a collection hangs under one node per authority spanning its periods"):
     val rows = PeriodO.toPeriods(parsed, roots = true)
     val m = byId(rows)
-    assertEquals(m(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa")).parentId, None)
-    assertEquals(m(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa")).period, Period(com.histmersion.api.catalogue.Year(-3200), com.histmersion.api.catalogue.Year(-1050)))
-    assertEquals(m(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa")).label, "Archaeological periods of Somewhere")
-    assertEquals(m(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa01")).parentId, Some("p0aaa"))
-    assertEquals(m(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa02")).parentId, Some("p0aaa01")) // its own broader still wins
-    assertEquals(m(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb01")).parentId, Some("p0bbb"))
+    assertEquals(m(HistoricalPeriod.Id("p0aaa")).parentId, None)
+    assertEquals(m(HistoricalPeriod.Id("p0aaa")).period, Period(Year(-3200), Year(-1050)))
+    assertEquals(m(HistoricalPeriod.Id("p0aaa")).label, "Archaeological periods of Somewhere")
+    assertEquals(m(HistoricalPeriod.Id("p0aaa01")).parentId, Some("p0aaa"))
+    assertEquals(m(HistoricalPeriod.Id("p0aaa02")).parentId, Some("p0aaa01")) // its own broader still wins
+    assertEquals(m(HistoricalPeriod.Id("p0bbb01")).parentId, Some("p0bbb"))
     assertEquals(rows.count(_.parentId.isEmpty), 2)
 
   test("a period already in the store keeps its place — a preset is never buried by a fetch"):
@@ -150,16 +151,16 @@ class PeriodsSuite extends munit.FunSuite:
     rows.zipWithIndex.foreach { (r, i) =>
       r.parentId.foreach(p => assert(rows.indexWhere(_.id.value == p.value) < i, s"${r.id} before its parent $p"))
     }
-    val a = HistoricalPeriod(com.histmersion.api.catalogue.HistoricalPeriod.Id("a"), com.histmersion.api.catalogue.HistoricalPeriod.Label("A"), None, Period(com.histmersion.api.catalogue.Year(1), com.histmersion.api.catalogue.Year(2)), None, Some(com.histmersion.api.catalogue.HistoricalPeriod.ParentId("b")))
-    val b = HistoricalPeriod(com.histmersion.api.catalogue.HistoricalPeriod.Id("b"), com.histmersion.api.catalogue.HistoricalPeriod.Label("B"), None, Period(com.histmersion.api.catalogue.Year(1), com.histmersion.api.catalogue.Year(2)), None, Some(com.histmersion.api.catalogue.HistoricalPeriod.ParentId("a")))
+    val a = HistoricalPeriod(HistoricalPeriod.Id("a"), HistoricalPeriod.Label("A"), None, Period(Year(1), Year(2)), None, Some(HistoricalPeriod.ParentId("b")))
+    val b = HistoricalPeriod(HistoricalPeriod.Id("b"), HistoricalPeriod.Label("B"), None, Period(Year(1), Year(2)), None, Some(HistoricalPeriod.ParentId("a")))
     val out = PeriodO.parentsFirst(List(a, b))
     assertEquals(out.map(_.id).toSet, Set("a", "b"))
     assertEquals(out.count(_.parentId.isEmpty), 1)
 
   test("only() keeps the named authorities; nothing named keeps them all"):
-    assertEquals(parsed.only(Set(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb"))).authorities.map(_.id), List("p0bbb"))
-    assertEquals(parsed.only(Set(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0bbb"))).skipped, Nil) // p0aaa's broken definitions are not p0bbb's
-    assertEquals(parsed.only(Set(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa"))).skipped.size, 2)
+    assertEquals(parsed.only(Set(HistoricalPeriod.Id("p0bbb"))).authorities.map(_.id), List("p0bbb"))
+    assertEquals(parsed.only(Set(HistoricalPeriod.Id("p0bbb"))).skipped, Nil) // p0aaa's broken definitions are not p0bbb's
+    assertEquals(parsed.only(Set(HistoricalPeriod.Id("p0aaa"))).skipped.size, 2)
     assertEquals(parsed.only(Set.empty).authorities.size, 2)
 
   // #771: EAMENA's "Old Kingdom" came in as -2701 → 2150 and was stored as it was
@@ -215,18 +216,18 @@ class PeriodsSuite extends munit.FunSuite:
 
   test("an import result counts every skipped definition and names them"):
     val r = Period.ImportResult(
-      com.histmersion.api.catalogue.Period.ImportResult.Periods(3),
-      com.histmersion.api.catalogue.Period.ImportResult.Roots(0),
-      com.histmersion.api.catalogue.Period.ImportResult.Presets(5),
-      List(SkippedPeriod(com.histmersion.api.catalogue.SkippedPeriod.Id("p0x1"), com.histmersion.api.catalogue.SkippedPeriod.Label("Old Kingdom"), Period.Skip.OutOfRange, com.histmersion.api.catalogue.SkippedPeriod.Detail("-2701 → 2150 lies outside -3000000..2100"))),
-      skippedCount = com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(2)
+      Period.ImportResult.Periods(3),
+      Period.ImportResult.Roots(0),
+      Period.ImportResult.Presets(5),
+      List(SkippedPeriod(SkippedPeriod.Id("p0x1"), SkippedPeriod.Label("Old Kingdom"), Period.Skip.OutOfRange, SkippedPeriod.Detail("-2701 → 2150 lies outside -3000000..2100"))),
+      skippedCount = Period.ImportResult.SkippedCount(2)
     )
     val md = PeriodsMarkdown.imported(r)
     assert(md.contains("skipped 2 definitions (not imported)"), md)
     assert(md.contains("`p0x1` Old Kingdom: -2701 → 2150 lies outside"), md)
     assert(md.contains("…and 1 more"), md)
     assert(
-      PeriodsMarkdown.imported(Period.ImportResult(com.histmersion.api.catalogue.Period.ImportResult.Periods(1), presets = com.histmersion.api.catalogue.Period.ImportResult.Presets(1))).startsWith("imported 1 period — 1 timeline preset")
+      PeriodsMarkdown.imported(Period.ImportResult(Period.ImportResult.Periods(1), presets = Period.ImportResult.Presets(1))).startsWith("imported 1 period — 1 timeline preset")
     )
 
   test("what is not a PeriodO dataset is refused"):
@@ -340,7 +341,7 @@ class PeriodsSuite extends munit.FunSuite:
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).region, Some("Greece"))
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).preset, Some(PresetRegion.Aegean))
     // the BSA dates Late Minoan from the earliest start to the latest end it gives
-    assertEquals(m(HistoricalPeriod.Id("p0ds9qjh4dh")).period, Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1050)))
+    assertEquals(m(HistoricalPeriod.Id("p0ds9qjh4dh")).period, Period(Year(-1700), Year(-1050)))
 
   // ── the curated overlays ─────────────────────────────────────────────────────────────────────
 
@@ -355,8 +356,8 @@ class PeriodsSuite extends munit.FunSuite:
     assertEquals(d.presets, Map("p0aaa01" -> PresetRegion.Aegean, "p0bbb01" -> PresetRegion.EasternEurope))
     assert(d.curated)
     val rows = byId(PeriodO.toPeriods(d))
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa01")).preset, Some(PresetRegion.Aegean))
-    assertEquals(rows(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0aaa02")).preset, None)
+    assertEquals(rows(HistoricalPeriod.Id("p0aaa01")).preset, Some(PresetRegion.Aegean))
+    assertEquals(rows(HistoricalPeriod.Id("p0aaa02")).preset, None)
     val bad = PeriodO.parse(withOverlay("""{"presets": {"p0aaa01": "atlantis"}}"""))
     assert(bad.left.exists(_.value.contains("atlantis")), bad.toString)
     assert(!parsed.curated)
@@ -397,7 +398,7 @@ class PeriodsSuite extends munit.FunSuite:
       preset(HistoricalPeriod.Id("b"), HistoricalPeriod.Label("Bronze Age"), Year(-1700), PresetRegion.Scandinavia, HistoricalPeriod.Region("Denmark")),
       preset(HistoricalPeriod.Id("n"), HistoricalPeriod.Label("Neolithic"), Year(-3900), PresetRegion.Scandinavia, HistoricalPeriod.Region("Denmark")),
       preset(HistoricalPeriod.Id("a"), HistoricalPeriod.Label("Bronze Age"), Year(-3200), PresetRegion.Aegean, HistoricalPeriod.Region("Greece")),
-      HistoricalPeriod(com.histmersion.api.catalogue.HistoricalPeriod.Id("x"), com.histmersion.api.catalogue.HistoricalPeriod.Label("Not a preset"), None, Period(com.histmersion.api.catalogue.Year(1), com.histmersion.api.catalogue.Year(2)))
+      HistoricalPeriod(HistoricalPeriod.Id("x"), HistoricalPeriod.Label("Not a preset"), None, Period(Year(1), Year(2)))
     )
     val gs = PresetMenu.groups(ps)
     assertEquals(gs.map(_.region), List(PresetRegion.Aegean, PresetRegion.Scandinavia))
@@ -419,19 +420,19 @@ class PeriodsSuite extends munit.FunSuite:
       PresetMenu.groups(ps, Some(britain)).map(_.region),
       List(PresetRegion.BritainIreland, PresetRegion.Aegean)
     )
-    val world = BBox(com.histmersion.api.catalogue.Longitude(-180), com.histmersion.api.catalogue.Latitude(-85), com.histmersion.api.catalogue.Longitude(180), com.histmersion.api.catalogue.Latitude(85))
+    val world = BBox(Longitude(-180), Latitude(-85), Longitude(180), Latitude(85))
     assertEquals(
       PresetMenu.groups(ps, Some(world)).map(g => (g.region, g.inView)),
       List(PresetRegion.Aegean -> false, PresetRegion.BritainIreland -> false)
     )
 
   test("share: the part of a view inside a box"):
-    val box = BBox(com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(10), com.histmersion.api.catalogue.Latitude(10))
-    assertEqualsDouble(PresetMenu.share(BBox(com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(10), com.histmersion.api.catalogue.Latitude(10)), box).value, 1.0, 1e-9)
-    assertEqualsDouble(PresetMenu.share(BBox(com.histmersion.api.catalogue.Longitude(5), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(15), com.histmersion.api.catalogue.Latitude(10)), box).value, 0.5, 1e-9)
-    assertEqualsDouble(PresetMenu.share(BBox(com.histmersion.api.catalogue.Longitude(20), com.histmersion.api.catalogue.Latitude(20), com.histmersion.api.catalogue.Longitude(30), com.histmersion.api.catalogue.Latitude(30)), box).value, 0.0, 1e-9)
-    assertEqualsDouble(PresetMenu.share(BBox(com.histmersion.api.catalogue.Longitude(170), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(-170), com.histmersion.api.catalogue.Latitude(10)), box).value, 0.0, 1e-9) // across the antimeridian
-    assertEqualsDouble(PresetMenu.share(BBox(com.histmersion.api.catalogue.Longitude(1), com.histmersion.api.catalogue.Latitude(1), com.histmersion.api.catalogue.Longitude(1), com.histmersion.api.catalogue.Latitude(1)), box).value, 0.0, 1e-9) // no area
+    val box = BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10))
+    assertEqualsDouble(PresetMenu.share(BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10)), box).value, 1.0, 1e-9)
+    assertEqualsDouble(PresetMenu.share(BBox(Longitude(5), Latitude(0), Longitude(15), Latitude(10)), box).value, 0.5, 1e-9)
+    assertEqualsDouble(PresetMenu.share(BBox(Longitude(20), Latitude(20), Longitude(30), Latitude(30)), box).value, 0.0, 1e-9)
+    assertEqualsDouble(PresetMenu.share(BBox(Longitude(170), Latitude(0), Longitude(-170), Latitude(10)), box).value, 0.0, 1e-9) // across the antimeridian
+    assertEqualsDouble(PresetMenu.share(BBox(Longitude(1), Latitude(1), Longitude(1), Latitude(1)), box).value, 0.0, 1e-9) // no area
 
   test("a row names its authority without the PeriodO id, and the id it cites"):
     val p = preset(HistoricalPeriod.Id("p0ds9qjq7b2"), HistoricalPeriod.Label("Bronze Age"), Year(-3200), PresetRegion.Aegean)

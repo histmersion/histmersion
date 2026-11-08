@@ -1,13 +1,16 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 
 import com.histmersion.api.Span
 import com.histmersion.api.given
-final case class GazName(name: GazName.Name, lang: GazName.Lang = _root_.com.histmersion.api.catalogue.GazName.Lang(""), span: Span = Span.always, citation: Option[GazName.Citation] = None)
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+final case class GazName(name: GazName.Name, lang: GazName.Lang = GazName.Lang(""), span: Span = Span.always, citation: Option[GazName.Citation] = None)
 
 object GazName:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Lang = Lang.T
-  object Lang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lang extends RefinedType[String, Pure]
   type Citation = Citation.T
-  object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Citation extends RefinedType[String, Pure]

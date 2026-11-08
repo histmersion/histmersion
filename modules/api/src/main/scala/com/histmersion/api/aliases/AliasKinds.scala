@@ -1,4 +1,5 @@
-package com.histmersion.api.aliases
+package com.histmersion
+package api.aliases
 
 /** The kinds of record whose old identifiers stay aliases (#1799), as the record references of every domain name them:
   * what each is called and what its identifier is called, and which bundle kind carries each. A closed vocabulary of
@@ -6,6 +7,7 @@ package com.histmersion.api.aliases
   * target, an asset link's) without naming that domain. Each owner registers the table its aliases are kept in.
   */
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.automation.Activity
 object AliasKinds:
 
   private def kind(noun: String, idWord: String): AliasKind = AliasKind(RecordNoun((noun)), KeyWord((idWord)))
@@ -29,7 +31,7 @@ object AliasKinds:
   /** The kind a reference's target type names (`event`, `place`, `source`, `article`; any case, surrounding space
     * ignored), when it is one whose old identifiers are followed.
     */
-  def ofTarget(targetType: com.histmersion.api.automation.Activity.Entry.TargetKind): Option[AliasKind] =
+  def ofTarget(targetType: Activity.Entry.TargetKind): Option[AliasKind] =
     (targetType).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case "event"   => Some(EventRecords)
       case "place"   => Some(PlaceRecords)

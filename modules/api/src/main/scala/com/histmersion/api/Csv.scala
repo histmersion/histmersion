@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 /** A minimal RFC 4180 reader (quoted fields, doubled quotes, embedded commas and newlines, CRLF): enough for the
   * Retraction Watch export.

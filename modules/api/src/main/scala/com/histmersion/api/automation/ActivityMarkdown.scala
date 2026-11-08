@@ -1,14 +1,16 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import com.histmersion.api.automation.Activity.{Entry, EntryKind, Page}
 import com.histmersion.api.Wording
 import com.histmersion.api.jobs.{JobKinds, JobState}
 import com.histmersion.api.given
+import com.histmersion.api.Paging
 
 object ActivityMarkdown:
 
-  export com.histmersion.api.automation.Activity.Entry.{At as MinuteAt}
+  export Entry.{At as MinuteAt}
 
-  def minute(at: com.histmersion.api.automation.ActivityMarkdown.MinuteAt): String = ((at).value.take(16).replace('T', ' '))
+  def minute(at: ActivityMarkdown.MinuteAt): String = ((at).value.take(16).replace('T', ' '))
 
   def headline(e: Entry): String = e.entryKind match
     case Some(EntryKind.Run) =>
@@ -51,7 +53,7 @@ object ActivityMarkdown:
       e.error.map(_.value).filter(_.nonEmpty).fold("")(err => s" — ${err.take(160)}") +
       (if refsText.nonEmpty then s" _(${refsText.mkString(", ")})_" else "")
 
-  def page(p: Page, olderHint: com.histmersion.api.Paging.Cursor => String): String =
+  def page(p: Page, olderHint: Paging.Cursor => String): String =
     val head = s"**Activity** — ${p.counts.running} running now · ${p.counts.problemsWeek} problem(s) this week"
     val body = if p.entries.isEmpty then "_Nothing here._" else p.entries.map(line).mkString("\n")
     (List(head, "", body) ++ p.next.map(c => s"\n${olderHint(c)}").toList).mkString("\n")

@@ -1,18 +1,22 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.ByteCount
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
-final case class PdfInfo(source: PdfInfo.Source, url: Option[PdfInfo.Url], bytes: com.histmersion.api.ByteCount, spoolPath: Option[PdfInfo.SpoolPath])
+final case class PdfInfo(source: PdfInfo.Source, url: Option[PdfInfo.Url], bytes: ByteCount, spoolPath: Option[PdfInfo.SpoolPath])
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object PdfInfo:
   type Source = Source.T
-  object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Source extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   type SpoolPath = SpoolPath.T
-  object SpoolPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpoolPath extends RefinedType[String, Pure]

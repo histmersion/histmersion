@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.optics.syntax.*
 
 import io.circe.{ACursor, Json}
@@ -6,45 +7,45 @@ import com.histmersion.api.given
 
 object Candidates:
   type AuthorId = AuthorId.T
-  object AuthorId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorId extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Index = Index.T
-  object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Index extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Lookback = Lookback.T
-  object Lookback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lookback extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Watermark = Watermark.T
-  object Watermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Watermark extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type Indexes = IndexesValue
-  type IndexesValue = com.histmersion.api.library.Candidates.Index
-  val IndexesValue: _root_.com.histmersion.api.library.Candidates.Index.type = _root_.com.histmersion.api.library.Candidates.Index
+  type IndexesValue = Index
+  val IndexesValue: Index.type = Index
 
   enum WatchKind(val wire: WatchKind.Wire):
-    case Query extends WatchKind(_root_.com.histmersion.api.library.Candidates.WatchKind.Wire("query"))
-    case Citing extends WatchKind(_root_.com.histmersion.api.library.Candidates.WatchKind.Wire("citing"))
-    case Author extends WatchKind(_root_.com.histmersion.api.library.Candidates.WatchKind.Wire("author"))
+    case Query extends WatchKind(WatchKind.Wire("query"))
+    case Citing extends WatchKind(WatchKind.Wire("citing"))
+    case Author extends WatchKind(WatchKind.Wire("author"))
   object WatchKind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def parse(s: com.histmersion.api.library.Candidates.WatchKind.Wire): Option[WatchKind] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.WatchKind.Wire((s).value.trim.toLowerCase))
+    def parse(s: Wire): Option[WatchKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   enum State(val wire: State.Wire):
-    case New extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("new"))
-    case Seen extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("seen"))
-    case Queued extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("queued"))
-    case Dismissed extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("dismissed"))
+    case New extends State(State.Wire("new"))
+    case Seen extends State(State.Wire("seen"))
+    case Queued extends State(State.Wire("queued"))
+    case Dismissed extends State(State.Wire("dismissed"))
   object State:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def parse(s: com.histmersion.api.library.Candidates.State.Wire): Option[State] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.State.Wire((s).value.trim.toLowerCase))
+    def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
-  val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List(_root_.com.histmersion.api.library.Candidates.Index("openalex"), _root_.com.histmersion.api.library.Candidates.Index("crossref"), _root_.com.histmersion.api.library.Candidates.Index("europepmc"), _root_.com.histmersion.api.library.Candidates.Index("arxiv"), _root_.com.histmersion.api.library.Candidates.Index("core"))
+  val Indexes: List[Indexes] = List(Index("openalex"), Index("crossref"), Index("europepmc"), Index("arxiv"), Index("core"))
 
-  def since(watermark: Option[com.histmersion.api.library.Candidates.Watermark], today: java.time.LocalDate, lookbackDays: com.histmersion.api.library.Candidates.Lookback): java.time.LocalDate =
+  def since(watermark: Option[Watermark], today: java.time.LocalDate, lookbackDays: Lookback): java.time.LocalDate =
     watermark
       .flatMap(w => scala.util.Try(java.time.LocalDate.parse((w).value.take(10))).toOption)
       .getOrElse(today.minusDays(math.max(0, (lookbackDays).value).toLong))
@@ -53,7 +54,7 @@ object Candidates:
 
   object Found:
     type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type By = By.T
     object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -69,7 +70,7 @@ object Candidates:
       val c = r.hcursor
       WorkRef(
         doi = (str(c, ("doi"))).map((com).histmersion.api.library.Doi.apply),
-        title = (str(c, ("title")).map((_).stripSuffix("."))).map(com.histmersion.api.library.Title.apply),
+        title = (str(c, ("title")).map((_).stripSuffix("."))).map(Title.apply),
         year = (str(c, ("pubYear")).flatMap((_).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
         authors = (str(c, ("authorString")).toList.flatMap((_).stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty))).map(com.histmersion.api.library.AuthorName.apply),
         venue =
@@ -104,7 +105,7 @@ object Candidates:
       val id = tag((e), ("id")).map((_).replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
       WorkRef(
         arxivId = (id).map(refactorValue8 => _root_.com.histmersion.api.library.WorkRef.ArxivId(refactorValue8)),
-        title = (tag((e), ("title")).map(unescape)).map(com.histmersion.api.library.Title.apply),
+        title = (tag((e), ("title")).map(unescape)).map(Title.apply),
         year = (tag((e), ("published")).flatMap((_).take(4).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
         authors = ("(?s)<author>\\s*<name>(.*?)</name>".r.findAllMatchIn(e).map(m => unescape((m.group(1).trim))).toList).map(com.histmersion.api.library.AuthorName.apply),
         doi = (tag((e), ("arxiv:doi"))).map((com).histmersion.api.library.Doi.apply),
@@ -114,7 +115,7 @@ object Candidates:
       )
     }
 
-  def openalexAuthorIds(json: Json): List[com.histmersion.api.library.Candidates.AuthorId] =
+  def openalexAuthorIds(json: Json): List[AuthorId] =
     (json.hcursor
       .downField("authorships")
       .values
@@ -122,4 +123,4 @@ object Candidates:
       .flatten
       .flatMap(a => a.hcursor.downField("author").get[String]("id").toOption)
       .map(_.split("/").last)
-      .filter(_.startsWith("A"))).map(refactorValue2 => _root_.com.histmersion.api.library.Candidates.AuthorId(refactorValue2))
+      .filter(_.startsWith("A"))).map(refactorValue2 => AuthorId(refactorValue2))

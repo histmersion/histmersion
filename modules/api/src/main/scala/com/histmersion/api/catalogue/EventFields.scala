@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import io.circe.Json
 import io.circe.syntax.*
 import com.histmersion.api.Span
@@ -14,10 +15,10 @@ object EventFields:
   val Geometry = "geometry"
   val all: List[String] = List(Label, Kind, Span, Historicity, Description, Geometry)
 
-  def point(lat: com.histmersion.api.catalogue.Latitude, lon: com.histmersion.api.catalogue.Longitude): Json =
+  def point(lat: Latitude, lon: Longitude): Json =
     Json.obj("type" -> "Point".asJson, "coordinates" -> Json.arr((lon.value: Double).asJson, (lat.value: Double).asJson))
 
-  def geometry(g: Option[com.histmersion.api.catalogue.EventGeometry.Geojson]): Json =
+  def geometry(g: Option[EventGeometry.Geojson]): Json =
     g.map((_).value.trim).filter(_.nonEmpty).fold(Json.Null)(t => io.circe.parser.parse(t).getOrElse(t.asJson))
 
   def upstream(r: CatalogRecord): Map[String, Json] =

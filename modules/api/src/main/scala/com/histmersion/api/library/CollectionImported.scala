@@ -1,18 +1,21 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** An import: the record written (`source`), the item it is linked to, the entry it was linked to before
   * (`relinkedFrom`), the file taken (left in the collection, never modified), the cover, and the conversion queued
   * (`job`) or why it was not (`jobError`, with its `jobErrorCode`).
   */
 final case class CollectionImported(
-    citekey: com.histmersion.api.library.Citekey,
+    citekey: Citekey,
     id: CollectionImported.Id,
-    title: com.histmersion.api.library.Title,
+    title: Title,
     relinkedFrom: Option[CollectionImported.RelinkedFrom],
     file: CollectionImported.File,
     source: Source.WithFindings,
@@ -25,12 +28,12 @@ final case class CollectionImported(
 
 object CollectionImported:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type RelinkedFrom = RelinkedFrom.T
-  object RelinkedFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RelinkedFrom extends RefinedType[String, Pure]
   type File = File.T
-  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object File extends RefinedType[String, Pure]
   type JobError = JobError.T
-  object JobError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JobError extends RefinedType[String, Pure]
   type JobErrorCode = JobErrorCode.T
-  object JobErrorCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JobErrorCode extends RefinedType[String, Pure]

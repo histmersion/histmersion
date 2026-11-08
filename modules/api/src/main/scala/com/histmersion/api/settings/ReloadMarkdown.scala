@@ -1,4 +1,5 @@
-package com.histmersion.api.settings
+package com.histmersion
+package api.settings
 import com.histmersion.api.given
 object ReloadMarkdown:
 
@@ -8,11 +9,11 @@ object ReloadMarkdown:
       if xs.isEmpty then Nil else (s"**$title:**" :: xs.map(x => s"- $x")).map(refactorValue => (refactorValue))
     val head =
       if r.errors.nonEmpty then s"# Config reload failed — generation ${r.generation} stays"
-      else if ((r.published) == _root_.com.histmersion.api.settings.ReloadReport.Published(true)) then s"# Config reloaded — generation ${r.generation}"
+      else if ((r.published) == ReloadReport.Published(true)) then s"# Config reloaded — generation ${r.generation}"
       else s"# Config unchanged — generation ${r.generation}"
     val file = r.file.map(f => s"File: `$f`").toList
     val none =
-      if ((r.published) == _root_.com.histmersion.api.settings.ReloadReport.Published(true)) || r.errors.nonEmpty || r.restartOnly.nonEmpty then Nil
+      if ((r.published) == ReloadReport.Published(true)) || r.errors.nonEmpty || r.restartOnly.nonEmpty then Nil
       else List("Nothing in the config differs from what is running.")
     (List(head, "") ++ file ++ none ++
       list(("Errors (nothing was changed)"), r.errors.map(_.value)) ++
