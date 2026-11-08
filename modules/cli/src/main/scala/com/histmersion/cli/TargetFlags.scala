@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -7,13 +8,15 @@ import com.monovore.decline.*
 import com.histmersion.api.personal.{ItemKey, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a bookmark or a note points at, from the command line: `<kind> [<id>]` and the flags of a point on the map, a
   * view or a period.
   */
 object TargetFlags:
   type Views = Views.T
-  object Views extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Views extends RefinedType[Boolean, Pure]
 
 
 
@@ -29,7 +32,7 @@ object TargetFlags:
   )
 
   /** `views`: the flags of a saved view (`--zoom`, `--view`) too. */
-  def opts(kinds: Set[ItemKind], views: com.histmersion.cli.TargetFlags.Views): Opts[Raw] =
+  def opts(kinds: Set[ItemKind], views: Views): Opts[Raw] =
     (
       Opts.argument[String](s"kind (${ItemKind.values.filter(kinds).map(_.wire).mkString(" | ")})"),
       Opts.argument[String]("id").orNone,

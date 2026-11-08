@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -20,6 +21,10 @@ import com.histmersion.api.research.ArticleMarkdown
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.CritiqueReason
 import com.histmersion.util.console.Console
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.research.Articles
+import com.histmersion.api.research.ReviewGoal
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -29,7 +34,7 @@ import com.histmersion.util.console.Console
   */
 object ArticleCli:
   type Exported = Exported.T
-  object Exported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Exported extends RefinedType[Int, Pure]
 
   // ── host-side wiki layout ────────────────────────────────────────────────────────────────────
 
@@ -65,7 +70,7 @@ object ArticleCli:
     (top ++ sub).sortBy((p, _) => p.toString)
 
   private def kindOf(dir: Path): Article.Kind.Wire =
-    com.histmersion.api.research.Articles.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
+    Articles.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
 
   private def markdown(dir: Path): List[Path] =
     if !Files.isDirectory(dir) then Nil
@@ -88,7 +93,7 @@ object ArticleCli:
   /** Package one article note for the server: text, fallback slug/kind, and the mtime that drives the "stored row is
     * newer than the file" skip.
     */
-  def toImport(file: Path, kind: Article.Kind.Wire, force: com.histmersion.api.Api.Overwrite): Article.Import =
+  def toImport(file: Path, kind: Article.Kind.Wire, force: Api.Overwrite): Article.Import =
     Article.Import(
       text = Article.Import.Text(Files.readString(file)),
       slug = Some(Article.Slug(file.getFileName.toString.stripSuffix(".md"))),
@@ -100,7 +105,7 @@ object ArticleCli:
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
     * (`histmersion seed`) can fold it into its own report.
     */
-  def importAll(c: Client, root: Path, force: com.histmersion.api.Api.Overwrite, skip: Set[MirrorPlacement.Directory])(using console: Console): SeedResult =
+  def importAll(c: Client, root: Path, force: Api.Overwrite, skip: Set[MirrorPlacement.Directory])(using console: Console): SeedResult =
     val fs = files(root, skip)
     val total = fs.size
     if total > 0 then Cli.out.println(s"importing $total article(s) from $root")
@@ -116,7 +121,7 @@ object ArticleCli:
           SeedResult(
             SeedResult.Imported(imported),
             failed.map(SeedResult.Failed(_)),
-            com.histmersion.api.library.SeedResult.EdgesResolved(0),
+            SeedResult.EdgesResolved(0),
             skipped.map(SeedResult.Skipped(_))
           )
         case (f, kind) :: tail =>
@@ -128,7 +133,7 @@ object ArticleCli:
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
-  def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, ArticleCli.Exported] =
+  def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, Exported] =
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
       val failed = slugs.zipWithIndex.flatMap { (slug, i) =>
@@ -143,7 +148,7 @@ object ArticleCli:
       }
       Cli.out.println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
       failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
-      if failed.isEmpty then Right(ArticleCli.Exported(total))
+      if failed.isEmpty then Right(Exported(total))
       else Left(Cli.Error(Cli.Error.Message(s"${failed.size} of $total article(s) could not be exported"), exitCode = ExitCode.Refused))
     }
 
@@ -157,7 +162,7 @@ object ArticleCli:
         .findFirstMatchIn(text.value)
         .map(_.group(1).trim)
         .filter(_.nonEmpty)
-        .getOrElse(com.histmersion.api.research.Articles.Kinds.head)
+        .getOrElse(Articles.Kinds.head)
     )
 
   // ── the `histmersion article …` subcommands ──────────────────────────────────────────────────────
@@ -176,7 +181,7 @@ object ArticleCli:
       (
         Opts.argument[String]("query").orNone,
         Opts
-          .option[String]("kind", s"Article kind (${com.histmersion.api.research.Articles.Kinds.mkString("|")})")
+          .option[String]("kind", s"Article kind (${Articles.Kinds.mkString("|")})")
           .orNone,
         FilterFlags.opts,
         Output.jsonFlag
@@ -204,7 +209,7 @@ object ArticleCli:
           .orNone,
         Output.jsonFlag
       ).mapN { (slug, parts, json) => (c: Client) =>
-        c.getArticle(com.histmersion.api.research.ReviewGoal.Slug(slug)).map { v =>
+        c.getArticle(ReviewGoal.Slug(slug)).map { v =>
           val ps = parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
           Output.emit(json, v)(ArticleMarkdown.article(_, ps.map(Article.Part(_))))
         }
@@ -229,14 +234,14 @@ object ArticleCli:
           else
             // an explicit `put` is always deliberate → force past the "newer in DB" guard
             val fallback = kind.map(Article.Kind.Wire(_)).getOrElse(kindOf(p.toAbsolutePath.getParent))
-            val req = toImport(p, fallback, force = com.histmersion.api.Api.Overwrite(true)).modify(_.strict).setTo(Article.Import.Strict(strict))
+            val req = toImport(p, fallback, force = Api.Overwrite(true)).modify(_.strict).setTo(Article.Import.Strict(strict))
             c.importArticle(req).map { r =>
               report(r)
               // the import answers with counts only: ask for the article's formatting problems by the
               // slug the note itself declares (as the server parsed it), so the writer sees them now
               val slug = ArticleNote.parse(req.text.value, req.slug.getOrElse(Article.Slug("")), fallback).map(_.slug).filter(_.value.nonEmpty)
               if r.imported.value > 0 then
-                slug.foreach(s => c.lintArticle(com.histmersion.api.research.ReviewGoal.Slug(s.value)).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
+                slug.foreach(s => c.lintArticle(ReviewGoal.Slug(s.value)).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
             }
         }
     }
@@ -251,7 +256,7 @@ object ArticleCli:
       Opts.flag("fix", "Apply the repairs that never change wording, then report what is left").orFalse,
       Output.jsonFlag
     ).mapN { (slug, fix, json) => (c: Client) =>
-      (if fix then c.fixArticleFormat(com.histmersion.api.research.ReviewGoal.Slug(slug)) else c.lintArticle(com.histmersion.api.research.ReviewGoal.Slug(slug)))
+      (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug)))
         .map(r => Output.emit(json, r)(FormatMarkdown.report))
     }
   }
@@ -301,15 +306,15 @@ object ArticleCli:
               kind = kind.map(Article.Kind.Wire(_))
             )
           )
-        case _ => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage))
-      req.flatMap(c.checkArticle(com.histmersion.api.research.ReviewGoal.Slug(slug), _)).map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
+        case _ => Left(Cli.Error(Cli.Error.Message("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage))
+      req.flatMap(c.checkArticle(ReviewGoal.Slug(slug), _)).map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
     }
   }
 
   private def delete(using console: Console) = Opts.subcommand("delete", "Remove one article (its links go with it)") {
     Opts
       .argument[String]("slug")
-      .map(slug => (c: Client) => c.deleteArticle(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(d => Cli.out.println(s"deleted ${d.slug}")))
+      .map(slug => (c: Client) => c.deleteArticle(ReviewGoal.Slug(slug)).map(d => Cli.out.println(s"deleted ${d.slug}")))
   }
 
   private def exportCmd(using console: Console) =
@@ -391,7 +396,7 @@ object ArticleCli:
     "The article's filter against the corpus: sources cited, not used (with reasons), statuses, edges, drift, the critique checklist (disagreements checked), and the generated sections"
   ) {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleCoverage(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.Coverage.markdown(_).value))
+      c.articleCoverage(ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.Coverage.markdown(_).value))
     }
   }
 
@@ -401,7 +406,7 @@ object ArticleCli:
     "The article's review state (unreviewed, queued, in review, passed, majors open, stopped), the goals linking it, and every review finding by run and round with what became of it"
   ) {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.articleReview(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.ReviewView.markdown(_).value))
+      c.articleReview(ReviewGoal.Slug(slug)).map(r => Output.emit(json, r)(Article.ReviewView.markdown(_).value))
     }
   }
 
@@ -412,7 +417,7 @@ object ArticleCli:
         Opts.option[String]("json", "A whole ArticlePatch as JSON (the flags below override its parts)").orNone,
         Opts.option[String]("title", "New title").orNone,
         Opts.option[String]("summary", "New summary (the one-paragraph lede)").orNone,
-        Opts.option[String]("kind", s"New kind (${com.histmersion.api.research.Articles.Kinds.mkString("|")})").orNone,
+        Opts.option[String]("kind", s"New kind (${Articles.Kinds.mkString("|")})").orNone,
         Opts.option[String]("body-file", "File whose Markdown REPLACES the body").orNone,
         Opts.option[String]("append-file", "File whose Markdown is APPENDED to the body").orNone,
         Opts.option[String]("tags-add", "Comma-separated tags to add").orNone,
@@ -463,7 +468,7 @@ object ArticleCli:
             .flatMap(ArticlePatches.withCoverage(_, ff, rs))
             .flatMap(ArticlePatches.withCritiques(_, crs))
             .flatMap(p =>
-              c.patchArticle(com.histmersion.api.research.ReviewGoal.Slug(slug), p, Cli.Strict(strict)).map { v =>
+              c.patchArticle(ReviewGoal.Slug(slug), p, Cli.Strict(strict)).map { v =>
                 Cli.out.println(ArticleMarkdown.article(v))
                 v.article.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
               }
@@ -475,14 +480,14 @@ object ArticleCli:
     Opts
       .argument[String]("slug")
       .map(slug =>
-        (c: Client) => c.articleVersions(com.histmersion.api.research.ReviewGoal.Slug(slug)).map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug), vs)))
+        (c: Client) => c.articleVersions(ReviewGoal.Slug(slug)).map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug), vs)))
       )
   }
 
   private def versionCmd(using console: Console) =
     Opts.subcommand("version", "Show one historical version's full body") {
       (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
-        c.articleVersion(com.histmersion.api.research.ReviewGoal.Slug(slug), Article.VersionId(id)).map(v => Cli.out.println(ArticleMarkdown.version(v)))
+        c.articleVersion(ReviewGoal.Slug(slug), Article.VersionId(id)).map(v => Cli.out.println(ArticleMarkdown.version(v)))
       }
     }
 

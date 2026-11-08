@@ -1,6 +1,9 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where `calibre import` writes, once the citekey is known (#714). */
 enum ImportTarget:
@@ -14,7 +17,7 @@ enum ImportTarget:
 
 object ImportTarget:
   type Explicit = Explicit.T
-  object Explicit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Explicit extends RefinedType[Boolean, Pure]
   object Update:
     type Previous = Previous.T
-    object Previous extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Previous extends RefinedType[String, Pure]

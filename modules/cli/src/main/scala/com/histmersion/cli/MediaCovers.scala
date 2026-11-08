@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
 import com.histmersion.config.*
@@ -17,6 +18,10 @@ import com.histmersion.api.media.{
   MediaSourceLine,
   SourceCoverParams
 }
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Isbn
+import com.histmersion.api.Paging
 
 /** The host-side half of a source's cover (#1446): the cover the local Calibre library keeps beside a linked book is
   * READ here (the library is on the user's machine, like every `calibre` command) and uploaded to the server as the
@@ -64,14 +69,14 @@ object MediaCovers:
   object Outcome:
     object Skipped:
       type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Reason extends RefinedType[String, Pure]
 
   def one(c: Client, ck: Citekey, book: Calibre.Book, dryRun: RepairAcquire.RepairRequest.DryRun): Outcome =
     CoverChoice.choose(
       book.cover.map(p => CoverChoice.Pick.Calibre.Path(p.value)),
       p => Files.isRegularFile(Path.of(p.value)),
-      book.isbn.toList.map(i => com.histmersion.domain.library.Isbn(i.value)),
-      book.identifiers.get(com.histmersion.cli.Calibre.Book.IdentifiersKey("oclc")).map(v => OpenLibrary.Oclc(v.value))
+      book.isbn.toList.map(i => Isbn(i.value)),
+      book.identifiers.get(Calibre.Book.IdentifiersKey("oclc")).map(v => OpenLibrary.Oclc(v.value))
     ) match
       case Some(CoverChoice.Pick.Calibre(path)) =>
         val line = MediaSourceLine(
@@ -106,7 +111,7 @@ object MediaCovers:
       only: Option[Citekey],
       refresh: MediaImportRequest.Refresh,
       dryRun: RepairAcquire.RepairRequest.DryRun,
-      limit: Option[com.histmersion.api.Paging.Limit]
+      limit: Option[Paging.Limit]
   ): Either[Cli.Error, (MediaCoversReport, List[(Citekey, MediaCoversRequest.Isbn)])] =
     if !cal.libraryExists then
       Right((MediaCoversReport(dryRun, skipped = List(MediaCount(MediaCount.Key("no Calibre library here"), MediaCount.N(1)))), Nil))

@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.library.RepairAcquire
 import com.monovore.decline.Command
@@ -7,6 +8,9 @@ import io.circe.syntax.*
 import java.io.ByteArrayOutputStream
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets.UTF_8
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.Doi
+import com.histmersion.api.automation.Managers
 
 /** `histmersion agent manager new review|enrich|seed …`, `agent enqueue <kind> <target>` and the --json flags parse
   * (phase 2 of docs/research-process-managers.md); a bad setting is refused before any request is sent.
@@ -51,18 +55,18 @@ class ManagerCmdSuite extends munit.FunSuite:
     assertEquals(ManagerCmd.focusRequest(List("list")), Right(None))
     assertEquals(
       ManagerCmd.focusRequest(List("pin", "bronze-age")),
-      Right(Some(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(com.histmersion.api.automation.Goal.Slug("bronze-age")), by = Some(com.histmersion.api.automation.Autopilot.FocusSet.By("cli")))))
+      Right(Some(FocusSet(FocusSet.Action("pin"), Some(Goal.Slug("bronze-age")), by = Some(FocusSet.By("cli")))))
     )
     assertEquals(ManagerCmd.focusRequest(List("unpin", "x")).map(_.map(_.action)), Right(Some(FocusSet.Action("unpin"))))
     assertEquals(
       ManagerCmd.focusRequest(List("priority", "x", "4")),
-      Right(Some(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("priority"), Some(com.histmersion.api.automation.Goal.Slug("x")), Some(com.histmersion.api.automation.Autopilot.FocusSet.Value(4)), Some(com.histmersion.api.automation.Autopilot.FocusSet.By("cli")))))
+      Right(Some(FocusSet(FocusSet.Action("priority"), Some(Goal.Slug("x")), Some(FocusSet.Value(4)), Some(FocusSet.By("cli")))))
     )
     assertEquals(
       ManagerCmd.focusRequest(List("max", "3")),
-      Right(Some(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("max"), value = Some(com.histmersion.api.automation.Autopilot.FocusSet.Value(3)), by = Some(com.histmersion.api.automation.Autopilot.FocusSet.By("cli")))))
+      Right(Some(FocusSet(FocusSet.Action("max"), value = Some(FocusSet.Value(3)), by = Some(FocusSet.By("cli")))))
     )
-    assertEquals(ManagerCmd.focusRequest(List("max", "default")), Right(Some(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("max"), by = Some(com.histmersion.api.automation.Autopilot.FocusSet.By("cli"))))))
+    assertEquals(ManagerCmd.focusRequest(List("max", "default")), Right(Some(FocusSet(FocusSet.Action("max"), by = Some(FocusSet.By("cli"))))))
     List(List("pin"), List("max", "-1"), List("max", "many"), List("priority", "x"), List("bogus")).foreach { a =>
       assert(ManagerCmd.focusRequest(a).left.exists(_.exitCode == ExitCode.Usage), a)
     }
@@ -81,12 +85,12 @@ class ManagerCmdSuite extends munit.FunSuite:
   ):
     val seen = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val answer = RepairAcquire.RepairResult(
-      dryRun = com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true),
-      moved = com.histmersion.api.library.RepairAcquire.RepairResult.Moved(1),
-      untouched = com.histmersion.api.library.RepairAcquire.RepairResult.Untouched(3),
-      rows = List(RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(7), com.histmersion.api.library.Doi("10.1/x"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.RepairRow.Action(RepairAcquire.Move), com.histmersion.api.library.RepairAcquire.RepairRow.Detail("legal open access"))),
-      backlog = com.histmersion.api.automation.Managers.ManagerInfo.Backlog(1),
-      backlogDays = Some(com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays(1))
+      dryRun = RepairAcquire.RepairResult.DryRun(true),
+      moved = RepairAcquire.RepairResult.Moved(1),
+      untouched = RepairAcquire.RepairResult.Untouched(3),
+      rows = List(RepairAcquire.RepairRow(RepairAcquire.RepairRow.Item(7), Doi("10.1/x"), List(RepairAcquire.RepairRow.Goals("g")), RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.RepairRow.Action(RepairAcquire.Move), RepairAcquire.RepairRow.Detail("legal open access"))),
+      backlog = Managers.ManagerInfo.Backlog(1),
+      backlogDays = Some(Managers.ManagerInfo.BacklogDays(1))
     )
     val srv = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     srv.createContext(

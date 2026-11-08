@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.config.*
 import com.monovore.decline.Command
@@ -50,7 +51,7 @@ class MergeCmdSuite extends munit.FunSuite:
       "policy:\n  editions: separate\nresolve:\n  S-11111111: keep-left\n  S-22222222: both\n  A-33333333:\n"
     )
     val r = MergeCmd
-      .resolutions(MergeCmd.ResolutionFlags(Some(MergeCmd.ResolutionFlags.File(f.toString)), List(com.histmersion.api.exchange.MergeResolutions.Text.Flag("S-22222222=map:x2000_y")), None))
+      .resolutions(MergeCmd.ResolutionFlags(Some(MergeCmd.ResolutionFlags.File(f.toString)), List(MergeResolutions.Text.Flag("S-22222222=map:x2000_y")), None))
       .fold(e => fail(e.message.value), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.decision).toMap,
@@ -61,7 +62,7 @@ class MergeCmdSuite extends munit.FunSuite:
     )
     assertEquals(r.policy.editions, Some(EditionsPolicy.Separate))
     val bad =
-      MergeCmd.resolutions(MergeCmd.ResolutionFlags(Some(com.histmersion.cli.MergeCmd.ResolutionFlags.File("/no/such/file.yaml")), List(com.histmersion.api.exchange.MergeResolutions.Text.Flag("nonsense")), Some(com.histmersion.cli.MergeCmd.ResolutionFlags.Editions("sometimes"))))
+      MergeCmd.resolutions(MergeCmd.ResolutionFlags(Some(MergeCmd.ResolutionFlags.File("/no/such/file.yaml")), List(MergeResolutions.Text.Flag("nonsense")), Some(MergeCmd.ResolutionFlags.Editions("sometimes"))))
     val msg = bad.left.map(_.message.value).swap.getOrElse(fail("accepted"))
     assert(
       msg.contains("no such file") && msg.contains("--resolve nonsense") && msg.contains("--editions sometimes"),
@@ -73,7 +74,7 @@ class MergeCmdSuite extends munit.FunSuite:
     val f = Files.createTempFile("merged", ".md")
     Files.writeString(f, "The merged text.")
     val r = MergeCmd
-      .withTexts(MergeResolutions(List(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("A-1"), com.histmersion.api.exchange.MergeResolution.Decision(s"file:$f")), MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-2"), com.histmersion.api.exchange.MergeResolution.Decision("keep-left")))))
+      .withTexts(MergeResolutions(List(MergeResolution(MergeResolution.Issue("A-1"), MergeResolution.Decision(s"file:$f")), MergeResolution(MergeResolution.Issue("S-2"), MergeResolution.Decision("keep-left")))))
       .fold(e => fail(e.message.value), identity)
     assertEquals(
       r.resolve.map(x => x.issue -> x.text).toMap,
@@ -82,5 +83,5 @@ class MergeCmdSuite extends munit.FunSuite:
         MergeResolution.Issue("S-2") -> None
       )
     )
-    val bad = MergeCmd.withTexts(MergeResolutions(List(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("A-1"), com.histmersion.api.exchange.MergeResolution.Decision("file:/no/such/merged.md")))))
+    val bad = MergeCmd.withTexts(MergeResolutions(List(MergeResolution(MergeResolution.Issue("A-1"), MergeResolution.Decision("file:/no/such/merged.md")))))
     assert(bad.left.exists(_.message.value.contains("A-1: file:/no/such/merged.md — no such file")), bad.toString)

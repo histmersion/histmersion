@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -57,7 +58,7 @@ object NotesCmd:
       "place on the map (`point --lat 37.73 --lon 22.75 [--from -1300 --to -1100] --text …`)"
   ) {
     (
-      TargetFlags.opts(ItemKind.Notable, views = com.histmersion.cli.TargetFlags.Views(false)),
+      TargetFlags.opts(ItemKind.Notable, views = TargetFlags.Views(false)),
       textOpts._1,
       textOpts._2,
       Opts.option[String]("title", "What the item is called, when the collection does not hold it").orNone,

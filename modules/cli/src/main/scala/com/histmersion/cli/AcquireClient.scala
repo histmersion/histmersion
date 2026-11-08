@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -24,6 +25,10 @@ import com.histmersion.api.library.{
   WorkRef
 }
 import com.histmersion.api.library.Ingest
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.ArchiveId
+import com.histmersion.api.library.Citekey
 
 /** The typed client for the acquisition endpoints — the same `AcquireApi` values the server interprets, so the CLI
   * cannot drift from the REST/MCP surface. It reuses [[Client]]'s transport rather than opening a second one.
@@ -31,13 +36,13 @@ import com.histmersion.api.library.Ingest
 final class AcquireClient(c: Client):
   def discover(
       q: AcquireApi.Query,
-      since: Option[com.histmersion.api.catalogue.Year],
+      since: Option[Year],
       sort: Option[AcquireApi.Filter],
       limit: Option[AcquireApi.Limit],
       notInDb: Boolean
   ): Either[Cli.Error, DiscoverResult] = c.call(AcquireApi.discover)((q, since, sort, limit, notInDb))
   def meta(id: AcquireApi.Identifier): Either[Cli.Error, WorkRef] = c.call(AcquireApi.meta)(id)
-  def wikirefs(url: com.histmersion.api.library.Title): Either[Cli.Error, WikirefsResult] = c.call(AcquireApi.wikirefs)(url)
+  def wikirefs(url: Title): Either[Cli.Error, WikirefsResult] = c.call(AcquireApi.wikirefs)(url)
   def refs(req: RefsRequest): Either[Cli.Error, RefsResult] = c.call(AcquireApi.refs)(req)
   def assess(req: AssessRequest): Either[Cli.Error, Assessment] = c.call(AcquireApi.assess)(req)
   def updateRetractions: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.updateRetractions)(())
@@ -46,11 +51,11 @@ final class AcquireClient(c: Client):
   def ingest(req: Ingest.Request): Either[Cli.Error, Ingest.Report] = c.call(AcquireApi.ingest)(req)
   def archiveSearch(q: AcquireApi.Query, rows: Option[AcquireApi.Limit]): Either[Cli.Error, ArchiveSearchResult] =
     c.call(AcquireApi.archiveSearch)((q, rows))
-  def archiveInfo(id: com.histmersion.api.library.ArchiveId): Either[Cli.Error, ArchiveItem] = c.call(AcquireApi.archiveInfo)(id)
+  def archiveInfo(id: ArchiveId): Either[Cli.Error, ArchiveItem] = c.call(AcquireApi.archiveInfo)(id)
   def archiveImport(req: ArchiveImportRequest): Either[Cli.Error, Ingest.Report] =
     c.call(AcquireApi.archiveImport)(req)
   def calibreGaps(limit: Option[AcquireApi.Limit]): Either[Cli.Error, CalibreGaps] = c.call(AcquireApi.calibreGaps)(limit)
-  def calibreMeta(citekey: com.histmersion.api.library.Citekey): Either[Cli.Error, CalibreGap] = c.call(AcquireApi.calibreMeta)(citekey)
+  def calibreMeta(citekey: Citekey): Either[Cli.Error, CalibreGap] = c.call(AcquireApi.calibreMeta)(citekey)
   def calibrePushed(req: CalibrePushRequest): Either[Cli.Error, CalibrePushResult] =
     c.call(AcquireApi.calibrePushed)(req)
 

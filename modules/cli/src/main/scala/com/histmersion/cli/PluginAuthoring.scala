@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -35,8 +36,8 @@ object PluginAuthoring:
   /** The local Maven repository, `$HOME/.m2/repository`: where Maven, Gradle, sbt (`Resolver.mavenLocal`) and scala-cli
     * (`m2Local`) look for artifacts installed on this machine.
     */
-  def mavenLocal(env: com.histmersion.cli.LocalInstall.EnvVariable => Option[com.histmersion.cli.LocalInstall.EnvSetting]): Either[Cli.Error, Path] =
-    env(com.histmersion.cli.LocalInstall.EnvVariable("HOME"))
+  def mavenLocal(env: LocalInstall.EnvVariable => Option[LocalInstall.EnvSetting]): Either[Cli.Error, Path] =
+    env(LocalInstall.EnvVariable("HOME"))
       .map(_.value.trim)
       .filter(_.nonEmpty)
       .map(h => Path.of(h, ".m2", "repository"))

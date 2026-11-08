@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.automation.AgentStateMarkdown
 
@@ -8,6 +9,7 @@ import com.histmersion.config.*
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.AgentStatePut
 import com.histmersion.util.console.Console
+import com.histmersion.api.Api
 
 object AgentStateCmd:
 
@@ -19,7 +21,7 @@ object AgentStateCmd:
 
   private def get (using console: Console) = Opts.subcommand("get", "Get one agent state entry") {
     Opts.argument[String]("key").map { key => (c: Client) =>
-      c.agentStateGet(com.histmersion.api.Api.AgentState.Key(key)).map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
+      c.agentStateGet(Api.AgentState.Key(key)).map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
     }
   }
 
@@ -28,7 +30,7 @@ object AgentStateCmd:
       .mapN { (key, valueStr) => (c: Client) =>
         io.circe.parser.parse(valueStr) match
           case Right(_) =>
-            c.agentStateSet(com.histmersion.api.Api.AgentState.Key(key), AgentStatePut(AgentStatePut.Value(valueStr))).map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
+            c.agentStateSet(Api.AgentState.Key(key), AgentStatePut(AgentStatePut.Value(valueStr))).map(e => Cli.out.println(AgentStateMarkdown.agentState(e)))
           case Left(err) =>
             Left(Cli.Error(Cli.Error.Message(s"Invalid JSON: ${err.getMessage}"), exitCode = ExitCode.Usage))
       }

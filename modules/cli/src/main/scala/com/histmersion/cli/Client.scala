@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
@@ -86,6 +87,13 @@ import com.histmersion.api.media.MediaProvider
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.CollectionsApi
+import com.histmersion.api.library.Edge
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.instance.CorpusCounts
+import com.histmersion.api.media.AssetLinks
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the server interprets,
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the
@@ -136,7 +144,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
           case sttp.tapir.DecodeResult.Value(Left(e))  =>
             // a refusal of the request itself (a collection's citekey collision) exits as a bad command line does
             val code =
-              if e.code.contains(com.histmersion.api.library.CollectionsApi.Usage) then ExitCode.Usage
+              if e.code.contains(CollectionsApi.Usage) then ExitCode.Usage
               else ExitCode.Refused
             Left(Cli.Error(Cli.Error.Message(e.message.value), exitCode = code))
           case _ =>
@@ -152,28 +160,28 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def version: Either[Cli.Error, Version.Info] = call(Api.version)(())
   def health: Either[Cli.Error, Health] = call(Api.health)(())
   def about: Either[Cli.Error, About] = call(Api.about)(())
-  def search(q: Option[com.histmersion.api.Api.Search.Text], limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, List[SearchHit]] =
+  def search(q: Option[Api.Search.Text], limit: Option[Paging.Limit]): Either[Cli.Error, List[SearchHit]] =
     call(Api.search)((q, limit.map(l => Api.Search.Limit(l.value))))
   def sources(f: Filter): Either[Cli.Error, SearchResult] = call(Api.sources)(f)
-  def facets(field: com.histmersion.api.Api.Facets.Field, prefix: Option[com.histmersion.api.Api.Facets.Prefix], f: Filter): Either[Cli.Error, List[Facet]] =
+  def facets(field: Api.Facets.Field, prefix: Option[Api.Facets.Prefix], f: Filter): Either[Cli.Error, List[Facet]] =
     call(Api.facets)((field, prefix, f))
-  def getSource(ck: Citekey): Either[Cli.Error, Source.WithFindings] = call(Api.getSource)((ck, com.histmersion.api.Api.SourceViewQuery.FullText(true)))
+  def getSource(ck: Citekey): Either[Cli.Error, Source.WithFindings] = call(Api.getSource)((ck, Api.SourceViewQuery.FullText(true)))
   def findings(q: Api.FindingsQuery): Either[Cli.Error, List[GeoHit]] = call(Api.findings)(q)
   def findingsPage(q: Api.FindingsQuery): Either[Cli.Error, GeoHitPage] = call(Api.findingsPage)(q)
   def aggregate(q: Api.AggregateQuery): Either[Cli.Error, TimeHistogram] = call(Api.aggregate)(q)
-  def neighbors(ck: Citekey, kinds: List[com.histmersion.api.library.Edge.Kind.Wire] = Nil): Either[Cli.Error, List[NeighborRow]] =
+  def neighbors(ck: Citekey, kinds: List[Edge.Kind.Wire] = Nil): Either[Cli.Error, List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def graph(ck: Citekey, depth: Option[Source.Graph.DepthCount]): Either[Cli.Error, Source.Graph] =
     call(Api.graph)((ck, depth))
   def contradictions(ck: Option[Citekey], since: Option[Api.AggregateQuery.AsOf]): Either[Cli.Error, ContradictionsResult] =
     call(Api.contradictions)((ck, since))
   def seed(req: SeedRequest): Either[Cli.Error, SeedResult] = call(Api.seed)(req)
-  def reindex(after: Option[Api.Reindex.Scope], limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, ReindexResult] =
+  def reindex(after: Option[Api.Reindex.Scope], limit: Option[Paging.Limit]): Either[Cli.Error, ReindexResult] =
     call(Api.reindex)((after, limit.map(l => Api.Reindex.Limit(l.value))))
 
   // ── backup / restore (plan §1.10): the DUMP is taken server-side; the host only copies it off ──
   def configReload: Either[Cli.Error, ReloadReport] = call(Api.configReload)(())
-  def settings(prefix: Option[com.histmersion.cli.Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] = call(ConfigEditApi.get)(prefix.map(p => ConfigEdit.Page.Selector(p.value)))
+  def settings(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] = call(ConfigEditApi.get)(prefix.map(p => ConfigEdit.Page.Selector(p.value)))
   def writeSettings(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] = call(ConfigEditApi.write)(w)
   def restartServer: Either[Cli.Error, ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
   def backup: Either[Cli.Error, Backup.Status] = call(Api.backup)(())
@@ -186,7 +194,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     * `SttpClientOptions.createFile` hands it, so the response is written straight to disk — a multi-GB dump never
     * becomes a byte array.
     */
-  def downloadBackup(file: com.histmersion.api.backup.Backup.Name, dest: java.io.File): Either[Cli.Error, java.io.File] =
+  def downloadBackup(file: Backup.Name, dest: java.io.File): Either[Cli.Error, java.io.File] =
     val toFile = SttpClientInterpreter(SttpClientOptions(() => dest))
     send(authed(toFile.toRequest(Api.downloadBackup, Some(base)).apply(file)))
 
@@ -211,7 +219,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
   /** The bundle file is the request body, streamed from disk. */
   def verifyBundle(file: java.io.File): Either[Cli.Error, Bundle.VerifyResult] = call(Api.verifyBundle)(file)
-  def importBundle(dryRun: com.histmersion.cli.Cli.DryRun, file: java.io.File): Either[Cli.Error, Bundle.ImportResult] =
+  def importBundle(dryRun: Cli.DryRun, file: java.io.File): Either[Cli.Error, Bundle.ImportResult] =
     call(Api.importBundle)((Api.Apply(dryRun.value), file))
   // the merge plan (M3): the bundle is uploaded once, then planned and imported by its sha256
   def uploadBundle(file: java.io.File): Either[Cli.Error, Bundle.Upload] = call(Api.uploadBundle)(file)
@@ -219,24 +227,24 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def mergeImport(req: MergeImportRequest): Either[Cli.Error, Bundle.ImportResult] = call(Api.mergeImport)(req)
   def mergeApply(req: MergeApplyRequest): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApply)(req)
   def mergeApplyStatus(job: Api.Merge.Id): Either[Cli.Error, MergeApplyJob] = call(Api.mergeApplyStatus)(job)
-  def merges(limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, List[MergeInfo]] = call(Api.merges)(limit.map(l => Api.Merge.Limit(l.value)))
-  def mergeDetail(id: com.histmersion.api.Api.Merge.Id): Either[Cli.Error, MergeDetail] = call(Api.mergeDetail)(id)
-  def mergeLedger(uid: Option[Api.Merge.Id], merge: Option[Api.Merge.Entity], limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, MergeLedger] =
+  def merges(limit: Option[Paging.Limit]): Either[Cli.Error, List[MergeInfo]] = call(Api.merges)(limit.map(l => Api.Merge.Limit(l.value)))
+  def mergeDetail(id: Api.Merge.Id): Either[Cli.Error, MergeDetail] = call(Api.mergeDetail)(id)
+  def mergeLedger(uid: Option[Api.Merge.Id], merge: Option[Api.Merge.Entity], limit: Option[Paging.Limit]): Either[Cli.Error, MergeLedger] =
     call(Api.mergeLedger)((uid, merge, limit.map(l => Api.Merge.Limit(l.value))))
   // label renames (V042, V053)
   def renameArticle(slug: ReviewGoal.Slug, to: LabelRename.To): Either[Cli.Error, LabelRenamed] =
     call(Api.renameArticle)((slug, LabelRename(to)))
-  def renameEvent(id: com.histmersion.api.catalogue.Event.Uid, to: LabelRename.To): Either[Cli.Error, LabelRenamed] =
+  def renameEvent(id: Event.Uid, to: LabelRename.To): Either[Cli.Error, LabelRenamed] =
     call(Api.renameEvent)((id, LabelRename(to)))
   def renameGoal(slug: Goal.Uid, to: LabelRename.To): Either[Cli.Error, LabelRenamed] =
     call(Api.renameGoal)((slug, LabelRename(to)))
-  def renamePlace(id: com.histmersion.api.catalogue.Place.Id, to: LabelRename.To): Either[Cli.Error, LabelRenamed] =
+  def renamePlace(id: Place.Id, to: LabelRename.To): Either[Cli.Error, LabelRenamed] =
     call(Api.renamePlace)((id, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
-  def putSource(ck: Citekey, in: Source.Put, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
+  def putSource(ck: Citekey, in: Source.Put, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
     call(Api.putSource)((ck, in, Api.Overwrite(strict.value)))
-  def patchSource(ck: Citekey, p: Source.Patch, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
+  def patchSource(ck: Citekey, p: Source.Patch, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
     call(Api.patchSource)((ck, p, Api.Apply(strict.value)))
   // the formatting lint of agent-written Markdown
   def lintSource(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.lintSource)(ck)
@@ -250,64 +258,64 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def renameSource(ck: Citekey, newCk: Citekey): Either[Cli.Error, Source.Renamed] =
     call(Api.renameSource)((ck, Rename.Request(newCk)))
   def sourceAliases: Either[Cli.Error, List[Source.Alias]] = call(Api.sourceAliases)(())
-  def deleteSource(ck: Citekey, apply: com.histmersion.api.Api.Apply): Either[Cli.Error, Source.Deletion] =
+  def deleteSource(ck: Citekey, apply: Api.Apply): Either[Cli.Error, Source.Deletion] =
     call(Api.deleteSource)((ck, Source.DeleteRequest(apply)))
 
   // ── the gazetteer (plan §1.6a) ──────────────────────────────────────────────────────────────
-  def places(q: Option[com.histmersion.api.Api.Search.Text], asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf], limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, List[Place.Hit]] =
+  def places(q: Option[Api.Search.Text], asOf: Option[Api.AggregateQuery.AsOf], limit: Option[Paging.Limit]): Either[Cli.Error, List[Place.Hit]] =
     call(Api.places)((q.map(t => Place.Kind.Wire(t.value)), asOf, limit.map(l => Api.PlacesGeoQuery.Limit(l.value))))
-  def place(id: com.histmersion.api.catalogue.Place.Id, asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf]): Either[Cli.Error, PlaceDetail] = call(Api.place)((id, asOf, None))
-  def placeChildren(id: com.histmersion.api.catalogue.Place.Id, asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf]): Either[Cli.Error, List[Place.Summary]] =
+  def place(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf]): Either[Cli.Error, PlaceDetail] = call(Api.place)((id, asOf, None))
+  def placeChildren(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf]): Either[Cli.Error, List[Place.Summary]] =
     call(Api.placeChildren)((id, asOf))
-  def placeTree(id: com.histmersion.api.catalogue.Place.Id, asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf], depth: Option[Place.Depth]): Either[Cli.Error, List[Place.TreeRow]] =
+  def placeTree(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf], depth: Option[Place.Depth]): Either[Cli.Error, List[Place.TreeRow]] =
     call(Api.placeTree)((id, asOf, depth))
   def importPlaces(
-      kind: Option[com.histmersion.api.Api.ExternalPlaces.Source],
-      body: com.histmersion.api.Api.ExternalPlaces.Format,
+      kind: Option[Api.ExternalPlaces.Source],
+      body: Api.ExternalPlaces.Format,
       dataset: Dataset = Dataset.Local
   ): Either[Cli.Error, Place.ImportResult] =
     call(Api.importPlaces)((kind, Some(Api.ExternalPlaces.Locator(dataset.wire.value)), body))
-  def placeNames(place: Option[com.histmersion.api.catalogue.Place.Id]): Either[Cli.Error, List[ManualPlaceName]] = call(Api.placeNames)(place)
-  def addPlaceName(id: com.histmersion.api.catalogue.Place.Id, in: Place.NameAdd): Either[Cli.Error, Place.NameChanged] =
+  def placeNames(place: Option[Place.Id]): Either[Cli.Error, List[ManualPlaceName]] = call(Api.placeNames)(place)
+  def addPlaceName(id: Place.Id, in: Place.NameAdd): Either[Cli.Error, Place.NameChanged] =
     call(Api.addPlaceName)((id, in))
-  def removePlaceName(id: com.histmersion.api.catalogue.Place.Id, in: Place.NameRemove): Either[Cli.Error, Place.NameChanged] =
+  def removePlaceName(id: Place.Id, in: Place.NameRemove): Either[Cli.Error, Place.NameChanged] =
     call(Api.removePlaceName)((id, in))
   def addPlace(in: Place.Add): Either[Cli.Error, Place.Summary] = call(Api.addPlace)(in)
-  def placeOverrides(place: Option[com.histmersion.api.catalogue.Place.Id]): Either[Cli.Error, List[Place.Override]] = call(Api.placeOverrides)(place)
-  def setPlaceOverride(id: com.histmersion.api.catalogue.Place.Id, in: Place.OverrideSet): Either[Cli.Error, Place.OverrideChanged] =
+  def placeOverrides(place: Option[Place.Id]): Either[Cli.Error, List[Place.Override]] = call(Api.placeOverrides)(place)
+  def setPlaceOverride(id: Place.Id, in: Place.OverrideSet): Either[Cli.Error, Place.OverrideChanged] =
     call(Api.setPlaceOverride)((id, in))
-  def mergePlace(id: com.histmersion.api.catalogue.Place.Id, in: Place.MergeIn): Either[Cli.Error, Place.Gone] = call(Api.mergePlace)((id, in))
-  def removePlace(id: com.histmersion.api.catalogue.Place.Id, in: Place.RemoveIn): Either[Cli.Error, Place.Gone] = call(Api.removePlace)((id, in))
+  def mergePlace(id: Place.Id, in: Place.MergeIn): Either[Cli.Error, Place.Gone] = call(Api.mergePlace)((id, in))
+  def removePlace(id: Place.Id, in: Place.RemoveIn): Either[Cli.Error, Place.Gone] = call(Api.removePlace)((id, in))
   def rebuildPlaces: Either[Cli.Error, Place.RebuildResult] = call(Api.rebuildPlaces)(())
-  def fetchExternalPlaces(source: com.histmersion.api.Api.ExternalPlaces.Source, dryRun: com.histmersion.cli.Cli.DryRun): Either[Cli.Error, Place.ImportResult] =
+  def fetchExternalPlaces(source: Api.ExternalPlaces.Source, dryRun: Cli.DryRun): Either[Cli.Error, Place.ImportResult] =
     call(Api.fetchExternalPlaces)((source, Api.Apply(dryRun.value)))
   def placeSources: Either[Cli.Error, List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
-  def loadPlaces(source: com.histmersion.api.Api.ExternalPlaces.Source, apply: com.histmersion.api.Api.Apply): Either[Cli.Error, JobInfo] = call(Api.loadPlaces)((source, apply))
+  def loadPlaces(source: Api.ExternalPlaces.Source, apply: Api.Apply): Either[Cli.Error, JobInfo] = call(Api.loadPlaces)((source, apply))
   def buildHierarchy: Either[Cli.Error, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
   // ── named periods (#719) and first-run data (#720) ──────────────────────────────────────────
   def periods(
-      q: Option[com.histmersion.api.instance.CorpusCounts.Periods.Source],
-      region: Option[com.histmersion.api.instance.CorpusCounts.Periods.Collection],
-      from: Option[com.histmersion.api.Api.PlacesGeoQuery.From],
-      to: Option[com.histmersion.api.Api.PlacesGeoQuery.To]
+      q: Option[CorpusCounts.Periods.Source],
+      region: Option[CorpusCounts.Periods.Collection],
+      from: Option[Api.PlacesGeoQuery.From],
+      to: Option[Api.PlacesGeoQuery.To]
   ): Either[Cli.Error, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
-  def period(id: com.histmersion.api.catalogue.Period.Id): Either[Cli.Error, Period.Detail] = call(Api.period)(id)
-  def seedPeriods(replace: com.histmersion.api.Api.Overwrite = com.histmersion.api.Api.Overwrite(false)): Either[Cli.Error, Period.ImportResult] = call(Api.seedPeriods)(replace)
+  def period(id: Period.Id): Either[Cli.Error, Period.Detail] = call(Api.period)(id)
+  def seedPeriods(replace: Api.Overwrite = Api.Overwrite(false)): Either[Cli.Error, Period.ImportResult] = call(Api.seedPeriods)(replace)
   def importPeriods(
-      collections: List[com.histmersion.api.instance.CorpusCounts.Periods.Source],
-      body: com.histmersion.api.instance.CorpusCounts.Periods.Name,
+      collections: List[CorpusCounts.Periods.Source],
+      body: CorpusCounts.Periods.Name,
       dataset: Dataset = Dataset.Local
   ): Either[Cli.Error, Period.ImportResult] =
-    call(Api.importPeriods)((collections, Some(com.histmersion.api.instance.CorpusCounts.Periods.Collection(dataset.wire.value)), body))
-  def fetchPeriods(source: com.histmersion.api.instance.CorpusCounts.Periods.Source, collections: List[com.histmersion.api.instance.CorpusCounts.Periods.Collection]): Either[Cli.Error, Period.ImportResult] =
+    call(Api.importPeriods)((collections, Some(CorpusCounts.Periods.Collection(dataset.wire.value)), body))
+  def fetchPeriods(source: CorpusCounts.Periods.Source, collections: List[CorpusCounts.Periods.Collection]): Either[Cli.Error, Period.ImportResult] =
     call(Api.fetchPeriods)((source, collections))
   def init(fetch: Api.Overwrite): Either[Cli.Error, JobInfo] = call(Api.init)(fetch)
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
   def listEvents(q: Api.EventQuery): Either[Cli.Error, EventList] = call(Api.events)(q)
-  def getEvent(id: com.histmersion.api.catalogue.Event.Uid): Either[Cli.Error, EventDetail] = call(Api.getEvent)(id)
-  def putEvent(id: com.histmersion.api.catalogue.Event.Uid, in: EventPut): Either[Cli.Error, EventDetail] = call(Api.putEvent)((id, in))
-  def patchEvent(id: com.histmersion.api.catalogue.Event.Uid, p: EventPatch): Either[Cli.Error, EventDetail] = call(Api.patchEvent)((id, p))
-  def deleteEvent(id: com.histmersion.api.catalogue.Event.Uid): Either[Cli.Error, EventDeleted] = call(Api.deleteEvent)(id)
+  def getEvent(id: Event.Uid): Either[Cli.Error, EventDetail] = call(Api.getEvent)(id)
+  def putEvent(id: Event.Uid, in: EventPut): Either[Cli.Error, EventDetail] = call(Api.putEvent)((id, in))
+  def patchEvent(id: Event.Uid, p: EventPatch): Either[Cli.Error, EventDetail] = call(Api.patchEvent)((id, p))
+  def deleteEvent(id: Event.Uid): Either[Cli.Error, EventDeleted] = call(Api.deleteEvent)(id)
   // ── goals (plan §1.5) ──────────────────────────────────────────────────────────────────────
   def listGoals(q: Api.GoalQuery): Either[Cli.Error, Goal.List] = call(Api.goals)(q)
   def getGoal(slug: Goal.Uid): Either[Cli.Error, Goal] = call(Api.getGoal)(slug)
@@ -316,17 +324,17 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def deleteGoal(slug: Goal.Uid): Either[Cli.Error, Goal.Deleted] = call(Api.deleteGoal)(slug)
   // ── agent state (plan §1.5) ───────────────────────────────────────────────────────────────
   def agentStateList(): Either[Cli.Error, List[AgentStateEntry]] = call(Api.agentStateList)(())
-  def agentStateGet(key: com.histmersion.api.Api.AgentState.Key): Either[Cli.Error, AgentStateEntry] = call(Api.agentStateGet)(key)
-  def agentStateSet(key: com.histmersion.api.Api.AgentState.Key, in: AgentStatePut): Either[Cli.Error, AgentStateEntry] =
+  def agentStateGet(key: Api.AgentState.Key): Either[Cli.Error, AgentStateEntry] = call(Api.agentStateGet)(key)
+  def agentStateSet(key: Api.AgentState.Key, in: AgentStatePut): Either[Cli.Error, AgentStateEntry] =
     call(Api.agentStateSet)((key, in))
-  def agentStateDelete(key: com.histmersion.api.Api.AgentState.Key): Either[Cli.Error, AgentStateDeleted] = call(Api.agentStateDelete)(key)
+  def agentStateDelete(key: Api.AgentState.Key): Either[Cli.Error, AgentStateDeleted] = call(Api.agentStateDelete)(key)
   // ── attestations (plan §1.3) ───────────────────────────────────────────────────────────────
   def listAttestations(q: Api.AttestationQuery): Either[Cli.Error, Attestation.List] = call(Api.attestations)(q)
-  def getAttestation(id: com.histmersion.api.catalogue.Attestation.Id): Either[Cli.Error, Attestation] = call(Api.getAttestation)(id)
+  def getAttestation(id: Attestation.Id): Either[Cli.Error, Attestation] = call(Api.getAttestation)(id)
   def createAttestation(in: Attestation.Put): Either[Cli.Error, Attestation] = call(Api.createAttestation)(in)
-  def patchAttestation(id: com.histmersion.api.catalogue.Attestation.Id, p: Attestation.Patch): Either[Cli.Error, Attestation] =
+  def patchAttestation(id: Attestation.Id, p: Attestation.Patch): Either[Cli.Error, Attestation] =
     call(Api.patchAttestation)((id, p))
-  def deleteAttestation(id: com.histmersion.api.catalogue.Attestation.Id): Either[Cli.Error, Attestation.Deleted] = call(Api.deleteAttestation)(id)
+  def deleteAttestation(id: Attestation.Id): Either[Cli.Error, Attestation.Deleted] = call(Api.deleteAttestation)(id)
 
   def exportSource(ck: Citekey): Either[Cli.Error, Source.Export] = call(Api.exportSource)(ck)
   def citekeys: Either[Cli.Error, List[Citekey]] = call(Api.citekeys)(())
@@ -334,10 +342,10 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   def listArticles(q: Api.ArticleQuery): Either[Cli.Error, Article.List] = call(Api.articles)(q)
-  def getArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.View] = call(Api.getArticle)((slug, com.histmersion.api.research.Article.FullText(false)))
-  def putArticle(slug: ReviewGoal.Slug, in: Article.Put, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Article.View] =
+  def getArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.View] = call(Api.getArticle)((slug, Article.FullText(false)))
+  def putArticle(slug: ReviewGoal.Slug, in: Article.Put, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Article.View] =
     call(Api.putArticle)((slug, in, Api.Overwrite(strict.value)))
-  def patchArticle(slug: ReviewGoal.Slug, p: Article.Patch, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Article.View] =
+  def patchArticle(slug: ReviewGoal.Slug, p: Article.Patch, strict: Cli.Strict = Cli.Strict(false)): Either[Cli.Error, Article.View] =
     call(Api.patchArticle)((slug, p, Api.Apply(strict.value)))
   def deleteArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.Deleted] = call(Api.deleteArticle)(slug)
   def articleCoverage(slug: ReviewGoal.Slug): Either[Cli.Error, Coverage] = call(Api.articleCoverage)(slug)
@@ -372,13 +380,13 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def ingest(p: Ingest.Params, file: java.io.File): Either[Cli.Error, Ingest.Accepted] =
     call(Api.ingest)((p, file))
   def reocr(ck: Citekey, quality: Api.Overwrite): Either[Cli.Error, Ingest.Accepted] = call(Api.reocr)((ck, quality))
-  def job(id: com.histmersion.api.SpatialHierarchyResult.Job.Id): Either[Cli.Error, JobInfo] = call(Api.job)(id)
+  def job(id: SpatialHierarchyResult.Job.Id): Either[Cli.Error, JobInfo] = call(Api.job)(id)
   def basemapStatus(): Either[Cli.Error, Basemap.Status] = call(BasemapApi.status)(())
   def basemapFetch(q: Basemap.FetchQuery): Either[Cli.Error, JobInfo] = call(BasemapApi.fetch)(q)
   def basemapRemove(q: Basemap.RemoveQuery): Either[Cli.Error, Basemap.Removed] = call(BasemapApi.remove)(q)
   def jobs(
       f: ListFilters.JobFilter,
-      limit: Option[com.histmersion.api.Paging.Limit],
+      limit: Option[Paging.Limit],
       before: Option[Api.Jobs.Status] = None
   ): Either[Cli.Error, (List[JobInfo], Paging.Page)] =
     call(Api.jobs)((f, limit.map(l => Api.Jobs.Limit(l.value)), before, None))
@@ -391,10 +399,10 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def assetLinks(
       ck: Option[Citekey],
       asset: Option[Bundle.Asset.Variant],
-      tt: Option[com.histmersion.api.catalogue.Attestation.TargetType],
-      ti: Option[com.histmersion.api.catalogue.Attestation.TargetId]
+      tt: Option[Attestation.TargetType],
+      ti: Option[Attestation.TargetId]
   ): Either[Cli.Error, AssetLink.List] =
-    call(Api.assetLinks)((ck.map(c => Bundle.Asset.Uid(c.value)), asset.map(a => com.histmersion.api.media.AssetLinks.Kind(a.value)), tt.map(t => com.histmersion.api.media.AssetLinks.TargetId(t.value)), ti.map(t => com.histmersion.api.media.AssetLinks.TargetKind(t.value))))
+    call(Api.assetLinks)((ck.map(c => Bundle.Asset.Uid(c.value)), asset.map(a => AssetLinks.Kind(a.value)), tt.map(t => AssetLinks.TargetId(t.value)), ti.map(t => AssetLinks.TargetKind(t.value))))
   def createAssetLink(in: AssetLink.Put): Either[Cli.Error, AssetLink] = call(Api.createAssetLink)(in)
   def deleteAssetLink(id: AssetLink.Id): Either[Cli.Error, AssetLink.Deleted] = call(Api.deleteAssetLink)(id)
   // ── media from outside providers (#1446) ──
@@ -402,27 +410,27 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def mediaImportJob(req: MediaImportRequest): Either[Cli.Error, JobInfo] = call(Api.mediaImportJob)(req)
   def mediaCovers(req: MediaCoversRequest): Either[Cli.Error, MediaCoversReport] = call(Api.mediaCovers)(req)
   def mediaCoversJob(req: MediaCoversRequest): Either[Cli.Error, JobInfo] = call(Api.mediaCoversJob)(req)
-  def putSourceCover(p: SourceCoverParams, bytes: com.histmersion.api.Api.FileBytes): Either[Cli.Error, MediaItem] =
+  def putSourceCover(p: SourceCoverParams, bytes: Api.FileBytes): Either[Cli.Error, MediaItem] =
     call(Api.putSourceCover)((p, bytes))
   def mediaList(q: Api.MediaQuery): Either[Cli.Error, MediaList] = call(Api.mediaList)(q)
   def mediaShow(uid: Bundle.Asset.Uid): Either[Cli.Error, MediaItem] = call(Api.mediaShow)(uid)
   def mediaFacets: Either[Cli.Error, MediaFacets] = call(Api.mediaFacets)(())
   def mediaProviders: Either[Cli.Error, List[MediaProvider.Info]] = call(Api.mediaProviders)(())
-  def fillFigureLicences(apply: com.histmersion.api.Api.Apply): Either[Cli.Error, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
+  def fillFigureLicences(apply: Api.Apply): Either[Cli.Error, FigureLicenceFill] = call(Api.fillFigureLicences)(apply)
 
 object Client:
   type HttpStatus = HttpStatus.T
-  object HttpStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HttpStatus extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Write = Write.T
-  object Write extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Write extends RefinedType[Boolean, Pure]
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
 
   type ServerUrl = ServerUrl.T
-  object ServerUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ServerUrl extends RefinedType[String, Pure]
   type Token = Token.T
-  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Token extends RefinedType[String, Pure]
 
 
   def isWrite(m: sttp.model.Method): Boolean =
@@ -432,7 +440,7 @@ object Client:
   /** What to say when the server answered something the endpoint does not describe. Pure. A refusal names what was
     * refused (#819: a refused backup download used to read "refused this write").
     */
-  def unexpected(status: com.histmersion.cli.Client.HttpStatus, serverUrl: com.histmersion.cli.Client.ServerUrl, write: com.histmersion.cli.Client.Write): com.histmersion.cli.Client.Problem = status.value match
+  def unexpected(status: HttpStatus, serverUrl: ServerUrl, write: Write): Problem = status.value match
     case 401 | 403 =>
       val what = if write.value then "this write" else "this request"
       Problem(s"$serverUrl refused $what: it needs its API key — pass --token <key> or set HISTMERSION_TOKEN")

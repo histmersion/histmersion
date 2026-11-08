@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -14,6 +15,8 @@ import com.histmersion.api.library.{AcquireChecksMarkdown, Citekey, Query}
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.api.library.Acquire
 import com.histmersion.util.console.Console
+import com.histmersion.api.Api
+import com.histmersion.api.library.AcquisitionWorkApi
 
 /** The CLI commands of stream 2.8 — `lint`, `queue`, `query`, `schema` — plus the pure argument parsing they need. Like
   * every other command they are HTTP clients of the server; the host never touches Postgres.
@@ -127,7 +130,7 @@ object Ops:
   /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only keep some of them.
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
-  def readMeta(c: Client, dir: Path, replace: com.histmersion.api.Api.Overwrite): Either[Cli.Error, List[String]] =
+  def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
     if !Files.isDirectory(dir) then Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
@@ -308,7 +311,7 @@ object Ops:
       }
     }
 
-  private def run(c: Client, cmd: QueueCmd, json: com.histmersion.cli.Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] = cmd match
+  private def run(c: Client, cmd: QueueCmd, json: Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
       c.queueList(Queue.Wire(list.value), all)
         .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
@@ -326,9 +329,9 @@ object Ops:
     case QueueCmd.Export(dir) =>
       writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
     case QueueCmd.Import(dir) =>
-      readMeta(c, Path.of(dir), replace = com.histmersion.api.Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
+      readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
-      c.call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(
+      c.call(AcquisitionWorkApi.acquireRecheck)(
         Acquire.Checks.RecheckRequest(
           Acquire.Checks.RecheckRequest.DryRun(dryRun),
           limit.map(Acquire.Checks.RecheckRequest.Limit(_)),

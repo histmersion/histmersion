@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -10,16 +11,16 @@ import scala.jdk.CollectionConverters.*
 /** Running the kit's scripts and curl. Behind a trait so the commands can be tested without them. */
 trait Runner:
   /** stdout on success; on failure the exit code and stderr. */
-  def capture(cmd: List[String], env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting] = Map.empty): Either[(com.histmersion.cli.Cli.Error.ExitCode, String), String]
+  def capture(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] = Map.empty): Either[(Cli.Error.ExitCode, String), String]
 
   /** The process's output goes to this terminal; its exit code. */
-  def interactive(cmd: List[String], env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting] = Map.empty): com.histmersion.cli.Cli.Error.ExitCode
+  def interactive(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] = Map.empty): Cli.Error.ExitCode
 
 object Runner:
 
   object System extends Runner:
 
-    def capture(cmd: List[String], env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting]) =
+    def capture(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting]) =
       scala.util
         .Try {
           val pb = new ProcessBuilder(cmd.asJava)
@@ -37,7 +38,7 @@ object Runner:
           identity
         )
 
-    def interactive(cmd: List[String], env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting]) =
+    def interactive(cmd: List[String], env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting]) =
       scala.util
         .Try {
           val pb = new ProcessBuilder(cmd.asJava).inheritIO()

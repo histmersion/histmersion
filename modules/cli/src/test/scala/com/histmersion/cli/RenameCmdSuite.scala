@@ -1,7 +1,9 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.monovore.decline.Command
 import com.histmersion.api.library.Source
+import com.histmersion.api.library.Citekey
 
 /** `histmersion rename <old> <new> [--json]`: the arguments parse, and a new citekey the server would refuse is a usage
   * error here, before any request.
@@ -16,24 +18,24 @@ class RenameCmdSuite extends munit.FunSuite:
   test("two positional citekeys, --json optional"):
     assertEquals(
       parse("page2024_history", "page1959_history"),
-      Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey("page1959_history"), json = com.histmersion.cli.Cli.JsonOutput(false)))
+      Right(RenameCmd.Args(Citekey("page2024_history"), Citekey("page1959_history"), json = Cli.JsonOutput(false)))
     )
     assertEquals(
       parse("page2024_history", "page1959_history", "--json"),
-      Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey("page1959_history"), json = com.histmersion.cli.Cli.JsonOutput(true)))
+      Right(RenameCmd.Args(Citekey("page2024_history"), Citekey("page1959_history"), json = Cli.JsonOutput(true)))
     )
 
   test("the new citekey is trimmed"):
     assertEquals(
       parse("latacz2023_troy", " latacz2004_troy "),
-      Right(RenameCmd.Args(com.histmersion.api.library.Citekey("latacz2023_troy"), com.histmersion.api.library.Citekey("latacz2004_troy"), json = com.histmersion.cli.Cli.JsonOutput(false)))
+      Right(RenameCmd.Args(Citekey("latacz2023_troy"), Citekey("latacz2004_troy"), json = Cli.JsonOutput(false)))
     )
 
   test("a missing argument is a usage error"):
     assert(parse("page2024_history").isLeft)
     assert(parse().isLeft)
 
-  test("citekey validity is decided by the server") { List("page2024_history", "Page 1959", "page-1959").foreach(to => assertEquals(parse("page2024_history", to), Right(RenameCmd.Args(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey(to), json = com.histmersion.cli.Cli.JsonOutput(false))))) }
+  test("citekey validity is decided by the server") { List("page2024_history", "Page 1959", "page-1959").foreach(to => assertEquals(parse("page2024_history", to), Right(RenameCmd.Args(Citekey("page2024_history"), Citekey(to), json = Cli.JsonOutput(false))))) }
 
   test("the subcommand is registered under `rename`"):
     val top = Command("histmersion", "test")(RenameCmd.command)
@@ -48,9 +50,9 @@ class RenameCmdSuite extends munit.FunSuite:
       val out = RenameCmd.pruneRenamed(
         dir,
         List(
-          Source.Alias(com.histmersion.api.library.Source.Alias.Value("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")),
-          Source.Alias(com.histmersion.api.library.Source.Alias.Value("gone2020_c"), com.histmersion.api.library.Citekey("new1999_c")), // no file: nothing to report
-          Source.Alias(com.histmersion.api.library.Source.Alias.Value("../keep2020_b"), com.histmersion.api.library.Citekey("x2020_y"))
+          Source.Alias(Source.Alias.Value("old2020_a"), Citekey("new1999_a")),
+          Source.Alias(Source.Alias.Value("gone2020_c"), Citekey("new1999_c")), // no file: nothing to report
+          Source.Alias(Source.Alias.Value("../keep2020_b"), Citekey("x2020_y"))
         )
       ) // not a citekey: never a path outside `dir`
       assertEquals(out, List(Right("old2020_a → new1999_a")))

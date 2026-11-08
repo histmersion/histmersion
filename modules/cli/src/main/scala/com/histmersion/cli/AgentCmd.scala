@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -9,6 +10,14 @@ import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.{AgentRole, AgentsApi, AgentsMarkdown, ModelChains, PlanQuota}
 import com.histmersion.api.research.Articles
 import com.histmersion.util.console.Console
+import com.histmersion.api.research.ReviewGoal
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.automation.Run
+import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.Paging
+import com.histmersion.api.automation.Approval
 
 /** `histmersion agent …` — the embedded research agents (docs/research-embedded-agents.md). The server runs them; this
   * only starts, follows and steers runs over HTTP. Off unless the SERVER has `HISTMERSION_AGENTS_ENABLED=true`.
@@ -62,9 +71,9 @@ object AgentCmd:
     )
       .mapN { (target, limits, reserve, remove) => (c: Client) =>
         if remove then
-          if limits.nonEmpty then Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("--remove takes no --limit"), exitCode = ExitCode.Usage))
+          if limits.nonEmpty then Left(Cli.Error(Cli.Error.Message("--remove takes no --limit"), exitCode = ExitCode.Usage))
           else
-            c.call(AgentsApi.removeAllowance)(com.histmersion.api.research.ReviewGoal.Slug(target))
+            c.call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target))
               .map(r =>
                 Cli.out.println(if r.removed.value then s"The saved allowance of $target is removed."
                 else s"No saved allowance for $target.")
@@ -109,7 +118,7 @@ object AgentCmd:
         .argument[String]("pool")
         .map(p =>
           (c: Client) =>
-            c.call(AgentsApi.setPool)((PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(com.histmersion.api.automation.PlanQuota.PoolSet.Hold(true)))))
+            c.call(AgentsApi.setPool)((PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true)))))
               .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         )
     }
@@ -118,7 +127,7 @@ object AgentCmd:
         .argument[String]("pool")
         .map(p =>
           (c: Client) =>
-            c.call(AgentsApi.setPool)((PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(com.histmersion.api.automation.PlanQuota.PoolSet.Hold(false)))))
+            c.call(AgentsApi.setPool)((PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(false)))))
               .map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         )
     }
@@ -133,8 +142,8 @@ object AgentCmd:
       )
         .mapN { (p, f, reset) => (c: Client) =>
           (f, reset) match
-            case (None, false)   => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("give the floors, or --reset"), exitCode = ExitCode.Usage))
-            case (Some(_), true) => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("--reset takes no floors"), exitCode = ExitCode.Usage))
+            case (None, false)   => Left(Cli.Error(Cli.Error.Message("give the floors, or --reset"), exitCode = ExitCode.Usage))
+            case (Some(_), true) => Left(Cli.Error(Cli.Error.Message("--reset takes no floors"), exitCode = ExitCode.Usage))
             case _               =>
               c.call(AgentsApi.setPool)(
                 (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(floors = Some(PlanQuota.PoolSet.Floors(f.getOrElse("")))))
@@ -191,7 +200,7 @@ object AgentCmd:
     "One live model call with one read-only tool (get_source) and a typed answer, checked against the record"
   ) {
     (Opts.argument[String]("citekey"), modelOpt).mapN { (ck, model) => (c: Client) =>
-      c.call(AgentsApi.probe)(ProbeRequest(com.histmersion.api.library.Citekey(ck), model.map(ProbeRequest.Model(_)))).map(p => Cli.out.println(AgentsMarkdown.probe(p)))
+      c.call(AgentsApi.probe)(ProbeRequest(Citekey(ck), model.map(ProbeRequest.Model(_)))).map(p => Cli.out.println(AgentsMarkdown.probe(p)))
     }
   }
 
@@ -200,13 +209,13 @@ object AgentCmd:
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
   @annotation.tailrec
-  private[cli] def follow(c: Client, id: com.histmersion.api.automation.Agents.RunInfo.Id, last: String)(using console: Console): Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, id: Agents.RunInfo.Id, last: String)(using console: Console): Either[Cli.Error, Unit] =
     c.call(AgentsApi.run)(id) match
       case Left(e)  => Left(e)
       case Right(d) =>
         val line = AgentsMarkdown.runLine(d.run)
         if line != last then Cli.err.println(line)
-        RunState.parse(com.histmersion.api.automation.Run.State.Wire(d.run.status.value)) match
+        RunState.parse(Run.State.Wire(d.run.status.value)) match
           case Some(RunState.Queued) | Some(RunState.Running) =>
             Thread.sleep(PollMs.toLong)
             follow(c, id, line)
@@ -294,13 +303,13 @@ object AgentCmd:
                 b._2.map(RunRequest.BudgetTokens(_)),
                 Option.when(rv._1)(RunRequest.Fix(true)),
                 rv._2.map(RunRequest.Rounds(_)),
-                item.map(com.histmersion.api.automation.Queue.QueueItem.Id(_)),
+                item.map(Queue.QueueItem.Id(_)),
                 cp._1.map(RunRequest.Title(_)),
                 cp._2.map(RunRequest.Kind(_)),
                 cp._3.map(RunRequest.Query(_)),
                 cp._4.map(RunRequest.Topics(_)),
                 cp._5.map(RunRequest.Tags(_)),
-                g.map(com.histmersion.api.automation.Goal.Slug(_)),
+                g.map(Goal.Slug(_)),
                 Option.when(ev._1)(RunRequest.DryRun(true)),
                 over
               )
@@ -318,8 +327,8 @@ object AgentCmd:
         c.call(AgentsApi.approvals)(
           (
             f,
-            limit.map(com.histmersion.api.Paging.Limit(_)),
-            before.map(com.histmersion.api.automation.Approval.State.Wire(_)),
+            limit.map(Paging.Limit(_)),
+            before.map(Approval.State.Wire(_)),
             None
           )
         ).map { (as, page) =>
@@ -327,8 +336,8 @@ object AgentCmd:
             AgentsMarkdown.approvals(
               as,
               page,
-              f.qualifier.map(q => com.histmersion.api.automation.Approval.State.Wire(q.value)),
-              PageCmd.older(page, "agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => com.histmersion.api.Paging.Cursor(t.value))
+              f.qualifier.map(q => Approval.State.Wire(q.value)),
+              PageCmd.older(page, "agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => Paging.Cursor(t.value))
             )
           )
         }
@@ -361,14 +370,14 @@ object AgentCmd:
       (ListOpts.runs, Opts.option[Int]("limit", "How many").orNone, beforeOpt("run"), Output.jsonFlag)
         .mapN { (f, limit, before, json) => (c: Client) =>
           c.call(AgentsApi.runs)(
-            (f, limit.map(com.histmersion.api.Paging.Limit(_)), before.map(RunInfo.Status(_)), None)
+            (f, limit.map(Paging.Limit(_)), before.map(RunInfo.Status(_)), None)
           ).map { (rs, page) =>
             Output.emit(json, rs)(rs =>
               AgentsMarkdown.runs(
                 rs,
                 page,
                 f.qualifier.map(q => RunInfo.Status(q.value)),
-                PageCmd.older(page, "agent runs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => com.histmersion.api.Paging.Cursor(t.value))
+                PageCmd.older(page, "agent runs", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))).map(t => Paging.Cursor(t.value))
               )
             )
           }
@@ -404,7 +413,7 @@ object AgentCmd:
     }
   }
 
-  private def control(action: com.histmersion.api.automation.Agents.Action, help: String)(using console: Console) = Opts.subcommand(action.value, help) {
+  private def control(action: Agents.Action, help: String)(using console: Console) = Opts.subcommand(action.value, help) {
     val budget = if action.value == "resume" then
       (
         Opts.option[Double]("budget-usd", "Raise the run's cost cap before resuming").orNone,
@@ -425,9 +434,9 @@ object AgentCmd:
     ) {
       models orElse allowance orElse quota orElse generate orElse doctor orElse probe orElse run orElse runs orElse show orElse
         compare orElse
-        control(com.histmersion.api.automation.Agents.Action("pause"), "Pause a run before its next step") orElse
-        control(com.histmersion.api.automation.Agents.Action("resume"), "Resume a paused run (finished steps are replayed, not re-run)") orElse
-        control(com.histmersion.api.automation.Agents.Action("cancel"), "Cancel a run") orElse approvals orElse
+        control(Agents.Action("pause"), "Pause a run before its next step") orElse
+        control(Agents.Action("resume"), "Resume a paused run (finished steps are replayed, not re-run)") orElse
+        control(Agents.Action("cancel"), "Cancel a run") orElse approvals orElse
         decide(
           Decision.Approve,
           "Approve proposed changes (one or more ids): a source change is applied through the ordinary patch; a plan or an article lets its waiting run go on and apply it"

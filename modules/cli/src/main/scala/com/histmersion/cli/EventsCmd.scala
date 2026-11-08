@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.exchange.Bundle
 
@@ -31,6 +32,10 @@ import com.histmersion.api.catalogue.{
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.console.Console
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.EventsJobKinds
 
 object EventsCmd:
 
@@ -68,7 +73,7 @@ object EventsCmd:
             hist.map(Api.EventQuery.Historicity(_)),
             place.map(Api.EventQuery.PlaceId(_)),
             tier.map(Api.EventQuery.Tier(_)),
-            Option.when(ctx)(com.histmersion.api.Api.EventQuery.Context(true))
+            Option.when(ctx)(Api.EventQuery.Context(true))
           )
         ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
       }
@@ -112,8 +117,8 @@ object EventsCmd:
           geom <- EventGeometry
             .of(
               geometry.map(EventGeometry.Geojson(_)),
-              lat.map(com.histmersion.api.catalogue.Latitude(_)),
-              lon.map(com.histmersion.api.catalogue.Longitude(_))
+              lat.map(Latitude(_)),
+              lon.map(Longitude(_))
             )
             .left
             .map(m => Cli.Error(Cli.Error.Message(m.value), exitCode = ExitCode.Usage))
@@ -127,7 +132,7 @@ object EventsCmd:
             kind = kind.map(EventSummary.Kind(_)),
             historicity = hist.map(EventSummary.Historicity(_)),
             geometry = geom.map(g => EventPatch.Geometry(g.value)),
-            placeId = place.map(com.histmersion.api.catalogue.Place.Id(_)),
+            placeId = place.map(Place.Id(_)),
             parentId = parent.map(Event.Id(_)),
             description = desc.map(EventSummary.Description(_)),
             citekey = ck.map(Citekey(_)),
@@ -160,9 +165,9 @@ object EventsCmd:
   // ── catalogues, links and leads (#1449) ──
 
   /** Follow a job, then print what it left (an import's report). */
-  private[cli] def follow(c: Client, j: JobInfo, noWait: com.histmersion.cli.Cli.NoWait)(using console: Console) : Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, j: JobInfo, noWait: Cli.NoWait)(using console: Console) : Either[Cli.Error, Unit] =
     Cli.out.println(
-      s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
+      s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
     if noWait.value then Right(())
     else
@@ -229,7 +234,7 @@ object EventsCmd:
       .mapN { (p, dry, noWait) => (c: Client) =>
         c.call(EventsApi.rederive)(EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))).flatMap { j =>
           Cli.out.println(
-            s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
+            s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
           )
           if noWait then Right(())
           else

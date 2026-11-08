@@ -1,4 +1,8 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What can be wrong with a linked Calibre entry, worst first. */
 enum AuditIssue(val label: AuditIssue.Label):
@@ -10,4 +14,4 @@ enum AuditIssue(val label: AuditIssue.Label):
 
 object AuditIssue:
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]

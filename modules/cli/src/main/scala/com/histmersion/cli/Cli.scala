@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.library.Tree
 
@@ -25,27 +26,33 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import sttp.client4.*
 import com.histmersion.util.console.Console
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.ByteCount
+import com.histmersion.api.Paging
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.Filter
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
   */
 object Cli:
   type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DryRun extends RefinedType[Boolean, Pure]
   type JsonOutput = JsonOutput.T
-  object JsonOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JsonOutput extends RefinedType[Boolean, Pure]
   type Message = Message.T
-  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Message extends RefinedType[String, Pure]
   type NoWait = NoWait.T
-  object NoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NoWait extends RefinedType[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Question = Question.T
-  object Question extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Question extends RefinedType[String, Pure]
   type QuietOutput = QuietOutput.T
-  object QuietOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QuietOutput extends RefinedType[Boolean, Pure]
   type Strict = Strict.T
-  object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Strict extends RefinedType[Boolean, Pure]
 
 
 
@@ -62,8 +69,8 @@ object Cli:
   private def version(using console: Console) = Opts.subcommand("version", "Print the CLI and server versions") {
     Opts.unit.map(_ =>
       (c: Client) =>
-        Cli.out.println(s"cli    ${Version.name} ${Version.version}")
-        c.version.map(v => Cli.out.println(s"server ${v.name} ${v.version}"))
+        out.println(s"cli    ${Version.name} ${Version.version}")
+        c.version.map(v => out.println(s"server ${v.name} ${v.version}"))
     )
   }
 
@@ -71,7 +78,7 @@ object Cli:
     Opts.unit.map(_ =>
       (c: Client) =>
         c.health.map(h =>
-          Cli.out.println(
+          out.println(
             (s"${h.status} · db ${h.db} · schema ${h.schemaVersion.getOrElse("?")}" ::
               h.warnings.map(w => s"warning: $w")).mkString("\n")
           )
@@ -105,12 +112,12 @@ object Cli:
   }
 
   private def report(r: SeedResult)(using console: Console): Unit =
-    Cli.out.println(
+    out.println(
       s"imported ${r.imported}, skipped ${r.skipped.size} (newer in DB), " +
         s"failed ${r.failed.size}, edges unified ${r.edgesResolved}"
     )
-    r.skipped.take(10).foreach(s => Cli.out.println(s"  ~ $s"))
-    r.failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
+    r.skipped.take(10).foreach(s => out.println(s"  ~ $s"))
+    r.failed.take(10).foreach(f => err.println(s"  ! $f"))
 
   private def seed(using console: Console) = Opts.subcommand(
     "seed",
@@ -132,13 +139,13 @@ object Cli:
     * article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout has a root, the compiled articles beside
     * `sources/` are imported too (plan §5.2 stream 2.7).
     */
-  private def hostSeed(c: Client, dir: Path, force: com.histmersion.api.Api.Overwrite)(using
+  private def hostSeed(c: Client, dir: Path, force: Api.Overwrite)(using
       console: Console
-  ): Either[com.histmersion.cli.Cli.Error, Unit] =
+  ): Either[Error, Unit] =
     val layout = ArticleCli.WikiLayout.of(dir)
     val files = Notes.markdownFiles(layout.sources)
     val total = files.size
-    Cli.out.println(s"seeding $total note(s) from ${layout.sources}")
+    out.println(s"seeding $total note(s) from ${layout.sources}")
     @tailrec def loop(
         rest: List[Path],
         number: Int,
@@ -151,12 +158,12 @@ object Cli:
           SeedResult(
             SeedResult.Imported(imported),
             failed.map(SeedResult.Failed(_)),
-            com.histmersion.api.library.SeedResult.EdgesResolved(0),
+            SeedResult.EdgesResolved(0),
             skipped.map(SeedResult.Skipped(_))
           )
         case f :: tail =>
           val ck = f.getFileName.toString.stripSuffix(".md")
-          Cli.out.println(s"$number/$total $ck")
+          out.println(s"$number/$total $ck")
           c.importNote(Notes.toImport(f, force)) match
             case Right(r) =>
               // the server cannot see the host's `md/<ck>/figures`, so the CLI uploads them (plan §1.8)
@@ -183,17 +190,17 @@ object Cli:
   /** Host-side caps on what `seed` uploads per note. Deliberately conservative: the SERVER enforces its own
     * `limits.asset-bytes`, this only keeps one request from becoming enormous.
     */
-  private val FigureBytes = com.histmersion.api.ByteCount(8L * 1024 * 1024)
-  private val FigureCount = com.histmersion.api.Paging.Limit(200)
+  private val FigureBytes = ByteCount(8L * 1024 * 1024)
+  private val FigureCount = Paging.Limit(200)
 
   private def put(using console: Console) =
     Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
       Opts.argument[String]("file.md").map { file => (c: Client) =>
         val p = Path.of(file)
         if !Files.isRegularFile(p) then
-          Left(com.histmersion.cli.Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+          Left(Error(Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
         // an explicit `put` is always deliberate → force past the "newer in DB" guard
-        else c.importNote(Notes.toImport(p, force = com.histmersion.api.Api.Overwrite(true))).map(report)
+        else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
       }
     }
 
@@ -230,7 +237,7 @@ object Cli:
         // a renamed source's note would otherwise linger under its OLD citekey — and a later
         // `seed` of the mirror would try to bring the old name back — so a full export removes it
         if only.isEmpty then pruneRenamed(c, sources)
-        failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
+        failed.take(10).foreach(f => err.println(s"  ! $f"))
         // a partial export must not look like success — the mirror on disk would be silently stale
         // the compiled wiki (2.7), the bookkeeping queues (2.8) and the goals are part of the same mirror on disk
         val meta =
@@ -242,8 +249,7 @@ object Cli:
         meta.flatMap { _ =>
           if failed.nonEmpty then
             Left(
-              com.histmersion.cli.Cli
-                .Error(Cli.Error.Message(s"${failed.size} of $total source(s) could not be exported"), exitCode = ExitCode.Refused)
+              Error(Error.Message(s"${failed.size} of $total source(s) could not be exported"), exitCode = ExitCode.Refused)
             )
           else if only.nonEmpty then Right(())
           else ArticleCli.exportAll(c, articles).map(_ => ())
@@ -260,12 +266,12 @@ object Cli:
     */
   private def pruneRenamed(c: Client, sources: Path)(using console: Console): Unit =
     c.sourceAliases match
-      case Left(e)   => Cli.err.println(s"  ! could not list renamed citekeys: ${e.message}")
+      case Left(e)   => err.println(s"  ! could not list renamed citekeys: ${e.message}")
       case Right(as) =>
         val (failed, removed) = RenameCmd.pruneRenamed(sources, as).partitionMap(identity)
-        failed.foreach(f => Cli.err.println(s"  ! $f"))
+        failed.foreach(f => err.println(s"  ! $f"))
         if removed.nonEmpty then
-          Cli.out.println(s"removed ${removed.size} note(s) of renamed citekeys: ${removed.mkString(", ")}")
+          out.println(s"removed ${removed.size} note(s) of renamed citekeys: ${removed.mkString(", ")}")
 
   private def patch(using console: Console) = Opts.subcommand(
     "patch",
@@ -339,7 +345,7 @@ object Cli:
             regs,
             summary.map(Source.Summary(_)),
             status,
-            title.map(com.histmersion.api.library.Title(_)),
+            title.map(Title(_)),
             notesFile.map(Patches.NotesFile(_)),
             period,
             bodyFile.map(Patches.BodyFile(_)),
@@ -350,11 +356,11 @@ object Cli:
             remE.toList
           )
           .flatMap(p =>
-            c.patchSource(Citekey(ck), p, Cli.Strict(strict)).map { sw =>
-              Cli.out.println(
+            c.patchSource(Citekey(ck), p, Strict(strict)).map { sw =>
+              out.println(
                 SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
               )
-              sw.source.updatedAt.foreach(u => Cli.out.println(s"\nupdatedAt: $u"))
+              sw.source.updatedAt.foreach(u => out.println(s"\nupdatedAt: $u"))
             }
           )
     }
@@ -388,7 +394,7 @@ object Cli:
       FilterFlags.opts,
       Output.jsonFlag
     ).mapN { (q, group, depth, asOf, samples, unit, brief, f0, json) => (c: Client) =>
-      val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Filter.Q(_)))
+      val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
       group.map(_.trim).filter(_.nonEmpty) match
         case None =>
           c.sources(f).map { r =>
@@ -399,8 +405,7 @@ object Cli:
           Tree.parseBy(by) match
             case None =>
               Left(
-                com.histmersion.cli.Cli
-                  .Error(Cli.Error.Message(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})"), exitCode = ExitCode.Usage)
+                Error(Error.Message(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})"), exitCode = ExitCode.Usage)
               )
             case Some(axes) =>
               c.aggregate(
@@ -432,7 +437,7 @@ object Cli:
       c.facets(
         Api.Facets.Field(field),
         prefix.map(Api.Facets.Prefix(_)),
-        f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Filter.Q(_)))
+        f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
       )
         .map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(Facet.FieldText(field), rs.toVector)))
     }
@@ -447,17 +452,17 @@ object Cli:
       after: Option[Api.Reindex.Scope],
       sources: Int,
       chunks: Int
-  )(using console: Console): Either[com.histmersion.cli.Cli.Error, Unit] =
+  )(using console: Console): Either[Error, Unit] =
     c.reindex(after, None) match
       case Left(e)  => Left(e)
       case Right(r) =>
         val (s, ch) = (sources + r.sources.value, chunks + r.chunks.value)
         if r.remaining.value > 0 && r.lastCitekey.isDefined then
-          Cli.err.print(s"\rreindexing… $s source(s), $ch chunk(s), ${r.remaining} to go")
+          err.print(s"\rreindexing… $s source(s), $ch chunk(s), ${r.remaining} to go")
           reindexLoop(c, r.lastCitekey.map(k => Api.Reindex.Scope(k.value)), s, ch)
         else
-          if sources > 0 then Cli.err.print("\r" + " " * 60 + "\r")
-          Cli.out.println(s"reindexed $s source(s) → $ch chunk(s)")
+          if sources > 0 then err.print("\r" + " " * 60 + "\r")
+          out.println(s"reindexed $s source(s) → $ch chunk(s)")
           Right(())
 
   private def reindex(using console: Console) =
@@ -473,7 +478,7 @@ object Cli:
         Opts
           .option[String](
             "section",
-            s"Section to return: ${com.histmersion.api.library.Source.Section.all.mkString("|")} (default: summary+findings+notes)"
+            s"Section to return: ${Source.Section.all.mkString("|")} (default: summary+findings+notes)"
           )
           .orNone,
         Opts.option[String]("heading", "Return body chunks under this heading (case-insensitive prefix)").orNone,
@@ -484,8 +489,8 @@ object Cli:
         if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
           if json.value then
             Left(
-              com.histmersion.cli.Cli.Error(
-                com.histmersion.cli.Cli.Error.Message("--json prints the whole record; drop --section/--heading/--offset/--chars"),
+              Error(
+                Error.Message("--json prints the whole record; drop --section/--heading/--offset/--chars"),
                 exitCode = ExitCode.Usage
               )
             )
@@ -500,7 +505,7 @@ object Cli:
                 chars.map(Api.SourceViewQuery.Chars(_))
               )
             )
-              .map(value => Cli.out.println(value))
+              .map(value => out.println(value))
         else
           c.getSource(Citekey(ck))
             .map(sw =>
@@ -535,7 +540,7 @@ object Cli:
           limit.map(Api.PassagesQuery.Limit(_)),
           context.map(Api.PassagesQuery.Context(_))
         )
-      ).map(r => Cli.out.println(PassagesMarkdown.render(r)))
+      ).map(r => out.println(PassagesMarkdown.render(r)))
     }
   }
 
@@ -567,9 +572,9 @@ object Cli:
     ).mapN { (q, region, unit, f0, json) => (c: Client) =>
       val f = f0
         .modify(_.q)
-        .setTo(q.map(_.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Filter.Q(_)))
+        .setTo(q.map(_.trim).filter(_.nonEmpty).map(Filter.Q(_)))
         .modify(_.places)
-        .setTo(f0.places ++ region.toList.map(com.histmersion.api.library.Filter.Places(_)))
+        .setTo(f0.places ++ region.toList.map(Filter.Places(_)))
       c.aggregate(Api.AggregateQuery.time(f, unit.map(Api.AggregateQuery.TimeUnit(_))))
         .map(h => Output.emit(json, h)(SearchMarkdown.histogram(_, Histogram.Unit(unit.getOrElse("sources")))))
     }
@@ -586,7 +591,7 @@ object Cli:
         .orNone
         .map { into => (c: Client) =>
           c.backup.flatMap(s => JobFollow.backup(() => c.backupStatus, s)).flatMap { r =>
-            Cli.out.println(Markdown.backup(r))
+            out.println(Markdown.backup(r))
             into match
               case None    => Right(())
               case Some(d) =>
@@ -596,8 +601,8 @@ object Cli:
                   .safeName(Backup.Name(r.file.value))
                   .left
                   .map(m =>
-                    com.histmersion.cli.Cli.Error(
-                      Cli.Error.Message(s"server returned an odd file name: $m"),
+                    Error(
+                      Error.Message(s"server returned an odd file name: $m"),
                       exitCode = ExitCode.Refused
                     )
                   )
@@ -605,7 +610,7 @@ object Cli:
                     val dir = Path.of(d)
                     val _ = Files.createDirectories(dir)
                     c.downloadBackup(Backup.Name(name.value), dir.resolve(name.value).toFile)
-                      .map(f => Cli.out.println(s"downloaded → ${f.getAbsolutePath}"))
+                      .map(f => out.println(s"downloaded → ${f.getAbsolutePath}"))
                   }
           }
         }
@@ -627,18 +632,18 @@ object Cli:
       Opts.flag("force", "Overwrite a database that still holds sources").orFalse,
       Opts.flag("yes", "Do not ask for confirmation").orFalse
     ).mapN { (file, force, yes) => (c: Client) =>
-      if !yes && !confirm(Cli.Question(s"Restore '$file' into the server's database? This DROPS what is there."))
-      then Left(com.histmersion.cli.Cli.Error(com.histmersion.cli.Cli.Error.Message("aborted"), exitCode = ExitCode.Usage))
-      else c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force))).map(r => Cli.out.println(Markdown.restored(r)))
+      if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
+      then Left(Error(Error.Message("aborted"), exitCode = ExitCode.Usage))
+      else c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force))).map(r => out.println(Markdown.restored(r)))
     }
   }
 
   /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted `histmersion restore` can
     * never destroy a database by accident; use `--yes` for that.
     */
-  private[cli] def confirm(question: com.histmersion.cli.Cli.Question)(using console: Console): Boolean =
-    Cli.err.print(s"$question [y/N] ")
-    Cli.err.flush()
+  private[cli] def confirm(question: Question)(using console: Console): Boolean =
+    err.print(s"$question [y/N] ")
+    err.flush()
     Option(console.readLine()).map(_.value.trim.toLowerCase).exists(a => a == "y" || a == "yes")
 
   private def neighbors(using console: Console) = Opts.subcommand(
@@ -697,7 +702,7 @@ object Cli:
         )
           .mapN { (analyze, tables, noWait) => (c: Client) =>
             c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap { j =>
-              Cli.out.println(
+              out.println(
                 s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
                   "(`histmersion jobs` lists it)"
               )
@@ -709,7 +714,7 @@ object Cli:
 
   private[cli] def command(using
       console: Console
-  ): Command[(Option[String], Option[String], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
+  ): Command[(Option[String], Option[String], Client => Either[Error, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (
         serverOpt,
@@ -746,7 +751,7 @@ object Cli:
     try runCommand(args)
     catch
       case t: Throwable if WorkingDir.denied(t) =>
-        Cli.err.println(WorkingDir.message)
+        err.println(WorkingDir.message)
         sys.exit(3)
 
   private def runCommand(args: Array[String])(using console: Console): Unit =
@@ -755,21 +760,21 @@ object Cli:
         // A8: --help should exit 0, not 1. Decline's Help has an `errors` field — empty means
         // the user asked for help, non-empty means a parse error.
         val isHelp = args.contains("--help") || args.contains("-h")
-        if isHelp then { Cli.out.println(help); sys.exit(0) }
-        else { Cli.err.println(help.toString); sys.exit(1) }
+        if isHelp then { out.println(help); sys.exit(0) }
+        else { err.println(help.toString); sys.exit(1) }
       case Right((server, tok, run)) =>
         val url = server.getOrElse(Settings.app.cli.serverUrl.value)
         val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
         run(new Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
           case Right(())                               => ()
-          case Left(e) if WorkingDir.denied(e.message.value) => Cli.err.println(WorkingDir.message); sys.exit(3)
-          case Left(e)                                 => Cli.err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
+          case Left(e) if WorkingDir.denied(e.message.value) => err.println(WorkingDir.message); sys.exit(3)
+          case Left(e)                                 => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
   final case class Error(message: Error.Message, exitCode: ExitCode = ExitCode.Unreachable)
 
   object Error:
     type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Message extends RefinedType[String, Pure]
     type ExitCode = com.histmersion.cli.ExitCode
-    val ExitCode: _root_.com.histmersion.cli.ExitCode.type = _root_.com.histmersion.cli.ExitCode
+    val ExitCode: com.histmersion.cli.ExitCode.type = com.histmersion.cli.ExitCode

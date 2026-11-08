@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.given
 
@@ -8,6 +9,10 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.atomic.AtomicLong
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.maintenance.Storage
+import com.histmersion.api.ByteCount
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.config.StorageConfig
 
 /** How much a directory holds, measured by a BOUNDED walk — the Storage part of About ([[StorageReport]]) on the
   * server, and the CLI's own locations. Reads the file system and nothing else; writes nothing.
@@ -28,19 +33,19 @@ object DirSize:
     * @param unreadable
     *   directories or files that could not be read
     */
-  final case class Result(bytes: Result.Bytes, files: Result.Files, exists: Result.Exists, partial: Result.Partial = com.histmersion.cli.DirSize.Result.Partial(false), unreadable: Result.Unreadable = com.histmersion.cli.DirSize.Result.Unreadable(0))
+  final case class Result(bytes: Result.Bytes, files: Result.Files, exists: Result.Exists, partial: Result.Partial = Result.Partial(false), unreadable: Result.Unreadable = Result.Unreadable(0))
 
   object Result:
-    type Bytes = com.histmersion.api.ByteCount
-    val Bytes: _root_.com.histmersion.api.ByteCount.type = _root_.com.histmersion.api.ByteCount
-    type Files = com.histmersion.api.maintenance.Storage.FileCount
-    val Files: _root_.com.histmersion.api.maintenance.Storage.FileCount.type = _root_.com.histmersion.api.maintenance.Storage.FileCount
-    type Exists = com.histmersion.api.maintenance.Storage.Entry.Exists
-    val Exists: _root_.com.histmersion.api.maintenance.Storage.Entry.Exists.type = _root_.com.histmersion.api.maintenance.Storage.Entry.Exists
-    type Partial = com.histmersion.api.maintenance.Storage.Entry.Partial
-    val Partial: _root_.com.histmersion.api.maintenance.Storage.Entry.Partial.type = _root_.com.histmersion.api.maintenance.Storage.Entry.Partial
+    type Bytes = ByteCount
+    val Bytes: ByteCount.type = ByteCount
+    type Files = Storage.FileCount
+    val Files: Storage.FileCount.type = Storage.FileCount
+    type Exists = Storage.Entry.Exists
+    val Exists: Storage.Entry.Exists.type = Storage.Entry.Exists
+    type Partial = Storage.Entry.Partial
+    val Partial: Storage.Entry.Partial.type = Storage.Entry.Partial
     type Unreadable = Unreadable.T
-    object Unreadable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unreadable extends RefinedType[Int, Pure]
 
   /** The caps of one measurement: at most `maxEntries` visited entries over all its walks, and no walk past
     * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
@@ -55,21 +60,21 @@ object DirSize:
 
   object Budget:
     type MaxEntries = MaxEntries.T
-    object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxEntries extends RefinedType[Long, Pure]
     type DeadlineNanos = DeadlineNanos.T
-    object DeadlineNanos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DeadlineNanos extends RefinedType[Long, Pure]
 
 
-    def of(maxEntries: com.histmersion.config.StorageConfig.MaxEntries, maxMillis: com.histmersion.config.StorageConfig.MaxMillis): Budget =
+    def of(maxEntries: StorageConfig.MaxEntries, maxMillis: StorageConfig.MaxMillis): Budget =
       Budget(MaxEntries(maxEntries.value.toLong), DeadlineNanos(System.nanoTime() + maxMillis.value.toLong * 1_000_000L))
     val unlimited: Budget = Budget(MaxEntries(Long.MaxValue), DeadlineNanos(Long.MaxValue))
 
   def measure(root: Path, budget: Budget): Result =
-    if !Files.exists(root) then Result(com.histmersion.cli.DirSize.Result.Bytes(0L), com.histmersion.cli.DirSize.Result.Files(0L), exists = com.histmersion.cli.DirSize.Result.Exists(false))
+    if !Files.exists(root) then Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists(false))
     else if Files.isRegularFile(root) then
       val _ = budget.take()
-      Result(com.histmersion.cli.DirSize.Result.Bytes(scala.util.Try(Files.size(root)).getOrElse(0L)), com.histmersion.cli.DirSize.Result.Files(1L), exists = com.histmersion.cli.DirSize.Result.Exists(true))
-    else if budget.exhausted then Result(com.histmersion.cli.DirSize.Result.Bytes(0L), com.histmersion.cli.DirSize.Result.Files(0L), exists = com.histmersion.cli.DirSize.Result.Exists(true), partial = com.histmersion.cli.DirSize.Result.Partial(true))
+      Result(Result.Bytes(scala.util.Try(Files.size(root)).getOrElse(0L)), Result.Files(1L), exists = Result.Exists(true))
+    else if budget.exhausted then Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists(true), partial = Result.Partial(true))
     else
       // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
       var bytes = 0L
@@ -94,7 +99,7 @@ object DirSize:
       try
         val _ = Files.walkFileTree(start, java.util.EnumSet.noneOf(classOf[FileVisitOption]), Int.MaxValue, visitor)
       catch case _: IOException => unreadable += 1
-      Result(com.histmersion.cli.DirSize.Result.Bytes(bytes), com.histmersion.cli.DirSize.Result.Files(files), exists = com.histmersion.cli.DirSize.Result.Exists(true), com.histmersion.cli.DirSize.Result.Partial(partial), com.histmersion.cli.DirSize.Result.Unreadable(unreadable))
+      Result(Result.Bytes(bytes), Result.Files(files), exists = Result.Exists(true), Result.Partial(partial), Result.Unreadable(unreadable))
 
   /** `p`, or the nearest of its parents that exists (a directory not made yet is on its parent's volume). */
   def existing(p: Path): Option[Path] =
@@ -105,7 +110,7 @@ object DirSize:
     existing(p).flatMap { e =>
       scala.util.Try {
         val s = Files.getFileStore(e)
-        Storage.Volume(Storage.Volume.Id(s.toString), com.histmersion.api.ByteCount(s.getTotalSpace), com.histmersion.api.ByteCount(s.getUsableSpace))
+        Storage.Volume(Storage.Volume.Id(s.toString), ByteCount(s.getTotalSpace), ByteCount(s.getUsableSpace))
       }.toOption
     }
 

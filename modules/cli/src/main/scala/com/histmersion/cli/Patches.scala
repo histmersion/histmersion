@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -15,6 +16,8 @@ import com.histmersion.api.library.Finding
 import com.histmersion.api.library.{Citekey, Title}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Write
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *
@@ -24,9 +27,9 @@ import com.histmersion.api.Write
   */
 object Patches:
   type BodyFile = BodyFile.T
-  object BodyFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodyFile extends RefinedType[String, Pure]
   type NotesFile = NotesFile.T
-  object NotesFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NotesFile extends RefinedType[String, Pure]
 
   def build(
       json: Option[String],
@@ -38,19 +41,19 @@ object Patches:
       summary: Option[Source.Summary],
       status: Option[Source.Status],
       title: Option[Title],
-      notesFile: Option[com.histmersion.cli.Patches.NotesFile],
+      notesFile: Option[NotesFile],
       period: Option[String],
-      bodyFile: Option[com.histmersion.cli.Patches.BodyFile],
+      bodyFile: Option[BodyFile],
       addFindings: List[String],
       removeFindings: List[String],
       ifUpdatedAt: Option[Source.UpdatedAt],
       addEdges: List[String] = Nil,
       removeEdges: List[String] = Nil
-  ): Either[Cli.Error, com.histmersion.api.library.Source.Patch] =
+  ): Either[Cli.Error, Source.Patch] =
     for
-      base <- json.fold[Either[Cli.Error, com.histmersion.api.library.Source.Patch]](
-        Right(com.histmersion.api.library.Source.Patch())
-      )(parse[com.histmersion.api.library.Source.Patch]("--json", _))
+      base <- json.fold[Either[Cli.Error, Source.Patch]](
+        Right(Source.Patch())
+      )(parse[Source.Patch]("--json", _))
       adds <- traverse(addFindings)(parse[Finding.Input]("--add-finding", _))
       eAdd <- traverse(addEdges)(parseEdge("--add-edge", _))
       eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _))
@@ -70,7 +73,7 @@ object Patches:
     )
 
   // ── part merges: a flag wins over the same part of --json, absent parts stay absent ────────────
-  private def mergeMetadata(base: Option[MetadataPatch], title: Option[com.histmersion.api.library.Title], status: Option[Source.Status]) =
+  private def mergeMetadata(base: Option[MetadataPatch], title: Option[Title], status: Option[Source.Status]) =
     if title.isEmpty && status.isEmpty then base
     else
       val m = base.getOrElse(MetadataPatch())
@@ -101,8 +104,8 @@ object Patches:
 
   private def mergeEdges(
       base: Option[EdgesPatch],
-      add: List[com.histmersion.api.library.Edge.Input],
-      remove: List[com.histmersion.api.library.Edge.Input]
+      add: List[Edge.Input],
+      remove: List[Edge.Input]
   ) =
     if add.isEmpty && remove.isEmpty then base
     else
@@ -122,7 +125,7 @@ object Patches:
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.
     */
-  private[cli] def parseEdge(flag: String, s: String): Either[Cli.Error, com.histmersion.api.library.Edge.Input] =
+  private[cli] def parseEdge(flag: String, s: String): Either[Cli.Error, Edge.Input] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
         Edge.Kind

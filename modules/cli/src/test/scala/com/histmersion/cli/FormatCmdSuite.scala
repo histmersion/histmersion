@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.monovore.decline.Command
 import com.histmersion.config.*
@@ -56,19 +57,19 @@ class FormatCmdSuite extends munit.FunSuite:
       FormatRule.TableNotRendered,
       FormatSeverity.Error,
       FormatField.Body,
-      com.histmersion.api.checks.FormatIssue.Line(4),
-      com.histmersion.api.checks.FormatIssue.Column(1),
-      com.histmersion.api.checks.FormatIssue.Excerpt("| a | b |"),
-      com.histmersion.api.checks.FormatIssue.Message("no blank line"),
-      Some(com.histmersion.api.checks.FormatIssue.Fix("insert a blank line before the table"))
+      FormatIssue.Line(4),
+      FormatIssue.Column(1),
+      FormatIssue.Excerpt("| a | b |"),
+      FormatIssue.Message("no blank line"),
+      Some(FormatIssue.Fix("insert a blank line before the table"))
     )
-    val md = FormatMarkdown.report(FormatReport(com.histmersion.api.checks.FormatReport.Subject("sea_peoples"), List(i)))
+    val md = FormatMarkdown.report(FormatReport(FormatReport.Subject("sea_peoples"), List(i)))
     assert(md.startsWith("### sea_peoples: 1 formatting problem (1 error(s), 0 warning(s))"), md)
     assert(
       md.contains("- body L4:1 error table-not-rendered — no blank line · `| a | b |` · fix: insert a blank line"),
       md
     )
-    assertEquals(FormatMarkdown.report(FormatReport(com.histmersion.api.checks.FormatReport.Subject("x"), Nil)), "### x: no formatting problems")
+    assertEquals(FormatMarkdown.report(FormatReport(FormatReport.Subject("x"), Nil)), "### x: no formatting problems")
     assertEquals(FormatMarkdown.notice(Nil), "")
     assert(
       FormatMarkdown.notice(List(i)).contains("## Formatting: 1 formatting problem (1 will not display as intended)")

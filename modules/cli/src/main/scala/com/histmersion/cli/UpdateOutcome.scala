@@ -1,6 +1,9 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What `calibre update --all` does, or did, to one Calibre entry. */
 enum UpdateOutcome:
@@ -21,8 +24,8 @@ enum UpdateOutcome:
 
 object UpdateOutcome:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   object Failed:
-    export com.histmersion.cli.UpdateOutcome.{Problem as Reason}
+    export UpdateOutcome.{Problem as Reason}
   object Refused:
-    export com.histmersion.cli.UpdateOutcome.{Problem as Reason}
+    export UpdateOutcome.{Problem as Reason}

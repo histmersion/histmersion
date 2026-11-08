@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.media.MediaMarkdown
 
@@ -19,6 +20,8 @@ import com.histmersion.api.catalogue.{Event, Latitude, Longitude, Place, Year}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.{Citekey, RepairAcquire}
 import com.histmersion.util.console.Console
+import com.histmersion.api.media.ImportJobKinds
+import com.histmersion.api.Paging
 
 object MediaCmd:
 
@@ -102,7 +105,7 @@ object MediaCmd:
         else
           c.mediaImportJob(req).flatMap { j =>
             Cli.out.println(
-              s"media import job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
+              s"media import job `${j.id}` started: ${j.detail.flatMap(ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
             )
             if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
           }
@@ -192,7 +195,7 @@ object MediaCmd:
               only.map(Citekey(_)),
               MediaImportRequest.Refresh(refresh),
               RepairAcquire.RepairRequest.DryRun(dry),
-              limit.map(com.histmersion.api.Paging.Limit(_))
+              limit.map(Paging.Limit(_))
             )
           (calReport, asks) = cal
           // 2. Calibre knew an ISBN but kept no cover: Open Library, by that ISBN, one source at a time
@@ -227,7 +230,7 @@ object MediaCmd:
             else
               c.mediaCoversJob(req).flatMap { j =>
                 Cli.out.println(
-                  s"media covers job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.media.ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
+                  s"media covers job `${j.id}` started: ${j.detail.flatMap(ImportJobKinds.Media.of).getOrElse("")} (`histmersion jobs` lists it)"
                 )
                 if noWait then Right(()) else IngestCmd.pollJob(c, j.id, 0)
               }

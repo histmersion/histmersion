@@ -1,9 +1,11 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.automation.GoalsExport
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import java.net.InetSocketAddress
 import java.nio.file.{Files, Path}
+import com.histmersion.api.Api
 
 /** Task #906: `queue export <dir>` and `export <dir>` (both through [[Ops.writeMeta]]) write `GOALS.md` beside the
   * three queue files, and `queue import <dir>` ([[Ops.readMeta]]) never sends it anywhere. A stand-in server answers
@@ -67,7 +69,7 @@ class MetaFilesSuite extends munit.FunSuite:
     withServer { (url, seen) =>
       val dir = tempDir()
       List("ACQUIRE.md", "TASKS.md", "LOG.md", "GOALS.md").foreach(f => Files.writeString(dir.resolve(f), "- [ ] x\n"))
-      val got = Ops.readMeta(new Client(url), dir, replace = com.histmersion.api.Api.Overwrite(true))
+      val got = Ops.readMeta(new Client(url), dir, replace = Api.Overwrite(true))
       assert(got.isRight, got.toString)
       assertEquals(
         seen(),

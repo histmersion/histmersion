@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 /** What the CLI says when the server answers outside an endpoint's contract. */
 class ClientSuite extends munit.FunSuite:

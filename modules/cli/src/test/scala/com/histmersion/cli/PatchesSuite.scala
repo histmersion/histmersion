@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
@@ -7,6 +8,12 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Finding
+import com.histmersion.api.library.Title
+import com.histmersion.api.Write
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Citekey
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed must not turn
   * into an empty list that wipes the stored value.
@@ -22,7 +29,7 @@ class PatchesSuite extends munit.FunSuite:
       regions: Option[String] = None,
       summary: Option[Source.Summary] = None,
       status: Option[Source.Status] = None,
-      title: Option[com.histmersion.api.library.Title] = None,
+      title: Option[Title] = None,
       period: Option[String] = None,
       addFindings: List[String] = Nil,
       removeFindings: List[String] = Nil,
@@ -51,11 +58,11 @@ class PatchesSuite extends munit.FunSuite:
   )
 
   test("no flags at all → every part absent (the server changes nothing)"):
-    assertEquals(build(), Right(com.histmersion.api.library.Source.Patch()))
+    assertEquals(build(), Right(Source.Patch()))
 
   test("--tags-add only sets the tags part, and only its add list"):
     val p = build(tagsAdd = Some("sea-peoples, collapse")).toOption.get
-    assertEquals(p.tags, Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("sea-peoples"), com.histmersion.api.Write.ListItem("collapse")))))
+    assertEquals(p.tags, Some(ListPatch(add = List(Write.ListItem("sea-peoples"), Write.ListItem("collapse")))))
     assertEquals(p.topics, None)
     assertEquals(p.findings, None)
     assertEquals(p.summary, None)
@@ -66,8 +73,8 @@ class PatchesSuite extends munit.FunSuite:
     assertEquals(p.regions, Some(List(Source.Regions("Anatolia"))))
 
   test("--status and --title fold into one metadata part"):
-    val p = build(status = Some(Source.Status.Superseded), title = Some(com.histmersion.api.library.Title("New"))).toOption.get
-    assertEquals(p.metadata, Some(MetadataPatch(title = Some(com.histmersion.api.library.Title("New")), status = Some(Source.Status.Superseded))))
+    val p = build(status = Some(Source.Status.Superseded), title = Some(Title("New"))).toOption.get
+    assertEquals(p.metadata, Some(MetadataPatch(title = Some(Title("New")), status = Some(Source.Status.Superseded))))
 
   test("--add-finding parses JSON; --remove-finding collects ids"):
     val p = build(
@@ -78,9 +85,9 @@ class PatchesSuite extends munit.FunSuite:
       p.findings.get.add,
       List(
         Finding.Input(
-          com.histmersion.api.library.Finding.Claim("c"),
-          lon = Some(com.histmersion.api.catalogue.Longitude(1.0)),
-          lat = Some(com.histmersion.api.catalogue.Latitude(2.0))
+          Finding.Claim("c"),
+          lon = Some(Longitude(1.0)),
+          lat = Some(Latitude(2.0))
         )
       )
     )
@@ -92,14 +99,14 @@ class PatchesSuite extends munit.FunSuite:
     assert(e.message.value.contains("--add-finding"), e.message)
 
   test("--period takes signed years, BCE negative; a malformed one is a usage error"):
-    assertEquals(build(period = Some("-3300,-2600")).toOption.get.period, Some(Period.Input(com.histmersion.api.catalogue.Year(-3300), com.histmersion.api.catalogue.Year(-2600))))
+    assertEquals(build(period = Some("-3300,-2600")).toOption.get.period, Some(Period.Input(Year(-3300), Year(-2600))))
     assertEquals(build(period = Some("3300 BCE")).swap.toOption.get.exitCode, ExitCode.Usage)
 
   test("--json carries the parts that have no flag, e.g. edges"):
     val p = build(json = Some("""{"edges":{"add":[{"src":"a","dst":"b","kind":"refutes"}]}}""")).toOption.get
     assertEquals(
       p.edges,
-      Some(EdgesPatch(add = List(com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey("b"), Edge.Kind.Refutes, Some(com.histmersion.api.library.Citekey("a"))))))
+      Some(EdgesPatch(add = List(Edge.Input(Citekey("b"), Edge.Kind.Refutes, Some(Citekey("a"))))))
     )
     assertEquals(p.tags, None)
 
@@ -115,11 +122,11 @@ class PatchesSuite extends munit.FunSuite:
       Some(
         EdgesPatch(
           add = List(
-            com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey("a"), Edge.Kind.Refutes),
-            com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey("lord1968_oralpoet"), Edge.Kind.Challenges),
-            com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey("notopoulos1960_achaean"), Edge.Kind.Challenges)
+            Edge.Input(Citekey("a"), Edge.Kind.Refutes),
+            Edge.Input(Citekey("lord1968_oralpoet"), Edge.Kind.Challenges),
+            Edge.Input(Citekey("notopoulos1960_achaean"), Edge.Kind.Challenges)
           ),
-          remove = List(com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey("old2001_x"), Edge.Kind.SupersededBy))
+          remove = List(Edge.Input(Citekey("old2001_x"), Edge.Kind.SupersededBy))
         )
       )
     )
@@ -138,7 +145,7 @@ class PatchesSuite extends munit.FunSuite:
       summary = Some(Source.Summary("from flag"))
     ).toOption.get
     assertEquals(p.summary, Some(Source.Summary("from flag")))
-    assertEquals(p.tags, Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("from-flag")))))
+    assertEquals(p.tags, Some(ListPatch(add = List(Write.ListItem("from-flag")))))
     assertEquals(p.topics, Some(List(Source.Topics("t"))))
 
   test("--if-updated-at is carried through as the precondition"):
@@ -149,7 +156,7 @@ class PatchesSuite extends munit.FunSuite:
 
   test("--tags-replace with --tags-remove keeps both parts"):
     val p = build(tagsReplace = Some("a,b"), tagsRemove = Some("b")).toOption.get
-    assertEquals(p.tags, Some(ListPatch(remove = List(com.histmersion.api.Write.ListItem("b")), replace = Some(List(com.histmersion.api.Write.ListItem("a"), com.histmersion.api.Write.ListItem("b"))))))
+    assertEquals(p.tags, Some(ListPatch(remove = List(Write.ListItem("b")), replace = Some(List(Write.ListItem("a"), Write.ListItem("b"))))))
 
   // a book's OCR (> 1 MB) could not be moved between records: --json on the command line was the only way
   test("--body-file replaces the body with the file's text; a missing file is an error"):

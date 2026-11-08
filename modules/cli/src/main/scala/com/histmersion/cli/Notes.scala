@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.config.*
 
@@ -7,6 +8,9 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.{Citekey, NoteImport}
 import com.histmersion.api.media.{AssetInput, AssetLinks}
+import com.histmersion.api.Api
+import com.histmersion.api.ByteCount
+import com.histmersion.api.Paging
 
 /** Host-side note handling for `histmersion seed` / `put` / `export` (plan §1.9a, §2.5).
   *
@@ -25,7 +29,7 @@ object Notes:
   /** Package one note for the server: its text, the converted body it points at, and its mtime (so the server can apply
     * the same "stored row is newer than the file" guard as a server-side seed).
     */
-  def toImport(file: Path, force: com.histmersion.api.Api.Overwrite): NoteImport =
+  def toImport(file: Path, force: Api.Overwrite): NoteImport =
     val text = Files.readString(file)
     NoteImport(
       text = NoteImport.Text(text),
@@ -53,7 +57,7 @@ object Notes:
     * are sent in bounded batches through `POST /api/sources/{ck}/assets` rather than inside the note, which keeps
     * request sizes sane. Sorted and capped, so one pathological directory cannot stall a seed.
     */
-  def figures(file: Path, citekey: Citekey, maxBytes: com.histmersion.api.ByteCount, maxCount: com.histmersion.api.Paging.Limit): List[AssetInput] =
+  def figures(file: Path, citekey: Citekey, maxBytes: ByteCount, maxCount: Paging.Limit): List[AssetInput] =
     val text = scala.util.Try(Files.readString(file)).getOrElse("")
     val root = Option(file.toAbsolutePath.getParent)
       .flatMap(p => Option(p.getParent))

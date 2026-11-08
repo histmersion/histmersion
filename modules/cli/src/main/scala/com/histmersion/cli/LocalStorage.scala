@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -42,7 +43,7 @@ object LocalStorage:
   /** Measure them within the `storage.*` caps and add them to `about`'s report. */
   def add(
       a: About,
-      serverUrl: com.histmersion.cli.Client.ServerUrl,
+      serverUrl: Client.ServerUrl,
       cfg: AppConfig,
       env: UserPaths.Lookup,
       osName: UserPaths.OsName,
@@ -57,7 +58,7 @@ object LocalStorage:
         Storage.Entry(
           key,
           label,
-          if key.value == "install" then com.histmersion.api.maintenance.Storage.Entry.Group("install") else com.histmersion.api.maintenance.Storage.Entry.Group("corpus"),
+          if key.value == "install" then Storage.Entry.Group("install") else Storage.Entry.Group("corpus"),
           Some(Storage.Entry.Path(p.toString)),
           bytes = Option.when(r.exists.value)(r.bytes),
           files = Option.when(r.exists.value)(r.files),

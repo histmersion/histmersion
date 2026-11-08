@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -21,6 +22,9 @@ import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.views.{AutopilotApi, AutopilotStatus}
 import com.histmersion.util.console.Console
+import com.histmersion.api.library.AcquisitionWorkApi
+import com.histmersion.api.automation.Activity
+import com.histmersion.api.automation.Stalls
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
@@ -119,20 +123,20 @@ object ManagerCmd:
       verb.trim.toLowerCase match
         case "mode" =>
           rest match
-            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(AgentMode.ModeSet.Mode(m), Some(com.histmersion.api.automation.AgentMode.ModeSet.By("cli")))))
-            case _ => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("autopilot mode takes one of: working, finish, pause"), exitCode = ExitCode.Usage))
+            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(AgentMode.ModeSet.Mode(m), Some(AgentMode.ModeSet.By("cli")))))
+            case _ => Left(Cli.Error(Cli.Error.Message("autopilot mode takes one of: working, finish, pause"), exitCode = ExitCode.Usage))
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
             Cli.Error(Cli.Error.Message(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})"), exitCode = ExitCode.Usage)
           )
         case "status"  => status(c.call(AutopilotApi.autopilot)(()))
-        case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("cli")))))
-        case "off"     => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(false), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("cli")))))
-        case "drain"   => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = com.histmersion.api.automation.Autopilot.DrainSet.On(true), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("cli")))))
-        case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = com.histmersion.api.automation.Autopilot.DrainSet.On(false), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("cli")))))
+        case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(true), Some(Autopilot.AutopilotSet.By("cli")))))
+        case "off"     => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(false), Some(Autopilot.AutopilotSet.By("cli")))))
+        case "drain"   => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("cli")))))
+        case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("cli")))))
         case "repair-acquire" =>
-          c.call(com.histmersion.api.library.AcquisitionWorkApi.repairAcquire)(
-            RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(com.histmersion.api.automation.Activity.Actor("cli")))
+          c.call(AcquisitionWorkApi.repairAcquire)(
+            RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(Activity.Actor("cli")))
           ).map(r => Output.emit(json, r)(RepairAcquire.markdown(_).value))
         case "focus" =>
           focusRequest(rest)
@@ -185,7 +189,7 @@ object ManagerCmd:
         case ("why", List(item)) =>
           c.call(ManagersApi.schedulerWhy)(ManagerInfo.Id(item)).map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
         case ("strategy", List(name)) =>
-          c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("cli"))))
+          c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(AgentScheduler.SchedulerSet.By("cli"))))
             .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
         case ("why", _)      => usage("scheduler why takes one item: its id, or the target of an open item")
         case ("strategy", _) => usage("scheduler strategy takes one name: type-balanced, goal-first or default")
@@ -203,7 +207,7 @@ object ManagerCmd:
   ) {
     (Opts.option[Int]("days", "No progress in this many days").orNone, Output.jsonFlag).mapN {
       (days, json) => (c: Client) =>
-        c.call(ManagersApi.stalls)(days.map(com.histmersion.api.automation.Stalls.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
+        c.call(ManagersApi.stalls)(days.map(Stalls.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
     }
   }
 
@@ -243,7 +247,7 @@ object ManagerCmd:
           note.map(ApprovalDigest.BulkDecide.Note(_)),
           ApprovalDigest.BulkDecide.DryRun(dry),
           limit.map(ApprovalDigest.BulkDecide.Limit(_)),
-          Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.By("cli"))))
+          Some(ApprovalDigest.BulkDecide.By("cli"))))
         .map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
     }
   }
@@ -315,17 +319,17 @@ object ManagerCmd:
           .flag("runs", "Pause its runs in flight too")
           .orFalse
           .map(r =>
-            (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), com.histmersion.api.automation.ManagersApi.ActionPart1Part2("pause"), Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+            (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("pause"), Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("resume", "Start runs again (and resume the runs a pause --runs paused)")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), com.histmersion.api.automation.ManagersApi.ActionPart1Part2("resume"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("resume"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb("stop", "Cancel its runs in flight and its open items")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), com.histmersion.api.automation.ManagersApi.ActionPart1Part2("stop"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("stop"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb(
