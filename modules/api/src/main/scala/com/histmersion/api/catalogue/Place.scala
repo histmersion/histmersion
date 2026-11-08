@@ -18,7 +18,6 @@ import io.circe.Codec
 import io.circe.Json
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 final case class Place(
@@ -35,11 +34,11 @@ final case class Place(
 
 object Place:
   type Depth = Depth.T
-  object Depth extends RefinedType[Int, Pure]
+  object Depth extends Newtype[Int, Pure]
   type Detail = Detail.T
-  object Detail extends RefinedType[Boolean, Pure]
+  object Detail extends Newtype[Boolean, Pure]
   type Region = Region.T
-  object Region extends RefinedType[String, Pure]
+  object Region extends Newtype[String, Pure]
 
   /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
     * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a
@@ -48,27 +47,27 @@ object Place:
     */
 
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type KindValue = KindValue.T
-  object KindValue extends RefinedType[String, Pure]
+  object KindValue extends Newtype[String, Pure]
   type Geometry = Geometry.T
-  object Geometry extends RefinedType[String, Pure]
+  object Geometry extends Newtype[String, Pure]
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
   type Properties = Properties.T
-  object Properties extends RefinedType[String, Pure]
+  object Properties extends Newtype[String, Pure]
 
   object Kind:
     type Parsed = Parsed.T
-    object Parsed extends RefinedType[String, Pure]
+    object Parsed extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type All = All.T
-    object All extends RefinedType[String, Pure]
+    object All extends Newtype[String, Pure]
     type ParseResult = Parsed
     val ParseResult: Parsed.type = Parsed
     type ParseS = ParseS.T
-    object ParseS extends RefinedType[String, Pure]
+    object ParseS extends Newtype[String, Pure]
 
     val Region = "region"
     val Polity = "polity"
@@ -120,9 +119,9 @@ object Place:
 
   object Precision:
     type CellsMicroNumber = CellsMicroNumber.T
-    object CellsMicroNumber extends RefinedType[Long, Pure]
+    object CellsMicroNumber extends Newtype[Long, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type CellsMicro = CellsMicroValue
     type CellsMicroValue = CellsMicroNumber
@@ -167,7 +166,7 @@ object Place:
   object Add:
     export Place.Label
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     export Place.Source
     export Name.{Value as Names, Lang}
 
@@ -219,7 +218,7 @@ object Place:
 
   object Card:
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
     type ShapeNoteResult = Note
     val ShapeNoteResult: Note.type = Note
     type LocationNoteResult = Note
@@ -233,13 +232,13 @@ object Place:
 
   object Counts:
     type Sources = Sources.T
-    object Sources extends RefinedType[Int, Pure]
+    object Sources extends Newtype[Int, Pure]
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type Articles = Articles.T
-    object Articles extends RefinedType[Int, Pure]
+    object Articles extends Newtype[Int, Pure]
     type Events = Events.T
-    object Events extends RefinedType[Int, Pure]
+    object Events extends Newtype[Int, Pure]
 
 
   enum Dating:
@@ -252,9 +251,9 @@ object Place:
 
   object Dating:
     type Description = Description.T
-    object Description extends RefinedType[String, Pure]
+    object Description extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[Dating] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
@@ -277,7 +276,7 @@ object Place:
 
   object Description:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     export Name.Lang
     export Place.Source
 
@@ -292,17 +291,17 @@ object Place:
 
   object Designation:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Start = Start.T
-    object Start extends RefinedType[String, Pure]
+    object Start extends Newtype[String, Pure]
     type End = End.T
-    object End extends RefinedType[String, Pure]
+    object End extends Newtype[String, Pure]
 
   object Edits:
     type Csv = Csv.T
-    object Csv extends RefinedType[String, Pure]
+    object Csv extends Newtype[String, Pure]
 
     val LocalPrefix = "local_"
 
@@ -424,11 +423,11 @@ object Place:
   object Entry:
     export Place.Geometry
     type Contested = Contested.T
-    object Contested extends RefinedType[Boolean, Pure]
+    object Contested extends Newtype[Boolean, Pure]
     type HasBoundary = HasBoundary.T
-    object HasBoundary extends RefinedType[Boolean, Pure]
+    object HasBoundary extends Newtype[Boolean, Pure]
     type SiteType = SiteType.T
-    object SiteType extends RefinedType[String, Pure]
+    object SiteType extends Newtype[String, Pure]
 
   /** Follows the Pleiades Place/Location split: one place, many dated footprints. */
   final case class Footprint(
@@ -451,13 +450,13 @@ object Place:
     val CertaintiesValue: Certainty.type = Certainty
 
     type Id = Id.T
-    object Id extends RefinedType[Int, Pure]
+    object Id extends Newtype[Int, Pure]
     type Role = Role.T
-    object Role extends RefinedType[String, Pure]
+    object Role extends Newtype[String, Pure]
     type Certainty = Certainty.T
-    object Certainty extends RefinedType[String, Pure]
+    object Certainty extends Newtype[String, Pure]
     type AccuracyM = AccuracyM.T
-    object AccuracyM extends RefinedType[Float, Pure]
+    object AccuracyM extends Newtype[Float, Pure]
 
     val Roles: List[Roles] = List(Role("extent"), Role("core"), Role("maximal"), Role("frontier"), Role("seat"), Role("snapshot"))
     val Certainties: List[Certainties] = List(Certainty("definite"), Certainty("approximate"), Certainty("uncertain"))
@@ -476,15 +475,15 @@ object Place:
   object Gone:
     export Place.Label
     type Into = Into.T
-    object Into extends RefinedType[String, Pure]
+    object Into extends Newtype[String, Pure]
     type IntoLabel = IntoLabel.T
-    object IntoLabel extends RefinedType[String, Pure]
+    object IntoLabel extends Newtype[String, Pure]
     type FindingsBefore = FindingsBefore.T
-    object FindingsBefore extends RefinedType[Int, Pure]
+    object FindingsBefore extends Newtype[Int, Pure]
     type FindingsAfter = FindingsAfter.T
-    object FindingsAfter extends RefinedType[Int, Pure]
+    object FindingsAfter extends Newtype[Int, Pure]
     type Unlocated = Unlocated.T
-    object Unlocated extends RefinedType[Int, Pure]
+    object Unlocated extends Newtype[Int, Pure]
 
 
   final case class Hit(
@@ -511,9 +510,9 @@ object Place:
     export Place.Source
     export Summary.Names
     type MatchedName = MatchedName.T
-    object MatchedName extends RefinedType[String, Pure]
+    object MatchedName extends Newtype[String, Pure]
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     export Summary.Contested
     export Match.ImportSource
 
@@ -529,15 +528,15 @@ object Place:
 
   object ImportResult:
     type Places = Places.T
-    object Places extends RefinedType[Int, Pure]
+    object Places extends Newtype[Int, Pure]
     type Names = Names.T
-    object Names extends RefinedType[Int, Pure]
+    object Names extends Newtype[Int, Pure]
     type Relations = Relations.T
-    object Relations extends RefinedType[Int, Pure]
+    object Relations extends Newtype[Int, Pure]
     type Failed = Failed.T
-    object Failed extends RefinedType[String, Pure]
+    object Failed extends Newtype[String, Pure]
     type Job = Job.T
-    object Job extends RefinedType[String, Pure]
+    object Job extends Newtype[String, Pure]
 
 
   final case class Input(place: Place, names: List[Name] = Nil, relations: List[Relation] = Nil)
@@ -547,9 +546,9 @@ object Place:
         KindlingsSchema, com.histmersion.api.json.Schema
   object Link:
     type SchemeTitle = SchemeTitle.T
-    object SchemeTitle extends RefinedType[String, Pure]
+    object SchemeTitle extends Newtype[String, Pure]
     type Url = Url.T
-    object Url extends RefinedType[String, Pure]
+    object Url extends Newtype[String, Pure]
 
     type Schemes = SchemesValue
     type SchemesValue = Scheme
@@ -565,11 +564,11 @@ object Place:
     val SchemeTitleResult: SchemeTitle.type = SchemeTitle
 
     type Scheme = Scheme.T
-    object Scheme extends RefinedType[String, Pure]
+    object Scheme extends Newtype[String, Pure]
     type ExternalId = ExternalId.T
-    object ExternalId extends RefinedType[String, Pure]
+    object ExternalId extends Newtype[String, Pure]
     type Relation = Relation.T
-    object Relation extends RefinedType[String, Pure]
+    object Relation extends Newtype[String, Pure]
 
     val Schemes: List[Schemes] = List(Scheme("pleiades"), Scheme("wikidata"), Scheme("tgn"), Scheme("geonames"), Scheme("whg"))
     val Relations: List[Relations] = List(Relation("close_match"), Relation("exact_match"), Relation("broad_match"), Relation("see_also"))
@@ -600,14 +599,14 @@ object Place:
 
   object Match:
     type ImportSource = ImportSource.T
-    object ImportSource extends RefinedType[String, Pure]
+    object ImportSource extends Newtype[String, Pure]
     type Native = Native.T
-    object Native extends RefinedType[Boolean, Pure]
+    object Native extends Newtype[Boolean, Pure]
 
   final case class MergeIn(into: Id, reason: Option[MergeIn.Reason] = None)
   object MergeIn:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
     given Schema[MergeIn] = KindlingsSchema
       .derived[MergeIn]
@@ -626,15 +625,15 @@ object Place:
   object Name:
 
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
     type Lang = Lang.T
-    object Lang extends RefinedType[String, Pure]
+    object Lang extends Newtype[String, Pure]
 
   final case class NameAdd(name: NameAdd.Name, lang: Option[NameAdd.Lang] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object NameAdd:
 
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     export Place.Name.Lang
 
     given Codec.AsObject[NameAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[NameAdd])
@@ -653,21 +652,21 @@ object Place:
   object NameChanged:
     export Place.Label
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     export Place.Name.Lang
     type Added = Added.T
-    object Added extends RefinedType[Boolean, Pure]
+    object Added extends Newtype[Boolean, Pure]
     type Changed = Changed.T
-    object Changed extends RefinedType[Boolean, Pure]
+    object Changed extends Newtype[Boolean, Pure]
     type WasImported = WasImported.T
-    object WasImported extends RefinedType[Boolean, Pure]
+    object WasImported extends Newtype[Boolean, Pure]
 
 
   final case class NameRemove(name: NameRemove.Name, lang: Option[NameRemove.Lang] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object NameRemove:
 
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     export Place.Name.Lang
 
     given Codec.AsObject[NameRemove] = StrictJson.codec(KindlingsCodecAsObject.derived[NameRemove])
@@ -694,15 +693,15 @@ object Place:
   object Override:
     export Place.Label
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type PeriodSet = PeriodSet.T
-    object PeriodSet extends RefinedType[Boolean, Pure]
+    object PeriodSet extends Newtype[Boolean, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type SourceKind = SourceKind.T
-    object SourceKind extends RefinedType[String, Pure]
+    object SourceKind extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
 
 
   final case class OverrideChanged(
@@ -726,21 +725,21 @@ object Place:
   object OverrideChanged:
     export Place.Label
     type Reset = Reset.T
-    object Reset extends RefinedType[Boolean, Pure]
+    object Reset extends Newtype[Boolean, Pure]
     type KindBefore = KindBefore.T
-    object KindBefore extends RefinedType[String, Pure]
+    object KindBefore extends Newtype[String, Pure]
     type KindAfter = KindAfter.T
-    object KindAfter extends RefinedType[String, Pure]
+    object KindAfter extends Newtype[String, Pure]
     type PeriodBefore = PeriodBefore.T
-    object PeriodBefore extends RefinedType[String, Pure]
+    object PeriodBefore extends Newtype[String, Pure]
     type PeriodAfter = PeriodAfter.T
-    object PeriodAfter extends RefinedType[String, Pure]
+    object PeriodAfter extends Newtype[String, Pure]
     type FindingsBefore = FindingsBefore.T
-    object FindingsBefore extends RefinedType[Int, Pure]
+    object FindingsBefore extends Newtype[Int, Pure]
     type FindingsAfter = FindingsAfter.T
-    object FindingsAfter extends RefinedType[Int, Pure]
+    object FindingsAfter extends Newtype[Int, Pure]
     type Unlocated = Unlocated.T
-    object Unlocated extends RefinedType[Int, Pure]
+    object Unlocated extends Newtype[Int, Pure]
 
 
   enum OverrideEdit:
@@ -756,9 +755,9 @@ object Place:
   object OverrideEdit:
     object Put:
       type Kind = Kind.T
-      object Kind extends RefinedType[String, Pure]
+      object Kind extends Newtype[String, Pure]
       type Reason = Reason.T
-      object Reason extends RefinedType[String, Pure]
+      object Reason extends Newtype[String, Pure]
 
   final case class OverrideSet(
       kind: Option[OverrideSet.Kind] = None,
@@ -771,11 +770,11 @@ object Place:
   )
   object OverrideSet:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type Reset = Reset.T
-    object Reset extends RefinedType[Boolean, Pure]
+    object Reset extends Newtype[Boolean, Pure]
 
     given Schema[OverrideSet] = KindlingsSchema
       .derived[OverrideSet]
@@ -792,9 +791,9 @@ object Place:
 
   object Overrides:
     type PointText = PointText.T
-    object PointText extends RefinedType[String, Pure]
+    object PointText extends Newtype[String, Pure]
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type ParsePointResultPart1 = Problem
     val ParsePointResultPart1: Problem.type = Problem
     type PointTextResult = PointText
@@ -893,17 +892,17 @@ object Place:
 
   object RebuildResult:
     type Links = Links.T
-    object Links extends RefinedType[Int, Pure]
+    object Links extends Newtype[Int, Pure]
     type ByGeometry = ByGeometry.T
-    object ByGeometry extends RefinedType[Int, Pure]
+    object ByGeometry extends Newtype[Int, Pure]
     type ByName = ByName.T
-    object ByName extends RefinedType[Int, Pure]
+    object ByName extends Newtype[Int, Pure]
     type Located = Located.T
-    object Located extends RefinedType[Int, Pure]
+    object Located extends Newtype[Int, Pure]
     type Unlocated = Unlocated.T
-    object Unlocated extends RefinedType[Int, Pure]
+    object Unlocated extends Newtype[Int, Pure]
     type Places = Places.T
-    object Places extends RefinedType[Int, Pure]
+    object Places extends Newtype[Int, Pure]
 
 
   final case class Record(
@@ -917,14 +916,14 @@ object Place:
 
   object Record:
     type DateSourceText = DateSourceText.T
-    object DateSourceText extends RefinedType[String, Pure]
+    object DateSourceText extends Newtype[String, Pure]
     type DateSourceTextResult = DateSourceText
     val DateSourceTextResult: DateSourceText.type = DateSourceText
 
     type DateSource = DateSource.T
-    object DateSource extends RefinedType[String, Pure]
+    object DateSource extends Newtype[String, Pure]
     type Periods = Periods.T
-    object Periods extends RefinedType[String, Pure]
+    object Periods extends Newtype[String, Pure]
 
     def dateSourceText(s: DateSource): DateSourceText = (s).value.trim.toLowerCase match
       case "wikidata-p580"                    => DateSourceText("Wikidata: its start and end time")
@@ -938,16 +937,16 @@ object Place:
 
   object Register:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type NameResult = Name
     val NameResult: Name.type = Name
     type NamesPart2 = Name
     val NamesPart2: Name.type = Name
 
     type Property = Property.T
-    object Property extends RefinedType[String, Pure]
+    object Property extends Newtype[String, Pure]
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
 
     val names: Map[Property, Name] = Map(
       { val refactorTuple12 = "P13741" -> "Archaeological Cadastre (Greece)"; (Property(refactorTuple12._1), Name(refactorTuple12._2)) },
@@ -970,12 +969,12 @@ object Place:
   object Relation:
 
     type ChildId = ChildId.T
-    object ChildId extends RefinedType[String, Pure]
+    object ChildId extends Newtype[String, Pure]
     type ParentId = ParentId.T
-    object ParentId extends RefinedType[String, Pure]:
+    object ParentId extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]:
+    object Kind extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
 
     val PartOf = "part_of"
@@ -994,7 +993,7 @@ object Place:
   object RemoveIn:
 
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
     given Codec.AsObject[RemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[RemoveIn])
 
@@ -1034,12 +1033,12 @@ object Place:
   object Summary:
     export Place.Label
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     export Place.Source
     type Names = Names.T
-    object Names extends RefinedType[String, Pure]
+    object Names extends Newtype[String, Pure]
     type Contested = Contested.T
-    object Contested extends RefinedType[Boolean, Pure]
+    object Contested extends Newtype[Boolean, Pure]
     export Match.ImportSource
 
 
@@ -1055,15 +1054,15 @@ object Place:
 
   object TimeBasis:
     type FindingsNoteText = FindingsNoteText.T
-    object FindingsNoteText extends RefinedType[String, Pure]
+    object FindingsNoteText extends Newtype[String, Pure]
     type ModernFrom = ModernFrom.T
-    object ModernFrom extends RefinedType[Long, Pure]
+    object ModernFrom extends Newtype[Long, Pure]
     type VisibleEnd = VisibleEnd.T
-    object VisibleEnd extends RefinedType[Long, Pure]
+    object VisibleEnd extends Newtype[Long, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type OfKind = OfKind.T
-    object OfKind extends RefinedType[String, Pure]
+    object OfKind extends Newtype[String, Pure]
     type FindingsNote = FindingsNoteValue
     type FindingsNoteValue = FindingsNoteText
     val FindingsNoteValue: FindingsNoteText.type = FindingsNoteText
@@ -1108,13 +1107,13 @@ object Place:
   object TreeRow:
     export Place.Label
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Depth = Depth.T
-    object Depth extends RefinedType[Int, Pure]
+    object Depth extends Newtype[Int, Pure]
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type Contested = Contested.T
-    object Contested extends RefinedType[Boolean, Pure]
+    object Contested extends Newtype[Boolean, Pure]
 
 
   final case class Type(
@@ -1127,9 +1126,9 @@ object Place:
 
   object Type:
     type TypeLabel = TypeLabel.T
-    object TypeLabel extends RefinedType[String, Pure]
+    object TypeLabel extends Newtype[String, Pure]
 
   type Id = Id.T
-  object Id extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.constraint.any.Pure]:
+  object Id extends Newtype[String, io.github.iltotore.iron.constraint.any.Pure]:
     extension (id: Id) def isPleiades: Boolean = id.value.startsWith("pleiades_")
 

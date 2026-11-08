@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 
@@ -16,9 +15,9 @@ object AgentScheduler:
 
   object StrategyLine:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Describe = Describe.T
-    object Describe extends RefinedType[String, Pure]
+    object Describe extends Newtype[String, Pure]
 
 
   final case class Started(
@@ -34,17 +33,17 @@ object AgentScheduler:
 
   object Started:
     type Item = Item.T
-    object Item extends RefinedType[Long, Pure]
+    object Item extends Newtype[Long, Pure]
     type Manager = Manager.T
-    object Manager extends RefinedType[String, Pure]
+    object Manager extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type JobType = JobKinds.Wire
     val JobType: JobKinds.Wire.type = JobKinds.Wire
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
 
   final case class Waiting(
@@ -65,38 +64,38 @@ object AgentScheduler:
 
   object Waiting:
     type Item = Item.T
-    object Item extends RefinedType[Long, Pure]
+    object Item extends Newtype[Long, Pure]
     type Manager = Manager.T
-    object Manager extends RefinedType[String, Pure]
+    object Manager extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type JobType = JobKinds.Wire
     val JobType: JobKinds.Wire.type = JobKinds.Wire
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type WaitedMinutes = WaitedMinutes.T
-    object WaitedMinutes extends RefinedType[Long, Pure]
+    object WaitedMinutes extends Newtype[Long, Pure]
     type Code = Code.T
-    object Code extends RefinedType[String, Pure]
+    object Code extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type Behind = Behind.T
-    object Behind extends RefinedType[String, Pure]
+    object Behind extends Newtype[String, Pure]
     type Position = Position.T
-    object Position extends RefinedType[Int, Pure]
+    object Position extends Newtype[Int, Pure]
 
 
   final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = PoolUse.Used(0), cap: PoolUse.Cap = PoolUse.Cap(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolUse:
     type Pool = Pool.T
-    object Pool extends RefinedType[String, Pure]
+    object Pool extends Newtype[String, Pure]
     type Used = Used.T
-    object Used extends RefinedType[Int, Pure]
+    object Used extends Newtype[Int, Pure]
     type Cap = Cap.T
-    object Cap extends RefinedType[Int, Pure]
+    object Cap extends Newtype[Int, Pure]
 
 
   final case class TypeLine(
@@ -113,15 +112,15 @@ object AgentScheduler:
     type JobType = JobKinds.Wire
     val JobType: JobKinds.Wire.type = JobKinds.Wire
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Weight = Weight.T
-    object Weight extends RefinedType[Int, Pure]
+    object Weight extends Newtype[Int, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type Recent = Recent.T
-    object Recent extends RefinedType[Int, Pure]
+    object Recent extends Newtype[Int, Pure]
     type Waiting = Waiting.T
-    object Waiting extends RefinedType[Int, Pure]
+    object Waiting extends Newtype[Int, Pure]
 
 
   final case class SchedulerStatus(
@@ -146,27 +145,27 @@ object AgentScheduler:
 
   object SchedulerStatus:
     type Strategy = Strategy.T
-    object Strategy extends RefinedType[String, Pure]
+    object Strategy extends Newtype[String, Pure]
     type StrategyFrom = StrategyFrom.T
-    object StrategyFrom extends RefinedType[String, Pure]
+    object StrategyFrom extends Newtype[String, Pure]
     type At = At.T
-    object At extends RefinedType[String, Pure]
+    object At extends Newtype[String, Pure]
     type Dry = Dry.T
-    object Dry extends RefinedType[Boolean, Pure]
+    object Dry extends Newtype[Boolean, Pure]
     type MaxRuns = MaxRuns.T
-    object MaxRuns extends RefinedType[Int, Pure]
+    object MaxRuns extends Newtype[Int, Pure]
     type Occupied = Occupied.T
-    object Occupied extends RefinedType[Int, Pure]
+    object Occupied extends Newtype[Int, Pure]
     type WaitingTotal = WaitingTotal.T
-    object WaitingTotal extends RefinedType[Int, Pure]
+    object WaitingTotal extends Newtype[Int, Pure]
     type ForPerson = ForPerson.T
-    object ForPerson extends RefinedType[Int, Pure]
+    object ForPerson extends Newtype[Int, Pure]
     type Stop = Stop.T
-    object Stop extends RefinedType[String, Pure]
+    object Stop extends Newtype[String, Pure]
     type Settings = Settings.T
-    object Settings extends RefinedType[String, Pure]
+    object Settings extends Newtype[String, Pure]
     type Changes = Changes.T
-    object Changes extends RefinedType[String, Pure]
+    object Changes extends Newtype[String, Pure]
 
 
   final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
@@ -175,9 +174,9 @@ object AgentScheduler:
 
   object SchedulerSet:
     type Strategy = Strategy.T
-    object Strategy extends RefinedType[String, Pure]
+    object Strategy extends Newtype[String, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
 
 
   final case class WhyInfo(
@@ -197,27 +196,27 @@ object AgentScheduler:
 
   object WhyInfo:
     type Item = Item.T
-    object Item extends RefinedType[Long, Pure]
+    object Item extends Newtype[Long, Pure]
     type Manager = Manager.T
-    object Manager extends RefinedType[String, Pure]
+    object Manager extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Code = Code.T
-    object Code extends RefinedType[String, Pure]
+    object Code extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type Behind = Behind.T
-    object Behind extends RefinedType[String, Pure]
+    object Behind extends Newtype[String, Pure]
     type Position = Position.T
-    object Position extends RefinedType[Int, Pure]
+    object Position extends Newtype[Int, Pure]
     type Run = Run.T
-    object Run extends RefinedType[String, Pure]
+    object Run extends Newtype[String, Pure]
     type Approval = Approval.T
-    object Approval extends RefinedType[Long, Pure]
+    object Approval extends Newtype[Long, Pure]
 
 
   object Code:

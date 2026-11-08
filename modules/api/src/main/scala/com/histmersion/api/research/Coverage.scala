@@ -9,7 +9,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
@@ -40,11 +39,11 @@ object Coverage:
 
 
   type FilterLine = FilterLine.T
-  object FilterLine extends RefinedType[String, Pure]
+  object FilterLine extends Newtype[String, Pure]
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
   type Checked = Checked.T
-  object Checked extends RefinedType[Int, Pure]
+  object Checked extends Newtype[Int, Pure]
 
   final case class Drift(kind: DriftKind, citekeys: List[Citekey]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -59,7 +58,7 @@ object Coverage:
 
   object Entry:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
 
   final case class Reason(citekey: Citekey, reason: Entry.Reason) derives KindlingsCodecAsObject

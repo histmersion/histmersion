@@ -3,15 +3,14 @@ package api.catalogue
 
 import com.histmersion.api.BBox
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object PresetMenu:
   type PeriodSource = PeriodSource.T
-  object PeriodSource extends RefinedType[String, Pure]
+  object PeriodSource extends Newtype[String, Pure]
   type PeriodoId = PeriodoId.T
-  object PeriodoId extends RefinedType[String, Pure]
+  object PeriodoId extends Newtype[String, Pure]
   type Share = Share.T
-  object Share extends RefinedType[Double, Pure]
+  object Share extends Newtype[Double, Pure]
 
   final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Boolean)
 

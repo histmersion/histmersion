@@ -1,21 +1,20 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Plural:
   object Noun:
     type Form = Form.T
-    object Form extends RefinedType[String, Pure]
+    object Form extends Newtype[String, Pure]
     type Plural = Plural.T
-    object Plural extends RefinedType[String, Pure]
+    object Plural extends Newtype[String, Pure]
     type Singular = Singular.T
-    object Singular extends RefinedType[String, Pure]
+    object Singular extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Long, Pure]
+  object Count extends Newtype[Long, Pure]
   type Phrase = Phrase.T
-  object Phrase extends RefinedType[String, Pure]
+  object Phrase extends Newtype[String, Pure]
 
   type CountN = Count
   val CountN: Count.type = Count

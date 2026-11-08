@@ -7,5 +7,5 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type UserId = UserId.T
 
-object UserId extends RefinedType[String, Pure]:
+object UserId extends Newtype[String, Pure]:
   val Local: UserId = UserId("local")

@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Assessment(
@@ -30,19 +29,19 @@ final case class Assessment(
 
 object Assessment:
   type Target = Target.T
-  object Target extends RefinedType[String, Pure]
+  object Target extends Newtype[String, Pure]
   export Acquire.CitedByCount
   type InfluentialCitations = InfluentialCitations.T
-  object InfluentialCitations extends RefinedType[Int, Pure]
+  object InfluentialCitations extends Newtype[Int, Pure]
   type IsRetracted = IsRetracted.T
-  object IsRetracted extends RefinedType[Boolean, Pure]
+  object IsRetracted extends Newtype[Boolean, Pure]
   type Flagged = Flagged.T
-  object Flagged extends RefinedType[Boolean, Pure]
+  object Flagged extends Newtype[Boolean, Pure]
   type Verdict = Verdict.T
-  object Verdict extends RefinedType[String, Pure]
+  object Verdict extends Newtype[String, Pure]
   type Recommendation = Recommendation.T
-  object Recommendation extends RefinedType[String, Pure]
+  object Recommendation extends Newtype[String, Pure]
   type Applied = Applied.T
-  object Applied extends RefinedType[String, Pure]
+  object Applied extends Newtype[String, Pure]
   type CheckedAt = CheckedAt.T
-  object CheckedAt extends RefinedType[String, Pure]
+  object CheckedAt extends Newtype[String, Pure]

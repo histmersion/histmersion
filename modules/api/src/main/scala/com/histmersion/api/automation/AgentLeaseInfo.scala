@@ -6,7 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseInfo.Until, expired: AgentLeaseInfo.Expired, thisServer: AgentLeaseInfo.ThisServer)
@@ -18,10 +17,10 @@ final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseIn
 object AgentLeaseInfo:
 
   type Owner = Owner.T
-  object Owner extends RefinedType[String, Pure]
+  object Owner extends Newtype[String, Pure]
   type Until = Until.T
-  object Until extends RefinedType[String, Pure]
+  object Until extends Newtype[String, Pure]
   type Expired = Expired.T
-  object Expired extends RefinedType[Boolean, Pure]
+  object Expired extends Newtype[Boolean, Pure]
   type ThisServer = ThisServer.T
-  object ThisServer extends RefinedType[Boolean, Pure]
+  object ThisServer extends Newtype[Boolean, Pure]

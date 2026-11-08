@@ -5,7 +5,6 @@ import hearth.kindlings.optics.syntax.*
 import io.circe.ACursor
 import com.histmersion.api.{PeriodODataset, Years}
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** PeriodO writes ISO 8601 years, which count a year 0 (`"-2999"` is 3000 BC, `"0000"` is 1 BC). The store's signed
@@ -14,19 +13,19 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object PeriodO:
   type MaxYearNumber = MaxYearNumber.T
-  object MaxYearNumber extends RefinedType[Long, Pure]
+  object MaxYearNumber extends Newtype[Long, Pure]
   type MinImplausibleSpanNumber = MinImplausibleSpanNumber.T
-  object MinImplausibleSpanNumber extends RefinedType[Long, Pure]
+  object MinImplausibleSpanNumber extends Newtype[Long, Pure]
   type MinSiblingsCount = MinSiblingsCount.T
-  object MinSiblingsCount extends RefinedType[Int, Pure]
+  object MinSiblingsCount extends Newtype[Int, Pure]
   type MinYearNumber = MinYearNumber.T
-  object MinYearNumber extends RefinedType[Long, Pure]
+  object MinYearNumber extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SpanFactorNumber = SpanFactorNumber.T
-  object SpanFactorNumber extends RefinedType[Long, Pure]
+  object SpanFactorNumber extends Newtype[Long, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   type MinYear = MinYearValue

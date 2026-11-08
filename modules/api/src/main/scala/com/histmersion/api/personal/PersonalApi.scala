@@ -5,13 +5,12 @@ import com.histmersion.api.Api
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import com.histmersion.api.ItemKind
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Activity
 
 object PersonalApi:
   type Search = Search.T
-  object Search extends RefinedType[String, Pure]
+  object Search extends Newtype[String, Pure]
 
   type BookmarksPart1Part3 = Int
   object BookmarksPart1Part3:

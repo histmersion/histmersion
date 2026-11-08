@@ -9,7 +9,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.circe.{Decoder, Encoder, Json}
 import sttp.tapir.SchemaType.SProductField
 import sttp.tapir.{FieldName, Schema}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a job records about itself beyond its kind and state: each field its kind's owner declares
@@ -84,4 +83,4 @@ object JobDetail:
 
   object Field:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]

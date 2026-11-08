@@ -1,7 +1,6 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum Dataset:
@@ -10,7 +9,7 @@ enum Dataset:
 
 object Dataset:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def parse(s: Wire): Option[Dataset] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 

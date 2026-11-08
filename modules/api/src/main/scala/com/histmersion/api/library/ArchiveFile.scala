@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.Format], megabytes: ArchiveFile.Megabytes)
@@ -14,12 +13,12 @@ final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.
 
 object ArchiveFile:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Format = Format.T
-  object Format extends RefinedType[String, Pure]:
+  object Format extends Newtype[String, Pure]:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   type Megabytes = Megabytes.T
-  object Megabytes extends RefinedType[Double, Pure]
+  object Megabytes extends Newtype[Double, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package api.jobs
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A kind of job as its owner registers it: its name and meaning for a person, whether a person may pause and cancel
@@ -31,9 +30,9 @@ object JobKindEntry:
   val OfOwnControl: OwnControl.type = OwnControl
 
   type Stoppable = Stoppable.T
-  object Stoppable extends RefinedType[Boolean, Pure]
+  object Stoppable extends Newtype[Boolean, Pure]
   type OwnControl = OwnControl.T
-  object OwnControl extends RefinedType[Boolean, Pure]
+  object OwnControl extends Newtype[Boolean, Pure]
 
   def of(
       kind: JobInfo.Kind,

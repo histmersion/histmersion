@@ -9,7 +9,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class Edge(src: Citekey, dst: Citekey, kind: Edge.Kind)
 
@@ -24,7 +23,7 @@ object Edge:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     private val wireMap: Map[Wire, Kind] = values.map(e => wireOf(e) -> e).toMap
 

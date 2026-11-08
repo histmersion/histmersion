@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Backlink(kind: Backlink.Kind, id: Backlink.Id, title: Option[Backlink.Title])
@@ -14,8 +13,8 @@ final case class Backlink(kind: Backlink.Kind, id: Backlink.Id, title: Option[Ba
 
 object Backlink:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]

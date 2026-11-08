@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class RetractionNotice(nature: Option[RetractionNotice.Nature], reason: Option[RetractionNotice.Reason], date: Option[RetractionNotice.Date])
@@ -14,8 +13,8 @@ final case class RetractionNotice(nature: Option[RetractionNotice.Nature], reaso
 
 object RetractionNotice:
   type Nature = Nature.T
-  object Nature extends RefinedType[String, Pure]
+  object Nature extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type Date = Date.T
-  object Date extends RefinedType[String, Pure]
+  object Date extends Newtype[String, Pure]

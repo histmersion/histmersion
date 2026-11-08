@@ -4,20 +4,19 @@ package plugin
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigFactory, ConfigValueFactory}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object PluginConfigSuite:
   final case class Settings(title: Settings.Title, retries: Settings.Retries, enabled: Settings.Enabled, weight: Settings.Weight, aliases: List[Settings.Title], delay: Option[Settings.Retries]) derives ConfigReader
   object Settings:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Retries = Retries.T
-    object Retries extends RefinedType[Int, Pure]
+    object Retries extends Newtype[Int, Pure]
     type Enabled = Enabled.T
-    object Enabled extends RefinedType[Boolean, Pure]
+    object Enabled extends Newtype[Boolean, Pure]
     type Weight = Weight.T
-    object Weight extends RefinedType[Double, Pure]
+    object Weight extends Newtype[Double, Pure]
 
 class PluginConfigSuite extends munit.FunSuite:
   import PluginConfigSuite.Settings

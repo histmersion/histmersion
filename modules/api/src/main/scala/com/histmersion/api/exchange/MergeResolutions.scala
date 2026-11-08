@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeResolutions(
@@ -27,11 +26,11 @@ object MergeResolutions:
 
   object Text:
     type Flag = Flag.T
-    object Flag extends RefinedType[String, Pure]
+    object Flag extends Newtype[String, Pure]
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Template = Template.T
-    object Template extends RefinedType[String, Pure]
+    object Template extends Newtype[String, Pure]
 
 
 

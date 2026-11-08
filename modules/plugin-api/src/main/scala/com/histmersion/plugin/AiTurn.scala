@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one call answered: text (the final answer is JSON matching the answer schema), the tools the model called (the
@@ -45,9 +44,9 @@ object AiTurn:
     *   what the answer is, when the step's schema says (a provider's structured-output field for it)
     */
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type ServedBy = ServedBy.T
-  object ServedBy extends RefinedType[String, Pure]
+  object ServedBy extends Newtype[String, Pure]
 
   final case class Request(
       model: Request.Model,
@@ -89,21 +88,21 @@ object AiTurn:
     val ApplyMaxIterations: MaxIterations.type = MaxIterations
 
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type System = System.T
-    object System extends RefinedType[String, Pure]
+    object System extends Newtype[String, Pure]
     type AnswerSchema = AnswerSchema.T
-    object AnswerSchema extends RefinedType[String, Pure]
+    object AnswerSchema extends Newtype[String, Pure]
     type MaxTokens = MaxTokens.T
-    object MaxTokens extends RefinedType[Int, Pure]
+    object MaxTokens extends Newtype[Int, Pure]
     type Iteration = Iteration.T
-    object Iteration extends RefinedType[Int, Pure]
+    object Iteration extends Newtype[Int, Pure]
     type MaxIterations = MaxIterations.T
-    object MaxIterations extends RefinedType[Int, Pure]
+    object MaxIterations extends Newtype[Int, Pure]
     type AnswerSchemaRendered = AnswerSchemaRendered.T
-    object AnswerSchemaRendered extends RefinedType[String, Pure]
+    object AnswerSchemaRendered extends Newtype[String, Pure]
     type AnswerDescription = AnswerDescription.T
-    object AnswerDescription extends RefinedType[String, Pure]
+    object AnswerDescription extends Newtype[String, Pure]
 
     def apply(
         model: ApplyModel,

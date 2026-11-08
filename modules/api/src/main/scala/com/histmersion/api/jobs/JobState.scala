@@ -1,7 +1,6 @@
 package com.histmersion
 package api.jobs
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum JobState:
   case Queued, Running, Done, Failed, Paused, Cancelled
@@ -11,7 +10,7 @@ enum JobState:
 
 object JobState:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   val Interrupted = "interrupted"
 

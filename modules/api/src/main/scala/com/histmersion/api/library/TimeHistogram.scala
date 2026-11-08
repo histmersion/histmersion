@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class TimeHistogram(
@@ -26,15 +25,15 @@ final case class TimeHistogram(
 
 object TimeHistogram:
   type From = From.T
-  object From extends RefinedType[Long, Pure]
+  object From extends Newtype[Long, Pure]
   type To = To.T
-  object To extends RefinedType[Long, Pure]
+  object To extends Newtype[Long, Pure]
   type Bucket = Bucket.T
-  object Bucket extends RefinedType[Long, Pure]
+  object Bucket extends Newtype[Long, Pure]
   type By = By.T
-  object By extends RefinedType[String, Pure]
+  object By extends Newtype[String, Pure]
   export Histogram.Unit
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
   type Depth = Depth.T
-  object Depth extends RefinedType[Int, Pure]
+  object Depth extends Newtype[Int, Pure]

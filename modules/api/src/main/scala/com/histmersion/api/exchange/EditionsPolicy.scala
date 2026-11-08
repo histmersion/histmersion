@@ -2,7 +2,6 @@ package com.histmersion
 package api.exchange
 
 import com.histmersion.api.{Ascii, WireEnumValues}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum EditionsPolicy:
@@ -14,7 +13,7 @@ enum EditionsPolicy:
 
 object EditionsPolicy:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   given WireEnumValues[EditionsPolicy]:
     def all: Array[EditionsPolicy] = values

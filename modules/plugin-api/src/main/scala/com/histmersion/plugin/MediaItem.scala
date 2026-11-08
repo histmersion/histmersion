@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One record of a collection: an object, a map, a photograph.
@@ -95,31 +94,31 @@ object MediaItem:
   val ApplyWithheld: Withheld.type = Withheld
 
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type PageUrl = PageUrl.T
-  object PageUrl extends RefinedType[String, Pure]
+  object PageUrl extends Newtype[String, Pure]
   type ImageUrl = ImageUrl.T
-  object ImageUrl extends RefinedType[String, Pure]
+  object ImageUrl extends Newtype[String, Pure]
   type RightsPart1 = RightsPart1.T
-  object RightsPart1 extends RefinedType[String, Pure]
+  object RightsPart1 extends Newtype[String, Pure]
   type ThumbUrl = ThumbUrl.T
-  object ThumbUrl extends RefinedType[String, Pure]
+  object ThumbUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
-  object OriginalUrl extends RefinedType[String, Pure]
+  object OriginalUrl extends Newtype[String, Pure]
   type GeographyPart1 = GeographyPart1.T
-  object GeographyPart1 extends RefinedType[String, Pure]
+  object GeographyPart1 extends Newtype[String, Pure]
   type GeographyPart2 = GeographyPart2.T
-  object GeographyPart2 extends RefinedType[String, Pure]
+  object GeographyPart2 extends Newtype[String, Pure]
   type IdsPart1 = IdsPart1.T
-  object IdsPart1 extends RefinedType[String, Pure]
+  object IdsPart1 extends Newtype[String, Pure]
   type IdsPart2 = IdsPart2.T
-  object IdsPart2 extends RefinedType[String, Pure]
+  object IdsPart2 extends Newtype[String, Pure]
   type Withheld = Withheld.T
-  object Withheld extends RefinedType[String, Pure]
+  object Withheld extends Newtype[String, Pure]
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
 
   def apply(
       key: ApplyKey,

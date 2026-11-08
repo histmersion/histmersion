@@ -2,7 +2,6 @@ package com.histmersion
 package api.automation
 
 import com.histmersion.api.WireEnumValues
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline):
@@ -11,7 +10,7 @@ enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline):
 
 object ScheduleKind:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[ScheduleKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

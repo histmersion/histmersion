@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeInfo(
@@ -25,13 +24,13 @@ final case class MergeInfo(
 
 object MergeInfo:
   type BundleSha256 = BundleSha256.T
-  object BundleSha256 extends RefinedType[String, Pure]
+  object BundleSha256 extends Newtype[String, Pure]
   type AppliedAt = AppliedAt.T
-  object AppliedAt extends RefinedType[String, Pure]
+  object AppliedAt extends Newtype[String, Pure]
   export MergePlan.PlanHash
   type Backup = Backup.T
-  object Backup extends RefinedType[String, Pure]
+  object Backup extends Newtype[String, Pure]
   type LedgerRows = LedgerRows.T
-  object LedgerRows extends RefinedType[Int, Pure]
+  object LedgerRows extends Newtype[Int, Pure]
   type Redirects = Redirects.T
-  object Redirects extends RefinedType[Int, Pure]
+  object Redirects extends Newtype[Int, Pure]

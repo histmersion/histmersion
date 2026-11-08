@@ -1,7 +1,6 @@
 package com.histmersion
 package util.console
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait Console:
@@ -28,9 +27,9 @@ trait Console:
 
 object Console:
   type Line = Line.T
-  object Line extends RefinedType[String, Pure]
+  object Line extends Newtype[String, Pure]
   type Prompt = Prompt.T
-  object Prompt extends RefinedType[String, Pure]
+  object Prompt extends Newtype[String, Pure]
   type ReadTerminalLineResult = Line
   val ReadTerminalLineResult: Line.type = Line
   type StreamsInputResult = Line

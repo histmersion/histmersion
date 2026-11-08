@@ -1,7 +1,6 @@
 package com.histmersion
 package api.automation
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum Pipeline(
     val wire: Pipeline.Wire,
@@ -85,11 +84,11 @@ enum Pipeline(
 
 object Pipeline:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Version = Version.T
-  object Version extends RefinedType[Int, Pure]
+  object Version extends Newtype[Int, Pure]
   type Describe = Describe.T
-  object Describe extends RefinedType[String, Pure]
+  object Describe extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[Pipeline] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

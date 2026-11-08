@@ -7,16 +7,16 @@ import io.github.iltotore.iron.constraint.all.*
 // A client layer's copies: the same names over the same base types, judging nothing (the server checks).
 
 type Citekey = Citekey.T
-object Citekey extends RefinedType[String, Pure]
+object Citekey extends Newtype[String, Pure]
 
 type Title = Title.T
-object Title extends RefinedType[String, Pure]
+object Title extends Newtype[String, Pure]
 
 type Tag = Tag.T
-object Tag extends RefinedType[String, Pure]
+object Tag extends Newtype[String, Pure]
 
 type Year = Year.T
-object Year extends RefinedType[Int, Pure]
+object Year extends Newtype[Int, Pure]
 
 enum SourceStatusView:
   case Current

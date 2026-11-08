@@ -9,7 +9,6 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class GeoHit(
@@ -31,8 +30,8 @@ final case class GeoHit(
 object GeoHit:
   export com.histmersion.api.library.Title
   type Claim = Claim.T
-  object Claim extends RefinedType[String, Pure]
+  object Claim extends Newtype[String, Pure]
   type Significance = Significance.T
-  object Significance extends RefinedType[String, Pure]
+  object Significance extends Newtype[String, Pure]
   type SourceKind = SourceKind.T
-  object SourceKind extends RefinedType[String, Pure]
+  object SourceKind extends Newtype[String, Pure]

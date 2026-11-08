@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
 object EventTaxonomy:
@@ -14,11 +13,11 @@ object EventTaxonomy:
 
   object Kind:
     type Group = Group.T
-    object Group extends RefinedType[String, Pure]
+    object Group extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Icon = Icon.T
-    object Icon extends RefinedType[String, Pure]
+    object Icon extends Newtype[String, Pure]
 
   val Eruption = "eruption"
   val Earthquake = "earthquake"
@@ -132,9 +131,9 @@ object EventTaxonomy:
 
   object KindCondition:
     type Filter = Filter.T
-    object Filter extends RefinedType[String, Pure]
+    object Filter extends Newtype[String, Pure]
     type Negate = Negate.T
-    object Negate extends RefinedType[Boolean, Pure]
+    object Negate extends Newtype[Boolean, Pure]
 
   def condition(filter: Option[KindCondition.Filter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>

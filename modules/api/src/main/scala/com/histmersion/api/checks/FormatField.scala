@@ -5,7 +5,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum FormatField:
@@ -13,7 +12,7 @@ enum FormatField:
 
 object FormatField:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   given WireEnumValues[FormatField]:
     def all: Array[FormatField] = values

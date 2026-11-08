@@ -1,11 +1,10 @@
 package com.histmersion
 package api.media
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object AssetKind:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   val Figure = "figure"
   val Photo = "photo"

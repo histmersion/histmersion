@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type Latitude = Latitude.T
 
-object Latitude extends RefinedType[Double, Pure]
+object Latitude extends Newtype[Double, Pure]

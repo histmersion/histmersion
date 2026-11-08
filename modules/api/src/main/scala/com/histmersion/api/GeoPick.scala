@@ -3,7 +3,6 @@ package api
 
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.GeoTime
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -30,7 +29,7 @@ enum GeoPick:
 
 object GeoPick:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def parse(s: Wire): Option[GeoPick] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 

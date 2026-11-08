@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What [[SourceCollection.updateAll]] does, or did, to one item. */
@@ -30,7 +29,7 @@ enum CollectionUpdateOutcome:
 object CollectionUpdateOutcome:
   object Failed:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
   object Refused:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]

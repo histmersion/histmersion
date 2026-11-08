@@ -7,7 +7,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReadMark(
@@ -25,11 +24,11 @@ object ReadMark:
 
   export com.histmersion.api.library.Title
   type Read = Read.T
-  object Read extends RefinedType[Boolean, Pure]
+  object Read extends Newtype[Boolean, Pure]
   type ReadAt = ReadAt.T
-  object ReadAt extends RefinedType[String, Pure]
+  object ReadAt extends Newtype[String, Pure]
   type OpenedAt = OpenedAt.T
-  object OpenedAt extends RefinedType[String, Pure]
+  object OpenedAt extends Newtype[String, Pure]
 
   final case class Set(kind: ItemKind, id: ItemKey, read: Read, title: Option[com.histmersion.api.library.Title] = None)
       derives KindlingsCodecAsObject,

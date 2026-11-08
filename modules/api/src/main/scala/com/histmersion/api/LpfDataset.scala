@@ -1,7 +1,6 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Read from a FeatureCollection's own keys or a sidecar `<file>.meta.json`: an LP-TSV file has nowhere else to say it.
@@ -15,8 +14,8 @@ final case class LpfDataset(
 
 object LpfDataset:
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Citation = Citation.T
-  object Citation extends RefinedType[String, Pure]
+  object Citation extends Newtype[String, Pure]
   type Licence = Licence.T
-  object Licence extends RefinedType[String, Pure]
+  object Licence extends Newtype[String, Pure]

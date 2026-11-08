@@ -2,7 +2,6 @@ package com.histmersion
 package api
 
 import scala.annotation.tailrec
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The converter reports free text (`ok`, `busy: 2 jobs`, `degraded: …`), so a wording never seen before reads as
@@ -19,7 +18,7 @@ enum ServiceState:
 
 object ServiceState:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   private val DownWords = List(
     "degraded",

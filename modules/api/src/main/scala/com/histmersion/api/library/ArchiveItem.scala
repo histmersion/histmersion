@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** @param lendingOnly
@@ -27,12 +26,12 @@ final case class ArchiveItem(
 object ArchiveItem:
   export com.histmersion.api.library.{ArchiveId as Identifier}
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Creator = Creator.T
-  object Creator extends RefinedType[String, Pure]
+  object Creator extends Newtype[String, Pure]
   type Publisher = Publisher.T
-  object Publisher extends RefinedType[String, Pure]
+  object Publisher extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type LendingOnly = LendingOnly.T
-  object LendingOnly extends RefinedType[Boolean, Pure]
+  object LendingOnly extends Newtype[Boolean, Pure]

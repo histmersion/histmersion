@@ -6,7 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import io.circe.KeyEncoder
 import io.circe.KeyDecoder
@@ -29,16 +28,16 @@ final case class CollectionEntry(
 object CollectionEntry:
   given Schema[Map[IdentifiersKey, IdentifiersValue]] = Schema.schemaForMap[IdentifiersKey, IdentifiersValue](_.value).copy(name = None, isOptional = true)
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Publisher = Publisher.T
-  object Publisher extends RefinedType[String, Pure]
+  object Publisher extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type IdentifiersKey = IdentifiersKey.T
-  object IdentifiersKey extends RefinedType[String, Pure]:
+  object IdentifiersKey extends Newtype[String, Pure]:
     given KeyEncoder[T] = KeyEncoder.encodeKeyString.contramap(_.value)
     given KeyDecoder[T] = KeyDecoder.decodeKeyString.map(IdentifiersKey(_))
   type IdentifiersValue = IdentifiersValue.T
-  object IdentifiersValue extends RefinedType[String, Pure]
+  object IdentifiersValue extends Newtype[String, Pure]
   type Formats = Formats.T
-  object Formats extends RefinedType[String, Pure]
+  object Formats extends Newtype[String, Pure]

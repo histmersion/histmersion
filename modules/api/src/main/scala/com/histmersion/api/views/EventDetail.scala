@@ -25,7 +25,6 @@ import com.histmersion.api.catalogue.EventGeometry
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.catalogue.EventsMarkdown
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An event's page as the server answers it: the catalogue's [[EventCard]] with the event's pictures. */
@@ -54,5 +53,5 @@ final case class EventDetail(
 
 object EventDetail:
   type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends RefinedType[String, Pure]
+  object MarkdownResult extends Newtype[String, Pure]
 

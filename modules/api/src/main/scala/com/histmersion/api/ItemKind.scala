@@ -2,7 +2,6 @@ package com.histmersion
 package api
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
@@ -20,13 +19,13 @@ enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
 
 object ItemKind:
   type Word = Word.T
-  object Word extends RefinedType[String, Pure]
+  object Word extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]:
+  object Label extends Newtype[String, Pure]:
     type Pattern = Pattern.T
-    object Pattern extends RefinedType[String, Pure]
+    object Pattern extends Newtype[String, Pure]
 
 
   val Items: Set[ItemKind] = Set(Source, Article, Event, Place, Picture, Goal)

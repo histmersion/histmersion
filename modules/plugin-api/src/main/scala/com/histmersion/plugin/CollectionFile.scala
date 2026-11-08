@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One file of a collection's item.
@@ -17,8 +16,8 @@ final case class CollectionFile(name: CollectionFile.Name, format: Option[Collec
 
 object CollectionFile:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Format = Format.T
-  object Format extends RefinedType[String, Pure]
+  object Format extends Newtype[String, Pure]
   type Megabytes = Megabytes.T
-  object Megabytes extends RefinedType[Double, Pure]
+  object Megabytes extends Newtype[Double, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package api.automation
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum ProviderKind(val wire: ProviderKind.Wire):
   case Anthropic extends ProviderKind(ProviderKind.Wire("anthropic"))
@@ -27,17 +26,17 @@ object ProviderKind:
   /** The host's own providers, in their order. */
   object Plugin:
     type FilePath = FilePath.T
-    object FilePath extends RefinedType[String, Pure]
+    object FilePath extends Newtype[String, Pure]
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
 
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   type NamesKnown = NamesKnown.T
-  object NamesKnown extends RefinedType[String, Pure]:
+  object NamesKnown extends Newtype[String, Pure]:
     given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
 
   val values: List[ProviderKind] = List(Anthropic, OpenAI, Local, ClaudeCode, Codex, Opencode)

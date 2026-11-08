@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.RepairAcquire
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaImportReport(
@@ -35,29 +34,29 @@ object MediaImportReport:
 
 
   type Targets = Targets.T
-  object Targets extends RefinedType[Int, Pure]
+  object Targets extends Newtype[Int, Pure]
   type Items = Items.T
-  object Items extends RefinedType[Int, Pure]
+  object Items extends Newtype[Int, Pure]
   type Statements = Statements.T
-  object Statements extends RefinedType[Int, Pure]
+  object Statements extends Newtype[Int, Pure]
   type Files = Files.T
-  object Files extends RefinedType[Int, Pure]
+  object Files extends Newtype[Int, Pure]
   type Stored = Stored.T
-  object Stored extends RefinedType[Int, Pure]
+  object Stored extends Newtype[Int, Pure]
   type Updated = Updated.T
-  object Updated extends RefinedType[Int, Pure]
+  object Updated extends Newtype[Int, Pure]
   type Linked = Linked.T
-  object Linked extends RefinedType[Int, Pure]
+  object Linked extends Newtype[Int, Pure]
   type Categories = Categories.T
-  object Categories extends RefinedType[Int, Pure]
+  object Categories extends Newtype[Int, Pure]
   type Revoked = Revoked.T
-  object Revoked extends RefinedType[String, Pure]
+  object Revoked extends Newtype[String, Pure]
   type Failed = Failed.T
-  object Failed extends RefinedType[String, Pure]
+  object Failed extends Newtype[String, Pure]
   type Pending = Pending.T
-  object Pending extends RefinedType[Int, Pure]
+  object Pending extends Newtype[Int, Pure]
   type Batches = Batches.T
-  object Batches extends RefinedType[Int, Pure]
+  object Batches extends Newtype[Int, Pure]
 
   def combine(a: MediaImportReport, b: MediaImportReport): MediaImportReport =
     def add(x: List[MediaCount], y: List[MediaCount]) =

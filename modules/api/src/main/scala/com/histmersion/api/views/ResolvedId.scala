@@ -7,7 +7,6 @@ import com.histmersion.api.library.ResolvedSource
 import com.histmersion.api.research.ResolvedArticle
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ResolvedId(
@@ -19,4 +18,4 @@ final case class ResolvedId(
 
 object ResolvedId:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]

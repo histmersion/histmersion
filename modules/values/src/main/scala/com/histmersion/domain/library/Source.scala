@@ -7,9 +7,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object Source:
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
@@ -19,7 +19,7 @@ object Source:
 
   object Status:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def fromString(s: Wire): Status =
@@ -34,4 +34,4 @@ object Source:
   /** A source's stable identity across renames, merges and databases (`sources.uid`). */
   type Uid = Uid.T
 
-  object Uid extends RefinedType[java.util.UUID, Pure]
+  object Uid extends Newtype[java.util.UUID, Pure]

@@ -3,7 +3,6 @@ package api
 
 import com.histmersion.api.backup.{Backup, RestoreResult}
 import com.histmersion.api.library.Label
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Place
@@ -13,7 +12,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.personal.UnreadPage
 object Markdown:
   type CharLimit = CharLimit.T
-  object CharLimit extends RefinedType[Int, Pure]
+  object CharLimit extends Newtype[Int, Pure]
 
   private[api] def year(y: Option[Int]): String = (y.map(_.toString).getOrElse("n.d."))
   private[api] def fmtYear(v: Year): String = YearFmt(v)

@@ -8,7 +8,6 @@ import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
@@ -44,33 +43,33 @@ final case class Filter(
 
 object Filter:
   type Last = Last.T
-  object Last extends RefinedType[String, Pure]
+  object Last extends Newtype[String, Pure]
   type YearFrom = YearFrom.T
-  object YearFrom extends RefinedType[Long, Pure]
+  object YearFrom extends Newtype[Long, Pure]
   type YearTo = YearTo.T
-  object YearTo extends RefinedType[Long, Pure]
+  object YearTo extends Newtype[Long, Pure]
 
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
 
   type Q = Q.T
-  object Q extends RefinedType[String, Pure]
+  object Q extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Places = Places.T
-  object Places extends RefinedType[String, Pure]
+  object Places extends Newtype[String, Pure]
   type Topics = Topics.T
-  object Topics extends RefinedType[String, Pure]
+  object Topics extends Newtype[String, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Offset = Offset.T
-  object Offset extends RefinedType[Int, Pure]
+  object Offset extends Newtype[Int, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
 
   val Earliest: Year = Year(-1000000000L)
@@ -148,13 +147,13 @@ object Filter:
 
     object Param:
       type Rest = Rest.T
-      object Rest extends RefinedType[String, Pure]
+      object Rest extends Newtype[String, Pure]
       type Mcp = Mcp.T
-      object Mcp extends RefinedType[String, Pure]
+      object Mcp extends Newtype[String, Pure]
       type Doc = Doc.T
-      object Doc extends RefinedType[String, Pure]
+      object Doc extends Newtype[String, Pure]
       type Brief = Brief.T
-      object Brief extends RefinedType[String, Pure]
+      object Brief extends Newtype[String, Pure]
 
     val query = Param(
       Param.Rest("q"),

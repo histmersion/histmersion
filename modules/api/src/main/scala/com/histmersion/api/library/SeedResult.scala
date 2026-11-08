@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SeedResult(
@@ -18,10 +17,10 @@ final case class SeedResult(
 
 object SeedResult:
   type Imported = Imported.T
-  object Imported extends RefinedType[Int, Pure]
+  object Imported extends Newtype[Int, Pure]
   type Failed = Failed.T
-  object Failed extends RefinedType[String, Pure]
+  object Failed extends Newtype[String, Pure]
   type EdgesResolved = EdgesResolved.T
-  object EdgesResolved extends RefinedType[Int, Pure]
+  object EdgesResolved extends Newtype[Int, Pure]
   type Skipped = Skipped.T
-  object Skipped extends RefinedType[String, Pure]
+  object Skipped extends Newtype[String, Pure]

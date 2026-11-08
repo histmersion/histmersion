@@ -1,14 +1,13 @@
 package com.histmersion
 package api.basemap
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object BaseMapSource:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type All = AllValue
   type AllValue = AllValue.T
-  object AllValue extends RefinedType[String, Pure]
+  object AllValue extends Newtype[String, Pure]
 
   val Auto = "auto"
   val Local = "local"

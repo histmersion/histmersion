@@ -7,13 +7,12 @@ import com.histmersion.api.Plural
 import com.histmersion.api.automation.ManagersMarkdown
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 
 object RepairAcquire:
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
 
   final case class RepairRequest(dryRun: RepairRequest.DryRun = RepairRequest.DryRun(false), by: Option[RepairRequest.By] = None)
@@ -22,7 +21,7 @@ object RepairAcquire:
 
   object RepairRequest:
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     export com.histmersion.api.automation.Activity.{Actor as By}
 
 
@@ -40,15 +39,15 @@ object RepairAcquire:
   object RepairRow:
     export Acquire.{ItemNumber as Item}
     type Goals = Goals.T
-    object Goals extends RefinedType[String, Pure]
+    object Goals extends Newtype[String, Pure]
     type Watcher = Watcher.T
-    object Watcher extends RefinedType[String, Pure]
+    object Watcher extends Newtype[String, Pure]
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
     type BacklogItem = BacklogItem.T
-    object BacklogItem extends RefinedType[Long, Pure]
+    object BacklogItem extends Newtype[Long, Pure]
 
 
   final case class RepairResult(
@@ -66,13 +65,13 @@ object RepairAcquire:
   object RepairResult:
     export RepairRequest.DryRun
     type Moved = Moved.T
-    object Moved extends RefinedType[Int, Pure]
+    object Moved extends Newtype[Int, Pure]
     type Removed = Removed.T
-    object Removed extends RefinedType[Int, Pure]
+    object Removed extends Newtype[Int, Pure]
     type Kept = Kept.T
-    object Kept extends RefinedType[Int, Pure]
+    object Kept extends Newtype[Int, Pure]
     type Untouched = Untouched.T
-    object Untouched extends RefinedType[Int, Pure]
+    object Untouched extends Newtype[Int, Pure]
 
 
   val Move = "move"

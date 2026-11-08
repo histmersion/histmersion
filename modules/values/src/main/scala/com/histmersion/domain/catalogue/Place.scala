@@ -11,7 +11,7 @@ object Place:
   /** A place's id: the gazetteer it comes from, an underscore, that gazetteer's id (`geonames_2911611`). */
   type Id = Id.T
 
-  object Id extends RefinedType[String, Match["[a-z][a-z0-9-]*(_.+)?"]]:
+  object Id extends Newtype[String, Match["[a-z][a-z0-9-]*(_.+)?"]]:
     extension (id: T) def isPleiades: Boolean = id.value.startsWith("pleiades_")
     extension (id: T) def isBlank: Boolean = id.value.trim.isEmpty
     extension (id: T) def trimmed: Id = assume(id.value.trim)
@@ -23,7 +23,7 @@ object Place:
     */
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Region = "region"
     val Polity = "polity"
@@ -75,14 +75,14 @@ object Place:
 
   object Precision:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type CellsMicro = CellsMicroValue
     type CellsMicroValue = CellsMicroValue.T
-    object CellsMicroValue extends RefinedType[Long, Pure]
+    object CellsMicroValue extends Newtype[Long, Pure]
     type Approximate = ApproximateValue
     type ApproximateValue = ApproximateValue.T
-    object ApproximateValue extends RefinedType[String, Pure]
+    object ApproximateValue extends Newtype[String, Pure]
 
     val CellsMicro: List[CellsMicro] = List(CellsMicroValue(5000000L), CellsMicroValue(1000000L), CellsMicroValue(500000L))
 

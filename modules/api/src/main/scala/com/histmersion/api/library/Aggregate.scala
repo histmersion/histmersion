@@ -3,16 +3,15 @@ package api.library
 
 import com.histmersion.api.given
 import com.histmersion.api.catalogue.Period
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 object Aggregate:
   type Count = Count.T
-  object Count extends RefinedType[Long, Pure]
+  object Count extends Newtype[Long, Pure]
   type Span = Span.T
-  object Span extends RefinedType[Long, Pure]
+  object Span extends Newtype[Long, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Long, Pure]
+  object Width extends Newtype[Long, Pure]
 
   def bucketSize(spanYears: Span): Width =
     val span = math.abs((spanYears).value)
@@ -56,7 +55,7 @@ object Aggregate:
 
   object Counting:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[Counting] = (s).value.trim.toLowerCase match
       case "starts"       => Some(Starts)

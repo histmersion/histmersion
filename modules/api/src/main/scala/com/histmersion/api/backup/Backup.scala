@@ -12,26 +12,25 @@ import com.histmersion.api.Api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
 
 object Backup:
   type ExitCode = ExitCode.T
-  object ExitCode extends RefinedType[Int, Pure]
+  object ExitCode extends Newtype[Int, Pure]
   type JdbcUrl = JdbcUrl.T
-  object JdbcUrl extends RefinedType[String, Pure]
+  object JdbcUrl extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends RefinedType[String, Pure]
+  object Outcome extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Retention = Retention.T
-  object Retention extends RefinedType[Int, Pure]
+  object Retention extends Newtype[Int, Pure]
   type ToolOutput = ToolOutput.T
-  object ToolOutput extends RefinedType[String, Pure]
+  object ToolOutput extends Newtype[String, Pure]
 
 
 
@@ -106,11 +105,11 @@ object Backup:
   object PgTarget:
 
     type Host = Host.T
-    object Host extends RefinedType[String, Pure]
+    object Host extends Newtype[String, Pure]
     type Port = Port.T
-    object Port extends RefinedType[Int, Pure]
+    object Port extends Newtype[Int, Pure]
     type Database = Database.T
-    object Database extends RefinedType[String, Pure]
+    object Database extends Newtype[String, Pure]
 
   private val JdbcScheme = "jdbc:postgresql:"
 
@@ -180,7 +179,7 @@ object Backup:
   object Info:
     export Result.File
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
 
   final case class Result(
@@ -194,11 +193,11 @@ object Backup:
 
   object Result:
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type DurationMs = DurationMs.T
-    object DurationMs extends RefinedType[Long, Pure]
+    object DurationMs extends Newtype[Long, Pure]
     type Pruned = Pruned.T
-    object Pruned extends RefinedType[String, Pure]
+    object Pruned extends Newtype[String, Pure]
 
 
   enum State:
@@ -207,7 +206,7 @@ object Backup:
 
   object State:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[State] = values.find(_.wire == s)
 
@@ -229,7 +228,7 @@ object Backup:
 
     export Result.{File as RunningFile, File as FailedFile, File, DurationMs}
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
     export Result.Pruned
 
     def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status = Status(file, State.Running.wire, Result.DurationMs((elapsedMs).value))

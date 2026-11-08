@@ -580,10 +580,10 @@ object PluginHarness:
       firstParty = id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))
     )
     val statuses = generation.report.plugins
-    val failedVaults = statuses.find(s => s.id.value == TestVaultsId.value && s.state != PluginState.Registered.wire)
+    val failedVaults = statuses.find(s => s.id.value == TestVaultsId.value && s.state.value != PluginState.Registered.wire.value)
     statuses.find(_.id.value == id.value) match
       case None                                                => Left(Problem(s"$id: the server did not consider the plugin"))
-      case Some(st) if st.state == PluginState.Registered.wire =>
+      case Some(st) if st.state.value == PluginState.Registered.wire.value =>
         Right(
           PluginHarness(
             id,
@@ -598,7 +598,7 @@ object PluginHarness:
             st.warnings
           )
         )
-      case Some(st) if st.state == PluginState.Disabled.wire =>
+      case Some(st) if st.state.value == PluginState.Disabled.wire.value =>
         Left(Problem(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
       case Some(st) =>
         Left(Problem(st.error.map(_.value).getOrElse(st.state.value) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)")))

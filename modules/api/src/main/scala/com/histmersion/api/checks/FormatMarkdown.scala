@@ -3,12 +3,11 @@ package api.checks
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.Plural
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object FormatMarkdown:
   type IssueLine = IssueLine.T
-  object IssueLine extends RefinedType[String, Pure]
+  object IssueLine extends Newtype[String, Pure]
 
 
   def problems(n: FormatReport.IssueCount): String = Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("formatting problem")).value

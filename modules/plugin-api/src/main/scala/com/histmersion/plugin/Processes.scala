@@ -2,7 +2,6 @@ package com.histmersion
 package plugin
 
 import scala.concurrent.duration.FiniteDuration
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Argument-vector execution supplied by the host. Implementations never interpret argv through a shell.
@@ -17,37 +16,37 @@ trait Processes:
 
 object Processes:
   type RunResultPart1 = RunResultPart1.T
-  object RunResultPart1 extends RefinedType[String, Pure]
+  object RunResultPart1 extends Newtype[String, Pure]
   type RunArgv = RunArgv.T
-  object RunArgv extends RefinedType[String, Pure]
+  object RunArgv extends Newtype[String, Pure]
   type RunEnvPart1 = RunEnvPart1.T
-  object RunEnvPart1 extends RefinedType[String, Pure]
+  object RunEnvPart1 extends Newtype[String, Pure]
   type RunEnvPart2 = RunEnvPart2.T
-  object RunEnvPart2 extends RefinedType[String, Pure]
+  object RunEnvPart2 extends Newtype[String, Pure]
   type RunStdin = RunStdin.T
-  object RunStdin extends RefinedType[String, Pure]
+  object RunStdin extends Newtype[String, Pure]
   type StartResultPart1 = StartResultPart1.T
-  object StartResultPart1 extends RefinedType[String, Pure]
+  object StartResultPart1 extends Newtype[String, Pure]
   type StartArgv = StartArgv.T
-  object StartArgv extends RefinedType[String, Pure]
+  object StartArgv extends Newtype[String, Pure]
   type StartEnvPart1 = StartEnvPart1.T
-  object StartEnvPart1 extends RefinedType[String, Pure]
+  object StartEnvPart1 extends Newtype[String, Pure]
   type StartEnvPart2 = StartEnvPart2.T
-  object StartEnvPart2 extends RefinedType[String, Pure]
+  object StartEnvPart2 extends Newtype[String, Pure]
   type CaptureResultPart1 = CaptureResultPart1.T
-  object CaptureResultPart1 extends RefinedType[String, Pure]
+  object CaptureResultPart1 extends Newtype[String, Pure]
   type CaptureArgv = CaptureArgv.T
-  object CaptureArgv extends RefinedType[String, Pure]
+  object CaptureArgv extends Newtype[String, Pure]
 
   final case class Result(exit: Result.Exit, out: Result.Out, err: Result.Err)
 
   object Result:
     type Exit = Exit.T
-    object Exit extends RefinedType[Int, Pure]
+    object Exit extends Newtype[Int, Pure]
     type Out = Out.T
-    object Out extends RefinedType[String, Pure]
+    object Out extends Newtype[String, Pure]
     type Err = Err.T
-    object Err extends RefinedType[String, Pure]
+    object Err extends Newtype[String, Pure]
 
   /** Owned by the caller, which must close it. Output is kept in memory and never logged by the implementation. */
   trait Session:
@@ -62,27 +61,27 @@ object Processes:
 
   object Session:
     type OutResult = OutResult.T
-    object OutResult extends RefinedType[String, Pure]
+    object OutResult extends Newtype[String, Pure]
     type ErrResult = ErrResult.T
-    object ErrResult extends RefinedType[String, Pure]
+    object ErrResult extends Newtype[String, Pure]
     type AliveResult = AliveResult.T
-    object AliveResult extends RefinedType[Boolean, Pure]
+    object AliveResult extends Newtype[Boolean, Pure]
     type SendResultPart1 = SendResultPart1.T
-    object SendResultPart1 extends RefinedType[String, Pure]
+    object SendResultPart1 extends Newtype[String, Pure]
     type SendLine = SendLine.T
-    object SendLine extends RefinedType[String, Pure]
+    object SendLine extends Newtype[String, Pure]
     type AwaitOutResult = AwaitOutResult.T
-    object AwaitOutResult extends RefinedType[Boolean, Pure]
+    object AwaitOutResult extends Newtype[Boolean, Pure]
     type AwaitOutReadyArg1 = AwaitOutReadyArg1.T
-    object AwaitOutReadyArg1 extends RefinedType[String, Pure]
+    object AwaitOutReadyArg1 extends Newtype[String, Pure]
     type AwaitOutReadyResult = AwaitOutReadyResult.T
-    object AwaitOutReadyResult extends RefinedType[Boolean, Pure]
+    object AwaitOutReadyResult extends Newtype[Boolean, Pure]
     type AwaitErrLength = AwaitErrLength.T
-    object AwaitErrLength extends RefinedType[Int, Pure]
+    object AwaitErrLength extends Newtype[Int, Pure]
     type CloseResult = CloseResult.T
-    object CloseResult extends RefinedType[Int, Pure]
+    object CloseResult extends Newtype[Int, Pure]
     type ExitResult = ExitResult.T
-    object ExitResult extends RefinedType[Int, Pure]
+    object ExitResult extends Newtype[Int, Pure]
 
   object Unavailable extends Processes:
     export Processes.{RunResultPart1, RunArgv, RunEnvPart1, RunEnvPart2, RunStdin, StartResultPart1, StartArgv, StartEnvPart1, StartEnvPart2, CaptureResultPart1, CaptureArgv}

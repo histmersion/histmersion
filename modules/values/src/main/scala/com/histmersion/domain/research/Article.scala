@@ -6,21 +6,21 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object Article:
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
   type Lead = Lead.T
-  object Lead extends RefinedType[String, Pure]
+  object Lead extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type Page = Page.T
-  object Page extends RefinedType[String, Pure]
+  object Page extends Newtype[String, Pure]
   type ReachSummary = ReachSummary.T
-  object ReachSummary extends RefinedType[String, Pure]
+  object ReachSummary extends Newtype[String, Pure]
   type StrictMode = StrictMode.T
-  object StrictMode extends RefinedType[Boolean, Pure]
+  object StrictMode extends Newtype[Boolean, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
 
   /** An article's stable identity across renames, merges and databases (`articles.uid`). */
   type Uid = Uid.T
 
-  object Uid extends RefinedType[java.util.UUID, Pure]
+  object Uid extends Newtype[java.util.UUID, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeTally(
@@ -33,40 +32,40 @@ final case class MergeTally(
 
 object MergeTally:
   type SourcesMerged = SourcesMerged.T
-  object SourcesMerged extends RefinedType[Int, Pure]
+  object SourcesMerged extends Newtype[Int, Pure]
   type SourcesByScore = SourcesByScore.T
-  object SourcesByScore extends RefinedType[Int, Pure]
+  object SourcesByScore extends Newtype[Int, Pure]
   type SourcesRenamed = SourcesRenamed.T
-  object SourcesRenamed extends RefinedType[Int, Pure]
+  object SourcesRenamed extends Newtype[Int, Pure]
   type Aliases = Aliases.T
-  object Aliases extends RefinedType[Int, Pure]
+  object Aliases extends Newtype[Int, Pure]
   type FindingsMerged = FindingsMerged.T
-  object FindingsMerged extends RefinedType[Int, Pure]
+  object FindingsMerged extends Newtype[Int, Pure]
   type AssetsMerged = AssetsMerged.T
-  object AssetsMerged extends RefinedType[Int, Pure]
+  object AssetsMerged extends Newtype[Int, Pure]
   type AttestationsReanchored = AttestationsReanchored.T
-  object AttestationsReanchored extends RefinedType[Int, Pure]
+  object AttestationsReanchored extends Newtype[Int, Pure]
   type AttestationsDropped = AttestationsDropped.T
-  object AttestationsDropped extends RefinedType[Int, Pure]
+  object AttestationsDropped extends Newtype[Int, Pure]
   type SelfLoopsDropped = SelfLoopsDropped.T
-  object SelfLoopsDropped extends RefinedType[Int, Pure]
+  object SelfLoopsDropped extends Newtype[Int, Pure]
   type ArticlesThreeWay = ArticlesThreeWay.T
-  object ArticlesThreeWay extends RefinedType[Int, Pure]
+  object ArticlesThreeWay extends Newtype[Int, Pure]
   type ArticlesFastForward = ArticlesFastForward.T
-  object ArticlesFastForward extends RefinedType[Int, Pure]
+  object ArticlesFastForward extends Newtype[Int, Pure]
   type ArticlesBoth = ArticlesBoth.T
-  object ArticlesBoth extends RefinedType[Int, Pure]
+  object ArticlesBoth extends Newtype[Int, Pure]
   type ArticlesFromFile = ArticlesFromFile.T
-  object ArticlesFromFile extends RefinedType[Int, Pure]
+  object ArticlesFromFile extends Newtype[Int, Pure]
   type EventsMerged = EventsMerged.T
-  object EventsMerged extends RefinedType[Int, Pure]
+  object EventsMerged extends Newtype[Int, Pure]
   type GoalsMerged = GoalsMerged.T
-  object GoalsMerged extends RefinedType[Int, Pure]
+  object GoalsMerged extends Newtype[Int, Pure]
   type QueueMerged = QueueMerged.T
-  object QueueMerged extends RefinedType[Int, Pure]
+  object QueueMerged extends Newtype[Int, Pure]
   type Redirects = Redirects.T
-  object Redirects extends RefinedType[Int, Pure]
+  object Redirects extends Newtype[Int, Pure]
   type PlacesMerged = PlacesMerged.T
-  object PlacesMerged extends RefinedType[Int, Pure]
+  object PlacesMerged extends Newtype[Int, Pure]
   type PeriodsMerged = PeriodsMerged.T
-  object PeriodsMerged extends RefinedType[Int, Pure]
+  object PeriodsMerged extends Newtype[Int, Pure]

@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.library.Source
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plan is spent by every client of the account, and the provider says how much is left only as a percentage of each
@@ -14,11 +13,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PlanQuota:
   type Now = Now.T
-  object Now extends RefinedType[Long, Pure]
+  object Now extends Newtype[Long, Pure]
   type PoolIdText = PoolIdText.T
-  object PoolIdText extends RefinedType[String, Pure]
+  object PoolIdText extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type WindowStateNow = Now
   val WindowStateNow: Now.type = Now
   type VerdictNow = Now
@@ -40,9 +39,9 @@ object PlanQuota:
 
   object PoolId:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[PoolId] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -56,11 +55,11 @@ object PlanQuota:
 
   object Logins:
     type ClaudeCodeApiKey = ClaudeCodeApiKey.T
-    object ClaudeCodeApiKey extends RefinedType[Boolean, Pure]
+    object ClaudeCodeApiKey extends Newtype[Boolean, Pure]
     type CodexApiKey = CodexApiKey.T
-    object CodexApiKey extends RefinedType[Boolean, Pure]
+    object CodexApiKey extends Newtype[Boolean, Pure]
     type OpencodeChatgpt = OpencodeChatgpt.T
-    object OpencodeChatgpt extends RefinedType[Boolean, Pure]
+    object OpencodeChatgpt extends Newtype[Boolean, Pure]
 
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
     case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == Logins.ClaudeCodeApiKey(true))                              => Some(PoolId.ClaudePlan)
@@ -86,7 +85,7 @@ object PlanQuota:
 
   object Source:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -105,20 +104,20 @@ object PlanQuota:
 
   object Reading:
     type Limit = Limit.T
-    object Limit extends RefinedType[String, Pure]:
+    object Limit extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]:
+    object Kind extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type UsedPct = UsedPct.T
-    object UsedPct extends RefinedType[Double, Pure]
+    object UsedPct extends Newtype[Double, Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends RefinedType[Long, Pure]:
+    object ResetsAt extends Newtype[Long, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     type Rejected = Rejected.T
-    object Rejected extends RefinedType[Boolean, Pure]
+    object Rejected extends Newtype[Boolean, Pure]
     type ObservedAt = ObservedAt.T
-    object ObservedAt extends RefinedType[Long, Pure]:
+    object ObservedAt extends Newtype[Long, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     export ModelChains.ChainEntry.Model
 
@@ -129,15 +128,15 @@ object PlanQuota:
 
   object Floors:
     type Floor = Floor.T
-    object Floor extends RefinedType[Int, Pure]
+    object Floor extends Newtype[Int, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type OfResult = Floor
     val OfResult: Floor.type = Floor
     export Reading.{Limit as OfLimit, Kind as OfKind}
 
     type ByKindKey = ByKindKey.T
-    object ByKindKey extends RefinedType[String, Pure]:
+    object ByKindKey extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type ByKindValue = Floor
     val ByKindValue: Floor.type = Floor
@@ -163,12 +162,12 @@ object PlanQuota:
 
   object Rules:
     type MinGap = MinGap.T
-    object MinGap extends RefinedType[Long, Pure]
+    object MinGap extends Newtype[Long, Pure]
     export Floors.{Floor as DefaultFloor}
     type StaleMs = StaleMs.T
-    object StaleMs extends RefinedType[Long, Pure]
+    object StaleMs extends Newtype[Long, Pure]
     type MarginPct = MarginPct.T
-    object MarginPct extends RefinedType[Int, Pure]
+    object MarginPct extends Newtype[Int, Pure]
 
   final case class WindowState(
       reading: Reading,
@@ -183,11 +182,11 @@ object PlanQuota:
     export Floors.Floor
     export WindowStatus.LeftPct
     type Stale = Stale.T
-    object Stale extends RefinedType[Boolean, Pure]
+    object Stale extends Newtype[Boolean, Pure]
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   enum Verdict:
     case Usable(note: Option[Usable.Note])
@@ -199,11 +198,11 @@ object PlanQuota:
   object Verdict:
     object Usable:
       type Note = Note.T
-      object Note extends RefinedType[String, Pure]
+      object Note extends Newtype[String, Pure]
 
     object Blocked:
       type Reason = Reason.T
-      object Reason extends RefinedType[String, Pure]
+      object Reason extends Newtype[String, Pure]
       export Reading.{ResetsAt as Until}
 
 
@@ -262,7 +261,7 @@ object PlanQuota:
 
   object RefreshMode:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[RefreshMode] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -275,13 +274,13 @@ object PlanQuota:
   object Login:
     object Present:
       type Detail = Detail.T
-      object Detail extends RefinedType[String, Pure]
+      object Detail extends Newtype[String, Pure]
     object Missing:
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
     object Unknown:
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
 
   enum RefreshNeed(val text: RefreshNeed.Text):
     case StaleOnly extends RefreshNeed(RefreshNeed.Text("the reading is stale"))
@@ -290,7 +289,7 @@ object PlanQuota:
 
   object RefreshNeed:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
 
   enum RefreshTrigger(val wire: RefreshTrigger.Wire):
     case Pick extends RefreshTrigger(RefreshTrigger.Wire("pick"))
@@ -303,7 +302,7 @@ object PlanQuota:
 
   object RefreshTrigger:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
   def refreshNeed(
       readings: List[Reading],
@@ -363,25 +362,25 @@ object PlanQuota:
   object WindowStatus:
     export Reading.Limit
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     export Reading.UsedPct
     type LeftPct = LeftPct.T
-    object LeftPct extends RefinedType[Double, Pure]
+    object LeftPct extends Newtype[Double, Pure]
     export Floors.Floor
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     type Stale = Stale.T
-    object Stale extends RefinedType[Boolean, Pure]
+    object Stale extends Newtype[Boolean, Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends RefinedType[String, Pure]
+    object ResetsAt extends Newtype[String, Pure]
     type ObservedAt = ObservedAt.T
-    object ObservedAt extends RefinedType[String, Pure]
+    object ObservedAt extends Newtype[String, Pure]
     type AgeSeconds = AgeSeconds.T
-    object AgeSeconds extends RefinedType[Long, Pure]
+    object AgeSeconds extends Newtype[Long, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
 
   final case class PoolStatus(
@@ -410,35 +409,35 @@ object PlanQuota:
   object PoolStatus:
     export PoolId.{Wire as Pool, Title}
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Covers = Covers.T
-    object Covers extends RefinedType[String, Pure]
+    object Covers extends Newtype[String, Pure]
     type Floors = Floors.T
-    object Floors extends RefinedType[String, Pure]
+    object Floors extends Newtype[String, Pure]
     type FloorsSource = FloorsSource.T
-    object FloorsSource extends RefinedType[String, Pure]
+    object FloorsSource extends Newtype[String, Pure]
     type Held = Held.T
-    object Held extends RefinedType[Boolean, Pure]
+    object Held extends Newtype[Boolean, Pure]
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type MaxCallsInFlight = MaxCallsInFlight.T
-    object MaxCallsInFlight extends RefinedType[Int, Pure]
+    object MaxCallsInFlight extends Newtype[Int, Pure]
     type PlanType = PlanType.T
-    object PlanType extends RefinedType[String, Pure]
+    object PlanType extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
     type Available = Available.T
-    object Available extends RefinedType[Boolean, Pure]
+    object Available extends Newtype[Boolean, Pure]
     type Login = Login.T
-    object Login extends RefinedType[String, Pure]
+    object Login extends Newtype[String, Pure]
     type Refresh = Refresh.T
-    object Refresh extends RefinedType[String, Pure]
+    object Refresh extends Newtype[String, Pure]
     type RefreshesToday = RefreshesToday.T
-    object RefreshesToday extends RefinedType[Int, Pure]
+    object RefreshesToday extends Newtype[Int, Pure]
 
 
   final case class RefreshInfo(at: RefreshInfo.At, mode: RefreshInfo.Mode, trigger: RefreshInfo.Trigger, ok: RefreshInfo.Ok, detail: RefreshInfo.Detail)
@@ -447,15 +446,15 @@ object PlanQuota:
 
   object RefreshInfo:
     type LastAttempt = LastAttempt.T
-    object LastAttempt extends RefinedType[Long, Pure]
+    object LastAttempt extends Newtype[Long, Pure]
     type At = At.T
-    object At extends RefinedType[String, Pure]
+    object At extends Newtype[String, Pure]
     export RefreshMode.{Wire as Mode}
     export RefreshTrigger.{Wire as Trigger}
     type Ok = Ok.T
-    object Ok extends RefinedType[Boolean, Pure]
+    object Ok extends Newtype[Boolean, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
 
 
   final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -471,9 +470,9 @@ object PlanQuota:
   object PoolRefreshed:
     export PoolId.{Wire as Pool}
     type Refreshed = Refreshed.T
-    object Refreshed extends RefinedType[Boolean, Pure]
+    object Refreshed extends Newtype[Boolean, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
 
 
   final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[QuotaRefreshed.Lifted] = Nil)
@@ -482,7 +481,7 @@ object PlanQuota:
 
   object QuotaRefreshed:
     type Lifted = Lifted.T
-    object Lifted extends RefinedType[String, Pure]
+    object Lifted extends Newtype[String, Pure]
 
 
   final case class QuotaInfo(
@@ -496,9 +495,9 @@ object PlanQuota:
 
   object QuotaInfo:
     type Fallthrough = Fallthrough.T
-    object Fallthrough extends RefinedType[String, Pure]
+    object Fallthrough extends Newtype[String, Pure]
     type Now = Now.T
-    object Now extends RefinedType[String, Pure]
+    object Now extends Newtype[String, Pure]
 
 
   final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Cooldown.Reason)
@@ -508,9 +507,9 @@ object PlanQuota:
   object Cooldown:
     export ModelChains.ChainEntry.Model
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
 
   final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
@@ -519,16 +518,16 @@ object PlanQuota:
 
   object PoolSet:
     type Hold = Hold.T
-    object Hold extends RefinedType[Boolean, Pure]
+    object Hold extends Newtype[Boolean, Pure]
     type Floors = Floors.T
-    object Floors extends RefinedType[String, Pure]
+    object Floors extends Newtype[String, Pure]
 
 
   final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object FallthroughSet:
     type Fallthrough = Fallthrough.T
-    object Fallthrough extends RefinedType[Boolean, Pure]
+    object Fallthrough extends Newtype[Boolean, Pure]
 
 
   /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
@@ -540,7 +539,7 @@ object PlanQuota:
     export WindowStatus.Kind
     export Reading.{UsedPct as PercentUsed}
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends RefinedType[String, Pure]
+    object ResetsAt extends Newtype[String, Pure]
 
 
   final case class ModReport(source: ModReport.Source, rateLimits: List[ModWindow])
@@ -549,7 +548,7 @@ object PlanQuota:
 
   object ModReport:
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
 
 
   final case class GuardAnswer(allow: GuardAnswer.Allow, reason: Option[GuardAnswer.Reason] = None, resetsAt: Option[GuardAnswer.ResetsAt] = None)
@@ -558,8 +557,8 @@ object PlanQuota:
 
   object GuardAnswer:
     type Allow = Allow.T
-    object Allow extends RefinedType[Boolean, Pure]
+    object Allow extends Newtype[Boolean, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends RefinedType[String, Pure]
+    object ResetsAt extends Newtype[String, Pure]

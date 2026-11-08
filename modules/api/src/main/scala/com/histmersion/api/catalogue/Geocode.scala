@@ -5,7 +5,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.{LatinFold, WireEnum}
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Citekey
@@ -17,19 +16,19 @@ import com.histmersion.api.library.Citekey
 object Geocode:
   object TimeRank:
     type Class = Class.T
-    object Class extends RefinedType[Int, Pure]
+    object Class extends Newtype[Int, Pure]
   object Placeholder:
     type Min = Min.T
-    object Min extends RefinedType[Int, Pure]
+    object Min extends Newtype[Int, Pure]
   object Compass:
     type Fraction = Fraction.T
-    object Fraction extends RefinedType[Double, Pure]
+    object Fraction extends Newtype[Double, Pure]
   type DistanceKm = DistanceKm.T
-  object DistanceKm extends RefinedType[Double, Pure]
+  object DistanceKm extends Newtype[Double, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type KindRank = KindRank.T
-  object KindRank extends RefinedType[Int, Pure]
+  object KindRank extends Newtype[Int, Pure]
   enum KindHint:
     case Site, Region, Polity, Water, Unknown
 
@@ -37,7 +36,7 @@ object Geocode:
 
   object KindHint:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     /** Lenient: it parses a model's free answer, and an unrecognised word is no hint. */
 
     def parse(s: Wire): KindHint =
@@ -98,15 +97,15 @@ object Geocode:
   object Approximation:
     object Qualifier:
       type Dropped = Dropped.T
-      object Dropped extends RefinedType[String, Pure]
+      object Dropped extends Newtype[String, Pure]
 
     object OnlyWithin:
       type Missing = Missing.T
-      object Missing extends RefinedType[String, Pure]
+      object Missing extends Newtype[String, Pure]
 
     object Rough:
       type Places = Places.T
-      object Places extends RefinedType[Int, Pure]
+      object Places extends Newtype[Int, Pure]
 
 
   final case class Attempt(name: Attempt.Name, within: Option[Attempt.Within] = None, approx: Option[Approximation] = None):
@@ -115,9 +114,9 @@ object Geocode:
   object Attempt:
 
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Within = Within.T
-    object Within extends RefinedType[String, Pure]
+    object Within extends Newtype[String, Pure]
 
   private val QualifierWords: Set[String] = Set(
     "north",
@@ -239,20 +238,20 @@ object Geocode:
 
   object Candidate:
     type Gap = Gap.T
-    object Gap extends RefinedType[Long, Pure]
+    object Gap extends Newtype[Long, Pure]
     type Span = Span.T
-    object Span extends RefinedType[Long, Pure]
+    object Span extends Newtype[Long, Pure]
 
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type ByLabel = ByLabel.T
-    object ByLabel extends RefinedType[Boolean, Pure]
+    object ByLabel extends Newtype[Boolean, Pure]
     type Dimension = Dimension.T
-    object Dimension extends RefinedType[Int, Pure]
+    object Dimension extends Newtype[Int, Pure]
     type Area = Area.T
-    object Area extends RefinedType[Double, Pure]
+    object Area extends Newtype[Double, Pure]
     type GridCell = GridCell.T
-    object GridCell extends RefinedType[Boolean, Pure]
+    object GridCell extends Newtype[Boolean, Pure]
 
   private def broad(kind: Candidate.Kind) =
     kind.value == Place.Kind.Region || kind.value == Place.Kind.Polity
@@ -312,7 +311,7 @@ object Geocode:
   object Resolution:
 
     type Asked = Asked.T
-    object Asked extends RefinedType[String, Pure]
+    object Asked extends Newtype[String, Pure]
 
   def choose(asked: Resolution.Asked, attempt: Attempt, ranked: List[Candidate], placeholderMin: Placeholder.Min): Option[Resolution] =
     ranked.headOption.map { c =>
@@ -359,12 +358,12 @@ object Geocode:
 
   object Move:
     type MinKm = MinKm.T
-    object MinKm extends RefinedType[Double, Pure]
+    object MinKm extends Newtype[Double, Pure]
 
     type Asked = Asked.T
-    object Asked extends RefinedType[String, Pure]
+    object Asked extends Newtype[String, Pure]
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.{Longitude as FromLon, Latitude as FromLat}
 
   def worthMoving(m: Move, minKm: Move.MinKm): Boolean = (m.km).value > minKm.value
@@ -385,7 +384,7 @@ object Geocode:
   object Placement:
 
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
 
   def periodOf(from: Option[Year], to: Option[Year]): Option[Period] = (from, to) match
     case (Some(a), Some(b)) => Some(Period(Year(math.min((a).value, (b).value)), Year(math.max((a).value, (b).value))))

@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A sync: the gaps it considered, and with `apply` each push made. */
@@ -21,7 +20,7 @@ object CollectionSync:
 
   /** One push of a sync: the item it became, or why it failed. */
   type Applied = Applied.T
-  object Applied extends RefinedType[Boolean, Pure]
+  object Applied extends Newtype[Boolean, Pure]
 
   final case class Push(
       citekey: Citekey,
@@ -32,9 +31,9 @@ object CollectionSync:
 
   object Push:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
 
 
 
@@ -47,6 +46,6 @@ object CollectionSync:
 
   object Request:
     type Apply = Apply.T
-    object Apply extends RefinedType[Boolean, Pure]
+    object Apply extends Newtype[Boolean, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]

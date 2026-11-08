@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergePlan(
@@ -35,23 +34,23 @@ object MergePlan:
 
 
   type FormatVersion = FormatVersion.T
-  object FormatVersion extends RefinedType[Int, Pure]
+  object FormatVersion extends Newtype[Int, Pure]
   type SchemaVersion = SchemaVersion.T
-  object SchemaVersion extends RefinedType[String, Pure]
+  object SchemaVersion extends Newtype[String, Pure]
   type AsOf = AsOf.T
-  object AsOf extends RefinedType[String, Pure]
+  object AsOf extends Newtype[String, Pure]
   type PlanHash = PlanHash.T
-  object PlanHash extends RefinedType[String, Pure]
+  object PlanHash extends Newtype[String, Pure]
   type Info = Info.T
-  object Info extends RefinedType[String, Pure]
+  object Info extends Newtype[String, Pure]
   type Problems = Problems.T
-  object Problems extends RefinedType[String, Pure]
+  object Problems extends Newtype[String, Pure]
   type ResolutionErrors = ResolutionErrors.T
-  object ResolutionErrors extends RefinedType[String, Pure]
+  object ResolutionErrors extends Newtype[String, Pure]
   type Resolved = Resolved.T
-  object Resolved extends RefinedType[Int, Pure]
+  object Resolved extends Newtype[Int, Pure]
   type Changes = Changes.T
-  object Changes extends RefinedType[Int, Pure]
+  object Changes extends Newtype[Int, Pure]
 
   final case class Request(bundle: Request.Bundle, resolutions: MergeResolutions = MergeResolutions())
       derives KindlingsCodecAsObject,

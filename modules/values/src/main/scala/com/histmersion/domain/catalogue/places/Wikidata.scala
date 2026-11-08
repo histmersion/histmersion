@@ -21,4 +21,4 @@ object Wikidata:
   /** A Wikidata item: `Q` and its number (`Q12554`). */
   type Id = Id.T
 
-  object Id extends RefinedType[String, Match["Q[1-9][0-9]*"]]
+  object Id extends Newtype[String, Match["Q[1-9][0-9]*"]]

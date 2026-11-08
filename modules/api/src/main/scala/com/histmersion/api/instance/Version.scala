@@ -5,11 +5,10 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object Version:
   type Licence = Licence.T
-  object Licence extends RefinedType[String, Pure]
+  object Licence extends Newtype[String, Pure]
 
   val name: Info.Name = Info.Name("histmersion")
   val version: Info.Version = Info.Version("0.1.0-SNAPSHOT")
@@ -21,6 +20,6 @@ object Version:
 
   object Info:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]

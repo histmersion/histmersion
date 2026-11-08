@@ -11,7 +11,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Json
 import java.util.UUID
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Sha256
 import com.histmersion.api.ByteCount
@@ -23,13 +22,13 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 object Bundle:
   type ChangedCount = ChangedCount.T
-  object ChangedCount extends RefinedType[Int, Pure]
+  object ChangedCount extends Newtype[Int, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
 
   /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
     * kebab-case (`article-version`), as the V031 trigger writes them.
@@ -53,7 +52,7 @@ object Bundle:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(k: Kind): Wire = k match
       case Source         => Wire("source")
@@ -127,7 +126,7 @@ object Bundle:
   object Alias:
     export com.histmersion.api.library.{Citekey as Value}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
   final case class Article(
       uid: UUID,
@@ -147,24 +146,24 @@ object Bundle:
   object Article:
     export com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     export com.histmersion.api.research.Article.Kind.{Wire as Kind}
     export com.histmersion.api.research.Article.{Body, SummaryText as Summary}
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Regions = Regions.T
-    object Regions extends RefinedType[String, Pure]
+    object Regions extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class ArticleAlias(alias: ArticleAlias.Alias, articleUid: UUID, createdAt: ArticleAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object ArticleAlias:
     export com.histmersion.api.research.ReviewGoal.{Slug as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
   final case class ArticleVersion(
       uid: UUID,
@@ -179,14 +178,14 @@ object Bundle:
 
   object ArticleVersion:
     type BodySha256 = BodySha256.T
-    object BodySha256 extends RefinedType[String, Pure]
+    object BodySha256 extends Newtype[String, Pure]
     export com.histmersion.api.research.Article.{SummaryText as Summary}
     type VersionOf = VersionOf.T
-    object VersionOf extends RefinedType[String, Pure]
+    object VersionOf extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class Assessment(
       sourceUid: UUID,
@@ -200,14 +199,14 @@ object Bundle:
 
   object Assessment:
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends RefinedType[String, Pure]
+    object CheckedAt extends Newtype[String, Pure]
     type Retracted = Retracted.T
-    object Retracted extends RefinedType[Boolean, Pure]
+    object Retracted extends Newtype[Boolean, Pure]
     export com.histmersion.api.library.Acquire.{CitedByCount as CitedBy}
     type Influential = Influential.T
-    object Influential extends RefinedType[Int, Pure]
+    object Influential extends Newtype[Int, Pure]
     type Verdict = Verdict.T
-    object Verdict extends RefinedType[String, Pure]
+    object Verdict extends Newtype[String, Pure]
 
   final case class Asset(
       uid: UUID,
@@ -230,31 +229,31 @@ object Bundle:
 
   object Asset:
     type Extension = Extension.T
-    object Extension extends RefinedType[String, Pure]
+    object Extension extends Newtype[String, Pure]
     type FileName = FileName.T
-    object FileName extends RefinedType[String, Pure]
+    object FileName extends Newtype[String, Pure]
     type MimeText = MimeText.T
-    object MimeText extends RefinedType[String, Pure]
+    object MimeText extends Newtype[String, Pure]
     type Uid = Uid.T
-    object Uid extends RefinedType[String, Pure]
+    object Uid extends Newtype[String, Pure]
     type Variant = Variant.T
-    object Variant extends RefinedType[String, Pure]
+    object Variant extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Mime = MimeText
     val Mime: MimeText.type = MimeText
     export com.histmersion.api.media.ImageSize.{Width, Height}
     export com.histmersion.api.media.AssetKind.{Wire as Kind}
     type Caption = Caption.T
-    object Caption extends RefinedType[String, Pure]
+    object Caption extends Newtype[String, Pure]
     type License = License.T
-    object License extends RefinedType[String, Pure]
+    object License extends Newtype[String, Pure]
     type Geom = Geom.T
-    object Geom extends RefinedType[String, Pure]
+    object Geom extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class AssetLink(
       uid: UUID,
@@ -273,17 +272,17 @@ object Bundle:
   object AssetLink:
     export com.histmersion.api.media.AssetRelation.{Wire as Relation}
     type TargetType = TargetType.T
-    object TargetType extends RefinedType[String, Pure]
+    object TargetType extends Newtype[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends RefinedType[String, Pure]
+    object TargetId extends Newtype[String, Pure]
     type Xywh = Xywh.T
-    object Xywh extends RefinedType[String, Pure]
+    object Xywh extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class Attestation(
       uid: UUID,
@@ -310,43 +309,43 @@ object Bundle:
 
   object Attestation:
     type TargetType = TargetType.T
-    object TargetType extends RefinedType[String, Pure]
+    object TargetType extends Newtype[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends RefinedType[String, Pure]
+    object TargetId extends Newtype[String, Pure]
     type Quote = Quote.T
-    object Quote extends RefinedType[String, Pure]
+    object Quote extends Newtype[String, Pure]
     type Prefix = Prefix.T
-    object Prefix extends RefinedType[String, Pure]
+    object Prefix extends Newtype[String, Pure]
     type Suffix = Suffix.T
-    object Suffix extends RefinedType[String, Pure]
+    object Suffix extends Newtype[String, Pure]
     type CharStart = CharStart.T
-    object CharStart extends RefinedType[Int, Pure]
+    object CharStart extends Newtype[Int, Pure]
     type CharEnd = CharEnd.T
-    object CharEnd extends RefinedType[Int, Pure]
+    object CharEnd extends Newtype[Int, Pure]
     type ChunkOrd = ChunkOrd.T
-    object ChunkOrd extends RefinedType[Int, Pure]
+    object ChunkOrd extends Newtype[Int, Pure]
     type Page = Page.T
-    object Page extends RefinedType[String, Pure]
+    object Page extends Newtype[String, Pure]
     type Canvas = Canvas.T
-    object Canvas extends RefinedType[String, Pure]
+    object Canvas extends Newtype[String, Pure]
     type Xywh = Xywh.T
-    object Xywh extends RefinedType[String, Pure]
+    object Xywh extends Newtype[String, Pure]
     type CtsUrn = CtsUrn.T
-    object CtsUrn extends RefinedType[String, Pure]
+    object CtsUrn extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class Blobs(count: Blobs.Count, bytes: ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Blobs:
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
 
 
   final case class Correction(
@@ -366,26 +365,26 @@ object Bundle:
 
   object Correction:
     type TargetKind = TargetKind.T
-    object TargetKind extends RefinedType[String, Pure]
+    object TargetKind extends Newtype[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends RefinedType[String, Pure]
+    object TargetId extends Newtype[String, Pure]
     type Field = Field.T
-    object Field extends RefinedType[String, Pure]
+    object Field extends Newtype[String, Pure]
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
     type Upstream = Upstream.T
-    object Upstream extends RefinedType[String, Pure]
+    object Upstream extends Newtype[String, Pure]
     type UpstreamValue = UpstreamValue.T
-    object UpstreamValue extends RefinedType[String, Pure]
+    object UpstreamValue extends Newtype[String, Pure]
     type UpstreamNow = UpstreamNow.T
-    object UpstreamNow extends RefinedType[String, Pure]
+    object UpstreamNow extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.EventCorrection.Status
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends RefinedType[String, Pure]
+    object CheckedAt extends Newtype[String, Pure]
 
   final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives KindlingsCodecAsObject
 
@@ -430,48 +429,48 @@ object Bundle:
   object Event:
     export com.histmersion.api.catalogue.Event.Id
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type NotBefore = NotBefore.T
-    object NotBefore extends RefinedType[Long, Pure]
+    object NotBefore extends Newtype[Long, Pure]
     type BeginBy = BeginBy.T
-    object BeginBy extends RefinedType[Long, Pure]
+    object BeginBy extends Newtype[Long, Pure]
     type EndFrom = EndFrom.T
-    object EndFrom extends RefinedType[Long, Pure]
+    object EndFrom extends Newtype[Long, Pure]
     type NotAfter = NotAfter.T
-    object NotAfter extends RefinedType[Long, Pure]
+    object NotAfter extends Newtype[Long, Pure]
     export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
     type Geom = Geom.T
-    object Geom extends RefinedType[String, Pure]
+    object Geom extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.Place.{Id as PlaceId}
     type Description = Description.T
-    object Description extends RefinedType[String, Pure]
+    object Description extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
     type Scale = Scale.T
-    object Scale extends RefinedType[String, Pure]
+    object Scale extends Newtype[String, Pure]
     type Catalogue = Catalogue.T
-    object Catalogue extends RefinedType[String, Pure]
+    object Catalogue extends Newtype[String, Pure]
     type Names = Names.T
-    object Names extends RefinedType[String, Pure]
+    object Names extends Newtype[String, Pure]
     type Wikidata = Wikidata.T
-    object Wikidata extends RefinedType[String, Pure]
+    object Wikidata extends Newtype[String, Pure]
     type Central = Central.T
-    object Central extends RefinedType[Long, Pure]
+    object Central extends Newtype[Long, Pure]
     type PlusMinus = PlusMinus.T
-    object PlusMinus extends RefinedType[Long, Pure]
+    object PlusMinus extends Newtype[Long, Pure]
     type DatingMethod = DatingMethod.T
-    object DatingMethod extends RefinedType[String, Pure]
+    object DatingMethod extends Newtype[String, Pure]
 
   final case class EventAlias(alias: EventAlias.Alias, eventUid: UUID, createdAt: EventAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object EventAlias:
     export com.histmersion.api.catalogue.Event.{Id as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
   final case class EventCandidate(
       eventUid: UUID,
@@ -487,15 +486,15 @@ object Bundle:
 
   object EventCandidate:
     type Score = Score.T
-    object Score extends RefinedType[Double, Pure]
+    object Score extends Newtype[Double, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Findings = Findings.T
-    object Findings extends RefinedType[String, Pure]
+    object Findings extends Newtype[String, Pure]
     type Reasons = Reasons.T
-    object Reasons extends RefinedType[String, Pure]
+    object Reasons extends Newtype[String, Pure]
     type ComputedAt = ComputedAt.T
-    object ComputedAt extends RefinedType[String, Pure]
+    object ComputedAt extends Newtype[String, Pure]
 
   final case class EventCatalogue(
       eventUid: UUID,
@@ -520,38 +519,38 @@ object Bundle:
 
   object EventCatalogue:
     type Provider = Provider.T
-    object Provider extends RefinedType[String, Pure]
+    object Provider extends Newtype[String, Pure]
     type ProviderId = ProviderId.T
-    object ProviderId extends RefinedType[String, Pure]
+    object ProviderId extends Newtype[String, Pure]
     type Url = Url.T
-    object Url extends RefinedType[String, Pure]
+    object Url extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type NotBefore = NotBefore.T
-    object NotBefore extends RefinedType[Long, Pure]
+    object NotBefore extends Newtype[Long, Pure]
     type BeginBy = BeginBy.T
-    object BeginBy extends RefinedType[Long, Pure]
+    object BeginBy extends Newtype[Long, Pure]
     type EndFrom = EndFrom.T
-    object EndFrom extends RefinedType[Long, Pure]
+    object EndFrom extends Newtype[Long, Pure]
     type NotAfter = NotAfter.T
-    object NotAfter extends RefinedType[Long, Pure]
+    object NotAfter extends Newtype[Long, Pure]
     type Vei = Vei.T
-    object Vei extends RefinedType[Int, Pure]
+    object Vei extends Newtype[Int, Pure]
     type Magnitude = Magnitude.T
-    object Magnitude extends RefinedType[Double, Pure]
+    object Magnitude extends Newtype[Double, Pure]
     type Deaths = Deaths.T
-    object Deaths extends RefinedType[Long, Pure]
+    object Deaths extends Newtype[Long, Pure]
     export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
     type RetrievedAt = RetrievedAt.T
-    object RetrievedAt extends RefinedType[String, Pure]
+    object RetrievedAt extends Newtype[String, Pure]
 
   final case class EventCheck(eventUid: UUID, checkedAt: EventCheck.CheckedAt) derives KindlingsCodecAsObject
 
   object EventCheck:
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends RefinedType[String, Pure]
+    object CheckedAt extends Newtype[String, Pure]
 
   final case class EventDating(
       citekey: Citekey,
@@ -566,17 +565,17 @@ object Bundle:
 
   object EventDating:
     type NotBefore = NotBefore.T
-    object NotBefore extends RefinedType[Long, Pure]
+    object NotBefore extends Newtype[Long, Pure]
     type BeginBy = BeginBy.T
-    object BeginBy extends RefinedType[Long, Pure]
+    object BeginBy extends Newtype[Long, Pure]
     type EndFrom = EndFrom.T
-    object EndFrom extends RefinedType[Long, Pure]
+    object EndFrom extends Newtype[Long, Pure]
     type NotAfter = NotAfter.T
-    object NotAfter extends RefinedType[Long, Pure]
+    object NotAfter extends Newtype[Long, Pure]
     type Method = Method.T
-    object Method extends RefinedType[String, Pure]
+    object Method extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
 
   final case class EventEdge(
       dstUid: UUID,
@@ -588,18 +587,18 @@ object Bundle:
 
   object EventEdge:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
 
   final case class EventParticipant(actor: EventParticipant.Actor, role: EventParticipant.Role, citekey: Option[Citekey], sourceUid: Option[UUID])
       derives KindlingsCodecAsObject
 
   object EventParticipant:
     type Actor = Actor.T
-    object Actor extends RefinedType[String, Pure]
+    object Actor extends Newtype[String, Pure]
     type Role = Role.T
-    object Role extends RefinedType[String, Pure]
+    object Role extends Newtype[String, Pure]
 
   object EventSets:
 
@@ -618,9 +617,9 @@ object Bundle:
 
   object FileInfo:
     type Path = Path.T
-    object Path extends RefinedType[String, Pure]
+    object Path extends Newtype[String, Pure]
     type Lines = Lines.T
-    object Lines extends RefinedType[Int, Pure]
+    object Lines extends Newtype[Int, Pure]
 
 
   object Files:
@@ -684,19 +683,19 @@ object Bundle:
   object Finding:
     export com.histmersion.api.library.Finding.Id
     type Claim = Claim.T
-    object Claim extends RefinedType[String, Pure]
+    object Claim extends Newtype[String, Pure]
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
     type PeriodName = PeriodName.T
-    object PeriodName extends RefinedType[String, Pure]
+    object PeriodName extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Significance = Significance.T
-    object Significance extends RefinedType[String, Pure]
+    object Significance extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class Goal(
       uid: UUID,
@@ -723,31 +722,31 @@ object Bundle:
   object Goal:
     export com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     export com.histmersion.api.automation.Goal.{StatusValue as Status}
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Regions = Regions.T
-    object Regions extends RefinedType[String, Pure]
+    object Regions extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
     type PlanApprovedAt = PlanApprovedAt.T
-    object PlanApprovedAt extends RefinedType[String, Pure]
+    object PlanApprovedAt extends Newtype[String, Pure]
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends RefinedType[Double, Pure]
+    object BudgetUsd extends Newtype[Double, Pure]
 
   final case class GoalAlias(alias: GoalAlias.Alias, goalUid: UUID, createdAt: GoalAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object GoalAlias:
     export com.histmersion.api.research.ReviewGoal.{Slug as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
   final case class GoalLink(
       kind: GoalLink.Kind,
@@ -760,11 +759,11 @@ object Bundle:
   object GoalLink:
     export com.histmersion.api.automation.Goal.LinkKind.{Wire as Kind}
     type Ref = Ref.T
-    object Ref extends RefinedType[String, Pure]
+    object Ref extends Newtype[String, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
   final case class GoalSchedule(kind: GoalSchedule.Kind, cron: GoalSchedule.Cron, enabled: GoalSchedule.Enabled, budgetUsd: Option[GoalSchedule.BudgetUsd])
       derives KindlingsCodecAsObject
@@ -772,11 +771,11 @@ object Bundle:
   object GoalSchedule:
     export com.histmersion.api.automation.ScheduleKind.{Wire as Kind}
     type Cron = Cron.T
-    object Cron extends RefinedType[String, Pure]
+    object Cron extends Newtype[String, Pure]
     type Enabled = Enabled.T
-    object Enabled extends RefinedType[Boolean, Pure]
+    object Enabled extends Newtype[Boolean, Pure]
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends RefinedType[Double, Pure]
+    object BudgetUsd extends Newtype[Double, Pure]
 
   final case class ImportResult(
       bundleId: UUID,
@@ -798,17 +797,17 @@ object Bundle:
   object ImportResult:
 
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type Applied = Applied.T
-    object Applied extends RefinedType[Boolean, Pure]
+    object Applied extends Newtype[Boolean, Pure]
     type Blobs = Blobs.T
-    object Blobs extends RefinedType[Int, Pure]
+    object Blobs extends Newtype[Int, Pure]
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]
     type Conflicts = Conflicts.T
-    object Conflicts extends RefinedType[String, Pure]
+    object Conflicts extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     export MergePlan.PlanHash
 
 
@@ -816,7 +815,7 @@ object Bundle:
 
   object Instance:
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
 
   final case class KindCounts(
@@ -836,21 +835,21 @@ object Bundle:
   object KindCounts:
 
     type Inserted = Inserted.T
-    object Inserted extends RefinedType[Int, Pure]
+    object Inserted extends Newtype[Int, Pure]
     type Updated = Updated.T
-    object Updated extends RefinedType[Int, Pure]
+    object Updated extends Newtype[Int, Pure]
     type Unchanged = Unchanged.T
-    object Unchanged extends RefinedType[Int, Pure]
+    object Unchanged extends Newtype[Int, Pure]
     type KeptLocal = KeptLocal.T
-    object KeptLocal extends RefinedType[Int, Pure]
+    object KeptLocal extends Newtype[Int, Pure]
     type Conflicts = Conflicts.T
-    object Conflicts extends RefinedType[Int, Pure]
+    object Conflicts extends Newtype[Int, Pure]
     type Deleted = Deleted.T
-    object Deleted extends RefinedType[Int, Pure]
+    object Deleted extends Newtype[Int, Pure]
     type SkippedDeleted = SkippedDeleted.T
-    object SkippedDeleted extends RefinedType[Int, Pure]
+    object SkippedDeleted extends Newtype[Int, Pure]
     type Held = Held.T
-    object Held extends RefinedType[Int, Pure]
+    object Held extends Newtype[Int, Pure]
 
 
   final case class Manifest(
@@ -869,15 +868,15 @@ object Bundle:
 
   object Manifest:
     type Format = Format.T
-    object Format extends RefinedType[String, Pure]
+    object Format extends Newtype[String, Pure]
     type FormatVersion = FormatVersion.T
-    object FormatVersion extends RefinedType[Int, Pure]
+    object FormatVersion extends Newtype[Int, Pure]
     type SchemaVersion = SchemaVersion.T
-    object SchemaVersion extends RefinedType[String, Pure]
+    object SchemaVersion extends Newtype[String, Pure]
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
     type AsOf = AsOf.T
-    object AsOf extends RefinedType[String, Pure]
+    object AsOf extends Newtype[String, Pure]
 
 
   final case class Period(
@@ -895,19 +894,19 @@ object Bundle:
 
   object Period:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Authority = Authority.T
-    object Authority extends RefinedType[String, Pure]
+    object Authority extends Newtype[String, Pure]
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
     type ParentId = ParentId.T
-    object ParentId extends RefinedType[String, Pure]
+    object ParentId extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class Place(
       uid: UUID,
@@ -930,54 +929,54 @@ object Bundle:
   object Place:
     export com.histmersion.api.catalogue.Place.Id
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.Place.Kind.{Wire as Kind}
     type Geom = Geom.T
-    object Geom extends RefinedType[String, Pure]
+    object Geom extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   final case class PlaceAlias(alias: PlaceAlias.Alias, placeUid: UUID, createdAt: PlaceAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object PlaceAlias:
     export com.histmersion.api.catalogue.Place.{Id as Alias}
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
   final case class PlaceLink(scheme: PlaceLink.Scheme, externalId: PlaceLink.ExternalId, relation: PlaceLink.Relation) derives KindlingsCodecAsObject
 
   object PlaceLink:
     export com.histmersion.api.catalogue.LinkScheme.{Wire as Scheme}
     type ExternalId = ExternalId.T
-    object ExternalId extends RefinedType[String, Pure]
+    object ExternalId extends Newtype[String, Pure]
     type Relation = Relation.T
-    object Relation extends RefinedType[String, Pure]
+    object Relation extends Newtype[String, Pure]
 
   final case class PlaceName(name: PlaceName.Name, lang: Option[PlaceName.Lang], period: Option[Range]) derives KindlingsCodecAsObject
 
   object PlaceName:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Lang = Lang.T
-    object Lang extends RefinedType[String, Pure]
+    object Lang extends Newtype[String, Pure]
 
   final case class PlaceRelation(parentId: PlaceRelation.ParentId, kind: PlaceRelation.Kind, period: Option[Range]) derives KindlingsCodecAsObject
 
   object PlaceRelation:
     export com.histmersion.api.catalogue.Place.{Id as ParentId}
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
 
   final case class PlaceType(typeLabel: PlaceType.TypeLabel, period: Option[Range], citekey: Option[Citekey])
       derives KindlingsCodecAsObject
 
   object PlaceType:
     type TypeLabel = TypeLabel.T
-    object TypeLabel extends RefinedType[String, Pure]
+    object TypeLabel extends Newtype[String, Pure]
 
   final case class QueueItem(
       uid: UUID,
@@ -996,21 +995,21 @@ object Bundle:
   object QueueItem:
     export com.histmersion.api.automation.Queue.{Wire as List}
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Topic = Topic.T
-    object Topic extends RefinedType[String, Pure]
+    object Topic extends Newtype[String, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type DoneAt = DoneAt.T
-    object DoneAt extends RefinedType[String, Pure]
+    object DoneAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
 
   /** Both bounds inclusive: Postgres keeps an `int8range` as `[lower, upper)`, so `upper − 1` is applied on the way out
     * and undone on the way in.
@@ -1023,13 +1022,13 @@ object Bundle:
 
   object Reference:
     type Places = Places.T
-    object Places extends RefinedType[Int, Pure]
+    object Places extends Newtype[Int, Pure]
     type PlacesDigest = PlacesDigest.T
-    object PlacesDigest extends RefinedType[String, Pure]
+    object PlacesDigest extends Newtype[String, Pure]
     type Periods = Periods.T
-    object Periods extends RefinedType[Int, Pure]
+    object Periods extends Newtype[Int, Pure]
     type PeriodsDigest = PeriodsDigest.T
-    object PeriodsDigest extends RefinedType[String, Pure]
+    object PeriodsDigest extends Newtype[String, Pure]
 
 
   final case class SiteType(placeId: SiteType.PlaceId, siteType: Option[SiteType.Value], checkedAt: Option[SiteType.CheckedAt])
@@ -1038,9 +1037,9 @@ object Bundle:
   object SiteType:
     export com.histmersion.api.catalogue.Place.{Id as PlaceId}
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends RefinedType[String, Pure]
+    object CheckedAt extends Newtype[String, Pure]
 
   final case class Source(
       uid: UUID,
@@ -1073,34 +1072,34 @@ object Bundle:
 
   object Source:
     type Topics = Topics.T
-    object Topics extends RefinedType[String, Pure]
+    object Topics extends Newtype[String, Pure]
     type Regions = Regions.T
-    object Regions extends RefinedType[String, Pure]
+    object Regions extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type Summary = Summary.T
-    object Summary extends RefinedType[String, Pure]
+    object Summary extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type Provenance = Provenance.T
-    object Provenance extends RefinedType[String, Pure]
+    object Provenance extends Newtype[String, Pure]
     export com.histmersion.api.library.Acquire.CitedByCount
     type InfluentialCitations = InfluentialCitations.T
-    object InfluentialCitations extends RefinedType[Int, Pure]
+    object InfluentialCitations extends Newtype[Int, Pure]
     type AddedDate = AddedDate.T
-    object AddedDate extends RefinedType[String, Pure]
+    object AddedDate extends Newtype[String, Pure]
     type BodySha256 = BodySha256.T
-    object BodySha256 extends RefinedType[String, Pure]
+    object BodySha256 extends Newtype[String, Pure]
     type OriginalSha256 = OriginalSha256.T
-    object OriginalSha256 extends RefinedType[String, Pure]
+    object OriginalSha256 extends Newtype[String, Pure]
     type OriginalExt = OriginalExt.T
-    object OriginalExt extends RefinedType[String, Pure]
+    object OriginalExt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
-    object Rev extends RefinedType[String, Pure]
+    object Rev extends Newtype[String, Pure]
     type Isbns = Isbns.T
-    object Isbns extends RefinedType[String, Pure]
+    object Isbns extends Newtype[String, Pure]
 
   final case class Tombstone(
       uid: UUID,
@@ -1111,13 +1110,13 @@ object Bundle:
 
   object Tombstone:
     type DeletedAt = DeletedAt.T
-    object DeletedAt extends RefinedType[String, Pure]
+    object DeletedAt extends Newtype[String, Pure]
 
   final case class UnresolvedEdge(srcUid: UUID, dst: UnresolvedEdge.Dst, kind: UnresolvedEdge.Kind) derives KindlingsCodecAsObject
 
   object UnresolvedEdge:
     type Dst = Dst.T
-    object Dst extends RefinedType[String, Pure]
+    object Dst extends Newtype[String, Pure]
     export com.histmersion.api.library.Edge.Kind.{Wire as Kind}
 
   final case class Upload(sha256: Sha256, bytes: ByteCount, manifest: Option[Manifest], problems: List[Upload.Problems])
@@ -1126,7 +1125,7 @@ object Bundle:
 
   object Upload:
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]
 
 
   final case class VerifyResult(
@@ -1139,8 +1138,8 @@ object Bundle:
 
   object VerifyResult:
     type Ok = Ok.T
-    object Ok extends RefinedType[Boolean, Pure]
+    object Ok extends Newtype[Boolean, Pure]
     type BlobsChecked = BlobsChecked.T
-    object BlobsChecked extends RefinedType[Int, Pure]
+    object BlobsChecked extends Newtype[Int, Pure]
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]

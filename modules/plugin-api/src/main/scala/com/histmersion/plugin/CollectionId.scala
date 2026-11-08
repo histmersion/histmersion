@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type CollectionId = CollectionId.T
 
-object CollectionId extends RefinedType[String, Pure]
+object CollectionId extends Newtype[String, Pure]

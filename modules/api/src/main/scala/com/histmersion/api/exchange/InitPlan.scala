@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
 
@@ -24,13 +23,13 @@ object InitPlan:
   /** What an init job imports, in its detail. */
 
   type Gazetteer = Gazetteer.T
-  object Gazetteer extends RefinedType[Boolean, Pure]
+  object Gazetteer extends Newtype[Boolean, Pure]
   type PeriodPresets = PeriodPresets.T
-  object PeriodPresets extends RefinedType[Boolean, Pure]
+  object PeriodPresets extends Newtype[Boolean, Pure]
   type Fetch = Fetch.T
-  object Fetch extends RefinedType[String, Pure]
+  object Fetch extends Newtype[String, Pure]
   type Check = Check.T
-  object Check extends RefinedType[Boolean, Pure]
+  object Check extends Newtype[Boolean, Pure]
 
   val Detail: JobDetail.Field[Option[InitPlan]] =
     new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("init"), None)

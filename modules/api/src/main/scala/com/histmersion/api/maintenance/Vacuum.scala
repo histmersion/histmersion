@@ -11,14 +11,13 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 object Vacuum:
   type DeadRows = DeadRows.T
-  object DeadRows extends RefinedType[Long, Pure]
+  object DeadRows extends Newtype[Long, Pure]
   type Table = Table.T
-  object Table extends RefinedType[String, Pure]
+  object Table extends Newtype[String, Pure]
 
 
   val JobKind = MaintenanceJobKinds.Vacuum.kind.value
@@ -63,9 +62,9 @@ object Vacuum:
   final case class Request(analyze: Request.Analyze = Request.Analyze(false), tables: List[Request.Tables] = Nil)
   object Request:
     type Analyze = Analyze.T
-    object Analyze extends RefinedType[Boolean, Pure]
+    object Analyze extends Newtype[Boolean, Pure]
     type Tables = Tables.T
-    object Tables extends RefinedType[String, Pure]
+    object Tables extends Newtype[String, Pure]
 
     given Schema[Request] = KindlingsSchema
       .derived[Request]

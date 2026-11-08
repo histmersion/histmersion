@@ -7,12 +7,11 @@ import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 object Articles:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
 
   def heading(body: Article.Body): Option[Article.Heading] =

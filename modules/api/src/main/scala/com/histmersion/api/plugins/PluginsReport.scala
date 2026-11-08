@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class PluginsReport(
@@ -15,10 +14,10 @@ final case class PluginsReport(
     set: Option[PluginSet] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def ok: Boolean = (plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire))
+  def ok: Boolean = (plugins.forall(p => p.state.value != PluginState.Failed.wire.value && p.state.value != PluginState.Refused.wire.value))
 
 object PluginsReport:
 
   export PluginDescription.SpiVersion
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]

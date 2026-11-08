@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 
@@ -26,7 +25,7 @@ final case class MergeApplyJob(
       KindlingsSchema, com.histmersion.api.json.Schema
 object MergeApplyJob:
   type InterruptedMessage = InterruptedMessage.T
-  object InterruptedMessage extends RefinedType[String, Pure]
+  object InterruptedMessage extends Newtype[String, Pure]
 
 
   type InterruptedText = InterruptedTextValue
@@ -43,9 +42,9 @@ object MergeApplyJob:
   export com.histmersion.api.exchange.Bundle.{Name as Bundle}
   export MergePlan.PlanHash
   type ElapsedMs = ElapsedMs.T
-  object ElapsedMs extends RefinedType[Long, Pure]
+  object ElapsedMs extends Newtype[Long, Pure]
   type Error = Error.T
-  object Error extends RefinedType[String, Pure]
+  object Error extends Newtype[String, Pure]
 
   val JobKind = ExchangeJobKinds.MergeApply.kind.value
 

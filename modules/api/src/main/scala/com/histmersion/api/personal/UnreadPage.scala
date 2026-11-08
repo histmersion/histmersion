@@ -6,7 +6,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UnreadPage(rows: List[UnreadRow], total: UnreadPage.Total, offset: UnreadPage.Offset = UnreadPage.Offset(0))
@@ -15,6 +14,6 @@ final case class UnreadPage(rows: List[UnreadRow], total: UnreadPage.Total, offs
 
 object UnreadPage:
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
   type Offset = Offset.T
-  object Offset extends RefinedType[Int, Pure]
+  object Offset extends Newtype[Int, Pure]

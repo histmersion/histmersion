@@ -1,7 +1,6 @@
 package com.histmersion
 package api.automation
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An agent run's vocabularies as the wire spells them (the api's own copies of the model's). */
@@ -24,7 +23,7 @@ object Run:
 
   object State:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

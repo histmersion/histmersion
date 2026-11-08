@@ -51,44 +51,44 @@ final case class Source(
 object Source:
   object Neighbor:
     type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AuthorSurname = AuthorSurname.T
-  object AuthorSurname extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorSurname extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EdgePart = EdgePart.T
-  object EdgePart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgePart extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EdgeRole = EdgeRole.T
-  object EdgeRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgeRole extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Export = Export.T
-  object Export extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Export extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Venue = Venue.T
-  object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Venue extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type View = View.T
-  object View extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object View extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Topics = Topics.T
-  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Topics extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedByCount extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfluentialCitations = InfluentialCitations.T
-  object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InfluentialCitations extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Provenance = Provenance.T
-  object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provenance extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CalibreId = CalibreId.T
-  object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CalibreId extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OcrMarkdown = OcrMarkdown.T
-  object OcrMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OcrMarkdown extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Notes = Notes.T
-  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Notes extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
@@ -98,7 +98,7 @@ object Source:
 
   object Status:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def fromString(s: Wire): Status =
@@ -139,32 +139,32 @@ object Source:
 
   object Candidate:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends Newtype[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
     type AbstractText = AbstractText.T
-    object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AbstractText extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsOa = IsOa.T
-    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object IsOa extends Newtype[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ArxivId = ArxivId.T
-    object ArxivId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ArxivId extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FoundBy = FoundBy.T
-    object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FoundBy extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type State = State.T
-    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object State extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FirstSeen = FirstSeen.T
-    object FirstSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FirstSeen extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LastSeen = LastSeen.T
-    object LastSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastSeen extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Delete:
     type CalibreLine = CalibreLine.T
-    object CalibreLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CalibreLine extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LogText = LogText.T
-    object LogText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LogText extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Markdown = Markdown.T
-    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     export com.histmersion.api.library.Source.{CalibreId as CalibreLineCalibreId}
 
@@ -286,19 +286,19 @@ object Source:
 
     export com.histmersion.api.library.Title
     type Applied = Applied.T
-    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Applied extends Newtype[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Aliases = Aliases.T
-    object Aliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Aliases extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Coverage = Coverage.T
-    object Coverage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Coverage extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Files = Files.T
-    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Files extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FilesFailed = FilesFailed.T
-    object FilesFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FilesFailed extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Mentions = Mentions.T
-    object Mentions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Mentions extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LogEntry = LogEntry.T
-    object LogEntry extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LogEntry extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Detail(
       citekey: Citekey,
@@ -338,14 +338,14 @@ object Source:
 
   object Graph:
     type DepthCount = DepthCount.T
-    object DepthCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DepthCount extends Newtype[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     export com.histmersion.api.library.{Citekey as Root}
     type Depth = com.histmersion.api.library.Source.Graph.DepthCount
     val Depth: _root_.com.histmersion.api.library.Source.Graph.DepthCount.type = _root_.com.histmersion.api.library.Source.Graph.DepthCount
 
   object Kinds:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     val Book = "book"
@@ -416,11 +416,11 @@ object Source:
     /** A source's match in a merge plan: the plan's Markdown lists every one but the new sources. */
 
     type Score = Score.T
-    object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Score extends Newtype[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Issue = Issue.T
-    object Issue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Issue extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Matches: PlanMatchKind[Match] =
       new com.histmersion.api.exchange.PlanMatchKind(m => PlanMatchKind.ListedResult(m.outcome != MatchOutcome.New), line)
@@ -519,11 +519,11 @@ object Source:
 
   object Ref:
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ShortAuthors = ShortAuthors.T
-    object ShortAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ShortAuthors extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ShortCite = ShortCite.T
-    object ShortCite extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ShortCite extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def surname(full: com.histmersion.api.library.AuthorName): com.histmersion.api.library.Source.AuthorSurname =
       val t = (full).value.trim
@@ -551,7 +551,7 @@ object Source:
 
   object Section:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Summary = "summary"
     val Findings = "findings"
@@ -579,7 +579,7 @@ object Source:
     */
   object Write:
     type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problem extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def findingId(citekey: Citekey, n: Finding.Ordinal): Finding.Id = Finding.Id(s"$citekey#$n")
 

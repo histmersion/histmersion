@@ -1,11 +1,10 @@
 package com.histmersion
 package api.text
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object SafeName:
   type Sanitized = Sanitized.T
-  object Sanitized extends RefinedType[String, Pure]
+  object Sanitized extends Newtype[String, Pure]
 
   /** The safe name of `raw`; `image.png` when nothing is left. */
 

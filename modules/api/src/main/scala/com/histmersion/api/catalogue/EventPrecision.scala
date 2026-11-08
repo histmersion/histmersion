@@ -3,11 +3,10 @@ package api.catalogue
 
 import com.histmersion.api.{TimeSpan, YearFmt, Years}
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object EventPrecision:
   type Uncertainty = Uncertainty.T
-  object Uncertainty extends RefinedType[Long, Pure]
+  object Uncertainty extends Newtype[Long, Pure]
 
   val Precise = "precise"
   val Approximate = "approximate"

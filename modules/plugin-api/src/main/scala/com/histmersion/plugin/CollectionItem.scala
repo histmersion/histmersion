@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One item of a [[SourceCollection]] — a book in a Calibre library, an item of archive.org — as the collection
@@ -49,22 +48,22 @@ final case class CollectionItem(
 
 object CollectionItem:
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Published = Published.T
-  object Published extends RefinedType[String, Pure]
+  object Published extends Newtype[String, Pure]
   type Publisher = Publisher.T
-  object Publisher extends RefinedType[String, Pure]
+  object Publisher extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type IdentifiersKey = IdentifiersKey.T
-  object IdentifiersKey extends RefinedType[String, Pure]
+  object IdentifiersKey extends Newtype[String, Pure]
   type IdentifiersValue = IdentifiersValue.T
-  object IdentifiersValue extends RefinedType[String, Pure]
+  object IdentifiersValue extends Newtype[String, Pure]
   type Cover = Cover.T
-  object Cover extends RefinedType[String, Pure]
+  object Cover extends Newtype[String, Pure]
   type Restricted = Restricted.T
-  object Restricted extends RefinedType[Boolean, Pure]
+  object Restricted extends Newtype[Boolean, Pure]

@@ -7,7 +7,6 @@ import com.histmersion.api.catalogue.MapTilesUiConfig
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UiConfig(
@@ -43,43 +42,43 @@ final case class UiConfig(
 
 object UiConfig:
   type Tiles = Tiles.T
-  object Tiles extends RefinedType[String, Pure]
+  object Tiles extends Newtype[String, Pure]
   type TilesMaxZoom = TilesMaxZoom.T
-  object TilesMaxZoom extends RefinedType[Int, Pure]
+  object TilesMaxZoom extends Newtype[Int, Pure]
   type MarkerRadius = MarkerRadius.T
-  object MarkerRadius extends RefinedType[Int, Pure]
+  object MarkerRadius extends Newtype[Int, Pure]
   type ViewportDebounceMs = ViewportDebounceMs.T
-  object ViewportDebounceMs extends RefinedType[Int, Pure]
+  object ViewportDebounceMs extends Newtype[Int, Pure]
   type PageSize = PageSize.T
-  object PageSize extends RefinedType[Int, Pure]
+  object PageSize extends Newtype[Int, Pure]
   type FacetSuggestions = FacetSuggestions.T
-  object FacetSuggestions extends RefinedType[Int, Pure]
+  object FacetSuggestions extends Newtype[Int, Pure]
   type TreeDepth = TreeDepth.T
-  object TreeDepth extends RefinedType[Int, Pure]
+  object TreeDepth extends Newtype[Int, Pure]
   type TreeSamples = TreeSamples.T
-  object TreeSamples extends RefinedType[Int, Pure]
+  object TreeSamples extends Newtype[Int, Pure]
   type MaxBuckets = MaxBuckets.T
-  object MaxBuckets extends RefinedType[Int, Pure]
+  object MaxBuckets extends Newtype[Int, Pure]
   type NarrowMaxWidthPx = NarrowMaxWidthPx.T
-  object NarrowMaxWidthPx extends RefinedType[Int, Pure]
+  object NarrowMaxWidthPx extends Newtype[Int, Pure]
   type NarrowMaxHeightPx = NarrowMaxHeightPx.T
-  object NarrowMaxHeightPx extends RefinedType[Int, Pure]
+  object NarrowMaxHeightPx extends Newtype[Int, Pure]
   type TabletMaxWidthPx = TabletMaxWidthPx.T
-  object TabletMaxWidthPx extends RefinedType[Int, Pure]
+  object TabletMaxWidthPx extends Newtype[Int, Pure]
   type CountersPollSeconds = CountersPollSeconds.T
-  object CountersPollSeconds extends RefinedType[Int, Pure]
+  object CountersPollSeconds extends Newtype[Int, Pure]
   type JobPollMs = JobPollMs.T
-  object JobPollMs extends RefinedType[Int, Pure]
+  object JobPollMs extends Newtype[Int, Pure]
   type WriteKeyRequired = WriteKeyRequired.T
-  object WriteKeyRequired extends RefinedType[Boolean, Pure]
+  object WriteKeyRequired extends Newtype[Boolean, Pure]
   type AgentsEnabled = AgentsEnabled.T
-  object AgentsEnabled extends RefinedType[Boolean, Pure]
+  object AgentsEnabled extends Newtype[Boolean, Pure]
   type TilesTone = TilesTone.T
-  object TilesTone extends RefinedType[String, Pure]
+  object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
-  object DocsUrl extends RefinedType[String, Pure]
+  object DocsUrl extends Newtype[String, Pure]
   export com.histmersion.api.basemap.BaseMapSource.{Wire as BaseMapSource}
   type MapLanguage = MapLanguage.T
-  object MapLanguage extends RefinedType[String, Pure]
+  object MapLanguage extends Newtype[String, Pure]
   type SetupDue = SetupDue.T
-  object SetupDue extends RefinedType[Boolean, Pure]
+  object SetupDue extends Newtype[Boolean, Pure]

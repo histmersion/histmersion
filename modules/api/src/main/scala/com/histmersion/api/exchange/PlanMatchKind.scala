@@ -3,7 +3,6 @@ package api.exchange
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The kind of record a merge plan's matches are of, as its owner declares it: how one is written and read, which ones
@@ -28,11 +27,11 @@ final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A =>
 
 object PlanMatchKind:
   type LineLimit = LineLimit.T
-  object LineLimit extends RefinedType[Int, Pure]
+  object LineLimit extends Newtype[Int, Pure]
   type MatchLine = MatchLine.T
-  object MatchLine extends RefinedType[String, Pure]
+  object MatchLine extends Newtype[String, Pure]
   type ListedResult = ListedResult.T
-  object ListedResult extends RefinedType[Boolean, Pure]
+  object ListedResult extends Newtype[Boolean, Pure]
   type LineResult = MatchLine
   val LineResult: MatchLine.type = MatchLine
 

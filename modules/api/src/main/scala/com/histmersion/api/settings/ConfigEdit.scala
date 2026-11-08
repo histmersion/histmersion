@@ -7,7 +7,6 @@ import com.histmersion.api.Write
 import com.histmersion.api.library.Source
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object ConfigEdit:
@@ -19,9 +18,9 @@ object ConfigEdit:
 
   object Source:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -34,11 +33,11 @@ object ConfigEdit:
   object Credential:
 
     type Rule = Rule.T
-    object Rule extends RefinedType[String, Pure]
+    object Rule extends Newtype[String, Pure]
     type Form = Form.T
-    object Form extends RefinedType[String, Pure]
+    object Form extends Newtype[String, Pure]
     type Shown = Shown.T
-    object Shown extends RefinedType[String, Pure]
+    object Shown extends Newtype[String, Pure]
 
   final case class Field(
       key: Field.Key,
@@ -59,28 +58,28 @@ object ConfigEdit:
 
   object Field:
     type LocalKey = LocalKey.T
-    object LocalKey extends RefinedType[String, Pure]
+    object LocalKey extends Newtype[String, Pure]
 
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
     export ConfigEdit.Section.{Id as Section}
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Doc = Doc.T
-    object Doc extends RefinedType[String, Pure]
+    object Doc extends Newtype[String, Pure]
     type Default = Default.T
-    object Default extends RefinedType[String, Pure]
+    object Default extends Newtype[String, Pure]
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
     type Effective = Effective.T
-    object Effective extends RefinedType[String, Pure]
+    object Effective extends Newtype[String, Pure]
     export ConfigEdit.Source.{Wire as Source}
     type EnvVar = EnvVar.T
-    object EnvVar extends RefinedType[String, Pure]
+    object EnvVar extends Newtype[String, Pure]
     type Restart = Restart.T
-    object Restart extends RefinedType[String, Pure]
+    object Restart extends Newtype[String, Pure]
     type Locked = Locked.T
-    object Locked extends RefinedType[String, Pure]
+    object Locked extends Newtype[String, Pure]
 
   final case class Section(id: Section.Id, doc: Section.Doc = Section.Doc(""), fields: List[Field] = Nil)
       derives KindlingsCodecAsObject,
@@ -88,9 +87,9 @@ object ConfigEdit:
 
   object Section:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Doc = Doc.T
-    object Doc extends RefinedType[String, Pure]
+    object Doc extends Newtype[String, Pure]
 
   final case class Page(
       file: Option[Page.File] = None,
@@ -109,20 +108,20 @@ object ConfigEdit:
 
   object Page:
     type Selector = Selector.T
-    object Selector extends RefinedType[String, Pure]
+    object Selector extends Newtype[String, Pure]
 
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type Exists = Exists.T
-    object Exists extends RefinedType[Boolean, Pure]
+    object Exists extends Newtype[Boolean, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]
     type Restartable = Restartable.T
-    object Restartable extends RefinedType[Boolean, Pure]
+    object Restartable extends Newtype[Boolean, Pure]
     type SetupDue = SetupDue.T
-    object SetupDue extends RefinedType[Boolean, Pure]
+    object SetupDue extends Newtype[Boolean, Pure]
 
 
 
@@ -131,7 +130,7 @@ object ConfigEdit:
   object Change:
     export Field.Key
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
 
   final case class Write(
       changes: List[Change],
@@ -143,11 +142,11 @@ object ConfigEdit:
 
   object Write:
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
     type LiteralConsent = LiteralConsent.T
-    object LiteralConsent extends RefinedType[Boolean, Pure]
+    object LiteralConsent extends Newtype[Boolean, Pure]
     type Reload = Reload.T
-    object Reload extends RefinedType[Boolean, Pure]
+    object Reload extends Newtype[Boolean, Pure]
 
 
 
@@ -156,7 +155,7 @@ object ConfigEdit:
   object RestartNote:
     export Field.Key
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   final case class Written(
       file: Written.File,
@@ -174,21 +173,21 @@ object ConfigEdit:
 
   object Written:
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type Changed = Changed.T
-    object Changed extends RefinedType[String, Pure]
+    object Changed extends Newtype[String, Pure]
     type Unchanged = Unchanged.T
-    object Unchanged extends RefinedType[String, Pure]
+    object Unchanged extends Newtype[String, Pure]
     type Backup = Backup.T
-    object Backup extends RefinedType[String, Pure]
+    object Backup extends Newtype[String, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
     type Created = Created.T
-    object Created extends RefinedType[Boolean, Pure]
+    object Created extends Newtype[Boolean, Pure]
     type Warnings = Warnings.T
-    object Warnings extends RefinedType[String, Pure]
+    object Warnings extends Newtype[String, Pure]
     type Restartable = Restartable.T
-    object Restartable extends RefinedType[Boolean, Pure]
+    object Restartable extends Newtype[Boolean, Pure]
 
 
 
@@ -196,9 +195,9 @@ object ConfigEdit:
 
   object Restart:
     type Accepted = Accepted.T
-    object Accepted extends RefinedType[Boolean, Pure]
+    object Accepted extends Newtype[Boolean, Pure]
     type Message = Message.T
-    object Message extends RefinedType[String, Pure]
+    object Message extends Newtype[String, Pure]
 
 
 

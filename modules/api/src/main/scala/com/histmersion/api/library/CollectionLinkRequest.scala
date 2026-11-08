@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Link source `citekey` to item `id` of a collection (the collection itself is not changed). */
@@ -17,4 +16,4 @@ final case class CollectionLinkRequest(
 
 object CollectionLinkRequest:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]

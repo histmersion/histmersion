@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The refresh downloads ~30 MB and rewrites ~60 000 rows, far longer than one HTTP request may take, so `POST` starts
@@ -21,10 +20,10 @@ final case class RetractionsUpdate(
 
 object RetractionsUpdate:
   type Rows = Rows.T
-  object Rows extends RefinedType[Int, Pure]
+  object Rows extends Newtype[Int, Pure]
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
   type Running = Running.T
-  object Running extends RefinedType[Boolean, Pure]
+  object Running extends Newtype[Boolean, Pure]
   type Error = Error.T
-  object Error extends RefinedType[String, Pure]
+  object Error extends Newtype[String, Pure]

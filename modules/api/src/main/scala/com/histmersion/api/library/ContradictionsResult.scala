@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ContradictionsResult(rows: List[ContradictionRow], total: ContradictionsResult.Total)
@@ -14,4 +13,4 @@ final case class ContradictionsResult(rows: List[ContradictionRow], total: Contr
 
 object ContradictionsResult:
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]

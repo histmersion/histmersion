@@ -4,7 +4,6 @@ import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import com.histmersion.api.given
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Goal
@@ -12,13 +11,13 @@ import com.histmersion.api.automation.Goal
 /** A DOI contains a `/`, so identifiers travel as `id=` query parameters rather than in the path. */
 object AcquireApi:
   type Filter = Filter.T
-  object Filter extends RefinedType[String, Pure]
+  object Filter extends Newtype[String, Pure]
   type Identifier = Identifier.T
-  object Identifier extends RefinedType[String, Pure]
+  object Identifier extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
 
 
   private lazy val base = endpoint.in("api" / "acquire").errorOut(jsonBody[Api.Error])

@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One place of a gazetteer dataset, in the shape the host stores it.
@@ -43,14 +42,14 @@ final case class GazetteerPlace(
 
 object GazetteerPlace:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Geometry = Geometry.T
-  object Geometry extends RefinedType[String, Pure]
+  object Geometry extends Newtype[String, Pure]
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
   type Properties = Properties.T
-  object Properties extends RefinedType[String, Pure]
+  object Properties extends Newtype[String, Pure]

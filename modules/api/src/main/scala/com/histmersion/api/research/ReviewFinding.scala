@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReviewFinding(
@@ -29,30 +28,30 @@ final case class ReviewFinding(
 
 object ReviewFinding:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Reviewer = Reviewer.T
-  object Reviewer extends RefinedType[String, Pure]:
+  object Reviewer extends Newtype[String, Pure]:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   type Severity = Severity.T
-  object Severity extends RefinedType[String, Pure]
+  object Severity extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Where = Where.T
-  object Where extends RefinedType[String, Pure]
+  object Where extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Fix = Fix.T
-  object Fix extends RefinedType[String, Pure]
+  object Fix extends Newtype[String, Pure]
   type Quote = Quote.T
-  object Quote extends RefinedType[String, Pure]
+  object Quote extends Newtype[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends RefinedType[String, Pure]
+  object Outcome extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   export com.histmersion.api.automation.Activity.{Actor as ClosedBy}
   export ReviewRound.{Round as ClosedRound, RunNumber as ClosedRunNumber}
   type Reopened = Reopened.T
-  object Reopened extends RefinedType[Int, Pure]
+  object Reopened extends Newtype[Int, Pure]
   type Deferred = Deferred.T
-  object Deferred extends RefinedType[Boolean, Pure]
+  object Deferred extends Newtype[Boolean, Pure]

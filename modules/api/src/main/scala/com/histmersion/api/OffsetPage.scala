@@ -2,7 +2,6 @@ package com.histmersion
 package api
 
 import sttp.tapir.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class OffsetPage(total: RowCount, offset: Offset, shown: RowCount):
@@ -13,9 +12,9 @@ final case class OffsetPage(total: RowCount, offset: Offset, shown: RowCount):
 object OffsetPage:
   type FullSetMax = FullSetMaxValue
   type FullSetMaxValue = FullSetMaxValue.T
-  object FullSetMaxValue extends RefinedType[Int, Pure]
+  object FullSetMaxValue extends Newtype[Int, Pure]
   type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends RefinedType[String, Pure]
+  object MarkdownResult extends Newtype[String, Pure]
 
   val FullSetMax: FullSetMax = FullSetMaxValue(500)
 

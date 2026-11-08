@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class WorkRef(
@@ -34,24 +33,24 @@ final case class WorkRef(
 
 object WorkRef:
   type OpenalexId = OpenalexId.T
-  object OpenalexId extends RefinedType[String, Pure]
+  object OpenalexId extends Newtype[String, Pure]
   export Source.Candidate.ArxivId
   export Source.CitedByCount
   export Source.Candidate.IsOa
   type OaStatus = OaStatus.T
-  object OaStatus extends RefinedType[String, Pure]
+  object OaStatus extends Newtype[String, Pure]
   type OaUrl = OaUrl.T
-  object OaUrl extends RefinedType[String, Pure]
+  object OaUrl extends Newtype[String, Pure]
   type IsRetracted = IsRetracted.T
-  object IsRetracted extends RefinedType[Boolean, Pure]
+  object IsRetracted extends Newtype[Boolean, Pure]
   type WorkType = WorkType.T
-  object WorkType extends RefinedType[String, Pure]
+  object WorkType extends Newtype[String, Pure]
   export Source.Candidate.AbstractText
   type ReferencedWorks = ReferencedWorks.T
-  object ReferencedWorks extends RefinedType[String, Pure]
+  object ReferencedWorks extends Newtype[String, Pure]
   type InDb = InDb.T
-  object InDb extends RefinedType[Boolean, Pure]
+  object InDb extends Newtype[Boolean, Pure]
   type OaLocations = OaLocations.T
-  object OaLocations extends RefinedType[String, Pure]
+  object OaLocations extends Newtype[String, Pure]
   type OaLicence = OaLicence.T
-  object OaLicence extends RefinedType[String, Pure]
+  object OaLicence extends Newtype[String, Pure]

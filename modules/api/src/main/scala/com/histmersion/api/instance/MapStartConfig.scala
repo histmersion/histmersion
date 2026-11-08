@@ -6,7 +6,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MapStartConfig(
@@ -20,6 +19,6 @@ final case class MapStartConfig(
 
 object MapStartConfig:
   type Zoom = Zoom.T
-  object Zoom extends RefinedType[Double, Pure]
+  object Zoom extends Newtype[Double, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]

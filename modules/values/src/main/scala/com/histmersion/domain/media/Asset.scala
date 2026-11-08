@@ -9,12 +9,12 @@ object Asset:
   /** A picture's stable identity across databases (`assets.uid`). */
   type Uid = Uid.T
 
-  object Uid extends RefinedType[java.util.UUID, Pure]
+  object Uid extends Newtype[java.util.UUID, Pure]
 
   /** What a picture's link points at: the kinds of record it depicts. */
   object LinkTarget:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Event = "event"
     val Finding = "finding"

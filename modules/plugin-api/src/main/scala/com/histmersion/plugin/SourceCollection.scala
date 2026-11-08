@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A collection of sources — a local Calibre library, archive.org's texts, a folder of PDFs — that the host searches
@@ -85,46 +84,46 @@ trait SourceCollection:
 
 object SourceCollection:
   type TitleResult = TitleResult.T
-  object TitleResult extends RefinedType[String, Pure]
+  object TitleResult extends Newtype[String, Pure]
   type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends RefinedType[String, Pure]
+  object DescriptionResult extends Newtype[String, Pure]
   type ReadOnlyReasonResult = ReadOnlyReasonResult.T
-  object ReadOnlyReasonResult extends RefinedType[String, Pure]
+  object ReadOnlyReasonResult extends Newtype[String, Pure]
   type ReachResultPart1 = ReachResultPart1.T
-  object ReachResultPart1 extends RefinedType[String, Pure]
+  object ReachResultPart1 extends Newtype[String, Pure]
   type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends RefinedType[String, Pure]
+  object SearchResultPart1 extends Newtype[String, Pure]
   type ItemResultPart1 = ItemResultPart1.T
-  object ItemResultPart1 extends RefinedType[String, Pure]
+  object ItemResultPart1 extends Newtype[String, Pure]
   type AdmitsResultPart1 = AdmitsResultPart1.T
-  object AdmitsResultPart1 extends RefinedType[String, Pure]
+  object AdmitsResultPart1 extends Newtype[String, Pure]
   type FileResultPart1 = FileResultPart1.T
-  object FileResultPart1 extends RefinedType[String, Pure]
+  object FileResultPart1 extends Newtype[String, Pure]
   type FileFormat = FileFormat.T
-  object FileFormat extends RefinedType[String, Pure]
+  object FileFormat extends Newtype[String, Pure]
   type OriginalResultPart1 = OriginalResultPart1.T
-  object OriginalResultPart1 extends RefinedType[String, Pure]
+  object OriginalResultPart1 extends Newtype[String, Pure]
   type CoverResultPart1 = CoverResultPart1.T
-  object CoverResultPart1 extends RefinedType[String, Pure]
+  object CoverResultPart1 extends Newtype[String, Pure]
   type AddResultPart1 = AddResultPart1.T
-  object AddResultPart1 extends RefinedType[String, Pure]
+  object AddResultPart1 extends Newtype[String, Pure]
   type ReplaceResultPart1 = ReplaceResultPart1.T
-  object ReplaceResultPart1 extends RefinedType[String, Pure]
+  object ReplaceResultPart1 extends Newtype[String, Pure]
   type ReplaceResultPart2 = ReplaceResultPart2.T
-  object ReplaceResultPart2 extends RefinedType[String, Pure]
+  object ReplaceResultPart2 extends Newtype[String, Pure]
   type ReplaceKey = ReplaceKey.T
-  object ReplaceKey extends RefinedType[String, Pure]
+  object ReplaceKey extends Newtype[String, Pure]
   type UpdateResultPart1 = UpdateResultPart1.T
-  object UpdateResultPart1 extends RefinedType[String, Pure]
+  object UpdateResultPart1 extends Newtype[String, Pure]
   type UpdateAllResultPart1 = UpdateAllResultPart1.T
-  object UpdateAllResultPart1 extends RefinedType[String, Pure]
+  object UpdateAllResultPart1 extends Newtype[String, Pure]
   type UpdateAllApply = UpdateAllApply.T
-  object UpdateAllApply extends RefinedType[Boolean, Pure]
+  object UpdateAllApply extends Newtype[Boolean, Pure]
   type SetResultPart1 = SetResultPart1.T
-  object SetResultPart1 extends RefinedType[String, Pure]
+  object SetResultPart1 extends Newtype[String, Pure]
   type SetFieldsPart1 = SetFieldsPart1.T
-  object SetFieldsPart1 extends RefinedType[String, Pure]
+  object SetFieldsPart1 extends Newtype[String, Pure]
   type SetFieldsPart2 = SetFieldsPart2.T
-  object SetFieldsPart2 extends RefinedType[String, Pure]
+  object SetFieldsPart2 extends Newtype[String, Pure]
   type AuditResultPart1 = AuditResultPart1.T
-  object AuditResultPart1 extends RefinedType[String, Pure]
+  object AuditResultPart1 extends Newtype[String, Pure]

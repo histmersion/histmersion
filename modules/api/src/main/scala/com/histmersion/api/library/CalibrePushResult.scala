@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CalibrePushResult(citekey: Citekey, calibreId: Source.CalibreId, ok: CalibrePushResult.Ok)
@@ -14,4 +13,4 @@ final case class CalibrePushResult(citekey: Citekey, calibreId: Source.CalibreId
 
 object CalibrePushResult:
   type Ok = Ok.T
-  object Ok extends RefinedType[Boolean, Pure]
+  object Ok extends Newtype[Boolean, Pure]

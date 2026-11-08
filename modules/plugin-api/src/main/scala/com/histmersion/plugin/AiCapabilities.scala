@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a provider can do. A provider without `tools` is offered no tools (a step that needs them should not chain its
@@ -32,13 +31,13 @@ object AiCapabilities:
   val ApplyStructuredOutput: StructuredOutput.type = StructuredOutput
 
   type Tools = Tools.T
-  object Tools extends RefinedType[Boolean, Pure]
+  object Tools extends Newtype[Boolean, Pure]
   type StructuredOutput = StructuredOutput.T
-  object StructuredOutput extends RefinedType[Boolean, Pure]
+  object StructuredOutput extends Newtype[Boolean, Pure]
   type IterationMarkers = IterationMarkers.T
-  object IterationMarkers extends RefinedType[Boolean, Pure]
+  object IterationMarkers extends Newtype[Boolean, Pure]
   type VerbatimFailures = VerbatimFailures.T
-  object VerbatimFailures extends RefinedType[Boolean, Pure]
+  object VerbatimFailures extends Newtype[Boolean, Pure]
 
   def apply(tools: ApplyTools, structuredOutput: ApplyStructuredOutput): AiCapabilities =
     new AiCapabilities(tools, structuredOutput, IterationMarkers(false), VerbatimFailures(false))

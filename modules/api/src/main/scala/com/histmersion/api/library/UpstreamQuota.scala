@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UpstreamQuota(
@@ -26,26 +25,26 @@ final case class UpstreamQuota(
 
 object UpstreamQuota:
   type Upstream = Upstream.T
-  object Upstream extends RefinedType[String, Pure]
+  object Upstream extends Newtype[String, Pure]
   type Day = Day.T
-  object Day extends RefinedType[String, Pure]
+  object Day extends Newtype[String, Pure]
   type LookupTokens = LookupTokens.T
-  object LookupTokens extends RefinedType[Int, Pure]
+  object LookupTokens extends Newtype[Int, Pure]
   type SearchTokens = SearchTokens.T
-  object SearchTokens extends RefinedType[Int, Pure]
+  object SearchTokens extends Newtype[Int, Pure]
   type DailyTokens = DailyTokens.T
-  object DailyTokens extends RefinedType[Int, Pure]
+  object DailyTokens extends Newtype[Int, Pure]
   type SearchDailyTokens = SearchDailyTokens.T
-  object SearchDailyTokens extends RefinedType[Int, Pure]
+  object SearchDailyTokens extends Newtype[Int, Pure]
   type PerMinute = PerMinute.T
-  object PerMinute extends RefinedType[Int, Pure]
+  object PerMinute extends Newtype[Int, Pure]
   type BlockedUntil = BlockedUntil.T
-  object BlockedUntil extends RefinedType[String, Pure]
+  object BlockedUntil extends Newtype[String, Pure]
   type BlockedWhy = BlockedWhy.T
-  object BlockedWhy extends RefinedType[String, Pure]
+  object BlockedWhy extends Newtype[String, Pure]
   type RateLimit = RateLimit.T
-  object RateLimit extends RefinedType[Int, Pure]
+  object RateLimit extends Newtype[Int, Pure]
   type RateRemaining = RateRemaining.T
-  object RateRemaining extends RefinedType[Int, Pure]
+  object RateRemaining extends Newtype[Int, Pure]
   type ObservedAt = ObservedAt.T
-  object ObservedAt extends RefinedType[String, Pure]
+  object ObservedAt extends Newtype[String, Pure]

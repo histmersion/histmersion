@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The host's reading of licence statements, lent to a plugin that must decide on one before it states it — whom a
@@ -26,11 +25,11 @@ trait LicenceReader:
 object LicenceReader:
   /** A host that lends no reading: every statement is unknown. */
   type ReadNameName = ReadNameName.T
-  object ReadNameName extends RefinedType[String, Pure]
+  object ReadNameName extends Newtype[String, Pure]
   type ReadUrlUrl = ReadUrlUrl.T
-  object ReadUrlUrl extends RefinedType[String, Pure]
+  object ReadUrlUrl extends Newtype[String, Pure]
   type ReadFirstStatements = ReadFirstStatements.T
-  object ReadFirstStatements extends RefinedType[String, Pure]
+  object ReadFirstStatements extends Newtype[String, Pure]
 
   val Unread: LicenceReader = new LicenceReader:
     def readName(name: ReadNameName) = Licence.Read.unknown(Licence.Read.UnknownStatement((name).value))

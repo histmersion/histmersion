@@ -10,17 +10,17 @@ object Event:
   /** An event's id, a slug (`uluburun_shipwreck`). */
   type Id = Id.T
 
-  object Id extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]
+  object Id extends Newtype[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]
 
   /** An event's stable identity across renames, merges and databases (`events.uid`). */
   type Uid = Uid.T
 
-  object Uid extends RefinedType[java.util.UUID, Pure]
+  object Uid extends Newtype[java.util.UUID, Pure]
 
   /** The relations between two events: Allen's interval relations and the causal ones. */
   object EdgeKind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Before = "before"
     val Meets = "meets"
@@ -55,7 +55,7 @@ object Event:
   /** Where a candidate link between an event and a source stands. */
   object LinkStatus:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Proposed = "proposed"
     val Confirmed = "confirmed"

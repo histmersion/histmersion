@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The fields set on item `id`. */
@@ -17,6 +16,6 @@ final case class CollectionSetDone(
 
 object CollectionSetDone:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Fields = Fields.T
-  object Fields extends RefinedType[String, Pure]
+  object Fields extends Newtype[String, Pure]

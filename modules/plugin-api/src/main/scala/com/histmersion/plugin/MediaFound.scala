@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a collection with its own targets' pictures ([[MediaMatchRule.Own]]) found for a batch of targets.
@@ -34,12 +33,12 @@ final case class MediaFound(
 
 object MediaFound:
   type Read = Read.T
-  object Read extends RefinedType[Int, Pure]
+  object Read extends Newtype[Int, Pure]
   type Failed = Failed.T
-  object Failed extends RefinedType[String, Pure]
+  object Failed extends Newtype[String, Pure]
   type NotTaken = NotTaken.T
-  object NotTaken extends RefinedType[String, Pure]
+  object NotTaken extends Newtype[String, Pure]
   type CategoriesPart1 = CategoriesPart1.T
-  object CategoriesPart1 extends RefinedType[String, Pure]
+  object CategoriesPart1 extends Newtype[String, Pure]
   type CategoriesPart2 = CategoriesPart2.T
-  object CategoriesPart2 extends RefinedType[String, Pure]
+  object CategoriesPart2 extends Newtype[String, Pure]

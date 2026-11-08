@@ -8,12 +8,11 @@ import com.histmersion.api.Api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Rename:
   type ShortForm = ShortForm.T
-  object ShortForm extends RefinedType[String, Pure]
+  object ShortForm extends Newtype[String, Pure]
 
 
   def shortForms(ck: Citekey): List[ShortForm] =
@@ -30,9 +29,9 @@ object Rename:
 
   object Count:
     type Table = Table.T
-    object Table extends RefinedType[String, Pure]
+    object Table extends Newtype[String, Pure]
     type Rows = Rows.T
-    object Rows extends RefinedType[Int, Pure]
+    object Rows extends Newtype[Int, Pure]
 
 
   final case class Counts(
@@ -47,15 +46,15 @@ object Rename:
 
   object Counts:
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type Articles = Articles.T
-    object Articles extends RefinedType[String, Pure]
+    object Articles extends Newtype[String, Pure]
     type Sources = Sources.T
-    object Sources extends RefinedType[String, Pure]
+    object Sources extends Newtype[String, Pure]
     type Links = Links.T
-    object Links extends RefinedType[Int, Pure]
+    object Links extends Newtype[Int, Pure]
     type EdgesPromoted = EdgesPromoted.T
-    object EdgesPromoted extends RefinedType[Int, Pure]
+    object EdgesPromoted extends Newtype[Int, Pure]
 
 
   final case class Request(newCitekey: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

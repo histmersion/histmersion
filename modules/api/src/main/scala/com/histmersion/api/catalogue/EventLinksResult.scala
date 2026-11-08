@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventLinksResult(
@@ -18,6 +17,6 @@ final case class EventLinksResult(
 
 object EventLinksResult:
   type Refused = Refused.T
-  object Refused extends RefinedType[String, Pure]
+  object Refused extends Newtype[String, Pure]
   type Rejected = Rejected.T
-  object Rejected extends RefinedType[String, Pure]
+  object Rejected extends Newtype[String, Pure]

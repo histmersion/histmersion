@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventFindingRef(
@@ -22,10 +21,10 @@ final case class EventFindingRef(
 
 object EventFindingRef:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Claim = Claim.T
-  object Claim extends RefinedType[String, Pure]
+  object Claim extends Newtype[String, Pure]
   type Km = Km.T
-  object Km extends RefinedType[Double, Pure]
+  object Km extends Newtype[Double, Pure]
   type YearGap = YearGap.T
-  object YearGap extends RefinedType[Long, Pure]
+  object YearGap extends Newtype[Long, Pure]

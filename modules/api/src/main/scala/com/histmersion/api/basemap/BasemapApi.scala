@@ -7,23 +7,22 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.given
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object BasemapApi:
   object Tile:
     type Bytes = Bytes.T
-    object Bytes extends RefinedType[Array[Byte], Pure]
+    object Bytes extends Newtype[Array[Byte], Pure]
     type ContentType = ContentType.T
-    object ContentType extends RefinedType[String, Pure]
+    object ContentType extends Newtype[String, Pure]
     type Encoding = Encoding.T
-    object Encoding extends RefinedType[String, Pure]
+    object Encoding extends Newtype[String, Pure]
     type Etag = Etag.T
-    object Etag extends RefinedType[String, Pure]
+    object Etag extends Newtype[String, Pure]
     type Format = Format.T
-    object Format extends RefinedType[String, Pure]
+    object Format extends Newtype[String, Pure]
   type TileTemplate = TileTemplate.T
-  object TileTemplate extends RefinedType[String, Pure]
+  object TileTemplate extends Newtype[String, Pure]
 
 
 

@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One event as a catalogue describes it. Its dating is a four-point span (years, inclusive): the start lies in
@@ -69,30 +68,30 @@ final case class CatalogueEvent(
 
 object CatalogueEvent:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Historicity = Historicity.T
-  object Historicity extends RefinedType[String, Pure]
+  object Historicity extends Newtype[String, Pure]
   type Vei = Vei.T
-  object Vei extends RefinedType[Int, Pure]
+  object Vei extends Newtype[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends RefinedType[Double, Pure]
+  object Magnitude extends Newtype[Double, Pure]
   type Deaths = Deaths.T
-  object Deaths extends RefinedType[Long, Pure]
+  object Deaths extends Newtype[Long, Pure]
   type Names = Names.T
-  object Names extends RefinedType[String, Pure]
+  object Names extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Group = Group.T
-  object Group extends RefinedType[String, Pure]
+  object Group extends Newtype[String, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends RefinedType[Long, Pure]
+  object PlusMinus extends Newtype[Long, Pure]
   type DatingMethod = DatingMethod.T
-  object DatingMethod extends RefinedType[String, Pure]
+  object DatingMethod extends Newtype[String, Pure]
   type Raw = Raw.T
-  object Raw extends RefinedType[String, Pure]
+  object Raw extends Newtype[String, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum AgentMode(val wire: AgentMode.Wire):
@@ -27,7 +26,7 @@ enum AgentMode(val wire: AgentMode.Wire):
 
 object AgentMode:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[AgentMode] =
@@ -44,10 +43,10 @@ object AgentMode:
   object Step:
     object Autopilot:
       type On = On.T
-      object On extends RefinedType[Boolean, Pure]
+      object On extends Newtype[Boolean, Pure]
     object Drain:
       type On = On.T
-      object On extends RefinedType[Boolean, Pure]
+      object On extends Newtype[Boolean, Pure]
 
   def steps(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On, to: AgentMode): List[Step] = to match
     case Working   => Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(!((autopilotOn) == Step.Autopilot.On(true)))(Step.Autopilot(Step.Autopilot.On(true)))
@@ -59,4 +58,4 @@ object AgentMode:
   object ModeSet:
     export AgentMode.{Wire as Mode}
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]

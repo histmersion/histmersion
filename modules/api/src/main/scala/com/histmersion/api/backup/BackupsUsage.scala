@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.ByteCount
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class BackupsUsage(count: BackupsUsage.Count, bytes: ByteCount, newest: Option[BackupsUsage.Newest], keep: BackupsUsage.Keep)
@@ -15,8 +14,8 @@ final case class BackupsUsage(count: BackupsUsage.Count, bytes: ByteCount, newes
 
 object BackupsUsage:
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Newest = Newest.T
-  object Newest extends RefinedType[String, Pure]
+  object Newest extends Newtype[String, Pure]
   type Keep = Keep.T
-  object Keep extends RefinedType[Int, Pure]
+  object Keep extends Newtype[Int, Pure]

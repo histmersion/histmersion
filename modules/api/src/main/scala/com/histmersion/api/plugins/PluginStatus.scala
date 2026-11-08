@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class PluginStatus(
@@ -24,10 +23,10 @@ final case class PluginStatus(
 object PluginStatus:
   export PluginDescription.{Id, Version, SpiVersion}
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
   export PluginDescription.Provides
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]
   export PluginDescription.Error

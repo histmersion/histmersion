@@ -2,7 +2,6 @@ package com.histmersion
 package api
 
 import hearth.kindlings.circederivation.Configuration
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 
@@ -14,7 +13,7 @@ given Configuration = Configuration.default.withDefaults
 
 object Write:
   type ListItem = ListItem.T
-  object ListItem extends RefinedType[String, Pure]
+  object ListItem extends Newtype[String, Pure]
 
   export Api.Error.{Problem as InvalidMessage}
 

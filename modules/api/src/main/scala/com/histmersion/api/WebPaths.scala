@@ -1,12 +1,11 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object WebPaths:
   type Segment = Segment.T
-  object Segment extends RefinedType[String, Pure]
+  object Segment extends Newtype[String, Pure]
 
   type Places = PlacesValue
   type PlacesValue = Segment

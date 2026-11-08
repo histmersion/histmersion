@@ -7,7 +7,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
@@ -15,16 +14,16 @@ import com.histmersion.api.ByteCount
 object Basemap:
   object Tile:
     type Column = Column.T
-    object Column extends RefinedType[Long, Pure]
+    object Column extends Newtype[Long, Pure]
     type Row = Row.T
-    object Row extends RefinedType[Long, Pure]
+    object Row extends Newtype[Long, Pure]
   object Subset:
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Zoom = Zoom.T
-  object Zoom extends RefinedType[Int, Pure]
+  object Zoom extends Newtype[Int, Pure]
 
 
 
@@ -96,14 +95,14 @@ object Basemap:
 
   object DropRule:
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
     export LayerInfo.{Dropped as Layer}
     type Whole = Whole.T
-    object Whole extends RefinedType[Boolean, Pure]
+    object Whole extends Newtype[Boolean, Pure]
     type Drop = Drop.T
-    object Drop extends RefinedType[String, Pure]
+    object Drop extends Newtype[String, Pure]
     type Spare = Spare.T
-    object Spare extends RefinedType[String, Pure]
+    object Spare extends Newtype[String, Pure]
 
   def parseDrop(s: DropRule.Spec): Either[Problem, List[DropRule]] =
     val parts = (s).value.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
@@ -129,10 +128,10 @@ object Basemap:
 
   object Read:
     type Geoms = Geoms.T
-    object Geoms extends RefinedType[Int, Pure]:
+    object Geoms extends Newtype[Int, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
     type Kinds = Kinds.T
-    object Kinds extends RefinedType[String, Pure]:
+    object Kinds extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
 
   private val KindName = "[A-Za-z0-9_:.-]+".r
@@ -228,12 +227,12 @@ object Basemap:
     export Basemap.Layer.{Wire as Layer}
     export Basemap.Focus.MaxZoom
     type TerrainMaxZoom = TerrainMaxZoom.T
-    object TerrainMaxZoom extends RefinedType[Int, Pure]
+    object TerrainMaxZoom extends Newtype[Int, Pure]
     export BBox.{Text as Bbox}
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type KeepAll = KeepAll.T
-    object KeepAll extends RefinedType[Boolean, Pure]
+    object KeepAll extends Newtype[Boolean, Pure]
     export Basemap.Focus.{Name as Focus}
 
   final case class Focus(
@@ -250,14 +249,14 @@ object Basemap:
 
   object Focus:
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     export LayerInfo.File
     export BBox.{Text as Bbox}
     export LayerInfo.MinZoom
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends RefinedType[Int, Pure]:
+    object MaxZoom extends Newtype[Int, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
     export LayerInfo.{Tiles, FetchedAt}
 
@@ -277,14 +276,14 @@ object Basemap:
 
   object Layer:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Wires = Wires.T
-    object Wires extends RefinedType[String, Pure]
+    object Wires extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]:
+    object Wire extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Layer] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -324,32 +323,32 @@ object Basemap:
 
     export Basemap.Layer.{Wire as Layer}
     type Present = Present.T
-    object Present extends RefinedType[Boolean, Pure]
+    object Present extends Newtype[Boolean, Pure]
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type MinZoom = MinZoom.T
-    object MinZoom extends RefinedType[Int, Pure]
+    object MinZoom extends Newtype[Int, Pure]
     export Focus.MaxZoom
     export BBox.{Text as Bbox}
     type Tiles = Tiles.T
-    object Tiles extends RefinedType[Long, Pure]
+    object Tiles extends Newtype[Long, Pure]
     type TileType = TileType.T
-    object TileType extends RefinedType[String, Pure]
+    object TileType extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type FetchedAt = FetchedAt.T
-    object FetchedAt extends RefinedType[String, Pure]
+    object FetchedAt extends Newtype[String, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
     type Attribution = Attribution.T
-    object Attribution extends RefinedType[String, Pure]
+    object Attribution extends Newtype[String, Pure]
     type Kept = Kept.T
-    object Kept extends RefinedType[String, Pure]
+    object Kept extends Newtype[String, Pure]
     type Dropped = Dropped.T
-    object Dropped extends RefinedType[String, Pure]:
+    object Dropped extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
 
 
 
@@ -366,15 +365,15 @@ object Basemap:
 
   object OnDemand:
     type Enabled = Enabled.T
-    object Enabled extends RefinedType[Boolean, Pure]
+    object Enabled extends Newtype[Boolean, Pure]
     export Focus.MaxZoom
     type Dir = Dir.T
-    object Dir extends RefinedType[String, Pure]
+    object Dir extends Newtype[String, Pure]
     export LayerInfo.Tiles
     type MaxBytes = MaxBytes.T
-    object MaxBytes extends RefinedType[Long, Pure]
+    object MaxBytes extends Newtype[Long, Pure]
     type OfflineUntil = OfflineUntil.T
-    object OfflineUntil extends RefinedType[String, Pure]
+    object OfflineUntil extends Newtype[String, Pure]
 
 
 
@@ -392,13 +391,13 @@ object Basemap:
     export Basemap.Layer.{Wire as Layer}
     export Basemap.Focus.{Name as Focus}
     type Cache = Cache.T
-    object Cache extends RefinedType[Boolean, Pure]
+    object Cache extends Newtype[Boolean, Pure]
 
   final case class Removed(removed: List[Removed.Value], bytes: ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Removed:
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
 
 
 
@@ -421,19 +420,19 @@ object Basemap:
   object Status:
 
     type Available = Available.T
-    object Available extends RefinedType[Boolean, Pure]
+    object Available extends Newtype[Boolean, Pure]
     export OnDemand.Dir
     export BBox.{Text as Bbox}
     type FetchCommand = FetchCommand.T
-    object FetchCommand extends RefinedType[String, Pure]
+    object FetchCommand extends Newtype[String, Pure]
     type FreeBytes = FreeBytes.T
-    object FreeBytes extends RefinedType[Long, Pure]
+    object FreeBytes extends Newtype[Long, Pure]
     type Running = Running.T
-    object Running extends RefinedType[String, Pure]
+    object Running extends Newtype[String, Pure]
     type Hints = Hints.T
-    object Hints extends RefinedType[String, Pure]
+    object Hints extends Newtype[String, Pure]
     type MapMaxZoom = MapMaxZoom.T
-    object MapMaxZoom extends RefinedType[Int, Pure]
+    object MapMaxZoom extends Newtype[Int, Pure]
 
 
 
@@ -443,7 +442,7 @@ object Basemap:
 
   object StyleState:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     export LayerInfo.{Dropped as Missing}

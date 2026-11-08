@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One linked item that disagrees with the host's record, judged against the record it matches best (an item shared by
@@ -31,6 +30,6 @@ final case class CollectionFinding(
 
 object CollectionFinding:
   type Keys = Keys.T
-  object Keys extends RefinedType[String, Pure]
+  object Keys extends Newtype[String, Pure]
   type Fixable = Fixable.T
-  object Fixable extends RefinedType[Boolean, Pure]
+  object Fixable extends Newtype[Boolean, Pure]

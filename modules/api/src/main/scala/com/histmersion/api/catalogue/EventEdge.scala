@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventEdge(
@@ -20,6 +19,6 @@ final case class EventEdge(
 
 object EventEdge:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

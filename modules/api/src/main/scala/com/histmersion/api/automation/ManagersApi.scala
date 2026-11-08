@@ -6,13 +6,12 @@ import sttp.model.StatusCode
 import com.histmersion.api.Write
 import com.histmersion.api.given
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
 
 object ManagersApi:
   type ActionPart1Part2 = ActionPart1Part2.T
-  object ActionPart1Part2 extends RefinedType[String, Pure]
+  object ActionPart1Part2 extends Newtype[String, Pure]
 
   import Managers.*
 

@@ -1,21 +1,20 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** WCAG 2.x contrast. */
 object Wcag:
   type Channel = Channel.T
-  object Channel extends RefinedType[Int, Pure]
+  object Channel extends Newtype[Int, Pure]
   type Hex = Hex.T
-  object Hex extends RefinedType[String, Pure]
+  object Hex extends Newtype[String, Pure]
   type LinearChannel = LinearChannel.T
-  object LinearChannel extends RefinedType[Double, Pure]
+  object LinearChannel extends Newtype[Double, Pure]
   type Luminance = Luminance.T
-  object Luminance extends RefinedType[Double, Pure]
+  object Luminance extends Newtype[Double, Pure]
   type Ratio = Ratio.T
-  object Ratio extends RefinedType[Double, Pure]
+  object Ratio extends Newtype[Double, Pure]
 
   def luminance(r: Channel, g: Channel, b: Channel): Luminance =
     def lin(c: Channel): LinearChannel =

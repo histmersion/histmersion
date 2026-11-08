@@ -8,7 +8,7 @@ import sttp.tapir.Schema
 
 type ItemKey = ItemKey.T
 
-object ItemKey extends RefinedType[String, Pure]:
+object ItemKey extends Newtype[String, Pure]:
   given Encoder[ItemKey] = Encoder.encodeString.contramap(_.value)
   given Decoder[ItemKey] = Decoder.decodeString.map(s => ItemKey(s.trim))
   given Schema[ItemKey] = Schema.string[ItemKey]

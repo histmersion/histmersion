@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Every identifier the caller has for one work. A fetcher reads the ones it understands and answers [[Fetch.Miss]]
@@ -45,21 +44,21 @@ final case class WorkKey(
 
 object WorkKey:
   type IsEmptyResult = IsEmptyResult.T
-  object IsEmptyResult extends RefinedType[Boolean, Pure]
+  object IsEmptyResult extends Newtype[Boolean, Pure]
 
   type Arxiv = Arxiv.T
-  object Arxiv extends RefinedType[String, Pure]
+  object Arxiv extends Newtype[String, Pure]
   type Pmid = Pmid.T
-  object Pmid extends RefinedType[String, Pure]
+  object Pmid extends Newtype[String, Pure]
   type Pmcid = Pmcid.T
-  object Pmcid extends RefinedType[String, Pure]
+  object Pmcid extends Newtype[String, Pure]
   type Archive = Archive.T
-  object Archive extends RefinedType[String, Pure]
+  object Archive extends Newtype[String, Pure]
   type Isbn = Isbn.T
-  object Isbn extends RefinedType[String, Pure]
+  object Isbn extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Format = Format.T
-  object Format extends RefinedType[String, Pure]
+  object Format extends Newtype[String, Pure]

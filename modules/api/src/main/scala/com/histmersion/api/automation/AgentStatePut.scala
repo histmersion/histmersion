@@ -7,7 +7,6 @@ import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class AgentStatePut(
@@ -18,6 +17,6 @@ object AgentStatePut:
 
 
   type Value = Value.T
-  object Value extends RefinedType[String, Pure]
+  object Value extends Newtype[String, Pure]
 
   given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])

@@ -8,7 +8,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CritiqueReason(src: Citekey, dst: Citekey, reason: CritiqueReason.Reason, by: Option[CritiqueReason.By] = None)
@@ -17,10 +16,10 @@ final case class CritiqueReason(src: Citekey, dst: Citekey, reason: CritiqueReas
 
 object CritiqueReason:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   export com.histmersion.api.automation.Activity.{Actor as By}
 
   given Schema[CritiqueReason] = KindlingsSchema

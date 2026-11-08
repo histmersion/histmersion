@@ -6,7 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `licence` and `sourceUrl` are `None` from an older server. */
@@ -22,14 +21,14 @@ final case class BuildStamp(
 
 object BuildStamp:
   type Version = Version.T
-  object Version extends RefinedType[String, Pure]
+  object Version extends Newtype[String, Pure]
   type GitCommit = GitCommit.T
-  object GitCommit extends RefinedType[String, Pure]
+  object GitCommit extends Newtype[String, Pure]
   type CommitDate = CommitDate.T
-  object CommitDate extends RefinedType[String, Pure]
+  object CommitDate extends Newtype[String, Pure]
   type Dirty = Dirty.T
-  object Dirty extends RefinedType[Boolean, Pure]
+  object Dirty extends Newtype[Boolean, Pure]
   type Licence = Licence.T
-  object Licence extends RefinedType[String, Pure]
+  object Licence extends Newtype[String, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends RefinedType[String, Pure]
+  object SourceUrl extends Newtype[String, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReloadReport(
@@ -26,22 +25,22 @@ final case class ReloadReport(
 object ReloadReport:
 
   type Published = Published.T
-  object Published extends RefinedType[Boolean, Pure]
+  object Published extends Newtype[Boolean, Pure]
   type Generation = Generation.T
-  object Generation extends RefinedType[Long, Pure]
+  object Generation extends Newtype[Long, Pure]
   type Applied = Applied.T
-  object Applied extends RefinedType[String, Pure]
+  object Applied extends Newtype[String, Pure]
   type RestartOnly = RestartOnly.T
-  object RestartOnly extends RefinedType[String, Pure]
+  object RestartOnly extends Newtype[String, Pure]
   type Rebuilt = Rebuilt.T
-  object Rebuilt extends RefinedType[String, Pure]
+  object Rebuilt extends Newtype[String, Pure]
   type Plugins = Plugins.T
-  object Plugins extends RefinedType[String, Pure]
+  object Plugins extends Newtype[String, Pure]
   type Draining = Draining.T
-  object Draining extends RefinedType[String, Pure]
+  object Draining extends Newtype[String, Pure]
   type Errors = Errors.T
-  object Errors extends RefinedType[String, Pure]
+  object Errors extends Newtype[String, Pure]
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]
   type File = File.T
-  object File extends RefinedType[String, Pure]
+  object File extends Newtype[String, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `value` is JSON carried as a string, so Kindlings/tapir derive its Schema without a custom one for `io.circe.Json`.
@@ -20,6 +19,6 @@ final case class AgentStateEntry(
 object AgentStateEntry:
   export com.histmersion.api.Api.AgentState.Key
   type Value = Value.T
-  object Value extends RefinedType[String, Pure]
+  object Value extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]

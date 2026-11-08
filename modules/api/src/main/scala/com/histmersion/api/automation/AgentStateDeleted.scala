@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 
@@ -18,7 +17,7 @@ final case class AgentStateDeleted(
 object AgentStateDeleted:
   object Key:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   type Key = Api.AgentState.Key
   type Deleted = Deleted.T
-  object Deleted extends RefinedType[Boolean, Pure]
+  object Deleted extends Newtype[Boolean, Pure]

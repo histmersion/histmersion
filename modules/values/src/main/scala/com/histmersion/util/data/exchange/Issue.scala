@@ -3,7 +3,6 @@ package util.data.exchange
 
 import com.histmersion.WireEnumValues
 import com.histmersion.{Ascii, WireEnumValues}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Issue:
@@ -58,7 +57,7 @@ object Issue:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(k: Kind): Wire = k match
       case SameWork                => Wire("same-work")
@@ -101,7 +100,7 @@ object Issue:
 
   object Severity:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     given WireEnumValues[Severity]:
       def all: Array[Severity] = values
@@ -126,7 +125,7 @@ object Issue:
 
   object DecidedBy:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = values

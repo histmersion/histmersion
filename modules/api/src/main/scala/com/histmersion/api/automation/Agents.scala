@@ -10,14 +10,13 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 
 object Agents:
   type Action = Action.T
-  object Action extends RefinedType[String, Pure]
+  object Action extends Newtype[String, Pure]
 
   export Approval.Kind as ApprovalKind
   export Approval.Mode as ApprovalMode
@@ -34,16 +33,16 @@ object Agents:
 
   object ModelRef:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]:
+    object Model extends Newtype[String, Pure]:
       type Problem = Problem.T
-      object Problem extends RefinedType[String, Pure]
+      object Problem extends Newtype[String, Pure]
       type Spec = Spec.T
-      object Spec extends RefinedType[String, Pure]
+      object Spec extends Newtype[String, Pure]
 
     def parse(s: Wire, known: Set[com.histmersion.api.automation.ProviderKind.Plugin.Name] = Set.empty): Either[Problem, ModelRef] =
       val t = (s).value.trim
@@ -71,20 +70,20 @@ object Agents:
 
   object Usage:
     type BudgetedTokens = BudgetedTokens.T
-    object BudgetedTokens extends RefinedType[Long, Pure]
+    object BudgetedTokens extends Newtype[Long, Pure]
     type CacheReadWeight = CacheReadWeight.T
-    object CacheReadWeight extends RefinedType[Double, Pure]
+    object CacheReadWeight extends Newtype[Double, Pure]
     type TotalTokens = TotalTokens.T
-    object TotalTokens extends RefinedType[Long, Pure]
+    object TotalTokens extends Newtype[Long, Pure]
 
     type Input = Input.T
-    object Input extends RefinedType[Long, Pure]
+    object Input extends Newtype[Long, Pure]
     type Output = Output.T
-    object Output extends RefinedType[Long, Pure]
+    object Output extends Newtype[Long, Pure]
     type CacheRead = CacheRead.T
-    object CacheRead extends RefinedType[Long, Pure]
+    object CacheRead extends Newtype[Long, Pure]
     type CacheWrite = CacheWrite.T
-    object CacheWrite extends RefinedType[Long, Pure]
+    object CacheWrite extends Newtype[Long, Pure]
 
     val Zero: Usage = Usage()
 
@@ -120,9 +119,9 @@ object Agents:
 
   object Prices:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     export ModelRef.{Model as CostModel}
 
     private[Agents] val Million = BigDecimal(1000000)
@@ -184,7 +183,7 @@ object Agents:
 
   object PauseReason:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
   enum StepKind(val wire: StepKind.Wire):
     case Code extends StepKind(StepKind.Wire("code"))
@@ -192,7 +191,7 @@ object Agents:
 
   object StepKind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[StepKind] = values.find(_.wire == s)
@@ -211,7 +210,7 @@ object Agents:
 
   object Origin:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Origin] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -222,7 +221,7 @@ object Agents:
 
   object ProbeRequest:
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
 
 
   final case class ProbeAnswer(citekey: Citekey, title: com.histmersion.api.library.Title, year: Option[Year])
@@ -243,9 +242,9 @@ object Agents:
     /** The year asked of a model stays the 32-bit integer its schema has always said. */
     given Schema[ProbeAnswer] = com.histmersion.api.json.Schema.derived[ProbeAnswer].modify(_.year)(_.format("int32"))
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type RecordYear = RecordYear.T
-    object RecordYear extends RefinedType[Int, Pure]
+    object RecordYear extends Newtype[Int, Pure]
 
 
   final case class ProbeResult(
@@ -266,25 +265,25 @@ object Agents:
 
   object ProbeResult:
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type RawAnswer = RawAnswer.T
-    object RawAnswer extends RefinedType[String, Pure]
+    object RawAnswer extends Newtype[String, Pure]
     type MatchesRecord = MatchesRecord.T
-    object MatchesRecord extends RefinedType[Boolean, Pure]
+    object MatchesRecord extends Newtype[Boolean, Pure]
     type ToolCalls = ToolCalls.T
-    object ToolCalls extends RefinedType[String, Pure]
+    object ToolCalls extends Newtype[String, Pure]
     type Iterations = Iterations.T
-    object Iterations extends RefinedType[Int, Pure]
+    object Iterations extends Newtype[Int, Pure]
     type Finish = Finish.T
-    object Finish extends RefinedType[String, Pure]
+    object Finish extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends RefinedType[Double, Pure]
+    object CostUsd extends Newtype[Double, Pure]
     type Millis = Millis.T
-    object Millis extends RefinedType[Long, Pure]
+    object Millis extends Newtype[Long, Pure]
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]
     type Attempts = Attempts.T
-    object Attempts extends RefinedType[Int, Pure]
+    object Attempts extends Newtype[Int, Pure]
 
 
   final case class RunRequest(
@@ -310,46 +309,46 @@ object Agents:
 
   object RunRequest:
     type Pipeline = Pipeline.T
-    object Pipeline extends RefinedType[String, Pure]
+    object Pipeline extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends RefinedType[Double, Pure]
+    object BudgetUsd extends Newtype[Double, Pure]
     type BudgetTokens = BudgetTokens.T
-    object BudgetTokens extends RefinedType[Long, Pure]
+    object BudgetTokens extends Newtype[Long, Pure]
     type Fix = Fix.T
-    object Fix extends RefinedType[Boolean, Pure]
+    object Fix extends Newtype[Boolean, Pure]
     type Rounds = Rounds.T
-    object Rounds extends RefinedType[Int, Pure]
+    object Rounds extends Newtype[Int, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
     type Topics = Topics.T
-    object Topics extends RefinedType[String, Pure]
+    object Topics extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
 
 
   final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
     def text: ModelOverride.Wire = ModelOverride.Wire(s"$role=$model")
   object ModelOverride:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
 
     export AgentRole.{Wire as Role}
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
 
     def parse(s: Wire): Either[Problem, ModelOverride] =
       (s).value.indexOf('=') match
@@ -386,21 +385,21 @@ object Agents:
   object RunParams:
 
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type ChainReview = ChainReview.T
-    object ChainReview extends RefinedType[Boolean, Pure]
+    object ChainReview extends Newtype[Boolean, Pure]
     type MinSources = MinSources.T
-    object MinSources extends RefinedType[Int, Pure]
+    object MinSources extends Newtype[Int, Pure]
     type MaxArticles = MaxArticles.T
-    object MaxArticles extends RefinedType[Int, Pure]
+    object MaxArticles extends Newtype[Int, Pure]
     type AutoIngest = AutoIngest.T
-    object AutoIngest extends RefinedType[Int, Pure]
+    object AutoIngest extends Newtype[Int, Pure]
     type Hint = Hint.T
-    object Hint extends RefinedType[Long, Pure]
+    object Hint extends Newtype[Long, Pure]
     type SubGoals = SubGoals.T
-    object SubGoals extends RefinedType[Int, Pure]
+    object SubGoals extends Newtype[Int, Pure]
     type OaBacklog = OaBacklog.T
-    object OaBacklog extends RefinedType[Boolean, Pure]
+    object OaBacklog extends Newtype[Boolean, Pure]
 
 
   final case class RunInfo(
@@ -431,7 +430,7 @@ object Agents:
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def isWaiting: Boolean = (status == Run.State.WaitingApproval.wire)
+    def isWaiting: Boolean = (status.value == Run.State.WaitingApproval.wire.value)
 
     def modelFor(role: Role): Option[RunInfo.Model] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(o => RunInfo.Model(o.model.value)).orElse(model)
@@ -439,49 +438,49 @@ object Agents:
   object RunInfo:
 
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Pipeline = Pipeline.T
-    object Pipeline extends RefinedType[String, Pure]
+    object Pipeline extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Progress = Progress.T
-    object Progress extends RefinedType[String, Pure]
+    object Progress extends Newtype[String, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends RefinedType[Double, Pure]
+    object CostUsd extends Newtype[Double, Pure]
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends RefinedType[Double, Pure]
+    object BudgetUsd extends Newtype[Double, Pure]
     type BudgetTokens = BudgetTokens.T
-    object BudgetTokens extends RefinedType[Long, Pure]
+    object BudgetTokens extends Newtype[Long, Pure]
     type Warnings = Warnings.T
-    object Warnings extends RefinedType[String, Pure]
+    object Warnings extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type TargetKind = TargetKind.T
-    object TargetKind extends RefinedType[String, Pure]
+    object TargetKind extends Newtype[String, Pure]
     export Agents.Origin.{Wire as Origin}
     type ResumeAt = ResumeAt.T
-    object ResumeAt extends RefinedType[String, Pure]
+    object ResumeAt extends Newtype[String, Pure]
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type HeartbeatAt = HeartbeatAt.T
-    object HeartbeatAt extends RefinedType[String, Pure]
+    object HeartbeatAt extends Newtype[String, Pure]
 
 
   final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object WouldWrite:
     type What = What.T
-    object What extends RefinedType[String, Pure]
+    object What extends Newtype[String, Pure]
     type Payload = Payload.T
-    object Payload extends RefinedType[String, Pure]
+    object Payload extends Newtype[String, Pure]
 
 
   final case class StepInfo(
@@ -513,35 +512,35 @@ object Agents:
   object StepInfo:
 
     type Seq = Seq.T
-    object Seq extends RefinedType[Int, Pure]
+    object Seq extends Newtype[Int, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Attempt = Attempt.T
-    object Attempt extends RefinedType[Int, Pure]
+    object Attempt extends Newtype[Int, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type PromptHash = PromptHash.T
-    object PromptHash extends RefinedType[String, Pure]
+    object PromptHash extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends RefinedType[Double, Pure]
+    object CostUsd extends Newtype[Double, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
     type Output = Output.T
-    object Output extends RefinedType[String, Pure]
+    object Output extends Newtype[String, Pure]
     type StartedAt = StartedAt.T
-    object StartedAt extends RefinedType[String, Pure]
+    object StartedAt extends Newtype[String, Pure]
     type FinishedAt = FinishedAt.T
-    object FinishedAt extends RefinedType[String, Pure]
+    object FinishedAt extends Newtype[String, Pure]
     type ActualModel = ActualModel.T
-    object ActualModel extends RefinedType[String, Pure]
+    object ActualModel extends Newtype[String, Pure]
     type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends RefinedType[Long, Pure]
+    object FirstCallTokens extends Newtype[Long, Pure]
     type Turns = Turns.T
-    object Turns extends RefinedType[Int, Pure]
+    object Turns extends Newtype[Int, Pure]
 
 
   final case class MessageInfo(
@@ -558,21 +557,21 @@ object Agents:
 
   object MessageInfo:
     type Seq = Seq.T
-    object Seq extends RefinedType[Int, Pure]
+    object Seq extends Newtype[Int, Pure]
     type N = N.T
-    object N extends RefinedType[Int, Pure]
+    object N extends Newtype[Int, Pure]
     type Role = Role.T
-    object Role extends RefinedType[String, Pure]
+    object Role extends Newtype[String, Pure]
     type Content = Content.T
-    object Content extends RefinedType[String, Pure]
+    object Content extends Newtype[String, Pure]
     type ToolName = ToolName.T
-    object ToolName extends RefinedType[String, Pure]
+    object ToolName extends Newtype[String, Pure]
     type ToolInput = ToolInput.T
-    object ToolInput extends RefinedType[String, Pure]
+    object ToolInput extends Newtype[String, Pure]
     type ToolResult = ToolResult.T
-    object ToolResult extends RefinedType[String, Pure]
+    object ToolResult extends Newtype[String, Pure]
     type LatencyMs = LatencyMs.T
-    object LatencyMs extends RefinedType[Int, Pure]
+    object LatencyMs extends Newtype[Int, Pure]
 
 
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
@@ -587,11 +586,11 @@ object Agents:
   object RoleModel:
     export AgentRole.{Wire as Role}
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type Ready = Ready.T
-    object Ready extends RefinedType[Boolean, Pure]
+    object Ready extends Newtype[Boolean, Pure]
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
 
 
   final case class ModelsInfo(
@@ -608,15 +607,15 @@ object Agents:
 
   object ModelsInfo:
     type Enabled = Enabled.T
-    object Enabled extends RefinedType[Boolean, Pure]
+    object Enabled extends Newtype[Boolean, Pure]
     type Pipelines = Pipelines.T
-    object Pipelines extends RefinedType[String, Pure]
+    object Pipelines extends Newtype[String, Pure]
     type MaxConcurrentRuns = MaxConcurrentRuns.T
-    object MaxConcurrentRuns extends RefinedType[Int, Pure]
+    object MaxConcurrentRuns extends Newtype[Int, Pure]
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]
     type Now = Now.T
-    object Now extends RefinedType[String, Pure]
+    object Now extends Newtype[String, Pure]
 
 
   enum CheckLevel(val wire: CheckLevel.Wire):
@@ -626,7 +625,7 @@ object Agents:
 
   object CheckLevel:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[CheckLevel] = values.find(_.wire == s)
@@ -644,9 +643,9 @@ object Agents:
 
   object DoctorCheck:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
 
 
   final case class ProviderDoctor(
@@ -664,13 +663,13 @@ object Agents:
 
   object ProviderDoctor:
     type Provider = Provider.T
-    object Provider extends RefinedType[String, Pure]
+    object Provider extends Newtype[String, Pure]
     type Used = Used.T
-    object Used extends RefinedType[Boolean, Pure]
+    object Used extends Newtype[Boolean, Pure]
     type Models = Models.T
-    object Models extends RefinedType[String, Pure]
+    object Models extends Newtype[String, Pure]
     type UpstreamModels = UpstreamModels.T
-    object UpstreamModels extends RefinedType[String, Pure]
+    object UpstreamModels extends Newtype[String, Pure]
 
 
   final case class DoctorReport(
@@ -683,9 +682,9 @@ object Agents:
 
   object DoctorReport:
     type Enabled = Enabled.T
-    object Enabled extends RefinedType[Boolean, Pure]
+    object Enabled extends Newtype[Boolean, Pure]
     type Online = Online.T
-    object Online extends RefinedType[Boolean, Pure]
+    object Online extends Newtype[Boolean, Pure]
 
 
   final case class GenerateRequest(runtimes: List[GenerateRequest.Runtimes] = Nil, out: Option[GenerateRequest.Out] = None)
@@ -694,9 +693,9 @@ object Agents:
 
   object GenerateRequest:
     type Runtimes = Runtimes.T
-    object Runtimes extends RefinedType[String, Pure]
+    object Runtimes extends Newtype[String, Pure]
     type Out = Out.T
-    object Out extends RefinedType[String, Pure]
+    object Out extends Newtype[String, Pure]
 
 
   final case class GenerateResult(
@@ -711,17 +710,17 @@ object Agents:
 
   object GenerateResult:
     type Dir = Dir.T
-    object Dir extends RefinedType[String, Pure]
+    object Dir extends Newtype[String, Pure]
     type Runtimes = Runtimes.T
-    object Runtimes extends RefinedType[String, Pure]
+    object Runtimes extends Newtype[String, Pure]
     type Files = Files.T
-    object Files extends RefinedType[Int, Pure]
+    object Files extends Newtype[Int, Pure]
     type Written = Written.T
-    object Written extends RefinedType[Int, Pure]
+    object Written extends Newtype[Int, Pure]
     type Removed = Removed.T
-    object Removed extends RefinedType[Int, Pure]
+    object Removed extends Newtype[Int, Pure]
     type Definitions = Definitions.T
-    object Definitions extends RefinedType[String, Pure]
+    object Definitions extends Newtype[String, Pure]
 
 
   enum Decision(val wire: Decision.Wire):
@@ -730,7 +729,7 @@ object Agents:
 
   object Decision:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Decision] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -775,29 +774,29 @@ object Agents:
 
   object ApprovalInfo:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     export Approval.Kind.{Wire as Kind}
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Current = Current.T
-    object Current extends RefinedType[String, Pure]
+    object Current extends Newtype[String, Pure]
     export com.histmersion.api.library.Edge.Kind.{Wire as EdgeKind}
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Evidence = Evidence.T
-    object Evidence extends RefinedType[String, Pure]
+    object Evidence extends Newtype[String, Pure]
     type Quote = Quote.T
-    object Quote extends RefinedType[String, Pure]
+    object Quote extends Newtype[String, Pure]
     export Approval.State.{Wire as State}
     export Approval.Note
     type Result = Result.T
-    object Result extends RefinedType[String, Pure]
+    object Result extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type DecidedAt = DecidedAt.T
-    object DecidedAt extends RefinedType[String, Pure]
+    object DecidedAt extends Newtype[String, Pure]
     type Subject = Subject.T
-    object Subject extends RefinedType[String, Pure]
+    object Subject extends Newtype[String, Pure]
 
 
   final case class DecisionRequest(note: Option[DecisionRequest.Note] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

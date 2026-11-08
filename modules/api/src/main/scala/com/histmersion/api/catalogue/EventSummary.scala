@@ -7,7 +7,6 @@ import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventSummary(
@@ -34,24 +33,24 @@ final case class EventSummary(
 object EventSummary:
 
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Historicity = Historicity.T
-  object Historicity extends RefinedType[String, Pure]
+  object Historicity extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type Scale = Scale.T
-  object Scale extends RefinedType[String, Pure]
+  object Scale extends Newtype[String, Pure]
   type ScaleStated = ScaleStated.T
-  object ScaleStated extends RefinedType[Boolean, Pure]
+  object ScaleStated extends Newtype[Boolean, Pure]
   type Tier = Tier.T
-  object Tier extends RefinedType[String, Pure]
+  object Tier extends Newtype[String, Pure]
   type Precision = Precision.T
-  object Precision extends RefinedType[String, Pure]
+  object Precision extends Newtype[String, Pure]
   type Central = Central.T
-  object Central extends RefinedType[Long, Pure]
+  object Central extends Newtype[Long, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends RefinedType[Long, Pure]
+  object PlusMinus extends Newtype[Long, Pure]
   type DatingMethod = DatingMethod.T
-  object DatingMethod extends RefinedType[String, Pure]
+  object DatingMethod extends Newtype[String, Pure]

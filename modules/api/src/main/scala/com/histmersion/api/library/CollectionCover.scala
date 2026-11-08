@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What became of an imported book's cover: one line for a person, a `warning` when it could not be stored. */
@@ -17,6 +16,6 @@ final case class CollectionCover(
 
 object CollectionCover:
   type Line = Line.T
-  object Line extends RefinedType[String, Pure]
+  object Line extends Newtype[String, Pure]
   type Warning = Warning.T
-  object Warning extends RefinedType[Boolean, Pure]
+  object Warning extends Newtype[Boolean, Pure]

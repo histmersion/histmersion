@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `latest` and `seen` are ISO-8601 UTC strings in one fixed format (`YYYY-MM-DDTHH:MM:SS.ffffffZ`, as the store
@@ -22,9 +21,9 @@ object UiNotices:
 
   object Board:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Counted = Counted.T
-    object Counted extends RefinedType[Boolean, Pure]
+    object Counted extends Newtype[Boolean, Pure]
 
     type WiresResult = Wire
     val WiresResult: Wire.type = Wire
@@ -43,13 +42,13 @@ object UiNotices:
 
   object Counter:
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
     type Latest = Latest.T
-    object Latest extends RefinedType[String, Pure]
+    object Latest extends Newtype[String, Pure]
     type Seen = Seen.T
-    object Seen extends RefinedType[String, Pure]
+    object Seen extends Newtype[String, Pure]
     type Fresh = Fresh.T
-    object Fresh extends RefinedType[Boolean, Pure]
+    object Fresh extends Newtype[Boolean, Pure]
 
 
   final case class AgentsGlance(running: AgentsGlance.Running = AgentsGlance.Running(0), queued: AgentsGlance.Queued = AgentsGlance.Queued(0), on: AgentsGlance.On = AgentsGlance.On(false), draining: AgentsGlance.Draining = AgentsGlance.Draining(false))
@@ -69,13 +68,13 @@ object UiNotices:
 
 
     type Running = Running.T
-    object Running extends RefinedType[Int, Pure]
+    object Running extends Newtype[Int, Pure]
     type Queued = Queued.T
-    object Queued extends RefinedType[Int, Pure]
+    object Queued extends Newtype[Int, Pure]
     type On = On.T
-    object On extends RefinedType[Boolean, Pure]
+    object On extends Newtype[Boolean, Pure]
     type Draining = Draining.T
-    object Draining extends RefinedType[Boolean, Pure]
+    object Draining extends Newtype[Boolean, Pure]
 
 
   final case class Counters(boards: List[Counter], agents: Option[AgentsGlance] = None)

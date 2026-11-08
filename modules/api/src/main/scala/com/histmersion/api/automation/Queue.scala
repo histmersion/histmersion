@@ -9,32 +9,31 @@ import com.histmersion.api.StrictJson
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 
 object Queue:
   type Export = Export.T
-  object Export extends RefinedType[String, Pure]
+  object Export extends Newtype[String, Pure]
   type FileText = FileText.T
-  object FileText extends RefinedType[String, Pure]
+  object FileText extends Newtype[String, Pure]
   type Id = Id.T
-  object Id extends RefinedType[Int, Pure]
+  object Id extends Newtype[Int, Pure]
   type InstantKey = InstantKey.T
-  object InstantKey extends RefinedType[Long, Pure]
+  object InstantKey extends Newtype[Long, Pure]
   type Preamble = Preamble.T
-  object Preamble extends RefinedType[String, Pure]
+  object Preamble extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   type RenderResult = RenderResult.T
-  object RenderResult extends RefinedType[String, Pure]
+  object RenderResult extends Newtype[String, Pure]
   type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends RefinedType[String, Pure]
+  object MarkdownResult extends Newtype[String, Pure]
 
   final case class QueueItem(
       id: QueueItem.Id,
@@ -53,26 +52,26 @@ object Queue:
 
   object QueueItem:
     type Id = Id.T
-    object Id extends RefinedType[Int, Pure]:
+    object Id extends Newtype[Int, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
     export Kind.{Label as List}
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Topic = Topic.T
-    object Topic extends RefinedType[String, Pure]
+    object Topic extends Newtype[String, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]:
+    object CreatedAt extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type DoneAt = DoneAt.T
-    object DoneAt extends RefinedType[String, Pure]
+    object DoneAt extends Newtype[String, Pure]
     type CreatedBy = CreatedBy.T
-    object CreatedBy extends RefinedType[String, Pure]
+    object CreatedBy extends Newtype[String, Pure]
     type ClosedBy = ClosedBy.T
-    object ClosedBy extends RefinedType[String, Pure]
+    object ClosedBy extends Newtype[String, Pure]
 
 
   final case class ItemGoals(item: QueueItem.Id, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -116,7 +115,7 @@ object Queue:
 
   object QueueImport:
     type Replace = Replace.T
-    object Replace extends RefinedType[Boolean, Pure]
+    object Replace extends Newtype[Boolean, Pure]
 
 
   final case class QueueImported(list: QueueImported.List, items: QueueImported.Items, notes: QueueImported.Notes, replaced: QueueImported.Replaced)
@@ -126,11 +125,11 @@ object Queue:
   object QueueImported:
     export Kind.{Label as List}
     type Items = Items.T
-    object Items extends RefinedType[Int, Pure]
+    object Items extends Newtype[Int, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[Int, Pure]
+    object Notes extends Newtype[Int, Pure]
     type Replaced = Replaced.T
-    object Replaced extends RefinedType[Int, Pure]
+    object Replaced extends Newtype[Int, Pure]
 
 
   enum Kind(val label: Kind.Label, val file: Kind.File, val checkboxes: Kind.Checkboxes):
@@ -140,11 +139,11 @@ object Queue:
 
   object Kind:
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type Checkboxes = Checkboxes.T
-    object Checkboxes extends RefinedType[Boolean, Pure]
+    object Checkboxes extends Newtype[Boolean, Pure]
 
     type All = Label
     val All: Label.type = Label

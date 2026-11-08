@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class IssuePlace(
@@ -18,6 +17,6 @@ final case class IssuePlace(
 
 object IssuePlace:
   type LeftGeometry = LeftGeometry.T
-  object LeftGeometry extends RefinedType[String, Pure]
+  object LeftGeometry extends Newtype[String, Pure]
   type RightGeometry = RightGeometry.T
-  object RightGeometry extends RefinedType[String, Pure]
+  object RightGeometry extends Newtype[String, Pure]

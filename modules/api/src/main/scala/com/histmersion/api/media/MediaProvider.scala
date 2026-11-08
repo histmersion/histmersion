@@ -7,11 +7,10 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object MediaProvider:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
 
   val Source = "source"
   val Commons = "wikimedia-commons"
@@ -83,14 +82,14 @@ object MediaProvider:
 
   object Info:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Over = Over.T
-    object Over extends RefinedType[String, Pure]
+    object Over extends Newtype[String, Pure]
     type Description = Description.T
-    object Description extends RefinedType[String, Pure]
+    object Description extends Newtype[String, Pure]
     type Plugin = Plugin.T
-    object Plugin extends RefinedType[String, Pure]
+    object Plugin extends Newtype[String, Pure]
     type Builtin = Builtin.T
-    object Builtin extends RefinedType[Boolean, Pure]
+    object Builtin extends Newtype[Boolean, Pure]
     type Licences = Licences.T
-    object Licences extends RefinedType[String, Pure]
+    object Licences extends Newtype[String, Pure]

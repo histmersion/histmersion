@@ -35,13 +35,13 @@ object JobInfo:
 
   export JobState.{Wire as Status}
   type Progress = Progress.T
-  object Progress extends RefinedType[String, Pure]
+  object Progress extends Newtype[String, Pure]
   type Error = Error.T
-  object Error extends RefinedType[String, Pure]
+  object Error extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends RefinedType[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
 
   type Kind = JobKinds.Wire
   val Kind: JobKinds.Wire.type = JobKinds.Wire

@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `maxZoom` is in MapLibre's zoom: the app's minus one. */
@@ -15,6 +14,6 @@ final case class MapTilesUiConfig(maxZoom: MapTilesUiConfig.MaxZoom = MapTilesUi
 
 object MapTilesUiConfig:
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Int, Pure]
+  object MaxZoom extends Newtype[Int, Pure]
   type PlaybackBucketSeconds = PlaybackBucketSeconds.T
-  object PlaybackBucketSeconds extends RefinedType[Double, Pure]
+  object PlaybackBucketSeconds extends Newtype[Double, Pure]

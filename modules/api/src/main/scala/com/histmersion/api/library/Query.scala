@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Read-only is enforced in three layers, because no single one of them holds:
@@ -20,15 +19,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Query:
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SchemaMarkdown = SchemaMarkdown.T
-  object SchemaMarkdown extends RefinedType[String, Pure]
+  object SchemaMarkdown extends Newtype[String, Pure]
   type Statement = Statement.T
-  object Statement extends RefinedType[String, Pure]
+  object Statement extends Newtype[String, Pure]
   type ToolDescription = ToolDescription.T
-  object ToolDescription extends RefinedType[String, Pure]
+  object ToolDescription extends Newtype[String, Pure]
 
 
   type StatementsSql = String
@@ -51,15 +50,15 @@ object Query:
 
   object QueryResult:
     type Columns = Columns.T
-    object Columns extends RefinedType[String, Pure]
+    object Columns extends Newtype[String, Pure]
     type Rows = Rows.T
-    object Rows extends RefinedType[String, Pure]
+    object Rows extends Newtype[String, Pure]
     type RowCount = RowCount.T
-    object RowCount extends RefinedType[Int, Pure]
+    object RowCount extends Newtype[Int, Pure]
     type Truncated = Truncated.T
-    object Truncated extends RefinedType[Boolean, Pure]
+    object Truncated extends Newtype[Boolean, Pure]
     type ElapsedMs = ElapsedMs.T
-    object ElapsedMs extends RefinedType[Long, Pure]
+    object ElapsedMs extends Newtype[Long, Pure]
 
 
   final case class SchemaColumn(name: SchemaColumn.Name, dataType: SchemaColumn.DataType, nullable: SchemaColumn.Nullable)
@@ -68,11 +67,11 @@ object Query:
 
   object SchemaColumn:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type DataType = DataType.T
-    object DataType extends RefinedType[String, Pure]
+    object DataType extends Newtype[String, Pure]
     type Nullable = Nullable.T
-    object Nullable extends RefinedType[Boolean, Pure]
+    object Nullable extends Newtype[Boolean, Pure]
 
 
   final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
@@ -81,9 +80,9 @@ object Query:
 
   object SchemaTable:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
 
 
   final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

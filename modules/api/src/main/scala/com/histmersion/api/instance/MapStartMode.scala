@@ -3,7 +3,6 @@ package api.instance
 
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum MapStartMode(val wire: MapStartMode.Wire, val label: MapStartMode.Label):
   case Last extends MapStartMode(MapStartMode.Wire("last"), MapStartMode.Label("Where I last left it"))
@@ -11,9 +10,9 @@ enum MapStartMode(val wire: MapStartMode.Wire, val label: MapStartMode.Label):
 
 object MapStartMode:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
 
   def parse(s: Wire): MapStartMode = values.find(_.wire == Wire(Option(s).fold("")((_).value.trim.toLowerCase))).getOrElse(Last)

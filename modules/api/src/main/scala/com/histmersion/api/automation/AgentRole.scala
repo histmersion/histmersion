@@ -1,7 +1,6 @@
 package com.histmersion
 package api.automation
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum AgentRole(val wire: AgentRole.Wire):
   case Probe extends AgentRole(AgentRole.Wire("probe"))
@@ -19,7 +18,7 @@ enum AgentRole(val wire: AgentRole.Wire):
 
 object AgentRole:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[AgentRole] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

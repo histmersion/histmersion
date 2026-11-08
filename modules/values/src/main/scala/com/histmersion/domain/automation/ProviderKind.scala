@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum ProviderKind(val wire: ProviderKind.Wire):
   case Anthropic extends ProviderKind(ProviderKind.Wire("anthropic"))
@@ -26,7 +25,7 @@ enum ProviderKind(val wire: ProviderKind.Wire):
 object ProviderKind:
   /** The host's own providers, in their order. */
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   val values: List[ProviderKind] = List(Anthropic, OpenAI, Local, ClaudeCode, Codex, Opencode)
 

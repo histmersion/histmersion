@@ -8,7 +8,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
 
@@ -22,7 +21,7 @@ final case class SearchResult(
   def page: OffsetPage = OffsetPage(total, offset, RowCount(hits.size))
 object SearchResult:
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
 
 
   def of(total: Total, hits: List[Hit], offset: UnreadPage.Offset): SearchResult =

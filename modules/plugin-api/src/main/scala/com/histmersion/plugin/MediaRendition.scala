@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a provider says about the file a [[MediaItem]] names, for a host that would otherwise measure it.
@@ -31,14 +30,14 @@ final case class MediaRendition(
 
 object MediaRendition:
   type Mime = Mime.T
-  object Mime extends RefinedType[String, Pure]
+  object Mime extends Newtype[String, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
   type Height = Height.T
-  object Height extends RefinedType[Int, Pure]
+  object Height extends Newtype[Int, Pure]
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Long, Pure]
+  object Bytes extends Newtype[Long, Pure]
   type ThumbWidth = ThumbWidth.T
-  object ThumbWidth extends RefinedType[Int, Pure]
+  object ThumbWidth extends Newtype[Int, Pure]
   type ThumbHeight = ThumbHeight.T
-  object ThumbHeight extends RefinedType[Int, Pure]
+  object ThumbHeight extends Newtype[Int, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FollowupsRequest(
@@ -18,10 +17,10 @@ final case class FollowupsRequest(
 
 object FollowupsRequest:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Since = Since.T
-  object Since extends RefinedType[Int, Pure]
+  object Since extends Newtype[Int, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Apply = Apply.T
-  object Apply extends RefinedType[Boolean, Pure]
+  object Apply extends Newtype[Boolean, Pure]

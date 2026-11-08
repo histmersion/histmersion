@@ -11,15 +11,18 @@ import scala.meta.internal.{semanticdb => s}
 /** The check behind ShortenQualified and ReExportAliases: every symbol occurrence of a rewritten file must denote the same
   * symbol as before, in the same order.
   *
-  *   compare <snapshot-dir> <ledger.tsv> <out.tsv>
+  *   compare <snapshot-dir> <ledger.tsv> <out.tsv> [renames.tsv]
   *
   * <snapshot-dir> holds the SemanticDB files of the modules before the rewrite (at the same paths as under target/out) and the
   * sources before it under `src/`. Ignored on both sides: package symbols, occurrences in imports and package clauses, and the
   * ledger's ranges (the qualifiers a rewrite dropped, the regions ReExportAliases replaced, the lines it added). Each
-  * difference is written to <out.tsv>: path, kind (changed|stale), offset after, line after, symbol before, symbol after. */
+  * difference is written to <out.tsv>: path, kind (changed|stale), offset after, line after, symbol before, symbol after.
+  * [renames.tsv] (symbol before TAB symbol after) lists the symbols a rewrite replaces on purpose, e.g. a parent
+  * `io/github/iltotore/iron/RefinedType#` that became `com/histmersion/Newtype#`: a before-occurrence of one counts as the other. */
 object SymbolOracle {
   final case class Row(path: String, kind: String, origStart: Int, origEnd: Int, newStart: Int, newEnd: Int)
   final case class Occ(sym: String, role: Int, start: Int, end: Int)
+  var renames: Map[String, String] = Map.empty
 
   def offsets(text: String): Array[Int] = {
     val b = scala.collection.mutable.ArrayBuffer(0)
@@ -102,7 +105,12 @@ object SymbolOracle {
 
   def main(args: Array[String]): Unit = args.toList match {
     case "compare" :: snap :: ledger :: out :: Nil => compare(Paths.get(snap), Paths.get(ledger), Paths.get(out))
-    case _ => System.err.println("usage: compare <snapshot-dir> <ledger.tsv> <out.tsv>"); sys.exit(2)
+    case "compare" :: snap :: ledger :: out :: renames :: Nil =>
+      this.renames = Files.readAllLines(Paths.get(renames), UTF_8).asScala.toList.filter(_.contains("\t")).map { l =>
+        val c = l.split("\t", -1); c(0) -> c(1)
+      }.toMap
+      compare(Paths.get(snap), Paths.get(ledger), Paths.get(out))
+    case _ => System.err.println("usage: compare <snapshot-dir> <ledger.tsv> <out.tsv> [renames.tsv]"); sys.exit(2)
   }
 
   def compare(snap: Path, ledgerPath: Path, out: Path): Unit = {
@@ -133,7 +141,7 @@ object SymbolOracle {
               val rs = ledger.getOrElse(bd.uri, Nil)
               val ob = occurrences(bd, tb, rs.filter(r => r.kind == "drop" || r.kind == "opaque").map(r => (r.origStart, r.origEnd)))
               val oa = occurrences(d, ta, rs.filter(r => r.kind == "opaque" || r.kind == "import" || r.kind == "pkg").map(r => (r.newStart, r.newEnd)))
-              val (ua, ub) = unmatched(ob.map(o => (o.sym, o.role)), oa.map(o => (o.sym, o.role)))
+              val (ua, ub) = unmatched(ob.map(o => (renames.getOrElse(o.sym, o.sym), o.role)), oa.map(o => (o.sym, o.role)))
               if (ua.nonEmpty || ub.nonEmpty) {
                 changedFiles += 1
                 val la = offsets(ta)

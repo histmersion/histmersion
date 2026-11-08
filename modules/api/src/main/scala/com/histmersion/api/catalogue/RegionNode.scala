@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place as the hierarchy shows it: its id, label, kind, period, and whether it is contested or withdrawn. */
@@ -17,22 +16,22 @@ final case class RegionNode(
 
 object RegionNode:
   type RootKindsText = RootKindsText.T
-  object RootKindsText extends RefinedType[String, Pure]
+  object RootKindsText extends Newtype[String, Pure]
 
   type RootKinds = RootKindsValue
   type RootKindsValue = RootKindsText
   val RootKindsValue: RootKindsText.type = RootKindsText
 
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Contested = Contested.T
-  object Contested extends RefinedType[Boolean, Pure]
+  object Contested extends Newtype[Boolean, Pure]
   type Withdrawn = Withdrawn.T
-  object Withdrawn extends RefinedType[Boolean, Pure]
+  object Withdrawn extends Newtype[Boolean, Pure]
 
   val RootKinds: Set[RootKinds] = Set(
     RootKindsText(Place.Kind.Region),

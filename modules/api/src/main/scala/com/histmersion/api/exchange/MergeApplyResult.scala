@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeApplyResult(
@@ -32,17 +31,17 @@ final case class MergeApplyResult(
 object MergeApplyResult:
 
   type Applied = Applied.T
-  object Applied extends RefinedType[Boolean, Pure]
+  object Applied extends Newtype[Boolean, Pure]
   export MergePlan.PlanHash
   type Backup = Backup.T
-  object Backup extends RefinedType[String, Pure]
+  object Backup extends Newtype[String, Pure]
   type Reviews = Reviews.T
-  object Reviews extends RefinedType[String, Pure]
+  object Reviews extends Newtype[String, Pure]
   type LogEntry = LogEntry.T
-  object LogEntry extends RefinedType[Int, Pure]
+  object LogEntry extends Newtype[Int, Pure]
   type ReplanChanges = ReplanChanges.T
-  object ReplanChanges extends RefinedType[Int, Pure]
+  object ReplanChanges extends Newtype[Int, Pure]
   type Problems = Problems.T
-  object Problems extends RefinedType[String, Pure]
+  object Problems extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends RefinedType[String, Pure]
+  object Notes extends Newtype[String, Pure]

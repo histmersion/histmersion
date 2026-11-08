@@ -8,7 +8,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CritiqueSide(
@@ -22,6 +21,6 @@ final case class CritiqueSide(
 
 object CritiqueSide:
   type Cited = Cited.T
-  object Cited extends RefinedType[Boolean, Pure]
+  object Cited extends Newtype[Boolean, Pure]
   type Mentions = Mentions.T
-  object Mentions extends RefinedType[Int, Pure]
+  object Mentions extends Newtype[Int, Pure]

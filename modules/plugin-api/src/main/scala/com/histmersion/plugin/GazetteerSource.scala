@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Gazetteer sources, a part of the app that plugins extend: a dataset of historical places — polity outlines, a
@@ -37,8 +36,8 @@ trait GazetteerSource:
 
 object GazetteerSource:
   type TitleResult = TitleResult.T
-  object TitleResult extends RefinedType[String, Pure]
+  object TitleResult extends Newtype[String, Pure]
   type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends RefinedType[String, Pure]
+  object DescriptionResult extends Newtype[String, Pure]
   type FetchResultPart1 = FetchResultPart1.T
-  object FetchResultPart1 extends RefinedType[String, Pure]
+  object FetchResultPart1 extends Newtype[String, Pure]

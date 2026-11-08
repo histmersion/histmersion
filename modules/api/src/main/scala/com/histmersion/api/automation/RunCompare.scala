@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -28,19 +27,19 @@ object RunCompare:
 
   object RunSide:
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends RefinedType[Double, Pure]
+    object CostUsd extends Newtype[Double, Pure]
     type Seconds = Seconds.T
-    object Seconds extends RefinedType[Long, Pure]
+    object Seconds extends Newtype[Long, Pure]
     type Attempts = Attempts.T
-    object Attempts extends RefinedType[Int, Pure]
+    object Attempts extends Newtype[Int, Pure]
     type Failures = Failures.T
-    object Failures extends RefinedType[Int, Pure]
+    object Failures extends Newtype[Int, Pure]
 
 
   final case class StepSide(
@@ -59,23 +58,23 @@ object RunCompare:
 
   object StepSide:
     type Models = Models.T
-    object Models extends RefinedType[String, Pure]
+    object Models extends Newtype[String, Pure]
     type Actual = Actual.T
-    object Actual extends RefinedType[String, Pure]
+    object Actual extends Newtype[String, Pure]
     type Billing = Billing.T
-    object Billing extends RefinedType[String, Pure]
+    object Billing extends Newtype[String, Pure]
     export RunSide.{CostUsd, Seconds, Attempts, Failures}
     type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends RefinedType[Long, Pure]
+    object FirstCallTokens extends Newtype[Long, Pure]
     type Turns = Turns.T
-    object Turns extends RefinedType[Int, Pure]
+    object Turns extends Newtype[Int, Pure]
 
 
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object StepRow:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
 
 
   final case class EnrichSide(
@@ -95,23 +94,23 @@ object RunCompare:
 
   object EnrichSide:
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type QuotesChecked = QuotesChecked.T
-    object QuotesChecked extends RefinedType[Int, Pure]
+    object QuotesChecked extends Newtype[Int, Pure]
     type QuotesPassed = QuotesPassed.T
-    object QuotesPassed extends RefinedType[Int, Pure]
+    object QuotesPassed extends Newtype[Int, Pure]
     type PlacesAsked = PlacesAsked.T
-    object PlacesAsked extends RefinedType[Int, Pure]
+    object PlacesAsked extends Newtype[Int, Pure]
     type PlacesResolved = PlacesResolved.T
-    object PlacesResolved extends RefinedType[Int, Pure]
+    object PlacesResolved extends Newtype[Int, Pure]
     type DatedFindings = DatedFindings.T
-    object DatedFindings extends RefinedType[Int, Pure]
+    object DatedFindings extends Newtype[Int, Pure]
     type SummaryChars = SummaryChars.T
-    object SummaryChars extends RefinedType[Int, Pure]
+    object SummaryChars extends Newtype[Int, Pure]
     type NotesChars = NotesChars.T
-    object NotesChars extends RefinedType[Int, Pure]
+    object NotesChars extends Newtype[Int, Pure]
     type UniqueClaims = UniqueClaims.T
-    object UniqueClaims extends RefinedType[String, Pure]
+    object UniqueClaims extends Newtype[String, Pure]
 
 
   final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
@@ -120,22 +119,22 @@ object RunCompare:
 
   object ReviewerSide:
     type Reviewer = Reviewer.T
-    object Reviewer extends RefinedType[String, Pure]
+    object Reviewer extends Newtype[String, Pure]
     type Verdict = Verdict.T
-    object Verdict extends RefinedType[String, Pure]
+    object Verdict extends Newtype[String, Pure]
     type Majors = Majors.T
-    object Majors extends RefinedType[Int, Pure]
+    object Majors extends Newtype[Int, Pure]
     type Minors = Minors.T
-    object Minors extends RefinedType[Int, Pure]
+    object Minors extends Newtype[Int, Pure]
 
 
   final case class KindCount(kind: KindCount.Kind, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object KindCount:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
 
 
   final case class ReviewSide(
@@ -149,11 +148,11 @@ object RunCompare:
 
   object ReviewSide:
     type Verdict = Verdict.T
-    object Verdict extends RefinedType[String, Pure]
+    object Verdict extends Newtype[String, Pure]
     type Rounds = Rounds.T
-    object Rounds extends RefinedType[Int, Pure]
+    object Rounds extends Newtype[Int, Pure]
     type Majors = Majors.T
-    object Majors extends RefinedType[String, Pure]
+    object Majors extends Newtype[String, Pure]
 
 
   final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List[MajorOverlap.Pairs])
@@ -162,17 +161,17 @@ object RunCompare:
 
   object MajorOverlap:
     type A = A.T
-    object A extends RefinedType[String, Pure]
+    object A extends Newtype[String, Pure]
     type B = B.T
-    object B extends RefinedType[String, Pure]
+    object B extends Newtype[String, Pure]
     type AMajors = AMajors.T
-    object AMajors extends RefinedType[Int, Pure]
+    object AMajors extends Newtype[Int, Pure]
     type BMajors = BMajors.T
-    object BMajors extends RefinedType[Int, Pure]
+    object BMajors extends Newtype[Int, Pure]
     type Shared = Shared.T
-    object Shared extends RefinedType[Int, Pure]
+    object Shared extends Newtype[Int, Pure]
     type Pairs = Pairs.T
-    object Pairs extends RefinedType[String, Pure]
+    object Pairs extends Newtype[String, Pure]
 
 
   final case class Comparison(
@@ -189,8 +188,8 @@ object RunCompare:
 
   object Comparison:
     type Pipeline = Pipeline.T
-    object Pipeline extends RefinedType[String, Pure]
+    object Pipeline extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]

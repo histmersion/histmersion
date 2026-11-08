@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A downloaded copy of a work.
@@ -28,11 +27,11 @@ final case class FetchedFile(
 
 object FetchedFile:
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
 
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Extension = Extension.T
-  object Extension extends RefinedType[String, Pure]
+  object Extension extends Newtype[String, Pure]

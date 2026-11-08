@@ -2,7 +2,6 @@ package com.histmersion
 package api.research
 
 import com.histmersion.api.WireEnumValues
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum DraftMode(val wire: DraftMode.Wire):
@@ -11,7 +10,7 @@ enum DraftMode(val wire: DraftMode.Wire):
 
 object DraftMode:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[DraftMode] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

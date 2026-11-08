@@ -24,9 +24,9 @@ final case class Period private (start: Year, end: Year):
 object Period:
   /** The period from `start` to `end`, or why there is none (it would end before it starts). */
   type IsPointResult = IsPointResult.T
-  object IsPointResult extends RefinedType[Boolean, Pure]
+  object IsPointResult extends Newtype[Boolean, Pure]
   type FromResultPart1 = FromResultPart1.T
-  object FromResultPart1 extends RefinedType[String, Pure]
+  object FromResultPart1 extends Newtype[String, Pure]
 
   def from(start: Year, end: Year): Either[FromResultPart1, Period] =
     Either.cond(

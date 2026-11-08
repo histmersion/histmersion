@@ -2,7 +2,6 @@ package com.histmersion
 package api.library
 
 import com.histmersion.api.WireEnumValues
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum MatchOutcome:
@@ -23,7 +22,7 @@ enum MatchOutcome:
 
 object MatchOutcome:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def wireOf(o: MatchOutcome): Wire = o match
     case Same          => Wire("same")

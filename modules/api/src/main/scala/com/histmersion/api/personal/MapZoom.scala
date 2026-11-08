@@ -8,7 +8,7 @@ import sttp.tapir.Schema
 
 type MapZoom = MapZoom.T
 
-object MapZoom extends RefinedType[Double, Pure]:
+object MapZoom extends Newtype[Double, Pure]:
   given Encoder[MapZoom] = Encoder.encodeDouble.contramap(_.value)
   given Decoder[MapZoom] = Decoder.decodeDouble.map(MapZoom(_))
   given Schema[MapZoom] = Schema.schemaForDouble.as[MapZoom]

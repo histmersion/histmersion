@@ -1,15 +1,14 @@
 package com.histmersion
 package api.media
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object ImageSize:
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
   type Height = Height.T
-  object Height extends RefinedType[Int, Pure]
+  object Height extends Newtype[Int, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
 
 
   def of(bytes: Bytes): Option[(Width, Height)] =

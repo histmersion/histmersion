@@ -5,7 +5,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum CritiqueState(val wire: CritiqueState.Wire):
@@ -15,7 +14,7 @@ enum CritiqueState(val wire: CritiqueState.Wire):
 
 object CritiqueState:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[CritiqueState] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

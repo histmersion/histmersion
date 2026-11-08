@@ -9,7 +9,6 @@ import com.histmersion.api.StrictJson
 import io.circe.Codec
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
@@ -38,33 +37,33 @@ object Attestation:
 
 
   type Id = Id.T
-  object Id extends RefinedType[Long, Pure]
+  object Id extends Newtype[Long, Pure]
   type TargetType = TargetType.T
-  object TargetType extends RefinedType[String, Pure]
+  object TargetType extends Newtype[String, Pure]
   type TargetId = TargetId.T
-  object TargetId extends RefinedType[String, Pure]
+  object TargetId extends Newtype[String, Pure]
   type Quote = Quote.T
-  object Quote extends RefinedType[String, Pure]
+  object Quote extends Newtype[String, Pure]
   type Prefix = Prefix.T
-  object Prefix extends RefinedType[String, Pure]
+  object Prefix extends Newtype[String, Pure]
   type Suffix = Suffix.T
-  object Suffix extends RefinedType[String, Pure]
+  object Suffix extends Newtype[String, Pure]
   type CharStart = CharStart.T
-  object CharStart extends RefinedType[Int, Pure]
+  object CharStart extends Newtype[Int, Pure]
   type CharEnd = CharEnd.T
-  object CharEnd extends RefinedType[Int, Pure]
+  object CharEnd extends Newtype[Int, Pure]
   type ChunkOrd = ChunkOrd.T
-  object ChunkOrd extends RefinedType[Int, Pure]
+  object ChunkOrd extends Newtype[Int, Pure]
   type Page = Page.T
-  object Page extends RefinedType[String, Pure]
+  object Page extends Newtype[String, Pure]
   type Canvas = Canvas.T
-  object Canvas extends RefinedType[String, Pure]
+  object Canvas extends Newtype[String, Pure]
   type Xywh = Xywh.T
-  object Xywh extends RefinedType[String, Pure]
+  object Xywh extends Newtype[String, Pure]
   type CtsUrn = CtsUrn.T
-  object CtsUrn extends RefinedType[String, Pure]
+  object CtsUrn extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
 
   final case class Deleted(
       id: Id,
@@ -74,7 +73,7 @@ object Attestation:
 
   object Deleted:
     type Value = Value.T
-    object Value extends RefinedType[Boolean, Pure]
+    object Value extends Newtype[Boolean, Pure]
 
 
 

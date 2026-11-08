@@ -24,13 +24,13 @@ final case class Note(
 
 object Note:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
 
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends RefinedType[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
 
   final case class Edit(text: Text, ifUpdatedAt: Option[UpdatedAt] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -38,7 +38,7 @@ object Note:
 
   type Id = Id.T
 
-  object Id extends RefinedType[String, Pure]:
+  object Id extends Newtype[String, Pure]:
     given Encoder[Id] = Encoder.encodeString.contramap(_.value)
     given Decoder[Id] = Decoder.decodeString.map(Id(_))
     given Schema[Id] = Schema.string[Id]
@@ -51,7 +51,7 @@ object Note:
 
   type Text = Text.T
 
-  object Text extends RefinedType[String, Pure]:
+  object Text extends Newtype[String, Pure]:
     export Note.{Problem as TidyResultPart1}
 
     val MaxChars = 50000

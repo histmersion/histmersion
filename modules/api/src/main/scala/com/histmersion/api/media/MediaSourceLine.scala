@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaSourceLine(citekey: Citekey, role: MediaSourceLine.Role, provider: MediaItem.Provider, detail: MediaSourceLine.Detail)
@@ -15,6 +14,6 @@ final case class MediaSourceLine(citekey: Citekey, role: MediaSourceLine.Role, p
 
 object MediaSourceLine:
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
   type Detail = Detail.T
-  object Detail extends RefinedType[String, Pure]
+  object Detail extends Newtype[String, Pure]

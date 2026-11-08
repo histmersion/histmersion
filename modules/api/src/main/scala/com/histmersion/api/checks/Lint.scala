@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
@@ -13,39 +12,39 @@ import com.histmersion.api.library.AuthorName
 
 object Lint:
   type AbbreviationsText = AbbreviationsText.T
-  object AbbreviationsText extends RefinedType[String, Pure]
+  object AbbreviationsText extends Newtype[String, Pure]
   type DuplicateKey = DuplicateKey.T
-  object DuplicateKey extends RefinedType[String, Pure]
+  object DuplicateKey extends Newtype[String, Pure]
   type FormatItemDetail = FormatItemDetail.T
-  object FormatItemDetail extends RefinedType[String, Pure]
+  object FormatItemDetail extends Newtype[String, Pure]
   type IssueCount = IssueCount.T
-  object IssueCount extends RefinedType[Int, Pure]
+  object IssueCount extends Newtype[Int, Pure]
   type ItemLimit = ItemLimit.T
-  object ItemLimit extends RefinedType[Int, Pure]
+  object ItemLimit extends Newtype[Int, Pure]
   type Paragraph = Paragraph.T
-  object Paragraph extends RefinedType[String, Pure]
+  object Paragraph extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ProseBody = ProseBody.T
-  object ProseBody extends RefinedType[String, Pure]
+  object ProseBody extends Newtype[String, Pure]
   type SentenceCount = SentenceCount.T
-  object SentenceCount extends RefinedType[Int, Pure]
+  object SentenceCount extends Newtype[Int, Pure]
   type Suggestion = Suggestion.T
-  object Suggestion extends RefinedType[String, Pure]
+  object Suggestion extends Newtype[String, Pure]
   type Tag = Tag.T
-  object Tag extends RefinedType[String, Pure]
+  object Tag extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends RefinedType[String, Pure]
+  object MarkdownResult extends Newtype[String, Pure]
 
   final case class LintItem(citekey: Citekey, detail: LintItem.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object LintItem:
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
 
 
   final case class LintRuleReport(rule: LintRuleReport.Rule, description: LintRuleReport.Description, count: LintRuleReport.Count, items: List[LintItem])
@@ -55,7 +54,7 @@ object Lint:
   object LintRuleReport:
     export Lint.Rule.{Name as Rule, Description}
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
 
 
   final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
@@ -66,7 +65,7 @@ object Lint:
   object LintReport:
 
     type Fixed = Fixed.T
-    object Fixed extends RefinedType[String, Pure]
+    object Fixed extends Newtype[String, Pure]
 
 
   final case class LintFixResult(
@@ -87,38 +86,38 @@ object Lint:
 
   object LintFixResult:
     type Applied = Applied.T
-    object Applied extends RefinedType[String, Pure]
+    object Applied extends Newtype[String, Pure]
     type EdgesResolved = EdgesResolved.T
-    object EdgesResolved extends RefinedType[Int, Pure]
+    object EdgesResolved extends Newtype[Int, Pure]
     type SourcesReindexed = SourcesReindexed.T
-    object SourcesReindexed extends RefinedType[Int, Pure]
+    object SourcesReindexed extends Newtype[Int, Pure]
     type ChunksWritten = ChunksWritten.T
-    object ChunksWritten extends RefinedType[Int, Pure]
+    object ChunksWritten extends Newtype[Int, Pure]
     type Remaining = Remaining.T
-    object Remaining extends RefinedType[Int, Pure]
+    object Remaining extends Newtype[Int, Pure]
     type FindingsRegeocoded = FindingsRegeocoded.T
-    object FindingsRegeocoded extends RefinedType[Int, Pure]
+    object FindingsRegeocoded extends Newtype[Int, Pure]
     type FindingsPlaced = FindingsPlaced.T
-    object FindingsPlaced extends RefinedType[Int, Pure]
+    object FindingsPlaced extends Newtype[Int, Pure]
     type PlacesReclassified = PlacesReclassified.T
-    object PlacesReclassified extends RefinedType[Int, Pure]
+    object PlacesReclassified extends Newtype[Int, Pure]
     type PlacesMerged = PlacesMerged.T
-    object PlacesMerged extends RefinedType[Int, Pure]
+    object PlacesMerged extends Newtype[Int, Pure]
     type PlacesRelocated = PlacesRelocated.T
-    object PlacesRelocated extends RefinedType[Int, Pure]
+    object PlacesRelocated extends Newtype[Int, Pure]
     type PointAreasRemoved = PointAreasRemoved.T
-    object PointAreasRemoved extends RefinedType[Int, Pure]
+    object PointAreasRemoved extends Newtype[Int, Pure]
     type PointAreasRemaining = PointAreasRemaining.T
-    object PointAreasRemaining extends RefinedType[Int, Pure]
+    object PointAreasRemaining extends Newtype[Int, Pure]
 
 
   final case class Rule(name: Rule.Name, description: Rule.Description)
 
   object Rule:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Description = Description.T
-    object Description extends RefinedType[String, Pure]
+    object Description extends Newtype[String, Pure]
 
   val DanglingEdges = "dangling-edges"
   val UnresolvedShortCitekeys = "unresolved-short-citekeys"

@@ -7,7 +7,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Sha256
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class AssetInput(
@@ -22,4 +21,4 @@ final case class AssetInput(
 
 object AssetInput:
   type Base64 = Base64.T
-  object Base64 extends RefinedType[String, Pure]
+  object Base64 extends Newtype[String, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Edge
 import com.histmersion.api.media.MediaItem
@@ -12,9 +11,9 @@ import com.histmersion.api.library.Source
 object Palette:
   object Ramp:
     type Stops = Stops.T
-    object Stops extends RefinedType[Int, Pure]
+    object Stops extends Newtype[Int, Pure]
   type CssVar = CssVar.T
-  object CssVar extends RefinedType[String, Pure]
+  object CssVar extends Newtype[String, Pure]
   val edgeKinds: List[Edge.Kind.Wire] = List(
     Edge.Kind.Wire("references"),
     Edge.Kind.Wire("challenges"),

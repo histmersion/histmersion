@@ -5,7 +5,6 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
@@ -13,13 +12,13 @@ final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeD
 
 object MergeDecision:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   type Argument = Argument.T
-  object Argument extends RefinedType[String, Pure]
+  object Argument extends Newtype[String, Pure]
 
   enum Kind:
     /** Keep this collection's version. */
@@ -65,7 +64,7 @@ object MergeDecision:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(k: Kind): Wire = k match
       case KeepLeft       => Wire("keep-left")

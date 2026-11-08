@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.Bundle
 
@@ -30,20 +29,20 @@ final case class MediaThumb(
 
 object MediaThumb:
   type FilePath = FilePath.T
-  object FilePath extends RefinedType[String, Pure]
+  object FilePath extends Newtype[String, Pure]
   type MarkdownLine = MarkdownLine.T
-  object MarkdownLine extends RefinedType[String, Pure]
+  object MarkdownLine extends Newtype[String, Pure]
   type ThumbPath = ThumbPath.T
-  object ThumbPath extends RefinedType[String, Pure]
+  object ThumbPath extends Newtype[String, Pure]
 
 
   type MarkdownLineResult = MarkdownLine
   val MarkdownLineResult: MarkdownLine.type = MarkdownLine
 
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
   def thumbPath(uid: Bundle.Asset.Uid): ThumbPath = ThumbPath(s"/media/$uid/thumb")
   def filePath(uid: Bundle.Asset.Uid): FilePath = FilePath(s"/media/$uid/file")

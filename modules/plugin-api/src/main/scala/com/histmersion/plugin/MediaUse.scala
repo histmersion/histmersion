@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One picture a collection found for one of its targets ([[MediaMatchRule.Own]]): the host ties the item to that
@@ -34,10 +33,10 @@ final case class MediaUse(
 
 object MediaUse:
   type Rank = Rank.T
-  object Rank extends RefinedType[Int, Pure]
+  object Rank extends Newtype[Int, Pure]
   type Statement = Statement.T
-  object Statement extends RefinedType[String, Pure]
+  object Statement extends Newtype[String, Pure]
   type Basis = Basis.T
-  object Basis extends RefinedType[String, Pure]
+  object Basis extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package api.library
 
 import com.histmersion.api.catalogue.LinkScheme
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
   def key: ExternalId.Key = ExternalId.Key(s"${scheme.wire}:$id")
@@ -12,15 +11,15 @@ final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
 
 object ExternalId:
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type PlaceId = PlaceId.T
-  object PlaceId extends RefinedType[String, Pure]
+  object PlaceId extends Newtype[String, Pure]
   type Reference = Reference.T
-  object Reference extends RefinedType[String, Pure]
+  object Reference extends Newtype[String, Pure]
 
 
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
 
   private val Prefixed = """^(wd|wikidata|gn|geonames|pl|pleiades|tgn|whg)\s*:\s*(\S+)$""".r
   private val WikidataUri = """^https?://(?:www\.)?wikidata\.org/(?:entity|wiki)/(Q\d+)/?$""".r

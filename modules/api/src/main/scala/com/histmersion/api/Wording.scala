@@ -9,7 +9,6 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.AgentScheduler
@@ -20,9 +19,9 @@ import com.histmersion.api.automation.ProviderKind
 object Wording:
   object Decisions:
     type Open = Open.T
-    object Open extends RefinedType[Int, Pure]
+    object Open extends Newtype[Int, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
 
 
   type ManagerId = Id

@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum GazGeometry:
   case GeoJson(text: GeoJson.Text)
@@ -10,7 +9,7 @@ enum GazGeometry:
 object GazGeometry:
   object GeoJson:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
   object Wkt:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]

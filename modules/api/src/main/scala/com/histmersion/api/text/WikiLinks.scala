@@ -1,19 +1,18 @@
 package com.histmersion
 package api.text
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object WikiLinks:
   type Alias = Alias.T
-  object Alias extends RefinedType[String, Pure]
+  object Alias extends Newtype[String, Pure]
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
   type RetargetCount = RetargetCount.T
-  object RetargetCount extends RefinedType[Int, Pure]
+  object RetargetCount extends Newtype[Int, Pure]
 
 
   type NormalizeRaw = NormalizeRaw.T
-  object NormalizeRaw extends RefinedType[String, Pure]
+  object NormalizeRaw extends Newtype[String, Pure]
   type RewriteLinksRenderArg3 = Alias
   val RewriteLinksRenderArg3: Alias.type = Alias
 
@@ -39,17 +38,17 @@ object WikiLinks:
 
   object Occurrence:
     type Start = Start.T
-    object Start extends RefinedType[Int, Pure]
+    object Start extends Newtype[Int, Pure]
     type End = End.T
-    object End extends RefinedType[Int, Pure]
+    object End extends Newtype[Int, Pure]
     type Raw = Raw.T
-    object Raw extends RefinedType[String, Pure]
+    object Raw extends Newtype[String, Pure]
     type Embed = Embed.T
-    object Embed extends RefinedType[Boolean, Pure]
+    object Embed extends Newtype[Boolean, Pure]
     type Escaped = Escaped.T
-    object Escaped extends RefinedType[Boolean, Pure]
+    object Escaped extends Newtype[Boolean, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
 
   def occurrences(md: Body): List[Occurrence] =
     Link

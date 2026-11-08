@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventLead(
@@ -24,19 +23,19 @@ object EventLead:
 
 
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Tier = Tier.T
-  object Tier extends RefinedType[String, Pure]
+  object Tier extends Newtype[String, Pure]
   type Years = Years.T
-  object Years extends RefinedType[String, Pure]
+  object Years extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type FindingsNear = FindingsNear.T
-  object FindingsNear extends RefinedType[Int, Pure]
+  object FindingsNear extends Newtype[Int, Pure]
   type Candidates = Candidates.T
-  object Candidates extends RefinedType[Int, Pure]
+  object Candidates extends Newtype[Int, Pure]
 
   final case class Action(kind: Action.Kind, label: Action.Label, command: Action.Command, query: Option[Action.Query] = None)
       derives KindlingsCodecAsObject,
@@ -44,17 +43,17 @@ object EventLead:
 
   object Action:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Command = Command.T
-    object Command extends RefinedType[String, Pure]
+    object Command extends Newtype[String, Pure]
     type Query = Query.T
-    object Query extends RefinedType[String, Pure]
+    object Query extends Newtype[String, Pure]
 
 
   final case class List(total: List.Total, leads: scala.List[EventLead]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object List:
     type Total = Total.T
-    object Total extends RefinedType[Int, Pure]
+    object Total extends Newtype[Int, Pure]

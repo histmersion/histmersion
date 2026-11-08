@@ -1,28 +1,27 @@
 package com.histmersion
 package api.media
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.text.SafeName
 import com.histmersion.api.exchange.Bundle
 object AssetLinks:
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Target = Target.T
-  object Target extends RefinedType[String, Pure]
+  object Target extends Newtype[String, Pure]
   type TargetId = TargetId.T
-  object TargetId extends RefinedType[String, Pure]
+  object TargetId extends Newtype[String, Pure]
   type TargetKind = TargetKind.T
-  object TargetKind extends RefinedType[String, Pure]
+  object TargetKind extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
   type NormalizeBodyMd = Body
   val NormalizeBodyMd: Body.type = Body

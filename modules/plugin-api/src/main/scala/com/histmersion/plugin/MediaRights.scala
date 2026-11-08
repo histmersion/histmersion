@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a record says about reuse, as the provider states it — never judged by the plugin.
@@ -25,8 +24,8 @@ final case class MediaRights(
 
 object MediaRights:
   type LicenceUrl = LicenceUrl.T
-  object LicenceUrl extends RefinedType[String, Pure]
+  object LicenceUrl extends Newtype[String, Pure]
   type Author = Author.T
-  object Author extends RefinedType[String, Pure]
+  object Author extends Newtype[String, Pure]
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]

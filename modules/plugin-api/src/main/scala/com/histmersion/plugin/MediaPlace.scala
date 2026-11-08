@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place on the map the host asks a collection about.
@@ -49,13 +48,13 @@ object MediaPlace:
   val ApplyLabel: Label.type = Label
 
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type IdsPart1 = IdsPart1.T
-  object IdsPart1 extends RefinedType[String, Pure]
+  object IdsPart1 extends Newtype[String, Pure]
   type IdsPart2 = IdsPart2.T
-  object IdsPart2 extends RefinedType[String, Pure]
+  object IdsPart2 extends Newtype[String, Pure]
 
   def apply(
       id: ApplyId,

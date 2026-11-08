@@ -3,11 +3,10 @@ package api.catalogue
 
 import com.histmersion.api.{Plural, TimeSpan, YearFmt}
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object EventLeads:
   type LeadList = LeadList.T
-  object LeadList extends RefinedType[String, Pure]
+  object LeadList extends Newtype[String, Pure]
 
   def years(ts: TimeSpan): EventLead.Years =
     EventLead.Years(YearFmt.span(ts))

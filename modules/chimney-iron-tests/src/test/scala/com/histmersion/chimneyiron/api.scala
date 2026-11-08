@@ -6,19 +6,19 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
 type Citekey = Citekey.T
-object Citekey extends RefinedType[String, CitekeyRule]
+object Citekey extends Newtype[String, CitekeyRule]
 
 type Title = Title.T
-object Title extends RefinedType[String, NonBlankCounted]
+object Title extends Newtype[String, NonBlankCounted]
 
 type Tag = Tag.T
-object Tag extends RefinedType[String, NonBlankCounted]
+object Tag extends Newtype[String, NonBlankCounted]
 
 type Year = Year.T
-object Year extends RefinedType[Int, Pure]
+object Year extends Newtype[Int, Pure]
 
 type Heading = Heading.T
-object Heading extends RefinedType[String, NonBlankCounted]
+object Heading extends Newtype[String, NonBlankCounted]
 
 enum SourceStatusView:
   case Current

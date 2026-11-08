@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReviewBadge(
@@ -22,16 +21,16 @@ final case class ReviewBadge(
 
 object ReviewBadge:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Detail = Detail.T
-  object Detail extends RefinedType[String, Pure]
+  object Detail extends Newtype[String, Pure]
   type OpenMajors = OpenMajors.T
-  object OpenMajors extends RefinedType[Int, Pure]
+  object OpenMajors extends Newtype[Int, Pure]
   type OpenMinors = OpenMinors.T
-  object OpenMinors extends RefinedType[Int, Pure]
+  object OpenMinors extends Newtype[Int, Pure]
   type Findings = Findings.T
-  object Findings extends RefinedType[Int, Pure]
+  object Findings extends Newtype[Int, Pure]
   type Runs = Runs.T
-  object Runs extends RefinedType[Int, Pure]
+  object Runs extends Newtype[Int, Pure]
   type Round = ReviewRound.Round
   val Round: ReviewRound.Round.type = ReviewRound.Round

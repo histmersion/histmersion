@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A call that did not answer. */
@@ -17,9 +16,9 @@ enum AiFailure:
 object AiFailure:
   object Error:
     type Message = Message.T
-    object Message extends RefinedType[String, Pure]
+    object Message extends Newtype[String, Pure]
   object LimitReached:
     type Message = Message.T
-    object Message extends RefinedType[String, Pure]
+    object Message extends Newtype[String, Pure]
     type UntilEpochMs = UntilEpochMs.T
-    object UntilEpochMs extends RefinedType[Long, Pure]
+    object UntilEpochMs extends Newtype[Long, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sources with a fetched file that are not in a collection: `count` gaps, `uncounted` records without a file,
@@ -21,8 +20,8 @@ final case class CollectionGaps(
 
 object CollectionGaps:
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Uncounted = Uncounted.T
-  object Uncounted extends RefinedType[Int, Pure]
+  object Uncounted extends Newtype[Int, Pure]
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]

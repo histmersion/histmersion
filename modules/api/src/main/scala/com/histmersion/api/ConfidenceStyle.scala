@@ -2,16 +2,15 @@ package com.histmersion
 package api
 
 import com.histmersion.api.library.Confidence
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object ConfidenceStyle:
   type Rank = Rank.T
-  object Rank extends RefinedType[Int, Pure]
+  object Rank extends Newtype[Int, Pure]
   type Rgb = Rgb.T
-  object Rgb extends RefinedType[String, Pure]
+  object Rgb extends Newtype[String, Pure]
   type Saturation = Saturation.T
-  object Saturation extends RefinedType[Double, Pure]
+  object Saturation extends Newtype[Double, Pure]
 
 
 
@@ -40,9 +39,9 @@ object ConfidenceStyle:
 
   object IconPart:
     type D = D.T
-    object D extends RefinedType[String, Pure]
+    object D extends Newtype[String, Pure]
     type Filled = Filled.T
-    object Filled extends RefinedType[Boolean, Pure]
+    object Filled extends Newtype[Boolean, Pure]
 
   private val Ring = IconPart(IconPart.D("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z"), filled = IconPart.Filled(false))
 

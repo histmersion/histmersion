@@ -8,7 +8,6 @@ import com.histmersion.api.Paging
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.RowCount
@@ -18,21 +17,21 @@ import com.histmersion.api.RowCount
   */
 object ListFilters:
   type EncodedFacets = EncodedFacets.T
-  object EncodedFacets extends RefinedType[String, Pure]
+  object EncodedFacets extends Newtype[String, Pure]
   type FacetLine = FacetLine.T
-  object FacetLine extends RefinedType[String, Pure]
+  object FacetLine extends Newtype[String, Pure]
   type FacetName = FacetName.T
-  object FacetName extends RefinedType[String, Pure]
+  object FacetName extends Newtype[String, Pure]
   type OptionLabel = OptionLabel.T
-  object OptionLabel extends RefinedType[String, Pure]
+  object OptionLabel extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Qualifier = Qualifier.T
-  object Qualifier extends RefinedType[String, Pure]
+  object Qualifier extends Newtype[String, Pure]
   type Term = Term.T
-  object Term extends RefinedType[String, Pure]
+  object Term extends Newtype[String, Pure]
   type TimeBound = TimeBound.T
-  object TimeBound extends RefinedType[String, Pure]
+  object TimeBound extends Newtype[String, Pure]
 
 
   type KnownResultPart1 = Problem
@@ -101,7 +100,7 @@ object ListFilters:
     export Approval.State.{Wire as State}
     export Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
-    object Subject extends RefinedType[String, Pure]
+    object Subject extends Newtype[String, Pure]
     export Approval.DecidedBy.{Wire as DecidedBy}
 
   final case class RunFilter(
@@ -142,22 +141,22 @@ object ListFilters:
     export ListFilters.{OptionLabel as OptionsResultPart2}
 
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Pipeline = Pipeline.T
-    object Pipeline extends RefinedType[String, Pure]
+    object Pipeline extends Newtype[String, Pure]
     type Manager = Manager.T
-    object Manager extends RefinedType[String, Pure]
+    object Manager extends Newtype[String, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type Provider = Provider.T
-    object Provider extends RefinedType[String, Pure]
+    object Provider extends Newtype[String, Pure]
     export Agents.Origin.{Wire as Origin}
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type Subject = Subject.T
-    object Subject extends RefinedType[String, Pure]
+    object Subject extends Newtype[String, Pure]
 
   final case class JobFilter(
       status: List[JobFilter.Status] = Nil,
@@ -190,11 +189,11 @@ object ListFilters:
     type Kind = JobKinds.Wire
     val Kind: JobKinds.Wire.type = JobKinds.Wire
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type Subject = Subject.T
-    object Subject extends RefinedType[String, Pure]
+    object Subject extends Newtype[String, Pure]
 
   val approvalQuery: EndpointInput[ApprovalFilter] =
     query[Option[String]]("state")

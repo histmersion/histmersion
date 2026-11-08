@@ -7,7 +7,6 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label):
@@ -32,9 +31,9 @@ enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label):
 
 object DeletePart:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
 
   given WireEnumValues[DeletePart]:
