@@ -1,0 +1,574 @@
+191 sites
+AgentEngineSuite.scala:389	389 |    assertEquals(page.total, page.count(Paging.Page.CountState("cancelled")))
+	api.Paging.Page.Total
+	api.Paging.Count.T
+AgentEngineSuite.scala:743	743 |    assertEquals((ok.modelFor(Role.Extractor), ok.modelFor(Role.Writer)), (Some(Haiku.wire), None))
+	(Option[api.automation.Agents.RunInfo.Model], Option[api.automation.Agents.RunInfo.Model])
+	(Some[api.automation.Agents.ModelRef.Wire], None.type)
+AgentEngineSuite.scala:853	853 |    assertEquals((cmp.pipeline, cmp.target, cmp.runs.map(_.id)), ("enrich-source", Ck, List(r1.id, r2.id)))
+	(api.automation.RunCompare.Comparison.Pipeline, api.automation.RunCompare.Comparison.Target, List[api.automation.Agents.RunInfo.Id.T])
+	(String, domain.library.Citekey.T, List[api.automation.Agents.RunInfo.Id])
+AgentEngineSuite.scala:1116	1116 |      assertEquals(engine.checkStalls(PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + limit + 60000L)), List(run.id))
+	List[domain.automation.Run.Id]
+	List[api.automation².Agents.RunInfo.Id]
+ApprovalServiceContract.scala:87	87 |      )
+	List[(api.automation.ApprovalDigest.Open.Id, api.automation.ApprovalDigest.Open.Kind, Option[api.automation.ApprovalDigest.Open.Subject])]
+	List[(api.automation.Agents.ApprovalInfo.Id, String, Some[String])]
+ModelChainRunSuite.scala:194	194 |    assertEquals(llmModels(run.id).map(_._4).distinct, List(Some(B.wire)))
+	List[Option[api.automation.Agents.StepInfo.Model]]
+	List[Some[api.automation.Agents.ModelRef.Wire]]
+ModelChainRunSuite.scala:201	201 |    assertEquals(ex.active, Some(B.wire))
+	Option[api.automation.ModelChains.RoleChain.Active]
+	Some[api.automation.Agents.ModelRef.Wire]
+ModelChainRunSuite.scala:205	205 |    assertEquals(m.roles.find(_.role.value == "extractor").flatMap(_.model), Some(B.wire))
+	Option[api.automation.Agents.RoleModel.Model.T]
+	Some[api.automation.Agents.ModelRef.Wire]
+ModelChainRunSuite.scala:231	231 |    assertEquals(a.engine.resumeDue(at.plusSeconds(1)), List(run.id))
+	List[domain.automation.Run.Id]
+	List[api.automation².Agents.RunInfo.Id]
+ModelChainRunSuite.scala:251	251 |    )
+	List[(api.automation.Agents.StepInfo.Attempt, api.automation.Agents.StepInfo.Status, Option[api.automation.Agents.StepInfo.Model])]
+	List[(Int, String, Some[api.automation.Agents.ModelRef.Wire])]
+ModelChainRunSuite.scala:282	282 |    assertEquals((saved.source, saved.active, saved.models.map(_.model)), ("saved", Some(B.wire), List(B.wire, A.wire)))
+	(api.automation.ModelChains.RoleChain.Source, Option[api.automation.ModelChains.RoleChain.Active], List[api.automation.ModelChains.ChainEntry.Model.T])
+	(String, Some[api.automation.Agents.ModelRef.Wire], List[api.automation.Agents.ModelRef.Wire])
+ModelChainRunSuite.scala:294	294 |    )
+	Option[(api.automation.ModelChains.RoleChain.Source, List[api.automation.ModelChains.ChainEntry.Model.T])]
+	Some[(String, List[api.automation.Agents.ModelRef.Wire])]
+ModelChainRunSuite.scala:305	305 |    )
+	Either[api.Api.Error, ( api.automation.ModelChains.RoleChain.Source, List[api.automation.ModelChains.ChainEntry.Model.T])]
+	Right[Nothing, (String, List[api.automation.Agents.ModelRef.Wire])]
+ModelChainRunSuite.scala:329	329 |    assertEquals(c.models.map(e => (e.model, e.ready)), List(("local:zzUnpriced", false), (B.wire, true)))
+	List[(api.automation.ModelChains.ChainEntry.Model, api.automation.ModelChains.ChainEntry.Ready)]
+	List[(String | api.automation.Agents.ModelRef.Wire, Boolean)]
+ModelChainRunSuite.scala:333	333 |    assertEquals(llmModels(run.id).map(_._4).distinct, List(Some(B.wire)))
+	List[Option[api.automation.Agents.StepInfo.Model]]
+	List[Some[api.automation.Agents.ModelRef.Wire]]
+PlanQuotaRunSuite.scala:167	167 |    assertEquals(a.engine.resumeDue(java.time.Instant.now()), List(run.id))
+	List[domain.automation.Run.Id]
+	List[api.automation².Agents.RunInfo.Id]
+PlanQuotaRunSuite.scala:205	205 |    assertEquals(a.engine.resumeDue(java.time.Instant.ofEpochMilli(reset.value + 1000)), List(run.id))
+	List[domain.automation.Run.Id]
+	List[api.automation².Agents.RunInfo.Id]
+RunServiceContract.scala:107	107 |    assertEquals(r(s).list(None, RunQuery.Limit(10)).map(_.id), Vector(c, b, a))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:108	108 |    assertEquals(r(s).list(Some(RunQuery.Status(" QUEUED ")), RunQuery.Limit(10)).map(_.id), Vector(c, a))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:109	109 |    assertEquals(r(s).list(None, RunQuery.Limit(10), Some(Goal.Slug("zz-g"))).map(_.id), Vector(a))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:110	110 |    assertEquals(r(s).list(None, RunQuery.Limit(1)).map(_.id), Vector(c))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:111	111 |    assertEquals(r(s).forTarget(Pipeline.EnrichSource, AgentsControllers.Target("zz2020_a")).map(_.id), Vector(a))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:112	112 |    assertEquals(r(s).forManager(ManagerLight.Id("watch:zz-g")).map(_.id), Vector(c, b))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:113	113 |    assertEquals(r(s).forManager(ManagerLight.Id("watch:zz-g"), active = RunService.Active(true)).map(_.id), Vector(c))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:114	114 |    assertEquals(r(s).forManager(com.histmersion.domain.automation.managers.ManagerLight.Id("watch:zz-g"), limit = RunQuery.Limit(1)).map(_.id), Vector(c))
+	Vector[api.automation.Agents.RunInfo.Id.T]
+	Vector[domain.automation².Run.Id]
+RunServiceContract.scala:131	131 |    assertEquals((first.map(_.id), more), (Vector(c, b), true))
+	(Vector[api.automation.Agents.RunInfo.Id.T], Boolean)
+	(Vector[domain.automation².Run.Id], Boolean)
+RunServiceContract.scala:133	133 |    assertEquals((rest.map(_.id), none), (Vector(a), false))
+	(Vector[api.automation.Agents.RunInfo.Id.T], Boolean)
+	(Vector[domain.automation².Run.Id], Boolean)
+RunServiceContract.scala:135	135 |    assertEquals((upTo.map(_.id), older), (Vector(c, b), true))
+	(Vector[api.automation.Agents.RunInfo.Id.T], Boolean)
+	(Vector[domain.automation².Run.Id], Boolean)
+RunServiceContract.scala:140	140 |    assertEquals(page(RunQuery(status = List(RunQuery.Status("running")))), Right(Vector(c)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:141	141 |    assertEquals(page(RunQuery(pipelines = List(RunQuery.Pipelines("currency-check")))), Right(Vector(c)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:142	142 |    assertEquals(page(RunQuery(managers = List(RunQuery.Managers("watch:zz-g")))), Right(Vector(b)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:143	143 |    assertEquals(page(RunQuery(goal = Some(RunQuery.Goal("zz-g")))), Right(Vector(a)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:144	144 |    assertEquals(page(RunQuery(models = List(RunQuery.Models("openai:gpt-5")))), Right(Vector(b)), "a model one of its steps used")
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:145	145 |    assertEquals(page(RunQuery(providers = List(RunQuery.Providers("local")))), Right(Vector(c, b, a)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:146	146 |    assertEquals(page(RunQuery(providers = List(RunQuery.Providers("openai")))), Right(Vector(b)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:147	147 |    assertEquals(page(RunQuery(q = Some(RunQuery.Q("TIN")))), Right(Vector(c, a)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+RunServiceContract.scala:148	148 |    assertEquals(page(RunQuery(origins = List(RunQuery.Origins("person")))), Right(Vector(c, b, a)))
+	Either[domain.automation.agents.AgentRepo.CursorProblem, Vector[api.automation².Agents.RunInfo.Id.T]]
+	Right[Nothing, Vector[domain.automation.Run.Id]]
+ManagerServiceContract.scala:87	87 |    )
+	Option[(api.automation.Managers.ManagerItem.Status, Option[api.automation.Agents.RunInfo.Id], api.automation.Managers.ManagerItem.Attempts, Option[api.automation.Managers.ItemState.Before])]
+	Some[(String, Some[domain.automation².Run.Id], Int, Some[Int])]
+QueueServiceContract.scala:170	170 |    assertEquals(exported(q, Kind.Acquire), acquireFile)
+	api.automation.Queue.RenderResult.T
+	api.automation.Queue.FileText.T
+QueueServiceContract.scala:175	175 |    assertEquals(exported(q, Kind.Log), logFile)
+	api.automation.Queue.RenderResult.T
+	api.automation.Queue.FileText.T
+QueueServiceContract.scala:187	187 |    assertEquals(exported(q, Kind.Acquire), acquireFile)
+	api.automation.Queue.RenderResult.T
+	api.automation.Queue.FileText.T
+GazetteerLoadSuite.scala:243	243 |    assertEquals((hit.periodStart, hit.periodEnd), (Some(-1650L), Some(-1180L)), "the records' widest years")
+	(Option[Year], Option[Year])
+	(Some[Long], Some[Long])
+GazetteerLoadSuite.scala:277	277 |    )
+	Option[(domain.catalogue.places.GazetteerSourceRow.Version, Sha256)]
+	Some[(String, api.catalogue².Gazetteer.Extract.Sha256.T)]
+ImportedPlaceTimeSuite.scala:228	228 |    assertEquals(inside.head.id, PatonesId)
+	api.catalogue.Place.Id
+	domain.catalogue².Place².Id.T
+ImportedPlaceTimeSuite.scala:229	229 |    assertEquals(at(Period(Year(1600), Year(1650))), Some(PatonesId))
+	Option[api.catalogue.Place.Id.T]
+	Some[domain.catalogue².Place².Id².T]
+PlaceServiceContract.scala:191	191 |    )
+	Either[api.Api.Error, (api.catalogue.Place.Id, api.catalogue.Place.OverrideChanged.Label, api.catalogue.Place.OverrideChanged.Reset, api.catalogue.Place.OverrideChanged.KindBefore, api.catalogue.Place.OverrideChanged.KindAfter, a
+	Right[Nothing, (String, String, Boolean, String, String, api.catalogue.Place.Dating.Description.T, api.catalogue.Place.Dating.Description.T)]
+UpstreamRecordsSuite.scala:67	67 |      assertEquals(Identifiers.doi(Identifiers.DoiText(s)), Doi.normalize(s), s)
+	Option[plugin.Doi]
+	Option[domain.library.Doi]
+UpstreamRecordsSuite.scala:68	68 |      assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)), Ident.arxiv(Ident.Written(s)), s)
+	Option[upstreams.ArxivId]
+	Option[domain.library.ArxivId]
+SeedImportSuite.scala:60	60 |    assertEquals(second.skipped, List(ckS))
+	List[api.library.SeedResult.Skipped]
+	List[domain.library².Citekey.T]
+SourceServiceContract.scala:109	109 |    )
+	List[(api.library.Citekey, api.library.NeighborTarget)]
+	List[(String | domain.library².Citekey.T, api.library.NeighborTarget)]
+SourceServiceContract.scala:115	115 |    )
+	List[(api.library.NeighborRow.Direction, api.library.Citekey, api.library.NeighborTarget)]
+	List[(String, String | domain.library².Citekey.T, api.library.NeighborTarget)]
+SourceServiceContract.scala:116	116 |    assertEquals(s.citations.neighbors(B, Nil).map(r => (r.direction, r.citekey)), List(("in", A)))
+	List[(api.library.NeighborRow.Direction, api.library.Citekey)]
+	List[(String, domain.library².Citekey.T)]
+SourceServiceContract.scala:122	122 |    assertEquals(s.sources.refs(List(B, A, Citekey("zqnone2000_x"))).map(_.citekey), List(A, B))
+	List[api.library.Citekey.T]
+	List[domain.library².Citekey².T]
+SourceServiceContract.scala:160	160 |    assertEquals(s.sources.toc(A).map(_.heading), chunks.flatMap(_.heading).distinct)
+	List[api.library.TocEntry.Heading.T]
+	List[util.ocr.Chunk.Heading².T]
+SourceServiceContract.scala:188	188 |      )
+	(api.library.Rename.Counts.Findings, List[api.library.Rename.Counts.Sources], api.library.Rename.Counts.Links, List[api.library.Rename.Count], api.library.Rename.Counts.EdgesPromoted)
+	(Int, List[domain.library².Citekey.T], Int, scala.collection.immutable.Nil.type, Int)
+SourceServiceContract.scala:197	197 |      )
+	List[(api.library.NeighborRow.Direction, api.library.Edge.Kind.Wire.T, api.library.Citekey)]
+	List[(String, String, domain.library².Citekey.T)]
+SourceServiceContract.scala:225	225 |    )
+	(List[api.library.Source.Deletion.Aliases], List[api.library.Edge], List[domain.library².sources.SourceDeletePlan.Keys])
+	(List[domain.library².Citekey.T], List[api.library.Edge], List[String | domain.library².Citekey.T])
+SourceServiceContract.scala:248	248 |    )
+	Map[api.text.WikiLinks.Occurrence.Target, domain.library.Citekey]
+	Map[domain.library.Citekey.T | String, domain.library.Citekey.T | String]
+SourceServiceContract.scala:268	268 |    assertEquals(s.sources.load(A).map(_.edges.map(_.dst).sorted), Some(List("zq_not_yet", B)))
+	Option[List[api.library.Citekey.T]]
+	Some[List[String | domain.library².Citekey².T]]
+SourceServiceContract.scala:308	308 |    assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(A, C))
+	List[api.library.Citekey.T]
+	List[domain.library².Citekey².T]
+SourceServiceContract.scala:309	309 |    assertEquals(s.sources.calibreGaps(Some(PageSize(1))).map(_.citekey), List(A))
+	List[api.library.Citekey.T]
+	List[domain.library².Citekey².T]
+SourceServiceContract.scala:310	310 |    assertEquals(s.sources.calibrePushMeta(B).map(g => (g.citekey, g.provenance)), Some((B, Some("calibre"))))
+	Option[(api.library.Citekey, Option[api.library.CalibreGap.Provenance])]
+	Some[(domain.library².Citekey.T, Some[String])]
+SourceServiceContract.scala:314	314 |    assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(C))
+	List[api.library.Citekey.T]
+	List[domain.library².Citekey².T]
+UnreadProjectionSuite.scala:49	49 |    assertEquals(shown.authors, authors)
+	List[api.library.AuthorName]
+	List[domain.library².sources.FullSourceRow.Authors.T]
+UnreadProjectionSuite.scala:54	54 |      ("reader2026_a", "  A title  ", Some(2026), Some(-1200L), Some(-1100L)))
+	(String, api.library.Title, Option[api.catalogue.Year], Option[api.catalogue.Year], Option[api.catalogue.Year])
+	(String, String, Some[Int], Some[Long], Some[Long])
+AssetServiceContract.scala:61	61 |      )
+	List[(api.media.AssetInfo.Name, api.Sha256)]
+	List[(String, Sha256.T)]
+AssetServiceContract.scala:69	69 |      )
+	List[(api.media.AssetInfo.Name, api.Sha256)]
+	List[(String, Sha256.T)]
+AssetServiceContract.scala:146	146 |      )
+	List[(api.media.MediaItem.Uid, api.media.MediaThumb.Role)]
+	List[(domain.media².assets.AssetService.AssetUid, String)]
+AssetServiceContract.scala:147	147 |      assertEquals(a.thumbs(AssetService.TargetType("place"), AssetService.TargetId("zq_x"), AssetService.Limit(1)).map(_.uid), List(p1))
+	List[api.media.MediaItem.Uid.T]
+	List[domain.media².assets.AssetService.AssetUid]
+AssetServiceContract.scala:155	155 |      assertEquals(a.thumbs(AssetService.TargetType("source"), AssetService.TargetId(Ck.value), AssetService.Limit(4)).map(_.uid), List(p2))
+	List[api.media.MediaItem.Uid.T]
+	List[domain.media².assets.AssetService.AssetUid]
+AssetServiceContract.scala:174	174 |    assertEquals(a.list(Api.MediaQuery(provider = Some(MediaProvider.Id("zq-provider"))), AssetService.Limit(50)).items.map(_.uid), List(p1))
+	List[api.media.MediaItem.Uid.T]
+	List[domain.media².assets.AssetService.AssetUid]
+AssetServiceContract.scala:178	178 |    assertEquals(((all.total.value: Int), all.items.size, all.items.head.uid), (3, 2, p1))
+	(Int, Int, api.media.MediaItem.Uid)
+	(Int, Int, domain.media².assets.AssetService.AssetUid)
+ArticleServiceContract.scala:62	62 |    assertEquals(s.articles.refs(List(Index, Slug.parse("ZR_WALLS").toOption.get, Slug("zr_nothing"))).map(_.slug), List(Index, Walls))
+	List[api.research.Article.Slug.T]
+	List[domain.research².Slug².T]
+ArticleServiceContract.scala:97	97 |      assertEquals(versions.map(_.updatedAt), List(second.toOption.get, first))
+	List[api.research.Article.Version.UpdatedAt.T]
+	List[api.research.Article.UpdatedAt]
+ArticleServiceContract.scala:102	102 |      assertEquals(s.articles.latestVersion(Walls), Some(versions.map(_.id.value).max))
+	Option[domain.research.articles.ArticleRepo.VersionId]
+	Some[ IronType[Long, Pure] ]
+ArticleServiceContract.scala:141	141 |    assertEquals(s.articles.view(Slug("zr_city_walls")).get.backlinks.map(_.id), List(Harbour))
+	List[api.research.Backlink.Id.T]
+	List[domain.research².Slug.T]
+AcquireLiveSuite.scala:50	50 |    assertEquals(w.doi, Some(doi))
+	Option[api.library.Doi]
+	Some[domain.library².Doi.T]
+AcquireLiveSuite.scala:51	51 |    assertEquals(w.year, Some(2015))
+	Option[api.catalogue.Year]
+	Some[Int]
+BasemapWiringSuite.scala:34	34 |    assertEquals(settings.map(BasemapWiring.seaFloor(_).wire), settings.map(_.wire))
+	List[util.basemap.SeaFloorGrid.Wire]
+	List[config.SeaFloorSource.Wire.T]
+BootstrapSuite.scala:122	122 |    assertEquals(periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)), PeriodO.parse(seedText).toOption.get.version)
+	Option[domain.catalogue.periods.PeriodService.SeedVersion]
+	Option[api.PeriodODataset.Version]
+BootstrapSuite.scala:139	139 |    assertEquals(asked, List(base.periods.periodoUrl))
+	List[server.HttpDownload.Url]
+	List[config.PeriodsConfig.PeriodoUrl]
+BootstrapSuite.scala:163	163 |    assertEquals(job.kind, Bootstrap.JobKind)
+	api.jobs.JobKinds.Wire
+	util.jobs².Job.Kind
+BundleHttpSuite.scala:160	160 |      assertEquals(plan.matches.byUid, plan.matches.sources)
+	api.exchange.MatchCounts.ByUid
+	api.exchange.MatchCounts.Sources
+CritiqueReasonsSuite.scala:127	127 |    )
+	List[(api.library.Citekey, api.library.Citekey, api.research.CritiqueReason.Reason, Option[api.research.CritiqueReason.By])]
+	List[(domain.library².Citekey.T, domain.library².Citekey.T, String, Some[String])]
+CritiqueReasonsSuite.scala:156	156 |    assertEquals(stored.map(_._1), List(Brown))
+	List[api.library.Citekey.T]
+	List[domain.library².Citekey².T]
+ManagersHttpSuite.scala:80	80 |        assertEquals(m.effective.minSources, Some(cfg.libraryAgents.seed.minSources))
+	Option[api.automation.Managers.ManagerConfig.MinSources]
+	Some[config.AgentSeedConfig.MinSources]
+ManagersHttpSuite.scala:134	134 |        assertEquals((st.strategy, st.strategyFrom), (cfg.agents.scheduler.strategy, "config"))
+	(api.automation.AgentScheduler.SchedulerStatus.Strategy, api.automation.AgentScheduler.SchedulerStatus.StrategyFrom)
+	(config.AgentSchedulerConfig.Strategy, String)
+PagesSuite.scala:81	81 |    assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)), cline.title)
+	server.HtmlRender.Html.T
+	api.library.Title
+PassagesHttpSuite.scala:112	112 |      assertEquals(PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)), SourceFixtures.bodyText(ds, Ck))
+	domain.PassageFinder.Passage.T
+	domain.library.sources.FullSourceRow.OcrMarkdown.T
+PassagesHttpSuite.scala:119	119 |      assertEquals((r.citekey, r.matches, r.total), (Ck, 2, 2))
+	(api.library.Citekey, api.library.PassageResult.Matches, api.library.PassageResult.Total)
+	(domain.library².Citekey.T, Int, Int)
+PlacesHttpSuite.scala:226	226 |      assertEquals(about.build.version, Version.version)
+	api.instance.BuildStamp.Version
+	api.instance.Version.Info.Version
+PlacesHttpSuite.scala:232	232 |      )
+	Option[api.instance.BuildStamp.SourceUrl]
+	Some[api.library.CorrespondingSource.Url.T]
+PmcFetchSuite.scala:110	110 |      assertEquals(h.get(Http.UserAgent), Some(c.publicUserAgent), u)
+	Option[domain.CoreQuota.HeaderValue]
+	Some[config.AcquireConfig.PublicUserAgent]
+SourceDeleteSuite.scala:247	247 |    )
+	Map[api.library.DeletePart, api.library.DeleteCount.Rows.T]
+	Map[api.library.DeletePart, Int | api.RowCount.T ]
+SourceDeleteSuite.scala:275	275 |      assertEquals(dry.blockers.map(b => (b.kind, b.id)), List((DeleteBlocker.Kind.Article, slug)), body)
+	List[(api.library.DeleteBlocker.Kind, api.library.DeleteBlocker.Id)]
+	List[(api.library.DeleteBlocker.Kind, api.research.Article.Slug.T)]
+StorageProbeSuite.scala:131	131 |      assertEquals(entry("backups").shrink, Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(3)))
+	Option[api.maintenance.Storage.Entry.Shrink]
+	Option[api.maintenance.Storage.Hint]
+UiNoticesHttpSuite.scala:103	103 |        assertEquals(read.seen, Some(latest))
+	Option[api.instance.UiNotices.Counter.Seen]
+	Some[api.instance.UiNotices.Counter.Latest]
+VacuumHttpSuite.scala:68	68 |      assertEquals(started.kind, Vacuum.JobKind)
+	api.jobs.JobKinds.Wire
+	IronType[String, Pure]
+AcquireRecheckDbSuite.scala:243	243 |    assertEquals(byId.rows.map(_.item), List(one))
+	List[api.library.Acquire.Checks.RecheckRow.Item.T]
+	List[api.automation.Queue.QueueItem.Id]
+AcquireRecheckDbSuite.scala:455	455 |    assertEquals(job.kind, RecheckJob.JobKind)
+	api.jobs.JobKinds.Wire
+	IronType[String, Pure]
+AcquireRecheckDbSuite.scala:501	501 |    )
+	Set[ IronType[Int, Pure] ]
+	Set[api.automation.Queue.QueueItem.Id.T]
+AcquireRecheckDbSuite.scala:582	582 |    assertEquals(next.detail.flatMap(RecheckJob.Detail.of).flatMap(_.resumes), Some(job.id))
+	Option[api.library.Acquire.Checks.RecheckJob.Resumes.T]
+	Some[api.SpatialHierarchyResult.Job.Id]
+AutoEnrichRunSuite.scala:134	134 |      assertEquals((run.status, run.origin, run.target), ("queued", Some(Origin.FromIngest.wire), Ck))
+	(api.automation.Agents.RunInfo.Status, Option[api.automation.Agents.RunInfo.Origin], api.automation.Agents.RunInfo.Target)
+	(String, Some[api.automation.Agents.Origin.Wire], domain.library.Citekey.T)
+GoalAgentsRunSuite.scala:289	289 |    assertEquals((run.goal, run.targetKind), (Some(Goal), "goal"))
+	(Option[api.automation.Goal.Slug], api.automation.Agents.RunInfo.TargetKind)
+	(Some[domain.automation².Goal².Slug.T], String)
+GoalAgentsRunSuite.scala:315	315 |    assertEquals(connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines"))).flatMap(_.parentSlug), Some(Goal))
+	Option[api.automation.Goal.Slug.T]
+	Some[domain.automation².Goal².Slug².T]
+GoalAgentsRunSuite.scala:320	320 |    )
+	List[(api.automation.Goal.Plans.LinkKind, api.automation.Goal.Plans.GoalLink.Ref)]
+	List[(api.automation.Goal.LinkKind, domain.library.Citekey.T | String)]
+GoalAgentsRunSuite.scala:433	433 |    )
+	(api.automation.Agents.RunInfo.Pipeline, api.automation.Agents.RunInfo.Target, Boolean, Option[api.automation.Agents.RunInfo.Origin], Option[api.automation.Goal.Slug])
+	(String, domain.research.Slug.T, Boolean, Some[String], Some[domain.automation².Goal².Slug².T])
+GoalAgentsRunSuite.scala:443	443 |    assertEquals((cov.total, cov.cited.map(_.citekey).toSet, cov.notUsed, cov.drift), (2, Set(Ck, Ck2), Nil, Nil))
+	(api.research.Coverage.Total, Set[api.library.Citekey.T], List[api.research.Coverage.Entry], List[api.research.Coverage.Drift])
+	(Int, Set[domain.library².Citekey².T], scala.collection.immutable.Nil.type, scala.collection.immutable.Nil.type)
+GoalAgentsRunSuite.scala:478	478 |    )
+	List[(api.library.Citekey, Option[api.research.Coverage.Entry.Reason])]
+	List[(domain.library².Citekey.T, Some[String])]
+IngestBacklogDbSuite.scala:214	214 |    assertEquals(first.state.oa.map(w => (w.goals, w.title, w.foundBy)), Some((List(Goal), "Work w21", Some(run.id))))
+	Option[(List[api.automation.Goal.Slug], api.library.Title, Option[api.automation.Managers.OaWork.FoundBy])]
+	Some[(List[domain.automation².Goal².Slug.T], String, Some[api.automation.Agents.RunInfo.Id])]
+IngestBacklogDbSuite.scala:296	296 |    assertEquals((x.managerId, x.state.oa.map(_.goals)), (w1.id, Some(List(Goal, Goal2))))
+	(api.automation.Managers.ManagerInfo.Id, Option[List[api.automation.Goal.Slug]])
+	(api.automation.Managers.ManagerInfo.Id, Some[List[domain.automation².Goal².Slug.T]])
+IngestBacklogDbSuite.scala:409	409 |    assertEquals(entry.head.state.oa.map(_.goals), Some(List(Goal)))
+	Option[List[api.automation.Goal.Slug]]
+	Some[List[domain.automation².Goal².Slug.T]]
+IngestBacklogDbSuite.scala:411	411 |    assertEquals(done.rows.find(_.doi.value == doi("a")).flatMap(_.backlogItem), Some(entry.head.id))
+	Option[api.library.RepairAcquire.RepairRow.BacklogItem.T]
+	Some[api.automation.Managers.ManagerItem.Id]
+ManagerAutopilotSuite.scala:288	288 |    assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))))
+	(api.automation.Managers.ManagerInfo.State, Option[api.automation.Managers.ManagerInfo.Cron])
+	(String, Some[domain.AutopilotPolicy.Cron.T])
+ManagerAutopilotSuite.scala:529	529 |    )
+	Option[api.automation.Managers.ManagerInfo.Cron.T]
+	Some[domain.AutopilotPolicy.Cron².T]
+ManagerDefaultsViewsSuite.scala:108	108 |    )
+	(domain.ManagerDefaults.MaxFailures, domain.ManagerRunDefaults.MaxRuns, domain.ManagerRunDefaults.MaxRuns)
+	(config.AgentManagersConfig.MaxFailures, config.SimpleManagerConfig.MaxRuns, config.SimpleManagerConfig.MaxRuns)
+ManagerPhase2Suite.scala:249	249 |    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).hold.flatMap(_.untilApproval), Some(appr.id))
+	Option[api.automation.Managers.Hold.UntilApproval.T]
+	Some[api.automation.Agents.ApprovalInfo.Id]
+ManagerPhase2Suite.scala:316	316 |    assertEquals((m.id, m.kind, m.goal), (seedId(ref(Goal)), "seed", Some(Goal)))
+	(api.automation.Managers.ManagerInfo.Id, api.automation.Managers.ManagerInfo.Kind, Option[api.automation.Goal.Slug])
+	(api.automation.Managers.ManagerInfo.Id.T, String, Some[domain.automation².Goal².Slug.T])
+ManagerPhase2Suite.scala:321	321 |    assertEquals((run.pipeline, run.goal), ("propose-articles", Some(Goal)))
+	(api.automation.Agents.RunInfo.Pipeline, Option[api.automation.Goal.Slug])
+	(String, Some[domain.automation².Goal².Slug.T])
+ManagerPhase2Suite.scala:353	353 |    )
+	(api.automation.Agents.RunInfo.Pipeline, Option[api.automation.Agents.RunParams.ChainReview], Option[api.automation.Goal.Slug], Option[api.automation.Agents.RunRequest.Title])
+	(String, Some[Boolean], Some[domain.automation².Goal².Slug.T], Some[String])
+ManagerPhase2Suite.scala:413	413 |    assertEquals(r.items.map(_.target), List(Ck2))
+	List[api.automation.Managers.ManagerItem.Target.T]
+	List[domain.library.Citekey.T]
+ManagerPhase2Suite.scala:466	466 |    assertEquals((again.priority, again.origin), (ReviewManagerPolicy.StalePriority, "selection"))
+	(api.automation.Managers.ManagerItem.Priority, api.automation.Managers.ManagerItem.Origin)
+	(domain.ManagerPolicy.Candidate.Priority, String)
+ManagerPhase3Suite.scala:175	175 |    )
+	(api.automation.Managers.ManagerInfo.Id, api.automation.Managers.ManagerInfo.Kind, Option[api.automation.Goal.Slug], api.automation.Managers.ManagerInfo.State, Option[api.automation.Managers.ManagerInfo.Cron])
+	(api.automation.Managers.ManagerInfo.Id.T, String, Some[domain.automation².Goal².Slug.T], String, Some[String])
+ManagerPhase3Suite.scala:185	185 |    )
+	List[(api.automation.Managers.ManagerItem.Kind, api.automation.Managers.ManagerItem.Target, api.automation.Managers.ManagerItem.Status)]
+	List[(String, domain.automation².Goal.Slug.T, String)]
+ManagerPhase3Suite.scala:440	440 |    )
+	(Option[api.automation.Agents.ApprovalInfo.Subject], Option[(api.automation.Managers.HintProposal.Hint, api.automation.Managers.HintEffect.Action, api.automation.Managers.HintProposal.By)] )
+	(Some[String], Some[(api.automation.Managers.ManagerHint.Id, String, String)] )
+ManagerPhase3Suite.scala:441	441 |    assertEquals(hint.proposal, Some(ap.head.id))
+	Option[api.automation.Managers.ManagerHint.Proposal]
+	Some[api.automation.Agents.ApprovalInfo.Id]
+ManagerPhase3Suite.scala:526	526 |    assertEquals((run.target, run.origin, run.params.hint), (EnrichId, Some("person"), Some(hint.id)))
+	(api.automation.Agents.RunInfo.Target, Option[api.automation.Agents.RunInfo.Origin], Option[api.automation.Agents.RunParams.Hint])
+	(String, Some[String], Some[api.automation.Managers.ManagerHint.Id])
+ManagerPhase3Suite.scala:538	538 |    )
+	List[ Option[(api.automation.Managers.HintEffect.Action, List[api.automation.Managers.HintEffect.Targets], api.automation.Managers.HintProposal.Hint)] ]
+	List[ Some[(String, List[domain.library.Citekey.T], api.automation.Managers.ManagerHint.Id)] ]
+PlanRefreshRunSuite.scala:276	276 |    assertEquals(a.engine.resumeFreed(later), List(run.id))
+	List[domain.automation.Run.Id]
+	List[api.automation².Agents.RunInfo.Id]
+PlanRefreshRunSuite.scala:412	412 |    assertEquals(a.quota.cooldowns.map(c => (c.model, c.until)), List((Plan.wire, until.toString)))
+	List[(api.automation.PlanQuota.Cooldown.Model, api.automation.PlanQuota.Cooldown.Until)]
+	List[(api.automation.Agents.ModelRef.Wire, String)]
+PlanRefreshRunSuite.scala:425	425 |    assertEquals(refreshed.lifted, List(Plan.wire))
+	List[api.automation.PlanQuota.QuotaRefreshed.Lifted]
+	List[api.automation.Agents.ModelRef.Wire]
+ReviewArticleRunSuite.scala:363	363 |    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck2))))
+	List[(api.automation.Agents.ApprovalInfo.Kind, Option[api.automation.Agents.ApprovalInfo.EdgeKind], Option[api.automation.Agents.ApprovalInfo.Target])]
+	List[(String, Some[String], Some[domain.library.Citekey.T])]
+ReviewArticleRunSuite.scala:457	457 |    assertEquals(ledger.task, Some(tasks.head.id))
+	Option[domain.ReviewLedger.Ledger.Task]
+	Some[api.automation.Queue.QueueItem.Id]
+ReviewArticleRunSuite.scala:726	726 |    )
+	List[(api.library.Citekey, Option[api.research.Coverage.Entry.Reason])]
+	List[(domain.library².Citekey.T, Some[String])]
+ReviewArticleRunSuite.scala:732	732 |    assertEquals(fixStep.reasons.map(_.citekey), List(Ck2))
+	List[api.library.Citekey.T]
+	List[domain.library².Citekey².T]
+ReviewArticleRunSuite.scala:1052	1052 |    assertEquals(ledgerOf(h).flatMap(_.task), Some(item.id))
+	Option[domain.ReviewLedger.Ledger.Task.T]
+	Some[api.automation.Queue.QueueItem.Id]
+ReviewArticleRunSuite.scala:1155	1155 |    assertEquals(ledgerOf(h).flatMap(_.task), Some(mine.id))
+	Option[domain.ReviewLedger.Ledger.Task.T]
+	Some[api.automation.Queue.QueueItem.Id]
+ReviewArticleRunSuite.scala:1370	1370 |    )
+	List[(api.automation.Agents.StepInfo.Name, Option[api.automation.Agents.StepInfo.Model])]
+	List[(String, Some[api.automation.Agents.ModelRef.Wire])]
+ReviewArticleRunSuite.scala:1422	1422 |    )
+	List[Option[List[api.automation.RunCompare.StepSide.Models]]]
+	List[Some[List[api.automation.Agents.ModelRef.Wire]]]
+ReviewArticleRunSuite.scala:1627	1627 |    )
+	List[(api.library.Citekey, api.library.Citekey, Boolean)]
+	List[(domain.library².Citekey.T, domain.library².Citekey.T, Boolean)]
+ReviewArticleRunSuite.scala:1702	1702 |    )
+	List[(api.library.Citekey, Boolean)]
+	List[(domain.library².Citekey.T, Boolean)]
+ReviewArticleRunSuite.scala:1747	1747 |    )
+	List[api.library.Citekey.T]
+	List[domain.library².Citekey².T]
+ReviewArticleRunSuite.scala:1798	1798 |    )
+	List[(domain.ReviewArticle.Finding.Id, domain.ReviewLedger.Status, Option[domain.ReviewLedger.Entry.Deferred])]
+	List[(String, domain.ReviewLedger.Status, None.type | Some[api.automation.Agents.RunInfo.Id])]
+SchedulerDbSuite.scala:263	263 |    assertEquals((first.goal, first.position, first.code), (Some(g(15)), 1, "capacity"))
+	(Option[api.automation.Goal.Slug], api.automation.AgentScheduler.Waiting.Position, api.automation.AgentScheduler.Waiting.Code)
+	(Some[domain.automation².Goal².Slug.T], Int, String)
+SchedulerDbSuite.scala:267	267 |    assertEquals(st.waiting.map(_.goal).distinct.take(4), List(Some(g(15)), Some(g(1)), Some(g(2)), Some(g(3))))
+	List[Option[api.automation.Goal.Slug]]
+	List[Some[domain.automation².Goal².Slug.T]]
+SchedulerDbSuite.scala:301	301 |    assertEquals(next, Set(("review-article", Art), ("propose-articles", g(15)), ("acquisition-sweep", g(15))))
+	Set[(api.automation.Agents.RunInfo.Pipeline.T, api.automation.Agents.RunInfo.Target.T)]
+	Set[ (String, domain.research.Slug.T | domain.automation².Goal.Slug².T) ]
+SchedulerDbSuite.scala:422	422 |    assertEquals(plans.ids, ps.map(_.id).sortBy(x => (x.value: Long)))
+	List[api.automation.ApprovalDigest.KindGroup.Ids]
+	List[api.automation.Agents.ApprovalInfo.Id.T]
+SchedulerDbSuite.scala:444	444 |    assertEquals((done.matched, done.decided, done.failed), (1, List(ps(1).id), Nil))
+	(api.automation.ApprovalDigest.BulkResult.Matched, List[api.automation.ApprovalDigest.BulkResult.Decided], List[api.automation.ApprovalDigest.BulkFailed])
+	(Int, List[api.automation.Agents.ApprovalInfo.Id], scala.collection.immutable.Nil.type)
+SchedulerDbSuite.scala:465	465 |    assertEquals(b.autoApprovals.goalPlanCap, cfg.agents.approvals.auto.goalPlansPerDay, "share 0: the fixed cap")
+	domain.AutopilotPolicy.Cap
+	config.AutoApprovalsConfig.GoalPlansPerDay
+SchedulerRunSuite.scala:154	154 |    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target)), List(("edge", Some("refutes"), Some(Ck))))
+	List[(api.automation.Agents.ApprovalInfo.Kind, Option[api.automation.Agents.ApprovalInfo.EdgeKind], Option[api.automation.Agents.ApprovalInfo.Target])]
+	List[(String, Some[String], Some[domain.library.Citekey.T])]
+UiRepoSuite.scala:121	121 |    assertEquals(read.seen, Some(latest))
+	Option[api.instance.UiNotices.Counter.Seen]
+	Some[api.instance.UiNotices.Counter.Latest]
+CollectionsSuite.scala:331	331 |    assertEquals(MediaCollection.Roles, MediaRole.all.toSet -- Set(MediaRole.Cover, MediaRole.Illustration))
+	Set[plugin.MediaCollection.Roles]
+	Set[String | domain.media.MediaRole.Wire.T]
+KeyedCollectionsSuite.scala:156	156 |    assertEquals(store.checks.keySet.map(_._2), Set(egypt.id, syria.id))
+	scala.collection.Set[domain.media.imports.Target.Id.T]
+	Set²[domain.media.imports.PlaceFacts.Id]
+MediaHttpSuite.scala:208	208 |        assertEquals(decode[MediaItem](sb).map(_.targets.map(_.targetId)), Right(List(PlaceId)))
+	Either[io.circe.Error, List[api.media.MediaTarget.TargetId.T]]
+	Right[Nothing, List[api.catalogue.Place.Id.T]]
+MediaImportJobSuite.scala:208	208 |        assertEquals(started.kind, ImportsControllers.ImportJobKind)
+	api.jobs.JobKinds.Wire
+	util.jobs².Job.Kind
+MediaSourcesSuite.scala:187	187 |    assertEquals(conv.calls.toList, List("fig-0002-01.png" -> cfg.media.thumbPx))
+	List[(util.ocr.ConverterClient.Filename, util.ocr.Pixels)]
+	List[(String, config.MediaConfig.ThumbPx)]
+MediaSourcesSuite.scala:250	250 |        assertEquals(m.targets.map(t => (t.targetType, t.targetId, t.role)), List(("source", Paper, "cover")))
+	List[(api.media.MediaTarget.TargetType, api.media.MediaTarget.TargetId, api.media.MediaTarget.Role)]
+	List[(String, domain.library.Citekey.T, String)]
+MediaSourcesSuite.scala:297	297 |        assertEquals(decode[PlaceDetail](pb).map(_.media.map(_.uid)), Right(List(uid)))
+	Either[io.circe.Error, List[api.media.MediaItem.Uid.T]]
+	Right[Nothing, List[domain.media².assets.MediaItemRow.Uid]]
+MediaSourcesSuite.scala:312	312 |    assertEquals(j.kind, ImportsControllers.ImportJobKind)
+	api.jobs.JobKinds.Wire
+	util.jobs².Job.Kind
+PluginHostSuite.scala:319	319 |    assertEquals((st.state, st.enabled), (PluginState.Disabled.wire, false))
+	(api.plugins.PluginStatus.State, api.plugins.PluginStatus.Enabled)
+	(api.plugins.PluginState.Wire, Boolean)
+PluginHostSuite.scala:330	330 |    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:336	336 |    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:351	351 |    assertEquals(statusOf(g, "consumer").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:365	365 |    assertEquals(statusOf(g, "consumer").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:376	376 |    assertEquals(st.state, PluginState.Failed.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:383	383 |    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:413	413 |    assertEquals(st.state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:436	436 |    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:444	444 |    assertEquals(st.state, PluginState.Failed.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:449	449 |    assertEquals(statusOf(g, "echo").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:464	464 |    assertEquals(statusOf(g, "maker").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:484	484 |    assertEquals(statusOf(g, "maker").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:522	522 |    assertEquals(statusOf(g, "c1").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:523	523 |    assertEquals(statusOf(g, "c2").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:552	552 |    assertEquals(statusOf(g, "c3").state, PluginState.Registered.wire)
+	api.plugins.PluginStatus.State
+	api.plugins.PluginState.Wire
+PluginHostSuite.scala:682	682 |    )
+	List[api.plugins.PluginStatus.State]
+	List[api.plugins.PluginState.Wire]
+PluginToolSuite.scala:240	240 |    )
+	Option[Sha256.T]
+	Some[api.Sha256².T]
+ProviderPluginsSuite.scala:107	107 |    )
+	Set[api.plugins.PluginDescription.Id.T]
+	Set[util.plugins².Plugin.Id]
+ProviderPluginsSuite.scala:377	377 |    )
+	Set[plugin.Plugin.Info.Id]
+	Set[util.plugins.Plugin².Id]
+ProviderPluginsSuite.scala:383	383 |    )
+	Set[plugin.Plugin.Info.Id]
+	Set[util.plugins.Plugin².Id]
+ProviderPluginsSuite.scala:388	388 |    )
+	Set[plugin.Plugin.Info.Id]
+	Set[util.plugins.Plugin².Id]
+ReservedNamesSuite.scala:21	21 |    assertEquals(ReservedNames.mediaCollections, BuiltinMedia.reserved)
+	Set[pluginhost.ReservedNames.Name]
+	Set[domain.media.imports.BuiltinMedia.ReservedName]
+ReservedNamesSuite.scala:22	22 |    assertEquals(ReservedNames.eventCatalogues, BuiltinCatalogues.reserved)
+	Set[pluginhost.ReservedNames.Name]
+	Set[api.catalogue.CatalogProviderInfo.Id]
+ReservedNamesSuite.scala:23	23 |    assertEquals(ReservedNames.aiProviders, BuiltinAi.reserved)
+	Set[pluginhost.ReservedNames.Name]
+	Set[server.agents.BuiltinAi.Reserved]
+ReservedNamesSuite.scala:24	24 |    assertEquals(ReservedNames.gazetteerSources, BuiltinGazetteers.reserved)
+	Set[pluginhost.ReservedNames.Name]
+	Set[domain.catalogue.places.BuiltinGazetteers.Entry.Name]
+ReservedNamesSuite.scala:32	32 |    assertEquals(HostProvided.Ids, ServerPlugins.providers.map(_.info.id))
+	List[util.plugins.Plugin.Id]
+	List[plugin.Plugin².Info.Id]
+BackupServiceSuite.scala:33	33 |    assertEquals(third.pruned, List(first.file))
+	List[api.backup.Backup.Result.Pruned]
+	List[api.backup.Backup.Result.File]
+CheckOrderSuite.scala:19	19 |    assertEquals(runner.names, Lint.names)
+	List[util.data.checks.CheckRule.Name]
+	List[api.checks².Lint.Rule.Name]
+StorageFiguresSuite.scala:59	59 |    )
+	Option[Option[api.maintenance.Storage.Entry.Shrink]]
+	Some[Option[api.maintenance.Storage.Hint]]
+MergeSettingsViewsSuite.scala:18	18 |    )
+	(domain.MergeSettings.AutoMerge, domain.MergeSettings.NewAtMost, domain.MergeSettings.MinhashSize, domain.MergeSettings.FindingNearAtLeast, domain.MergeSettings.FindingWithinKm)
+	(config.MergeConfig.AutoMerge, config.MergeConfig.NewAtMost, config.MergeConfig.MinhashSize, config.MergeConfig.FindingNearAtLeast, config.MergeConfig.FindingWithinKm)
+MergeSettingsViewsSuite.scala:19	19 |    assertEquals((s.placeWithinKm, s.placeOverlapAtLeast), (c.placeWithinKm, c.placeOverlapAtLeast))
+	(domain.MergeSettings.PlaceWithinKm, domain.MergeSettings.PlaceOverlapAtLeast)
+	(config.MergeConfig.PlaceWithinKm, config.MergeConfig.PlaceOverlapAtLeast)

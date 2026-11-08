@@ -1,0 +1,78 @@
+### AgentEngineSuite.scala
+389|assertEquals(page.total, page.count(Paging.Page.CountState("cancelled")))|assertEquals(page.total.value, page.count(Paging.Page.CountState("cancelled")).value)
+743|(ok.modelFor(Role.Extractor), ok.modelFor(Role.Writer))|(ok.modelFor(Role.Extractor).map(_.value: String), ok.modelFor(Role.Writer).map(_.value: String))
+853|(cmp.pipeline, cmp.target, cmp.runs.map(_.id))|(cmp.pipeline, cmp.target.value: String, cmp.runs.map(_.id.value: String))
+853|List(r1.id, r2.id)|List(r1.id.value: String, r2.id.value: String)
+1116|60000L)), List(run.id))|60000L)).map(_.value: String), List(run.id))
+### ApprovalServiceContract.scala
+81|(o.id, o.kind, o.subject)|(o.id.value: String, o.kind, o.subject)
+83|(plan.id,|(plan.id.value: String,
+84|(filter.id,|(filter.id.value: String,
+85|(again.id,|(again.id.value: String,
+### ModelChainRunSuite.scala
+194|.map(_._4).distinct|.map(_._4.map(_.value: String)).distinct
+201|assertEquals(ex.active,|assertEquals(ex.active.map(_.value: String),
+205|.flatMap(_.model), Some|.flatMap(_.model).map(_.value: String), Some
+231|assertEquals(a.engine.resumeDue(at.plusSeconds(1)), List(run.id))|assertEquals(a.engine.resumeDue(at.plusSeconds(1)).map(_.value: String), List(run.id))
+249|(s.attempt, s.status, s.model)|(s.attempt, s.status, s.model.map(_.value: String))
+282|(saved.source, saved.active, saved.models.map(_.model))|(saved.source, saved.active.map(_.value: String), saved.models.map(_.model.value: String))
+292|(c.source, c.models.map(_.model))|(c.source, c.models.map(_.model.value: String))
+303|(c.source, c.models.map(_.model))|(c.source, c.models.map(_.model.value: String))
+329|(e.model, e.ready)|(e.model.value: String, e.ready)
+333|.map(_._4).distinct|.map(_._4.map(_.value: String)).distinct
+### PlanQuotaRunSuite.scala
+167|resumeDue(java.time.Instant.now()), List|resumeDue(java.time.Instant.now()).map(_.value: String), List
+205|reset.value + 1000)), List|reset.value + 1000)).map(_.value: String), List
+### ManagerServiceContract.scala
+85|(i.status, i.runId, i.attempts, i.state.before)|(i.status, i.runId.map(_.value: String), i.attempts, i.state.before)
+### QueueServiceContract.scala
+170|assertEquals(exported(q, Kind.Acquire), acquireFile)|assertEquals(exported(q, Kind.Acquire).value, acquireFile.value)
+175|assertEquals(exported(q, Kind.Log), logFile)|assertEquals(exported(q, Kind.Log).value, logFile.value)
+187|assertEquals(exported(q, Kind.Acquire), acquireFile)|assertEquals(exported(q, Kind.Acquire).value, acquireFile.value)
+### GazetteerLoadSuite.scala
+275|.map(r => (r.version, r.sha256))|.map(r => (r.version, r.sha256.value: String))
+### ImportedPlaceTimeSuite.scala
+228|assertEquals(inside.head.id, PatonesId)|assertEquals(inside.head.id.value: String, PatonesId)
+229|assertEquals(at(Period(Year(1600), Year(1650))), Some|assertEquals(at(Period(Year(1600), Year(1650))).map(_.value: String), Some
+### UpstreamRecordsSuite.scala
+67|assertEquals(Identifiers.doi(Identifiers.DoiText(s)), Doi.normalize(s), s)|assertEquals(Identifiers.doi(Identifiers.DoiText(s)).map(_.value: String), Doi.normalize(s).map(_.value: String), s)
+68|assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)), Ident.arxiv(Ident.Written(s)), s)|assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)).map(_.value: String), Ident.arxiv(Ident.Written(s)).map(_.value: String), s)
+### SeedImportSuite.scala
+60|assertEquals(second.skipped, List(ckS))|assertEquals(second.skipped.map(_.value: String), List(ckS))
+### SourceServiceContract.scala
+107|(r.citekey, r.target)|(r.citekey.value: String, r.target)
+113|(r.direction, r.citekey, r.target)|(r.direction, r.citekey.value: String, r.target)
+116|(r.direction, r.citekey)|(r.direction, r.citekey.value: String)
+122|.map(_.citekey), List(A, B))|.map(_.citekey.value: String), List(A, B))
+160|.map(_.heading), chunks|.map(_.heading.value: String), chunks
+186|counts.sources,|counts.sources.map(_.value: String),
+195|r.citekey)),|r.citekey.value: String)),
+223|(plan.deletion.aliases, plan.deletion.edgesIn, plan.keys)|(plan.deletion.aliases.map(_.value: String), plan.deletion.edgesIn, plan.keys.map(_.value: String))
+268|.map(_.edges.map(_.dst).sorted)|.map(_.edges.map(_.dst.value: String).sorted)
+308|.map(_.citekey), List(A, C))|.map(_.citekey.value: String), List(A, C))
+309|.map(_.citekey), List(A))|.map(_.citekey.value: String), List(A))
+310|(g.citekey, g.provenance)|(g.citekey.value: String, g.provenance)
+314|.map(_.citekey), List(C))|.map(_.citekey.value: String), List(C))
+### UnreadProjectionSuite.scala
+49|assertEquals(shown.authors, authors)|assertEquals(shown.authors.map(_.value: String), authors)
+54|Some(2026), Some(-1200L)|Some(2026L), Some(-1200L)
+### AssetServiceContract.scala
+59|(f.name, f.sha256)|(f.name, f.sha256.value: String)
+67|(f.name, f.sha256)|(f.name, f.sha256.value: String)
+144|(t.uid, t.role)|(t.uid.value: String, t.role)
+147|.map(_.uid), List(p1))|.map(_.uid.value: String), List(p1))
+155|.map(_.uid), List(p2))|.map(_.uid.value: String), List(p2))
+174|.map(_.uid), List(p1))|.map(_.uid.value: String), List(p1))
+178|all.items.head.uid)|all.items.head.uid.value: String)
+### ArticleServiceContract.scala
+62|.map(_.slug), List(Index, Walls))|.map(_.slug.value: String), List(Index, Walls))
+97|assertEquals(versions.map(_.updatedAt), List(second.toOption.get, first))|assertEquals(versions.map(_.updatedAt.value), List(second.toOption.get.value, first.value))
+102|assertEquals(s.articles.latestVersion(Walls), Some(versions.map(_.id.value).max))|assertEquals(s.articles.latestVersion(Walls).map(_.value: Long), Some(versions.map(_.id.value).max))
+141|.backlinks.map(_.id), List(Harbour))|.backlinks.map(_.id.value: String), List(Harbour))
+### AcquireLiveSuite.scala
+50|assertEquals(w.doi, Some(doi))|assertEquals(w.doi.map(_.value: String), Some(doi))
+51|Some(2015))|Some(2015L))
+### BasemapWiringSuite.scala
+34|assertEquals(settings.map(BasemapWiring.seaFloor(_).wire), settings.map(_.wire))|assertEquals(settings.map(BasemapWiring.seaFloor(_).wire.value: String), settings.map(_.wire.value: String))
+### BootstrapSuite.scala
+122|PeriodService.SeedName(Bootstrap.PeriodSeed)), PeriodO.parse(seedText).toOption.get.version)|PeriodService.SeedName(Bootstrap.PeriodSeed)).map(_.value: String), Some(PeriodO.parse(seedText).toOption.get.version).map(_.value: String))

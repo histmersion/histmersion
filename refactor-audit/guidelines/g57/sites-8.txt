@@ -1,0 +1,28 @@
+9 sites
+ApprovalServiceContract.scala:81	81 |        a(s).openLight().map(o => (o.id.value: String, o.kind, o.subject)),
+	
+	 | ^^^^^^^^^^ | Found: io.github.iltotore.iron.IronType[Long, | io.github.iltotore.iron.constraint.any.Pure] | Required: String |
+ApprovalServiceContract.scala:83	83 |          (plan.id.value: String, "goal-plan", Some("zz-goal")),
+	
+	 | ^^^^^^^^^^^^^ | Found: io.github.iltotore.iron.IronType[Long, | io.github.iltotore.iron.constraint.any.Pure] | Required: String |
+ApprovalServiceContract.scala:84	84 |          (filter.id.value: String, "article-filter", Some("zz-art")),
+	
+	 | ^^^^^^^^^^^^^^^ | Found: io.github.iltotore.iron.IronType[Long, | io.github.iltotore.iron.constraint.any.Pure] | Required: String |
+ApprovalServiceContract.scala:85	85 |          (again.id.value: String, "article-filter", Some("zz-art"))
+	
+	 | ^^^^^^^^^^^^^^ | Found: io.github.iltotore.iron.IronType[Long, | io.github.iltotore.iron.constraint.any.Pure] | Required: String |
+GazetteerLoadSuite.scala:243	243 |    assertEquals((hit.periodStart, hit.periodEnd), (Some(-1650L), Some(-1180L)), "the records' widest years")
+	(Option[Year], Option[Year])
+	(Some[Long], Some[Long])
+PlaceServiceContract.scala:191	191 |    )
+	Either[api.Api.Error, (api.catalogue.Place.Id, api.catalogue.Place.OverrideChanged.Label, api.catalogue.Place.OverrideChanged.Reset, api.catalogue.Place.OverrideChanged.KindBefore, api.catalogue.Place.OverrideChanged.KindAfter, api.catalogue.Place.OverrideChanged.PeriodBefore, api.catalogue.Place.O
+	Right[Nothing, (String, String, Boolean, String, String, api.catalogue.Place.Dating.Description.T, api.catalogue.Place.Dating.Description.T)]
+BootstrapSuite.scala:122	122 |    assertEquals(periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)).map(_.value: String), PeriodO.parse(seedText).toOption.get.version.map(_.value: St
+	
+	 | ^^^^^^^ | Found: io.github.iltotore.iron.IronType[Int, | io.github.iltotore.iron.constraint.any.Pure] | Required: String |
+SchedulerDbSuite.scala:301	301 |    assertEquals(next, Set(("review-article", Art), ("propose-articles", g(15)), ("acquisition-sweep", g(15))))
+	Set[(api.automation.Agents.RunInfo.Pipeline.T, api.automation.Agents.RunInfo.Target.T)]
+	Set[ (String, domain.research.Slug.T | domain.automation².Goal.Slug².T) ]
+CollectionsSuite.scala:331	331 |    assertEquals(MediaCollection.Roles.map(_.value: String), (MediaRole.all.toSet -- Set(MediaRole.Cover, MediaRole.Illustration)).map(_.value: String))
+	
+	 | ^^^^^^^ |value value is not a member of String | com.histmersion.domain.media.MediaRole.Wire.T - [E028] Syntax Warning: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/serve
