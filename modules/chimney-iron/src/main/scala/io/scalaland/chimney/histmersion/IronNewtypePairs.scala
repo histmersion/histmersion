@@ -15,13 +15,15 @@ final class IronNewtypePairs(using val quotes: Quotes):
   import IronNewtypePairs.withoutPackageObjects
   import quotes.reflect.*
 
+  private given CanEqual[Symbol, Symbol] = CanEqual.derived
+
   final case class IronNewtype(companion: Symbol, base: TypeRepr, constraint: TypeRepr):
     def name: String = companion.name
     def fullName: String = withoutPackageObjects(companion.fullName)
     def refinedTypeShown: String =
       s"${withoutPackageObjects(base.show)} :| ${withoutPackageObjects(constraint.show)}"
 
-  enum NewtypePair:
+  enum NewtypePair derives CanEqual:
     case SameRefinedType(from: IronNewtype, to: IronNewtype)
     case DifferentConstraints(from: IronNewtype, to: IronNewtype)
     case NotSameNamedNewtypes
