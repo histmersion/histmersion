@@ -42,7 +42,7 @@ object MergeIssue:
   type Why = Why.T
   object Why extends Newtype[String, Pure]
 
-  enum Kind:
+  enum Kind derives CanEqual:
     /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years
       * far apart): merge them (`map:<citekey>`) or keep both.
       */
@@ -122,7 +122,7 @@ object MergeIssue:
       def fromWire(s: WireEnumValues.Wire): Option[Kind] = values.find(k => wireOf(k) == Wire((s).value.trim))
 
   /** How much an issue holds the merge up. */
-  enum Severity:
+  enum Severity derives CanEqual:
     /** Nothing is merged until it has a decision. */
     case Blocking
 
@@ -142,7 +142,7 @@ object MergeIssue:
       def fromWire(s: WireEnumValues.Wire): Option[Severity] = values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
   /** Who decided an issue. */
-  enum DecidedBy:
+  enum DecidedBy derives CanEqual:
     /** A resolution (the file or `--resolve`). */
     case Resolution
 

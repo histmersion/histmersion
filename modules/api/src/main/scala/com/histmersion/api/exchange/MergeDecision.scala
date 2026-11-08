@@ -20,7 +20,7 @@ object MergeDecision:
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]
 
-  enum Kind:
+  enum Kind derives CanEqual:
     /** Keep this collection's version. */
     case KeepLeft
 

@@ -12,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * renders them), so they compare as strings.
   */
 object UiNotices:
-  enum Board(val wire: Board.Wire, val counted: Board.Counted):
+  enum Board(val wire: Board.Wire, val counted: Board.Counted) derives CanEqual:
     case Goals extends Board(Board.Wire("goals"), counted = Board.Counted(false))
     case Tasks extends Board(Board.Wire("tasks"), counted = Board.Counted(true))
     case Approvals extends Board(Board.Wire("approvals"), counted = Board.Counted(true))

@@ -6,7 +6,7 @@ import com.histmersion.api.{BBox, WireEnum}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]):
+enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]) derives CanEqual:
   case Aegean extends PresetRegion(PresetRegion.Wire("aegean"), PresetRegion.Label("Aegean"), Some(BBox(Longitude(19.5), Latitude(34.5), Longitude(29.5), Latitude(41.5))))
   case Anatolia extends PresetRegion(PresetRegion.Wire("anatolia"), PresetRegion.Label("Anatolia"), Some(BBox(Longitude(26.0), Latitude(35.8), Longitude(45.0), Latitude(42.2))))
   case BritainIreland extends PresetRegion(PresetRegion.Wire("britain-ireland"), PresetRegion.Label("Britain and Ireland"), Some(BBox(Longitude(-10.7), Latitude(49.8), Longitude(1.8), Latitude(60.9))))

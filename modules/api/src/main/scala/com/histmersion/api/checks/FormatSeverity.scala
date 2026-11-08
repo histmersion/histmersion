@@ -7,7 +7,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum FormatSeverity:
+enum FormatSeverity derives CanEqual:
   case Error, Warning
 
 object FormatSeverity:

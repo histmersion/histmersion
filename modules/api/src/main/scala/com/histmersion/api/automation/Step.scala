@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Step:
 
   /** How one attempt of a run's step ended, stored in `agent_steps.status`. */
-  enum Status(val wire: Status.Wire):
+  enum Status(val wire: Status.Wire) derives CanEqual:
     case Done extends Status(Status.Wire("done"))
     case Failed extends Status(Status.Wire("failed"))
 

@@ -7,7 +7,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum CritiqueState(val wire: CritiqueState.Wire):
+enum CritiqueState(val wire: CritiqueState.Wire) derives CanEqual:
   case Addressed extends CritiqueState(CritiqueState.Wire("addressed"))
   case Reasoned extends CritiqueState(CritiqueState.Wire("reasoned"))
   case Open extends CritiqueState(CritiqueState.Wire("open"))

@@ -30,7 +30,7 @@ object Managers:
   export Manager.State as State
   export com.histmersion.api.automation.ItemStatus
 
-  enum ItemOrigin(val wire: ItemOrigin.Wire):
+  enum ItemOrigin(val wire: ItemOrigin.Wire) derives CanEqual:
     case Selection extends ItemOrigin(ItemOrigin.Wire("selection"))
     case Person extends ItemOrigin(ItemOrigin.Wire("person"))
     case Chain extends ItemOrigin(ItemOrigin.Wire("chain"))
@@ -119,7 +119,7 @@ object Managers:
 
   def watchId(goal: Goal.Ref): ManagerInfo.Id = ManagerInfo.Id(s"watch:${(goal).value.trim}")
 
-  enum Sweep(val wire: Sweep.Wire, val itemKind: Sweep.ItemKind):
+  enum Sweep(val wire: Sweep.Wire, val itemKind: Sweep.ItemKind) derives CanEqual:
     case Acquisition extends Sweep(Sweep.Wire("acquisition"), Sweep.ItemKind(AcquisitionSweep))
     case Currency extends Sweep(Sweep.Wire("currency"), Sweep.ItemKind(CurrencyCheck))
 
@@ -137,7 +137,7 @@ object Managers:
     def of(c: ManagerConfig): List[Sweep] =
       c.sweeps.fold(values.toList)(ws => values.toList.filter(s => ws.exists(w => parse(w).contains(s))))
 
-  enum EnqueueKind(val wire: EnqueueKind.Wire):
+  enum EnqueueKind(val wire: EnqueueKind.Wire) derives CanEqual:
     case Review extends EnqueueKind(EnqueueKind.Wire("review"))
     case Extend extends EnqueueKind(EnqueueKind.Wire("extend"))
     case Enrich extends EnqueueKind(EnqueueKind.Wire("enrich"))

@@ -4,7 +4,7 @@ package api.instance
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-enum MapStartMode(val wire: MapStartMode.Wire, val label: MapStartMode.Label):
+enum MapStartMode(val wire: MapStartMode.Wire, val label: MapStartMode.Label) derives CanEqual:
   case Last extends MapStartMode(MapStartMode.Wire("last"), MapStartMode.Label("Where I last left it"))
   case Place extends MapStartMode(MapStartMode.Wire("place"), MapStartMode.Label("At a place I choose"))
 

@@ -37,7 +37,7 @@ object ModelChains:
 
   def chainText(ms: List[ModelRef]): String = (ms.map(_.wire).mkString(" > "))
 
-  enum Measure(val wire: Measure.Wire):
+  enum Measure(val wire: Measure.Wire) derives CanEqual:
     case Tokens extends Measure(Measure.Wire("tokens"))
     case Usd extends Measure(Measure.Wire("usd"))
 
@@ -150,7 +150,7 @@ object ModelChains:
       yield Limit(a, s.measure, w)
 
   /** `claude-code:*` covers every model of the provider: a Claude plan is one pool, whichever model spends it. */
-  enum Target:
+  enum Target derives CanEqual:
     case Model(ref: ModelRef)
     case Provider(kind: ProviderKind)
 
@@ -325,7 +325,7 @@ object ModelChains:
     export Allowance.ReservePct
 
 
-  enum SettingSource(val wire: SettingSource.Wire):
+  enum SettingSource(val wire: SettingSource.Wire) derives CanEqual:
     case Config extends SettingSource(SettingSource.Wire("config"))
     case Saved extends SettingSource(SettingSource.Wire("saved"))
 

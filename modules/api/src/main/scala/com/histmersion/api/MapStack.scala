@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 object MapStack:
 
 
-  enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas):
+  enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas) derives CanEqual:
     case Areas extends Pane(Pane.Name("areas"), point = Pane.Point(false), canvas = Pane.Canvas(true))
 
     case AreaPoints extends Pane(Pane.Name("area-points"), point = Pane.Point(false), canvas = Pane.Canvas(false))

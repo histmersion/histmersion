@@ -21,7 +21,7 @@ object Activity:
   object Subject extends Newtype[String, Pure]
 
 
-  enum EntryKind(val wire: EntryKind.Wire):
+  enum EntryKind(val wire: EntryKind.Wire) derives CanEqual:
     case Run extends EntryKind(EntryKind.Wire("run"))
     case Job extends EntryKind(EntryKind.Wire("job"))
     case Log extends EntryKind(EntryKind.Wire("log"))
@@ -41,7 +41,7 @@ object Activity:
 
     def parse(s: Wire): Option[EntryKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
-  enum Writer(val wire: Writer.Wire):
+  enum Writer(val wire: Writer.Wire) derives CanEqual:
     case Agent extends Writer(Writer.Wire("agent"))
     case Job extends Writer(Writer.Wire("job"))
 
@@ -49,7 +49,7 @@ object Activity:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-  enum Show(val wire: Show.Wire, val label: Show.Label):
+  enum Show(val wire: Show.Wire, val label: Show.Label) derives CanEqual:
     case Everything extends Show(Show.Wire("all"), Show.Label("Everything"))
     case Running extends Show(Show.Wire("running"), Show.Label("Running now"))
     case Agents extends Show(Show.Wire("agents"), Show.Label("Agent work"))

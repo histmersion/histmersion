@@ -15,7 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * ([[JobDetailField]]), kept as JSON. The wire shows every field the kinds' registry lists, in its order, each job's
   * value or the field's default; a detail holds only the values that differ from their default.
   */
-final case class JobDetail private (values: Map[JobDetail.Field.Name, Json]):
+final case class JobDetail private (values: Map[JobDetail.Field.Name, Json]) derives CanEqual:
   def json(name: JobDetail.Field.Name): Option[Json] = values.get(name)
 
   /** The detail with `field` set to `a`. */
@@ -58,6 +58,8 @@ object JobDetail:
     * when a job records none, and how it reads and writes. The jobs keep a detail as these fields' JSON
     * ([[JobDetail]]); the kinds' registry lists every field in the order the detail shows them.
     */
+  private given CanEqual[Json, Json] = CanEqual.derived
+
   final class Field[A](val name: Field.Name, val default: A)(using
       encoder: Encoder[A],
       decoder: Decoder[A],

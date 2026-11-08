@@ -130,7 +130,7 @@ object Queue:
     object Replaced extends Newtype[Int, Pure]
 
 
-  enum Kind(val label: Kind.Label, val file: Kind.File, val checkboxes: Kind.Checkboxes):
+  enum Kind(val label: Kind.Label, val file: Kind.File, val checkboxes: Kind.Checkboxes) derives CanEqual:
     case Acquire extends Kind(Kind.Label("acquire"), Kind.File("ACQUIRE.md"), Kind.Checkboxes(true))
     case Tasks extends Kind(Kind.Label("tasks"), Kind.File("TASKS.md"), Kind.Checkboxes(true))
     case Log extends Kind(Kind.Label("log"), Kind.File("LOG.md"), Kind.Checkboxes(false))
@@ -289,7 +289,7 @@ object Queue:
     case Kind.Log =>
       Preamble("# 📓 LOG — project worklog\n\nWhat was done and when, newest first.\n\n---")
 
-  private enum Block:
+  private enum Block derives CanEqual:
     case Heading(line: String)
     case Item(lines: String)
     case Note(lines: String)

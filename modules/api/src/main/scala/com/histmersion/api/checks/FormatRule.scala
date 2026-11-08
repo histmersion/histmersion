@@ -7,7 +7,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description):
+enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description) derives CanEqual:
   case Frontmatter
       extends FormatRule(
         FormatRule.Wire("frontmatter"),

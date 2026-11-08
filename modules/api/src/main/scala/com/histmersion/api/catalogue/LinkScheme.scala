@@ -2,7 +2,7 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-enum LinkScheme:
+enum LinkScheme derives CanEqual:
   case Pleiades, Wikidata, Geonames, Tgn, Whg
 
   def wire: LinkScheme.Wire = LinkScheme.Wire(toString.toLowerCase(java.util.Locale.ROOT))

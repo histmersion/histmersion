@@ -25,7 +25,7 @@ final case class JobInfo(
     acquireItem: Option[Queue.QueueItem.Id] = None,
     detail: Option[JobDetail] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
   def state: JobState = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: Boolean = state.isTerminal
   def succeeded: Boolean = (state == JobState.Done)

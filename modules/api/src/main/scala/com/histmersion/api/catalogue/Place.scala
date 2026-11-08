@@ -110,7 +110,7 @@ object Place:
     * but it is not an atlas square. `places.location_precision` is the SQL twin (a generated column), held equal by
     * `PlaceCleanupSuite`.
     */
-  enum Precision:
+  enum Precision derives CanEqual:
     case Stated, GridCell
 
     def wire: Precision.Wire = this match
@@ -241,7 +241,7 @@ object Place:
     object Events extends Newtype[Int, Pure]
 
 
-  enum Dating:
+  enum Dating derives CanEqual:
     case Stated, EndOnly, Unknown
 
     def wire: Dating.Wire = this match
@@ -742,7 +742,7 @@ object Place:
     object Unlocated extends Newtype[Int, Pure]
 
 
-  enum OverrideEdit:
+  enum OverrideEdit derives CanEqual:
     case Reset
 
     case Put(
@@ -1040,7 +1040,7 @@ object Place:
     export Match.ImportSource
 
 
-  enum TimeBasis:
+  enum TimeBasis derives CanEqual:
     case Dated, Timeless, Modern, Grouping, Findings
 
     def wire: TimeBasis.Wire = this match

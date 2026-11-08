@@ -36,7 +36,7 @@ object Iiif:
   val Protocol = "http://iiif.io/api/image"
   val Profile = "level1"
 
-  enum Region:
+  enum Region derives CanEqual:
     case Full
     case Pixels(x: Pixels.X, y: Pixels.Y, w: Pixels.W, h: Pixels.H)
 
@@ -72,7 +72,7 @@ object Iiif:
               .toRight(Problem(s"invalid region coordinates: '$s' (expected x,y,w,h with w,h > 0)"))
           case _ => Left(Problem(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')"))
 
-  enum Size:
+  enum Size derives CanEqual:
     case Max
     case ScaleUp // ^max
     case Width(w: Width.W) // w,

@@ -9,7 +9,7 @@ import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label):
+enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label) derives CanEqual:
   case Findings extends DeletePart(DeletePart.Wire("findings"), DeletePart.Label("findings"))
   case FindingPlaces extends DeletePart(DeletePart.Wire("finding-places"), DeletePart.Label("gazetteer assignments of its findings"))
   case EdgesOut extends DeletePart(DeletePart.Wire("edges-out"), DeletePart.Label("edges from it"))

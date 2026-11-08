@@ -2,7 +2,7 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-enum GeoTime:
+enum GeoTime derives CanEqual:
   case Always
 
   case At(year: Year)

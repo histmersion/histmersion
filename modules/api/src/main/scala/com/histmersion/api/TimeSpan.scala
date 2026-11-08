@@ -13,7 +13,7 @@ final case class TimeSpan(
     endFrom: Option[Year] = None,
     notAfter: Option[Year] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
 
   /** The outer span: the earliest and latest years stated, one known end standing for both; `None` when undated. */
   def outer: Option[(Year, Year)] =

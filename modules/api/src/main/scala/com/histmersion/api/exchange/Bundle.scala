@@ -34,7 +34,7 @@ object Bundle:
     * kebab-case (`article-version`), as the V031 trigger writes them.
     */
 
-  enum Kind:
+  enum Kind derives CanEqual:
     case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
 
     /** A place or a named period added HERE (`dataset = 'local'`); the bundled seeds every instance imports itself are
@@ -386,7 +386,7 @@ object Bundle:
     type CheckedAt = CheckedAt.T
     object CheckedAt extends Newtype[String, Pure]
 
-  final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives KindlingsCodecAsObject
+  final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives KindlingsCodecAsObject, CanEqual
 
   object Edge:
     export com.histmersion.api.library.Edge.Kind.{Wire as Kind}
@@ -754,7 +754,7 @@ object Bundle:
       refUid: Option[UUID],
       note: Option[GoalLink.Note],
       createdAt: GoalLink.CreatedAt
-  ) derives KindlingsCodecAsObject
+  ) derives KindlingsCodecAsObject, CanEqual
 
   object GoalLink:
     export com.histmersion.api.automation.Goal.LinkKind.{Wire as Kind}
@@ -766,7 +766,7 @@ object Bundle:
     object CreatedAt extends Newtype[String, Pure]
 
   final case class GoalSchedule(kind: GoalSchedule.Kind, cron: GoalSchedule.Cron, enabled: GoalSchedule.Enabled, budgetUsd: Option[GoalSchedule.BudgetUsd])
-      derives KindlingsCodecAsObject
+      derives KindlingsCodecAsObject, CanEqual
 
   object GoalSchedule:
     export com.histmersion.api.automation.ScheduleKind.{Wire as Kind}
@@ -1014,11 +1014,11 @@ object Bundle:
   /** Both bounds inclusive: Postgres keeps an `int8range` as `[lower, upper)`, so `upper − 1` is applied on the way out
     * and undone on the way in.
     */
-  final case class Range(start: Option[Year] = None, end: Option[Year] = None) derives KindlingsCodecAsObject
+  final case class Range(start: Option[Year] = None, end: Option[Year] = None) derives KindlingsCodecAsObject, CanEqual
 
   final case class Reference(places: Reference.Places, placesDigest: Reference.PlacesDigest, periods: Reference.Periods, periodsDigest: Reference.PeriodsDigest)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual
 
   object Reference:
     type Places = Places.T
@@ -1112,7 +1112,7 @@ object Bundle:
     type DeletedAt = DeletedAt.T
     object DeletedAt extends Newtype[String, Pure]
 
-  final case class UnresolvedEdge(srcUid: UUID, dst: UnresolvedEdge.Dst, kind: UnresolvedEdge.Kind) derives KindlingsCodecAsObject
+  final case class UnresolvedEdge(srcUid: UUID, dst: UnresolvedEdge.Dst, kind: UnresolvedEdge.Kind) derives KindlingsCodecAsObject, CanEqual
 
   object UnresolvedEdge:
     type Dst = Dst.T

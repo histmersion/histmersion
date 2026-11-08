@@ -2,7 +2,7 @@ package com.histmersion
 package api.jobs
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-enum JobState:
+enum JobState derives CanEqual:
   case Queued, Running, Done, Failed, Paused, Cancelled
 
   def wire: JobState.Wire = JobState.Wire(toString.toLowerCase)

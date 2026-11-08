@@ -28,7 +28,7 @@ object Agents:
   /** The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the first colon separates the
     * provider.
     */
-  final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+  final case class ModelRef(provider: ProviderKind, model: ModelRef.Model) derives CanEqual:
     def wire: ModelRef.Wire = ModelRef.Wire(s"${provider.wire}:$model")
 
   object ModelRef:
@@ -104,7 +104,7 @@ object Agents:
       ((List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/"))
 
 
-  enum Billing:
+  enum Billing derives CanEqual:
     case Plan(pool: PlanQuota.PoolId)
     case Metered(price: Price)
 
@@ -169,7 +169,7 @@ object Agents:
 
   val JobKind = AgentJobKinds.Agent.kind.value
 
-  enum PauseReason(val wire: PauseReason.Wire):
+  enum PauseReason(val wire: PauseReason.Wire) derives CanEqual:
     case Budget extends PauseReason(PauseReason.Wire("budget"))
     case Interrupted extends PauseReason(PauseReason.Wire("interrupted"))
     case Requested extends PauseReason(PauseReason.Wire("requested"))
@@ -185,7 +185,7 @@ object Agents:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-  enum StepKind(val wire: StepKind.Wire):
+  enum StepKind(val wire: StepKind.Wire) derives CanEqual:
     case Code extends StepKind(StepKind.Wire("code"))
     case Llm extends StepKind(StepKind.Wire("llm"))
 
@@ -196,7 +196,7 @@ object Agents:
 
     def parse(s: Wire): Option[StepKind] = values.find(_.wire == s)
 
-  enum Origin(val wire: Origin.Wire):
+  enum Origin(val wire: Origin.Wire) derives CanEqual:
     case Person extends Origin(Origin.Wire("person"))
     case Scheduler extends Origin(Origin.Wire("scheduler"))
     case Run extends Origin(Origin.Wire("run"))
@@ -429,7 +429,7 @@ object Agents:
       managerItem: Option[Managers.ManagerItem.Id] = None,
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
     def isWaiting: Boolean = (status.value == Run.State.WaitingApproval.wire.value)
 
     def modelFor(role: Role): Option[RunInfo.Model] =
@@ -576,7 +576,7 @@ object Agents:
 
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual
 
 
   final case class RoleModel(role: RoleModel.Role, model: Option[RoleModel.Model], ready: RoleModel.Ready, problem: Option[RoleModel.Problem])
@@ -618,7 +618,7 @@ object Agents:
     object Now extends Newtype[String, Pure]
 
 
-  enum CheckLevel(val wire: CheckLevel.Wire):
+  enum CheckLevel(val wire: CheckLevel.Wire) derives CanEqual:
     case Ok extends CheckLevel(CheckLevel.Wire("ok"))
     case Warn extends CheckLevel(CheckLevel.Wire("warn"))
     case Fail extends CheckLevel(CheckLevel.Wire("fail"))
@@ -723,7 +723,7 @@ object Agents:
     object Definitions extends Newtype[String, Pure]
 
 
-  enum Decision(val wire: Decision.Wire):
+  enum Decision(val wire: Decision.Wire) derives CanEqual:
     case Approve extends Decision(Decision.Wire("approve"))
     case Reject extends Decision(Decision.Wire("reject"))
 
@@ -757,7 +757,7 @@ object Agents:
       articles: Option[Article.Plans.ArticlePlan] = None,
       hintEffect: Option[Managers.HintProposal] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
     def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
 
     /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a

@@ -200,7 +200,7 @@ object Backup:
     object Pruned extends Newtype[String, Pure]
 
 
-  enum State:
+  enum State derives CanEqual:
     case Running, Done, Failed
     def wire: State.Wire = State.Wire(toString.toLowerCase(java.util.Locale.ROOT))
 

@@ -31,7 +31,7 @@ object Facet:
   type Contested = Contested.T
   object Contested extends Newtype[Boolean, Pure]
 
-  enum Field:
+  enum Field derives CanEqual:
     case Tags, Authors, Places, Topics, Status, Provenance
 
   object Field:

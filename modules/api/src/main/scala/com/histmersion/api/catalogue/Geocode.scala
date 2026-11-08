@@ -29,7 +29,7 @@ object Geocode:
   object Key extends Newtype[String, Pure]
   type KindRank = KindRank.T
   object KindRank extends Newtype[Int, Pure]
-  enum KindHint:
+  enum KindHint derives CanEqual:
     case Site, Region, Polity, Water, Unknown
 
     def wire: KindHint.Wire = KindHint.Wire(toString.toLowerCase(java.util.Locale.ROOT))
@@ -79,7 +79,7 @@ object Geocode:
     val spaced = b.result().replaceAll(" {2,}", " ").dropWhile(_ == ' ').reverse.dropWhile(_ == ' ').reverse
     if spaced.startsWith("the ") then Key(spaced.drop(4)) else Key(spaced)
 
-  enum Approximation:
+  enum Approximation derives CanEqual:
     case Qualifier(dropped: Qualifier.Dropped)
 
     case OnlyWithin(missing: OnlyWithin.Missing)

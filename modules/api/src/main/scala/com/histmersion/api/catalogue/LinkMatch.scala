@@ -2,7 +2,7 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-enum LinkMatch:
+enum LinkMatch derives CanEqual:
   case Exact, Close
 
   def wire: LinkMatch.Wire = this match

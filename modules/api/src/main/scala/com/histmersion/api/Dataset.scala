@@ -3,7 +3,7 @@ package api
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum Dataset:
+enum Dataset derives CanEqual:
   case Seed, Local
   def wire: Dataset.Wire = Dataset.Wire(this.toString.toLowerCase(java.util.Locale.ROOT))
 

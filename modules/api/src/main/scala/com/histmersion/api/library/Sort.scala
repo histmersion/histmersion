@@ -5,7 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum Sort:
+enum Sort derives CanEqual:
   case Relevance, Cited, PeriodStart, Year, Oldest, Title
 
 object Sort:

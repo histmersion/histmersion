@@ -7,7 +7,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum FormatField:
+enum FormatField derives CanEqual:
   case Body, Summary, Notes
 
 object FormatField:

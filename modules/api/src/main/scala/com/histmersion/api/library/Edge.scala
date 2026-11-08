@@ -17,7 +17,7 @@ object Edge:
   /** The typed relationships between sources. Wire representation is the lowercase/underscore string (e.g.
     * `superseded_by`). The enum replaces the `EdgeKind` string constants.
     */
-  enum Kind:
+  enum Kind derives CanEqual:
     case References, Challenges, Refutes, Updates, SupersededBy, Supersedes,
       Confirms, Cites, FoundationalFor, CompilationOf, ReviewOf, Verifies
 
