@@ -90,3 +90,7 @@ The clients see only `api` (`com.histmersion.api...`), its unconstrained newtype
 Refer to names as their scope allows: inside `JobType` write `JobType.Wire("goal-plan")`, not the fully qualified path; no new `_root_.` or `com.histmersion.` prefixes where an import or the enclosing package resolves the name. Replace a `type X = a.B.C` + `val X: a.B.C.type = a.B.C` pair you touch with `export a.B.C`. When you need an operation the type lacks (`values.find(_.wire.value.equalsIgnoreCase(s.value))`), add it to the type's companion as an extension and call it.
 
 Literal constructors (`Citekey("x")`, `PageSize(20)`) are allowed anywhere (user, 2026-11-08): Iron checks them at compile time.
+
+## No compatibility engineering (user, 2026-11-08; overrides anything above)
+
+Until the user says the code is published, the only constraint is that the data in the user's current database survives. API, MCP, CLI output, plugin SPI, wire formats, JSON types, schema names, migration history: change them freely and update every consumer in the repo (web, cli, plugins, tests) in the same change. Contract snapshots (openapi.json, mcp-tools.json, toolbox.json, plugin-testkit-api.txt, contracts.tsv) are regenerated, never defended; a recorded traffic fixture is updated to the new shape. Spend nothing on keeping an old shape.
