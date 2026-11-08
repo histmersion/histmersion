@@ -106,7 +106,7 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
   ):
     val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
     val (ok, ko) = AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, Allowance(2)) { (n, _) =>
-      if n == "c" then Left(IngestFailure("no legal open-access copy of c")) else Right(n.toUpperCase)
+      if n == "c" then Left(Problem("no legal open-access copy of c")) else Right(n.toUpperCase)
     }
     assertEquals(ok.map(_._2), List("A", "D"))
     assertEquals(ko.map((p, why) => (p._1, why)), List("c" -> "no legal open-access copy of c"))
