@@ -666,7 +666,7 @@ object Calibre:
     object To extends Newtype[String, Pure]
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
-  enum Field(val name: Field.Name):
+  enum Field(val name: Field.Name) derives CanEqual:
     case Title extends Field(Field.Name("title"))
     case Authors extends Field(Field.Name("authors"))
     case Pubdate extends Field(Field.Name("pubdate"))

@@ -4,7 +4,7 @@ package plugins.calibre
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What `calibre update --all` does, or did, to one Calibre entry. */
-enum UpdateOutcome:
+enum UpdateOutcome derives CanEqual:
   /** Dry run: these fields would change. */
   case Change(changes: List[Calibre.Change])
   case Applied(changes: List[Calibre.Change])

@@ -4,7 +4,7 @@ package plugins.calibre
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What can be wrong with a linked Calibre entry, worst first. */
-enum AuditIssue(val label: AuditIssue.Label):
+enum AuditIssue(val label: AuditIssue.Label) derives CanEqual:
   case Missing extends AuditIssue(AuditIssue.Label("no such Calibre entry"))
   case Junk extends AuditIssue(AuditIssue.Label("Calibre's title or author is blank, Unknown or scraped"))
   case Title extends AuditIssue(AuditIssue.Label("titles differ"))
