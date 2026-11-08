@@ -74,36 +74,29 @@ object Route:
 
   /** The front page of each place. */
   object Goal:
-    type Slug = com.histmersion.api.automation.Goal.Slug
-    val Slug: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
+    export com.histmersion.api.automation.Goal.Slug
 
   object Source:
     type Citekey = com.histmersion.web.Preview.Target.Source.Citekey
     val Citekey: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
 
   object Article:
-    type Slug = com.histmersion.web.Preview.Item.Slug
-    val Slug: _root_.com.histmersion.web.Preview.Item.Slug.type = _root_.com.histmersion.web.Preview.Item.Slug
+    export com.histmersion.api.research.Article.Slug
 
   object Place:
-    type Id = com.histmersion.web.Pages.PlaceId
-    val Id: _root_.com.histmersion.web.Pages.PlaceId.type = _root_.com.histmersion.web.Pages.PlaceId
+    export com.histmersion.web.Pages.{PlaceId as Id}
 
   object Event:
-    type Id = com.histmersion.web.Pages.EventId
-    val Id: _root_.com.histmersion.web.Pages.EventId.type = _root_.com.histmersion.web.Pages.EventId
+    export com.histmersion.web.Pages.{EventId as Id}
 
   object Run:
-    type Id = com.histmersion.web.Route.RunId
-    val Id: _root_.com.histmersion.web.Route.RunId.type = _root_.com.histmersion.web.Route.RunId
+    export com.histmersion.web.Route.{RunId as Id}
 
   object Manager:
-    type Id = com.histmersion.web.Route.ManagerId
-    val Id: _root_.com.histmersion.web.Route.ManagerId.type = _root_.com.histmersion.web.Route.ManagerId
+    export com.histmersion.web.Route.{ManagerId as Id}
 
   object Job:
-    type Id = com.histmersion.web.Pages.JobId
-    val Id: _root_.com.histmersion.web.Pages.JobId.type = _root_.com.histmersion.web.Pages.JobId
+    export com.histmersion.web.Pages.{JobId as Id}
 
   type ParsePath = String
   type LegacyPath = String

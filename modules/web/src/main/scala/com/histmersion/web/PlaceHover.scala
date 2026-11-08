@@ -18,14 +18,12 @@ import org.scalajs.dom
   * drawn as a marker answers through its element.
   */
 object PlaceHover:
-  type PlaceId = Pages.PlaceId
-  val PlaceId: Pages.PlaceId.type = Pages.PlaceId
+  export Pages.PlaceId
   type PlaceKind = PlaceKind.T
   object PlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointerType = PointerType.T
   object PointerType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapeSetName = ShapeHit.Set
-  val ShapeSetName: ShapeHit.Set.type = ShapeHit.Set
+  export ShapeHit.{Set as ShapeSetName}
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
 

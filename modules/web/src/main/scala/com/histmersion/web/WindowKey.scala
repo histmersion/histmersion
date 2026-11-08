@@ -135,8 +135,7 @@ object WindowKey:
     val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
 
   object Article:
-    type Slug = com.histmersion.api.research.Article.Slug
-    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
+    export com.histmersion.api.research.Article.Slug
 
   object Graph:
     type Citekey = com.histmersion.api.library.Citekey
@@ -147,16 +146,13 @@ object WindowKey:
     val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
 
   object Run:
-    type Id = com.histmersion.api.automation.Agents.RunInfo.Id
-    val Id: _root_.com.histmersion.api.automation.Agents.RunInfo.Id.type = _root_.com.histmersion.api.automation.Agents.RunInfo.Id
+    export com.histmersion.api.automation.Agents.RunInfo.Id
 
   object Goal:
-    type Slug = com.histmersion.api.automation.Goal.Slug
-    val Slug: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
+    export com.histmersion.api.automation.Goal.Slug
 
   object Manager:
-    type Id = com.histmersion.api.automation.Managers.ManagerInfo.Id
-    val Id: _root_.com.histmersion.api.automation.Managers.ManagerInfo.Id.type = _root_.com.histmersion.api.automation.Managers.ManagerInfo.Id
+    export com.histmersion.api.automation.Managers.ManagerInfo.Id
 
   /** The window of each bookkeeping list, and back. */
   def ofQueue(kind: Queue.Kind): WindowKey = kind match

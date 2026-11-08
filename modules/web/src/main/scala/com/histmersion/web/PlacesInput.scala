@@ -26,8 +26,7 @@ import com.histmersion.api.catalogue.Place
   * `ApiClient.places(q, asOf, limit)`. Selected places draw polygons on the map as shapes ([[ShapeSet]] "place-pick").
   */
 object PlacesInput:
-  type PlaceId = Pages.PlaceId
-  val PlaceId: Pages.PlaceId.type = Pages.PlaceId
+  export Pages.PlaceId
   type ChipTextSignalId = PlaceId
   val ChipTextSignalId: Pages.PlaceId.type = Pages.PlaceId
 

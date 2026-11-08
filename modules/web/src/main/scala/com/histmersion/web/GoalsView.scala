@@ -34,16 +34,11 @@ object GoalsView:
 
   /** How many goals the tree lists, and how many of a goal's runs its window shows. */
 
-  type NewAreaPlan = _root_.com.histmersion.web.GoalsView.NewArea.Plan
-  val NewAreaPlan: _root_.com.histmersion.web.GoalsView.NewArea.Plan.type = _root_.com.histmersion.web.GoalsView.NewArea.Plan
-  type NewAreaSeed = _root_.com.histmersion.web.GoalsView.NewArea.Seed
-  val NewAreaSeed: _root_.com.histmersion.web.GoalsView.NewArea.Seed.type = _root_.com.histmersion.web.GoalsView.NewArea.Seed
-  type BadgeStatus = _root_.com.histmersion.api.automation.Goal.StatusValue
-  val BadgeStatus: _root_.com.histmersion.api.automation.Goal.StatusValue.type = _root_.com.histmersion.api.automation.Goal.StatusValue
+  export com.histmersion.web.GoalsView.NewArea.{Plan as NewAreaPlan, Seed as NewAreaSeed}
+  export com.histmersion.api.automation.Goal.{StatusValue as BadgeStatus}
   type BadgeText = BadgeText.T
   object BadgeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanSectionSlug = _root_.com.histmersion.api.automation.Goal.Slug
-  val PlanSectionSlug: _root_.com.histmersion.api.automation.Goal.Slug.type = _root_.com.histmersion.api.automation.Goal.Slug
+  export com.histmersion.api.automation.Goal.{Slug as PlanSectionSlug}
 
   val Limit = 500
   val RunLimit = 15

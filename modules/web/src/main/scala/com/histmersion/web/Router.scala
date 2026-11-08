@@ -9,8 +9,7 @@ import org.scalajs.dom.window
   * the server's own pages (a source, an article) load.
   */
 object Router:
-  type Push = UiState.NavigatePush
-  val Push: UiState.NavigatePush.type = UiState.NavigatePush
+  export UiState.{NavigatePush as Push}
 
   private val current = Var[Route](Route.Explore)
 

@@ -16,8 +16,7 @@ object Fmt:
 
   type ColorT = _root_.com.histmersion.web.Fmt.RampPosition
   val ColorT: _root_.com.histmersion.web.Fmt.RampPosition.type = _root_.com.histmersion.web.Fmt.RampPosition
-  type DisplayTagS = _root_.com.histmersion.api.UiLabels.Text
-  val DisplayTagS: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
+  export com.histmersion.api.UiLabels.{Text as DisplayTagS}
 
   def yr(y: com.histmersion.api.catalogue.Year): com.histmersion.api.Years.Text = com.histmersion.api.Years.Text(YearFmt(y))
 

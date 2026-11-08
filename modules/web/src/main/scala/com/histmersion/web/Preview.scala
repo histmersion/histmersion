@@ -110,16 +110,12 @@ object Preview:
       type Citekey = com.histmersion.api.library.Citekey
       val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
     object Article:
-      type Slug = com.histmersion.web.Preview.Item.Slug
-      val Slug: _root_.com.histmersion.web.Preview.Item.Slug.type = _root_.com.histmersion.web.Preview.Item.Slug
+      export com.histmersion.api.research.Article.Slug
     object Place:
-      type Id = com.histmersion.web.Pages.PlaceId
-      val Id: _root_.com.histmersion.web.Pages.PlaceId.type = _root_.com.histmersion.web.Pages.PlaceId
-      type AsOf = com.histmersion.api.Years.Astronomical
-      val AsOf: _root_.com.histmersion.api.Years.Astronomical.type = _root_.com.histmersion.api.Years.Astronomical
+      export com.histmersion.web.Pages.{PlaceId as Id}
+      export com.histmersion.api.Years.{Astronomical as AsOf}
     object Event:
-      type Id = com.histmersion.web.Pages.EventId
-      val Id: _root_.com.histmersion.web.Pages.EventId.type = _root_.com.histmersion.web.Pages.EventId
+      export com.histmersion.web.Pages.{EventId as Id}
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
   def targetOf(ck: Option[com.histmersion.web.Preview.Target.Source.Citekey], slug: Option[com.histmersion.web.Preview.Item.Slug]): Option[Target] =
@@ -866,19 +862,9 @@ object Preview:
 
   object Anchor:
     object At:
-      type X = com.histmersion.web.Preview.ScreenPixels
-      val X: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-      type Y = com.histmersion.web.Preview.ScreenPixels
-      val Y: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
+      export com.histmersion.web.Preview.{ScreenPixels as X, ScreenPixels as Y}
     object Under:
-      type Left = com.histmersion.web.Preview.ScreenPixels
-      val Left: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-      type Top = com.histmersion.web.Preview.ScreenPixels
-      val Top: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-      type Bottom = com.histmersion.web.Preview.ScreenPixels
-      val Bottom: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-      type Width = com.histmersion.web.Preview.ElementSize
-      val Width: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
+      export com.histmersion.web.Preview.{ScreenPixels as Left, ScreenPixels as Top, ScreenPixels as Bottom, ElementSize as Width}
 
   /** The pinned card: what it shows, its element, where it is anchored (`None` while the anchor is out of view: the
     * card waits, hidden), what pinned it (a click there is not "outside"), and where the focus goes back to when it

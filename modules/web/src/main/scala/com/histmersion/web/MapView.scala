@@ -30,8 +30,7 @@ object MapView:
   object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Mid = DotCluster.Mid
-  val Mid: DotCluster.Mid.type = DotCluster.Mid
+  export DotCluster.Mid
   type Playback = Playback.T
   object Playback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Ring = Ring.T
@@ -42,8 +41,7 @@ object MapView:
   object SourceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearsPerSecond = PlaybackBuckets.YearsPerSecond
-  val YearsPerSecond: PlaybackBuckets.YearsPerSecond.type = PlaybackBuckets.YearsPerSecond
+  export PlaybackBuckets.YearsPerSecond
 
 
 

@@ -18,12 +18,7 @@ import com.histmersion.api.instance.EventsUiConfig
   * point: the label at the point).
   */
 object EventLayer:
-  type Alpha = EventPlayback.Alpha
-  val Alpha: EventPlayback.Alpha.type = EventPlayback.Alpha
-  type Slot = EventPlayback.Slot
-  val Slot: EventPlayback.Slot.type = EventPlayback.Slot
-  type YearsPerSecond = EventPlayback.YearsPerSecond
-  val YearsPerSecond: EventPlayback.YearsPerSecond.type = EventPlayback.YearsPerSecond
+  export EventPlayback.{Alpha, Slot, YearsPerSecond}
 
   // `var`s: a shown event's visibility and stacking slot change frame by frame, in place
 

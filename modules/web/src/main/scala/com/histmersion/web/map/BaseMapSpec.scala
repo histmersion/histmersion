@@ -43,8 +43,7 @@ object BaseMapSpec:
     type Reduced = Reduced.T
     object Reduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Raster:
-    type Template = com.histmersion.api.basemap.BasemapApi.TileTemplate
-    val Template: _root_.com.histmersion.api.basemap.BasemapApi.TileTemplate.type = _root_.com.histmersion.api.basemap.BasemapApi.TileTemplate
+    export com.histmersion.api.basemap.BasemapApi.{TileTemplate as Template}
     type MaxZoom = MaxZoom.T
     object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Attribution = Attribution.T
