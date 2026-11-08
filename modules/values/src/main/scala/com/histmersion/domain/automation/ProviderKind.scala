@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-enum ProviderKind(val wire: ProviderKind.Wire):
+enum ProviderKind(val wire: ProviderKind.Wire) derives CanEqual:
   case Anthropic extends ProviderKind(ProviderKind.Wire("anthropic"))
   case OpenAI extends ProviderKind(ProviderKind.Wire("openai"))
   case Local extends ProviderKind(ProviderKind.Wire("local"))

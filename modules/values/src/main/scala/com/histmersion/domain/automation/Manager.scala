@@ -9,7 +9,7 @@ object Manager:
     * sources until enriched), `seed` (one research area: new articles proposed, approved and compiled), `watch` (one
     * research area: an acquisition sweep and a currency check on its cron).
     */
-  enum Kind(val wire: Kind.Wire):
+  enum Kind(val wire: Kind.Wire) derives CanEqual:
     case Review extends Kind(Kind.Wire("review"))
     case Seed extends Kind(Kind.Wire("seed"))
     case Watch extends Kind(Kind.Wire("watch"))
@@ -25,7 +25,7 @@ object Manager:
   /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
     * cancelled its in-flight runs and items.
     */
-  enum State(val wire: State.Wire):
+  enum State(val wire: State.Wire) derives CanEqual:
     case Active extends State(State.Wire("active"))
     case Paused extends State(State.Wire("paused"))
     case Stopped extends State(State.Wire("stopped"))

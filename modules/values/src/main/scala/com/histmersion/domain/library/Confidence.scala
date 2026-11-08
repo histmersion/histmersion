@@ -3,7 +3,7 @@ package domain.library
 
 import com.histmersion.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
-enum Confidence:
+enum Confidence derives CanEqual:
   case High, Medium, Low, Contested
 
   /** The wire / storage spelling (`high`). */

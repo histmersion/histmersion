@@ -32,7 +32,7 @@ object Goal:
     val all: List[Wire] = List(Wire(Planned), Wire(Seeding), Wire(Compiled), Wire(Reviewed), Wire(Done))
 
   /** What a goal is linked to. */
-  enum LinkKind(val wire: LinkKind.Wire):
+  enum LinkKind(val wire: LinkKind.Wire) derives CanEqual:
     case Source extends LinkKind(LinkKind.Wire("source"))
     case Article extends LinkKind(LinkKind.Wire("article"))
     case Query extends LinkKind(LinkKind.Wire("query"))

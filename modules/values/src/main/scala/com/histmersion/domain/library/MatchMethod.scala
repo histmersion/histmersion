@@ -3,7 +3,7 @@ package domain.library
 
 import com.histmersion.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
-enum MatchMethod:
+enum MatchMethod derives CanEqual:
   /** The same uid. */
   case Uid
 

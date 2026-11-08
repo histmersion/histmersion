@@ -17,7 +17,7 @@ object Approval:
     * the decision (`waiting_approval`) and applies it itself when it resumes; the other kinds are applied by the
     * decision and the run never waits.
     */
-  enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
+  enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking) derives CanEqual:
     case StatusChange extends Kind(Kind.Wire("status-change"), Kind.Blocking(false))
     case Edge extends Kind(Kind.Wire("edge"), Kind.Blocking(false))
     case GoalPlan extends Kind(Kind.Wire("goal-plan"), Kind.Blocking(true))
@@ -61,7 +61,7 @@ object Approval:
   /** How a kind of proposal is handled: `Manual` waits for a person, `Auto` is applied at once (and still recorded,
     * already approved).
     */
-  enum Mode(val wire: Mode.Wire):
+  enum Mode(val wire: Mode.Wire) derives CanEqual:
     case Manual extends Mode(Mode.Wire("manual"))
     case Auto extends Mode(Mode.Wire("auto"))
 
@@ -75,7 +75,7 @@ object Approval:
   /** `Failed` = a person approved it but applying it failed (the source changed or went away); the reason is kept in
     * `result`.
     */
-  enum State(val wire: State.Wire):
+  enum State(val wire: State.Wire) derives CanEqual:
     case Open extends State(State.Wire("open"))
     case Approved extends State(State.Wire("approved"))
     case Rejected extends State(State.Wire("rejected"))
@@ -92,7 +92,7 @@ object Approval:
     * applied the moment it was proposed, by an `agents.approvals.*` mode of `auto` (its result starts [[AutoResult]]);
     * `Person` = everything else that is decided.
     */
-  enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe):
+  enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe) derives CanEqual:
     case Person extends DecidedBy(DecidedBy.Wire("person"), DecidedBy.Describe("decided by a person"))
     case Autopilot extends DecidedBy(DecidedBy.Wire("autopilot"), DecidedBy.Describe("decided by the autopilot's checks"))
     case Auto extends DecidedBy(DecidedBy.Wire("auto"), DecidedBy.Describe("applied when proposed (an auto approval mode)"))

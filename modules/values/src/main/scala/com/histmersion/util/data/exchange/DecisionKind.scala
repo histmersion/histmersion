@@ -3,7 +3,7 @@ package util.data.exchange
 
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
-enum DecisionKind:
+enum DecisionKind derives CanEqual:
   /** Keep this collection's version. */
   case KeepLeft
 

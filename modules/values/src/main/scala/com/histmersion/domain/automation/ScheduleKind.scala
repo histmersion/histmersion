@@ -3,7 +3,7 @@ package domain.automation
 
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
-enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline):
+enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline) derives CanEqual:
   case Currency extends ScheduleKind(ScheduleKind.Wire("currency"), Pipeline.CurrencyCheck)
   case Acquisition extends ScheduleKind(ScheduleKind.Wire("acquisition"), Pipeline.AcquisitionSweep)
 

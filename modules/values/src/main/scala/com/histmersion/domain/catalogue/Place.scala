@@ -66,7 +66,7 @@ object Place:
     * but it is not an atlas square. `places.location_precision` is the SQL twin (a generated column), held equal by
     * `PlaceCleanupSuite`.
     */
-  enum Precision:
+  enum Precision derives CanEqual:
     case Stated, GridCell
 
     def wire: Precision.Wire = this match
