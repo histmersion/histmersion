@@ -22,7 +22,7 @@ import com.histmersion.api.Geo
   * ZOOM is the app's unit: the zoom of the 256-pixel raster grid (OSM Carto's, every `Layout` value and link the app
   * had). An adapter converts to its library's own.
   */
-final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon)
+final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon) derives CanEqual
 
 object LatLon:
   type Lat = Geo.Latitude

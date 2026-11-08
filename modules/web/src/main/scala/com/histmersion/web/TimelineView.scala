@@ -95,7 +95,7 @@ object TimelineView:
   /** What the detail curve layer was drawn for: (from, to, width). */
   private var dtDrawn: (Years.Astronomical, Years.Astronomical, Double) = (Years.Astronomical(0L), Years.Astronomical(0L), 0.0)
 
-  private enum DragKind:
+  private enum DragKind derives CanEqual:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
 
   private case class DragInfo(startX: Double, curX: Double, kind: DragKind, origFrom: Long, origTo: Long)

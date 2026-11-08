@@ -9,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** A bubble's OUTLINE (#1647): the shape grammar's event square carried over to the clusters, so a cluster of events
   * reads apart from one of findings at a glance (docs/visualization-guide.md §2a).
   */
-enum BubbleForm(val cls: BubbleForm.Cls):
+enum BubbleForm(val cls: BubbleForm.Cls) derives CanEqual:
   /** No events in it: the round count. */
   case Round extends BubbleForm(BubbleForm.Cls(""))
 

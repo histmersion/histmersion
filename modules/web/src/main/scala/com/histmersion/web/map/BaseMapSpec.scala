@@ -8,7 +8,7 @@ import com.histmersion.api.basemap.Basemap
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A base map, as the app describes it; the adapter makes its library's style of it. */
-enum BaseMapSpec:
+enum BaseMapSpec derives CanEqual:
   /** Nothing yet: the page's own background. */
   case Blank
 

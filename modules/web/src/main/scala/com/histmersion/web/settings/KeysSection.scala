@@ -28,7 +28,7 @@ object KeysSection:
   type ReferenceEntry = ReferenceEntry.T
   object ReferenceEntry extends Newtype[String, Pure]
 
-  enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint):
+  enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint) derives CanEqual:
     case Env extends Form(Form.Scheme("env"), Form.Label("Environment variable"), Form.Hint("its name, e.g. HISTMERSION_CORE_KEY"))
     case Keepassxc extends Form(Form.Scheme("keepassxc"), Form.Label("KeePassXC entry"), Form.Hint("Group/Entry#attribute"))
     case OnePass extends Form(Form.Scheme("1password"), Form.Label("1Password item"), Form.Hint("op://Vault/Item/field"))

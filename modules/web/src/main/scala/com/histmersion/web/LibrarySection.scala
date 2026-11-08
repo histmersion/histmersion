@@ -5,7 +5,7 @@ import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Library's sections: the two lists, and the three ways to add sources. */
-enum LibrarySection(val slug: LibrarySection.Slug, val label: LibrarySection.Label):
+enum LibrarySection(val slug: LibrarySection.Slug, val label: LibrarySection.Label) derives CanEqual:
   case Sources extends LibrarySection(LibrarySection.Slug(""), LibrarySection.Label("Sources"))
   case Articles extends LibrarySection(LibrarySection.Slug("articles"), LibrarySection.Label("Articles"))
   case Upload extends LibrarySection(LibrarySection.Slug("upload"), LibrarySection.Label("Upload a file"))

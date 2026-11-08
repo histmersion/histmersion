@@ -87,7 +87,7 @@ object ResultsList:
             var idx = -1
             var i = 0
             while i < rows.length do
-              if rows(i) == active || (active != null && rows(i).contains(active)) then idx = i
+              if (rows(i) eq active) || (active != null && rows(i).contains(active)) then idx = i
               i += 1
             if idx >= 0 then
               ev.preventDefault()
@@ -330,7 +330,7 @@ object ResultsList:
         if !inLink then openSource(src.citekey, inPanel)
       },
       onKeyDown --> { ev =>
-        if (ev.key == "Enter" || ev.key == " ") && ev.target == ev.currentTarget then
+        if (ev.key == "Enter" || ev.key == " ") && (ev.target eq ev.currentTarget) then
           ev.preventDefault()
           openSource(src.citekey, inPanel)
       }

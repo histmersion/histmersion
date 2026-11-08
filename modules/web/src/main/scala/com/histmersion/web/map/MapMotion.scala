@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The reader's "Map motion" setting (#4718), kept per device: follow the system's reduced-motion setting (the
   * default), always animate, or never.
   */
-enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label):
+enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label) derives CanEqual:
   case System extends MapMotion(MapMotion.Wire("system"), MapMotion.Label("Follow the system"))
   case Always extends MapMotion(MapMotion.Wire("always"), MapMotion.Label("Always animate"))
   case Never extends MapMotion(MapMotion.Wire("never"), MapMotion.Label("Never animate"))

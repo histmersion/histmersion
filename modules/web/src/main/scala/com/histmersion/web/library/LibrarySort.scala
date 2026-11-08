@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** How Library's table of sources is ordered — its own choice, kept in the address (`lsort=`), apart from Explore's:
   * the reader names an order of publication here, not a ranking of the map's results.
   */
-enum LibrarySort(val wire: LibrarySort.Wire, val label: LibrarySort.Label, val sort: Sort):
+enum LibrarySort(val wire: LibrarySort.Wire, val label: LibrarySort.Label, val sort: Sort) derives CanEqual:
   case Relevance extends LibrarySort(LibrarySort.Wire("relevance"), LibrarySort.Label("Relevance"), Sort.Relevance)
   case Newest extends LibrarySort(LibrarySort.Wire("newest"), LibrarySort.Label("Newest publication"), Sort.Year)
   case Oldest extends LibrarySort(LibrarySort.Wire("oldest"), LibrarySort.Label("Oldest publication"), Sort.Oldest)

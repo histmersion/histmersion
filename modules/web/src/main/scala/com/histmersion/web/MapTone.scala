@@ -12,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Whether the base map under the names is light or dark — what the map's label colours follow (`.map-tone-light` /
   * `.map-tone-dark`: dark text on a light halo, or the inverse).
   */
-enum MapTone(val wire: MapTone.Wire):
+enum MapTone(val wire: MapTone.Wire) derives CanEqual:
   case Light extends MapTone(MapTone.Wire("light"))
   case Dark extends MapTone(MapTone.Wire("dark"))
 

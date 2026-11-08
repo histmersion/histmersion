@@ -20,7 +20,7 @@ enum BaseMap(
     val label: BaseMap.Label,
     val vector: Option[VectorStyle],
     val url: Option[BaseMap.Url]
-):
+) derives CanEqual:
   case Readable extends BaseMap(BaseMap.Wire("readable"), BaseMap.Label("Readable"), Some(VectorStyle.Readable), None)
   case Physical extends BaseMap(BaseMap.Wire("physical"), BaseMap.Label("Physical"), Some(VectorStyle.Physical), None)
   case Standard extends BaseMap(BaseMap.Wire("standard"), BaseMap.Label("Standard (online)"), None, None)

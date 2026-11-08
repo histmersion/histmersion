@@ -67,7 +67,7 @@ object NoteEditor:
         }
     div(
       cls := "note-editor-scrim",
-      onClick --> { ev => if ev.target == ev.currentTarget then close() },
+      onClick --> { ev => if ev.target eq ev.currentTarget then close() },
       div(
         cls := "note-editor",
         role := "dialog",

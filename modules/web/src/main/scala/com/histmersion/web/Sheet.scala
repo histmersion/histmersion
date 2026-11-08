@@ -12,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** How far the sidebar is pulled up in the narrow (phone) layout, where it is a bottom sheet: a strip, half the screen,
   * or all of it but the search bar. The heights are the stylesheet's.
   */
-enum Sheet(val wire: Sheet.Wire):
+enum Sheet(val wire: Sheet.Wire) derives CanEqual:
   case Peek extends Sheet(Sheet.Wire("peek"))
   case Half extends Sheet(Sheet.Wire("half"))
   case Full extends Sheet(Sheet.Wire("full"))

@@ -103,7 +103,7 @@ object WindowManager:
         val ws = WinState(wid, key, key.initialTitle, x0, y0, w0, h0, nextZ, minimized = false)
         shown += key -> wid
         dom.document.activeElement match
-          case el: dom.HTMLElement if el != dom.document.body => openers += wid -> el
+          case el: dom.HTMLElement if el ne dom.document.body => openers += wid -> el
           case _                                              => ()
         windows.update(_ :+ ws)
         // the open windows are UI state: in the URL, so a reload or a shared link reopens them

@@ -10,5 +10,5 @@ import scala.scalajs.js
   * tokens — the canvas, then the panes (core MapStack), then the corners (`.hd-map-corner`, `--z-map-controls`), then
   * the popups (`--z-map-popups`); windows and modals open over the whole map.
   */
-enum Corner:
+enum Corner derives CanEqual:
   case TopLeft, TopRight, BottomLeft, BottomRight

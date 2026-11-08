@@ -7,7 +7,7 @@ import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A shape under the pointer: its set and its id. */
-final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id)
+final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id) derives CanEqual
 
 object ShapeHit:
   type Set = Set.T

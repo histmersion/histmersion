@@ -7,7 +7,7 @@ import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
-final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
+final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East) derives CanEqual:
   def contains(p: LatLon): Boolean =
     p.lat.value >= south.value && p.lat.value <= north.value && p.lon.value >= west.value && p.lon.value <= east.value
   def extend(o: GeoBounds): GeoBounds =

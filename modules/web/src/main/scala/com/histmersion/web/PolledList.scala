@@ -32,7 +32,7 @@ final class PolledList[A](
     after: (ListPaging.Listing[A], List[A]) => Unit = (_: ListPaging.Listing[A], _: List[A]) => (),
     later: (Poll.Revision, () => Unit) => PolledList.TimerId = (ms, f) => PolledList.TimerId(dom.window.setTimeout(() => f(), ms.value)),
     cancel: PolledList.TimerId => Unit = id => dom.window.clearTimeout(id.value)
-)(using ExecutionContext):
+)(using ExecutionContext, CanEqual[A, A]):
 
   val listing: Var[ListPaging.Listing[A]] = Var(ListPaging.Listing.empty[A])
   val loaded: Var[PolledList.Loaded] = Var(PolledList.Loaded(false))
@@ -157,7 +157,7 @@ object PolledList:
       after: (Option[A], A) => Unit = (_: Option[A], _: A) => (),
       later: (Poll.Revision, () => Unit) => TimerId = (ms, f) => TimerId(dom.window.setTimeout(() => f(), ms.value)),
       cancel: TimerId => Unit = id => dom.window.clearTimeout(id.value)
-  )(using ExecutionContext): PolledList[A] =
+  )(using ExecutionContext, CanEqual[A, A]): PolledList[A] =
     PolledList[A](
       fetch = (_, _) => fetch().map(a => (List(a), Paging.Page.empty)),
       id = _ => ItemId(""),

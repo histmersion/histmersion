@@ -59,7 +59,7 @@ object UploadView:
     object Force extends Newtype[Boolean, Pure]
 
   /** A form field a message belongs next to. */
-  enum Field:
+  enum Field derives CanEqual:
     case File, Citekey, Year, Doi, Form
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────

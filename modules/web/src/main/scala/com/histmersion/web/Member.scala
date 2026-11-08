@@ -21,7 +21,7 @@ final case class Member(
     entry: Option[DotEntry] = None,
     cell: Option[GeoBounds] = None,
     undated: Member.Undated = Member.Undated(0)
-):
+) derives CanEqual:
   /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their box (`cell`) is
     * where a click zooms.
     */

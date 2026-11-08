@@ -46,7 +46,7 @@ object QueueView:
   type RenderGroupTopicsId = String
   type RenderItemTopicsId = String
 
-  enum Seg:
+  enum Seg derives CanEqual:
     case Text(s: Seg.Text.S)
     case Bold(s: Seg.Bold.S)
     case Italic(s: Seg.Italic.S)
@@ -293,7 +293,7 @@ object QueueView:
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
   /** What an item's row is showing besides the item itself. */
-  private enum Mode:
+  private enum Mode derives CanEqual:
     case Idle, Editing, ConfirmDelete, Linking
 
   /** One window's pane. Its state lives with the pane, so each window loads its own list. */

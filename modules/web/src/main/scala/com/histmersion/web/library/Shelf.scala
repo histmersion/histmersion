@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** A shelf of My library: everything the filters select, the person's bookmarks, their notes, what they have not marked
   * read, and what they opened lately.
   */
-enum Shelf(val wire: Shelf.Wire, val label: Shelf.Label):
+enum Shelf(val wire: Shelf.Wire, val label: Shelf.Label) derives CanEqual:
   case Everything extends Shelf(Shelf.Wire("all"), Shelf.Label("Everything"))
   case Bookmarks extends Shelf(Shelf.Wire("bookmarks"), Shelf.Label("Bookmarks"))
   case Notes extends Shelf(Shelf.Wire("notes"), Shelf.Label("My notes"))

@@ -18,7 +18,7 @@ import com.histmersion.api.Geo
   * A PEOPLE (a tribe, the Ubii) is a group, not a place with a boundary: a [[Label]] too, marked "people" instead. The
   * hover card and the click (choose as the place filter) are the same for all three.
   */
-enum PlaceGlyph:
+enum PlaceGlyph derives CanEqual:
   case Area, Label, Dot
 
 object PlaceGlyph:

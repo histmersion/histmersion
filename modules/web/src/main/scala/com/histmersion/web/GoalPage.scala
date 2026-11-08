@@ -49,7 +49,7 @@ object GoalPage:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A step's mark: done, going now, or still to do (its position). */
-  enum Mark:
+  enum Mark derives CanEqual:
     case Done, Going, Todo, Stopped
 
   def markOf(i: ManagerItem): Mark = i.status.value match

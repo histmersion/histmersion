@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * and opened in a new tab; the open windows and the filters ride along in the hash ([[UiState]]). `/source/…` and
   * `/article/…` are the server's own standalone pages. Pure.
   */
-enum Route:
+enum Route derives CanEqual:
   case Explore
   case Library(section: LibrarySection)
   case Research(section: ResearchSection)

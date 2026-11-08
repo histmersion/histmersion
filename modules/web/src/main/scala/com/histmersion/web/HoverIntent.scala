@@ -14,7 +14,7 @@ final class HoverIntent[K](
     fire: K => Unit,
     later: (HoverIntent.DelayMs, () => Unit) => HoverIntent.TimerId = (ms, g) => HoverIntent.TimerId(dom.window.setTimeout(() => g(), ms.value.toDouble)),
     cancel: HoverIntent.TimerId => Unit = id => dom.window.clearTimeout(id.value)
-):
+)(using CanEqual[K, K]):
   // `var`: the one pending hover and its timer
   private var pending: Option[(K, HoverIntent.TimerId)] = None
 

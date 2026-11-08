@@ -8,7 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** How wide a source's or an article's own page sets its text: at a reading width, or across the page. Kept per
   * browser.
   */
-enum PageWidth(val wire: PageWidth.Wire, val label: PageWidth.Label):
+enum PageWidth(val wire: PageWidth.Wire, val label: PageWidth.Label) derives CanEqual:
   case Reading extends PageWidth(PageWidth.Wire("reading"), PageWidth.Label("Reading width"))
   case Wide extends PageWidth(PageWidth.Wire("wide"), PageWidth.Label("Page wide"))
 

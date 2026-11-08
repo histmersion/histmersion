@@ -28,7 +28,7 @@ import com.histmersion.api.Geo
 object LabelPlacement:
 
   /** A point in the zoom-0 Mercator plane. */
-  final case class Pt(x: Double, y: Double)
+  final case class Pt(x: Double, y: Double) derives CanEqual
 
   /** A polygon: its outer ring then its holes, each a closed or open list of points. */
   type Poly = Vector[Vector[Pt]]
@@ -305,7 +305,7 @@ object LabelPlacement:
   // ── how big, and whether at all ──────────────────────────────────────────────────────────────────
 
   /** A name's size class (`.hd-map-label--s/m/l`): small shapes get small names. */
-  enum Tier(val css: String):
+  enum Tier(val css: String) derives CanEqual:
     case S extends Tier("hd-map-label--s")
     case M extends Tier("hd-map-label--m")
     case L extends Tier("hd-map-label--l")

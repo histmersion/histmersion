@@ -256,7 +256,7 @@ object UiState:
   // ── the hovered suggestion (never a chip, never in the URL) ────────────────────────────────────
 
   /** A hovered filter suggestion, applied to every query but never to the chips or the URL. */
-  case class Preview(key: Preview.Key, value: Preview.Value)
+  case class Preview(key: Preview.Key, value: Preview.Value) derives CanEqual
 
   object Preview:
     type Key = Key.T

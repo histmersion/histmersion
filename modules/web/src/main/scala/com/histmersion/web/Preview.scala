@@ -107,7 +107,7 @@ object Preview:
   type UnderPlacementVh = ViewportHeight
   val UnderPlacementVh: ViewportHeight.type = ViewportHeight
 
-  enum Target:
+  enum Target derives CanEqual:
     case Source(citekey: Target.Source.Citekey)
     case Article(slug: Target.Article.Slug)
 
@@ -559,7 +559,7 @@ object Preview:
 
   /** The place chip a key or focus event is FOR — the chip itself, not its ✕ inside it. */
   private def chipItself(t: dom.EventTarget): Option[dom.Element] =
-    placeAnchorOf(t).filter(el => t match { case n: dom.Element => n == el; case _ => false })
+    placeAnchorOf(t).filter(el => t match { case n: dom.Element => n eq el; case _ => false })
 
   /** A click on a place chip pins its card under it (its ✕ stops the click: removing is not reading). */
   private def onDocClick(e: dom.MouseEvent): Unit =
@@ -865,7 +865,7 @@ object Preview:
   // ── a PINNED card: a click (or Enter) keeps it still, so its links can be followed ──────────────
 
   /** Where a pinned card is anchored, as the viewport sees it now. */
-  enum Anchor:
+  enum Anchor derives CanEqual:
     /** Beside a point — a place on the map, where its hover card was. */
     case At(x: Anchor.At.X, y: Anchor.At.Y)
 

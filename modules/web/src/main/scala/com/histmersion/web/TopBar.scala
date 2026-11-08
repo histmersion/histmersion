@@ -20,7 +20,7 @@ object TopBar:
     * standalone pages (a source, an article), whose links load the web UI.
     */
 
-  enum Host:
+  enum Host derives CanEqual:
     case App
     case Standalone(here: PlaceTab)
 

@@ -7,7 +7,7 @@ import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The two vector styles drawn from the server's own extracts (docs/research-map-styles.md). */
-enum VectorStyle(val id: VectorStyle.Id, val label: VectorStyle.Label):
+enum VectorStyle(val id: VectorStyle.Id, val label: VectorStyle.Label) derives CanEqual:
   case Readable extends VectorStyle(VectorStyle.Id("readable"), VectorStyle.Label("Readable"))
   case Physical extends VectorStyle(VectorStyle.Id("physical"), VectorStyle.Label("Physical"))
 
