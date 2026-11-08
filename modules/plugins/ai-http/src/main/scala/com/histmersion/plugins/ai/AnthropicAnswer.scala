@@ -57,7 +57,7 @@ object AnthropicAnswer:
   /** One content block: its text, or its tool call, or neither (a thinking block, an image …); a block of an unknown
     * type is not a message.
     */
-  private enum Block:
+  private enum Block derives CanEqual:
     case Text(text: AiTurn.Text)
     case ToolUse(call: AiTool.Call)
     case Other
