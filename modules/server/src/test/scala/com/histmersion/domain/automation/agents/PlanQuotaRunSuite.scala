@@ -214,7 +214,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     val (plan, paid) = (ScriptedClient(Plan), ScriptedClient(Paid)); enrichScripts(paid)
     val (a, h) = handlers(Map(Plan -> plan, Paid -> paid)); seed(h)
     a.pools.record(PoolId.ClaudePlan, low())
-    assert(a.setFallthrough(Agents.Role.Wire("extractor"), FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(true))).exists(_.fallthrough == List("extractor")))
+    assert(a.setFallthrough(Agents.Role.Wire("extractor"), FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(true))).exists(_.fallthrough == List(PlanQuota.QuotaInfo.Fallthrough("extractor"))))
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     assertEquals((plan.steps.size, paid.steps.size > 0), (0, true))

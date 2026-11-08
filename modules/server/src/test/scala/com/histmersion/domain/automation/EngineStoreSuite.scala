@@ -48,6 +48,7 @@ object EngineStoreSuite:
   /** A data source whose connections do nothing: the transaction an in-memory store's `…In` operation is given. */
   val NoDatabase: javax.sql.DataSource =
     def inert[T](c: Class[T]): T =
+      given CanEqual[Class[?], Class[?]] = CanEqual.derived
       java.lang.reflect.Proxy
         .newProxyInstance(
           c.getClassLoader,

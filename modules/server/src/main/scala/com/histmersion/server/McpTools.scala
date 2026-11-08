@@ -811,7 +811,7 @@ object McpTools:
     given Codec.AsObject[MergePlanInput] = StrictJson.codec(KindlingsCodecAsObject.derived[MergePlanInput])
 
   /** What the `merges` tool does. */
-  enum MergesAction:
+  enum MergesAction derives CanEqual:
     case List, Show, Ledger
   object MergesAction:
     def parse(raw: Option[String]): Option[MergesAction] =

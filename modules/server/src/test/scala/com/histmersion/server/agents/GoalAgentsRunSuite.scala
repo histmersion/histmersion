@@ -323,7 +323,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assert(items.head.text.value.contains("https://doi.org/10.5555/zzagent.out — for goal zzagent-goal"), items.head.text)
     assert(links.exists(l => l.kind == LinkKind.QueueItem && l.ref == GoalLink.Ref(items.head.id.toString)))
     assert(
-      a.goalView(Goal).toOption.get.plan.exists(_.queries == List("Bronze Age tin isotopes")),
+      a.goalView(Goal).toOption.get.plan.exists(_.queries == List(Plan.Queries("Bronze Age tin isotopes"))),
       "the approved plan is kept"
     )
     val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(50))).map(_.name)

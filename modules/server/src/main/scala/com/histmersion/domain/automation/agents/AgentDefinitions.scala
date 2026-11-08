@@ -111,11 +111,11 @@ object AgentDefinitions:
       case e: Exception =>
         Left(s"the YAML header does not parse: ${e.getMessage.linesIterator.nextOption().getOrElse("")}")
 
-  private def strings(v: Any): Either[String, List[String]] = v.asMatchable match
-    case null                        => Right(Nil)
-    case l: java.util.List[?]        => Right(l.asScala.toList.map(String.valueOf))
-    case s: String if s.trim.isEmpty => Right(Nil)
-    case other                       => Left(s"expected a list, not '$other'")
+  private def strings(v: Any): Either[String, List[String]] = Option(v).map(_.asMatchable) match
+    case None                              => Right(Nil)
+    case Some(l: java.util.List[?])        => Right(l.asScala.toList.map(String.valueOf))
+    case Some(s: String) if s.trim.isEmpty => Right(Nil)
+    case Some(other)                       => Left(s"expected a list, not '$other'")
 
   /** Parse one definition. `name` is its file name; the header's `name` must agree. */
   def parse(name: AgentDef.Name, md: Markdown, known: List[ToolName]): Either[String, AgentDef] =

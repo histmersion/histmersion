@@ -19,7 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** What a bookmark or a note is left on, or what a read mark is about: a record of some domain (personal knows only its
   * reference), a point on the map, a saved view of Explore, or a span of years.
   */
-enum MarkTarget:
+enum MarkTarget derives CanEqual:
   case Item(ref: ItemRef)
   case Point(lat: Latitude, lon: Longitude, zoom: Option[MapZoom], from: Option[Year], to: Option[Year])
   case View(

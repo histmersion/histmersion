@@ -14,6 +14,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * binary linked without the data fails the check instead of the first query.
   */
 object TimeZoneCheck:
+  private given CanEqual[ZoneOffset, ZoneOffset] = CanEqual.derived
+
   type Report = Report.T
   object Report extends Newtype[String, Pure]
 

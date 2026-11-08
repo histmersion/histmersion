@@ -4,7 +4,7 @@ package domain.personal.reading
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
-enum ReadingShow(val wire: ReadingShow.Wire):
+enum ReadingShow(val wire: ReadingShow.Wire) derives CanEqual:
   case Read extends ReadingShow(ReadingShow.Wire("read"))
   case Opened extends ReadingShow(ReadingShow.Wire("opened"))
   case All extends ReadingShow(ReadingShow.Wire("all"))

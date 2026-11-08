@@ -14,5 +14,5 @@ object Stored:
 
   /** What a name in a store holds. */
 
-  enum Kind:
+  enum Kind derives CanEqual:
     case File, Directory

@@ -46,6 +46,8 @@ import com.histmersion.util.data.exchange.MergeRow
   * changing nothing. The behaviour in depth is `db.BundleSuite`'s. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
+  private given CanEqual[java.util.UUID, java.util.UUID] = CanEqual.derived
+
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 

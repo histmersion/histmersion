@@ -9,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.Job
 
 /** What `/api/health` says about the OCR sidecar (#692). */
-enum ConverterState:
+enum ConverterState derives CanEqual:
   case Ok
 
   /** A conversion is in flight and the probe got no answer: the single worker is busy, not down. */

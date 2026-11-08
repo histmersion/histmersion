@@ -20,6 +20,8 @@ import com.histmersion.config.ServerConfig
   * `stream-json` output read back into sttp-ai's result types.
   */
 object ClaudeCode:
+  private given CanEqual[FinishReason, FinishReason] = CanEqual.derived
+
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]
   type ModelId = ModelRef.Model
@@ -54,7 +56,7 @@ object ClaudeCode:
   /** How the step's prompt reaches the CLI: as the generated plugin's agent (with its role settings), or — no generated
     * tree — as a system prompt file.
     */
-  enum Launch:
+  enum Launch derives CanEqual:
     case Agent(pluginDir: Launch.Agent.PluginDir, name: Launch.Agent.Name, settings: Launch.Agent.Settings)
     case SystemPrompt(file: Launch.SystemPrompt.File)
 

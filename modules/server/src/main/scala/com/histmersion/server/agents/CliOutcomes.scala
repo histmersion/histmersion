@@ -12,6 +12,8 @@ import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.api.automation.Agents
 
 object CliOutcomes:
+  private given CanEqual[FinishReason, FinishReason] = CanEqual.derived
+
 
   /** The answer as the step's schema: the final text is JSON (code fences tolerated), a `null` field the same as an
     * absent one.

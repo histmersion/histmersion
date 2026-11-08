@@ -45,7 +45,7 @@ object PmTiles:
   /** The root directory must fit, with the header, in the first 16 KiB: one request reads both. */
   val RootBytes = 16384
 
-  enum Compression(val code: Compression.Code):
+  enum Compression(val code: Compression.Code) derives CanEqual:
     case Unknown extends Compression(Compression.Code(0))
     case None extends Compression(Compression.Code(1))
     case Gzip extends Compression(Compression.Code(2))
@@ -59,7 +59,7 @@ object PmTiles:
 
     def of(code: Code): Compression = values.find(_.code == code).getOrElse(Unknown)
 
-  enum TileType(val code: TileType.Code, val mime: TileType.Mime):
+  enum TileType(val code: TileType.Code, val mime: TileType.Mime) derives CanEqual:
     case Unknown extends TileType(TileType.Code(0), TileType.Mime("application/octet-stream"))
     case Mvt extends TileType(TileType.Code(1), TileType.Mime("application/vnd.mapbox-vector-tile"))
     case Png extends TileType(TileType.Code(2), TileType.Mime("image/png"))

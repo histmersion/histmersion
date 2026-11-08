@@ -115,7 +115,7 @@ class CalibreCommandsSuite extends DbSuite:
   /** One step of the scenario: a CLI command (with the host-side originals directory or not), or a change made through
     * the server between two commands.
     */
-  private enum Step:
+  private enum Step derives CanEqual:
     case Run(args: List[String], originals: Boolean = false)
     case Lock(locked: Boolean)
     case Patch(citekey: String, json: String)

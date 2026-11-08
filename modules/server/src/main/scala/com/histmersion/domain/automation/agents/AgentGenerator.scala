@@ -185,7 +185,7 @@ object AgentGenerator:
     interactivePlugin(d, s).map((k, v) => s"plugin/$k" -> v) +
       (".claude-plugin/marketplace.json" -> marketplaceJson(InteractivePlugin, "./plugin", PluginVersion))
 
-  enum QuotaMod:
+  enum QuotaMod derives CanEqual:
     case Guard, Reporting
 
   private def modFiles(m: QuotaMod): Map[String, String] =

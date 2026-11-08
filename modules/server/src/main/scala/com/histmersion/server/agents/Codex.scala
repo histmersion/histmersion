@@ -23,6 +23,8 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.backup.Backup
 
 object Codex:
+  private given CanEqual[Path, Path] = CanEqual.derived
+
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
   type SchemaJson = SchemaJson.T

@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * CLI runtimes, the direct API (sttp-ai, the engine's own loop), and the person's own interactive Claude Code session
   * (the plugin the research workspace installs).
   */
-enum AgentRuntime(val wire: AgentRuntime.Wire):
+enum AgentRuntime(val wire: AgentRuntime.Wire) derives CanEqual:
   case ClaudeCode extends AgentRuntime(AgentRuntime.Wire("claude-code"))
   case Codex extends AgentRuntime(AgentRuntime.Wire("codex"))
   case Opencode extends AgentRuntime(AgentRuntime.Wire("opencode"))

@@ -6,7 +6,7 @@ import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether a source page shows the whole OCR'd paper. */
-enum FullText:
+enum FullText derives CanEqual:
   case Hidden
   case Missing
   case Shown(markdown: FullText.Shown.Markdown)

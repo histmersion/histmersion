@@ -22,6 +22,8 @@ import com.histmersion.domain.library.acquisition.Http
   * archiv.ub.uni-heidelberg.de chains through to it.
   */
 class OutboundTlsSuite extends munit.FunSuite:
+  private given CanEqual[X509Certificate, X509Certificate] = CanEqual.derived
+
 
   private def resource(name: String): String =
     new String(getClass.getResourceAsStream(s"/tls/$name").readAllBytes(), "US-ASCII")

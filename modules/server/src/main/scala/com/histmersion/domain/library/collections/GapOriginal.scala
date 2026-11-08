@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 
 /** Where the file a push would add comes from, as the gaps and the sync report it. */
-enum GapOriginal(val label: GapOriginal.Label):
+enum GapOriginal(val label: GapOriginal.Label) derives CanEqual:
   /** A host-side copy (`cli.calibre.originals-dir`): the CLI's own classification, never the server's. */
   case Local extends GapOriginal(GapOriginal.Label("local"))
 

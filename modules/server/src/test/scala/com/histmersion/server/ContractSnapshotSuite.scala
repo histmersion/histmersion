@@ -57,7 +57,7 @@ class ContractSnapshotSuite extends munit.FunSuite:
       assert(Files.exists(file), s"$file is missing; write it with HISTMERSION_UPDATE_CONTRACT=1")
       val expected = Files.readString(file, UTF_8)
       if expected != text then
-        val firstDiff = expected.lines.toArray.zip(text.lines.toArray).indexWhere((a, b) => a != b)
+        val firstDiff = expected.lines.toArray(new Array[String](_)).zip(text.lines.toArray(new Array[String](_))).indexWhere((a, b) => a != b)
         fail(
           s"$name differs from the snapshot (first differing line ${firstDiff + 1}); if the change is intended, " +
             "rewrite it with HISTMERSION_UPDATE_CONTRACT=1"

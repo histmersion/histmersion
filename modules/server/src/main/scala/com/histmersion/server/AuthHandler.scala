@@ -67,6 +67,8 @@ final class AuthHandler(
     (path == RunTokens.QuotaPath && tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)).isDefined)
 
 object AuthHandler:
+  private given CanEqual[HttpMethod, HttpMethod] = CanEqual.derived
+
   type RequestPath = RequestPath.T
   object RequestPath extends Newtype[String, Pure]
 
