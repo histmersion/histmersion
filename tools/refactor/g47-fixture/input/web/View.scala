@@ -26,3 +26,18 @@ enum Family(val wire: String):
   case CcBy extends Family("cc-by")
   // S22 REWRITE Family.CcBy to CcBy only: `wire` alone would be this.wire, not CcBy's; the parentheses stay
   def attribution: Boolean = wire.startsWith((Family.CcBy.wire)) || this == Family.Cc0
+
+object Secret:
+  trait Vault
+  object Vault
+  enum Ref:
+    case Plain(text: String)
+    // S23 UNCHANGED: in the case's own signature the enum's members are out of reach
+    case Vault(name: Ref.Vault.Name)
+    // S24 UNCHANGED to Vault: Secret.Vault and the case would be ambiguous (the qualifier drops to Ref.Vault only)
+    def shown: Int = this match
+      case com.histmersion.web.Secret.Ref.Vault(_) => 1
+      case _ => 0
+  object Ref:
+    object Vault:
+      type Name = String

@@ -33,7 +33,10 @@ object ShortenQualified {
   }
 
   /** What the project-wide SemanticDB knows: symbol information, and the members of every package by name. */
-  final class Index(val infos: ConcurrentHashMap[String, s.SymbolInformation], val packageMembers: Map[String, Map[String, Set[String]]], val packages: Set[String])
+  final class Index(val infos: ConcurrentHashMap[String, s.SymbolInformation], val packageMembers: Map[String, Map[String, Set[String]]], val packages: Set[String]) {
+    /** Every indexed symbol by owner: export forwarders are members SemanticDB lists in no class declarations. */
+    lazy val children: Map[String, List[(String, String)]] = infos.values.asScala.toList.map(i => (ownerOf(i.symbol), (i.displayName, i.symbol))).groupBy(_._1).map { case (k, v) => k -> v.map(_._2) }
+  }
   private val indexes = new ConcurrentHashMap[List[String], Index]()
   def index(roots: List[String]): Index = indexes.computeIfAbsent(roots, r => buildIndex(r))
 
@@ -217,16 +220,19 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
 
     // ---- members of classes (declared and inherited) ------------------------------------------------------------------
     val memberCache = new java.util.HashMap[String, Option[Map[String, Set[String]]]]()
+    /** The own members of a class whose parents are not all known. */
+    val ownOnly = new java.util.HashMap[String, Map[String, Set[String]]]()
     /** The members of a class/object/trait by name, inherited ones included; None when some parent is unknown. */
     def members(cls: String): Option[Map[String, Set[String]]] = {
       if (memberCache.containsKey(cls)) return memberCache.get(cls)
       memberCache.put(cls, Some(Map.empty)) // cycle guard
       val res: Option[Map[String, Set[String]]] = info(cls).map(_.signature) match {
         case Some(cs: s.ClassSignature) =>
-          val own: Map[String, Set[String]] = cs.declarations.toList.flatMap(_.symlinks).flatMap(d => info(d).map(i => i.displayName -> d)).groupBy(_._1).map { case (k, v) => k -> v.map(_._2).toSet }
+          val own: Map[String, Set[String]] = (cs.declarations.toList.flatMap(_.symlinks).flatMap(d => info(d).map(i => i.displayName -> d)) ++ idx.children.getOrElse(cls, Nil))
+            .groupBy(_._1).map { case (k, v) => k -> v.map(_._2).toSet }
           val parents = cs.parents.collect { case r: s.TypeRef => r.symbol }.filterNot(p => p.startsWith("scala/") || p.startsWith("java/lang/Object#") || p.startsWith("java/io/Serializable#"))
           val inherited = parents.map(members)
-          if (inherited.exists(_.isEmpty)) None
+          if (inherited.exists(_.isEmpty)) { ownOnly.put(cls, own); None }
           else Some(inherited.flatten.foldLeft(own) { (acc, m) => m.foldLeft(acc) { case (a, (k, v)) => a.updated(k, a.getOrElse(k, Set.empty) ++ v) } })
         case _ => None
       }
@@ -240,7 +246,13 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
         val probe = (if (wantType) List(owner + name + "#") else List(owner + name + ".", owner + name + "/")).filter(x => Symbol(x).info.isDefined)
         if (probe.nonEmpty) Some(probe.toSet) else if (owner.startsWith("java/") || owner.startsWith("javax/")) Some(Set.empty) else None
       }
-      else members(owner).map(_.getOrElse(name, Set.empty).filter(m => if (wantType) isTypeSym(m) else termSym(m)))
+      else members(owner) match {
+        case Some(m) => Some(m.getOrElse(name, Set.empty).filter(x => if (wantType) isTypeSym(x) else termSym(x)))
+        case None =>
+          // parents unknown: an own member of that name still decides
+          val own = Option(ownOnly.get(owner)).map(_.getOrElse(name, Set.empty).filter(x => if (wantType) isTypeSym(x) else termSym(x))).getOrElse(Set.empty)
+          if (own.nonEmpty) Some(own) else None
+      }
 
     // ---- bindings that a scope introduces ------------------------------------------------------------------------------
     def patVars(p: Tree): List[Binding] = p.collect {
@@ -342,6 +354,11 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
       case _ => ""
     }
 
+    def enumCaseNamed(t: Template, name: String): Boolean = t.body.stats.exists {
+      case c: Defn.EnumCase => c.name.value == name
+      case c: Defn.RepeatedEnumCase => c.cases.exists(_.value == name)
+      case _ => false
+    }
     /** What `name` (a type when `wantType`) denotes at `at`, compared with `target`. */
     def resolve(name: String, wantType: Boolean, target: String, at: Tree): Res = {
       def judge(syms: Set[String]): Option[Res] = if (syms.isEmpty) None else Some(if (syms.forall(same(_, target))) Same else Other)
@@ -356,15 +373,23 @@ class ShortenQualified(config: ShortenQualified.Config, excluded: Set[String]) e
         if (explicit.nonEmpty) judge(explicit)
         else {
           val got = imps.map(i => importBinds(i, name, wantType, target))
-          if (got.exists(_.isEmpty)) None // unknown wildcard: let the compiler judge, look further out
-          else judge(got.flatten.flatten.toSet)
+          val known = got.flatten.flatten.toSet
+          if (known.exists(x => !same(x, target))) Some(Other) // a known wildcard brings another `name`
+          else if (got.exists(_.isEmpty)) None // unknown wildcard: let the compiler judge, look further out
+          else judge(known)
         }
       }
       var child: Tree = at
+      var inEnumCase = false
       val it = ancestors(at).iterator
       while (it.hasNext) {
         val a = it.next()
+        if (a.is[Defn.EnumCase] || a.is[Defn.RepeatedEnumCase]) inEnumCase = true
         val r: Option[Res] = a match {
+          // an enum case's own signature cannot refer to the enum's members ("illegal reference ... from enum case")
+          case t: Template if inEnumCase && t.parent.exists(_.is[Defn.Enum]) => None
+          // in an enum body the cases are visible like an import: a same-named definition further out makes them ambiguous
+          case t: Template if t.parent.exists(_.is[Defn.Enum]) && enumCaseNamed(t, name) && t.parent.exists(e => resolve(name, wantType, target, e) != NotFound) => Some(Other)
           case b: Term.Block => fromBindings(statsBindings(b, b.stats)).orElse(importsBefore(b.stats, child))
           case t: Template =>
             val declared = fromBindings(statsBindings(t, t.body.stats))

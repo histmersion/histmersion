@@ -54,7 +54,7 @@ object SymbolOracle {
         val en = lines(r.endLine) + r.endCharacter
         Occ(norm(o.symbol), o.role.value, st, en)
       }
-    }.filterNot(o => o.sym.endsWith("/") || o.sym.isEmpty || ignored.exists { case (a, b) => o.start >= a && o.end <= b && b > a })
+    }.filterNot(o => o.sym.endsWith("/") || o.sym.isEmpty || (o.start == o.end && o.sym.endsWith("`<init>`.")) || ignored.exists { case (a, b) => o.start >= a && o.end <= b && b > a })
       .sortBy(o => (o.start, o.end))
   }
 
