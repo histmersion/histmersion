@@ -14,8 +14,6 @@ type CitekeyRule = Match["(?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"]
 type Citekey = Citekey.T
 
 object Citekey extends Newtype[String, CitekeyRule]:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** A citekey from what a person or a client typed (trimmed), or why it is none. */
   type ValidRaw = String
