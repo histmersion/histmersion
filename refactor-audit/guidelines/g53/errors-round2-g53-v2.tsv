@@ -1,0 +1,1 @@
+modules/values/src/test/scala/com/histmersion/values/testsupport/ComparedByValue.scala:9:53	A and B	def isEqual(obtained: A, expected: B): Boolean = obtained == expected
