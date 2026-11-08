@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Problem
 import com.histmersion.api.library.{CandidateCount, Candidates, CandidateWatch}
@@ -118,7 +119,7 @@ object CandidateService:
               watch.index,
               watermark.orElse(before),
               Some(CandidateWatch.LastRun(at)),
-              error.map(Problem.wire),
+              error.map(_.transformInto[api.Problem]),
               found
             )
           )

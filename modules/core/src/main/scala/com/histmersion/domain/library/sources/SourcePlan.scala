@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.sources
+import com.histmersion.domain.ProblemTransformers
 import com.histmersion.domain.Problem
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
@@ -179,7 +180,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         title,
         Some(MergeIssue.Detail.side(l)),
         Some(MergeIssue.Detail.side(r)),
-        Problem.wireAll(why),
+        why.map(ProblemTransformers.toApi),
         opts,
         suggested,
         cond,

@@ -160,7 +160,7 @@ final class GoalFocusService(
       facts,
       rows,
       goals.map(g => Goal.Slug.assume(g.slug.value) -> g.title).toMap,
-      goals.map(g => Goal.Slug.assume(g.slug.value) -> (g.leftAt, g.leftWhy.map(domain.Problem.wire))).toMap,
+      goals.map(g => Goal.Slug.assume(g.slug.value) -> (g.leftAt, g.leftWhy.map(_.transformInto[api.Problem]))).toMap,
       Transactor(ds).read(FocusRepo.openGoalPlans)
     )
 
@@ -182,7 +182,7 @@ final class GoalFocusService(
       current = None
       queued = Set.empty
       val released = agents.managerStore.focusReleaseAll()
-      val cleared = Transactor(ds).transact(FocusRepo.clearActive(domain.Problem.fromApi(notInForce), now))
+      val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce.transformInto[domain.Problem], now))
       if released.value + cleared.value == 0 then Nil
       else
         val line = s"autopilot focus: not in force (${notInForce.value}): ${count(released.value, "item")} released, " +

@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Problem
 import com.histmersion.server.agents.*
@@ -108,7 +109,7 @@ object TestRuns:
             id,
             RunRow.Status(from.wire.value),
             RunRow.Status(t.wire.value),
-            error.map(Problem.wire),
+            error.map(_.transformInto[api.Problem]),
             None,
             resumeAt
           )

@@ -170,7 +170,7 @@ final class ModelPicker(
         ls <- ss.map(Limit.fromSpec).partitionMap(identity) match
           case (Nil, ok) => Right(ok)
           case (errs, _) => Left(Problem(errs.mkString("; ")))
-        a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value)).left.map(Problem.fromApi)
+        a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value)).left.map(_.transformInto[Problem])
       yield a
       Effective(Target.Wire(s.target.value), a, SettingSource.Saved)
     }

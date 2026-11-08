@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.automation.agents
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Problem
 import com.histmersion.api.Paging
@@ -144,7 +145,7 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      ).left.map(Problem.fromApi)
+      ).left.map(_.transformInto[Problem])
     def approvalPage(
         q: ApprovalQuery,
         limit: ApprovalQuery.Limit,
@@ -158,7 +159,7 @@ object ApprovalService:
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
-      ).left.map(Problem.fromApi)
+      ).left.map(_.transformInto[Problem])
     def approvalFacets(
         q: ApprovalQuery
     ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
@@ -217,7 +218,7 @@ object ApprovalService:
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
     def closeForRun(jobId: Job.Id, why: Problem): RowCount =
-      db.transact(AgentRepo.closeForRun(jobId, Problem.wire(why)))
+      db.transact(AgentRepo.closeForRun(jobId, why.transformInto[api.Problem]))
     def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
       db.transact(
         AgentRepo.decide(

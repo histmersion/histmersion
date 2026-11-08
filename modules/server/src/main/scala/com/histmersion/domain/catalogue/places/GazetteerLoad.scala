@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Problem
 import com.histmersion.api.{LpfDataset, Span}
@@ -443,7 +444,7 @@ object GazetteerLoad:
                     n,
                     meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value))
                   )
-                  .left.map(Problem.fromApi).map(Gazetteer.inDataset(_, meta))
+                  .left.map(_.transformInto[Problem]).map(Gazetteer.inDataset(_, meta))
               )
           }
         })
@@ -480,7 +481,7 @@ object GazetteerLoad:
                   b.add(
                     Gazetteer
                       .fromFeature(j, slug, i, meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value)))
-                      .left.map(Problem.fromApi).map(Gazetteer.inDataset(_, meta))
+                      .left.map(_.transformInto[Problem]).map(Gazetteer.inDataset(_, meta))
                   )
                 )
               )

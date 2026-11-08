@@ -1,5 +1,6 @@
 package com.histmersion
 package server
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
@@ -174,12 +175,12 @@ object CatalogueWiring:
           deps.storage.find(Location.GazetteerFolder),
           deps.storage.store(Location.GazetteerDrop),
           GazetteerLoad.Stores.ManifestAt(paths.manifest.toString),
-          () => paths.manifestText().left.map(domain.Problem.fromApi)
+          () => paths.manifestText().left.map(_.transformInto[domain.Problem])
         )
       ,
       () => deps.cfg,
       download,
-      u => text(u).left.map(domain.Problem.fromApi),
+      u => text(u).left.map(_.transformInto[domain.Problem]),
       () => deps.plugins.registries.gazetteerSources,
       () => PluginGazetteers.http(PluginGazetteers.transport(deps.cfg.places))
     )

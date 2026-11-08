@@ -1,5 +1,6 @@
 package com.histmersion
 package server
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.Problem
 import com.histmersion.util.jobs.BackgroundJob
@@ -62,14 +63,14 @@ final class Bootstrap(
   /** The named periods, and how the seed, a sent dataset and the live dump come in. */
   val periods: PeriodService = PeriodService(deps.transactor)
   val periodImports: PeriodImports =
-    PeriodImports(
+    new PeriodImports(
       periods,
       () =>
         PeriodSources(
           PeriodSources.PeriodoUrl(cfg.periods.periodoUrl.value),
           cfg.periods.collections.map(c => PeriodSources.Collections(c.value))
         ),
-      () => bundledSeed.left.map(domain.Problem.fromApi),
+      () => bundledSeed.left.map(_.transformInto[domain.Problem]),
       url =>
         download(HttpDownload.Url(url.value)).left
           .map(p => domain.Problem(p.value))

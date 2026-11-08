@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.activity
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Problem
 import com.histmersion.api.automation.Activity
@@ -42,7 +43,7 @@ final private[activity] case class ActivityRow(
     state,
     what,
     text,
-    error.map(Problem.wire),
+    error.map(_.transformInto[api.Problem]),
     endedAt,
     goal,
     job,
