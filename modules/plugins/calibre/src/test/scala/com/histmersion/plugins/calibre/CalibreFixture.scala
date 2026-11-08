@@ -53,6 +53,8 @@ final case class CalibreFixture(dir: Path):
     if locked then Files.writeString(f, "locked") else Files.deleteIfExists(f): Unit
 
 object CalibreFixture:
+  private given CanEqual[Path, Path] = CanEqual.derived
+
 
   /** One book of the fixture, in `calibredb list --for-machine`'s terms (`authors` joined by ` & `). */
   private given LocalFiles = new DiskLocalFiles
