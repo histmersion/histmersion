@@ -4,7 +4,7 @@ package cli
 import io.github.iltotore.iron.*
 
 /** Where a new plugin project resolves the plugin API, the platform and the testkit from. */
-enum TemplateRepository:
+enum TemplateRepository derives CanEqual:
   /** The local Maven repository (`~/.m2/repository`), which `histmersion plugin repo --m2` fills from the install's
     * `maven/`. scala-cli names it `m2Local`, so the project names no path of this machine.
     */

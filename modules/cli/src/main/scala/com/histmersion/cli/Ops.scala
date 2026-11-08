@@ -30,7 +30,7 @@ object Ops:
   // ── queue argument grammar (pure) ────────────────────────────────────────────────────────────
 
   /** What `histmersion queue …` was asked to do. */
-  enum QueueCmd:
+  enum QueueCmd derives CanEqual:
     case Show(list: Queue.Kind.Label, all: Boolean)
     case Add(
         list: Queue.Kind.Label,

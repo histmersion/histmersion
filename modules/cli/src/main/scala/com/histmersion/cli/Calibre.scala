@@ -666,7 +666,7 @@ object Calibre:
   /** Where a push takes its file from: `--file`, else the host-side original under `cli.calibre.originals-dir`, else
     * the original the server stored (downloaded for the push).
     */
-  enum PushFile:
+  enum PushFile derives CanEqual:
     case Given(path: Path)
     case Local(path: Path)
     case Server
@@ -675,7 +675,7 @@ object Calibre:
     explicit.map(PushFile.Given(_)).orElse(local.map(PushFile.Local(_))).getOrElse(PushFile.Server)
 
   /** Where the file a push would add comes from, as `calibre gaps`/`sync` report it (`original`). */
-  enum GapOriginal(val label: GapOriginal.Label):
+  enum GapOriginal(val label: GapOriginal.Label) derives CanEqual:
     /** `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host. */
     case Local extends GapOriginal(GapOriginal.Label("local"))
 
@@ -960,7 +960,7 @@ object Calibre:
     val To: CollectionFieldChange.To.type = CollectionFieldChange.To
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
-  enum Field(val name: Field.Name):
+  enum Field(val name: Field.Name) derives CanEqual:
     case Title extends Field(Field.Name("title"))
     case Authors extends Field(Field.Name("authors"))
     case Pubdate extends Field(Field.Name("pubdate"))
