@@ -1,4 +1,5 @@
-package com.histmersion.chimneyiron.domain
+package com.histmersion
+package chimneyiron.domain
 
 import com.histmersion.chimneyiron.{CitekeyRule, NonBlankCounted}
 import io.github.iltotore.iron.*

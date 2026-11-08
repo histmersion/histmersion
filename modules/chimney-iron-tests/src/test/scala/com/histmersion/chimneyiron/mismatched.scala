@@ -1,4 +1,5 @@
-package com.histmersion.chimneyiron.mismatched
+package com.histmersion
+package chimneyiron.mismatched
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*

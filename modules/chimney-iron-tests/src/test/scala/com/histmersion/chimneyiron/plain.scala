@@ -1,4 +1,5 @@
-package com.histmersion.chimneyiron.plain
+package com.histmersion
+package chimneyiron.plain
 
 final case class Score(value: Int) extends AnyVal
 final case class ScoreView(value: Int) extends AnyVal
