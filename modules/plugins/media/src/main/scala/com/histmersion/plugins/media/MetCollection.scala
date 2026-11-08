@@ -1,7 +1,10 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.Json
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `met`: The Metropolitan Museum of Art Collection API (https://metmuseum.github.io/), no key. Search is
   * `/v1.1/search` (the Solr-backed `/v1/search` was retired on 2026-10-01: it answers 410), paged by `limit`, by the
@@ -10,8 +13,8 @@ import io.circe.Json
   * (`-1399` is 1400 BCE, as its "ca. 14th–13th century BCE" shows), so a year ≤ 0 is moved one back.
   */
 final class MetCollection(conf: CollectionSettings)
-    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("The Metropolitan Museum of Art"), com.histmersion.plugins.media.MuseumCollection.Key("media.met")):
-  val title = com.histmersion.plugin.MediaCollection.TitleResult("Met objects")
+    extends MuseumCollection(conf, MuseumCollection.Provider("The Metropolitan Museum of Art"), MuseumCollection.Key("media.met")):
+  val title = MediaCollection.TitleResult("Met objects")
   override val description = MediaCollection.DescriptionResult("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
   val role = MediaCollection.RoleResult(MediaCollection.Object)
 
@@ -33,11 +36,11 @@ final class MetCollection(conf: CollectionSettings)
 
 object MetCollection:
   type ObjectId = ObjectId.T
-  object ObjectId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ObjectId extends RefinedType[Long, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Year extends RefinedType[Long, Pure]
 
   /** What every museum's description adds: what it takes and how a dry run shows it. */
   val Museum = " — Open Access objects only (as the record itself says), tied to a place on the map " +

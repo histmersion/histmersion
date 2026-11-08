@@ -1,4 +1,5 @@
-package com.histmersion.plugins.events
+package com.histmersion
+package plugins.events
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 

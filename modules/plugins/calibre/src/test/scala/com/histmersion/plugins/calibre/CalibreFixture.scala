@@ -1,4 +1,5 @@
-package com.histmersion.plugins.calibre
+package com.histmersion
+package plugins.calibre
 
 import io.circe.Json
 import io.circe.syntax.*
@@ -7,6 +8,10 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.attribute.PosixFilePermissions
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import com.histmersion.plugin.LocalFiles
+import com.histmersion.pluginhost.DiskLocalFiles
+import com.histmersion.plugin.Processes
+import com.histmersion.pluginhost.SystemProcesses
 
 /** A Calibre library for the suites, built in a scratch directory: its books (`books.json`, which the fake `calibredb`
   * answers from and writes to), the books' files and covers, the `metadata.db` the `sqlite3` fallback reads (the same
@@ -14,8 +19,8 @@ import scala.jdk.CollectionConverters.*
   * user's own library: [[CalibreFixture.refuseRealLibrary]] fails every suite that would be pointed at it.
   */
 final case class CalibreFixture(dir: Path):
-  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
-  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
+  private given LocalFiles = new DiskLocalFiles
+  private given Processes = new SystemProcesses
   def calibredb: Path = dir.resolve("bin/calibredb")
   def sqlite3: Path = dir.resolve("bin/sqlite3")
 
@@ -50,8 +55,8 @@ final case class CalibreFixture(dir: Path):
 object CalibreFixture:
 
   /** One book of the fixture, in `calibredb list --for-machine`'s terms (`authors` joined by ` & `). */
-  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
-  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
+  private given LocalFiles = new DiskLocalFiles
+  private given Processes = new SystemProcesses
   final case class Book(
       id: Int,
       title: String,

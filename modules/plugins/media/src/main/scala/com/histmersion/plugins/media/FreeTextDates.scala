@@ -1,6 +1,9 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Free-text object dates as museums write them (`1550-1196 BCE`, `100 BCE-100 CE`, `ca. 3300-ca. 2250 BCE`,
   * `12th-13th century`, `5th century BCE`, `2nd millennium BCE`, `1883 or 1884`) read as a signed span, BCE negative.
@@ -9,9 +12,9 @@ import java.util.Locale
   */
 object FreeTextDates:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Year extends RefinedType[Long, Pure]
 
 
   private val Part =
@@ -42,7 +45,7 @@ object FreeTextDates:
         Option.when(b.n > 0)(if bce then (-b.n * 1000, -((b.n - 1) * 1000 + 1)) else ((b.n - 1) * 1000 + 1, b.n * 1000))
 
   /** Pure: the span a date text states, or `None`. */
-  def parse(text: com.histmersion.plugins.media.FreeTextDates.Text): Option[(com.histmersion.plugins.media.FreeTextDates.Year, com.histmersion.plugins.media.FreeTextDates.Year)] =
+  def parse(text: Text): Option[(Year, Year)] =
     spanOf(Option(text).fold("")(_.value)).map((from, to) => (Year(from), Year(to)))
 
   private def spanOf(text: String): Option[(Long, Long)] =

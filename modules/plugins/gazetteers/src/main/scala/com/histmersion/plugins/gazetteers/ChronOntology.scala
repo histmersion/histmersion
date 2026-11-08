@@ -1,4 +1,5 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
@@ -13,10 +14,10 @@ import io.circe.{Json, JsonObject}
   * and the time span as its period.
   */
 object ChronOntology extends DownloadedGazetteer:
-  val title = com.histmersion.plugin.GazetteerSource.TitleResult("ChronOntology named periods")
-  override val description = com.histmersion.plugin.GazetteerSource.DescriptionResult("ChronOntology named periods (DAI, open access, ~14K periods)")
-  val url = com.histmersion.plugin.Plugin.Http.GetUrl("https://chronontology.dainst.org/data/period?size=15000&from=0")
-  val rights: GazetteerRights = GazetteerRights(Licence("open access"), com.histmersion.plugin.GazetteerRights.Credit("ChronOntology (DAI), open access"))
+  val title = GazetteerSource.TitleResult("ChronOntology named periods")
+  override val description = GazetteerSource.DescriptionResult("ChronOntology named periods (DAI, open access, ~14K periods)")
+  val url = Plugin.Http.GetUrl("https://chronontology.dainst.org/data/period?size=15000&from=0")
+  val rights: GazetteerRights = GazetteerRights(Licence("open access"), GazetteerRights.Credit("ChronOntology (DAI), open access"))
 
   def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
     io.circe.parser.parse(text.value).left.map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
@@ -54,7 +55,7 @@ object ChronOntology extends DownloadedGazetteer:
           )
     }
 
-  private def bestName(res: JsonObject): com.histmersion.plugin.GazetteerName.Name =
+  private def bestName(res: JsonObject): GazetteerName.Name =
     val names = res("names").flatMap(_.asObject).getOrElse(JsonObject.empty)
     val en = names("en").flatMap(_.asArray).flatMap(_.headOption).flatMap(_.asString)
     GazetteerName.Name(
@@ -63,7 +64,7 @@ object ChronOntology extends DownloadedGazetteer:
       }
     )
 
-  private def allNames(res: JsonObject): List[(com.histmersion.plugin.GazetteerName.Name, com.histmersion.plugin.GazetteerName.Lang)] =
+  private def allNames(res: JsonObject): List[(GazetteerName.Name, GazetteerName.Lang)] =
     val names = res("names").flatMap(_.asObject).getOrElse(JsonObject.empty)
     names.toList.flatMap { (lang, arr) =>
       arr.asArray.getOrElse(Vector.empty).flatMap(_.asString).map(n => (GazetteerName.Name(n), GazetteerName.Lang(lang)))
@@ -91,15 +92,15 @@ object ChronOntology extends DownloadedGazetteer:
       else trimmed.toLongOption.map(DownloadedGazetteer.Year(_))
     }
 
-  private def extractKind(res: JsonObject): com.histmersion.plugin.GazetteerPlace.Kind =
+  private def extractKind(res: JsonObject): GazetteerPlace.Kind =
     val types = res("types")
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
       .flatMap(_.asString)
       .map(_.toLowerCase)
-    if types.contains("political") then com.histmersion.plugin.GazetteerPlace.Kind("polity")
-    else if types.contains("geological") || types.contains("climatological") then com.histmersion.plugin.GazetteerPlace.Kind("feature")
-    else com.histmersion.plugin.GazetteerPlace.Kind("region")
+    if types.contains("political") then GazetteerPlace.Kind("polity")
+    else if types.contains("geological") || types.contains("climatological") then GazetteerPlace.Kind("feature")
+    else GazetteerPlace.Kind("region")
 
   private def extractRegions(wrapper: JsonObject): List[String] =
     wrapper("regions").flatMap(_.asArray).getOrElse(Vector.empty).toList.flatMap { r =>

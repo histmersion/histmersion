@@ -1,4 +1,5 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.{Plugin, Spi}
 import hearth.kindlings.sconfigderivation.ConfigReader

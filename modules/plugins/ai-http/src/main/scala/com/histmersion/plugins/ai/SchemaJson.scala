@@ -1,4 +1,5 @@
-package com.histmersion.plugins.ai
+package com.histmersion
+package plugins.ai
 
 import io.circe.{Json, JsonObject}
 

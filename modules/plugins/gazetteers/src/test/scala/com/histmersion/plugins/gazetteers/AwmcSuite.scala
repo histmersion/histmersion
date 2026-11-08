@@ -1,8 +1,11 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
+import com.histmersion.plugin.testkit.PluginHarness
+import com.histmersion.plugin.testkit.HttpMode
 
 class AwmcSuite extends munit.FunSuite:
 
@@ -65,7 +68,7 @@ class AwmcSuite extends munit.FunSuite:
     assertEquals(r1.map(_.id), r2.map(_.id))
 
   test("transform returns Left for invalid JSON"):
-    assert(Awmc.read(com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text("not json")).isLeft)
+    assert(Awmc.read(DownloadedGazetteer.Text("not json")).isLeft)
 
   test("transform returns Left for empty features"):
     val empty = """{"type":"FeatureCollection","features":[]}"""
@@ -81,7 +84,7 @@ class AwmcSuite extends munit.FunSuite:
     assertEquals(Awmc.read(DownloadedGazetteer.Text(noTitle)).toOption.get.length, 0)
 
   test("the gazetteer-awmc plugin registers the source awmc"):
-    val h = com.histmersion.plugin.testkit.PluginHarness
-      .load(com.histmersion.plugin.Plugin.Info.Id("gazetteer-awmc"), http = com.histmersion.plugin.testkit.HttpMode.Offline, env = Map.empty)
+    val h = PluginHarness
+      .load(Plugin.Info.Id("gazetteer-awmc"), http = HttpMode.Offline, env = Map.empty)
       .fold(e => fail(e.value), identity)
     assertEquals(h.gazetteerSources, List("awmc"))

@@ -1,6 +1,9 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One of the open-access collections searched by a place's name, with its own `media.<collection>` block: its pace,
   * its patience with a refusal, how many records it keeps per place, and its own switch.
@@ -13,19 +16,19 @@ import com.histmersion.plugin.*
   *   its settings' path (`media.met`), named when it is switched off
   */
 abstract class MuseumCollection(conf: CollectionSettings, provider: MuseumCollection.Provider, key: MuseumCollection.Key) extends MediaCollection:
-  override def perPlace: com.histmersion.plugin.MediaCollection.PerPlaceResult = com.histmersion.plugin.MediaCollection.PerPlaceResult(conf.perPlace.value)
-  override def requestIntervalMs: com.histmersion.plugin.MediaCollection.RequestIntervalMsResult = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
-  override def refusalBackoffMs: List[com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult] =
-    conf.refusalBackoffMs.map(ms => com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult(ms.value))
-  override def check: Either[com.histmersion.plugin.MediaCollection.CheckResultPart1, Unit] =
+  override def perPlace: MediaCollection.PerPlaceResult = MediaCollection.PerPlaceResult(conf.perPlace.value)
+  override def requestIntervalMs: MediaCollection.RequestIntervalMsResult = MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
+  override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] =
+    conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMsResult(ms.value))
+  override def check: Either[MediaCollection.CheckResultPart1, Unit] =
     Either.cond(
       conf.enabled.value,
       (),
-      com.histmersion.plugin.MediaCollection.CheckResultPart1(s"${provider.value} is switched off (${key.value}.enabled = false)")
+      MediaCollection.CheckResultPart1(s"${provider.value} is switched off (${key.value}.enabled = false)")
     )
 
 object MuseumCollection:
   type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provider extends RefinedType[String, Pure]
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]

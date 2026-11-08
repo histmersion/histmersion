@@ -1,4 +1,8 @@
-package com.histmersion.plugins.calibre
+package com.histmersion
+package plugins.calibre
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One Calibre entry that disagrees with the corpus, judged against the record it matches best (an entry shared by a
   * chapter and its volume is fine when it matches either).
@@ -18,6 +22,6 @@ final case class AuditFinding(
 object AuditFinding:
 
   type CalibreId = CalibreId.T
-  object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CalibreId extends RefinedType[Int, Pure]
   type Citekeys = Citekeys.T
-  object Citekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Citekeys extends RefinedType[String, Pure]

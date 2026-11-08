@@ -1,10 +1,13 @@
-package com.histmersion.plugins.events
+package com.histmersion
+package plugins.events
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
 import io.circe.{ACursor, Json}
 
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** NOAA NCEI's significant earthquakes, eruptions and tsunamis: its hazard service
   * (`/hazel/hazard-service/api/v1/{earthquakes,volcanoes,tsunamis/events}`), page by page. A part is a page of a
@@ -13,23 +16,23 @@ import java.util.Locale
   */
 final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
   // a U.S. federal work: public domain; NCEI asks to be cited
-  def title = com.histmersion.plugin.EventCatalogue.TitleResult("NOAA NCEI Natural Hazards")
+  def title = EventCatalogue.TitleResult("NOAA NCEI Natural Hazards")
   def licence = Licence("public-domain")
   def citation =
-    com.histmersion.plugin.EventCatalogue.CitationResult(
+    EventCatalogue.CitationResult(
       "National Geophysical Data Center / World Data Service: NCEI/WDS Global Significant Earthquake, Tsunami " +
         "and Volcano Databases. NOAA National Centers for Environmental Information. https://doi.org/10.7289/V5TD9V7K"
     )
-  def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://www.ngdc.noaa.gov/hazard/")
-  override def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult =
-    com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
-  override def everyPartEachImport: com.histmersion.plugin.EventCatalogue.EveryPartEachImportResult =
-    com.histmersion.plugin.EventCatalogue.EveryPartEachImportResult(true)
+  def home = EventCatalogue.HomeResult("https://www.ngdc.noaa.gov/hazard/")
+  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult =
+    EventCatalogue.RequestIntervalMsResult(cfg.requestIntervalMs.value)
+  override def everyPartEachImport: EventCatalogue.EveryPartEachImportResult =
+    EventCatalogue.EveryPartEachImportResult(true)
 
-  def parts(query: CatalogueQuery): List[com.histmersion.plugin.EventCatalogue.PartsResult] =
-    cfg.datasetList.map(ds => com.histmersion.plugin.EventCatalogue.PartsResult(s"${ds.value}:1"))
+  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] =
+    cfg.datasetList.map(ds => EventCatalogue.PartsResult(s"${ds.value}:1"))
 
-  def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1, CataloguePage] =
+  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
     part.value match
       case NoaaCatalogue.Page(dataset, page) =>
         val p = page.toInt
@@ -37,15 +40,15 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
         CatalogueJson(http)(
           NoaaCatalogue.url(cfg.url, ds, query.from, query.to, NoaaCatalogue.PageNumber(p), cfg.pageSize)
         ).left
-          .map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
+          .map(e => EventCatalogue.ReadResultPart1(e.value))
           .flatMap(j =>
-            NoaaCatalogue.parse(ds, j).left.map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
+            NoaaCatalogue.parse(ds, j).left.map(e => EventCatalogue.ReadResultPart1(e.value))
           )
           .map((rs, pages) =>
             CataloguePage(rs, Option.when(p < pages.value)(CataloguePage.Next(s"$dataset:${p + 1}")))
           )
       case other =>
-        Left(com.histmersion.plugin.EventCatalogue.ReadResultPart1(s"'$other' is no page of NOAA's datasets"))
+        Left(EventCatalogue.ReadResultPart1(s"'$other' is no page of NOAA's datasets"))
 
   /** The item read again from its `raw`, its dataset named by its id (`volcano:1351`). */
   override def reread(stored: CatalogueEvent): Option[CatalogueEvent] =
@@ -56,19 +59,19 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
 
 object NoaaCatalogue:
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type Dataset = Dataset.T
-  object Dataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dataset extends RefinedType[String, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Path extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type PageNumber = PageNumber.T
-  object PageNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PageNumber extends RefinedType[Int, Pure]
 
   val Earthquakes: Dataset = Dataset("earthquakes")
   val Volcanoes: Dataset = Dataset("volcanoes")
@@ -77,11 +80,11 @@ object NoaaCatalogue:
 
   private val Page = "([a-z]+):(\\d+)".r
 
-  private def path(ds: com.histmersion.plugins.events.NoaaCatalogue.Dataset): com.histmersion.plugins.events.NoaaCatalogue.Path = if ds == Tsunamis then com.histmersion.plugins.events.NoaaCatalogue.Path("tsunamis/events") else com.histmersion.plugins.events.NoaaCatalogue.Path(ds.value)
+  private def path(ds: Dataset): Path = if ds == Tsunamis then Path("tsunamis/events") else Path(ds.value)
 
   /** Pure: one page of a dataset's events up to `to` (and from `from`). */
-  def url(base: com.histmersion.plugins.events.NoaaSettings.Url, dataset: com.histmersion.plugins.events.NoaaCatalogue.Dataset, from: Option[com.histmersion.plugin.Year], to: com.histmersion.plugin.Year, page: com.histmersion.plugins.events.NoaaCatalogue.PageNumber, perPage: com.histmersion.plugins.events.NoaaSettings.PageSize): com.histmersion.plugin.Plugin.Http.GetUrl =
-    com.histmersion.plugin.Plugin.Http.GetUrl(
+  def url(base: NoaaSettings.Url, dataset: Dataset, from: Option[Year], to: Year, page: PageNumber, perPage: NoaaSettings.PageSize): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(
       s"${base.value.stripSuffix("/")}/${path(dataset).value}?maxYear=${to.value}${from.fold("")(f => s"&minYear=${f.value}")}" +
         s"&itemsPerPage=${perPage.value}&page=${page.value}"
     )
@@ -89,15 +92,15 @@ object NoaaCatalogue:
   /** Pure: one page's events and the number of pages. Tsunamis NOAA marks erroneous (validity −1) or a mere seiche (0)
     * are dropped; very doubtful (1) and questionable (2) ones are `contested`.
     */
-  def parse(dataset: com.histmersion.plugins.events.NoaaCatalogue.Dataset, json: Json): Either[com.histmersion.plugins.events.NoaaCatalogue.Problem, (List[CatalogueEvent], com.histmersion.plugins.events.NoaaCatalogue.Count)] =
+  def parse(dataset: Dataset, json: Json): Either[Problem, (List[CatalogueEvent], Count)] =
     val c = json.hcursor
     c.downField("items").focus.flatMap(_.asArray) match
-      case None        => Left(com.histmersion.plugins.events.NoaaCatalogue.Problem("no items in the answer"))
+      case None        => Left(Problem("no items in the answer"))
       case Some(items) =>
         Right((items.toList.flatMap(i => record(dataset, i.hcursor)), Count(c.get[Int]("totalPages").getOrElse(1))))
 
   /** Pure: the dataset a NOAA record's id names (`volcano:1351` → volcanoes). */
-  def datasetOf(providerId: com.histmersion.plugin.CatalogueEvent.Id): Option[com.histmersion.plugins.events.NoaaCatalogue.Dataset] =
+  def datasetOf(providerId: CatalogueEvent.Id): Option[Dataset] =
     providerId.value.takeWhile(_ != ':') match
       case "earthquake" => Some(Earthquakes)
       case "volcano"    => Some(Volcanoes)
@@ -105,7 +108,7 @@ object NoaaCatalogue:
       case _            => None
 
   /** Pure: "SYRIA:  UGARIT" → "Syria: Ugarit" — NOAA's upper-case place names in title case. */
-  def titleCase(s: com.histmersion.plugins.events.JsonFields.Text): com.histmersion.plugins.events.NoaaCatalogue.Title =
+  def titleCase(s: JsonFields.Text): Title =
     Title(
       "(^|[\\s(/,-])(\\p{L})".r.replaceAllIn(
         s.value.trim.replaceAll("\\s+", " ").toLowerCase(Locale.ROOT),
@@ -114,15 +117,15 @@ object NoaaCatalogue:
     )
 
   /** Pure: one item of a dataset's answer as an event. */
-  def record(dataset: com.histmersion.plugins.events.NoaaCatalogue.Dataset, i: ACursor): Option[CatalogueEvent] =
+  def record(dataset: Dataset, i: ACursor): Option[CatalogueEvent] =
     import JsonFields.*
     val kind = dataset match
       case Earthquakes => "earthquake"
       case Volcanoes   => "eruption"
       case _           => "tsunami"
-    val validity = long(i, com.histmersion.plugins.events.JsonFields.Key("eventValidity"))
+    val validity = long(i, Key("eventValidity"))
     for
-      id <- long(i, com.histmersion.plugins.events.JsonFields.Key("id"))
+      id <- long(i, Key("id"))
       year <- long(i, JsonFields.Key("year"))
       if dataset != Tsunamis || validity.forall(_.value >= 1)
     yield
@@ -168,7 +171,7 @@ object NoaaCatalogue:
         raw = i.focus.map(j => CatalogueEvent.Raw(j.noSpaces))
       )
 
-  private def singular(ds: com.histmersion.plugins.events.NoaaCatalogue.Dataset): com.histmersion.plugins.events.NoaaCatalogue.Name = ds match
-    case Earthquakes => com.histmersion.plugins.events.NoaaCatalogue.Name("earthquake")
-    case Volcanoes   => com.histmersion.plugins.events.NoaaCatalogue.Name("volcano")
-    case _           => com.histmersion.plugins.events.NoaaCatalogue.Name("tsunami")
+  private def singular(ds: Dataset): Name = ds match
+    case Earthquakes => Name("earthquake")
+    case Volcanoes   => Name("volcano")
+    case _           => Name("tsunami")

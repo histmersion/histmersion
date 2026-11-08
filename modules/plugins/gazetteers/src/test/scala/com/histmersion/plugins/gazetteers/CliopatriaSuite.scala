@@ -1,12 +1,15 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
+import com.histmersion.plugin.testkit.PluginHarness
+import com.histmersion.plugin.testkit.HttpMode
 
 class CliopatriaSuite extends munit.FunSuite:
 
-  private val fixture = com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text(
+  private val fixture = DownloadedGazetteer.Text(
     scala.io.Source.fromResource("gazetteers/cliopatria.geojson")(using scala.io.Codec.UTF8).mkString
   )
 
@@ -84,15 +87,15 @@ class CliopatriaSuite extends munit.FunSuite:
   test("parentConcepts span their slices: earliest start to latest end, also for a MemberOf concept"):
     val places = Cliopatria.read(fixture).toOption.get
     val parents = Cliopatria.parentConcepts(places).map(p => p.id -> p.period).toMap
-    assertEquals(parents(com.histmersion.plugin.GazetteerPlace.Id("cliopatria_hittite_empire")), period(-1650, -1201))
-    assertEquals(parents(com.histmersion.plugin.GazetteerPlace.Id("cliopatria_kingdom_of_elam")), period(-3200, -2701))
-    assertEquals(parents(com.histmersion.plugin.GazetteerPlace.Id("cliopatria_sumerian_city_states")), period(-3200, -2701))
+    assertEquals(parents(GazetteerPlace.Id("cliopatria_hittite_empire")), period(-1650, -1201))
+    assertEquals(parents(GazetteerPlace.Id("cliopatria_kingdom_of_elam")), period(-3200, -2701))
+    assertEquals(parents(GazetteerPlace.Id("cliopatria_sumerian_city_states")), period(-3200, -2701))
 
   test("a concept whose slices carry no years stays undated"):
     val undated = Cliopatria
       .readFeature(
         io.circe.parser.parse("""{"type":"Feature","properties":{"Name":"Nowhere"},"geometry":null}""").toOption.get,
-        com.histmersion.plugins.gazetteers.Cliopatria.Ordinal(7)
+        Cliopatria.Ordinal(7)
       )
       .toOption
       .get
@@ -104,11 +107,11 @@ class CliopatriaSuite extends munit.FunSuite:
     assertEquals(r1, r2)
 
   test("transform returns Left for invalid JSON"):
-    val result = Cliopatria.read(com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text("not json"))
+    val result = Cliopatria.read(DownloadedGazetteer.Text("not json"))
     assert(result.isLeft)
 
   test("transform returns Left for empty features"):
-    val result = Cliopatria.read(com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text("""{"type":"FeatureCollection","features":[]}"""))
+    val result = Cliopatria.read(DownloadedGazetteer.Text("""{"type":"FeatureCollection","features":[]}"""))
     assert(result.isRight)
     assertEquals(result.toOption.get.length, 0)
 
@@ -118,8 +121,8 @@ class CliopatriaSuite extends munit.FunSuite:
     assert(hittite1.properties.exists(_.value.contains("Q170494")))
 
   test("the gazetteer-cliopatria plugin registers the source cliopatria"):
-    val h = com.histmersion.plugin.testkit.PluginHarness
-      .load(com.histmersion.plugin.Plugin.Info.Id("gazetteer-cliopatria"), http = com.histmersion.plugin.testkit.HttpMode.Offline, env = Map.empty)
+    val h = PluginHarness
+      .load(Plugin.Info.Id("gazetteer-cliopatria"), http = HttpMode.Offline, env = Map.empty)
       .fold(e => fail(e.value), identity)
     assertEquals(h.gazetteerSources, List("cliopatria"))
 
@@ -176,10 +179,10 @@ class CliopatriaSuite extends munit.FunSuite:
       .parse("""{"properties":{"Name":"Late","FromYear":-100,"ToYear":-200},"geometry":null}""")
       .toOption
       .get
-    assertEquals(Cliopatria.readFeature(swapped, com.histmersion.plugins.gazetteers.Cliopatria.Ordinal(0)).toOption.get.period, period(-200, -100))
+    assertEquals(Cliopatria.readFeature(swapped, Cliopatria.Ordinal(0)).toOption.get.period, period(-200, -100))
     val huge = io.circe.parser
       .parse("""{"properties":{"Name":"Deep","FromYear":-3000000000,"ToYear":0},"geometry":null}""")
       .toOption
       .get
-    val deep = Cliopatria.readFeature(huge, com.histmersion.plugins.gazetteers.Cliopatria.Ordinal(0)).toOption.get
+    val deep = Cliopatria.readFeature(huge, Cliopatria.Ordinal(0)).toOption.get
     assertEquals((deep.id, deep.period), ("cliopatria_deep_-3000000000_0", None))

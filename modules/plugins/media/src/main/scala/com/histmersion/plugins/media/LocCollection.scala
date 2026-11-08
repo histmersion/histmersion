@@ -1,9 +1,12 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.Json
 
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `loc`: the Library of Congress JSON API (https://www.loc.gov/apis/json-and-yaml/), no key: the maps format
   * (`/maps/?q=&fo=json`) narrowed to the Geography and Map Division, then each candidate's item (`/item/{id}/?fo=json`)
@@ -12,8 +15,8 @@ import java.util.Locale
   * is where it is of. A 403 is loc.gov's bot challenge to automated clients — reported as such, never worked around.
   */
 final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.ThumbPx)
-    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("Library of Congress"), com.histmersion.plugins.media.MuseumCollection.Key("media.loc")):
-  val title = com.histmersion.plugin.MediaCollection.TitleResult("Library of Congress maps")
+    extends MuseumCollection(conf, MuseumCollection.Provider("Library of Congress"), MuseumCollection.Key("media.loc")):
+  val title = MediaCollection.TitleResult("Library of Congress maps")
   override val description =
     MediaCollection.DescriptionResult(
       "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights " +
@@ -48,12 +51,12 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
 
 object LocCollection:
   type Date = Date.T
-  object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Date extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
-  type ThumbPx = com.histmersion.plugins.media.MediaSettings.ThumbPx
-  val ThumbPx: _root_.com.histmersion.plugins.media.MediaSettings.ThumbPx.type = _root_.com.histmersion.plugins.media.MediaSettings.ThumbPx
+  type ThumbPx = MediaSettings.ThumbPx
+  val ThumbPx: MediaSettings.ThumbPx.type = MediaSettings.ThumbPx
 
   def searchUrl(base: CollectionSettings.ApiUrl, name: MediaPlace.Label, limit: CollectionSettings.Candidates): Plugin.Http.GetUrl =
     Plugin.Http.GetUrl(s"${base.value.stripSuffix("/")}/maps/?q=${name.value.enc}&fo=json&c=${limit.value.max(1)}&fa=${"partof:geography and map division".enc}")
@@ -88,7 +91,7 @@ object LocCollection:
   /** Pure: one item answer. `maxYear` is the public-domain boundary; `displayPx`/`thumbPx` choose among the item's JPEG
     * files (the largest no wider than display, the smallest no narrower than thumb).
     */
-  def record(json: Json, base: CollectionSettings.ApiUrl, maxYear: CollectionSettings.MaxYear, displayPx: CollectionSettings.DisplayPx, thumbPx: com.histmersion.plugins.media.MediaSettings.ThumbPx): Either[Problem, MediaItem] =
+  def record(json: Json, base: CollectionSettings.ApiUrl, maxYear: CollectionSettings.MaxYear, displayPx: CollectionSettings.DisplayPx, thumbPx: MediaSettings.ThumbPx): Either[Problem, MediaItem] =
     val item = json.hcursor.downField("item")
     if item.focus.isEmpty then Left(Problem("no item in the answer"))
     else

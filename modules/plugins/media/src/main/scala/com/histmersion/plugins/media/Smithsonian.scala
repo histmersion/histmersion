@@ -1,9 +1,12 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Smithsonian Open Access API (https://edan.si.edu/openaccess/apidocs/): `GET {api}/search?q=&rows=
   * &type=edanmdm&row_group=objects` with an api.data.gov key (sent as the `X-Api-Key` header, which api.data.gov
@@ -17,11 +20,11 @@ import java.util.Locale
   */
 object Smithsonian:
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Unit = Unit.T
-  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Unit extends RefinedType[String, Pure]
 
   /** The header the key travels in (api.data.gov's documented alternative to the `api_key` parameter). */
   val KeyHeader = "X-Api-Key"
@@ -29,30 +32,30 @@ object Smithsonian:
   /** Pure: the query — the place's name as a phrase, objects with images only, none of the excluded units (`unit_code`,
     * a fielded term the API's `terms` endpoint lists).
     */
-  def query(name: com.histmersion.plugin.MediaPlace.Label, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.CollectionQuery.Text =
+  def query(name: MediaPlace.Label, excludedUnits: List[Unit] = Nil): CollectionQuery.Text =
     val units = excludedUnits.map(_.value.replaceAll("[^A-Za-z0-9_]", "")).filter(_.nonEmpty)
-    com.histmersion.plugin.CollectionQuery.Text(
+    CollectionQuery.Text(
       s"\"${name.value.replace("\"", " ").trim}\" AND online_media_type:Images" +
         (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
     )
 
-  def searchUrl(api: com.histmersion.plugins.media.CollectionSettings.ApiUrl, name: com.histmersion.plugin.MediaPlace.Label, rows: com.histmersion.plugins.media.CollectionSettings.Candidates, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.Plugin.Http.GetUrl =
-    com.histmersion.plugin.Plugin.Http.GetUrl(
+  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, rows: CollectionSettings.Candidates, excludedUnits: List[Unit] = Nil): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(
       s"${api.value.stripSuffix("/")}/search?q=${query(name, excludedUnits).value.enc}&rows=${rows.value.max(1).min(1000)}" +
         "&type=edanmdm&row_group=objects"
     )
 
   /** Pure: the unit a row comes from — `descriptiveNonRepeating.unit_code`, else the row's `unitCode`. */
-  def unitOf(json: Json): Option[com.histmersion.plugins.media.Smithsonian.Unit] =
+  def unitOf(json: Json): Option[Unit] =
     val c = json.hcursor
     c.downField("content").downField("descriptiveNonRepeating").str("unit_code").orElse(c.str("unitCode")).map(u => Unit(u))
 
   /** The labels of `freetext.date` that name when the object was made. */
-  val DateLabels: Set[com.histmersion.plugins.media.Smithsonian.Label] =
+  val DateLabels: Set[Label] =
     Set("date", "date made", "date created", "creation date", "production date", "object date").map(l => Label(l))
 
   /** The labels of `freetext.name` that name who made it. */
-  val MakerLabels: Set[com.histmersion.plugins.media.Smithsonian.Label] = Set(
+  val MakerLabels: Set[Label] = Set(
     "artist",
     "maker",
     "creator",
@@ -69,7 +72,7 @@ object Smithsonian:
   /** Pure: the rows of a search answer; an error answer (api.data.gov's `{error: {code, message}}`, or EDAN's
     * `{response: {error}}`) is a `Left`.
     */
-  def records(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Problem, List[Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaItem]]] =
+  def records(json: Json, excludedUnits: List[Unit] = Nil): Either[Problem, List[Either[Problem, MediaItem]]] =
     val c = json.hcursor
     val resp = c.downField("response")
     resp.downField("rows").focus.flatMap(_.asArray) match
@@ -81,7 +84,7 @@ object Smithsonian:
           case "" => resp.str("error").orElse(c.str("message")).getOrElse("no rows in the answer")
           case e  => e))
 
-  private def labelled(c: ACursor, field: String): List[(com.histmersion.plugins.media.Smithsonian.Label, String)] =
+  private def labelled(c: ACursor, field: String): List[(Label, String)] =
     c.downField(field).focus.flatMap(_.asArray).toList.flatten.flatMap { e =>
       val h = e.hcursor
       h.str("content").map(v => Label(h.str("label").getOrElse("").toLowerCase(Locale.ROOT)) -> v)
@@ -90,7 +93,7 @@ object Smithsonian:
   /** Pure: one row of a search answer; a row of an excluded unit (a natural-history department's specimen) is withheld
     * with that reason, whatever its licence.
     */
-  def record(json: Json, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaItem] =
+  def record(json: Json, excludedUnits: List[Unit] = Nil): Either[Problem, MediaItem] =
     val c = json.hcursor
     val cont = c.downField("content")
     val dnr = cont.downField("descriptiveNonRepeating")
@@ -123,7 +126,7 @@ object Smithsonian:
           .map(_.hcursor)
           .filter(m => m.str("type").forall(_.equalsIgnoreCase("Images")))
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
-        val rights: Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaRights] = cc0 match
+        val rights: Either[Problem, MediaRights] = cc0 match
           case Some(_)               => Right(MediaRights.cc0(maker.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
           case None if media.isEmpty => Left(Problem("no image on the record"))
           case None                  =>

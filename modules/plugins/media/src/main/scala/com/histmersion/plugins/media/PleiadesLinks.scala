@@ -1,9 +1,12 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.{GazetteerPlace, Plugin}
 import io.circe.Json
 
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Pictures a Pleiades place record links (https://pleiades.stoa.org/places/{id}/json, no key). A place's `references`
   * (`accessURI`, `alternateURI`) sometimes name a Wikimedia Commons file — those are the pictures; their licence is
@@ -12,9 +15,9 @@ import java.util.Locale
   */
 object PleiadesLinks:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
 
 
   def placeUrl(api: CollectionSettings.ApiUrl, id: GazetteerPlace.Id): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/places/${id.value.enc}/json")

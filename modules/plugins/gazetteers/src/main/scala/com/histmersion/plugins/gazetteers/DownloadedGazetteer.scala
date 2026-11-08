@@ -1,4 +1,5 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import com.histmersion.plugin.*
 import io.circe.JsonObject
@@ -6,21 +7,23 @@ import io.circe.JsonObject
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.zip.ZipInputStream
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A gazetteer that is one file at a fixed address: downloaded whole through the host's client, unpacked when it is a
   * zip (its first file that is neither a directory nor macOS's `__MACOSX` metadata), read as UTF-8 and parsed.
   */
 trait DownloadedGazetteer extends GazetteerSource:
   /** The dataset's canonical address. */
-  def url: com.histmersion.plugin.Plugin.Http.GetUrl
+  def url: Plugin.Http.GetUrl
 
   /** Pure: the dataset's places from its text, in the order they are stored. */
-  def read(text: com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem, List[GazetteerPlace]]
+  def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]]
 
-  def fetch(http: Plugin.Http): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem, List[GazetteerPlace]] = download(http).flatMap(read)
+  def fetch(http: Plugin.Http): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] = download(http).flatMap(read)
 
   /** The dataset's text: one request, answered 200, unpacked when the address names a zip. */
-  def download(http: Plugin.Http): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem, com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text] =
+  def download(http: Plugin.Http): Either[DownloadedGazetteer.Problem, DownloadedGazetteer.Text] =
     http.fetch(url) match
       case Left(e)                           => Left(DownloadedGazetteer.Problem(s"download failed: $e"))
       case Right(r) if r.status.value != 200 => Left(DownloadedGazetteer.Problem(s"HTTP ${r.status.value} from ${url.value}"))
@@ -28,32 +31,32 @@ trait DownloadedGazetteer extends GazetteerSource:
         if url.value.endsWith(".zip") then DownloadedGazetteer.unzip(r.body) else Right(DownloadedGazetteer.Text(String(r.body.value, UTF_8)))
 
   /** A property's text: the first of `keys` that holds a non-empty string. */
-  protected def str(o: JsonObject, keys: String*): Option[com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text] =
+  protected def str(o: JsonObject, keys: String*): Option[DownloadedGazetteer.Text] =
     keys.iterator.flatMap(k => o(k).flatMap(_.asString).filter(_.nonEmpty)).nextOption().map(DownloadedGazetteer.Text(_))
 
   /** A name as an id part: lower case, every run of other characters than `a-z0-9` one `_`, none at the ends. */
-  protected def slugify(name: com.histmersion.plugin.GazetteerName.Name): com.histmersion.plugins.gazetteers.DownloadedGazetteer.Slug =
+  protected def slugify(name: GazetteerName.Name): DownloadedGazetteer.Slug =
     DownloadedGazetteer.Slug(name.value.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_|_$", ""))
 
   /** The period of two years in either order; `None` when one is beyond what a [[Year]] holds. */
-  protected def span(a: com.histmersion.plugins.gazetteers.DownloadedGazetteer.Year, b: com.histmersion.plugins.gazetteers.DownloadedGazetteer.Year): Option[Period] =
+  protected def span(a: DownloadedGazetteer.Year, b: DownloadedGazetteer.Year): Option[Period] =
     Option
       .when(a.value.isValidInt && b.value.isValidInt)(())
-      .flatMap(_ => Period.from(com.histmersion.plugin.Year(a.value.min(b.value).toInt), com.histmersion.plugin.Year(a.value.max(b.value).toInt)).toOption)
+      .flatMap(_ => Period.from(Year(a.value.min(b.value).toInt), Year(a.value.max(b.value).toInt)).toOption)
 
 object DownloadedGazetteer:
-  type Problem = com.histmersion.plugin.GazetteerSource.FetchResultPart1
-  val Problem: com.histmersion.plugin.GazetteerSource.FetchResultPart1.type = com.histmersion.plugin.GazetteerSource.FetchResultPart1
+  type Problem = GazetteerSource.FetchResultPart1
+  val Problem: GazetteerSource.FetchResultPart1.type = GazetteerSource.FetchResultPart1
   type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Slug extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Year extends RefinedType[Long, Pure]
   /** The first usable file of a zip archive, as UTF-8 text. */
 
 
-  def unzip(data: com.histmersion.plugin.Plugin.HttpResponse.Body): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem, com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text] =
+  def unzip(data: Plugin.HttpResponse.Body): Either[Problem, Text] =
     try
       val zis = ZipInputStream(ByteArrayInputStream(data.value))
       @annotation.tailrec
@@ -62,6 +65,6 @@ object DownloadedGazetteer:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left(com.histmersion.plugins.gazetteers.DownloadedGazetteer.Problem("zip contains no usable file"))
+        case None    => Left(Problem("zip contains no usable file"))
         case Some(_) => Right(Text(String(zis.readAllBytes(), UTF_8)))
     catch case e: Exception => Left(Problem(s"unzip failed: ${e.getMessage}"))

@@ -1,4 +1,5 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 
@@ -11,26 +12,26 @@ import com.histmersion.plugin.*
   */
 final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
   private val conf = media.pleiades
-  val title = com.histmersion.plugin.MediaCollection.TitleResult("Pleiades-linked pictures")
-  override val description = com.histmersion.plugin.MediaCollection.DescriptionResult(
+  val title = MediaCollection.TitleResult("Pleiades-linked pictures")
+  override val description = MediaCollection.DescriptionResult(
     "Wikimedia Commons files that Pleiades place records link, for the places on the map that carry a Pleiades id " +
       "(matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), Commons " +
       "categories and other sites are counted, not taken"
   )
   val role = MediaItem.Role(MediaCollection.Image)
   override def matchRule = MediaMatchRule.Own
-  override def placesCarrying = Some(com.histmersion.plugin.MediaCollection.PlacesCarryingResult(PleiadesPictures.Scheme))
-  override def perPlace = com.histmersion.plugin.MediaCollection.PerPlaceResult(conf.perPlace.value)
-  override def requestIntervalMs = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
+  override def placesCarrying = Some(MediaCollection.PlacesCarryingResult(PleiadesPictures.Scheme))
+  override def perPlace = MediaCollection.PerPlaceResult(conf.perPlace.value)
+  override def requestIntervalMs = MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
 
   override def check =
     Either.cond(
       conf.enabled.value,
       (),
-      com.histmersion.plugin.MediaCollection.CheckResultPart1("Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)")
+      MediaCollection.CheckResultPart1("Pleiades (linked Commons files) is switched off (media.pleiades.enabled = false)")
     )
 
-  def search(place: MediaPlace, http: Plugin.Http) = Left(com.histmersion.plugin.MediaCollection.SearchResultPart1("the Pleiades pictures are found for a batch of places"))
+  def search(place: MediaPlace, http: Plugin.Http) = Left(MediaCollection.SearchResultPart1("the Pleiades pictures are found for a batch of places"))
 
   private def placeTarget(p: MediaPlace): MediaTarget.Id =
     MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value(p.id.value))

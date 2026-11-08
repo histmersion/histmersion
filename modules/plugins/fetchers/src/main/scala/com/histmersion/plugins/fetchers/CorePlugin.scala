@@ -1,7 +1,9 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 /** `oa-core`: CORE's download URLs for a DOI, with an API key, through the server's CORE budget. */
 import com.histmersion.plugin.Plugin
+import com.histmersion.plugin.Registry
 final class CorePlugin extends FetcherPlugin("oa-core"):
   type Config = CoreConfig
   def register(c: CoreConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
@@ -16,7 +18,7 @@ final class CorePlugin extends FetcherPlugin("oa-core"):
       .flatMap(key =>
         ctx.sourceFetchers
           .add(
-            com.histmersion.plugin.Registry.AddId("core"),
+            Registry.AddId("core"),
             OpenAccess(c.acquire, () => ctx.http, ctx.log).core(key, ctx.quota(Plugin.Context.QuotaUpstream("core")))
           )
           .left

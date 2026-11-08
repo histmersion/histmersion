@@ -1,4 +1,5 @@
-package com.histmersion.plugins.events
+package com.histmersion
+package plugins.events
 
 import com.histmersion.plugin.{CatalogueEvent, Year}
 import com.histmersion.upstreams.dating.CatalogDating

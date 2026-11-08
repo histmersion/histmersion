@@ -1,7 +1,10 @@
-package com.histmersion.plugins.gazetteers
+package com.histmersion
+package plugins.gazetteers
 
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Polity polygons from the Seshat Cliopatria dataset.
   *
@@ -16,15 +19,15 @@ import io.circe.{Json, JsonObject}
   */
 object Cliopatria extends DownloadedGazetteer:
   type Ordinal = Ordinal.T
-  object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Ordinal extends RefinedType[Int, Pure]
 
-  val title = com.histmersion.plugin.GazetteerSource.TitleResult("Seshat Cliopatria polity polygons")
-  override val description = com.histmersion.plugin.GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
+  val title = GazetteerSource.TitleResult("Seshat Cliopatria polity polygons")
+  override val description = GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
   val url = Plugin.Http.GetUrl("https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip")
   val rights: GazetteerRights = GazetteerRights(
     Licence("CC BY 4.0"),
-    com.histmersion.plugin.GazetteerRights.Credit("Cliopatria (Seshat Databank), CC BY 4.0"),
-    Some(com.histmersion.plugin.GazetteerRights.LicenceUrl("https://creativecommons.org/licenses/by/4.0/"))
+    GazetteerRights.Credit("Cliopatria (Seshat Databank), CC BY 4.0"),
+    Some(GazetteerRights.LicenceUrl("https://creativecommons.org/licenses/by/4.0/"))
   )
 
   private val Polity = GazetteerPlace.Kind("polity")

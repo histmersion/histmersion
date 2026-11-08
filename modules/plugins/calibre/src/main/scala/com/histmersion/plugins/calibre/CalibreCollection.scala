@@ -1,14 +1,17 @@
-package com.histmersion.plugins.calibre
+package com.histmersion
+package plugins.calibre
 
 import com.histmersion.plugin.*
 
 import java.nio.file.Path
 import scala.util.Try
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.
   */
-final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollection.WriteBack, shell: Shell)(using files: com.histmersion.plugin.LocalFiles) extends SourceCollection:
+final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollection.WriteBack, shell: Shell)(using files: LocalFiles) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
   val title: SourceCollection.TitleResult = SourceCollection.TitleResult("Calibre")
@@ -143,7 +146,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
 object CalibreCollection:
   type WriteBack = WriteBack.T
-  object WriteBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WriteBack extends RefinedType[Boolean, Pure]
 
   /** The most books a search answers when the host does not say. */
   val SearchLimit: Calibre.SearchLimit = Calibre.SearchLimit(20)

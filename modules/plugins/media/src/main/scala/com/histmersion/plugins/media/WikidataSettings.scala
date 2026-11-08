@@ -1,8 +1,11 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.{MediaCollection, MediaItem}
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.media.wikidata`: the API, ids per call, `maxlag`, and the picture properties of a place and an event
   * with the role each plays (`P18:image,P242:locator-map`).
@@ -19,21 +22,21 @@ final case class WikidataSettings(
 
 object WikidataSettings:
   type Spec = Spec.T
-  object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Spec extends RefinedType[String, Pure]
   /** A Wikidata property id (`P18`). */
   type Property = Property.T
-  object Property extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Property extends RefinedType[String, Pure]
 
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ApiUrl extends RefinedType[String, Pure]
   type Batch = Batch.T
-  object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Batch extends RefinedType[Int, Pure]
   type Maxlag = Maxlag.T
-  object Maxlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Maxlag extends RefinedType[Int, Pure]
   type PlaceProperties = PlaceProperties.T
-  object PlaceProperties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceProperties extends RefinedType[String, Pure]
   type EventProperties = EventProperties.T
-  object EventProperties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventProperties extends RefinedType[String, Pure]
 
   /** The roles a picture of a place or an event may play. */
   val PictureRoles: List[MediaItem.Role] = List(

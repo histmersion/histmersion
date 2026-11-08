@@ -1,6 +1,9 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 import com.histmersion.plugin.{Access, Doi, Fetch, FetchedFile, SourceFetcher, WorkKey}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** An open-access step that reads a work by its DOI: no DOI is a miss saying so, no copy a miss saying which step had
   * none.
@@ -15,4 +18,4 @@ final class ByDoi(step: ByDoi.Step, copy: (Fetch.Context, Doi) => Option[Fetched
 
 object ByDoi:
   type Step = Step.T
-  object Step extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Step extends RefinedType[String, Pure]

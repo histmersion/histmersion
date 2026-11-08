@@ -1,14 +1,19 @@
-package com.histmersion.plugins.calibre
+package com.histmersion
+package plugins.calibre
 
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.plugin.LocalFiles
+import com.histmersion.pluginhost.DiskLocalFiles
+import com.histmersion.plugin.Processes
+import com.histmersion.pluginhost.SystemProcesses
 
 /** The audit compares loosely where Calibre legitimately differs (subtitles, accents, "Last, First") and strictly where
   * it matters (no author in common, scraped junk, a missing entry).
   */
 class CalibreAuditSuite extends munit.FunSuite:
 
-  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
-  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
+  private given LocalFiles = new DiskLocalFiles
+  private given Processes = new SystemProcesses
   private def book(
       id: Calibre.Book.Id,
       title: Calibre.Book.Title,
@@ -45,10 +50,10 @@ class CalibreAuditSuite extends munit.FunSuite:
   test("a bracketed role or life span is not a surname"):
     assert(
       Calibre.Audit.authorsMatch(
-        List(com.histmersion.plugins.calibre.AuditRecord.Authors("Ken Dowden (ed.)"), com.histmersion.plugins.calibre.AuditRecord.Authors("Niall Livingstone (ed.)")),
-        List(com.histmersion.plugins.calibre.Calibre.Author("Ken Dowden; Niall Livingstone"))
+        List(AuditRecord.Authors("Ken Dowden (ed.)"), AuditRecord.Authors("Niall Livingstone (ed.)")),
+        List(Calibre.Author("Ken Dowden; Niall Livingstone"))
       ) ||
-        Calibre.Audit.authorsMatch(List(com.histmersion.plugins.calibre.AuditRecord.Authors("Ken Dowden (ed.)")), List(com.histmersion.plugins.calibre.Calibre.Author("Ken Dowden")))
+        Calibre.Audit.authorsMatch(List(AuditRecord.Authors("Ken Dowden (ed.)")), List(Calibre.Author("Ken Dowden")))
     )
     assertEquals(Calibre.Audit.surname("Gimbutienė, Marija (1921-1994)"), "gimbutiene")
     assertEquals(Calibre.Audit.surname("Cynthia W. Shelmerdine (ed.)"), "shelmerdine")

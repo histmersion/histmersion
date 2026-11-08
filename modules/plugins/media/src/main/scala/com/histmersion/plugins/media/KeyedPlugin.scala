@@ -1,10 +1,14 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.MediaCollection
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Plugin.Config.given
 import com.histmersion.plugin.Secret
 import hearth.kindlings.sconfigderivation.ConfigReader
+import com.histmersion.plugin.Registry
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One of the collections that need a key of the user's own: OFF by default, its key a secret reference in its block
   * (`api-key`). Registered without a key, the collection is listed and its import says what is missing; it is never
@@ -14,7 +18,7 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
   type Config = KeyedPlugin.Config
 
   /** The collection over the media settings and the key, when one is set. */
-  protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.KeyedCollection.Key], ctx: Plugin.Context): MediaCollection
+  protected def collection(c: KeyedPlugin.Config, key: Option[KeyedCollection.Key], ctx: Plugin.Context): MediaCollection
 
   def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     c.apiKey
@@ -27,7 +31,7 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
       )
       .flatMap(key =>
         ctx.mediaCollections
-          .add(com.histmersion.plugin.Registry.AddId(name.value), collection(c, key, ctx))
+          .add(Registry.AddId(name.value), collection(c, key, ctx))
           .left
           .map(e => Plugin.RegisterResultPart1(e.value))
       )
@@ -37,9 +41,9 @@ object KeyedPlugin:
     * key; `null` = none, and the collection is then not asked. Its other settings are Histmersion's own `media.*`.
     */
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
 
 
   final case class Config(apiKey: Option[Secret], media: MediaSettings) derives ConfigReader

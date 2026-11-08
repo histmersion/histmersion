@@ -1,4 +1,5 @@
-package com.histmersion.plugins.media
+package com.histmersion
+package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.Json
@@ -10,12 +11,12 @@ import io.circe.Json
   * given.
   */
 final class ClevelandCollection(conf: CollectionSettings)
-    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("The Cleveland Museum of Art"), com.histmersion.plugins.media.MuseumCollection.Key("media.cleveland")):
-  val title = com.histmersion.plugin.MediaCollection.TitleResult("Cleveland Museum of Art objects")
+    extends MuseumCollection(conf, MuseumCollection.Provider("The Cleveland Museum of Art"), MuseumCollection.Key("media.cleveland")):
+  val title = MediaCollection.TitleResult("Cleveland Museum of Art objects")
   override val description = MediaCollection.DescriptionResult("The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum)
   val role = MediaCollection.RoleResult(MediaCollection.Object)
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugin.MediaCollection.SearchResultPart1, List[Either[com.histmersion.plugin.MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(ClevelandCollection.searchUrl(Plugin.Http.GetUrl(conf.apiUrl.value), CollectionQuery.Text(place.label.value), conf.candidates))
       .left
@@ -39,17 +40,17 @@ object ClevelandCollection:
     "tombstone"
   ).mkString(",")
 
-  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.CollectionSettings.Candidates): com.histmersion.plugin.Plugin.Http.GetUrl =
-    com.histmersion.plugin.Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/artworks/?q=${name.value.enc}&cc0=1&has_image=1&limit=${limit.value.max(1)}&fields=$Fields")
+  def searchUrl(api: Plugin.Http.GetUrl, name: CollectionQuery.Text, limit: CollectionSettings.Candidates): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/artworks/?q=${name.value.enc}&cc0=1&has_image=1&limit=${limit.value.max(1)}&fields=$Fields")
 
   /** Pure: the records of a search answer. */
-  def records(json: Json): Either[com.histmersion.plugin.MediaCollection.SearchResultPart1, List[Either[com.histmersion.plugin.MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def records(json: Json): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None       => Left(MediaCollection.SearchResultPart1(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer")))
       case Some(rows) => Right(rows.toList.map(record))
 
-  def record(json: Json): Either[com.histmersion.plugin.MediaCollection.SearchResultPart2Part1, MediaItem] =
+  def record(json: Json): Either[MediaCollection.SearchResultPart2Part1, MediaItem] =
     val c = json.hcursor
     c.str("accession_number").orElse(c.str("id")).toRight(MediaCollection.SearchResultPart2Part1("no accession number")).map { acc =>
       val title = c.str("title").getOrElse(acc)

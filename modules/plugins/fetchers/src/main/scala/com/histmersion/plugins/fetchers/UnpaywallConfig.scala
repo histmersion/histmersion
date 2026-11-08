@@ -1,8 +1,11 @@
-package com.histmersion.plugins.fetchers
+package com.histmersion
+package plugins.fetchers
 
 import com.histmersion.plugin.Plugin.Config.given
 import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `oa-unpaywall`'s settings. `contact-email`: the e-mail Unpaywall requires with every request (its `email` parameter,
   * nothing else); `null` = Histmersion's own `acquire.contact-email`, and with neither Unpaywall is not asked (it
@@ -10,12 +13,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class UnpaywallConfig(contactEmail: Option[UnpaywallConfig.ContactEmail], acquire: UpstreamSettings) derives ConfigReader:
   /** The contact Unpaywall is asked with: the plugin's own, else Histmersion's. */
-  def email: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail] = UnpaywallConfig.own(contactEmail).orElse(acquire.contact.map(c => UnpaywallConfig.ContactEmail(c.value)))
+  def email: Option[UnpaywallConfig.ContactEmail] = UnpaywallConfig.own(contactEmail).orElse(acquire.contact.map(c => UnpaywallConfig.ContactEmail(c.value)))
 
 object UnpaywallConfig:
   /** A contact as a block states it: trimmed, a blank one none. */
 
   type ContactEmail = ContactEmail.T
-  object ContactEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ContactEmail extends RefinedType[String, Pure]
 
-  def own(contact: Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail]): Option[com.histmersion.plugins.fetchers.UnpaywallConfig.ContactEmail] = contact.map(c => ContactEmail(c.value.trim)).filter(_.value.nonEmpty)
+  def own(contact: Option[ContactEmail]): Option[ContactEmail] = contact.map(c => ContactEmail(c.value.trim)).filter(_.value.nonEmpty)

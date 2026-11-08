@@ -1,4 +1,5 @@
-package com.histmersion.plugins.events
+package com.histmersion
+package plugins.events
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.dating.CatalogDating
@@ -7,6 +8,8 @@ import io.circe.Json
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Smithsonian Global Volcanism Program's Holocene eruptions: its WFS
   * (`GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions`), CQL-filtered, one request per window of start years — the
@@ -16,48 +19,48 @@ import java.util.Locale
 final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
   // volcano.si.edu (its terms page) did not answer on 2026-10-14; the Smithsonian's general Terms of
   // Use allow non-commercial, educational use with attribution, and the GVP asks to be cited as below.
-  def title = com.histmersion.plugin.EventCatalogue.TitleResult("Smithsonian Global Volcanism Program")
+  def title = EventCatalogue.TitleResult("Smithsonian Global Volcanism Program")
   def licence = Licence("Smithsonian Terms of Use (non-commercial use with attribution)")
   def citation =
-    com.histmersion.plugin.EventCatalogue.CitationResult(
+    EventCatalogue.CitationResult(
       "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
         "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
     )
-  def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://volcano.si.edu")
-  override def requestIntervalMs: com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult =
-    com.histmersion.plugin.EventCatalogue.RequestIntervalMsResult(cfg.gvp.requestIntervalMs.value)
+  def home = EventCatalogue.HomeResult("https://volcano.si.edu")
+  override def requestIntervalMs: EventCatalogue.RequestIntervalMsResult =
+    EventCatalogue.RequestIntervalMsResult(cfg.gvp.requestIntervalMs.value)
   override def floorYear: Option[Year] = Dated.year(CatalogDating.HistoricalYear(cfg.gvp.floorYear.value))
 
-  def parts(query: CatalogueQuery): List[com.histmersion.plugin.EventCatalogue.PartsResult] =
+  def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] =
     GvpCatalogue
       .windows(
         GvpCatalogue.Year(query.from.fold(cfg.minYear.value)(_.value.toLong)),
         GvpCatalogue.Year(query.to.value.toLong),
         cfg.gvp.windowYears
       )
-      .map((a, b) => com.histmersion.plugin.EventCatalogue.PartsResult(s"years:${a.value}..${b.value}"))
+      .map((a, b) => EventCatalogue.PartsResult(s"years:${a.value}..${b.value}"))
 
-  def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1, CataloguePage] =
+  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
     part.value match
       case GvpCatalogue.Window(a, b) =>
         CatalogueJson(http)(
           GvpCatalogue.url(cfg.gvp.url, GvpCatalogue.Year(a.toLong), GvpCatalogue.Year(b.toLong), cfg.gvp.pageSize)
         ).left
-          .map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
+          .map(e => EventCatalogue.ReadResultPart1(e.value))
           .flatMap(j =>
-            GvpCatalogue.parse(j).left.map(e => com.histmersion.plugin.EventCatalogue.ReadResultPart1(e.value))
+            GvpCatalogue.parse(j).left.map(e => EventCatalogue.ReadResultPart1(e.value))
           )
           .flatMap((rs, total) =>
             Either.cond(
               total.forall(_.value <= rs.size),
               CataloguePage(rs),
-              com.histmersion.plugin.EventCatalogue.ReadResultPart1(
+              EventCatalogue.ReadResultPart1(
                 s"${total.map(_.value).getOrElse(0)} eruptions in $a..$b, more than one request takes (events.gvp.page-size)"
               )
             )
           )
       case other =>
-        Left(com.histmersion.plugin.EventCatalogue.ReadResultPart1(s"'$other' is no window of years of the GVP's"))
+        Left(EventCatalogue.ReadResultPart1(s"'$other' is no window of years of the GVP's"))
 
   /** The feature read again from its `raw`; a record stored before the central year and the ± were kept (V088, no
     * `raw`), read back from its span and the "dated by …" of its description.
@@ -71,11 +74,11 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
 
 object GvpCatalogue:
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Year extends RefinedType[Long, Pure]
 
   val TypeName = "GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions"
 
@@ -84,15 +87,15 @@ object GvpCatalogue:
   private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   /** Pure: the eruptions that started in `from`…`to` (signed years, both inclusive), unpaged. */
-  def url(base: com.histmersion.plugins.events.GvpSettings.Url, from: com.histmersion.plugins.events.GvpCatalogue.Year, to: com.histmersion.plugins.events.GvpCatalogue.Year, max: com.histmersion.plugins.events.GvpSettings.PageSize): com.histmersion.plugin.Plugin.Http.GetUrl =
+  def url(base: GvpSettings.Url, from: Year, to: Year, max: GvpSettings.PageSize): Plugin.Http.GetUrl =
     val cql = s"StartDateYear>=${from.value} AND StartDateYear<=${to.value}"
-    com.histmersion.plugin.Plugin.Http.GetUrl(
+    Plugin.Http.GetUrl(
       s"${base.value}?service=WFS&version=2.0.0&request=GetFeature&typeNames=${enc(TypeName)}" +
         s"&outputFormat=${enc("application/json")}&count=${max.value}&CQL_FILTER=${enc(cql)}"
     )
 
   /** Pure: `from`…`to` cut into windows of `years` (the last one shorter). */
-  def windows(from: com.histmersion.plugins.events.GvpCatalogue.Year, to: com.histmersion.plugins.events.GvpCatalogue.Year, years: com.histmersion.plugins.events.GvpSettings.WindowYears): List[(com.histmersion.plugins.events.GvpCatalogue.Year, com.histmersion.plugins.events.GvpCatalogue.Year)] =
+  def windows(from: Year, to: Year, years: GvpSettings.WindowYears): List[(Year, Year)] =
     if from.value > to.value || years.value <= 0 then Nil
     else
       Iterator
@@ -104,7 +107,7 @@ object GvpCatalogue:
   /** Pure: the records of one page and how many match in all. "Discredited" eruptions are dropped; "Uncertain" ones are
     * `contested`. Years are GVP's signed years (BCE negative), ± its stated uncertainty.
     */
-  def parse(json: Json): Either[com.histmersion.plugins.events.GvpCatalogue.Problem, (List[CatalogueEvent], Option[com.histmersion.plugins.events.GvpCatalogue.Count])] =
+  def parse(json: Json): Either[Problem, (List[CatalogueEvent], Option[Count])] =
     val c = json.hcursor
     c.downField("features").focus.flatMap(_.asArray) match
       case None =>
