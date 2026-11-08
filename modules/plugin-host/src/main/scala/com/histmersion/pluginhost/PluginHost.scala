@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.config.EnvOverrides
 import com.histmersion.api.Sha256
@@ -24,6 +25,9 @@ import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.plugins.PluginKit
 
 /** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config contract (each
   * plugin's block layered over its own defaults resource, type-checked by key, decoded with the plugin's own reader),
@@ -32,17 +36,17 @@ import scala.util.control.NonFatal
   */
 object PluginHost:
   type ClassName = ClassName.T
-  object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClassName extends RefinedType[String, Pure]
   type ConfigPath = ConfigPath.T
-  object ConfigPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConfigPath extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provider extends RefinedType[String, Pure]
   type SecretValue = SecretValue.T
-  object SecretValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SecretValue extends RefinedType[String, Pure]
   type Warning = Warning.T
-  object Warning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Warning extends RefinedType[String, Pure]
 
   val Root = "histmersion.plugins"
 
@@ -174,7 +178,7 @@ object PluginHost:
     * in the image and `histmersion plugin status` recomputes over the plugins directory (docs/research-plugins.md §7.3;
     * the one implementation is files' `PluginKit.digest`).
     */
-  def digest(entries: List[(PluginJar.File, Sha256)]): PluginSet.Digest = com.histmersion.util.plugins.PluginKit.digest(entries)
+  def digest(entries: List[(PluginJar.File, Sha256)]): PluginSet.Digest = PluginKit.digest(entries)
 
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
   def configuredOrder(user: Config, env: Config): Either[Problem, List[Plugin.Info.Id]] =

@@ -1,9 +1,12 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.plugin.*
 
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the registered plugins contribute, one map per extension point, in registration order. Read by the rest of the
   * app; an immutable snapshot of one [[Generation]].
@@ -17,7 +20,7 @@ final case class Registries(
     gazetteerSources: ListMap[Registries.GazetteerSourcesKey, GazetteerSource] = ListMap.empty,
     sourceCollections: ListMap[Registries.SourceCollectionsKey, SourceCollection] = ListMap.empty
 ):
-  def provides: List[com.histmersion.pluginhost.Registries.RegistryKey] =
+  def provides: List[Registries.RegistryKey] =
     secretVaults.keys.toList.map(k => Registries.RegistryKey(s"${Registries.SecretVault}:$k")) ++
       sourceFetchers.keys.toList.map(k => Registries.RegistryKey(s"${Registries.SourceFetcher}:$k")) ++
       mediaCollections.keys.toList.map(k => Registries.RegistryKey(s"${Registries.MediaCollection}:$k")) ++
@@ -40,22 +43,22 @@ final case class Registries(
 
 object Registries:
   type RegistryKey = RegistryKey.T
-  object RegistryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RegistryKey extends RefinedType[String, Pure]
 
   type SecretVaultsKey = SecretVaultsKey.T
-  object SecretVaultsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SecretVaultsKey extends RefinedType[String, Pure]
   type SourceFetchersKey = SourceFetchersKey.T
-  object SourceFetchersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceFetchersKey extends RefinedType[String, Pure]
   type MediaCollectionsKey = MediaCollectionsKey.T
-  object MediaCollectionsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MediaCollectionsKey extends RefinedType[String, Pure]
   type EventCataloguesKey = EventCataloguesKey.T
-  object EventCataloguesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventCataloguesKey extends RefinedType[String, Pure]
   type AiProvidersKey = AiProvidersKey.T
-  object AiProvidersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AiProvidersKey extends RefinedType[String, Pure]
   type GazetteerSourcesKey = GazetteerSourcesKey.T
-  object GazetteerSourcesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GazetteerSourcesKey extends RefinedType[String, Pure]
   type SourceCollectionsKey = SourceCollectionsKey.T
-  object SourceCollectionsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceCollectionsKey extends RefinedType[String, Pure]
 
   val SecretVault = "secret-vault"
   val SourceFetcher = "source-fetcher"

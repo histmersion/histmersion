@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.api.plugins.{PluginsReport, PluginStatus}
 import com.histmersion.plugin.*

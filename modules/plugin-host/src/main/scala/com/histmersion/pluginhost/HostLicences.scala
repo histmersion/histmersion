@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.domain.Licence
 import com.histmersion.plugin.LicenceReader
@@ -14,9 +15,9 @@ object HostLicences extends LicenceReader:
       com.histmersion.plugin.Licence.Read.NeedsAttribution(l.family.needsAttribution)
     )
 
-  def readName(name: com.histmersion.plugin.LicenceReader.ReadNameName): com.histmersion.plugin.Licence.Read =
+  def readName(name: LicenceReader.ReadNameName): com.histmersion.plugin.Licence.Read =
     read(Licence.classify(Licence.Id(Option(name).fold("")(_.value))))
-  def readUrl(url: com.histmersion.plugin.LicenceReader.ReadUrlUrl): com.histmersion.plugin.Licence.Read =
+  def readUrl(url: LicenceReader.ReadUrlUrl): com.histmersion.plugin.Licence.Read =
     read(Licence.ofUrl(Licence.Url(url.value)))
-  def readFirst(statements: List[com.histmersion.plugin.LicenceReader.ReadFirstStatements]): com.histmersion.plugin.Licence.Read =
+  def readFirst(statements: List[LicenceReader.ReadFirstStatements]): com.histmersion.plugin.Licence.Read =
     read(Licence.firstKnown(statements.map(s => Licence.Statement(s.value))))

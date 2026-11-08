@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.api.instance.Version
 import com.histmersion.domain.HttpPolicy

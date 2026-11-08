@@ -1,8 +1,11 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.config.MediaIllustrationsConfig
 import com.histmersion.domain.media.figures.FigurePick
 import com.histmersion.domain.media.imports.LicencePolicy
+import com.histmersion.config.MediaPluginCollectionsConfig
+import com.histmersion.domain.Licence
 
 extension (c: MediaIllustrationsConfig)
   def figureRules: FigurePick.Rules =
@@ -15,7 +18,7 @@ extension (c: MediaIllustrationsConfig)
       FigurePick.Rules.PageScanMin(c.pageScanMin.value)
     )
 
-extension (c: com.histmersion.config.MediaPluginCollectionsConfig)
+extension (c: MediaPluginCollectionsConfig)
   /** The policy a plugin's collection is judged by: its `per-collection` entry, else the default. */
-  def allowed(collection: com.histmersion.config.MediaPluginCollectionsConfig.PerCollectionKey): LicencePolicy =
-    LicencePolicy.of(com.histmersion.domain.Licence.AllowList(c.licencesFor(collection).value))
+  def allowed(collection: MediaPluginCollectionsConfig.PerCollectionKey): LicencePolicy =
+    LicencePolicy.of(Licence.AllowList(c.licencesFor(collection).value))
