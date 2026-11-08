@@ -462,7 +462,7 @@ final class AgentsControllers(
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
     */
   def runnable(role: Role, overrideRef: Option[ModelName]): Either[Problem, Unit] =
-    picker.chainFor(role, overrideRef).left.map(domain.Problem.wire).flatMap { chain =>
+    picker.chainFor(role, overrideRef).left.map(_.transformInto[api.Problem]).flatMap { chain =>
       val tried = chain.map(m => m -> resolve(m))
       if tried.exists(_._2.isRight) then Right(())
       else

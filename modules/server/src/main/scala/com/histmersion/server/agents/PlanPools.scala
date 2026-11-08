@@ -1,5 +1,6 @@
 package com.histmersion
 package server.agents
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
@@ -387,7 +388,7 @@ final class PlanPools(
               val (rs, refusal, plan) = PlanPools.codexReadings(json, now)
               record(PoolId.ChatgptPlan, rs)
               Transactor(ds).transact(
-                PlanQuotaRepo.setRefusal(PoolId.ChatgptPlan, refusal.map(r => domain.Problem.fromApi(r._1)), refusal.flatMap(_._2), plan)
+                PlanQuotaRepo.setRefusal(PoolId.ChatgptPlan, refusal.map(r => r._1.transformInto[domain.Problem]), refusal.flatMap(_._2), plan)
               )
               None
 

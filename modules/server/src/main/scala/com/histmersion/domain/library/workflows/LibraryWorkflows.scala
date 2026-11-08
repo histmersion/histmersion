@@ -44,7 +44,7 @@ final class LibraryWorkflows(
       site.sources
         .patch(p.citekey, p.patch)
         .left
-        .map(e => Problem.fromApi(e.message))
+        .map(e => e.message.transformInto[Problem])
         .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value))
   )
 

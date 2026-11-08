@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.library.acquisition
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Problem
 import com.histmersion.util.database.given
@@ -66,7 +67,7 @@ private[acquisition] object AssessmentRepo:
           FROM retraction_watch WHERE doi = ${doi.value.toLowerCase}"""
       .query[RwRow]
       .run()
-      .map(r => RetractionNotice(r.nature, r.reason.map(Problem.wire), r.date))
+      .map(r => RetractionNotice(r.nature, r.reason.map(_.transformInto[api.Problem]), r.date))
       .toList
 
   /** Record the verdict for a stored source; the `checked_at` stamp. */

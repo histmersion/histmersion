@@ -333,7 +333,7 @@ object CompileArticle:
       case DraftMode.Create => Right(text)
       case DraftMode.Extend =>
         section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty) match
-          case Some(s) => Articles.appendUnderSection(current, s, Article.Prose(text.value.trim)).left.map(Problem.fromApi)
+          case Some(s) => Articles.appendUnderSection(current, s, Article.Prose(text.value.trim)).left.map(ProblemTransformers.ofApi)
           case None    =>
             Right(Article.Body(if current.value.trim.isEmpty then text.value.trim
             else s"${current.value.stripTrailing}\n\n${text.value.trim}"))
@@ -484,7 +484,7 @@ object CompileArticle:
             notUsed.map(com.histmersion.api.library.Citekey(_)),
             soft.map(ArticleDraft.Problems(_)),
             filter,
-            Coverage.Reason.list(reasons.map((k, v) => k -> Problem.wire(v)))
+            Coverage.Reason.list(reasons.map((k, v) => k -> ProblemTransformers.toApi(v)))
           ),
           soft.map(p => Problem(s"self-check: $p"))
         )

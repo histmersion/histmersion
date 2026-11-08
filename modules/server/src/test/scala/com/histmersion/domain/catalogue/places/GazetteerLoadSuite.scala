@@ -1,5 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
+import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.Problem
 import com.histmersion.testsupport.ComparedByValue.given
@@ -90,7 +91,7 @@ class GazetteerLoadSuite extends DbSuite:
       legacy.map(Storage.at(Location.GazetteerFolder, _)),
       Storage.at(Location.GazetteerDrop, lpf),
       GazetteerLoad.Stores.ManifestAt(manifest.toString),
-      () => GazetteerPaths(extracts, lpf, manifest).manifestText().left.map(Problem.fromApi)
+      () => GazetteerPaths(extracts, lpf, manifest).manifestText().left.map(_.transformInto[Problem])
     )
 
   private def extractsOf(s: GazetteerLoad.Settings): Path = Path.of(s.stores.extracts.where().value)
