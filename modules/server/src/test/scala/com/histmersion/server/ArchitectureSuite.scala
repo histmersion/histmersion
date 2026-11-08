@@ -91,9 +91,10 @@ class ArchitectureSuite extends munit.FunSuite:
     val oneLine = "val a = s\"$owner${if (x).value then \" (here)\" else \"\"} until ${y.value}\".size"
     val broken = "val a = s\"$owner${\n    if (x).value then \" (here)\" else \"\"\n  } until ${y.value}\".size"
     assertEquals(words(broken), words(oneLine))
-    assertEquals(words(oneLine), List("val", "a", "=", "s", ".size"))
+    // a splice is code: its `.value` is read like any other
+    assertEquals(words(oneLine), List("val", "a", "=", "s", "if", "(x).value", "then", "else", "y.value", ".size"))
     assertEquals(words("f(\"a\\\"b\", /* c */ d) // e"), List("f(", ",", "d)"))
-    assertEquals(words("val t = \"\"\"x \"y\" ${z}\"\"\" + 1"), List("val", "t", "=", "+", "1"))
+    assertEquals(words("val t = \"\"\"x \"y\" ${z}\"\"\" + 1"), List("val", "t", "=", "+", "1"), "no prefix: not interpolated")
 
 object ArchitectureSuite:
 
@@ -128,9 +129,9 @@ object ArchitectureSuite:
         }
         .sortBy(_.key)
 
-  /** The text with every comment and string literal replaced by spaces. An interpolated string is blanked whole, its
-    * splices (`s"…${expr}…"`) with it, and wherever the formatter breaks it over lines: a check reads the same code
-    * whatever the layout. (A splice's code is not read: `.value` in one is the string's rendering, not an unwrap.)
+  /** The text with every comment and string literal replaced by spaces. A splice (`s"…${expr}…"`) is code and is
+    * kept: `.value` in one is an unwrap like any other (user, 2026-11-08). Line breaks stay, so a check reads the same
+    * code whatever the layout.
     */
   object Blank:
     def apply(text: String): String =
@@ -142,7 +143,7 @@ object ArchitectureSuite:
         while i < stop do { out += keep(text(i)); i += 1 }
         i
 
-      /** Code from `from`, kept (or blanked, in a splice); a splice ends before the `}` that closes it. Returns where
+      /** Code from `from`, kept; a splice ends before the `}` that closes it. Returns where
         * it stopped.
         */
       def code(from: Int, splice: Boolean): Int =
@@ -166,7 +167,7 @@ object ArchitectureSuite:
           else
             if splice && c == '{' then depth += 1
             else if splice && c == '}' then depth -= 1
-            out += (if splice then keep(c) else c)
+            out += c
             i += 1
         i
 
