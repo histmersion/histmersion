@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -8,6 +9,7 @@ import java.nio.file.{Files, Path, StandardCopyOption}
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
 import com.histmersion.api.exchange.{Bundle, BundleMarkdown, MergeImportRequest}
 import com.histmersion.util.console.Console
+import com.histmersion.api.library.InstanceLabel
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle (docs/research-merge-import.md, milestones
   * M0–M2). The server builds and reads bundles; the CLI moves the file: an export is streamed to disk, a verify/import
@@ -65,7 +67,7 @@ object BundleCmd:
     (Opts.argument[String]("file.hmx"), Output.jsonFlag).mapN { (file, json) => (c: Client) =>
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.verify)
-        if r.ok.value then Right(()) else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
+        if r.ok.value then Right(()) else Left(Cli.Error(Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
       }
     }
   }
@@ -91,7 +93,7 @@ object BundleCmd:
           yield x
       run.flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.importResult)
-        if r.problems.isEmpty then Right(()) else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the import was refused"), exitCode = ExitCode.Refused))
+        if r.problems.isEmpty then Right(()) else Left(Cli.Error(Cli.Error.Message("the import was refused"), exitCode = ExitCode.Refused))
       }
     }
   }
@@ -102,7 +104,7 @@ object BundleCmd:
   ) {
     Opts.option[String]("label", "Name this instance; an empty string clears the name").orNone.map {
       label => (c: Client) =>
-        label.fold(c.instance)(l => c.setInstance(Some(com.histmersion.api.library.InstanceLabel.Label(l)))).map(i => Cli.out.println(BundleMarkdown.instance(i)))
+        label.fold(c.instance)(l => c.setInstance(Some(InstanceLabel.Label(l)))).map(i => Cli.out.println(BundleMarkdown.instance(i)))
     }
   }
 

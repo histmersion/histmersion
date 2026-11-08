@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.data.Validated
 import com.histmersion.cli.NewtypeArguments.given

@@ -1,10 +1,12 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.personal.*
 import com.histmersion.api.ItemKind
 import com.histmersion.util.console.Console
+import com.histmersion.api.library.Title
 
 /** `histmersion bookmarks list|add|rm` — your bookmarks: items of the collection, places on the map, saved views of
   * Explore and periods.
@@ -19,7 +21,7 @@ object BookmarksCmd:
       Output.jsonFlag
     ).mapN { (kind, q, limit, json) => (c: Client) =>
       c.call(PersonalApi.bookmarks)(
-        (kind.map(com.histmersion.api.ItemKind.Wire(_)), q.map(PersonalApi.Search(_)), limit)
+        (kind.map(ItemKind.Wire(_)), q.map(PersonalApi.Search(_)), limit)
       ).map(bs => Output.emit(json, bs)(PersonalMarkdown.bookmarks))
     }
   }
@@ -31,7 +33,7 @@ object BookmarksCmd:
       "period (`period --from -1200 --to -1150 --label 'the crisis years'`)"
   ) {
     (
-      TargetFlags.opts(ItemKind.Bookmarkable, views = com.histmersion.cli.TargetFlags.Views(true)),
+      TargetFlags.opts(ItemKind.Bookmarkable, views = TargetFlags.Views(true)),
       Opts.option[String]("label", "Your name for it").orNone,
       Opts.option[String]("title", "What the item is called, when the collection does not hold it").orNone,
       Output.jsonFlag
@@ -39,7 +41,7 @@ object BookmarksCmd:
       TargetFlags
         .target(raw)
         .flatMap(t =>
-          c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title.map(com.histmersion.api.library.Title(_))))
+          c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title.map(Title(_))))
             .map(b => Output.emit(json, b)(b => s"Bookmarked: ${PersonalMarkdown.bookmarkLine(b).stripPrefix("- ")}"))
         )
     }

@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.ListPatch
 import com.histmersion.config.*
@@ -7,6 +8,11 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.testsupport.ComparedByValue.given
+import com.histmersion.api.Write
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Api
+import com.histmersion.api.library.Filter
+import com.histmersion.api.library.Citekey
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass changes" is asserted
   * without a server.
@@ -47,12 +53,12 @@ class ArticlePatchesSuite extends munit.FunSuite:
 
   test("tag flags become one ListPatch; untouched parts stay absent"):
     val p = build(tagsAdd = Some(ArticlePatches.CsvText("sea-peoples, collapse")), tagsRemove = Some(ArticlePatches.CsvText("old"))).toOption.get
-    assertEquals(p.tags, Some(ListPatch(List(com.histmersion.api.Write.ListItem("sea-peoples"), com.histmersion.api.Write.ListItem("collapse")), List(com.histmersion.api.Write.ListItem("old")), None)))
+    assertEquals(p.tags, Some(ListPatch(List(Write.ListItem("sea-peoples"), Write.ListItem("collapse")), List(Write.ListItem("old")), None)))
     assertEquals(p.body, None)
     assertEquals(p.summary, None)
 
   test("--tags-replace sets the baseline"):
-    assertEquals(build(tagsReplace = Some(ArticlePatches.CsvText("a,b"))).toOption.get.tags, Some(ListPatch(Nil, Nil, Some(List(com.histmersion.api.Write.ListItem("a"), com.histmersion.api.Write.ListItem("b"))))))
+    assertEquals(build(tagsReplace = Some(ArticlePatches.CsvText("a,b"))).toOption.get.tags, Some(ListPatch(Nil, Nil, Some(List(Write.ListItem("a"), Write.ListItem("b"))))))
 
   test("--regions replaces the list, --title/--summary/--kind replace themselves"):
     val p =
@@ -66,7 +72,7 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals((p.title, p.summary, p.kind), (Some("T"), Some("S"), Some("report")))
 
   test("--period parses signed years, and refuses anything else"):
-    assertEquals(build(period = Some(ArticlePatches.FilterFlags.Period("-1300,-1100"))).toOption.get.period, Some(Period.Input(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1100))))
+    assertEquals(build(period = Some(ArticlePatches.FilterFlags.Period("-1300,-1100"))).toOption.get.period, Some(Period.Input(Year(-1300), Year(-1100))))
     assert(build(period = Some(ArticlePatches.FilterFlags.Period("-1300"))).isLeft)
     assert(build(period = Some(ArticlePatches.FilterFlags.Period("a,b"))).isLeft)
 
@@ -97,47 +103,47 @@ class ArticlePatchesSuite extends munit.FunSuite:
   test("#958: --filter-* flags replace the filter, --clear-filter sends the empty one, --reason sets or removes one"):
     val base = build(json = Some(ArticlePatches.PatchJson("""{"filter":{"query":"from json"}}"""))).toOption.get
     val ff = ArticlePatches.FilterFlags(
-      query = Some(com.histmersion.api.Api.ArticleQuery.Text(" Theseus ")),
-      topics = Some(com.histmersion.cli.ArticlePatches.CsvText("greek_myth, attica")),
-      period = Some(com.histmersion.cli.ArticlePatches.FilterFlags.Period("-1500,-400")),
-      extraQueries = List(com.histmersion.cli.ArticlePatches.FilterFlags.ExtraQueries("synoikism"))
+      query = Some(Api.ArticleQuery.Text(" Theseus ")),
+      topics = Some(ArticlePatches.CsvText("greek_myth, attica")),
+      period = Some(ArticlePatches.FilterFlags.Period("-1500,-400")),
+      extraQueries = List(ArticlePatches.FilterFlags.ExtraQueries("synoikism"))
     )
     val p = ArticlePatches
-      .withCoverage(base, ff, List(com.histmersion.cli.ArticlePatches.ReasonText("graves2017_greek=retells the myths"), com.histmersion.cli.ArticlePatches.ReasonText("nilsson1927_minoan=")))
+      .withCoverage(base, ff, List(ArticlePatches.ReasonText("graves2017_greek=retells the myths"), ArticlePatches.ReasonText("nilsson1927_minoan=")))
       .toOption
       .get
     assertEquals(
       p.filter,
       Some(
         Article.Filter(
-          query = Some(com.histmersion.api.library.Filter.Q("Theseus")),
-          topics = List(com.histmersion.api.library.Filter.Topics("greek_myth"), com.histmersion.api.library.Filter.Topics("attica")),
-          from = Some(com.histmersion.api.catalogue.Year(-1500)),
-          to = Some(com.histmersion.api.catalogue.Year(-400)),
-          extraQueries = List(com.histmersion.api.research.Article.Filter.ExtraQueries("synoikism"))
+          query = Some(Filter.Q("Theseus")),
+          topics = List(Filter.Topics("greek_myth"), Filter.Topics("attica")),
+          from = Some(Year(-1500)),
+          to = Some(Year(-400)),
+          extraQueries = List(Article.Filter.ExtraQueries("synoikism"))
         )
       )
     )
     assertEquals(
       p.reasons,
-      List(Coverage.Reason(com.histmersion.api.library.Citekey("graves2017_greek"), com.histmersion.api.research.Coverage.Entry.Reason("retells the myths")), Coverage.Reason(com.histmersion.api.library.Citekey("nilsson1927_minoan"), com.histmersion.api.research.Coverage.Entry.Reason("")))
+      List(Coverage.Reason(Citekey("graves2017_greek"), Coverage.Entry.Reason("retells the myths")), Coverage.Reason(Citekey("nilsson1927_minoan"), Coverage.Entry.Reason("")))
     )
     // no flag: the --json filter stands
     assertEquals(
       ArticlePatches.withCoverage(base, ArticlePatches.FilterFlags(), Nil).toOption.get.filter,
-      Some(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("from json"))))
+      Some(Article.Filter(query = Some(Filter.Q("from json"))))
     )
     assertEquals(
-      ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = com.histmersion.cli.ArticlePatches.FilterFlags.Clear(true)), Nil).toOption.get.filter,
+      ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = ArticlePatches.FilterFlags.Clear(true)), Nil).toOption.get.filter,
       Some(Article.Filter())
     )
     assert(
       ArticlePatches
-        .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(query = Some(com.histmersion.api.Api.ArticleQuery.Text("x")), clear = com.histmersion.cli.ArticlePatches.FilterFlags.Clear(true)), Nil)
+        .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(query = Some(Api.ArticleQuery.Text("x")), clear = ArticlePatches.FilterFlags.Clear(true)), Nil)
         .isLeft
     )
-    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(), List(com.histmersion.cli.ArticlePatches.ReasonText("no-equals-sign"))).isLeft)
-    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(period = Some(com.histmersion.cli.ArticlePatches.FilterFlags.Period("-1500"))), Nil).isLeft)
+    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(), List(ArticlePatches.ReasonText("no-equals-sign"))).isLeft)
+    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(period = Some(ArticlePatches.FilterFlags.Period("-1500"))), Nil).isLeft)
 
   test("§6.8: --critique-reason sets or removes one checklist pair's reason, after those of --json"):
     val base = build(json =
@@ -146,18 +152,18 @@ class ArticlePatchesSuite extends munit.FunSuite:
     val p = ArticlePatches
       .withCritiques(
         base,
-        List(com.histmersion.api.research.CritiqueReason.Reason("smith1987_dying>frazer1922_golden=cited for the calendar only"), com.histmersion.api.research.CritiqueReason.Reason("[[jones2001_myth]] -> lee1990_ritual="))
+        List(CritiqueReason.Reason("smith1987_dying>frazer1922_golden=cited for the calendar only"), CritiqueReason.Reason("[[jones2001_myth]] -> lee1990_ritual="))
       )
       .toOption
       .get
     assertEquals(
       p.critiqueReasons,
       List(
-        CritiqueReason(com.histmersion.api.library.Citekey("a2000_x"), com.histmersion.api.library.Citekey("b2001_y"), com.histmersion.api.research.CritiqueReason.Reason("from json")),
-        CritiqueReason(com.histmersion.api.library.Citekey("smith1987_dying"), com.histmersion.api.library.Citekey("frazer1922_golden"), com.histmersion.api.research.CritiqueReason.Reason("cited for the calendar only")),
-        CritiqueReason(com.histmersion.api.library.Citekey("jones2001_myth"), com.histmersion.api.library.Citekey("lee1990_ritual"), com.histmersion.api.research.CritiqueReason.Reason(""))
+        CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), CritiqueReason.Reason("from json")),
+        CritiqueReason(Citekey("smith1987_dying"), Citekey("frazer1922_golden"), CritiqueReason.Reason("cited for the calendar only")),
+        CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), CritiqueReason.Reason(""))
       )
     )
     assertEquals(ArticlePatches.withCritiques(base, Nil).toOption.get, base)
-    val bad = ArticlePatches.withCritiques(Article.Patch(), List(com.histmersion.api.research.CritiqueReason.Reason("smith1987_dying=no pair")))
+    val bad = ArticlePatches.withCritiques(Article.Patch(), List(CritiqueReason.Reason("smith1987_dying=no pair")))
     assert(bad.left.exists(e => e.message.value.startsWith("--critique-reason:") && e.exitCode == ExitCode.Usage), bad)

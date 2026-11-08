@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -342,7 +343,7 @@ class PluginTemplateSuite extends munit.FunSuite:
       )
       assertEquals(
         PluginAuthoring
-          .repository(Some("https://example.org/m2"), Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("no install"))), Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("no HOME"))))
+          .repository(Some("https://example.org/m2"), Left(Cli.Error(Cli.Error.Message("no install"))), Left(Cli.Error(Cli.Error.Message("no HOME"))))
           .map(_._1),
         Right(TemplateRepository.Remote(PluginRepository.parse("https://example.org/m2", _ => false).toOption.get))
       )

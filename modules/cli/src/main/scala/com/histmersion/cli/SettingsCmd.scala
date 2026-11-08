@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -75,7 +76,7 @@ object SettingsCmd:
       onlyLocal: Boolean,
       reload: Boolean,
       consent: Boolean,
-      json: com.histmersion.cli.Cli.JsonOutput,
+      json: Cli.JsonOutput,
       c: Client
   )(using console: Console): Either[Cli.Error, Unit] =
     val w = ConfigEdit.Write(

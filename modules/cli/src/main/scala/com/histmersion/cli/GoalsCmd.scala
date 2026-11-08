@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.exchange.Bundle
 
@@ -60,7 +61,7 @@ object GoalsCmd:
       .mapN { (slug, title, status, notes, budget, from, to) => (c: Client) =>
         c.patchGoal(
           Goal.Uid(slug),
-          com.histmersion.api.automation.Goal.Patch(
+          Goal.Patch(
             title = title.map(Goal.Title(_)),
             status = status.map(Goal.StatusValue(_)),
             notes = notes.map(Goal.Notes(_)),

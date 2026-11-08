@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -12,6 +13,7 @@ import com.histmersion.api.library.{AuthorName, Citekey, Doi, Title}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.SpatialHierarchyResult.Job
 import com.histmersion.util.console.Console
+import com.histmersion.api.Paging
 
 /** `histmersion ingest <file>` · `reocr` · `assets` · `jobs` — OCR that keeps the figures, as a job (plan §1.8).
   *
@@ -27,7 +29,7 @@ object IngestCmd:
     * [[ExitCode.Refused]].
     */
 
-  def pollJob(c: Client, id: com.histmersion.api.SpatialHierarchyResult.Job.Id, waited: Int)(using console: Console) : Either[Cli.Error, Unit] =
+  def pollJob(c: Client, id: Job.Id, waited: Int)(using console: Console) : Either[Cli.Error, Unit] =
     JobFollow.job(c.job, id, waited * 1000L).map(j => Cli.out.println(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
@@ -41,12 +43,12 @@ object IngestCmd:
       authors: List[AuthorName],
       year: Option[Year],
       doi: Option[Doi],
-      noWait: com.histmersion.cli.Cli.NoWait,
+      noWait: Cli.NoWait,
       provenance: Option[Ingest.Params.Provenance] = None,
       acquireItem: Option[Ingest.Params.AcquireItem] = None
   ) : Either[Cli.Error, Unit] =
     if citekey.value.trim.isEmpty then
-      Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("uploading a file needs --citekey to store it under"), exitCode = ExitCode.Usage))
+      Left(Cli.Error(Cli.Error.Message("uploading a file needs --citekey to store it under"), exitCode = ExitCode.Usage))
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
     // connection mis-framed, so the NEXT upload on it reads as empty too (see
     // ZeroLengthUploadSuite). Never sending one keeps that hazard off our own wire entirely.
@@ -98,7 +100,7 @@ object IngestCmd:
     }
 
   /** `histmersion jobs pause|resume|cancel <id>`. */
-  private def control(action: com.histmersion.api.Api.JobControl.Action, help: String)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  private def control(action: Api.JobControl.Action, help: String)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(action.value, help) {
       (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
         c.call(Api.jobControl)((Job.Id(id), action)).map(j => Output.emit(json, j)(IngestMarkdown.job))
@@ -107,12 +109,12 @@ object IngestCmd:
 
   private def controls (using console: Console) =
     control(
-      com.histmersion.api.Api.JobControl.Action("pause"),
+      Api.JobControl.Action("pause"),
       "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
         "re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did"
     ) orElse
-      control(com.histmersion.api.Api.JobControl.Action("resume"), "Resume a paused job: it goes on with the parts it had not done") orElse
-      control(com.histmersion.api.Api.JobControl.Action("cancel"), "Cancel a job: a background job stops after the part it is on and is recorded as cancelled")
+      control(Api.JobControl.Action("resume"), "Resume a paused job: it goes on with the parts it had not done") orElse
+      control(Api.JobControl.Action("cancel"), "Cancel a job: a background job stops after the part it is on and is recorded as cancelled")
 
   private def jobs (using console: Console) = Opts.subcommand(
     "jobs",
@@ -132,7 +134,7 @@ object IngestCmd:
         id match
           case Some(i) => c.job(Job.Id(i)).map(j => Output.emit(json, j)(IngestMarkdown.job))
           case None    =>
-            c.jobs(f, limit.map(com.histmersion.api.Paging.Limit(_)), before.map(Api.Jobs.Status(_))).map { (js, page) =>
+            c.jobs(f, limit.map(Paging.Limit(_)), before.map(Api.Jobs.Status(_))).map { (js, page) =>
               Output.emit(json, js)(js =>
                 IngestMarkdown.jobs(
                   js.toVector,

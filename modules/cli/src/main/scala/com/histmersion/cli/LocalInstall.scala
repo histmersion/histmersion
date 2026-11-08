@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -6,6 +7,8 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Histmersion installed on THIS machine, as the plugin commands see it: the bundle (`bin/`, `kit/`) and the data
   * directory (`plugins/`, `signing/`).
@@ -31,17 +34,17 @@ final case class LocalInstall(home: Path, data: Path):
   def lib: Path = plugins.resolve("lib")
 
   /** What the scripts need to act on THIS install and data directory, whatever the caller's environment. */
-  def env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting] =
+  def env: Map[LocalInstall.EnvVariable, LocalInstall.EnvSetting] =
     Map(
-      com.histmersion.cli.LocalInstall.EnvVariable("HISTMERSION_HOME") -> com.histmersion.cli.LocalInstall.EnvSetting(home.toString),
-      com.histmersion.cli.LocalInstall.EnvVariable("HISTMERSION_DATA_DIR") -> com.histmersion.cli.LocalInstall.EnvSetting(data.toString)
+      LocalInstall.EnvVariable("HISTMERSION_HOME") -> LocalInstall.EnvSetting(home.toString),
+      LocalInstall.EnvVariable("HISTMERSION_DATA_DIR") -> LocalInstall.EnvSetting(data.toString)
     )
 
 object LocalInstall:
   type EnvSetting = EnvSetting.T
-  object EnvSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvSetting extends RefinedType[String, Pure]
   type EnvVariable = EnvVariable.T
-  object EnvVariable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvVariable extends RefinedType[String, Pure]
   /** The install: `cli.plugins.install-dir`, else the one this executable sits in (`<home>/bin/histmersion`, through
     * the `~/bin` symlink), else the platform default. It must hold the relink kit.
     */

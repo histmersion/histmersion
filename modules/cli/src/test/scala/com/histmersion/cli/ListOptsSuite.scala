@@ -1,7 +1,14 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, JobFilter, RunFilter}
 import com.monovore.decline.Command
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.jobs.JobState
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.Paging
 
 /** The filter options of `agent approvals`, `agent runs` and `jobs`: repeatable or comma-separated, parsed into the
   * core filters the request carries, and repeated by the next-page line.
@@ -32,11 +39,11 @@ class ListOptsSuite extends munit.FunSuite:
       ),
       Right(
         ApprovalFilter(
-          Some(com.histmersion.api.automation.Approval.State.Wire("all")),
-          List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan,edge"), com.histmersion.api.automation.Approval.Kind.Wire("article-publish")),
-          Some(com.histmersion.api.automation.ListFilters.ApprovalFilter.Subject("tin")),
-          Some(com.histmersion.api.automation.Goal.Slug("bronze-age")),
-          List(com.histmersion.api.automation.Approval.DecidedBy.Wire("autopilot"))
+          Some(Approval.State.Wire("all")),
+          List(Approval.Kind.Wire("goal-plan,edge"), Approval.Kind.Wire("article-publish")),
+          Some(ApprovalFilter.Subject("tin")),
+          Some(Goal.Slug("bronze-age")),
+          List(Approval.DecidedBy.Wire("autopilot"))
         )
       )
     )
@@ -44,7 +51,7 @@ class ListOptsSuite extends munit.FunSuite:
     // the server reads the comma-separated and repeated values as one list
     assertEquals(
       parse(ListOpts.approvals, "--kind", "goal-plan,edge").map(_.normalized.kind),
-      Right(List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan"), com.histmersion.api.automation.Approval.Kind.Wire("edge")))
+      Right(List(Approval.Kind.Wire("goal-plan"), Approval.Kind.Wire("edge")))
     )
 
   test("runs: every filter, and the dates as typed (the server reads them)"):
@@ -76,16 +83,16 @@ class ListOptsSuite extends munit.FunSuite:
       ),
       Right(
         RunFilter(
-          List(com.histmersion.api.automation.ListFilters.RunFilter.Status("failed"), com.histmersion.api.automation.ListFilters.RunFilter.Status("cancelled")),
-          List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("review-article")),
-          List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("seed:tin")),
-          Some(com.histmersion.api.automation.Goal.Slug("g")),
-          List(com.histmersion.api.automation.ListFilters.RunFilter.Model("codex:gpt-6")),
-          List(com.histmersion.api.automation.ListFilters.RunFilter.Provider("codex")),
-          List(com.histmersion.api.automation.Agents.Origin.Wire("manager")),
-          Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("7d")),
-          Some(com.histmersion.api.automation.ListFilters.RunFilter.Until("2026-10-01")),
-          Some(com.histmersion.api.automation.ListFilters.RunFilter.Subject("a2020"))
+          List(RunFilter.Status("failed"), RunFilter.Status("cancelled")),
+          List(RunFilter.Pipeline("review-article")),
+          List(RunFilter.Manager("seed:tin")),
+          Some(Goal.Slug("g")),
+          List(RunFilter.Model("codex:gpt-6")),
+          List(RunFilter.Provider("codex")),
+          List(Agents.Origin.Wire("manager")),
+          Some(RunFilter.Since("7d")),
+          Some(RunFilter.Until("2026-10-01")),
+          Some(RunFilter.Subject("a2020"))
         )
       )
     )
@@ -93,7 +100,7 @@ class ListOptsSuite extends munit.FunSuite:
   test("jobs: kinds, states, dates, subject"):
     assertEquals(
       parse(ListOpts.jobs, "--kind", "ingest", "--kind", "reocr", "--status", "failed", "--since", "2026-09-01"),
-      Right(JobFilter(List(com.histmersion.api.jobs.JobState.Wire("failed")), List(com.histmersion.api.jobs.JobKinds.Wire("ingest"), com.histmersion.api.jobs.JobKinds.Wire("reocr")), Some(com.histmersion.api.automation.ListFilters.JobFilter.Since("2026-09-01")), None, None))
+      Right(JobFilter(List(JobState.Wire("failed")), List(JobKinds.Wire("ingest"), JobKinds.Wire("reocr")), Some(JobFilter.Since("2026-09-01")), None, None))
     )
 
   test("the commands take the filters, --limit, --before and --json; approve/reject take several ids"):
@@ -124,12 +131,12 @@ class ListOptsSuite extends munit.FunSuite:
     assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal").isLeft)
 
   test("the next-page line repeats every filter, a list option once per value"):
-    val f = ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan,edge")), decidedBy = List(com.histmersion.api.automation.Approval.DecidedBy.Wire("person")))
+    val f = ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan,edge")), decidedBy = List(Approval.DecidedBy.Wire("person")))
     assertEquals(
-      PageCmd.next("agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> Some("20")), com.histmersion.api.Paging.Cursor("41")),
+      PageCmd.next("agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> Some("20")), Paging.Cursor("41")),
       "histmersion agent approvals --kind goal-plan --kind edge --decided-by person --limit 20 --before 41"
     )
     assertEquals(
-      PageCmd.next("agent runs", RunFilter(manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("seed:tin")), since = Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("7d"))).options.map((k, v) => (k.value, v.map(_.value))), com.histmersion.api.Paging.Cursor("r9")),
+      PageCmd.next("agent runs", RunFilter(manager = List(RunFilter.Manager("seed:tin")), since = Some(RunFilter.Since("7d"))).options.map((k, v) => (k.value, v.map(_.value))), Paging.Cursor("r9")),
       "histmersion agent runs --manager seed:tin --since 7d --before r9"
     )

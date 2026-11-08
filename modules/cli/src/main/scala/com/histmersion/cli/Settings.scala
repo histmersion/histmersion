@@ -1,7 +1,10 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.monovore.decline.*
 import com.histmersion.config.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The configuration as the CLI reads it: reference.conf < the user config file < the environment, the same layers as
   * the server ([[AppConfig.loadWithUserFile]]). Read on first use, so `--help` never reads a file. A file that does not
@@ -10,7 +13,7 @@ import com.histmersion.config.*
   */
 object Settings:
   type Prefix = Prefix.T
-  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Prefix extends RefinedType[String, Pure]
 
   lazy val loaded: Either[ConfigProblem, LoadedConfig] = AppConfig.loadWithUserFile()
 

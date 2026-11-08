@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 
 import cats.syntax.all.*
@@ -8,6 +9,8 @@ import com.histmersion.config.*
 import com.histmersion.api.library.CalibreEntryCheck
 import com.histmersion.api.library.Source
 import com.histmersion.util.console.Console
+import com.histmersion.api.Api
+import com.histmersion.config.CalibreCliConfig
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).
   *
@@ -21,11 +24,11 @@ object DeleteCmd:
 
   object Args:
     type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
-    type Apply = com.histmersion.api.Api.Apply
-    val Apply: _root_.com.histmersion.api.Api.Apply.type = _root_.com.histmersion.api.Api.Apply
-    type Json = com.histmersion.cli.Cli.JsonOutput
-    val Json: _root_.com.histmersion.cli.Cli.JsonOutput.type = _root_.com.histmersion.cli.Cli.JsonOutput
+    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
+    type Apply = Api.Apply
+    val Apply: Api.Apply.type = Api.Apply
+    type Json = Cli.JsonOutput
+    val Json: Cli.JsonOutput.type = Cli.JsonOutput
 
   val args: Opts[Args] =
     (
@@ -48,8 +51,8 @@ object DeleteCmd:
   def calibreCheck(
       calibreId: Source.CalibreId,
       libraryExists: => Boolean,
-      library: com.histmersion.config.CalibreCliConfig.LibraryDir,
-      byId: com.histmersion.cli.Calibre.Book.Id => Either[com.histmersion.cli.Calibre.Problem, Option[Calibre.Book]]
+      library: CalibreCliConfig.LibraryDir,
+      byId: Calibre.Book.Id => Either[Calibre.Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.value.trim.toIntOption match
       case None => CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason(s"'$calibreId' is not a Calibre id"))
@@ -78,7 +81,7 @@ object DeleteCmd:
         Left(
           Cli.Error(
             Cli.Error.Message(
-              s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), com.histmersion.api.Plural.CountSingular("stored file"))} could not be removed"
+              s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), Plural.CountSingular("stored file"))} could not be removed"
             ),
             exitCode = ExitCode.Refused
           )

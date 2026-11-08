@@ -1,8 +1,10 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import io.github.iltotore.iron.*
 
 import java.nio.file.Path
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What `histmersion plugin new` writes: a scala-cli project whose build is `project.scala`, whose two Scala files are
   * the plugin and its tests, and the resources a plugin jar carries beside its classes. Pure: the caller writes the
@@ -10,7 +12,7 @@ import java.nio.file.Path
   */
 object PluginTemplate:
   type ClassName = ClassName.T
-  object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClassName extends RefinedType[String, Pure]
 
 
   final case class Request(
@@ -23,7 +25,7 @@ object PluginTemplate:
 
   object Request:
     type AgentNotes = AgentNotes.T
-    object AgentNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AgentNotes extends RefinedType[Boolean, Pure]
 
   /** The version a new plugin is published under, as its `Plugin.Info` states it too. */
   val FirstVersion = "0.1.0"
@@ -52,11 +54,11 @@ object PluginTemplate:
   def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): TemplateFile.Path =
     TemplateFile.Path(s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json")
 
-  def pluginClass(id: PluginId): com.histmersion.cli.PluginTemplate.ClassName =
+  def pluginClass(id: PluginId): ClassName =
     val typeName = id.typeName.value
     ClassName(if typeName.endsWith("Plugin") then typeName else s"${typeName}Plugin")
 
-  def contributionClass(id: PluginId, kind: PluginKind): com.histmersion.cli.PluginTemplate.ClassName =
+  def contributionClass(id: PluginId, kind: PluginKind): ClassName =
     ClassName(s"${id.typeName}${kind.classSuffix}")
 
   def files(r: Request): List[TemplateFile] =

@@ -1,8 +1,10 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.catalogue.Place
 
 import java.nio.file.{Files, Path}
+import com.histmersion.config.PlacesConfig
 
 /** `histmersion places seed`'s file walk is a pure function of a directory, so it is tested as one. */
 class PlacesCmdSuite extends munit.FunSuite:
@@ -110,19 +112,19 @@ class PlacesCmdSuite extends munit.FunSuite:
     val bin = Files.createDirectories(install.resolve("bin"))
     val exe = Files.writeString(bin.resolve("histmersion"), "")
     val elsewhere = Files.createTempDirectory("histmersion-cwd")
-    val (d, tried) = PlacesCmd.resolveSeedDir(com.histmersion.config.PlacesConfig.SeedDir("db/places"), elsewhere, Some(exe))
+    val (d, tried) = PlacesCmd.resolveSeedDir(PlacesConfig.SeedDir("db/places"), elsewhere, Some(exe))
     assertEquals(d, install.resolve("db/places").toRealPath())
     assertEquals(tried.size, 2)
 
   test("#6560: the working directory wins when it holds the seed dir; absolute paths are kept"):
     val cwd = Files.createTempDirectory("histmersion-checkout")
     val _ = Files.createDirectories(cwd.resolve("db/places"))
-    assertEquals(PlacesCmd.resolveSeedDir(com.histmersion.config.PlacesConfig.SeedDir("db/places"), cwd, None)._1, cwd.resolve("db/places"))
+    assertEquals(PlacesCmd.resolveSeedDir(PlacesConfig.SeedDir("db/places"), cwd, None)._1, cwd.resolve("db/places"))
     val abs = cwd.resolve("elsewhere").toAbsolutePath
-    assertEquals(PlacesCmd.resolveSeedDir(com.histmersion.config.PlacesConfig.SeedDir(abs.toString), Path.of("/"), None), (abs, List(abs)))
+    assertEquals(PlacesCmd.resolveSeedDir(PlacesConfig.SeedDir(abs.toString), Path.of("/"), None), (abs, List(abs)))
 
   test("#6560: nothing found — the first candidate, and every one tried for the message"):
     val cwd = Files.createTempDirectory("histmersion-empty")
-    val (d, tried) = PlacesCmd.resolveSeedDir(com.histmersion.config.PlacesConfig.SeedDir("db/places"), cwd, None)
+    val (d, tried) = PlacesCmd.resolveSeedDir(PlacesConfig.SeedDir("db/places"), cwd, None)
     assertEquals(d, cwd.resolve("db/places"))
     assertEquals(tried, List(cwd.resolve("db/places")))

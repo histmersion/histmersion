@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -25,6 +26,8 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.console.Console
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against
@@ -40,9 +43,9 @@ object MergeCmd:
   object ResolutionFlags:
 
     type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object File extends RefinedType[String, Pure]
     type Editions = Editions.T
-    object Editions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Editions extends RefinedType[String, Pure]
 
   val resolutionOpts: Opts[ResolutionFlags] =
     (
@@ -208,7 +211,7 @@ object MergeCmd:
             Cli.confirm(
               Cli.Question(
                 s"Merge ${MergeMarkdown.who(plan.from)} into this collection (plan $hash, " +
-                  s"${Plural.count(com.histmersion.api.Plural.CountN(plan.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))})? A backup is taken first."
+                  s"${Plural.count(Plural.CountN(plan.changes.value.toLong), Plural.CountSingular("change"))})? A backup is taken first."
               )
             ),
           (),

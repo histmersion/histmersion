@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 /** The CLI started in a directory it may not read (#901). On macOS, privacy protection (TCC) denies a native binary its
   * working directory under `~/Documents`, `~/Desktop` or `~/Downloads` until the terminal is granted Files and Folders

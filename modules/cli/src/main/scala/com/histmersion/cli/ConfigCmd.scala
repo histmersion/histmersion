@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.monovore.decline.*
 import com.histmersion.config.*
@@ -43,7 +44,7 @@ object ConfigCmd:
       c.configReload.flatMap { r =>
         Output.emit(json, r)(ReloadMarkdown.report)
         if r.errors.isEmpty then Right(())
-        else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the config was not reloaded"), exitCode = ExitCode.Refused))
+        else Left(Cli.Error(Cli.Error.Message("the config was not reloaded"), exitCode = ExitCode.Refused))
       }
     }
   }

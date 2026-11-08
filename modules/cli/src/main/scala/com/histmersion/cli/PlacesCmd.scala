@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.exchange.Bundle
 
@@ -15,6 +16,7 @@ import com.histmersion.api.catalogue.{EventsApi, Lpf}
 import com.histmersion.api.catalogue.{Latitude, Longitude, Place, Year}
 import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.util.console.Console
+import com.histmersion.api.SpatialHierarchyResult
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.
@@ -40,7 +42,7 @@ object PlacesCmd:
       .orNone
       .map(_.map(Api.AggregateQuery.AsOf(_)))
 
-  private def show(rows: List[com.histmersion.api.catalogue.Place.Hit], asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf])(using console: Console) : Unit =
+  private def show(rows: List[Place.Hit], asOf: Option[Api.AggregateQuery.AsOf])(using console: Console) : Unit =
     Cli.out.println(PlacesMarkdown.places(rows.toVector, asOf.map(a => Year(a.value))))
 
   private def search (using console: Console) = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
@@ -81,7 +83,7 @@ object PlacesCmd:
       kind: Option[Place.KindValue],
       batch: Paging.Limit,
       dataset: Dataset = Dataset.Local
-  ) : Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult] =
+  ) : Either[Cli.Error, Place.ImportResult] =
     if !Files.isRegularFile(file) then Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.KindValue(Place.Kind.Region))) match
@@ -90,15 +92,15 @@ object PlacesCmd:
           val groups = items.grouped(batch.value.max(1)).toList
           val total = groups.size
           groups.zipWithIndex
-            .foldLeft[Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult]](
-              Right(com.histmersion.api.catalogue.Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil))
+            .foldLeft[Either[Cli.Error, Place.ImportResult]](
+              Right(Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil))
             ) { case (acc, (g, i)) =>
               acc.flatMap { sum =>
                 if total > 1 then
                   Cli.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
                 c.importPlaces(kind.map(k => Api.ExternalPlaces.Source(k.value)), Api.ExternalPlaces.Format(Lpf.render(g).value), dataset)
                   .map(r =>
-                    com.histmersion.api.catalogue.Place.ImportResult(
+                    Place.ImportResult(
                       Place.ImportResult.Places(sum.places.value + r.places.value),
                       Place.ImportResult.Names(sum.names.value + r.names.value),
                       Place.ImportResult.Relations(sum.relations.value + r.relations.value),
@@ -232,7 +234,7 @@ object PlacesCmd:
   private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
 
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
-  private def started(c: Client, id: com.histmersion.api.SpatialHierarchyResult.Job.Id, noWait: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
+  private def started(c: Client, id: SpatialHierarchyResult.Job.Id, noWait: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
     Cli.out.println(s"job `$id` started (`histmersion jobs $id` follows it)")
     if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
 
@@ -265,7 +267,7 @@ object PlacesCmd:
       .mapN { (source, dryRun, nw) => (c: Client) =>
         c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), Cli.DryRun(dryRun)).flatMap { r =>
           r.job match
-            case Some(id) => started(c, com.histmersion.api.SpatialHierarchyResult.Job.Id(id.value), nw)
+            case Some(id) => started(c, SpatialHierarchyResult.Job.Id(id.value), nw)
             case None     => Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
         }
       }
@@ -336,7 +338,7 @@ object PlacesCmd:
       .mapN { (place, csv) => (c: Client) =>
         c.placeNames(place.map(Place.Id(_)))
           .map(rows =>
-            Cli.out.print(if csv then com.histmersion.api.catalogue.Place.Edits.csv(rows)
+            Cli.out.print(if csv then Place.Edits.csv(rows)
             else PlacesMarkdown.manualPlaceNames(rows) + "\n")
           )
       }
@@ -360,7 +362,7 @@ object PlacesCmd:
         "Where the coordinates come from: a gazetteer or Wikidata id, a map, a publication"
       ),
       Opts
-        .option[String]("id", s"The place id (default ${com.histmersion.api.catalogue.Place.Edits.LocalPrefix}<label>)")
+        .option[String]("id", s"The place id (default ${Place.Edits.LocalPrefix}<label>)")
         .orNone,
       Opts.options[String]("name", "A further name (repeatable)").orEmpty,
       langOpt,

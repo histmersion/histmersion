@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.monovore.decline.Command
 import com.histmersion.config.*
@@ -6,15 +7,17 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.CollectionEntry
 
 class OutputSuite extends munit.FunSuite:
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
   test("render prints the DTO's own codec with --json, its Markdown without"):
-    val item = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(7), com.histmersion.api.automation.Queue.QueueItem.List("tasks"), com.histmersion.api.automation.Queue.QueueItem.Text("Read Cline"), None, com.histmersion.api.automation.Queue.QueueItem.Status("open"), None, Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("2026-10-17T00:00:00Z")), None)
-    assertEquals(Output.render(json = com.histmersion.cli.Cli.JsonOutput(false), item)(i => s"#${i.id}"), "#7")
-    val js = Output.render(json = com.histmersion.cli.Cli.JsonOutput(true), item)(_ => "unused")
+    val item = Queue.QueueItem(Queue.QueueItem.Id(7), Queue.QueueItem.List("tasks"), Queue.QueueItem.Text("Read Cline"), None, Queue.QueueItem.Status("open"), None, Some(Queue.QueueItem.CreatedAt("2026-10-17T00:00:00Z")), None)
+    assertEquals(Output.render(json = Cli.JsonOutput(false), item)(i => s"#${i.id}"), "#7")
+    val js = Output.render(json = Cli.JsonOutput(true), item)(_ => "unused")
     assert(js.startsWith("{\n  \"id\" : 7,"), js)
     assert(js.contains("\"reason\" : null"), "an absent field is printed as null, as the server sends it: " + js)
 
@@ -26,15 +29,15 @@ class OutputSuite extends munit.FunSuite:
   test("calibre search --json keeps the field names it always printed"):
     val b =
       Calibre.Book(
-        com.histmersion.cli.Calibre.Book.Id(3),
-        com.histmersion.cli.Calibre.Book.Title("Title"),
-        List(com.histmersion.api.library.AuthorName("A")),
-        Some(com.histmersion.cli.Calibre.Book.Pubdate("1999-01-01")),
+        Calibre.Book.Id(3),
+        Calibre.Book.Title("Title"),
+        List(AuthorName("A")),
+        Some(Calibre.Book.Pubdate("1999-01-01")),
         None,
-        List(com.histmersion.api.library.CollectionEntry.Tags("t")),
+        List(CollectionEntry.Tags("t")),
         None,
         Map(Calibre.Book.IdentifiersKey("doi") -> Calibre.Book.IdentifiersValue("10.1/x")),
-        List(com.histmersion.api.library.CollectionEntry.Formats("PDF"))
+        List(CollectionEntry.Formats("PDF"))
       )
     val js = Output.json(List(Calibre.Json.Book.of(b)))
     assertEquals(
@@ -44,14 +47,14 @@ class OutputSuite extends munit.FunSuite:
     assert(js.contains("\"year\" : 1999"), js)
 
   test("calibre update --all --json names each outcome as before"):
-    val ch = Calibre.Change(Calibre.Field.values.head, com.histmersion.cli.Calibre.Change.From("a"), com.histmersion.cli.Calibre.Change.To("b"))
-    val r = Calibre.Json.UpdateRow.of(UpdateEntry(com.histmersion.cli.UpdateEntry.CalibreId(3), List(com.histmersion.cli.UpdateEntry.Citekeys("ck")), UpdateOutcome.Failed(List(ch), com.histmersion.cli.UpdateOutcome.Failed.Reason("locked"))))
+    val ch = Calibre.Change(Calibre.Field.values.head, Calibre.Change.From("a"), Calibre.Change.To("b"))
+    val r = Calibre.Json.UpdateRow.of(UpdateEntry(UpdateEntry.CalibreId(3), List(UpdateEntry.Citekeys("ck")), UpdateOutcome.Failed(List(ch), UpdateOutcome.Failed.Reason("locked"))))
     assertEquals(
       (r.state, r.reason, r.changes.map(_.from)),
       (Calibre.Json.UpdateRow.State("failed"), Some(Calibre.Json.UpdateRow.Reason("locked")), List(Calibre.Change.From("a")))
     )
     assertEquals(
-      Calibre.Json.UpdateRow.of(UpdateEntry(com.histmersion.cli.UpdateEntry.CalibreId(3), Nil, UpdateOutcome.UpToDate)).state,
+      Calibre.Json.UpdateRow.of(UpdateEntry(UpdateEntry.CalibreId(3), Nil, UpdateOutcome.UpToDate)).state,
       Calibre.Json.UpdateRow.State("up-to-date")
     )
 
@@ -91,8 +94,8 @@ class OutputSuite extends munit.FunSuite:
         summon[com.histmersion.util.console.Console].writeLine()
         summon[com.histmersion.util.console.Console].writeLine(null)
         List("a", "b").foreach(summon[com.histmersion.util.console.Console].writeLine)
-        Output.emit(json = com.histmersion.cli.Cli.JsonOutput(false), "answer")(identity)
-        Output.emit(json = com.histmersion.cli.Cli.JsonOutput(true), "answer")(_ => fail("JSON must not render Markdown"))
+        Output.emit(json = Cli.JsonOutput(false), "answer")(identity)
+        Output.emit(json = Cli.JsonOutput(true), "answer")(_ => fail("JSON must not render Markdown"))
       }
     }
     val nl = System.lineSeparator()

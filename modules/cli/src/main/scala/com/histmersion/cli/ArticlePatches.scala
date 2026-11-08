@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -14,6 +15,11 @@ import com.histmersion.api.research.CritiqueReason
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a server. Mirrors
   * [[Patches]] on the source side: `--json` is the baseline, each flag overrides the part it names, and an absent part
@@ -21,13 +27,13 @@ import com.histmersion.api.research.Coverage
   */
 object ArticlePatches:
   type CsvText = CsvText.T
-  object CsvText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CsvText extends RefinedType[String, Pure]
   type PatchJson = PatchJson.T
-  object PatchJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PatchJson extends RefinedType[String, Pure]
   type ReasonText = ReasonText.T
-  object ReasonText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReasonText extends RefinedType[String, Pure]
   type TextFile = TextFile.T
-  object TextFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TextFile extends RefinedType[String, Pure]
 
   def build(
       json: Option[PatchJson],
@@ -72,21 +78,21 @@ object ArticlePatches:
       places: Option[CsvText] = None,
       period: Option[FilterFlags.Period] = None,
       extraQueries: List[FilterFlags.ExtraQueries] = Nil,
-      clear: FilterFlags.Clear = com.histmersion.cli.ArticlePatches.FilterFlags.Clear(false)
+      clear: FilterFlags.Clear = FilterFlags.Clear(false)
   ):
     def anyGiven: Boolean = query.isDefined || topics.isDefined || tags.isDefined || status.isDefined ||
       places.isDefined || period.isDefined || extraQueries.nonEmpty
 
   object FilterFlags:
 
-    type Query = com.histmersion.api.Api.ArticleQuery.Text
-    val Query: _root_.com.histmersion.api.Api.ArticleQuery.Text.type = _root_.com.histmersion.api.Api.ArticleQuery.Text
+    type Query = Api.ArticleQuery.Text
+    val Query: Api.ArticleQuery.Text.type = Api.ArticleQuery.Text
     type Period = Period.T
-    object Period extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Period extends RefinedType[String, Pure]
     type ExtraQueries = ExtraQueries.T
-    object ExtraQueries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExtraQueries extends RefinedType[String, Pure]
     type Clear = Clear.T
-    object Clear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Clear extends RefinedType[Boolean, Pure]
 
   /** The coverage flags (#958) over a built patch: any `--filter-*` flag REPLACES the filter with the one the flags
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
@@ -105,7 +111,7 @@ object ArticlePatches:
           case i if i > 0 =>
             Right(
               Coverage.Reason(
-                com.histmersion.api.library.Citekey(r.value.take(i).trim),
+                Citekey(r.value.take(i).trim),
                 Coverage.Entry.Reason(r.value.drop(i + 1).trim)
               )
             )
@@ -164,7 +170,7 @@ object ArticlePatches:
         case a :: b :: Nil =>
           (a.toLongOption, b.toLongOption) match
             case (Some(x), Some(y)) =>
-              Right(Some(Period.Input(com.histmersion.api.catalogue.Year(x), com.histmersion.api.catalogue.Year(y))))
+              Right(Some(Period.Input(Year(x), Year(y))))
             case _ => Left(Cli.Error(Cli.Error.Message(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
         case _ => Left(Cli.Error(Cli.Error.Message(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
 

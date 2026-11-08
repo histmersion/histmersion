@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -6,6 +7,9 @@ import com.histmersion.config.*
 import com.histmersion.api.library.{AcquireApi, CandidateMark, Candidates, CandidatesMarkdown}
 import com.histmersion.api.library.CandidateSweep
 import com.histmersion.util.console.Console
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.CandidateList
+import com.histmersion.api.library.Source
 
 /** `histmersion candidates` (#3761): the new sources the deterministic search found for the research goals — list them,
   * sweep a goal's watches now, mark what was decided. A pure HTTP client of `AcquireApi`.
@@ -24,10 +28,10 @@ object CandidatesCmd:
       .mapN { (goal, state, limit, offset) => (c: Client) =>
         c.call(AcquireApi.candidates)(
           (
-            goal.map(com.histmersion.api.automation.Goal.Slug(_)),
+            goal.map(Goal.Slug(_)),
             state.map(Candidates.State.Wire(_)),
             limit.map(AcquireApi.Limit(_)),
-            offset.map(com.histmersion.api.library.CandidateList.Offset(_))
+            offset.map(CandidateList.Offset(_))
           )
         ).map(l => Cli.out.println(CandidatesMarkdown.list(l)))
       }
@@ -51,8 +55,8 @@ object CandidatesCmd:
       )
         .mapN { (ids, as) => (c: Client) =>
           c.call(AcquireApi.markCandidates)(CandidateMark(
-              ids.toList.map(com.histmersion.api.library.Source.Candidate.Id(_)),
-              com.histmersion.api.library.Source.Candidate.State(as)
+              ids.toList.map(Source.Candidate.Id(_)),
+              Source.Candidate.State(as)
             ))
             .map(m => Cli.out.println(CandidatesMarkdown.marked(m)))
         }

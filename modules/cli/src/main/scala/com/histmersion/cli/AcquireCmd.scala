@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -19,6 +20,9 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.library.Ingest
 import com.histmersion.util.console.Console
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Doi
 
 /** `histmersion discover|refs|assess|followups|ingest|archive` — the acquisition & assessment commands (plan §5.2
   * stream 2.6), each a thin wrapper over one endpoint that prints the SHARED Markdown rendering, or the raw JSON with
@@ -41,7 +45,7 @@ object AcquireCmd:
       AcquireClient(c)
         .discover(
           AcquireApi.Query(q),
-          since.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
+          since.map(y => Year(y.toLong)),
           sort.map(AcquireApi.Filter(_)),
           limit.map(AcquireApi.Limit(_)),
           notInDb
@@ -223,10 +227,10 @@ object AcquireCmd:
               Citekey(citekey.getOrElse("")),
               Ingest.Params.Quality(quality),
               Ingest.Params.Force(force),
-              title.map(com.histmersion.api.library.Title(_)),
-              authors.map(com.histmersion.api.library.AuthorName(_)),
-              year.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
-              doi.map(com.histmersion.api.library.Doi(_)),
+              title.map(Title(_)),
+              authors.map(AuthorName(_)),
+              year.map(y => Year(y.toLong)),
+              doi.map(Doi(_)),
               Cli.NoWait(noWait),
               prov.map(Ingest.Params.Provenance(_)),
               item.map(Ingest.Params.AcquireItem(_))

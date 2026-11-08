@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 /** The sources of each kind's new plugin, with the placeholders `PluginTemplate` fills in (`@Name@`, `@id@`,
   * `@Plugin@`, `@Contribution@`). Each one works as written: it compiles, its tests pass, and the server registers it

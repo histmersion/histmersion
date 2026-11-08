@@ -1,7 +1,10 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.catalogue.EventPatch
 import com.monovore.decline.Command
+import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.api.catalogue.Place
 
 /** `histmersion events patch <id> …` (#1440): the flags make the patch the server is sent — a scale, a place, a point
   * from --lat/--lon — and a patch that changes nothing, a scale that is no scale or a half point is refused before
@@ -17,9 +20,9 @@ class EventsCmdSuite extends munit.FunSuite:
   test("--scale and --place-id make the patch"):
     assertEquals(
       parse("battle_of_kadesh", "--scale", "local", "--place-id", "pleiades_678125"),
-      Right(("battle_of_kadesh", Right(EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("local")), placeId = Some(com.histmersion.api.catalogue.Place.Id("pleiades_678125"))))))
+      Right(("battle_of_kadesh", Right(EventPatch(scale = Some(EventSummary.Scale("local")), placeId = Some(Place.Id("pleiades_678125"))))))
     )
-    assertEquals(parse("x", "--scale", "auto").map(_._2), Right(Right(EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("auto"))))))
+    assertEquals(parse("x", "--scale", "auto").map(_._2), Right(Right(EventPatch(scale = Some(EventSummary.Scale("auto"))))))
 
   test("--lat/--lon is the event's own point, longitude first; a negative is written --lon=-1.5"):
     assertEquals(

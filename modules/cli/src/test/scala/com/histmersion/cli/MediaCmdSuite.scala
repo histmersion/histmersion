@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +13,9 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.media.ImportJobKinds
 
 /** #1491: `histmersion media import wikidata` starts the server's import JOB — the request answers at once — and
   * follows it with the `n/total` progress line the job reports, to its summary; `--no-wait` prints the id and returns;
@@ -22,13 +26,13 @@ class MediaCmdSuite extends munit.FunSuite:
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
   private val running = JobInfo(
-    com.histmersion.api.SpatialHierarchyResult.Job.Id("j7"),
-    com.histmersion.api.jobs.JobKinds.Wire("media-import"),
-    com.histmersion.api.jobs.JobInfo.Status("running"),
-    progress = Some(com.histmersion.api.jobs.JobInfo.Progress("100/300 place(s)/event(s) asked · batch 2")),
+    SpatialHierarchyResult.Job.Id("j7"),
+    JobKinds.Wire("media-import"),
+    JobInfo.Status("running"),
+    progress = Some(JobInfo.Progress("100/300 place(s)/event(s) asked · batch 2")),
     detail = Some(
-      com.histmersion.api.media.ImportJobKinds
-        .Media(Some(com.histmersion.api.jobs.JobKinds.Subject("Wikidata pictures of up to 300 places/events not asked yet")))
+      ImportJobKinds
+        .Media(Some(JobKinds.Subject("Wikidata pictures of up to 300 places/events not asked yet")))
     )
   )
   private val done =

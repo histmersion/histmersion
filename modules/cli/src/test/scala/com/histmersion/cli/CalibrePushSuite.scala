@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import hearth.kindlings.optics.syntax.*
 
@@ -10,6 +11,8 @@ import io.circe.syntax.*
 
 import java.net.InetSocketAddress
 import java.nio.file.{Files, Path}
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Year
 
 /** `calibre push`/`sync` take the original the SERVER stored when no file is given and no host-side `originals-dir`
   * holds one: it is downloaded over HTTP into a temporary directory, handed to `calibredb add`, and removed. A stand-in
@@ -33,8 +36,8 @@ class CalibrePushSuite extends munit.FunSuite:
       ck,
       CalibreGap.Title("Bronze Age tin"),
       List(CalibreGap.Authors("Stocker, Sharon R.")),
-      Some(com.histmersion.api.library.Doi("10.1/x")),
-      Some(com.histmersion.api.catalogue.Year(2019)),
+      Some(Doi("10.1/x")),
+      Some(Year(2019)),
       None,
       None,
       Nil,
@@ -113,7 +116,7 @@ class CalibrePushSuite extends munit.FunSuite:
     def isRunning(processMatch: Shell.ProcessMatch): Boolean = false
 
   private def calibre(shell: Shell) =
-    Calibre(CalibreCliConfig(com.histmersion.config.CalibreCliConfig.LibraryDir("/nonexistent/library"), com.histmersion.config.CalibreCliConfig.Calibredb("calibredb"), com.histmersion.config.CalibreCliConfig.Sqlite("sqlite3"), com.histmersion.config.CalibreCliConfig.OriginalsDir("")), shell)
+    Calibre(CalibreCliConfig(CalibreCliConfig.LibraryDir("/nonexistent/library"), CalibreCliConfig.Calibredb("calibredb"), CalibreCliConfig.Sqlite("sqlite3"), CalibreCliConfig.OriginalsDir("")), shell)
 
   private def withStub[A](body: Stub => A): A = withGaps(Nil)(body)
 

@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 /** #901: a working directory macOS denies the native CLI becomes one plain message, not a stack trace. */
 class WorkingDirSuite extends munit.FunSuite:

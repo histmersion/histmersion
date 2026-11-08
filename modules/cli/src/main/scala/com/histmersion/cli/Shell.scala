@@ -1,24 +1,27 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Running an external program. Behind a trait so the parsers and the guards can be tested without a Calibre
   * installation.
   */
 trait Shell:
-  def run(cmd: List[String]): Either[com.histmersion.cli.Shell.Problem, String]
-  def isRunning(processMatch: com.histmersion.cli.Shell.ProcessMatch): Boolean
+  def run(cmd: List[String]): Either[Shell.Problem, String]
+  def isRunning(processMatch: Shell.ProcessMatch): Boolean
 
 object Shell:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type ProcessMatch = ProcessMatch.T
-  object ProcessMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ProcessMatch extends RefinedType[String, Pure]
   /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
 
   object System extends Shell:
 
-    def run(cmd: List[String]): Either[com.histmersion.cli.Shell.Problem, String] =
+    def run(cmd: List[String]): Either[Problem, String] =
       scala.util
         .Try {
           val p = new ProcessBuilder(cmd.asJava).redirectErrorStream(false).start()
@@ -32,5 +35,5 @@ object Shell:
           identity
         )
 
-    def isRunning(processMatch: com.histmersion.cli.Shell.ProcessMatch): Boolean =
+    def isRunning(processMatch: ProcessMatch): Boolean =
       run(List("pgrep", "-f", processMatch.value)).exists(_.trim.nonEmpty)

@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.ItemKind
 import com.histmersion.api.catalogue.{Latitude, Year}

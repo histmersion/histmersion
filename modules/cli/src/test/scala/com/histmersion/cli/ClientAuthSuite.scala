@@ -1,8 +1,11 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import java.net.InetSocketAddress
 import java.nio.file.Files
+import com.histmersion.api.backup.Backup
+import com.histmersion.api.library.Citekey
 
 /** #767: the file downloads (`backups download`, `original`) are built outside the typed `call`, and `downloadBackup`
   * sent no bearer token. A stand-in server that wants the key on EVERY request — as one behind an authenticating proxy
@@ -41,7 +44,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-backup", ".dump").toFile
       try
-        val got = new Client(url, Some(key)).downloadBackup(com.histmersion.api.backup.Backup.Name("histmersion-20260101T000000Z.dump"), dest)
+        val got = new Client(url, Some(key)).downloadBackup(Backup.Name("histmersion-20260101T000000Z.dump"), dest)
         assert(got.isRight, got.toString)
         assertEquals(Files.readString(dest.toPath), "DUMP")
       finally dest.delete()
@@ -51,7 +54,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-original", ".bin").toFile
       try
-        val got = new Client(url, Some(key)).original(com.histmersion.api.library.Citekey("zz_ck"), dest)
+        val got = new Client(url, Some(key)).original(Citekey("zz_ck"), dest)
         assert(got.isRight, got.toString)
         assertEquals(Files.readString(dest.toPath), "%PDF")
       finally dest.delete()
@@ -61,7 +64,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-backup", ".dump").toFile
       try
-        val got = new Client(url).downloadBackup(com.histmersion.api.backup.Backup.Name("x.dump"), dest)
+        val got = new Client(url).downloadBackup(Backup.Name("x.dump"), dest)
         assert(got.left.exists(_.message.value.contains("API key")), got.toString)
       finally dest.delete()
     }

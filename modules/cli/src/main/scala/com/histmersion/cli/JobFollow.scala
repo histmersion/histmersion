@@ -1,9 +1,13 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.config.*
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.backup.Backup
 import com.histmersion.util.console.Console
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.SpatialHierarchyResult
 
 /** ONE way the CLI follows server work to its end (#1798 item 14): a background job (`jobs`) and a backup. A run that
   * ends badly is ALWAYS `ExitCode.Refused` (2) — a script that follows a job must not read a failure as success, nor as
@@ -14,14 +18,14 @@ object JobFollow:
 
   /** How often a job is asked for. This process's own cadence, not a server tunable. */
   type PollMs = PollMs.T
-  object PollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PollMs extends RefinedType[Long, Pure]
   type BackupPollMs = BackupPollMs.T
-  object BackupPollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BackupPollMs extends RefinedType[Long, Pure]
 
-  val Poll: com.histmersion.cli.JobFollow.PollMs = com.histmersion.cli.JobFollow.PollMs(1000)
+  val Poll: PollMs = PollMs(1000)
 
   /** How often a backup is asked for: a dump runs for minutes, and each answer prints a line. */
-  val BackupPoll: com.histmersion.cli.JobFollow.BackupPollMs = com.histmersion.cli.JobFollow.BackupPollMs(5000)
+  val BackupPoll: BackupPollMs = BackupPollMs(5000)
 
   /** One rewritten progress line on stderr, always the same width. */
   object Progress:
@@ -36,8 +40,8 @@ object JobFollow:
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
   def job(using console: Console)(
-      fetch: com.histmersion.api.SpatialHierarchyResult.Job.Id => Either[Cli.Error, JobInfo],
-      id: com.histmersion.api.SpatialHierarchyResult.Job.Id,
+      fetch: SpatialHierarchyResult.Job.Id => Either[Cli.Error, JobInfo],
+      id: SpatialHierarchyResult.Job.Id,
       waited: Long = 0,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = Progress.line,
@@ -62,7 +66,7 @@ object JobFollow:
   def backup(using console: Console)(
       fetch: () => Either[Cli.Error, Backup.Status],
       s: Backup.Status,
-      pollMs: com.histmersion.cli.JobFollow.BackupPollMs = BackupPoll,
+      pollMs: BackupPollMs = BackupPoll,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = l => Cli.err.println(l)
   ) : Either[Cli.Error, Backup.Result] =

@@ -1,6 +1,8 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.CollectionAudit
 
 /** The audit compares loosely where Calibre legitimately differs (subtitles, accents, "Last, First") and strictly where
   * it matters (no author in common, scraped junk, a missing entry).
@@ -140,6 +142,6 @@ class CalibreAuditSuite extends munit.FunSuite:
         AuditFinding.CalibreId(3) -> List(AuditIssue.Title, AuditIssue.Year)
       )
     )
-    val md = Calibre.Audit.markdown(f, com.histmersion.api.library.CollectionAudit.Checked(3))
+    val md = Calibre.Audit.markdown(f, CollectionAudit.Checked(3))
     assert(md.contains("`histmersion calibre update a2000_x`"), md)
     assert(md.contains("re-push, or clear"), md)

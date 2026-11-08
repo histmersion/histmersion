@@ -1,4 +1,5 @@
-package com.histmersion.cli
+package com.histmersion
+package cli
 
 import com.histmersion.domain.catalogue.AttestationTarget
 
@@ -10,6 +11,7 @@ import com.histmersion.api.Api
 import com.histmersion.config.*
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.util.console.Console
+import com.histmersion.api.library.Citekey
 
 object AttestationsCmd:
 
@@ -24,7 +26,7 @@ object AttestationsCmd:
       .mapN { (ck, tt, ti, limit, offset) => (c: Client) =>
         c.listAttestations(
           Api.AttestationQuery(
-            ck.map(com.histmersion.api.library.Citekey(_)),
+            ck.map(Citekey(_)),
             tt.map(Api.AttestationQuery.TargetType(_)),
             ti.map(Api.AttestationQuery.TargetId(_)),
             limit.map(Api.AttestationQuery.Limit(_)),
@@ -54,7 +56,7 @@ object AttestationsCmd:
       .mapN { (ck, tt, ti, quote, page, chunk, note) => (c: Client) =>
         c.createAttestation(
           Attestation.Put(
-            com.histmersion.api.library.Citekey(ck),
+            Citekey(ck),
             Attestation.TargetType(tt),
             Attestation.TargetId(ti),
             quote = quote.map(Attestation.Quote(_)),
