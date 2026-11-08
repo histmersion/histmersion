@@ -1,9 +1,13 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.domain.MergePlanner
 
 import com.augustnagro.magnum.DbCon
 import java.util.UUID
+import com.histmersion.api.automation.Queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a merge leaves to do, written in the merge's own transaction by the owner of the work lists: a review of each
   * article the merge changed, and a line in the worklog.
@@ -14,15 +18,15 @@ trait MergeFollowUps:
     */
   def recordIn(
       m: com.histmersion.api.exchange.Bundle.Manifest,
-      from: com.histmersion.util.data.exchange.MergeFollowUps.FromRecordRef,
+      from: MergeFollowUps.FromRecordRef,
       mergeId: UUID,
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
-      dump: com.histmersion.util.data.exchange.MergeFollowUps.DumpRecordRef
-  )(using DbCon): (List[com.histmersion.api.exchange.Bundle.Article.Slug], com.histmersion.api.automation.Queue.QueueItem.Id)
+      dump: MergeFollowUps.DumpRecordRef
+  )(using DbCon): (List[com.histmersion.api.exchange.Bundle.Article.Slug], Queue.QueueItem.Id)
 
 object MergeFollowUps:
   type DumpRecordRef = DumpRecordRef.T
-  object DumpRecordRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DumpRecordRef extends RefinedType[String, Pure]
   type FromRecordRef = FromRecordRef.T
-  object FromRecordRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FromRecordRef extends RefinedType[String, Pure]

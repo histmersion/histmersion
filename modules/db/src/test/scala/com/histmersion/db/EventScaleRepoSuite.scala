@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -22,6 +23,14 @@ import com.histmersion.api.catalogue.{EventPatch, EventPut, EventSummary, Place}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.catalogue.events.EventSelection
+import com.histmersion.domain.catalogue.events.BEventRow
+import com.histmersion.util.data.exchange.TestExchange
+import com.histmersion.util.storage.ContentStore
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the
@@ -29,18 +38,18 @@ import com.histmersion.util.database.given
   * or the point-on-surface of an area), the outline of a REGIONAL event's area only, the unplaced count — and the
   * bundle carrying a stated scale. Fixtures sit at 120–125°E, 50°S, ids start with `zqes`.
   */
-class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
+class EventScaleRepoSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
   private val Lat = -50.0
-  private def pt(lon: com.histmersion.api.catalogue.Longitude) = Some(s"""{"type":"Point","coordinates":[${lon.value},$Lat]}""")
+  private def pt(lon: Longitude) = Some(s"""{"type":"Point","coordinates":[${lon.value},$Lat]}""")
   // a 2°×2° square west of the sites; its point-on-surface is inside it
   private val Square = Some(
     """{"type":"Polygon","coordinates":[[[120,-51],[122,-51],[122,-49],[120,-49],[120,-51]]]}"""
@@ -48,16 +57,16 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   private val places = List(
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id("zqes_site"), com.histmersion.api.catalogue.Place.Label("Zqes site"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(com.histmersion.api.catalogue.Longitude(124.0)).map(Place.Geometry(_))),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqes site")))
+      Place(Place.Id("zqes_site"), Place.Label("Zqes site"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(124.0)).map(Place.Geometry(_))),
+      List(Place.Name(Place.Name.Value("Zqes site")))
     ),
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id("zqes_area"), com.histmersion.api.catalogue.Place.Label("Zqes area"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), Square.map(Place.Geometry(_))),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqes area")))
+      Place(Place.Id("zqes_area"), Place.Label("Zqes area"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), Square.map(Place.Geometry(_))),
+      List(Place.Name(Place.Name.Value("Zqes area")))
     ),
     Place.Input(
-      Place(com.histmersion.api.catalogue.Place.Id("zqes_ptregion"), com.histmersion.api.catalogue.Place.Label("Zqes point region"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), pt(com.histmersion.api.catalogue.Longitude(125.0)).map(Place.Geometry(_))),
-      List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqes point region")))
+      Place(Place.Id("zqes_ptregion"), Place.Label("Zqes point region"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), pt(Longitude(125.0)).map(Place.Geometry(_))),
+      List(Place.Name(Place.Name.Value("Zqes point region")))
     )
   )
 
@@ -65,7 +74,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       id: BEventRow.Id,
       kind: EventSummary.Kind,
       place: Option[Place.Id] = None,
-      parent: Option[com.histmersion.api.catalogue.Event.Id] = None,
+      parent: Option[Event.Id] = None,
       geometry: Option[EventPut.Geometry] = None,
       scale: Option[EventSummary.Scale] = None
   ) =
@@ -75,7 +84,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       EventPut(
         EventSummary.Label(s"Zqes ${id.value}"),
         kind,
-        TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), None, None, Some(com.histmersion.api.catalogue.Year(-1250))),
+        TimeSpan(Some(Year(-1300)), None, None, Some(Year(-1250))),
         geometry = geometry,
         placeId = place,
         parentId = parent,
@@ -96,9 +105,9 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       ev(BEventRow.Id("zqes_event_site"), EventSummary.Kind("event"), place = Some(Place.Id("zqes_site"))) // place kind: local
       ev(BEventRow.Id("zqes_event_area"), EventSummary.Kind("event"), place = Some(Place.Id("zqes_area"))) // place kind: regional
       ev(BEventRow.Id("zqes_drought"), EventSummary.Kind("natural_disaster"), place = Some(Place.Id("zqes_ptregion"))) // regional, point only: no outline
-      ev(BEventRow.Id("zqes_sub"), EventSummary.Kind("event"), parent = Some(com.histmersion.api.catalogue.Event.Id("zqes_migration"))) // a sub-event, nothing else: local
-      ev(BEventRow.Id("zqes_sub_area"), EventSummary.Kind("event"), place = Some(Place.Id("zqes_area")), parent = Some(com.histmersion.api.catalogue.Event.Id("zqes_migration"))) // the area decides
-      ev(BEventRow.Id("zqes_own_point"), EventSummary.Kind("event"), geometry = pt(com.histmersion.api.catalogue.Longitude(123.5)).map(EventPut.Geometry(_))) // its own point: local
+      ev(BEventRow.Id("zqes_sub"), EventSummary.Kind("event"), parent = Some(Event.Id("zqes_migration"))) // a sub-event, nothing else: local
+      ev(BEventRow.Id("zqes_sub_area"), EventSummary.Kind("event"), place = Some(Place.Id("zqes_area")), parent = Some(Event.Id("zqes_migration"))) // the area decides
+      ev(BEventRow.Id("zqes_own_point"), EventSummary.Kind("event"), geometry = pt(Longitude(123.5)).map(EventPut.Geometry(_))) // its own point: local
       ev(BEventRow.Id("zqes_own_area"), EventSummary.Kind("event"), geometry = Square.map(EventPut.Geometry(_))) // its own area: regional
       ev(BEventRow.Id("zqes_unplaced"), EventSummary.Kind("battle")) // nowhere
       ev(BEventRow.Id("zqes_stated"), EventSummary.Kind("battle"), place = Some(Place.Id("zqes_area")), scale = Some(EventSummary.Scale("regional")))
@@ -107,7 +116,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private def summary(id: BEventRow.Id): EventSummary = EventFixtures.get(ds, id).getOrElse(fail(s"no ${id.value}")).event
 
   private def geo(): EventGeo.List =
-    val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqes")), None, None, None, com.histmersion.PageSize(1000), EventFixtures.GeoTolerance(0.01))
+    val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some(EventSelection.Text("Zqes")), None, None, None, PageSize(1000), EventFixtures.GeoTolerance(0.01))
     all.modify(_.events).setTo(all.events.filter(_.id.value.startsWith("zqes")))
 
   test("V078: the scale column takes local, regional or nothing — and nothing else"):
@@ -153,48 +162,48 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(!summary(BEventRow.Id("zqes_migration")).scaleStated.value)
     // the list carries the same
     val listed = EventFixtures
-      .list(ds, Filter(), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqes")), None, None, None, com.histmersion.PageSize(100), com.histmersion.Offset(0))
+      .list(ds, Filter(), PlaceScope.empty, Some(EventSelection.Text("Zqes")), None, None, None, PageSize(100), Offset(0))
       .events
       .map(e => e.id -> e.scale)
       .toMap
-    assertEquals(listed(com.histmersion.api.catalogue.Event.Id("zqes_event_area")), "regional")
-    assertEquals(listed(com.histmersion.api.catalogue.Event.Id("zqes_stated")), "regional")
+    assertEquals(listed(Event.Id("zqes_event_area")), "regional")
+    assertEquals(listed(Event.Id("zqes_stated")), "regional")
 
   test("a stated scale wins; a patch states one, and `auto` forgets it"):
     assertEquals((summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated), ("regional", true))
-    assertEquals(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zqes_stated"), EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("auto")))), Right(()))
+    assertEquals(EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(scale = Some(EventSummary.Scale("auto")))), Right(()))
     assertEquals((summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated), ("local", false))
-    assertEquals(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zqes_stated"), EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("Regional")))), Right(()))
+    assertEquals(EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(scale = Some(EventSummary.Scale("Regional")))), Right(()))
     assertEquals((summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated), ("regional", true))
     // a patch of something else keeps it
-    assertEquals(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zqes_stated"), EventPatch(description = Some(com.histmersion.api.catalogue.EventSummary.Description("d")))), Right(()))
+    assertEquals(EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(description = Some(EventSummary.Description("d")))), Right(()))
     assertEquals(summary(BEventRow.Id("zqes_stated")).scale, "regional")
 
   test("the map feed: the anchor, the outline of a regional area only, the unplaced count"):
     val g = geo()
     val by = g.events.map(e => e.id -> e).toMap
-    assert(!by.contains(com.histmersion.api.catalogue.Event.Id("zqes_unplaced")))
+    assert(!by.contains(Event.Id("zqes_unplaced")))
     assert(g.unplaced.value >= 1, g.toString)
     // a site's point, the event's own point
-    assertEquals((by(com.histmersion.api.catalogue.Event.Id("zqes_event_site")).lon, by(com.histmersion.api.catalogue.Event.Id("zqes_event_site")).lat), (124.0, Lat))
-    assertEquals(by(com.histmersion.api.catalogue.Event.Id("zqes_event_site")).anchor, "place")
-    assertEquals(by(com.histmersion.api.catalogue.Event.Id("zqes_own_point")).anchor, "event")
-    assertEquals((by(com.histmersion.api.catalogue.Event.Id("zqes_own_point")).lon, by(com.histmersion.api.catalogue.Event.Id("zqes_own_point")).lat), (123.5, Lat))
+    assertEquals((by(Event.Id("zqes_event_site")).lon, by(Event.Id("zqes_event_site")).lat), (124.0, Lat))
+    assertEquals(by(Event.Id("zqes_event_site")).anchor, "place")
+    assertEquals(by(Event.Id("zqes_own_point")).anchor, "event")
+    assertEquals((by(Event.Id("zqes_own_point")).lon, by(Event.Id("zqes_own_point")).lat), (123.5, Lat))
     // an area's point-on-surface lies inside the square
     List("zqes_battle_area", "zqes_migration", "zqes_own_area").foreach { id =>
-      val e = by(com.histmersion.api.catalogue.Event.Id(id))
+      val e = by(Event.Id(id))
       assert(e.lon.value > 120 && e.lon.value < 122 && e.lat.value > -51 && e.lat.value < -49, s"$id at ${e.lon},${e.lat}")
     }
     // the outline: regional with an area — not a local event at the same area, not a point-only region
-    assert(by(com.histmersion.api.catalogue.Event.Id("zqes_migration")).outline.exists(_.value.contains("Polygon")), by(com.histmersion.api.catalogue.Event.Id("zqes_migration")).toString)
-    assert(by(com.histmersion.api.catalogue.Event.Id("zqes_own_area")).outline.isDefined)
-    assert(by(com.histmersion.api.catalogue.Event.Id("zqes_event_area")).outline.isDefined)
-    assertEquals(by(com.histmersion.api.catalogue.Event.Id("zqes_battle_area")).outline, None)
-    assert(!by.contains(com.histmersion.api.catalogue.Event.Id("zqes_sub")), "a sub-event with no place is not on the map")
-    assert(by(com.histmersion.api.catalogue.Event.Id("zqes_sub_area")).outline.isDefined)
-    assertEquals(by(com.histmersion.api.catalogue.Event.Id("zqes_drought")).outline, None)
-    assertEquals((by(com.histmersion.api.catalogue.Event.Id("zqes_drought")).lon, by(com.histmersion.api.catalogue.Event.Id("zqes_drought")).scale), (125.0, "regional"))
-    assertEquals(by(com.histmersion.api.catalogue.Event.Id("zqes_drought")).placeLabel, Some("Zqes point region"))
+    assert(by(Event.Id("zqes_migration")).outline.exists(_.value.contains("Polygon")), by(Event.Id("zqes_migration")).toString)
+    assert(by(Event.Id("zqes_own_area")).outline.isDefined)
+    assert(by(Event.Id("zqes_event_area")).outline.isDefined)
+    assertEquals(by(Event.Id("zqes_battle_area")).outline, None)
+    assert(!by.contains(Event.Id("zqes_sub")), "a sub-event with no place is not on the map")
+    assert(by(Event.Id("zqes_sub_area")).outline.isDefined)
+    assertEquals(by(Event.Id("zqes_drought")).outline, None)
+    assertEquals((by(Event.Id("zqes_drought")).lon, by(Event.Id("zqes_drought")).scale), (125.0, "regional"))
+    assertEquals(by(Event.Id("zqes_drought")).placeLabel, Some("Zqes point region"))
 
   test("the feed is fast enough to start a playback: 50 runs well under the frame budget"):
     val t0 = System.nanoTime()
@@ -205,9 +214,9 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   test("a bundle carries a stated scale, and leaves a derived one out"):
     val events =
       connect(ds)(
-        com.histmersion.util.data.exchange.TestExchange.kinds
-          .entities(BundleScope.All, com.histmersion.util.storage.ContentStore.none)
+        TestExchange.kinds
+          .entities(BundleScope.All, ContentStore.none)
           .events
       ).filter(_.id.value.startsWith("zqes")).map(e => e.id -> e.scale).toMap
-    assertEquals(events(com.histmersion.api.catalogue.Event.Id("zqes_stated")), Some("regional"))
-    assertEquals(events(com.histmersion.api.catalogue.Event.Id("zqes_migration")), None)
+    assertEquals(events(Event.Id("zqes_stated")), Some("regional"))
+    assertEquals(events(Event.Id("zqes_migration")), None)

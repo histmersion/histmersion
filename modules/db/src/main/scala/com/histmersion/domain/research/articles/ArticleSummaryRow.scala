@@ -1,10 +1,14 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.api.research.Article
+import com.histmersion.domain.DeepTime
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A list row as the database has it: [[ArticleSummary]] without the review state, which the server derives from other
   * tables.
@@ -16,8 +20,8 @@ final private[articles] case class ArticleSummaryRow(
     summary: Option[ArticleSummaryRow.Summary],
     tags: List[ArticleSummaryRow.Tags],
     regions: List[ArticleSummaryRow.Regions],
-    periodStart: Option[com.histmersion.domain.DeepTime.SignedYear],
-    periodEnd: Option[com.histmersion.domain.DeepTime.SignedYear],
+    periodStart: Option[DeepTime.SignedYear],
+    periodEnd: Option[DeepTime.SignedYear],
     updatedAt: Option[ArticleSummaryRow.UpdatedAt]
 ) derives DbCodec:
   def summaryRow: Article.Summary =
@@ -35,16 +39,16 @@ final private[articles] case class ArticleSummaryRow(
 
 object ArticleSummaryRow:
   type Slug = com.histmersion.domain.research.Slug
-  val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
   type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Kind = com.histmersion.domain.research.Article.Kind
-  val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
+  val Kind: com.histmersion.domain.research.Article.Kind.type = com.histmersion.domain.research.Article.Kind
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends RefinedType[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends RefinedType[String, Pure]

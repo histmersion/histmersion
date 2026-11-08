@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.util.database.RangeSql
 
@@ -21,6 +22,20 @@ import com.histmersion.api.media.{
   MediaTarget,
   MediaThumb
 }
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.media.imports.Target
+import com.histmersion.domain.media.imports.MediaMatch
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.catalogue.evidence.EventMatcher
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.api.ByteCount
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
+import com.histmersion.domain.DeepTime
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Year
 
 /** Pictures (#1446, V082): one `assets` row each — a provider's with `provider` set instead of a `citekey`, a source's
   * figure with its citekey — and the places, events and sources they are shown on (`media_links`); the read paths every
@@ -29,35 +44,35 @@ import com.histmersion.api.media.{
   */
 private[assets] object MediaRepo:
   type Degrees = Degrees.T
-  object Degrees extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Degrees extends RefinedType[Double, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type PictureKey = PictureKey.T
-  object PictureKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PictureKey extends RefinedType[String, Pure]
   type GapItem = GapItem.T
-  object GapItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GapItem extends RefinedType[String, Pure]
   type GapDetail = GapDetail.T
-  object GapDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GapDetail extends RefinedType[String, Pure]
 
   // ── writes ───────────────────────────────────────────────────────────────────────────────────
 
   /** The pictures of `provider` already stored under these keys. */
 
   type LinkProperty = LinkProperty.T
-  object LinkProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkProperty extends RefinedType[String, Pure]
   type LinkItem = LinkItem.T
-  object LinkItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkItem extends RefinedType[String, Pure]
   type LinkRank = LinkRank.T
-  object LinkRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkRank extends RefinedType[Int, Pure]
   type SetSourcePictureProperty = SetSourcePictureProperty.T
-  object SetSourcePictureProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SetSourcePictureProperty extends RefinedType[String, Pure]
 
-  def known(provider: com.histmersion.domain.media.assets.MediaItemRow.Provider, keys: List[com.histmersion.domain.media.assets.MediaItemRow.ProviderKey])(using DbCon): Map[com.histmersion.domain.media.assets.MediaItemRow.ProviderKey, Known] =
+  def known(provider: MediaItemRow.Provider, keys: List[MediaItemRow.ProviderKey])(using DbCon): Map[MediaItemRow.ProviderKey, Known] =
     if keys.isEmpty then Map.empty
     else
       sql"""SELECT provider_key, uid::text, license FROM assets
           WHERE provider = $provider AND provider_key = ANY($keys::text[])"""
-        .query[(com.histmersion.domain.media.assets.MediaItemRow.ProviderKey, Known.Uid, Option[Known.License])]
+        .query[(MediaItemRow.ProviderKey, Known.Uid, Option[Known.License])]
         .run()
         .map((k, u, l) => k -> Known(u, l))
         .toMap
@@ -65,8 +80,8 @@ private[assets] object MediaRepo:
   /** Store a provider's picture (or replace the bytes and rights of the one stored under its key); its point and period
     * come from the place or event it is first stored for. Returns its uid and whether it is new.
     */
-  def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.imports.Target.TargetType, com.histmersion.domain.media.imports.Target.Id))(using DbCon): (com.histmersion.domain.media.assets.MediaItemRow.Uid, Boolean) =
-    val sha = com.histmersion.domain.media.assets.NewFigure.sha256(com.histmersion.domain.media.assets.NewFigure.Bytes(a.bytes.value))
+  def save(a: ProviderAsset, firstTarget: (Target.TargetType, Target.Id))(using DbCon): (MediaItemRow.Uid, Boolean) =
+    val sha = NewFigure.sha256(NewFigure.Bytes(a.bytes.value))
     val (uid, inserted) =
       sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, kind, license, provider,
               provider_key, source_url, original_url, author, credit, license_url, retrieved_at,
@@ -82,7 +97,7 @@ private[assets] object MediaRepo:
               retrieved_at = EXCLUDED.retrieved_at, thumb = EXCLUDED.thumb, thumb_mime = EXCLUDED.thumb_mime,
               thumb_width = EXCLUDED.thumb_width, thumb_height = EXCLUDED.thumb_height,
               kind = coalesce(assets.kind, EXCLUDED.kind)
-            RETURNING uid::text, (xmax = 0)""".query[(com.histmersion.domain.media.assets.MediaItemRow.Uid, Boolean)].run().head
+            RETURNING uid::text, (xmax = 0)""".query[(MediaItemRow.Uid, Boolean)].run().head
     placeAt(uid, firstTarget)
     (uid, inserted)
 
@@ -90,7 +105,7 @@ private[assets] object MediaRepo:
     * (else its place's) and outer span. An open period (a place with no dates is stored as `(,)`) is not copied: a
     * time-filtered media layer shows dated pictures only.
     */
-  private def placeAt(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, target: (com.histmersion.domain.media.imports.Target.TargetType, com.histmersion.domain.media.imports.Target.Id))(using DbCon): Unit =
+  private def placeAt(uid: MediaItemRow.Uid, target: (Target.TargetType, Target.Id))(using DbCon): Unit =
     val (tt, id) = target
     if tt == PictureTarget.Source.wire then () // a source's picture (a cover) is not on the map
     else if tt == PictureTarget.Place.wire then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
@@ -105,7 +120,7 @@ private[assets] object MediaRepo:
     ()
 
   /** Re-read rights on a stored picture whose bytes are kept (a refresh that does not re-download). */
-  def refreshRights(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, r: Rights)(using DbCon): Unit =
+  def refreshRights(uid: MediaItemRow.Uid, r: Rights)(using DbCon): Unit =
     val _ = sql"""UPDATE assets SET license = ${r.license}, license_url = ${r.licenseUrl}, author = ${r.author},
             credit = ${r.credit}, retrieved_at = now() WHERE uid = $uid::uuid""".update.run()
 
@@ -113,14 +128,14 @@ private[assets] object MediaRepo:
     * (V094). Returns whether the link is new.
     */
   def link(
-      uid: com.histmersion.domain.media.assets.MediaItemRow.Uid,
-      targetType: com.histmersion.domain.media.imports.Target.TargetType,
-      targetId: com.histmersion.domain.media.imports.Target.Id,
-      role: com.histmersion.domain.media.MediaRole.Wire,
-      property: Option[com.histmersion.domain.media.assets.MediaRepo.LinkProperty],
-      item: Option[com.histmersion.domain.media.assets.MediaRepo.LinkItem],
-      rank: com.histmersion.domain.media.assets.MediaRepo.LinkRank,
-      basis: Option[com.histmersion.domain.media.imports.MediaMatch.Basis]
+      uid: MediaItemRow.Uid,
+      targetType: Target.TargetType,
+      targetId: Target.Id,
+      role: MediaRole.Wire,
+      property: Option[LinkProperty],
+      item: Option[LinkItem],
+      rank: LinkRank,
+      basis: Option[MediaMatch.Basis]
   )(using DbCon): Boolean =
     sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank, basis)
           VALUES ($uid::uuid, $targetType, $targetId, $role, $property, $item, $rank, $basis)
@@ -130,14 +145,14 @@ private[assets] object MediaRepo:
           RETURNING (xmax = 0)""".query[Boolean].run().head
 
   /** Store a thumbnail for a stored picture (a figure chosen to illustrate its source). */
-  def setThumb(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, bytes: com.histmersion.domain.media.assets.ProviderAsset.Thumb, mime: com.histmersion.domain.media.assets.ProviderAsset.ThumbMime, width: Option[com.histmersion.domain.media.assets.MediaThumbRow.Width], height: Option[com.histmersion.domain.media.assets.MediaThumbRow.Height])(using
+  def setThumb(uid: MediaItemRow.Uid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[MediaThumbRow.Width], height: Option[MediaThumbRow.Height])(using
       DbCon
   ): Unit =
     val _ = sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
           WHERE uid = $uid::uuid""".update.run()
 
   /** Make `uid` the source's picture in `role` — replacing the one it had in that role. */
-  def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, role: com.histmersion.domain.media.MediaRole.Wire, property: Option[com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureProperty])(using DbCon): Unit =
+  def setSourcePicture(citekey: Citekey, uid: MediaItemRow.Uid, role: MediaRole.Wire, property: Option[SetSourcePictureProperty])(using DbCon): Unit =
     val _ = sql"""DELETE FROM media_links WHERE target_type = 'source' AND target_id = $citekey AND role = $role
             AND asset_uid <> $uid::uuid""".update.run()
     val _ = sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank)
@@ -146,10 +161,10 @@ private[assets] object MediaRepo:
       .run()
 
   /** The source's picture in `role`, if it has one: its uid and the provider key or figure name. */
-  def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.MediaRole.Wire)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaItemRow.Uid, com.histmersion.domain.media.assets.MediaRepo.PictureKey)] =
+  def sourcePicture(citekey: Citekey, role: MediaRole.Wire)(using DbCon): Option[(MediaItemRow.Uid, PictureKey)] =
     sql"""SELECT a.uid::text, coalesce(a.provider_key, a.name) FROM media_links m JOIN assets a ON a.uid = m.asset_uid
           WHERE m.target_type = 'source' AND m.target_id = $citekey AND m.role = $role LIMIT 1"""
-      .query[(com.histmersion.domain.media.assets.MediaItemRow.Uid, com.histmersion.domain.media.assets.MediaRepo.PictureKey)]
+      .query[(MediaItemRow.Uid, PictureKey)]
       .run()
       .headOption
 
@@ -173,7 +188,7 @@ private[assets] object MediaRepo:
     * thumbnail is shown from its own bytes (a figure is already small enough); a provider's picture of a place needs
     * one.
     */
-  def thumbsIn(targetType: com.histmersion.domain.media.imports.Target.TargetType, targetId: com.histmersion.domain.media.imports.Target.Id, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): List[MediaThumb] =
+  def thumbsIn(targetType: Target.TargetType, targetId: Target.Id, limit: Limit)(using DbCon): List[MediaThumb] =
     // one row per picture (an event's P18 image may also be one of its depictions), in its best role
     sql"""SELECT uid, role, credit, license, license_url, source_url, w, h FROM (
             SELECT DISTINCT ON (a.uid) a.uid::text AS uid, m.role, coalesce(a.credit, '') AS credit, a.license,
@@ -190,7 +205,7 @@ private[assets] object MediaRepo:
   /** Pure: `km` as degrees of arc for `ST_DWithin` on lon/lat geometry — a latitude degree, so a little generous
     * east–west away from the equator, which a "same site" test can afford.
     */
-  def kmToDegrees(km: com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km): com.histmersion.domain.media.assets.MediaRepo.Degrees = Degrees(km.value.max(0) / 111.32)
+  def kmToDegrees(km: EventMatcher.NearFinding.Km): Degrees = Degrees(km.value.max(0) / 111.32)
 
   /** A PLACE's pictures for its card (#1446): its own, and those stored for its equivalents —
     *   - any place with the same Wikidata item (the picture's `item`): Mycenae is `pleiades_570491` and a Wikidata
@@ -201,7 +216,7 @@ private[assets] object MediaRepo:
     * Best role first, then the place's own before an equivalent's, then the provider's preference. Index lookups only
     * (label key, GiST on the point, the links' item), within the hover budget.
     */
-  def placeThumbsIn(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): List[MediaThumb] =
+  def placeThumbsIn(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit)(using DbCon): List[MediaThumb] =
     val deg = kmToDegrees(sameSiteKm)
     sql"""WITH p AS (SELECT id, label, geom FROM places WHERE id = $placeId),
           eq AS (
@@ -239,7 +254,7 @@ private[assets] object MediaRepo:
       MediaItem.Uid(r.uid.value),
       Bundle.Asset.FileName(r.name.value),
       Bundle.Asset.MimeText(r.mime.value),
-      com.histmersion.api.ByteCount(r.bytes.value.toLong),
+      ByteCount(r.bytes.value.toLong),
       r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
       r.provider.map(p => MediaItem.Provider(p.value)),
       r.providerKey.map(k => MediaItem.ProviderKey(k.value)),
@@ -259,14 +274,14 @@ private[assets] object MediaRepo:
       targets
     )
 
-  private def targetsOf(uids: List[com.histmersion.domain.media.assets.MediaItemRow.Uid])(using DbCon): Map[com.histmersion.domain.media.assets.MediaItemRow.Uid, List[MediaTarget]] =
+  private def targetsOf(uids: List[MediaItemRow.Uid])(using DbCon): Map[MediaItemRow.Uid, List[MediaTarget]] =
     if uids.isEmpty then Map.empty
     else
       sql"""SELECT asset_uid::text, target_type, target_id, role, coalesce(property, ''), coalesce(item, ''),
                    coalesce(basis, '')
             FROM media_links WHERE asset_uid = ANY($uids::uuid[])
             ORDER BY asset_uid, target_type, target_id, rank"""
-        .query[(com.histmersion.domain.media.assets.MediaItemRow.Uid, String, String, String, String, String, String)]
+        .query[(MediaItemRow.Uid, String, String, String, String, String, String)]
         .run()
         .toList
         .groupMap(_._1)((_, tt, ti, role, p, q, b) =>
@@ -285,7 +300,7 @@ private[assets] object MediaRepo:
   /** The list: by provider (`source` = a source's figures), licence (`none` = no licence), the place or event a picture
     * is linked to, and a text match; newest first. `total` ignores the limit.
     */
-  def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): MediaList =
+  def list(q: Api.MediaQuery, limit: Limit)(using DbCon): MediaList =
     val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
     val (place, event) = (clean(q.place.map(_.value)), clean(q.event.map(_.value)))
     val text = clean(q.q.map(_.value)).map(t => s"%$t%")
@@ -307,12 +322,12 @@ private[assets] object MediaRepo:
       .toList
     val ts = targetsOf(rows.map(_._1.uid))
     MediaList.of(
-      com.histmersion.api.RowCount(rows.headOption.fold(0)(_._2)),
+      RowCount(rows.headOption.fold(0)(_._2)),
       rows.map((r, _) => item(r, ts.getOrElse(r.uid, Nil))),
-      com.histmersion.api.personal.UnreadPage.Offset(offset)
+      UnreadPage.Offset(offset)
     )
 
-  def show(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid)(using DbCon): Option[MediaItem] =
+  def show(uid: MediaItemRow.Uid)(using DbCon): Option[MediaItem] =
     sql"SELECT ${SqlLiteral(itemCols)} FROM assets a WHERE a.uid = $uid::uuid"
       .query[MediaItemRow]
       .run()
@@ -320,18 +335,18 @@ private[assets] object MediaRepo:
       .map(r => item(r, targetsOf(List(r.uid)).getOrElse(r.uid, Nil)))
 
   /** The thumbnail's bytes and type — a source's figure without one is its own thumbnail. */
-  def thumb(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid)(using DbCon): Option[(com.histmersion.domain.media.assets.ProviderAsset.ThumbMime, com.histmersion.domain.media.assets.ProviderAsset.Thumb)] =
+  def thumb(uid: MediaItemRow.Uid)(using DbCon): Option[(ProviderAsset.ThumbMime, ProviderAsset.Thumb)] =
     sql"""SELECT CASE WHEN thumb IS NOT NULL THEN coalesce(thumb_mime, mime) ELSE mime END, coalesce(thumb, bytes)
           FROM assets WHERE uid = $uid::uuid
             AND (thumb IS NOT NULL OR provider IS NULL OR provider IN (${MediaProvider.Calibre}, ${MediaProvider.OpenLibrary}))"""
-      .query[(com.histmersion.domain.media.assets.ProviderAsset.ThumbMime, com.histmersion.domain.media.assets.ProviderAsset.Thumb)]
+      .query[(ProviderAsset.ThumbMime, ProviderAsset.Thumb)]
       .run()
       .headOption
 
   /** The stored rendition's (or figure's) bytes and type. */
-  def file(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid)(using DbCon): Option[(com.histmersion.domain.media.assets.AssetBytesRow.Mime, com.histmersion.domain.media.assets.AssetBytesRow.Bytes)] =
+  def file(uid: MediaItemRow.Uid)(using DbCon): Option[(AssetBytesRow.Mime, AssetBytesRow.Bytes)] =
     sql"SELECT mime, bytes FROM assets WHERE uid = $uid::uuid"
-      .query[(com.histmersion.domain.media.assets.AssetBytesRow.Mime, com.histmersion.domain.media.assets.AssetBytesRow.Bytes)]
+      .query[(AssetBytesRow.Mime, AssetBytesRow.Bytes)]
       .run()
       .headOption
 
@@ -343,7 +358,7 @@ private[assets] object MediaRepo:
     MediaFacets(providers, licences)
 
   /** The media layer: geolocated pictures in the span, by kind, provider and licence. */
-  def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): List[MediaGeoHit] =
+  def geo(q: Api.MediaGeoQuery, limit: Limit)(using DbCon): List[MediaGeoHit] =
     val k = q.kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
     sql"""SELECT ${SqlLiteral(geoCols)}
@@ -362,29 +377,29 @@ private[assets] object MediaRepo:
       .map(geoHit)
 
   /** The pictures of `uids` as the map's tiles draw one ([[geo]]'s hits), by uid. */
-  def geoOf(uids: List[com.histmersion.domain.media.assets.MediaItemRow.Uid])(using DbCon): Map[com.histmersion.domain.media.assets.MediaItemRow.Uid, MediaGeoHit] =
+  def geoOf(uids: List[MediaItemRow.Uid])(using DbCon): Map[MediaItemRow.Uid, MediaGeoHit] =
     if uids.isEmpty then Map.empty
     else
       sql"""SELECT ${SqlLiteral(geoCols)} FROM assets a
           WHERE a.geom IS NOT NULL AND a.uid = ANY($uids::uuid[])"""
         .query[MediaGeoRow]
         .run()
-        .map(r => com.histmersion.domain.media.assets.MediaItemRow.Uid(r.uid.value) -> geoHit(r))
+        .map(r => MediaItemRow.Uid(r.uid.value) -> geoHit(r))
         .toMap
 
   /** The pictures of the media layer as the map's tiles select them — [[geo]]'s selection, every one whose dates
     * overlap `window` (none: whatever their dates), in the tile's box `envelope`: uid, point and dates.
     */
   def tileCandidates(
-      kind: Option[com.histmersion.domain.media.assets.MediaItemRow.Kind],
-      provider: Option[com.histmersion.domain.media.assets.MediaItemRow.Provider],
-      license: Option[com.histmersion.domain.media.assets.MediaItemRow.License],
-      window: Option[(com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear)],
+      kind: Option[MediaItemRow.Kind],
+      provider: Option[MediaItemRow.Provider],
+      license: Option[MediaItemRow.License],
+      window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
       envelope: Sql
   ): Sql =
     val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val ps = List.newBuilder[Sql]
-    k.foreach(v => ps += Sql.of(com.histmersion.util.database.Sql.OfText("a.kind = ?"), Param.S(Param.S.V(v))))
+    k.foreach(v => ps += Sql.of(Sql.OfText("a.kind = ?"), Param.S(Param.S.V(v))))
     clean(provider.map(_.value)).foreach(p =>
       ps += (if p == MediaProvider.Source then Sql.raw(Sql.Text("a.provider IS NULL"))
              else Sql.of(Sql.Text("a.provider = ?"), Param.S(Param.S.V(p))))
@@ -396,7 +411,7 @@ private[assets] object MediaRepo:
     window.foreach((lo, hi) =>
       ps += Sql.raw(Sql.Text(RangeSql.overlaps("a.period", s"${lo.value}::bigint", s"${hi.value}::bigint")))
     )
-    val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(com.histmersion.util.database.Sql.RawText(" AND ")) ++ p)
+    val rest = ps.result().foldLeft(Sql.empty)((acc, p) => acc ++ Sql.raw(Sql.RawText(" AND ")) ++ p)
     Sql.raw(
       Sql.Text(
         "SELECT a.uid::text AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, lower(a.period) AS ps, upper(a.period) - 1 AS pe," +
@@ -416,10 +431,10 @@ private[assets] object MediaRepo:
       r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
       Bundle.Asset.FileName(r.name.value),
       r.kind.map(k => MediaItem.Kind(k.value)),
-      com.histmersion.api.catalogue.Latitude(r.lat.value),
-      com.histmersion.api.catalogue.Longitude(r.lon.value),
-      r.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
-      r.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+      Latitude(r.lat.value),
+      Longitude(r.lon.value),
+      r.periodStart.map(y => Year(y.value.toLong)),
+      r.periodEnd.map(y => Year(y.value.toLong)),
       r.caption.map(c => MediaItem.Caption(c.value)),
       MediaItem.Uid(r.uid.value),
       r.provider.map(p => MediaItem.Provider(p.value)),
@@ -435,7 +450,7 @@ private[assets] object MediaRepo:
   /** `media-licence`: the pictures with no licence (a cover from Calibre or Open Library needs none) or a provider's
     * with no credit line — `citekey/name` (else `media:<uid>`) and what is missing, the provider's first.
     */
-  def licenceGaps()(using DbCon): List[(com.histmersion.domain.media.assets.MediaRepo.GapItem, com.histmersion.domain.media.assets.MediaRepo.GapDetail)] =
+  def licenceGaps()(using DbCon): List[(GapItem, GapDetail)] =
     sql"""SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
                 concat_ws(' · ',
                   CASE WHEN coalesce(btrim(a.license), '') = ''
@@ -448,7 +463,7 @@ private[assets] object MediaRepo:
          ORDER BY a.provider NULLS LAST, 1""".query[(GapItem, GapDetail)].run().toList
 
   /** A source's stored figures (images only), as the illustration's choice weighs them. */
-  def sourceFigures(citekey: com.histmersion.domain.library.Citekey)(using DbCon): List[SourceFigure] =
+  def sourceFigures(citekey: Citekey)(using DbCon): List[SourceFigure] =
     sql"""SELECT uid::text, name, width, height, thumb IS NOT NULL FROM assets
           WHERE citekey = $citekey AND mime LIKE 'image/%' ORDER BY name"""
       .query[(SourceFigure.Uid, SourceFigure.Name, Option[SourceFigure.Width], Option[SourceFigure.Height], SourceFigure.HasThumb)]

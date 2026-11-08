@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.Write
 import com.histmersion.api.exchange.{
@@ -24,6 +25,8 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final private[exchange] case class MergeRow(
     id: UUID,
@@ -39,17 +42,17 @@ final private[exchange] case class MergeRow(
 ) derives DbCodec
 
 object MergeRow:
-  type BundleSha256 = com.histmersion.Sha256
-  val BundleSha256: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+  type BundleSha256 = Sha256
+  val BundleSha256: Sha256.type = Sha256
   type FromLabel = FromLabel.T
-  object FromLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FromLabel extends RefinedType[String, Pure]
   type AppliedAt = AppliedAt.T
-  object AppliedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AppliedAt extends RefinedType[String, Pure]
   type PlanHash = PlanHash.T
-  object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlanHash extends RefinedType[String, Pure]
   type Backup = Backup.T
-  object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerRows = com.histmersion.RowCount
-  val LedgerRows: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
+  object Backup extends RefinedType[String, Pure]
+  type LedgerRows = RowCount
+  val LedgerRows: RowCount.type = RowCount
   type Redirects = Redirects.T
-  object Redirects extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Redirects extends RefinedType[Int, Pure]

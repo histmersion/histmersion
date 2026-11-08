@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,6 +18,12 @@ import com.histmersion.util.database.{Db, Migrate}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Source
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.util.database.Transactor
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Query
+import com.histmersion.config.QueryConfig
 
 /** The read-only query path against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *
@@ -24,12 +31,12 @@ import com.histmersion.util.database.given
   * we wrote — so every refusal below is asserted to carry Postgres's own "read-only transaction" message, and the store
   * is checked afterwards to prove nothing changed.
   */
-class QueryRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class QueryRepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
-  private lazy val dbCfg = cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))
+  private lazy val dbCfg = cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get))
 
   /** The APPLICATION role — schema owner, superuser in every deployment we ship. Used here only to migrate and to seed
     * the probe row.
@@ -52,7 +59,7 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     q
 
   private def run(sql: String, maxRows: Int = 100, timeoutMs: Int = 5000, maxCell: Int = 2000) =
-    SearchFixtures.run(queryDs, SearchFixtures.Statement(sql), com.histmersion.util.database.Transactor.TimeoutMs(timeoutMs), SearchFixtures.MaxRows(maxRows), SearchFixtures.MaxCellChars(maxCell))
+    SearchFixtures.run(queryDs, SearchFixtures.Statement(sql), Transactor.TimeoutMs(timeoutMs), SearchFixtures.MaxRows(maxRows), SearchFixtures.MaxCellChars(maxCell))
 
   private val ck = "zzquery_probe"
 
@@ -61,18 +68,18 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey(ck),
+        citekey = Citekey(ck),
         title = com.histmersion.api.library.Title("Probe"),
         authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (Some(2020)).map(Year.apply),
         venue = None,
-        status = com.histmersion.api.library.Source.Status.Current,
+        status = Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
-        period = Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))),
-        summary = Some(com.histmersion.api.library.Source.Summary("s")),
+        period = Some(Period(Year(-2000), Year(-1500))),
+        summary = Some(Source.Summary("s")),
         citedByCount = None,
         influentialCitations = None,
         provenance = None,
@@ -192,8 +199,8 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
 
   test("the generated tool description names the tables that exist"):
     // `Query` alone is ambiguous here — magnum exports one too
-    val d = com.histmersion.api.library.Query
-      .toolDescription(com.histmersion.api.library.Query.SchemaTables(SearchFixtures.tables(ds)))
+    val d = Query
+      .toolDescription(Query.SchemaTables(SearchFixtures.tables(ds)))
     assert(d.value.contains("sources("), d)
     assert(d.value.contains("queue_items("), d)
 
@@ -249,14 +256,14 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
         finally st.close()
       } finally c.close()
     scala.util.Try(admin(s"DROP OWNED BY $role")); admin(s"DROP ROLE IF EXISTS $role")
-    val qc = cfg.query.modify(_.user).setTo(com.histmersion.config.QueryConfig.User(role)).modify(_.password).setTo(com.histmersion.config.QueryConfig.Password("probe-pw"))
+    val qc = cfg.query.modify(_.user).setTo(QueryConfig.User(role)).modify(_.password).setTo(QueryConfig.Password("probe-pw"))
     try
       assertEquals(QueryAccess.provision(ds, qc), Right(()))
       assertEquals(QueryAccess.provision(ds, qc), Right(()), "idempotent")
       val q = testQueryPool(dbCfg, qc)
       assertEquals(Db.canConnect(q), Right(()))
-      assert(SearchFixtures.run(q, SearchFixtures.Statement(s"SELECT title FROM sources WHERE citekey = '$ck'"), com.histmersion.util.database.Transactor.TimeoutMs(5000), SearchFixtures.MaxRows(10), SearchFixtures.MaxCellChars(100)).isRight)
-      assert(SearchFixtures.run(q, SearchFixtures.Statement(s"DELETE FROM sources WHERE citekey = '$ck'"), com.histmersion.util.database.Transactor.TimeoutMs(5000), SearchFixtures.MaxRows(10), SearchFixtures.MaxCellChars(100)).isLeft)
+      assert(SearchFixtures.run(q, SearchFixtures.Statement(s"SELECT title FROM sources WHERE citekey = '$ck'"), Transactor.TimeoutMs(5000), SearchFixtures.MaxRows(10), SearchFixtures.MaxCellChars(100)).isRight)
+      assert(SearchFixtures.run(q, SearchFixtures.Statement(s"DELETE FROM sources WHERE citekey = '$ck'"), Transactor.TimeoutMs(5000), SearchFixtures.MaxRows(10), SearchFixtures.MaxCellChars(100)).isLeft)
       assert(probeExists)
     finally
       scala.util.Try(admin(s"DROP OWNED BY $role")); scala.util.Try(admin(s"DROP ROLE IF EXISTS $role"))

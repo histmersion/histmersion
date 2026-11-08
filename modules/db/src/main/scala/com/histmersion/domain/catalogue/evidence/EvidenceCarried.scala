@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.exchange.Bundle
 
@@ -21,7 +22,7 @@ object EvidenceCarried:
   private def afterBlobs(rank: Int)(write: BundleImport.Writer => Unit) =
     RowsIn(ImportStage.AfterBlobs, ImportRank(rank), write)
 
-  val attestations: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Attestation](
+  val attestations: CarriedKind = CarriedKind.records[Bundle.Attestation](
     Catalogue,
     Bundle.Kind.Attestation,
     TableName("attestations"),
@@ -31,18 +32,18 @@ object EvidenceCarried:
     (es, ls) => es.modify(_.attestations).setTo(ls)
   )
 
-  val eventCandidates: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.EventCandidate](
+  val eventCandidates: CarriedKind = CarriedKind.owned[Bundle.EventCandidate](
     Catalogue,
-    BundleEntry(com.histmersion.api.exchange.Bundle.Files.EventCandidates),
+    BundleEntry(Bundle.Files.EventCandidates),
     List(rows(61)(EvidenceBundleRepo.candidatesIn))
   )(scope => EvidenceBundleRepo.eventCandidates(scope).toList)(
     c => Some(CarriedKind.OwnedClock(c.computedAt.value)),
     (es, ls) => es.modify(_.eventCandidates).setTo(ls)
   )
 
-  val eventChecks: CarriedKind = CarriedKind.owned[com.histmersion.api.exchange.Bundle.EventCheck](
+  val eventChecks: CarriedKind = CarriedKind.owned[Bundle.EventCheck](
     Catalogue,
-    BundleEntry(com.histmersion.api.exchange.Bundle.Files.EventChecks),
+    BundleEntry(Bundle.Files.EventChecks),
     List(rows(62)(EvidenceBundleRepo.checksIn))
   )(scope => EvidenceBundleRepo.eventChecks(scope).toList)(
     c => Some(CarriedKind.OwnedClock(c.checkedAt.value)),

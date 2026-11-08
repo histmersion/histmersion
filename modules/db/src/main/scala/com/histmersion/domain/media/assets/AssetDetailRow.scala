@@ -1,38 +1,41 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final private[assets] case class AssetDetailRow(
     name: AssetDetailRow.Name,
     mime: AssetDetailRow.Mime,
     bytes: AssetDetailRow.Bytes,
-    sha256: com.histmersion.Sha256,
+    sha256: Sha256,
     width: Option[AssetDetailRow.Width],
     height: Option[AssetDetailRow.Height],
     kind: Option[AssetDetailRow.Kind],
     caption: Option[AssetDetailRow.Caption],
     license: Option[AssetDetailRow.License],
-    lat: Option[com.histmersion.Latitude],
-    lon: Option[com.histmersion.Longitude],
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year]
+    lat: Option[Latitude],
+    lon: Option[Longitude],
+    periodStart: Option[Year],
+    periodEnd: Option[Year]
 ) derives DbCodec
 
 object AssetDetailRow:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Mime = Mime.T
-  object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mime extends RefinedType[String, Pure]
   type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Bytes extends RefinedType[Int, Pure]
   type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Width extends RefinedType[Int, Pure]
   type Height = Height.T
-  object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Height extends RefinedType[Int, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Caption = Caption.T
-  object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Caption extends RefinedType[String, Pure]
   type License = License.T
-  object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object License extends RefinedType[String, Pure]

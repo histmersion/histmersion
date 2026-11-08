@@ -1,4 +1,5 @@
-package com.histmersion.util.storage
+package com.histmersion
+package util.storage
 
 import java.io.InputStream
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -6,7 +7,7 @@ import java.nio.file.{Files, Path, StandardCopyOption}
 /** A [[ContentStore]] in a directory: `<dir>/<sha256>.<ext>`. */
 final class ContentDirectory(dir: Path) extends ContentStore:
 
-  def find(sha256: com.histmersion.Sha256): Option[(ByteSource, ContentStore.Ext)] =
+  def find(sha256: Sha256): Option[(ByteSource, ContentStore.Ext)] =
     scala.util
       .Try {
         val s = Files.list(dir)
@@ -20,7 +21,7 @@ final class ContentDirectory(dir: Path) extends ContentStore:
   /** Written to a temporary file, hashed, and moved into place only when the content IS `sha256`: the directory is
     * content-addressed, and whoever reads it trusts the name.
     */
-  def store(sha256: com.histmersion.Sha256, ext: ContentStore.Ext, in: InputStream): Either[ContentStore.Problem, Unit] =
+  def store(sha256: Sha256, ext: ContentStore.Ext, in: InputStream): Either[ContentStore.Problem, Unit] =
     if find(sha256).isDefined then
       val _ = in.transferTo(java.io.OutputStream.nullOutputStream())
       Right(())

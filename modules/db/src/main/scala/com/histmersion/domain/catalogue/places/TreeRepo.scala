@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -13,6 +14,10 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
+import com.histmersion.domain.DeepTime
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);
@@ -23,10 +28,10 @@ private[places] object TreeRepo:
   /** A closed [[Period]] from the two bounds SQL returned (`lower`, `upper - 1`); `None` unless both are present — an
     * int8range with an open end is "always", which is what `None` means here.
     */
-  private def periodOf(start: Option[com.histmersion.domain.DeepTime.SignedYear], end: Option[com.histmersion.domain.DeepTime.SignedYear]): Option[Period] =
+  private def periodOf(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): Option[Period] =
     (start, end) match
       case (Some(a), Some(b)) =>
-        val (lo, hi) = (com.histmersion.api.catalogue.Year(a.value), com.histmersion.api.catalogue.Year(b.value))
+        val (lo, hi) = (Year(a.value), Year(b.value))
         Some(if a.value <= b.value then Period(lo, hi) else Period(hi, lo))
       case _                  => None
 
@@ -34,8 +39,8 @@ private[places] object TreeRepo:
       id: RegionNodeRow.Id,
       label: RegionNodeRow.Label,
       kind: RegionNodeRow.Kind,
-      periodStart: Option[com.histmersion.domain.DeepTime.SignedYear],
-      periodEnd: Option[com.histmersion.domain.DeepTime.SignedYear],
+      periodStart: Option[DeepTime.SignedYear],
+      periodEnd: Option[DeepTime.SignedYear],
       contested: RegionNodeRow.Contested,
       withdrawn: RegionNodeRow.Withdrawn
   ) derives DbCodec:
@@ -51,22 +56,22 @@ private[places] object TreeRepo:
 
   object RegionNodeRow:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Contested = Contested.T
-    object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Contested extends RefinedType[Boolean, Pure]
     type Withdrawn = Withdrawn.T
-    object Withdrawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Withdrawn extends RefinedType[Boolean, Pure]
 
   final private[histmersion] case class RelationRow(
       childId: RelationRow.ChildId,
       parentId: RelationRow.ParentId,
       kind: RelationRow.Kind,
-      periodStart: Option[com.histmersion.domain.DeepTime.SignedYear],
-      periodEnd: Option[com.histmersion.domain.DeepTime.SignedYear]
+      periodStart: Option[DeepTime.SignedYear],
+      periodEnd: Option[DeepTime.SignedYear]
   ) derives DbCodec:
     def toRelation: Place.Relation =
       Place.Relation(
@@ -78,11 +83,11 @@ private[places] object TreeRepo:
 
   object RelationRow:
     type ChildId = ChildId.T
-    object ChildId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ChildId extends RefinedType[String, Pure]
     type ParentId = ParentId.T
-    object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ParentId extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
 
   // ── the gazetteer the rows hang off ──────────────────────────────────────────────────────────
 

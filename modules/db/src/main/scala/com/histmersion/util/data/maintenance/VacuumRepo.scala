@@ -1,16 +1,19 @@
-package com.histmersion.util.data.maintenance
+package com.histmersion
+package util.data.maintenance
 
 import com.histmersion.api.maintenance.Vacuum
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `VACUUM` for `histmersion maintenance vacuum`. VACUUM cannot run inside a transaction block, so it runs on a
   * connection in autocommit mode — never in a transaction.
   */
 object VacuumRepo:
   type Analyze = Analyze.T
-  object Analyze extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Analyze extends RefinedType[Boolean, Pure]
 
   /** One table's dead row versions (the statistics collector's count) and its size with indexes and TOAST.
     */
@@ -19,9 +22,9 @@ object VacuumRepo:
 
   object TableState:
     type DeadRows = DeadRows.T
-    object DeadRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Bytes = com.histmersion.ByteCount
-    val Bytes: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+    object DeadRows extends RefinedType[Long, Pure]
+    type Bytes = ByteCount
+    val Bytes: ByteCount.type = ByteCount
 
   /** The ordinary tables of the `public` schema — what a vacuum may name. */
   def tables(using DbCon): Set[String] =
@@ -40,7 +43,7 @@ object VacuumRepo:
   /** Run `VACUUM [(ANALYZE)]` on one table, on a connection outside any transaction. The name must have passed
     * [[Vacuum.plan]] (shape and existence).
     */
-  def vacuum(table: String, analyze: com.histmersion.util.data.maintenance.VacuumRepo.Analyze)(using con: DbCon): Unit =
+  def vacuum(table: String, analyze: Analyze)(using con: DbCon): Unit =
     val c = con.connection
     val st = c.createStatement()
     try { val _ = st.execute(Vacuum.statement(Vacuum.Table(table), Vacuum.Request.Analyze(analyze.value))) }

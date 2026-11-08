@@ -1,9 +1,12 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a catalogue says about an event, as its bundle line reads it. */
 final private[events] case class BCatalogueRow(
@@ -17,8 +20,8 @@ final private[events] case class BCatalogueRow(
     beginBy: Option[BCatalogueRow.BeginBy],
     endFrom: Option[BCatalogueRow.EndFrom],
     notAfter: Option[BCatalogueRow.NotAfter],
-    lat: Option[com.histmersion.Latitude],
-    lon: Option[com.histmersion.Longitude],
+    lat: Option[Latitude],
+    lon: Option[Longitude],
     vei: Option[BCatalogueRow.Vei],
     magnitude: Option[BCatalogueRow.Magnitude],
     deaths: Option[BCatalogueRow.Deaths],
@@ -29,32 +32,32 @@ final private[events] case class BCatalogueRow(
 
 object BCatalogueRow:
   type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provider extends RefinedType[String, Pure]
   type ProviderId = ProviderId.T
-  object ProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ProviderId extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type NotBefore = NotBefore.T
-  object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NotBefore extends RefinedType[Long, Pure]
   type BeginBy = BeginBy.T
-  object BeginBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BeginBy extends RefinedType[Long, Pure]
   type EndFrom = EndFrom.T
-  object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EndFrom extends RefinedType[Long, Pure]
   type NotAfter = NotAfter.T
-  object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NotAfter extends RefinedType[Long, Pure]
   type Vei = Vei.T
-  object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Vei extends RefinedType[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Magnitude extends RefinedType[Double, Pure]
   type Deaths = Deaths.T
-  object Deaths extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Deaths extends RefinedType[Long, Pure]
   type Historicity = Historicity.T
-  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Historicity extends RefinedType[String, Pure]
   type Record = Record.T
-  object Record extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Record extends RefinedType[String, Pure]
   type RetrievedAt = RetrievedAt.T
-  object RetrievedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RetrievedAt extends RefinedType[String, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.config.*
@@ -14,6 +15,7 @@ import com.histmersion.util.database.given
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.util.data.TableName
 
 given DbCodec[InstanceInfo] = DbCodec.derived
 
@@ -40,7 +42,7 @@ object BundleRepo:
   /** The gazetteer and the named periods, fingerprinted: not carried, compared ([[BundleReference]]). */
   private[histmersion] def reference(using DbCon): com.histmersion.api.exchange.Bundle.Reference =
     // the SEED rows only: a place or period of this collection's own travels in the bundle itself
-    def digest(table: com.histmersion.util.data.TableName): (Int, String) =
+    def digest(table: TableName): (Int, String) =
       Sql
         .raw(Sql.Text(s"""SELECT count(*)::int, coalesce(md5(string_agg(id, ',' ORDER BY id COLLATE "C")), '')
                   FROM $table WHERE dataset = 'seed'"""))
@@ -48,8 +50,8 @@ object BundleRepo:
         .query[(Int, String)]
         .run()
         .head
-    val (np, dp) = digest(com.histmersion.util.data.TableName("places"))
-    val (nq, dq) = digest(com.histmersion.util.data.TableName("periods"))
+    val (np, dp) = digest(TableName("places"))
+    val (nq, dq) = digest(TableName("periods"))
     com.histmersion.api.exchange.Bundle.Reference(
       com.histmersion.api.exchange.Bundle.Reference.Places(np),
       com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(dp),

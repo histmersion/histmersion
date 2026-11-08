@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.api.checks.Lint.{FormatChecker, LintRuleReport, Rule}
 import com.histmersion.util.data.checks.CheckRun

@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +13,9 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.{DeleteCount, DeletePart, Edge}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Deleting a source (#969) — the database half of `POST /api/sources/{ck}/delete`. The rules are
   * [[com.histmersion.api.library.SourceDelete]]'s; this reads what a delete would touch ([[planIn]]) and does it
@@ -27,7 +31,7 @@ private[sources] object SourceDeleteRepo:
   /** Delete `requested`, unless something refuses it. `files` names the stored originals the service removes after the
     * commit (they are part of the answer and the log line); `logTopic` is the log entry's heading (today's date).
     */
-  def applyIn(requested: com.histmersion.domain.library.Citekey, logTopic: SourceReferrers.Day, files: SourceDeletePlan => List[Source.Deletion.Files], referrers: SourceReferrers)(
+  def applyIn(requested: Citekey, logTopic: SourceReferrers.Day, files: SourceDeletePlan => List[Source.Deletion.Files], referrers: SourceReferrers)(
       using DbCon
   ): Either[Api.Error, SourceDeletePlan] =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $requested FOR UPDATE".query[String].run()
@@ -41,26 +45,26 @@ private[sources] object SourceDeleteRepo:
         )
       else
         val p = p0.modify(_.deletion).setTo(d0.modify(_.files).setTo(files(p0)))
-        val source = keysOf(requested, p.keys.flatMap(k => com.histmersion.domain.library.Citekey.option(k.value)))
+        val source = keysOf(requested, p.keys.flatMap(k => Citekey.option(k.value)))
         deleteNow(p, source, referrers)
         val d = p.deletion.modify(_.applied).setTo(Source.Deletion.Applied(true))
         val log = referrers.recorded(source, SourceReferrers.Line(Source.Delete.logText(d).value), logTopic)
         Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log.map(e => Source.Deletion.LogEntry(e.value)))))
     }
 
-  final private case class Row(citekey: com.histmersion.domain.library.Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[SourceDeletePlan.Sha256])
+  final private case class Row(citekey: Citekey, title: Row.Title, calibreId: Option[Row.CalibreId], sha256: Option[SourceDeletePlan.Sha256])
       derives DbCodec
 
   object Row:
     type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+    val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
     type CalibreId = CalibreId.T
-    object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CalibreId extends RefinedType[String, Pure]
 
-  private def keysOf(ck: com.histmersion.domain.library.Citekey, keys: List[com.histmersion.domain.library.Citekey])(using DbCon): SourceKeys =
+  private def keysOf(ck: Citekey, keys: List[Citekey])(using DbCon): SourceKeys =
     SourceKeys(ck, keys, targets => SourceRepo.resolveAliases(targets))
 
-  def planIn(requested: com.histmersion.domain.library.Citekey, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePlan] =
+  def planIn(requested: Citekey, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePlan] =
     sql"SELECT citekey, title, calibre_id, sha256 FROM sources WHERE citekey = $requested"
       .query[Row]
       .run()
@@ -76,7 +80,7 @@ private[sources] object SourceDeleteRepo:
       case Some(r) =>
         val ck = r.citekey
         val aliases = sql"""SELECT alias FROM source_aliases WHERE citekey = $ck ORDER BY alias COLLATE "C""""
-          .query[com.histmersion.domain.library.Citekey]
+          .query[Citekey]
           .run()
           .toList
         val keys = ck :: aliases
@@ -93,13 +97,13 @@ private[sources] object SourceDeleteRepo:
               .map(kind => Edge(com.histmersion.api.library.Citekey(s), com.histmersion.api.library.Citekey(d), kind))
           )
         val report = referrers.report(
-          DeleteReport(counts = counts(ck, com.histmersion.RowCount(aliases.size), com.histmersion.RowCount(edgesIn.size))),
+          DeleteReport(counts = counts(ck, RowCount(aliases.size), RowCount(edgesIn.size))),
           keysOf(ck, keys)
         )
         val d = Source.Deletion(
           citekey = com.histmersion.api.library.Citekey(ck.value),
           title = com.histmersion.api.library.Title(r.title.value),
-          applied = com.histmersion.api.library.Source.Deletion.Applied(false),
+          applied = Source.Deletion.Applied(false),
           blockers = report.blockers,
           counts = report.counts,
           aliases = aliases.map(a => Source.Deletion.Aliases(a.value)),
@@ -118,10 +122,10 @@ private[sources] object SourceDeleteRepo:
           )
         )
 
-  private def n(q: Frag)(using DbCon): com.histmersion.RowCount = com.histmersion.RowCount(q.query[Int].run().headOption.getOrElse(0))
+  private def n(q: Frag)(using DbCon): RowCount = RowCount(q.query[Int].run().headOption.getOrElse(0))
 
   /** What of the library goes with the source. */
-  private def counts(ck: com.histmersion.domain.library.Citekey, aliases: com.histmersion.RowCount, edgesIn: com.histmersion.RowCount)(using DbCon): List[DeleteCount] =
+  private def counts(ck: Citekey, aliases: RowCount, edgesIn: RowCount)(using DbCon): List[DeleteCount] =
     import com.histmersion.api.library.DeletePart.*
     List(
       Findings -> n(sql"SELECT count(*)::int FROM findings WHERE citekey = $ck"),

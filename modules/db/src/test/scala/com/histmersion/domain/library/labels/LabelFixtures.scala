@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.labels
+package com.histmersion
+package domain.library.labels
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.library.search.FilterSql
@@ -14,7 +15,7 @@ object LabelFixtures:
       field: Facet.Field,
       prefix: Option[FilterSql.FacetPrefix],
       filter: Filter,
-      limit: com.histmersion.PageSize,
+      limit: PageSize,
       scope: PlaceScope = PlaceScope.empty
   ): Vector[Facet] =
     connect(ds)(LabelRepo.facets(field, prefix, filter, limit, scope))

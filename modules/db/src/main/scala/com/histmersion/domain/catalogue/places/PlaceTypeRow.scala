@@ -1,21 +1,25 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final private[places] case class PlaceTypeRow(
     placeId: com.histmersion.domain.catalogue.Place.Id,
     typeLabel: PlaceTypeRow.TypeLabel,
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
-    citekey: Option[com.histmersion.domain.library.Citekey]
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
+    citekey: Option[Citekey]
 ) derives DbCodec:
   def toDto: Place.Type =
     Place.Type(
-      com.histmersion.api.catalogue.Place.Id(placeId.value),
+      Place.Id(placeId.value),
       Place.Type.TypeLabel(typeLabel.value),
       for s <- periodStart; e <- periodEnd yield
         Period(com.histmersion.api.catalogue.Year(s.value.toLong), com.histmersion.api.catalogue.Year(e.value.toLong)),
@@ -24,4 +28,4 @@ final private[places] case class PlaceTypeRow(
 
 object PlaceTypeRow:
   type TypeLabel = TypeLabel.T
-  object TypeLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TypeLabel extends RefinedType[String, Pure]

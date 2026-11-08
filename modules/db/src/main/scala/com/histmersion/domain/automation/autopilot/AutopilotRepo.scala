@@ -1,8 +1,12 @@
-package com.histmersion.domain.automation.autopilot
+package com.histmersion
+package domain.automation.autopilot
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Managers
 
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its
@@ -10,13 +14,13 @@ import com.histmersion.util.database.NewtypeColumns.given
   */
 object AutopilotRepo:
   type Digest = Digest.T
-  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Digest extends RefinedType[String, Pure]
   type StrategyName = StrategyName.T
-  object StrategyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StrategyName extends RefinedType[String, Pure]
   type DrainSince = DrainSince.T
-  object DrainSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DrainSince extends RefinedType[String, Pure]
   type DrainedAt = DrainedAt.T
-  object DrainedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DrainedAt extends RefinedType[String, Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
@@ -35,19 +39,19 @@ object AutopilotRepo:
 
   object Row:
     type Enabled = Enabled.T
-    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Enabled extends RefinedType[Boolean, Pure]
     type ChangedAt = ChangedAt.T
-    object ChangedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ChangedAt extends RefinedType[String, Pure]
     type ChangedBy = ChangedBy.T
-    object ChangedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ChangedBy extends RefinedType[String, Pure]
     type Paused = Paused.T
-    object Paused extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Paused extends RefinedType[String, Pure]
     type LastEnsureAt = LastEnsureAt.T
-    object LastEnsureAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastEnsureAt extends RefinedType[String, Pure]
     type LastBackupAt = LastBackupAt.T
-    object LastBackupAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastBackupAt extends RefinedType[String, Pure]
     type LastLintAt = LastLintAt.T
-    object LastLintAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastLintAt extends RefinedType[String, Pure]
 
   /** The row, made first if it is not there yet. */
   def get()(using DbCon): Row =
@@ -63,7 +67,7 @@ object AutopilotRepo:
   /** Switch it; `paused` = the managers it paused (turning it off) or none (turning it on). True = it changed (it was
     * the other way).
     */
-  def set(enabled: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled, by: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, paused: List[com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused])(using DbCon): Boolean =
+  def set(enabled: Row.Enabled, by: Row.ChangedBy, paused: List[Row.Paused])(using DbCon): Boolean =
     val _ = get()
     sql"""UPDATE agent_autopilot SET enabled = $enabled, changed_at = now(), changed_by = $by, paused = $paused::text[],
                                      last_ensure_at = NULL
@@ -87,11 +91,11 @@ object AutopilotRepo:
     val _ = sql"UPDATE agent_autopilot SET last_lint_at = $t::timestamptz WHERE id".update.run()
 
   /** A paused manager the autopilot resumed (it no longer counts as one it paused). */
-  def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id)(using DbCon): Unit =
+  def unpaused(managerId: Managers.ManagerInfo.Id)(using DbCon): Unit =
     val _ = sql"UPDATE agent_autopilot SET paused = array_remove(paused, $managerId) WHERE id".update.run()
 
   /** The scheduler's strategy a person chose (V100): (name, by, at); None = agents.scheduler.strategy. */
-  def strategy()(using DbCon): Option[(com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy, com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt)] =
+  def strategy()(using DbCon): Option[(StrategyName, Row.ChangedBy, Row.ChangedAt)] =
     val _ = get()
     Sql
       .raw(Sql.RawText(s"""SELECT scheduler_strategy, coalesce(scheduler_by, ''), coalesce(${at("scheduler_at")}, '')
@@ -102,14 +106,14 @@ object AutopilotRepo:
       .headOption
 
   /** Set (Some) or clear (None: back to the config's) the scheduler's strategy. */
-  def setStrategy(name: Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName], by: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy)(using DbCon): Unit =
+  def setStrategy(name: Option[StrategyName], by: Row.ChangedBy)(using DbCon): Unit =
     val _ = get()
     val _ =
       sql"""UPDATE agent_autopilot SET scheduler_strategy = $name, scheduler_by = $by, scheduler_at = now() WHERE id""".update
         .run()
 
   /** When the daily approval digest was last written (V101), if ever. */
-  def lastDigest()(using DbCon): Option[com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest] =
+  def lastDigest()(using DbCon): Option[Digest] =
     val _ = get()
     Sql.raw(Sql.RawText(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id")).frag.query[Option[Digest]].run().head
 
@@ -130,7 +134,7 @@ object AutopilotRepo:
       .headOption
 
   /** Start draining (true; a drain under way keeps its start) or stop (false). True = it changed. */
-  def setDrain(on: Boolean, by: com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy)(using DbCon): Boolean =
+  def setDrain(on: Boolean, by: Row.ChangedBy)(using DbCon): Boolean =
     val _ = get()
     if on then sql"""UPDATE agent_autopilot SET drain_since = now(), drain_by = $by, drained_at = NULL
                      WHERE id AND drain_since IS NULL""".update.run() > 0

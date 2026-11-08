@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -17,29 +18,33 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.library.{Edge, NeighborTarget, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Year
 
 /** `edges` connects stored sources only (V026): the migration's data move, the write-path routing into
   * `unresolved_edges`, promotion when the target arrives, and the graph/neighbors reads built on that invariant.
   * Against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   */
-class EdgeRepoSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class EdgeRepoSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private val Prefix = "zzedge"
 
   private def source(ck: String, edges: List[Edge] = Nil, topics: List[Source.Topics] = Nil) = Source(
-    citekey = com.histmersion.api.library.Citekey(ck),
+    citekey = Citekey(ck),
     title = com.histmersion.api.library.Title(s"Title $ck"),
     authors = (List("A")).map(com.histmersion.api.library.AuthorName.apply),
-    doi = (Some(s"10.1/$ck")).map(com.histmersion.api.library.Doi.apply),
-    year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+    doi = (Some(s"10.1/$ck")).map(Doi.apply),
+    year = (Some(2020)).map(Year.apply),
     venue = None,
-    status = com.histmersion.api.library.Source.Status.Current,
+    status = Source.Status.Current,
     topics = topics,
     regions = Nil,
     tags = Nil,
@@ -61,9 +66,9 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
 
   test("an edge to a source not stored yet is parked, listed as unresolved, and promoted when it arrives"):
     val a = s"${Prefix}a2020_x"; val b = s"${Prefix}b2021_y"
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), com.histmersion.api.library.Edge.Kind.Challenges))))
+    put(source(a, edges = List(Edge(Citekey(a), Citekey(b), Edge.Kind.Challenges))))
     // the domain read still carries it — a patch or an export must not lose it
-    assertEquals(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey.assume(a)).get.edges, List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), com.histmersion.api.library.Edge.Kind.Challenges)))
+    assertEquals(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey.assume(a)).get.edges, List(Edge(Citekey(a), Citekey(b), Edge.Kind.Challenges)))
     assertEquals(
       CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
       Vector(b -> NeighborTarget.Unresolved)
@@ -80,8 +85,8 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   test("a parked edge naming a compiled article is classified as an article"):
     val a = s"${Prefix}a2020_x"
     val slug = s"${Prefix}_topic"
-    val _ = ArticleFixtures.put(ds, Article(Article.Slug(slug), com.histmersion.api.research.Article.Title("A topic"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("# A topic"), None, Nil, Nil, None))
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(slug), com.histmersion.api.library.Edge.Kind.Updates))))
+    val _ = ArticleFixtures.put(ds, Article(Article.Slug(slug), Article.Title("A topic"), Article.KindValue("concept"), Article.Body("# A topic"), None, Nil, Nil, None))
+    put(source(a, edges = List(Edge(Citekey(a), Citekey(slug), Edge.Kind.Updates))))
     assertEquals(
       CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target, n.title)),
       Vector((slug, NeighborTarget.Article, Some("A topic")))
@@ -93,7 +98,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     val a = s"${Prefix}a2020_x"
     put(source(s"${Prefix}c2019_full"))
     put(source(s"${Prefix}d2018_one")); put(source(s"${Prefix}d2018_two"))
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}c2019"), com.histmersion.api.library.Edge.Kind.References), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(s"${Prefix}d2018"), com.histmersion.api.library.Edge.Kind.References))))
+    put(source(a, edges = List(Edge(Citekey(a), Citekey(s"${Prefix}c2019"), Edge.Kind.References), Edge(Citekey(a), Citekey(s"${Prefix}d2018"), Edge.Kind.References))))
     assert(SourceFixtures.resolveEdges(ds).value >= 1)
     assertEquals(
       CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
@@ -103,14 +108,14 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
   test("graph: every link joins two nodes of the result, whatever the depth cut-off"):
     val (a, b, c, d) = (s"${Prefix}a2020_x", s"${Prefix}b2021_y", s"${Prefix}c2019_z", s"${Prefix}d2018_w")
     List(b, c, d).foreach(k => put(source(k)))
-    put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), com.histmersion.api.library.Edge.Kind.References), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey("not_a_source_topic"), com.histmersion.api.library.Edge.Kind.References))))
-    put(source(c, edges = List(Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Edge.Kind.Challenges), Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(d), com.histmersion.api.library.Edge.Kind.References))))
-    val g1 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), com.histmersion.api.library.Source.Graph.Depth(1))
+    put(source(a, edges = List(Edge(Citekey(a), Citekey(b), Edge.Kind.References), Edge(Citekey(a), Citekey("not_a_source_topic"), Edge.Kind.References))))
+    put(source(c, edges = List(Edge(Citekey(c), Citekey(a), Edge.Kind.Challenges), Edge(Citekey(c), Citekey(d), Edge.Kind.References))))
+    val g1 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(1))
     assertEquals(g1.nodes.map(_.id).toSet, Set(a, b, c))
     assertEquals(g1.links.map(l => (l.source, l.target)).toSet, Set(a -> b, c -> a))
     val ids = g1.nodes.map(_.id).toSet
     assert(g1.links.forall(l => ids(l.source) && ids(l.target)), g1)
-    val g2 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), com.histmersion.api.library.Source.Graph.Depth(2))
+    val g2 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(2))
     assertEquals(g2.nodes.map(_.id).toSet, Set(a, b, c, d))
     assertEquals(g2.nodes.find(_.id.value == d).map(_.depth), Some(2))
-    assertEquals(CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), com.histmersion.api.library.Source.Graph.Depth(0)).links, Nil)
+    assertEquals(CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(0)).links, Nil)

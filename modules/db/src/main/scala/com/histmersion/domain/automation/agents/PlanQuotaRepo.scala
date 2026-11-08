@@ -1,22 +1,25 @@
-package com.histmersion.domain.automation.agents
+package com.histmersion
+package domain.automation.agents
 import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 object PlanQuotaRepo:
   type PoolName = PoolName.T
-  object PoolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PoolName extends RefinedType[String, Pure]
   type EpochMillis = EpochMillis.T
-  object EpochMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EpochMillis extends RefinedType[Long, Pure]
   type RefreshDetail = RefreshDetail.T
-  object RefreshDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefreshDetail extends RefinedType[String, Pure]
   type RefreshMode = RefreshMode.T
-  object RefreshMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefreshMode extends RefinedType[String, Pure]
   type RefreshTrigger = RefreshTrigger.T
-  object RefreshTrigger extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefreshTrigger extends RefinedType[String, Pure]
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image): bound through
   // to_timestamp(ms / 1000.0), read back as (extract(epoch …) * 1000)::bigint.
@@ -70,17 +73,17 @@ object PlanQuotaRepo:
 
   object Pool:
     type Held = Held.T
-    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Held extends RefinedType[Boolean, Pure]
     type Floors = Floors.T
-    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Floors extends RefinedType[String, Pure]
     type Refusal = Refusal.T
-    object Refusal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Refusal extends RefinedType[String, Pure]
     type RefusalUntil = RefusalUntil.T
-    object RefusalUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RefusalUntil extends RefinedType[Long, Pure]
     type PlanType = PlanType.T
-    object PlanType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlanType extends RefinedType[String, Pure]
 
-  val NoPool: Pool = Pool(com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held(false), None, None, None, None)
+  val NoPool: Pool = Pool(Pool.Held(false), None, None, None, None)
 
   def pool(p: PoolId)(using DbCon): Pool =
     sql"""SELECT held, floors, refusal, (extract(epoch FROM refusal_until) * 1000)::bigint, plan_type
@@ -93,33 +96,33 @@ object PlanQuotaRepo:
       )
       .getOrElse(NoPool)
 
-  def setHold(p: PoolId, held: com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held)(using DbCon): Unit =
+  def setHold(p: PoolId, held: Pool.Held)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO plan_pools (pool, held) VALUES (${p.wire}, $held)
             ON CONFLICT (pool) DO UPDATE SET held = EXCLUDED.held, updated_at = now()""".update.run()
 
   /** Saved floors; None drops them (config's apply again). */
-  def setFloors(p: PoolId, floors: Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Floors])(using DbCon): Unit =
+  def setFloors(p: PoolId, floors: Option[Pool.Floors])(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO plan_pools (pool, floors) VALUES (${p.wire}, $floors)
             ON CONFLICT (pool) DO UPDATE SET floors = EXCLUDED.floors, updated_at = now()""".update.run()
 
   /** The provider's own refusal (None lifts it) and its plan type, as last read. */
-  def setRefusal(p: PoolId, refusal: Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Refusal], until: Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.RefusalUntil], planType: Option[com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.PlanType])(using DbCon): Unit =
+  def setRefusal(p: PoolId, refusal: Option[Pool.Refusal], until: Option[Pool.RefusalUntil], planType: Option[Pool.PlanType])(using DbCon): Unit =
     val u = until.map(_.value.toDouble / 1000)
     val _ =
       sql"""INSERT INTO plan_pools (pool, refusal, refusal_until, plan_type) VALUES (${p.wire}, $refusal, to_timestamp($u::float8), $planType)
             ON CONFLICT (pool) DO UPDATE SET refusal = EXCLUDED.refusal, refusal_until = EXCLUDED.refusal_until,
               plan_type = COALESCE(EXCLUDED.plan_type, plan_pools.plan_type), updated_at = now()""".update.run()
 
-  def fallthrough(using DbCon): Map[com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainRole, Boolean] =
+  def fallthrough(using DbCon): Map[ModelSettingsRepo.ChainRole, Boolean] =
     sql"SELECT role, fallthrough FROM agent_role_fallthrough"
       .query[(String, Boolean)]
       .run()
       .map((role, on) => ModelSettingsRepo.ChainRole(role) -> on)
       .toMap
 
-  def setFallthrough(role: com.histmersion.domain.automation.agents.ModelSettingsRepo.ChainRole, on: Boolean)(using DbCon): Unit =
+  def setFallthrough(role: ModelSettingsRepo.ChainRole, on: Boolean)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO agent_role_fallthrough (role, fallthrough) VALUES ($role, $on)
             ON CONFLICT (role) DO UPDATE SET fallthrough = EXCLUDED.fallthrough, updated_at = now()""".update.run()
@@ -127,13 +130,13 @@ object PlanQuotaRepo:
   // ── the refresh log (V069) ──────────────────────────────────────────────────────────────────────
 
   /** One fresh reading a pool took on purpose (or tried to). */
-  def logRefresh(p: PoolId, mode: com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshMode, trigger: com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshTrigger, ok: Boolean, detail: com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshDetail)(using DbCon): Unit =
+  def logRefresh(p: PoolId, mode: RefreshMode, trigger: RefreshTrigger, ok: Boolean, detail: RefreshDetail)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO plan_quota_refreshes (pool, mode, trigger, ok, detail)
             VALUES (${p.wire}, $mode, $trigger, $ok, ${detail.value.take(1000)})""".update.run()
 
   /** How many refreshes `p` took since `sinceMs` (epoch ms), and the newest one. */
-  def refreshes(p: PoolId, sinceMs: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis)(using DbCon): (com.histmersion.RowCount, Option[RefreshInfo]) =
+  def refreshes(p: PoolId, sinceMs: EpochMillis)(using DbCon): (RowCount, Option[RefreshInfo]) =
     val since = sinceMs.value.toDouble / 1000
     val n = sql"""SELECT count(*)::int FROM plan_quota_refreshes
                   WHERE pool = ${p.wire} AND at >= to_timestamp($since::float8)""".query[Int].run().head
@@ -145,4 +148,4 @@ object PlanQuotaRepo:
       .map((a, m, t, ok, d) =>
         RefreshInfo(RefreshInfo.At(a), RefreshInfo.Mode(m), RefreshInfo.Trigger(t), RefreshInfo.Ok(ok), RefreshInfo.Detail(d))
       )
-    (com.histmersion.RowCount(n), last)
+    (RowCount(n), last)

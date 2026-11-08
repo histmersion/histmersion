@@ -1,18 +1,21 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 
 import com.augustnagro.magnum.{connect as connectTo, transact as transactOn, DbCon}
 import javax.sql.DataSource
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 trait Transactor:
   def read[A](work: DbCon ?=> A): A
   def transact[A](work: DbCon ?=> A): A
   def autocommit[A](work: DbCon ?=> A): A = read(Transactor.onConnection.autocommit(work))
-  def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A =
+  def readOnlyRollback[A](timeoutMs: Transactor.TimeoutMs)(work: DbCon ?=> A): A =
     read(Transactor.onConnection.readOnlyRollback(timeoutMs)(work))
 
 object Transactor:
   type TimeoutMs = TimeoutMs.T
-  object TimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutMs extends RefinedType[Int, Pure]
 
   def apply(dataSource: DataSource): Transactor = Implementation(dataSource)
   def onConnection(using con: DbCon): Session = new Session(con)
@@ -24,9 +27,9 @@ object Transactor:
 
     def transact[A](work: DbCon ?=> A): A = run(true, None)(work)
     def rollback[A](work: DbCon ?=> A): A = run(false, None)(work)
-    def readOnlyRollback[A](timeoutMs: com.histmersion.util.database.Transactor.TimeoutMs)(work: DbCon ?=> A): A = run(false, Some(timeoutMs))(work)
+    def readOnlyRollback[A](timeoutMs: TimeoutMs)(work: DbCon ?=> A): A = run(false, Some(timeoutMs))(work)
 
-    private def run[A](commit: Boolean, readOnlyTimeout: Option[com.histmersion.util.database.Transactor.TimeoutMs])(work: DbCon ?=> A): A =
+    private def run[A](commit: Boolean, readOnlyTimeout: Option[TimeoutMs])(work: DbCon ?=> A): A =
       val jdbc = con.connection
       require(jdbc.getAutoCommit, "A scoped transaction cannot borrow an active transaction")
       val wasReadOnly = jdbc.isReadOnly

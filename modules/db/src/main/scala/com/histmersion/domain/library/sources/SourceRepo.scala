@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import hearth.kindlings.optics.syntax.*
 
@@ -22,6 +23,16 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{CalibreGap, Edge, Finding, Rename, Source, TocEntry}
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.library.Confidence
+import com.histmersion.domain.Licence
+import com.histmersion.domain.library.search.FilterSql
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
@@ -29,21 +40,21 @@ import com.histmersion.api.Api
   */
 private[sources] object SourceRepo:
   type BodyChars = BodyChars.T
-  object BodyChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BodyChars extends RefinedType[Int, Pure]
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Long, Pure]
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
 
-  private def apiCitekey(ck: com.histmersion.domain.library.Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck.value)
+  private def apiCitekey(ck: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck.value)
 
-  private def apiToDomain(ck: com.histmersion.api.library.Citekey): com.histmersion.domain.library.Citekey = com.histmersion.domain.library.Citekey.applyUnsafe(ck.value)
+  private def apiToDomain(ck: com.histmersion.api.library.Citekey): Citekey = Citekey.applyUnsafe(ck.value)
 
   private def apiCitekeyOf(t: WikiLinks.Occurrence.Target): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(t.value)
 
-  private def domainCitekey(ck: com.histmersion.api.library.Citekey): Option[com.histmersion.domain.library.Citekey] = com.histmersion.domain.library.Citekey.either(ck.value).toOption
+  private def domainCitekey(ck: com.histmersion.api.library.Citekey): Option[Citekey] = Citekey.either(ck.value).toOption
 
   import com.histmersion.api.library.SourceColumns.given
 
@@ -53,31 +64,31 @@ private[sources] object SourceRepo:
   private given DbCodec[Source.Ref] = DbCodec.derived
 
   /** The sources whose chunks contain `name` as a phrase (the FTS index), most chunks first, at most `limit`. */
-  def naming(name: com.histmersion.domain.library.sources.SourceRepo.Name, limit: com.histmersion.domain.library.sources.SourceRepo.Limit)(using DbCon): List[com.histmersion.domain.library.Citekey] =
+  def naming(name: Name, limit: Limit)(using DbCon): List[Citekey] =
     sql"""SELECT citekey FROM source_chunks WHERE tsv @@ phraseto_tsquery('english', $name)
-            GROUP BY citekey ORDER BY count(*) DESC, citekey LIMIT $limit""".query[com.histmersion.domain.library.Citekey].run().toList
+            GROUP BY citekey ORDER BY count(*) DESC, citekey LIMIT $limit""".query[Citekey].run().toList
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** The findings of `citekey` placed again (`finding_places`), inside the caller's transaction: what a write that
     * touched the source's findings leaves to do.
     */
-  private[histmersion] def placeFindingsIn(citekey: com.histmersion.domain.library.Citekey, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): com.histmersion.RowCount =
+  private[histmersion] def placeFindingsIn(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
     FindingPlacement(toleranceKm).placeSource(citekey)
 
   /** How many sources and findings are stored (what About counts). */
-  def counts()(using DbCon): (com.histmersion.domain.library.sources.SourceRepo.Count, com.histmersion.domain.library.sources.SourceRepo.Count) =
+  def counts()(using DbCon): (Count, Count) =
     (
       Count(sql"SELECT count(*)::int FROM sources".query[Int].run().head.toLong),
       Count(sql"SELECT count(*)::int FROM findings".query[Int].run().head.toLong)
     )
 
   /** [[put]] inside the caller's transaction. */
-  def putIn(s: Source, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): Source.UpdatedAt =
+  def putIn(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Source.UpdatedAt =
     write(s, chunkChars, toleranceKm)
     Source.UpdatedAt(domainCitekey(s.citekey).flatMap(token(_)).getOrElse(""))
 
   /** [[patch]] inside the caller's transaction. */
-  def patchIn(requested: com.histmersion.domain.library.Citekey, p: Source.Patch, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using
+  def patchIn(requested: Citekey, p: Source.Patch, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
       DbCon
   ): Either[Api.Error, Source.UpdatedAt] =
     // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
@@ -101,11 +112,11 @@ private[sources] object SourceRepo:
   /** Take the row lock the patch's compare-and-swap needs. A missing row is not an error here — `load` reports the 404
     * — so nothing is read out of it.
     */
-  private def lockRow(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Unit =
+  private def lockRow(citekey: Citekey)(using DbCon): Unit =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $citekey FOR UPDATE".query[String].run()
 
   /** The write itself, inside the caller's transaction. */
-  private def write(s: Source, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): Unit =
+  private def write(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Unit =
     // Creating a source under an OLD citekey would make the alias and a new row answer to the same
     // name. The handlers refuse it with a readable 400 first; this is the net under every other
     // writer (a seed of a stale `<old>.md`, an ingest job queued before the rename).
@@ -174,9 +185,9 @@ private[sources] object SourceRepo:
     * finds its source. The routing lives HERE only; every writer (`put`/`patch`, `refs --apply`, `followups --apply`)
     * comes through it. Returns how many rows were new.
     */
-  private[histmersion] def insertEdges(edges: List[Edge])(using DbCon): com.histmersion.RowCount =
+  private[histmersion] def insertEdges(edges: List[Edge])(using DbCon): RowCount =
     val es = edges.distinct
-    if es.isEmpty then com.histmersion.RowCount(0)
+    if es.isEmpty then RowCount(0)
     else
       // an edge to an OLD citekey (V027) is an edge to the source it was renamed to
       val known = canonicalAll(es.flatMap(e => domainCitekey(e.dst)).distinct).map((key, value) => apiCitekey(key) -> value)
@@ -187,10 +198,10 @@ private[sources] object SourceRepo:
         else sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${Edge.Kind.wireOf(e.kind)})
                 ON CONFLICT DO NOTHING""".update.run()
       }.sum
-        .pipe(com.histmersion.RowCount(_))
+        .pipe(RowCount(_))
 
   /** A source just arrived: every parked edge that named it exactly becomes a real edge. */
-  private[histmersion] def promote(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Unit =
+  private[histmersion] def promote(citekey: Citekey)(using DbCon): Unit =
     sql"""INSERT INTO edges (src, dst, kind)
           SELECT src, dst, kind FROM unresolved_edges WHERE dst = $citekey
           ON CONFLICT DO NOTHING""".update.run()
@@ -199,11 +210,11 @@ private[sources] object SourceRepo:
   /** The opaque last-write token: `updated_at` rendered UTC-normalised so it is stable to compare and safe to echo back
     * through JSON, whatever the session's TimeZone setting.
     */
-  private def token(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[String] =
+  private def token(citekey: Citekey)(using DbCon): Option[String] =
     sql"""SELECT to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
           FROM sources WHERE citekey = $citekey""".query[String].run().headOption
 
-  def load(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[Source] =
+  def load(citekey: Citekey)(using DbCon): Option[Source] =
     sql"""SELECT citekey, title, authors, doi, year, venue, status, topics, regions, tags,
                  ${SqlLiteral(RangeSql.cols("period"))}, summary, cited_by_count, influential_citations,
                  source, calibre_id, ocr_markdown, notes,
@@ -222,17 +233,17 @@ private[sources] object SourceRepo:
       Source(
         citekey = apiCitekey(r.citekey),
         title = com.histmersion.api.library.Title(r.title.value),
-        authors = r.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+        authors = r.authors.map(a => AuthorName(a.value)),
         doi = r.doi.map(d => com.histmersion.api.library.Doi(d.value)),
-        year = r.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+        year = r.year.map(y => Year(y.value.toLong)),
         venue = r.venue.map(v => Source.Venue(v.value)),
-        status = r.status.transformInto[com.histmersion.api.library.Source.Status],
+        status = r.status.transformInto[Source.Status],
         topics = r.topics.map(t => Source.Topics(t.value)),
         regions = r.regions.map(t => Source.Regions(t.value)),
         tags = r.tags.map(t => Source.Tags(t.value)),
         period = (r.periodStart, r.periodEnd) match
           case (Some(a), Some(b)) =>
-            Some(Period(com.histmersion.api.catalogue.Year(a.value.toLong), com.histmersion.api.catalogue.Year(b.value.toLong)))
+            Some(Period(Year(a.value.toLong), Year(b.value.toLong)))
           case _ => None,
         summary = r.summary.map(v => Source.Summary(v.value)),
         citedByCount = r.citedByCount.map(v => Source.CitedByCount(v.value)),
@@ -243,7 +254,7 @@ private[sources] object SourceRepo:
         findings = fs.toList.map { f =>
           val geo = (f.lon, f.lat) match
             case (Some(x), Some(y)) =>
-              Some(GeoPoint(com.histmersion.api.catalogue.Longitude(x.value), com.histmersion.api.catalogue.Latitude(y.value)))
+              Some(GeoPoint(Longitude(x.value), Latitude(y.value)))
             case _ => None
           Finding(
             Finding.Id(f.id.value),
@@ -253,11 +264,11 @@ private[sources] object SourceRepo:
             geo,
             (f.periodStart, f.periodEnd) match
               case (Some(a), Some(b)) =>
-                Some(Period(com.histmersion.api.catalogue.Year(a.value.toLong), com.histmersion.api.catalogue.Year(b.value.toLong)))
+                Some(Period(Year(a.value.toLong), Year(b.value.toLong)))
               case _ => None,
             f.periodName.map(v => Finding.PeriodName(v.value)),
             f.tags.map(v => Finding.Tags(v.value)),
-            f.confidence.transformInto[Option[com.histmersion.api.library.Confidence]],
+            f.confidence.transformInto[Option[Confidence]],
             f.significance.map(v => Finding.Significance(v.value))
           )
         },
@@ -273,10 +284,10 @@ private[sources] object SourceRepo:
       )
     }
 
-  def citekeys()(using DbCon): Vector[com.histmersion.domain.library.Citekey] =
-    sql"""SELECT citekey FROM sources ORDER BY citekey COLLATE "C"""".query[com.histmersion.domain.library.Citekey].run()
+  def citekeys()(using DbCon): Vector[Citekey] =
+    sql"""SELECT citekey FROM sources ORDER BY citekey COLLATE "C"""".query[Citekey].run()
 
-  def updatedAtMillis()(using DbCon): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.CitekeyMillis.Millis] =
+  def updatedAtMillis()(using DbCon): Map[Citekey, CitekeyMillis.Millis] =
     sql"SELECT citekey, (extract(epoch from updated_at) * 1000)::bigint FROM sources"
       .query[CitekeyMillis]
       .run()
@@ -287,26 +298,26 @@ private[sources] object SourceRepo:
     * chunks, and one round trip per chunk makes a full reindex take minutes (long enough for the server's request
     * timeout to cut it off).
     */
-  private[histmersion] def replaceChunks(citekey: com.histmersion.domain.library.Citekey, markdown: Option[com.histmersion.util.ocr.Chunker.ChunkMarkdown], chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars)(using DbCon): com.histmersion.RowCount =
+  private[histmersion] def replaceChunks(citekey: Citekey, markdown: Option[Chunker.ChunkMarkdown], chunkChars: Chunker.ChunkMaxChars)(using DbCon): RowCount =
     sql"DELETE FROM source_chunks WHERE citekey = $citekey".update.run()
     val chunks = markdown.map(Chunker.chunk(_, chunkChars)).getOrElse(Nil)
     if chunks.nonEmpty then
       val _ = batchUpdate(chunks)(c => sql"""INSERT INTO source_chunks (citekey, ord, heading, body)
               VALUES ($citekey, ${c.ord}, ${c.heading}, ${c.body})""".update)
-    com.histmersion.RowCount(chunks.size)
+    RowCount(chunks.size)
 
   /** The sources after `after`, in citekey order, each with its body's length: what a re-chunk of the corpus walks. */
-  def bodiesAfter(after: Option[com.histmersion.domain.library.Citekey])(using DbCon): Vector[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.SourceRepo.BodyChars)] =
+  def bodiesAfter(after: Option[Citekey])(using DbCon): Vector[(Citekey, BodyChars)] =
     sql"""SELECT citekey, coalesce(length(ocr_markdown), 0)
           FROM sources WHERE $after IS NULL OR citekey > $after
-          ORDER BY citekey""".query[(com.histmersion.domain.library.Citekey, BodyChars)].run()
+          ORDER BY citekey""".query[(Citekey, BodyChars)].run()
 
   /** One source's full-text chunks rebuilt from its stored body; how many chunks it now has. */
-  def rechunk(citekey: com.histmersion.domain.library.Citekey, chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars)(using DbCon): com.histmersion.RowCount =
+  def rechunk(citekey: Citekey, chunkChars: Chunker.ChunkMaxChars)(using DbCon): RowCount =
     val md = sql"SELECT ocr_markdown FROM sources WHERE citekey = $citekey".query[Option[String]].run()
     replaceChunks(citekey, md.headOption.flatten.map(Chunker.ChunkMarkdown(_)), chunkChars)
 
-  def resolveEdges()(using DbCon): com.histmersion.RowCount =
+  def resolveEdges()(using DbCon): RowCount =
     val parked = sql"SELECT src, dst, kind FROM unresolved_edges".query[EdgeRow].run().toList
     val aliases = resolveAliases(parked.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
     val moves =
@@ -318,7 +329,7 @@ private[sources] object SourceRepo:
               ON CONFLICT DO NOTHING""".update.run()
       sql"DELETE FROM unresolved_edges WHERE src = ${e.src} AND dst = ${e.dst} AND kind = ${e.kind}".update.run()
     }
-    com.histmersion.RowCount(moves.size)
+    RowCount(moves.size)
 
   /** Resolve wikilink targets to real citekeys, the same way [[resolveEdges]] resolves edge targets: an exact citekey
     * wins, otherwise the UNIQUE `<target>_%` prefix match does. The wiki writes `[[allentoft2015]]` for
@@ -328,7 +339,7 @@ private[sources] object SourceRepo:
     * `lint --rule unresolved-short-citekeys` is where a human picks one. One query for the whole body, whatever its
     * number of links.
     */
-  def resolveAliases(targets: List[WikiLinks.Occurrence.Target])(using DbCon): Map[WikiLinks.Occurrence.Target, com.histmersion.domain.library.Citekey] =
+  def resolveAliases(targets: List[WikiLinks.Occurrence.Target])(using DbCon): Map[WikiLinks.Occurrence.Target, Citekey] =
     val wanted = targets.map(_.value.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Map.empty
     else
@@ -342,7 +353,7 @@ private[sources] object SourceRepo:
               SELECT t.target, a.citekey, 1
               FROM unnest($wanted::text[]) AS t(target)
               JOIN source_aliases a ON a.alias = t.target
-           """.query[(String, com.histmersion.domain.library.Citekey, Int)].run()
+           """.query[(String, Citekey, Int)].run()
       rows.groupBy(_._1).flatMap { (target, cands) =>
         val best = cands.map(_._3).min
         cands.filter(_._3 == best).map(_._2).distinct.toList match
@@ -357,35 +368,35 @@ private[sources] object SourceRepo:
     * `SourcesControllers.canonical`, and [[patch]]), so an old id keeps working everywhere at once. Exact only: the
     * short-form prefix rule belongs to wikilinks ([[resolveAliases]]), not to ids in URLs.
     */
-  def canonical(id: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
+  def canonical(id: Citekey)(using DbCon): Option[Citekey] =
     canonicalAll(List(id)).get(id)
 
   /** [[canonical]] for many ids in one query; an id that names nothing is absent. */
-  private[histmersion] def canonicalAll(ids: List[com.histmersion.domain.library.Citekey])(using DbCon): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey] =
+  private[histmersion] def canonicalAll(ids: List[Citekey])(using DbCon): Map[Citekey, Citekey] =
     if ids.isEmpty then Map.empty
     else
       sql"""SELECT citekey, citekey, 0 FROM sources WHERE citekey = ANY($ids::text[])
             UNION ALL
             SELECT alias, citekey, 1 FROM source_aliases WHERE alias = ANY($ids::text[])"""
-        .query[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey, Int)]
+        .query[(Citekey, Citekey, Int)]
         .run()
         .toList
         .groupBy(_._1)
         .map((id, rows) => id -> rows.minBy(_._3)._2)
 
   /** The source `ck` was renamed to, when `ck` is an old citekey. */
-  def aliasOf(ck: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.Citekey] = aliasTarget(ck)
+  def aliasOf(ck: Citekey)(using DbCon): Option[Citekey] = aliasTarget(ck)
 
-  private def aliasTarget(ck: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
-    sql"SELECT citekey FROM source_aliases WHERE alias = $ck".query[com.histmersion.domain.library.Citekey].run().headOption
+  private def aliasTarget(ck: Citekey)(using DbCon): Option[Citekey] =
+    sql"SELECT citekey FROM source_aliases WHERE alias = $ck".query[Citekey].run().headOption
 
   /** The OLD citekeys that now name `ck` (V027) — an edge written on `ck` may give one as its `src`. */
-  def aliasesOf(ck: com.histmersion.domain.library.Citekey)(using DbCon): Set[com.histmersion.domain.library.Citekey] =
-    (sql"SELECT alias FROM source_aliases WHERE citekey = $ck".query[com.histmersion.domain.library.Citekey].run().toSet)
+  def aliasesOf(ck: Citekey)(using DbCon): Set[Citekey] =
+    (sql"SELECT alias FROM source_aliases WHERE citekey = $ck".query[Citekey].run().toSet)
 
   /** The Calibre book id recorded for a source, if any. */
-  def calibreId(ck: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId] =
-    (sql"SELECT calibre_id FROM sources WHERE citekey = $ck".query[Option[com.histmersion.domain.library.sources.FullSourceRow.CalibreId]].run().headOption.flatten)
+  def calibreId(ck: Citekey)(using DbCon): Option[FullSourceRow.CalibreId] =
+    (sql"SELECT calibre_id FROM sources WHERE citekey = $ck".query[Option[FullSourceRow.CalibreId]].run().headOption.flatten)
 
   /** Every old citekey and the source it names now, by alias. */
   def aliases(using DbCon): List[Source.Alias] =
@@ -415,7 +426,7 @@ private[sources] object SourceRepo:
     *   - Parked edges that named `new` (or a short form now unique to it) become real edges.
     *   - `old` becomes an alias of `new`, so it keeps resolving.
     */
-  def rename(oldCk: com.histmersion.domain.library.Citekey, newRaw: com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw, referrers: SourceReferrers)(using DbCon): Either[Api.Error, Rename.Counts] =
+  def rename(oldCk: Citekey, newRaw: Citekeys.RenameToNewRaw, referrers: SourceReferrers)(using DbCon): Either[Api.Error, Rename.Counts] =
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
@@ -425,11 +436,11 @@ private[sources] object SourceRepo:
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a
     * source was renamed on the other side (`BundleImport`).
     */
-  private[histmersion] def renameIn(oldCk: com.histmersion.domain.library.Citekey, newCk: com.histmersion.domain.library.Citekey, referrers: SourceReferrers)(using
+  private[histmersion] def renameIn(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using
       DbCon
   ): Either[Api.Error, Rename.Counts] =
     lockRow(oldCk)
-    def taken(ck: com.histmersion.domain.library.Citekey) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
+    def taken(ck: Citekey) = sql"SELECT citekey FROM sources WHERE citekey = $ck".query[String].run().nonEmpty
     val findingIdsTaken =
       sql"SELECT id FROM findings WHERE left(id, ${newCk.value.length + 1}) = ${newCk.value + "#"} LIMIT 1"
         .query[String]
@@ -479,7 +490,7 @@ private[sources] object SourceRepo:
                   .run()
               Right(renameNow(oldCk, newCk, referrers))
 
-  private def renameNow(oldCk: com.histmersion.domain.library.Citekey, newCk: com.histmersion.domain.library.Citekey, referrers: SourceReferrers)(using DbCon): Rename.Counts =
+  private def renameNow(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using DbCon): Rename.Counts =
     // the short forms that pointed at the old key — decided BEFORE it moves
     val forms = Rename.shortForms(apiCitekey(oldCk))
     val shorts = resolveAliases(forms.map(f => WikiLinks.Occurrence.Target(f.value))).collect { case (f, ck) if ck == oldCk => f }.toSet
@@ -492,7 +503,7 @@ private[sources] object SourceRepo:
     val findings =
       sql"""UPDATE findings SET id = $newCk || substr(id, $cut)
             WHERE citekey = $newCk AND left(id, $cut) = $oldHash""".update.run()
-    val rename = SourceRename(oldCk, newCk, shorts.map(f => com.histmersion.domain.library.Citekey.assume(f.value)))
+    val rename = SourceRename(oldCk, newCk, shorts.map(f => Citekey.assume(f.value)))
     val referred = referrers.renamed(rename)
 
     // parked edges that were waiting for the new name, exactly or by a short form now unique to it
@@ -523,21 +534,21 @@ private[sources] object SourceRepo:
     )
 
   /** Promote the parked edges whose target is `dst` as edges to `ck` (never a self-edge). */
-  private def promoteAs(dst: WikiLinks.Occurrence.Target, ck: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.RowCount =
+  private def promoteAs(dst: WikiLinks.Occurrence.Target, ck: Citekey)(using DbCon): RowCount =
     val n = sql"""INSERT INTO edges (src, dst, kind)
                   SELECT src, $ck, kind FROM unresolved_edges WHERE dst = $dst AND src <> $ck
                   ON CONFLICT DO NOTHING""".update.run()
     sql"DELETE FROM unresolved_edges WHERE dst = $dst AND src <> $ck".update.run()
-    com.histmersion.RowCount(n)
+    RowCount(n)
 
   /** Rewrite links in every source's notes and summary; returns (citekey, links moved) per source that changed. A plain
     * UPDATE, not [[write]]: nothing but the text changes, so the findings, chunks and edges need no rewrite.
     */
-  private def retargetSourceText(needle: com.histmersion.domain.library.sources.referrers.SourceRename.Needle, to: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.library.Citekey])(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)] =
+  private def retargetSourceText(needle: SourceRename.Needle, to: Citekey => Option[Citekey])(using DbCon): List[(Citekey, RowCount)] =
     sql"""SELECT citekey, notes, summary FROM sources
           WHERE strpos(lower(coalesce(notes, '') || ' ' || coalesce(summary, '')), $needle) > 0
           ORDER BY citekey"""
-      .query[(com.histmersion.domain.library.Citekey, Option[String], Option[String])]
+      .query[(Citekey, Option[String], Option[String])]
       .run()
       .toList
       .flatMap { (ck, notes, summary) =>
@@ -549,7 +560,7 @@ private[sources] object SourceRepo:
         Option.when(moved > 0) {
           sql"""UPDATE sources SET notes = ${n.map(_._1)}, summary = ${s.map(_._1)}, updated_at = now()
                 WHERE citekey = $ck""".update.run()
-          ck -> com.histmersion.RowCount(moved)
+          ck -> RowCount(moved)
         }
       }
 
@@ -557,13 +568,13 @@ private[sources] object SourceRepo:
   /** The citation-link view of the given stored sources (unknown citekeys are simply absent) — what a page needs to
     * render a reference with its DOI, byline and status. One query, in citekey order.
     */
-  def refs(citekeys: List[com.histmersion.domain.library.Citekey])(using DbCon): List[Source.Ref] =
+  def refs(citekeys: List[Citekey])(using DbCon): List[Source.Ref] =
     val wanted = citekeys.distinct
     if wanted.isEmpty then Nil
     else sql"""SELECT citekey, doi, authors, year, title, status FROM sources
               WHERE citekey = ANY($wanted::text[]) ORDER BY citekey""".query[Source.Ref].run().toList
 
-  def get(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[(Source.Detail, Vector[Finding.Row])] =
+  def get(citekey: Citekey)(using DbCon): Option[(Source.Detail, Vector[Finding.Row])] =
     val src = sql"""SELECT citekey, title, authors, year, venue, status, topics, regions, tags,
                              ${SqlLiteral(RangeSql.cols("period"))},
                              summary, doi, ocr_markdown, notes,
@@ -581,7 +592,7 @@ private[sources] object SourceRepo:
   // ── get_source sectioning (plan §6 A1/A7/A18) ────────────────────────────────────────────────
 
   /** Table of contents: distinct headings from source_chunks with first ord and total chars. */
-  def toc(citekey: com.histmersion.domain.library.Citekey)(using DbCon): List[TocEntry] =
+  def toc(citekey: Citekey)(using DbCon): List[TocEntry] =
     sql"""SELECT heading, min(ord), sum(length(body))::int
             FROM source_chunks
             WHERE citekey = $citekey AND heading IS NOT NULL
@@ -590,7 +601,7 @@ private[sources] object SourceRepo:
 
   /** Full body text: chunks concatenated in ord order, or raw ocr_markdown when unchunked. */
   /** A source's converted text as stored — where its figures are linked from. */
-  def markdown(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown =
+  def markdown(citekey: Citekey)(using DbCon): FullSourceRow.OcrMarkdown =
     FullSourceRow.OcrMarkdown(
       sql"SELECT coalesce(ocr_markdown, '') FROM sources WHERE citekey = $citekey"
         .query[String]
@@ -601,61 +612,61 @@ private[sources] object SourceRepo:
 
   // ── the uploaded ORIGINAL's digest, on `sources.sha256` (V001 already has the column) ─────────
 
-  def citekeyOfSha256(sha: com.histmersion.Sha256)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
-    sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[com.histmersion.domain.library.Citekey].run().headOption
+  def citekeyOfSha256(sha: Sha256)(using DbCon): Option[Citekey] =
+    sql"SELECT citekey FROM sources WHERE sha256 = $sha ORDER BY citekey LIMIT 1".query[Citekey].run().headOption
 
-  def setSha256(citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.Sha256)(using DbCon): Unit =
+  def setSha256(citekey: Citekey, sha: Sha256)(using DbCon): Unit =
     val _ = sql"UPDATE sources SET sha256 = $sha WHERE citekey = $citekey".update.run()
 
-  def sha256Of(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.Sha256] =
-    sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[com.histmersion.Sha256]].run().headOption.flatten
+  def sha256Of(citekey: Citekey)(using DbCon): Option[Sha256] =
+    sql"SELECT sha256 FROM sources WHERE citekey = $citekey".query[Option[Sha256]].run().headOption.flatten
 
   /** The content hash (`sources.sha256`, the stored original's name) of each of `citekeys` that has one, in one query.
     */
-  def sha256s(citekeys: List[com.histmersion.domain.library.Citekey])(using DbCon): Map[com.histmersion.domain.library.Citekey, com.histmersion.Sha256] =
+  def sha256s(citekeys: List[Citekey])(using DbCon): Map[Citekey, Sha256] =
     if citekeys.isEmpty then Map.empty
     else
       sql"""SELECT citekey, sha256 FROM sources WHERE citekey = ANY($citekeys::text[]) AND sha256 IS NOT NULL"""
-        .query[(com.histmersion.domain.library.Citekey, com.histmersion.Sha256)]
+        .query[(Citekey, Sha256)]
         .run()
         .toMap
 
   // ── the identifiers acquisition resolves a work's references and its own copy by ────────────
 
   /** `lower(doi) -> citekey` for the whole corpus, in one query. */
-  def doiIndex()(using DbCon): Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey] =
+  def doiIndex()(using DbCon): Map[com.histmersion.domain.library.Doi, Citekey] =
     sql"SELECT lower(doi), citekey FROM sources WHERE doi IS NOT NULL AND doi <> ''"
       .query[DoiKey]
       .run()
       .map(r => r.doi -> r.citekey)
       .toMap
 
-  final private case class DoiKey(doi: com.histmersion.domain.library.Doi, citekey: com.histmersion.domain.library.Citekey) derives DbCodec
+  final private case class DoiKey(doi: com.histmersion.domain.library.Doi, citekey: Citekey) derives DbCodec
 
   /** The citekey of the source holding `doi` (the first by citekey), if one does. */
-  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi)(using DbCon): Option[com.histmersion.domain.library.Citekey] =
+  def citekeyOfDoi(doi: com.histmersion.domain.library.Doi)(using DbCon): Option[Citekey] =
     val d = doi.value.trim.toLowerCase
-    sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[com.histmersion.domain.library.Citekey].run().headOption
+    sql"SELECT citekey FROM sources WHERE lower(doi) = $d ORDER BY citekey LIMIT 1".query[Citekey].run().headOption
 
-  def exists(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Boolean =
+  def exists(citekey: Citekey)(using DbCon): Boolean =
     sql"SELECT count(*)::int FROM sources WHERE citekey = $citekey".query[Int].run().headOption.exists(_ > 0)
 
   // ── the licence a source is published under, as stored (classified on read by the service) ──
 
-  def licenceOf(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[com.histmersion.domain.Licence.Id] =
-    sql"SELECT license FROM sources WHERE citekey = $citekey".query[Option[com.histmersion.domain.Licence.Id]].run().headOption.flatten
+  def licenceOf(citekey: Citekey)(using DbCon): Option[Licence.Id] =
+    sql"SELECT license FROM sources WHERE citekey = $citekey".query[Option[Licence.Id]].run().headOption.flatten
 
   /** The licence a fetched copy came with, recorded as the source's when it has none — one set by hand or an earlier
     * copy is kept. `true` when it was written.
     */
-  def recordLicence(citekey: com.histmersion.domain.library.Citekey, licence: com.histmersion.domain.Licence.Id)(using DbCon): Boolean =
+  def recordLicence(citekey: Citekey, licence: Licence.Id)(using DbCon): Boolean =
     sql"""UPDATE sources SET license = $licence, updated_at = now()
           WHERE citekey = $citekey AND (license IS NULL OR btrim(license) = '')""".update.run() > 0
 
   // ── Calibre: the sources not in it yet, and the id written back after a push ────────────────
 
   final private case class GapRow(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       title: GapRow.Title,
       authors: List[GapRow.Authors],
       doi: Option[GapRow.Doi],
@@ -673,7 +684,7 @@ private[sources] object SourceRepo:
         CalibreGap.Title(title.value),
         authors.map(a => CalibreGap.Authors(a.value)),
         doi.map(d => com.histmersion.api.library.Doi(d.value)),
-        year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+        year.map(y => Year(y.value.toLong)),
         venue.map(v => Source.Venue(v.value)),
         summary.map(v => CalibreGap.Summary(v.value)),
         topics.map(t => CalibreGap.Topics(t.value)),
@@ -684,28 +695,28 @@ private[sources] object SourceRepo:
 
   object GapRow:
     type Doi = Doi.T
-    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Doi extends RefinedType[String, Pure]
     type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+    val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
     type Authors = Authors.T
-    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Authors extends RefinedType[String, Pure]
     type Venue = Venue.T
-    object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Venue extends RefinedType[String, Pure]
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Topics extends RefinedType[String, Pure]
     type Provenance = Provenance.T
-    object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Provenance extends RefinedType[String, Pure]
     type CalibreId = CalibreId.T
-    object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CalibreId extends RefinedType[String, Pure]
     type Isbn = Isbn.T
-    object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Isbn extends RefinedType[String, Pure]
 
   /** Sources that are NOT in Calibre yet: provenance is something other than `calibre` (or missing) and no `calibre_id`
     * has been written back, in citekey order, at most `limit`.
     */
-  def calibreGaps(limit: Option[com.histmersion.domain.library.sources.SourceRepo.Limit])(using DbCon): List[CalibreGap] =
+  def calibreGaps(limit: Option[Limit])(using DbCon): List[CalibreGap] =
     val cap = limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue)
     sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
             (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
@@ -718,16 +729,16 @@ private[sources] object SourceRepo:
   /** The push metadata for ONE source, whether or not it currently counts as a gap — `calibre push <citekey>` needs the
     * authors as a LIST, which the comma-joined `SourceDetail.authors` cannot give back unambiguously.
     */
-  def calibrePushMeta(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[CalibreGap] =
+  def calibrePushMeta(citekey: Citekey)(using DbCon): Option[CalibreGap] =
     sql"""SELECT citekey, title, authors, doi, year, venue, summary, topics, source, NULLIF(calibre_id, ''),
             (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = sources.uid AND i.scheme = 'isbn')
           FROM sources WHERE citekey = $citekey""".query[GapRow].run().headOption.map(_.gap)
 
   /** Write the Calibre id back after a push; how many sources it named (0 or 1). */
-  def setCalibreId(citekey: com.histmersion.domain.library.Citekey, calibreId: com.histmersion.domain.library.sources.FullSourceRow.CalibreId)(using DbCon): com.histmersion.RowCount =
-    sql"UPDATE sources SET calibre_id = $calibreId, updated_at = now() WHERE citekey = $citekey".update.run().pipe(com.histmersion.RowCount(_))
+  def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId)(using DbCon): RowCount =
+    sql"UPDATE sources SET calibre_id = $calibreId, updated_at = now() WHERE citekey = $citekey".update.run().pipe(RowCount(_))
 
-  def bodyText(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown =
+  def bodyText(citekey: Citekey)(using DbCon): FullSourceRow.OcrMarkdown =
     val chunks = sql"""SELECT body FROM source_chunks
                          WHERE citekey = $citekey ORDER BY ord""".query[String].run()
     FullSourceRow.OcrMarkdown(
@@ -744,7 +755,7 @@ private[sources] object SourceRepo:
     * without chunks — the raw `ocr_markdown` as one headingless piece. Joined by
     * [[com.histmersion.domain.PassageFinder.body]] this is exactly [[bodyText]].
     */
-  def bodyChunks(citekey: com.histmersion.domain.library.Citekey)(using DbCon): List[Chunk] =
+  def bodyChunks(citekey: Citekey)(using DbCon): List[Chunk] =
     val chunks = sql"""SELECT ord, heading, body FROM source_chunks
                          WHERE citekey = $citekey ORDER BY ord"""
       .query[(Int, Option[String], String)]
@@ -762,7 +773,7 @@ private[sources] object SourceRepo:
         .toList
 
   /** Body text under a specific heading: chunks whose heading matches case-insensitively (prefix). */
-  def bodyUnderHeading(citekey: com.histmersion.domain.library.Citekey, heading: com.histmersion.domain.library.search.FilterSql.SnippetRow.Heading)(using DbCon): com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown =
+  def bodyUnderHeading(citekey: Citekey, heading: FilterSql.SnippetRow.Heading)(using DbCon): FullSourceRow.OcrMarkdown =
     val lower = heading.value.trim.toLowerCase
     sql"""SELECT body FROM source_chunks
             WHERE citekey = $citekey AND lower(heading) LIKE ${lower + "%"}

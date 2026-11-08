@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.domain.library.sources.CitekeyResolver
 
@@ -9,6 +10,10 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.research.{CritiqueReason, Critiques}
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.research.Slug
+import com.histmersion.api.library.Citekey
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
   * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the
@@ -16,21 +21,21 @@ import com.histmersion.api.Api
   */
 private[articles] object CritiqueRepo:
   type By = By.T
-  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object By extends RefinedType[String, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
 
   /** The article's reasons, by pair. */
 
-  def list(slug: com.histmersion.domain.research.Slug)(using DbCon): List[CritiqueReason] =
+  def list(slug: Slug)(using DbCon): List[CritiqueReason] =
     sql"""SELECT src, dst, reason, set_by FROM article_critique_reasons WHERE slug = $slug ORDER BY src, dst"""
       .query[(String, String, String, String)]
       .run()
       .toList
       .map((s, d, r, b) =>
         CritiqueReason(
-          com.histmersion.api.library.Citekey(s),
-          com.histmersion.api.library.Citekey(d),
+          Citekey(s),
+          Citekey(d),
           CritiqueReason.Reason(r),
           Some(CritiqueReason.By(b))
         )
@@ -47,13 +52,13 @@ private[articles] object CritiqueRepo:
     * removes the pair's reason in either direction. `by` is the setter of a reason that names none. The first refusal
     * is the answer.
     */
-  private def check(reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.By)(using DbCon): Either[Api.Error, List[Change]] =
+  private def check(reasons: List[CritiqueReason], by: By)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
       case Some(m) => Left(Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(Write.CodeInvalid))))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
-        def stored(c: com.histmersion.api.library.Citekey): Option[com.histmersion.domain.library.Citekey] =
+        def stored(c: Citekey): Option[com.histmersion.domain.library.Citekey] =
           com.histmersion.domain.library.Citekey.option(c.value)
         val known = CitekeyResolver.stored.canonical(rs.flatMap(r => List(r.src, r.dst)).flatMap(stored).distinct)
         val kinds = Critiques.Kinds
@@ -109,12 +114,12 @@ private[articles] object CritiqueRepo:
     * (the article's own write, if any) runs between the two, so a refused reason leaves nothing written. Returns how
     * many pairs changed.
     */
-  def applyIn(slug: com.histmersion.domain.research.Slug, reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.By)(
+  def applyIn(slug: Slug, reasons: List[CritiqueReason], by: By)(
       write: => Unit
-  )(using DbCon): Either[Api.Error, com.histmersion.RowCount] =
+  )(using DbCon): Either[Api.Error, RowCount] =
     check(reasons, by).map { changes =>
       write
-      com.histmersion.RowCount(changes.map {
+      RowCount(changes.map {
         case Change.Remove(a, b) =>
           sql"""DELETE FROM article_critique_reasons
                 WHERE slug = $slug AND ((src = $a AND dst = $b) OR (src = $b AND dst = $a))""".update.run()

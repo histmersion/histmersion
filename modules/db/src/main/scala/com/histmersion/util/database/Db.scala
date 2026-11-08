@@ -1,4 +1,5 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -6,6 +7,8 @@ import com.zaxxer.hikari.HikariDataSource
 import org.postgresql.ds.PGSimpleDataSource
 import java.sql.SQLException
 import javax.sql.DataSource
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Postgres connection pools from the HOCON config (see [[AppConfig]] / reference.conf).
   *
@@ -21,29 +24,29 @@ import javax.sql.DataSource
   */
 object Db:
   type ActiveConnections = ActiveConnections.T
-  object ActiveConnections extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ActiveConnections extends RefinedType[Int, Pure]
   type DatabaseName = DatabaseName.T
-  object DatabaseName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DatabaseName extends RefinedType[String, Pure]
   type JdbcUrl = JdbcUrl.T
-  object JdbcUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JdbcUrl extends RefinedType[String, Pure]
   type Login = Login.T
-  object Login extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Login extends RefinedType[String, Pure]
   type Password = Password.T
-  object Password extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Password extends RefinedType[String, Pure]
   type PoolMax = PoolMax.T
-  object PoolMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PoolMax extends RefinedType[Int, Pure]
   type PoolName = PoolName.T
-  object PoolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PoolName extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type SettingName = SettingName.T
-  object SettingName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SettingName extends RefinedType[String, Pure]
 
   /** The APPLICATION pool: owns the schema, runs the migrations, serves every repo. */
-  type PooledUrl = _root_.com.histmersion.util.database.Db.JdbcUrl
-  val PooledUrl: _root_.com.histmersion.util.database.Db.JdbcUrl.type = _root_.com.histmersion.util.database.Db.JdbcUrl
+  type PooledUrl = JdbcUrl
+  val PooledUrl: JdbcUrl.type = JdbcUrl
   type SettingValue = SettingValue.T
-  object SettingValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SettingValue extends RefinedType[String, Pure]
 
   def pool(cfg: DbConfig): HikariDataSource =
     pooled(
@@ -70,7 +73,7 @@ object Db:
     * Neither is a workaround for a missing agent run: both are the shapes that have no reflection in them at all, which
     * is the rule this codebase already follows for everything else.
     */
-  def pooled(url: com.histmersion.util.database.Db.PooledUrl, user: com.histmersion.util.database.Db.Login, password: com.histmersion.util.database.Db.Password, max: com.histmersion.util.database.Db.PoolMax, name: com.histmersion.util.database.Db.PoolName): HikariDataSource =
+  def pooled(url: PooledUrl, user: Login, password: Password, max: PoolMax, name: PoolName): HikariDataSource =
     val pg = PGSimpleDataSource()
     pg.setUrl(url.value)
     pg.setUser(user.value)
@@ -85,13 +88,13 @@ object Db:
     ds
 
   /** The database a JDBC URL names (`jdbc:postgresql://h:p/NAME?…`), for a pool's name in the log. */
-  private[histmersion] def databaseOf(url: com.histmersion.util.database.Db.JdbcUrl): com.histmersion.util.database.Db.DatabaseName =
+  private[histmersion] def databaseOf(url: JdbcUrl): DatabaseName =
     DatabaseName(url.value.takeWhile(_ != '?').reverse.takeWhile(_ != '/').reverse)
 
   /** Connections the pool behind `ds` has lent out now (0 for a pool that has not started, or no pool at all). A
     * retired pool is closed only when this is 0.
     */
-  def activeConnections(ds: DataSource): com.histmersion.util.database.Db.ActiveConnections =
+  def activeConnections(ds: DataSource): ActiveConnections =
     ActiveConnections(hikari(ds).flatMap(p => Option(p.getHikariPoolMXBean)).map(_.getActiveConnections).getOrElse(0))
 
   private def hikari(ds: DataSource): Option[HikariDataSource] =
@@ -112,7 +115,7 @@ object Db:
     * went from 17 ms to 1.5 s on the sixth hover (2026-10-09), and a place-name search from 0.1 s to minutes. Every
     * statement here is small next to its planning, so each is planned for its own values.
     */
-  private[histmersion] val databaseSettings: List[(com.histmersion.util.database.Db.SettingName, com.histmersion.util.database.Db.SettingValue)] =
+  private[histmersion] val databaseSettings: List[(SettingName, SettingValue)] =
     List(
       SettingName("random_page_cost") -> SettingValue("1.1"),
       SettingName("plan_cache_mode") -> SettingValue("force_custom_plan")
@@ -171,7 +174,7 @@ object Db:
   /** Can we actually connect as the read-only role? Checked once at startup, so a misconfigured password is a log line
     * at boot rather than a mystery 500 on the first `query`.
     */
-  def canConnect(ds: DataSource): Either[com.histmersion.util.database.Db.Problem, Unit] =
+  def canConnect(ds: DataSource): Either[Problem, Unit] =
     try
       val c = ds.getConnection
       try Right(())

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion}
 import com.augustnagro.magnum.DbCodec
@@ -9,8 +10,8 @@ final private[periods] case class PeriodRow(
     id: PeriodRow.Id,
     label: PeriodRow.Label,
     authority: Option[PeriodRow.Authority],
-    periodStart: com.histmersion.Year,
-    periodEnd: com.histmersion.Year,
+    periodStart: Year,
+    periodEnd: Year,
     region: Option[PeriodRow.Region],
     parentId: Option[PeriodRow.ParentId],
     preset: Option[PeriodRow.Preset]

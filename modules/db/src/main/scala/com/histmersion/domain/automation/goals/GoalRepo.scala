@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.goals
+package com.histmersion
+package domain.automation.goals
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.api.Write
@@ -10,6 +11,10 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.Api
+import com.histmersion.api.RowCount
+import com.histmersion.api.personal.UnreadPage
+import com.histmersion.domain.DeepTime
+import com.histmersion.util.identity.AliasTable
 
 object GoalRepo:
 
@@ -20,7 +25,7 @@ object GoalRepo:
       s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
 
   /** One page of the goals (of one status), by slug, on the caller's connection. */
-  def listIn(status: Option[com.histmersion.domain.automation.goals.GoalRow.Status], limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using DbCon): Goal.List =
+  def listIn(status: Option[GoalRow.Status], limit: PageSize, offset: Offset)(using DbCon): Goal.List =
     val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     locally:
       val total = sql"""SELECT count(*)::int FROM goals g
@@ -31,9 +36,9 @@ object GoalRepo:
             LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}
             """.query[GoalRow].run().toList.map(_.toDto)
       Goal.List.of(
-        com.histmersion.api.RowCount(total),
+        RowCount(total),
         rows,
-        com.histmersion.api.personal.UnreadPage.Offset(offset.value.max(0))
+        UnreadPage.Offset(offset.value.max(0))
       )
 
   def get(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[Goal] =
@@ -65,8 +70,8 @@ object GoalRepo:
     RangeSql
       .merge(
         (None, None),
-        in.periodStart.map(y => com.histmersion.domain.DeepTime.SignedYear(y.value)),
-        in.periodEnd.map(y => com.histmersion.domain.DeepTime.SignedYear(y.value)),
+        in.periodStart.map(y => DeepTime.SignedYear(y.value)),
+        in.periodEnd.map(y => DeepTime.SignedYear(y.value)),
         s"goal '${slug.value}'"
       )
       .getOrElse(Right((None, None)))
@@ -112,12 +117,12 @@ object GoalRepo:
           .query[(Option[Long], Option[Long])]
           .run()
           .head
-        val stored = (storedRaw._1.map(com.histmersion.domain.DeepTime.SignedYear(_)), storedRaw._2.map(com.histmersion.domain.DeepTime.SignedYear(_)))
+        val stored = (storedRaw._1.map(DeepTime.SignedYear(_)), storedRaw._2.map(DeepTime.SignedYear(_)))
         RangeSql
           .merge(
             stored,
-            p.periodStart.map(y => com.histmersion.domain.DeepTime.SignedYear(y.value)),
-            p.periodEnd.map(y => com.histmersion.domain.DeepTime.SignedYear(y.value)),
+            p.periodStart.map(y => DeepTime.SignedYear(y.value)),
+            p.periodEnd.map(y => DeepTime.SignedYear(y.value)),
             s"goal '${slug.value}'"
           )
           .getOrElse(Right(stored))
@@ -161,8 +166,8 @@ object GoalRepo:
 
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
   def renamedTo(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
-    com.histmersion.domain.automation.goals.GoalAliasTable.table
-      .renamedToIn(com.histmersion.util.identity.AliasTable.Id(slug.value))
+    GoalAliasTable.table
+      .renamedToIn(AliasTable.Id(slug.value))
       .map(id => com.histmersion.domain.automation.Goal.Slug.assume(id.value))
 
   /** A goal removed in the caller's transaction; false when there was none. */

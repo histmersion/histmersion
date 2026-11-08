@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql
@@ -10,6 +11,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.library.Citekey
+import com.histmersion.domain.catalogue.events.BEventRow
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an
@@ -72,7 +75,7 @@ private[evidence] object EvidenceBundleRepo:
         Bundle.EventCandidate(
           r.eventUid,
           r.sourceUid,
-          com.histmersion.api.library.Citekey(r.citekey.value),
+          Citekey(r.citekey.value),
           Bundle.EventCandidate.Score(r.score.value),
           Bundle.EventCandidate.Status(r.status.value),
           r.findings.map(f => Bundle.EventCandidate.Findings(f.value)),
@@ -94,12 +97,12 @@ private[evidence] object EvidenceBundleRepo:
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
 
   /** Each event of the candidates and checks looked up once, in one step. */
-  private def eventIdsOf()(using DbCon): UUID => Option[com.histmersion.domain.catalogue.events.BEventRow.Id] =
-    val ids = scala.collection.mutable.Map.empty[UUID, Option[com.histmersion.domain.catalogue.events.BEventRow.Id]]
+  private def eventIdsOf()(using DbCon): UUID => Option[BEventRow.Id] =
+    val ids = scala.collection.mutable.Map.empty[UUID, Option[BEventRow.Id]]
     u =>
       ids.getOrElseUpdate(
         u,
-        sql"SELECT id FROM events WHERE uid = $u".query[com.histmersion.domain.catalogue.events.BEventRow.Id].run().headOption
+        sql"SELECT id FROM events WHERE uid = $u".query[BEventRow.Id].run().headOption
       )
 
   /** The candidates: the newer evidence, a decision kept over a proposal (BundleEventSets). */

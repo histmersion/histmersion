@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -46,7 +47,7 @@ object MergeState:
       m: Bundle.Manifest,
       readProblems: List[Input.ReadProblems],
       originals: ContentStore,
-      chunkChars: com.histmersion.util.data.exchange.ImportOptions.ChunkChars,
+      chunkChars: ImportOptions.ChunkChars,
       cfg: MergeSettings,
       kinds: CarriedKinds,
       rules: MergeRuleSet
@@ -212,7 +213,7 @@ object MergeState:
     * from one pass over its blobs. Only bodies of pairs whose score they can change are asked for
     * ([[MergePlanner.sketchesWanted]]).
     */
-  def sketches(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256], size: com.histmersion.util.text.MinHash.Size)(using DbCon): Map[Bundle.Source.BodySha256, MinHash] =
+  def sketches(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256], size: MinHash.Size)(using DbCon): Map[Bundle.Source.BodySha256, MinHash] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -268,7 +269,7 @@ object MergeState:
       loop(Map.empty)
     }
 
-  private def bundleSketches(bundle: ByteSource, wanted: Set[Bundle.Source.BodySha256], size: com.histmersion.util.text.MinHash.Size): Map[Bundle.Source.BodySha256, MinHash] =
+  private def bundleSketches(bundle: ByteSource, wanted: Set[Bundle.Source.BodySha256], size: MinHash.Size): Map[Bundle.Source.BodySha256, MinHash] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
@@ -292,7 +293,7 @@ object MergeState:
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       originals: ContentStore,
-      chunkChars: com.histmersion.util.data.exchange.ImportOptions.ChunkChars,
+      chunkChars: ImportOptions.ChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
   ): Either[MergePlans.PlanFileText, MergePlan] =

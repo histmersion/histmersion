@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.domain.library.search.FilterSql
 
@@ -12,6 +13,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.SourceColumns.given
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Edge
 
 /** What an article's coverage (#958) reads from the corpus: the whole source set of its filter (not a ranked page — no
   * FTS ranking, no snippets), which of a set of citekeys the filter returns, and the disagreement edges touching the
@@ -27,25 +30,25 @@ private[articles] object CoverageRepo:
   import Param.*
 
   /** How many sources `f` selects, and the first `cap` of them in citekey order. */
-  def sourceSet(f: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.ArticleRepo.Limit)(using DbCon): (com.histmersion.RowCount, List[Coverage.Source]) =
-    val total = com.histmersion.RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
-    val rows = (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ")) ++
+  def sourceSet(f: Filter, scope: PlaceScope, cap: ArticleRepo.Limit)(using DbCon): (RowCount, List[Coverage.Source]) =
+    val total = RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
+    val rows = (Sql.raw(Sql.RawText("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ")) ++
       FilterSql.where(f, scope) ++ Sql
         .of(Sql.OfText(" ORDER BY s.citekey LIMIT ?"), I(Param.I.V(math.max(0, cap.value))))).frag.query[Coverage.Source].run().toList
     (total, rows)
 
   /** How many sources `f` selects, and which of `citekeys` are among them (exact, whatever their number). */
-  def members(f: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.library.Citekey])(using DbCon): (com.histmersion.RowCount, Set[com.histmersion.domain.library.Citekey]) =
-    val total = com.histmersion.RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
+  def members(f: Filter, scope: PlaceScope, citekeys: List[Citekey])(using DbCon): (RowCount, Set[Citekey]) =
+    val total = RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
     val in =
-      if citekeys.isEmpty then Set.empty[com.histmersion.domain.library.Citekey]
+      if citekeys.isEmpty then Set.empty[Citekey]
       else
-        (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ FilterSql.where(f, scope) ++
-          Sql.of(Sql.OfText(" AND s.citekey = ANY(?)"), A(citekeys.distinct.map(c => Param.A.V(c.value))))).frag.query[com.histmersion.domain.library.Citekey].run().toSet
+        (Sql.raw(Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ FilterSql.where(f, scope) ++
+          Sql.of(Sql.OfText(" AND s.citekey = ANY(?)"), A(citekeys.distinct.map(c => Param.A.V(c.value))))).frag.query[Citekey].run().toSet
     (total, in)
 
   /** The edges of `kinds` with either end in `citekeys` (source to source only, V026). */
-  def edgesTouching(citekeys: List[com.histmersion.domain.library.Citekey], kinds: List[com.histmersion.domain.library.Edge.Kind.Wire])(using DbCon): List[Coverage.Edge] =
+  def edgesTouching(citekeys: List[Citekey], kinds: List[Edge.Kind.Wire])(using DbCon): List[Coverage.Edge] =
     if citekeys.isEmpty || kinds.isEmpty then Nil
     else sql"""SELECT e.src, e.kind, e.dst FROM edges e
               WHERE e.kind = ANY($kinds::text[])

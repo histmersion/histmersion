@@ -1,4 +1,5 @@
-package com.histmersion.domain.automation.approvals
+package com.histmersion
+package domain.automation.approvals
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -8,6 +9,7 @@ import io.circe.syntax.*
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Citekey
 
 /** What the approvals' lists read of a source proposal's payload is what the proposal says: its evidence and quote. */
 class ProposalEvidenceSuite extends munit.FunSuite:
@@ -15,19 +17,19 @@ class ProposalEvidenceSuite extends munit.FunSuite:
   private val proposals = List(
     Proposal(
       Approval.Kind.StatusChange,
-      com.histmersion.domain.library.Citekey("a2000_x"),
+      Citekey("a2000_x"),
       status = Some(Source.Status.Contested),
-      evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence("why"),
-      quote = Some(com.histmersion.domain.AgentProposals.Proposal.Quote("q"))
+      evidence = Proposal.Evidence("why"),
+      quote = Some(Proposal.Quote("q"))
     ),
     Proposal(
       Approval.Kind.Edge,
-      com.histmersion.domain.library.Citekey("a2000_x"),
+      Citekey("a2000_x"),
       edgeKind = Some(Edge.Kind.Refutes),
-      target = Some(com.histmersion.domain.library.Citekey("b2001_y")),
-      evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence("e")
+      target = Some(Citekey("b2001_y")),
+      evidence = Proposal.Evidence("e")
     ),
-    Proposal(Approval.Kind.Edge, com.histmersion.domain.library.Citekey("a2000_x"), edgeKind = Some(Edge.Kind.Challenges), target = Some(com.histmersion.domain.library.Citekey("b2001_y")))
+    Proposal(Approval.Kind.Edge, Citekey("a2000_x"), edgeKind = Some(Edge.Kind.Challenges), target = Some(Citekey("b2001_y")))
   )
 
   test("every proposal's payload reads as its evidence and quote"):
@@ -38,4 +40,4 @@ class ProposalEvidenceSuite extends munit.FunSuite:
     }
 
   test("a payload that is no JSON reads as nothing"):
-    assertEquals(Jsonb.read[ProposalEvidence](com.histmersion.util.database.Jsonb.JsonText("not json")), None)
+    assertEquals(Jsonb.read[ProposalEvidence](Jsonb.JsonText("not json")), None)

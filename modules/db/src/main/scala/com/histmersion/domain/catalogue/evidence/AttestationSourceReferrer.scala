@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
@@ -52,7 +53,7 @@ final class AttestationSourceReferrer extends SourceReferrer:
     if gone.nonEmpty then sql"DELETE FROM attestations WHERE id::text = ANY($gone::text[])".update.run()
 
   /** Other sources' attestations whose target goes with the source. */
-  private def losing(source: SourceKeys)(using DbCon): List[com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId] =
+  private def losing(source: SourceKeys)(using DbCon): List[AttestationRepo.AttestationId] =
     val ck = source.citekey
     sql"""SELECT id, target_type, target_id FROM attestations
           WHERE citekey <> $ck AND target_type IN ('finding', 'edge', 'event_dating') AND strpos(target_id, $ck) > 0"""
@@ -67,7 +68,7 @@ object AttestationSourceReferrer:
     * dating it gives. An edge TO it is parked, not deleted, so its attestations stay.
     */
 
-  def goes(targetType: com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType, targetId: com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId, source: SourceKeys): Boolean =
+  def goes(targetType: BAttestationFullRow.TargetType, targetId: BAttestationFullRow.TargetId, source: SourceKeys): Boolean =
     targetType.value match
       case "finding"      => targetId.value.startsWith(source.findingPrefix.value)
       case "edge"         => targetId.value.split('|').headOption.contains(source.citekey.value)

@@ -1,4 +1,5 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
 
@@ -13,5 +14,5 @@ import io.circe.syntax.*
 object Vocab:
   /** A vocabulary column: `parse` the stored wire string, `unknown` for anything it does not know. */
 
-  def codec[E](parse: com.histmersion.WireEnumValues.Wire => Option[E], wire: E => com.histmersion.WireEnumValues.Wire, unknown: E): DbCodec[E] =
-    DbCodec[Option[String]].biMap(s => s.flatMap(v => parse(com.histmersion.WireEnumValues.Wire(v.trim))).getOrElse(unknown), e => Some(wire(e).value))
+  def codec[E](parse: WireEnumValues.Wire => Option[E], wire: E => WireEnumValues.Wire, unknown: E): DbCodec[E] =
+    DbCodec[Option[String]].biMap(s => s.flatMap(v => parse(WireEnumValues.Wire(v.trim))).getOrElse(unknown), e => Some(wire(e).value))

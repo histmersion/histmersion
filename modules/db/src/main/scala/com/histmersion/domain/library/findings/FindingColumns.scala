@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.findings
+package com.histmersion
+package domain.library.findings
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Confidence

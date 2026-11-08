@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -24,10 +25,16 @@ import com.histmersion.api.jobs.JobState
 import com.histmersion.api.library.{Ingest, Source}
 import com.histmersion.api.media.AssetLink
 import com.histmersion.util.database.given
+import com.histmersion.domain.library.Citekey
+import com.histmersion.util.jobs.Job
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.media.AssetRelation
+import com.histmersion.api.media.MediaTarget
+import com.histmersion.util.jobs.JobRow
 
 /** V006 round-trips against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */
-class AssetsJobsSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class AssetsJobsSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
@@ -35,12 +42,12 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     val d = testPool(base.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
-  private val ck = com.histmersion.domain.library.Citekey("zz_assets_source")
+  private val ck = Citekey("zz_assets_source")
 
   private def png(colour: Byte): NewFigure.Bytes = NewFigure.Bytes(Array[Byte](0x89.toByte, 'P', 'N', 'G', colour))
 
-  private val ingestKind = com.histmersion.util.jobs.Job.Kind.applyUnsafe(Ingest.KindIngest)
-  private val reocrKind = com.histmersion.util.jobs.Job.Kind.applyUnsafe(Ingest.KindReocr)
+  private val ingestKind = Job.Kind.applyUnsafe(Ingest.KindIngest)
+  private val reocrKind = Job.Kind.applyUnsafe(Ingest.KindReocr)
 
   private def source(body: Option[Source.OcrMarkdown] = None) = Source(
     citekey = com.histmersion.api.library.Citekey(ck.value),
@@ -49,7 +56,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     doi = None,
     year = None,
     venue = None,
-    status = com.histmersion.api.library.Source.Status.Unassessed,
+    status = Source.Status.Unassessed,
     topics = Nil,
     regions = Nil,
     tags = Nil,
@@ -70,8 +77,8 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
       ds,
       ck,
       List(
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("a.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), Some(com.histmersion.domain.media.assets.NewFigure.Width(10)), Some(com.histmersion.domain.media.assets.NewFigure.Height(20))),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("b.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None)
+        NewFigure(NewFigure.Name("a.png"), NewFigure.Mime("image/png"), png(1), Some(NewFigure.Width(10)), Some(NewFigure.Height(20))),
+        NewFigure(NewFigure.Name("b.png"), NewFigure.Mime("image/png"), png(2), None, None)
       )
     )
     assertEquals(n, 2)
@@ -90,9 +97,9 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
       ds,
       ck,
       List(
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("page1-logo.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(7), None, None),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("page2-logo.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(7), None, None), // same bytes
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("plot.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(8), None, None)
+        NewFigure(NewFigure.Name("page1-logo.png"), NewFigure.Mime("image/png"), png(7), None, None),
+        NewFigure(NewFigure.Name("page2-logo.png"), NewFigure.Mime("image/png"), png(7), None, None), // same bytes
+        NewFigure(NewFigure.Name("plot.png"), NewFigure.Mime("image/png"), png(8), None, None)
       )
     )
     assertEquals(n, 2)
@@ -100,10 +107,10 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   test("replace clears the previous set; add keeps it"):
     seed()
-    AssetFixtures.replace(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("old.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), None, None)))
-    AssetFixtures.add(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("new.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None)))
+    AssetFixtures.replace(ds, ck, List(NewFigure(NewFigure.Name("old.png"), NewFigure.Mime("image/png"), png(1), None, None)))
+    AssetFixtures.add(ds, ck, List(NewFigure(NewFigure.Name("new.png"), NewFigure.Mime("image/png"), png(2), None, None)))
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("new.png", "old.png"))
-    AssetFixtures.replace(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("only.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(3), None, None)))
+    AssetFixtures.replace(ds, ck, List(NewFigure(NewFigure.Name("only.png"), NewFigure.Mime("image/png"), png(3), None, None)))
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("only.png"))
 
   test("a re-conversion keeps each asset's uid and links: same name in place, a moved picture renamed (#826)"):
@@ -113,9 +120,9 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
       ds,
       ck,
       List(
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), None, None),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-2.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-3.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(3), None, None)
+        NewFigure(NewFigure.Name("fig-1.png"), NewFigure.Mime("image/png"), png(1), None, None),
+        NewFigure(NewFigure.Name("fig-2.png"), NewFigure.Mime("image/png"), png(2), None, None),
+        NewFigure(NewFigure.Name("fig-3.png"), NewFigure.Mime("image/png"), png(3), None, None)
       )
     )
     import com.augustnagro.magnum.*
@@ -124,21 +131,21 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     def links = AssetLinkFixtures.list(ds, Some(ck), None, None, None).links.map(l => l.assetName -> l.targetId).sortBy((a, t) => (a.value, t.value))
     val (u1, u2) = (uid("fig-1.png"), uid("fig-2.png"))
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.exchange.Bundle.Asset.FileName("fig-1.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("hattusa")))
+      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), Bundle.Asset.FileName("fig-1.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("place"), MediaTarget.TargetId("hattusa")))
       .fold(e => fail(e.message.value), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.exchange.Bundle.Asset.FileName("fig-2.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("troy")))
+      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), Bundle.Asset.FileName("fig-2.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("place"), MediaTarget.TargetId("troy")))
       .fold(e => fail(e.message.value), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.exchange.Bundle.Asset.FileName("fig-3.png"), com.histmersion.api.media.AssetRelation.Wire("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("mycenae")))
+      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), Bundle.Asset.FileName("fig-3.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("place"), MediaTarget.TargetId("mycenae")))
       .fold(e => fail(e.message.value), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
     AssetFixtures.replace(
       ds,
       ck,
       List(
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-1.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(11), None, None),
-        NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("fig-4.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(2), None, None)
+        NewFigure(NewFigure.Name("fig-1.png"), NewFigure.Mime("image/png"), png(11), None, None),
+        NewFigure(NewFigure.Name("fig-4.png"), NewFigure.Mime("image/png"), png(2), None, None)
       )
     )
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("fig-1.png", "fig-4.png"))
@@ -149,7 +156,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   test("assets die with their source (ON DELETE CASCADE)"):
     seed()
-    AssetFixtures.replace(ds, ck, List(NewFigure(com.histmersion.domain.media.assets.NewFigure.Name("x.png"), com.histmersion.domain.media.assets.NewFigure.Mime("image/png"), png(1), None, None)))
+    AssetFixtures.replace(ds, ck, List(NewFigure(NewFigure.Name("x.png"), NewFigure.Mime("image/png"), png(1), None, None)))
     connectForTest(s"DELETE FROM sources WHERE citekey = '$ck'")
     assertEquals(AssetFixtures.count(ds, ck), 0)
 
@@ -159,7 +166,7 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.setSha256(ds, ck, sha)
     assertEquals(SourceFixtures.sha256Of(ds, ck), Some(sha))
     assertEquals(SourceFixtures.citekeyOfSha256(ds, sha), Some(ck))
-    assertEquals(SourceFixtures.citekeyOfSha256(ds, com.histmersion.Sha256.assume("0" * 64)), None)
+    assertEquals(SourceFixtures.citekeyOfSha256(ds, Sha256.assume("0" * 64)), None)
 
   test("a body write does NOT clear the stored digest (put preserves sources.sha256)"):
     seed()
@@ -170,37 +177,37 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────
   test("job lifecycle: queued → running → done, with progress"):
-    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), Some(com.histmersion.Sha256.assume("abc"))))
+    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), Some(Sha256.assume("abc"))))
     assertEquals(j.status, JobState.Queued.wire)
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(j.id.value), JobState.Queued, JobState.Running, Some(com.histmersion.util.jobs.JobRow.Progress("converting")))),
+      Transactor(ds).transact(JobRepo.transition(Job.Id.assume(j.id.value), JobState.Queued, JobState.Running, Some(JobRow.Progress("converting")))),
       Some(JobState.Running)
     )
-    Transactor(ds).transact(JobRepo.progress(com.histmersion.util.jobs.Job.Id.assume(j.id.value), com.histmersion.util.jobs.JobRow.Progress("storing 3 asset(s)")))
-    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).flatMap(_.progress), Some("storing 3 asset(s)"))
+    Transactor(ds).transact(JobRepo.progress(Job.Id.assume(j.id.value), JobRow.Progress("storing 3 asset(s)")))
+    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).flatMap(_.progress), Some("storing 3 asset(s)"))
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(j.id.value), JobState.Running, JobState.Done, Some(com.histmersion.util.jobs.JobRow.Progress("1 page(s)")))),
+      Transactor(ds).transact(JobRepo.transition(Job.Id.assume(j.id.value), JobState.Running, JobState.Done, Some(JobRow.Progress("1 page(s)")))),
       Some(JobState.Done)
     )
-    val done = Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).get
+    val done = Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).get
     assertEquals(done.status, JobState.Done.wire)
     assert(done.succeeded && done.isTerminal)
 
   test("a job remembers the acquisition item it ticks off; one without an item reads back none"):
-    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None, acquireItem = Some(com.histmersion.util.jobs.JobRow.AcquireItem(4242))))
+    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None, acquireItem = Some(JobRow.AcquireItem(4242))))
     assertEquals(j.acquireItem, Some(4242))
-    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).flatMap(_.acquireItem), Some(4242))
-    assert(Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(50))).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
+    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).flatMap(_.acquireItem), Some(4242))
+    assert(Transactor(ds).read(JobRepo.list(None, PageSize(50))).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
     assertEquals(
       Transactor(ds)
-        .read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None)).id.value)))
+        .read(JobRepo.get(Job.Id.assume(Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None)).id.value)))
         .flatMap(_.acquireItem),
       None
     )
 
   test("a transition from the wrong state is refused — two workers cannot claim one job"):
     val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
-    val id = com.histmersion.util.jobs.Job.Id.assume(j.id.value)
+    val id = Job.Id.assume(j.id.value)
     assertEquals(
       Transactor(ds).transact(JobRepo.transition(id, JobState.Queued, JobState.Running)),
       Some(JobState.Running)
@@ -212,38 +219,38 @@ class AssetsJobsSuite extends com.histmersion.db.DbSuite:
 
   test("failure records the reason"):
     val j = Transactor(ds).transact(JobRepo.create(reocrKind, Some(ck), None))
-    val id = com.histmersion.util.jobs.Job.Id.assume(j.id.value)
+    val id = Job.Id.assume(j.id.value)
     Transactor(ds).transact(JobRepo.transition(id, JobState.Queued, JobState.Running))
     Transactor(ds).transact(
-      JobRepo.transition(id, JobState.Running, JobState.Failed, error = Some(com.histmersion.util.jobs.JobRow.Error("converter unreachable")))
+      JobRepo.transition(id, JobState.Running, JobState.Failed, error = Some(JobRow.Error("converter unreachable")))
     )
-    val f = Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(j.id.value))).get
+    val f = Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).get
     assertEquals(f.status, JobState.Failed.wire)
     assertEquals(f.error, Some("converter unreachable"))
     assert(!f.succeeded)
 
   test("a restart fails whatever was unfinished, and leaves terminal rows alone"):
     val done = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
-    Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(done.id.value), JobState.Queued, JobState.Running))
-    Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(done.id.value), JobState.Running, JobState.Done))
+    Transactor(ds).transact(JobRepo.transition(Job.Id.assume(done.id.value), JobState.Queued, JobState.Running))
+    Transactor(ds).transact(JobRepo.transition(Job.Id.assume(done.id.value), JobState.Running, JobState.Done))
     val running = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
-    Transactor(ds).transact(JobRepo.transition(com.histmersion.util.jobs.Job.Id.assume(running.id.value), JobState.Queued, JobState.Running))
+    Transactor(ds).transact(JobRepo.transition(Job.Id.assume(running.id.value), JobState.Queued, JobState.Running))
     val queued = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
 
     assert(Transactor(ds).transact(JobRepo.failInterrupted()).value >= 2)
-    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(running.id.value))).map(_.error), Some(Some(JobState.Interrupted)))
-    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(queued.id.value))).map(_.status), Some(JobState.Failed.wire))
-    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.assume(done.id.value))).map(_.status), Some(JobState.Done.wire))
+    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error), Some(Some(JobState.Interrupted)))
+    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(queued.id.value))).map(_.status), Some(JobState.Failed.wire))
+    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(done.id.value))).map(_.status), Some(JobState.Done.wire))
 
   test("jobs list is newest-first and filterable by status"):
     Transactor(ds).transact(JobRepo.failInterrupted())
     val a = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
-    val all = Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(10)))
+    val all = Transactor(ds).read(JobRepo.list(None, PageSize(10)))
     assertEquals(all.headOption.map(_.id), Some(a.id))
-    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.api.jobs.JobState.Wire("queued")), com.histmersion.PageSize(10))).forall(_.status.value == "queued"))
-    assert(Transactor(ds).read(JobRepo.list(Some(com.histmersion.api.jobs.JobState.Wire("done")), com.histmersion.PageSize(10))).forall(_.status.value == "done"))
-    assertEquals(Transactor(ds).read(JobRepo.list(Some(com.histmersion.api.jobs.JobState.Wire("nonsense")), com.histmersion.PageSize(10))), Vector.empty)
-    assertEquals(Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id("00000000-0000-0000-0000-000000000000"))), None)
+    assert(Transactor(ds).read(JobRepo.list(Some(JobState.Wire("queued")), PageSize(10))).forall(_.status.value == "queued"))
+    assert(Transactor(ds).read(JobRepo.list(Some(JobState.Wire("done")), PageSize(10))).forall(_.status.value == "done"))
+    assertEquals(Transactor(ds).read(JobRepo.list(Some(JobState.Wire("nonsense")), PageSize(10))), Vector.empty)
+    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id("00000000-0000-0000-0000-000000000000"))), None)
 
   private def connectForTest(sql: String): Unit =
     val c = ds.getConnection()

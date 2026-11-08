@@ -1,9 +1,14 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Acquire, RetractionNotice}
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Doi
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every
   * method runs on the connection it is given.
@@ -18,7 +23,7 @@ private[acquisition] object AssessmentRepo:
   ) derives DbCodec
 
   final private case class AssessmentRow(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       checkedAt: AssessmentRow.CheckedAt,
       retracted: AssessmentRow.Retracted,
       citedBy: Option[AssessmentRow.CitedBy],
@@ -28,36 +33,36 @@ private[acquisition] object AssessmentRepo:
 
   object AssessmentRow:
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CheckedAt extends RefinedType[String, Pure]
     type Retracted = Retracted.T
-    object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Retracted extends RefinedType[Boolean, Pure]
     type CitedBy = CitedBy.T
-    object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CitedBy extends RefinedType[Int, Pure]
     type Influential = Influential.T
-    object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Influential extends RefinedType[Int, Pure]
     type Verdict = Verdict.T
-    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Verdict extends RefinedType[String, Pure]
 
   /** Replace the whole mirror: the CSV is a full export, so a partial refresh would leave a mixture of two vintages.
     * Batched — 60 000 single inserts take minutes.
     */
-  def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using DbCon): com.histmersion.RowCount =
+  def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using DbCon): RowCount =
     sql"DELETE FROM retraction_watch".update.run()
     // the export can list a DOI twice (a retraction and a later reinstatement); the last wins
     val unique = rows.map(r => r.doi -> r).toMap.values.toVector
-    if unique.isEmpty then com.histmersion.RowCount(0)
+    if unique.isEmpty then RowCount(0)
     else
       val _ = batchUpdate(unique)(r => sql"""INSERT INTO retraction_watch (doi, reason, date, nature)
               VALUES (${r.doi}, ${r.reason}, ${Acquire.rwDate(r.date)}::date, ${r.nature})
               ON CONFLICT (doi) DO UPDATE SET
                 reason = EXCLUDED.reason, date = EXCLUDED.date, nature = EXCLUDED.nature""".update)
-      com.histmersion.RowCount(unique.size)
+      RowCount(unique.size)
 
-  def retractionCount()(using DbCon): com.histmersion.RowCount =
-    com.histmersion.RowCount(sql"SELECT count(*)::int FROM retraction_watch".query[Int].run().headOption.getOrElse(0))
+  def retractionCount()(using DbCon): RowCount =
+    RowCount(sql"SELECT count(*)::int FROM retraction_watch".query[Int].run().headOption.getOrElse(0))
 
   /** Every Retraction Watch notice recorded against this DOI (usually zero or one). */
-  def retractionsFor(doi: com.histmersion.domain.library.Doi)(using DbCon): List[RetractionNotice] =
+  def retractionsFor(doi: Doi)(using DbCon): List[RetractionNotice] =
     sql"""SELECT nature, reason, to_char(date, 'YYYY-MM-DD')
           FROM retraction_watch WHERE doi = ${doi.value.toLowerCase}"""
       .query[RwRow]
@@ -78,7 +83,7 @@ private[acquisition] object AssessmentRepo:
           FROM assessments WHERE citekey = ${a.citekey}""".query[String].run().headOption.getOrElse("")
 
   /** `(verdict, checkedAt)` of the last assessment, when there is one. */
-  def assessmentFor(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[(com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Verdict, com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.CheckedAt)] =
+  def assessmentFor(citekey: Citekey)(using DbCon): Option[(AssessmentRow.Verdict, AssessmentRow.CheckedAt)] =
     sql"""SELECT citekey, to_char(checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                  retracted, cited_by, influential, verdict
           FROM assessments WHERE citekey = $citekey"""

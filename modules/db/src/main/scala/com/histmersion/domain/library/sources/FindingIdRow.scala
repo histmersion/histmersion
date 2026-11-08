@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.domain.library.findings.FindingColumns.given
 
@@ -7,16 +8,18 @@ import com.histmersion.domain.library.Confidence
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A finding's row with its id, as a write path reads it back. */
 final private[sources] case class FindingIdRow(
     id: FindingIdRow.Id,
     claim: FindingIdRow.Claim,
     regionName: Option[FindingIdRow.RegionName],
-    lon: Option[com.histmersion.Longitude],
-    lat: Option[com.histmersion.Latitude],
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    lon: Option[Longitude],
+    lat: Option[Latitude],
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
     periodName: Option[FindingIdRow.PeriodName],
     tags: List[FindingIdRow.Tags],
     confidence: Option[Confidence],
@@ -25,14 +28,14 @@ final private[sources] case class FindingIdRow(
 
 object FindingIdRow:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Claim = Claim.T
-  object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Claim extends RefinedType[String, Pure]
   type RegionName = RegionName.T
-  object RegionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RegionName extends RefinedType[String, Pure]
   type PeriodName = PeriodName.T
-  object PeriodName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodName extends RefinedType[String, Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends RefinedType[String, Pure]
   type Significance = Significance.T
-  object Significance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Significance extends RefinedType[String, Pure]

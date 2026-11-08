@@ -1,4 +1,5 @@
-package com.histmersion.util.jobs
+package com.histmersion
+package util.jobs
 
 import com.histmersion.api.library.DeleteBlocker
 import com.histmersion.domain.library.sources.referrers.*

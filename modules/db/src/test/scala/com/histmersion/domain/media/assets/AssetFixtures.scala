@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.api.{Api, Write}
 import com.histmersion.domain.media.MediaRole
@@ -17,6 +18,10 @@ import com.histmersion.api.media.{
   MediaList,
   MediaThumb
 }
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.catalogue.evidence.EventMatcher
+import com.histmersion.domain.DeepTime
 
 /** The pictures' repositories as the db suites reach them from outside the feature: each call on a connection or in a
   * transaction of its own, as the service runs it.
@@ -33,23 +38,23 @@ object AssetFixtures:
   type SetSourcePictureProperty = MediaRepo.SetSourcePictureProperty
   val SetSourcePictureProperty: MediaRepo.SetSourcePictureProperty.type = MediaRepo.SetSourcePictureProperty
 
-  def add(ds: DataSource, citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.RowCount =
+  def add(ds: DataSource, citekey: Citekey, figures: List[NewFigure]): RowCount =
     transact(ds)(AssetRepo.add(citekey, figures))
-  def replace(ds: DataSource, citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.RowCount =
+  def replace(ds: DataSource, citekey: Citekey, figures: List[NewFigure]): RowCount =
     transact(ds)(AssetRepo.replace(citekey, figures))
-  def list(ds: DataSource, citekey: com.histmersion.domain.library.Citekey): Vector[AssetInfo] = connect(ds)(AssetRepo.list(citekey))
+  def list(ds: DataSource, citekey: Citekey): Vector[AssetInfo] = connect(ds)(AssetRepo.list(citekey))
   def read(
       ds: DataSource,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       name: AssetInfoRow.Name
   ): Option[(AssetBytesRow.Mime, AssetBytesRow.Bytes)] =
     connect(ds)(AssetRepo.read(citekey, name))
-  def count(ds: DataSource, citekey: com.histmersion.domain.library.Citekey): com.histmersion.RowCount = connect(ds)(AssetRepo.count(citekey))
-  def detail(ds: DataSource, citekey: com.histmersion.domain.library.Citekey, name: AssetInfoRow.Name): Option[AssetDetail] =
+  def count(ds: DataSource, citekey: Citekey): RowCount = connect(ds)(AssetRepo.count(citekey))
+  def detail(ds: DataSource, citekey: Citekey, name: AssetInfoRow.Name): Option[AssetDetail] =
     connect(ds)(AssetRepo.detail(citekey, name))
   def patch(
       ds: DataSource,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       name: AssetInfoRow.Name,
       p: AssetPatch
   ): Either[Api.Error, AssetDetail] =
@@ -97,7 +102,7 @@ object AssetFixtures:
   ): Boolean = transact(ds)(MediaRepo.link(uid, targetType, targetId, role, property, item, rank, basis))
   def setSourcePicture(
       ds: DataSource,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       uid: MediaItemRow.Uid,
       role: MediaRole.Wire,
       property: Option[MediaRepo.SetSourcePictureProperty]
@@ -105,7 +110,7 @@ object AssetFixtures:
     transact(ds)(MediaRepo.setSourcePicture(citekey, uid, role, property))
   def sourcePicture(
       ds: DataSource,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       role: MediaRole.Wire
   ): Option[(MediaItemRow.Uid, MediaRepo.PictureKey)] =
     connect(ds)(MediaRepo.sourcePicture(citekey, role))
@@ -118,12 +123,12 @@ object AssetFixtures:
     connect(ds)(MediaRepo.thumbsIn(targetType, targetId, limit))
   def placeThumbs(
       ds: DataSource,
-      placeId: com.histmersion.domain.catalogue.Place.Id,
-      sameSiteKm: com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km,
+      placeId: Place.Id,
+      sameSiteKm: EventMatcher.NearFinding.Km,
       limit: MediaRepo.Limit = MediaRepo.Limit(4)
   ): List[MediaThumb] =
     connect(ds)(MediaRepo.placeThumbsIn(placeId, sameSiteKm, limit))
-  def sourceThumb(ds: DataSource, citekey: com.histmersion.domain.library.Citekey): Option[MediaThumb] =
+  def sourceThumb(ds: DataSource, citekey: Citekey): Option[MediaThumb] =
     thumbs(ds, Target.TargetType(PictureTarget.Source.wire.value), Target.Id(citekey.value), MediaRepo.Limit(1)).headOption
   def list(ds: DataSource, q: Api.MediaQuery, limit: MediaRepo.Limit): MediaList = connect(ds)(MediaRepo.list(q, limit))
   def show(ds: DataSource, uid: MediaItemRow.Uid): Option[MediaItem] = connect(ds)(MediaRepo.show(uid))
@@ -134,12 +139,12 @@ object AssetFixtures:
   def facets(ds: DataSource): MediaFacets = connect(ds)(MediaRepo.facets)
   def geo(ds: DataSource, q: Api.MediaGeoQuery, limit: MediaRepo.Limit): List[MediaGeoHit] = connect(ds)(MediaRepo.geo(q, limit))
   def geoOf(ds: DataSource, uids: List[MediaItemRow.Uid]): Map[MediaItemRow.Uid, MediaGeoHit] = connect(ds)(MediaRepo.geoOf(uids))
-  def figures(ds: DataSource, citekey: com.histmersion.domain.library.Citekey): List[SourceFigure] =
+  def figures(ds: DataSource, citekey: Citekey): List[SourceFigure] =
     connect(ds)(MediaRepo.sourceFigures(citekey))
   def tileCandidates(
       kind: Option[MediaItemRow.Kind],
       provider: Option[MediaItemRow.Provider],
       license: Option[MediaItemRow.License],
-      window: Option[(com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear)],
+      window: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
       envelope: Sql
   ): Sql = MediaRepo.tileCandidates(kind, provider, license, window, envelope)

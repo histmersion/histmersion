@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.domain.catalogue.places.PlaceColumns.given
 
@@ -6,14 +7,16 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
 final private[places] case class PlaceDetailRow(
     id: Place.Id,
     label: com.histmersion.api.catalogue.Place.Summary.Label,
     kind: com.histmersion.api.catalogue.Place.Summary.Kind,
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    periodStart: Option[Year],
+    periodEnd: Option[Year],
     source: Option[com.histmersion.api.catalogue.Place.Summary.Source],
     names: com.histmersion.api.catalogue.Place.Summary.Names,
     contested: com.histmersion.api.catalogue.Place.Summary.Contested,
@@ -41,8 +44,8 @@ final private[places] case class PlaceDetailRow(
 
 object PlaceDetailRow:
   type Geometry = Geometry.T
-  object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Geometry extends RefinedType[String, Pure]
   type Findings = Findings.T
-  object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Findings extends RefinedType[Int, Pure]
   type HasBoundary = HasBoundary.T
-  object HasBoundary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HasBoundary extends RefinedType[Boolean, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.assets
+package com.histmersion
+package domain.media.assets
 
 import com.histmersion.api.exchange.Bundle
 
@@ -48,7 +49,7 @@ object AssetsCarried extends CarriedKind:
 
   override def blobIn(
       use: BlobUse,
-      sha256: com.histmersion.Sha256,
+      sha256: Sha256,
       writer: BundleImport.Writer,
       files: ContentStore
   ): Option[BlobSink] = use match

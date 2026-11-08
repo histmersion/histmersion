@@ -1,4 +1,8 @@
-package com.histmersion.domain.media.imports
+package com.histmersion
+package domain.media.imports
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place or event to ask a provider about: its Wikidata item (empty when the import needs none) and its name (for the
   * report).
@@ -7,10 +11,10 @@ final case class Target(targetType: Target.TargetType, id: Target.Id, qid: Targe
 
 object Target:
   type TargetType = TargetType.T
-  object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TargetType extends RefinedType[String, Pure]
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Qid = Qid.T
-  object Qid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Qid extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]

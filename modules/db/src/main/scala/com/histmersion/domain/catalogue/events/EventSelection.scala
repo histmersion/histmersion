@@ -1,9 +1,13 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.Sql
+import com.histmersion.domain.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which events a list, the map's events or the leads select: those related to the filter's sources (read with the
   * gazetteer's `scope` of its places), narrowed by the event's own text (label or description), kind, historicity,
@@ -15,7 +19,7 @@ final case class EventSelection(
     text: Option[EventSelection.Text] = None,
     kind: Option[EventSelection.Kind] = None,
     historicity: Option[EventSelection.Historicity] = None,
-    placeId: Option[com.histmersion.domain.catalogue.Place.Id] = None,
+    placeId: Option[Place.Id] = None,
     narrow: EventSql.Narrow = EventSql.Narrow()
 ):
   /** The WHERE over `events e` with its place `ep`, the sources' part as `related` reads them. */
@@ -24,8 +28,8 @@ final case class EventSelection(
 
 object EventSelection:
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Historicity = Historicity.T
-  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Historicity extends RefinedType[String, Pure]

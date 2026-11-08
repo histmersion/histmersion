@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.periods
+package com.histmersion
+package domain.catalogue.periods
 
 import com.histmersion.api.exchange.Bundle
 
@@ -33,4 +34,4 @@ object PeriodMergeRules extends MergeRules:
     val idsHere = PeriodBundleRepo.present(added.map(p => BPeriodRow.Id(p.id.value)))
     val matches = PeriodBundleRepo.matchPeriods(added.filterNot(p => idsHere(BPeriodRow.Id(p.id.value))))
     val rows = PeriodBundleRepo.periods(BundleScope.All, (idsHere ++ matches.values).toList).toList
-    in.modify(_.local.periods).setTo(rows).modify(_.periodMatches).setTo(matches.map((uid, id) => uid -> com.histmersion.api.exchange.Bundle.Period.Id(id.value)))
+    in.modify(_.local.periods).setTo(rows).modify(_.periodMatches).setTo(matches.map((uid, id) => uid -> Bundle.Period.Id(id.value)))

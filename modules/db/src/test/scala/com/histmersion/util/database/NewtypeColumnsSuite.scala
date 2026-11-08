@@ -1,4 +1,5 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -12,11 +13,12 @@ import com.histmersion.Year
 import java.util.UUID
 import com.histmersion.domain.library.Source
 import com.histmersion.util.jobs.Job
+import com.histmersion.config.DbConfig
 
 class NewtypeColumnsSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
-  private lazy val ds = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val ds = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
 
   test("a newtype column reads and writes as its base type"):
     val uid = UUID.fromString("0b3f6a4e-2c1d-4e5f-8a9b-0c1d2e3f4a5b")

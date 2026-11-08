@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage}
 import com.histmersion.util.database.Jsonb
@@ -6,6 +7,11 @@ import com.histmersion.util.database.Jsonb
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
+import com.histmersion.domain.catalogue.events.BEventRow
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.Finding
 
 /** The proposed links of events to sources (`event_link_candidates`) and when each event's were computed
   * (`event_link_checks`). Every method runs on the connection it is given.
@@ -14,7 +20,7 @@ private[evidence] object EventLinkRepo:
 
   /** The stored candidates of one event, best first; `withRejected` includes the rejected ones. */
 
-  def candidates(id: com.histmersion.domain.catalogue.events.BEventRow.Id, withRejected: Boolean = false)(using DbCon): List[EventLinkCandidate] =
+  def candidates(id: BEventRow.Id, withRejected: Boolean = false)(using DbCon): List[EventLinkCandidate] =
     sql"""SELECT c.event_id, c.citekey, c.score, c.status, s.title, c.findings, c.passages::text, c.reasons
           FROM event_link_candidates c JOIN sources s ON s.citekey = c.citekey
           WHERE c.event_id = $id AND ($withRejected OR c.status <> 'rejected')
@@ -25,12 +31,12 @@ private[evidence] object EventLinkRepo:
       .map { r =>
         val ps = Jsonb.read[List[EventPassage]](Jsonb.JsonText(r.passages.value)).getOrElse(Nil)
         EventLinkCandidate(
-          com.histmersion.api.catalogue.Event.Id(r.eventId.value),
-          com.histmersion.api.library.Citekey(r.citekey.value),
+          Event.Id(r.eventId.value),
+          Citekey(r.citekey.value),
           EventLinkCandidate.Score(r.score.value),
           EventLinkCandidate.StatusValue(r.status.value),
-          r.title.map(t => com.histmersion.api.library.Title(t.value)),
-          r.findings.map(f => com.histmersion.api.library.Finding.Id(f.value)),
+          r.title.map(t => Title(t.value)),
+          r.findings.map(f => Finding.Id(f.value)),
           ps,
           r.reasons.map(x => EventLinkCandidate.Reasons(x.value))
         )
@@ -39,7 +45,7 @@ private[evidence] object EventLinkRepo:
   /** Replace the PROPOSED candidates of one event with `cs`; a source confirmed or rejected before keeps its status
     * (its evidence is refreshed). Records the check.
     */
-  def saveCandidates(id: com.histmersion.domain.catalogue.events.BEventRow.Id, cs: List[EventLinkCandidate])(using DbCon): Unit =
+  def saveCandidates(id: BEventRow.Id, cs: List[EventLinkCandidate])(using DbCon): Unit =
     sql"DELETE FROM event_link_candidates WHERE event_id = $id AND status = 'proposed'".update.run()
     cs.foreach { c =>
       val ps = Jsonb.write(c.passages)
@@ -51,15 +57,15 @@ private[evidence] object EventLinkRepo:
     sql"""INSERT INTO event_link_checks (event_id) VALUES ($id)
           ON CONFLICT (event_id) DO UPDATE SET checked_at = now()""".update.run()
 
-  def setStatus(id: com.histmersion.domain.catalogue.events.BEventRow.Id, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.catalogue.evidence.BCandidateRow.Status)(using DbCon): Boolean =
+  def setStatus(id: BEventRow.Id, citekey: com.histmersion.domain.library.Citekey, status: BCandidateRow.Status)(using DbCon): Boolean =
     sql"UPDATE event_link_candidates SET status = $status WHERE event_id = $id AND citekey = $citekey".update
       .run() > 0
 
-  def isChecked(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Boolean =
+  def isChecked(id: BEventRow.Id)(using DbCon): Boolean =
     sql"SELECT 1 FROM event_link_checks WHERE event_id = $id".query[Int].run().nonEmpty
 
   /** Events whose candidates were never computed (or every one, with `all`), catalogue ones first. */
-  def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize)(using DbCon): List[com.histmersion.domain.catalogue.events.BEventRow.Id] =
+  def eventsToCheck(all: Boolean, limit: PageSize)(using DbCon): List[BEventRow.Id] =
     sql"""SELECT e.id FROM events e
           WHERE ($all OR NOT EXISTS (SELECT 1 FROM event_link_checks k WHERE k.event_id = e.id))
-          ORDER BY e.catalogue IS NULL, e.id LIMIT $limit""".query[com.histmersion.domain.catalogue.events.BEventRow.Id].run().toList
+          ORDER BY e.catalogue IS NULL, e.id LIMIT $limit""".query[BEventRow.Id].run().toList

@@ -1,4 +1,5 @@
-package com.histmersion.domain.media.figures
+package com.histmersion
+package domain.media.figures
 
 import com.histmersion.api.media.FigureLicenceFill
 

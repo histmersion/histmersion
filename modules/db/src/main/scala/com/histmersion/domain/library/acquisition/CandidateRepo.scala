@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.acquisition
+package com.histmersion
+package domain.library.acquisition
 
 import com.histmersion.util.database.given
 
@@ -6,13 +7,19 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.{CandidateCount, CandidateWatch}
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.Title
+import com.histmersion.domain.AuthorName
 
 /** The deterministic new-source search's store (V099, #3761): each goal's watches with their watermarks, and the
   * candidates found, one per goal and DOI. Every method runs on the connection it is given.
   */
 private[acquisition] object CandidateRepo:
   type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Limit extends RefinedType[Int, Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
@@ -29,7 +36,7 @@ private[acquisition] object CandidateRepo:
   ) derives DbCodec
 
   /** A goal's watches as they were last read. */
-  def watches(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[CandidateWatch] =
+  def watches(goal: Goal.Slug)(using DbCon): List[CandidateWatch] =
     sql"""SELECT goal, kind, subject, index_name, to_char(watermark, 'YYYY-MM-DD'),
                    to_char(last_run AT TIME ZONE 'UTC', ${SqlLiteral(ts)}), last_error, last_found
             FROM candidate_watches WHERE goal = $goal ORDER BY kind, subject, index_name"""
@@ -70,16 +77,16 @@ private[acquisition] object CandidateRepo:
     !existed
 
   /** The DOIs a goal has candidates for already (any state): a sweep does not count them as new. */
-  def dois(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Set[com.histmersion.domain.library.Doi] =
-    sql"SELECT doi FROM source_candidates WHERE goal = $goal".query[com.histmersion.domain.library.Doi].run().toSet
+  def dois(goal: Goal.Slug)(using DbCon): Set[Doi] =
+    sql"SELECT doi FROM source_candidates WHERE goal = $goal".query[Doi].run().toSet
 
   final private case class Row(
       id: Source.Candidate.Id,
       goal: Source.Candidate.Goal,
-      doi: com.histmersion.domain.library.Doi,
-      title: com.histmersion.domain.Title,
-      year: Option[com.histmersion.Year],
-      authors: List[com.histmersion.domain.AuthorName],
+      doi: Doi,
+      title: Title,
+      year: Option[Year],
+      authors: List[AuthorName],
       venue: Option[Source.Venue],
       abstractText: Option[Source.Candidate.AbstractText],
       isOa: Source.Candidate.IsOa,
@@ -91,7 +98,7 @@ private[acquisition] object CandidateRepo:
   ) derives DbCodec
 
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], state: Source.Candidate.State, limit: com.histmersion.domain.library.acquisition.CandidateRepo.Limit, offset: com.histmersion.Offset)(using DbCon): List[Source.Candidate] =
+  def list(goal: Option[Goal.Slug], state: Source.Candidate.State, limit: Limit, offset: Offset)(using DbCon): List[Source.Candidate] =
     sql"""SELECT id, goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, state,
                    to_char(first_seen AT TIME ZONE 'UTC', ${SqlLiteral(
         ts
@@ -121,7 +128,7 @@ private[acquisition] object CandidateRepo:
       )
 
   /** How many candidates there are in each state (of one goal, or of all). */
-  def counts(goal: Option[com.histmersion.domain.automation.Goal.Slug])(using DbCon): List[CandidateCount] =
+  def counts(goal: Option[Goal.Slug])(using DbCon): List[CandidateCount] =
     sql"""SELECT state, count(*)::int FROM source_candidates WHERE ($goal::text IS NULL OR goal = $goal)
             GROUP BY state ORDER BY CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END"""
       .query[(Source.Candidate.State, CandidateCount.Count)]
@@ -130,16 +137,16 @@ private[acquisition] object CandidateRepo:
       .map(CandidateCount(_, _))
 
   /** Set the state of these candidates; how many there were. */
-  def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State)(using DbCon): com.histmersion.RowCount =
-    if ids.isEmpty then com.histmersion.RowCount(0)
+  def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State)(using DbCon): RowCount =
+    if ids.isEmpty then RowCount(0)
     else
       val arr = ids.map(_.toString)
-      com.histmersion.RowCount(sql"UPDATE source_candidates SET state = $state WHERE id = ANY($arr::bigint[])".update.run())
+      RowCount(sql"UPDATE source_candidates SET state = $state WHERE id = ANY($arr::bigint[])".update.run())
 
   /** Set the state of a goal's candidates with these DOIs (a ranking's picks). */
-  def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: Source.Candidate.State)(using DbCon): com.histmersion.RowCount =
-    if dois.isEmpty then com.histmersion.RowCount(0)
+  def markDois(goal: Goal.Slug, dois: List[Doi], state: Source.Candidate.State)(using DbCon): RowCount =
+    if dois.isEmpty then RowCount(0)
     else
-      com.histmersion.RowCount(
+      RowCount(
         sql"UPDATE source_candidates SET state = $state WHERE goal = $goal AND doi = ANY($dois::text[])".update.run()
       )

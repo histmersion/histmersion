@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.workflows
+package com.histmersion
+package domain.research.workflows
 
 import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.research.Slug

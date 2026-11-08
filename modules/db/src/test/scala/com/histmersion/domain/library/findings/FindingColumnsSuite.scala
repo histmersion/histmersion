@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.findings
+package com.histmersion
+package domain.library.findings
 
 import com.histmersion.domain.library.findings.FindingColumns.given
 

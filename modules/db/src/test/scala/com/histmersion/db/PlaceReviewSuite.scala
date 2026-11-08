@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,6 +17,9 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.given
+import com.histmersion.util.identity.AliasTable
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
 
 /** `lint --rule place-kind` and `--rule place-grid-point` (2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the dry run lists people, polities, a settlement and a merge and
@@ -50,7 +54,7 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     assertEquals(PlaceFixtures.get(ds, AiantisId).map(_.place.kind), Some(Place.Kind.People))
     assertEquals(PlaceFixtures.get(ds, PeirId).map(_.place.kind), Some(Place.Kind.Site))
     assertEquals(PlaceFixtures.get(ds, DupId), None)
-    assertEquals(PlaceFixtures.renamedTo(ds, com.histmersion.util.identity.AliasTable.Id(Dup)), Some(Into), "the old id resolves to its replacement")
+    assertEquals(PlaceFixtures.renamedTo(ds, AliasTable.Id(Dup)), Some(Into), "the old id resolves to its replacement")
     val links = connect(ds)(
       sql"SELECT external_id FROM place_links WHERE place_id = $Into AND scheme = 'pleiades'"
         .query[String]
@@ -89,13 +93,13 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     SourceFixtures.upsert(
       ds,
       Source(
-        citekey = com.histmersion.api.library.Citekey("zzrc_src2"),
+        citekey = Citekey("zzrc_src2"),
         title = com.histmersion.api.library.Title("Region cleanup fixture 2"),
         authors = (List("T")).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (Some(2026)).map(Year.apply),
         venue = None,
-        status = com.histmersion.api.library.Source.Status.Current,
+        status = Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -107,9 +111,9 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
         calibreId = None,
         findings = List(
           Finding(
-            com.histmersion.api.library.Finding.Id("zzrc_src2#0"),
-            com.histmersion.api.library.Citekey("zzrc_src2"),
-            com.histmersion.api.library.Finding.Claim("on the real point"),
+            Finding.Id("zzrc_src2#0"),
+            Citekey("zzrc_src2"),
+            Finding.Claim("on the real point"),
             None,
             Some(GeoPoint(Longitude(141.71), Latitude(-47.62))),
             None,
@@ -122,10 +126,10 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
       cfg.limits.chunkChars,
       cfg.places.pointToleranceKm
     )
-    assertEquals(PlaceFixtures.placesOf(ds, com.histmersion.api.library.Finding.Id("zzrc_src2#0")).map(_.id).filter(_.value.startsWith("pleiades_99910")).toList, Nil)
+    assertEquals(PlaceFixtures.placesOf(ds, Finding.Id("zzrc_src2#0")).map(_.id).filter(_.value.startsWith("pleiades_99910")).toList, Nil)
     assertEquals(PlaceFixtures.relocate(ds, rs, cfg.places.pointToleranceKm), 1)
     assertEquals(
-      PlaceFixtures.placesOf(ds, com.histmersion.api.library.Finding.Id("zzrc_src2#0")).map(_.id).filter(_.value.startsWith("pleiades_99910")).toList,
+      PlaceFixtures.placesOf(ds, Finding.Id("zzrc_src2#0")).map(_.id).filter(_.value.startsWith("pleiades_99910")).toList,
       List(Thess),
       "the moved place's findings are matched again at once"
     )

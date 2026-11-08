@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import io.scalaland.chimney.dsl.*
 
@@ -21,6 +22,17 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import com.histmersion.api.library.Edge
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.library.Confidence
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.library.Doi
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Source
+import com.histmersion.domain.library.sources.referrers.SourceReferrers
+import com.histmersion.util.ocr.Chunker
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned
@@ -58,8 +70,8 @@ private[sources] object SourceBundleRepo:
         Bundle.Finding.Id(r.id.value),
         Bundle.Finding.Claim(r.claim.value),
         r.region.map(x => Bundle.Finding.Region(x.value)),
-        r.lon.map(x => com.histmersion.api.catalogue.Longitude(x.value)),
-        r.lat.map(x => com.histmersion.api.catalogue.Latitude(x.value)),
+        r.lon.map(x => Longitude(x.value)),
+        r.lat.map(x => Latitude(x.value)),
         range(
           com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
           r.pLo.map(x => com.histmersion.util.data.exchange.Bundle.RangeLower(x.value)),
@@ -67,7 +79,7 @@ private[sources] object SourceBundleRepo:
         ),
         r.periodName.map(x => Bundle.Finding.PeriodName(x.value)),
         r.tags.map(t => Bundle.Finding.Tags(t.value)),
-        r.confidence.transformInto[Option[com.histmersion.api.library.Confidence]],
+        r.confidence.transformInto[Option[Confidence]],
         r.significance.map(x => Bundle.Finding.Significance(x.value)),
         Bundle.Finding.UpdatedAt(r.updatedAt.value)
       )
@@ -119,13 +131,13 @@ private[sources] object SourceBundleRepo:
     Bundle.Source(
       r.uid,
       r.origin,
-      com.histmersion.api.library.Citekey(r.citekey.value),
-      com.histmersion.api.library.Title(r.title.value),
-      r.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
-      r.doi.map(d => com.histmersion.api.library.Doi(d.value)),
-      r.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
-      r.venue.map(v => com.histmersion.api.library.Source.Venue(v.value)),
-      r.status.transformInto[com.histmersion.api.library.Source.Status],
+      Citekey(r.citekey.value),
+      Title(r.title.value),
+      r.authors.map(a => AuthorName(a.value)),
+      r.doi.map(d => Doi(d.value)),
+      r.year.map(y => Year(y.value.toLong)),
+      r.venue.map(v => Source.Venue(v.value)),
+      r.status.transformInto[Source.Status],
       r.topics.map(t => Bundle.Source.Topics(t.value)),
       r.regions.map(t => Bundle.Source.Regions(t.value)),
       r.tags.map(t => Bundle.Source.Tags(t.value)),
@@ -154,7 +166,7 @@ private[sources] object SourceBundleRepo:
   private def bodiesChanged(w: BundleImport.Writer): scala.collection.mutable.LinkedHashSet[UUID] =
     w.once(changedBodies)
 
-  def sourcesIn(w: BundleImport.Writer, referrers: com.histmersion.domain.library.sources.referrers.SourceReferrers): Unit =
+  def sourcesIn(w: BundleImport.Writer, referrers: SourceReferrers): Unit =
     given DbCon = w.transaction
     // `rename-left`: a source here gives its citekey up first, to the bundle's work that has it; the
     // old citekey does not stay an alias (it is the other work's now)
@@ -236,7 +248,7 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     w.es.unresolvedEdges.filter(e => w.writes(e.srcUid)).foreach { e =>
       Edge.Kind.fromWire(e.kind).foreach { k =>
-        val _ = SourceRepo.insertEdges(List(Edge(com.histmersion.api.library.Citekey(w.citekeyOf(e.srcUid).value), com.histmersion.api.library.Citekey(e.dst.value), k)))
+        val _ = SourceRepo.insertEdges(List(Edge(Citekey(w.citekeyOf(e.srcUid).value), Citekey(e.dst.value), k)))
       }
     }
 
@@ -303,8 +315,8 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     bodiesChanged(w).foreach { u =>
       val (ck, md) =
-        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(com.histmersion.domain.library.Citekey, Option[com.histmersion.util.ocr.Chunker.ChunkMarkdown])].run().head
-      val _ = SourceRepo.replaceChunks(ck, md, com.histmersion.util.ocr.Chunker.ChunkMaxChars(w.opts.chunkChars.value))
+        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(com.histmersion.domain.library.Citekey, Option[Chunker.ChunkMarkdown])].run().head
+      val _ = SourceRepo.replaceChunks(ck, md, Chunker.ChunkMaxChars(w.opts.chunkChars.value))
     }
     w.touchedSources.foreach { u =>
       val _ = SourceRepo.placeFindingsIn(w.citekeyOf(u), GeocodeSettings.ToleranceKm(w.opts.toleranceKm.value))
@@ -312,7 +324,7 @@ private[sources] object SourceBundleRepo:
     w.insertedSources.foreach(u => SourceRepo.promote(w.citekeyOf(u)))
 
   /** A source's body into its row; a stored original into `files`. */
-  def blobIn(use: BlobUse, sha: com.histmersion.Sha256, w: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
+  def blobIn(use: BlobUse, sha: Sha256, w: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
     given DbCon = w.transaction
     use match
       case BlobUse.Body(u) =>

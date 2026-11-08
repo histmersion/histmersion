@@ -1,9 +1,12 @@
-package com.histmersion.domain.library.citations
+package com.histmersion
+package domain.library.citations
 
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 import com.histmersion.api.library.{ContradictionsResult, NeighborRow}
 import com.histmersion.api.library.Source
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Edge
 
 /** The db suites' reads of the citation graph on a database of their own. */
 object CitationFixtures:
@@ -11,15 +14,15 @@ object CitationFixtures:
 
   def neighbors(
       ds: DataSource,
-      citekey: com.histmersion.domain.library.Citekey,
-      kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil
+      citekey: Citekey,
+      kinds: List[Edge.Kind.Wire] = Nil
   ): Vector[NeighborRow] =
     connect(ds)(CitationRepo.neighbors(citekey, kinds))
-  def graph(ds: DataSource, citekey: com.histmersion.domain.library.Citekey, maxDepth: Source.Graph.Depth): Source.Graph =
+  def graph(ds: DataSource, citekey: Citekey, maxDepth: Source.Graph.Depth): Source.Graph =
     connect(ds)(CitationRepo.graph(citekey, maxDepth))
   def contradictions(
       ds: DataSource,
-      citekey: Option[com.histmersion.domain.library.Citekey],
+      citekey: Option[Citekey],
       since: Option[CitationRepo.Since]
   ): ContradictionsResult =
     connect(ds)(CitationRepo.contradictions(citekey, since))

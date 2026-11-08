@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.exchange.Bundle
 
@@ -31,6 +32,6 @@ object EventMergeRules extends MergeRules:
   )(using DbCon): MergePlanner.Input =
     val named = (bundle.events.map(_.id) ++ bundle.eventAliases.map(_.alias)).map(id => BEventRow.Id(id.value))
     in.modify(_.labels.events)
-      .setTo(EventBundleRepo.eventsNamed(named).map((id, uid) => com.histmersion.api.exchange.Bundle.Event.Id(id.value) -> uid))
+      .setTo(EventBundleRepo.eventsNamed(named).map((id, uid) => Bundle.Event.Id(id.value) -> uid))
       .modify(_.labels.eventAliases)
-      .setTo(EventBundleRepo.oldIdsNamed(named).map((id, uid) => com.histmersion.api.exchange.Bundle.EventAlias.Alias(id.value) -> uid))
+      .setTo(EventBundleRepo.oldIdsNamed(named).map((id, uid) => Bundle.EventAlias.Alias(id.value) -> uid))

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -12,6 +13,10 @@ import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence,
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Geocode
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.DeepTime
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The two gazetteer-cleanup lint rules (2026-10-09): `place-kind` — what a point-only seed region really is
   * ([[PlaceReview]]) — and `place-grid-point` — a better point than an atlas grid square's centre
@@ -24,7 +29,7 @@ private[places] object PlaceReviewRepo:
   final private case class Row(
       id: Evidence.Id,
       label: Evidence.Label,
-      kind: com.histmersion.domain.catalogue.Place.Kind.Wire,
+      kind: Place.Kind.Wire,
       types: Option[String],
       periods: Option[String],
       start: Option[Row.Start],
@@ -32,10 +37,10 @@ private[places] object PlaceReviewRepo:
   ) derives DbCodec
 
   object Row:
-    type Start = com.histmersion.domain.DeepTime.SignedYear
-    val Start: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-    type End = com.histmersion.domain.DeepTime.SignedYear
-    val End: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+    type Start = DeepTime.SignedYear
+    val Start: DeepTime.SignedYear.type = DeepTime.SignedYear
+    type End = DeepTime.SignedYear
+    val End: DeepTime.SignedYear.type = DeepTime.SignedYear
 
   final private case class ItemRow(
       placeId: Evidence.Id,
@@ -46,10 +51,10 @@ private[places] object PlaceReviewRepo:
   ) derives DbCodec
 
   object ItemRow:
-    type From = com.histmersion.domain.DeepTime.SignedYear
-    val From: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-    type To = com.histmersion.domain.DeepTime.SignedYear
-    val To: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+    type From = DeepTime.SignedYear
+    val From: DeepTime.SignedYear.type = DeepTime.SignedYear
+    type To = DeepTime.SignedYear
+    val To: DeepTime.SignedYear.type = DeepTime.SignedYear
 
   private given DbCodec[Candidate] = DbCodec.derived
 
@@ -134,9 +139,9 @@ private[places] object PlaceReviewRepo:
     * changed places' `finding_places` rows are then matched again (a kind decides how a place takes findings), in the
     * same transaction. Returns (reclassified, merged).
     */
-  def apply(ps: List[Proposal], toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using DbCon): (com.histmersion.RowCount, com.histmersion.RowCount) =
+  def apply(ps: List[Proposal], toleranceKm: PointAreaRepo.Settings.ToleranceKm)(using DbCon): (RowCount, RowCount) =
     val todo = ps.filter(_.fixable)
-    if todo.isEmpty then (com.histmersion.RowCount(0), com.histmersion.RowCount(0))
+    if todo.isEmpty then (RowCount(0), RowCount(0))
     else
       val re = todo.collect { case p: Proposal.Reclassify => p }.filter { p =>
         val range = RangeSql.literalOf(p.period)
@@ -146,16 +151,16 @@ private[places] object PlaceReviewRepo:
               WHERE id = ${p.id} AND kind = ${p.from}""".update.run() > 0
       }
       val mg = todo.collect { case p: Proposal.Merge => p }.filter(p =>
-        mergeIn(com.histmersion.domain.catalogue.Place.Id.assume(p.id.value), com.histmersion.domain.catalogue.Place.Id.assume(p.into.value))
+        mergeIn(Place.Id.assume(p.id.value), Place.Id.assume(p.into.value))
       )
       val _ = FindingPlaceRepo.materialisePlaces(
         (re.map(_.id) ++ mg.map(_.into)).map(i => BPlaceRow.Id(i.value)),
         FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
       )
-      (com.histmersion.RowCount(re.size), com.histmersion.RowCount(mg.size))
+      (RowCount(re.size), RowCount(mg.size))
 
   /** Merge place `from` into `into` in the caller's transaction. `false` when either is gone. */
-  private[places] def mergeIn(from: com.histmersion.domain.catalogue.Place.Id, into: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Boolean =
+  private[places] def mergeIn(from: Place.Id, into: Place.Id)(using DbCon): Boolean =
     val both = sql"SELECT count(*)::int FROM places WHERE id = $from OR id = $into".query[Int].run().head
     if from == into || both < 2 then false
     else
@@ -193,8 +198,8 @@ private[places] object PlaceReviewRepo:
       fromLon: Relocation.FromLon,
       fromLat: Relocation.FromLat,
       ref: Relocation.Ref,
-      lon: com.histmersion.Longitude,
-      lat: com.histmersion.Latitude
+      lon: Longitude,
+      lat: Latitude
   ) derives DbCodec:
     def km: Geocode.DistanceKm =
       Geocode.distanceKm(
@@ -205,11 +210,11 @@ private[places] object PlaceReviewRepo:
       )
 
     /** One line: id, label, the grid point, the better one and how far. */
-    def describe: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.Description =
+    def describe: Relocation.Description =
       Relocation.Description(s"${id.value} ${detail.value}")
 
     /** The line without the id — a lint item, which carries the id beside it. */
-    def detail: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.Detail =
+    def detail: Relocation.Detail =
       Relocation.Detail(
         String.format(
           java.util.Locale.ROOT,
@@ -226,18 +231,18 @@ private[places] object PlaceReviewRepo:
 
   object Relocation:
     type Description = Description.T
-    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Description extends RefinedType[String, Pure]
     type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Detail extends RefinedType[String, Pure]
 
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type FromLon = FromLon.T
-    object FromLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FromLon extends RefinedType[Double, Pure]
     type FromLat = FromLat.T
-    object FromLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FromLat extends RefinedType[Double, Pure]
     type Ref = Ref.T
-    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ref extends RefinedType[String, Pure]
 
   /** Every grid-cell place a linked record (Wikidata's P625) puts somewhere that is no grid centre itself; one per
     * place, the nearest such point. A place whose point a person set (`places set --point`, V081) is decided: never
@@ -258,8 +263,8 @@ private[places] object PlaceReviewRepo:
   /** Give each listed place the linked record's point — only while it still has the grid point the list was made from —
     * and match the moved places' findings again, in the same transaction. Returns the places moved.
     */
-  def relocate(rs: List[Relocation], toleranceKm: com.histmersion.domain.catalogue.places.PointAreaRepo.Settings.ToleranceKm)(using DbCon): com.histmersion.RowCount =
-    if rs.isEmpty then com.histmersion.RowCount(0)
+  def relocate(rs: List[Relocation], toleranceKm: PointAreaRepo.Settings.ToleranceKm)(using DbCon): RowCount =
+    if rs.isEmpty then RowCount(0)
     else
       val moved = rs.filter { r =>
         sql"""UPDATE places SET geom = ST_SetSRID(ST_MakePoint(${r.lon}, ${r.lat}), 4326)
@@ -268,4 +273,4 @@ private[places] object PlaceReviewRepo:
           .run() > 0
       }
       val _ = FindingPlaceRepo.materialisePlaces(moved.map(_.id), FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
-      com.histmersion.RowCount(moved.size)
+      RowCount(moved.size)

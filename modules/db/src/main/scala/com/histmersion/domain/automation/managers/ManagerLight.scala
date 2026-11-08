@@ -1,10 +1,13 @@
-package com.histmersion.domain.automation.managers
+package com.histmersion
+package domain.automation.managers
 
 import com.histmersion.api.automation.Managers.ManagerConfig
 import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A manager without its counts: what the autopilot's ensure and status read for every manager. `planItem` = it has a
   * plan-goal item (any status).
@@ -22,19 +25,19 @@ final case class ManagerLight(
 
 object ManagerLight:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Goal extends RefinedType[String, Pure]
   type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object State extends RefinedType[String, Pure]
   type Cron = Cron.T
-  object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Cron extends RefinedType[String, Pure]
   type StatusNote = StatusNote.T
-  object StatusNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusNote extends RefinedType[String, Pure]
   type PlanItem = PlanItem.T
-  object PlanItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlanItem extends RefinedType[Boolean, Pure]
 
-  private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true))
+  private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls(true))
   given DbCodec[ManagerLight] = DbCodec.derived

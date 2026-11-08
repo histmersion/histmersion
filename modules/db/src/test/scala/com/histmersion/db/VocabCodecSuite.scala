@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -14,12 +15,14 @@ import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.{Jsonb, Migrate}
 import com.histmersion.api.library.{Finding, Source}
 import com.histmersion.util.database.given
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.catalogue.Year
 
 /** The vocabulary codecs (#1798 item 11): a stored value the vocabulary does not know reads as its UNKNOWN — a
   * confidence as "not stated", a status as unassessed, a place's dating as unknown — never as a confident member (an
   * unknown confidence used to read as `high`).
   */
-class VocabCodecSuite extends com.histmersion.db.DbSuite:
+class VocabCodecSuite extends DbSuite:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
@@ -28,7 +31,7 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
-  private val ck = com.histmersion.domain.library.Citekey("zzvocab_src")
+  private val ck = Citekey("zzvocab_src")
 
   test("an unknown confidence in the store reads as not stated, never as high"):
     SourceFixtures.put(
@@ -38,9 +41,9 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
         title = com.histmersion.api.library.Title("Vocab"),
         authors = (Nil).map(com.histmersion.api.library.AuthorName.apply),
         doi = None,
-        year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (Some(2020)).map(Year.apply),
         venue = None,
-        status = com.histmersion.api.library.Source.Status.Current,
+        status = Source.Status.Current,
         topics = Nil,
         regions = Nil,
         tags = Nil,
@@ -52,9 +55,9 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
         calibreId = None,
         ocrMarkdown = None,
         findings = List(
-          Finding(Finding.Id(s"$ck#0"), com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Finding.Claim("stated low"), None, None, None, None, Nil, Some(Confidence.Low)),
-          Finding(Finding.Id(s"$ck#1"), com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Finding.Claim("garbled"), None, None, None, None, Nil, Some(Confidence.Medium)),
-          Finding(Finding.Id(s"$ck#2"), com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Finding.Claim("not stated"), None, None, None, None, Nil, None)
+          Finding(Finding.Id(s"$ck#0"), com.histmersion.api.library.Citekey(ck.value), Finding.Claim("stated low"), None, None, None, None, Nil, Some(Confidence.Low)),
+          Finding(Finding.Id(s"$ck#1"), com.histmersion.api.library.Citekey(ck.value), Finding.Claim("garbled"), None, None, None, None, Nil, Some(Confidence.Medium)),
+          Finding(Finding.Id(s"$ck#2"), com.histmersion.api.library.Citekey(ck.value), Finding.Claim("not stated"), None, None, None, None, Nil, None)
         )
       ),
       cfg.limits.chunkChars,
@@ -68,24 +71,24 @@ class VocabCodecSuite extends com.histmersion.db.DbSuite:
       fs.map(f => f.claim -> f.confidence).toMap,
       Map("stated low" -> Some(Confidence.Low), "garbled" -> None, "not stated" -> None)
     )
-    assertEquals(s.status, com.histmersion.api.library.Source.Status.Unassessed)
+    assertEquals(s.status, Source.Status.Unassessed)
     connect(ds)(sql"DELETE FROM sources WHERE citekey = $ck".update.run())
 
 /** [[Jsonb]] (#1946): one rule for a jsonb column — what does not decode reads as the fallback or as absent, never as
   * an exception; nulls are dropped only when asked.
   */
-class JsonbCodecSuite extends com.histmersion.db.DbSuite:
+class JsonbCodecSuite extends DbSuite:
   import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
   final case class Doc(a: Int = 1, b: Option[String] = None) derives KindlingsCodecAsObject
 
   test("write: compact, nulls kept unless dropNulls"):
     assertEquals(Jsonb.write(Doc(2, None)), """{"a":2,"b":null}""")
-    assertEquals(Jsonb.write(Doc(2, None), dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true)), """{"a":2}""")
+    assertEquals(Jsonb.write(Doc(2, None), dropNulls = Jsonb.DropNulls(true)), """{"a":2}""")
 
   test("read and decode: a document this build cannot read is absent, or says why"):
-    assertEquals(Jsonb.read[Doc](com.histmersion.util.database.Jsonb.JsonText("""{"a":3}""")), Some(Doc(3)))
-    assertEquals(Jsonb.read[Doc](com.histmersion.util.database.Jsonb.JsonText("""{"a":"x"}""")), None)
-    assertEquals(Jsonb.read[Doc](com.histmersion.util.database.Jsonb.JsonText("not json")), None)
-    assert(Jsonb.decode[Doc](com.histmersion.util.database.Jsonb.JsonText("""{"a":"x"}""")).isLeft)
-    assertEquals(Jsonb.decode[List[Int]](com.histmersion.util.database.Jsonb.JsonText("[1,2]")), Right(List(1, 2)))
+    assertEquals(Jsonb.read[Doc](Jsonb.JsonText("""{"a":3}""")), Some(Doc(3)))
+    assertEquals(Jsonb.read[Doc](Jsonb.JsonText("""{"a":"x"}""")), None)
+    assertEquals(Jsonb.read[Doc](Jsonb.JsonText("not json")), None)
+    assert(Jsonb.decode[Doc](Jsonb.JsonText("""{"a":"x"}""")).isLeft)
+    assertEquals(Jsonb.decode[List[Int]](Jsonb.JsonText("[1,2]")), Right(List(1, 2)))

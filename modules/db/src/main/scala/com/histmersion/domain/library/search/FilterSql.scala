@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import hearth.kindlings.optics.syntax.*
 
@@ -22,6 +23,17 @@ import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.SourceColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.util.database.LikePattern
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.Title
+import com.histmersion.util.database.EnvelopeSql
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Doi
+import com.histmersion.domain.Highlight
+import com.histmersion.api.library.Hit
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -34,7 +46,7 @@ object FilterSql:
 
 
   type FacetPrefix = FacetPrefix.T
-  object FacetPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FacetPrefix extends RefinedType[String, Pure]
 
   private def raw(text: String): Sql = Sql.raw(Sql.RawText(text))
   private def of(text: String, ps: Param*): Sql = Sql.of(Sql.OfText(text), ps*)
@@ -51,9 +63,9 @@ object FilterSql:
     * needed a literal backslash, and a search for `ZZR_` matched nothing (#769).
     */
   private val Esc = " ESCAPE '\\'"
-  def escapeLike(s: String): String = com.histmersion.util.database.LikePattern.escape(s)
-  def contains(s: String): String = com.histmersion.util.database.LikePattern.contains(s)
-  def startsWith(s: String): String = com.histmersion.util.database.LikePattern.startsWith(s)
+  def escapeLike(s: String): String = LikePattern.escape(s)
+  def contains(s: String): String = LikePattern.contains(s)
+  def startsWith(s: String): String = LikePattern.startsWith(s)
 
   // ── combinators ──────────────────────────────────────────────────────────────────────────────
   private def join(sep: String, parts: List[Sql]): Sql =
@@ -75,7 +87,7 @@ object FilterSql:
     * (2026-10-09). Uncorrelated, Postgres computes the matching citekeys once (a hashed sub-plan) whatever OR or IN
     * surrounds it, and one array parameter keeps a generic plan of a prepared statement from going bad on 451 `?`s.
     */
-  private def placeIdsSource(ids: List[com.histmersion.domain.catalogue.Place.Id]): Sql =
+  private def placeIdsSource(ids: List[Place.Id]): Sql =
     of(
       "s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
         " WHERE fp.place_id = ANY(?::text[]))",
@@ -83,7 +95,7 @@ object FilterSql:
     )
 
   /** `finding_places` membership for ONE finding row (alias `fa`), uncorrelated like [[placeIdsSource]]. */
-  private def placeIdsFinding(ids: List[com.histmersion.domain.catalogue.Place.Id], fa: String): Sql =
+  private def placeIdsFinding(ids: List[Place.Id], fa: String): Sql =
     of(s"$fa.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))", strs(ids.map(_.value)))
 
   /** The wave-1 name match for a source: its own regions, any of its findings' `region_name`, OR any place_name
@@ -196,11 +208,11 @@ object FilterSql:
       .foreach(g => ps += of("s.citekey IN (SELECT ref FROM goal_links WHERE goal_slug = ? AND kind = 'source')", str(g)))
 
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** The filter's title quick-filter, trimmed; `None` when there is nothing to match. */
-  def titleLike(f: Filter): Option[com.histmersion.domain.Title] =
-    f.title.map(_.value.trim).filter(_.nonEmpty).map(com.histmersion.domain.Title(_))
+  def titleLike(f: Filter): Option[Title] =
+    f.title.map(_.value.trim).filter(_.nonEmpty).map(Title(_))
 
   // ── what the filter selects, seen from the other lists (articles, events) ───────────────────
   // ONE rule, reused: the Articles and Events lists are the items RELATED to the sources the
@@ -209,7 +221,7 @@ object FilterSql:
 
   /** The citekeys of the sources `f` selects — `/api/sources`' predicate as a sub-select. */
   def sourceKeys(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
-    Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ where(f, scope)
+    Sql.raw(Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ where(f, scope)
 
   /** [[sourceKeys]] as an ARRAY computed ONCE per statement (an init-plan): `x = ANY(…)` against it is
     * `x IN (sourceKeys)`. Written as `IN (sub-select)` the planner pulls the sources back into a nested loop and
@@ -234,7 +246,7 @@ object FilterSql:
       ) ++ sourceKeySet(set, scope) ++ raw("))"))
     titleLike(f).foreach(t => ps += of(s"a.title ILIKE ?$Esc", str(contains(t.value))))
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** The events for a filter (alias `e`): whose source (`e.citekey`) is among the sources of `f.sourceSet` WITHOUT its
     * period, whose OWN span overlaps the period, and whose label contains `f.title`. The period applies to the event
@@ -254,12 +266,12 @@ object FilterSql:
     f.period.foreach(p => ps += RangeSql.overlaps("e.outer_span", p))
     titleLike(f).foreach(t => ps += of(s"e.label ILIKE ?$Esc", str(contains(t.value))))
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** The PostGIS predicate for a viewport. A box with `minLon > maxLon` crosses the **antimeridian** and becomes two
     * envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
     */
-  def envelopes(geom: String, b: BBox): Sql = com.histmersion.util.database.EnvelopeSql.envelopes(geom, b)
+  def envelopes(geom: String, b: BBox): Sql = EnvelopeSql.envelopes(geom, b)
 
   // ── the FINDING-level predicate (map feed §1.1, histogram §1.7) ─────────────────────────────
   // `/api/sources` asks "does this SOURCE match?" — an EXISTS quantified over its findings (above).
@@ -301,16 +313,16 @@ object FilterSql:
     f.bbox.foreach(b => ps += (raw(s"($fa.geom IS NOT NULL AND ") ++ envelopes(s"$fa.geom", b) ++ raw(")")))
 
     val parts = ps.result()
-    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** Deep-time overlap for ONE finding; `TRUE` when the filter carries no period. */
   def findingPeriodWhere(f: Filter, fa: String = "f"): Sql =
-    f.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(p => RangeSql.overlaps(s"$fa.period", p))
+    f.period.fold(Sql.raw(Sql.RawText("TRUE")))(p => RangeSql.overlaps(s"$fa.period", p))
 
   /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
   def findingWhere(f: Filter, fa: String = "f", sa: String = "s", scope: PlaceScope = PlaceScope.empty): Sql =
     val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa, scope)).filter(_.text.value != "TRUE")
-    if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")) else join(" AND ", parts)
+    if parts.isEmpty then Sql.raw(Sql.RawText("TRUE")) else join(" AND ", parts)
 
   /** Deterministic ordering (`, s.citekey` last) so paging is stable. `Relevance` WITHOUT a text query has nothing to
     * rank by, so it falls back to citations; with one it is `ts_rank_cd` — see [[orderBySql]], which is what the
@@ -339,7 +351,7 @@ object FilterSql:
     case _ => raw(orderBy(f.sort))
 
   /** The filter's text query, trimmed; `None` when there is nothing to search for. */
-  def text(f: Filter): Option[com.histmersion.domain.library.search.Search.Query] =
+  def text(f: Filter): Option[Search.Query] =
     f.q.map(_.value.trim).filter(_.nonEmpty).map(Search.Query(_))
 
   // ── the queries ──────────────────────────────────────────────────────────────────────────────
@@ -362,7 +374,7 @@ object FilterSql:
     *
     * Parameter order is textual: CTE, then SELECT, then WHERE, then ORDER BY, then limit/offset.
     */
-  def sourcesQuery(f: Filter, snippetWords: com.histmersion.domain.library.search.Search.SnippetWords, scope: PlaceScope = PlaceScope.empty): Sql =
+  def sourcesQuery(f: Filter, snippetWords: Search.SnippetWords, scope: PlaceScope = PlaceScope.empty): Sql =
     val (cte, cols, join) = text(f) match
       case Some(q) =>
         (
@@ -371,35 +383,35 @@ object FilterSql:
           raw(" LEFT JOIN best_chunks bc ON bc.citekey = s.citekey")
         )
       case None =>
-        (Sql.empty, Sql.raw(com.histmersion.util.database.Sql.RawText("FALSE AS body_hit, NULL::text, NULL::text")), Sql.empty)
+        (Sql.empty, Sql.raw(Sql.RawText("FALSE AS body_hit, NULL::text, NULL::text")), Sql.empty)
     cte ++ raw(s"SELECT $rowCols, ") ++ cols ++ raw(" FROM sources s") ++ join ++
       raw(" WHERE ") ++ where(f, scope) ++ raw(" ") ++ orderBySql(f, useCte = text(f).isDefined) ++
       raw(" ") ++ of("LIMIT ? OFFSET ?", int(f.limit.value.max(0)), int(f.offset.value.max(0)))
 
   /** `total` = count(DISTINCT source) for the filter, ignoring limit/offset. */
   def countQuery(f: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
-    Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT count(*)::int FROM sources s WHERE ")) ++ where(f, scope)
+    Sql.raw(Sql.RawText("SELECT count(*)::int FROM sources s WHERE ")) ++ where(f, scope)
 
   /** Snippets for a specific set of citekeys — the second phase of the two-phase FTS approach. Returns
     * `(citekey, heading, snippet)` rows, one per citekey, with `ts_headline` wrapping hits in `**`. An empty `citekeys`
     * list is a no-op (the caller should skip the query).
     */
-  def snippetsQuery(q: com.histmersion.domain.library.search.Search.Query, snippetWords: com.histmersion.domain.library.search.Search.SnippetWords, citekeys: List[com.histmersion.domain.library.Citekey]): Sql =
+  def snippetsQuery(q: Search.Query, snippetWords: Search.SnippetWords, citekeys: List[Citekey]): Sql =
     Search.snippetsQuery(q, snippetWords, citekeys)
 
   /** One snippet row: (citekey, heading, snippet). */
-  final case class SnippetRow(citekey: com.histmersion.domain.library.Citekey, heading: Option[SnippetRow.Heading], snippet: SnippetRow.Snippet) derives DbCodec
+  final case class SnippetRow(citekey: Citekey, heading: Option[SnippetRow.Heading], snippet: SnippetRow.Snippet) derives DbCodec
 
   object SnippetRow:
     type Heading = Heading.T
-    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Heading extends RefinedType[String, Pure]
     type Snippet = Snippet.T
-    object Snippet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Snippet extends RefinedType[String, Pure]
 
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by [[findingWhy]], so the
     * explanation is unit-testable without a database.
     */
-  def findingsQuery(citekeys: List[com.histmersion.domain.library.Citekey]): Sql =
+  def findingsQuery(citekeys: List[Citekey]): Sql =
     Sql(
       Sql.Text(
       "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
@@ -479,9 +491,9 @@ object FilterSql:
     */
   def facetsQuery(
       field: Facet.Field,
-      prefix: Option[FilterSql.FacetPrefix],
+      prefix: Option[FacetPrefix],
       f: Filter,
-      limit: com.histmersion.PageSize,
+      limit: PageSize,
       scope: PlaceScope = PlaceScope.empty
   ): Sql =
     val pre = prefix.map(_.value.trim).filter(_.nonEmpty) match
@@ -514,18 +526,18 @@ object FilterSql:
   // ── pure match explanation ───────────────────────────────────────────────────────────────────
 
   type SourceDoi = SourceDoi.T
-  object SourceDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceDoi extends RefinedType[String, Pure]
 
   /** One row of [[sourcesQuery]]: a `SearchHit` plus the extra columns `why` needs. */
   final case class SourceRow(
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: Citekey,
       title: com.histmersion.api.library.Title,
-      year: Option[com.histmersion.api.catalogue.Year],
+      year: Option[Year],
       status: Source.Status,
       topics: List[SearchHit.Topics],
       regions: List[SearchHit.Regions],
-      periodStart: Option[com.histmersion.api.catalogue.Year],
-      periodEnd: Option[com.histmersion.api.catalogue.Year],
+      periodStart: Option[Year],
+      periodEnd: Option[Year],
       summary: Option[SearchHit.Summary],
       tags: List[Filter.Tags],
       authors: List[com.histmersion.api.library.AuthorName],
@@ -548,7 +560,7 @@ object FilterSql:
         summary,
         snippet,
         matchedHeading,
-        doi.map(d => com.histmersion.api.library.Doi(d.value)),
+        doi.map(d => Doi(d.value)),
         authors
       )
 
@@ -560,16 +572,16 @@ object FilterSql:
     * connectives dropped. The SQL side is a tsquery, so the explanation cannot just look for the raw string —
     * `"sea peoples"` never occurs verbatim in a title.
     */
-  def queryTerms(q: com.histmersion.domain.library.search.Search.Query): List[com.histmersion.domain.Highlight.Term] =
+  def queryTerms(q: Search.Query): List[Highlight.Term] =
     q.value
       .split("\\s+")
       .toList
       .map(_.replace("\"", "").trim.toLowerCase)
       .filterNot(t => t.isEmpty || t.startsWith("-") || t == "or" || t == "and")
-      .map(com.histmersion.domain.Highlight.Term(_))
+      .map(Highlight.Term(_))
 
   /** Inclusive `[start, end]` overlap — the Scala twin of `int8range(a, b, '[]') &&`. */
-  def overlaps(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year], p: Period): Boolean =
+  def overlaps(start: Option[Year], end: Option[Year], p: Period): Boolean =
     (start, end) match
       case (Some(a), Some(b)) => a.value <= p.end.value && b.value >= p.start.value
       case _                  => false
@@ -577,7 +589,7 @@ object FilterSql:
   /** Source-level reasons this source is in the result — "title matches 'collapse'", "tag: sea-peoples", … Pure:
     * everything comes from the row the SQL returned.
     */
-  def sourceWhy(f: Filter, r: SourceRow): List[com.histmersion.api.library.Hit.Why] =
+  def sourceWhy(f: Filter, r: SourceRow): List[Hit.Why] =
     val b = List.newBuilder[String]
     text(f).foreach { q =>
       val terms = queryTerms(q)
@@ -596,7 +608,7 @@ object FilterSql:
       if overlaps(r.periodStart, r.periodEnd, p) then
         b += s"period: ${Markdown.periodLabel(r.periodStart, r.periodEnd)}"
     )
-    b.result().map(com.histmersion.api.library.Hit.Why(_))
+    b.result().map(Hit.Why(_))
 
   /** Which of the filter's finding-level criteria this finding satisfies. Empty ⇒ it is NOT part of the evidence and is
     * dropped from `Hit.matched`.
@@ -604,7 +616,7 @@ object FilterSql:
   def findingWhy(
       f: Filter,
       m: Finding.Match,
-      placeIds: List[com.histmersion.domain.catalogue.Place.Id] = Nil,
+      placeIds: List[Place.Id] = Nil,
       scope: PlaceScope = PlaceScope.empty
   ): List[Finding.Match.Why] =
     val b = List.newBuilder[String]

@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.evidence
+package com.histmersion
+package domain.catalogue.evidence
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{ArticleEventLead, CatalogRecord, EventEntry, EventFindingRef, EventLinkCandidate, EventSourceRef}
@@ -27,7 +28,7 @@ object EvidenceFixtures:
       id: Event.Id,
       km: CatalogMerge.Tolerance.Km,
       years: CatalogMerge.Tolerance.Years,
-      limit: com.histmersion.PageSize
+      limit: PageSize
   ): List[EventFindingRef] =
     connect(ds)(LeadRepo.nearFindings(id, km, years, limit))
   def leadRows(
@@ -35,9 +36,9 @@ object EvidenceFixtures:
       where: Sql,
       km: CatalogMerge.Tolerance.Km,
       years: CatalogMerge.Tolerance.Years,
-      limit: com.histmersion.PageSize,
-      offset: com.histmersion.Offset
-  ): (com.histmersion.RowCount, List[LeadRow]) =
+      limit: PageSize,
+      offset: Offset
+  ): (RowCount, List[LeadRow]) =
     connect(ds)(LeadRepo.leadRows(where, km, years, limit, offset))
   def articleCandidates(
       ds: DataSource,
@@ -46,7 +47,7 @@ object EvidenceFixtures:
       km: CatalogMerge.Tolerance.Km,
       minVei: CatalogRecord.Vei,
       minMagnitude: CatalogRecord.Magnitude,
-      limit: com.histmersion.PageSize
+      limit: PageSize
   ): List[
     (
         Event.Id,

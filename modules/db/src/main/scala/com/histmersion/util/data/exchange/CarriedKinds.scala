@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.api.exchange.Bundle
 
@@ -9,6 +10,8 @@ import com.histmersion.util.data.TableName
 import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The carried kinds an export and an import run over, from the registry. The entries come in the bundle format's order
   * (the manifest lists them so, and a bundle is byte for byte the same whoever registered first); the steps of an
@@ -35,28 +38,28 @@ final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
     loop(inBundleOrder, BundleEntities())
 
   /** Where the first kind that owns `use` puts it. */
-  def sink(use: BlobUse, sha256: com.histmersion.Sha256, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
+  def sink(use: BlobUse, sha256: Sha256, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
     inBundleOrder.iterator.flatMap(_.blobIn(use, sha256, writer, files)).nextOption()
 
 object CarriedKinds:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   /** The kinds in the format's order, or what is wrong with them: an entry no kind carries, one carried twice, one the
     * format does not have.
     */
 
-  def of(kinds: List[CarriedKind]): Either[List[com.histmersion.util.data.exchange.CarriedKinds.Problem], CarriedKinds] =
+  def of(kinds: List[CarriedKind]): Either[List[Problem], CarriedKinds] =
     val entries = kinds.map(_.entry.value)
     val missing =
-      com.histmersion.api.exchange.Bundle.Files.all.filterNot(entries.contains).map(e => s"no carried kind writes $e")
+      Bundle.Files.all.filterNot(entries.contains).map(e => s"no carried kind writes $e")
     val twice = entries.diff(entries.distinct).distinct.map(e => s"$e is carried twice")
     val unknown = entries
-      .filterNot(com.histmersion.api.exchange.Bundle.Files.all.contains)
+      .filterNot(Bundle.Files.all.contains)
       .map(e => s"$e is not a file of the bundle format")
     val problems = missing ++ twice ++ unknown
     Either.cond(
       problems.isEmpty,
-      new CarriedKinds(kinds.sortBy(k => com.histmersion.api.exchange.Bundle.Files.all.indexOf(k.entry.value))),
+      new CarriedKinds(kinds.sortBy(k => Bundle.Files.all.indexOf(k.entry.value))),
       problems.map(Problem(_))
     )
 

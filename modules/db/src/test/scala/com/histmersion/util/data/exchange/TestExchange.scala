@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 import com.histmersion.domain.automation.AutomationExchange
 import com.histmersion.domain.automation.worklists.WorkListMergeFollowUps
@@ -7,13 +8,14 @@ import com.histmersion.domain.library.LibraryExchange
 import com.histmersion.domain.media.MediaExchange
 import com.histmersion.domain.research.ResearchExchange
 import com.histmersion.util.identity.TombstonesCarried
+import com.histmersion.domain.library.sources.SourceFixtures
 
 /** The carried kinds, merge rules and merge follow-ups of every owner, as the server's registry has them (each owner's
   * own, in the order of the owners), for the db suites that run an export, an import or a plan without a server.
   */
 object TestExchange:
   val carried: List[CarriedKind] =
-    AutomationExchange.carried ++ CatalogueExchange.carried ++ MediaExchange.carried ++ LibraryExchange.carried(com.histmersion.domain.library.sources.SourceFixtures.referrers) ++
+    AutomationExchange.carried ++ CatalogueExchange.carried ++ MediaExchange.carried ++ LibraryExchange.carried(SourceFixtures.referrers) ++
       ResearchExchange.carried :+ TombstonesCarried.tombstones
   val kinds: CarriedKinds = CarriedKinds(carried)
   val rules: MergeRuleSet = MergeRuleSet(

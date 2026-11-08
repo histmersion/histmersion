@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import hearth.kindlings.optics.syntax.*
 

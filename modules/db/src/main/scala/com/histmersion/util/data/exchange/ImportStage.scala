@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 
 /** The stages of an import, in the order they run. */
 enum ImportStage:

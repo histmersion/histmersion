@@ -1,7 +1,10 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.histmersion.domain.library.sources.referrers.DeleteReport
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What deleting a source does: the answer, plus what finding its stored original needs — its digest, and whether
   * another source still holds the same file (then the file stays). `keys` = the citekey and its old citekeys (the
@@ -17,8 +20,8 @@ final case class SourceDeletePlan(
 
 object SourceDeletePlan:
   type Sha256 = Sha256.T
-  object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sha256 extends RefinedType[String, Pure]
   type ShaShared = ShaShared.T
-  object ShaShared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ShaShared extends RefinedType[Boolean, Pure]
   type Keys = Keys.T
-  object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Keys extends RefinedType[String, Pure]

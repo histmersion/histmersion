@@ -1,4 +1,5 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 
 import com.augustnagro.magnum.DbCodec
 import io.github.iltotore.iron.RefinedType

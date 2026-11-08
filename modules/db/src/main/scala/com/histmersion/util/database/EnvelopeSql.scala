@@ -1,4 +1,5 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 
 import com.histmersion.api.BBox
 import com.histmersion.util.database.{Param, Sql}

@@ -1,4 +1,8 @@
-package com.histmersion.domain.catalogue.places
+package com.histmersion
+package domain.catalogue.places
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `placeholderMin`: a point shared by this many places is a placeholder (`places.geocode-placeholder-min`);
   * `repairKm`: the smallest move the repair makes (`places.geocode-repair-km`); `toleranceKm`: the point tolerance
@@ -8,8 +12,8 @@ final case class GeocodeSettings(placeholderMin: GeocodeSettings.PlaceholderMin,
 
 object GeocodeSettings:
   type PlaceholderMin = PlaceholderMin.T
-  object PlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceholderMin extends RefinedType[Int, Pure]
   type RepairKm = RepairKm.T
-  object RepairKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RepairKm extends RefinedType[Double, Pure]
   type ToleranceKm = ToleranceKm.T
-  object ToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ToleranceKm extends RefinedType[Double, Pure]

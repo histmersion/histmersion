@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.events
+package com.histmersion
+package domain.catalogue.events
 
 import com.histmersion.api.catalogue.Corrections
 import com.histmersion.util.database.{Param, Sql}
@@ -8,6 +9,7 @@ import io.circe.Json
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.api.checks.Lint
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target
@@ -28,7 +30,7 @@ private[events] object CorrectionRepo:
     * correction is needed (one there goes); otherwise it is recorded, or updated — the upstream value then is what
     * upstream says NOW, and the status starts `active` again.
     */
-  def record(kind: Correction.TargetKind, id: Correction.TargetId, field: Correction.Field, value: Json, upstreamValue: Json, upstream: Option[com.histmersion.domain.catalogue.events.BCatalogueRow.Provider])(using
+  def record(kind: Correction.TargetKind, id: Correction.TargetId, field: Correction.Field, value: Json, upstreamValue: Json, upstream: Option[BCatalogueRow.Provider])(using
       DbCon
   ): Unit =
     if value == upstreamValue then
@@ -65,14 +67,14 @@ private[events] object CorrectionRepo:
   /** `histmersion events corrections`: the corrections of `kind` (one target's with `id`), the ones in `status`
     * (default: all but the retired), conflicts first, with each event's label.
     */
-  def list(kind: Correction.TargetKind, id: Option[Correction.TargetId], status: Option[Correction.StatusValue], limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using
+  def list(kind: Correction.TargetKind, id: Option[Correction.TargetId], status: Option[Correction.StatusValue], limit: PageSize, offset: Offset)(using
       DbCon
   ): Correction.List =
     val st = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val where = Sql.of(Sql.OfText("c.target_kind = ?"), Param.S(Param.S.V(kind.value))) ++
       id.map(_.value.trim).filter(_.nonEmpty).fold(Sql.empty)(i => Sql.of(Sql.OfText(" AND c.target_id = ?"), Param.S(Param.S.V(i)))) ++
       st.fold(Sql.raw(Sql.RawText(" AND c.status <> 'agreed'")))(s => Sql.of(Sql.OfText(" AND c.status = ?"), Param.S(Param.S.V(s))))
-    val count = (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT count(*)::int FROM corrections c WHERE ")) ++ where).frag.query[Int].run().head
+    val count = (Sql.raw(Sql.RawText("SELECT count(*)::int FROM corrections c WHERE ")) ++ where).frag.query[Int].run().head
     val rows = (Sql.raw(
       Sql.RawText(
         s"SELECT $Cols, e.label FROM corrections c " +
@@ -89,8 +91,8 @@ private[events] object CorrectionRepo:
   /** `lint --rule event-correction-conflict`: the events whose catalogue changed a field a person kept by hand, each
     * with what the person kept, what the catalogue said and what it says now.
     */
-  def conflictsIn()(using DbCon): List[(Correction.TargetId, com.histmersion.api.checks.Lint.LintItem.Detail)] =
-    Sql.raw(Sql.RawText(ConflictsSql)).frag.query[(Correction.TargetId, com.histmersion.api.checks.Lint.LintItem.Detail)].run().toList
+  def conflictsIn()(using DbCon): List[(Correction.TargetId, Lint.LintItem.Detail)] =
+    Sql.raw(Sql.RawText(ConflictsSql)).frag.query[(Correction.TargetId, Lint.LintItem.Detail)].run().toList
 
   private val ConflictsSql =
     """SELECT c.target_id,

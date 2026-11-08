@@ -1,4 +1,5 @@
-package com.histmersion.domain.library.search
+package com.histmersion
+package domain.library.search
 
 import com.histmersion.api.library.Tree
 
@@ -10,10 +11,13 @@ import javax.sql.DataSource
 import com.histmersion.api.library.{Filter, SearchResult}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
+import com.histmersion.util.time.Timer
+import com.histmersion.util.database.Transactor
+import com.histmersion.util.database.Sql
 
 /** The db suites' reads of the search on a database of their own. */
 object SearchFixtures:
-  private given com.histmersion.util.time.Timer = new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero } }
+  private given Timer = new Timer { def start(): Timer.Measure = new Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero } }
 
   export QueryRepo.{MaxRows, MaxCellChars, Statement}
   export AggregateRepo.{Unit as AggregateUnit}
@@ -25,9 +29,9 @@ object SearchFixtures:
       scope: PlaceScope = PlaceScope.empty
   ): SearchResult =
     connect(ds)(SearchRepo.sources(filter, snippetWords, scope))
-  def count(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): com.histmersion.RowCount =
+  def count(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): RowCount =
     connect(ds)(SearchRepo.count(filter, scope))
-  def unlocated(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): com.histmersion.RowCount =
+  def unlocated(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): RowCount =
     connect(ds)(SearchRepo.unlocated(filter, scope))
   def selectionCounts(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Place.Counts =
     connect(ds)(SearchRepo.selectionCounts(filter, scope))
@@ -48,22 +52,22 @@ object SearchFixtures:
   def run(
       ds: DataSource,
       statement: QueryRepo.Statement,
-      timeoutMs: _root_.com.histmersion.util.database.Transactor.TimeoutMs,
+      timeoutMs: Transactor.TimeoutMs,
       maxRows: QueryRepo.MaxRows,
       maxCellChars: QueryRepo.MaxCellChars
   ): Either[QueryRepo.Problem, QueryResult] =
-    try _root_.com.histmersion.util.database.Transactor(ds).readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
+    try Transactor(ds).readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
     catch case error: java.sql.SQLException => Left(QueryRepo.message(error))
   def tables(ds: DataSource): List[SchemaTable] = connect(ds)(QueryRepo.tables)
   def periodsQuery(
       unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
-  ): com.histmersion.util.database.Sql =
+  ): Sql =
     AggregateRepo.periodsQuery(unit, filter, scope)
   def treeRowsQuery(
       unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
-  ): com.histmersion.util.database.Sql =
+  ): Sql =
     AggregateRepo.treeRowsQuery(unit, filter, scope)

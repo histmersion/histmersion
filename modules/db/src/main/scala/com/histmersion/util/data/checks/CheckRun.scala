@@ -1,4 +1,5 @@
-package com.histmersion.util.data.checks
+package com.histmersion
+package util.data.checks
 
 import com.augustnagro.magnum.DbCon
 import scala.collection.mutable

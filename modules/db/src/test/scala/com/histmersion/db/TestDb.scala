@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 /** The database the DB-backed suites run against: `HISTMERSION_TEST_DB_URL`, or `None` (the suites skip).
   *

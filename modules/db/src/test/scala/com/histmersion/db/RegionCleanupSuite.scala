@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -11,6 +12,9 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.{Geocode, Place}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.domain.catalogue.places.GeocodeSettings
 
 /** Point-only seed regions (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   *   - a region, polity or people known only by a point, and any atlas grid square's centre, takes a finding only by an
@@ -38,11 +42,11 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     )
     places.foreach { p =>
       val c = """\[([-0-9.]+),([-0-9.]+)\]""".r.findFirstMatchIn(p.geometry.get.value).get
-      val want = com.histmersion.api.catalogue.Place.Precision.of(p.id, com.histmersion.api.catalogue.Longitude(c.group(1).toDouble), com.histmersion.api.catalogue.Latitude(c.group(2).toDouble))
+      val want = Place.Precision.of(p.id, Longitude(c.group(1).toDouble), Latitude(c.group(2).toDouble))
       assertEquals(
         stored(p.id.value)
-          .flatMap(s => com.histmersion.api.catalogue.Place.Precision.parse(com.histmersion.api.catalogue.Place.Precision.Wire(s)))
-          .getOrElse(com.histmersion.api.catalogue.Place.Precision.Stated),
+          .flatMap(s => Place.Precision.parse(Place.Precision.Wire(s)))
+          .getOrElse(Place.Precision.Stated),
         want,
         p.id
       )
@@ -56,37 +60,37 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     yield (x, y)
     pts.foreach { (x, y) =>
       val sqlSays = connect(ds)(sql"SELECT histmersion_grid_centre($x, $y)".query[Boolean].run().head)
-      assertEquals(sqlSays, com.histmersion.api.catalogue.Place.Precision.gridCentre(com.histmersion.api.catalogue.Longitude(x), com.histmersion.api.catalogue.Latitude(y)), s"($x, $y)")
+      assertEquals(sqlSays, Place.Precision.gridCentre(Longitude(x), Latitude(y)), s"($x, $y)")
     }
 
   test("the geocoder ranks a grid square's centre below a precise point of the same name"):
     seed()
     val precise =
       Place(
-        com.histmersion.api.catalogue.Place.Id("pleiades_999100010"),
-        com.histmersion.api.catalogue.Place.Label("Zzrc Thessalia"),
+        Place.Id("pleiades_999100010"),
+        Place.Label("Zzrc Thessalia"),
         Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
-        pt(com.histmersion.api.catalogue.Longitude(141.9), com.histmersion.api.catalogue.Latitude(-47.1)),
+        pt(Longitude(141.9), Latitude(-47.1)),
         properties = types("region")
       )
-    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value(precise.label.value))))))
+    val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(Place.Name.Value(precise.label.value))))))
     val r =
       connect(ds)(
-        PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzrc Thessalia"), Geocode.KindHint.Unknown, None, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
+        PlaceFixtures.resolve(Geocode.Attempt.Name("Zzrc Thessalia"), Geocode.KindHint.Unknown, None, GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
       )
     assertEquals(r.map(_.placeId), Some("pleiades_999100010"))
     val alone =
       connect(ds)(
-        PlaceFixtures.resolve(com.histmersion.api.catalogue.Geocode.Attempt.Name("Zzrc Achaia"), Geocode.KindHint.Unknown, None, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
+        PlaceFixtures.resolve(Geocode.Attempt.Name("Zzrc Achaia"), Geocode.KindHint.Unknown, None, GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value))
       )
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
     assertEquals(
       PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Thess)).map(_.locationPrecision),
-      Some(com.histmersion.api.catalogue.Place.Precision.GridCell)
+      Some(Place.Precision.GridCell)
     )
     assertEquals(
       PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Regio1)).map(_.locationPrecision),
-      Some(com.histmersion.api.catalogue.Place.Precision.Stated)
+      Some(Place.Precision.Stated)
     )
 
   test("the assignment's placeholder minimum is the configured one"):

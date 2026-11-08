@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.api.library.{DeleteBlocker, DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
@@ -8,6 +9,9 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.Rename
+import com.histmersion.api.research.Article
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
 
 /** The articles that cite a source (`[[citekey]]`, the link graph) or keep a coverage reason for it: a rename rewrites
   * their links through the article write path (each rewrite a recorded version), a citing article refuses a delete, and
@@ -24,12 +28,12 @@ final class ArticleSourceReferrer extends SourceReferrer:
       },
       ArticleRepo
         .retargetLinks(
-          com.histmersion.api.research.Article.Link.Target(rename.needle.value),
+          Article.Link.Target(rename.needle.value),
           t =>
-            com.histmersion.domain.library.Citekey
+            Citekey
               .option(t.value)
               .flatMap(rename.target)
-              .map(c => com.histmersion.api.research.Article.Link.Target(c.value))
+              .map(c => Article.Link.Target(c.value))
         )
         .map((slug, n) => (RenamedReferences.TextsPart1(slug.value), RenamedReferences.TextsPart2(n.value)))
     )
@@ -55,18 +59,18 @@ final class ArticleSourceReferrer extends SourceReferrer:
     * write time), and a scan of the text for the short forms the renderer resolves to it (`[[beckman2025]]` for
     * `beckman2025_ahhiyawa` while that is unambiguous).
     */
-  private def citing(source: SourceKeys)(using DbCon): List[(com.histmersion.domain.research.Slug, String)] =
+  private def citing(source: SourceKeys)(using DbCon): List[(Slug, String)] =
     val ck = source.citekey
     val linked = sql"""SELECT a.slug, a.title FROM article_links l JOIN articles a ON a.slug = l.src_slug
                        WHERE l.target_kind = 'source' AND l.target = $ck"""
-      .query[(com.histmersion.domain.research.Slug, String)]
+      .query[(Slug, String)]
       .run()
       .toList
     val needles = source.keys.map(_.value.toLowerCase.takeWhile(_ != '_')).distinct
     val scanned = sql"""SELECT slug, title, body, summary FROM articles
                         WHERE EXISTS (SELECT 1 FROM unnest($needles::text[]) AS n(needle)
                                       WHERE strpos(lower(body || ' ' || coalesce(summary, '')), n.needle) > 0)"""
-      .query[(com.histmersion.domain.research.Slug, String, String, Option[String])]
+      .query[(Slug, String, String, Option[String])]
       .run()
       .toList
       .flatMap((slug, title, body, summary) =>
@@ -75,7 +79,7 @@ final class ArticleSourceReferrer extends SourceReferrer:
     (linked ++ scanned).distinctBy(_._1).sortBy(_._1.value)
 
   /** Articles whose coverage reasons (V066) are keyed by the source. */
-  private def coverageOf(keys: List[com.histmersion.domain.library.Citekey])(using DbCon): List[DeleteReport.Coverage] =
+  private def coverageOf(keys: List[Citekey])(using DbCon): List[DeleteReport.Coverage] =
     sql"""SELECT slug FROM articles a
           WHERE EXISTS (SELECT 1 FROM jsonb_object_keys(a.coverage_reasons) AS k(key) WHERE k.key = ANY($keys::text[]))
           ORDER BY slug""".query[DeleteReport.Coverage].run().toList

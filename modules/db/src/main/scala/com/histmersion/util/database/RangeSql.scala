@@ -1,10 +1,12 @@
-package com.histmersion.util.database
+package com.histmersion
+package util.database
 
 import com.histmersion.api.{Write, YearFmt}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Year
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
   * optional bounds are written, and how a PATCH that names one bound merges with the stored other one.
@@ -20,18 +22,18 @@ object RangeSql:
     */
   type StartCol = String
   type ColsCol = String
-  export com.histmersion.domain.DeepTime.{SignedYear as LiteralStart, SignedYear as LiteralEnd}
+  export DeepTime.{SignedYear as LiteralStart, SignedYear as LiteralEnd}
 
-  def start(col: com.histmersion.util.database.RangeSql.StartCol): String = s"lower($col)"
+  def start(col: StartCol): String = s"lower($col)"
 
   /** `upper(col) - 1` — the inclusive end (the stored bound is exclusive); NULL when that side is open. */
   def end(col: String): String = s"upper($col) - 1"
 
   /** `lower(col), upper(col) - 1` — the inclusive bounds of an `int8range` column, in that order. */
-  def cols(col: com.histmersion.util.database.RangeSql.ColsCol): String = s"${start(col)}, ${end(col)}"
+  def cols(col: ColsCol): String = s"${start(col)}, ${end(col)}"
 
   /** The same, each named: `lower(col) AS a, upper(col) - 1 AS b`. */
-  def cols(col: com.histmersion.util.database.RangeSql.ColsCol, startAs: String, endAs: String): String = s"${start(col)} AS $startAs, ${end(col)} AS $endAs"
+  def cols(col: ColsCol, startAs: String, endAs: String): String = s"${start(col)} AS $startAs, ${end(col)} AS $endAs"
 
   /** `int8range(lo, hi + 1, '[)')` — the range of two INCLUSIVE bounds given as SQL expressions (columns, `?::bigint`);
     * a NULL bound is an open side.
@@ -50,7 +52,7 @@ object RangeSql:
   /** The `int8range` literal of optional inclusive bounds — `[-1200,-999)`, `[-1200,)`, `(,-999)`, and `(,)` (every
     * year) when neither is given. Bind it as `${lit}::int8range`.
     */
-  def bounds(start: Option[com.histmersion.domain.DeepTime.SignedYear], end: Option[com.histmersion.domain.DeepTime.SignedYear]): String =
+  def bounds(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): String =
     s"${start.fold("(")(v => s"[${v.value}")},${end.fold(")")(v => s"${v.value + 1})")}"
 
   /** [[bounds]] of an optional closed period: `(,)` when there is none — a place, name or relation without a dating
@@ -59,7 +61,7 @@ object RangeSql:
   def always(p: Option[Period]): String = bounds(p.map(x => DeepTime.SignedYear(x.start.value)), p.map(x => DeepTime.SignedYear(x.end.value)))
 
   /** [[bounds]], or `None` (SQL NULL: no period) when neither bound is given. */
-  def literal(start: Option[com.histmersion.util.database.RangeSql.LiteralStart], end: Option[com.histmersion.util.database.RangeSql.LiteralEnd]): Option[String] =
+  def literal(start: Option[RangeSql.LiteralStart], end: Option[RangeSql.LiteralEnd]): Option[String] =
     Option.when(start.isDefined || end.isDefined)(bounds(start, end))
 
   /** [[literal]] of an optional closed period. */
@@ -70,26 +72,26 @@ object RangeSql:
     p.flatMap(x => literal(Some(DeepTime.SignedYear(x.start.value.toLong)), Some(DeepTime.SignedYear(x.end.value.toLong))))
 
   /** A closed [[Period]] from two inclusive bounds read back with [[cols]]: `None` unless both are known. */
-  def period(start: Option[com.histmersion.domain.DeepTime.SignedYear], end: Option[com.histmersion.domain.DeepTime.SignedYear]): Option[Period] =
-    for a <- start; b <- end yield Period(com.histmersion.api.catalogue.Year(a.value), com.histmersion.api.catalogue.Year(b.value))
+  def period(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): Option[Period] =
+    for a <- start; b <- end yield Period(Year(a.value), Year(b.value))
 
   /** A patch's bounds merged with the stored ones: a bound the patch names replaces the stored one, the other stays as
     * it is (#1798: a goal patch that named one bound was silently ignored). `None` when the patch names neither
     * (nothing to write); `Left` when the result would start after it ends (Postgres refuses an inverted range).
     */
   def merge(
-      stored: (Option[com.histmersion.domain.DeepTime.SignedYear], Option[com.histmersion.domain.DeepTime.SignedYear]),
-      start: Option[com.histmersion.domain.DeepTime.SignedYear],
-      end: Option[com.histmersion.domain.DeepTime.SignedYear],
+      stored: (Option[DeepTime.SignedYear], Option[DeepTime.SignedYear]),
+      start: Option[DeepTime.SignedYear],
+      end: Option[DeepTime.SignedYear],
       what: String
-  ): Option[Either[Api.Error, (Option[com.histmersion.domain.DeepTime.SignedYear], Option[com.histmersion.domain.DeepTime.SignedYear])]] =
+  ): Option[Either[Api.Error, (Option[DeepTime.SignedYear], Option[DeepTime.SignedYear])]] =
     Option.when(start.isDefined || end.isDefined) {
       val (s, e) = (start.orElse(stored._1), end.orElse(stored._2))
       (s, e) match
         case (Some(a), Some(b)) if a.value > b.value =>
           Left(
             Api.Error(
-              Api.Error.Message(s"$what: the period would start (${YearFmt(com.histmersion.api.catalogue.Year(a.value))}) after it ends (${YearFmt(com.histmersion.api.catalogue.Year(b.value))})"),
+              Api.Error.Message(s"$what: the period would start (${YearFmt(Year(a.value))}) after it ends (${YearFmt(Year(b.value))})"),
               Some(Api.Error.Code(Write.CodeInvalid))
             )
           )

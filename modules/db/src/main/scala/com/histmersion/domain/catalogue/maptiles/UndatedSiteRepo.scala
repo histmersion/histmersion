@@ -1,4 +1,5 @@
-package com.histmersion.domain.catalogue.maptiles
+package com.histmersion
+package domain.catalogue.maptiles
 
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
@@ -6,6 +7,8 @@ import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sites with no known date, for the map when a viewer asks for them (V106): every site whose period is open on
   * both sides, in a tile's box ([[candidates]], over the partial index `places_site_undated`), and their counts by the
@@ -17,8 +20,8 @@ private[maptiles] object UndatedSiteRepo:
 
   /** The group of `map_changes` a write to an undated site moves (V106's trigger). */
   type Group = Group.T
-  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.domain.catalogue.maptiles.TileRepo.{SiteType as CandidatesSiteType}
+  object Group extends RefinedType[String, Pure]
+  export TileRepo.{SiteType as CandidatesSiteType}
 
   val UndatedGroup: Group = Group("undated")
 
@@ -28,7 +31,7 @@ private[maptiles] object UndatedSiteRepo:
   private val UndatedSiteSql =
     s"p.kind = '${Place.Kind.Site}' AND p.geom IS NOT NULL AND lower_inf(p.period) AND upper_inf(p.period)"
 
-  private def typed(siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType]): Sql =
+  private def typed(siteType: Option[TileRepo.SiteType]): Sql =
     siteType
       .map(_.value.trim.toLowerCase)
       .filter(_.nonEmpty)
@@ -37,7 +40,7 @@ private[maptiles] object UndatedSiteRepo:
   /** The undated sites in the box `envelope` (of type `siteType` when one is asked for), but those of `except`, as a
     * tile's candidates ([[TileRepo.cellsSql]]: no dates, each marked `ub`). Pure.
     */
-  def candidates(siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.CandidatesSiteType], envelope: Sql, except: List[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId] = Nil): Sql =
+  def candidates(siteType: Option[UndatedSiteRepo.CandidatesSiteType], envelope: Sql, except: List[TileRepo.SiteId] = Nil): Sql =
     Sql.raw(
       Sql.Text(
         "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, NULL::bigint AS ps, NULL::bigint AS pe, true AS ub" +
@@ -51,11 +54,11 @@ private[maptiles] object UndatedSiteRepo:
          Sql.of(Sql.OfText(" AND NOT (p.id = ANY(?::text[]))"), Param.A(except.map(e => Param.A.V(e.value)))))
 
   /** Every undated site in tile `c`, each alone, but those of `except`. */
-  def items(c: TileCoord, siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType], except: List[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId])(using DbCon): List[TileCell] =
+  def items(c: TileCoord, siteType: Option[TileRepo.SiteType], except: List[TileRepo.SiteId])(using DbCon): List[TileCell] =
     TileRepo.items(candidates(siteType, TileRepo.envelope(c), except), c)
 
   /** The undated sites in tile `c` counted by the grid's squares, read from the sites themselves. */
-  def counted(c: TileCoord, grid: TileGrid, siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType])(using DbCon): List[GridCell] =
+  def counted(c: TileCoord, grid: TileGrid, siteType: Option[TileRepo.SiteType])(using DbCon): List[GridCell] =
     TileRepo.gridCells(candidates(siteType, TileRepo.envelope(c)), c, grid)
 
   private given DbCodec[GridCell] = DbCodec.derived
@@ -63,7 +66,7 @@ private[maptiles] object UndatedSiteRepo:
   /** The kept counts of tile `c`'s squares (`perSide` a side), in the tile's units: of every type, or of `siteType`.
     * Pure.
     */
-  def keptSql(c: TileCoord, perSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType]): Sql =
+  def keptSql(c: TileCoord, perSide: UndatedBuild.PerSide, siteType: Option[TileRepo.SiteType]): Sql =
     val side = c.side.value.toDouble
     val e = TileCoord.Extent
     val (gx0, gy0) = (c.x.value * perSide.value, c.y.value * perSide.value)
@@ -81,7 +84,7 @@ private[maptiles] object UndatedSiteRepo:
       Sql.raw(Sql.Text(" GROUP BY gx, gy"))
 
   /** The kept counts of tile `c`'s squares ([[keptSql]]). */
-  def kept(c: TileCoord, perSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType])(using DbCon): List[GridCell] =
+  def kept(c: TileCoord, perSide: UndatedBuild.PerSide, siteType: Option[TileRepo.SiteType])(using DbCon): List[GridCell] =
     keptSql(c, perSide, siteType).frag.query[GridCell].run().toList
 
   /** What the kept counts were built from: the `undated` group's version, the grid's squares a tile side, the deepest
@@ -95,7 +98,7 @@ private[maptiles] object UndatedSiteRepo:
       .map((v, p, z) => UndatedBuild(v, p, z))
 
   /** The `undated` group's version now (0 before any write to an undated site). */
-  def version()(using DbCon): com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version =
+  def version()(using DbCon): UndatedBuild.Version =
     sql"SELECT coalesce(sum(weight), 0)::bigint FROM map_changes WHERE grp = $UndatedGroup".query[UndatedBuild.Version].run().head
 
   /** The sites' places on Web Mercator's unit square, each axis held inside it (as [[TileRepo.unitsSql]]), over the
@@ -109,7 +112,7 @@ private[maptiles] object UndatedSiteRepo:
   /** The statement that counts every undated site again, by type, into the squares of zooms 0 to `maxZoom` (`perSide` a
     * tile side). Pure.
     */
-  def rebuildSql(perSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, maxZoom: com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom): Sql =
+  def rebuildSql(perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom): Sql =
     val (mx, my) = unitSquare
     Sql.raw(
       Sql.Text(
@@ -128,7 +131,7 @@ private[maptiles] object UndatedSiteRepo:
     * before), replacing the kept counts — in the caller's transaction, so readers see the old counts until it commits.
     * False when another rebuild holds the lock (it does the same work).
     */
-  def rebuild(version: com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version, perSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, maxZoom: com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom)(using DbCon): Boolean =
+  def rebuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom)(using DbCon): Boolean =
     val locked =
       sql"SELECT pg_try_advisory_xact_lock(hashtext('histmersion.site_undated_cells'))".query[Boolean].run().head
     if locked then

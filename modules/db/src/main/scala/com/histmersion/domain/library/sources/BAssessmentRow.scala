@@ -1,8 +1,11 @@
-package com.histmersion.domain.library.sources
+package com.histmersion
+package domain.library.sources
 
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source's assessment as the bundle reads it, with the source's uid. */
 final private[sources] case class BAssessmentRow(
@@ -17,14 +20,14 @@ final private[sources] case class BAssessmentRow(
 
 object BAssessmentRow:
   type CheckedAt = CheckedAt.T
-  object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CheckedAt extends RefinedType[String, Pure]
   type Retracted = Retracted.T
-  object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Retracted extends RefinedType[Boolean, Pure]
   type Notices = Notices.T
-  object Notices extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Notices extends RefinedType[String, Pure]
   type CitedBy = CitedBy.T
-  object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CitedBy extends RefinedType[Int, Pure]
   type Influential = Influential.T
-  object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Influential extends RefinedType[Int, Pure]
   type Verdict = Verdict.T
-  object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Verdict extends RefinedType[String, Pure]

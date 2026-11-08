@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -27,14 +28,14 @@ class MigrateSuite extends munit.FunSuite:
 
   test("retrying: a transient failure is run again, a real one is thrown at once"):
     var calls = 0 // counting the attempts of a closure is what a var is for
-    val ok = Migrate.retrying(com.histmersion.util.database.Migrate.RetryAttempts(5)) {
+    val ok = Migrate.retrying(Migrate.RetryAttempts(5)) {
       calls += 1
       if calls < 3 then throw java.sql.SQLException("tuple concurrently updated", "XX000") else "done"
     }
     assertEquals((ok, calls), ("done", 3))
     calls = 0
-    intercept[java.sql.SQLException](Migrate.retrying(com.histmersion.util.database.Migrate.RetryAttempts(5)) { calls += 1; throw java.sql.SQLException("no", "42601") })
+    intercept[java.sql.SQLException](Migrate.retrying(Migrate.RetryAttempts(5)) { calls += 1; throw java.sql.SQLException("no", "42601") })
     assertEquals(calls, 1)
     calls = 0
-    intercept[java.sql.SQLException](Migrate.retrying(com.histmersion.util.database.Migrate.RetryAttempts(2)) { calls += 1; throw java.sql.SQLException("x", "40P01") })
+    intercept[java.sql.SQLException](Migrate.retrying(Migrate.RetryAttempts(2)) { calls += 1; throw java.sql.SQLException("x", "40P01") })
     assertEquals(calls, 2)

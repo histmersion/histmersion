@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import hearth.kindlings.optics.syntax.*
 
@@ -11,17 +12,18 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Lpf
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
 
 /** A one-ended LPF timespan is stored OPEN (#1403): `[start,)` / `(,end]`, never the one known year — for the place,
   * its names and its relations. Against a real PostGIS (HISTMERSION_TEST_DB_URL).
   */
-class PlaceOpenSideSuite extends com.histmersion.db.DbSuite:
-  private val testDb = com.histmersion.db.TestDb.url
+class PlaceOpenSideSuite extends DbSuite:
+  private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val cfg = AppConfig.load()
   private lazy val ds =
-    val d = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+    val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d); d
 
   private def clean(): Unit = connect(ds):

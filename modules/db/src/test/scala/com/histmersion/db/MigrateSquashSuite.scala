@@ -1,4 +1,5 @@
-package com.histmersion.db
+package com.histmersion
+package db
 
 import hearth.kindlings.optics.syntax.*
 
@@ -7,18 +8,19 @@ import com.histmersion.config.AppConfig
 import javax.sql.DataSource
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
+import com.histmersion.config.DbConfig
 
 /** The squash of the migration chain ([[Migrate.squashHistory]]): a fresh database gets the one migration; a database
   * the chain before it built keeps every row and has its history replaced by a baseline at 109; one that chain had not
   * finished is refused, untouched. In databases of their own beside HISTMERSION_TEST_DB_URL's, dropped afterwards;
   * skipped without it.
   */
-class MigrateSquashSuite extends com.histmersion.db.DbSuite with Bounded:
+class MigrateSquashSuite extends DbSuite with Bounded:
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   private lazy val cfg = AppConfig.load()
-  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
-  private lazy val dbs = ScratchDatabases("histmersion_squash", cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
+  private lazy val admin = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+  private lazy val dbs = ScratchDatabases("histmersion_squash", cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
   private val created = scala.collection.mutable.ListBuffer.empty[String]
 
   private def exec(ds: DataSource, stmt: String): Unit =

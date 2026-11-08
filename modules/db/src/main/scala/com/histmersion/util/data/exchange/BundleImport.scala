@@ -1,4 +1,5 @@
-package com.histmersion.util.data.exchange
+package com.histmersion
+package util.data.exchange
 import com.histmersion.config.*
 import com.histmersion.domain.*
 
@@ -23,6 +24,9 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
+import com.histmersion.domain.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
   * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and
@@ -61,7 +65,7 @@ object BundleImport:
       val writes: UUID => Boolean,
       /** This collection's rows as lines, before the import. */
       val local: BundleEntities,
-      skipAliases: Set[com.histmersion.domain.library.Citekey],
+      skipAliases: Set[Citekey],
       /** What the merge does besides writing the decided lines. */
       val merged: MergePlanner.Apply,
       /** The import's options: the chunk size, the point tolerance, the referrers a rename runs. */
@@ -78,18 +82,18 @@ object BundleImport:
     def inserts(u: UUID): Boolean = decision(u).contains(Decision.Insert)
 
     /** Whether a source alias of the bundle is left out (an alias the merge gave to another work). */
-    def skipsAlias(alias: com.histmersion.domain.library.Citekey): Boolean = skipAliases(alias)
+    def skipsAlias(alias: Citekey): Boolean = skipAliases(alias)
 
     /** citekey / slug of a uid as it stands NOW (after the writes so far). */
-    def citekeyOf(u: UUID): com.histmersion.domain.library.Citekey =
-      sql"SELECT citekey FROM sources WHERE uid = $u".query[com.histmersion.domain.library.Citekey].run().head
+    def citekeyOf(u: UUID): Citekey =
+      sql"SELECT citekey FROM sources WHERE uid = $u".query[Citekey].run().head
 
     /** The citekey of a source here, when its uid names one. */
-    def citekeyHere(u: UUID): Option[com.histmersion.domain.library.Citekey] =
-      sql"SELECT citekey FROM sources WHERE uid = $u".query[com.histmersion.domain.library.Citekey].run().headOption
+    def citekeyHere(u: UUID): Option[Citekey] =
+      sql"SELECT citekey FROM sources WHERE uid = $u".query[Citekey].run().headOption
 
     /** The label a target has HERE, when its uid names a row here; else the bundle's label. */
-    def targetLabel(tt: com.histmersion.util.data.exchange.BundleImport.Writer.TargetType, tid: com.histmersion.util.data.exchange.BundleImport.Writer.TargetId, tuid: Option[UUID]): com.histmersion.util.data.exchange.BundleImport.Writer.TargetId =
+    def targetLabel(tt: Writer.TargetType, tid: Writer.TargetId, tuid: Option[UUID]): Writer.TargetId =
       tuid
         .flatMap { u =>
           val q = tt.value match
@@ -98,7 +102,7 @@ object BundleImport:
             case "article" => Some(sql"SELECT slug FROM articles WHERE uid = $u")
             case "event"   => Some(sql"SELECT id FROM events WHERE uid = $u")
             case _         => None
-          q.flatMap(_.query[com.histmersion.util.data.exchange.BundleImport.Writer.TargetId].run().headOption)
+          q.flatMap(_.query[Writer.TargetId].run().headOption)
         }
         .getOrElse(tid)
 
@@ -151,7 +155,7 @@ object BundleImport:
         uid: A => UUID,
         label: A => L,
         localLabel: Map[UUID, L],
-        what: com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat
+        what: PlanQuestions.LabelTakenWhat
     )(rename: (L, L) => Either[Api.Error, ?]): Unit =
       lines.filter(a => writes(uid(a))).foreach { a =>
         localLabel.get(uid(a)).filter(old => !old.equals(label(a))).foreach { old =>
@@ -163,7 +167,7 @@ object BundleImport:
 
   object Writer:
     type TargetId = TargetId.T
-    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetId extends RefinedType[String, Pure]
     type TargetType = TargetType.T
-    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetType extends RefinedType[String, Pure]
 

@@ -1,4 +1,5 @@
-package com.histmersion.domain.research.articles
+package com.histmersion
+package domain.research.articles
 
 import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.database.Sql
@@ -12,6 +13,12 @@ import com.histmersion.api.checks.{FormatField, Lint}
 import com.histmersion.api.research.CritiquePairing
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Edge
 
 /** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *
@@ -23,7 +30,7 @@ private[articles] object ArticleCheckRepo:
 
   /** Rules that are one SQL statement. Ordered so the report is stable. */
   type ReportMaxItems = ReportMaxItems.T
-  object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReportMaxItems extends RefinedType[Int, Pure]
 
   val projections: Map[String, String] = Map(
     // The article-side twin of `dangling-edges`, resolved exactly the way the RENDERER resolves a
@@ -76,10 +83,10 @@ private[articles] object ArticleCheckRepo:
   private val ArticleRows = CheckInput(articles(articlesSql))
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
-  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck => run(StoredCitekeys).contains(ck.value)
+  def storedCitekey(using run: CheckRun)(using DbCon): Citekey => Boolean = ck => run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection; `format` is the formatting check. */
-  def report(r: Rule, format: FormatChecker, maxItems: com.histmersion.domain.research.articles.ArticleCheckRepo.ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
+  def report(r: Rule, format: FormatChecker, maxItems: ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
     val rule: String = r.name.value
     val items = rule match
       case ArticleFiller           => Article.Lint.articleFiller(run(ArticleRows))
@@ -128,8 +135,8 @@ private[articles] object ArticleCheckRepo:
         val key = com.histmersion.api.library.Citekey(ck)
         key -> CritiquePairing.Work(
           key,
-          CritiquePairing.names(key, Option(authors).getOrElse(Nil).map(com.histmersion.api.library.AuthorName(_))),
-          year.map(y => com.histmersion.api.catalogue.Year(y.toLong))
+          CritiquePairing.names(key, Option(authors).getOrElse(Nil).map(AuthorName(_))),
+          year.map(y => Year(y.toLong))
         )
       }
       .toMap
@@ -139,7 +146,7 @@ private[articles] object ArticleCheckRepo:
     val edges = triples(disagreementEdgesSql).map((src, kind, dst) =>
       Coverage.Edge(
         com.histmersion.api.library.Citekey(src),
-        com.histmersion.api.library.Edge.Kind.Wire(kind),
+        Edge.Kind.Wire(kind),
         com.histmersion.api.library.Citekey(dst)
       )
     )
@@ -155,9 +162,9 @@ private[articles] object ArticleCheckRepo:
 
   object PairingRepair:
     type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends RefinedType[String, Pure]
 
   /** The mechanical pairing repairs of every article ([[CritiquePairing.repair]]) — computed, not written:
     * `histmersion lint --rule article-critique-pairing --fix` writes each through the article patch, guarded by its
