@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library.sources.referrers
 
 import com.augustnagro.magnum.DbCon
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Every domain that names sources, in the order their rewrites are reported (a rename's columns follow it). */
@@ -32,8 +31,8 @@ final class SourceReferrers(val all: List[SourceReferrer]):
 object SourceReferrers:
   /** The entry a referrer kept of a deletion: its number in the domain's own log. */
   type Entry = Entry.T
-  object Entry extends RefinedType[Int, Pure]
+  object Entry extends Newtype[Int, Pure]
   type Day = Day.T
-  object Day extends RefinedType[String, Pure]
+  object Day extends Newtype[String, Pure]
   type Line = Line.T
-  object Line extends RefinedType[String, Pure]
+  object Line extends Newtype[String, Pure]

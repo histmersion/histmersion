@@ -20,7 +20,6 @@ import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{Geocode, GeoTime, ManualPlaceName, Period, SiteTypes}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.DeepTime
@@ -41,33 +40,33 @@ import com.histmersion.domain.library.Citekey
   */
 private[places] object PlaceRepo:
   type AccuracyMetres = AccuracyMetres.T
-  object AccuracyMetres extends RefinedType[Float, Pure]
+  object AccuracyMetres extends Newtype[Float, Pure]
   type ArrayKey = ArrayKey.T
-  object ArrayKey extends RefinedType[String, Pure]
+  object ArrayKey extends Newtype[String, Pure]
   type Certainty = Certainty.T
-  object Certainty extends RefinedType[String, Pure]
+  object Certainty extends Newtype[String, Pure]
   type Depth = Depth.T
-  object Depth extends RefinedType[Int, Pure]
+  object Depth extends Newtype[Int, Pure]
   type FootprintRole = FootprintRole.T
-  object FootprintRole extends RefinedType[String, Pure]
+  object FootprintRole extends Newtype[String, Pure]
   type GeoJson = GeoJson.T
-  object GeoJson extends RefinedType[String, Pure]
+  object GeoJson extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Lang = Lang.T
-  object Lang extends RefinedType[String, Pure]
+  object Lang extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type PairsByIndex = PairsByIndex.T
-  object PairsByIndex extends RefinedType[Boolean, Pure]
+  object PairsByIndex extends Newtype[Boolean, Pure]
   type RankLevel = RankLevel.T
-  object RankLevel extends RefinedType[String, Pure]
+  object RankLevel extends Newtype[String, Pure]
   type SearchText = SearchText.T
-  object SearchText extends RefinedType[String, Pure]
+  object SearchText extends Newtype[String, Pure]
   type SiteType = SiteType.T
-  object SiteType extends RefinedType[String, Pure]
+  object SiteType extends Newtype[String, Pure]
 
 
   export com.histmersion.domain.catalogue.Place.Kind.{Wire as GeoJsonQueryKind}
@@ -75,7 +74,7 @@ private[places] object PlaceRepo:
   val GeoJsonQueryLimit: Limit.type = Limit
   export com.histmersion.domain.DeepTime.{SignedYear as GeoJsonQueryModernFrom}
   type ScopeForValues = ScopeForValues.T
-  object ScopeForValues extends RefinedType[String, Pure]
+  object ScopeForValues extends Newtype[String, Pure]
 
   given DbCodec[Place.Summary] = DbCodec.derived
   given DbCodec[Place.Hit] = DbCodec.derived

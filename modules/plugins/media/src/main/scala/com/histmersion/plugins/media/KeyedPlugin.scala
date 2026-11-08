@@ -7,7 +7,6 @@ import com.histmersion.plugin.Plugin.Config.given
 import com.histmersion.plugin.Secret
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.plugin.Registry
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One of the collections that need a key of the user's own: OFF by default, its key a secret reference in its block
@@ -41,9 +40,9 @@ object KeyedPlugin:
     * key; `null` = none, and the collection is then not asked. Its other settings are Histmersion's own `media.*`.
     */
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
 
   final case class Config(apiKey: Option[Secret], media: MediaSettings) derives ConfigReader

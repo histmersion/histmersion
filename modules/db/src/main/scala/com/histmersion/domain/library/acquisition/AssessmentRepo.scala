@@ -6,7 +6,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Acquire, RetractionNotice}
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
 
@@ -33,15 +32,15 @@ private[acquisition] object AssessmentRepo:
 
   object AssessmentRow:
     type CheckedAt = CheckedAt.T
-    object CheckedAt extends RefinedType[String, Pure]
+    object CheckedAt extends Newtype[String, Pure]
     type Retracted = Retracted.T
-    object Retracted extends RefinedType[Boolean, Pure]
+    object Retracted extends Newtype[Boolean, Pure]
     type CitedBy = CitedBy.T
-    object CitedBy extends RefinedType[Int, Pure]
+    object CitedBy extends Newtype[Int, Pure]
     type Influential = Influential.T
-    object Influential extends RefinedType[Int, Pure]
+    object Influential extends Newtype[Int, Pure]
     type Verdict = Verdict.T
-    object Verdict extends RefinedType[String, Pure]
+    object Verdict extends Newtype[String, Pure]
 
   /** Replace the whole mirror: the CSV is a full export, so a partial refresh would leave a mixture of two vintages.
     * Batched — 60 000 single inserts take minutes.

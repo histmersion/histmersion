@@ -6,7 +6,6 @@ import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Secret
@@ -17,15 +16,15 @@ import com.histmersion.plugin.Secret
   */
 object KeePassXcSession:
   type Command = Command.T
-  object Command extends RefinedType[String, Pure]
+  object Command extends Newtype[String, Pure]
   type Entry = Entry.T
-  object Entry extends RefinedType[String, Pure]
+  object Entry extends Newtype[String, Pure]
   type Prompt = Prompt.T
-  object Prompt extends RefinedType[String, Pure]
+  object Prompt extends Newtype[String, Pure]
   type Segment = Segment.T
-  object Segment extends RefinedType[String, Pure]
+  object Segment extends Newtype[String, Pure]
   type SegmentFrom = SegmentFrom.T
-  object SegmentFrom extends RefinedType[Int, Pure]
+  object SegmentFrom extends Newtype[Int, Pure]
 
   /** Pure: the prompt the session prints once the database is open and after each answer (`<name>> `, the database's
     * name or file name) — the text after the last line break, once stdout ends in `> `.

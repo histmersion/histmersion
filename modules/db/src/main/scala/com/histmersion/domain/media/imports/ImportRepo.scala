@@ -8,7 +8,6 @@ import com.histmersion.util.database.Sql
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.DeepTime
@@ -19,21 +18,21 @@ import com.histmersion.domain.DeepTime
   */
 private[imports] object ImportRepo:
   type Category = Category.T
-  object Category extends RefinedType[String, Pure]
+  object Category extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type NameKey = NameKey.T
-  object NameKey extends RefinedType[String, Pure]
+  object NameKey extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Places = Places.T
-  object Places extends RefinedType[Boolean, Pure]
+  object Places extends Newtype[Boolean, Pure]
   type PleiadesOnly = PleiadesOnly.T
-  object PleiadesOnly extends RefinedType[Boolean, Pure]
+  object PleiadesOnly extends Newtype[Boolean, Pure]
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]
   type Since = Since.T
-  object Since extends RefinedType[Long, Pure]
+  object Since extends Newtype[Long, Pure]
 
 
   val Place: Target.TargetType = Target.TargetType("place")

@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiFailure
 
@@ -14,9 +13,9 @@ import com.histmersion.plugin.AiFailure
   */
 object PluginAi:
   type ModelName = ModelName.T
-  object ModelName extends RefinedType[String, Pure]
+  object ModelName extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** Whether the provider can serve `model` now, by its own check; an exception is a "no". */
 

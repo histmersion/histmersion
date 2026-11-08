@@ -3,7 +3,6 @@ package domain.media.assets
 
 import com.histmersion.api.media.AssetKind
 import com.histmersion.domain.media.MediaRole
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A provider's picture to store. `bytes` are the capped rendition, `thumb` the card's thumbnail. */
@@ -33,42 +32,42 @@ object ProviderAsset:
   /** Pure: the media kind (the layer's colour) of a picture shown in `role`. */
 
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
   type Thumb = Thumb.T
-  object Thumb extends RefinedType[Array[Byte], Pure]
+  object Thumb extends Newtype[Array[Byte], Pure]
 
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Mime = Mime.T
-  object Mime extends RefinedType[String, Pure]
+  object Mime extends Newtype[String, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
   type Height = Height.T
-  object Height extends RefinedType[Int, Pure]
+  object Height extends Newtype[Int, Pure]
   type ThumbMime = ThumbMime.T
-  object ThumbMime extends RefinedType[String, Pure]
+  object ThumbMime extends Newtype[String, Pure]
   type ThumbWidth = ThumbWidth.T
-  object ThumbWidth extends RefinedType[Int, Pure]
+  object ThumbWidth extends Newtype[Int, Pure]
   type ThumbHeight = ThumbHeight.T
-  object ThumbHeight extends RefinedType[Int, Pure]
+  object ThumbHeight extends Newtype[Int, Pure]
   type License = License.T
-  object License extends RefinedType[String, Pure]
+  object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
-  object LicenseUrl extends RefinedType[String, Pure]
+  object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
-  object Author extends RefinedType[String, Pure]
+  object Author extends Newtype[String, Pure]
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends RefinedType[String, Pure]
+  object SourceUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
-  object OriginalUrl extends RefinedType[String, Pure]
+  object OriginalUrl extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
 
   def kindOf(role: MediaRole.Wire): Kind = role.value match
     case MediaRole.LocatorMap | MediaRole.RouteMap | MediaRole.Map => Kind(AssetKind.Map)

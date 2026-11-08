@@ -4,7 +4,6 @@ package domain.library.acquisition
 import com.histmersion.domain.AcquireRecheck
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An acquisition item's last check: when, under which fetcher generation, what it found, why, and how many times it
@@ -27,8 +26,8 @@ final case class AcquireCheckRow(
 
 object AcquireCheckRow:
   type Item = Item.T
-  object Item extends RefinedType[Int, Pure]
+  object Item extends Newtype[Int, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type Checks = Checks.T
-  object Checks extends RefinedType[Int, Pure]
+  object Checks extends Newtype[Int, Pure]

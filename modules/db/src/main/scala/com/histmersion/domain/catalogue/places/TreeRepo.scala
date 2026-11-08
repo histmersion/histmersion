@@ -16,7 +16,6 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
@@ -56,15 +55,15 @@ private[places] object TreeRepo:
 
   object RegionNodeRow:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Contested = Contested.T
-    object Contested extends RefinedType[Boolean, Pure]
+    object Contested extends Newtype[Boolean, Pure]
     type Withdrawn = Withdrawn.T
-    object Withdrawn extends RefinedType[Boolean, Pure]
+    object Withdrawn extends Newtype[Boolean, Pure]
 
   final private[histmersion] case class RelationRow(
       childId: RelationRow.ChildId,
@@ -83,11 +82,11 @@ private[places] object TreeRepo:
 
   object RelationRow:
     type ChildId = ChildId.T
-    object ChildId extends RefinedType[String, Pure]
+    object ChildId extends Newtype[String, Pure]
     type ParentId = ParentId.T
-    object ParentId extends RefinedType[String, Pure]
+    object ParentId extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
 
   // ── the gazetteer the rows hang off ──────────────────────────────────────────────────────────
 

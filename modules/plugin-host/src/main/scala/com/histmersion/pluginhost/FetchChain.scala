@@ -8,7 +8,6 @@ import scala.util.control.NonFatal
 import com.histmersion.plugin.Plugin
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): the [[SourceFetcher]]s the plugins registered, run
@@ -103,14 +102,14 @@ final class FetchChain(
 
 object FetchChain:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   type LegalOnly = LegalOnly.T
-  object LegalOnly extends RefinedType[Boolean, Pure]
+  object LegalOnly extends Newtype[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type AllowUnauthorised = AllowUnauthorised.T
-  object AllowUnauthorised extends RefinedType[Boolean, Pure]
+  object AllowUnauthorised extends Newtype[Boolean, Pure]
 
   /** What every failed fetch says (the ingest step and the acquisition list read it). */
   val NoCopy = "no legal open-access PDF found"
@@ -120,7 +119,7 @@ object FetchChain:
 
   object Step:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
 
   /** What one fetcher that ran answered, when it had no copy. */
   final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Answer.Why):
@@ -128,12 +127,12 @@ object FetchChain:
     def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${kind.label.value} — ${why.value}")
   object Answer:
     type Line = Line.T
-    object Line extends RefinedType[String, Pure]
+    object Line extends Newtype[String, Pure]
 
     type Fetcher = Fetcher.T
-    object Fetcher extends RefinedType[String, Pure]
+    object Fetcher extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
     enum Kind(val label: Kind.Label):
       case Miss extends Kind(Kind.Label("no copy"))
@@ -141,7 +140,7 @@ object FetchChain:
 
     object Kind:
       type Label = Label.T
-      object Label extends RefinedType[String, Pure]
+      object Label extends Newtype[String, Pure]
 
   /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no copy, the answer of
     * each fetcher that ran, in chain order; the fetcher that found the copy.
@@ -150,7 +149,7 @@ object FetchChain:
 
   object Outcome:
     type FoundBy = FoundBy.T
-    object FoundBy extends RefinedType[String, Pure]
+    object FoundBy extends Newtype[String, Pure]
 
   /** A chain over these fetchers, in this order. `registered` answers [[Fetch.Context.registered]]: the plugins of the
     * generation the fetch runs in.

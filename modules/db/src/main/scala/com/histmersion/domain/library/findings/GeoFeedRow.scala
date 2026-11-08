@@ -11,7 +11,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.SourceColumns.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
@@ -63,22 +62,22 @@ final private[findings] case class GeoFeedRow(
 
 object GeoFeedRow:
   type Doi = Doi.T
-  object Doi extends RefinedType[String, Pure]
+  object Doi extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Claim = Claim.T
-  object Claim extends RefinedType[String, Pure]
+  object Claim extends Newtype[String, Pure]
   type RegionName = RegionName.T
-  object RegionName extends RefinedType[String, Pure]
+  object RegionName extends Newtype[String, Pure]
   type Significance = Significance.T
-  object Significance extends RefinedType[String, Pure]
+  object Significance extends Newtype[String, Pure]
   type Venue = Venue.T
-  object Venue extends RefinedType[String, Pure]
+  object Venue extends Newtype[String, Pure]
   type Provenance = Provenance.T
-  object Provenance extends RefinedType[String, Pure]
+  object Provenance extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Topics = Topics.T
-  object Topics extends RefinedType[String, Pure]
+  object Topics extends Newtype[String, Pure]
   type HasCover = HasCover.T
-  object HasCover extends RefinedType[Boolean, Pure]
+  object HasCover extends Newtype[Boolean, Pure]

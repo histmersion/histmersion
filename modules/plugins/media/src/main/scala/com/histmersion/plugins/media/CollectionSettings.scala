@@ -6,7 +6,6 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.annotation.targetName
 import com.histmersion.plugin.MediaCollection
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One collection's `histmersion.media.<collection>` block: its switch, its API, how many records it reads and keeps
@@ -37,32 +36,32 @@ final case class CollectionSettings(
 
 object CollectionSettings:
   type Item = Item.T
-  object Item extends RefinedType[String, Pure]
+  object Item extends Newtype[String, Pure]
 
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends RefinedType[String, Pure]
+  object ApiUrl extends Newtype[String, Pure]
   type ImageUrl = ImageUrl.T
-  object ImageUrl extends RefinedType[String, Pure]
+  object ImageUrl extends Newtype[String, Pure]
   type Candidates = Candidates.T
-  object Candidates extends RefinedType[Int, Pure]
+  object Candidates extends Newtype[Int, Pure]
   type PerPlace = PerPlace.T
-  object PerPlace extends RefinedType[Int, Pure]
+  object PerPlace extends Newtype[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type DisplayPx = DisplayPx.T
-  object DisplayPx extends RefinedType[Int, Pure]
+  object DisplayPx extends Newtype[Int, Pure]
   type MaxYear = MaxYear.T
-  object MaxYear extends RefinedType[Int, Pure]
+  object MaxYear extends Newtype[Int, Pure]
   type RefusalBackoffSeconds = RefusalBackoffSeconds.T
-  object RefusalBackoffSeconds extends RefinedType[String, Pure]
+  object RefusalBackoffSeconds extends Newtype[String, Pure]
   type ExcludeProviders = ExcludeProviders.T
-  object ExcludeProviders extends RefinedType[String, Pure]
+  object ExcludeProviders extends Newtype[String, Pure]
   type ExcludeDataProviders = ExcludeDataProviders.T
-  object ExcludeDataProviders extends RefinedType[String, Pure]
+  object ExcludeDataProviders extends Newtype[String, Pure]
   type ExcludeTypes = ExcludeTypes.T
-  object ExcludeTypes extends RefinedType[String, Pure]
+  object ExcludeTypes extends Newtype[String, Pure]
 
   private def split(setting: String): List[Item] = setting.split(",").toList.map(_.trim).filter(_.nonEmpty).map(Item(_))
 

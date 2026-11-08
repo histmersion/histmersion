@@ -3,7 +3,6 @@ package util.storage
 
 import java.io.{BufferedInputStream, ByteArrayInputStream, InputStream}
 import java.nio.file.{Files, Path}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Bytes that can be read from their start as often as needed, and their length: a bundle on disk, a file a store
@@ -21,7 +20,7 @@ trait ByteSource:
 
 object ByteSource:
   type Content = Content.T
-  object Content extends RefinedType[Array[Byte], Pure]
+  object Content extends Newtype[Array[Byte], Pure]
 
 
 

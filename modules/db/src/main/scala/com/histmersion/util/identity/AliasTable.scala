@@ -6,7 +6,6 @@ import com.histmersion.util.database.{Param, Sql}
 import com.augustnagro.magnum.*
 import javax.sql.DataSource
 import com.histmersion.api.aliases.AliasKind
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where an owner keeps a kind's records and their old identifiers: the table and its identifier column, the alias
@@ -41,13 +40,13 @@ final case class AliasTable(kind: AliasKind, table: AliasTable.Table, idColumn: 
 
 object AliasTable:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
 
   type Table = Table.T
-  object Table extends RefinedType[String, Pure]
+  object Table extends Newtype[String, Pure]
   type IdColumn = IdColumn.T
-  object IdColumn extends RefinedType[String, Pure]
+  object IdColumn extends Newtype[String, Pure]
   type Value = Value.T
-  object Value extends RefinedType[String, Pure]
+  object Value extends Newtype[String, Pure]
   type TargetColumn = TargetColumn.T
-  object TargetColumn extends RefinedType[String, Pure]
+  object TargetColumn extends Newtype[String, Pure]

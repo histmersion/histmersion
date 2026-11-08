@@ -7,7 +7,6 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
@@ -44,8 +43,8 @@ final private[places] case class PlaceDetailRow(
 
 object PlaceDetailRow:
   type Geometry = Geometry.T
-  object Geometry extends RefinedType[String, Pure]
+  object Geometry extends Newtype[String, Pure]
   type Findings = Findings.T
-  object Findings extends RefinedType[Int, Pure]
+  object Findings extends Newtype[Int, Pure]
   type HasBoundary = HasBoundary.T
-  object HasBoundary extends RefinedType[Boolean, Pure]
+  object HasBoundary extends Newtype[Boolean, Pure]

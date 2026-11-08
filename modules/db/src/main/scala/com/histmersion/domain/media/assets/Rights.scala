@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.media.assets
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The licence fields a re-read refreshes on a stored picture (the bytes stay). */
@@ -9,10 +8,10 @@ final case class Rights(license: Rights.License, licenseUrl: Option[Rights.Licen
 
 object Rights:
   type License = License.T
-  object License extends RefinedType[String, Pure]
+  object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
-  object LicenseUrl extends RefinedType[String, Pure]
+  object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
-  object Author extends RefinedType[String, Pure]
+  object Author extends Newtype[String, Pure]
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]

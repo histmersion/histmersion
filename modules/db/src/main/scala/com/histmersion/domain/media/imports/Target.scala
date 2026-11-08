@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.media.imports
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place or event to ask a provider about: its Wikidata item (empty when the import needs none) and its name (for the
@@ -11,10 +10,10 @@ final case class Target(targetType: Target.TargetType, id: Target.Id, qid: Targe
 
 object Target:
   type TargetType = TargetType.T
-  object TargetType extends RefinedType[String, Pure]
+  object TargetType extends Newtype[String, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Qid = Qid.T
-  object Qid extends RefinedType[String, Pure]
+  object Qid extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]

@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library.acquisition
 
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A verdict as it is recorded against a stored source: `noticesJson` is the raw JSON of everything that was found, so
@@ -19,12 +18,12 @@ final case class AssessmentRecord(
 
 object AssessmentRecord:
   type Verdict = Verdict.T
-  object Verdict extends RefinedType[String, Pure]
+  object Verdict extends Newtype[String, Pure]
   type Retracted = Retracted.T
-  object Retracted extends RefinedType[Boolean, Pure]
+  object Retracted extends Newtype[Boolean, Pure]
   type NoticesJson = NoticesJson.T
-  object NoticesJson extends RefinedType[String, Pure]
+  object NoticesJson extends Newtype[String, Pure]
   type CitedBy = CitedBy.T
-  object CitedBy extends RefinedType[Int, Pure]
+  object CitedBy extends Newtype[Int, Pure]
   type Influential = Influential.T
-  object Influential extends RefinedType[Int, Pure]
+  object Influential extends Newtype[Int, Pure]

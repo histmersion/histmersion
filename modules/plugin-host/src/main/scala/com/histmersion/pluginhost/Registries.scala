@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the registered plugins contribute, one map per extension point, in registration order. Read by the rest of the
@@ -43,22 +42,22 @@ final case class Registries(
 
 object Registries:
   type RegistryKey = RegistryKey.T
-  object RegistryKey extends RefinedType[String, Pure]
+  object RegistryKey extends Newtype[String, Pure]
 
   type SecretVaultsKey = SecretVaultsKey.T
-  object SecretVaultsKey extends RefinedType[String, Pure]
+  object SecretVaultsKey extends Newtype[String, Pure]
   type SourceFetchersKey = SourceFetchersKey.T
-  object SourceFetchersKey extends RefinedType[String, Pure]
+  object SourceFetchersKey extends Newtype[String, Pure]
   type MediaCollectionsKey = MediaCollectionsKey.T
-  object MediaCollectionsKey extends RefinedType[String, Pure]
+  object MediaCollectionsKey extends Newtype[String, Pure]
   type EventCataloguesKey = EventCataloguesKey.T
-  object EventCataloguesKey extends RefinedType[String, Pure]
+  object EventCataloguesKey extends Newtype[String, Pure]
   type AiProvidersKey = AiProvidersKey.T
-  object AiProvidersKey extends RefinedType[String, Pure]
+  object AiProvidersKey extends Newtype[String, Pure]
   type GazetteerSourcesKey = GazetteerSourcesKey.T
-  object GazetteerSourcesKey extends RefinedType[String, Pure]
+  object GazetteerSourcesKey extends Newtype[String, Pure]
   type SourceCollectionsKey = SourceCollectionsKey.T
-  object SourceCollectionsKey extends RefinedType[String, Pure]
+  object SourceCollectionsKey extends Newtype[String, Pure]
 
   val SecretVault = "secret-vault"
   val SourceFetcher = "source-fetcher"

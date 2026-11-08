@@ -6,7 +6,6 @@ import io.circe.{Encoder, Json}
 import io.circe.parser.parse
 import com.histmersion.plugin.AiTurn
 import com.histmersion.plugin.AiHttp
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiTool
 
@@ -20,9 +19,9 @@ final case class AnthropicRequest(json: Json):
 
 object AnthropicRequest:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
 
   /** The output cap when the step names none. */
 

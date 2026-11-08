@@ -25,7 +25,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
@@ -167,7 +166,7 @@ object BundleImport:
 
   object Writer:
     type TargetId = TargetId.T
-    object TargetId extends RefinedType[String, Pure]
+    object TargetId extends Newtype[String, Pure]
     type TargetType = TargetType.T
-    object TargetType extends RefinedType[String, Pure]
+    object TargetType extends Newtype[String, Pure]
 

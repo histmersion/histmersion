@@ -8,7 +8,6 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How the gazetteer resolved a [[Filter]]'s `places` values. Computing it needs the database, so it is done ONCE per
@@ -33,7 +32,7 @@ final case class PlaceScope(byValue: Map[PlaceScope.Value, List[Place.Id]], labe
 object PlaceScope:
   /** A value of a filter's `places`: a place id (an old one included) or a free-text place name. */
   type Value = Value.T
-  object Value extends RefinedType[String, Pure]
+  object Value extends Newtype[String, Pure]
 
   type IdsForValue = Value
   val IdsForValue: Value.type = Value

@@ -3,7 +3,6 @@ package util.database
 import com.augustnagro.magnum.*
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A `jsonb` column holding a wire DTO, crossing through that DTO's own circe codec (#1946) — the Vocab.codec rule for
@@ -14,11 +13,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Jsonb:
   type DropNulls = DropNulls.T
-  object DropNulls extends RefinedType[Boolean, Pure]
+  object DropNulls extends Newtype[Boolean, Pure]
   type JsonText = JsonText.T
-  object JsonText extends RefinedType[String, Pure]
+  object JsonText extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] =
     DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))).getOrElse(fallback), a => Some(write(a, dropNulls).value))

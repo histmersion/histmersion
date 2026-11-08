@@ -4,7 +4,6 @@ package domain.research.articles
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An article's version as a bundle reads it: its body by digest and length, carried as a blob. */
@@ -25,8 +24,8 @@ object BVersionRow:
   type BodyBytes = ByteCount
   val BodyBytes: ByteCount.type = ByteCount
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type VersionOf = VersionOf.T
-  object VersionOf extends RefinedType[String, Pure]
+  object VersionOf extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends RefinedType[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]

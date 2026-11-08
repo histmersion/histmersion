@@ -3,7 +3,6 @@ package domain.automation.approvals
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.api.automation.ListFilters
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state` None = every state;
@@ -19,22 +18,22 @@ final case class ApprovalQuery(
 
 object ApprovalQuery:
   type Cursor = Cursor.T
-  object Cursor extends RefinedType[String, Pure]
+  object Cursor extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
   type UpTo = UpTo.T
-  object UpTo extends RefinedType[String, Pure]
+  object UpTo extends Newtype[String, Pure]
   /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are the code's own
     * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
     * expression is used both to filter and to count.
     */
 
   type Subject = Subject.T
-  object Subject extends RefinedType[String, Pure]
+  object Subject extends Newtype[String, Pure]
   type Goal = Goal.T
-  object Goal extends RefinedType[String, Pure]
+  object Goal extends Newtype[String, Pure]
 
   val decidedByExpr: String =
     import ListFilters.DecidedBy

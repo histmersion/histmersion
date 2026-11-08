@@ -2,7 +2,6 @@ package com.histmersion
 package plugins.media
 
 import com.histmersion.plugin.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A collection that needs a key of the user's own: registered with its key resolved from its secret reference, or
@@ -61,15 +60,15 @@ abstract class KeyedCollection(
 
 object KeyedCollection:
   type Explanation = Explanation.T
-  object Explanation extends RefinedType[String, Pure]
+  object Explanation extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Plugin = Plugin.T
-  object Plugin extends RefinedType[String, Pure]
+  object Plugin extends Newtype[String, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Needs = Needs.T
-  object Needs extends RefinedType[String, Pure]
+  object Needs extends Newtype[String, Pure]
   type Settings = Settings.T
-  object Settings extends RefinedType[String, Pure]
+  object Settings extends Newtype[String, Pure]
 

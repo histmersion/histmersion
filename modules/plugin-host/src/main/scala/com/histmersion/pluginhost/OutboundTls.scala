@@ -12,7 +12,6 @@ import java.security.cert.{CertificateFactory, X509Certificate}
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.{SSLContext, TrustManagerFactory, X509TrustManager}
 import scala.util.Using
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The roots an acquisition request trusts (#1568, [[HttpPolicy.trust]]): the JDK's, and — only when `acquire.tls` asks
@@ -26,9 +25,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object OutboundTls:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
 
   /** A command → its standard output (the seam a test replaces). */
 

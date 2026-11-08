@@ -8,7 +8,6 @@ import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Plugin
@@ -20,19 +19,19 @@ import com.histmersion.plugin.LocalFiles
   */
 object Subprocess:
   type Plain = Plain.T
-  object Plain extends RefinedType[String, Pure]
+  object Plain extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Tool = Tool.T
-  object Tool extends RefinedType[String, Pure]
+  object Tool extends Newtype[String, Pure]
 
   export com.histmersion.plugin.Processes.{RunResultPart1, RunEnvPart1, RunEnvPart2}
   type ValueResult = ValueResult.T
-  object ValueResult extends RefinedType[String, Pure]
+  object ValueResult extends Newtype[String, Pure]
   type ValueOut = ValueOut.T
-  object ValueOut extends RefinedType[String, Pure]
+  object ValueOut extends Newtype[String, Pure]
 
   type Result = Processes.Result
   val Result = Processes.Result

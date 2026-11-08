@@ -1,5 +1,6 @@
 package com.histmersion.fixtures.helloai
 
+import com.histmersion.Newtype
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
@@ -11,4 +12,4 @@ final case class HelloAiConfig(name: HelloAiConfig.Name, token: Option[Secret], 
 
 object HelloAiConfig:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

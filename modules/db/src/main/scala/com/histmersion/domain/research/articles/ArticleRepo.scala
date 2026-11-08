@@ -22,7 +22,6 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.library.SourceColumns.given
 import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource}
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.research.Slug
@@ -49,11 +48,11 @@ given given_DbCodec_ArticleVersionFull: DbCodec[Article.VersionFull] = DbCodec.d
   */
 private[articles] object ArticleRepo:
   type Count = Count.T
-  object Count extends RefinedType[Long, Pure]
+  object Count extends Newtype[Long, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type VersionId = VersionId.T
-  object VersionId extends RefinedType[Long, Pure]
+  object VersionId extends Newtype[Long, Pure]
 
 
 

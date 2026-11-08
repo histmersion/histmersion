@@ -3,7 +3,6 @@ package plugins.events
 
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.events.noaa`: NCEI's hazard service, its page size, the pace and the datasets read (comma-separated:
@@ -18,10 +17,10 @@ final case class NoaaSettings(url: NoaaSettings.Url, pageSize: NoaaSettings.Page
 object NoaaSettings:
 
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type PageSize = PageSize.T
-  object PageSize extends RefinedType[Int, Pure]
+  object PageSize extends Newtype[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type Datasets = Datasets.T
-  object Datasets extends RefinedType[String, Pure]
+  object Datasets extends Newtype[String, Pure]

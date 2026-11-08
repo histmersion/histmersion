@@ -5,7 +5,6 @@ import com.histmersion.util.database.{Param, Sql}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The agent lease (V087): one agent server per database, the one that holds the named lease. Every statement runs on
@@ -13,13 +12,13 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object LeaseRepo:
   type LeaseExpiry = LeaseExpiry.T
-  object LeaseExpiry extends RefinedType[String, Pure]
+  object LeaseExpiry extends Newtype[String, Pure]
   type LeaseName = LeaseName.T
-  object LeaseName extends RefinedType[String, Pure]
+  object LeaseName extends Newtype[String, Pure]
   type LeaseOwner = LeaseOwner.T
-  object LeaseOwner extends RefinedType[String, Pure]
+  object LeaseOwner extends Newtype[String, Pure]
   type TtlSeconds = TtlSeconds.T
-  object TtlSeconds extends RefinedType[Int, Pure]
+  object TtlSeconds extends Newtype[Int, Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""

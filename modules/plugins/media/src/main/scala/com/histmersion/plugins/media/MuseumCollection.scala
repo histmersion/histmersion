@@ -2,7 +2,6 @@ package com.histmersion
 package plugins.media
 
 import com.histmersion.plugin.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One of the open-access collections searched by a place's name, with its own `media.<collection>` block: its pace,
@@ -29,6 +28,6 @@ abstract class MuseumCollection(conf: CollectionSettings, provider: MuseumCollec
 
 object MuseumCollection:
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]

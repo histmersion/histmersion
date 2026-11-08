@@ -25,7 +25,6 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final private[exchange] case class MergeRow(
@@ -45,14 +44,14 @@ object MergeRow:
   type BundleSha256 = Sha256
   val BundleSha256: Sha256.type = Sha256
   type FromLabel = FromLabel.T
-  object FromLabel extends RefinedType[String, Pure]
+  object FromLabel extends Newtype[String, Pure]
   type AppliedAt = AppliedAt.T
-  object AppliedAt extends RefinedType[String, Pure]
+  object AppliedAt extends Newtype[String, Pure]
   type PlanHash = PlanHash.T
-  object PlanHash extends RefinedType[String, Pure]
+  object PlanHash extends Newtype[String, Pure]
   type Backup = Backup.T
-  object Backup extends RefinedType[String, Pure]
+  object Backup extends Newtype[String, Pure]
   type LedgerRows = RowCount
   val LedgerRows: RowCount.type = RowCount
   type Redirects = Redirects.T
-  object Redirects extends RefinedType[Int, Pure]
+  object Redirects extends Newtype[Int, Pure]

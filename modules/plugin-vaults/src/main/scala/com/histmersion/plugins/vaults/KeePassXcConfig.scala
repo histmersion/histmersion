@@ -7,7 +7,6 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 // ── KeePassXC ───────────────────────────────────────────────────────────────────────────────────
@@ -32,16 +31,16 @@ final case class KeePassXcConfig(
 
 object KeePassXcConfig:
   type Cli = Cli.T
-  object Cli extends RefinedType[String, Pure]
+  object Cli extends Newtype[String, Pure]
   type Database = Database.T
-  object Database extends RefinedType[String, Pure]
+  object Database extends Newtype[String, Pure]
   type KeyFile = KeyFile.T
-  object KeyFile extends RefinedType[String, Pure]
+  object KeyFile extends Newtype[String, Pure]
   type Attribute = Attribute.T
-  object Attribute extends RefinedType[String, Pure]
+  object Attribute extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type YubikeyTimeoutSeconds = YubikeyTimeoutSeconds.T
-  object YubikeyTimeoutSeconds extends RefinedType[Int, Pure]
+  object YubikeyTimeoutSeconds extends Newtype[Int, Pure]
   type Ykman = Ykman.T
-  object Ykman extends RefinedType[String, Pure]
+  object Ykman extends Newtype[String, Pure]

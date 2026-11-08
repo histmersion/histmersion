@@ -4,7 +4,6 @@ package plugins.fetchers
 import com.histmersion.plugin.Plugin.Config.given
 import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `oa-unpaywall`'s settings. `contact-email`: the e-mail Unpaywall requires with every request (its `email` parameter,
@@ -19,6 +18,6 @@ object UnpaywallConfig:
   /** A contact as a block states it: trimmed, a blank one none. */
 
   type ContactEmail = ContactEmail.T
-  object ContactEmail extends RefinedType[String, Pure]
+  object ContactEmail extends Newtype[String, Pure]
 
   def own(contact: Option[ContactEmail]): Option[ContactEmail] = contact.map(c => ContactEmail(c.value.trim)).filter(_.value.nonEmpty)

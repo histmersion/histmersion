@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.media.assets
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a picture is shown on: a place, an event, or a source (its cover or illustration). */
@@ -12,4 +11,4 @@ enum PictureTarget(val wire: PictureTarget.Wire):
 
 object PictureTarget:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]

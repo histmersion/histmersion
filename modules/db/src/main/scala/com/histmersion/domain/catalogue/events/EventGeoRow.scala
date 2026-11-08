@@ -5,7 +5,6 @@ import com.histmersion.api.catalogue.{EventGeo, EventLeads}
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.LeadFacts
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One event on the map before its outline is read (the map's events). */
@@ -49,10 +48,10 @@ final private[events] case class EventGeoRow(
 
 object EventGeoRow:
   type Anchor = Anchor.T
-  object Anchor extends RefinedType[String, Pure]
+  object Anchor extends Newtype[String, Pure]
   type PlaceLabel = PlaceLabel.T
-  object PlaceLabel extends RefinedType[String, Pure]
+  object PlaceLabel extends Newtype[String, Pure]
   type Vei = Vei.T
-  object Vei extends RefinedType[Int, Pure]
+  object Vei extends Newtype[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends RefinedType[Double, Pure]
+  object Magnitude extends Newtype[Double, Pure]

@@ -16,7 +16,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 
 
 import com.histmersion.api.automation.Goal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Managers
@@ -34,15 +33,15 @@ import com.histmersion.domain.automation.Approval
   */
 object AgentRepo:
   type ActiveOnly = ActiveOnly.T
-  object ActiveOnly extends RefinedType[Boolean, Pure]
+  object ActiveOnly extends Newtype[Boolean, Pure]
   type CloseReason = CloseReason.T
-  object CloseReason extends RefinedType[String, Pure]
+  object CloseReason extends Newtype[String, Pure]
   type OutputChars = OutputChars.T
-  object OutputChars extends RefinedType[Int, Pure]
+  object OutputChars extends Newtype[Int, Pure]
   type PageCursor = PageCursor.T
-  object PageCursor extends RefinedType[String, Pure]
+  object PageCursor extends Newtype[String, Pure]
   type CursorProblem = CursorProblem.T
-  object CursorProblem extends RefinedType[String, Pure]
+  object CursorProblem extends Newtype[String, Pure]
 
   /** `jobs.params`: `{}` (and anything a later version wrote that this one cannot read) is every option's default
     * ([[Jsonb]]).
@@ -359,25 +358,25 @@ object AgentRepo:
 
   object StepRecord:
     type Seq = Seq.T
-    object Seq extends RefinedType[Int, Pure]
+    object Seq extends Newtype[Int, Pure]
     type Attempt = Attempt.T
-    object Attempt extends RefinedType[Int, Pure]
+    object Attempt extends Newtype[Int, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Output = Output.T
-    object Output extends RefinedType[String, Pure]
+    object Output extends Newtype[String, Pure]
     type PromptHash = PromptHash.T
-    object PromptHash extends RefinedType[String, Pure]
+    object PromptHash extends Newtype[String, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
     type ActualModel = ActualModel.T
-    object ActualModel extends RefinedType[String, Pure]
+    object ActualModel extends Newtype[String, Pure]
     type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends RefinedType[Long, Pure]
+    object FirstCallTokens extends Newtype[Long, Pure]
     type Turns = Turns.T
-    object Turns extends RefinedType[Int, Pure]
+    object Turns extends Newtype[Int, Pure]
 
   final case class MessageRecord(
       n: MessageRecord.N,
@@ -391,19 +390,19 @@ object AgentRepo:
 
   object MessageRecord:
     type N = N.T
-    object N extends RefinedType[Int, Pure]
+    object N extends Newtype[Int, Pure]
     type Role = Role.T
-    object Role extends RefinedType[String, Pure]
+    object Role extends Newtype[String, Pure]
     type Content = Content.T
-    object Content extends RefinedType[String, Pure]
+    object Content extends Newtype[String, Pure]
     type ToolName = ToolName.T
-    object ToolName extends RefinedType[String, Pure]
+    object ToolName extends Newtype[String, Pure]
     type ToolInput = ToolInput.T
-    object ToolInput extends RefinedType[String, Pure]
+    object ToolInput extends Newtype[String, Pure]
     type ToolResult = ToolResult.T
-    object ToolResult extends RefinedType[String, Pure]
+    object ToolResult extends Newtype[String, Pure]
     type LatencyMs = LatencyMs.T
-    object LatencyMs extends RefinedType[Int, Pure]
+    object LatencyMs extends Newtype[Int, Pure]
 
   /** One attempt and its trace, in ONE transaction (a checkpoint without its trace, or the reverse, is never visible).
     */
@@ -492,7 +491,7 @@ object AgentRepo:
   // ── approvals: what runs proposed for a person to decide (`ApprovalService` opens the connection) ────
 
   type ApprovalJobId = ApprovalJobId.T
-  object ApprovalJobId extends RefinedType[String, Pure]
+  object ApprovalJobId extends Newtype[String, Pure]
 
   final case class ApprovalRow(
       id: ApprovalInfo.Id,

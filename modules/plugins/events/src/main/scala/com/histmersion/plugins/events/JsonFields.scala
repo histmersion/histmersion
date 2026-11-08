@@ -3,21 +3,20 @@ package plugins.events
 
 import com.histmersion.plugin.{Latitude, Longitude, Year}
 import io.circe.ACursor
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reading a catalogue's JSON: a field as text, a whole number or a number, whatever the catalogue wrote it as. */
 object JsonFields:
   type Decimal = Decimal.T
-  object Decimal extends RefinedType[Double, Pure]
+  object Decimal extends Newtype[Double, Pure]
   type Integer = Integer.T
-  object Integer extends RefinedType[Long, Pure]
+  object Integer extends Newtype[Long, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Year = Year.T
-  object Year extends RefinedType[Long, Pure]
+  object Year extends Newtype[Long, Pure]
 
   def str(c: ACursor, k: Key): Option[Text] =
     c.downField(k.value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty).map(t => Text(t))

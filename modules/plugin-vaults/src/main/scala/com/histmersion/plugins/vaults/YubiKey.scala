@@ -3,7 +3,6 @@ package plugins.vaults
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigValue, ConfigValueType}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** KeePassXC's YubiKey challenge-response (`keepassxc-cli … -y <slot>[:<serial>]`): which keys the `yubikey` setting
@@ -12,14 +11,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object YubiKey:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   export Subprocess.Problem
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   /** One `<slot>[:<serial>]`: the challenge-response slot (1 or 2) and, optionally, which key. */
   type SerialsOut = SerialsOut.T
-  object SerialsOut extends RefinedType[String, Pure]
+  object SerialsOut extends Newtype[String, Pure]
 
   final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
@@ -28,9 +27,9 @@ object YubiKey:
   object Slot:
 
     type Value = Value.T
-    object Value extends RefinedType[Int, Pure]
+    object Value extends Newtype[Int, Pure]
     type Serial = Serial.T
-    object Serial extends RefinedType[Long, Pure]
+    object Serial extends Newtype[Long, Pure]
 
   /** Pure: `"2"` or `"2:12345678"`. */
   def parse(text: Text): Either[YubiKey.Problem, Slot] =
@@ -78,10 +77,10 @@ object YubiKey:
   object Failure:
     object Next:
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
     object Stop:
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
 
   /** Pure: KeePassXC's message for a failed attempt (lower-cased stderr) → next or stop. Wrong credentials stop at
     * once: another key cannot fix a wrong password, and with the same secret programmed into every listed key a wrong
@@ -135,7 +134,7 @@ object YubiKey:
 
   object Setting:
     type Entries = Entries.T
-    object Entries extends RefinedType[String, Pure]
+    object Entries extends Newtype[String, Pure]
 
     given ConfigReader[Setting] = new ConfigReader[Setting]:
       def from(v: ConfigValue) =

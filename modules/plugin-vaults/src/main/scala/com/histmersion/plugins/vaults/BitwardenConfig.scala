@@ -7,7 +7,6 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 // ── Bitwarden ───────────────────────────────────────────────────────────────────────────────────
@@ -21,8 +20,8 @@ final case class BitwardenConfig(cli: BitwardenConfig.Cli, session: Option[Secre
 
 object BitwardenConfig:
   type Cli = Cli.T
-  object Cli extends RefinedType[String, Pure]
+  object Cli extends Newtype[String, Pure]
   type Field = Field.T
-  object Field extends RefinedType[String, Pure]
+  object Field extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]

@@ -8,7 +8,6 @@ import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.library.Doi
@@ -22,11 +21,11 @@ import com.histmersion.domain.library.Doi
   */
 private[worklists] object QueueRepo:
   type QueueItemId = QueueItemId.T
-  object QueueItemId extends RefinedType[Int, Pure]
+  object QueueItemId extends Newtype[Int, Pure]
   type JobText = JobText.T
-  object JobText extends RefinedType[String, Pure]
+  object JobText extends Newtype[String, Pure]
   type GoalText = GoalText.T
-  object GoalText extends RefinedType[String, Pure]
+  object GoalText extends Newtype[String, Pure]
 
   /** Column order is fixed once here and reused by every projection (AGENTS.md: no duplicated column lists). `to_char`
     * normalises to UTC so the value is stable whatever the session TZ is.

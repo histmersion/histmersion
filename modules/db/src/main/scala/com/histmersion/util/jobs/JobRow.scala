@@ -8,7 +8,6 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Flat projection of `jobs` (positional, like the other write-path rows). */
@@ -28,24 +27,24 @@ final private[jobs] case class JobRow(
 
 object JobRow:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Citekey = com.histmersion.domain.library.Citekey
   val Citekey: com.histmersion.domain.library.Citekey.type = com.histmersion.domain.library.Citekey
   type Progress = Progress.T
-  object Progress extends RefinedType[String, Pure]
+  object Progress extends Newtype[String, Pure]
   type Error = Error.T
-  object Error extends RefinedType[String, Pure]
+  object Error extends Newtype[String, Pure]
   type Sha256 = Sha256.T
-  object Sha256 extends RefinedType[String, Pure]
+  object Sha256 extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends RefinedType[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
   type AcquireItem = AcquireItem.T
-  object AcquireItem extends RefinedType[Int, Pure]
+  object AcquireItem extends Newtype[Int, Pure]
   type Detail = Detail.T
-  object Detail extends RefinedType[String, Pure]
+  object Detail extends Newtype[String, Pure]

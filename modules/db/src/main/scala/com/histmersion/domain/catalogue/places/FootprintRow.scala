@@ -6,7 +6,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final private[places] case class FootprintRow(
@@ -33,12 +32,12 @@ final private[places] case class FootprintRow(
 
 object FootprintRow:
   type Citekey = Citekey.T
-  object Citekey extends RefinedType[String, Pure]
+  object Citekey extends Newtype[String, Pure]
   type Id = Id.T
-  object Id extends RefinedType[Int, Pure]
+  object Id extends Newtype[Int, Pure]
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
   type Certainty = Certainty.T
-  object Certainty extends RefinedType[String, Pure]
+  object Certainty extends Newtype[String, Pure]
   type AccuracyM = AccuracyM.T
-  object AccuracyM extends RefinedType[Float, Pure]
+  object AccuracyM extends Newtype[Float, Pure]

@@ -6,7 +6,6 @@ import com.augustnagro.magnum.DbCodec
 
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A goal's row as a bundle reads it (Magnum maps a SELECT's columns positionally). */
@@ -32,28 +31,28 @@ final private[histmersion] case class BGoalRow(
 
 object BGoalRow:
   type Slug = Slug.T
-  object Slug extends RefinedType[String, Pure]
+  object Slug extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends RefinedType[String, Pure]
+  object Notes extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type PNull = PNull.T
-  object PNull extends RefinedType[Boolean, Pure]
+  object PNull extends Newtype[Boolean, Pure]
   type PLo = PLo.T
-  object PLo extends RefinedType[Long, Pure]
+  object PLo extends Newtype[Long, Pure]
   type PHi = PHi.T
-  object PHi extends RefinedType[Long, Pure]
+  object PHi extends Newtype[Long, Pure]
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends RefinedType[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
   type Plan = Plan.T
-  object Plan extends RefinedType[String, Pure]
+  object Plan extends Newtype[String, Pure]
   type PlanApprovedAt = PlanApprovedAt.T
-  object PlanApprovedAt extends RefinedType[String, Pure]
+  object PlanApprovedAt extends Newtype[String, Pure]

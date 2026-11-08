@@ -6,7 +6,6 @@ import com.augustnagro.magnum.DbCodec
 
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A tombstone as a bundle reads it (Magnum maps a SELECT's columns positionally). */
@@ -15,6 +14,6 @@ final private[histmersion] case class BTombstoneRow(uid: UUID, kind: BTombstoneR
 
 object BTombstoneRow:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type DeletedAt = DeletedAt.T
-  object DeletedAt extends RefinedType[String, Pure]
+  object DeletedAt extends Newtype[String, Pure]

@@ -6,7 +6,6 @@ import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
 import scala.concurrent.duration.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Secret
 import com.histmersion.plugin.Plugin
@@ -19,11 +18,11 @@ import com.histmersion.plugin.Plugin
   */
 object Vaults:
   type Field = Field.T
-  object Field extends RefinedType[String, Pure]
+  object Field extends Newtype[String, Pure]
   type Operation = Operation.T
-  object Operation extends RefinedType[String, Pure]
+  object Operation extends Newtype[String, Pure]
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]
 
   /** The version these plugins report (they ship with the server, and change with it). */
   val Version = "0.1.0"

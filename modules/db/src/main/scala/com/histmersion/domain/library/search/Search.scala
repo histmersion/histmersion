@@ -3,7 +3,6 @@ package domain.library.search
 
 import com.histmersion.util.database.given
 import com.histmersion.util.database.{Param, Sql}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 
@@ -36,9 +35,9 @@ import com.histmersion.domain.library.Citekey
   */
 object Search:
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type SnippetWords = SnippetWords.T
-  object SnippetWords extends RefinedType[Int, Pure]
+  object SnippetWords extends Newtype[Int, Pure]
 
   /** The parsed query, as a fragment. Spliced once per use site so parameters stay in textual order. */
   type FtsPredicateQ = Query

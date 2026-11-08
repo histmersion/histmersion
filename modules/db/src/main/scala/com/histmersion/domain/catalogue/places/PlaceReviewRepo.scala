@@ -15,7 +15,6 @@ import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.DeepTime
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The two gazetteer-cleanup lint rules (2026-10-09): `place-kind` — what a point-only seed region really is
@@ -231,18 +230,18 @@ private[places] object PlaceReviewRepo:
 
   object Relocation:
     type Description = Description.T
-    object Description extends RefinedType[String, Pure]
+    object Description extends Newtype[String, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
 
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type FromLon = FromLon.T
-    object FromLon extends RefinedType[Double, Pure]
+    object FromLon extends Newtype[Double, Pure]
     type FromLat = FromLat.T
-    object FromLat extends RefinedType[Double, Pure]
+    object FromLat extends Newtype[Double, Pure]
     type Ref = Ref.T
-    object Ref extends RefinedType[String, Pure]
+    object Ref extends Newtype[String, Pure]
 
   /** Every grid-cell place a linked record (Wikidata's P625) puts somewhere that is no grid centre itself; one per
     * place, the nearest such point. A place whose point a person set (`places set --point`, V081) is decided: never

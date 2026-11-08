@@ -8,7 +8,6 @@ import com.histmersion.domain.library.Confidence
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 
@@ -34,22 +33,22 @@ final private[sources] case class BFindingRow(
 
 object BFindingRow:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Claim = Claim.T
-  object Claim extends RefinedType[String, Pure]
+  object Claim extends Newtype[String, Pure]
   type Region = Region.T
-  object Region extends RefinedType[String, Pure]
+  object Region extends Newtype[String, Pure]
   type PNull = PNull.T
-  object PNull extends RefinedType[Boolean, Pure]
+  object PNull extends Newtype[Boolean, Pure]
   type PLo = DeepTime.SignedYear
   val PLo: DeepTime.SignedYear.type = DeepTime.SignedYear
   type PHi = DeepTime.SignedYear
   val PHi: DeepTime.SignedYear.type = DeepTime.SignedYear
   type PeriodName = PeriodName.T
-  object PeriodName extends RefinedType[String, Pure]
+  object PeriodName extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Significance = Significance.T
-  object Significance extends RefinedType[String, Pure]
+  object Significance extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]

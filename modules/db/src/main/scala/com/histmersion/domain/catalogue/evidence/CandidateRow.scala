@@ -6,7 +6,6 @@ import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A stored candidate link of an event to a source, its passages as JSON. */
@@ -23,14 +22,14 @@ final private[evidence] case class CandidateRow(
 
 object CandidateRow:
   type Score = Score.T
-  object Score extends RefinedType[Double, Pure]
+  object Score extends Newtype[Double, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Findings = Findings.T
-  object Findings extends RefinedType[String, Pure]
+  object Findings extends Newtype[String, Pure]
   type Passages = Passages.T
-  object Passages extends RefinedType[String, Pure]
+  object Passages extends Newtype[String, Pure]
   type Reasons = Reasons.T
-  object Reasons extends RefinedType[String, Pure]
+  object Reasons extends Newtype[String, Pure]

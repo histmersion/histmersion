@@ -13,7 +13,6 @@ import com.histmersion.domain.media.imports.{LicencePolicy, MediaRecord}
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plugin's media collection as the host reads it: its polite HTTP, its answers guarded, each item turned into the
@@ -22,11 +21,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object PluginMedia:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type Refusal = Refusal.T
-  object Refusal extends RefinedType[String, Pure]
+  object Refusal extends Newtype[String, Pure]
 
   /** A collection run's polite client: the collection's own pace, the media politeness otherwise. */
   def polite(

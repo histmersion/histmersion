@@ -7,7 +7,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.api.research.Article
 import com.histmersion.domain.DeepTime
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A list row as the database has it: [[ArticleSummary]] without the review state, which the server derives from other
@@ -45,10 +44,10 @@ object ArticleSummaryRow:
   type Kind = com.histmersion.domain.research.Article.Kind
   val Kind: com.histmersion.domain.research.Article.Kind.type = com.histmersion.domain.research.Article.Kind
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]

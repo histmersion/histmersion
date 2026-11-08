@@ -6,7 +6,6 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
@@ -33,16 +32,16 @@ object FullArticleRow:
   type Kind = Article.Kind
   val Kind: Article.Kind.type = Article.Kind
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
   type Filter = Filter.T
-  object Filter extends RefinedType[String, Pure]
+  object Filter extends Newtype[String, Pure]
   type Reasons = Reasons.T
-  object Reasons extends RefinedType[String, Pure]
+  object Reasons extends Newtype[String, Pure]

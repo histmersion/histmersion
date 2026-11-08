@@ -9,7 +9,6 @@ import com.histmersion.domain.automation.managers.ManagerLight
 import com.histmersion.util.database.{Jsonb, Param, Sql}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.api.automation.Agents
@@ -28,13 +27,13 @@ import com.histmersion.domain.CodexRetention
   */
 object ManagerRepo:
   type CancelReason = CancelReason.T
-  object CancelReason extends RefinedType[String, Pure]
+  object CancelReason extends Newtype[String, Pure]
   type EventCursor = EventCursor.T
-  object EventCursor extends RefinedType[Long, Pure]
+  object EventCursor extends Newtype[Long, Pure]
   type ProgressText = ProgressText.T
-  object ProgressText extends RefinedType[String, Pure]
+  object ProgressText extends Newtype[String, Pure]
   type RestaleReason = RestaleReason.T
-  object RestaleReason extends RefinedType[String, Pure]
+  object RestaleReason extends Newtype[String, Pure]
   export ManagerInfo.{TokensToday as SpendCount}
 
   export com.histmersion.domain.automation.Goal.{Slug as ArticleFacetsResultPart2}

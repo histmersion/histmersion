@@ -3,7 +3,6 @@ package domain.catalogue.events
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A catalogue's row of one event, as its card lists it. */
@@ -19,16 +18,16 @@ final private[events] case class CatalogueRefRow(
 
 object CatalogueRefRow:
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type ProviderId = ProviderId.T
-  object ProviderId extends RefinedType[String, Pure]
+  object ProviderId extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Vei = Vei.T
-  object Vei extends RefinedType[Int, Pure]
+  object Vei extends Newtype[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends RefinedType[Double, Pure]
+  object Magnitude extends Newtype[Double, Pure]
   type Deaths = Deaths.T
-  object Deaths extends RefinedType[Long, Pure]
+  object Deaths extends Newtype[Long, Pure]
   type RetrievedAt = RetrievedAt.T
-  object RetrievedAt extends RefinedType[String, Pure]
+  object RetrievedAt extends Newtype[String, Pure]

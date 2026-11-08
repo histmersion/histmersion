@@ -4,7 +4,6 @@ package domain.library.sources.referrers
 import com.histmersion.api.library.Rename
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source a delete would touch: its citekey, and every key it answers to (the citekey and its old ones). `resolve`
@@ -28,9 +27,9 @@ final case class SourceKeys(citekey: Citekey, keys: List[Citekey], resolve: List
 
 object SourceKeys:
   type FindingPrefix = FindingPrefix.T
-  object FindingPrefix extends RefinedType[String, Pure]
+  object FindingPrefix extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
 
   type Keys = Citekey

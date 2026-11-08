@@ -3,7 +3,6 @@ package domain.library.sources
 
 import com.histmersion.domain.library.sources.referrers.DeleteReport
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What deleting a source does: the answer, plus what finding its stored original needs — its digest, and whether
@@ -20,8 +19,8 @@ final case class SourceDeletePlan(
 
 object SourceDeletePlan:
   type Sha256 = Sha256.T
-  object Sha256 extends RefinedType[String, Pure]
+  object Sha256 extends Newtype[String, Pure]
   type ShaShared = ShaShared.T
-  object ShaShared extends RefinedType[Boolean, Pure]
+  object ShaShared extends Newtype[Boolean, Pure]
   type Keys = Keys.T
-  object Keys extends RefinedType[String, Pure]
+  object Keys extends Newtype[String, Pure]

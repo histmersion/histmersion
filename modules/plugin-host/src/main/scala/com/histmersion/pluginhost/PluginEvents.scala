@@ -11,7 +11,6 @@ import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
 import com.histmersion.domain.catalogue.Historicity
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.plugin.Latitude
@@ -27,13 +26,13 @@ import com.histmersion.api.catalogue.EventEntry
 object PluginEvents:
   export MediaConfig.{RequestIntervalMs as IntervalMs}
   type PartName = PartName.T
-  object PartName extends RefinedType[String, Pure]
+  object PartName extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Provider = CatalogRecord.Provider
   val Provider: CatalogRecord.Provider.type = CatalogRecord.Provider
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   export Polite.{IntervalMs as SleepMs}
 
   /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own

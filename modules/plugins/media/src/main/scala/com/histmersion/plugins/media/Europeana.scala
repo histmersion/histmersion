@@ -6,7 +6,6 @@ import io.circe.{ACursor, Json}
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Europeana APIs (Search, Record and Thumbnail), with a user's personal key sent as the `X-Api-Key` header
@@ -22,15 +21,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Europeana:
   type Clause = Clause.T
-  object Clause extends RefinedType[String, Pure]
+  object Clause extends Newtype[String, Pure]
   type Field = Field.T
-  object Field extends RefinedType[String, Pure]
+  object Field extends Newtype[String, Pure]
   type Preview = Preview.T
-  object Preview extends RefinedType[String, Pure]
+  object Preview extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
 
   val KeyHeader = "X-Api-Key"
   val Spatial = "dcterms:spatial"
@@ -44,11 +43,11 @@ object Europeana:
   final case class Exclusions(providers: List[Exclusions.Providers], dataProviders: List[Exclusions.DataProviders], types: List[Exclusions.Types])
   object Exclusions:
     type Providers = Providers.T
-    object Providers extends RefinedType[String, Pure]
+    object Providers extends Newtype[String, Pure]
     type DataProviders = DataProviders.T
-    object DataProviders extends RefinedType[String, Pure]
+    object DataProviders extends Newtype[String, Pure]
     type Types = Types.T
-    object Types extends RefinedType[String, Pure]
+    object Types extends Newtype[String, Pure]
 
     val none: Exclusions = Exclusions(Nil, Nil, Nil)
 

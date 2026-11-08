@@ -9,7 +9,6 @@ import io.circe.{ACursor, Json}
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Wikidata's events of the configured classes (battles, sieges, wars, treaties …): the query service, one SPARQL query
@@ -51,11 +50,11 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
 
 object WikidataCatalogue:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type Wkt = Wkt.T
-  object Wkt extends RefinedType[String, Pure]
+  object Wkt extends Newtype[String, Pure]
 
   /** Items that are only told of, never shown to have happened: a mythical event, a legendary battle, a narrative event
     * (2026-10-14, checked against their labels).

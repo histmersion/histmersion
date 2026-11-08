@@ -8,7 +8,6 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.api.maintenance.ReindexResult
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The library's repairs that run as several transactions: the re-chunk of the corpus and of the stale sources (one
@@ -127,9 +126,9 @@ final class SourceRepairs(db: Transactor):
 
 object SourceRepairs:
   type MaxChars = MaxChars.T
-  object MaxChars extends RefinedType[Long, Pure]
+  object MaxChars extends Newtype[Long, Pure]
   type MaxSources = MaxSources.T
-  object MaxSources extends RefinedType[Int, Pure]
+  object MaxSources extends Newtype[Int, Pure]
 
   /** The citekeys of `pending` (in order) whose bodies fit in `maxChars` together. */
 

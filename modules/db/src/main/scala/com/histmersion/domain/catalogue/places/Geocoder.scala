@@ -18,7 +18,6 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Finding
@@ -144,15 +143,15 @@ private[places] object Geocoder:
 
   object Placed:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
     type From = From.T
-    object From extends RefinedType[Long, Pure]
+    object From extends Newtype[Long, Pure]
     type To = To.T
-    object To extends RefinedType[Long, Pure]
+    object To extends Newtype[Long, Pure]
 
   /** The findings whose stored point is EXACTLY the one the pre-#981 geocoder chose for their place name — the only
     * points the repair may move, so a hand-placed coordinate is never touched.
@@ -257,13 +256,13 @@ private[places] object Geocoder:
 
   object Unplaced:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
     type From = From.T
-    object From extends RefinedType[Long, Pure]
+    object From extends Newtype[Long, Pure]
     type To = To.T
-    object To extends RefinedType[Long, Pure]
+    object To extends Newtype[Long, Pure]
 
   /** The findings with a place name and no point — what `finding-unplaced` reads. */
   val unplacedSql: String =

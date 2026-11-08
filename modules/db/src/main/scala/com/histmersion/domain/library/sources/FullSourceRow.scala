@@ -9,7 +9,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Source
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source's row as a write path reads it back (Magnum maps a SELECT's columns positionally). */
@@ -38,32 +37,32 @@ final private[sources] case class FullSourceRow(
 
 object FullSourceRow:
   type Doi = Doi.T
-  object Doi extends RefinedType[String, Pure]
+  object Doi extends Newtype[String, Pure]
   type Title = com.histmersion.domain.Title
   val Title: com.histmersion.domain.Title.type = com.histmersion.domain.Title
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Venue = Venue.T
-  object Venue extends RefinedType[String, Pure]
+  object Venue extends Newtype[String, Pure]
   type Topics = Topics.T
-  object Topics extends RefinedType[String, Pure]
+  object Topics extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends RefinedType[Int, Pure]
+  object CitedByCount extends Newtype[Int, Pure]
   type InfluentialCitations = InfluentialCitations.T
-  object InfluentialCitations extends RefinedType[Int, Pure]
+  object InfluentialCitations extends Newtype[Int, Pure]
   type Provenance = Provenance.T
-  object Provenance extends RefinedType[String, Pure]
+  object Provenance extends Newtype[String, Pure]
   type CalibreId = CalibreId.T
-  object CalibreId extends RefinedType[String, Pure]
+  object CalibreId extends Newtype[String, Pure]
   type OcrMarkdown = OcrMarkdown.T
-  object OcrMarkdown extends RefinedType[String, Pure]
+  object OcrMarkdown extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends RefinedType[String, Pure]
+  object Notes extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]

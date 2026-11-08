@@ -24,7 +24,6 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a bundle carries of research: the articles (each line stamped with its rev), their versions (each body a blob)
@@ -35,7 +34,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ArticlesCarried:
   type Stem = Stem.T
-  object Stem extends RefinedType[String, Pure]
+  object Stem extends Newtype[String, Pure]
 
   private val Research = DataOwner("research")
 

@@ -13,7 +13,6 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -27,7 +26,7 @@ import com.histmersion.api.catalogue.Year
   */
 private[places] object PlaceOverrideRepo:
   type RemovalReason = RemovalReason.T
-  object RemovalReason extends RefinedType[String, Pure]
+  object RemovalReason extends Newtype[String, Pure]
 
 
   final private case class Row(
@@ -42,15 +41,15 @@ private[places] object PlaceOverrideRepo:
 
   object Row:
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Start = Start.T
-    object Start extends RefinedType[Long, Pure]
+    object Start extends Newtype[Long, Pure]
     type End = End.T
-    object End extends RefinedType[Long, Pure]
+    object End extends Newtype[Long, Pure]
     type HasShape = HasShape.T
-    object HasShape extends RefinedType[Boolean, Pure]
+    object HasShape extends Newtype[Boolean, Pure]
   private given DbCodec[Place.Override] = DbCodec.derived
 
   /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a point; `hasShape`

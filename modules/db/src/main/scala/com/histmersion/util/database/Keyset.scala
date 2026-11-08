@@ -3,7 +3,6 @@ package util.database
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.Paging
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Keyset paging of a newest-first list (`core.Paging`): rows ordered by `created_at DESC, id DESC`, a cursor being the
@@ -13,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 private[histmersion] object Keyset:
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
 
   /** The order every paged list uses. `alias` = the table's alias in the query (with its dot). */
 

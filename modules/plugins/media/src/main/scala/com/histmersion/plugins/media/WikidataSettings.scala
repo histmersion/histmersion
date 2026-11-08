@@ -4,7 +4,6 @@ package plugins.media
 import com.histmersion.plugin.{MediaCollection, MediaItem}
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.media.wikidata`: the API, ids per call, `maxlag`, and the picture properties of a place and an event
@@ -22,21 +21,21 @@ final case class WikidataSettings(
 
 object WikidataSettings:
   type Spec = Spec.T
-  object Spec extends RefinedType[String, Pure]
+  object Spec extends Newtype[String, Pure]
   /** A Wikidata property id (`P18`). */
   type Property = Property.T
-  object Property extends RefinedType[String, Pure]
+  object Property extends Newtype[String, Pure]
 
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends RefinedType[String, Pure]
+  object ApiUrl extends Newtype[String, Pure]
   type Batch = Batch.T
-  object Batch extends RefinedType[Int, Pure]
+  object Batch extends Newtype[Int, Pure]
   type Maxlag = Maxlag.T
-  object Maxlag extends RefinedType[Int, Pure]
+  object Maxlag extends Newtype[Int, Pure]
   type PlaceProperties = PlaceProperties.T
-  object PlaceProperties extends RefinedType[String, Pure]
+  object PlaceProperties extends Newtype[String, Pure]
   type EventProperties = EventProperties.T
-  object EventProperties extends RefinedType[String, Pure]
+  object EventProperties extends Newtype[String, Pure]
 
   /** The roles a picture of a place or an event may play. */
   val PictureRoles: List[MediaItem.Role] = List(

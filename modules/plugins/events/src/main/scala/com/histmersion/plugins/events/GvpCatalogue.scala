@@ -8,7 +8,6 @@ import io.circe.Json
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Smithsonian Global Volcanism Program's Holocene eruptions: its WFS
@@ -74,11 +73,11 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
 
 object GvpCatalogue:
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Year = Year.T
-  object Year extends RefinedType[Long, Pure]
+  object Year extends Newtype[Long, Pure]
 
   val TypeName = "GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions"
 

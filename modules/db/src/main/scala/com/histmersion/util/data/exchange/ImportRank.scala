@@ -7,4 +7,4 @@ import io.github.iltotore.iron.*
   * rows they point at, and a rename before the rows that carry the new label.
   */
 type ImportRank = ImportRank.T
-object ImportRank extends RefinedType[Int, Pure]
+object ImportRank extends Newtype[Int, Pure]

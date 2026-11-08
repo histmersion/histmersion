@@ -7,7 +7,6 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final private[places] case class PlaceTypeRow(
@@ -28,4 +27,4 @@ final private[places] case class PlaceTypeRow(
 
 object PlaceTypeRow:
   type TypeLabel = TypeLabel.T
-  object TypeLabel extends RefinedType[String, Pure]
+  object TypeLabel extends Newtype[String, Pure]

@@ -7,7 +7,6 @@ import org.flywaydb.core.api.resource.LoadableResource
 import java.io.{InputStreamReader, Reader}
 import java.nio.charset.Charset
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Flyway schema versioning. Migrations are SQL resources under `db/migration/V###__name.sql`, enumerated by the
@@ -17,15 +16,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Migrate:
   type MigrationName = MigrationName.T
-  object MigrationName extends RefinedType[String, Pure]
+  object MigrationName extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type RetryAttempts = RetryAttempts.T
-  object RetryAttempts extends RefinedType[Int, Pure]
+  object RetryAttempts extends Newtype[Int, Pure]
   type RoleName = RoleName.T
-  object RoleName extends RefinedType[String, Pure]
+  object RoleName extends Newtype[String, Pure]
   type Version = Version.T
-  object Version extends RefinedType[String, Pure]
+  object Version extends Newtype[String, Pure]
 
   private val Base = "db/migration"
 

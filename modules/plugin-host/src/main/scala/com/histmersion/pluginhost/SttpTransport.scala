@@ -8,7 +8,6 @@ import sttp.model.Uri
 import java.util.Locale
 import scala.concurrent.duration.*
 import com.histmersion.domain.CoreQuota
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition transport: java.net.http through sttp, which follows redirects. `tls` is the trust `acquire.tls`
@@ -54,7 +53,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
 object SttpTransport:
   /** The same request, pinned to HTTP/1.1 (see the backend above). */
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
 
   val http11: java.net.http.HttpRequest => java.net.http.HttpRequest = r =>
     java.net.http.HttpRequest.newBuilder(r, (_, _) => true).version(java.net.http.HttpClient.Version.HTTP_1_1).build()

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.media.imports
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 
@@ -21,11 +20,11 @@ final case class PlaceFacts(
 
 object PlaceFacts:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Keys = Keys.T
-  object Keys extends RefinedType[String, Pure]
+  object Keys extends Newtype[String, Pure]
   type PeriodPart1 = DeepTime.SignedYear
   val PeriodPart1: DeepTime.SignedYear.type = DeepTime.SignedYear
   type PeriodPart2 = DeepTime.SignedYear

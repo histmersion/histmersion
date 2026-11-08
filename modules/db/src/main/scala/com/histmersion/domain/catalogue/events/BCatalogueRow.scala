@@ -5,7 +5,6 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a catalogue says about an event, as its bundle line reads it. */
@@ -32,32 +31,32 @@ final private[events] case class BCatalogueRow(
 
 object BCatalogueRow:
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type ProviderId = ProviderId.T
-  object ProviderId extends RefinedType[String, Pure]
+  object ProviderId extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type NotBefore = NotBefore.T
-  object NotBefore extends RefinedType[Long, Pure]
+  object NotBefore extends Newtype[Long, Pure]
   type BeginBy = BeginBy.T
-  object BeginBy extends RefinedType[Long, Pure]
+  object BeginBy extends Newtype[Long, Pure]
   type EndFrom = EndFrom.T
-  object EndFrom extends RefinedType[Long, Pure]
+  object EndFrom extends Newtype[Long, Pure]
   type NotAfter = NotAfter.T
-  object NotAfter extends RefinedType[Long, Pure]
+  object NotAfter extends Newtype[Long, Pure]
   type Vei = Vei.T
-  object Vei extends RefinedType[Int, Pure]
+  object Vei extends Newtype[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends RefinedType[Double, Pure]
+  object Magnitude extends Newtype[Double, Pure]
   type Deaths = Deaths.T
-  object Deaths extends RefinedType[Long, Pure]
+  object Deaths extends Newtype[Long, Pure]
   type Historicity = Historicity.T
-  object Historicity extends RefinedType[String, Pure]
+  object Historicity extends Newtype[String, Pure]
   type Record = Record.T
-  object Record extends RefinedType[String, Pure]
+  object Record extends Newtype[String, Pure]
   type RetrievedAt = RetrievedAt.T
-  object RetrievedAt extends RefinedType[String, Pure]
+  object RetrievedAt extends Newtype[String, Pure]

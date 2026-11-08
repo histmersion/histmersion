@@ -7,7 +7,6 @@ import java.time.Duration
 import java.util.Locale
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider URLs are already
@@ -43,4 +42,4 @@ final class JavaHttpTransport(timeoutSeconds: => HttpTransport.TimeoutSeconds, c
 
 object JavaHttpTransport:
   type ConnectSeconds = ConnectSeconds.T
-  object ConnectSeconds extends RefinedType[Int, Pure]
+  object ConnectSeconds extends Newtype[Int, Pure]

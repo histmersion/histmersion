@@ -5,7 +5,6 @@ import com.histmersion.plugin.*
 
 import java.nio.file.Path
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
@@ -146,7 +145,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
 object CalibreCollection:
   type WriteBack = WriteBack.T
-  object WriteBack extends RefinedType[Boolean, Pure]
+  object WriteBack extends Newtype[Boolean, Pure]
 
   /** The most books a search answers when the host does not say. */
   val SearchLimit: Calibre.SearchLimit = Calibre.SearchLimit(20)

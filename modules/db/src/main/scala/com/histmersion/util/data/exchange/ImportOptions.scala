@@ -1,7 +1,6 @@
 package com.histmersion
 package util.data.exchange
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 
@@ -11,8 +10,8 @@ final case class ImportOptions(dryRun: ImportOptions.DryRun, chunkChars: ImportO
 
 object ImportOptions:
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type ChunkChars = ChunkChars.T
-  object ChunkChars extends RefinedType[Int, Pure]
+  object ChunkChars extends Newtype[Int, Pure]
   type ToleranceKm = ToleranceKm.T
-  object ToleranceKm extends RefinedType[Double, Pure]
+  object ToleranceKm extends Newtype[Double, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation.agents
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the runs list is filtered by (core `ListFilters.RunFilter`, validated): the lists match any of their values;
@@ -22,22 +21,22 @@ final case class RunQuery(
 
 object RunQuery:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type UpTo = UpTo.T
-  object UpTo extends RefinedType[String, Pure]
+  object UpTo extends Newtype[String, Pure]
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Pipelines = Pipelines.T
-  object Pipelines extends RefinedType[String, Pure]
+  object Pipelines extends Newtype[String, Pure]
   type Managers = Managers.T
-  object Managers extends RefinedType[String, Pure]
+  object Managers extends Newtype[String, Pure]
   type Goal = Goal.T
-  object Goal extends RefinedType[String, Pure]
+  object Goal extends Newtype[String, Pure]
   type Models = Models.T
-  object Models extends RefinedType[String, Pure]
+  object Models extends Newtype[String, Pure]
   type Providers = Providers.T
-  object Providers extends RefinedType[String, Pure]
+  object Providers extends Newtype[String, Pure]
   type Origins = Origins.T
-  object Origins extends RefinedType[String, Pure]
+  object Origins extends Newtype[String, Pure]
   type Q = Q.T
-  object Q extends RefinedType[String, Pure]
+  object Q extends Newtype[String, Pure]

@@ -9,7 +9,6 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.automation.Goal
@@ -38,7 +37,7 @@ private[review] object ArticleReviewRepo:
     type Slug = com.histmersion.domain.research.Slug
     val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
 
   final private case class ApprovalRow(subject: ApprovalRow.Subject, id: ApprovalRow.Id, kind: ApprovalRow.Kind) derives DbCodec
 
@@ -48,7 +47,7 @@ private[review] object ArticleReviewRepo:
     type Id = ManagerPolicy.ApprovalId
     val Id: ManagerPolicy.ApprovalId.type = ManagerPolicy.ApprovalId
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
 
   final private case class GoalRow(slug: GoalRow.Slug, title: GoalRow.Title, status: GoalRow.Status) derives DbCodec
 

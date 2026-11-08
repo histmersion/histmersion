@@ -3,7 +3,6 @@ package plugins.media
 
 import com.histmersion.plugin.*
 import io.circe.Json
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `aic`: the Art Institute of Chicago API (https://api.artic.edu/docs/), no key. A search answers the fields asked
@@ -26,9 +25,9 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstitu
 
 object ArtInstituteCollection:
   type ImageId = ImageId.T
-  object ImageId extends RefinedType[String, Pure]
+  object ImageId extends Newtype[String, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
 
   type ThumbPx = MediaSettings.ThumbPx
   val ThumbPx: MediaSettings.ThumbPx.type = MediaSettings.ThumbPx

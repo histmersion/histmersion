@@ -4,7 +4,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
@@ -16,7 +15,7 @@ import com.histmersion.domain.GoalFocus
   */
 object FocusRepo:
   type JoinWhy = JoinWhy.T
-  object JoinWhy extends RefinedType[String, Pure]
+  object JoinWhy extends Newtype[String, Pure]
 
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
@@ -40,29 +39,29 @@ object FocusRepo:
 
   object GoalRow:
     type Slug = Slug.T
-    object Slug extends RefinedType[String, Pure]
+    object Slug extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Parent = Parent.T
-    object Parent extends RefinedType[String, Pure]
+    object Parent extends Newtype[String, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type Active = Active.T
-    object Active extends RefinedType[Boolean, Pure]
+    object Active extends Newtype[Boolean, Pure]
     type Pinned = Pinned.T
-    object Pinned extends RefinedType[Boolean, Pure]
+    object Pinned extends Newtype[Boolean, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type LeftAt = LeftAt.T
-    object LeftAt extends RefinedType[String, Pure]
+    object LeftAt extends Newtype[String, Pure]
     type LeftWhy = LeftWhy.T
-    object LeftWhy extends RefinedType[String, Pure]
+    object LeftWhy extends Newtype[String, Pure]
 
   def goals()(using DbCon): List[GoalRow] =
     Sql
@@ -98,31 +97,31 @@ object FocusRepo:
 
   object WorkRow:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type ManagerId = ManagerId.T
-    object ManagerId extends RefinedType[String, Pure]
+    object ManagerId extends Newtype[String, Pure]
     type ManagerKind = ManagerKind.T
-    object ManagerKind extends RefinedType[String, Pure]
+    object ManagerKind extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Person = Person.T
-    object Person extends RefinedType[Boolean, Pure]
+    object Person extends Newtype[Boolean, Pure]
     type FocusHeld = FocusHeld.T
-    object FocusHeld extends RefinedType[Boolean, Pure]
+    object FocusHeld extends Newtype[Boolean, Pure]
     type PersonHeld = PersonHeld.T
-    object PersonHeld extends RefinedType[Boolean, Pure]
+    object PersonHeld extends Newtype[Boolean, Pure]
     type Approval = Approval.T
-    object Approval extends RefinedType[Long, Pure]
+    object Approval extends Newtype[Long, Pure]
     type ApprovalKind = ApprovalKind.T
-    object ApprovalKind extends RefinedType[String, Pure]
+    object ApprovalKind extends Newtype[String, Pure]
     type AutoApprove = AutoApprove.T
-    object AutoApprove extends RefinedType[String, Pure]
+    object AutoApprove extends Newtype[String, Pure]
     type Goals = Goals.T
-    object Goals extends RefinedType[String, Pure]
+    object Goals extends Newtype[String, Pure]
 
   def work(using DbCon): List[WorkRow] =
     sql"""SELECT i.id, i.manager_id, m.kind, i.kind, i.target, i.status, i.origin = 'person',

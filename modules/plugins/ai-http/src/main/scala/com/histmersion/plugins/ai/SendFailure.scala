@@ -2,7 +2,6 @@ package com.histmersion
 package plugins.ai
 
 import com.histmersion.plugin.AiHttp
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A request that got no answer, as the host's client reported it (`<exception>: <message>`), described as these
@@ -22,15 +21,15 @@ final case class SendFailure(reported: SendFailure.Reported):
 
 object SendFailure:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Method = Method.T
-  object Method extends RefinedType[String, Pure]
+  object Method extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
 
   type Reported = Reported.T
-  object Reported extends RefinedType[String, Pure]
+  object Reported extends Newtype[String, Pure]
 
   private val Connect = Set(
     "ConnectException",

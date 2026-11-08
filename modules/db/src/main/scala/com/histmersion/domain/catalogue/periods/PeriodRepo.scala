@@ -9,7 +9,6 @@ import com.histmersion.util.database.{LikePattern, RangeSql}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 
@@ -19,14 +18,14 @@ import com.histmersion.domain.DeepTime
   */
 private[periods] object PeriodRepo:
   type SearchText = SearchText.T
-  object SearchText extends RefinedType[String, Pure]
+  object SearchText extends Newtype[String, Pure]
   type SeedVersion = SeedVersion.T
-  object SeedVersion extends RefinedType[Int, Pure]
+  object SeedVersion extends Newtype[Int, Pure]
 
   type SeedVersionName = SeedVersionName.T
-  object SeedVersionName extends RefinedType[String, Pure]
+  object SeedVersionName extends Newtype[String, Pure]
   type SetSeedVersionName = SetSeedVersionName.T
-  object SetSeedVersionName extends RefinedType[String, Pure]
+  object SetSeedVersionName extends Newtype[String, Pure]
 
   private val columns = s"id, label, authority, ${RangeSql.cols("period")}, region, parent_id, preset"
 

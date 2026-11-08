@@ -9,7 +9,6 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One row of `gazetteer_sources` (V071). */
@@ -33,26 +32,26 @@ final case class GazetteerSourceRow(
 
 object GazetteerSourceRow:
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Version = Version.T
-  object Version extends RefinedType[String, Pure]
+  object Version extends Newtype[String, Pure]
   type File = File.T
-  object File extends RefinedType[String, Pure]
+  object File extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type Licence = Licence.T
-  object Licence extends RefinedType[String, Pure]
+  object Licence extends Newtype[String, Pure]
   type Citation = Citation.T
-  object Citation extends RefinedType[String, Pure]
+  object Citation extends Newtype[String, Pure]
   type Places = Places.T
-  object Places extends RefinedType[Int, Pure]
+  object Places extends Newtype[Int, Pure]
   type Names = Names.T
-  object Names extends RefinedType[Int, Pure]
+  object Names extends Newtype[Int, Pure]
   type Links = Links.T
-  object Links extends RefinedType[Int, Pure]
+  object Links extends Newtype[Int, Pure]
   type ImportedAt = ImportedAt.T
-  object ImportedAt extends RefinedType[String, Pure]
+  object ImportedAt extends Newtype[String, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package plugins.calibre
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What `calibre update --all` does, or did, to one Calibre entry. */
@@ -24,7 +23,7 @@ enum UpdateOutcome:
 object UpdateOutcome:
   object Failed:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
   object Refused:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]

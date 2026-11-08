@@ -1,7 +1,6 @@
 package com.histmersion
 package util.database
 import com.augustnagro.magnum.Frag
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A composable SQL fragment: text with `?` placeholders plus the parameters that fill them, in order.
@@ -44,7 +43,7 @@ object Sql:
   val OfText: Text.type = Text
 
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   val empty: Sql = Sql(Text(""), Nil)
   def raw(text: Text): Sql = Sql(text, Nil)

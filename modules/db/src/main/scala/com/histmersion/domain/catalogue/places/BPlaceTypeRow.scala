@@ -6,7 +6,6 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One of a place's types, as its bundle line reads it. */
@@ -21,10 +20,10 @@ final private[places] case class BPlaceTypeRow(
 
 object BPlaceTypeRow:
   type TypeLabel = TypeLabel.T
-  object TypeLabel extends RefinedType[String, Pure]
+  object TypeLabel extends Newtype[String, Pure]
   type PNull = PNull.T
-  object PNull extends RefinedType[Boolean, Pure]
+  object PNull extends Newtype[Boolean, Pure]
   type PLo = PLo.T
-  object PLo extends RefinedType[Long, Pure]
+  object PLo extends Newtype[Long, Pure]
   type PHi = PHi.T
-  object PHi extends RefinedType[Long, Pure]
+  object PHi extends Newtype[Long, Pure]

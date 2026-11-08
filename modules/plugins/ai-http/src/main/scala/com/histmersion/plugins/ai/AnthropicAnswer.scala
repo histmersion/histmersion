@@ -6,7 +6,6 @@ import io.circe.{ACursor, Decoder, DecodingFailure, HCursor, Json}
 import io.circe.DecodingFailure.Reason.WrongTypeExpectation
 import io.circe.parser.parse
 import com.histmersion.plugin.AiTool
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the Anthropic Messages API answered, read as these providers have always read it: a message (its first text
@@ -29,12 +28,12 @@ final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: Anthropic
 
 object AnthropicAnswer:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type Status = Status.T
-  object Status extends RefinedType[Int, Pure]
+  object Status extends Newtype[Int, Pure]
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
 
   private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =
     if c.value.isObject then Right(()) else Left(DecodingFailure(WrongTypeExpectation("object", c.value), c.history))

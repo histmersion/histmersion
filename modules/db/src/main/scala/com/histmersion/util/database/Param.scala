@@ -1,7 +1,6 @@
 package com.histmersion
 package util.database
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum Param:
   case S(v: Param.S.V)
@@ -15,16 +14,16 @@ enum Param:
 object Param:
   object S:
     type V = V.T
-    object V extends RefinedType[String, Pure]
+    object V extends Newtype[String, Pure]
   object L:
     type V = V.T
-    object V extends RefinedType[Long, Pure]
+    object V extends Newtype[Long, Pure]
   object I:
     type V = V.T
-    object V extends RefinedType[Int, Pure]
+    object V extends Newtype[Int, Pure]
   object D:
     type V = V.T
-    object V extends RefinedType[Double, Pure]
+    object V extends Newtype[Double, Pure]
   object A:
     type V = V.T
-    object V extends RefinedType[String, Pure]
+    object V extends Newtype[String, Pure]

@@ -5,7 +5,6 @@ import com.histmersion.api.catalogue.Attestation
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.RowCount
@@ -16,7 +15,7 @@ import com.histmersion.api.personal.UnreadPage
   */
 private[evidence] object AttestationRepo:
   type AttestationId = AttestationId.T
-  object AttestationId extends RefinedType[Long, Pure]
+  object AttestationId extends Newtype[Long, Pure]
 
 
   private given DbCodec[Attestation] = DbCodec.derived

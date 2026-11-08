@@ -3,7 +3,6 @@ package plugins.fetchers
 
 import com.histmersion.plugin.FetchedFile
 import com.histmersion.plugin.Plugin
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One download the fetchers make, checked: a copy only when it is a PDF. Any other answer is logged and is no copy. */
@@ -21,7 +20,7 @@ final class Downloads(http: Plugin.Http):
 
 object Downloads:
   type Md5 = Md5.T
-  object Md5 extends RefinedType[String, Pure]
+  object Md5 extends Newtype[String, Pure]
 
   /** A PDF that is really a PDF: the magic bytes within the first KiB and a plausible size (the host checks the same).
     */

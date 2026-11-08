@@ -5,21 +5,20 @@ import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, S
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 object PlanQuotaRepo:
   type PoolName = PoolName.T
-  object PoolName extends RefinedType[String, Pure]
+  object PoolName extends Newtype[String, Pure]
   type EpochMillis = EpochMillis.T
-  object EpochMillis extends RefinedType[Long, Pure]
+  object EpochMillis extends Newtype[Long, Pure]
   type RefreshDetail = RefreshDetail.T
-  object RefreshDetail extends RefinedType[String, Pure]
+  object RefreshDetail extends Newtype[String, Pure]
   type RefreshMode = RefreshMode.T
-  object RefreshMode extends RefinedType[String, Pure]
+  object RefreshMode extends Newtype[String, Pure]
   type RefreshTrigger = RefreshTrigger.T
-  object RefreshTrigger extends RefinedType[String, Pure]
+  object RefreshTrigger extends Newtype[String, Pure]
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image): bound through
   // to_timestamp(ms / 1000.0), read back as (extract(epoch …) * 1000)::bigint.
@@ -73,15 +72,15 @@ object PlanQuotaRepo:
 
   object Pool:
     type Held = Held.T
-    object Held extends RefinedType[Boolean, Pure]
+    object Held extends Newtype[Boolean, Pure]
     type Floors = Floors.T
-    object Floors extends RefinedType[String, Pure]
+    object Floors extends Newtype[String, Pure]
     type Refusal = Refusal.T
-    object Refusal extends RefinedType[String, Pure]
+    object Refusal extends Newtype[String, Pure]
     type RefusalUntil = RefusalUntil.T
-    object RefusalUntil extends RefinedType[Long, Pure]
+    object RefusalUntil extends Newtype[Long, Pure]
     type PlanType = PlanType.T
-    object PlanType extends RefinedType[String, Pure]
+    object PlanType extends Newtype[String, Pure]
 
   val NoPool: Pool = Pool(Pool.Held(false), None, None, None, None)
 

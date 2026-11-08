@@ -22,7 +22,6 @@ import com.histmersion.api.media.{
   MediaTarget,
   MediaThumb
 }
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.domain.media.imports.MediaMatch
@@ -44,28 +43,28 @@ import com.histmersion.api.catalogue.Year
   */
 private[assets] object MediaRepo:
   type Degrees = Degrees.T
-  object Degrees extends RefinedType[Double, Pure]
+  object Degrees extends Newtype[Double, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type PictureKey = PictureKey.T
-  object PictureKey extends RefinedType[String, Pure]
+  object PictureKey extends Newtype[String, Pure]
   type GapItem = GapItem.T
-  object GapItem extends RefinedType[String, Pure]
+  object GapItem extends Newtype[String, Pure]
   type GapDetail = GapDetail.T
-  object GapDetail extends RefinedType[String, Pure]
+  object GapDetail extends Newtype[String, Pure]
 
   // ── writes ───────────────────────────────────────────────────────────────────────────────────
 
   /** The pictures of `provider` already stored under these keys. */
 
   type LinkProperty = LinkProperty.T
-  object LinkProperty extends RefinedType[String, Pure]
+  object LinkProperty extends Newtype[String, Pure]
   type LinkItem = LinkItem.T
-  object LinkItem extends RefinedType[String, Pure]
+  object LinkItem extends Newtype[String, Pure]
   type LinkRank = LinkRank.T
-  object LinkRank extends RefinedType[Int, Pure]
+  object LinkRank extends Newtype[Int, Pure]
   type SetSourcePictureProperty = SetSourcePictureProperty.T
-  object SetSourcePictureProperty extends RefinedType[String, Pure]
+  object SetSourcePictureProperty extends Newtype[String, Pure]
 
   def known(provider: MediaItemRow.Provider, keys: List[MediaItemRow.ProviderKey])(using DbCon): Map[MediaItemRow.ProviderKey, Known] =
     if keys.isEmpty then Map.empty
@@ -107,8 +106,8 @@ private[assets] object MediaRepo:
     */
   private def placeAt(uid: MediaItemRow.Uid, target: (Target.TargetType, Target.Id))(using DbCon): Unit =
     val (tt, id) = target
-    if tt == PictureTarget.Source.wire then () // a source's picture (a cover) is not on the map
-    else if tt == PictureTarget.Place.wire then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
+    if tt.value == PictureTarget.Source.wire.value then () // a source's picture (a cover) is not on the map
+    else if tt.value == PictureTarget.Place.wire.value then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
               period = coalesce(a.period, CASE WHEN lower_inf(t.p) AND upper_inf(t.p) THEN NULL ELSE t.p END)
             FROM (SELECT ST_PointOnSurface(coalesce(geom_clipped, geom)) AS g, period AS p FROM places WHERE id = $id) t
             WHERE a.uid = $uid::uuid""".update.run()

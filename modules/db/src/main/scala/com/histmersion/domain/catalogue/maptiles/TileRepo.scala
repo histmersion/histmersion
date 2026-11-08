@@ -11,7 +11,6 @@ import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
@@ -23,11 +22,11 @@ import com.histmersion.api.catalogue.Year
   */
 private[maptiles] object TileRepo:
   type GroupName = GroupName.T
-  object GroupName extends RefinedType[String, Pure]
+  object GroupName extends Newtype[String, Pure]
   type SiteId = SiteId.T
-  object SiteId extends RefinedType[String, Pure]
+  object SiteId extends Newtype[String, Pure]
   type SiteType = SiteType.T
-  object SiteType extends RefinedType[String, Pure]
+  object SiteType extends Newtype[String, Pure]
 
   /** What a layer's tiles read, by the groups of V105's `map_changes`. */
   val Groups: Map[TileLayer, List[GroupName]] = Map(

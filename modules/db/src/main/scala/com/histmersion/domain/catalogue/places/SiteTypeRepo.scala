@@ -6,7 +6,6 @@ import com.histmersion.util.database.{Param, Sql}
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Place
@@ -16,7 +15,7 @@ import com.histmersion.domain.catalogue.Place
   */
 private[places] object SiteTypeRepo:
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]
 
   /** The Wikidata sites on the map (with a finding or a picture) whose type is still to be refined: never asked, or
     * (`refresh`) asked before `before` (epoch ms — the start of this run).
