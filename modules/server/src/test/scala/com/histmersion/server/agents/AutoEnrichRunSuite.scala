@@ -131,7 +131,7 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
       val rs = runs
       assertEquals(rs.size, 1, rs)
       val run = rs.head
-      assertEquals((run.status, run.origin, run.target), ("queued", Some(Origin.FromIngest.wire), Ck))
+      assertEquals((run.status, run.origin.map(_.value: String), run.target.value: String), ("queued", Some(Origin.FromIngest.wire.value: String), Ck))
       assert(job.progress.exists(_.value.contains(s"enrichment queued: run ${run.id}")), job.progress)
       assert(IngestMarkdown.job(job).contains(s"enrichment queued: run ${run.id}"), "jobs <id> shows it")
       // the same file again: the source is re-converted, the pending run covers it

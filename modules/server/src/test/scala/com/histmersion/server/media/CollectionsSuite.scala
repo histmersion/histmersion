@@ -328,6 +328,6 @@ class CollectionsSuite extends munit.FunSuite:
   // ── roles ────────────────────────────────────────────────────────────────────────────────────
 
   test("the roles a collection's pictures may play are the place and event roles the host stores"):
-    assertEquals(MediaCollection.Roles, MediaRole.all.toSet -- Set(MediaRole.Cover, MediaRole.Illustration))
+    assertEquals(MediaCollection.Roles.map(_.value: String), MediaRole.all.map(_.value: String).toSet -- Set(MediaRole.Cover, MediaRole.Illustration))
     assertEquals(FakeMediaHttp.builtin(Loc).role, MediaRole.Map)
     assertEquals(FakeMediaHttp.builtin(Met).role, MediaRole.Object)

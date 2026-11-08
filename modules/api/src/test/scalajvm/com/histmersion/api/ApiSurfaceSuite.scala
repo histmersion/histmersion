@@ -62,7 +62,7 @@ class ApiSurfaceSuite extends munit.FunSuite:
   test("the docs' endpoint index is Api.all (`just api-docs` regenerates it)"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
     val readme = Files.readString(root.resolve(Api.Index.Page))
-    assertEquals(Api.Index.current(Api.Index.Readme(readme)), Some(Api.Index.markdown(Api.all)), "run `just api-docs`")
+    assertEquals(Api.Index.current(Api.Index.Readme(readme)).map(_.value), Some(Api.Index.markdown(Api.all).value), "run `just api-docs`")
 
   test("the index lists each path once, with its methods in a fixed order"):
     val md = Api.Index.markdown(List(Api.getSource, Api.putSource, Api.health))

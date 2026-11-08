@@ -119,7 +119,7 @@ class BootstrapSuite extends DbSuite:
     val bsa = periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).get
     assertEquals((bsa.parentId, bsa.preset), (None, Some(PresetRegion.Aegean)))
     assertEquals(periods.get(HistoricalPeriod.Id("p0s2rwkwbsz")).flatMap(_.preset), None)
-    assertEquals(periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)), PeriodO.parse(seedText).toOption.get.version)
+    assertEquals(periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)).map(_.value: Int), PeriodO.parse(seedText).toOption.get.version.map(_.value: Int))
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false)
 
   test("a period fetch never takes a seed preset off the menu"):
@@ -136,7 +136,7 @@ class BootstrapSuite extends DbSuite:
     var asked = List.empty[HttpDownload.Url] // a test double is the one place a var is the simplest thing
     val b = bootstrap(dataDir(), url => { asked = asked :+ url; Right(HttpDownload.Text(dump)) })
     val r = b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).fold(e => fail(e.message.value), identity)
-    assertEquals(asked, List(base.periods.periodoUrl))
+    assertEquals(asked.map(_.value: String), List(base.periods.periodoUrl.value: String))
     assertEquals(r.periods, 4) // 3 periods + the authority node
     assertEquals(r.roots, 1)
     assertEquals(periods.get(HistoricalPeriod.Id("zzqother01")), None)
@@ -160,7 +160,7 @@ class BootstrapSuite extends DbSuite:
   test("init runs as a job: every step is attempted, a missing gazetteer seed is reported"):
     val b = bootstrap(dataDir())
     val job = b.init(fetch = false).fold(e => fail(e.message.value), identity)
-    assertEquals(job.kind, Bootstrap.JobKind)
+    assertEquals(job.kind.value: String, Bootstrap.JobKind.value: String)
     val end = Iterator
       .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(Job.Id.applyUnsafe(job.id.value))).get }
       .take(300)

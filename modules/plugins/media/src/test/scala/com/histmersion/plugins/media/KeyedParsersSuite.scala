@@ -190,8 +190,8 @@ class KeyedParsersSuite extends munit.FunSuite:
     )
     assertEquals(gate.ids, List("geonames" -> "256075"))
     assertEquals(gate.period, Period.span(-1250L, -1250L))
-    assertEquals(gate.imageUrl, Some(Europeana.thumbnailUrl(api, Europeana.Source("https://images.fixture.example/lion-gate.jpg"), MediaRendition.Width(400))))
-    assertEquals(gate.thumbUrl, Some(Europeana.thumbnailUrl(api, Europeana.Source("https://images.fixture.example/lion-gate.jpg"), MediaRendition.Width(200))))
+    assertEquals(gate.imageUrl.map(_.value), Some(Europeana.thumbnailUrl(api, Europeana.Source("https://images.fixture.example/lion-gate.jpg"), MediaRendition.Width(400)).value))
+    assertEquals(gate.thumbUrl.map(_.value), Some(Europeana.thumbnailUrl(api, Europeana.Source("https://images.fixture.example/lion-gate.jpg"), MediaRendition.Width(200)).value))
     assertEquals(gate.originalUrl, Some("https://images.fixture.example/lion-gate.jpg"))
     val r = gate.rights.fold(e => fail(e.value), identity)
     assertEquals(r.licence, Licence("http://creativecommons.org/licenses/by-sa/4.0/"), "its edm:rights URL")
@@ -273,7 +273,7 @@ class KeyedParsersSuite extends munit.FunSuite:
       .map(_.fold(e => fail(e.value), identity))
     assertEquals(
       rs.map(r => r.key -> r.withheld),
-      List(
+      List[(String, Option[String])](
         "854/NHMUKXZOOX1950X3X1X144" -> Some("an excluded provider (OpenUp!)"),
         "9200999/fixture_orkney_herbarium_sheet" -> Some("an excluded data provider (Fixture Herbarium Trust)"),
         "9200999/fixture_kirkwall_postcard" -> None,

@@ -13,9 +13,9 @@ class MergeSettingsViewsSuite extends munit.FunSuite:
     val c = AppConfig.load().merge
     val s = MergeSettingsViews.settings(c)
     assertEquals(
-      (s.autoMerge, s.newAtMost, s.minhashSize, s.findingNearAtLeast, s.findingWithinKm),
-      (c.autoMerge, c.newAtMost, c.minhashSize, c.findingNearAtLeast, c.findingWithinKm)
+      (s.autoMerge.value, s.newAtMost.value, s.minhashSize.value, s.findingNearAtLeast.value, s.findingWithinKm.value),
+      (c.autoMerge.value, c.newAtMost.value, c.minhashSize.value, c.findingNearAtLeast.value, c.findingWithinKm.value)
     )
-    assertEquals((s.placeWithinKm, s.placeOverlapAtLeast), (c.placeWithinKm, c.placeOverlapAtLeast))
+    assertEquals((s.placeWithinKm.value, s.placeOverlapAtLeast.value), (c.placeWithinKm.value, c.placeOverlapAtLeast.value))
     assertEquals(s.weights.productIterator.toList, c.weights.productIterator.toList)
     assertEquals(s.weights.productElementNames.toList, c.weights.productElementNames.toList)

@@ -109,14 +109,14 @@ class PassagesHttpSuite extends DbSuite:
     withServer { url =>
       seed(url)
       val ds = testPool(cfg.db)
-      assertEquals(PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)), SourceFixtures.bodyText(ds, Ck))
+      assertEquals(PassageFinder.body(SourceFixtures.bodyChunks(ds, Ck)).value: String, SourceFixtures.bodyText(ds, Ck).value: String)
     }
 
   test("hits with headings, and each offset reads on through get_source's body slice"):
     withServer { url =>
       seed(url)
       val r = passages(url, Ck, "skyros", "&context=40")
-      assertEquals((r.citekey, r.matches, r.total), (Ck, 2, 2))
+      assertEquals((r.citekey.value: String, r.matches, r.total), (Ck, 2, 2))
       assertEquals(r.passages.map(_.heading), List(Some("Theseus > Burial"), Some("Theseus > Cult")))
       r.passages.foreach { p =>
         val view = get(s"$url/api/sources/$Ck/view?section=body&offset=${p.offset}&chars=${p.text.value.length}")

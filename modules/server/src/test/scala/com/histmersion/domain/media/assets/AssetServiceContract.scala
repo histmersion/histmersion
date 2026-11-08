@@ -56,7 +56,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
       assertEquals(a.addFigures(Ck, List(fig(NewFigure.Name("b.jpg"), "2"), fig(NewFigure.Name("a.jpg"), "1"), fig(NewFigure.Name("again.jpg"), "1"))), 2)
       assertEquals(a.addFigures(Ck, List(fig(NewFigure.Name("a.jpg"), "3"))), 1)
       assertEquals(
-        a.figures(Ck).map(f => (f.name, f.sha256)),
+        a.figures(Ck).map(f => (f.name, f.sha256.value: String)),
         List("a.jpg" -> NewFigure.sha256(figureBytes("1")), "b.jpg" -> NewFigure.sha256(figureBytes("2")))
       )
       assertEquals(a.figureCount(Ck), 2)
@@ -64,7 +64,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
       assertEquals(a.figure(Ck, AssetService.AssetName("nope.jpg")), None)
       assertEquals(a.replaceFigures(Ck, List(fig(NewFigure.Name("c.jpg"), "2"), fig(NewFigure.Name("a.jpg"), "4"))), 2)
       assertEquals(
-        a.figures(Ck).map(f => (f.name, f.sha256)),
+        a.figures(Ck).map(f => (f.name, f.sha256.value: String)),
         List("a.jpg" -> NewFigure.sha256(figureBytes("4")), "c.jpg" -> NewFigure.sha256(figureBytes("2")))
       )
       assertEquals(
@@ -141,10 +141,10 @@ abstract class AssetServiceContract extends MediaStoreSuite:
       assert(a.link(p1, AssetService.TargetType("place"), AssetService.TargetId("zq_x"), ImageRole, Some(AssetService.LinkProperty("P18")), Some(AssetService.LinkItem("Q1")), AssetService.LinkRank(1), None))
       assert(!a.link(p1, AssetService.TargetType("place"), AssetService.TargetId("zq_x"), ImageRole, Some(AssetService.LinkProperty("P18")), Some(AssetService.LinkItem("Q1")), AssetService.LinkRank(0), Some(MediaMatch.Basis("its own picture"))))
       assertEquals(
-        a.thumbs(AssetService.TargetType("place"), AssetService.TargetId("zq_x"), AssetService.Limit(4)).map(t => (t.uid, t.role)),
+        a.thumbs(AssetService.TargetType("place"), AssetService.TargetId("zq_x"), AssetService.Limit(4)).map(t => (t.uid.value: String, t.role)),
         List(p1 -> MediaRole.Image, p2 -> MediaRole.LocatorMap)
       )
-      assertEquals(a.thumbs(AssetService.TargetType("place"), AssetService.TargetId("zq_x"), AssetService.Limit(1)).map(_.uid), List(p1))
+      assertEquals(a.thumbs(AssetService.TargetType("place"), AssetService.TargetId("zq_x"), AssetService.Limit(1)).map(_.uid.value: String), List(p1))
       assertEquals(
         a.show(p1).map(_.targets.map(t => (t.targetId, t.role, t.basis))),
         Some(List(("zq_x", MediaRole.Image, Some("its own picture"))))
@@ -152,7 +152,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
       a.setSourcePicture(Ck, p1, CoverRole, Some(AssetService.LinkProperty("calibre")))
       a.setSourcePicture(Ck, p2, CoverRole, Some(AssetService.LinkProperty("calibre")))
       assertEquals(a.sourcePicture(Ck, CoverRole), Some((p2, "p2")))
-      assertEquals(a.thumbs(AssetService.TargetType("source"), AssetService.TargetId(Ck.value), AssetService.Limit(4)).map(_.uid), List(p2))
+      assertEquals(a.thumbs(AssetService.TargetType("source"), AssetService.TargetId(Ck.value), AssetService.Limit(4)).map(_.uid.value: String), List(p2))
       assertEquals(a.placeThumbs(Place.Id("zq_nowhere"), EventMatcher.NearFinding.Km(3.0), AssetService.Limit(4)), Nil)
   }
 
@@ -171,11 +171,11 @@ abstract class AssetServiceContract extends MediaStoreSuite:
       a.list(Api.MediaQuery(provider = Some(MediaProvider.Id(MediaProvider.Source))), AssetService.Limit(50)).items.map(_.name),
       List("f1.jpg", "f2.jpg")
     )
-    assertEquals(a.list(Api.MediaQuery(provider = Some(MediaProvider.Id("zq-provider"))), AssetService.Limit(50)).items.map(_.uid), List(p1))
+    assertEquals(a.list(Api.MediaQuery(provider = Some(MediaProvider.Id("zq-provider"))), AssetService.Limit(50)).items.map(_.uid.value: String), List(p1))
     assertEquals(a.list(Api.MediaQuery(license = Some(Api.MediaQuery.License("none"))), AssetService.Limit(50)).items.map(_.name), List("f1.jpg"))
     assertEquals(a.list(Api.MediaQuery(q = Some(Api.MediaQuery.Q("F2"))), AssetService.Limit(50)).items.map(_.name), List("f2.jpg"))
     val all = a.list(Api.MediaQuery(), AssetService.Limit(2))
-    assertEquals(((all.total.value: Int), all.items.size, all.items.head.uid), (3, 2, p1))
+    assertEquals(((all.total.value: Int), all.items.size, all.items.head.uid.value: String), (3, 2, p1))
     assertEquals(a.facets.providers.map(c => (c.key, c.n)), List((MediaProvider.Source, 2), ("zq-provider", 1)))
     assertEquals(a.facets.licences.map(c => (c.key, c.n)), List(("CC-BY-4.0", 1), ("CC0-1.0", 1), ("none", 1)))
     assertEquals(

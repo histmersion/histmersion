@@ -381,7 +381,7 @@ class PlaceRepoSuite extends DbSuite:
     assert(PlaceFixtures.placesOf(ds, Finding.Id("zzp_src#0")).nonEmpty)
 
   test("the fallback tolerance matches the configured one, so they cannot drift"):
-    assertEquals(FindingPlacement.DefaultToleranceKm, cfg.places.pointToleranceKm)
+    assertEquals(FindingPlacement.DefaultToleranceKm.value, cfg.places.pointToleranceKm.value)
 
   // ── the hierarchy walk's bounds ──────────────────────────────────────────────────────────────
 

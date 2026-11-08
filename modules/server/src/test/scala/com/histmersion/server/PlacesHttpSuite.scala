@@ -223,12 +223,12 @@ class PlacesHttpSuite extends DbSuite:
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
       val about = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity)
-      assertEquals(about.build.version, Version.version)
+      assertEquals(about.build.version.value: String, Version.version.value: String)
       // the AGPL's network clause: everyone using the server is offered the source of what is running
       assertEquals(about.build.licence, Some("AGPL-3.0-or-later"))
       assertEquals(
-        about.build.sourceUrl,
-        Some(CorrespondingSource.url(CorrespondingSource.Repository(cfg.server.sourceUrl.value), BuildMeta.gitCommit.map(CorrespondingSource.Commit(_))))
+        about.build.sourceUrl.map(_.value: String),
+        Some(CorrespondingSource.url(CorrespondingSource.Repository(cfg.server.sourceUrl.value), BuildMeta.gitCommit.map(CorrespondingSource.Commit(_))).value: String)
       )
       assertEquals(about.health.db, "ok")
       assert(about.health.schemaVersion.isDefined, ab)

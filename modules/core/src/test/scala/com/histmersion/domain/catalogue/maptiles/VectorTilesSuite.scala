@@ -59,7 +59,7 @@ class VectorTilesSuite extends munit.FunSuite:
     assertEquals(g.pointsAt(tile(TileCoord.Z(5), TileCoord.X(0), TileCoord.Y(0))), 600)
     assertEquals(g.pointsAt(tile(TileCoord.Z(12), TileCoord.X(0), TileCoord.Y(0))), Int.MaxValue)
     assertEquals(TileGrid.of(TileGrid.MaxZoom(12), TileGrid.MaxPoints(600), TileGrid.CellPx(0)).cellUnits, 8)
-    assertEquals(TileGrid.of(TileGrid.MaxZoom(12), TileGrid.MaxPoints(600), TileGrid.CellPx(4096)).cellUnits, TileCoord.Extent)
+    assertEquals(TileGrid.of(TileGrid.MaxZoom(12), TileGrid.MaxPoints(600), TileGrid.CellPx(4096)).cellUnits.value, TileCoord.Extent.value)
 
   test("a written tile reads back: layer, extent, places and typed properties"):
     val pts = Seq(

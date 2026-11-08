@@ -78,7 +78,7 @@ class PagesSuite extends munit.FunSuite:
 
   test("the readable label is author-year, or the title when there are no authors"):
     assertEquals(HtmlRender.readable(cline), "Cline 2014")
-    assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)), cline.title)
+    assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)).value: String, cline.title.value: String)
 
   test("a chip never shows an underscore, and links the raw value into the web UI"):
     val c = HtmlRender.chip(ChipField.Tag, HtmlRender.Label("sea_peoples")).value

@@ -182,7 +182,7 @@ class RenameRepoSuite extends DbSuite:
     // the source and everything with a foreign key
     assert(SourceFixtures.get(ds, Old).isEmpty)
     val (detail, findings) = SourceFixtures.get(ds, New).get
-    assertEquals(detail.citekey, New)
+    assertEquals(detail.citekey.value, New.value: String)
     assertEquals(findings.size, 2)
     assertEquals(counts.findings, 2)
     connect(ds):
@@ -275,9 +275,9 @@ class RenameRepoSuite extends DbSuite:
       ArticleFixtures.getVersion(ds, Slug, ArticleFixtures.VersionId(ArticleFixtures.listVersions(ds, Slug).head.id.value)).map(_.body),
       Some(body)
     )
-    assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id), List(Slug))
+    assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id.value), List(Slug.value: String))
     assertEquals(ArticleFixtures.sourcesCited(ds, Slug).map(_.citekey).toSet, Set(New, Other))
-    assertEquals(counts.articles, List(Slug))
+    assertEquals(counts.articles.map(_.value), List(Slug.value: String))
 
     // source notes and summaries, the renamed source's own included; a longer key is left alone
     assertEquals(
@@ -295,19 +295,19 @@ class RenameRepoSuite extends DbSuite:
     assertEquals(SourceFixtures.canonical(ds, Old), Some(New))
     assertEquals(SourceFixtures.canonical(ds, New), Some(New))
     assertEquals(SourceFixtures.canonical(ds, Citekey("zzrn_nothing")), None)
-    assertEquals(SourceFixtures.resolveAliases(ds, List(WikiLinks.Occurrence.Target(Old.value), WikiLinks.Occurrence.Target(New.value))), Map(Old -> New, New -> New))
+    assertEquals(SourceFixtures.resolveAliases(ds, List(WikiLinks.Occurrence.Target(Old.value), WikiLinks.Occurrence.Target(New.value))), Map((Old.value: String) -> New, (New.value: String) -> New))
 
   test("after a rename the old citekey keeps working as a link target, an edge target and a patch target"):
     put(source(Old)); put(source(Other))
     val _ = SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).fold(e => fail(e.message.value), identity)
     // an article written LATER with the old key links the source, recorded under the new key
     val _ = ArticleFixtures.put(ds, Article(Article.Slug(Slug.value), Article.Title("Zz"), Article.KindValue("concept"), Article.Body(s"Late [[$Old]]."), None, Nil, Nil, None))
-    assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id), List(Slug))
+    assertEquals(ArticleFixtures.backlinksForSource(ds, New).map(_.id.value), List(Slug.value: String))
     // an edge written later to the old key is a real edge to the new one, not a parked one
     put(source(Other, edges = List(Edge(com.histmersion.api.library.Citekey(Other.value), com.histmersion.api.library.Citekey(Old.value), Edge.Kind.Challenges))))
     assertEquals(
-      CitationFixtures.neighbors(ds, New).map(n => (n.direction, n.citekey, n.target)),
-      Vector(("in", Other, NeighborTarget.Source))
+      CitationFixtures.neighbors(ds, New).map(n => (n.direction, n.citekey.value, n.target)),
+      Vector(("in", Other.value: String, NeighborTarget.Source))
     )
     // a patch by the old key patches the renamed source
     assert(SourceFixtures.patch(ds, Old, Source.Patch(summary = Some(Source.Summary("patched"))), cfg.limits.chunkChars).isRight)
@@ -339,7 +339,7 @@ class RenameRepoSuite extends DbSuite:
     assertEquals(tombstones, Set.empty[(String, String)])
     assert(SourceFixtures.rename(ds, New, RenameToNewRaw(Old.value)).isRight)
     assertEquals(tombstones, Set(Old -> Old), "the alias Old was deleted: its tombstone names the source")
-    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.value.startsWith(Prefix)).map(_.alias), List(New))
+    assertEquals(SourceFixtures.aliases(ds).filter(_.alias.value.startsWith(Prefix)).map(_.alias.value), List(New.value: String))
     assert(SourceFixtures.rename(ds, Old, RenameToNewRaw(New.value)).isRight)
     assertEquals(tombstones, Set(New -> New), "Old is an alias again; New was dropped by this rename back")
 
@@ -367,5 +367,5 @@ class RenameRepoSuite extends DbSuite:
     )
     refused(Old, RenameToNewRaw(New.value), Some(Write.CodeInvalid), s"finding id '$New#9'")
     // nothing moved
-    assertEquals(SourceFixtures.get(ds, Old).map(_._1.citekey), Some(Old))
+    assertEquals(SourceFixtures.get(ds, Old).map(_._1.citekey.value), Some(Old.value: String))
     assertEquals(SourceFixtures.aliasOf(ds, Old), None)

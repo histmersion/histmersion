@@ -88,8 +88,8 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(CorrespondingSource.url(repo, Some(CorrespondingSource.Commit("abc123def456"))), s"$repo/tree/abc123def456")
     assertEquals(CorrespondingSource.url(CorrespondingSource.Repository(s"$repo/"), Some(CorrespondingSource.Commit(" abc123 "))), s"$repo/tree/abc123")
     assertEquals(CorrespondingSource.url(CorrespondingSource.Repository(s"$repo.git"), Some(CorrespondingSource.Commit("abc123"))), s"$repo/tree/abc123")
-    assertEquals(CorrespondingSource.url(repo, None), repo)
-    assertEquals(CorrespondingSource.url(repo, Some(CorrespondingSource.Commit(""))), repo)
+    assertEquals(CorrespondingSource.url(repo, None).value, repo.value)
+    assertEquals(CorrespondingSource.url(repo, Some(CorrespondingSource.Commit(""))).value, repo.value)
 
   test("histmersion about names the licence and links the source; an older server says unknown"):
     val src = about.modify(_.build).setTo(about.build.modify(_.licence).setTo(Some(BuildStamp.Licence("AGPL-3.0-or-later"))).modify(_.sourceUrl).setTo(Some(BuildStamp.SourceUrl("https://example.org/h/tree/abc123def456")))

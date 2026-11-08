@@ -286,7 +286,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     val (a, h, up) = handlers(c); seed(h); stubPlan(up)
     val run = start(a, RunRequest(PlanGoal, GoalTarget))
     assertEquals(run.status, "waiting", why(run))
-    assertEquals((run.goal, run.targetKind), (Some(Goal), "goal"))
+    assertEquals((run.goal.map(_.value: String), run.targetKind), (Some(Goal), "goal"))
     // the planner was offered read tools only, and the DOIs were looked up before anyone saw them
     assertEquals(c.steps.head.flatMap(_.toolsOffered).map(_.name).toSet, Set("search", "facets", "get_source"))
     import scala.jdk.CollectionConverters.*
@@ -312,11 +312,11 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
     assertEquals(c.steps.size, 1, "the planner is not asked again on resume")
-    assertEquals(connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines"))).flatMap(_.parentSlug), Some(Goal))
+    assertEquals(connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines"))).flatMap(_.parentSlug).map(_.value: String), Some(Goal))
     val links = connect(ds)(GoalLinkRepo.links(Goal))
     assertEquals(
-      links.map(l => (l.kind, l.ref)).filter(_._1 != LinkKind.QueueItem),
-      List((LinkKind.Source, Ck), (LinkKind.Query, "Bronze Age tin isotopes"))
+      links.map(l => (l.kind, l.ref.value: String)).filter(_._1 != LinkKind.QueueItem),
+      List((LinkKind.Source, Ck.value), (LinkKind.Query, "Bronze Age tin isotopes"))
     )
     val items = h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.value.contains("zzagent.out"))
     assertEquals(items.size, 1)
@@ -428,7 +428,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     // the chained review: a review-article run with fix, started by this one, for the same goal
     val child = connect(ds)(AgentRepo.list(None, PageSize(50))).find(r => r.parent.contains(run.id)).get
     assertEquals(
-      (child.pipeline, child.target, child.params.fixes, child.origin, child.goal),
+      (child.pipeline, child.target.value: String, child.params.fixes, child.origin, child.goal.map(_.value: String)),
       ("review-article", Slug, true, Some("run"), Some(Goal))
     )
     assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == SlugRef))
@@ -440,7 +440,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
       Some(Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
     )
     val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.value), identity)
-    assertEquals((cov.total, cov.cited.map(_.citekey).toSet, cov.notUsed, cov.drift), (2, Set(Ck, Ck2), Nil, Nil))
+    assertEquals((cov.total, cov.cited.map(_.citekey.value: String).toSet, cov.notUsed, cov.drift), (2, Set(Ck, Ck2), Nil, Nil))
 
   test(
     "compile-article (#958): a hand-written Not used section is sent back; the writer's reason is stored, the list generated"
@@ -473,7 +473,7 @@ class GoalAgentsRunSuite extends DbSuite with com.histmersion.db.Bounded with Ru
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, onlyCk.trim)
     val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.value), identity)
     assertEquals(
-      cov.notUsed.map(e => (e.source.citekey, e.reason)),
+      cov.notUsed.map(e => (e.source.citekey.value: String, e.reason)),
       List((Ck2, Some("Its isotope study dates a later trade.")))
     )
     assertEquals(cov.drift, Nil)

@@ -277,7 +277,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(Gazetteer.validity(Gazetteer.ValiditySourceKey(""), Span(None, Some(Year(1769L))), Gazetteer.ValidityWindowYears(300)), Validity(None, Some(Year(1769L)), Validity.StartUnknown(false)))
 
   test("the window's default is the configured one (and V074's, checked in the db module)"):
-    assertEquals(AppConfig.load().places.sources.openStartWindowYears, Gazetteer.DefaultOpenStartWindowYears)
+    assertEquals(AppConfig.load().places.sources.openStartWindowYears.value, Gazetteer.DefaultOpenStartWindowYears.value)
 
   test("inDataset: an LPF feature with no `when` takes its dataset's; a dated one keeps its own"):
     val r = GazRecord(GazRecord.Ref("x"), None, com.histmersion.api.catalogue.Place.Id("lpf_d_x"), GazRecord.Label("X"), GazRecord.Kind(Place.Kind.Site), None, Span.always, Nil, Nil, None, None)

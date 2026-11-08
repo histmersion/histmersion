@@ -126,8 +126,8 @@ class PagingRepoSuite extends DbSuite:
     val (every, _) = connect(ds)(AgentRepo.page(None, PageSize(10), Some(goalSlug))).toOption.get
     assertEquals(every.size, 6)
     assertEquals(
-      connect(ds)(AgentRepo.stateCounts(Some(goalSlug))).toMap,
-      Map(RunState.Done.wire -> 5, RunState.Paused.wire -> 1)
+      connect(ds)(AgentRepo.stateCounts(Some(goalSlug))).toMap.map((state, count) => (state.value: String) -> count),
+      Map(RunState.Done.wire.value -> 5, RunState.Paused.wire.value -> 1)
     )
     // an OCR job is not a run, wherever it sits
     jobs(s"$tag-x", RunState.Done.wire.value, 1, "ingest", Some(goal))

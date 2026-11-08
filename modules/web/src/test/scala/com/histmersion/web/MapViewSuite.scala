@@ -82,22 +82,22 @@ class MapViewSuite extends munit.FunSuite:
 
   test("colorFor at span start returns first viridis color") {
     val c = MapView.colorFor(Some(MapView.Mid(-3500.0)), (Years.Astronomical(-3500L), Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(Fmt.RampPosition(0.0)))
+    assertEquals(c.value, Fmt.color(Fmt.RampPosition(0.0)).value)
   }
 
   test("colorFor at span end returns last viridis color") {
     val c = MapView.colorFor(Some(MapView.Mid(-500.0)), (Years.Astronomical(-3500L), Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(Fmt.RampPosition(1.0)))
+    assertEquals(c.value, Fmt.color(Fmt.RampPosition(1.0)).value)
   }
 
   test("colorFor at span midpoint returns middle viridis color") {
     val c = MapView.colorFor(Some(MapView.Mid(-2000.0)), (Years.Astronomical(-3500L), Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(Fmt.RampPosition(0.5)))
+    assertEquals(c.value, Fmt.color(Fmt.RampPosition(0.5)).value)
   }
 
   test("colorFor with None mid returns first viridis stop") {
     val c = MapView.colorFor(None, (Years.Astronomical(-3500L), Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
-    assertEquals(c, Fmt.color(Fmt.RampPosition(0.0)))
+    assertEquals(c.value, Fmt.color(Fmt.RampPosition(0.0)).value)
   }
 
   test("colorFor desaturates for low confidence") {
@@ -209,8 +209,8 @@ class MapViewSuite extends munit.FunSuite:
   test("the areas of a whole range are all asked for; a year keeps the year's limit"):
     import com.histmersion.api.catalogue.GeoTime
     import com.histmersion.web.ui.Layout
-    assertEquals(MapView.overlayLimit(GeoTime.Within(Year(-3000), Year(2000), latest = GeoTime.Within.Latest(false))), Layout.overlayRangeFetchLimit)
-    assertEquals(MapView.overlayLimit(GeoTime.At(Year(1500))), Layout.overlayFetchLimit)
+    assertEquals(MapView.overlayLimit(GeoTime.Within(Year(-3000), Year(2000), latest = GeoTime.Within.Latest(false))).value, Layout.overlayRangeFetchLimit.value)
+    assertEquals(MapView.overlayLimit(GeoTime.At(Year(1500))).value, Layout.overlayFetchLimit.value)
     assert(Layout.overlayRangeFetchLimit.value > Layout.overlayFetchLimit.value)
 
   test("the tiled layers are asked for the span itself; in playback for its window widened to whole buckets"):

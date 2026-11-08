@@ -137,8 +137,8 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       tol
     )
 
-  private def placesOf(n: Int): Set[Place.Id] =
-    PlaceFixtures.placesOf(ds, Finding.Id(s"zzpo_src#$n")).map(_.id).filter(_.value.startsWith("zzpo")).toSet
+  private def placesOf(n: Int): Set[String] =
+    PlaceFixtures.placesOf(ds, Finding.Id(s"zzpo_src#$n")).map(_.id.value: String).filter(_.startsWith("zzpo")).toSet
 
   private def row(id: DPlace.Id): (String, String, Boolean) =
     connect(ds)(
@@ -235,7 +235,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
   test("the place-kind lint no longer lists a place a person decided"):
     seed()
     def listed = PlaceFixtures.proposals(ds).map(_.id).filter(_.value.startsWith("zzpo")).toSet
-    assertEquals(listed, Set(Tribe), "a people filed as a region")
+    assertEquals(listed.map(_.value: String), Set(Tribe), "a people filed as a region")
     val _ = PlaceFixtures.setOverride(
       ds,
       Tribe,
@@ -254,10 +254,10 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       val _ = sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
                     VALUES ('zzpo_dup', 'pleiades', 'zzpo1', 'exact_match')""".update.run()
     val _ = transact(ds)(PlaceFixtures.materialisePlacesIn(List(com.histmersion.domain.catalogue.Place.Id("zzpo_dup")), tol))
-    assertEquals(placesOf(1), Set(Regio, City, "zzpo_dup"))
+    assertEquals(placesOf(1), Set(Regio, City, DPlace.Id("zzpo_dup")))
     val r = PlaceFixtures.merge(ds, DPlace.Id("zzpo_dup"), City, tol).toOption.get
-    assertEquals((r.into, r.findingsBefore, r.findingsAfter, r.unlocated), (Some(City), 2, 2, 0))
-    assertEquals(PlaceFixtures.renamedTo(ds, AliasTable.Id("zzpo_dup")), Some(City))
+    assertEquals((r.into.map(_.value: String), r.findingsBefore, r.findingsAfter, r.unlocated), (Some(City), 2, 2, 0))
+    assertEquals(PlaceFixtures.renamedTo(ds, AliasTable.Id("zzpo_dup")).map(_.value: String), Some(City))
     assertEquals(PlaceFixtures.links(ds, City).map(_.externalId).toList, List("zzpo1"))
     assertEquals(placesOf(1), Set(Regio, City))
     // the seed sends the duplicate again: it is left out, the rest of the batch goes in
@@ -398,7 +398,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
                     VALUES (${id.value}, 'wikidata', 'Qzzpo', 'exact_match', ST_SetSRID(ST_MakePoint(151.1, -31.3), 4326))""".update
         .run()
     def listed = PlaceFixtures.relocations(ds).map(_.id).filter(_.value == id.value)
-    assertEquals(listed, List(id), "a grid square's centre with a linked point elsewhere")
+    assertEquals(listed.map(_.value: String), List(id), "a grid square's centre with a linked point elsewhere")
     assertEquals(
       PlaceFixtures.relocate(ds, PlaceFixtures.relocations(ds).filter(_.id.value == id.value), tol),
       1

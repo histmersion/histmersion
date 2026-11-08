@@ -164,7 +164,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
     connect(ds)(sql"UPDATE plan_quota_readings SET resets_at = now() - interval '1 second'".update.run())
     connect(ds)(sql"UPDATE jobs SET resume_at = now() - interval '1 second' WHERE id = ${run.id}".update.run())
     enrichScripts(plan)
-    assertEquals(a.engine.resumeDue(java.time.Instant.now()), List(run.id))
+    assertEquals(a.engine.resumeDue(java.time.Instant.now()).map(_.value: String), List(run.id))
     a.engine.execute(runId(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
@@ -202,7 +202,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
       sql"UPDATE plan_quota_readings SET resets_at = now() - interval '1 second' WHERE kind = 'five_hour'".update.run()
     )
     enrichScripts(plan)
-    assertEquals(a.engine.resumeDue(java.time.Instant.ofEpochMilli(reset.value + 1000)), List(run.id))
+    assertEquals(a.engine.resumeDue(java.time.Instant.ofEpochMilli(reset.value + 1000)).map(_.value: String), List(run.id))
     a.engine.execute(runId(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)

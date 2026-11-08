@@ -285,7 +285,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Seeding, "managed: seeding")
     val seedM = connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).get
-    assertEquals((seedM.state, seedM.cron), ("active", Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))))
+    assertEquals((seedM.state, seedM.cron.map(_.value: String)), ("active", Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))))
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).map(m => (m.state, m.config.autoIngest)),
       Some(("active", Some(true)))
@@ -524,7 +524,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
     assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))), None)
     assertEquals(
-      connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).flatMap(_.cron),
+      connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).flatMap(_.cron).map(_.value: String),
       Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@monthly"), AutopilotPolicy.ManagerRow.Id.watch(Goal)))
     )
 

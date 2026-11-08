@@ -59,7 +59,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     assertEquals(s.articles.slugs, List(Walls, Index).sortBy[String](_.value))
     assert(s.articles.exists(Walls))
     assert(!s.articles.exists(Slug("zr_nothing")))
-    assertEquals(s.articles.refs(List(Index, Slug.parse("ZR_WALLS").toOption.get, Slug("zr_nothing"))).map(_.slug), List(Index, Walls))
+    assertEquals(s.articles.refs(List(Index, Slug.parse("ZR_WALLS").toOption.get, Slug("zr_nothing"))).map(_.slug.value: String), List(Index, Walls))
     assertEquals(s.articles.updatedAtMillis.keySet, Set(Walls, Index))
     assertEquals(s.articles.backlinksForSource(com.histmersion.domain.library.Citekey("zralpha1990_walls")), Nil)
     assertEquals(s.articles.citing(List(com.histmersion.domain.library.Citekey("zralpha1990_walls")), PageSize(5)), Nil)
@@ -94,12 +94,12 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       val versions = s.articles.versions(Walls)
       assertEquals(versions.size, 2)
       assertEquals(versions.map(_.wordCount), List(6, 5))
-      assertEquals(versions.map(_.updatedAt), List(second.toOption.get, first))
+      assertEquals(versions.map(_.updatedAt.value), List(second.toOption.get.value, first.value))
       val oldest = s.articles.version(Walls, ArticleRepo.VersionId(versions.last.id.value)).get
       assertEquals(oldest.body, "## Overview\n\nThe walls.\n")
       assertEquals(s.articles.version(Walls, ArticleRepo.VersionId(versions.last.id.value + 1000)), None)
       assertEquals(s.articles.version(Harbour, ArticleRepo.VersionId(versions.last.id.value)), None)
-      assertEquals(s.articles.latestVersion(Walls), Some(versions.map(_.id.value).max))
+      assertEquals(s.articles.latestVersion(Walls).map(_.value: Long), Some(versions.map(_.id.value).max))
       assertEquals(s.articles.latestVersion(Harbour), None)
   }
 
@@ -138,7 +138,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Some("## Story\n\nSee [[zr_city_walls]] and [[zr_city_walls|the walls]].\n")
     )
     assertEquals(s.articles.versions(Harbour).size, 1)
-    assertEquals(s.articles.view(Slug("zr_city_walls")).get.backlinks.map(_.id), List(Harbour))
+    assertEquals(s.articles.view(Slug("zr_city_walls")).get.backlinks.map(_.id.value: String), List(Harbour))
     assertEquals(s.articles.rename(Slug("zr_city_walls"), Harbour, Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(s.articles.rename(Slug("zr_nothing"), Slug("zr_other"), Me).left.map(_.code), Left(Some(Write.CodeNotFound)))
     assertEquals(s.articles.rename(Index, Walls, Me).left.map(_.code), Left(Some(Write.CodeInvalid)))

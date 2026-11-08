@@ -128,7 +128,7 @@ class StorageProbeSuite extends munit.FunSuite:
         figures.measure(p, StorageLocations.install, cfg, None, bs.list.left.map(_.message.value), MeasureBudget.unlimited)
       def entry(k: String) = r.entries.find(_.key.value == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))
       assertEquals(entry("backups").bytes, Some(7000L))
-      assertEquals(entry("backups").shrink, Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(3)))
+      assertEquals(entry("backups").shrink.map(_.value: String), Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(3)).map(_.value: String))
       assertEquals(r.backups, Some(BackupsUsage(BackupsUsage.Count(2), ByteCount(7000L), Some(BackupsUsage.Newest("histmersion-20261002T100000Z.dump")), BackupsUsage.Keep(3))))
       assertEquals(entry("database-cluster").bytes, Some(7000L))
       assertEquals(entry("install").bytes, Some(2000L))

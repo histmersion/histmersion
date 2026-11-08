@@ -28,7 +28,7 @@ class MediaSettingsSuite extends munit.FunSuite:
       HostLicences.readUrl(LicenceReader.ReadUrlUrl("https://creativecommons.org/licenses/by/4.0/")),
       com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0"), family(CcBy.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(true))
     )
-    assertEquals(HostLicences.readUrl(LicenceReader.ReadUrlUrl("http://rightsstatements.org/vocab/NoC-NC/1.0/")).family, Unknown.wire)
+    assertEquals(HostLicences.readUrl(LicenceReader.ReadUrlUrl("http://rightsstatements.org/vocab/NoC-NC/1.0/")).family.value, Unknown.wire.value)
     assertEquals(
       HostLicences.readFirst(List(LicenceReader.ReadFirstStatements("nonsense"), LicenceReader.ReadFirstStatements("CC BY 4.0"))),
       com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0"), family(CcBy.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(true))

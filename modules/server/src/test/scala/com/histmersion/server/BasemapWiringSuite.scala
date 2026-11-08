@@ -31,7 +31,7 @@ class BasemapWiringSuite extends munit.FunSuite:
   test("each sea-floor setting is the base map's grid of the same name"):
     val settings = SeaFloorSource.values.toList
     assertEquals(settings.map(BasemapWiring.seaFloor), List(SeaFloorGrid.Etopo1, SeaFloorGrid.Gebco))
-    assertEquals(settings.map(BasemapWiring.seaFloor(_).wire), settings.map(_.wire))
+    assertEquals(settings.map(BasemapWiring.seaFloor(_).wire.value: String), settings.map(_.wire.value: String))
 
   test("basemap.dir, else the per-user cache's basemap, else init.data-dir's"):
     assertEquals(UserPaths.basemapDir(UserPaths.BasemapDir(" /y/maps "), RuntimeConfig.DataDir("/d"), _ => None), Path.of("/y/maps"))

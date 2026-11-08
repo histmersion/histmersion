@@ -205,7 +205,7 @@ class MediaImportJobSuite extends DbSuite:
         val (s, body) = post(s"$url/api/media/import/job", s"""{"dryRun":false,"limit":$N}""")
         assertEquals(s, 202, body)
         val started = decode[JobInfo](body).fold(e => fail(s"$e: $body"), identity)
-        assertEquals(started.kind, ImportsControllers.ImportJobKind)
+        assertEquals(started.kind.value: String, ImportsControllers.ImportJobKind.value: String)
         assert(!started.isTerminal, started.toString)
 
         // mid-way: two batches of 50 asked, the third held at Wikidata

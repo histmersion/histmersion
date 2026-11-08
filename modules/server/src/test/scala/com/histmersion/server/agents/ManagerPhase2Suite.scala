@@ -246,7 +246,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assertEquals(appr.filter.map(p => (p.total, p.cited, p.citedIn)), Some((2, 2, 2)))
     a.managers.tick(t0)
     assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).status, "held")
-    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).hold.flatMap(_.untilApproval), Some(appr.id))
+    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).hold.flatMap(_.untilApproval).map(_.value), Some(appr.id.value))
     assertEquals(item(Review, ReviewKind, ManagerItem.Target("zzagent_f1")).status, "pending", "the review waits for the filter")
     assertEquals(ArticleFixtures.load(ds, Slug("zzagent_f1")).flatMap(_.filter), None, "nothing recorded before approval")
     // approve: the filter is recorded, the item done, the review dispatched
@@ -313,12 +313,12 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assert(h.research.articles.put(Slug("zzagent_old"), Article.Put(Article.Title("Old"), Article.Kind.Wire("concept"), Article.Body("Old text."))).isRight)
     val m =
       a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug), paused = Some(ManagerCreate.Paused(false)))).fold(e => fail(e.message.value), identity)
-    assertEquals((m.id, m.kind, m.goal), (seedId(ref(Goal)), "seed", Some(Goal)))
+    assertEquals((m.id, m.kind, m.goal.map(_.value: String)), (seedId(ref(Goal)), "seed", Some(Goal)))
     assert(a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug))).isLeft, "one per area")
     a.managers.tick(t0)
     val prop = item(m.id, ProposeKind, goalTarget(Goal))
     val run = connect(ds)(AgentRepo.get(prop.runId.get)).get
-    assertEquals((run.pipeline, run.goal), ("propose-articles", Some(Goal)))
+    assertEquals((run.pipeline, run.goal.map(_.value: String)), ("propose-articles", Some(Goal)))
     a.engine.execute(ApiIds.run(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "done", why(connect(ds)(AgentRepo.get(run.id)).get))
     val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(GoalSubject)).get
@@ -348,7 +348,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     assertEquals(item(m.id, ProposeKind, goalTarget(Goal)).status, "done")
     val crun = connect(ds)(AgentRepo.get(item(m.id, CompileKind, ManagerItem.Target("zzagent_new")).runId.get)).get
     assertEquals(
-      (crun.pipeline, crun.params.chainReview, crun.goal, crun.params.title),
+      (crun.pipeline, crun.params.chainReview, crun.goal.map(_.value: String), crun.params.title),
       ("compile-article", Some(false), Some(Goal), Some("Zz new"))
     )
     a.engine.execute(ApiIds.run(crun.id))
@@ -410,7 +410,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     // Enrich on an article: only its unenriched cited sources
     assert(h.research.articles.put(Slug("zzagent_e1"), Article.Put(Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Body(articleBody))).isRight)
     val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("enrich"), EnqueueRequest.Target("zzagent_e1"))).fold(e => fail(e.message.value), identity)
-    assertEquals(r.items.map(_.target), List(Ck2))
+    assertEquals(r.items.map(_.target.value: String), List(Ck2))
     assert(r.skipped.exists(_.value.contains(Ck.value)), r.skipped)
     a.managers.tick(t0)
     val run = connect(ds)(AgentRepo.get(item(Enrich, EnrichKind, ckTarget(Ck2)).runId.get)).get
@@ -463,7 +463,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     )
     a.managers.tick(t0)
     val again = connect(ds)(ManagerRepo.item(id)).get
-    assertEquals((again.priority, again.origin), (ReviewManagerPolicy.StalePriority, "selection"))
+    assertEquals((again.priority.value, again.origin), (ReviewManagerPolicy.StalePriority.value, "selection"))
     assert(again.outcome.exists(_.value.contains("its filter gained 1 source")), again.outcome)
     assert(Set("pending", "active").contains(again.status.value), again.status)
 

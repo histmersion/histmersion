@@ -225,8 +225,8 @@ class ImportedPlaceTimeSuite extends DbSuite with com.histmersion.db.Bounded:
     val ranked = Geocode.rank(cands.map(_.modify(_.tier).setTo(Gazetteer.Rank(0))), KindHint.Unknown, Some(Period(Year(-4664), Year(-3153))), Geocode.Placeholder.Min(4))
     assertEquals(ranked.head.id, "geonames_999500002", "outside its window the dated place ranks after the undated one")
     val inside = Geocode.rank(cands.map(_.modify(_.tier).setTo(Gazetteer.Rank(0))), KindHint.Unknown, Some(Period(Year(1600), Year(1650))), Geocode.Placeholder.Min(4))
-    assertEquals(inside.head.id, PatonesId)
-    assertEquals(at(Period(Year(1600), Year(1650))), Some(PatonesId))
+    assertEquals(inside.head.id.value: String, PatonesId)
+    assertEquals(at(Period(Year(1600), Year(1650))).map(_.value: String), Some(PatonesId))
     assertEquals(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("geonames_999500002")).map(_.place.dating), Some(Place.Dating.Unknown))
 
   test(

@@ -32,5 +32,5 @@ class DatasetAttributionSuite extends munit.FunSuite:
   test("every credit the page shows reads as an attribution with its own credit line"):
     val all = DataCredits.all.map(c => c -> Attribution.ofDataset(c))
     assert(all.nonEmpty)
-    all.foreach((c, a) => assertEquals((a.credit, a.licenceUrl), (c.credit, c.licenceUrl), c.name))
+    all.foreach((c, a) => assertEquals((a.credit.value, a.licenceUrl.map(_.value)), (c.credit.value, c.licenceUrl.map(_.value)), c.name))
     assert(all.exists(_._2.licence.family == Licence.Family.CcBy), all.map((c, a) => c.name -> a.licence).toString)

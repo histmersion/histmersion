@@ -100,7 +100,7 @@ class UiNoticesHttpSuite extends DbSuite:
         assertEquals(m1, 200, mb1)
         val read = decode(mb1).boards.find(_.key.value == "tasks").get
         assert(!read.fresh.value, read.toString)
-        assertEquals(read.seen, Some(latest))
+        assertEquals(read.seen.map(_.value), Some(latest.value))
 
         // refused: an unknown board, a malformed instant; a longer path is not the exemption
         assertEquals(post(s"$url/ui/seen/jobs", "{}")._1, 400)

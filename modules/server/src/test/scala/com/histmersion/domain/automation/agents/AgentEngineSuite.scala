@@ -386,7 +386,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // the paged list (core Paging): the cancelled run is counted, a cursor pages past it
     val (cancelled, page) = a.runsPage(Some(RunQuery.Status("cancelled")), Some(PageSize(500))).toOption.get
     assert(cancelled.exists(_.id == run.id))
-    assertEquals(page.total, page.count(Paging.Page.CountState("cancelled")))
+    assertEquals(page.total.value, page.count(Paging.Page.CountState("cancelled")).value)
     assert(a.runsPage(Some(RunQuery.Status("cancelled")), Some(PageSize(500)), before = Some(Paging.Cursor(run.id.value))).toOption.get._1.forall(_.id != run.id))
     assert(a.runsPage(None, None, before = Some(Paging.Cursor("no-such-run"))).left.exists(_.code.exists(_.value == Write.CodeNotFound)))
     assert(a.runsPage(Some(RunQuery.Status("bogus")), None).isLeft)
@@ -740,7 +740,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, modelFor = List(ModelOverride(ModelOverride.Role("Extractor"), ModelOverride.Model(s" ${Haiku.wire} ")))))
       .fold(e => fail(e.message.value), identity)
     assertEquals(ok.params.overrides, List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku))))
-    assertEquals((ok.modelFor(Role.Extractor), ok.modelFor(Role.Writer)), (Some(Haiku.wire), None))
+    assertEquals((ok.modelFor(Role.Extractor).map(_.value: String), ok.modelFor(Role.Writer).map(_.value: String)), (Some(Haiku.wire), None))
 
   test("the model that served a step is recorded beside the configured one (claude -p's modelUsage)"):
     val result =
@@ -850,7 +850,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     )
     assertEquals((r1.status, r2.status), ("done", "done"), s"${r1.error} ${r2.error}")
     val cmp = a.compare(List(runId(r1.id), runId(r2.id))).fold(e => fail(e.message.value), identity)
-    assertEquals((cmp.pipeline, cmp.target, cmp.runs.map(_.id)), ("enrich-source", Ck, List(r1.id, r2.id)))
+    assertEquals((cmp.pipeline, cmp.target.value: String, cmp.runs.map(_.id.value: String)), ("enrich-source", Ck, List(r1.id.value: String, r2.id.value: String)))
     assertEquals(
       cmp.runs.map(r => (r.dryRun, r.modelFor)),
       List((true, Nil), (true, List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku)))))
@@ -1113,7 +1113,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       val t = Thread.ofVirtual().start(() => engine.execute(runId(run.id)))
       val (cli, child) = (awaitFile(dir.resolve("pid")), awaitFile(dir.resolve("child")))
       assertEquals(engine.checkStalls(PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + limit / 2)), Nil) // not yet
-      assertEquals(engine.checkStalls(PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + limit + 60000L)), List(run.id))
+      assertEquals(engine.checkStalls(PlanQuotaRepo.EpochMillis(System.currentTimeMillis() + limit + 60000L)).map(_.value: String), List(run.id))
       t.join(java.time.Duration.ofSeconds(20))
       assert(!t.isAlive, "the run did not settle")
       assert(dead(cli) && dead(child), "the CLI or its child is still alive")

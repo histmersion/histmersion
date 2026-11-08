@@ -234,5 +234,5 @@ class MediaCardSuite extends munit.FunSuite:
   test("a card's picture opens the stored picture full size, with its credit, licence and provider page"):
     val attrs = Preview.fullAttrs(thumb).toMap
     assertEquals(attrs.get(UiLabels.Text("data-full")), Some(s"/media/${thumb.uid}/file"))
-    assertEquals(attrs.get(UiLabels.Text("data-lb-credit")), Some(thumb.credit))
-    assertEquals(attrs.get(UiLabels.Text("data-lb-license")), thumb.license)
+    assertEquals(attrs.get(UiLabels.Text("data-lb-credit")).map(_.value), Some(thumb.credit.value))
+    assertEquals(attrs.get(UiLabels.Text("data-lb-license")).map(_.value), thumb.license.map(_.value))

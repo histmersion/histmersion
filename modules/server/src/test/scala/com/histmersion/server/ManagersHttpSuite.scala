@@ -77,7 +77,7 @@ class ManagersHttpSuite extends DbSuite:
         assertEquals(cs, 200, cb)
         val m = decode[Managers.ManagerInfo](cb).fold(e => fail(s"$e: $cb"), identity)
         assertEquals((m.id, m.state, m.counts.pending), (s"seed:$Goal", "paused", 1))
-        assertEquals(m.effective.minSources, Some(cfg.libraryAgents.seed.minSources))
+        assertEquals(m.effective.minSources.map(_.value), Some(cfg.libraryAgents.seed.minSources.value))
         assertEquals(post(s"$url/api/agents/managers", """{"kind":"seed"}""")._1, 400, "a seed needs its goal")
         assertEquals(post(s"$url/api/agents/managers", s"""{"kind":"seed","goal":"$Goal"}""")._1, 409)
 
@@ -131,7 +131,7 @@ class ManagersHttpSuite extends DbSuite:
         assertEquals(ss, 200, sb)
         val st = decode[AgentScheduler.SchedulerStatus](sb)
           .fold(e => fail(s"$e: $sb"), identity)
-        assertEquals((st.strategy, st.strategyFrom), (cfg.agents.scheduler.strategy, "config"))
+        assertEquals((st.strategy.value: String, st.strategyFrom), (cfg.agents.scheduler.strategy.value: String, "config"))
         assert(st.strategies.map(_.name).contains("goal-first"), st.strategies)
         val (ws, wb) = get(s"$url/api/agents/scheduler/why/zqmgr2019_tin")
         assertEquals(ws, 200, wb)

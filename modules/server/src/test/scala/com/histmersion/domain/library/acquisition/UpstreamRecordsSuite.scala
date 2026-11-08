@@ -64,6 +64,6 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       "math.AG/0309136"
     )
     inputs.foreach { s =>
-      assertEquals(Identifiers.doi(Identifiers.DoiText(s)), Doi.normalize(s), s)
-      assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)), Ident.arxiv(Ident.Written(s)), s)
+      assertEquals(Identifiers.doi(Identifiers.DoiText(s)).map(_.value: String), Doi.normalize(s).map(_.value: String), s)
+      assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)).map(_.value: String), Ident.arxiv(Ident.Written(s)).map(_.value: String), s)
     }

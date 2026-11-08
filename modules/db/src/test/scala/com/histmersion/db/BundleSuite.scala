@@ -523,7 +523,7 @@ class BundleSuite extends DbSuite with Bounded:
     val inc = exportOf(ds, sp, Some(BundleScope.Since.At(asOf.value)))
     val es = entries(inc)
     val m = manifestOf(inc)
-    assertEquals(m.since, Some(asOf))
+    assertEquals(m.since.map(_.value), Some(asOf.value))
     assertEquals(
       m.files.find(_.path.value == Bundle.Kind.Source.file).map(_.lines),
       Some(1)

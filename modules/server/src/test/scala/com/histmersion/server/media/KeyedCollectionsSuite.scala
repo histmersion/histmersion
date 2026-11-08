@@ -153,7 +153,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     )
     assert(http.requests.exists(_._1 == "https://ids.si.edu/ids/download?id=FS-8431_10_screen"))
     assert(http.requests.exists(_._1 == "https://ids.si.edu/ids/download?id=FS-8431_10_thumb"))
-    assertEquals(store.checks.keySet.map(_._2), Set(egypt.id, syria.id))
+    assertEquals(store.checks.keySet.map(_._2.value: String).toSet, Set(egypt.id.value: String, syria.id.value: String))
     noKeyInUrls(http)
 
   test("Smithsonian: a refused key ends the batch and names the setting; nothing is recorded as asked"):

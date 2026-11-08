@@ -47,8 +47,8 @@ class AcquireLiveSuite extends munit.FunSuite:
 
   test("OpenAlex resolves a known DOI to the metadata the corpus expects"):
     val w = openalex.meta(doi).fold(e => fail(e.value), identity)
-    assertEquals(w.doi, Some(doi))
-    assertEquals(w.year, Some(2015))
+    assertEquals(w.doi.map(_.value: String), Some(doi))
+    assertEquals(w.year, Some(2015L))
     assertEquals(w.authors.headOption, Some("Wolfgang Haak"))
     assertEquals(w.citekey, Some("haak2015_massive"))
     assert(w.citedByCount.exists(_.value > 500), s"cited_by_count = ${w.citedByCount}")

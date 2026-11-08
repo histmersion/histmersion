@@ -82,7 +82,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(m(s).dispatch(a, run, ItemState(before = Some(ItemState.Before(2)))))
     assert(!m(s).dispatch(a, run, ItemState()), "not pending")
     assertEquals(
-      m(s).item(a).map(i => (i.status, i.runId, i.attempts, i.state.before)),
+      m(s).item(a).map(i => (i.status, i.runId.map(_.value: String), i.attempts, i.state.before)),
       Some(("active", Some(run), 1, Some(2)))
     )
     assertEquals(m(s).openFor(ManagerItem.Target("zz-a")).map(_.id), List(a))

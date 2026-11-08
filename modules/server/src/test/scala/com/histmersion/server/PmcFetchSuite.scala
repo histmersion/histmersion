@@ -107,7 +107,7 @@ class PmcFetchSuite extends munit.FunSuite:
     )
     assert(pmc.nonEmpty)
     pmc.foreach { (u, h) =>
-      assertEquals(h.get(Http.UserAgent), Some(c.publicUserAgent), u)
+      assertEquals(h.get(Http.UserAgent).map(_.value: String), Some(c.publicUserAgent.value: String), u)
       assert(!u.value.contains("someone") && !u.value.contains("mailto") && !u.value.contains("email"), u)
     }
     assert(!c.publicUserAgent.value.contains("@"), c.publicUserAgent)

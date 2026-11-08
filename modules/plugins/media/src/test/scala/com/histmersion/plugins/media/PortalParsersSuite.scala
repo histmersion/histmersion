@@ -257,7 +257,7 @@ class PortalParsersSuite extends munit.FunSuite:
     )
     assertEquals(
       classify(Plugin.Http.GetUrl("=https://elexikon.ch/RE/X,2_2449.png")),
-      Some(Left("a picture on elexikon.ch (no documented keyless licence API)"))
+      Some(Left(PleiadesLinks.Problem("a picture on elexikon.ch (no documented keyless licence API)")))
     )
     assertEquals(classify(Plugin.Http.GetUrl("https://en.wikipedia.org/wiki/Mycenae")), None)
     assertEquals(classify(Plugin.Http.GetUrl("http://www.worldcat.org/oclc/43970336")), None)
@@ -267,11 +267,11 @@ class PortalParsersSuite extends munit.FunSuite:
     val ls = PleiadesLinks.links(fixture("pleiades-place.json")).fold(e => fail(e.value), identity)
     assertEquals(
       ls.map(l => (l.citation, l.file)),
-      List(
+      List[(String, Either[PleiadesLinks.Problem, String])](
         ("citesAsRelated", Right("File:Zygouries-General plan of the excavations.jpg")),
         ("citesAsRelated", Left(PleiadesLinks.OnFlickr)),
         ("citesAsRelated", Left(PleiadesLinks.Category)),
-        ("seeFurther", Left("a picture on elexikon.ch (no documented keyless licence API)"))
+        ("seeFurther", Left(PleiadesLinks.Problem("a picture on elexikon.ch (no documented keyless licence API)")))
       )
     )
     assert(PleiadesLinks.links(parse("""{"message":"not found"}""").toOption.get).isLeft)

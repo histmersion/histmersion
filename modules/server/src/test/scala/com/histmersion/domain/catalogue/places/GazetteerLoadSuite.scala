@@ -240,7 +240,7 @@ class GazetteerLoadSuite extends DbSuite:
     assertEquals(hit.title, "Zzgaz Hittite capitals (test fixture)")
     assertEquals(hit.licence, Some("CC BY 4.0"))
     assert(hit.citation.exists(_.value.startsWith("Fixture, A. (2026)")))
-    assertEquals((hit.periodStart, hit.periodEnd), (Some(-1650L), Some(-1180L)), "the records' widest years")
+    assertEquals((hit.periodStart, hit.periodEnd), (Some(-1650), Some(-1180)), "the records' widest years")
     assertEquals(rows(GazetteerSourceRow.Key("lpf:zzgaz_kultepe")).title, "Zzgaz Kültepe (test fixture)")
     assertEquals(rows(GazetteerSourceRow.Key("lpf:zzgaz_kultepe")).citation, Some("Fixture, B. (2026). Kültepe LP-TSV."))
     val hattusa = "lpf_zzgaz_hittite_hattusa"
@@ -272,7 +272,7 @@ class GazetteerLoadSuite extends DbSuite:
     )
     assertEquals(names, List("Zzgaz Mikoyan", "Zzgaz Yeghegnadzor"))
     assertEquals(
-      PlaceFixtures.gazetteerSources(ds).find(_.key == GazetteerSourceRow.Key("geonames")).map(r => (r.version, r.sha256)),
+      PlaceFixtures.gazetteerSources(ds).find(_.key == GazetteerSourceRow.Key("geonames")).map(r => (r.version, r.sha256.value: String)),
       Some(("fixture-1", FixtureSha))
     )
 

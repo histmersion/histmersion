@@ -104,22 +104,22 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assertEquals(rows.map(r => (r.lon, r.lat)), List((Some(34.6), Some(40.0)), (None, None)))
     assertEquals(s.sources.load(A).get.edges, List(Edge(api(A), com.histmersion.api.library.Citekey("zq_article"), Edge.Kind.References), Edge(api(A), api(B), Edge.Kind.References)))
     assertEquals(
-      s.citations.neighbors(A, Nil).map(r => (r.citekey, r.target)),
-      List(("zq_article", NeighborTarget.Unresolved), (B, NeighborTarget.Unresolved))
+      s.citations.neighbors(A, Nil).map(r => (r.citekey.value: String, r.target)),
+      List(("zq_article", NeighborTarget.Unresolved), (B.value, NeighborTarget.Unresolved))
     )
     // the target arrives: its parked edge becomes an edge between two sources
     val _ = s.sources.put(source(B, Title("Cove")), Me)
     assertEquals(
-      s.citations.neighbors(A, Nil).map(r => (r.direction, r.citekey, r.target)),
-      List(("out", "zq_article", NeighborTarget.Unresolved), ("out", B, NeighborTarget.Source))
+      s.citations.neighbors(A, Nil).map(r => (r.direction, r.citekey.value: String, r.target)),
+      List(("out", "zq_article", NeighborTarget.Unresolved), ("out", B.value, NeighborTarget.Source))
     )
-    assertEquals(s.citations.neighbors(B, Nil).map(r => (r.direction, r.citekey)), List(("in", A)))
+    assertEquals(s.citations.neighbors(B, Nil).map(r => (r.direction, r.citekey.value: String)), List(("in", A)))
     // a put again keeps the findings' uids by id
     val uid0 = rows.head.uid
     val _ = s.sources.put(source(A, Title("Walls"), List(finding(A, 0, Finding.Claim("a gate, again")))), Me)
     assertEquals(s.sources.get(A).get._2.map(r => (r.claim, r.uid)), List(("a gate, again", uid0)))
     assertEquals(s.sources.citekeys, List(A, B))
-    assertEquals(s.sources.refs(List(B, A, Citekey("zqnone2000_x"))).map(_.citekey), List(A, B))
+    assertEquals(s.sources.refs(List(B, A, Citekey("zqnone2000_x"))).map(_.citekey.value: String), List(A, B))
     assertEquals(s.sources.get(Citekey("zqnone2000_x")), None)
   }
 
@@ -157,7 +157,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(A, Title("Walls")), Me)
     val chunks = s.sources.bodyChunks(A)
     assert(chunks.size >= 2, chunks.toString)
-    assertEquals(s.sources.toc(A).map(_.heading), chunks.flatMap(_.heading).distinct)
+    assertEquals(s.sources.toc(A).map(_.heading.value: String), chunks.flatMap(_.heading).distinct)
     assert(s.sources.bodyText(A).value.contains("The walls of Walls."))
     val last = s.sources.toc(A).last.heading
     assert(s.sources.bodyUnderHeading(A, SourceService.Heading(last.value.take(4).toUpperCase)).value.contains("The harbour of Walls."), last)
@@ -183,7 +183,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       )
       val counts = s.sources.rename(A, Citekey("zqa1991_walls"), Me).toOption.get
       assertEquals(
-        (counts.findings, counts.sources, counts.links, counts.columns, counts.edgesPromoted),
+        (counts.findings, counts.sources.map(_.value: String), counts.links, counts.columns, counts.edgesPromoted),
         (1, List(B), 2, Nil, 1)
       )
       assertEquals(s.sources.current(A), Some("zqa1991_walls"))
@@ -192,7 +192,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       assertEquals(s.sources.load(Citekey("zqa1991_walls")).get.findings.map(_.id), List("zqa1991_walls#0"))
       assertEquals(s.sources.load(B).get.notes, Some("See [[zqa1991_walls|the walls]] and [[zqa1991_walls]]."))
       assertEquals(
-        s.citations.neighbors(Citekey("zqa1991_walls"), Nil).map(r => (r.direction, Edge.Kind.wireOf(r.kind), r.citekey)),
+        s.citations.neighbors(Citekey("zqa1991_walls"), Nil).map(r => (r.direction, Edge.Kind.wireOf(r.kind), r.citekey.value: String)),
         List(("in", "challenges", C), ("in", "cites", C), ("out", "refutes", B))
       )
       assertEquals(s.sources.rename(A, Citekey("zqx2000_x"), Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
@@ -220,8 +220,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       )
     )
     assertEquals(
-      (plan.deletion.aliases, plan.deletion.edgesIn, plan.keys),
-      (List(A), List(Edge(api(B), com.histmersion.api.library.Citekey("zqa1991_walls"), Edge.Kind.References)), List("zqa1991_walls", A))
+      (plan.deletion.aliases.map(_.value: String), plan.deletion.edgesIn, plan.keys.map(_.value: String)),
+      (List(A), List(Edge(api(B), com.histmersion.api.library.Citekey("zqa1991_walls"), Edge.Kind.References)), List("zqa1991_walls", A.value))
     )
     val done =
       s.sources.delete(Citekey("zqa1991_walls"), SourceReferrers.Day("2026-11-01"), p => List(Source.Deletion.Files(s"file-of-${p.deletion.citekey}")), Me).toOption.get
@@ -243,8 +243,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(C, Title("Kings")), Me)
     val _ = s.sources.rename(C, Citekey("zqc1976_kings"), Me)
     assertEquals(
-      s.sources.resolveLinks(List(WikiLinks.Occurrence.Target(A.value), WikiLinks.Occurrence.Target("ZQA1990_WALLS "), WikiLinks.Occurrence.Target("zqa1990"), WikiLinks.Occurrence.Target("zqb2001"), WikiLinks.Occurrence.Target(C.value), WikiLinks.Occurrence.Target("zqnone"), WikiLinks.Occurrence.Target(""))),
-      Map(A -> A, "zqa1990_walls" -> A, "zqb2001" -> B, C -> "zqc1976_kings")
+      s.sources.resolveLinks(List(WikiLinks.Occurrence.Target(A.value), WikiLinks.Occurrence.Target("ZQA1990_WALLS "), WikiLinks.Occurrence.Target("zqa1990"), WikiLinks.Occurrence.Target("zqb2001"), WikiLinks.Occurrence.Target(C.value), WikiLinks.Occurrence.Target("zqnone"), WikiLinks.Occurrence.Target(""))).map((target, citekey) => (target.value: String) -> (citekey.value: String)),
+      Map[String, String](A.value -> A.value, "zqa1990_walls" -> A.value, "zqb2001" -> B.value, C.value -> "zqc1976_kings")
     )
     assertEquals(s.sources.resolveEdges(Me), 0) // a self-edge by a short form stays parked, an ambiguous one too
     val _ = s.sources.put(source(Citekey("zqd2005_new"), Title("New"), edges = List(Edge(com.histmersion.api.library.Citekey("zqd2005_new"), com.histmersion.api.library.Citekey("zqc1976"), Edge.Kind.References))), Me)
@@ -265,7 +265,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assertEquals(s.sources.addEdges(edges, Me), 2)
     assertEquals(s.sources.addEdges(edges, Me), 0, "an edge stored already is not new")
     assertEquals(s.sources.addEdges(Nil, Me), 0)
-    assertEquals(s.sources.load(A).map(_.edges.map(_.dst).sorted), Some(List("zq_not_yet", B)))
+    assertEquals(s.sources.load(A).map(_.edges.map(_.dst.value: String).sorted), Some(List("zq_not_yet", B.value)))
   }
 
   stest("the citekey of a DOI: case and spaces ignored, the first by citekey of two holders, none for an unknown one") {
@@ -305,13 +305,13 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(A, Title("Walls")).modify(_.provenance).setTo(Some(Source.Provenance("unpaywall"))), Me)
     val _ = s.sources.put(source(B, Title("Cove")).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))), Me)
     val _ = s.sources.put(source(C, Title("Kings")), Me)
-    assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(A, C))
-    assertEquals(s.sources.calibreGaps(Some(PageSize(1))).map(_.citekey), List(A))
-    assertEquals(s.sources.calibrePushMeta(B).map(g => (g.citekey, g.provenance)), Some((B, Some("calibre"))))
+    assertEquals(s.sources.calibreGaps(None).map(_.citekey.value: String), List(A, C))
+    assertEquals(s.sources.calibreGaps(Some(PageSize(1))).map(_.citekey.value: String), List(A))
+    assertEquals(s.sources.calibrePushMeta(B).map(g => (g.citekey.value: String, g.provenance)), Some((B, Some("calibre"))))
     assertEquals(s.sources.calibrePushMeta(Citekey("zqnone")), None)
     assertEquals(s.sources.setCalibreId(A, FullSourceRow.CalibreId("17"), Me), Right(()))
     assert(s.sources.setCalibreId(Citekey("zqnone"), FullSourceRow.CalibreId("18"), Me).isLeft)
-    assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(C))
+    assertEquals(s.sources.calibreGaps(None).map(_.citekey.value: String), List(C))
     assertEquals(s.sources.calibrePushMeta(A).flatMap(_.calibreId), Some("17"))
   }
 

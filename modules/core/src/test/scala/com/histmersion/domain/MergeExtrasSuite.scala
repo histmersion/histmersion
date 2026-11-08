@@ -125,8 +125,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val q = p.issues.find(_.kind == Issue.Kind.PlaceDiffers).getOrElse(fail(p.issues.mkString("\n")))
     assert(q.id.value.startsWith("P-") && q.open, q.toString)
     assertEquals(
-      q.detail.flatMap(_.place).map(x => (x.leftGeometry, x.rightGeometry)),
-      Some((Some(PointA), Some(PointB)))
+      q.detail.flatMap(_.place).map(x => (x.leftGeometry.map(_.value), x.rightGeometry.map(_.value))),
+      Some((Some(PointA.value), Some(PointB.value)))
     )
     val kept = run(foreign.modify(_.places).setTo(List(theirs)), in, resolve(q.id -> MergeResolution.Decision("keep-left")))
     assertEquals(kept.rows.find(_.foreignUid == theirs.uid).map(_.decision), Some(Decision.Kept))
