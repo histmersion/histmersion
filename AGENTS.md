@@ -548,6 +548,12 @@ ways: a new violation fails the build, and so does a row nothing violates any mo
 rewrites the list; a change only ever removes rows or lowers counts). Rules 2, 5, 6 and 10 are judged in review (10 is
 also `ArchitectureSuite`'s direction rule).
 
+The guideline inventory (`tools/refactor/GuidelineInventory.scala`, a Scalafix rule over the SemanticDB every compile
+writes) is a ratchet too: `GuidelineRatchetSuite` (server tests) counts its findings per rule, module and scope in
+`architecture/guidelines-ratchet.tsv`. A count above the file fails and names the new findings (path:line); a count
+below it fails until the file is regenerated with `HISTMERSION_UPDATE_ARCHITECTURE=1 sbt 'server/testOnly
+*GuidelineRatchetSuite'`. A rewrite of any of the three lists refuses a count that rises.
+
 Rules 7–14 bind new code from 2026-10-30. Existing code is migrated by two planned jobs (a style sweep and
 a restructure by feature), not piecemeal; until then, follow the surrounding code where the two conflict
 only to keep one file consistent.
