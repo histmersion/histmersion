@@ -10,14 +10,7 @@ import scala.jdk.CollectionConverters.*
   * `repositories` the repositories they were resolved from.
   */
 object LibDirectory:
-  type StoredRepositoriesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val StoredRepositoriesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  type WriteInputsPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val WriteInputsPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  type WriteInputsPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
-  val WriteInputsPart2: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
-  type Sha256Result = _root_.com.histmersion.pluginresolver.Resolver.Sha256
-  val Sha256Result: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  export com.histmersion.pluginresolver.Resolver.{Problem as StoredRepositoriesResultPart1, FileName as WriteInputsPart1, Sha256 as WriteInputsPart2, Sha256 as Sha256Result}
 
   val Classpath = "classpath"
   val Inputs = "inputs"
