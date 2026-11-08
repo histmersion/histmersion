@@ -15,8 +15,7 @@ import com.histmersion.domain.catalogue.Historicity
   * turned into the host's [[CatalogRecord]]s. Pure but for [[http]].
   */
 object PluginEvents:
-  type IntervalMs = MediaConfig.RequestIntervalMs
-  val IntervalMs: MediaConfig.RequestIntervalMs.type = MediaConfig.RequestIntervalMs
+  export MediaConfig.{RequestIntervalMs as IntervalMs}
   type PartName = PartName.T
   object PartName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
@@ -25,8 +24,7 @@ object PluginEvents:
   val Provider: CatalogRecord.Provider.type = CatalogRecord.Provider
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SleepMs = Polite.IntervalMs
-  val SleepMs: Polite.IntervalMs.type = Polite.IntervalMs
+  export Polite.{IntervalMs as SleepMs}
 
   /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a dating stored under
