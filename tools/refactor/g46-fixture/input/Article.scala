@@ -65,3 +65,10 @@ object Pinned:
   val Alias: _root_.com.histmersion.api.research.Coverage.Entry.Note.type = _root_.com.histmersion.api.research.Coverage.Entry.Note
   type Again = com.histmersion.api.research.Pinned.Alias
   val Again: _root_.com.histmersion.api.research.Pinned.Alias.type = _root_.com.histmersion.api.research.Pinned.Alias
+
+// A10 UNCHANGED: in a class's companion, an export would suppress the synthetic apply and creator applications
+final case class Limit(n: Int)
+object Limit:
+  type Reason = com.histmersion.api.research.Coverage.Entry.Reason
+  val Reason: _root_.com.histmersion.api.research.Coverage.Entry.Reason.type = _root_.com.histmersion.api.research.Coverage.Entry.Reason
+  def one: Limit = Limit(1)
