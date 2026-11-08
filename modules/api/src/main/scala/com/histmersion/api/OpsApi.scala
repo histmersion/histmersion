@@ -11,10 +11,8 @@ import com.histmersion.api.views.QueueListing
 object OpsApi:
 
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
-  type QueueExportPart3 = com.histmersion.api.automation.Queue.Export
-  val QueueExportPart3: _root_.com.histmersion.api.automation.Queue.Export.type = _root_.com.histmersion.api.automation.Queue.Export
-  type GoalsExportPart3 = com.histmersion.api.automation.Goal.Export
-  val GoalsExportPart3: _root_.com.histmersion.api.automation.Goal.Export.type = _root_.com.histmersion.api.automation.Goal.Export
+  export com.histmersion.api.automation.Queue.{Export as QueueExportPart3}
+  export com.histmersion.api.automation.Goal.{Export as GoalsExportPart3}
 
   import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
   import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}

@@ -53,8 +53,7 @@ object Finding:
       significance: Option[com.histmersion.api.library.Finding.Significance] = None
   )
   object Input:
-    type Confidence = com.histmersion.api.library.Confidence.Wire
-    val Confidence: _root_.com.histmersion.api.library.Confidence.Wire.type = _root_.com.histmersion.api.library.Confidence.Wire
+    export com.histmersion.api.library.Confidence.{Wire as Confidence}
 
     given Schema[Input] = KindlingsSchema
       .derived[Input]

@@ -6,8 +6,7 @@ import com.histmersion.api.given
 
 object ActivityMarkdown:
 
-  type MinuteAt = _root_.com.histmersion.api.automation.Activity.Entry.At
-  val MinuteAt: _root_.com.histmersion.api.automation.Activity.Entry.At.type = _root_.com.histmersion.api.automation.Activity.Entry.At
+  export com.histmersion.api.automation.Activity.Entry.{At as MinuteAt}
 
   def minute(at: com.histmersion.api.automation.ActivityMarkdown.MinuteAt): String = ((at).value.take(16).replace('T', ' '))
 

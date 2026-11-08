@@ -360,10 +360,7 @@ object Geocode:
     object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Region = Region.T
     object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromLon = com.histmersion.api.catalogue.Longitude
-    val FromLon: _root_.com.histmersion.api.catalogue.Longitude.type = _root_.com.histmersion.api.catalogue.Longitude
-    type FromLat = com.histmersion.api.catalogue.Latitude
-    val FromLat: _root_.com.histmersion.api.catalogue.Latitude.type = _root_.com.histmersion.api.catalogue.Latitude
+    export com.histmersion.api.catalogue.{Longitude as FromLon, Latitude as FromLat}
 
   def worthMoving(m: Move, minKm: com.histmersion.api.catalogue.Geocode.Move.MinKm): Boolean = (m.km).value > minKm.value
 

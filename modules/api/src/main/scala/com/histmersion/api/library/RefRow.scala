@@ -16,5 +16,4 @@ final case class RefRow(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object RefRow:
-  type Raw = com.histmersion.api.library.Refs.ReferenceText
-  val Raw: _root_.com.histmersion.api.library.Refs.ReferenceText.type = _root_.com.histmersion.api.library.Refs.ReferenceText
+  export com.histmersion.api.library.Refs.{ReferenceText as Raw}

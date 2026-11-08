@@ -36,8 +36,7 @@ object Target:
   object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type ItemKey = com.histmersion.api.personal.ItemKey
-  val ItemKey: _root_.com.histmersion.api.personal.ItemKey.type = _root_.com.histmersion.api.personal.ItemKey
+  export com.histmersion.api.personal.ItemKey
   type CheckWhat = String
   object CheckWhat:
     inline def apply(v: String): String = v

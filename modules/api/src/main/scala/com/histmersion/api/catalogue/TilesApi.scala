@@ -30,10 +30,8 @@ object TilesApi:
 
   object TileQuery:
 
-    type Layer = com.histmersion.api.catalogue.TileLayer.Wire
-    val Layer: _root_.com.histmersion.api.catalogue.TileLayer.Wire.type = _root_.com.histmersion.api.catalogue.TileLayer.Wire
-    type Z = com.histmersion.api.basemap.Basemap.Zoom
-    val Z: _root_.com.histmersion.api.basemap.Basemap.Zoom.type = _root_.com.histmersion.api.basemap.Basemap.Zoom
+    export com.histmersion.api.catalogue.TileLayer.{Wire as Layer}
+    export com.histmersion.api.basemap.Basemap.{Zoom as Z}
     type X = X.T
     object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Y = Y.T
@@ -42,12 +40,10 @@ object TilesApi:
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tier = Tier.T
     object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Historicity = com.histmersion.api.catalogue.Historicity.Wire
-    val Historicity: _root_.com.histmersion.api.catalogue.Historicity.Wire.type = _root_.com.histmersion.api.catalogue.Historicity.Wire
+    export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
     type Context = Context.T
     object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Text = com.histmersion.api.Api.Search.Text
-    val Text: _root_.com.histmersion.api.Api.Search.Text.type = _root_.com.histmersion.api.Api.Search.Text
+    export com.histmersion.api.Api.Search.Text
     type SiteType = SiteType.T
     object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Provider = Provider.T
@@ -68,8 +64,7 @@ object TilesApi:
   )
 
   object TileAnswer:
-    type ContentType = com.histmersion.api.Api.ContentType
-    val ContentType: _root_.com.histmersion.api.Api.ContentType.type = _root_.com.histmersion.api.Api.ContentType
+    export com.histmersion.api.Api.ContentType
     type Etag = Etag.T
     object Etag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CacheControl = CacheControl.T

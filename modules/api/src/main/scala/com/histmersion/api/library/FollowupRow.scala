@@ -22,8 +22,7 @@ final case class FollowupRow(
 object FollowupRow:
   type Arxiv = Arxiv.T
   object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedBy = com.histmersion.api.library.Acquire.CitedByCount
-  val CitedBy: _root_.com.histmersion.api.library.Acquire.CitedByCount.type = _root_.com.histmersion.api.library.Acquire.CitedByCount
+  export com.histmersion.api.library.Acquire.{CitedByCount as CitedBy}
   type IsInfluential = IsInfluential.T
   object IsInfluential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Intents = Intents.T

@@ -10,5 +10,4 @@ final case class RefsRequest(id: RefsRequest.Id, apply: RefsRequest.Apply = _roo
 object RefsRequest:
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Apply = com.histmersion.api.Api.Apply
-  val Apply: _root_.com.histmersion.api.Api.Apply.type = _root_.com.histmersion.api.Api.Apply
+  export com.histmersion.api.Api.Apply

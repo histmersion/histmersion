@@ -13,5 +13,4 @@ object ReviewGoal:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Status = com.histmersion.api.automation.Goal.StatusValue
-  val Status: _root_.com.histmersion.api.automation.Goal.StatusValue.type = _root_.com.histmersion.api.automation.Goal.StatusValue
+  export com.histmersion.api.automation.Goal.{StatusValue as Status}

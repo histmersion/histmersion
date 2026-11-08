@@ -13,7 +13,6 @@ final case class ArchiveImportRequest(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ArchiveImportRequest:
-  type Id = com.histmersion.api.library.ArchiveId
-  val Id: _root_.com.histmersion.api.library.ArchiveId.type = _root_.com.histmersion.api.library.ArchiveId
+  export com.histmersion.api.library.{ArchiveId as Id}
   type Format = Format.T
   object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -2,10 +2,7 @@ package com.histmersion.api.personal
 
 object PersonalIds:
 
-  type LimitResult = com.histmersion.api.Paging.Limit
-  val LimitResult: _root_.com.histmersion.api.Paging.Limit.type = _root_.com.histmersion.api.Paging.Limit
-  type LimitAsked = com.histmersion.api.Paging.Limit
-  val LimitAsked: _root_.com.histmersion.api.Paging.Limit.type = _root_.com.histmersion.api.Paging.Limit
+  export com.histmersion.api.Paging.{Limit as LimitResult, Limit as LimitAsked}
 
   val MaxLimit = 1000
   val DefaultLimit = 200

@@ -50,8 +50,7 @@ object Queue:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
-    type List = com.histmersion.api.automation.Queue.Kind.Label
-    val List: _root_.com.histmersion.api.automation.Queue.Kind.Label.type = _root_.com.histmersion.api.automation.Queue.Kind.Label
+    export com.histmersion.api.automation.Queue.Kind.{Label as List}
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topic = Topic.T
@@ -89,8 +88,7 @@ object Queue:
   object QueueAdd:
 
 
-    type CreatedAt = com.histmersion.api.automation.Queue.QueueItem.CreatedAt
-    val CreatedAt: _root_.com.histmersion.api.automation.Queue.QueueItem.CreatedAt.type = _root_.com.histmersion.api.automation.Queue.QueueItem.CreatedAt
+    export com.histmersion.api.automation.Queue.QueueItem.CreatedAt
 
     given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
 
@@ -105,8 +103,7 @@ object Queue:
   object QueuePatch:
 
 
-    type ClosedBy = com.histmersion.api.automation.Queue.QueueItem.ClosedBy
-    val ClosedBy: _root_.com.histmersion.api.automation.Queue.QueueItem.ClosedBy.type = _root_.com.histmersion.api.automation.Queue.QueueItem.ClosedBy
+    export com.histmersion.api.automation.Queue.QueueItem.ClosedBy
 
     given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
 
@@ -122,8 +119,7 @@ object Queue:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object QueueImported:
-    type List = com.histmersion.api.automation.Queue.QueueItem.List
-    val List: _root_.com.histmersion.api.automation.Queue.QueueItem.List.type = _root_.com.histmersion.api.automation.Queue.QueueItem.List
+    export com.histmersion.api.automation.Queue.Kind.{Label as List}
     type Items = Items.T
     object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T

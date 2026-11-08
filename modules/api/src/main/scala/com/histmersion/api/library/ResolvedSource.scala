@@ -17,5 +17,4 @@ final case class ResolvedSource(
   def ref: Source.Ref = Source.Ref(citekey, doi, authors, year, title, status)
 
 object ResolvedSource:
-  type Title = com.histmersion.api.library.Title
-  val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
+  export com.histmersion.api.library.Title

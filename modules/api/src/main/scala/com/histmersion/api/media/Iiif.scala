@@ -26,8 +26,7 @@ object Iiif:
   type SizeText = SizeText.T
   object SizeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseFormatResultPart1 = com.histmersion.api.library.ArchiveFile.Format.Problem
-  val ParseFormatResultPart1: _root_.com.histmersion.api.library.ArchiveFile.Format.Problem.type = _root_.com.histmersion.api.library.ArchiveFile.Format.Problem
+  export com.histmersion.api.library.ArchiveFile.Format.{Problem as ParseFormatResultPart1}
 
   val ApiContext = "http://iiif.io/api/image/3/context.json"
   val Protocol = "http://iiif.io/api/image"

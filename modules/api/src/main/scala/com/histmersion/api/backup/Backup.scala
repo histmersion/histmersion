@@ -173,8 +173,7 @@ object Backup:
   final case class Info(file: Info.File, bytes: com.histmersion.api.ByteCount, createdAt: Info.CreatedAt) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Info:
-    type File = com.histmersion.api.backup.Backup.Result.File
-    val File: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
+    export com.histmersion.api.backup.Backup.Result.File
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -223,19 +222,10 @@ object Backup:
 
   object Status:
 
-    type RunningFile = _root_.com.histmersion.api.backup.Backup.Result.File
-    val RunningFile: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
-    type FailedFile = _root_.com.histmersion.api.backup.Backup.Result.File
-    val FailedFile: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
-
-    type File = com.histmersion.api.backup.Backup.Result.File
-    val File: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
-    type DurationMs = com.histmersion.api.backup.Backup.Result.DurationMs
-    val DurationMs: _root_.com.histmersion.api.backup.Backup.Result.DurationMs.type = _root_.com.histmersion.api.backup.Backup.Result.DurationMs
+    export com.histmersion.api.backup.Backup.Result.{File as RunningFile, File as FailedFile, File, DurationMs}
     type Error = Error.T
     object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pruned = com.histmersion.api.backup.Backup.Result.Pruned
-    val Pruned: _root_.com.histmersion.api.backup.Backup.Result.Pruned.type = _root_.com.histmersion.api.backup.Backup.Result.Pruned
+    export com.histmersion.api.backup.Backup.Result.Pruned
 
     def running(file: com.histmersion.api.backup.Backup.Status.RunningFile, elapsedMs: com.histmersion.api.backup.Backup.Result.DurationMs): Status = Status(file, State.Running.wire, _root_.com.histmersion.api.backup.Backup.Result.DurationMs((elapsedMs).value))
     def done(r: Result): Status =

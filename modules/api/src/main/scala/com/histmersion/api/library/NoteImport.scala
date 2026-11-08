@@ -18,10 +18,7 @@ final case class NoteImport(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object NoteImport:
-  type Text = com.histmersion.api.library.Source.Notes
-  val Text: _root_.com.histmersion.api.library.Source.Notes.type = _root_.com.histmersion.api.library.Source.Notes
-  type Body = com.histmersion.api.library.Source.Notes
-  val Body: _root_.com.histmersion.api.library.Source.Notes.type = _root_.com.histmersion.api.library.Source.Notes
+  export com.histmersion.api.library.Source.{Notes as Text, Notes as Body}
   type Mtime = Mtime.T
   object Mtime extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Force = Force.T

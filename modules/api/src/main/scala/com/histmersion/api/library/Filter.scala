@@ -64,8 +64,7 @@ object Filter:
   object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Goal = com.histmersion.api.research.ReviewGoal.Slug
-  val Goal: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+  export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
 
   val Earliest: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(-1000000000L)
   val Latest: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(1000000000L)

@@ -118,8 +118,7 @@ object Agents:
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CostModel = _root_.com.histmersion.api.automation.Agents.ModelRef.Model
-    val CostModel: _root_.com.histmersion.api.automation.Agents.ModelRef.Model.type = _root_.com.histmersion.api.automation.Agents.ModelRef.Model
+    export com.histmersion.api.automation.Agents.ModelRef.{Model as CostModel}
 
     private[Agents] val Million = BigDecimal(1000000)
 
@@ -343,8 +342,7 @@ object Agents:
 
 
 
-    type Role = com.histmersion.api.automation.AgentRole.Wire
-    val Role: _root_.com.histmersion.api.automation.AgentRole.Wire.type = _root_.com.histmersion.api.automation.AgentRole.Wire
+    export com.histmersion.api.automation.AgentRole.{Wire as Role}
     type Model = Model.T
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -463,8 +461,7 @@ object Agents:
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TargetKind = TargetKind.T
     object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Origin = com.histmersion.api.automation.Agents.Origin.Wire
-    val Origin: _root_.com.histmersion.api.automation.Agents.Origin.Wire.type = _root_.com.histmersion.api.automation.Agents.Origin.Wire
+    export com.histmersion.api.automation.Agents.Origin.{Wire as Origin}
     type ResumeAt = ResumeAt.T
     object ResumeAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DryRun = DryRun.T
@@ -583,8 +580,7 @@ object Agents:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RoleModel:
-    type Role = com.histmersion.api.automation.AgentRole.Wire
-    val Role: _root_.com.histmersion.api.automation.AgentRole.Wire.type = _root_.com.histmersion.api.automation.AgentRole.Wire
+    export com.histmersion.api.automation.AgentRole.{Wire as Role}
     type Model = Model.T
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Ready = Ready.T
@@ -775,24 +771,20 @@ object Agents:
   object ApprovalInfo:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = com.histmersion.api.automation.Approval.Kind.Wire
-    val Kind: _root_.com.histmersion.api.automation.Approval.Kind.Wire.type = _root_.com.histmersion.api.automation.Approval.Kind.Wire
+    export com.histmersion.api.automation.Approval.Kind.{Wire as Kind}
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Current = Current.T
     object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EdgeKind = com.histmersion.api.library.Edge.Kind.Wire
-    val EdgeKind: _root_.com.histmersion.api.library.Edge.Kind.Wire.type = _root_.com.histmersion.api.library.Edge.Kind.Wire
+    export com.histmersion.api.library.Edge.Kind.{Wire as EdgeKind}
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Evidence = Evidence.T
     object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Quote = Quote.T
     object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type State = com.histmersion.api.automation.Approval.State.Wire
-    val State: _root_.com.histmersion.api.automation.Approval.State.Wire.type = _root_.com.histmersion.api.automation.Approval.State.Wire
-    type Note = com.histmersion.api.automation.Approval.Note
-    val Note: _root_.com.histmersion.api.automation.Approval.Note.type = _root_.com.histmersion.api.automation.Approval.Note
+    export com.histmersion.api.automation.Approval.State.{Wire as State}
+    export com.histmersion.api.automation.Approval.Note
     type Result = Result.T
     object Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedAt = CreatedAt.T
@@ -806,5 +798,4 @@ object Agents:
   final case class DecisionRequest(note: Option[DecisionRequest.Note] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object DecisionRequest:
-    type Note = com.histmersion.api.automation.Approval.Note
-    val Note: _root_.com.histmersion.api.automation.Approval.Note.type = _root_.com.histmersion.api.automation.Approval.Note
+    export com.histmersion.api.automation.Approval.Note

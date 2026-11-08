@@ -2,8 +2,7 @@ package com.histmersion.api.library
 import com.histmersion.api.given
 object UpstreamQuotaMarkdown:
 
-  type NameUpstream = _root_.com.histmersion.api.library.UpstreamQuota.Upstream
-  val NameUpstream: _root_.com.histmersion.api.library.UpstreamQuota.Upstream.type = _root_.com.histmersion.api.library.UpstreamQuota.Upstream
+  export com.histmersion.api.library.UpstreamQuota.{Upstream as NameUpstream}
 
   private def name(upstream: com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream): String = if upstream == _root_.com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream("core") then ("CORE") else upstream.value
 

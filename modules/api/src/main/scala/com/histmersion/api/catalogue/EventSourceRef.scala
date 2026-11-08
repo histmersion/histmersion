@@ -19,5 +19,4 @@ object EventSourceRef:
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Via = Via.T
   object Via extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Quote = com.histmersion.api.catalogue.EventPassage.Quote
-  val Quote: _root_.com.histmersion.api.catalogue.EventPassage.Quote.type = _root_.com.histmersion.api.catalogue.EventPassage.Quote
+  export com.histmersion.api.catalogue.EventPassage.Quote

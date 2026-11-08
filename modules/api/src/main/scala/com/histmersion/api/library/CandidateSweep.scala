@@ -21,8 +21,7 @@ object CandidateSweep:
 
   given Schema[Map[SkippedKey, SkippedValue]] = Schema.schemaForMap[SkippedKey, SkippedValue](_.value).copy(name = None, isOptional = true)
 
-  type Goal = com.histmersion.api.research.ReviewGoal.Slug
-  val Goal: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+  export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
   type Found = Found.T
   object Found extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Added = Added.T
@@ -46,7 +45,6 @@ object CandidateSweep:
   final case class Request(goal: Request.Goal, dryRun: Request.DryRun = _root_.com.histmersion.api.library.CandidateSweep.Request.DryRun(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Request:
-    type Goal = com.histmersion.api.research.ReviewGoal.Slug
-    val Goal: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -18,8 +18,7 @@ object JobKindEntry:
   type SubjectResult = com.histmersion.api.jobs.JobKinds.Subject
   val SubjectResult: _root_.com.histmersion.api.jobs.JobKinds.Subject.type = _root_.com.histmersion.api.jobs.JobKinds.Subject
 
-  type OfMeaning = com.histmersion.api.jobs.JobKindMeaning
-  val OfMeaning: _root_.com.histmersion.api.jobs.JobKindMeaning.type = _root_.com.histmersion.api.jobs.JobKindMeaning
+  export com.histmersion.api.jobs.{JobKindMeaning as OfMeaning}
   type OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
   val OfStoppable: _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable.type = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
   type OfSubjectResult = com.histmersion.api.jobs.JobKinds.Subject

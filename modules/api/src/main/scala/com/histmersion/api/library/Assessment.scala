@@ -27,8 +27,7 @@ final case class Assessment(
 object Assessment:
   type Target = Target.T
   object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedByCount = com.histmersion.api.library.Acquire.CitedByCount
-  val CitedByCount: _root_.com.histmersion.api.library.Acquire.CitedByCount.type = _root_.com.histmersion.api.library.Acquire.CitedByCount
+  export com.histmersion.api.library.Acquire.CitedByCount
   type InfluentialCitations = InfluentialCitations.T
   object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsRetracted = IsRetracted.T

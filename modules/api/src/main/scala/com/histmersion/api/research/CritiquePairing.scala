@@ -43,16 +43,12 @@ object CritiquePairing:
 
     type Unit = Unit.T
     object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type From = com.histmersion.api.research.Critiques.Block.From
-    val From: _root_.com.histmersion.api.research.Critiques.Block.From.type = _root_.com.histmersion.api.research.Critiques.Block.From
-    type To = com.histmersion.api.research.Critiques.Block.To
-    val To: _root_.com.histmersion.api.research.Critiques.Block.To.type = _root_.com.histmersion.api.research.Critiques.Block.To
+    export com.histmersion.api.research.Critiques.Block.{From, To}
     type Where = Where.T
     object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Edges = Edges.T
     object Edges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Named = com.histmersion.api.research.CritiquePairing.Work.Names
-    val Named: _root_.com.histmersion.api.research.CritiquePairing.Work.Names.type = _root_.com.histmersion.api.research.CritiquePairing.Work.Names
+    export com.histmersion.api.research.CritiquePairing.Work.{Names as Named}
     type Mechanical = Mechanical.T
     object Mechanical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -84,8 +80,7 @@ object CritiquePairing:
     case Strong, Weak, Conflict
 
   object Mention:
-    type Key = com.histmersion.api.text.WikiLinks.Occurrence.Target
-    val Key: _root_.com.histmersion.api.text.WikiLinks.Occurrence.Target.type = _root_.com.histmersion.api.text.WikiLinks.Occurrence.Target
+    export com.histmersion.api.text.WikiLinks.Occurrence.{Target as Key}
 
   private def mention(text: String, name: Work.Names, year: Option[com.histmersion.api.catalogue.Year]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r

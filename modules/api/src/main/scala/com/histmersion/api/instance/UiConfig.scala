@@ -75,8 +75,7 @@ object UiConfig:
   object TilesTone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DocsUrl = DocsUrl.T
   object DocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapSource = com.histmersion.api.basemap.BaseMapSource.Wire
-  val BaseMapSource: _root_.com.histmersion.api.basemap.BaseMapSource.Wire.type = _root_.com.histmersion.api.basemap.BaseMapSource.Wire
+  export com.histmersion.api.basemap.BaseMapSource.{Wire as BaseMapSource}
   type MapLanguage = MapLanguage.T
   object MapLanguage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetupDue = SetupDue.T

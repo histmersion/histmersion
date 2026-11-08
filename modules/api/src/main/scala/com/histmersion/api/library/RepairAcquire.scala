@@ -19,8 +19,7 @@ object RepairAcquire:
   object RepairRequest:
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type By = com.histmersion.api.automation.Activity.Actor
-    val By: _root_.com.histmersion.api.automation.Activity.Actor.type = _root_.com.histmersion.api.automation.Activity.Actor
+    export com.histmersion.api.automation.Activity.{Actor as By}
 
 
   final case class RepairRow(
@@ -35,8 +34,7 @@ object RepairAcquire:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RepairRow:
-    type Item = com.histmersion.api.library.Acquire.ItemNumber
-    val Item: _root_.com.histmersion.api.library.Acquire.ItemNumber.type = _root_.com.histmersion.api.library.Acquire.ItemNumber
+    export com.histmersion.api.library.Acquire.{ItemNumber as Item}
     type Goals = Goals.T
     object Goals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Watcher = Watcher.T
@@ -62,8 +60,7 @@ object RepairAcquire:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RepairResult:
-    type DryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
-    val DryRun: _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun.type = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
+    export com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
     type Moved = Moved.T
     object Moved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Removed = Removed.T

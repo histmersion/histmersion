@@ -60,14 +60,7 @@ object RunCompare:
     object Actual extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Billing = Billing.T
     object Billing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CostUsd = _root_.com.histmersion.api.automation.RunCompare.RunSide.CostUsd
-    val CostUsd: _root_.com.histmersion.api.automation.RunCompare.RunSide.CostUsd.type = _root_.com.histmersion.api.automation.RunCompare.RunSide.CostUsd
-    type Seconds = _root_.com.histmersion.api.automation.RunCompare.RunSide.Seconds
-    val Seconds: _root_.com.histmersion.api.automation.RunCompare.RunSide.Seconds.type = _root_.com.histmersion.api.automation.RunCompare.RunSide.Seconds
-    type Attempts = _root_.com.histmersion.api.automation.RunCompare.RunSide.Attempts
-    val Attempts: _root_.com.histmersion.api.automation.RunCompare.RunSide.Attempts.type = _root_.com.histmersion.api.automation.RunCompare.RunSide.Attempts
-    type Failures = _root_.com.histmersion.api.automation.RunCompare.RunSide.Failures
-    val Failures: _root_.com.histmersion.api.automation.RunCompare.RunSide.Failures.type = _root_.com.histmersion.api.automation.RunCompare.RunSide.Failures
+    export com.histmersion.api.automation.RunCompare.RunSide.{CostUsd, Seconds, Attempts, Failures}
     type FirstCallTokens = FirstCallTokens.T
     object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Turns = Turns.T

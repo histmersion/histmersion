@@ -29,8 +29,7 @@ object TimeHistogram:
   object Bucket extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type By = By.T
   object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unit = com.histmersion.api.library.Histogram.Unit
-  val Unit: _root_.com.histmersion.api.library.Histogram.Unit.type = _root_.com.histmersion.api.library.Histogram.Unit
+  export com.histmersion.api.library.Histogram.Unit
   type Total = Total.T
   object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Depth = Depth.T

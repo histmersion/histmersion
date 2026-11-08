@@ -45,8 +45,7 @@ object Coverage:
   final case class Edge(from: com.histmersion.api.library.Citekey, kind: Edge.Kind, to: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Edge:
-    type Kind = com.histmersion.api.library.Edge.Kind.Wire
-    val Kind: _root_.com.histmersion.api.library.Edge.Kind.Wire.type = _root_.com.histmersion.api.library.Edge.Kind.Wire
+    export com.histmersion.api.library.Edge.Kind.{Wire as Kind}
 
 
   final case class Entry(source: Source, reason: Option[Entry.Reason]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

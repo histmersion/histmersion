@@ -24,8 +24,7 @@ final case class MetadataPatch(
       com.histmersion.api.json.Schema
 object MetadataPatch:
 
-  type Provenance = com.histmersion.api.library.Source.Provenance
-  val Provenance: _root_.com.histmersion.api.library.Source.Provenance.type = _root_.com.histmersion.api.library.Source.Provenance
+  export com.histmersion.api.library.Source.Provenance
 
   private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
 

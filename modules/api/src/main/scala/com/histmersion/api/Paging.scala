@@ -45,8 +45,7 @@ object Paging:
 
     type Total = Total.T
     object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Next = com.histmersion.api.Paging.Cursor
-    val Next: _root_.com.histmersion.api.Paging.Cursor.type = _root_.com.histmersion.api.Paging.Cursor
+    export com.histmersion.api.Paging.{Cursor as Next}
 
     val empty: Page = Page(_root_.com.histmersion.api.Paging.Page.Total(0), None, Nil)
 

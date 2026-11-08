@@ -17,16 +17,10 @@ object SiteTypes:
   type ReportSummary = ReportSummary.T
   object ReportSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IconResult = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
-  val IconResult: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
-  type IconId = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
-  val IconId: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
-  type WikidataP31 = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
-  val WikidataP31: _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
-  type OfPlaceKind = com.histmersion.api.catalogue.Place.Kind.Wire
-  val OfPlaceKind: _root_.com.histmersion.api.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.api.catalogue.Place.Kind.Wire
-  type OfP31 = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
-  val OfP31: _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
+  export com.histmersion.api.catalogue.SiteTypes.SiteType.{Icon as IconResult, Id as IconId}
+  export com.histmersion.api.catalogue.CatalogRecord.Wikidata.{Class as WikidataP31}
+  export com.histmersion.api.catalogue.Place.Kind.{Wire as OfPlaceKind}
+  export com.histmersion.api.catalogue.CatalogRecord.Wikidata.{Class as OfP31}
 
   final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
 
@@ -378,8 +372,7 @@ object SiteTypes:
         KindlingsSchema, com.histmersion.api.json.Schema
   object Report:
 
-    type SummaryResult = com.histmersion.api.catalogue.SiteTypes.ReportSummary
-    val SummaryResult: _root_.com.histmersion.api.catalogue.SiteTypes.ReportSummary.type = _root_.com.histmersion.api.catalogue.SiteTypes.ReportSummary
+    export com.histmersion.api.catalogue.SiteTypes.{ReportSummary as SummaryResult}
 
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

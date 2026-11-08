@@ -2,10 +2,7 @@ package com.histmersion.api
 
 object YearFmt:
 
-  type OpenPeriodStart = _root_.com.histmersion.api.catalogue.Year
-  val OpenPeriodStart: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
-  type OpenPeriodEnd = _root_.com.histmersion.api.catalogue.Year
-  val OpenPeriodEnd: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+  export com.histmersion.api.catalogue.{Year as OpenPeriodStart, Year as OpenPeriodEnd}
 
   def apply(v: com.histmersion.api.catalogue.Year): String =
     if (v).value < 0 then (s"${-(v).value} BCE")

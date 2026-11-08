@@ -312,8 +312,7 @@ object ModelChains:
   final case class ChainSet(models: List[ChainSet.Models]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ChainSet:
-    type Models = com.histmersion.api.automation.ModelChains.ChainEntry.Model
-    val Models: _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model.type = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model
+    export com.histmersion.api.automation.ModelChains.ChainEntry.{Model as Models}
 
 
   final case class AllowanceSet(target: AllowanceSet.Target, limits: List[LimitSpec] = Nil, reservePct: AllowanceSet.ReservePct = _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct(0))
@@ -323,8 +322,7 @@ object ModelChains:
   object AllowanceSet:
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReservePct = com.histmersion.api.automation.ModelChains.Allowance.ReservePct
-    val ReservePct: _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct.type = _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct
+    export com.histmersion.api.automation.ModelChains.Allowance.ReservePct
 
 
   enum SettingSource(val wire: SettingSource.Wire):
@@ -383,12 +381,10 @@ object ModelChains:
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Source = Source.T
     object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReservePct = com.histmersion.api.automation.ModelChains.Allowance.ReservePct
-    val ReservePct: _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct.type = _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct
+    export com.histmersion.api.automation.ModelChains.Allowance.ReservePct
     type Usable = Usable.T
     object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FreesAt = com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt
-    val FreesAt: _root_.com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt.type = _root_.com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt
+    export com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt
     type Note = Note.T
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -413,8 +409,7 @@ object ModelChains:
     object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FreesAt = com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt
-    val FreesAt: _root_.com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt.type = _root_.com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt
+    export com.histmersion.api.automation.ModelChains.LimitStatus.FreesAt
     type Billing = Billing.T
     object Billing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Cooling = Cooling.T

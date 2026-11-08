@@ -11,10 +11,7 @@ object Stalls:
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type ReportDays = _root_.com.histmersion.api.automation.Stalls.StallReport.Days
-  val ReportDays: _root_.com.histmersion.api.automation.Stalls.StallReport.Days.type = _root_.com.histmersion.api.automation.Stalls.StallReport.Days
-  type ReportAt = _root_.com.histmersion.api.automation.Stalls.StallReport.At
-  val ReportAt: _root_.com.histmersion.api.automation.Stalls.StallReport.At.type = _root_.com.histmersion.api.automation.Stalls.StallReport.At
+  export com.histmersion.api.automation.Stalls.StallReport.{Days as ReportDays, At as ReportAt}
 
   final case class Stall(
       slug: Stall.Slug,
@@ -29,16 +26,8 @@ object Stalls:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Stall:
-    type Slug = com.histmersion.api.automation.Stalls.Facts.Slug
-    val Slug: _root_.com.histmersion.api.automation.Stalls.Facts.Slug.type = _root_.com.histmersion.api.automation.Stalls.Facts.Slug
-    type Title = com.histmersion.api.automation.Stalls.Facts.Title
-    val Title: _root_.com.histmersion.api.automation.Stalls.Facts.Title.type = _root_.com.histmersion.api.automation.Stalls.Facts.Title
-    type Status = com.histmersion.api.automation.Stalls.Facts.Status
-    val Status: _root_.com.histmersion.api.automation.Stalls.Facts.Status.type = _root_.com.histmersion.api.automation.Stalls.Facts.Status
-    type LastProgress = com.histmersion.api.automation.Stalls.Facts.LastProgress
-    val LastProgress: _root_.com.histmersion.api.automation.Stalls.Facts.LastProgress.type = _root_.com.histmersion.api.automation.Stalls.Facts.LastProgress
-    type IdleDays = com.histmersion.api.automation.Stalls.Facts.IdleDays
-    val IdleDays: _root_.com.histmersion.api.automation.Stalls.Facts.IdleDays.type = _root_.com.histmersion.api.automation.Stalls.Facts.IdleDays
+    export com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.automation.Stalls.Facts.{Title, Status, LastProgress, IdleDays}
     type Code = Code.T
     object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T
@@ -50,8 +39,7 @@ object Stalls:
   final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ReasonCount:
-    type Code = com.histmersion.api.automation.Stalls.Stall.Code
-    val Code: _root_.com.histmersion.api.automation.Stalls.Stall.Code.type = _root_.com.histmersion.api.automation.Stalls.Stall.Code
+    export com.histmersion.api.automation.Stalls.Stall.Code
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -91,10 +79,7 @@ object Stalls:
   final case class SchedWait(code: SchedWait.Code, why: SchedWait.Why, position: SchedWait.Position = _root_.com.histmersion.api.automation.Stalls.SchedWait.Position(0))
 
   object SchedWait:
-    type Code = com.histmersion.api.automation.Stalls.Stall.Code
-    val Code: _root_.com.histmersion.api.automation.Stalls.Stall.Code.type = _root_.com.histmersion.api.automation.Stalls.Stall.Code
-    type Why = com.histmersion.api.automation.Stalls.Stall.Why
-    val Why: _root_.com.histmersion.api.automation.Stalls.Stall.Why.type = _root_.com.histmersion.api.automation.Stalls.Stall.Why
+    export com.histmersion.api.automation.Stalls.Stall.{Code, Why}
     type Position = Position.T
     object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -117,8 +102,7 @@ object Stalls:
   )
 
   object Facts:
-    type Slug = com.histmersion.api.research.ReviewGoal.Slug
-    val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+    export com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Status = Status.T

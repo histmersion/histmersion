@@ -47,33 +47,23 @@ object CatalogRecord:
 
   type EventIdProvider = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
   val EventIdProvider: _root_.com.histmersion.api.catalogue.CatalogRecord.Provider.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
-  type EventIdProviderId = _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId
-  val EventIdProviderId: _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId.type = _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId
+  export com.histmersion.api.catalogue.EventCatalogueRef.{ProviderId as EventIdProviderId}
   type OwnerKeysPart2 = OwnerKeysPart2.T
   object OwnerKeysPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
 
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderId = com.histmersion.api.catalogue.EventCatalogueRef.ProviderId
-  val ProviderId: _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId.type = _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId
-  type Url = com.histmersion.api.catalogue.EventCatalogueRef.Url
-  val Url: _root_.com.histmersion.api.catalogue.EventCatalogueRef.Url.type = _root_.com.histmersion.api.catalogue.EventCatalogueRef.Url
+  export com.histmersion.api.catalogue.EventCatalogueRef.{ProviderId, Url}
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Kind = Kind.T
   object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Historicity = Historicity.T
   object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Vei = com.histmersion.api.catalogue.EventCatalogueRef.Vei
-  val Vei: _root_.com.histmersion.api.catalogue.EventCatalogueRef.Vei.type = _root_.com.histmersion.api.catalogue.EventCatalogueRef.Vei
-  type Magnitude = com.histmersion.api.catalogue.EventCatalogueRef.Magnitude
-  val Magnitude: _root_.com.histmersion.api.catalogue.EventCatalogueRef.Magnitude.type = _root_.com.histmersion.api.catalogue.EventCatalogueRef.Magnitude
-  type Deaths = com.histmersion.api.catalogue.EventCatalogueRef.Deaths
-  val Deaths: _root_.com.histmersion.api.catalogue.EventCatalogueRef.Deaths.type = _root_.com.histmersion.api.catalogue.EventCatalogueRef.Deaths
+  export com.histmersion.api.catalogue.EventCatalogueRef.{Vei, Magnitude, Deaths}
   type Wikidata = com.histmersion.api.catalogue.EventEntry.Wikidata
-  type Names = com.histmersion.api.catalogue.EventEntry.Names
-  val Names: _root_.com.histmersion.api.catalogue.EventEntry.Names.type = _root_.com.histmersion.api.catalogue.EventEntry.Names
+  export com.histmersion.api.catalogue.EventEntry.Names
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Group = Group.T
@@ -84,8 +74,7 @@ object CatalogRecord:
   object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlusMinus = PlusMinus.T
   object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DatingMethod = com.histmersion.api.catalogue.EventDating.Method
-  val DatingMethod: _root_.com.histmersion.api.catalogue.EventDating.Method.type = _root_.com.histmersion.api.catalogue.EventDating.Method
+  export com.histmersion.api.catalogue.EventDating.{Method as DatingMethod}
   type Raw = Raw.T
   object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

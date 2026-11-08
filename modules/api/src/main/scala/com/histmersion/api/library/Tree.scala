@@ -23,10 +23,7 @@ object Tree:
   val TimeTimeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
   type TimeTimeSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
   val TimeTimeSamples: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
-  type TimeTreeFrom = _root_.com.histmersion.api.catalogue.Year
-  val TimeTreeFrom: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
-  type TimeTreeTo = _root_.com.histmersion.api.catalogue.Year
-  val TimeTreeTo: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+  export com.histmersion.api.catalogue.{Year as TimeTreeFrom, Year as TimeTreeTo}
   type TimeTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
   val TimeTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
   type TimeTreeSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
@@ -36,28 +33,23 @@ object Tree:
   type SplitRatio = SplitRatioValue
   type SplitRatioValue = com.histmersion.api.library.Tree.SplitRatioAmount
   val SplitRatioValue: _root_.com.histmersion.api.library.Tree.SplitRatioAmount.type = _root_.com.histmersion.api.library.Tree.SplitRatioAmount
-  type RegionTreeAsOf = _root_.com.histmersion.api.catalogue.Year
-  val RegionTreeAsOf: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+  export com.histmersion.api.catalogue.{Year as RegionTreeAsOf}
   type RegionTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
   val RegionTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
   type RegionTreeSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
   val RegionTreeSamples: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
-  type RegionTreeRoot = _root_.com.histmersion.api.catalogue.RegionNode.Id
-  val RegionTreeRoot: _root_.com.histmersion.api.catalogue.RegionNode.Id.type = _root_.com.histmersion.api.catalogue.RegionNode.Id
+  export com.histmersion.api.catalogue.RegionNode.{Id as RegionTreeRoot}
   type TimeRegionTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
   val TimeRegionTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
   type TimeRegionTreeSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
   val TimeRegionTreeSamples: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
-  type RegionTimeTreeAsOf = _root_.com.histmersion.api.catalogue.Year
-  val RegionTimeTreeAsOf: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+  export com.histmersion.api.catalogue.{Year as RegionTimeTreeAsOf}
   type RegionTimeTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
   val RegionTimeTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
   type RegionTimeTreeSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
   val RegionTimeTreeSamples: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
-  type RegionTimeTreeRoot = _root_.com.histmersion.api.catalogue.RegionNode.Id
-  val RegionTimeTreeRoot: _root_.com.histmersion.api.catalogue.RegionNode.Id.type = _root_.com.histmersion.api.catalogue.RegionNode.Id
-  type RegionsAsOf = _root_.com.histmersion.api.catalogue.Year
-  val RegionsAsOf: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+  export com.histmersion.api.catalogue.RegionNode.{Id as RegionTimeTreeRoot}
+  export com.histmersion.api.catalogue.{Year as RegionsAsOf}
   type RegionsDepth = com.histmersion.api.library.Tree.Depth
   val RegionsDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
   type RegionsSamples = com.histmersion.api.library.Tree.MaxSamplesCount

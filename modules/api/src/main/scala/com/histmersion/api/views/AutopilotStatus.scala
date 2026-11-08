@@ -76,33 +76,4 @@ final case class AutopilotStatus(
     )
 
 object AutopilotStatus:
-  type On = com.histmersion.api.automation.Autopilot.EngineStatus.On
-  val On: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.On.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.On
-  type Since = com.histmersion.api.automation.Autopilot.EngineStatus.Since
-  val Since: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Since.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Since
-  type By = com.histmersion.api.automation.Autopilot.EngineStatus.By
-  val By: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.By.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.By
-  type AgentsEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled
-  val AgentsEnabled: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled
-  type ManagersEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled
-  val ManagersEnabled: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled
-  type CronsEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled
-  val CronsEnabled: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled
-  type IngestedToday = com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday
-  val IngestedToday: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday
-  type IngestCap = com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap
-  val IngestCap: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap
-  type MaxConcurrentRuns = com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns
-  val MaxConcurrentRuns: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns
-  type LastBackup = com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup
-  val LastBackup: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup
-  type LastLint = com.histmersion.api.automation.Autopilot.EngineStatus.LastLint
-  val LastLint: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastLint.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastLint
-  type Changes = com.histmersion.api.automation.Autopilot.EngineStatus.Changes
-  val Changes: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Changes.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Changes
-  type Backlog = com.histmersion.api.automation.Autopilot.EngineStatus.Backlog
-  val Backlog: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Backlog.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Backlog
-  type BacklogDays = com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays
-  val BacklogDays: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays
-  type GoalPlansWait = com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait
-  val GoalPlansWait: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait
+  export com.histmersion.api.automation.Autopilot.EngineStatus.{On, Since, By, AgentsEnabled, ManagersEnabled, CronsEnabled, IngestedToday, IngestCap, MaxConcurrentRuns, LastBackup, LastLint, Changes, Backlog, BacklogDays, GoalPlansWait}
