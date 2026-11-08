@@ -33,7 +33,7 @@ object PlanQuota:
 
   import Agents.{ModelRef, ProviderKind}
 
-  enum PoolId(val wire: PoolId.Wire, val title: PoolId.Title):
+  enum PoolId(val wire: PoolId.Wire, val title: PoolId.Title) derives CanEqual:
     case ClaudePlan extends PoolId(PoolId.Wire("claude-plan"), PoolId.Title("Claude plan"))
     case ChatgptPlan extends PoolId(PoolId.Wire("chatgpt-plan"), PoolId.Title("ChatGPT plan"))
 
@@ -70,7 +70,7 @@ object PlanQuota:
   def paid(m: ModelRef, logins: Logins): Boolean =
     (m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty)
 
-  enum Source(val wire: Source.Wire):
+  enum Source(val wire: Source.Wire) derives CanEqual:
     case Run extends Source(Source.Wire("run"))
 
     case Mod extends Source(Source.Wire("mod"))
@@ -183,7 +183,7 @@ object PlanQuota:
     type Why = Why.T
     object Why extends Newtype[String, Pure]
 
-  enum Verdict:
+  enum Verdict derives CanEqual:
     case Usable(note: Option[Usable.Note])
 
     case Blocked(reason: Blocked.Reason, until: Option[Blocked.Until])
@@ -249,7 +249,7 @@ object PlanQuota:
           case None                           => Verdict.Usable(None)
     (v, states)
 
-  enum RefreshMode(val wire: RefreshMode.Wire):
+  enum RefreshMode(val wire: RefreshMode.Wire) derives CanEqual:
     case Auto extends RefreshMode(RefreshMode.Wire("auto"))
     case Probe extends RefreshMode(RefreshMode.Wire("probe"))
     case Off extends RefreshMode(RefreshMode.Wire("off"))
@@ -261,7 +261,7 @@ object PlanQuota:
 
     def parse(s: Wire): Option[RefreshMode] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
-  enum Login:
+  enum Login derives CanEqual:
     case Present(detail: Present.Detail)
     case Missing(why: Missing.Why)
     case Unknown(why: Unknown.Why)
@@ -277,7 +277,7 @@ object PlanQuota:
       type Why = Why.T
       object Why extends Newtype[String, Pure]
 
-  enum RefreshNeed(val text: RefreshNeed.Text):
+  enum RefreshNeed(val text: RefreshNeed.Text) derives CanEqual:
     case StaleOnly extends RefreshNeed(RefreshNeed.Text("the reading is stale"))
 
     case NoReading extends RefreshNeed(RefreshNeed.Text("no reading yet"))
@@ -286,7 +286,7 @@ object PlanQuota:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
 
-  enum RefreshTrigger(val wire: RefreshTrigger.Wire):
+  enum RefreshTrigger(val wire: RefreshTrigger.Wire) derives CanEqual:
     case Pick extends RefreshTrigger(RefreshTrigger.Wire("pick"))
 
     case Paused extends RefreshTrigger(RefreshTrigger.Wire("paused-run"))

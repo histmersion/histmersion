@@ -4,7 +4,7 @@ package api.research
 import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum DraftMode(val wire: DraftMode.Wire):
+enum DraftMode(val wire: DraftMode.Wire) derives CanEqual:
   case Create extends DraftMode(DraftMode.Wire("create"))
   case Extend extends DraftMode(DraftMode.Wire("extend"))
 

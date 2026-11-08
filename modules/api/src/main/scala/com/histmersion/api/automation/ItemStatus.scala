@@ -2,7 +2,7 @@ package com.histmersion
 package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-enum ItemStatus(val wire: ItemStatus.Wire):
+enum ItemStatus(val wire: ItemStatus.Wire) derives CanEqual:
   case Pending extends ItemStatus(ItemStatus.Wire("pending"))
   case Held extends ItemStatus(ItemStatus.Wire("held"))
   case Active extends ItemStatus(ItemStatus.Wire("active"))

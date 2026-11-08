@@ -20,7 +20,7 @@ object Candidates:
   type IndexesValue = Index
   val IndexesValue: Index.type = Index
 
-  enum WatchKind(val wire: WatchKind.Wire):
+  enum WatchKind(val wire: WatchKind.Wire) derives CanEqual:
     case Query extends WatchKind(WatchKind.Wire("query"))
     case Citing extends WatchKind(WatchKind.Wire("citing"))
     case Author extends WatchKind(WatchKind.Wire("author"))
@@ -31,7 +31,7 @@ object Candidates:
 
     def parse(s: Wire): Option[WatchKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
-  enum State(val wire: State.Wire):
+  enum State(val wire: State.Wire) derives CanEqual:
     case New extends State(State.Wire("new"))
     case Seen extends State(State.Wire("seen"))
     case Queued extends State(State.Wire("queued"))

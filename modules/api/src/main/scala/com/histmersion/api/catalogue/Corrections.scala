@@ -14,12 +14,14 @@ object Corrections:
   type MarkdownResult = Markdown
   val MarkdownResult: Markdown.type = Markdown
 
-  enum Outcome:
+  enum Outcome derives CanEqual:
     case Keep
 
     case Retire
 
     case Conflict
+
+  private given CanEqual[Json, Json] = CanEqual.derived
 
   def reconcile(value: Json, upstreamThen: Json, upstreamNow: Json): Outcome =
     if upstreamNow == value then Outcome.Retire

@@ -8,7 +8,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum NeighborTarget:
+enum NeighborTarget derives CanEqual:
   case Source, Article, Unresolved
 
 object NeighborTarget:

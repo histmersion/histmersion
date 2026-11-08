@@ -6,7 +6,7 @@ import com.histmersion.api.catalogue.GeoTime
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
-enum GeoPick:
+enum GeoPick derives CanEqual:
   case Mid, Start, End, Earliest, Latest
 
   def wire: GeoPick.Wire = this match

@@ -77,7 +77,7 @@ object Goal:
     val all: scala.List[All] = scala.List(All(Planned), All(Seeding), All(Compiled), All(Reviewed), All(Done))
 
   /** What a goal is linked to. */
-  enum LinkKind(val wire: LinkKind.Wire):
+  enum LinkKind(val wire: LinkKind.Wire) derives CanEqual:
     case Source extends LinkKind(LinkKind.Wire("source"))
     case Article extends LinkKind(LinkKind.Wire("article"))
     case Query extends LinkKind(LinkKind.Wire("query"))

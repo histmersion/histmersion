@@ -6,7 +6,7 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Mapbox vector tiles, cut by the grid MapLibre asks for (Web Mercator, 512 px a tile). */
-enum TileLayer:
+enum TileLayer derives CanEqual:
   case Sites, Events, Media
 
   def wire: TileLayer.Wire = this match

@@ -3,7 +3,7 @@ package api
 
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Year
-enum OpenSide:
+enum OpenSide derives CanEqual:
   case Start, End
 
 object OpenSide:

@@ -4,7 +4,7 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
+enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label) derives CanEqual:
   case Source extends ItemKind(ItemKind.Wire("source"), ItemKind.Label("Source"))
   case Article extends ItemKind(ItemKind.Wire("article"), ItemKind.Label("Article"))
   case Event extends ItemKind(ItemKind.Wire("event"), ItemKind.Label("Event"))

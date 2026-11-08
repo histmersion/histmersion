@@ -7,7 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum AgentMode(val wire: AgentMode.Wire):
+enum AgentMode(val wire: AgentMode.Wire) derives CanEqual:
   case Working extends AgentMode(AgentMode.Wire("working"))
   case Finishing extends AgentMode(AgentMode.Wire("finish"))
   case Paused extends AgentMode(AgentMode.Wire("pause"))
@@ -36,7 +36,7 @@ object AgentMode:
   def of(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On): AgentMode =
     if !(autopilotOn).value then Paused else if (draining).value then Finishing else Working
 
-  enum Step:
+  enum Step derives CanEqual:
     case Autopilot(on: Autopilot.On)
     case Drain(on: Drain.On)
 

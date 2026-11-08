@@ -367,7 +367,7 @@ object Gazetteer:
     object Built extends Newtype[String, Pure]
 
   /** `Tgn`: the Getty Thesaurus of Geographic Names. */
-  enum Kind:
+  enum Kind derives CanEqual:
     case Geonames, Wikidata, Lpf, Tgn
 
     def wire: Kind.Wire = Kind.Wire(toString.toLowerCase(java.util.Locale.ROOT))

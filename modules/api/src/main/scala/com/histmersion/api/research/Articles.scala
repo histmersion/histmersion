@@ -107,7 +107,7 @@ object Articles:
     patch.ifUpdatedAt match
       case None       => Right(())
       case Some(want) =>
-        val actual = existing.updatedAt.getOrElse("")
+        val actual = existing.updatedAt.getOrElse(Article.UpdatedAt(""))
         if want == actual then Right(())
         else
           Left(

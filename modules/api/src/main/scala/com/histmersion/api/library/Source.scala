@@ -90,7 +90,7 @@ object Source:
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  enum Status:
+  enum Status derives CanEqual:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
@@ -198,10 +198,9 @@ object Source:
       val parts = d.counts.filter(_.rows.value > 0).map(c => s"${c.rows} ${short(c.part)}")
       val files = if d.files.isEmpty then Nil else List(Plural.count(_root_.com.histmersion.api.Plural.CountN((d.files.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("stored original")))
       val calibre = d.calibreId.map(id => s"Calibre entry $id kept").toList
+      val all = parts ++ files ++ calibre
       _root_.com.histmersion.api.library.Source.Delete.LogText(s"deleted ${d.citekey} (${d.title})" +
-        (parts ++ files ++ calibre match
-          case Nil => ""
-          case xs  => ": " + xs.mkString(", ")))
+        (if all.isEmpty then "" else ": " + all.mkString(", ")))
 
     def markdown(d: Deletion, calibre: Option[CalibreEntryCheck] = None): Markdown =
       val head =
@@ -444,7 +443,7 @@ object Source:
       edges: Option[EdgesPatch] = None,
       ifUpdatedAt: Option[UpdatedAt] = None
   ) derives KindlingsSchema,
-        com.histmersion.api.json.Schema
+        com.histmersion.api.json.Schema, CanEqual
   object Patch:
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])

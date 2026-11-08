@@ -7,7 +7,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum DriftKind(val wire: DriftKind.Wire):
+enum DriftKind(val wire: DriftKind.Wire) derives CanEqual:
   case Unplaced extends DriftKind(DriftKind.Wire("unplaced"))
 
   case ReasonForCited extends DriftKind(DriftKind.Wire("reason-for-cited"))

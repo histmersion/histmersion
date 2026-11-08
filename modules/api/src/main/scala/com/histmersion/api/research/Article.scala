@@ -331,7 +331,7 @@ object Article:
     type MarkdownResult = Markdown
     val MarkdownResult: Markdown.type = Markdown
 
-    enum Op(val wire: Op.Wire):
+    enum Op(val wire: Op.Wire) derives CanEqual:
       case Replace extends Op(Op.Wire("replace"))
 
       case InsertAfter extends Op(Op.Wire("insertAfter"))
@@ -376,7 +376,7 @@ object Article:
           )
         )
 
-    enum Edit:
+    enum Edit derives CanEqual:
       def anchor: Anchor
       case Replace(anchor: Replace.Anchor, text: Replace.Text)
       case InsertAfter(anchor: InsertAfter.Anchor, text: InsertAfter.Text)
@@ -516,7 +516,7 @@ object Article:
               case Left(p)  => loop(tail, ((number) + 1), cur, acc :+ base.copy(problem = Some(p)))
       loop(edits, (1), body, Vector.empty)
 
-    enum Draft:
+    enum Draft derives CanEqual:
       case Edits(edits: scala.List[EditAnswer])
       case Body(text: Draft.Body.Text)
 
@@ -698,7 +698,7 @@ object Article:
     object Strict extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  enum Kind:
+  enum Kind derives CanEqual:
     case Concept, Myth, Culture, Region, Timeline, Report, Index
 
   object Kind:
@@ -911,7 +911,7 @@ object Article:
       filter: Option[Filter] = None,
       reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil,
       critiqueReasons: scala.List[CritiqueReason] = Nil
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema:
+  ) derives KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
     def onlyCritiques: Boolean =
       (critiqueReasons.nonEmpty && this.modify(_.critiqueReasons).setTo(Nil).modify(_.ifUpdatedAt).setTo(None) == Patch())
   object Patch:

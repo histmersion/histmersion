@@ -64,7 +64,7 @@ object Period:
 
   final case class Row(periodStart: Option[Year], periodEnd: Option[Year])
 
-  enum Skip:
+  enum Skip derives CanEqual:
     case NoSpan
 
     case EndsBeforeStart

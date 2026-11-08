@@ -72,7 +72,7 @@ object ListFilters:
       subject: Option[ApprovalFilter.Subject] = None,
       goal: Option[Goal.Slug] = None,
       decidedBy: List[ApprovalFilter.DecidedBy] = Nil
-  ):
+  ) derives CanEqual:
     def normalized: ApprovalFilter =
       ApprovalFilter(
         single(state, true)(_.value, ApprovalFilter.State(_)),

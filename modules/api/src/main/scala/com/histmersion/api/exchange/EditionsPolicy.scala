@@ -4,7 +4,7 @@ package api.exchange
 import com.histmersion.api.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum EditionsPolicy:
+enum EditionsPolicy derives CanEqual:
   /** Merge them (the year issue then takes the earliest year). */
   case Merge
 

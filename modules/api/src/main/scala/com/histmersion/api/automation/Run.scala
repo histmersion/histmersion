@@ -10,7 +10,7 @@ object Run:
     * person's pause); `WaitingApproval` holds no worker and goes back to the queue when a person decides the approval
     * it waits on; `Cancelled` and the other terminal states are final.
     */
-  enum State(val wire: State.Wire):
+  enum State(val wire: State.Wire) derives CanEqual:
     case Queued extends State(State.Wire("queued"))
     case Running extends State(State.Wire("running"))
     case Paused extends State(State.Wire("paused"))

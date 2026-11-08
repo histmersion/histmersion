@@ -8,7 +8,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-enum MergeJobState:
+enum MergeJobState derives CanEqual:
   case Running, Done, Failed, Interrupted
 
 object MergeJobState:

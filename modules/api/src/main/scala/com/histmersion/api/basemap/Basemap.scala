@@ -259,7 +259,7 @@ object Basemap:
 
 
 
-  enum Layer(val wire: Layer.Wire, val title: Layer.Title):
+  enum Layer(val wire: Layer.Wire, val title: Layer.Title) derives CanEqual:
     case Vector extends Layer(Layer.Wire("vector"), Layer.Title("coast, water and land cover"))
 
     case Terrain extends Layer(Layer.Wire("terrain"), Layer.Title("relief"))
@@ -409,7 +409,7 @@ object Basemap:
       mapMaxZoom: Status.MapMaxZoom = Status.MapMaxZoom(16),
       regions: List[Region] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
     def missing(id: StyleState.Id): List[StyleState.Missing] = styles.find(_.id == id).fold(Nil)(_.missing)
 
   object Status:

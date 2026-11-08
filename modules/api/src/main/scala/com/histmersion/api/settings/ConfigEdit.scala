@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object ConfigEdit:
 
-  enum Source(val wire: Source.Wire, val label: Source.Label):
+  enum Source(val wire: Source.Wire, val label: Source.Label) derives CanEqual:
     case Default extends Source(Source.Wire("default"), Source.Label("the default"))
     case File extends Source(Source.Wire("file"), Source.Label("the settings file"))
     case Environment extends Source(Source.Wire("environment"), Source.Label("an environment variable"))
@@ -61,7 +61,10 @@ object ConfigEdit:
     object LocalKey extends Newtype[String, Pure]
 
     type Key = Key.T
-    object Key extends Newtype[String, Pure]
+    object Key extends Newtype[String, Pure]:
+      extension (key: Key)
+        /** The key with the `histmersion.` prefix every full key has. */
+        def qualified: Key = if key.value.startsWith("histmersion.") then key else Key(s"histmersion.${key.value}")
     export ConfigEdit.Section.{Id as Section}
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
@@ -103,8 +106,7 @@ object ConfigEdit:
         KindlingsSchema, com.histmersion.api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
     def field(key: Field.Key): Option[Field] =
-      val full = if (key).value.startsWith("histmersion.") then key else s"histmersion.$key"
-      fields.find(_.key == full)
+      fields.find(_.key == key.qualified)
 
   object Page:
     type Selector = Selector.T

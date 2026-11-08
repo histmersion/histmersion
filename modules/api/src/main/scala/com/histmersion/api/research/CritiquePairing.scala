@@ -82,7 +82,7 @@ object CritiquePairing:
 
   private def prose(text: String): String = (LinkRe.replaceAllIn((text), " "))
 
-  enum Mention:
+  enum Mention derives CanEqual:
     case Strong, Weak, Conflict
 
   object Mention:
