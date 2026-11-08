@@ -88,7 +88,7 @@ object RangeSql:
     Option.when(start.isDefined || end.isDefined) {
       val (s, e) = (start.orElse(stored._1), end.orElse(stored._2))
       (s, e) match
-        case (Some(a), Some(b)) if a.value > b.value =>
+        case (Some(a), Some(b)) if a > b =>
           Left(
             Api.Error(
               Api.Error.Message(s"$what: the period would start (${YearFmt(Year(a.value))}) after it ends (${YearFmt(Year(b.value))})"),

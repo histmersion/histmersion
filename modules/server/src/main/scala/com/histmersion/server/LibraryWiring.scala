@@ -45,7 +45,7 @@ final class LibraryWiring(
   /** How a filter's page and places are read. */
   val filters: SearchFilters = SearchFilters(places, cfg)
 
-  val sources: SourcesControllers = SourcesControllers(
+  val sources: SourcesControllers = new SourcesControllers(
     sourceStore,
     figures,
     formatting,

@@ -115,7 +115,7 @@ class EventCorrectionsRepoSuite extends DbSuite:
     val ids = Random(7).shuffle((1 to 6).map(i => BEventRow.Id(s"zqcr_m$i")).toList)
     ids.foreach(id => put(id, TimeSpan(Some(Year(-900 - id.value.last.asDigit)), None, None, Some(Year(-890 + id.value.last.asDigit))), Longitude(161.0)))
     val stored = EventFixtures.stored(ds)
-    assertEquals(stored.map(_.id), stored.map(_.id).sortBy(_.value))
+    assertEquals(stored.map(_.id), stored.map(_.id).sorted)
     val mine = stored.filter(_.id.value.startsWith("zqcr_m"))
     val recs = (1 to 4)
       .map(i =>

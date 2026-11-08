@@ -168,7 +168,7 @@ private[places] object GazetteerRepo:
       else
         PointAreaRepo.ofSourceIn(
           PointAreas.Group.Source(source.value),
-          pointAreaKinds.toList.sortBy(_.value).map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
+          pointAreaKinds.toList.sorted.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
         )
 
     def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.Place.Id]): RowCount = PointAreaRepo.deletePlacesIn(ids)

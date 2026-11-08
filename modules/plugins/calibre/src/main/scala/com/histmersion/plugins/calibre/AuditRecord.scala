@@ -10,8 +10,7 @@ object AuditRecord:
   type Citekey = Citekey.T
   object Citekey extends Newtype[String, Pure]
   type CalibreId = CalibreId.T
-  object CalibreId extends Newtype[Int, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
+  object CalibreId extends Newtype[Int, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type Authors = Authors.T

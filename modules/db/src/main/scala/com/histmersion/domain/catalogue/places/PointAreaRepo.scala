@@ -293,7 +293,7 @@ private[places] object PointAreaRepo:
       val n = deletePlacesIn(ids)
       val cks = held.map(_._2).toSet ++ byName
       cks.toList
-        .sortBy(_.value)
+        .sorted
         .foreach(ck =>
           FindingPlaceRepo.materialiseFor(ck, FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
         )

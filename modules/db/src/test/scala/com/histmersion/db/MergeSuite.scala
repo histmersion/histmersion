@@ -845,7 +845,7 @@ class MergeSuite extends DbSuite with Bounded:
       1
     )
     // the reviews, the log entry, the merge with its plan and backup, the remembered decisions
-    assertEquals(r.reviews.sortBy(_.value), List("bronze_age_collapse-work", "zz_shared_art", "zz_shared_conf"))
+    assertEquals(r.reviews.sorted, List("bronze_age_collapse-work", "zz_shared_art", "zz_shared_conf"))
     r.reviews.foreach(slug =>
       assertEquals(
         count(

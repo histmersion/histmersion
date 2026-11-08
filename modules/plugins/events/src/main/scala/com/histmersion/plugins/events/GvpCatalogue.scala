@@ -95,7 +95,7 @@ object GvpCatalogue:
 
   /** Pure: `from`…`to` cut into windows of `years` (the last one shorter). */
   def windows(from: Year, to: Year, years: GvpSettings.WindowYears): List[(Year, Year)] =
-    if from.value > to.value || years.value <= 0 then Nil
+    if from > to || years.value <= 0 then Nil
     else
       Iterator
         .iterate[Long](from.value)(_ + years.value)

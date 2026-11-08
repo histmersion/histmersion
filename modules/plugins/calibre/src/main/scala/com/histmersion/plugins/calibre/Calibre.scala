@@ -386,7 +386,7 @@ object Calibre:
       books: Map[Book.Id, Book]
   ): List[UpdateEntry] =
     linked.groupBy(_.calibreId).toList.sortBy(_._1).map { (id, rs) =>
-      val keys = rs.map(_.citekey).distinct.sortBy(_.value)
+      val keys = rs.map(_.citekey).distinct.sorted
       val outcome =
         if keys.sizeIs > 1 then UpdateOutcome.Shared
         else
@@ -579,7 +579,7 @@ object Calibre:
 
     def audit(records: List[AuditRecord], books: Map[Book.Id, Book]): List[AuditFinding] =
       records.groupBy(_.calibreId).toList.sortBy(_._1).flatMap { (id, rs) =>
-        val keys = rs.map(_.citekey).sortBy(_.value).map(k => AuditFinding.Citekeys(k.value))
+        val keys = rs.map(_.citekey).sorted.map(k => AuditFinding.Citekeys(k.value))
         books.get(Book.Id(id.value)) match
           case None    => List(AuditFinding(AuditFinding.CalibreId(id.value), keys, List(AuditIssue.Missing), None, rs.minBy(_.citekey.value)))
           case Some(b) =>

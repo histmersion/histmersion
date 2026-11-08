@@ -205,4 +205,4 @@ class WriteRepoSuite extends DbSuite:
     val _ = fresh()
     val ks = SourceFixtures.citekeys(ds)
     assert(ks.contains(ck))
-    assertEquals(ks.toList, ks.toList.sortBy(_.value))
+    assertEquals(ks.toList, ks.toList.sorted)

@@ -582,7 +582,7 @@ object FilterSql:
   /** Inclusive `[start, end]` overlap — the Scala twin of `int8range(a, b, '[]') &&`. */
   def overlaps(start: Option[Year], end: Option[Year], p: Period): Boolean =
     (start, end) match
-      case (Some(a), Some(b)) => a.value <= p.end.value && b.value >= p.start.value
+      case (Some(a), Some(b)) => a <= p.end && b >= p.start
       case _                  => false
 
   /** Source-level reasons this source is in the result — "title matches 'collapse'", "tag: sea-peoples", … Pure:
@@ -602,7 +602,7 @@ object FilterSql:
     f.places.foreach(p => like(r.regions.map(_.value), p.value).foreach(x => b += s"region: $x"))
     f.topics.foreach(t => if has(r.topics.map(_.value), t.value) then b += s"topic: ${t.value}")
     f.status.foreach(s => if ci(r.status.wire.value, s.value) then b += s"status: ${r.status.wire.value}")
-    f.years.foreach(y => r.year.foreach(x => if x.value >= y.start.value && x.value <= y.end.value then b += s"year: ${x.value}"))
+    f.years.foreach(y => r.year.foreach(x => if x >= y.start && x <= y.end then b += s"year: ${x.value}"))
     f.period.foreach(p =>
       if overlaps(r.periodStart, r.periodEnd, p) then
         b += s"period: ${Markdown.periodLabel(r.periodStart, r.periodEnd)}"

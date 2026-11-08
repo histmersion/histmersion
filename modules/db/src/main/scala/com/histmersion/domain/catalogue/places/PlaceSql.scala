@@ -171,7 +171,7 @@ object PlaceSql:
   ): String =
     window.fold("true") { (lo, hi) =>
       val w = modernFrom.fold("(SELECT tw.w FROM tw)")(_ => s"int8range($lo::bigint, $hi::bigint, '[]')")
-      val modernOn = modernFrom.fold("(SELECT tw.modern_on FROM tw)")(m => if hi.value >= m.value then "true" else "false")
+      val modernOn = modernFrom.fold("(SELECT tw.modern_on FROM tw)")(m => if hi >= m then "true" else "false")
       val modern = modernSql(alias)
       val undated = undatedSql(alias)
       val timeless = timelessSql(alias)
