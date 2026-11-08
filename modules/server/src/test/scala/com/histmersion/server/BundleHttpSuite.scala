@@ -205,19 +205,22 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       val ds = testPool(cfg.db)
       val sha = "a" * 64
       // the review screen's draft: empty until written, the whole set replaced, gated like any write
-      assertEquals(
-        decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8")).resolutions,
-        MergeResolutions()
-      )
-      val res =
-        """{"resolve":[{"issue":"S-1234abcd","decision":"keep-left"},{"issue":"A-1234abcd","decision":"file:merged.md","text":"merged\n"}]}"""
-      assertEquals(put(s"$url/api/merge/sessions/$sha", res, None).statusCode, 401)
-      val saved = put(s"$url/api/merge/sessions/$sha", res, Some(Key))
-      assertEquals(saved.statusCode, 200, saved.body)
-      val back = decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8"))
-      assertEquals(back.resolutions.resolve.map(_.decision), List("keep-left", "file:merged.md"))
-      assertEquals(back.resolutions.resolve.flatMap(_.text), List("merged\n"))
-      assertEquals(get(s"$url/api/merge/sessions/not-a-sha").statusCode, 400)
+      // (dropped again at the end, so the next run on this database starts from an empty draft too)
+      try
+        assertEquals(
+          decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8")).resolutions,
+          MergeResolutions()
+        )
+        val res =
+          """{"resolve":[{"issue":"S-1234abcd","decision":"keep-left"},{"issue":"A-1234abcd","decision":"file:merged.md","text":"merged\n"}]}"""
+        assertEquals(put(s"$url/api/merge/sessions/$sha", res, None).statusCode, 401)
+        val saved = put(s"$url/api/merge/sessions/$sha", res, Some(Key))
+        assertEquals(saved.statusCode, 200, saved.body)
+        val back = decode[MergeSession](String(get(s"$url/api/merge/sessions/$sha").body, "UTF-8"))
+        assertEquals(back.resolutions.resolve.map(_.decision), List("keep-left", "file:merged.md"))
+        assertEquals(back.resolutions.resolve.flatMap(_.text), List("merged\n"))
+        assertEquals(get(s"$url/api/merge/sessions/not-a-sha").statusCode, 400)
+      finally com.augustnagro.magnum.transact(ds)(MergeRepo.dropSession(MergeRepo.BundleName(sha)))
 
       // a resolution file read on the server (the web screen's upload); every bad line at once
       val yaml = "bundle: 0192f6c4-0000-7000-8000-000000000000\nresolve:\n  S-1234abcd: keep-right\n"
