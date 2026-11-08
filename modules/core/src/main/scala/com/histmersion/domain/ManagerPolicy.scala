@@ -377,8 +377,7 @@ object ManagerPolicy:
 
   object Candidate:
     type Id = Id.T
-    object Id extends Newtype[Long, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    object Id extends Newtype[Long, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type Priority = Priority.T

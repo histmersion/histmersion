@@ -125,9 +125,9 @@ object PluginKit:
     val linked =
       installed.map(_.jars.map(j => j.file -> j.sha256).toMap).getOrElse(Map.empty) ++ linkedDeps.getOrElse(Map.empty)
     val now = dir.toMap ++ (if linkedDeps.isDefined then dependencies.toMap else Map.empty)
-    val added = now.keys.filterNot(linked.contains).toList.sortBy(_.value)
-    val removed = linked.keys.filterNot(now.contains).toList.sortBy(_.value)
-    val changed = now.collect { case (f, h) if linked.get(f).exists(_ != h) => f }.toList.sortBy(_.value)
+    val added = now.keys.filterNot(linked.contains).toList.sorted
+    val removed = linked.keys.filterNot(now.contains).toList.sorted
+    val changed = now.collect { case (f, h) if linked.get(f).exists(_ != h) => f }.toList.sorted
     val depsMoved = linkedDeps.exists(_ != dependencies.toMap)
     val runningDigest = if serverAnswered then Some(running.fold(PluginSet.Digest(PluginSet.EmptyDigest))(_.digest)) else None
     val verdict = installed match
@@ -355,7 +355,7 @@ object PluginKit:
       .left
       .map(e => Problem(s"kit.json: ${e.getMessage}"))
       .filterOrElse(
-        _.format.value <= KitFormat.value,
+        _.format <= KitFormat,
         Problem(s"kit.json: a newer kit format than this Histmersion reads ($KitFormat)")
       )
 
@@ -378,7 +378,7 @@ object PluginKit:
     */
   def verifyKit(expected: List[KitFile], actual: Map[KitFile.File, KitFile.Sha256]): List[Problem] =
     val want = expected.map(f => f.file -> f.sha256).toMap
-    val missing = want.keys.filterNot(actual.contains).toList.sortBy(_.value).map(f => Problem(s"missing: $f"))
-    val changed = want.collect { case (f, h) if actual.get(f).exists(_ != h) => f }.toList.sortBy(_.value).map(f => Problem(s"changed: $f"))
-    val extra = actual.keys.filterNot(want.contains).toList.sortBy(_.value).map(f => Problem(s"not in the manifest: $f"))
+    val missing = want.keys.filterNot(actual.contains).toList.sorted.map(f => Problem(s"missing: $f"))
+    val changed = want.collect { case (f, h) if actual.get(f).exists(_ != h) => f }.toList.sorted.map(f => Problem(s"changed: $f"))
+    val extra = actual.keys.filterNot(want.contains).toList.sorted.map(f => Problem(s"not in the manifest: $f"))
     missing ++ changed ++ extra

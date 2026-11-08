@@ -276,7 +276,7 @@ object ReviewManagerPolicy:
   ): Option[Pick.Why] =
     if days.value <= 0 then None
     else
-      val gained = hitsThen.zip(hitsNow).collect { case (a, b) if b.value > a.value => b.value - a.value }
+      val gained = hitsThen.zip(hitsNow).collect { case (a, b) if b > a => b.value - a.value }
       gained
         .map(n => s"its filter gained ${counted(n, "source")}")
         .orElse(

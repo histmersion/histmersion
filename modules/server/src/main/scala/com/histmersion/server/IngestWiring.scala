@@ -25,7 +25,7 @@ final class IngestWiring(
   /** The acquisition spool, where a fetched copy waits for the converter. */
   def spool: Spool = Spool(deps.storage.store(Location.Spool))
 
-  val queue: IngestQueue = IngestQueue(
+  val queue: IngestQueue = new IngestQueue(
     sources,
     figures,
     deps.queues,

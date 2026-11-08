@@ -204,7 +204,7 @@ object AcquireMatch:
       .flatMap { i =>
         val s = scoreOf(i.text.value, title.value, authors)
         Option.when(s.value >= proposeAt.value) {
-          val named = doisInText(i.text.value).toList.sortBy(_.value)
+          val named = doisInText(i.text.value).toList.sorted
           Decision.Propose(i, s, named.find(d => !key.contains(d)))
         }
       }

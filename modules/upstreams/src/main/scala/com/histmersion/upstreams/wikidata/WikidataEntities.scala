@@ -54,7 +54,7 @@ object WikidataEntities:
                 if rank == "deprecated" || snak.get[String]("snaktype").toOption.exists(_ != "value") then None
                 else v.map(f => WikidataStatement(p, WikidataStatement.File(f), WikidataStatement.Preferred(rank == "preferred"), WikidataStatement.Order(i)))
               }
-            val pictures = props.toList.sortBy(_.value).flatMap(statementsOf)
+            val pictures = props.toList.sorted.flatMap(statementsOf)
             val category = WikidataStatement.best(statementsOf(WikidataStatement.Property(CommonsCategory)), WikidataStatement.BestPer(1)).headOption.map(st => WikidataItem.CommonsCategory(st.file.value))
             val id = WikidataItem.Id(key)
             Some(id -> WikidataItem(id, pictures, category))

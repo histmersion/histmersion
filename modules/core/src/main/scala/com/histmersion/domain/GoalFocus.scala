@@ -93,8 +93,7 @@ object GoalFocus:
   object Work:
 
     type ItemId = ItemId.T
-    object ItemId extends Newtype[Long, Pure]:
-      given Ordering[T] = Ordering.by[T, Long](_.value)
+    object ItemId extends Newtype[Long, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type Person = Person.T
@@ -104,8 +103,7 @@ object GoalFocus:
     type PersonHeld = PersonHeld.T
     object PersonHeld extends Newtype[Boolean, Pure]
     type Approval = Approval.T
-    object Approval extends Newtype[Long, Pure]:
-      given Ordering[T] = Ordering.by[T, Long](_.value)
+    object Approval extends Newtype[Long, Pure]
     type ApprovalByPerson = ApprovalByPerson.T
     object ApprovalByPerson extends Newtype[Boolean, Pure]
 
@@ -390,7 +388,7 @@ object GoalFocus:
         swaps: List[(Goal.Slug, Reason)]
     ): (List[Facts], List[(Facts, Reason)], List[(Goal.Slug, Reason)]) =
       val pool = cands.map(_._1).filterNot(g => chosen.exists(_.slug == g.slug))
-      val urgent = pool.filter(g => stageOf(g.slug).rank.value <= Stage.Compiling.rank.value)
+      val urgent = pool.filter(g => stageOf(g.slug).rank <= Stage.Compiling.rank)
       val victims = chosen.filter(g => !g.pinned.value && stageOf(g.slug) == Stage.Gathering)
       if urgent.isEmpty || victims.isEmpty then (chosen, fresh, swaps)
       else

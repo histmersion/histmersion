@@ -102,8 +102,7 @@ object PlaceReview:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
     type FeatureTypes = FeatureTypes.T
-    object FeatureTypes extends Newtype[String, Pure]:
-      given Ordering[T] = Ordering.by[T, String](_.value)
+    object FeatureTypes extends Newtype[String, Pure]
     type TimePeriods = TimePeriods.T
     object TimePeriods extends Newtype[String, Pure]
     type Descriptions = Descriptions.T
@@ -191,7 +190,7 @@ object PlaceReview:
     * else none.
     */
   def polityPeriod(e: Evidence): Option[Period] =
-    val own = for s <- e.start; t <- e.end if t.value < ExtantYear.value && s.value <= t.value; p <- DeepTime.span(s, t) yield p
+    val own = for s <- e.start; t <- e.end if t < ExtantYear && s <= t; p <- DeepTime.span(s, t) yield p
     own.orElse(e.items.flatMap(_.period).headOption)
 
   /** The proposal for one place (`None` = leave it). `candidates` are the seed places a withdrawn duplicate's name

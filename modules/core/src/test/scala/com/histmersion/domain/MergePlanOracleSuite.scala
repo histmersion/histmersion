@@ -110,8 +110,8 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       sk: Map[Bundle.Source.BodySha256, MinHash],
       res: MergeResolutions
   ): String =
-    val s = MergePlanner.sketchesWanted(in, cfg, rules).toList.sortBy(_.value)
-    val b = MergePlanner.bodiesWanted(in, sk, res, cfg, rules).toList.sortBy(_.value)
+    val s = MergePlanner.sketchesWanted(in, cfg, rules).toList.sorted
+    val b = MergePlanner.bodiesWanted(in, sk, res, cfg, rules).toList.sorted
     s"sketches wanted: ${s.mkString(", ")}\nbodies wanted: ${b.mkString(", ")}\n"
 
   private def render(r: MergePlanner.Result): String =

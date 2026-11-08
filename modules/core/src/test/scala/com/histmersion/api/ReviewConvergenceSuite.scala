@@ -40,7 +40,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
 
   test("live ledgers decode — entries written before §6.9 have no not-fixed count and no deferral"):
     val a = live("achilles_origins")
-    assertEquals(a.entries.map(_.id).sortBy(_.value), List("C12", "R8", "S3", "S4", "S5", "S6"))
+    assertEquals(a.entries.map(_.id).sorted, List("C12", "R8", "S3", "S4", "S5", "S6"))
     assert(a.entries.forall(e => e.notFixedCount.value == 0 && e.deferred.isEmpty))
     assertEquals(a.entry(ReviewArticle.Finding.Id("S6")).flatMap(_.finding.pair).map(_.wire), Some("kelly2021_gods>bachvarova2016_hittite"))
     // and round-trips with the new fields
@@ -64,13 +64,13 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     val after = g // the final pass absorbed: S24/S31/S7 reopened, S35–S37 new
     val regression = (f: Finding) => f.id.value == "S37"
     val (d, ids) = deferFinal(before, after, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), regression)
-    assertEquals(ids.sortBy(_.value), List("S35", "S36"))
-    assertEquals(d.entries.filter(_.deferred.contains(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"))).map(_.id).sortBy(_.value), List("S35", "S36"))
+    assertEquals(ids.sorted, List("S35", "S36"))
+    assertEquals(d.entries.filter(_.deferred.contains(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"))).map(_.id).sorted, List("S35", "S36"))
     // the run's verdict counts them as minor; the next run sees them as open MAJORs
     val m = merged(d, ReviewLedger.Closure.Round(3), run = Some(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b")))
-    assertEquals(m.deferred.sortBy(_.value), List("S35", "S36"))
+    assertEquals(m.deferred.sorted, List("S35", "S36"))
     assert(!m.majors.exists(f => Set("S35", "S36")(f.id.value)))
-    assertEquals(m.majors.map(_.id).sortBy(_.value), List("S24", "S31", "S37", "S7"))
+    assertEquals(m.majors.map(_.id).sorted, List("S24", "S31", "S37", "S7"))
     assertEquals(merged(d, ReviewLedger.Closure.Round(1), run = Some(Run.Id("cc1deb80-c51f-5da7-a8a6-4eeb589e61b3"))).majors.size, 6)
     assertEquals(d.openMajors.size, 6, "still open MAJOR in the ledger: the next run's work")
     // an open minor the final pass raised to MAJOR is new too
@@ -79,7 +79,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         .get
         .copy(finding = after.entry(ReviewArticle.Finding.Id("S35")).get.finding.copy(severity = Severity.Minor))
     )
-    assertEquals(deferFinal(minorBefore, after, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), _ => false)._2.sortBy(_.value), List("S35", "S36", "S37"))
+    assertEquals(deferFinal(minorBefore, after, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), _ => false)._2.sorted, List("S35", "S36", "S37"))
 
   test("a run whose only open MAJORs are deferred ends below MAJOR; its backlog item says they are deferred"):
     val g = live("gods_and_migrations")

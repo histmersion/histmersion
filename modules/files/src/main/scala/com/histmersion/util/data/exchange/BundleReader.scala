@@ -88,10 +88,10 @@ object BundleReader:
         )
     }
     val refs = entities.blobRefs
-    val missing = refs.keys.toList.sortBy(_.value)
+    val missing = refs.keys.toList.sorted
       .filterNot(blobs.contains)
       .map(sha => s"blob $sha (${refs(sha).size} use(s)) is referenced but not in the bundle")
-    val unused = blobs.keys.toList.sortBy(_.value)
+    val unused = blobs.keys.toList.sorted
       .filterNot(refs.contains)
       .map(sha => s"blob $sha is in the bundle but nothing references it")
     Loaded(manifest, entities, blobs.toMap, problems.result() ++ fileProblems ++ lineProblems ++ missing ++ unused)
