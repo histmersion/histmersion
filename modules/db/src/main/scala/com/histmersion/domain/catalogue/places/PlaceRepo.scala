@@ -62,12 +62,10 @@ private[places] object PlaceRepo:
   object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type GeoJsonQueryKind = _root_.com.histmersion.domain.catalogue.Place.Kind.Wire
-  val GeoJsonQueryKind: _root_.com.histmersion.domain.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.domain.catalogue.Place.Kind.Wire
+  export com.histmersion.domain.catalogue.Place.Kind.{Wire as GeoJsonQueryKind}
   type GeoJsonQueryLimit = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.Limit
   val GeoJsonQueryLimit: _root_.com.histmersion.domain.catalogue.places.PlaceRepo.Limit.type = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.Limit
-  type GeoJsonQueryModernFrom = _root_.com.histmersion.domain.DeepTime.SignedYear
-  val GeoJsonQueryModernFrom: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  export com.histmersion.domain.DeepTime.{SignedYear as GeoJsonQueryModernFrom}
   type ScopeForValues = ScopeForValues.T
   object ScopeForValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

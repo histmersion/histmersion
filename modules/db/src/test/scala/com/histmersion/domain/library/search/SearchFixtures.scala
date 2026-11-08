@@ -15,14 +15,8 @@ import com.histmersion.api.catalogue.Place
 object SearchFixtures:
   private given com.histmersion.util.time.Timer = new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero } }
 
-  type MaxRows = QueryRepo.MaxRows
-  val MaxRows: QueryRepo.MaxRows.type = QueryRepo.MaxRows
-  type MaxCellChars = QueryRepo.MaxCellChars
-  val MaxCellChars: QueryRepo.MaxCellChars.type = QueryRepo.MaxCellChars
-  type Statement = QueryRepo.Statement
-  val Statement: QueryRepo.Statement.type = QueryRepo.Statement
-  type AggregateUnit = AggregateRepo.Unit
-  val AggregateUnit: AggregateRepo.Unit.type = AggregateRepo.Unit
+  export QueryRepo.{MaxRows, MaxCellChars, Statement}
+  export AggregateRepo.{Unit as AggregateUnit}
 
   def sources(
       ds: DataSource,

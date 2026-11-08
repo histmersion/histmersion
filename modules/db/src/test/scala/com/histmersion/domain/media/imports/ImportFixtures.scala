@@ -6,20 +6,7 @@ import javax.sql.DataSource
 
 /** The imports' repository as the db and server suites reach it from outside the feature. */
 object ImportFixtures:
-  type Limit = ImportRepo.Limit
-  val Limit: ImportRepo.Limit.type = ImportRepo.Limit
-  type Refresh = ImportRepo.Refresh
-  val Refresh: ImportRepo.Refresh.type = ImportRepo.Refresh
-  type Since = ImportRepo.Since
-  val Since: ImportRepo.Since.type = ImportRepo.Since
-  type Places = ImportRepo.Places
-  val Places: ImportRepo.Places.type = ImportRepo.Places
-  type PleiadesOnly = ImportRepo.PleiadesOnly
-  val PleiadesOnly: ImportRepo.PleiadesOnly.type = ImportRepo.PleiadesOnly
-  type Category = ImportRepo.Category
-  val Category: ImportRepo.Category.type = ImportRepo.Category
-  type NameKey = ImportRepo.NameKey
-  val NameKey: ImportRepo.NameKey.type = ImportRepo.NameKey
+  export ImportRepo.{Limit, Refresh, Since, Places, PleiadesOnly, Category, NameKey}
 
   val Place: Target.TargetType = ImportRepo.Place
   val Event: Target.TargetType = ImportRepo.Event

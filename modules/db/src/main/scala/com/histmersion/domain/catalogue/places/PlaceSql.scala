@@ -22,16 +22,13 @@ object PlaceSql:
   object ImportedListValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModernSqlAlias = String
   type DefaultModernFrom = DefaultModernFromValue
-  type DefaultModernFromValue = com.histmersion.domain.DeepTime.SignedYear
-  val DefaultModernFromValue: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  export com.histmersion.domain.DeepTime.{SignedYear as DefaultModernFromValue}
   type UndatedSqlAlias = String
   type TimelessSqlAlias = String
   type TimeBasisSqlAlias = String
-  type TimeWindowCteModernFrom = _root_.com.histmersion.domain.DeepTime.SignedYear
-  val TimeWindowCteModernFrom: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  export com.histmersion.domain.DeepTime.{SignedYear as TimeWindowCteModernFrom}
   type InTimeSqlAlias = String
-  type InTimeSqlKind = _root_.com.histmersion.domain.catalogue.Place.Kind.Wire
-  val InTimeSqlKind: _root_.com.histmersion.domain.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.domain.catalogue.Place.Kind.Wire
+  export com.histmersion.domain.catalogue.Place.Kind.{Wire as InTimeSqlKind}
   type InWindowSqlAlias = String
 
   def importedSql(alias: String): String =

@@ -20,10 +20,7 @@ object RangeSql:
     */
   type StartCol = String
   type ColsCol = String
-  type LiteralStart = _root_.com.histmersion.domain.DeepTime.SignedYear
-  val LiteralStart: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-  type LiteralEnd = _root_.com.histmersion.domain.DeepTime.SignedYear
-  val LiteralEnd: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  export com.histmersion.domain.DeepTime.{SignedYear as LiteralStart, SignedYear as LiteralEnd}
 
   def start(col: com.histmersion.util.database.RangeSql.StartCol): String = s"lower($col)"
 

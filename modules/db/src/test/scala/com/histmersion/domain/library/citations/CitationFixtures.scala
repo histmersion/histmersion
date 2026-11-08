@@ -7,8 +7,7 @@ import com.histmersion.api.library.Source
 
 /** The db suites' reads of the citation graph on a database of their own. */
 object CitationFixtures:
-  type Since = CitationRepo.Since
-  val Since: CitationRepo.Since.type = CitationRepo.Since
+  export CitationRepo.Since
 
   def neighbors(
       ds: DataSource,

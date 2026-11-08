@@ -24,29 +24,11 @@ object ManagerRepo:
   object ProgressText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RestaleReason = RestaleReason.T
   object RestaleReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpendCount = ManagerInfo.TokensToday
-  val SpendCount: ManagerInfo.TokensToday.type = ManagerInfo.TokensToday
+  export ManagerInfo.{TokensToday as SpendCount}
 
-  type ArticleFacetsResultPart2 = com.histmersion.domain.automation.Goal.Slug
-  val ArticleFacetsResultPart2: com.histmersion.domain.automation.Goal.Slug.type = com.histmersion.domain.automation.Goal.Slug
-  type CountEventsByInResultPart1 = ManagerInfo.Id
-  val CountEventsByInResultPart1: ManagerInfo.Id.type = ManagerInfo.Id
-  type CountEventsByInKind = ManagerEvent.Kind
-  val CountEventsByInKind: ManagerEvent.Kind.type = ManagerEvent.Kind
-  type EventInKind = ManagerEvent.Kind
-  val EventInKind: ManagerEvent.Kind.type = ManagerEvent.Kind
-  type EventInText = ManagerEvent.Text
-  val EventInText: ManagerEvent.Text.type = ManagerEvent.Text
-  type EventKind = ManagerEvent.Kind
-  val EventKind: ManagerEvent.Kind.type = ManagerEvent.Kind
-  type EventText = ManagerEvent.Text
-  val EventText: ManagerEvent.Text.type = ManagerEvent.Text
-  type CountEventsKind = ManagerEvent.Kind
-  val CountEventsKind: ManagerEvent.Kind.type = ManagerEvent.Kind
-  type CountEventsAllKind = ManagerEvent.Kind
-  val CountEventsAllKind: ManagerEvent.Kind.type = ManagerEvent.Kind
-  type LastEventOfKind = ManagerEvent.Kind
-  val LastEventOfKind: ManagerEvent.Kind.type = ManagerEvent.Kind
+  export com.histmersion.domain.automation.Goal.{Slug as ArticleFacetsResultPart2}
+  export ManagerInfo.{Id as CountEventsByInResultPart1}
+  export ManagerEvent.{Kind as CountEventsByInKind, Kind as EventInKind, Text as EventInText, Kind as EventKind, Text as EventText, Kind as CountEventsKind, Kind as CountEventsAllKind, Kind as LastEventOfKind}
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"

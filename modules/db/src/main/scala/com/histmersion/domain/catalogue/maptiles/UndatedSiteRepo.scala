@@ -18,8 +18,7 @@ private[maptiles] object UndatedSiteRepo:
   /** The group of `map_changes` a write to an undated site moves (V106's trigger). */
   type Group = Group.T
   object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesSiteType = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
-  val CandidatesSiteType: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
+  export com.histmersion.domain.catalogue.maptiles.TileRepo.{SiteType as CandidatesSiteType}
 
   val UndatedGroup: Group = Group("undated")
 

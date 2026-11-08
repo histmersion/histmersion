@@ -21,10 +21,7 @@ import com.histmersion.api.text.WikiLinks
   * registers.
   */
 object SourceFixtures:
-  type Name = SourceRepo.Name
-  val Name: SourceRepo.Name.type = SourceRepo.Name
-  type Limit = SourceRepo.Limit
-  val Limit: SourceRepo.Limit.type = SourceRepo.Limit
+  export SourceRepo.{Name, Limit}
 
   private def db(ds: DataSource): Transactor = Transactor(ds)
 

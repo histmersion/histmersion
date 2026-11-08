@@ -8,8 +8,7 @@ import com.augustnagro.magnum.DbCon
   * reads.
   */
 object ArticleCheckFixtures:
-  type ReportMaxItems = ArticleCheckRepo.ReportMaxItems
-  val ReportMaxItems: ArticleCheckRepo.ReportMaxItems.type = ArticleCheckRepo.ReportMaxItems
+  export ArticleCheckRepo.ReportMaxItems
 
   def report(r: Rule, format: FormatChecker, maxItems: ArticleCheckRepo.ReportMaxItems)(using CheckRun)(using
       DbCon
