@@ -31,7 +31,7 @@ private[places] object TreeRepo:
     (start, end) match
       case (Some(a), Some(b)) =>
         val (lo, hi) = (Year(a.value), Year(b.value))
-        Some(if a.value <= b.value then Period(lo, hi) else Period(hi, lo))
+        Some(if a <= b then Period(lo, hi) else Period(hi, lo))
       case _                  => None
 
   final private[histmersion] case class RegionNodeRow(

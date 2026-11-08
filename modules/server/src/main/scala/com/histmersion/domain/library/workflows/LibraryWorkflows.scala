@@ -32,7 +32,7 @@ final class LibraryWorkflows(
   private val upstream: () => AgentUpstream = () => work.acquisition
 
   /** How a source's proposed status or edge goes through the approvals (research's review proposes them too). */
-  val proposals: SourceProposals = SourceProposals(
+  val proposals: SourceProposals = new SourceProposals(
     SourceApprovalService(transactor, a.approvalStore, a.clock),
     cfg().agents,
     ck =>

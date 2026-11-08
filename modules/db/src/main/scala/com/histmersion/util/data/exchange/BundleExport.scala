@@ -44,7 +44,7 @@ object BundleExport:
         carried.flatMap(_._2.blobs).foldLeft(Map.empty[Sha256, BlobOut]) { (m, b) =>
           if m.contains(b.sha256) then m else m + (b.sha256 -> b)
         }
-      val shas = blobs.keys.toList.sortBy(_.value)
+      val shas = blobs.keys.toList.sorted
       val payloads = carried.map((entry, o) => entry -> o.payload)
       val listed = payloads.map((p, b) => BundleFormat.fileInfo(Bundle.FileInfo.Path(p.value), b.value))
       val manifestSince = since.map(at => Bundle.Manifest.Since(at.value))

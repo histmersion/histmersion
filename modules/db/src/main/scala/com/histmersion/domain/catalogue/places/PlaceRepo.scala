@@ -249,7 +249,7 @@ private[places] object PlaceRepo:
     // then), it lets every pass read the 132 000 others through their own indexes (V076): at 2500 BCE
     // "Tro" checked 8 500 candidates by primary key, nearly all of them imported, and found its label
     // matches in all 1.28 M labels — 57 ms; through the partial indexes, 34 (2026-10-09).
-    val pm = SqlLiteral(if asOf.exists(_.value < modernFrom.value) then s" AND $ShownBeforeModernSql" else "")
+    val pm = SqlLiteral(if asOf.exists(_ < modernFrom) then s" AND $ShownBeforeModernSql" else "")
     // RANK FIRST, DECORATE AFTER (2026-10-09). The ordering needs only the row itself and its
     // finding count; the alternate-name laterals (every name of the place, and the one that
     // matched) are for the `n` rows shown. Computing them for every candidate first — 23 800 for

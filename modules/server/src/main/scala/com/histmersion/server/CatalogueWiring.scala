@@ -129,7 +129,7 @@ final class CatalogueWiring(
   lazy val placeGeometry: PlaceGeometry = PlaceGeometry(deps.transactor)(using deps.timer)
 
   lazy val places: PlacesControllers =
-    PlacesControllers(
+    new PlacesControllers(
       placeStore,
       PlaceMap(deps.transactor),
       placeGeometry,

@@ -111,7 +111,7 @@ private[places] object PlaceReviewRepo:
         items
           .getOrElse(r.id, Nil)
           .map(i =>
-            LinkedItem(i.ref, i.itemClass, for a <- i.from; b <- i.to if a.value <= b.value; p <- DeepTime.span(a, b) yield p)
+            LinkedItem(i.ref, i.itemClass, for a <- i.from; b <- i.to if a <= b; p <- DeepTime.span(a, b) yield p)
           ),
         descs.getOrElse(r.id, Nil)
       )

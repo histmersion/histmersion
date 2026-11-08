@@ -404,7 +404,7 @@ class FilterRepoSuite extends DbSuite:
 
   test("map feed: a wrapping bbox returns only findings east of 170 or west of -170"):
     val hits = feed(Filter(bbox = Some(BBox(Longitude(170.0), Latitude(-60.0), Longitude(-170.0), Latitude(60.0)))))
-    assertEquals(hits.map(_.claim).toList.sortBy(_.value), List("Lapita site west of the line", "Site east of the line"))
+    assertEquals(hits.map(_.claim).toList.sorted, List("Lapita site west of the line", "Site east of the line"))
     assertEquals(hits.flatMap(_.lon).toList.sortBy(l => l.value: Double), List(-172.0, 178.0))
     // the Levantine/steppe findings (lon 35.78, 33.0, 40.0) are NOT in a box that wraps the Pacific
     assert(!hits.exists(_.citekey.value == "zzf_alpha"), hits.toString)

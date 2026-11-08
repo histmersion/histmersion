@@ -85,7 +85,7 @@ object SpiValues:
       a <- yearOf(p.start)
       b <- yearOf(p.end)
       period <- Period
-        .from(if a.value <= b.value then a else b, if a.value <= b.value then b else a)
+        .from(if a <= b then a else b, if a <= b then b else a)
         .left
         .map(e => Problem(e.message.value))
     yield period
