@@ -191,7 +191,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                 )
               case None =>
                 val sweep = item.kind.value == AcquisitionSweep
-                val autoOn = sweep && m.config.autoIngest.contains(true)
+                val autoOn = sweep && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true))
                 val managerId = ManagerLight.Id(m.id.value)
                 val own = IngestBacklog.OwnAllowance(
                   if sweep then

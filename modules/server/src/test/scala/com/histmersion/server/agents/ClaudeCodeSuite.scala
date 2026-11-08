@@ -70,7 +70,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
       Some(Path.of("/t/mcp.json")),
       Offered,
       AllTools
-    )
+    ).map(_.value)
     assertEquals(a.take(2), List("claude", "-p"))
     def after(flag: String) = a(a.indexOf(flag) + 1)
     assertEquals(after("--output-format"), "stream-json")
@@ -90,12 +90,12 @@ class ClaudeCodeSuite extends munit.FunSuite:
       "without StructuredOutput the model writes its JSON as text and structured_output stays empty"
     )
     assertEquals(
-      after("--disallowedTools").value.split(',').toSet,
+      after("--disallowedTools").split(',').toSet,
       AllTools.filterNot(Offered.toSet).map(ClaudeCode.toolId).toSet
     )
     assert(a.contains("--strict-mcp-config") && a.contains("--no-session-persistence"))
     assert(!a.contains("--disable-slash-commands"), "switched off in this config")
-    assert(!a.exists(_.value.contains("disableAllHooks")), "it turns the quota-guard mod off (§3a P5)")
+    assert(!a.exists(_.contains("disableAllHooks")), "it turns the quota-guard mod off (§3a P5)")
     assert(!a.contains("--system-prompt-file") && !a.contains("--bare"))
 
   /** The provider as reference.conf configures it. */
@@ -105,7 +105,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test(
     "argv: --disable-slash-commands by default (a role's skills are in its prompt), never --bare or the dynamic-sections flag"
   ):
-    val a = ClaudeCode.argv(Ref, ModelRef.Model("sonnet"), AgentDef.MaxTurns(4), ClaudeCode.SchemaJson("{}"), Launch, Some(Path.of("/t/mcp.json")), List(ToolUse.Tool("get_source")), AllTools)
+    val a = ClaudeCode.argv(Ref, ModelRef.Model("sonnet"), AgentDef.MaxTurns(4), ClaudeCode.SchemaJson("{}"), Launch, Some(Path.of("/t/mcp.json")), List(ToolUse.Tool("get_source")), AllTools).map(_.value)
     assert(a.contains("--disable-slash-commands"), a)
     assertEquals(
       a.slice(a.indexOf("--setting-sources"), a.indexOf("--setting-sources") + 3),
@@ -118,6 +118,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     assert(
       !ClaudeCode
         .argv(Ref.modify(_.disableSlashCommands).setTo(ClaudeCodeConfig.DisableSlashCommands(false)), ModelRef.Model("sonnet"), AgentDef.MaxTurns(4), ClaudeCode.SchemaJson("{}"), Launch, None, Nil, AllTools)
+        .map(_.value)
         .contains("--disable-slash-commands")
     )
 
@@ -173,7 +174,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
       Nil,
       AllTools,
       web = List("WebSearch", "WebFetch")
-    )
+    ).map(_.value)
     assertEquals(a(a.indexOf("--system-prompt-file") + 1), "/s")
     assertEquals(a(a.indexOf("--tools") + 1), "WebSearch,WebFetch")
     assertEquals(a(a.indexOf("--allowedTools") + 1), "WebSearch,WebFetch,StructuredOutput")

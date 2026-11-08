@@ -16,9 +16,8 @@ import io.circe.syntax.*
 
 import com.histmersion.api.automation.{AgentsMarkdown, Queue}
 import com.histmersion.api.catalogue.{Geocode, Period}
-import com.histmersion.domain.library.Source
 import com.histmersion.domain.library.Citekey
-import com.histmersion.api.library.Finding
+import com.histmersion.api.library.{Finding, Source as ApiSource}
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps
@@ -313,8 +312,8 @@ final class EnrichSourcePipeline(
     * `assess` outranks any proposal.
     */
   private def status(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
-    if p.fieldsSet.contains("status") then StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
-    else if c.status == Source.Status.Unassessed then StatusRouted(None, None, StatusRouted.Note("no status proposed"))
+    if p.fieldsSet.contains(Patched.FieldsSet("status")) then StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
+    else if c.status == ApiSource.Status.Unassessed then StatusRouted(None, None, StatusRouted.Note("no status proposed"))
     else if a.retracted.value then StatusRouted(None, None, StatusRouted.Note(s"${c.status.wire} not proposed: the source is retracted"))
     else
       val proposal = AgentProposals.Proposal(

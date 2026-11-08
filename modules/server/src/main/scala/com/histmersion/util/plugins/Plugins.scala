@@ -141,8 +141,8 @@ object Plugins:
         .filter { (id, st) =>
           !touched(id) && !hostKeys.exists(FirstPartySettings.rebuilds(id, _)) &&
           !peerKeys.exists(k => FirstPartySettings.of(id).exists(_.readsHostKey(k))) &&
-          (st.state == PluginState.Disabled.wire ||
-            st.state == PluginState.Registered.wire && !previous.withSecrets(id))
+          (st.state.value == PluginState.Disabled.wire.value ||
+            st.state.value == PluginState.Registered.wire.value && !previous.withSecrets(id))
         }
         .flatMap((id, _) => previous.carry(id))
         .map(c => Plugin.Info.Id(c._1.id.value) -> c)

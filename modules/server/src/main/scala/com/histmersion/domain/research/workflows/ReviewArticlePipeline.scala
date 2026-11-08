@@ -19,7 +19,7 @@ import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueScope, WorkListControllers}
 
-import com.histmersion.api.{Plural, Write}
+import com.histmersion.api.{Api, Plural, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{Pipeline, Role}
@@ -941,7 +941,7 @@ final class ReviewArticlePipeline(
               conflict = Patched.Conflict(false)
             )
           )
-        case Left(e) if e.code.contains(Write.CodePrecondition) =>
+        case Left(e) if e.code.contains(Api.Error.Code(Write.CodePrecondition)) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
           Right(ReviewArticle.Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(true)))
         case Left(e) => Left(e.message.value)

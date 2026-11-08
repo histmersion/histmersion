@@ -6,6 +6,7 @@ import com.histmersion.upstreams.europepmc.EuropePmcHit
 import com.histmersion.upstreams.identifiers.Identifiers
 import com.histmersion.upstreams.pmc.{PmcObject, PmcRecord}
 import com.histmersion.upstreams.unpaywall.OaAccess
+import com.histmersion.upstreams.Offset
 
 /** PURE parsers for the JSON the acquisition upstreams return (OpenAlex, Crossref, Unpaywall, CORE, Semantic Scholar,
   * Europe PMC, PMC Article Datasets, archive.org, Wikipedia).
@@ -321,7 +322,7 @@ object AcquireParse:
     }
 
   /** `next` offset of an S2 page, absent on the last page. */
-  def s2Next(json: Json): Option[com.histmersion.upstreams.Offset] = (int(json.hcursor, "next")).flatMap(refactorValue49 => _root_.com.histmersion.upstreams.Offset.option((refactorValue49)))
+  def s2Next(json: Json): Option[Offset] = int(json.hcursor, "next").map(Offset(_))
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 

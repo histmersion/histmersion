@@ -21,9 +21,9 @@ object SavedViews:
     val s = Option.when(TheMap.isUp)(TheMap.surface)
     Target(
       ItemKind.View,
-      lat = s.flatMap(x => Latitude.option(x.center.lat.value)),
-      lon = s.flatMap(x => Longitude.option(x.center.lon.value)),
-      zoom = s.flatMap(x => MapZoom.option(math.round(x.zoom.value * 100) / 100.0)),
+      lat = s.flatMap(x => Some(Latitude(x.center.lat.value))),
+      lon = s.flatMap(x => Some(Longitude(x.center.lon.value))),
+      zoom = s.flatMap(x => Some(MapZoom(math.round(x.zoom.value * 100) / 100.0))),
       from = UiState.from.now().map(v => Year(v.toInt)),
       to = UiState.to.now().map(v => Year(v.toInt)),
       view = Some(ViewState(UiState.hashString.value))

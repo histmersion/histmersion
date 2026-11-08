@@ -33,9 +33,9 @@ object MapMenu:
   def point(at: LatLon, zoom: MapSurface.Zoom, span: Option[(Year, Year)]): Target =
     Target(
       ItemKind.Point,
-      lat = Latitude.option(at.lat.value),
-      lon = Longitude.option(wrap(at.lon).value),
-      zoom = MapZoom.option(math.round(zoom.value * 10) / 10.0),
+      lat = Some(Latitude(at.lat.value)),
+      lon = Some(Longitude(wrap(at.lon).value)),
+      zoom = Some(MapZoom(math.round(zoom.value * 10) / 10.0)),
       from = span.map(_._1),
       to = span.map(_._2)
     )

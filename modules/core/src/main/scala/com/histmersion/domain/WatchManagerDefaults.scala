@@ -23,7 +23,7 @@ final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, aut
     * (`autoIngest`, default off), else what is left of its daily cap after the ones it ingested today.
     */
   def ingestAllowance(c: ManagerConfig, ingestedToday: com.histmersion.domain.WatchManagerDefaults.IngestedToday): com.histmersion.domain.WatchManagerDefaults.IngestAllowance =
-    if !c.autoIngest.contains(true) then com.histmersion.domain.WatchManagerDefaults.IngestAllowance(0)
+    if !c.autoIngest.contains(ManagerConfig.AutoIngest(true)) then com.histmersion.domain.WatchManagerDefaults.IngestAllowance(0)
     else com.histmersion.domain.WatchManagerDefaults.IngestAllowance(math.max(0, c.autoIngestPerDay.fold(autoIngestPerDay.value)(_.value) - math.max(0, ingestedToday.value)))
 
 object WatchManagerDefaults:

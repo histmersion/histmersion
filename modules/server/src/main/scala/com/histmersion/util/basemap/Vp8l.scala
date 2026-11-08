@@ -28,6 +28,8 @@ object Vp8l:
     type Height = Height.T
     object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+    extension (i: Image) def isSquare: Boolean = i.width.value == i.height.value
+
   /** A WebP file (`RIFF … WEBP VP8L …`) or a bare `VP8L` bitstream, decoded. */
   def decode(bytes: Bitstream): Either[Problem, Image] =
     val raw: Array[Byte] = bytes.value

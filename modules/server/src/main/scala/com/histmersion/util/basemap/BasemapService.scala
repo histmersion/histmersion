@@ -368,7 +368,7 @@ final class BasemapService(
           case Left(e) =>
             scribe.warn(s"relief tile $az (for ${z.value}/${x.value}/${y.value}) cannot be read: $e")
             None
-          case Right(i) if i.width != i.height =>
+          case Right(i) if !i.isSquare =>
             None
           case Right(i) =>
             val png = Png.encodeRgb(

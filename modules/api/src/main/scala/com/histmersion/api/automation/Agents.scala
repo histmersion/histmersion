@@ -376,7 +376,7 @@ object Agents:
       oaBacklog: Option[RunParams.OaBacklog] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def fixes: Boolean = (fix.contains(true))
+    def fixes: Boolean = (fix.contains(RunRequest.Fix(true)))
     def noteList: List[com.histmersion.api.automation.Agents.RunParams.Notes] = (notes.getOrElse(Nil).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.api.automation.Agents.RunParams.Notes(refactorValue4))
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
 

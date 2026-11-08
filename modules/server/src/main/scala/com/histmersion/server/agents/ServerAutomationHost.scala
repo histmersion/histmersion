@@ -74,7 +74,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
     val compileOpts =
       req.title.isDefined || req.kind.isDefined || req.query.isDefined || req.topics.nonEmpty || req.tags.nonEmpty
     p match
-      case _ if p != Pipeline.ReviewArticle && req.fix.contains(true)   => wrong("fix", Pipeline.ReviewArticle)
+      case _ if p != Pipeline.ReviewArticle && req.fix.contains(RunRequest.Fix(true)) => wrong("fix", Pipeline.ReviewArticle)
       case _ if p != Pipeline.ReviewArticle && req.rounds.isDefined     => wrong("rounds", Pipeline.ReviewArticle)
       case _ if p != Pipeline.EnrichSource && req.acquireItem.isDefined =>
         wrong("an acquisition item", Pipeline.EnrichSource)

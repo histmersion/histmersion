@@ -54,7 +54,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     """{"type":"result","subtype":"success","is_error":false,"result":"Quota.","num_turns":1,"usage":{"input_tokens":9,"output_tokens":3}}"""
 
   test("the probe's argv: the probe model, ONE turn, no tools, no MCP server, no skills or settings, no session"):
-    val a = ClaudeCode.probeArgv(Cfg, com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku"))
+    val a = ClaudeCode.probeArgv(Cfg, com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku")).map(_.value)
     def after(flag: String) = a(a.indexOf(flag) + 1)
     assertEquals(a.take(2), List("claude", "-p"))
     assertEquals(after("--model"), "haiku")

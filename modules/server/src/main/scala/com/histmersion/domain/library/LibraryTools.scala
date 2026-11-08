@@ -497,7 +497,7 @@ object LibraryTools:
   def passagesMarkdown(sources: SourcesControllers, in: PassagesInput): String =
     sources.passages(Api.PassagesQuery(ApiCitekey(in.citekey.value), in.query, in.regex, in.limit, in.context)) match
       case Right(r)                                       => PassagesMarkdown.render(r)
-      case Left(e) if e.code.contains(Write.CodeNotFound) =>
+      case Left(e) if e.code.contains(Api.Error.Code(Write.CodeNotFound)) =>
         s"_No source '${in.citekey}' — find a citekey with search._"
       case Left(e) => McpOut.refusal(e)
 

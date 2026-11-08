@@ -359,14 +359,14 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.engine.execute(runId(run.id)) // a cancelled run is not picked up
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "cancelled")
     assertEquals(c.steps.size, 0)
-    assert(a.control(runId(run.id), com.histmersion.api.automation.Agents.Action("resume"), None, None).left.exists(_.code.contains(AgentsApi.CodeConflict)))
+    assert(a.control(runId(run.id), com.histmersion.api.automation.Agents.Action("resume"), None, None).left.exists(_.code.exists(_.value == AgentsApi.CodeConflict)))
     assert(a.control(runId(run.id), com.histmersion.api.automation.Agents.Action("frobnicate"), None, None).isLeft)
     // the paged list (core Paging): the cancelled run is counted, a cursor pages past it
     val (cancelled, page) = a.runsPage(Some(com.histmersion.domain.automation.agents.RunQuery.Status("cancelled")), Some(com.histmersion.PageSize(500))).toOption.get
     assert(cancelled.exists(_.id == run.id))
     assertEquals(page.total, page.count(com.histmersion.api.Paging.Page.CountState("cancelled")))
     assert(a.runsPage(Some(com.histmersion.domain.automation.agents.RunQuery.Status("cancelled")), Some(com.histmersion.PageSize(500)), before = Some(Paging.Cursor(run.id.value))).toOption.get._1.forall(_.id != run.id))
-    assert(a.runsPage(None, None, before = Some(com.histmersion.api.Paging.Cursor("no-such-run"))).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.runsPage(None, None, before = Some(com.histmersion.api.Paging.Cursor("no-such-run"))).left.exists(_.code.exists(_.value == Write.CodeNotFound)))
     assert(a.runsPage(Some(com.histmersion.domain.automation.agents.RunQuery.Status("bogus")), None).isLeft)
 
   test("restart: a running agent run is paused as interrupted, and the OCR reconciliation leaves it alone"):
@@ -491,8 +491,8 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val decided = a.decide(id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("checked the rebuttal")))).toOption.get
     assertEquals((decided.state, decided.note), ("approved", Some("checked the rebuttal")))
     assertEquals(h.library.sources.get(Ck).toOption.get.source.status, Source.Status.Contested)
-    assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).left.exists(_.code.contains(AgentsApi.CodeConflict)))
-    assert(a.decide(com.histmersion.domain.automation.Approval.Id(999999999L), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).left.exists(_.code.exists(_.value == AgentsApi.CodeConflict)))
+    assert(a.decide(com.histmersion.domain.automation.Approval.Id(999999999L), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).left.exists(_.code.exists(_.value == Write.CodeNotFound)))
     assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("maybe"), DecisionRequest()).isLeft)
     val p2 = p.modify(_.status).setTo(Some(Source.Status.Debunked))
     val id2 = TestRuns.proposals(a, h, ds).propose(None, p2) match
@@ -511,7 +511,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(afterId2.exists(_.id.value == id.value) && !afterId2.exists(_.id.value == id2.value))
     val (rejected, rp) = a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("rejected")), Some(com.histmersion.PageSize(500))).toOption.get
     assertEquals(rp.total, rejected.size)
-    assert(a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), Some(com.histmersion.PageSize(1)), before = Some(com.histmersion.api.Paging.Cursor("x"))).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), Some(com.histmersion.PageSize(1)), before = Some(com.histmersion.api.Paging.Cursor("x"))).left.exists(_.code.exists(_.value == Write.CodeNotFound)))
     assert(a.approvalsPage(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("pending")), None).isLeft)
 
   test("approvals configured auto are applied at once and recorded already approved"):
@@ -898,7 +898,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     // what cannot be compared is refused
     assert(a.compare(List(runId(r1.id))).left.exists(_.message.value.contains("at least two")))
-    assert(a.compare(List(runId(r1.id), Run.Id("00000000-0000-0000-0000-000000000000"))).left.exists(_.code.contains(Write.CodeNotFound)))
+    assert(a.compare(List(runId(r1.id), Run.Id("00000000-0000-0000-0000-000000000000"))).left.exists(_.code.exists(_.value == Write.CodeNotFound)))
     assert(a.compare(List(Run.Id.assume(s"${r1.id},${r2.id}"))).isRight, "ids may come comma-separated")
 
   // ── #1450 the output cap · #941 the decoder's error ─────────────────────────────────────────────
