@@ -59,7 +59,11 @@ object CatalogMerge:
       case _ => false
 
   /** Pure: are two points within `km`? An unplaced one is near nothing. */
-  def near(a: (Option[Latitude], Option[Longitude]), b: (Option[Latitude], Option[Longitude]), km: Tolerance.Km): Boolean =
+  def near(
+      a: (Option[Latitude], Option[Longitude]),
+      b: (Option[Latitude], Option[Longitude]),
+      km: Tolerance.Km
+  ): Boolean =
     (a, b) match
       case ((Some(la), Some(lo)), (Some(lb), Some(ob))) => Geocode.distanceKm(lo, la, ob, lb).value <= km.value
       case _                                            => false
@@ -88,7 +92,8 @@ object CatalogMerge:
     type Id = Event.Id
     val Id: Event.Id.type = Event.Id
 
-    given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score.value, f.years.value: Double, f.km.value: Double, f.id.value: String))
+    given Ordering[Fit] =
+      Ordering.by((f: Fit) => (-f.score.value, f.years.value: Double, f.km.value: Double, f.id.value: String))
 
   /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */
   def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[Latitude], lon: Option[Longitude], id: Fit.Id): Fit =
@@ -145,7 +150,10 @@ object CatalogMerge:
             )(ofStored(r))
               .map(e =>
                 Placement
-                  .Existing(e.id, Placement.Why(s"same ${canonical(r.kind.value)} at the same time and place as '${e.id}'"))
+                  .Existing(
+                    e.id,
+                    Placement.Why(s"same ${canonical(r.kind.value)} at the same time and place as '${e.id}'")
+                  )
               )
           )
       def runMatch: Option[Placement] =
@@ -168,10 +176,14 @@ object CatalogMerge:
             )
           )
           .map {
-            case Placement.Existing(id, _) => Placement.Existing(id, Placement.Why("merged with another record of this run"))
-            case Placement.New(id, _)      => Placement.New(id, Placement.Why("merged with another catalogue's record of it"))
+            case Placement.Existing(id, _) =>
+              Placement.Existing(id, Placement.Why("merged with another record of this run"))
+            case Placement.New(id, _) =>
+              Placement.New(id, Placement.Why("merged with another catalogue's record of it"))
           }
-      val p = storedMatch.orElse(runMatch).getOrElse(Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), Placement.Why("new")))
+      val p = storedMatch
+        .orElse(runMatch)
+        .getOrElse(Placement.New(Event.Id.assume(CatalogRecord.eventId(r).value), Placement.Why("new")))
       acc :+ ((i, r, p))
     }
     placed.sortBy(_._1).map((_, r, p) => r -> p).toList

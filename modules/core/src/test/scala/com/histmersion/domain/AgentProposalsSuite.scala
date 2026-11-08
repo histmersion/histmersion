@@ -64,22 +64,58 @@ class AgentProposalsSuite extends munit.FunSuite:
     assert(p.describe.value.contains("superseded_by"))
     assert(
       check(
-        ProposalAnswer(ProposalAnswer.Kind("edge"), ProposalAnswer.Citekey("knapp2016_tin"), None, Some(Edge.Kind.Wire("references")), Some(ProposalAnswer.Target("jones2021_tin")), ProposalAnswer.Evidence("e"), ProposalAnswer.Quote("one ton of tin"))
+        ProposalAnswer(
+          ProposalAnswer.Kind("edge"),
+          ProposalAnswer.Citekey("knapp2016_tin"),
+          None,
+          Some(Edge.Kind.Wire("references")),
+          Some(ProposalAnswer.Target("jones2021_tin")),
+          ProposalAnswer.Evidence("e"),
+          ProposalAnswer.Quote("one ton of tin")
+        )
       ).left.exists(_.value.contains("edge kind"))
     )
     assert(
       check(
-        ProposalAnswer(ProposalAnswer.Kind("edge"), ProposalAnswer.Citekey("knapp2016_tin"), None, Some(Edge.Kind.Wire("refutes")), Some(ProposalAnswer.Target("knapp2016_tin")), ProposalAnswer.Evidence("e"), ProposalAnswer.Quote("one ton of tin"))
+        ProposalAnswer(
+          ProposalAnswer.Kind("edge"),
+          ProposalAnswer.Citekey("knapp2016_tin"),
+          None,
+          Some(Edge.Kind.Wire("refutes")),
+          Some(ProposalAnswer.Target("knapp2016_tin")),
+          ProposalAnswer.Evidence("e"),
+          ProposalAnswer.Quote("one ton of tin")
+        )
       ).left.exists(_.value.contains("itself"))
     )
 
   test("refused: unknown citekey, no evidence, an invented quote, unassessed, an unknown kind"):
     assert(
-      check(ProposalAnswer(ProposalAnswer.Kind("status"), ProposalAnswer.Citekey("ghost"), Some(com.histmersion.domain.library.Source.Status.Wire("contested")), None, None, ProposalAnswer.Evidence("e"), ProposalAnswer.Quote("q"))).left
+      check(
+        ProposalAnswer(
+          ProposalAnswer.Kind("status"),
+          ProposalAnswer.Citekey("ghost"),
+          Some(com.histmersion.domain.library.Source.Status.Wire("contested")),
+          None,
+          None,
+          ProposalAnswer.Evidence("e"),
+          ProposalAnswer.Quote("q")
+        )
+      ).left
         .exists(_.value.contains("not a citekey"))
     )
     assert(
-      check(ProposalAnswer(ProposalAnswer.Kind("status"), ProposalAnswer.Citekey("knapp2016_tin"), Some(com.histmersion.domain.library.Source.Status.Wire("contested")), None, None, ProposalAnswer.Evidence(" "), ProposalAnswer.Quote("one ton of tin"))).left
+      check(
+        ProposalAnswer(
+          ProposalAnswer.Kind("status"),
+          ProposalAnswer.Citekey("knapp2016_tin"),
+          Some(com.histmersion.domain.library.Source.Status.Wire("contested")),
+          None,
+          None,
+          ProposalAnswer.Evidence(" "),
+          ProposalAnswer.Quote("one ton of tin")
+        )
+      ).left
         .exists(_.value.contains("no evidence"))
     )
     assert(
@@ -96,17 +132,42 @@ class AgentProposalsSuite extends munit.FunSuite:
       ).left.exists(_.value.contains("not in the record"))
     )
     assert(
-      check(ProposalAnswer(ProposalAnswer.Kind("status"), ProposalAnswer.Citekey("knapp2016_tin"), Some(com.histmersion.domain.library.Source.Status.Wire("unassessed")), None, None, ProposalAnswer.Evidence("e"), ProposalAnswer.Quote("one ton of tin"))).isLeft
+      check(
+        ProposalAnswer(
+          ProposalAnswer.Kind("status"),
+          ProposalAnswer.Citekey("knapp2016_tin"),
+          Some(com.histmersion.domain.library.Source.Status.Wire("unassessed")),
+          None,
+          None,
+          ProposalAnswer.Evidence("e"),
+          ProposalAnswer.Quote("one ton of tin")
+        )
+      ).isLeft
     )
     assert(
-      check(ProposalAnswer(ProposalAnswer.Kind("rename"), ProposalAnswer.Citekey("knapp2016_tin"), None, None, None, ProposalAnswer.Evidence("e"), ProposalAnswer.Quote("one ton of tin"))).left
+      check(
+        ProposalAnswer(
+          ProposalAnswer.Kind("rename"),
+          ProposalAnswer.Citekey("knapp2016_tin"),
+          None,
+          None,
+          None,
+          ProposalAnswer.Evidence("e"),
+          ProposalAnswer.Quote("one ton of tin")
+        )
+      ).left
         .exists(_.value.contains("neither"))
     )
 
   test("route: the fill rule applies, anything else waits for a person unless configured auto"):
     val current = Proposal(ApprovalKind.StatusChange, Citekey.assume("a"), status = Some(Source.Status.Current))
     val debunk = Proposal(ApprovalKind.StatusChange, Citekey.assume("a"), status = Some(Source.Status.Debunked))
-    val edge = Proposal(ApprovalKind.Edge, Citekey.assume("a"), edgeKind = Some(Edge.Kind.Refutes), target = Some(Citekey.assume("b")))
+    val edge = Proposal(
+      ApprovalKind.Edge,
+      Citekey.assume("a"),
+      edgeKind = Some(Edge.Kind.Refutes),
+      target = Some(Citekey.assume("b"))
+    )
     import ApprovalMode.*
     assertEquals(route(current, Some(Source.Status.Unassessed), Manual, Manual), Route.Apply)
     assertEquals(route(current, Some(Source.Status.Contested), Manual, Manual), Route.Ask)

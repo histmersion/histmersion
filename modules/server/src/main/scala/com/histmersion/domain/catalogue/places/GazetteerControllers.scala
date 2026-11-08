@@ -28,20 +28,30 @@ final class GazetteerControllers(
 
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed. */
   private def job(kind: Job.Kind, about: String)(run: => Either[String, String]): Either[Api.Error, JobInfo] =
-    BackgroundJob.start(ds, kind, Some(JobDetail.Purpose(Some(JobKinds.Subject(about)))), slot, BackgroundJob.Work("a places job"), pins = pins)(
-      (_, progress) =>
-        progress(JobInfo.Progress(about))
-        scribe.info(s"[import] $about…")
-        val r = run
-        r.fold(e => scribe.error(s"[import] $about failed: $e"), ok => scribe.info(s"[import] $about: $ok"))
-        BackgroundJob.Outcome.of(r.left.map(BackgroundJob.Outcome.Error(_)).map(BackgroundJob.Outcome.Summary(_)))
+    BackgroundJob.start(
+      ds,
+      kind,
+      Some(JobDetail.Purpose(Some(JobKinds.Subject(about)))),
+      slot,
+      BackgroundJob.Work("a places job"),
+      pins = pins
+    )((_, progress) =>
+      progress(JobInfo.Progress(about))
+      scribe.info(s"[import] $about…")
+      val r = run
+      r.fold(e => scribe.error(s"[import] $about failed: $e"), ok => scribe.info(s"[import] $about: $ok"))
+      BackgroundJob.Outcome.of(r.left.map(BackgroundJob.Outcome.Error(_)).map(BackgroundJob.Outcome.Summary(_)))
     )
 
   /** `POST /api/places/fetch?source=cliopatria` — download, transform and upsert an external gazetteer. Idempotent:
     * re-running upserts over existing entries. A real run is a background job (the download and its upserts exceed any
     * reasonable HTTP timeout).
     */
-  def fetch(caller: Caller, source: Api.ExternalPlaces.Source, dryRun: Api.Apply): Either[Api.Error, Place.ImportResult] =
+  def fetch(
+      caller: Caller,
+      source: Api.ExternalPlaces.Source,
+      dryRun: Api.Apply
+  ): Either[Api.Error, Place.ImportResult] =
     maintenance.guard(WriteGate.OperationName("places/fetch")):
       val name = source.value.trim.toLowerCase
       if name == NaturalEarthLand.name then land(GazetteerControllers.DryRun(dryRun.value))
@@ -56,8 +66,7 @@ final class GazetteerControllers(
           .left
           .map(refused)
           .flatMap { src =>
-            if dryRun.value then
-              imports.fetch(src, dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
+            if dryRun.value then imports.fetch(src, dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
             else
               job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), s"fetch $name")(
                 imports

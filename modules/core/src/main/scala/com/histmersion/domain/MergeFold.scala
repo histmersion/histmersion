@@ -42,7 +42,12 @@ object MergeFold:
   def richer[A](l: A, r: A)(text: A => String): A =
     def score(a: A) =
       val s = text(a)
-      (Fingerprint.tokens(Fingerprint.TokensS(s)).size, s.count(c => c.isLetter && c > 127), s.count(_.isUpper), s.length)
+      (
+        Fingerprint.tokens(Fingerprint.TokensS(s)).size,
+        s.count(c => c.isLetter && c > 127),
+        s.count(_.isUpper),
+        s.length
+      )
     if summon[Ordering[(Int, Int, Int, Int)]].gt(score(r), score(l)) then r else l
 
   /** Left's values, then right's that are not already there (compared after `key`). */
@@ -162,10 +167,16 @@ object MergeFold:
       .sortBy(k => (k.kind.value, k.ref.value, k.refUid.fold("")(_.toString)))
     val ss = l.schedules.getOrElse(Nil)
     val schedules = (ss ++ r.schedules.getOrElse(Nil).filterNot(x => ss.exists(_.kind == x.kind))).sortBy(_.kind.value)
-    l.modify(_.links).setTo(Option(links).filter(_.nonEmpty)).modify(_.schedules).setTo(Option(schedules).filter(_.nonEmpty))
+    l.modify(_.links)
+      .setTo(Option(links).filter(_.nonEmpty))
+      .modify(_.schedules)
+      .setTo(Option(schedules).filter(_.nonEmpty))
 
   /** The schedules of one kind that both goals have and that differ: (kind, ours, theirs). */
-  def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(Bundle.GoalSchedule.Kind, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
+  def scheduleDifferences(
+      l: Bundle.Goal,
+      r: Bundle.Goal
+  ): List[(Bundle.GoalSchedule.Kind, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
     l.schedules
       .getOrElse(Nil)
       .flatMap(a => r.schedules.getOrElse(Nil).find(_.kind == a.kind).filter(_ != a).map(b => (a.kind, a, b)))
@@ -214,11 +225,11 @@ object MergeFold:
 
   object ArticleOutcome:
     object Merged:
-      export MergeFold.{ArticleBody as Body}
+      export MergeFold.ArticleBody as Body
       type BaseSha = Sha256
       val BaseSha: Sha256.type = Sha256
     object Conflict:
-      export MergeFold.{ConflictCount as Conflicts}
+      export MergeFold.ConflictCount as Conflicts
       type BaseSha = Sha256
       val BaseSha: Sha256.type = Sha256
 
@@ -239,7 +250,11 @@ object MergeFold:
       localHistory.find((sha, _) => foreignHistory(sha)) match
         case None              => ArticleOutcome.NoBase
         case Some((sha, base)) =>
-          val m = Diff3.merge(Diff3.MergeBase(base.value), Diff3.MergeLeft(localBody.value), Diff3.MergeRight(foreignBody.value))
+          val m = Diff3.merge(
+            Diff3.MergeBase(base.value),
+            Diff3.MergeLeft(localBody.value),
+            Diff3.MergeRight(foreignBody.value)
+          )
           if m.clean then ArticleOutcome.Merged(ArticleBody(m.text.value), sha)
           else ArticleOutcome.Conflict(ConflictCount(m.conflicts.value), sha)
 

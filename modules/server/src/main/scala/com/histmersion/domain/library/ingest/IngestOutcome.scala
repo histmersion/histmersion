@@ -6,7 +6,12 @@ import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** @param created false when the citekey already existed and was enriched rather than replaced */
-final case class IngestOutcome(citekey: Citekey, created: IngestOutcome.Created, jobId: Option[Job.Id], detail: IngestOutcome.Detail)
+final case class IngestOutcome(
+    citekey: Citekey,
+    created: IngestOutcome.Created,
+    jobId: Option[Job.Id],
+    detail: IngestOutcome.Detail
+)
 
 object IngestOutcome:
   type Created = Created.T

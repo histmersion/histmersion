@@ -20,7 +20,6 @@ object Activity:
   type Subject = Subject.T
   object Subject extends Newtype[String, Pure]
 
-
   enum EntryKind(val wire: EntryKind.Wire) derives CanEqual:
     case Run extends EntryKind(EntryKind.Wire("run"))
     case Job extends EntryKind(EntryKind.Wire("job"))
@@ -37,7 +36,6 @@ object Activity:
   object EntryKind:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[EntryKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
@@ -63,7 +61,6 @@ object Activity:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[Show] =
       val t = (s).value.trim.toLowerCase
       values.find(v => v.wire == Wire(t) || v.toString.toLowerCase == t)
@@ -88,7 +85,8 @@ object Activity:
       target: Option[Entry.Target] = None,
       targetKind: Option[Entry.TargetKind] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def entryKind: Option[EntryKind] = EntryKind.parse(kind)
 
   object Entry:
@@ -96,7 +94,7 @@ object Activity:
     object Id extends Newtype[String, Pure]
     type Key = Key.T
     object Key extends Newtype[String, Pure]
-    export EntryKind.{Wire as Kind}
+    export EntryKind.Wire as Kind
     type At = At.T
     object At extends Newtype[String, Pure]
     type State = State.T
@@ -109,11 +107,11 @@ object Activity:
     object Error extends Newtype[String, Pure]
     type EndedAt = EndedAt.T
     object EndedAt extends Newtype[String, Pure]
-    export com.histmersion.api.SpatialHierarchyResult.Job.{Id as Job}
+    export com.histmersion.api.SpatialHierarchyResult.Job.Id as Job
     type By = By.T
     object By extends Newtype[String, Pure]
-    export com.histmersion.api.research.ReviewGoal.{Slug as Article}
-    export Goal.Plans.GoalLink.{QueueNumber as QueueItem}
+    export com.histmersion.api.research.ReviewGoal.Slug as Article
+    export Goal.Plans.GoalLink.QueueNumber as QueueItem
     type QueueList = QueueList.T
     object QueueList extends Newtype[String, Pure]
     type Approval = Approval.T
@@ -123,8 +121,12 @@ object Activity:
     type TargetKind = TargetKind.T
     object TargetKind extends Newtype[String, Pure]
 
-
-  final case class Counts(running: Counts.Running = Counts.Running(0), problemsWeek: Counts.ProblemsWeek = Counts.ProblemsWeek(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Counts(
+      running: Counts.Running = Counts.Running(0),
+      problemsWeek: Counts.ProblemsWeek = Counts.ProblemsWeek(0)
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Counts:
     type Wire = Wire.T
@@ -134,14 +136,13 @@ object Activity:
     type ProblemsWeek = ProblemsWeek.T
     object ProblemsWeek extends Newtype[Int, Pure]
 
-
   final case class Page(entries: List[Entry], next: Option[Page.Next] = None, counts: Counts = Counts())
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Page:
-    export com.histmersion.api.Paging.{Cursor as Next}
-
+    export com.histmersion.api.Paging.Cursor as Next
 
   val MaxLimit = 200
   val DefaultLimit = 30

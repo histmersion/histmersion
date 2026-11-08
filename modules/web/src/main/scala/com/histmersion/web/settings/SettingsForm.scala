@@ -57,7 +57,12 @@ object SettingsForm:
             items.flatMap(i =>
               p.field(i.key)
                 .map(f =>
-                  SettingControl(f.modify(_.default).setTo(f.default.orElse(i.fallback.map(v => ConfigEdit.Field.Default(v.value)))), draft, i.name, i.help)
+                  SettingControl(
+                    f.modify(_.default).setTo(f.default.orElse(i.fallback.map(v => ConfigEdit.Field.Default(v.value)))),
+                    draft,
+                    i.name,
+                    i.help
+                  )
                 )
             )
         },
@@ -82,7 +87,9 @@ object SettingsForm:
             if n.value == 0 then "Save" else s"Save ${if n.value == 1 then "the change" else s"$n changes"}"
           ),
           disabled <-- draft.isEmpty.combineWith(Auth.writable).map((empty, w) => empty || !w),
-          onClick --> (_ => SettingsStore.save(draft.changes, SettingsStore.SaveLiteralConsent(consent())).foreach(_ => draft.clear()))
+          onClick --> (_ =>
+            SettingsStore.save(draft.changes, SettingsStore.SaveLiteralConsent(consent())).foreach(_ => draft.clear())
+          )
         ),
         button(
           typ := "button",

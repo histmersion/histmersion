@@ -17,4 +17,5 @@ object EditionsPolicy:
   given WireEnumValues[EditionsPolicy]:
     def all: Array[EditionsPolicy] = values
     def wire(e: EditionsPolicy): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
-    def fromWire(s: WireEnumValues.Wire): Option[EditionsPolicy] = values.find(_.toString.equalsIgnoreCase((s).value.trim))
+    def fromWire(s: WireEnumValues.Wire): Option[EditionsPolicy] =
+      values.find(_.toString.equalsIgnoreCase((s).value.trim))

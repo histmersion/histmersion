@@ -61,7 +61,10 @@ class JobControlServiceSuite extends DbSuite:
     assertEquals(mem.get(M1).map(j => (j.status, j.progress)), Some(("paused", Some("paused after: 3/6"))))
     assertEquals(mem.control(M1, JobAction.Resume).map(_.status), Right("running"))
     assertEquals(resumed, 1)
-    assert(mem.control(M1, JobAction.Resume).left.exists(_.code.exists(_.value == "conflict")), "a running job is not resumed")
+    assert(
+      mem.control(M1, JobAction.Resume).left.exists(_.code.exists(_.value == "conflict")),
+      "a running job is not resumed"
+    )
 
   test("in memory: cancel — a paused job at once, a running one at its next part; an ended one is refused"):
     val stops = JobStops()

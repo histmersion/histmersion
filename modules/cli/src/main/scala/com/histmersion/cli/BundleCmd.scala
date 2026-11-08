@@ -17,7 +17,6 @@ import com.histmersion.api.library.InstanceLabel
   */
 object BundleCmd:
 
-
   private def existing(file: String): Either[Cli.Error, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
@@ -30,11 +29,11 @@ object BundleCmd:
       val r = BundleTar.Reader(java.io.BufferedInputStream(in))
       r.next().flatMap {
         case Some(e) if e.name.value == Bundle.ManifestPath => BundleFormat.parseManifest(r.readAll())
-        case _                                        => Left(BundleTar.Problem(s"$p does not start with ${Bundle.ManifestPath}"))
+        case _ => Left(BundleTar.Problem(s"$p does not start with ${Bundle.ManifestPath}"))
       }
     finally in.close()
 
-  private def exportCmd (using console: Console) = Opts.subcommand(
+  private def exportCmd(using console: Console) = Opts.subcommand(
     "export",
     "Write the whole database (or, with --since, what changed after a moment, deletions included) to a portable .hmx bundle"
   ) {
@@ -54,25 +53,32 @@ object BundleCmd:
         case Right(_) =>
           val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
           manifestOf(dest).fold(
-            e => Left(Cli.Error(Cli.Error.Message(s"the server sent something that is not a bundle: $e"), exitCode = ExitCode.Refused)),
+            e =>
+              Left(
+                Cli.Error(
+                  Cli.Error.Message(s"the server sent something that is not a bundle: $e"),
+                  exitCode = ExitCode.Refused
+                )
+              ),
             m => Right(Cli.out.println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
           )
     }
   }
 
-  private def verifyCmd (using console: Console) = Opts.subcommand(
+  private def verifyCmd(using console: Console) = Opts.subcommand(
     "verify",
     "Check a bundle against this server: format, schema, every checksum, record and blob — every problem listed"
   ) {
     (Opts.argument[String]("file.hmx"), Output.jsonFlag).mapN { (file, json) => (c: Client) =>
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.verify)
-        if r.ok.value then Right(()) else Left(Cli.Error(Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
+        if r.ok.value then Right(())
+        else Left(Cli.Error(Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
       }
     }
   }
 
-  private def importCmd (using console: Console) = Opts.subcommand(
+  private def importCmd(using console: Console) = Opts.subcommand(
     "import",
     "Import a bundle: what the merge plan says is new or changed, after every open issue is decided (--resolutions); refused while one is open"
   ) {
@@ -89,26 +95,31 @@ object BundleCmd:
             f <- existing(file)
             r <- MergeCmd.resolutions(res)
             u <- MergeCmd.upload(c, f)
-            x <- c.mergeImport(MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun)))
+            x <- c.mergeImport(
+              MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun))
+            )
           yield x
       run.flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.importResult)
-        if r.problems.isEmpty then Right(()) else Left(Cli.Error(Cli.Error.Message("the import was refused"), exitCode = ExitCode.Refused))
+        if r.problems.isEmpty then Right(())
+        else Left(Cli.Error(Cli.Error.Message("the import was refused"), exitCode = ExitCode.Refused))
       }
     }
   }
 
-  private def instanceCmd (using console: Console) = Opts.subcommand(
+  private def instanceCmd(using console: Console) = Opts.subcommand(
     "instance",
     "This collection's identity (the origin of every row it creates); --label names it, e.g. work or home"
   ) {
     Opts.option[String]("label", "Name this instance; an empty string clears the name").orNone.map {
       label => (c: Client) =>
-        label.fold(c.instance)(l => c.setInstance(Some(InstanceLabel.Label(l)))).map(i => Cli.out.println(BundleMarkdown.instance(i)))
+        label
+          .fold(c.instance)(l => c.setInstance(Some(InstanceLabel.Label(l))))
+          .map(i => Cli.out.println(BundleMarkdown.instance(i)))
     }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "bundle",
       "Portable .hmx bundles: export, verify and import a whole collection, carrying its identities"

@@ -20,7 +20,6 @@ object HostLog:
   type Line = Line.T
   object Line extends Newtype[String, Pure]
 
-
   val scribe: HostLog = new HostLog:
     def info(line: Line): Unit = _root_.scribe.info(line.value)
     def warn(line: Line): Unit = _root_.scribe.warn(line.value)

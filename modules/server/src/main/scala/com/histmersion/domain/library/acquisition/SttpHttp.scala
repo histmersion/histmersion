@@ -11,10 +11,16 @@ import io.circe.Json
   * a request) as the three verbs the acquisition clients read.
   */
 final class SttpHttp(policy: PolicyHttp) extends Http:
-  def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, HttpAnswer.Body] =
+  def bytes(
+      url: Http.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+  ): Either[Http.Problem, HttpAnswer.Body] =
     policy.bytes(HttpTransport.Url(url.value), headers)
 
-  override def once(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, HttpAnswer] =
+  override def once(
+      url: Http.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+  ): Either[Http.Problem, HttpAnswer] =
     policy.once(HttpTransport.Url(url.value), headers)
 
   def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Http.Text] =

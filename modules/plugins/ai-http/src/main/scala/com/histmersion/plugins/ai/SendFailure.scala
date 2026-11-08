@@ -17,7 +17,9 @@ final case class SendFailure(reported: SendFailure.Reported):
   def describe(method: SendFailure.Method, url: AiHttp.GetUrl): SendFailure.Problem =
     SendFailure
       .kind(exception)
-      .fold(SendFailure.Problem(reported.value))(k => SendFailure.Problem(s"${k.value}: Exception when sending request: ${method.value} ${url.value}"))
+      .fold(SendFailure.Problem(reported.value))(k =>
+        SendFailure.Problem(s"${k.value}: Exception when sending request: ${method.value} ${url.value}")
+      )
 
 object SendFailure:
   type Kind = Kind.T
@@ -26,7 +28,6 @@ object SendFailure:
   object Method extends Newtype[String, Pure]
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
-
 
   type Reported = Reported.T
   object Reported extends Newtype[String, Pure]

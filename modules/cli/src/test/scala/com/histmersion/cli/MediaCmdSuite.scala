@@ -36,7 +36,11 @@ class MediaCmdSuite extends munit.FunSuite:
     )
   )
   private val done =
-    running.modify(_.status).setTo(JobInfo.Status("done")).modify(_.progress).setTo(Some(JobInfo.Progress("300 place(s)/event(s) asked in 6 batch(es) · 284 stored")))
+    running
+      .modify(_.status)
+      .setTo(JobInfo.Status("done"))
+      .modify(_.progress)
+      .setTo(Some(JobInfo.Progress("300 place(s)/event(s) asked in 6 batch(es) · 284 stored")))
 
   /** Answers the job start with `queued`, then each poll of the job with the next of `polls`. */
   private def withServer[A](polls: List[JobInfo])(body: (Client.ServerUrl, ConcurrentLinkedQueue[String]) => A): A =
@@ -53,7 +57,10 @@ class MediaCmdSuite extends munit.FunSuite:
         seen.add(s"${ex.getRequestMethod} $path $req".trim)
         val (code, json) =
           if ex.getRequestMethod == "POST" && path == "/api/media/import/job" then
-            (202, running.modify(_.status).setTo(JobInfo.Status("queued")).modify(_.progress).setTo(None).asJson.noSpaces)
+            (
+              202,
+              running.modify(_.status).setTo(JobInfo.Status("queued")).modify(_.progress).setTo(None).asJson.noSpaces
+            )
           else if path == s"/api/jobs/${running.id}" then
             synchronized { if next.hasNext then last = next.next() }
             (200, last.asJson.noSpaces)
@@ -102,7 +109,15 @@ class MediaCmdSuite extends munit.FunSuite:
     }
 
   test("a job that fails exits 2 with its reason"):
-    withServer(List(running.modify(_.status).setTo(JobInfo.Status("failed")).modify(_.error).setTo(Some(JobInfo.Error("interrupted"))))) { (url, _) =>
+    withServer(
+      List(
+        running
+          .modify(_.status)
+          .setTo(JobInfo.Status("failed"))
+          .modify(_.error)
+          .setTo(Some(JobInfo.Error("interrupted")))
+      )
+    ) { (url, _) =>
       val (r, _, _) = run(url, "media", "import", "wikidata")
       assertEquals(r.left.map(_.exitCode), Left(ExitCode.Refused))
       assert(r.left.exists(_.message.value.contains("interrupted")), r.toString)

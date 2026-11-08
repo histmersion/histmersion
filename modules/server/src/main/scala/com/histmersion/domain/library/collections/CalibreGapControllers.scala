@@ -37,7 +37,9 @@ final class CalibreGapControllers(
     def held(ck: com.histmersion.api.library.Citekey): Citekey = Citekey.assume(ck.value)
     val hashes = sources.originals(gaps.map(g => held(g.citekey)))
     val stored = if hashes.isEmpty then Set.empty[Sha256] else originals.hashes
-    val marked = gaps.map(g => g.modify(_.storedOriginal).setTo(Some(CalibreGap.StoredOriginal(hashes.get(held(g.citekey)).exists(stored)))))
+    val marked = gaps.map(g =>
+      g.modify(_.storedOriginal).setTo(Some(CalibreGap.StoredOriginal(hashes.get(held(g.citekey)).exists(stored))))
+    )
     CalibreGaps(CalibreGaps.Count(marked.size), marked)
 
   def pushMeta(citekey: Citekey): Either[Api.Error, CalibreGap] =

@@ -39,7 +39,10 @@ object EnrichComparison extends OutputComparison:
             case Some(f) =>
               val n = f.findings.size
               val fails =
-                math.min(n, s.error.fold(0)(e => e.value.split(java.util.regex.Pattern.quote(QuoteFailure), -1).length - 1))
+                math.min(
+                  n,
+                  s.error.fold(0)(e => e.value.split(java.util.regex.Pattern.quote(QuoteFailure), -1).length - 1)
+                )
               loop(tail, checked + n, passed + n - fails)
             case None => loop(tail, checked, passed)
     val (checked, passed) = loop(steps.filter(s => isFindings(s.name)), 0, 0)
@@ -71,11 +74,13 @@ object EnrichComparison extends OutputComparison:
         quotesPassed = passed,
         placesAsked = EnrichSide.PlacesAsked(geo.fold(0)(_.choices.size)),
         placesResolved = EnrichSide.PlacesResolved(geo.fold(0)(_.choices.count(_.placeId.isDefined))),
-        datedFindings = EnrichSide.DatedFindings(geo.fold(0)(_.findings.count(f => f.periodStart.isDefined || f.periodEnd.isDefined))),
+        datedFindings = EnrichSide
+          .DatedFindings(geo.fold(0)(_.findings.count(f => f.periodStart.isDefined || f.periodEnd.isDefined))),
         periodStart = cls.flatMap(_.period).map(_.start),
         periodEnd = cls.flatMap(_.period).map(_.end),
         summaryChars = EnrichSide.SummaryChars(cls.fold(0)(_.summary.value.trim.length)),
-        notesChars = EnrichSide.NotesChars(CompareRuns.output[String](d, CompareRuns.OutputName("notes")).fold(0)(_.trim.length)),
+        notesChars =
+          EnrichSide.NotesChars(CompareRuns.output[String](d, CompareRuns.OutputName("notes")).fold(0)(_.trim.length)),
         uniqueClaims = mine.filterNot((n, _) => others.contains(n)).map(_._2).distinct.map(EnrichSide.UniqueClaims(_))
       )
     }

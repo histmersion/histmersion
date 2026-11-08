@@ -20,5 +20,4 @@ object AgentRole:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[AgentRole] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

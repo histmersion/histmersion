@@ -21,15 +21,34 @@ class PlaceRecordSuite extends munit.FunSuite:
     assertEquals(Place.Record.dateSourceText(Place.Record.DateSource("lpf")), "lpf")
 
   test("a register is named when the extract keeps it, else by its property"):
-    assertEquals(Place.Register(Place.Register.Property("P1936"), Place.Register.Id("123")).name, "DARE (Digital Atlas of the Roman Empire)")
+    assertEquals(
+      Place.Register(Place.Register.Property("P1936"), Place.Register.Id("123")).name,
+      "DARE (Digital Atlas of the Roman Empire)"
+    )
     assertEquals(Place.Register(Place.Register.Property("P9999"), Place.Register.Id("x")).name, "P9999")
 
   test("the place's Markdown lists its record; none when it holds nothing"):
-    val p = Place.Summary(Place.Id("wikidata_q1"), Place.Summary.Label("Larissa Castle"), Place.Summary.Kind("site"), None, None, None, Place.Summary.Names(""), Place.Summary.Contested(false))
+    val p = Place.Summary(
+      Place.Id("wikidata_q1"),
+      Place.Summary.Label("Larissa Castle"),
+      Place.Summary.Kind("site"),
+      None,
+      None,
+      None,
+      Place.Summary.Names(""),
+      Place.Summary.Contested(false)
+    )
     val rec = Place.Record(
       Some(Place.Record.DateSource("wikidata-p580")),
       List(Place.Record.Periods("Byzantine")),
-      List(Place.Designation(Place.Designation.Id("Q1"), Some(Place.Designation.Label("listed monument")), Some(Place.Designation.Start("1922")), None)),
+      List(
+        Place.Designation(
+          Place.Designation.Id("Q1"),
+          Some(Place.Designation.Label("listed monument")),
+          Some(Place.Designation.Start("1922")),
+          None
+        )
+      ),
       List(Place.Register(Place.Register.Property("P2186"), Place.Register.Id("GR-1")))
     )
     val md = PlacesMarkdown.place(PlaceDetail(p, None, Nil, Nil, Place.Counts.Findings(0), None, record = rec))

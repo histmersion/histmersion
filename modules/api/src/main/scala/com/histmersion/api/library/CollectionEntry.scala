@@ -23,10 +23,12 @@ final case class CollectionEntry(
     identifiers: Map[CollectionEntry.IdentifiersKey, CollectionEntry.IdentifiersValue],
     formats: List[CollectionEntry.Formats]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionEntry:
-  given Schema[Map[IdentifiersKey, IdentifiersValue]] = Schema.schemaForMap[IdentifiersKey, IdentifiersValue](_.value).copy(name = None, isOptional = true)
+  given Schema[Map[IdentifiersKey, IdentifiersValue]] =
+    Schema.schemaForMap[IdentifiersKey, IdentifiersValue](_.value).copy(name = None, isOptional = true)
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   type Publisher = Publisher.T

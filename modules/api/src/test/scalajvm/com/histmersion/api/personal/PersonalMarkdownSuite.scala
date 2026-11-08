@@ -42,7 +42,13 @@ class PersonalMarkdownSuite extends munit.FunSuite:
   test("read marks"):
     assertEquals(
       PersonalMarkdown.readLine(
-        ReadMark(ItemKind.Article, ItemKey("a"), ReadMark.Title("A"), read = ReadMark.Read(true), readAt = Some(ReadMark.ReadAt("2026-10-30T12:40:00Z")))
+        ReadMark(
+          ItemKind.Article,
+          ItemKey("a"),
+          ReadMark.Title("A"),
+          read = ReadMark.Read(true),
+          readAt = Some(ReadMark.ReadAt("2026-10-30T12:40:00Z"))
+        )
       ),
       "- **A** — article `a` · read 2026-10-30 12:40"
     )

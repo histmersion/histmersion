@@ -52,7 +52,10 @@ class CarriedKindsSuite extends munit.FunSuite:
     assertEquals(kinds.tableOf(com.histmersion.api.exchange.Bundle.Kind.Source), TableName("sources"))
     assertEquals(kinds.tableOf(com.histmersion.api.exchange.Bundle.Kind.ArticleVersion), TableName("article_versions"))
     assertEquals(kinds.tableOf(com.histmersion.api.exchange.Bundle.Kind.QueueItem), TableName("queue_items"))
-    assertEquals(com.histmersion.api.exchange.Bundle.Kind.values.toList.map(kinds.tableOf).distinct.size, com.histmersion.api.exchange.Bundle.Kind.values.length)
+    assertEquals(
+      com.histmersion.api.exchange.Bundle.Kind.values.toList.map(kinds.tableOf).distinct.size,
+      com.histmersion.api.exchange.Bundle.Kind.values.length
+    )
 
   test("the import's steps: tombstones first, the rows before the blobs, links after them, derived state last"):
     val rows = kinds.steps(ImportStage.Rows).map(_.rank.value: Int)

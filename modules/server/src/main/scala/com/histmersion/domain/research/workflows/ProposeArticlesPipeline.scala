@@ -145,9 +145,7 @@ final class ProposeArticlesPipeline(
             .exists(s => s.isFinal && s != Managers.ItemStatus.Done)
         )
         .flatMap(i =>
-          i.state.spec.map(sp =>
-            Existing(Slug.assume(i.target.value), Title(sp.title.value), Some(sp.filter), Nil)
-          )
+          i.state.spec.map(sp => Existing(Slug.assume(i.target.value), Title(sp.title.value), Some(sp.filter), Nil))
         )
         .foldLeft(List.empty[Existing])((acc, e) => if acc.exists(_.slug == e.slug) then acc else acc :+ e)
       val vocab = (field: String) =>
@@ -303,7 +301,8 @@ object ProposeArticlesPipeline:
     type Topics = Topics.T
     object Topics extends Newtype[String, Pure]
 
-  final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], line: Recorded.Line) derives KindlingsCodecAsObject
+  final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], line: Recorded.Line)
+      derives KindlingsCodecAsObject
 
   object Recorded:
     type Line = Line.T

@@ -29,11 +29,20 @@ class PortalParsersSuite extends munit.FunSuite:
   // ── ids ──────────────────────────────────────────────────────────────────────────────────────
 
   test("gazetteer ids in their URI forms"):
-    assertEquals(GazetteerUri.of(GazetteerPlace.Id("https://pleiades.stoa.org/places/697725")), Some("pleiades" -> "697725"))
-    assertEquals(GazetteerUri.of(GazetteerPlace.Id("http://pleiades.stoa.org/places/697725/")), Some("pleiades" -> "697725"))
+    assertEquals(
+      GazetteerUri.of(GazetteerPlace.Id("https://pleiades.stoa.org/places/697725")),
+      Some("pleiades" -> "697725")
+    )
+    assertEquals(
+      GazetteerUri.of(GazetteerPlace.Id("http://pleiades.stoa.org/places/697725/")),
+      Some("pleiades" -> "697725")
+    )
     assertEquals(GazetteerUri.of(GazetteerPlace.Id("https://www.geonames.org/310858")), Some("geonames" -> "310858"))
     assertEquals(GazetteerUri.of(GazetteerPlace.Id("http://sws.geonames.org/310858/")), Some("geonames" -> "310858"))
-    assertEquals(GazetteerUri.of(GazetteerPlace.Id("http://www.wikidata.org/entity/Q5788")), Some("wikidata" -> "Q5788"))
+    assertEquals(
+      GazetteerUri.of(GazetteerPlace.Id("http://www.wikidata.org/entity/Q5788")),
+      Some("wikidata" -> "Q5788")
+    )
     assertEquals(GazetteerUri.of(GazetteerPlace.Id("https://opencontext.org/subjects/x")), None)
     assertEquals(GazetteerUri.of(GazetteerPlace.Id(null)), None)
 
@@ -41,13 +50,20 @@ class PortalParsersSuite extends munit.FunSuite:
 
   test("Open Context: the search URL asks for images with each record's licence, creators, subjects and places"):
     assertEquals(
-      OpenContext.searchUrl(CollectionSettings.ApiUrl("https://opencontext.org/"), MediaPlace.Label("Petra"), CollectionSettings.Candidates(20)),
+      OpenContext.searchUrl(
+        CollectionSettings.ApiUrl("https://opencontext.org/"),
+        MediaPlace.Label("Petra"),
+        CollectionSettings.Candidates(20)
+      ),
       "https://opencontext.org/query/.json?type=media&cat=oc-gen-image&q=Petra&rows=20" +
         "&attributes=dc-terms-license%2Cdc-terms-spatial%2Cdc-terms-creator%2Cdc-terms-subject&add-attribute-uris=1" +
         "&response=metadata%2Curi-meta"
     )
     assertEquals(
-      OpenContext.itemUrl(CollectionSettings.ApiUrl("https://opencontext.org"), OpenContext.Uuid("f589a368-62ed-43df-5738-4c84d2f5f765")),
+      OpenContext.itemUrl(
+        CollectionSettings.ApiUrl("https://opencontext.org"),
+        OpenContext.Uuid("f589a368-62ed-43df-5738-4c84d2f5f765")
+      ),
       "https://opencontext.org/media/f589a368-62ed-43df-5738-4c84d2f5f765.json"
     )
 
@@ -55,7 +71,10 @@ class PortalParsersSuite extends munit.FunSuite:
     "Open Context: a record's own licence and credit form, its context most specific first, its place ids, its dates"
   ):
     val recs =
-      OpenContext.records(fixture("oc-search.json"), licences).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
+      OpenContext
+        .records(fixture("oc-search.json"), licences)
+        .fold(e => fail(e.value), identity)
+        .map(_.fold(e => fail(e.value), identity))
     assertEquals(recs.size, 4)
     val bowls = recs(1)
     assertEquals(bowls.key, "f589a368-62ed-43df-5738-4c84d2f5f765")
@@ -73,7 +92,11 @@ class PortalParsersSuite extends munit.FunSuite:
     assertEquals(r.licence, Licence("https://creativecommons.org/licenses/by/4.0"), "stated as the record states it")
     assertEquals(
       licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value)),
-      Licence.Read(Licence.Read.Id("CC-BY-4.0"), Licence.Read.Family("cc-by"), needsAttribution = Licence.Read.NeedsAttribution(true)),
+      Licence.Read(
+        Licence.Read.Id("CC-BY-4.0"),
+        Licence.Read.Family("cc-by"),
+        needsAttribution = Licence.Read.NeedsAttribution(true)
+      ),
       "the host reads it as CC BY 4.0"
     )
     assertEquals(r.licenceUrl, Some("https://creativecommons.org/licenses/by/4.0"))
@@ -137,7 +160,10 @@ class PortalParsersSuite extends munit.FunSuite:
     assert(OpenContext.item(bones, rec, licences).left.exists(_.value.contains("human remains")))
 
   test("Open Context: the short licence name of a label"):
-    assertEquals(OpenContext.shortLicence(Licence("Attribution 4.0 International (CC BY 4.0)"), Licence.Read.Id("CC-BY-4.0")), "CC BY 4.0")
+    assertEquals(
+      OpenContext.shortLicence(Licence("Attribution 4.0 International (CC BY 4.0)"), Licence.Read.Id("CC-BY-4.0")),
+      "CC BY 4.0"
+    )
     assertEquals(OpenContext.shortLicence(Licence(""), Licence.Read.Id("CC-BY-4.0")), "CC-BY-4.0")
 
   // ── #2571: real Domuztepe records (Open Context, 2026-10-23) ─────────────────────────────────
@@ -183,7 +209,12 @@ class PortalParsersSuite extends munit.FunSuite:
       .map(PluginMedia.record)
 
   private val domuztepe =
-    MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("wikidata_q4165990"), MediaMatch.PlaceInfo.Label("Domuztepe"), Set(MediaMatch.PlaceInfo.Keys("domuztepe")), DeepTime.span(DeepTime.SignedYear(-6500L), DeepTime.SignedYear(-5400L)))
+    MediaMatch.PlaceInfo(
+      MediaMatch.PlaceInfo.Id("wikidata_q4165990"),
+      MediaMatch.PlaceInfo.Label("Domuztepe"),
+      Set(MediaMatch.PlaceInfo.Keys("domuztepe")),
+      DeepTime.span(DeepTime.SignedYear(-6500L), DeepTime.SignedYear(-5400L))
+    )
   // the live map (2026-10-23) has a place called "I" and Kahramanmaraş; the record's ids name the province
   private val domNames: MediaMatch.Resolve = Map(
     MediaMatch.PlaceInfo.Keys("domuztepe") -> Set(MediaMatch.PlaceInfo.Id("wikidata_q4165990")),
@@ -208,13 +239,20 @@ class PortalParsersSuite extends munit.FunSuite:
     )
     // the province's own place is not given the site's finds: the finer context names another place
     val kahramanmaras =
-      MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("ne_city_1159127453"), MediaMatch.PlaceInfo.Label("Kahramanmaraş"), Set(MediaMatch.PlaceInfo.Keys("kahramanmaras")), DeepTime.span(DeepTime.SignedYear(-8000L), DeepTime.SignedYear(2000L)))
+      MediaMatch.PlaceInfo(
+        MediaMatch.PlaceInfo.Id("ne_city_1159127453"),
+        MediaMatch.PlaceInfo.Label("Kahramanmaraş"),
+        Set(MediaMatch.PlaceInfo.Keys("kahramanmaras")),
+        DeepTime.span(DeepTime.SignedYear(-8000L), DeepTime.SignedYear(2000L))
+      )
     assertEquals(
       MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, deeper),
       Left("its context names another place on the map")
     )
     // the unit "I" kept as a context field (as before #2571) refused it: the map's "I" is another place
-    val before = recs.head.copy(geography = (MediaRecord.GeographyPart1("context") -> MediaRecord.GeographyPart2("I")) :: recs.head.geography)
+    val before = recs.head.copy(geography =
+      (MediaRecord.GeographyPart1("context") -> MediaRecord.GeographyPart2("I")) :: recs.head.geography
+    )
     assertEquals(
       MediaMatch.withIds(before, domuztepe, domIds, domNames, deeper),
       Left("its context names another place on the map")
@@ -235,7 +273,11 @@ class PortalParsersSuite extends munit.FunSuite:
       Some(Right("File:Temple d'Apollon, Oppidum de Gaujac.JPG"))
     )
     assertEquals(
-      classify(Plugin.Http.GetUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Lions_Gate.jpg/330px-Lions_Gate.jpg")),
+      classify(
+        Plugin.Http.GetUrl(
+          "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Lions_Gate.jpg/330px-Lions_Gate.jpg"
+        )
+      ),
       Some(Right("File:Lions Gate.jpg"))
     )
     assertEquals(
@@ -246,7 +288,10 @@ class PortalParsersSuite extends munit.FunSuite:
       classify(Plugin.Http.GetUrl("https://it.wikipedia.org/wiki/Vara_(fiume)#/media/File:Brugnato-IMG_0146.JPG")),
       Some(Right("File:Brugnato-IMG 0146.JPG"))
     )
-    assertEquals(classify(Plugin.Http.GetUrl("https://en.wikipedia.org/wiki/File:Afrin,Huri.jpg")), Some(Right("File:Afrin,Huri.jpg")))
+    assertEquals(
+      classify(Plugin.Http.GetUrl("https://en.wikipedia.org/wiki/File:Afrin,Huri.jpg")),
+      Some(Right("File:Afrin,Huri.jpg"))
+    )
     assertEquals(
       classify(Plugin.Http.GetUrl("https://commons.wikimedia.org/wiki/Category:Msoura?uselang=en")),
       Some(Left(PleiadesLinks.Category))

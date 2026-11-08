@@ -173,7 +173,11 @@ final class EventsControllers(
           .flatMap(l => Event.Id.either(l.value).left.map(why => invalid(s"'${l.value}' is not an event id: $why")))
     ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 
-  def rename(caller: Caller, id: Event.Id, to: Event.Id => Either[Api.Error, Event.Id]): Either[Api.Error, (Event.Id, Event.Id)] =
+  def rename(
+      caller: Caller,
+      id: Event.Id,
+      to: Event.Id => Either[Api.Error, Event.Id]
+  ): Either[Api.Error, (Event.Id, Event.Id)] =
     maintenance.guard(WriteGate.OperationName("rename_event")):
       val from = now(id)
       for

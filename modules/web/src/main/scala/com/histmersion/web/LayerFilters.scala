@@ -22,7 +22,11 @@ object LayerFilters:
   def layerIcon(k: PointKind[?]): Icon.Html = Icon.html(k.icon)
 
   val eventKinds: List[IconSelect.Opt] =
-    IconSelect.Opt(IconSelect.Opt.Value(""), IconSelect.Opt.Label("all"), layerIcon(PointKinds.Events)) :: EventTaxonomy.groups.flatMap { g =>
+    IconSelect.Opt(
+      IconSelect.Opt.Value(""),
+      IconSelect.Opt.Label("all"),
+      layerIcon(PointKinds.Events)
+    ) :: EventTaxonomy.groups.flatMap { g =>
       val under = Some(IconSelect.Opt.Group(s"$g events"))
       IconSelect.Opt(
         IconSelect.Opt.Value(g.value),
@@ -45,7 +49,9 @@ object LayerFilters:
   /** What each event tier means; the tier menu's tooltips. */
   def tierMeaning(tier: EventSummary.Tier): Option[IconSelect.Opt.Hint] = tier.value match
     case EventTier.Attested =>
-      Some(IconSelect.Opt.Hint("Events a source in the corpus attests: its own record, or an attestation linked to it."))
+      Some(
+        IconSelect.Opt.Hint("Events a source in the corpus attests: its own record, or an attestation linked to it.")
+      )
     case EventTier.Catalogue =>
       Some(IconSelect.Opt.Hint("Events only an external catalogue knows; no source in the corpus attests them yet."))
     case _ => None
@@ -71,10 +77,11 @@ object LayerFilters:
     )
   )
   val siteTypes: List[IconSelect.Opt] =
-    IconSelect.Opt(IconSelect.Opt.Value(""), IconSelect.Opt.Label("all"), layerIcon(PointKinds.Sites)) :: SiteTypes.all.map(t =>
-      IconSelect.Opt(
-        IconSelect.Opt.Value(t.id.value),
-        IconSelect.Opt.Label(t.label.value),
-        badge(Shape.Circle, Glyphs.BadgeName(t.icon.value))
+    IconSelect.Opt(IconSelect.Opt.Value(""), IconSelect.Opt.Label("all"), layerIcon(PointKinds.Sites)) :: SiteTypes.all
+      .map(t =>
+        IconSelect.Opt(
+          IconSelect.Opt.Value(t.id.value),
+          IconSelect.Opt.Label(t.label.value),
+          badge(Shape.Circle, Glyphs.BadgeName(t.icon.value))
+        )
       )
-    )

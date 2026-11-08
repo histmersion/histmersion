@@ -26,7 +26,11 @@ class CollectionParsersSuite extends munit.FunSuite:
   test(
     "Met: v1.1 search URL (geoLocation and q both the name, paged by limit); ids; a retired endpoint's message is an error"
   ):
-    val u = MetCollection.searchUrl(CollectionSettings.ApiUrl("https://collectionapi.metmuseum.org/public/collection/"), MediaPlace.Label("Tell el-Amarna"), CollectionSettings.Candidates(20))
+    val u = MetCollection.searchUrl(
+      CollectionSettings.ApiUrl("https://collectionapi.metmuseum.org/public/collection/"),
+      MediaPlace.Label("Tell el-Amarna"),
+      CollectionSettings.Candidates(20)
+    )
     assertEquals(
       u,
       "https://collectionapi.metmuseum.org/public/collection/v1.1/search?hasImages=true" +
@@ -51,7 +55,10 @@ class CollectionParsersSuite extends munit.FunSuite:
     assertEquals((r.role, r.rendition), (None, None), "the collection's role; the host measures the file")
     val rights = r.rights.fold(e => fail(e.value), identity)
     assertEquals((rights.licence, rights.licenceUrl), (Licence("CC0-1.0"), Some(Cc0Url)))
-    assertEquals(HostLicences.readName(LicenceReader.ReadNameName(rights.licence.value)), Licence.Read(Licence.Read.Id("CC0-1.0"), Licence.Read.Family(Licence.Read.Cc0)))
+    assertEquals(
+      HostLicences.readName(LicenceReader.ReadNameName(rights.licence.value)),
+      Licence.Read(Licence.Read.Id("CC0-1.0"), Licence.Read.Family(Licence.Read.Cc0))
+    )
     assertEquals(rights.credit, "Terracotta animal figurine, The Metropolitan Museum of Art, CC0")
     val closed = fixture("met-object.json").mapObject(_.add("isPublicDomain", Json.False))
     assert(MetCollection.record(closed).toOption.get.rights.isLeft, "not public domain: refused, never assumed")
@@ -64,7 +71,10 @@ class CollectionParsersSuite extends munit.FunSuite:
     "Cleveland: records from the search, CC0 from share_license_status, find_spot before culture, web rendition stored"
   ):
     val rs =
-      ClevelandCollection.records(fixture("cma-search.json")).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
+      ClevelandCollection
+        .records(fixture("cma-search.json"))
+        .fold(e => fail(e.value), identity)
+        .map(_.fold(e => fail(e.value), identity))
     assertEquals(rs.size, 4)
     val earring = rs.head
     assertEquals(earring.key, "1916.131")
@@ -81,7 +91,11 @@ class CollectionParsersSuite extends munit.FunSuite:
     assert(ClevelandCollection.record(copyrighted).toOption.get.rights.isLeft)
     assert(
       ClevelandCollection
-        .searchUrl(Plugin.Http.GetUrl("https://openaccess-api.clevelandart.org/api"), CollectionQuery.Text("Cyprus"), CollectionSettings.Candidates(20))
+        .searchUrl(
+          Plugin.Http.GetUrl("https://openaccess-api.clevelandart.org/api"),
+          CollectionQuery.Text("Cyprus"),
+          CollectionSettings.Candidates(20)
+        )
         .value
         .startsWith("https://openaccess-api.clevelandart.org/api/artworks/?q=Cyprus&cc0=1&has_image=1&limit=20&fields=")
     )
@@ -90,7 +104,12 @@ class CollectionParsersSuite extends munit.FunSuite:
 
   test("Chicago: is_public_domain decides; IIIF renditions at the display and thumbnail widths"):
     val rs = ArtInstituteCollection
-      .records(fixture("aic-search.json"), Plugin.Http.GetUrl("https://www.artic.edu/iiif/2"), CollectionSettings.DisplayPx(843), ArtInstituteCollection.ThumbPx(330))
+      .records(
+        fixture("aic-search.json"),
+        Plugin.Http.GetUrl("https://www.artic.edu/iiif/2"),
+        CollectionSettings.DisplayPx(843),
+        ArtInstituteCollection.ThumbPx(330)
+      )
       .fold(e => fail(e.value), identity)
       .map(_.fold(e => fail(e.value), identity))
     val coin = rs.head
@@ -107,7 +126,10 @@ class CollectionParsersSuite extends munit.FunSuite:
     )
     assertEquals(coin.pageUrl, "https://www.artic.edu/artworks/4441")
     assert(coin.rights.isRight)
-    assertEquals(coin.rights.map(r => HostLicences.readName(LicenceReader.ReadNameName(r.licence.value)).family), Right(Licence.Read.Cc0))
+    assertEquals(
+      coin.rights.map(r => HostLicences.readName(LicenceReader.ReadNameName(r.licence.value)).family),
+      Right(Licence.Read.Cc0)
+    )
     assert(rs(1).rights.isLeft, "the fixture's second work is marked not public domain")
 
   // ── the Library of Congress ──────────────────────────────────────────────────────────────────
@@ -116,11 +138,23 @@ class CollectionParsersSuite extends munit.FunSuite:
     assertEquals(LocCollection.results(fixture("loc-search.json")), Right(List("2007627513", "2010593001")))
     assertEquals(LocCollection.itemId(Plugin.Http.GetUrl("http://www.loc.gov/item/2007627513/")), Some("2007627513"))
     val r =
-      LocCollection.record(fixture("loc-item.json"), CollectionSettings.ApiUrl("https://www.loc.gov"), CollectionSettings.MaxYear(1928), CollectionSettings.DisplayPx(1280), MediaSettings.ThumbPx(330)).fold(e => fail(e.value), identity)
+      LocCollection
+        .record(
+          fixture("loc-item.json"),
+          CollectionSettings.ApiUrl("https://www.loc.gov"),
+          CollectionSettings.MaxYear(1928),
+          CollectionSettings.DisplayPx(1280),
+          MediaSettings.ThumbPx(330)
+        )
+        .fold(e => fail(e.value), identity)
     assertEquals(r.key, "2007627513")
     assertEquals(r.period, Period.span(1880L, 1880L))
     assertEquals(r.imageUrl.map(_.value.split('/').last), Some("1024.jpg"), "the largest JPEG no wider than display-px")
-    assertEquals(r.thumbUrl.map(_.value.split('/').last), Some("1024.jpg"), "the smallest JPEG no narrower than thumb-px")
+    assertEquals(
+      r.thumbUrl.map(_.value.split('/').last),
+      Some("1024.jpg"),
+      "the smallest JPEG no narrower than thumb-px"
+    )
     assertEquals(r.originalUrl.map(_.value.split('/').last), Some("4000.jpg"))
     assertEquals(r.rights.map(_.licence), Right(Licence("public-domain")))
     assertEquals(
@@ -132,19 +166,46 @@ class CollectionParsersSuite extends munit.FunSuite:
       Right("Plan of Mycenae, Steffen, Bernhard, Library of Congress, Geography and Map Division")
     )
     assertEquals(r.geography.map(_._2), List("mycenae", "greece"))
-    val late = LocCollection.record(fixture("loc-item.json"), CollectionSettings.ApiUrl("https://www.loc.gov"), CollectionSettings.MaxYear(1870), CollectionSettings.DisplayPx(1280), MediaSettings.ThumbPx(330)).toOption.get
+    val late = LocCollection
+      .record(
+        fixture("loc-item.json"),
+        CollectionSettings.ApiUrl("https://www.loc.gov"),
+        CollectionSettings.MaxYear(1870),
+        CollectionSettings.DisplayPx(1280),
+        MediaSettings.ThumbPx(330)
+      )
+      .toOption
+      .get
     assert(late.rights.isLeft, "after max-year: may be in copyright")
     val restricted = parse(
       fixture("loc-item.json").noSpaces.replace("No known restrictions on publication.", "Rights status not evaluated.")
     ).toOption.get
-    assert(LocCollection.record(restricted, CollectionSettings.ApiUrl("https://www.loc.gov"), CollectionSettings.MaxYear(1928), CollectionSettings.DisplayPx(1280), MediaSettings.ThumbPx(330)).toOption.get.rights.isLeft)
+    assert(
+      LocCollection
+        .record(
+          restricted,
+          CollectionSettings.ApiUrl("https://www.loc.gov"),
+          CollectionSettings.MaxYear(1928),
+          CollectionSettings.DisplayPx(1280),
+          MediaSettings.ThumbPx(330)
+        )
+        .toOption
+        .get
+        .rights
+        .isLeft
+    )
     assertEquals(LocCollection.yearsOf(LocCollection.Date("[ca. 1906-1910]")), Period.span(1906L, 1910L))
     assertEquals(LocCollection.yearsOf(LocCollection.Date("undated")), None)
 
   // ── depictions ───────────────────────────────────────────────────────────────────────────────
 
   test("Commons depictions: haswbstatement search URL and its titles; P1299 items preferred first, deprecated dropped"):
-    val u = Commons.Depicts.searchUrl(Commons.Settings.ApiUrl("https://commons.wikimedia.org/w/api.php"), WikidataId("Q203729"), DepictsSettings.SearchLimit(10), Commons.Settings.Maxlag(5))
+    val u = Commons.Depicts.searchUrl(
+      Commons.Settings.ApiUrl("https://commons.wikimedia.org/w/api.php"),
+      WikidataId("Q203729"),
+      DepictsSettings.SearchLimit(10),
+      Commons.Settings.Maxlag(5)
+    )
     assertEquals(
       u,
       "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=search" +

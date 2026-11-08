@@ -31,9 +31,7 @@ class CheckRunnerSuite extends munit.FunSuite:
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
       Lint.report(
         rule,
-        List.tabulate(items)(i =>
-          LintItem(Citekey(s"${run(shared).head}$i"), LintItem.Detail(name.value))
-        ),
+        List.tabulate(items)(i => LintItem(Citekey(s"${run(shared).head}$i"), LintItem.Detail(name.value))),
         Lint.ItemLimit(maxItems.value)
       )
 
@@ -61,20 +59,38 @@ class CheckRunnerSuite extends munit.FunSuite:
 
   private val order = CheckOrder(List(Rule.Name("a"), Rule.Name("b"), Rule.Name("c")))
   private val registered = List(
-    Fake(Rule.Name("b"), 1, fixing(LintFixResult.Applied("b fixed"), LintFixResult.EdgesResolved(2), FixWhen.WhenNamed, FixRank(3))),
+    Fake(
+      Rule.Name("b"),
+      1,
+      fixing(LintFixResult.Applied("b fixed"), LintFixResult.EdgesResolved(2), FixWhen.WhenNamed, FixRank(3))
+    ),
     Fake(Rule.Name("z"), 0),
-    Fake(Rule.Name("a"), 3, fixing(LintFixResult.Applied("a fixed"), LintFixResult.EdgesResolved(1), FixWhen.EveryFix, FixRank(2))),
-    Fake(Rule.Name("c"), 0, fixing(LintFixResult.Applied("c fixed"), LintFixResult.EdgesResolved(4), FixWhen.WhenNamed, FixRank(1)))
+    Fake(
+      Rule.Name("a"),
+      3,
+      fixing(LintFixResult.Applied("a fixed"), LintFixResult.EdgesResolved(1), FixWhen.EveryFix, FixRank(2))
+    ),
+    Fake(
+      Rule.Name("c"),
+      0,
+      fixing(LintFixResult.Applied("c fixed"), LintFixResult.EdgesResolved(4), FixWhen.WhenNamed, FixRank(1))
+    )
   )
   private val runner = CheckRunner(registered, order, NoDatabase)
-  private lazy val context = CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true, new SystemTimer)
+  private lazy val context =
+    CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true, new SystemTimer)
 
   test("the rules in the stated order, an unordered one last"):
     assertEquals(runner.names, List("a", "b", "c", "z"))
 
   test("selection: all, the named ones in the order named and once, an unknown name refused with the known ones"):
     assertEquals(runner.select(Nil).map(_.map(_.rule.name)), Right(List("a", "b", "c", "z")))
-    assertEquals(runner.select(List(CheckRule.Name(" c"), CheckRule.Name(""), CheckRule.Name("A"), CheckRule.Name("c"))).map(_.map(_.rule.name)), Right(List("c", "a")))
+    assertEquals(
+      runner
+        .select(List(CheckRule.Name(" c"), CheckRule.Name(""), CheckRule.Name("A"), CheckRule.Name("c")))
+        .map(_.map(_.rule.name)),
+      Right(List("c", "a"))
+    )
     assertEquals(
       runner.select(List(CheckRule.Name("a"), CheckRule.Name("nope"))).map(_.map(_.rule.name)),
       Left("unknown lint rule(s): nope — known rules: a, b, c, z")
@@ -90,8 +106,25 @@ class CheckRunnerSuite extends munit.FunSuite:
     assertEquals(rep.fixed, Nil)
 
   test("the fixes: every call's always, the named ones only when named, in fix order, summed"):
-    assertEquals(runner.fix(Nil, context), LintFixResult(List(LintFixResult.Applied("a fixed")), LintFixResult.EdgesResolved(1), LintFixResult.SourcesReindexed(0), LintFixResult.ChunksWritten(0), LintFixResult.Remaining(1), findingsPlaced = LintFixResult.FindingsPlaced(1)))
+    assertEquals(
+      runner.fix(Nil, context),
+      LintFixResult(
+        List(LintFixResult.Applied("a fixed")),
+        LintFixResult.EdgesResolved(1),
+        LintFixResult.SourcesReindexed(0),
+        LintFixResult.ChunksWritten(0),
+        LintFixResult.Remaining(1),
+        findingsPlaced = LintFixResult.FindingsPlaced(1)
+      )
+    )
     assertEquals(
       runner.fix(List(CheckRule.Name(" B "), CheckRule.Name("C"), CheckRule.Name("unknown")), context),
-      LintFixResult(List(LintFixResult.Applied("c fixed"), LintFixResult.Applied("a fixed"), LintFixResult.Applied("b fixed")), LintFixResult.EdgesResolved(7), LintFixResult.SourcesReindexed(0), LintFixResult.ChunksWritten(0), LintFixResult.Remaining(7), findingsPlaced = LintFixResult.FindingsPlaced(7))
+      LintFixResult(
+        List(LintFixResult.Applied("c fixed"), LintFixResult.Applied("a fixed"), LintFixResult.Applied("b fixed")),
+        LintFixResult.EdgesResolved(7),
+        LintFixResult.SourcesReindexed(0),
+        LintFixResult.ChunksWritten(0),
+        LintFixResult.Remaining(7),
+        findingsPlaced = LintFixResult.FindingsPlaced(7)
+      )
     )

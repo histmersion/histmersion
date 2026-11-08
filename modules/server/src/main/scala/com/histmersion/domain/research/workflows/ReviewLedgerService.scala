@@ -33,15 +33,17 @@ object ReviewLedgerService:
   final private class Implementation(db: Transactor) extends ReviewLedgerService:
     def get(slug: Slug): Either[String, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug))
     def put(ledger: Ledger): Unit = db.transact(ReviewLedgerRepo.put(ledger))
-    def passedReview(reviewId: ReviewId): Set[Slug] = db.read(ReviewLedgerRepo.passedReview(ReviewLedgerRepo.ReviewId(reviewId.value)))
-
+    def passedReview(reviewId: ReviewId): Set[Slug] =
+      db.read(ReviewLedgerRepo.passedReview(ReviewLedgerRepo.ReviewId(reviewId.value)))
 
   /** Over the ledgers of `state`, as a database holding only research's rows answers: no manager item is stored, so an
     * article passed once its ledger holds no open MAJOR; a ledger of an article that is not stored is refused, as the
     * database's reference to the article refuses it.
     */
   final class InMemory(state: AtomicReference[ResearchState]) extends ReviewLedgerService:
-    def get(slug: Slug): Either[String, Option[Ledger]] = Right(state.get.ledgers.get(ResearchState.LedgersKey(slug.value)))
+    def get(slug: Slug): Either[String, Option[Ledger]] = Right(
+      state.get.ledgers.get(ResearchState.LedgersKey(slug.value))
+    )
 
     def put(ledger: Ledger): Unit =
       val before = state.getAndUpdate(st =>
@@ -54,4 +56,3 @@ object ReviewLedgerService:
 
     def passedReview(reviewId: ReviewId): Set[Slug] =
       state.get.ledgers.collect { case (slug, l) if l.openMajors.isEmpty => Slug.assume(slug.value) }.toSet
-

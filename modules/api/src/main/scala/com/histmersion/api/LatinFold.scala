@@ -78,14 +78,14 @@ object LatinFold:
   private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
 
   def foldChar(c: FoldCharC): String =
-    if ((isCombiningMark(c)) == (true)) then ("") else Table.getOrElse(((c)), c.toString)
+    if (isCombiningMark(c)) == (true) then ("") else Table.getOrElse(((c)), c.toString)
 
   def fold(s: String): String =
     val b = new StringBuilder((s).length)
-    (s).foreach ({ c =>
+    (s).foreach(c =>
       if !(isCombiningMark((c))) then
         Table.get((c)) match
           case Some(r) => b ++= r
           case None    => b += c
-    })
+    )
     (b.result())

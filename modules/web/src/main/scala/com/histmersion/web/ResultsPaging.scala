@@ -26,12 +26,19 @@ object ResultsPaging:
     * `no things` for none; then the tab's own `extras`, each after a ` · `.
     */
 
-  def countLine(shown: Paging.Shown, total: Paging.Page.Total, singular: Plural.Noun.Singular, plural: Plural.Noun.Plural = Plural.Noun.Plural(""), extras: List[UiLabels.Text] = Nil): UiLabels.Text =
+  def countLine(
+      shown: Paging.Shown,
+      total: Paging.Page.Total,
+      singular: Plural.Noun.Singular,
+      plural: Plural.Noun.Plural = Plural.Noun.Plural(""),
+      extras: List[UiLabels.Text] = Nil
+  ): UiLabels.Text =
     val many = if plural.value.nonEmpty then plural.value else singular.value + "s"
     val count = Plural.Count(total.value.toLong)
     val head =
       if total.value <= 0 then s"no $many"
-      else if shown.value < total.value then s"showing 1–$shown of ${Plural.count(count, singular, Plural.Noun.Plural(many))}"
+      else if shown.value < total.value then
+        s"showing 1–$shown of ${Plural.count(count, singular, Plural.Noun.Plural(many))}"
       else Plural.count(count, singular, Plural.Noun.Plural(many)).value
     UiLabels.Text((head :: extras.map(_.value).filter(_.nonEmpty)).mkString(" · "))
 

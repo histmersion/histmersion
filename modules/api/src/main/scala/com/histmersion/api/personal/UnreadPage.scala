@@ -8,9 +8,13 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class UnreadPage(rows: List[UnreadRow], total: UnreadPage.Total, offset: UnreadPage.Offset = UnreadPage.Offset(0))
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class UnreadPage(
+    rows: List[UnreadRow],
+    total: UnreadPage.Total,
+    offset: UnreadPage.Offset = UnreadPage.Offset(0)
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object UnreadPage:
   type Total = Total.T

@@ -17,7 +17,8 @@ final case class QueueListing(
     checks: List[Acquire.Checks.AcquireCheck] = Nil,
     goals: List[Queue.ItemGoals] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
 
   /** The list in Markdown, each ACQUIRE item with its last check's reason; `None` for a list no kind names. */
   def markdown: Option[Queue.MarkdownResult] =

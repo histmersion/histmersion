@@ -35,10 +35,13 @@ final class SettingsControllers(
   /** The changes, each value read as its setting's kind; then the reload, when asked for and something changed. */
   def write(w: ConfigEdit.Write): Either[Api.Error, ConfigEdit.Written] =
     for
-      edits <- SettingEdit.parseAll(
-        w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),
-        settings.schema
-      ).left.map(SettingsViews.error)
+      edits <- SettingEdit
+        .parseAll(
+          w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),
+          settings.schema
+        )
+        .left
+        .map(SettingsViews.error)
       version <- w.version
         .map(_.value.trim)
         .filter(_.nonEmpty)
@@ -62,7 +65,8 @@ final class SettingsControllers(
       .restart()
       .fold(
         why => Left(Api.Error(Api.Error.Message(why.value), Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
-        msg => Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), ConfigEdit.Restart.Message(msg.value)))
+        msg =>
+          Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), ConfigEdit.Restart.Message(msg.value)))
       )
 
   def setupDue: Boolean = settings.setupDue

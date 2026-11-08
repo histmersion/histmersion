@@ -28,7 +28,9 @@ class LightboxSuite extends munit.FunSuite:
 
   test("the attributes are escaped") {
     assert(
-      Lightbox.attrs(item.modify(_.title).setTo(Some("a \"b\" <c>"))).contains("""data-lb-title="a &quot;b&quot; &lt;c&gt;"""")
+      Lightbox
+        .attrs(item.modify(_.title).setTo(Some("a \"b\" <c>")))
+        .contains("""data-lb-title="a &quot;b&quot; &lt;c&gt;"""")
     )
   }
 

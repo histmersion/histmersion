@@ -7,7 +7,10 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class DeleteCount(part: DeletePart, rows: DeleteCount.Rows) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class DeleteCount(part: DeletePart, rows: DeleteCount.Rows)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object DeleteCount:
   type Rows = Rows.T

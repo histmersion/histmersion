@@ -24,15 +24,16 @@ object Years:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-
-  export com.histmersion.api.catalogue.{Year as ShiftH}
+  export com.histmersion.api.catalogue.Year as ShiftH
   type NoYearZero = NoYearZeroValue
   type NoYearZeroValue = Problem
   val NoYearZeroValue: Problem.type = Problem
 
   def fromAstronomical(a: Astronomical): Year = if a.value <= 0 then Year((a).value - 1) else Year((a).value)
 
-  def toAstronomical(h: Year): Astronomical = if (h).value < 0 then Astronomical((h).value + 1) else if h.value == 0 then Astronomical((0).toLong) else Astronomical((h).value)
+  def toAstronomical(h: Year): Astronomical = if (h).value < 0 then Astronomical((h).value + 1)
+  else if h.value == 0 then Astronomical((0).toLong)
+  else Astronomical((h).value)
 
   def shift(h: Years.ShiftH, d: Shift): Year = fromAstronomical(Astronomical(toAstronomical(h).value + d.value))
 
@@ -55,8 +56,9 @@ object Years:
         era match
           case None                => Right(Year(n))
           case Some(e) if isBce(e) => Right(Year(-math.abs(n)))
-          case Some(_) if n < 0    => Left(Problem(s"'${(raw).value.trim}': a CE year is positive; write the BCE year instead"))
-          case Some(_)             => Right(Year(n))
+          case Some(_) if n < 0    =>
+            Left(Problem(s"'${(raw).value.trim}': a CE year is positive; write the BCE year instead"))
+          case Some(_) => Right(Year(n))
       }
     val parsed = t match
       case Typed(num, era)    => signed((num), Option(Era.Wire(era)))
@@ -74,4 +76,11 @@ object Years:
     (raw).value.trim.toLongOption.map(v => fromAstronomical(Astronomical(v)))
 
   def fromJson(j: Json, text: Text => Option[Year]): Option[Year] =
-    (j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(Text(refactorValue))).map(refactorValue2 => (refactorValue2).value) })).orElse(j.asNumber.map(_.toDouble.round))).map(refactorValue4 => Year(refactorValue4))
+    (j.asNumber
+      .flatMap(_.toLong)
+      .orElse(j.asString.flatMap {
+        val refactorFunction = text;
+        (refactorValue) => (refactorFunction(Text(refactorValue))).map(refactorValue2 => (refactorValue2).value)
+      })
+      .orElse(j.asNumber.map(_.toDouble.round)))
+      .map(refactorValue4 => Year(refactorValue4))

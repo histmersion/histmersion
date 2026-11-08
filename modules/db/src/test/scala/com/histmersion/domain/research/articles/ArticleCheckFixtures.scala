@@ -11,7 +11,9 @@ import com.augustnagro.magnum.DbCon
 object ArticleCheckFixtures:
   export ArticleCheckRepo.ReportMaxItems
 
-  def report(r: Rule, format: FormatChecker, maxItems: ArticleCheckRepo.ReportMaxItems)(using CheckRun)(using
+  def report(r: Rule, format: FormatChecker, maxItems: ArticleCheckRepo.ReportMaxItems)(using
+      CheckRun
+  )(using
       DbCon
   ): LintRuleReport =
     ArticleCheckRepo.report(r, format, maxItems)

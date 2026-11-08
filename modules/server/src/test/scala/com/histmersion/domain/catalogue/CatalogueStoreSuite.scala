@@ -47,13 +47,20 @@ object CatalogueStoreSuite:
         val corrections = CorrectionService.InMemory(state)
         val eventImports = EventImportService.InMemory(state)
         val eventLinks = EventLinkService.InMemory(state, ck => sources.get(ck.value).map(_ => Some(Title(ck.value))))
-        val leads = LeadService.InMemory(state, evs, ck => sources.get(ck.value).map(_ => (Some(EventSourceRef.Title(ck.value)), None)))
+        val leads = LeadService.InMemory(
+          state,
+          evs,
+          ck => sources.get(ck.value).map(_ => (Some(EventSourceRef.Title(ck.value)), None))
+        )
         val siteTypes = SiteTypeService.InMemory(state, () => HeldSite.CheckedAt(clock.incrementAndGet()))
         val places =
           PlaceService.InMemory(state, java.time.Clock.fixed(java.time.Instant.EPOCH, java.time.ZoneOffset.UTC))
         def source(citekey: String): Unit = sources.update(citekey, ())
         def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
-          val _ = state.updateAndGet(_.modify(_.sites).using(_ :+ HeldSite(HeldSite.Id(id), HeldSite.OnMap(onMap), cls.map(HeldSite.ImportClass(_)))))
+          val _ = state.updateAndGet(
+            _.modify(_.sites)
+              .using(_ :+ HeldSite(HeldSite.Id(id), HeldSite.OnMap(onMap), cls.map(HeldSite.ImportClass(_))))
+          )
         def seedRows(): List[String] =
           state.get.periods.filter(_.dataset == Dataset.Seed).map(_.period.id.value).toList)
 

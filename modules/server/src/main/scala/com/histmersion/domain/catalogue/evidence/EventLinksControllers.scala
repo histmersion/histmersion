@@ -14,9 +14,9 @@ import com.histmersion.api.catalogue.{
   Attestation,
   CatalogProviderInfo,
   CatalogRecord,
+  EventCandidatesRequest,
   EventCatalogueRef,
   EventGeo,
-  EventCandidatesRequest,
   EventLead,
   EventLeads,
   EventLinkCandidate,
@@ -258,14 +258,24 @@ final class EventLinksControllers(
   def candidatesJob(caller: Caller, req: EventCandidatesRequest): Either[Api.Error, JobInfo] =
     req.event.map(_.value.trim).filter(_.nonEmpty) match
       case Some(one) =>
-        Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail).flatMap(_ =>
-          jobs.start(EventLinksControllers.CandidatesJobKind, JobKinds.Subject(s"candidates of $one"), write = true) { (_, _) =>
-            Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail)
-              .map(d => BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}"))
-              .left
-              .map(e => BackgroundJob.Outcome.Error(e.message.value))
-          }
-        )
+        Event.Id
+          .option(one)
+          .toRight(notFound(s"No event '$one'"))
+          .flatMap(eventOrFail)
+          .flatMap(_ =>
+            jobs.start(EventLinksControllers.CandidatesJobKind, JobKinds.Subject(s"candidates of $one"), write = true) {
+              (_, _) =>
+                Event.Id
+                  .option(one)
+                  .toRight(notFound(s"No event '$one'"))
+                  .flatMap(eventOrFail)
+                  .map(d =>
+                    BackgroundJob.Outcome.Summary(s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
+                  )
+                  .left
+                  .map(e => BackgroundJob.Outcome.Error(e.message.value))
+            }
+          )
       case None =>
         jobs.start(
           EventLinksControllers.CandidatesJobKind,
@@ -399,7 +409,11 @@ final class EventLinksControllers(
       .setTo(lead)
 
   /** The catalogue events an article's period and region hold that its body never names. */
-  def articleLeads(body: ArticleEventLead.Body, citekeys: List[Citekey], period: Option[Period]): List[ArticleEventLead] =
+  def articleLeads(
+      body: ArticleEventLead.Body,
+      citekeys: List[Citekey],
+      period: Option[Period]
+  ): List[ArticleEventLead] =
     PageSize
       .option(ec.leads.articleLimit.value * 3)
       .fold(Nil)(candidateLimit =>

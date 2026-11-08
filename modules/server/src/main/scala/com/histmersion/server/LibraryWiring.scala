@@ -51,8 +51,7 @@ final class LibraryWiring(
     formatting,
     originals,
     mentions,
-    (k, id) =>
-      Citekey.either(Deps.aliasTables.current(deps.ds, k, AliasTable.Id(id.value)).value).getOrElse(id),
+    (k, id) => Citekey.either(Deps.aliasTables.current(deps.ds, k, AliasTable.Id(id.value)).value).getOrElse(id),
     cfg,
     deps.maintenance,
     deps.clock

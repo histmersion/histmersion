@@ -87,8 +87,13 @@ class MediaProvidersSuite extends munit.FunSuite:
 
   test("counts: most frequent first, then by key, with the allowed flag"):
     assertEquals(
-      MediaCount.of(List(MediaCount.Key("b"), MediaCount.Key("a"), MediaCount.Key("b"), MediaCount.Key("c")), _.value != "c"),
-      List(MediaCount(MediaCount.Key("b"), MediaCount.N(2)), MediaCount(MediaCount.Key("a"), MediaCount.N(1)), MediaCount(MediaCount.Key("c"), MediaCount.N(1), allowed = MediaCount.Allowed(false)))
+      MediaCount
+        .of(List(MediaCount.Key("b"), MediaCount.Key("a"), MediaCount.Key("b"), MediaCount.Key("c")), _.value != "c"),
+      List(
+        MediaCount(MediaCount.Key("b"), MediaCount.N(2)),
+        MediaCount(MediaCount.Key("a"), MediaCount.N(1)),
+        MediaCount(MediaCount.Key("c"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
+      )
     )
 
   // ── Wikidata ─────────────────────────────────────────────────────────────────────────────────
@@ -118,9 +123,16 @@ class MediaProvidersSuite extends munit.FunSuite:
       items = MediaImportReport.Items(9),
       statements = MediaImportReport.Statements(19),
       files = MediaImportReport.Files(10),
-      byLicence = List(MediaCount(MediaCount.Key("CC-BY-SA-3.0"), MediaCount.N(5)), MediaCount(MediaCount.Key("CC-BY-NC-4.0"), MediaCount.N(1), allowed = MediaCount.Allowed(false))),
-      byRole = List(MediaCount(MediaCount.Key("locator-map"), MediaCount.N(16)), MediaCount(MediaCount.Key("image"), MediaCount.N(3))),
-      rejected = List(MediaCount(MediaCount.Key("licence cc-by-nc not allowed for wikimedia-commons"), MediaCount.N(1))),
+      byLicence = List(
+        MediaCount(MediaCount.Key("CC-BY-SA-3.0"), MediaCount.N(5)),
+        MediaCount(MediaCount.Key("CC-BY-NC-4.0"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
+      ),
+      byRole = List(
+        MediaCount(MediaCount.Key("locator-map"), MediaCount.N(16)),
+        MediaCount(MediaCount.Key("image"), MediaCount.N(3))
+      ),
+      rejected =
+        List(MediaCount(MediaCount.Key("licence cc-by-nc not allowed for wikimedia-commons"), MediaCount.N(1))),
       failed = List(MediaImportReport.Failed("x: y"))
     )
     val md = MediaMarkdown.mediaImportReport(r)
@@ -135,4 +147,13 @@ class MediaProvidersSuite extends munit.FunSuite:
     assert(md.contains("**Not stored**\n- licence cc-by-nc not allowed for wikimedia-commons: 1"), md)
     assert(md.contains("**Failed**\n- x: y"), md)
     assert(!md.contains("**Stored:**"), "a dry run stores nothing")
-    assert(MediaMarkdown.mediaImportReport(r.modify(_.dryRun).setTo(RepairAcquire.RepairRequest.DryRun(false)).modify(_.stored).setTo(MediaImportReport.Stored(2))).contains("**Stored:** 2 new"))
+    assert(
+      MediaMarkdown
+        .mediaImportReport(
+          r.modify(_.dryRun)
+            .setTo(RepairAcquire.RepairRequest.DryRun(false))
+            .modify(_.stored)
+            .setTo(MediaImportReport.Stored(2))
+        )
+        .contains("**Stored:** 2 new")
+    )

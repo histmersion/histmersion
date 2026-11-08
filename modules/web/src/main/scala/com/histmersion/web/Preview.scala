@@ -124,10 +124,10 @@ object Preview:
     object Article:
       export com.histmersion.api.research.Article.Slug
     object Place:
-      export Pages.{PlaceId as Id}
-      export com.histmersion.api.Years.{Astronomical as AsOf}
+      export Pages.PlaceId as Id
+      export com.histmersion.api.Years.Astronomical as AsOf
     object Event:
-      export Pages.{EventId as Id}
+      export Pages.EventId as Id
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
   def targetOf(ck: Option[Target.Source.Citekey], slug: Option[Item.Slug]): Option[Target] =
@@ -183,7 +183,12 @@ object Preview:
     object LinkHref extends Newtype[String, Pure]
 
   /** One titled list on a card. */
-  final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = Section.Kind(""))
+  final case class Section(
+      title: Section.Title,
+      items: List[Item],
+      note: Option[Section.Note] = None,
+      kind: Section.Kind = Section.Kind("")
+  )
 
   object Section:
     type Title = Title.T
@@ -226,7 +231,11 @@ object Preview:
     Card(
       title = Card.Title(s.title.value),
       byline = Card.Byline(
-        List(s.authors.map(_.value).mkString(", "), s.year.map(_.value.toInt).fold("")(_.toString), s.venue.map(_.value).getOrElse(""))
+        List(
+          s.authors.map(_.value).mkString(", "),
+          s.year.map(_.value.toInt).fold("")(_.toString),
+          s.venue.map(_.value).getOrElse("")
+        )
           .filter(_.trim.nonEmpty)
           .mkString(" · ")
       ),
@@ -235,7 +244,10 @@ object Preview:
       chips = s.topics.map(t => Card.ChipKind("topic") -> Chip.Choice(t.value)) ++
         s.tags.map(t => Card.ChipKind("tag") -> Chip.Choice(t.value)),
       where = Card.Where(
-        List(s.regions.map(r => Label.display(Label.Text(r.value)).value).mkString(", "), YearFmt.period(s.periodStart, s.periodEnd))
+        List(
+          s.regions.map(r => Label.display(Label.Text(r.value)).value).mkString(", "),
+          YearFmt.period(s.periodStart, s.periodEnd)
+        )
           .filter(_.nonEmpty)
           .mkString(" · ")
       ),
@@ -248,9 +260,11 @@ object Preview:
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
   def card(sw: Source.WithFindings): Card =
-    card(sw.source).modify(
-      _.media).setTo(sw.illustration).modify(_.icon).setTo(Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role.value == MediaRole.Cover)))
-    )
+    card(sw.source)
+      .modify(_.media)
+      .setTo(sw.illustration)
+      .modify(_.icon)
+      .setTo(Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role.value == MediaRole.Cover))))
 
   def card(a: Article.View): Card =
     Card(
@@ -286,12 +300,15 @@ object Preview:
     */
   def card(d: PlaceDetail): Card =
     val p = d.place
-    val contested = Option.when(d.contested.value && !p.label.value.toLowerCase.contains("contested"))("contested extent")
+    val contested =
+      Option.when(d.contested.value && !p.label.value.toLowerCase.contains("contested"))("contested extent")
     val description = d.descriptions match
       case Nil           => None
       case first :: rest =>
         val other =
-          rest.find(_.lang != first.lang).map(o => s" · ${o.text}" + (if o.lang.value.nonEmpty then s" (${o.lang})" else ""))
+          rest
+            .find(_.lang != first.lang)
+            .map(o => s" · ${o.text}" + (if o.lang.value.nonEmpty then s" (${o.lang})" else ""))
         Some(first.text.value + other.getOrElse(""))
     val links = d.links
       .flatMap(l =>
@@ -377,7 +394,9 @@ object Preview:
     (Option.when(e.datingNote.isDefined)(s"window: $years").toList ++
       EventPrecision
         .label(e.precision)
-        .map(l => if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l)
+        .map(l =>
+          if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l
+        )
         .toList ++
       d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}")).map(UiLabels.Text(_))
 
@@ -407,7 +426,9 @@ object Preview:
         Section.Title("Findings near it"),
         d.findings.map(f =>
           Item(
-            Item.Text(s"${km(f.km)}, ${if f.yearGap.value == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim.value, Markdown.CharLimit(90))}"),
+            Item.Text(
+              s"${km(f.km)}, ${if f.yearGap.value == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim.value, Markdown.CharLimit(90))}"
+            ),
             citekey = Some(Item.Citekey(f.citekey.value))
           )
         ),
@@ -417,7 +438,8 @@ object Preview:
         Section.Title("Possibly discussed in"),
         d.candidates.map(c =>
           Item(
-            Item.Text(c.title.map(_.value).getOrElse(c.citekey.value) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}")),
+            Item.Text(c.title.map(_.value).getOrElse(c.citekey.value) + (if c.reasons.isEmpty then ""
+                                                                         else s" — ${c.reasons.mkString("; ")}")),
             citekey = Some(Item.Citekey(c.citekey.value))
           )
         ),
@@ -441,7 +463,9 @@ object Preview:
             href = Some(c.url.value).filter(_.nonEmpty).map(Item.Href(_))
           )
         ),
-        note = Option.when(d.tier.value == EventTier.Catalogue)(Section.Note("known only from a catalogue: a research lead, not evidence")),
+        note = Option.when(d.tier.value == EventTier.Catalogue)(
+          Section.Note("known only from a catalogue: a research lead, not evidence")
+        ),
         kind = Section.Kind("catalogue")
       ),
       Section(
@@ -464,7 +488,9 @@ object Preview:
     */
   def creditLine(t: MediaThumb): (MediaItem.Credit, Option[(MediaItem.License, Item.Href)]) =
     val lic = t.license.map(l =>
-      l -> Item.Href(t.licenseUrl.map(_.value).orElse(LicenseName.url(l.value)).orElse(t.sourceUrl.map(_.value)).getOrElse(""))
+      l -> Item.Href(
+        t.licenseUrl.map(_.value).orElse(LicenseName.url(l.value)).orElse(t.sourceUrl.map(_.value)).getOrElse("")
+      )
     )
     (t.credit, lic)
 
@@ -520,7 +546,9 @@ object Preview:
           .map(card)
       )
     case Target.Event(id) =>
-      cached(eventCache, CacheKey(id.value))(ApiClient.getEvent(com.histmersion.api.catalogue.Event.Id(id.value)).map(card))
+      cached(eventCache, CacheKey(id.value))(
+        ApiClient.getEvent(com.histmersion.api.catalogue.Event.Id(id.value)).map(card)
+      )
 
   // ── the one handler ──────────────────────────────────────────────────────────────────────────
 
@@ -531,8 +559,15 @@ object Preview:
   var placeAsOf: () => Option[Years.Astronomical] = () => None
 
   /** Pure: what an element asks to preview, a place chip's id included (a source or an article first). */
-  def targetOf(ck: Option[Target.Source.Citekey], slug: Option[Item.Slug], place: Option[Pages.PlaceId], asOf: => Option[Target.Place.AsOf]): Option[Target] =
-    targetOf(ck, slug).orElse(place.map(_.value.trim).filter(_.nonEmpty).map(p => Target.Place(Target.Place.Id(p), asOf)))
+  def targetOf(
+      ck: Option[Target.Source.Citekey],
+      slug: Option[Item.Slug],
+      place: Option[Pages.PlaceId],
+      asOf: => Option[Target.Place.AsOf]
+  ): Option[Target] =
+    targetOf(ck, slug).orElse(
+      place.map(_.value.trim).filter(_.nonEmpty).map(p => Target.Place(Target.Place.Id(p), asOf))
+    )
 
   /** Pure: the same, an event's id last. */
   def targetOf(
@@ -542,7 +577,9 @@ object Preview:
       event: Option[Pages.EventId],
       asOf: => Option[Target.Place.AsOf]
   ): Option[Target] =
-    targetOf(ck, slug, place, asOf).orElse(event.map(_.value.trim).filter(_.nonEmpty).map(e => Target.Event(Target.Event.Id(e))))
+    targetOf(ck, slug, place, asOf).orElse(
+      event.map(_.value.trim).filter(_.nonEmpty).map(e => Target.Event(Target.Event.Id(e)))
+    )
 
   private def targetOfElement(el: dom.Element): Option[Target] =
     targetOf(
@@ -584,7 +621,12 @@ object Preview:
           () =>
             Option.when(el.isConnected) {
               val r = el.getBoundingClientRect()
-              Anchor.Under(Anchor.Under.Left(r.left), Anchor.Under.Top(r.top), Anchor.Under.Bottom(r.bottom), Anchor.Under.Width(r.width))
+              Anchor.Under(
+                Anchor.Under.Left(r.left),
+                Anchor.Under.Top(r.top),
+                Anchor.Under.Bottom(r.bottom),
+                Anchor.Under.Width(r.width)
+              )
             },
           owner = Some(el),
           keyboard = keyboard
@@ -794,7 +836,13 @@ object Preview:
     * when it fits there, else on the roomier side, capped to that room so the content scrolls; with less than `MinRoom`
     * either side, the full viewport height.
     */
-  def verticalFit(top: ScreenPixels, bottom: ScreenPixels, gap: ElementSize, h: ElementSize, vh: ViewportHeight): (ScreenPixels, ScreenPixels) =
+  def verticalFit(
+      top: ScreenPixels,
+      bottom: ScreenPixels,
+      gap: ElementSize,
+      h: ElementSize,
+      vh: ViewportHeight
+  ): (ScreenPixels, ScreenPixels) =
     val t: Double = top.value
     val b: Double = bottom.value
     val g: Double = gap.value
@@ -844,7 +892,14 @@ object Preview:
     Fit(ScreenPixels(x), y, maxH)
 
   /** Pure: the corner [[pointFit]] picks (kept for callers that only need the position). */
-  def pointPlacement(x: PointPlacementX, y: PointPlacementY, w: PointPlacementW, h: PointPlacementH, vw: PointPlacementVw, vh: PointPlacementVh): (ScreenPixels, ScreenPixels) =
+  def pointPlacement(
+      x: PointPlacementX,
+      y: PointPlacementY,
+      w: PointPlacementW,
+      h: PointPlacementH,
+      vw: PointPlacementVw,
+      vh: PointPlacementVh
+  ): (ScreenPixels, ScreenPixels) =
     val f = pointFit(x, y, w, h, vw, vh)
     (f.x, f.y)
 
@@ -876,7 +931,7 @@ object Preview:
     object At:
       export Preview.{ScreenPixels as X, ScreenPixels as Y}
     object Under:
-      export Preview.{ScreenPixels as Left, ScreenPixels as Top, ScreenPixels as Bottom, ElementSize as Width}
+      export Preview.{ElementSize as Width, ScreenPixels as Bottom, ScreenPixels as Left, ScreenPixels as Top}
 
   /** The pinned card: what it shows, its element, where it is anchored (`None` while the anchor is out of view: the
     * card waits, hidden), what pinned it (a click there is not "outside"), and where the focus goes back to when it
@@ -896,7 +951,6 @@ object Preview:
     // `var`: re-measures the card when its content changes size (see `observe`)
     var observer: Option[js.Dynamic] = None
 
-
   // `var`: at most one card is pinned
   private var pinned: Option[Pinned] = None
 
@@ -913,7 +967,12 @@ object Preview:
   /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the focus moves into
     * the card (its ✕ first, then its links), and back to `owner` when it closes.
     */
-  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: KeyboardDriven = KeyboardDriven(false)): Unit =
+  def pin(
+      t: Target,
+      anchor: () => Option[Anchor],
+      owner: Option[dom.Element] = None,
+      keyboard: KeyboardDriven = KeyboardDriven(false)
+  ): Unit =
     unpin(restoreFocus = RestoreFocus(false))
     hide()
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
@@ -983,8 +1042,10 @@ object Preview:
           p.box.classList.remove("is-offscreen")
           val (w, h) = p.size
           val fit = a match
-            case Anchor.At(ax, ay)         => pointFit(ax, ay, w, h, ViewportWidth(window.innerWidth), ViewportHeight(window.innerHeight))
-            case Anchor.Under(l, t, b, wd) => underFit(l, t, b, wd, w, h, ViewportWidth(window.innerWidth), ViewportHeight(window.innerHeight))
+            case Anchor.At(ax, ay) =>
+              pointFit(ax, ay, w, h, ViewportWidth(window.innerWidth), ViewportHeight(window.innerHeight))
+            case Anchor.Under(l, t, b, wd) =>
+              underFit(l, t, b, wd, w, h, ViewportWidth(window.innerWidth), ViewportHeight(window.innerHeight))
           apply(p.box, fit, h)
     }
 
@@ -1116,7 +1177,9 @@ object Preview:
               r.works.map(w =>
                 li(
                   cls := "cite-tip-item",
-                  w.title.map(_.value).getOrElse(w.doi.map(_.value).getOrElse("untitled")) + w.year.fold("")(y => s" ($y)"),
+                  w.title.map(_.value).getOrElse(w.doi.map(_.value).getOrElse("untitled")) + w.year.fold("")(y =>
+                    s" ($y)"
+                  ),
                   w.doi.map(d =>
                     a(
                       cls := "cite-tip-link",
@@ -1163,7 +1226,8 @@ object Preview:
         lic.map((l, u) =>
           val name = LicenseName.label(l.value)
           if u.value.isEmpty then span(" · ", name)
-          else span(" · ", a(cls := "cite-tip-link", href := u.value, target := "_blank", rel := "noopener license", name))
+          else
+            span(" · ", a(cls := "cite-tip-link", href := u.value, target := "_blank", rel := "noopener license", name))
         )
       )
     )

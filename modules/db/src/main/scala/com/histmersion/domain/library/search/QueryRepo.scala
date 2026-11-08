@@ -22,9 +22,9 @@ import com.histmersion.api.library.Query
   *   2. the caller's connection comes from the DataSource of the dedicated **`histmersion_query`** role (migration
   *      V011) — SELECT and nothing else, `default_transaction_read_only = on` baked in. This is what actually stops a
   *      superuser-only `pg_read_file()`; the transaction settings never could.
-  *   3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` in the caller's Transactor scope, so `WITH x AS (DELETE …) SELECT …` — the
-  *      classic blacklist escape — still fails on a database where layer 2 could not be provisioned. `maxRows` bounds
-  *      the rows, `maxCellChars` bounds one cell.
+  *   3. `SET TRANSACTION READ ONLY` + `SET LOCAL statement_timeout` in the caller's Transactor scope, so
+  *      `WITH x AS (DELETE …) SELECT …` — the classic blacklist escape — still fails on a database where layer 2 could
+  *      not be provisioned. `maxRows` bounds the rows, `maxCellChars` bounds one cell.
   *
   * Written against plain JDBC rather than Magnum: the projection of an arbitrary statement is not known at compile
   * time, so there is no `DbCodec` to derive — the `ResultSetMetaData` is the schema.
@@ -42,13 +42,18 @@ private[search] object QueryRepo:
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.
     */
-  def run(statement: Statement, maxRows: MaxRows, maxCellChars: MaxCellChars)(using con: DbCon, timer: Timer): Either[Problem, QueryResult] =
-    check(Query.Statement(statement.value))
-      .left
+  def run(statement: Statement, maxRows: MaxRows, maxCellChars: MaxCellChars)(using
+      con: DbCon,
+      timer: Timer
+  ): Either[Problem, QueryResult] =
+    check(Query.Statement(statement.value)).left
       .map(p => Problem(p.value))
       .flatMap(text => exec(Statement(text.value), maxRows, maxCellChars))
 
-  private def exec(text: Statement, maxRows: MaxRows, maxCellChars: MaxCellChars)(using con: DbCon, timer: Timer): Either[Problem, QueryResult] =
+  private def exec(text: Statement, maxRows: MaxRows, maxCellChars: MaxCellChars)(using
+      con: DbCon,
+      timer: Timer
+  ): Either[Problem, QueryResult] =
     val c: Connection = con.connection
     try
       val st = c.createStatement()
@@ -60,7 +65,9 @@ private[search] object QueryRepo:
         if !hasRs then
           // unreachable in a READ ONLY transaction (nothing that updates rows can run), but an
           // honest answer beats a NullPointerException if Postgres ever allows one.
-          Right(QueryResult(Nil, Nil, QueryResult.RowCount(0), QueryResult.Truncated(false), QueryResult.ElapsedMs(elapsed)))
+          Right(
+            QueryResult(Nil, Nil, QueryResult.RowCount(0), QueryResult.Truncated(false), QueryResult.ElapsedMs(elapsed))
+          )
         else Right(read(st.getResultSet, maxRows, maxCellChars, QueryResult.ElapsedMs(elapsed)))
       finally st.close()
     catch case e: SQLException => Left(message(e))
@@ -74,7 +81,12 @@ private[search] object QueryRepo:
         .getOrElse(e.getClass.getSimpleName)
     )
 
-  private def read(rs: ResultSet, maxRows: MaxRows, maxCellChars: MaxCellChars, elapsedMs: QueryResult.ElapsedMs): QueryResult =
+  private def read(
+      rs: ResultSet,
+      maxRows: MaxRows,
+      maxCellChars: MaxCellChars,
+      elapsedMs: QueryResult.ElapsedMs
+  ): QueryResult =
     val md = rs.getMetaData
     val columns = (1 to md.getColumnCount).map(md.getColumnLabel).toList
     val rows = List.newBuilder[List[Option[QueryResult.Rows]]]
@@ -85,7 +97,13 @@ private[search] object QueryRepo:
       else
         rows += columns.indices.map(i => cell(rs, i + 1, maxCellChars)).toList
         n += 1
-    QueryResult(columns.map(QueryResult.Columns(_)), rows.result(), QueryResult.RowCount(n), QueryResult.Truncated(more), elapsedMs)
+    QueryResult(
+      columns.map(QueryResult.Columns(_)),
+      rows.result(),
+      QueryResult.RowCount(n),
+      QueryResult.Truncated(more),
+      elapsedMs
+    )
 
   /** Every value is stringified — the only shape one static JSON schema can carry for an arbitrary projection. Long
     * values (an OCR body) are cut with an explicit marker rather than silently.
@@ -128,7 +146,13 @@ private[search] object QueryRepo:
             SchemaTable(
               SchemaTable.Name(name),
               if kind == "VIEW" then SchemaTable.Kind("view") else SchemaTable.Kind("table"),
-              cols.map((_, _, col, tpe, nullable) => SchemaColumn(SchemaColumn.Name(col), SchemaColumn.DataType(tpe), SchemaColumn.Nullable(nullable == "YES")))
+              cols.map((_, _, col, tpe, nullable) =>
+                SchemaColumn(
+                  SchemaColumn.Name(col),
+                  SchemaColumn.DataType(tpe),
+                  SchemaColumn.Nullable(nullable == "YES")
+                )
+              )
             )
           }
       finally st.close()

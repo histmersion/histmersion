@@ -8,9 +8,14 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
 
-final case class SkippedPeriod(id: SkippedPeriod.Id, label: SkippedPeriod.Label, reason: Period.Skip, detail: SkippedPeriod.Detail)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class SkippedPeriod(
+    id: SkippedPeriod.Id,
+    label: SkippedPeriod.Label,
+    reason: Period.Skip,
+    detail: SkippedPeriod.Detail
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object SkippedPeriod:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
@@ -24,4 +29,7 @@ object SkippedPeriod:
 
   /** How many period presets an init job skipped, in its detail. */
   val SkippedCount: JobDetail.Field[Period.ImportResult.SkippedCount] =
-    new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("skippedPeriodCount"), Period.ImportResult.SkippedCount(0))
+    new com.histmersion.api.jobs.JobDetail.Field(
+      JobDetail.Field.Name("skippedPeriodCount"),
+      Period.ImportResult.SkippedCount(0)
+    )

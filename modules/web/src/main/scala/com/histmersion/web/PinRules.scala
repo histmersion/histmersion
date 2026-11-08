@@ -15,6 +15,7 @@ object PinRules:
   object KeyName extends Newtype[String, Pure]
   type ScreenPixels = ScreenPixels.T
   object ScreenPixels extends Newtype[Double, Pure]
+
   /** Does this key close a pinned card? */
 
   def dismisses(key: KeyName): Boolean = key.value == "Escape" || key.value == "Esc"
@@ -30,7 +31,14 @@ object PinRules:
   /** Pure: a point in the map container (`x`, `y`, from its top-left) as a viewport point, when it is inside the
     * container's `w`×`h` box at (`left`, `top`) — `None` while it is panned out of view.
     */
-  def inView(x: ScreenPixels, y: ScreenPixels, left: ScreenPixels, top: ScreenPixels, w: ElementSize, h: ElementSize): Option[(ScreenPixels, ScreenPixels)] =
+  def inView(
+      x: ScreenPixels,
+      y: ScreenPixels,
+      left: ScreenPixels,
+      top: ScreenPixels,
+      w: ElementSize,
+      h: ElementSize
+  ): Option[(ScreenPixels, ScreenPixels)] =
     Option.when(x.value >= 0 && y.value >= 0 && x.value <= w.value && y.value <= h.value)(
       (ScreenPixels(left.value + x.value), ScreenPixels(top.value + y.value))
     )

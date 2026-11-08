@@ -62,7 +62,10 @@ class MetaFilesSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try assert(Ops.writeMeta(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}")), tempDir()).isLeft)
+    try
+      assert(
+        Ops.writeMeta(new Client(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}")), tempDir()).isLeft
+      )
     finally srv.stop(0)
 
   test("readMeta imports the three queue files and never sends GOALS.md"):

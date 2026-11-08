@@ -52,13 +52,24 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(build(), Right(Article.Patch()))
 
   test("tag flags become one ListPatch; untouched parts stay absent"):
-    val p = build(tagsAdd = Some(ArticlePatches.CsvText("sea-peoples, collapse")), tagsRemove = Some(ArticlePatches.CsvText("old"))).toOption.get
-    assertEquals(p.tags, Some(ListPatch(List(Write.ListItem("sea-peoples"), Write.ListItem("collapse")), List(Write.ListItem("old")), None)))
+    val p = build(
+      tagsAdd = Some(ArticlePatches.CsvText("sea-peoples, collapse")),
+      tagsRemove = Some(ArticlePatches.CsvText("old"))
+    ).toOption.get
+    assertEquals(
+      p.tags,
+      Some(
+        ListPatch(List(Write.ListItem("sea-peoples"), Write.ListItem("collapse")), List(Write.ListItem("old")), None)
+      )
+    )
     assertEquals(p.body, None)
     assertEquals(p.summary, None)
 
   test("--tags-replace sets the baseline"):
-    assertEquals(build(tagsReplace = Some(ArticlePatches.CsvText("a,b"))).toOption.get.tags, Some(ListPatch(Nil, Nil, Some(List(Write.ListItem("a"), Write.ListItem("b"))))))
+    assertEquals(
+      build(tagsReplace = Some(ArticlePatches.CsvText("a,b"))).toOption.get.tags,
+      Some(ListPatch(Nil, Nil, Some(List(Write.ListItem("a"), Write.ListItem("b")))))
+    )
 
   test("--regions replaces the list, --title/--summary/--kind replace themselves"):
     val p =
@@ -72,7 +83,10 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals((p.title, p.summary, p.kind), (Some("T"), Some("S"), Some("report")))
 
   test("--period parses signed years, and refuses anything else"):
-    assertEquals(build(period = Some(ArticlePatches.FilterFlags.Period("-1300,-1100"))).toOption.get.period, Some(Period.Input(Year(-1300), Year(-1100))))
+    assertEquals(
+      build(period = Some(ArticlePatches.FilterFlags.Period("-1300,-1100"))).toOption.get.period,
+      Some(Period.Input(Year(-1300), Year(-1100)))
+    )
     assert(build(period = Some(ArticlePatches.FilterFlags.Period("-1300"))).isLeft)
     assert(build(period = Some(ArticlePatches.FilterFlags.Period("a,b"))).isLeft)
 
@@ -90,13 +104,19 @@ class ArticlePatchesSuite extends munit.FunSuite:
     assertEquals(e.exitCode, ExitCode.Usage)
 
   test("a missing --body-file is a usage error"):
-    assertEquals(build(bodyFile = Some(ArticlePatches.TextFile("/nope/nothing.md"))).left.toOption.get.exitCode, ExitCode.Usage)
+    assertEquals(
+      build(bodyFile = Some(ArticlePatches.TextFile("/nope/nothing.md"))).left.toOption.get.exitCode,
+      ExitCode.Usage
+    )
 
   test("--append-file becomes `append`, --body-file becomes `body`"):
     val dir = java.nio.file.Files.createTempDirectory("histmersion-article-patch")
     val body = dir.resolve("b.md"); java.nio.file.Files.writeString(body, "# New body")
     val app = dir.resolve("a.md"); java.nio.file.Files.writeString(app, "## Added")
-    val p = build(bodyFile = Some(ArticlePatches.TextFile(body.toString)), appendFile = Some(ArticlePatches.TextFile(app.toString))).toOption.get
+    val p = build(
+      bodyFile = Some(ArticlePatches.TextFile(body.toString)),
+      appendFile = Some(ArticlePatches.TextFile(app.toString))
+    ).toOption.get
     assertEquals(p.body, Some("# New body"))
     assertEquals(p.append, Some("## Added"))
 
@@ -109,7 +129,14 @@ class ArticlePatchesSuite extends munit.FunSuite:
       extraQueries = List(ArticlePatches.FilterFlags.ExtraQueries("synoikism"))
     )
     val p = ArticlePatches
-      .withCoverage(base, ff, List(ArticlePatches.ReasonText("graves2017_greek=retells the myths"), ArticlePatches.ReasonText("nilsson1927_minoan=")))
+      .withCoverage(
+        base,
+        ff,
+        List(
+          ArticlePatches.ReasonText("graves2017_greek=retells the myths"),
+          ArticlePatches.ReasonText("nilsson1927_minoan=")
+        )
+      )
       .toOption
       .get
     assertEquals(
@@ -126,7 +153,10 @@ class ArticlePatchesSuite extends munit.FunSuite:
     )
     assertEquals(
       p.reasons,
-      List(Coverage.Reason(Citekey("graves2017_greek"), Coverage.Entry.Reason("retells the myths")), Coverage.Reason(Citekey("nilsson1927_minoan"), Coverage.Entry.Reason("")))
+      List(
+        Coverage.Reason(Citekey("graves2017_greek"), Coverage.Entry.Reason("retells the myths")),
+        Coverage.Reason(Citekey("nilsson1927_minoan"), Coverage.Entry.Reason(""))
+      )
     )
     // no flag: the --json filter stands
     assertEquals(
@@ -134,16 +164,37 @@ class ArticlePatchesSuite extends munit.FunSuite:
       Some(Article.Filter(query = Some(Filter.Q("from json"))))
     )
     assertEquals(
-      ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = ArticlePatches.FilterFlags.Clear(true)), Nil).toOption.get.filter,
+      ArticlePatches
+        .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(clear = ArticlePatches.FilterFlags.Clear(true)), Nil)
+        .toOption
+        .get
+        .filter,
       Some(Article.Filter())
     )
     assert(
       ArticlePatches
-        .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(query = Some(Api.ArticleQuery.Text("x")), clear = ArticlePatches.FilterFlags.Clear(true)), Nil)
+        .withCoverage(
+          Article.Patch(),
+          ArticlePatches
+            .FilterFlags(query = Some(Api.ArticleQuery.Text("x")), clear = ArticlePatches.FilterFlags.Clear(true)),
+          Nil
+        )
         .isLeft
     )
-    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(), List(ArticlePatches.ReasonText("no-equals-sign"))).isLeft)
-    assert(ArticlePatches.withCoverage(Article.Patch(), ArticlePatches.FilterFlags(period = Some(ArticlePatches.FilterFlags.Period("-1500"))), Nil).isLeft)
+    assert(
+      ArticlePatches
+        .withCoverage(Article.Patch(), ArticlePatches.FilterFlags(), List(ArticlePatches.ReasonText("no-equals-sign")))
+        .isLeft
+    )
+    assert(
+      ArticlePatches
+        .withCoverage(
+          Article.Patch(),
+          ArticlePatches.FilterFlags(period = Some(ArticlePatches.FilterFlags.Period("-1500"))),
+          Nil
+        )
+        .isLeft
+    )
 
   test("§6.8: --critique-reason sets or removes one checklist pair's reason, after those of --json"):
     val base = build(json =
@@ -152,7 +203,10 @@ class ArticlePatchesSuite extends munit.FunSuite:
     val p = ArticlePatches
       .withCritiques(
         base,
-        List(CritiqueReason.Reason("smith1987_dying>frazer1922_golden=cited for the calendar only"), CritiqueReason.Reason("[[jones2001_myth]] -> lee1990_ritual="))
+        List(
+          CritiqueReason.Reason("smith1987_dying>frazer1922_golden=cited for the calendar only"),
+          CritiqueReason.Reason("[[jones2001_myth]] -> lee1990_ritual=")
+        )
       )
       .toOption
       .get
@@ -160,7 +214,11 @@ class ArticlePatchesSuite extends munit.FunSuite:
       p.critiqueReasons,
       List(
         CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), CritiqueReason.Reason("from json")),
-        CritiqueReason(Citekey("smith1987_dying"), Citekey("frazer1922_golden"), CritiqueReason.Reason("cited for the calendar only")),
+        CritiqueReason(
+          Citekey("smith1987_dying"),
+          Citekey("frazer1922_golden"),
+          CritiqueReason.Reason("cited for the calendar only")
+        ),
         CritiqueReason(Citekey("jones2001_myth"), Citekey("lee1990_ritual"), CritiqueReason.Reason(""))
       )
     )

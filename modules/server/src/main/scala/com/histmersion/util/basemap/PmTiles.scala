@@ -56,7 +56,6 @@ object PmTiles:
     type Code = Code.T
     object Code extends Newtype[Int, Pure]
 
-
     def of(code: Code): Compression = values.find(_.code == code).getOrElse(Unknown)
 
   enum TileType(val code: TileType.Code, val mime: TileType.Mime) derives CanEqual:
@@ -72,7 +71,6 @@ object PmTiles:
     object Code extends Newtype[Int, Pure]
     type Mime = Mime.T
     object Mime extends Newtype[String, Pure]
-
 
     def of(code: Code): TileType = values.find(_.code == code).getOrElse(Unknown)
 
@@ -330,7 +328,6 @@ object PmTiles:
         if shift > 63 && more then throw IllegalArgumentException("varint too long in PMTiles directory")
       result
 
-
   /** A directory's bytes, uncompressed: the count, then the id deltas, run lengths, lengths and offsets column by
     * column (an offset of 0 means "right after the previous entry").
     */
@@ -399,8 +396,8 @@ object PmTiles:
       val e = entries(at)
       if e.isLeaf || id.value < e.tileId.value + e.runLength.value then Some(e) else None
 
-  /** Where entry `e` lies in the file, in the section that starts at `section`: the offset to read from and the
-    * number of bytes.
+  /** Where entry `e` lies in the file, in the section that starts at `section`: the offset to read from and the number
+    * of bytes.
     */
   def range(section: ByteOffset, e: Entry): Either[Problem, (ByteOffset, ByteCount)] =
     for
@@ -408,7 +405,10 @@ object PmTiles:
         .either(section.value + e.offset.value)
         .left
         .map(_ => Problem(s"PMTiles entry offset ${e.offset.value} lies outside its file"))
-      n <- ByteCount.either(e.length.value.toLong).left.map(_ => Problem(s"PMTiles entry length ${e.length.value} is negative"))
+      n <- ByteCount
+        .either(e.length.value.toLong)
+        .left
+        .map(_ => Problem(s"PMTiles entry length ${e.length.value} is negative"))
     yield (at, n)
 
   // ── compression ─────────────────────────────────────────────────────────────────────────────────
@@ -515,9 +515,11 @@ object PmTiles:
                   Problem(s"${where.value}: root directory outside the first 16 KiB")
                 )
                 root <- decompress(
-                    CompressedBytes(bytes.slice(h.rootOffset.value.toInt, (h.rootOffset.value + h.rootLength.value).toInt)),
-                    h.internalCompression
-                  )
+                  CompressedBytes(
+                    bytes.slice(h.rootOffset.value.toInt, (h.rootOffset.value + h.rootLength.value).toInt)
+                  ),
+                  h.internalCompression
+                )
                   .flatMap(decodeDirectory)
                 meta <- metadata(reader, h)
               yield new File(where, reader, h, root, meta, maxLeaves)
@@ -539,5 +541,8 @@ object PmTiles:
         )
         decompress(CompressedBytes(bytes), h.internalCompression)
           .flatMap(b =>
-            io.circe.parser.parse(String(b.value: Array[Byte], "UTF-8")).left.map(e => Problem(s"metadata is not JSON: ${e.getMessage}"))
+            io.circe.parser
+              .parse(String(b.value: Array[Byte], "UTF-8"))
+              .left
+              .map(e => Problem(s"metadata is not JSON: ${e.getMessage}"))
           )

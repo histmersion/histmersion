@@ -22,11 +22,26 @@ import com.histmersion.api.research.Article
 class VocabularyWireSuite extends munit.FunSuite:
 
   test("a checkpointed record spells a vocabulary as the wire does"):
-    val found = CompileArticlePipeline.Found(Goal.Plans.ArticleDraft.Filter("f"), RowCount(1), List(SourceFact(Citekey("ck"), Title("T"), None, Source.Status.Superseded)), Nil)
+    val found = CompileArticlePipeline.Found(
+      Goal.Plans.ArticleDraft.Filter("f"),
+      RowCount(1),
+      List(SourceFact(Citekey("ck"), Title("T"), None, Source.Status.Superseded)),
+      Nil
+    )
     assert(found.asJson.noSpaces.contains("\"status\":\"superseded\""), found.asJson.noSpaces)
 
   test("a checkpointed snapshot spells its draft mode as the wire does"):
-    val snap = CompileArticlePipeline.Snap(Slug("a"), DraftMode.Extend, Title("t"), Article.Kind.Wire("concept"), Article.Body(""), None, None, Nil, Nil)
+    val snap = CompileArticlePipeline.Snap(
+      Slug("a"),
+      DraftMode.Extend,
+      Title("t"),
+      Article.Kind.Wire("concept"),
+      Article.Body(""),
+      None,
+      None,
+      Nil,
+      Nil
+    )
     assert(snap.asJson.noSpaces.contains("\"mode\":\"extend\""), snap.asJson.noSpaces)
 
   test("goal links and schedules spell their kinds as the wire does"):

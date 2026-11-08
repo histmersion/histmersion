@@ -24,7 +24,11 @@ object Licence extends Newtype[String, Pure]:
     * @param needsAttribution
     *   whether the licence requires the author to be named (every CC BY variant and the GFDL)
     */
-  final case class Read(id: Read.Id, family: Read.Family, needsAttribution: Read.NeedsAttribution = Read.NeedsAttribution(false))
+  final case class Read(
+      id: Read.Id,
+      family: Read.Family,
+      needsAttribution: Read.NeedsAttribution = Read.NeedsAttribution(false)
+  )
 
   object Read:
     type UnknownStatement = UnknownStatement.T

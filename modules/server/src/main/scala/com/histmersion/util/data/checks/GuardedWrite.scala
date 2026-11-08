@@ -7,7 +7,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `false` when a concurrent writer moved the record on first, and the next check lists it again.
   */
 trait GuardedWrite:
-  def apply(record: GuardedWrite.RecordRef, text: GuardedWrite.FileText, token: Option[GuardedWrite.ConcurrencyToken]): Boolean
+  def apply(
+      record: GuardedWrite.RecordRef,
+      text: GuardedWrite.FileText,
+      token: Option[GuardedWrite.ConcurrencyToken]
+  ): Boolean
 
 object GuardedWrite:
   type ConcurrencyToken = ConcurrencyToken.T

@@ -57,7 +57,9 @@ private[places] object FindingPlaceRepo:
     * transaction, so the gazetteer assignment is never observable as missing. Same table order as
     * [[rebuildFindingPlaces]]: findings, then finding_places.
     */
-  def materialiseFor(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
+  def materialiseFor(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
+      DbCon
+  ): RowCount =
     val _ = sql"""DELETE FROM finding_places fp
                   USING findings f
                   WHERE f.id = fp.finding_id AND f.citekey = $citekey""".update.run()
@@ -69,7 +71,9 @@ private[places] object FindingPlaceRepo:
     * inserts as a rebuild, restricted to those places, so a fix takes seconds instead of a whole rebuild's half minute
     * (live 2026-10-09). Same table order as [[rebuildFindingPlaces]]. Returns the rows written.
     */
-  def materialisePlaces(placeIds: List[BPlaceRow.Id], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
+  def materialisePlaces(placeIds: List[BPlaceRow.Id], toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
+      DbCon
+  ): RowCount =
     val ids = placeIds.distinct
     if ids.isEmpty then RowCount(0)
     else
@@ -149,7 +153,8 @@ private[places] object FindingPlaceRepo:
     */
   def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, Placeholder.Detail)] =
     val ph =
-      (Sql.raw(Sql.Text(placeholderFindingsSql)) ++ Sql.raw(Sql.Text(" ORDER BY f.citekey, f.id"))).frag.query[Placeholder].run().toList
+      (Sql.raw(Sql.Text(placeholderFindingsSql)) ++ Sql
+        .raw(Sql.Text(" ORDER BY f.citekey, f.id"))).frag.query[Placeholder].run().toList
     val resolved = resolve(ph).map(_._1).toSet
     ph.filterNot(p => resolved.contains(p.id)).map { p =>
       val at = String.format(java.util.Locale.ROOT, "%.4f N %.4f E", p.lat, p.lon)
@@ -178,9 +183,13 @@ private[places] object FindingPlaceRepo:
     * geocoder resolves ([[Geocoder.resolveIn]], as a region), the place it resolves to: (every placeholder id, finding
     * id → place id).
     */
-  private def placeholders(citekey: Option[Citekey])(using DbCon): (List[Placeholder.Id], List[(Placeholder.Id, BPlaceRow.Id)]) =
+  private def placeholders(citekey: Option[Citekey])(using
+      DbCon
+  ): (List[Placeholder.Id], List[(Placeholder.Id, BPlaceRow.Id)]) =
     val ph = (Sql.raw(Sql.Text(placeholderFindingsSql)) ++
-      citekey.fold(Sql.raw(Sql.Text("")))(ck => Sql.of(Sql.Text(" AND f.citekey = ?"), Param.S(Param.S.V(ck.value))))).frag.query[Placeholder].run().toList
+      citekey.fold(Sql.raw(Sql.Text("")))(ck =>
+        Sql.of(Sql.Text(" AND f.citekey = ?"), Param.S(Param.S.V(ck.value)))
+      )).frag.query[Placeholder].run().toList
     (ph.map(_.id), resolve(ph))
 
   /** The inserts that define "a finding belongs to a place", shared by the full rebuild and the per-citekey
@@ -199,7 +208,11 @@ private[places] object FindingPlaceRepo:
     *     not to the Peloponnese — and not to areas merely covering the point; when it does not resolve, areas still
     *     take it by containment (`lint --rule finding-placeholder` lists those for a person).
     */
-  private def insertAssignments(citekey: Option[Citekey], toleranceKm: FindingPlacement.Implementation.ToleranceKm, places: Option[List[BPlaceRow.Id]] = None)(using
+  private def insertAssignments(
+      citekey: Option[Citekey],
+      toleranceKm: FindingPlacement.Implementation.ToleranceKm,
+      places: Option[List[BPlaceRow.Id]] = None
+  )(using
       DbCon
   ): (RowCount, RowCount) =
     // `places`: only the links of these places (a reclassified, merged or moved place, [[materialisePlaces]])
@@ -282,7 +295,9 @@ private[places] object FindingPlaceRepo:
     * least [[DefaultPlaceholderAreaShare]] of that place's shape, or, when the place has no shape, its point — when the
     * periods overlap. The shares are computed once per place. Returns the rows inserted.
     */
-  private def byPlaceholder(named: List[(Placeholder.Id, BPlaceRow.Id)], anyPlace: Boolean, pids: List[BPlaceRow.Id])(using DbCon): RowCount =
+  private def byPlaceholder(named: List[(Placeholder.Id, BPlaceRow.Id)], anyPlace: Boolean, pids: List[BPlaceRow.Id])(
+      using DbCon
+  ): RowCount =
     if named.isEmpty then RowCount(0)
     else
       val fids = named.map(_._1)
@@ -330,7 +345,9 @@ private[places] object FindingPlaceRepo:
     * readings ([[Geocode.attempts]]) is the name key of an explicit-only place are resolved at all, so a rebuild
     * resolves a few hundred names, not every finding's. Returns the rows inserted.
     */
-  private def byResolution(citekey: Option[Citekey], anyPlace: Boolean, pids: List[BPlaceRow.Id])(using DbCon): RowCount =
+  private def byResolution(citekey: Option[Citekey], anyPlace: Boolean, pids: List[BPlaceRow.Id])(using
+      DbCon
+  ): RowCount =
     val named = sql"""SELECT f.id, btrim(f.region_name), ${SqlLiteral(RangeSql.cols("f.period"))}
                       FROM findings f
                       WHERE btrim(coalesce(f.region_name, '')) <> ''
@@ -343,7 +360,9 @@ private[places] object FindingPlaceRepo:
       val keysOf = named
         .map(_.name)
         .distinct
-        .map(n => n -> Geocode.attempts(n).flatMap(a => a.key :: a.within.map(w => Geocode.key(w.value)).toList).distinct)
+        .map(n =>
+          n -> Geocode.attempts(n).flatMap(a => a.key :: a.within.map(w => Geocode.key(w.value)).toList).distinct
+        )
         .toMap
       val allKeys = keysOf.values.flatten.toList.distinct
       val hits = sql"""SELECT DISTINCT k FROM unnest($allKeys::text[]) AS k

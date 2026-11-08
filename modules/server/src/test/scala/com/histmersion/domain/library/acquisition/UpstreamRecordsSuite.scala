@@ -41,11 +41,28 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     val ups = DiscoveryClient
       .notices(AcquireParse.crossrefUpdates(fixture("crossref_retracted.json")))
     assertEquals(
-      Acquire.verdict(Nil, ups, false, Some(Acquire.CitedByCount(5)), Some(Year(2019)), Acquire.CitationThreshold(50), Acquire.CitationThreshold(3), Year(2018)),
+      Acquire.verdict(
+        Nil,
+        ups,
+        false,
+        Some(Acquire.CitedByCount(5)),
+        Some(Year(2019)),
+        Acquire.CitationThreshold(50),
+        Acquire.CitationThreshold(3),
+        Year(2018)
+      ),
       Acquire.Verdicts.Retracted
     )
     val rows = AcquireParse.s2Citations(fixture("s2_citations.json")).map(_.wire)
-    val kinds = rows.map(r => Acquire.classify(r.intents.map(i => Acquire.Intent.Wire(i.value)), r.contexts.map(c => Acquire.CitationContext(c.value)), r.isInfluential.value, r.year, Some(Year(2015))))
+    val kinds = rows.map(r =>
+      Acquire.classify(
+        r.intents.map(i => Acquire.Intent.Wire(i.value)),
+        r.contexts.map(c => Acquire.CitationContext(c.value)),
+        r.isInfluential.value,
+        r.year,
+        Some(Year(2015))
+      )
+    )
     assert(kinds.forall(Acquire.EdgeKinds.all.contains), kinds)
 
   test("the upstreams' DOI and arXiv rules are the wire's"):
@@ -64,6 +81,14 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       "math.AG/0309136"
     )
     inputs.foreach { s =>
-      assertEquals(Identifiers.doi(Identifiers.DoiText(s)).map(_.value: String), Doi.normalize(s).map(_.value: String), s)
-      assertEquals(Identifiers.arxiv(Identifiers.ArxivText(s)).map(_.value: String), Ident.arxiv(Ident.Written(s)).map(_.value: String), s)
+      assertEquals(
+        Identifiers.doi(Identifiers.DoiText(s)).map(_.value: String),
+        Doi.normalize(s).map(_.value: String),
+        s
+      )
+      assertEquals(
+        Identifiers.arxiv(Identifiers.ArxivText(s)).map(_.value: String),
+        Ident.arxiv(Ident.Written(s)).map(_.value: String),
+        s
+      )
     }

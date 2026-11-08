@@ -17,12 +17,17 @@ final case class SearchResult(
     offset: Offset = Offset(0),
     next: Option[Offset] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, RowCount(hits.size))
 object SearchResult:
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
 
-
   def of(total: Total, hits: List[Hit], offset: UnreadPage.Offset): SearchResult =
-    SearchResult(RowCount((total).value), hits, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next)
+    SearchResult(
+      RowCount((total).value),
+      hits,
+      Offset((offset).value),
+      OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next
+    )

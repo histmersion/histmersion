@@ -32,7 +32,6 @@ object Codex:
 
   /** The typed answer's JSON Schema as derived (opencode reads it in the message). */
 
-
   def schemaJson(s: ResponseSchema[?]): SchemaJson = SchemaJson(schema(s).noSpaces)
 
   /** The `--output-schema` file: the derived schema in OpenAI's strict form, the only one Codex's structured output
@@ -75,7 +74,12 @@ object Codex:
   /** The CLI's environment: its own CODEX_HOME (its login, never a copied `auth.json`), the run token the MCP server
     * config names, and no API key unless asked (a key bills the API).
     */
-  def environment(cfg: CodexConfig, home: Path, token: Option[RunGrant.Token], env: java.util.Map[String, String]): Unit =
+  def environment(
+      cfg: CodexConfig,
+      home: Path,
+      token: Option[RunGrant.Token],
+      env: java.util.Map[String, String]
+  ): Unit =
     if !cfg.useApiKey.value then
       List("OPENAI_API_KEY", "CODEX_API_KEY").foreach { k =>
         val _ = env.remove(k)
@@ -134,7 +138,13 @@ object Codex:
             Tokens(l("cache_write_input_tokens"))
           )
         case "turn.failed" =>
-          error = c.downField("error").downField("message").as[String].toOption.orElse(Some("turn failed")).map(CliOutcome.Error(_))
+          error = c
+            .downField("error")
+            .downField("message")
+            .as[String]
+            .toOption
+            .orElse(Some("turn failed"))
+            .map(CliOutcome.Error(_))
         case "error" => error = error.orElse(c.downField("message").as[String].toOption.map(CliOutcome.Error(_)))
         case _       => ()
     }
@@ -143,7 +153,11 @@ object Codex:
   def client(cfg: CodexConfig, rt: CliRuntime, ref: ModelRef): Either[Problem, LlmClient] =
     if ref.provider != ProviderKind.Codex then Left(Problem(s"${ref.wire} is not a codex model"))
     else if !rt.loopback then
-      Left(Problem("codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan"))
+      Left(
+        Problem(
+          "codex is refused while the server listens beyond loopback: another client could spend your ChatGPT plan"
+        )
+      )
     else if cfg.command.value.trim.isEmpty then Left(Problem("agents.providers.codex.command is empty"))
     else Right(CodexExecClient(ref, cfg, rt))
 
@@ -162,7 +176,6 @@ object Codex:
     object ExitCode extends Newtype[Int, Pure]
     type Problem = Problem.T
     object Problem extends Newtype[String, Pure]
-
 
     private val locks = ConcurrentHashMap[Path, ReentrantReadWriteLock]()
     private val lastPass = ConcurrentHashMap[Path, AtomicLong]()
@@ -187,9 +200,7 @@ object Codex:
         problems: List[Report.Problem] = Nil
     ):
       def summary: Report.Summary = Report.Summary(skipped.fold {
-        val v = vacuumed.map((n, b, a) =>
-          s"$n ${Backup.humanBytes(b)} → ${Backup.humanBytes(a)}"
-        )
+        val v = vacuumed.map((n, b, a) => s"$n ${Backup.humanBytes(b)} → ${Backup.humanBytes(a)}")
         (List(
           s"${Plural.count(Plural.Count(deleted.value.toLong), Plural.Noun.Singular("transcript"))} deleted (${Backup.humanBytes(freedBytes)})"
         ) ++
@@ -246,11 +257,12 @@ object Codex:
         try
           val problems = List.newBuilder[Report.Problem]
           val files = CodexRetention.SessionDirs.flatMap(d => filesUnder(home, home.resolve(d.value)))
-          val gone = CodexRetention.stale(files, nowMs, CodexRetention.KeepDays(cfg.keepSessionsDays.value)).filter { f =>
-            scala.util
-              .Try(Files.deleteIfExists(home.resolve(f.rel.value)))
-              .fold(e => { problems += Report.Problem(s"${f.rel}: ${e.getMessage}"); false }, identity)
-          }
+          val gone =
+            CodexRetention.stale(files, nowMs, CodexRetention.KeepDays(cfg.keepSessionsDays.value)).filter { f =>
+              scala.util
+                .Try(Files.deleteIfExists(home.resolve(f.rel.value)))
+                .fold(e => { problems += Report.Problem(s"${f.rel}: ${e.getMessage}"); false }, identity)
+            }
           CodexRetention.SessionDirs.foreach(d => pruneEmpty(home.resolve(d.value)))
           val vacuumed =
             if !cfg.vacuum.value then Nil
@@ -305,7 +317,11 @@ object Codex:
         .flatten
 
     /** After a step: a pass on a virtual thread when one is due ([[CodexRetention.due]]). */
-    def maybeRetain(home: Path, cfg: CodexConfig, nowMs: CodexRetention.NowMs = CodexRetention.NowMs(System.currentTimeMillis())): Unit =
+    def maybeRetain(
+        home: Path,
+        cfg: CodexConfig,
+        nowMs: CodexRetention.NowMs = CodexRetention.NowMs(System.currentTimeMillis())
+    ): Unit =
       val last = lastPass.computeIfAbsent(key(home), _ => AtomicLong(0L))
       val prev = last.get()
       if CodexRetention.due(

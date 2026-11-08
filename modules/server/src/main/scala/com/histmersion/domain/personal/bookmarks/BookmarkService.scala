@@ -134,7 +134,11 @@ object BookmarkService:
         ) match
           case Some(existing) if label.isDefined =>
             s.modify(_.bookmarks)
-              .using(_.map(b => if b.id == existing.id then b.modify(_.label).setTo(label).modify(_.updatedAt).setTo(at) else b))
+              .using(
+                _.map(b =>
+                  if b.id == existing.id then b.modify(_.label).setTo(label).modify(_.updatedAt).setTo(at) else b
+                )
+              )
           case Some(_) => s
           case None    => s.modify(_.bookmarks).using(_ :+ StoredBookmark(user, id, t, label, title, at, at))
       }

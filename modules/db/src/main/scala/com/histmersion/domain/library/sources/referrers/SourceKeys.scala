@@ -10,16 +10,25 @@ import io.github.iltotore.iron.constraint.any.Pure
   * gives the citekey each wikilink target names now, as the library resolves `[[x]]` (an unambiguous short form
   * included).
   */
-final case class SourceKeys(citekey: Citekey, keys: List[Citekey], resolve: List[WikiLinks.Occurrence.Target] => Map[WikiLinks.Occurrence.Target, Citekey]):
+final case class SourceKeys(
+    citekey: Citekey,
+    keys: List[Citekey],
+    resolve: List[WikiLinks.Occurrence.Target] => Map[WikiLinks.Occurrence.Target, Citekey]
+):
 
   /** The prefix of its finding ids (`<citekey>#`). */
   def findingPrefix: SourceKeys.FindingPrefix = SourceKeys.FindingPrefix(citekey.value + "#")
 
   /** Whether `text` holds the citekey as a whole token. */
-  def tokenIn(text: SourceKeys.Text): Boolean = Rename.replaceToken(text.value, com.histmersion.api.library.Citekey(citekey.value), com.histmersion.api.library.Citekey("\u0000")) != text.value
+  def tokenIn(text: SourceKeys.Text): Boolean = Rename.replaceToken(
+    text.value,
+    com.histmersion.api.library.Citekey(citekey.value),
+    com.histmersion.api.library.Citekey("\u0000")
+  ) != text.value
 
   /** Whether `text` links the source under any of its keys. */
-  def linkedIn(text: SourceKeys.Text): Boolean = keys.exists(k => WikiLinks.links(WikiLinks.Body(text.value), com.histmersion.api.library.Citekey(k.value)))
+  def linkedIn(text: SourceKeys.Text): Boolean =
+    keys.exists(k => WikiLinks.links(WikiLinks.Body(text.value), com.histmersion.api.library.Citekey(k.value)))
 
   /** Whether one of the texts links the source as the library resolves its links. */
   def citedIn(texts: List[SourceKeys.Text]): Boolean =
@@ -30,7 +39,6 @@ object SourceKeys:
   object FindingPrefix extends Newtype[String, Pure]
   type Text = Text.T
   object Text extends Newtype[String, Pure]
-
 
   type Keys = Citekey
   val Keys: Citekey.type = Citekey

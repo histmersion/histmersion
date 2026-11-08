@@ -57,9 +57,7 @@ class CardIconsSuite extends munit.FunSuite:
     )
 
   test("every icon a card or a marker can name is in the registry"):
-    val names = Source.Kinds.all.flatMap(k =>
-      List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))
-    ) ++
+    val names = Source.Kinds.all.flatMap(k => List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))) ++
       Place.Kind.all.map(k => CardIcons.place(Place.Kind.Wire(k.value), None)) ++ SiteTypes.all.map(t =>
         CardIcons.place(Place.Kind.Wire(Place.Kind.Site), Some(Place.Entry.SiteType(t.id.value)))
       ) ++
@@ -122,24 +120,43 @@ class CardIconsSuite extends munit.FunSuite:
     )
 
   test("place icons: a site its type's (a pin untyped), a region or polity a map, a people a group"):
-    assertEquals(CardIcons.place(Place.Kind.Wire(Place.Kind.Site), Some(Place.Entry.SiteType("fortification"))).value, "castle")
+    assertEquals(
+      CardIcons.place(Place.Kind.Wire(Place.Kind.Site), Some(Place.Entry.SiteType("fortification"))).value,
+      "castle"
+    )
     assertEquals(CardIcons.place(Place.Kind.Wire(Place.Kind.Site), None).value, CardIcons.GenericPlace)
     assertEquals(CardIcons.place(Place.Kind.Wire(Place.Kind.Region), None).value, CardIcons.Area)
     assertEquals(CardIcons.place(Place.Kind.Wire(Place.Kind.Polity), None).value, CardIcons.Area)
     assertEquals(CardIcons.place(Place.Kind.Wire(Place.Kind.People), None).value, CardIcons.People)
-    assertEquals(CardIcons.place(Place.Kind.Wire(Place.Kind.Feature), Some(Place.Entry.SiteType("cave"))).value, "door-open")
+    assertEquals(
+      CardIcons.place(Place.Kind.Wire(Place.Kind.Feature), Some(Place.Entry.SiteType("cave"))).value,
+      "door-open"
+    )
     assertEquals(CardIcons.siteMarker(None).value, CardIcons.Unknown)
 
   test("every card kind carries its icon"):
     val s = src(doi = Some(Doi("10.1038/nature14317")))
     assertEquals(Preview.card(s).icon.map(_.value), Some("file-text"))
-    val cover = MediaThumb(MediaItem.Uid("u"), MediaThumb.Role(MediaRole.Cover), MediaThumb.Url("/m/u/thumb"), MediaItem.Credit("c"))
+    val cover = MediaThumb(
+      MediaItem.Uid("u"),
+      MediaThumb.Role(MediaRole.Cover),
+      MediaThumb.Url("/m/u/thumb"),
+      MediaItem.Credit("c")
+    )
     assertEquals(
       Preview.card(Source.WithFindings(src(), Nil, illustration = Some(cover))).icon.map(_.value),
       Some("book")
     )
     val fort = PlaceDetail(
-      Place.Summary(Place.Id("zz_f"), Place.Summary.Label("Zz fort"), Place.Summary.Kind(Place.Kind.Site), None, None, None, Place.Summary.Names("Zz fort")),
+      Place.Summary(
+        Place.Id("zz_f"),
+        Place.Summary.Label("Zz fort"),
+        Place.Summary.Kind(Place.Kind.Site),
+        None,
+        None,
+        None,
+        Place.Summary.Names("Zz fort")
+      ),
       None,
       Nil,
       Nil,
@@ -149,21 +166,59 @@ class CardIconsSuite extends munit.FunSuite:
     )
     assertEquals(Preview.card(fort).icon.map(_.value), Some("castle"))
     assertEquals(
-      Preview.card(fort.copy(place = fort.place.modify(_.kind).setTo(Place.Summary.Kind(Place.Kind.Polity)), siteType = None)).icon.map(_.value),
+      Preview
+        .card(
+          fort.copy(place = fort.place.modify(_.kind).setTo(Place.Summary.Kind(Place.Kind.Polity)), siteType = None)
+        )
+        .icon
+        .map(_.value),
       Some("map")
     )
-    val art = Article.View(Article.Row(Article.Slug("zz"), Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Body(""), None, Nil, Nil, None, None), Nil, Nil)
+    val art = Article.View(
+      Article.Row(
+        Article.Slug("zz"),
+        Article.Title("Zz"),
+        Article.Kind.Wire("concept"),
+        Article.Body(""),
+        None,
+        Nil,
+        Nil,
+        None,
+        None
+      ),
+      Nil,
+      Nil
+    )
     assertEquals(Preview.card(art).icon.map(_.value), Some(CardIcons.Article))
 
   test("the HTML card icon is the same element as the card view's"):
-    assertEquals(CardIcons.html(Glyphs.Name("image")), s"""<span class="cite-tip-icon">${Glyphs.svg(Glyphs.Name("image"))}</span>""")
+    assertEquals(
+      CardIcons.html(Glyphs.Name("image")),
+      s"""<span class="cite-tip-icon">${Glyphs.svg(Glyphs.Name("image"))}</span>"""
+    )
 
   // ── the mixed clusters ─────────────────────────────────────────────────────────────────────────
 
   private def hit(s: Year, e: Year, c: Confidence = Confidence.High) =
-    GeoHit(Citekey("zz"), GeoHit.Title("Zz"), GeoHit.Claim("c"), None, Some(Longitude(30.0)), Some(Latitude(37.0)), Some(s), Some(e), Some(c))
+    GeoHit(
+      Citekey("zz"),
+      GeoHit.Title("Zz"),
+      GeoHit.Claim("c"),
+      None,
+      Some(Longitude(30.0)),
+      Some(Latitude(37.0)),
+      Some(s),
+      Some(e),
+      Some(c)
+    )
   private def dot(k: DotKind, mid: Option[DotEntry.Mid] = None) =
-    Member(k, Member.N(1), mid.toList.map(m => Member.Mids(m.value)), Certainty.NoSay, entry = Some(DotEntry(k, DotEntry.Id(k.toString), DotEntry.Label(k.toString), DotEntry.Icon("x"), mid)))
+    Member(
+      k,
+      Member.N(1),
+      mid.toList.map(m => Member.Mids(m.value)),
+      Certainty.NoSay,
+      entry = Some(DotEntry(k, DotEntry.Id(k.toString), DotEntry.Label(k.toString), DotEntry.Icon("x"), mid))
+    )
   private def finds(hs: GeoHit*) =
     Member(
       DotKind.Finding,
@@ -193,16 +248,26 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(DotCluster.summary(Map.empty).value, "")
 
   test("a bubble's colour spans every dated point, whatever its kind; the undated have no say"):
-    val c = DotCluster.Contents(List(finds(hit(Year(-1300), Year(-1200))), dot(DotKind.Site, Some(DotEntry.Mid(-1600.0))), dot(DotKind.Event)))
+    val c = DotCluster.Contents(
+      List(finds(hit(Year(-1300), Year(-1200))), dot(DotKind.Site, Some(DotEntry.Mid(-1600.0))), dot(DotKind.Event))
+    )
     assertEquals(c.mids.map(_.value).sorted, List(-1600.0, -1250.0))
     assertEquals(MapView.rangeOf(c.mids).map((lo, hi) => (lo.value, hi.value)), Some((-1600.0, -1250.0)))
-    assert(MapView.gradientOf(c.mids, (Years.Astronomical(-1700L), Years.Astronomical(-1200L)), c.certainty).value.startsWith("linear-gradient("))
+    assert(
+      MapView
+        .gradientOf(c.mids, (Years.Astronomical(-1700L), Years.Astronomical(-1200L)), c.certainty)
+        .value
+        .startsWith("linear-gradient(")
+    )
     assertEquals(DotCluster.Contents(List(dot(DotKind.Site))).certainty, Certainty.NoSay)
     assertEquals(
       DotCluster.Contents(List(finds(hit(Year(1), Year(2), Confidence.Low)), dot(DotKind.Site))).certainty,
       Certainty.Stated(Confidence.Low)
     )
-    assertEquals(MapView.gradientOf(Nil, (Years.Astronomical(0L), Years.Astronomical(1L)), Certainty.NoSay), MapView.colorFor(None, (Years.Astronomical(0L), Years.Astronomical(1L)), Certainty.NoSay))
+    assertEquals(
+      MapView.gradientOf(Nil, (Years.Astronomical(0L), Years.Astronomical(1L)), Certainty.NoSay),
+      MapView.colorFor(None, (Years.Astronomical(0L), Years.Astronomical(1L)), Certainty.NoSay)
+    )
 
   test("a bubble's list: by kind, then by name"):
     val open: org.scalajs.dom.Element => Unit = _ => ()
@@ -219,7 +284,16 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(DotCluster.mid(None, Some(Period.End(1L))), None)
 
   test("a bubble's markup: its count, its colours as data, and what it holds as its title and accessible name"):
-    val h = DotCluster.bubbleHtml(DotCluster.Count(5), DotCluster.Size(24), (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")), DotCluster.Id("hdb1"), DotCluster.ExtraClass("hd-cluster--mixed"), Some(DotCluster.SpokenText("2 findings · 3 sites"))).value
+    val h = DotCluster
+      .bubbleHtml(
+        DotCluster.Count(5),
+        DotCluster.Size(24),
+        (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")),
+        DotCluster.Id("hdb1"),
+        DotCluster.ExtraClass("hd-cluster--mixed"),
+        Some(DotCluster.SpokenText("2 findings · 3 sites"))
+      )
+      .value
     assert(
       h.startsWith(
         """<span class="hd-dot hd-cluster hd-cluster--mixed" style="--d:24px;--fs:12px;--ring:5px;--g0:red;--g1:blue" """ +
@@ -230,7 +304,16 @@ class CardIconsSuite extends munit.FunSuite:
     assert(h.endsWith("""<span class="hd-dot-count">5</span></span>"""), h)
     assert(h.contains("""<linearGradient id="hdb1"""") && h.contains("""fill="url(#hdb1)""""), h)
     // a single dot's bubble has no count; without words, no role
-    val one = DotCluster.bubbleHtml(DotCluster.Count(1), DotCluster.Size(18), (DotCluster.StartLabel("red"), DotCluster.EndLabel("red")), DotCluster.Id("k"), DotCluster.ExtraClass(""), None).value
+    val one = DotCluster
+      .bubbleHtml(
+        DotCluster.Count(1),
+        DotCluster.Size(18),
+        (DotCluster.StartLabel("red"), DotCluster.EndLabel("red")),
+        DotCluster.Id("k"),
+        DotCluster.ExtraClass(""),
+        None
+      )
+      .value
     assert(one.contains("""<span class="hd-dot-count"></span>""") && !one.contains("role="), one)
 
   // the user's report: "one circle is not ideally in the centre of another" — the disc and its rings are one
@@ -239,7 +322,16 @@ class CardIconsSuite extends munit.FunSuite:
     val circle = """<circle class="([^"]+)" cx="([^"]+)" cy="([^"]+)" r="([^"]+)"""".r
     for n <- List(3, 42, 120) do
       val d = 2 * (5 + 4 + 3 * n.toString.length)
-      val h = DotCluster.bubbleHtml(DotCluster.Count(n), DotCluster.Size(d), (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")), DotCluster.Id("g"), DotCluster.ExtraClass(""), None).value
+      val h = DotCluster
+        .bubbleHtml(
+          DotCluster.Count(n),
+          DotCluster.Size(d),
+          (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")),
+          DotCluster.Id("g"),
+          DotCluster.ExtraClass(""),
+          None
+        )
+        .value
       val cs = circle
         .findAllMatchIn(h)
         .map(m => (m.group(1), m.group(2).toDouble, m.group(3).toDouble, m.group(4).toDouble))
@@ -264,7 +356,9 @@ class CardIconsSuite extends munit.FunSuite:
       BubbleForm.WithEvents
     )
     assertEquals(
-      DotCluster.form(DotCluster.Contents(List(finds(hit(Year(1), Year(2)), hit(Year(3), Year(4))), dot(DotKind.Site)))),
+      DotCluster.form(
+        DotCluster.Contents(List(finds(hit(Year(1), Year(2)), hit(Year(3), Year(4))), dot(DotKind.Site)))
+      ),
       BubbleForm.Round
     )
     assertEquals(DotCluster.form(DotCluster.Contents(Nil)), BubbleForm.Round)
@@ -274,7 +368,17 @@ class CardIconsSuite extends munit.FunSuite:
     for n <- List(3, 42, 120) do
       val d = 2 * (5 + 4 + 3 * n.toString.length)
       val s = d + 2 * DotCluster.Ring
-      val h = DotCluster.bubbleHtml(DotCluster.Count(n), DotCluster.Size(d), (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")), DotCluster.Id("g"), DotCluster.ExtraClass(""), Some(DotCluster.SpokenText(s"$n events")), BubbleForm.Events).value
+      val h = DotCluster
+        .bubbleHtml(
+          DotCluster.Count(n),
+          DotCluster.Size(d),
+          (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")),
+          DotCluster.Id("g"),
+          DotCluster.ExtraClass(""),
+          Some(DotCluster.SpokenText(s"$n events")),
+          BubbleForm.Events
+        )
+        .value
       assert(h.startsWith("""<span class="hd-dot hd-cluster hd-cluster--events" """), h)
       assert(!h.contains("<circle"), h)
       val rs = rect.findAllMatchIn(h).map(m => (m.group(1), (2 to 6).map(i => m.group(i).toDouble))).toList
@@ -289,7 +393,17 @@ class CardIconsSuite extends munit.FunSuite:
       assertEquals(rs.map(_._2(4)), List(4.0, 4.5, 6.5, 8.5))
       // the outer line ends exactly at the rings' reach, as the round bubble's does
       assertEquals(rs.last._2(0) - 0.5, 0.0)
-    val mixed = DotCluster.bubbleHtml(DotCluster.Count(4), DotCluster.Size(24), (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")), DotCluster.Id("m"), DotCluster.ExtraClass("hd-cluster--mixed"), None, BubbleForm.WithEvents).value
+    val mixed = DotCluster
+      .bubbleHtml(
+        DotCluster.Count(4),
+        DotCluster.Size(24),
+        (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")),
+        DotCluster.Id("m"),
+        DotCluster.ExtraClass("hd-cluster--mixed"),
+        None,
+        BubbleForm.WithEvents
+      )
+      .value
     assert(mixed.startsWith("""<span class="hd-dot hd-cluster hd-cluster--with-events hd-cluster--mixed" """), mixed)
     assertEquals("""<circle """.r.findAllMatchIn(mixed).size, 4, mixed)
     val s = 24 + 2 * DotCluster.Ring
@@ -300,7 +414,16 @@ class CardIconsSuite extends munit.FunSuite:
       mixed
     )
     // the round bubble is what it was: no tab, no square
-    val round = DotCluster.bubbleHtml(DotCluster.Count(4), DotCluster.Size(24), (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")), DotCluster.Id("r"), DotCluster.ExtraClass(""), None).value
+    val round = DotCluster
+      .bubbleHtml(
+        DotCluster.Count(4),
+        DotCluster.Size(24),
+        (DotCluster.StartLabel("red"), DotCluster.EndLabel("blue")),
+        DotCluster.Id("r"),
+        DotCluster.ExtraClass(""),
+        None
+      )
+      .value
     assert(!round.contains("<rect") && round.startsWith("""<span class="hd-dot hd-cluster" """), round)
 
   test("a bubble's colours: the ramp's ends of its dates, the same twice when they agree or none is dated"):
@@ -314,12 +437,31 @@ class CardIconsSuite extends munit.FunSuite:
     val undated = MapView.rampEnds(Nil, span, Certainty.NoSay)
     assertEquals(undated._1, undated._2)
     // the findings' gradient is built from the same ends
-    assertEquals(MapView.gradientOf(List(MapView.Mid(-1900.0), MapView.Mid(-100.0)), span, Certainty.NoSay).value, s"linear-gradient(135deg,$a,$b)")
+    assertEquals(
+      MapView.gradientOf(List(MapView.Mid(-1900.0), MapView.Mid(-100.0)), span, Certainty.NoSay).value,
+      s"linear-gradient(135deg,$a,$b)"
+    )
     assertEquals(MapView.gradientOf(List(MapView.Mid(-1000.0)), span, Certainty.NoSay).value, at(Fmt.ColorT(0.5)).value)
 
   test("points join a bubble closer than its widest diameter, or than the largest marker box if wider"):
-    assertEquals(MapView.clusterRadius(18, List((PointKind.BoxPixels(24), PointKind.BoxPixels(24)), (PointKind.BoxPixels(34), PointKind.BoxPixels(34)), (PointKind.BoxPixels(32), PointKind.BoxPixels(24)))), 36)
-    assertEquals(MapView.clusterRadius(10, List((PointKind.BoxPixels(24), PointKind.BoxPixels(24)), (PointKind.BoxPixels(34), PointKind.BoxPixels(34)))), 34)
+    assertEquals(
+      MapView.clusterRadius(
+        18,
+        List(
+          (PointKind.BoxPixels(24), PointKind.BoxPixels(24)),
+          (PointKind.BoxPixels(34), PointKind.BoxPixels(34)),
+          (PointKind.BoxPixels(32), PointKind.BoxPixels(24))
+        )
+      ),
+      36
+    )
+    assertEquals(
+      MapView.clusterRadius(
+        10,
+        List((PointKind.BoxPixels(24), PointKind.BoxPixels(24)), (PointKind.BoxPixels(34), PointKind.BoxPixels(34)))
+      ),
+      34
+    )
     assertEquals(MapView.clusterRadius(18, Nil), 36)
     // the map's own markers: none is wider than the bubbles' reach, so two drawn apart never overlap
     assert(

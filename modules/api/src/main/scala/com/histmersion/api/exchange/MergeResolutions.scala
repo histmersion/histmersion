@@ -13,7 +13,8 @@ final case class MergeResolutions(
     policy: MergePolicy = MergePolicy(),
     bundle: Option[UUID] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def overriddenBy(later: MergeResolutions): MergeResolutions =
     val ids = later.resolve.map(_.issue).toSet
     MergeResolutions(
@@ -23,7 +24,6 @@ final case class MergeResolutions(
     )
 object MergeResolutions:
 
-
   object Text:
     type Flag = Flag.T
     object Flag extends Newtype[String, Pure]
@@ -32,12 +32,16 @@ object MergeResolutions:
     type Template = Template.T
     object Template extends Newtype[String, Pure]
 
-
-
     def flag(s: Flag): Either[Problem, MergeResolution] =
       (s).value.indexOf('=') match
-        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(MergeResolution.Issue((s).value.take(i).trim), MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)))
-        case _                              => Left(Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
+        case i if i > 0 && i < (s).value.length - 1 =>
+          Right(
+            MergeResolution(
+              MergeResolution.Issue((s).value.take(i).trim),
+              MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)
+            )
+          )
+        case _ => Left(Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
 
     def template(p: MergePlan, current: MergeResolutions): Template =
       val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap
@@ -46,9 +50,9 @@ object MergeResolutions:
           .map { k =>
             val arg = (k, i.suggested) match
               case (_, Some(s)) if s.kind == k && s.argument.isDefined => s":${s.argument.get}"
-              case (MergeDecision.Kind.Map, _) => s":${i.left.map(_.label).getOrElse("<citekey>")}"
-              case _ if ((k.takesArgument) == (true))        => ":<value>"
-              case _                           => ""
+              case (MergeDecision.Kind.Map, _)        => s":${i.left.map(_.label).getOrElse("<citekey>")}"
+              case _ if ((k.takesArgument) == (true)) => ":<value>"
+              case _                                  => ""
             MergeDecision.Kind.wireOf(k).value + arg
           }
           .mkString(" | ")
@@ -66,21 +70,23 @@ object MergeResolutions:
           case (None, None, _) =>
             s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})")
       val issues = p.issues.filter(_.severity != MergeIssue.Severity.Info)
-      Template(List(
+      Template(
         List(
-          s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",
-          "# left = this collection (here), right = the bundle. An id with no value is still open.",
-          "# Use with: histmersion merge plan <bundle> --resolutions <this file>",
-          s"bundle: ${p.bundleId}",
-          "policy:",
-          current.policy.editions.fold(
-            "  # editions: merge        # every year-gap question at once: merge | separate"
-          )(e => s"  editions: ${e.toString.toLowerCase}"),
-          if issues.isEmpty then "resolve: {}" else "resolve:"
-        ),
-        issues.map(line),
-        texts(current)
-      ).flatten.mkString("", "\n", "\n"))
+          List(
+            s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",
+            "# left = this collection (here), right = the bundle. An id with no value is still open.",
+            "# Use with: histmersion merge plan <bundle> --resolutions <this file>",
+            s"bundle: ${p.bundleId}",
+            "policy:",
+            current.policy.editions.fold(
+              "  # editions: merge        # every year-gap question at once: merge | separate"
+            )(e => s"  editions: ${e.toString.toLowerCase}"),
+            if issues.isEmpty then "resolve: {}" else "resolve:"
+          ),
+          issues.map(line),
+          texts(current)
+        ).flatten.mkString("", "\n", "\n")
+      )
 
     /** YAML literal blocks: `|-` when the text has no final newline, `|` with one, `|+` with more, so the text reads
       * back exactly.

@@ -44,9 +44,14 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
 
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] = Nil
 
-  def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts = StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
+  def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
+    StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
 
-  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+  def target(
+      m: ManagerInfo,
+      itemKind: ManagerContext.ItemKind,
+      raw: ManagerItem.Target
+  ): Either[Api.Error, ManagerContext.ItemTarget] =
     itemKind.value match
       case SourceEnrich =>
         Citekey.option(raw.value.trim) match
@@ -60,24 +65,54 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
     */
-  override def expand(c: ManagerContext, raw: ManagerItem.Target): Either[Api.Error, (List[ManagerContext.ItemTarget], List[ManagerKindDefinition.ExpandSkipped])] =
+  override def expand(
+      c: ManagerContext,
+      raw: ManagerItem.Target
+  ): Either[Api.Error, (List[ManagerContext.ItemTarget], List[ManagerKindDefinition.ExpandSkipped])] =
     val text = raw.value
-    val asSource = Citekey.option(text).toRight(Api.Error(Api.Error.Message(s"No source '$text'"))).flatMap(ck =>
-      site.sources.get(ck, body = SourcesControllers.GetBody(false))
-    )
-    asSource.map(s => (List(ManagerContext.ItemTarget(s.source.citekey.value)), List.empty[ManagerKindDefinition.ExpandSkipped])).orElse {
-      val cited = Slug.option(text).toRight(Api.Error(Api.Error.Message(s"No article '$text'"))).flatMap(slug =>
-        site.articleSources(slug)
-      ).orElse(
-        com.histmersion.domain.automation.Goal.Slug.option(text).toRight(Api.Error(Api.Error.Message(s"No goal '$text'"))).flatMap(slug =>
-          a.host.goal(slug).map(g => c.goalLinks(com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value), Goal.Plans.LinkKind.Source).map(x => Citekey.assume(x.value)))
-        )
+    val asSource = Citekey
+      .option(text)
+      .toRight(Api.Error(Api.Error.Message(s"No source '$text'")))
+      .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)))
+    asSource
+      .map(s =>
+        (List(ManagerContext.ItemTarget(s.source.citekey.value)), List.empty[ManagerKindDefinition.ExpandSkipped])
       )
-      cited.left.map(_ => Api.Error(Api.Error.Message(s"'$text' is no source, article or goal"), Some(Api.Error.Code(Write.CodeNotFound)))).map { cks =>
-        val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(c, ck)).partition(_._2.isEmpty)
-        (todo.map(t => ManagerContext.ItemTarget(t._1.value)), done.map((ck, why) => ManagerKindDefinition.ExpandSkipped(s"[[$ck]]: ${why.fold("")(_.value)}")))
+      .orElse {
+        val cited = Slug
+          .option(text)
+          .toRight(Api.Error(Api.Error.Message(s"No article '$text'")))
+          .flatMap(slug => site.articleSources(slug))
+          .orElse(
+            com.histmersion.domain.automation.Goal.Slug
+              .option(text)
+              .toRight(Api.Error(Api.Error.Message(s"No goal '$text'")))
+              .flatMap(slug =>
+                a.host
+                  .goal(slug)
+                  .map(g =>
+                    c.goalLinks(
+                      com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value),
+                      Goal.Plans.LinkKind.Source
+                    ).map(x => Citekey.assume(x.value))
+                  )
+              )
+          )
+        cited.left
+          .map(_ =>
+            Api.Error(
+              Api.Error.Message(s"'$text' is no source, article or goal"),
+              Some(Api.Error.Code(Write.CodeNotFound))
+            )
+          )
+          .map { cks =>
+            val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(c, ck)).partition(_._2.isEmpty)
+            (
+              todo.map(t => ManagerContext.ItemTarget(t._1.value)),
+              done.map((ck, why) => ManagerKindDefinition.ExpandSkipped(s"[[$ck]]: ${why.fold("")(_.value)}"))
+            )
+          }
       }
-    }
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
   private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[AutoEnrich.Reason] =
@@ -85,7 +120,11 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       case None      => Some(AutoEnrich.Reason("no such source"))
       case Some(src) =>
         val runs = priorRuns(c, Citekey.assume(src.source.citekey.value))
-        AutoEnrich.enrichedBy(AutoEnrich.FindingCount(src.findings.size), src.source.notes.map(n => AutoEnrich.Notes(n.value)), runs)
+        AutoEnrich.enrichedBy(
+          AutoEnrich.FindingCount(src.findings.size),
+          src.source.notes.map(n => AutoEnrich.Notes(n.value)),
+          runs
+        )
 
   /** The earlier non-dry `enrich-source` runs of a source, as [[AutoEnrich]] reads them. */
   private def priorRuns(c: ManagerContext, ck: Citekey): List[AutoEnrich.PriorRun] =
@@ -126,21 +165,24 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
               case Right(())                               =>
                 Some(
                   a.startRunAs(
-                      RunRequest(RunRequest.Pipeline(Pipeline.EnrichSource.wire.value), RunRequest.Target(ck.value)),
-                      Origin.FromIngest,
-                      None
-                    )
-                    .fold(
-                      e => AutoEnrich.notQueued(AutoEnrich.Reason(e.message.value)),
-                      r => AutoEnrich.queued(Run.Id.assume(r.id.value))
-                    )
+                    RunRequest(RunRequest.Pipeline(Pipeline.EnrichSource.wire.value), RunRequest.Target(ck.value)),
+                    Origin.FromIngest,
+                    None
+                  ).fold(
+                    e => AutoEnrich.notQueued(AutoEnrich.Reason(e.message.value)),
+                    r => AutoEnrich.queued(Run.Id.assume(r.id.value))
+                  )
                 )
       }
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
         scribe.warn(s"auto-enrich of $citekey failed: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        Some(AutoEnrich.notQueued(AutoEnrich.Reason(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))))
+        Some(
+          AutoEnrich.notQueued(
+            AutoEnrich.Reason(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
+          )
+        )
 
   private val autoEnrichLock = new Object
 
@@ -151,7 +193,14 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     val enrichId = ManagerLight.Id(EnrichId)
     val _ = c.ensure(Kind.Review, ManagerLight.Id(ReviewId), None)
     val _ = c.ensure(Kind.Enrich, enrichId, None)
-    val (itemId, isNew) = c.upsert(enrichId, ManagerContext.ItemKind(SourceEnrich), ManagerContext.ItemTarget(citekey.value), ItemOrigin.FromIngest, ManagerContext.Priority(0), reopen = ManagerContext.UpsertReopen(true))
+    val (itemId, isNew) = c.upsert(
+      enrichId,
+      ManagerContext.ItemKind(SourceEnrich),
+      ManagerContext.ItemTarget(citekey.value),
+      ItemOrigin.FromIngest,
+      ManagerContext.Priority(0),
+      reopen = ManagerContext.UpsertReopen(true)
+    )
     c.event(
       enrichId,
       Some(itemId),
@@ -192,24 +241,28 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
             // a person's Enrich enriches again; an ingest's or a selection's skips an enriched source
             val enriched = Option
               .when(item.origin != ItemOrigin.Person.wire)(
-                AutoEnrich.enrichedBy(AutoEnrich.FindingCount(src.findings.size), src.source.notes.map(n => AutoEnrich.Notes(n.value)), runs)
+                AutoEnrich.enrichedBy(
+                  AutoEnrich.FindingCount(src.findings.size),
+                  src.source.notes.map(n => AutoEnrich.Notes(n.value)),
+                  runs
+                )
               )
               .flatten
             enriched match
               case Some(why) => settle(ItemStatus.Done, s"already enriched: $why")
               case None      =>
                 c.start(
-                    m,
-                    item,
-                    RunRequest(
-                      RunRequest.Pipeline(Pipeline.EnrichSource.wire.value),
-                      RunRequest.Target(src.source.citekey.value),
-                      budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
-                    ),
-                    identity,
-                    item.state,
-                    ManagerContext.StartWhat("enrich-source"),
-                    out
-                  )
+                  m,
+                  item,
+                  RunRequest(
+                    RunRequest.Pipeline(Pipeline.EnrichSource.wire.value),
+                    RunRequest.Target(src.source.citekey.value),
+                    budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
+                  ),
+                  identity,
+                  item.state,
+                  ManagerContext.StartWhat("enrich-source"),
+                  out
+                )
       case other =>
         settle(ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")

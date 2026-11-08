@@ -23,7 +23,10 @@ object PlacesCarried:
     Bundle.Kind.Place,
     TableName("places"),
     List(rows(ImportRank(30))(PlaceBundleRepo.placeRenames), rows(ImportRank(31))(PlaceBundleRepo.placesIn))
-  )(scope => PlaceBundleRepo.places(scope).toList)(p => CarriedKind.RecordsClock(p.updatedAt.value), (es, ls) => es.modify(_.places).setTo(ls))
+  )(scope => PlaceBundleRepo.places(scope).toList)(
+    p => CarriedKind.RecordsClock(p.updatedAt.value),
+    (es, ls) => es.modify(_.places).setTo(ls)
+  )
 
   val placeAliases: CarriedKind = CarriedKind.owned[Bundle.PlaceAlias](
     Catalogue,
@@ -38,7 +41,10 @@ object PlacesCarried:
     Catalogue,
     BundleEntry(Bundle.Files.PlaceSiteTypes),
     List(rows(ImportRank(64))(PlaceBundleRepo.siteTypesIn))
-  )(scope => PlaceBundleRepo.siteTypes(scope).toList)(t => t.checkedAt.map(c => CarriedKind.OwnedClock(c.value)), (es, ls) => es.modify(_.siteTypes).setTo(ls))
+  )(scope => PlaceBundleRepo.siteTypes(scope).toList)(
+    t => t.checkedAt.map(c => CarriedKind.OwnedClock(c.value)),
+    (es, ls) => es.modify(_.siteTypes).setTo(ls)
+  )
 
   /** Every kind of the places. */
   val all: List[CarriedKind] = List(places, placeAliases, siteTypes)

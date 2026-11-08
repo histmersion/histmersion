@@ -76,20 +76,19 @@ object SettingError:
     export SettingField.EnvVar
 
   object NotAReference:
-    export SettingError.{Problem as Why}
+    export SettingError.Problem as Why
 
   object FromInclude:
-    export SettingsFile.{Path as File}
+    export SettingsFile.Path as File
 
   object Unreadable:
-    export SettingError.{Problem as Why}
+    export SettingError.Problem as Why
 
   object Invalid:
-    export SettingError.{Problem as Why}
+    export SettingError.Problem as Why
 
   object NoFile:
-    export SettingError.{Problem as Why}
+    export SettingError.Problem as Why
 
   object Io:
-    export SettingError.{Problem as Why}
-
+    export SettingError.Problem as Why

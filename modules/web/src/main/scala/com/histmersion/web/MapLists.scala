@@ -42,7 +42,13 @@ object MapLists:
   type PaneName = PaneName.T
   object PaneName extends Newtype[String, Pure]
 
-  def countLine(listed: ListedCount, total: TotalCount, one: Plural.Noun.Singular, many: Plural.Noun.Plural, onMap: OnMap): CountLine =
+  def countLine(
+      listed: ListedCount,
+      total: TotalCount,
+      one: Plural.Noun.Singular,
+      many: Plural.Noun.Plural,
+      onMap: OnMap
+  ): CountLine =
     val where = if onMap.value then " on the map" else ""
     val count = Plural.count(Plural.CountN(total.value.toLong), one, many)
     CountLine(
@@ -136,9 +142,7 @@ object MapLists:
     MapView.mediaLayer.changed.signal.foreach(_ => if UiState.inView.now() then refresh(config))
     UiState.signal.foreach(_ => refresh(config))
     if TheMap.isUp then
-      val _ = TheMap.surface.on(MapEventKind.MoveEnd)(_ =>
-        if UiState.inView.now() then refresh(config)
-      )
+      val _ = TheMap.surface.on(MapEventKind.MoveEnd)(_ => if UiState.inView.now() then refresh(config))
 
   /** Read both lists again: from the map's layers, or (everywhere) from the server when what is asked changed. */
   def refresh(config: UiConfig): Unit =
@@ -214,7 +218,14 @@ object MapLists:
             ),
           m => places.set(MapListState(Nil, MapListState.Total(0), MapListState.Note(s"Could not list places: $m")))
         )
-      case None => places.set(MapListState(Nil, MapListState.Total(0), MapListState.Note("Type words in the filters to find places by name everywhere.")))
+      case None =>
+        places.set(
+          MapListState(
+            Nil,
+            MapListState.Total(0),
+            MapListState.Note("Type words in the filters to find places by name everywhere.")
+          )
+        )
     val f = UiState.toFilter()
     picturesLatest(
       ApiClient.mediaGeo(
@@ -234,7 +245,13 @@ object MapLists:
             rows,
             MapListState.Total(rows.size),
             MapListState.Note(
-              countLine(ListedCount(rows.size), TotalCount(rows.size), Plural.Noun.Singular("picture"), Plural.Noun.Plural("pictures"), onMap = OnMap(false)).value
+              countLine(
+                ListedCount(rows.size),
+                TotalCount(rows.size),
+                Plural.Noun.Singular("picture"),
+                Plural.Noun.Plural("pictures"),
+                onMap = OnMap(false)
+              ).value
             )
           )
         )

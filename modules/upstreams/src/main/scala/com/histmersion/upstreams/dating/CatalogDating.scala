@@ -103,10 +103,13 @@ object CatalogDating:
     digits.toLongOption.map(v => if neg then AstronomicalYear(-v) else AstronomicalYear(v))
 
   /** Pure: a historical year as an astronomical one (−1, 1 BCE, is 0). */
-  def toAstronomical(h: HistoricalYear): AstronomicalYear = if (h).value < 0 then AstronomicalYear((h).value + 1) else if (h).value == 0 then AstronomicalYear((0).toLong) else AstronomicalYear((h).value)
+  def toAstronomical(h: HistoricalYear): AstronomicalYear = if (h).value < 0 then AstronomicalYear((h).value + 1)
+  else if (h).value == 0 then AstronomicalYear((0).toLong)
+  else AstronomicalYear((h).value)
 
   /** Pure: an astronomical year as a historical one (0 is −1, 1 BCE). */
-  def fromAstronomical(a: AstronomicalYear): HistoricalYear = if (a).value <= 0 then HistoricalYear((a).value - 1) else HistoricalYear((a).value)
+  def fromAstronomical(a: AstronomicalYear): HistoricalYear =
+    if (a).value <= 0 then HistoricalYear((a).value - 1) else HistoricalYear((a).value)
 
   /** Pure: a historical year `d` years later (earlier when negative), across the missing year 0. */
   def shift(h: HistoricalYear, d: YearShift): HistoricalYear = fromAstronomical(toAstronomical(h) + d)

@@ -16,7 +16,9 @@ object BackupRepo:
   def rows(table: TableName)(using DbCon): RowCount =
     RowCount(
       scala.util
-        .Try(Sql.raw(Sql.RawText(s"SELECT count(*) FROM ${quoted(table)}")).frag.query[Int].run().headOption.getOrElse(0))
+        .Try(
+          Sql.raw(Sql.RawText(s"SELECT count(*) FROM ${quoted(table)}")).frag.query[Int].run().headOption.getOrElse(0)
+        )
         .getOrElse(0)
     )
 

@@ -4,7 +4,15 @@ package cli
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Api
-import com.histmersion.api.library.{AuthorName, Citekey, CollectionEntry, CollectionFieldValue, CollectionSync, Doi, Source}
+import com.histmersion.api.library.{
+  AuthorName,
+  Citekey,
+  CollectionEntry,
+  CollectionFieldValue,
+  CollectionSync,
+  Doi,
+  Source
+}
 import com.histmersion.config.CalibreCliConfig
 
 import java.nio.file.Path
@@ -108,13 +116,17 @@ class CalibreSuite extends munit.FunSuite:
   test("push refuses junk metadata and never reaches calibredb"):
     val shell = RecordingShell()
     val c = Calibre(cfg(), shell)
-    val bad = c.add(Path.of("/tmp/whatever.pdf"), Calibre.Push(Calibre.Push.Title("Unknown"), List(Calibre.Push.Authors("Unknown Author"))))
+    val bad = c.add(
+      Path.of("/tmp/whatever.pdf"),
+      Calibre.Push(Calibre.Push.Title("Unknown"), List(Calibre.Push.Authors("Unknown Author")))
+    )
     assert(bad.isLeft, bad)
     assertEquals(shell.commands, Nil, "the guard must fire before anything is executed")
 
   test("push refuses while the Calibre GUI holds the library"):
     val shell = RecordingShell(running = true)
-    val r = Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Push.Authors("A"))))
+    val r = Calibre(cfg(), shell)
+      .add(Path.of("/tmp/x.pdf"), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Push.Authors("A"))))
     assert(r.left.exists(_.value.contains("GUI is running")), r)
 
   /** A shell whose `calibredb list` answers with one book (the entry being updated). */
@@ -191,7 +203,8 @@ class CalibreSuite extends munit.FunSuite:
   test("update MERGES identifiers: the record's DOI is set, Calibre's ISBN and every other scheme are kept"):
     val ids = """{"isbn":"9780918986672","google":"abcDEF","asin":"B000X","doi":"10.9/old"}"""
     val held = LibraryShell(shelf("1997-01-01T00:00:00+00:00", "Oriental Institute", "x", identifiers = ids))
-    val _ = Calibre(cfg(), held).update(Calibre.Book.Id(1567), meta.modify(_.isbn).setTo(Some(Calibre.Push.Isbn("9999999999999"))))
+    val _ = Calibre(cfg(), held)
+      .update(Calibre.Book.Id(1567), meta.modify(_.isbn).setTo(Some(Calibre.Push.Isbn("9999999999999"))))
     assert(fields(held).contains("identifiers:asin:B000X,doi:10.1/x,google:abcDEF,isbn:9780918986672"), fields(held))
     assertEquals(
       Calibre.mergeIdentifiers(
@@ -283,7 +296,12 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(n(AuthorName("King, Martin Luther, Jr.")), AuthorName("Martin Luther King Jr."))
     assertEquals(n(AuthorName("Smith, Ed")), AuthorName("Ed Smith"), "a man called Ed is not an editor")
     assertEquals(n(AuthorName("Walter Burkert")), AuthorName("Walter Burkert"))
-    assertEquals(Calibre.normaliseAuthors(List(AuthorName("Burkert, Walter"), AuthorName("Walter Burkert (ed.)"), AuthorName(" "))), List(AuthorName("Walter Burkert")))
+    assertEquals(
+      Calibre.normaliseAuthors(
+        List(AuthorName("Burkert, Walter"), AuthorName("Walter Burkert (ed.)"), AuthorName(" "))
+      ),
+      List(AuthorName("Walter Burkert"))
+    )
 
   // ── update --all (#831) ─────────────────────────────────────────────────────────────────────
   private def libraryOf(books: String*) = LibraryShell(books.mkString("[", ",", "]"))
@@ -293,20 +311,46 @@ class CalibreSuite extends munit.FunSuite:
     LinkedRecord(
       LinkedRecord.Citekey("burkert1985_greek"),
       LinkedRecord.CalibreId(10),
-      Calibre.Push(Calibre.Push.Title("Greek Religion"), List(AuthorName("Burkert, Walter")), year = Some(Year(1985)), tags = List(CollectionEntry.Tags("t")))
+      Calibre.Push(
+        Calibre.Push.Title("Greek Religion"),
+        List(AuthorName("Burkert, Walter")),
+        year = Some(Year(1985)),
+        tags = List(CollectionEntry.Tags("t"))
+      )
     ),
     LinkedRecord(
       LinkedRecord.Citekey("page1959_history"),
       LinkedRecord.CalibreId(11),
-      Calibre.Push(Calibre.Push.Title("History and the Homeric Iliad"), List(AuthorName("Page, Denys")), year = Some(Year(1959)), tags = List(CollectionEntry.Tags("t")))
+      Calibre.Push(
+        Calibre.Push.Title("History and the Homeric Iliad"),
+        List(AuthorName("Page, Denys")),
+        year = Some(Year(1959)),
+        tags = List(CollectionEntry.Tags("t"))
+      )
     ),
-    LinkedRecord(LinkedRecord.Citekey("guterbock1948_kumarbi"), LinkedRecord.CalibreId(12), Calibre.Push(Calibre.Push.Title("Kumarbi"), List(AuthorName("Güterbock, Hans G.")), tags = List(CollectionEntry.Tags("t")))),
+    LinkedRecord(
+      LinkedRecord.Citekey("guterbock1948_kumarbi"),
+      LinkedRecord.CalibreId(12),
+      Calibre.Push(
+        Calibre.Push.Title("Kumarbi"),
+        List(AuthorName("Güterbock, Hans G.")),
+        tags = List(CollectionEntry.Tags("t"))
+      )
+    ),
     LinkedRecord(
       LinkedRecord.Citekey("guterbock1997_perspectives"),
       LinkedRecord.CalibreId(12),
-      Calibre.Push(Calibre.Push.Title("Perspectives"), List(AuthorName("Güterbock, Hans G.")), tags = List(CollectionEntry.Tags("t")))
+      Calibre.Push(
+        Calibre.Push.Title("Perspectives"),
+        List(AuthorName("Güterbock, Hans G.")),
+        tags = List(CollectionEntry.Tags("t"))
+      )
     ),
-    LinkedRecord(LinkedRecord.Citekey("gone2000_x"), LinkedRecord.CalibreId(13), Calibre.Push(Calibre.Push.Title("Gone"), List(AuthorName("Someone"))))
+    LinkedRecord(
+      LinkedRecord.Citekey("gone2000_x"),
+      LinkedRecord.CalibreId(13),
+      Calibre.Push(Calibre.Push.Title("Gone"), List(AuthorName("Someone")))
+    )
   )
   private val shelfAll = Seq(
     entry(10, "Greek Religion", "Walter Burkert", "1985-01-01T00:00:00+00:00"),
@@ -318,12 +362,16 @@ class CalibreSuite extends munit.FunSuite:
     "update --all is a dry run by default: it lists the changes, leaves shared and missing entries alone, writes nothing"
   ):
     val shell = libraryOf(shelfAll*)
-    val out = Calibre(cfg(), shell).updateAll(linked, apply = CollectionSync.Request.Apply(false)).fold(p => fail(p.value), identity)
+    val out = Calibre(cfg(), shell)
+      .updateAll(linked, apply = CollectionSync.Request.Apply(false))
+      .fold(p => fail(p.value), identity)
     assertEquals(
       out.map(e => e.calibreId -> e.outcome),
       List(
         Calibre.Book.Id(10) -> UpdateOutcome.UpToDate,
-        Calibre.Book.Id(11) -> UpdateOutcome.Change(List(Calibre.Change(Calibre.Field.Pubdate, Calibre.Change.From("1963"), Calibre.Change.To("1959-01-01")))),
+        Calibre.Book.Id(11) -> UpdateOutcome.Change(
+          List(Calibre.Change(Calibre.Field.Pubdate, Calibre.Change.From("1963"), Calibre.Change.To("1959-01-01")))
+        ),
         Calibre.Book.Id(12) -> UpdateOutcome.Shared,
         Calibre.Book.Id(13) -> UpdateOutcome.Missing
       )
@@ -336,17 +384,28 @@ class CalibreSuite extends munit.FunSuite:
 
   test("update --all --apply writes only the entries that change, and refuses while the GUI runs"):
     val shell = libraryOf(shelfAll*)
-    val out = Calibre(cfg(), shell).updateAll(linked, apply = CollectionSync.Request.Apply(true)).fold(p => fail(p.value), identity)
+    val out = Calibre(cfg(), shell)
+      .updateAll(linked, apply = CollectionSync.Request.Apply(true))
+      .fold(p => fail(p.value), identity)
     assertEquals(
       out.find(_.calibreId == Calibre.Book.Id(11)).map(_.outcome),
-      Some(UpdateOutcome.Applied(List(Calibre.Change(Calibre.Field.Pubdate, Calibre.Change.From("1963"), Calibre.Change.To("1959-01-01")))))
+      Some(
+        UpdateOutcome.Applied(
+          List(Calibre.Change(Calibre.Field.Pubdate, Calibre.Change.From("1963"), Calibre.Change.To("1959-01-01")))
+        )
+      )
     )
     assertEquals(
       shell.commands.filter(_.contains("set_metadata")),
       List(List("calibredb", "set_metadata", "--with-library", lib.value, "11", "--field", "pubdate:1959-01-01"))
     )
     val gui = RecordingShell(running = true)
-    assert(Calibre(cfg(), gui).updateAll(linked, apply = CollectionSync.Request.Apply(true)).left.exists(_.value.contains("GUI is running")))
+    assert(
+      Calibre(cfg(), gui)
+        .updateAll(linked, apply = CollectionSync.Request.Apply(true))
+        .left
+        .exists(_.value.contains("GUI is running"))
+    )
     assertEquals(gui.commands, Nil)
 
   test("update of an id Calibre does not have is an error, and nothing is written"):
@@ -370,7 +429,10 @@ class CalibreSuite extends munit.FunSuite:
     val quiet = RecordingShell()
     assert(
       Calibre(cfg(), quiet)
-        .set(Calibre.Book.Id(1), List(CollectionFieldValue(CollectionFieldValue.Name("formats"), CollectionFieldValue.Value("x"))))
+        .set(
+          Calibre.Book.Id(1),
+          List(CollectionFieldValue(CollectionFieldValue.Name("formats"), CollectionFieldValue.Value("x")))
+        )
         .left
         .exists(_.value.contains("cannot set formats"))
     )
@@ -378,7 +440,12 @@ class CalibreSuite extends munit.FunSuite:
       Calibre(cfg(), quiet)
         .set(
           Calibre.Book.Id(1),
-          List(CollectionFieldValue(CollectionFieldValue.Name("authors"), CollectionFieldValue.Value("Walter Burkert & Unknown")))
+          List(
+            CollectionFieldValue(
+              CollectionFieldValue.Name("authors"),
+              CollectionFieldValue.Value("Walter Burkert & Unknown")
+            )
+          )
         )
         .isLeft
     )
@@ -387,11 +454,17 @@ class CalibreSuite extends munit.FunSuite:
 
   test("update refuses junk metadata and a running GUI before running anything"):
     assert(
-      Calibre(cfg(), RecordingShell()).update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Push.Authors("(ed.)")))).isLeft,
+      Calibre(cfg(), RecordingShell())
+        .update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Push.Authors("(ed.)"))))
+        .isLeft,
       "a name that is nothing but a role is no author"
     )
     val shell = RecordingShell()
-    assert(Calibre(cfg(), shell).update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("Unknown"), List(Calibre.Push.Authors("A")))).isLeft)
+    assert(
+      Calibre(cfg(), shell)
+        .update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("Unknown"), List(Calibre.Push.Authors("A"))))
+        .isLeft
+    )
     assertEquals(shell.commands, Nil)
     val gui = RecordingShell(running = true)
     assert(
@@ -425,13 +498,21 @@ class CalibreSuite extends munit.FunSuite:
   test("two volumes of one work get two citekeys, with the whole surname"):
     val v1 = book(
       Calibre.Book.Id(1805),
-      Calibre.Book.Title("The Pre-Christian Religions of the North: Research and Reception, Volume I: From the Middle Ages to c. 1830"),
+      Calibre.Book.Title(
+        "The Pre-Christian Religions of the North: Research and Reception, Volume I: From the Middle Ages to c. 1830"
+      ),
       List(Calibre.Book.Authors("Clunies Ross, Margaret (ed.)")),
       Calibre.Book.Pubdate("2018-01-01T00:00:00+00:00")
     )
-    val v2 = v1.modify(
-      _.id).setTo(Calibre.Book.Id(1806)).modify(_.title).setTo(Calibre.Book.Title("The Pre-Christian Religions of the North: Research and Reception, Volume II: From c. 1830 to the Present")
-    )
+    val v2 = v1
+      .modify(_.id)
+      .setTo(Calibre.Book.Id(1806))
+      .modify(_.title)
+      .setTo(
+        Calibre.Book.Title(
+          "The Pre-Christian Religions of the North: Research and Reception, Volume II: From c. 1830 to the Present"
+        )
+      )
     assertEquals(Calibre.citekeyFor(v1), Citekey("cluniesross2018_christian_v1"))
     assertEquals(Calibre.citekeyFor(v2), Citekey("cluniesross2018_christian_v2"))
 
@@ -510,23 +591,50 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.citekeyFor(b), Citekey("youngnd_twilight"))
 
   test("import refuses to merge a second Calibre entry into an existing record unless --citekey says so"):
-    assertEquals(Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), None), Right(ImportTarget.Create))
     assertEquals(
-      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), Some(Some(Source.CalibreId("1806")))),
+      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), None),
+      Right(ImportTarget.Create)
+    )
+    assertEquals(
+      Calibre.importTarget(
+        Citekey("k"),
+        Calibre.Book.Id(1806),
+        explicit = ImportTarget.Explicit(false),
+        Some(Some(Source.CalibreId("1806")))
+      ),
       Right(ImportTarget.Update(None))
     )
-    val e = Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), Some(Some(Source.CalibreId("1805")))).swap.toOption.get
+    val e = Calibre
+      .importTarget(
+        Citekey("k"),
+        Calibre.Book.Id(1806),
+        explicit = ImportTarget.Explicit(false),
+        Some(Some(Source.CalibreId("1805")))
+      )
+      .swap
+      .toOption
+      .get
     assert(e.value.contains("Calibre id 1805") && e.value.contains("--citekey"), e)
     assert(
-      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), Some(None)).isLeft,
+      Calibre
+        .importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(false), Some(None))
+        .isLeft,
       "an unlinked record is not merged silently either"
     )
     // #721: an explicit --citekey re-links the record to the imported entry
     assertEquals(
-      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(true), Some(Some(Source.CalibreId("1805")))),
+      Calibre.importTarget(
+        Citekey("k"),
+        Calibre.Book.Id(1806),
+        explicit = ImportTarget.Explicit(true),
+        Some(Some(Source.CalibreId("1805")))
+      ),
       Right(ImportTarget.Update(Some(ImportTarget.Update.Previous("1805"))))
     )
-    assertEquals(Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(true), Some(None)), Right(ImportTarget.Update(None)))
+    assertEquals(
+      Calibre.importTarget(Citekey("k"), Calibre.Book.Id(1806), explicit = ImportTarget.Explicit(true), Some(None)),
+      Right(ImportTarget.Update(None))
+    )
 
   // ── push --replace (#652) ───────────────────────────────────────────────────────────────────
   private def tmpFile(ext: String) =
@@ -547,13 +655,23 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre(cfg(), gui).replaceFormat(Calibre.Book.Id(1), f).left.exists(_.value.contains("GUI is running")))
     assertEquals(gui.commands, Nil)
     val none = LibraryShell("[]")
-    assert(Calibre(cfg(), none).replaceFormat(Calibre.Book.Id(1567), f).left.exists(_.value.contains("no Calibre entry 1567")))
+    assert(
+      Calibre(cfg(), none)
+        .replaceFormat(Calibre.Book.Id(1567), f)
+        .left
+        .exists(_.value.contains("no Calibre entry 1567"))
+    )
     assert(!none.commands.exists(_.contains("add_format")))
     val quiet = RecordingShell()
     assert(Calibre(cfg(), quiet).replaceFormat(Calibre.Book.Id(1), tmpFile("mobi")).isLeft)
     assertEquals(quiet.commands, Nil)
 
-  private def cfg() = CalibreCliConfig(lib, CalibreCliConfig.Calibredb("calibredb"), CalibreCliConfig.Sqlite("sqlite3"), CalibreCliConfig.OriginalsDir(""))
+  private def cfg() = CalibreCliConfig(
+    lib,
+    CalibreCliConfig.Calibredb("calibredb"),
+    CalibreCliConfig.Sqlite("sqlite3"),
+    CalibreCliConfig.OriginalsDir("")
+  )
 
   /** A [[Shell]] that records instead of executing. */
   private class RecordingShell(running: Boolean = false) extends Shell:
@@ -579,13 +697,39 @@ class CalibreSuite extends munit.FunSuite:
 
   test("unlinked: the entries no source links, newest (highest id) first, limited"):
     val books = List(
-      book(Calibre.Book.Id(3), Calibre.Book.Title("Old"), List(Calibre.Book.Authors("A")), Calibre.Book.Pubdate("2001-01-01")),
-      book(Calibre.Book.Id(9), Calibre.Book.Title("Newest"), List(Calibre.Book.Authors("B")), Calibre.Book.Pubdate("2020-01-01")),
-      book(Calibre.Book.Id(5), Calibre.Book.Title("Linked"), List(Calibre.Book.Authors("C")), Calibre.Book.Pubdate("2010-01-01")),
-      book(Calibre.Book.Id(7), Calibre.Book.Title("Middle"), List(Calibre.Book.Authors("D")), Calibre.Book.Pubdate("2015-01-01"))
+      book(
+        Calibre.Book.Id(3),
+        Calibre.Book.Title("Old"),
+        List(Calibre.Book.Authors("A")),
+        Calibre.Book.Pubdate("2001-01-01")
+      ),
+      book(
+        Calibre.Book.Id(9),
+        Calibre.Book.Title("Newest"),
+        List(Calibre.Book.Authors("B")),
+        Calibre.Book.Pubdate("2020-01-01")
+      ),
+      book(
+        Calibre.Book.Id(5),
+        Calibre.Book.Title("Linked"),
+        List(Calibre.Book.Authors("C")),
+        Calibre.Book.Pubdate("2010-01-01")
+      ),
+      book(
+        Calibre.Book.Id(7),
+        Calibre.Book.Title("Middle"),
+        List(Calibre.Book.Authors("D")),
+        Calibre.Book.Pubdate("2015-01-01")
+      )
     )
-    assertEquals(Calibre.unlinked(books, Set(Calibre.Book.Id(5)), Paging.Limit(10)).map(_.id), List(Calibre.Book.Id(9), Calibre.Book.Id(7), Calibre.Book.Id(3)))
-    assertEquals(Calibre.unlinked(books, Set(Calibre.Book.Id(5)), Paging.Limit(2)).map(_.id), List(Calibre.Book.Id(9), Calibre.Book.Id(7)))
+    assertEquals(
+      Calibre.unlinked(books, Set(Calibre.Book.Id(5)), Paging.Limit(10)).map(_.id),
+      List(Calibre.Book.Id(9), Calibre.Book.Id(7), Calibre.Book.Id(3))
+    )
+    assertEquals(
+      Calibre.unlinked(books, Set(Calibre.Book.Id(5)), Paging.Limit(2)).map(_.id),
+      List(Calibre.Book.Id(9), Calibre.Book.Id(7))
+    )
     assertEquals(Calibre.unlinked(books, books.map(_.id).toSet, Paging.Limit(10)), Nil)
 
   test("unlinked listing: title, authors, year and the file path of each entry"):
@@ -624,7 +768,10 @@ class CalibreSuite extends munit.FunSuite:
       .fold(p => fail(p.value), _.head)
     assertEquals(b.cover, Some(Calibre.Book.Cover("/lib/A/T (7)/cover.jpg")))
     val s = Calibre
-      .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]""", CalibreCliConfig.LibraryDir("/lib"))
+      .parseSqliteJson(
+        """[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]""",
+        CalibreCliConfig.LibraryDir("/lib")
+      )
       .fold(p => fail(p.value), _.head)
     assertEquals(s.cover, Some(Calibre.Book.Cover("/lib/A/T (7)/cover.jpg")))
     assertEquals(
@@ -643,7 +790,19 @@ class CalibreSuite extends munit.FunSuite:
     assert(!MediaCovers.linkedQuery(None, refresh = MediaImportRequest.Refresh(true)).value.contains("NOT EXISTS"))
 
   test("an import into an existing record keeps a compiled summary (#896)"):
-    assertEquals(Calibre.importSummary(Some(Source.Summary("Calibre blurb (Friedrich et al.")), Some(Source.Summary("Compiled summary."))), None)
-    assertEquals(Calibre.importSummary(Some(Source.Summary("Calibre blurb")), None), Some(Source.Summary("Calibre blurb")))
-    assertEquals(Calibre.importSummary(Some(Source.Summary("Calibre blurb")), Some(Source.Summary("  "))), Some(Source.Summary("Calibre blurb")))
+    assertEquals(
+      Calibre.importSummary(
+        Some(Source.Summary("Calibre blurb (Friedrich et al.")),
+        Some(Source.Summary("Compiled summary."))
+      ),
+      None
+    )
+    assertEquals(
+      Calibre.importSummary(Some(Source.Summary("Calibre blurb")), None),
+      Some(Source.Summary("Calibre blurb"))
+    )
+    assertEquals(
+      Calibre.importSummary(Some(Source.Summary("Calibre blurb")), Some(Source.Summary("  "))),
+      Some(Source.Summary("Calibre blurb"))
+    )
     assertEquals(Calibre.importSummary(None, None), None)

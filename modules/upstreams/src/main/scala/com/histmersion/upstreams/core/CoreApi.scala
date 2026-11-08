@@ -17,23 +17,43 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota):
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
-  def searchWorks(key: CoreApi.SearchWorksKey, query: CoreApi.SearchWorksQuery, limit: PageSize, purpose: UpstreamQuota.TakePurpose): Either[CoreFailure, Json] =
-    val url = Url(Candidate.Url(core.url.value), Url.UrlPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
+  def searchWorks(
+      key: CoreApi.SearchWorksKey,
+      query: CoreApi.SearchWorksQuery,
+      limit: PageSize,
+      purpose: UpstreamQuota.TakePurpose
+  ): Either[CoreFailure, Json] =
+    val url =
+      Url(Candidate.Url(core.url.value), Url.UrlPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
     quota.take(purpose) match
       case Left(why) => Left(CoreFailure.Skipped(CoreFailure.Skipped.Why(why.value)))
       case Right(_)  =>
-        http.fetch(Plugin.Http.GetUrl(url.value), Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (Plugin.Http.GetHeadersPart1(refactorTuple._1), Plugin.Http.GetHeadersPart2(refactorTuple._2)) })) match
+        http.fetch(
+          Plugin.Http.GetUrl(url.value),
+          Map {
+            val refactorTuple = "Authorization" -> s"Bearer $key";
+            (Plugin.Http.GetHeadersPart1(refactorTuple._1), Plugin.Http.GetHeadersPart2(refactorTuple._2))
+          }
+        ) match
           case Left(e)  => Left(CoreFailure.Failed(CoreFailure.Failed.Why(e.value)))
           case Right(a) =>
             quota.observe(a.status, a.headers)
             if a.status == Plugin.HttpResponse.Status(429) then
               Left(
                 CoreFailure.Skipped(
-                  CoreFailure.Problem(quota.waitingUntil.fold("CORE answered HTTP 429")(u => s"CORE answered HTTP 429; not asked until $u"))
+                  CoreFailure.Problem(
+                    quota.waitingUntil.fold("CORE answered HTTP 429")(u =>
+                      s"CORE answered HTTP 429; not asked until $u"
+                    )
+                  )
                 )
               )
             else if (a.status).value >= 400 then
-              Left(CoreFailure.Failed(CoreFailure.Failed.Why(s"$url: HTTP ${a.status} ${String(a.body.value.take(200), UTF_8)}")))
+              Left(
+                CoreFailure.Failed(
+                  CoreFailure.Failed.Why(s"$url: HTTP ${a.status} ${String(a.body.value.take(200), UTF_8)}")
+                )
+              )
             else
               io.circe.parser
                 .parse(String(a.body.value, UTF_8))

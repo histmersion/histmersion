@@ -197,7 +197,11 @@ class EventCatalogRepoSuite extends DbSuite:
         Some(CatalogRecord.Vei(4))
       )
     )
-    val placed = CatalogMerge.place(records, stored, CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30)))
+    val placed = CatalogMerge.place(
+      records,
+      stored,
+      CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+    )
     // the first is natural_disaster like the compiled one, at its place and time: matched
     assertEquals(placed.map(_._2.eventId), List("zqec_compiled", "zztest_b"))
     val saved = EventFixtures.save(ds, placed)
@@ -208,13 +212,23 @@ class EventCatalogRepoSuite extends DbSuite:
       ("Zqec compiled eruption", "natural_disaster", Some("zqec_src2020"))
     )
     assertEquals(EventFixtures.catalogueRefs(ds, Event.Id("zqec_compiled")).map(_.providerId), List("a"))
-    assert(EventFixtures.tierAndNames(ds, BEventRow.Id("zqec_compiled")).get._2.contains("Zqecian eruption"), "names added")
+    assert(
+      EventFixtures.tierAndNames(ds, BEventRow.Id("zqec_compiled")).get._2.contains("Zqecian eruption"),
+      "names added"
+    )
     val created = EventFixtures.get(ds, BEventRow.Id("zztest_b")).get.event
     assertEquals((created.kind, created.tier), ("eruption", EventTier.Catalogue))
     // a second save of the same records changes nothing
     assertEquals(
       EventFixtures
-        .save(ds, CatalogMerge.place(records, EventFixtures.stored(ds), CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))))
+        .save(
+          ds,
+          CatalogMerge.place(
+            records,
+            EventFixtures.stored(ds),
+            CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+          )
+        )
         .created,
       0
     )
@@ -245,7 +259,10 @@ class EventCatalogRepoSuite extends DbSuite:
     // a source filter selects the compiled event; with the catalogue context, the catalogue's too
     val bySource = Filter(tags = List(Filter.Tags("zqec")), period = Some(Period(Year(-2000), Year(-1000))))
     assertEquals(ids(bySource), Set("zqec_compiled"))
-    assertEquals(ids(bySource, more = EventSql.Narrow(context = EventSql.Narrow.Context(true))), Set("zqec_compiled", "zztest_b"))
+    assertEquals(
+      ids(bySource, more = EventSql.Narrow(context = EventSql.Narrow.Context(true))),
+      Set("zqec_compiled", "zztest_b")
+    )
     assertEquals(ids(more = EventSql.Narrow(area = BBox.parse(BBox.Text("150.5,-41,151.5,-39")))), Set("zztest_b"))
     val geo = EventFixtures.geo(
       ds,
@@ -259,7 +276,10 @@ class EventCatalogRepoSuite extends DbSuite:
       EventFixtures.GeoTolerance(0.01),
       EventSql.Narrow(tier = Some(EventSql.Narrow.Tier("catalogue")))
     )
-    assertEquals(geo.events.find(_.id.value == "zztest_b").map(g => (g.tier, g.size)), Some(("catalogue", Some("VEI 4"))))
+    assertEquals(
+      geo.events.find(_.id.value == "zztest_b").map(g => (g.tier, g.size)),
+      Some(("catalogue", Some("VEI 4")))
+    )
 
   test("findings near an event: within the distance and years, nearest first, the far one left out"):
     val near = EvidenceFixtures.nearFindings(
@@ -285,13 +305,23 @@ class EventCatalogRepoSuite extends DbSuite:
     )
 
   test("the full-text index finds the sources naming an event; candidates keep their status"):
-    assertEquals(SourceFixtures.naming(ds, SourceFixtures.Name("Zqecian eruption"), SourceFixtures.Limit(10)), List("zqec_src2020"))
+    assertEquals(
+      SourceFixtures.naming(ds, SourceFixtures.Name("Zqecian eruption"), SourceFixtures.Limit(10)),
+      List("zqec_src2020")
+    )
     val c = EventLinkCandidate(
       com.histmersion.api.catalogue.Event.Id("zztest_b"),
       Citekey("zqec_src2020"),
       EventLinkCandidate.Score(1.1),
       findings = Nil,
-      passages = List(EventPassage(EventPassage.Start(10), EventPassage.End(26), EventPassage.Quote("Zqecian eruption"), EventPassage.Name("Zqecian eruption"))),
+      passages = List(
+        EventPassage(
+          EventPassage.Start(10),
+          EventPassage.End(26),
+          EventPassage.Quote("Zqecian eruption"),
+          EventPassage.Name("Zqecian eruption")
+        )
+      ),
       reasons = List(EventLinkCandidate.Reasons("names it"))
     )
     EvidenceFixtures.saveCandidates(ds, BEventRow.Id("zztest_b"), List(c))
@@ -310,7 +340,10 @@ class EventCatalogRepoSuite extends DbSuite:
     )
     EvidenceFixtures.saveCandidates(ds, BEventRow.Id("zztest_b"), List(c)) // a recompute keeps the rejection
     assertEquals(EvidenceFixtures.candidates(ds, BEventRow.Id("zztest_b")), Nil)
-    assertEquals(EvidenceFixtures.candidates(ds, BEventRow.Id("zztest_b"), withRejected = true).map(_.status), List("rejected"))
+    assertEquals(
+      EvidenceFixtures.candidates(ds, BEventRow.Id("zztest_b"), withRejected = true).map(_.status),
+      List("rejected")
+    )
 
   test("an attestation makes a catalogue event attested"):
     val _ = AttestationRows.create(

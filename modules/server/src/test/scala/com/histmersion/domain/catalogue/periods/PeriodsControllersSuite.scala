@@ -18,18 +18,31 @@ class PeriodsControllersSuite extends munit.FunSuite:
   private val dump = scala.io.Source.fromResource("periods/periodo_dump.json")(using scala.io.Codec.UTF8).mkString
 
   private def controllers(
-      download: PeriodSources.PeriodoUrl => Either[PeriodImports.Problem, PeriodImports.Document] = _ => Right(PeriodImports.Document(dump)),
-      seed: () => Either[PeriodImports.Problem, PeriodImports.Document] = () => Left(PeriodImports.Problem("no period seed here")),
+      download: PeriodSources.PeriodoUrl => Either[PeriodImports.Problem, PeriodImports.Document] = _ =>
+        Right(PeriodImports.Document(dump)),
+      seed: () => Either[PeriodImports.Problem, PeriodImports.Document] = () =>
+        Left(PeriodImports.Problem("no period seed here")),
       gate: WriteGate = WriteGate()
   ): PeriodsControllers =
     val periods = PeriodService.InMemory(AtomicReference(CatalogueState.empty))
     val imports =
-      new PeriodImports(periods, () => PeriodSources(PeriodSources.PeriodoUrl("https://periodo.test/dump"), List(PeriodSources.Collections("zzqauth"))), seed, download)
+      new PeriodImports(
+        periods,
+        () =>
+          PeriodSources(
+            PeriodSources.PeriodoUrl("https://periodo.test/dump"),
+            List(PeriodSources.Collections("zzqauth"))
+          ),
+        seed,
+        download
+      )
     PeriodsControllers(periods, imports, gate)
 
   test("a sent dump is grouped under its authorities; a period shows its parent and its parts"):
     val c = controllers()
-    val r = c.importDataset(Caller.Local, Nil, Some(PeriodImports.Dataset("local")), PeriodImports.DatasetBody(dump)).fold(e => fail(e.message.value), identity)
+    val r = c
+      .importDataset(Caller.Local, Nil, Some(PeriodImports.Dataset("local")), PeriodImports.DatasetBody(dump))
+      .fold(e => fail(e.message.value), identity)
     assertEquals(r.roots, 2)
     val lba = c.period(HistoricalPeriod.Id("zzqauthlba")).fold(e => fail(e.message.value), identity)
     assertEquals(lba.parent.map(_.id), Some("zzqauthbronze"))
@@ -44,14 +57,31 @@ class PeriodsControllersSuite extends munit.FunSuite:
     assertEquals(r.roots, 1)
     assertEquals(r.periods, 4)
     assert(c.period(HistoricalPeriod.Id("zzqother01")).isLeft)
-    assert(c.fetch(Caller.Local, PeriodSources.PeriodoUrl("chronontology"), Nil).left.exists(_.message.value.contains("unknown period source")))
-    assert(c.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqnope"))).left.exists(_.message.value.contains("zzqnope")))
-    assert(c.importDataset(Caller.Local, Nil, Some(PeriodImports.Dataset("other")), PeriodImports.DatasetBody(dump)).left.exists(_.message.value.contains("seed or local")))
+    assert(
+      c.fetch(Caller.Local, PeriodSources.PeriodoUrl("chronontology"), Nil)
+        .left
+        .exists(_.message.value.contains("unknown period source"))
+    )
+    assert(
+      c.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqnope")))
+        .left
+        .exists(_.message.value.contains("zzqnope"))
+    )
+    assert(
+      c.importDataset(Caller.Local, Nil, Some(PeriodImports.Dataset("other")), PeriodImports.DatasetBody(dump))
+        .left
+        .exists(_.message.value.contains("seed or local"))
+    )
     val dead = controllers(download = _ => Left(PeriodImports.Problem("HTTP 503 from https://periodo.test/dump")))
-    assert(dead.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), Nil).left.exists(_.message.value.contains("503")))
+    assert(
+      dead.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), Nil).left.exists(_.message.value.contains("503"))
+    )
 
   test("the seed's absence is the answer of a seed; a held lock refuses every write"):
-    assertEquals(controllers().seed(Caller.Local, replace = PeriodImports.Replace(false)).left.map(_.message), Left("no period seed here"))
+    assertEquals(
+      controllers().seed(Caller.Local, replace = PeriodImports.Replace(false)).left.map(_.message),
+      Left("no period seed here")
+    )
     val gate = WriteGate()
     val c = controllers(gate = gate)
     val held = gate.exclusively(WriteGate.OperationName("restore")) {

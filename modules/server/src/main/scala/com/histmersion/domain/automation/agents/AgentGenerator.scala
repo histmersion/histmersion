@@ -44,7 +44,10 @@ object AgentGenerator:
     val agentProblems = markerProblems ++ d.agents.flatMap { a =>
       AgentDefinitions.system(a, d.fragments, d.skills, ToolStyle.Bare).left.toOption.toList ++
         (AgentDefinitions.placeholders(a.body.value) ++ a.include.flatMap(i =>
-          d.fragments.get(AgentDefinitions.FragmentName(i.value)).toList.flatMap(f => AgentDefinitions.placeholders(f.value))
+          d.fragments
+            .get(AgentDefinitions.FragmentName(i.value))
+            .toList
+            .flatMap(f => AgentDefinitions.placeholders(f.value))
         ))
           .filterNot(known)
           .map(t => s"agents/${a.name}.md names {{tool:$t}}, which is not an MCP tool")
@@ -99,7 +102,8 @@ object AgentGenerator:
     * inlined (a main-thread `--agent` gets no `skills:` preload, §3a).
     */
   def claudeAgent(d: Defs, a: AgentDef): String =
-    val tools = a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
+    val tools =
+      a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     // no stripMargin around the prompt: a Markdown table row starts with `|`
     s"---\nname: ${a.name}\ndescription: ${yamlString(a.description.value)}\ntools: ${tools.mkString(", ")}\n" +
       s"maxTurns: ${claudeTurns(a.maxTurns)}\n---\n${d.system(a, ToolStyle.Claude)}\n"
@@ -108,7 +112,8 @@ object AgentGenerator:
     * quota-guard mod off (§3a P5); the person's own hooks stay out through `--setting-sources ""` instead.
     */
   def claudeSettings(a: AgentDef): String =
-    val allow = a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
+    val allow =
+      a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     val deny = List("Bash", "Edit", "Write", "NotebookEdit", "Agent") ++
       List("WebFetch", "WebSearch").filterNot(claudeWebTools(a.web).contains)
     pretty(
@@ -181,7 +186,14 @@ object AgentGenerator:
 
   /** The checked-in tree of the repository: `plugin/` and the root marketplace. */
   def repoPlugin(d: Defs): Map[String, String] =
-    val s = GenSettings(GenSettings.AgentMcpUrl(""), None, GenSettings.QuotaUrl(""), claudeMod = GenSettings.ClaudeMod(false), interactiveMod = GenSettings.InteractiveMod(false), GenSettings.Version(PluginVersion))
+    val s = GenSettings(
+      GenSettings.AgentMcpUrl(""),
+      None,
+      GenSettings.QuotaUrl(""),
+      claudeMod = GenSettings.ClaudeMod(false),
+      interactiveMod = GenSettings.InteractiveMod(false),
+      GenSettings.Version(PluginVersion)
+    )
     interactivePlugin(d, s).map((k, v) => s"plugin/$k" -> v) +
       (".claude-plugin/marketplace.json" -> marketplaceJson(InteractivePlugin, "./plugin", PluginVersion))
 
@@ -208,7 +220,9 @@ object AgentGenerator:
       (if s.claudeMod.value then modFiles(QuotaMod.Guard).map((k, v) => s"headless/$k" -> v) else Map.empty)
     val roles = headless.map(a => s"roles/${a.name}/settings.json" -> claudeSettings(a))
     val market =
-      Map(".claude-plugin/marketplace.json" -> marketplaceJson(LocalMarketplace, s"./$InteractivePlugin", s.version.value)) ++
+      Map(
+        ".claude-plugin/marketplace.json" -> marketplaceJson(LocalMarketplace, s"./$InteractivePlugin", s.version.value)
+      ) ++
         interactivePlugin(d, s).map((k, v) => s"$InteractivePlugin/$k" -> v)
     (hl ++ roles ++ market).map((k, v) => s"claude-code/$k" -> v)
 
@@ -344,12 +358,14 @@ object AgentGenerator:
       skills(d, "home/skills", ToolStyle.Bare, keepAllowedTools = false)
     val plugin = Map(
       "plugin/.codex-plugin/plugin.json" -> pretty(
-        Json.obj(
-          "name" -> InteractivePlugin.asJson,
-          "version" -> Json.fromString(s.version.value),
-          "description" -> InteractiveDescription.asJson,
-          "skills" -> "./skills".asJson
-        ).deepMerge(s.mcpUrl.fold(Json.obj())(_ => Json.obj("mcpServers" -> "./.mcp.json".asJson)))
+        Json
+          .obj(
+            "name" -> InteractivePlugin.asJson,
+            "version" -> Json.fromString(s.version.value),
+            "description" -> InteractiveDescription.asJson,
+            "skills" -> "./skills".asJson
+          )
+          .deepMerge(s.mcpUrl.fold(Json.obj())(_ => Json.obj("mcpServers" -> "./.mcp.json".asJson)))
       )
     ) ++
       skills(d, "plugin/skills", ToolStyle.Bare, keepAllowedTools = false) ++
@@ -378,12 +394,14 @@ object AgentGenerator:
         else Json.obj()
       )
     pretty(
-      Json.obj(
-        "$schema" -> "https://opencode.ai/config.json".asJson,
-        "autoupdate" -> Json.False,
-        "share" -> "disabled".asJson,
-        "mcp" -> Json.obj(AgentDefinitions.McpServer -> server)
-      ).deepMerge(if headless then Json.obj("permission" -> Json.obj("*" -> "deny".asJson)) else Json.obj())
+      Json
+        .obj(
+          "$schema" -> "https://opencode.ai/config.json".asJson,
+          "autoupdate" -> Json.False,
+          "share" -> "disabled".asJson,
+          "mcp" -> Json.obj(AgentDefinitions.McpServer -> server)
+        )
+        .deepMerge(if headless then Json.obj("permission" -> Json.obj("*" -> "deny".asJson)) else Json.obj())
     )
 
   def opencode(d: Defs, s: GenSettings): Map[String, String] =
@@ -394,8 +412,9 @@ object AgentGenerator:
     ) ++
       roles.map(a => s"config/agents/${a.name}.md" -> opencodeAgent(d, a)) ++
       skills(d, "config/skills", ToolStyle.Opencode, keepAllowedTools = false)
-    val interactive = s.mcpUrl.map(u => "interactive/opencode.json" -> opencodeConfig(u.value, headless = false)).toMap ++
-      skills(d, "interactive/skills", ToolStyle.Opencode, keepAllowedTools = false)
+    val interactive =
+      s.mcpUrl.map(u => "interactive/opencode.json" -> opencodeConfig(u.value, headless = false)).toMap ++
+        skills(d, "interactive/skills", ToolStyle.Opencode, keepAllowedTools = false)
     (runs ++ interactive).map((k, v) => s"opencode/$k" -> v)
 
   /** Every tree for `runtimes`. */

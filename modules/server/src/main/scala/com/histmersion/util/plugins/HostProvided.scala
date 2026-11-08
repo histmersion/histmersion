@@ -9,7 +9,10 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * command-line AI runtimes, which read the host's own settings at each use. Its defaults resource
   * (`META-INF/histmersion/plugins/<id>.conf`, in the server) names every key and sets `enabled`.
   */
-final class HostProvided[C](id: Plugin.Info.Id, contribute: (C, Plugin.Context) => Either[Plugin.RegisterResultPart1, Unit])(using ConfigReader[C])
+final class HostProvided[C](
+    id: Plugin.Info.Id,
+    contribute: (C, Plugin.Context) => Either[Plugin.RegisterResultPart1, Unit]
+)(using ConfigReader[C])
     extends Plugin:
   type Config = C
   val info: Plugin.Info = Plugin.Info(id, HostProvided.Release, PluginHost.SpiGeneration)
@@ -30,7 +33,10 @@ object HostProvided:
   val Release: Plugin.Info.Version = Plugin.Info.Version("0.1.0")
 
   /** A host-supplied plugin with no settings of its own beyond the host's `enabled`. */
-  def apply(id: com.histmersion.util.plugins.Plugin.Id, contribute: Plugin.Context => Either[Plugin.RegisterResultPart1, Unit]): HostProvided[NoSettings] =
+  def apply(
+      id: com.histmersion.util.plugins.Plugin.Id,
+      contribute: Plugin.Context => Either[Plugin.RegisterResultPart1, Unit]
+  ): HostProvided[NoSettings] =
     new HostProvided[NoSettings](Plugin.Info.Id(id.value), (_, ctx) => contribute(ctx))
 
   /** No settings of its own. */

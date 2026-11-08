@@ -41,17 +41,30 @@ class AggregateSuite extends munit.FunSuite:
     assertEquals(Aggregate.buckets(Year(-1600), Year(-1200), Aggregate.Width(100)).size, 5)
 
   test("a window that does not start on a multiple snaps DOWN (floor, also for negatives)"):
-    assertEquals(Aggregate.buckets(Year(-1637), Year(-1592), Aggregate.Width(100)), List((-1700L, -1601L), (-1600L, -1501L)))
-    assertEquals(Aggregate.buckets(Year(37), Year(250), Aggregate.Width(100)), List((0L, 99L), (100L, 199L), (200L, 299L)))
+    assertEquals(
+      Aggregate.buckets(Year(-1637), Year(-1592), Aggregate.Width(100)),
+      List((-1700L, -1601L), (-1600L, -1501L))
+    )
+    assertEquals(
+      Aggregate.buckets(Year(37), Year(250), Aggregate.Width(100)),
+      List((0L, 99L), (100L, 199L), (200L, 299L))
+    )
 
   test("the same year lands in the same bucket whatever the window"):
-    val a = Aggregate.buckets(Year(-3500), Year(-500), Aggregate.Width(100)).find((s, e) => -1250 >= s.value && -1250 <= e.value)
-    val b = Aggregate.buckets(Year(-1600), Year(-1200), Aggregate.Width(100)).find((s, e) => -1250 >= s.value && -1250 <= e.value)
+    val a = Aggregate
+      .buckets(Year(-3500), Year(-500), Aggregate.Width(100))
+      .find((s, e) => -1250 >= s.value && -1250 <= e.value)
+    val b = Aggregate
+      .buckets(Year(-1600), Year(-1200), Aggregate.Width(100))
+      .find((s, e) => -1250 >= s.value && -1250 <= e.value)
     assertEquals(a, Some((-1300L, -1201L)))
     assertEquals(a, b)
 
   test("reversed from/to is normalised"):
-    assertEquals(Aggregate.buckets(Year(-1200), Year(-1600), Aggregate.Width(100)), Aggregate.buckets(Year(-1600), Year(-1200), Aggregate.Width(100)))
+    assertEquals(
+      Aggregate.buckets(Year(-1200), Year(-1600), Aggregate.Width(100)),
+      Aggregate.buckets(Year(-1600), Year(-1200), Aggregate.Width(100))
+    )
 
   test("a zero-width window still yields the one bucket containing it"):
     assertEquals(Aggregate.buckets(Year(-1250), Year(-1250), Aggregate.Width(100)), List((-1300L, -1201L)))
@@ -69,16 +82,37 @@ class AggregateSuite extends munit.FunSuite:
     assertEquals(h.filter(_.count.value > 0).map(b => (b.start, b.end)), List((-1300L, -1201L)))
 
   test("bucket-boundary years belong to the bucket that starts on them"):
-    assertEquals(Aggregate.histogram(List(row(Year(-1300), Year(-1300))), Year(-1400), Year(-1200), Aggregate.Width(100)).map(_.count), List(0, 1, 0))
-    assertEquals(Aggregate.histogram(List(row(Year(-1301), Year(-1301))), Year(-1400), Year(-1200), Aggregate.Width(100)).map(_.count), List(1, 0, 0))
+    assertEquals(
+      Aggregate
+        .histogram(List(row(Year(-1300), Year(-1300))), Year(-1400), Year(-1200), Aggregate.Width(100))
+        .map(_.count),
+      List(0, 1, 0)
+    )
+    assertEquals(
+      Aggregate
+        .histogram(List(row(Year(-1301), Year(-1301))), Year(-1400), Year(-1200), Aggregate.Width(100))
+        .map(_.count),
+      List(1, 0, 0)
+    )
 
   test("counts overlap, so they do not sum to the number of rows"):
-    val h = Aggregate.histogram(List(row(Year(-1600), Year(-1200)), row(Year(-1250), Year(-1240))), Year(-1600), Year(-1200), Aggregate.Width(100))
+    val h = Aggregate.histogram(
+      List(row(Year(-1600), Year(-1200)), row(Year(-1250), Year(-1240))),
+      Year(-1600),
+      Year(-1200),
+      Aggregate.Width(100)
+    )
     assertEquals(h.map(_.count), List(1, 1, 1, 2, 1))
     assert(h.map(_.count.value).sum > 2)
 
   test("rows outside the window contribute nothing"):
-    assertEquals(Aggregate.histogram(List(row(Year(-900), Year(-800))), Year(-1600), Year(-1200), Aggregate.Width(100)).map(_.count.value).sum, 0)
+    assertEquals(
+      Aggregate
+        .histogram(List(row(Year(-900), Year(-800))), Year(-1600), Year(-1200), Aggregate.Width(100))
+        .map(_.count.value)
+        .sum,
+      0
+    )
 
   test("undated rows are ignored; half-dated rows collapse to a point"):
     val rows = List(Period.Row(None, None), Period.Row(Some(Year(-1250)), None), Period.Row(None, Some(Year(-1450))))
@@ -86,7 +120,12 @@ class AggregateSuite extends munit.FunSuite:
     assertEquals(h.map(b => (b.start, b.count)), List((-1600L, 0), (-1500L, 1), (-1400L, 0), (-1300L, 1), (-1200L, 0)))
 
   test("a row with inverted bounds is normalised, not dropped"):
-    assertEquals(Aggregate.histogram(List(row(Year(-1350), Year(-1550))), Year(-1600), Year(-1200), Aggregate.Width(100)).map(_.count), List(1, 1, 1, 0, 0))
+    assertEquals(
+      Aggregate
+        .histogram(List(row(Year(-1350), Year(-1550))), Year(-1600), Year(-1200), Aggregate.Width(100))
+        .map(_.count),
+      List(1, 1, 1, 0, 0)
+    )
 
   test("empty input still yields the full (all-zero) bucket grid"):
     val h = Aggregate.histogram(Nil, Year(-1600), Year(-1200), Aggregate.Width(100))
@@ -101,7 +140,12 @@ class AggregateSuite extends munit.FunSuite:
 
   // ── Markdown rendering (CLI + MCP surface) ────────────────────────────────────────────────
   test("SearchMarkdown.histogram renders a table with a bar per non-empty bucket"):
-    val h = TimeHistogram(TimeHistogram.From(-1600), TimeHistogram.To(-1200), TimeHistogram.Bucket(100), Aggregate.histogram(List(row(Year(-1250), Year(-1250))), Year(-1600), Year(-1200), Aggregate.Width(100)))
+    val h = TimeHistogram(
+      TimeHistogram.From(-1600),
+      TimeHistogram.To(-1200),
+      TimeHistogram.Bucket(100),
+      Aggregate.histogram(List(row(Year(-1250), Year(-1250))), Year(-1600), Year(-1200), Aggregate.Width(100))
+    )
     val md = SearchMarkdown.histogram(h, Histogram.Unit("sources"))
     assert(md.contains("| period | sources | |"), md)
     // every table row must keep its leading pipe (a stripMargin here would silently eat them)
@@ -111,7 +155,15 @@ class AggregateSuite extends munit.FunSuite:
 
   test("SearchMarkdown.histogram survives an all-empty histogram"):
     val md =
-      SearchMarkdown.histogram(TimeHistogram(TimeHistogram.From(-1600), TimeHistogram.To(-1200), TimeHistogram.Bucket(100), Aggregate.histogram(Nil, Year(-1600), Year(-1200), Aggregate.Width(100))), Histogram.Unit("sources"))
+      SearchMarkdown.histogram(
+        TimeHistogram(
+          TimeHistogram.From(-1600),
+          TimeHistogram.To(-1200),
+          TimeHistogram.Bucket(100),
+          Aggregate.histogram(Nil, Year(-1600), Year(-1200), Aggregate.Width(100))
+        ),
+        Histogram.Unit("sources")
+      )
     assert(md.contains("0 non-empty bucket(s)"), md)
 
   // ── unbounded windows and Long overflow ──────────────────────────────────────────────────────
@@ -121,13 +173,20 @@ class AggregateSuite extends munit.FunSuite:
     assertEquals(Aggregate.bucketCount(Year(0), Year(0), Aggregate.Width(10)), BigInt(1))
     assertEquals(Aggregate.bucketCount(Year(-3500), Year(-500), Aggregate.Width(100)), BigInt(31))
     // …and it answers, exactly, for a window nobody could ever build
-    assertEquals(Aggregate.bucketCount(Year(-1000000000000000L), Year(1000000000000000L), Aggregate.Width(5000)), BigInt("400000000001"))
+    assertEquals(
+      Aggregate.bucketCount(Year(-1000000000000000L), Year(1000000000000000L), Aggregate.Width(5000)),
+      BigInt("400000000001")
+    )
     assert(Aggregate.bucketCount(Year(-Long.MaxValue), Year(Long.MaxValue), Aggregate.Width(10)) > BigInt(10).pow(17))
 
   test("bucketCount agrees with buckets on windows small enough to build"):
     List((-1000L, -1L, 100L), (-3500L, -500L, 10L), (7L, 7L, 5L), (-20L, 20L, 3L))
       .foreach { (f, t, s) =>
-        assertEquals(BigInt(Aggregate.buckets(Year(f), Year(t), Aggregate.Width(s)).size), Aggregate.bucketCount(Year(f), Year(t), Aggregate.Width(s)), s"($f, $t, $s)")
+        assertEquals(
+          BigInt(Aggregate.buckets(Year(f), Year(t), Aggregate.Width(s)).size),
+          Aggregate.bucketCount(Year(f), Year(t), Aggregate.Width(s)),
+          s"($f, $t, $s)"
+        )
       }
 
   test("to = Long.MaxValue terminates instead of looping on overflow"):
@@ -140,7 +199,9 @@ class AggregateSuite extends munit.FunSuite:
 
   test("a bucket's end never precedes its start, anywhere near the boundaries"):
     List(Long.MinValue + 1, -1L, 0L, 1L, Long.MaxValue - 1).foreach { v =>
-      Aggregate.buckets(Year(v), Year(v), Aggregate.Width(5000)).foreach((s, e) => assert(s.value <= e.value, s"($v): ($s, $e)"))
+      Aggregate
+        .buckets(Year(v), Year(v), Aggregate.Width(5000))
+        .foreach((s, e) => assert(s.value <= e.value, s"($v): ($s, $e)"))
     }
 
 /** `unit=starts` — one bar per source, at the bucket its period begins in (UX item 11). Pure. */
@@ -158,17 +219,31 @@ class AggregateStartsSuite extends munit.FunSuite:
     assertEquals(st.find(_.count.value > 0).map(_.start), Some(-3300L))
 
   test("Starts bars sum to the number of dated rows in the window"):
-    val rows = List(row(Year(-2000), Year(-1000)), row(Year(-1950), Year(-1900)), row(Year(-1200), Year(-1100)), row(Year(-1150), Year(-900)))
+    val rows = List(
+      row(Year(-2000), Year(-1000)),
+      row(Year(-1950), Year(-1900)),
+      row(Year(-1200), Year(-1100)),
+      row(Year(-1150), Year(-900))
+    )
     val st = Aggregate.histogram(rows, Year(-2000), Year(-900), Aggregate.Width(100), Counting.Starts)
     assertEquals(st.map(_.count.value).sum, 4)
 
   test("a source starting before the window is not counted into the first bar"):
-    val st = Aggregate.histogram(List(row(Year(-5000), Year(-1500))), Year(-2000), Year(-1000), Aggregate.Width(100), Counting.Starts)
+    val st = Aggregate.histogram(
+      List(row(Year(-5000), Year(-1500))),
+      Year(-2000),
+      Year(-1000),
+      Aggregate.Width(100),
+      Counting.Starts
+    )
     assertEquals(st.map(_.count.value).sum, 0)
 
   test("undated rows are dropped by both countings"):
     val rows = List(Period.Row(None, None), row(Year(-1500), Year(-1400)))
-    assertEquals(Aggregate.histogram(rows, Year(-2000), Year(-1000), Aggregate.Width(100), Counting.Starts).map(_.count.value).sum, 1)
+    assertEquals(
+      Aggregate.histogram(rows, Year(-2000), Year(-1000), Aggregate.Width(100), Counting.Starts).map(_.count.value).sum,
+      1
+    )
 
   test("Overlap stays the default, byte for byte"):
     val rows = List(row(Year(-2000), Year(-1500)), row(Year(-1600), Year(-1000)))

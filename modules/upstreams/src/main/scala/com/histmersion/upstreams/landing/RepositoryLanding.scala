@@ -67,12 +67,17 @@ object RepositoryLanding:
   export Candidate.{Url as CitationPdfUrlsPageUrl, Url as IsRepositoryPageUrl}
   type IsRepositoryHtml = Html
   val IsRepositoryHtml: Html.type = Html
-  export Candidate.{Url as PdfsOfPageUrl, Repository as PdfsOfIndexSaysRepository}
+  export Candidate.{Repository as PdfsOfIndexSaysRepository, Url as PdfsOfPageUrl}
   type PdfsOfHtml = Html
   val PdfsOfHtml: Html.type = Html
-  export Candidate.{Url as GalleyPdfUrlsPageUrl}
+  export Candidate.Url as GalleyPdfUrlsPageUrl
 
-  final case class Candidate(url: Candidate.Url, repository: Candidate.Repository, publisher: Candidate.Publisher = Candidate.Publisher(false), open: Candidate.Open = Candidate.Open(false))
+  final case class Candidate(
+      url: Candidate.Url,
+      repository: Candidate.Repository,
+      publisher: Candidate.Publisher = Candidate.Publisher(false),
+      open: Candidate.Open = Candidate.Open(false)
+  )
 
   object Candidate:
     type Url = Url.T
@@ -85,7 +90,12 @@ object RepositoryLanding:
     object Open extends Newtype[Boolean, Pure]
 
   /** OpenAlex `source.type`s that are a publisher's, not a repository's. */
-  val PublisherSourceTypes: Set[PublisherSourceType] = Set(PublisherSourceType("journal"), PublisherSourceType("conference"), PublisherSourceType("ebook platform"), PublisherSourceType("book series"))
+  val PublisherSourceTypes: Set[PublisherSourceType] = Set(
+    PublisherSourceType("journal"),
+    PublisherSourceType("conference"),
+    PublisherSourceType("ebook platform"),
+    PublisherSourceType("book series")
+  )
 
   /** One file of a Zenodo record: where to download it and its MD5, when the record states one. */
   final case class ZenodoFile(url: ZenodoFile.Url, md5: Option[ZenodoFile.Md5])
@@ -118,7 +128,11 @@ object RepositoryLanding:
       */
     def denied(host: Host): Boolean =
       denyHosts.exists(d => matchesHost(host, d)) ||
-        (!allowed(host) && host.value.split('.').toList.dropRight(1).exists(l => denyHostWords.exists(w => wordLabel(HostLabel(l), w))))
+        (!allowed(host) && host.value
+          .split('.')
+          .toList
+          .dropRight(1)
+          .exists(l => denyHostWords.exists(w => wordLabel(HostLabel(l), w))))
 
     /** A university's host: `.edu` (`.edu.au` too), `.ac.<cc>`, or a label that is a configured word ([[wordLabel]]:
       * `repository`, `eprints`, `pure`, `opus4`, `uni-tuebingen` for `uni-`).
@@ -161,15 +175,24 @@ object RepositoryLanding:
 
   /** Pure: the lower-case host of an absolute http(s) URL. */
   /** The host of `url` when it is one of `hosts` or a subdomain of one. */
-  def onHost(url: OnHostUrl, hosts: List[HostPattern]): Option[Host] = host(url).filter(h => hosts.exists(matchesHost(h, _)))
+  def onHost(url: OnHostUrl, hosts: List[HostPattern]): Option[Host] =
+    host(url).filter(h => hosts.exists(matchesHost(h, _)))
 
   def host(url: HostUrl): Option[Host] =
-    "(?i)^https?://([^/?#:]+)".r.findFirstMatchIn((url).value.trim).map(m => Host(m.group(1).toLowerCase.stripPrefix("www.")))
+    "(?i)^https?://([^/?#:]+)".r
+      .findFirstMatchIn((url).value.trim)
+      .map(m => Host(m.group(1).toLowerCase.stripPrefix("www.")))
 
   // ── which pages ────────────────────────────────────────────────────────────────────────────
 
   private def str(c: ACursor, keys: String*): Option[String] =
-    (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
+    (keys
+      .foldLeft(c)(_.downField(_))
+      .as[String]
+      .toOption
+      .map(_.trim)
+      .filter(_.nonEmpty))
+      .map(refactorValue => (refactorValue))
   private def arr(c: ACursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
 
@@ -188,7 +211,9 @@ object RepositoryLanding:
       val pub = kind.exists(k => PublisherSourceTypes.contains(PublisherSourceType(k)))
       val open = h.downField("is_oa").as[Boolean].contains(true)
       (str(h, "pdf_url").filter(((notPdfPath))).toList ++ str(h, "landing_page_url").toList)
-        .map(u => Candidate(Candidate.Url(u), Candidate.Repository(repo), Candidate.Publisher(pub), Candidate.Open(open)))
+        .map(u =>
+          Candidate(Candidate.Url(u), Candidate.Repository(repo), Candidate.Publisher(pub), Candidate.Open(open))
+        )
     })
 
   /** Pure: the landing pages of Unpaywall's OA locations (`host_type: repository` marked). */
@@ -200,11 +225,14 @@ object RepositoryLanding:
       val repo = str(h, "host_type").contains("repository")
       val pub = str(h, "host_type").contains("publisher")
       (str(h, "url_for_pdf").filter(((notPdfPath))).toList ++ str(h, "url_for_landing_page").toList)
-        .map(u => Candidate(Candidate.Url(u), Candidate.Repository(repo), Candidate.Publisher(pub), open = Candidate.Open(true)))
+        .map(u =>
+          Candidate(Candidate.Url(u), Candidate.Repository(repo), Candidate.Publisher(pub), open = Candidate.Open(true))
+        )
     })
 
   /** Pure: where a DataCite DOI resolves (`data.attributes.url` of `api.datacite.org/dois/<doi>`). */
-  def dataciteUrl(json: Json): Option[Candidate.Url] = (str(json.hcursor, "data", "attributes", "url")).map(refactorValue2 => Candidate.Url((refactorValue2)))
+  def dataciteUrl(json: Json): Option[Candidate.Url] =
+    (str(json.hcursor, "data", "attributes", "url")).map(refactorValue2 => Candidate.Url((refactorValue2)))
 
   /** Candidates by URL, the first of each kept; repository if any index says so, publisher only if one says so and none
     * says repository, open if any says so.
@@ -215,7 +243,17 @@ object RepositoryLanding:
       .toList
       .map { (u, xs) =>
         val repo = xs.exists((refactorCallback => ((refactorCallback.repository) == Candidate.Repository(true))))
-        (cs.indexWhere(_.url == u), Candidate(u, Candidate.Repository(repo), Candidate.Publisher(!repo && xs.exists((refactorCallback => ((refactorCallback.publisher) == Candidate.Publisher(true))))), Candidate.Open(xs.exists((refactorCallback => ((refactorCallback.open) == Candidate.Open(true)))))))
+        (
+          cs.indexWhere(_.url == u),
+          Candidate(
+            u,
+            Candidate.Repository(repo),
+            Candidate.Publisher(
+              !repo && xs.exists((refactorCallback => ((refactorCallback.publisher) == Candidate.Publisher(true))))
+            ),
+            Candidate.Open(xs.exists((refactorCallback => ((refactorCallback.open) == Candidate.Open(true)))))
+          )
+        )
       }
       .sortBy(_._1)
       .map(_._2)
@@ -223,7 +261,8 @@ object RepositoryLanding:
   /** Pure: is this an open-access publisher's OPEN location (#2550) — read although it is a publisher's: an index says
     * it is open, and its host is on `oa-publisher-hosts`.
     */
-  def oaPublisherPage(c: Candidate, rules: Rules): Boolean = ((c.open) == Candidate.Open(true)) && host(c.url).exists(rules.oaPublisher)
+  def oaPublisherPage(c: Candidate, rules: Rules): Boolean =
+    ((c.open) == Candidate.Open(true)) && host(c.url).exists(rules.oaPublisher)
 
   /** Pure: where the DOI handle API (`doi.org/api/handles/<doi>?type=URL`) says a DOI resolves — its first URL value.
     * Read only for an open location on an OA publisher, so a `doi.org` link is still never followed blind.
@@ -233,7 +272,8 @@ object RepositoryLanding:
       .map(_.hcursor)
       .filter(v => str(v, "type").contains("URL"))
       .flatMap(v => str(v, "data", "value"))
-      .nextOption()).map(refactorValue3 => Candidate.Url((refactorValue3)))
+      .nextOption())
+      .map(refactorValue3 => Candidate.Url((refactorValue3)))
 
   // ── Zenodo ─────────────────────────────────────────────────────────────────────────────────
 
@@ -287,7 +327,10 @@ object RepositoryLanding:
         .toMap
       for
         key <- attrs.get("name").orElse(attrs.get("property")).map(_.trim.toLowerCase).filter(_.nonEmpty)
-        content <- attrs.get("content").map({ val refactorFunction = decode; (refactorValue5) => refactorFunction((refactorValue5)) }).map((_).trim)
+        content <- attrs
+          .get("content")
+          .map { val refactorFunction = decode; (refactorValue5) => refactorFunction((refactorValue5)) }
+          .map((_).trim)
       yield { val refactorTuple = key -> content; (MetaName(refactorTuple._1), MetaContent(refactorTuple._2)) }
     }
 
@@ -295,7 +338,8 @@ object RepositoryLanding:
   val MaxHead = 400000
 
   private def decode(s: String): String =
-    ((s).replace("&amp;", "&")
+    ((s)
+      .replace("&amp;", "&")
       .replace("&quot;", "\"")
       .replace("&#39;", "'")
       .replace("&apos;", "'")
@@ -305,11 +349,23 @@ object RepositoryLanding:
       .replace("&#47;", "/"))
 
   /** Pure: the page's `generator` tags (`DSpace 6.3`, `EPrints 3.4`). */
-  def generators(html: GeneratorsHtml): List[Rules.Generators] = metaTags(html).collect { case (refactorPattern, g) if (refactorPattern.value == "generator") && ((g).value.nonEmpty) => Rules.Generators((g).value) }
+  def generators(html: GeneratorsHtml): List[Rules.Generators] = metaTags(html).collect {
+    case (refactorPattern, g) if (refactorPattern.value == "generator") && ((g).value.nonEmpty) =>
+      Rules.Generators((g).value)
+  }
 
   /** Pure: the `citation_pdf_url`s a page names, made absolute against `pageUrl`, http(s) only. */
-  def citationPdfUrls(html: CitationPdfUrlsHtml, pageUrl: RepositoryLanding.CitationPdfUrlsPageUrl): List[Candidate.Url] =
-    metaTags(html).collect { case (refactorPattern2, u) if (refactorPattern2.value == "citation_pdf_url") && ((u).value.nonEmpty) => absolute(Href((u).value), pageUrl) }.flatten.distinct
+  def citationPdfUrls(
+      html: CitationPdfUrlsHtml,
+      pageUrl: RepositoryLanding.CitationPdfUrlsPageUrl
+  ): List[Candidate.Url] =
+    metaTags(html)
+      .collect {
+        case (refactorPattern2, u) if (refactorPattern2.value == "citation_pdf_url") && ((u).value.nonEmpty) =>
+          absolute(Href((u).value), pageUrl)
+      }
+      .flatten
+      .distinct
 
   /** Pure: `href` against the page it is on (`/bitstream/…` → `https://host/bitstream/…`). */
   def absolute(href: Href, pageUrl: Candidate.Url): Option[Candidate.Url] =
@@ -328,7 +384,12 @@ object RepositoryLanding:
     * page (`deny-generators`: Open Journal Systems); otherwise when an OA index calls the location a repository, the
     * host is allowed or academic, or the page names a repository platform as its generator.
     */
-  def isRepository(pageUrl: RepositoryLanding.IsRepositoryPageUrl, indexSaysRepository: Candidate.Repository, html: IsRepositoryHtml, rules: Rules): Boolean =
+  def isRepository(
+      pageUrl: RepositoryLanding.IsRepositoryPageUrl,
+      indexSaysRepository: Candidate.Repository,
+      html: IsRepositoryHtml,
+      rules: Rules
+  ): Boolean =
     host(pageUrl).exists { h =>
       val gs = generators(html)
       !rules.denied(h) && !rules.journalGenerator(gs) &&
@@ -377,17 +438,23 @@ object RepositoryLanding:
           }
           .toMap
         val cls = attrs.getOrElse("class", "").toLowerCase.split("\\s+").toSet
-        attrs.get("href").filter(_ => cls("obj_galley_link") && cls("pdf")).map({ val refactorFunction3 = decode; (refactorValue7) => refactorFunction3((refactorValue7)) })
+        attrs.get("href").filter(_ => cls("obj_galley_link") && cls("pdf")).map {
+          val refactorFunction3 = decode; (refactorValue7) => refactorFunction3((refactorValue7))
+        }
       }
       .toList
     val unescaped = page.replace("\\u0022", "\"").replace("&quot;", "\"").replace("\\\\/", "/").replace("\\/", "/")
     val listed = GalleyJson.findAllMatchIn(unescaped).map(_.group(1)).toList
-    (links ++ listed).flatMap(h => absolute(Href(h), pageUrl)).filter(u => "(?i)^https?://".r.findPrefixOf((u).value).isDefined).distinct
+    (links ++ listed)
+      .flatMap(h => absolute(Href(h), pageUrl))
+      .filter(u => "(?i)^https?://".r.findPrefixOf((u).value).isDefined)
+      .distinct
 
   /** Pure: an OJS galley's viewer URL (`…/article/view/<article>/<galley>`, an HTML page around the PDF) as its
     * download (`…/article/download/<article>/<galley>`); any other URL as it is.
     */
-  def ojsDownload(url: Candidate.Url): Candidate.Url = Candidate.Url(OjsView.replaceFirstIn((url).value, "/article/download/$1/$2"))
+  def ojsDownload(url: Candidate.Url): Candidate.Url =
+    Candidate.Url(OjsView.replaceFirstIn((url).value, "/article/download/$1/$2"))
 
   /** Pure: does a non-PDF answer look like an HTML page (worth reading for its tags)? */
   def looksLikeHtml(b: PageBytes): Boolean =

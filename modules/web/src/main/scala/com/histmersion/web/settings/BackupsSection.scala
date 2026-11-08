@@ -39,7 +39,13 @@ object BackupsSection:
       SettingsForm(
         SettingsForm.ApplyTitle("How many to keep"),
         Some(SettingsForm.Intro("Each backup is a full copy of the database; the oldest are deleted after a new one.")),
-        List(SettingsForm.Item(SettingsForm.Item.Key("backups.keep"), Some(SettingsForm.Item.Name("Backups kept")), Some(SettingsForm.Item.Help("0 keeps every one."))))
+        List(
+          SettingsForm.Item(
+            SettingsForm.Item.Key("backups.keep"),
+            Some(SettingsForm.Item.Name("Backups kept")),
+            Some(SettingsForm.Item.Help("0 keeps every one."))
+          )
+        )
       ),
       sectionTag(
         cls := "settings-card",

@@ -106,14 +106,18 @@ object JobRepo:
     val _ = (sql"UPDATE jobs SET detail = $js::jsonb WHERE id = $id".update.run())
 
   def get(id: Job.Id)(using DbCon): Option[JobInfo] =
-    (select ++ Sql.of(Sql.OfText(" WHERE id = ?"), Param.S(Param.S.V(id.value)))).frag.query[JobRow].run().headOption.map(toInfo)
+    (select ++ Sql
+      .of(Sql.OfText(" WHERE id = ?"), Param.S(Param.S.V(id.value)))).frag.query[JobRow].run().headOption.map(toInfo)
 
   /** Newest first; `status` (when given) narrows to one state. */
   def list(status: Option[JobState.Wire], limit: PageSize)(using DbCon): Vector[JobInfo] =
     val where = status.map(_.value.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) => Sql.of(Sql.OfText(" WHERE status = ?"), Param.S(Param.S.V(s)))
       case None    => Sql.empty
-    val q = select ++ where ++ Keyset.orderBy("") ++ Sql.of(Sql.OfText(" LIMIT ?"), Param.I(Param.I.V(math.max(1, limit.value))))
+    val q = select ++ where ++ Keyset.orderBy("") ++ Sql.of(
+      Sql.OfText(" LIMIT ?"),
+      Param.I(Param.I.V(math.max(1, limit.value)))
+    )
     (q.frag.query[JobRow].run().map(toInfo))
 
   /** One page of the newest-first list ([[com.histmersion.api.Paging]]): `before` = only jobs older than that one,
@@ -142,13 +146,16 @@ object JobRepo:
       .map((state, n) => (Keyset.State(state), RowCount(n)))
 
   /** How many jobs are in each state — the whole table (one `GROUP BY` over the status index). */
-  def stateCounts(using DbCon): List[(Keyset.State, RowCount)] = Keyset.countsOn(Sql.raw(Sql.RawText(" FROM jobs")), "status")
+  def stateCounts(using DbCon): List[(Keyset.State, RowCount)] =
+    Keyset.countsOn(Sql.raw(Sql.RawText(" FROM jobs")), "status")
 
   private def conds(q: JobQuery): ListSql.Conds =
     val text = q.q.fold(Sql.empty) { t =>
       val p = Param.S(Param.S.V(ListSql.contains(t.value)))
       Sql.of(
-        Sql.OfText(" AND (citekey ILIKE ? OR target_id ILIKE ? OR pipeline ILIKE ? OR detail::text ILIKE ? OR id LIKE ?)"),
+        Sql.OfText(
+          " AND (citekey ILIKE ? OR target_id ILIKE ? OR pipeline ILIKE ? OR detail::text ILIKE ? OR id LIKE ?)"
+        ),
         p,
         p,
         p,
@@ -190,7 +197,9 @@ object JobRepo:
   /** The counts that go with a filtered page: per state, and the `kind` facet (at most `facetMax` kinds) — each under
     * every filter but its own.
     */
-  def facets(q: JobQuery, facetMax: PageSize)(using DbCon): (List[(Keyset.State, RowCount)], List[(String, List[(String, RowCount)])]) =
+  def facets(q: JobQuery, facetMax: PageSize)(using
+      DbCon
+  ): (List[(Keyset.State, RowCount)], List[(String, List[(String, RowCount)])]) =
     val c = conds(q)
     def from(except: String) = Sql.raw(Sql.RawText(" FROM jobs WHERE true")) ++ c.except(except)
     (Keyset.countsOn(from("status"), "status"), List("kind" -> ListSql.facetOn(from("kind"), "kind", facetMax)))
@@ -251,7 +260,12 @@ object JobRepo:
 
   /** The pipeline version a run was started with. */
   def runPipelineVersion(id: Run.Id)(using DbCon): Option[Pipeline.Version] =
-    sql"SELECT pipeline_version FROM jobs WHERE id = $id".query[Option[Int]].run().headOption.flatten.map(Pipeline.Version(_))
+    sql"SELECT pipeline_version FROM jobs WHERE id = $id"
+      .query[Option[Int]]
+      .run()
+      .headOption
+      .flatten
+      .map(Pipeline.Version(_))
 
   def runHeartbeat(kind: Job.Kind, id: Run.Id)(using DbCon): Unit =
     val _ = sql"UPDATE jobs SET heartbeat_at = now() WHERE id = $id AND kind = $kind".update.run()
@@ -343,7 +357,8 @@ object JobRepo:
     val id = java.util.UUID.randomUUID().toString
     val js = json(ExchangeJobKinds.PlanHash(Some(MergePlan.PlanHash(planHash.value))))
     sql"""INSERT INTO jobs (id, kind, status, sha256, detail)
-          VALUES ($id, ${ExchangeJobKinds.MergeApply.kind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update.run()
+          VALUES ($id, ${ExchangeJobKinds.MergeApply.kind}, ${JobState.Running.wire}, $bundle, $js::jsonb)""".update
+      .run()
     Job.Id.assume(id)
 
   /** Record how a merge apply ended: `done` with its report (applied or refused), or `failed` with why. A row a restart
@@ -355,7 +370,8 @@ object JobRepo:
       case Left(e)  => (JobState.Failed, Some(e), None)
     val _ =
       sql"""UPDATE jobs SET status = ${status.wire}, error = $error, result = $result::jsonb, updated_at = now()
-            WHERE id = $id AND kind = ${ExchangeJobKinds.MergeApply.kind} AND status = ${JobState.Running.wire}""".update.run()
+            WHERE id = $id AND kind = ${ExchangeJobKinds.MergeApply.kind} AND status = ${JobState.Running.wire}""".update
+        .run()
 
   /** One merge apply as the API answers it; `None` for an unknown id (or another kind of job). The time so far of a
     * running one is measured against the database's clock.

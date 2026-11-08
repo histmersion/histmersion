@@ -47,4 +47,3 @@ object RunBudget:
   object SpentTokens extends Newtype[Long, Pure]
   type CapTokens = AgentsControllers.BudgetTokens
   val CapTokens: AgentsControllers.BudgetTokens.type = AgentsControllers.BudgetTokens
-

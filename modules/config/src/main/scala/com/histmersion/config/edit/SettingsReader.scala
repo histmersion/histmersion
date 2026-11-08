@@ -14,7 +14,6 @@ import scala.util.Try
   */
 object SettingsReader:
 
-
   def read(
       schema: ConfigSchema,
       state: ConfigFileState,

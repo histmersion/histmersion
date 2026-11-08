@@ -22,7 +22,13 @@ abstract class FocusServiceContract extends EngineStoreSuite:
     List(Goal.Slug("zz-a"), Goal.Slug("zz-b")).foreach(g =>
       assert(
         s.goals
-          .put(g, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(g.value), parentSlug = Option.when(g == Goal.Slug("zz-b"))(com.histmersion.api.automation.Goal.Slug("zz-a"))))
+          .put(
+            g,
+            com.histmersion.api.automation.Goal.Put(
+              com.histmersion.api.automation.Goal.Title(g.value),
+              parentSlug = Option.when(g == Goal.Slug("zz-b"))(com.histmersion.api.automation.Goal.Slug("zz-a"))
+            )
+          )
           .isRight
       )
     )
@@ -48,19 +54,75 @@ abstract class FocusServiceContract extends EngineStoreSuite:
   }
 
   stest("the goals linked to sources and articles; each goal's sources; its last stop") { s =>
-    List(Goal.Slug("zz-a"), Goal.Slug("zz-b")).foreach(g => assert(s.goals.put(g, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(g.value))).isRight))
-    assert(s.goals.link(Goal.Slug("zz-b"), Goal.LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"), None))
-    assert(s.goals.link(Goal.Slug("zz-a"), Goal.LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"), None))
-    assert(s.goals.link(Goal.Slug("zz-a"), Goal.LinkKind.Article, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz-art"), None))
-    assertEquals(f(s).goalsOf(Goal.LinkKind.Wire("source"), List(com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"), com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_none"))), Map("zz2020_s" -> List("zz-a", "zz-b")))
-    assertEquals(f(s).goalsOf(Goal.LinkKind.Wire("article"), List(com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz-art"))), Map("zz-art" -> List("zz-a")))
+    List(Goal.Slug("zz-a"), Goal.Slug("zz-b")).foreach(g =>
+      assert(
+        s.goals
+          .put(g, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(g.value)))
+          .isRight
+      )
+    )
+    assert(
+      s.goals.link(
+        Goal.Slug("zz-b"),
+        Goal.LinkKind.Source,
+        com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
+        None
+      )
+    )
+    assert(
+      s.goals.link(
+        Goal.Slug("zz-a"),
+        Goal.LinkKind.Source,
+        com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
+        None
+      )
+    )
+    assert(
+      s.goals.link(
+        Goal.Slug("zz-a"),
+        Goal.LinkKind.Article,
+        com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz-art"),
+        None
+      )
+    )
+    assertEquals(
+      f(s).goalsOf(
+        Goal.LinkKind.Wire("source"),
+        List(
+          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_s"),
+          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz2020_none")
+        )
+      ),
+      Map("zz2020_s" -> List("zz-a", "zz-b"))
+    )
+    assertEquals(
+      f(s)
+        .goalsOf(Goal.LinkKind.Wire("article"), List(com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zz-art"))),
+      Map("zz-art" -> List("zz-a"))
+    )
     assertEquals(f(s).goalsOf(Goal.LinkKind.Wire("source"), Nil), Map.empty)
     assertEquals(f(s).sourceCounts(), Map("zz-a" -> 1, "zz-b" -> 1))
-    assert(s.managers.create(ManagerInfo.Id("seed:zz-a"), Kind.Seed, Some(Goal.Slug("zz-a")), State.Active, ManagerConfig()))
-    val (i1, _) = s.managers.upsert(ManagerInfo.Id("seed:zz-a"), ManagerItem.Kind(ProposeArticles),ManagerItem.Target("zz-a"), ItemOrigin.Selection, ManagerItem.Priority(0), reopen = false)
+    assert(
+      s.managers.create(ManagerInfo.Id("seed:zz-a"), Kind.Seed, Some(Goal.Slug("zz-a")), State.Active, ManagerConfig())
+    )
+    val (i1, _) = s.managers.upsert(
+      ManagerInfo.Id("seed:zz-a"),
+      ManagerItem.Kind(ProposeArticles),
+      ManagerItem.Target("zz-a"),
+      ItemOrigin.Selection,
+      ManagerItem.Priority(0),
+      reopen = false
+    )
     assert(s.managers.settle(i1, ItemStatus.Failed, ManagerItem.Outcome("the model gave up"), List(ItemStatus.Pending)))
     assertEquals(f(s).lastStops(), Map("zz-a" -> "the model gave up"))
-    val (i2, _) = s.managers.upsert(ManagerInfo.Id("seed:zz-a"), ManagerItem.Kind(PlanGoalItem),ManagerItem.Target("zz-a"), ItemOrigin.Selection, ManagerItem.Priority(0), reopen = false)
+    val (i2, _) = s.managers.upsert(
+      ManagerInfo.Id("seed:zz-a"),
+      ManagerItem.Kind(PlanGoalItem),
+      ManagerItem.Target("zz-a"),
+      ItemOrigin.Selection,
+      ManagerItem.Priority(0),
+      reopen = false
+    )
     assert(s.managers.settle(i2, ItemStatus.Done, ManagerItem.Outcome("planned"), List(ItemStatus.Pending)))
     assertEquals(f(s).lastStops(), Map.empty, "its newest settled item is done")
   }

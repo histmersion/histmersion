@@ -15,7 +15,8 @@ final case class FollowupsResult(
     edgesAdded: FollowupsResult.EdgesAdded,
     followups: List[FollowupRow]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object FollowupsResult:
   type Target = Target.T

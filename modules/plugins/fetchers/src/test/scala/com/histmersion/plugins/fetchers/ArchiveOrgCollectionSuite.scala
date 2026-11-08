@@ -31,8 +31,13 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
     ): Either[Plugin.Http.GetResultPart1, Plugin.Http.GetResultPart2] =
       asked += url.value
       if url.value.contains("/advancedsearch.php") then
-        Right(Plugin.HttpResponse.Body("""{"response":{"docs":[{"identifier":"zqbook"},{"identifier":"zqlent"}]}}""".getBytes(UTF_8)))
-      else if url.value.contains("/download/zqbook/") then Right(Plugin.HttpResponse.Body(("PK " + "e" * 20480).getBytes(UTF_8)))
+        Right(
+          Plugin.HttpResponse.Body(
+            """{"response":{"docs":[{"identifier":"zqbook"},{"identifier":"zqlent"}]}}""".getBytes(UTF_8)
+          )
+        )
+      else if url.value.contains("/download/zqbook/") then
+        Right(Plugin.HttpResponse.Body(("PK " + "e" * 20480).getBytes(UTF_8)))
       else
         answers
           .get(url.value)
@@ -42,7 +47,9 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
   private val collection = ArchiveOrgCollection(() => ArchiveOrg(Endpoint(Endpoint.Url("https://archive.org")), Canned))
 
   test("search: each hit's own metadata, the lending-only one marked restricted"):
-    val hits = collection.search(CollectionQuery(Some(CollectionQuery.Text("bronze")), Some(CollectionQuery.Limit(2)))).fold(e => fail(e.value), identity)
+    val hits = collection
+      .search(CollectionQuery(Some(CollectionQuery.Text("bronze")), Some(CollectionQuery.Limit(2))))
+      .fold(e => fail(e.value), identity)
     assertEquals(
       hits.map(h => (h.id.value: String, h.title, h.restricted)),
       List(("zqbook", Option("A Book"), false), ("zqlent", Option("Lent"), true))
@@ -58,12 +65,26 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
     assertEquals(collection.original(book, epub).map(_.extension), Right("epub"))
     val lent = collection.item(CollectionId("zqlent")).fold(e => fail(e.value), identity).getOrElse(fail("no item"))
     asked.clear()
-    assert(collection.original(lent, CollectionFile(CollectionFile.Name("zqlent.pdf"))).left.exists(_.value.contains("lending-only")))
+    assert(
+      collection
+        .original(lent, CollectionFile(CollectionFile.Name("zqlent.pdf")))
+        .left
+        .exists(_.value.contains("lending-only"))
+    )
     assertEquals(asked.toList, Nil)
     assert(collection.item(CollectionId("zqgone")).left.exists(_.value.contains("404")))
 
   test("read-only: it declares reading alone and refuses every write"):
     assertEquals(collection.capabilities, Set(CollectionCapability.Read))
     assert(
-      collection.add(CollectionMetadata(CollectionMetadata.Key("k"), CollectionMetadata.Title("T"), List(CollectionMetadata.Authors("A"))), FetchedFile(FetchedFile.Source("x"), None, FetchedFile.Bytes(Array[Byte](1)),FetchedFile.Extension("pdf"))).isLeft
+      collection
+        .add(
+          CollectionMetadata(
+            CollectionMetadata.Key("k"),
+            CollectionMetadata.Title("T"),
+            List(CollectionMetadata.Authors("A"))
+          ),
+          FetchedFile(FetchedFile.Source("x"), None, FetchedFile.Bytes(Array[Byte](1)), FetchedFile.Extension("pdf"))
+        )
+        .isLeft
     )

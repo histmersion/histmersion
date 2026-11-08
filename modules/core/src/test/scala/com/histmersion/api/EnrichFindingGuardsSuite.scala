@@ -47,7 +47,17 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       end: Option[StatedYear] = None,
       periodName: Option[String] = None
   ) =
-    FindingProposal(FindingProposal.Claim(claim), AgentProposals.Proposal.Quote(quote), place.map(FindingProposal.Place(_)), None, start, end, periodName.map(FindingProposal.PeriodName(_)), Nil, Confidence.Wire("high"))
+    FindingProposal(
+      FindingProposal.Claim(claim),
+      AgentProposals.Proposal.Quote(quote),
+      place.map(FindingProposal.Place(_)),
+      None,
+      start,
+      end,
+      periodName.map(FindingProposal.PeriodName(_)),
+      Nil,
+      Confidence.Wire("high")
+    )
 
   private val copper = "The Uluburun ship carried ten tons of copper and one ton of tin."
   private val cargo = "Its cargo dates to about 1320 BCE."
@@ -62,7 +72,16 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       within: Option[Period] = None,
       last: Boolean = false
   ) =
-    checkFindings(Findings(fs), window, EnrichSource.MinRatio(0.9), EnrichSource.CheckFindingsMaxAbsYear(3000000), within, Set.empty, g, EnrichSource.Last(last))
+    checkFindings(
+      Findings(fs),
+      window,
+      EnrichSource.MinRatio(0.9),
+      EnrichSource.CheckFindingsMaxAbsYear(3000000),
+      within,
+      Set.empty,
+      g,
+      EnrichSource.Last(last)
+    )
 
   // ── 1. places the gazetteer knows ─────────────────────────────────────────────────────────────
 
@@ -77,7 +96,10 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     assertEquals(ps.size, 1, ps)
     val p = ps.head
     assert(p.value.startsWith("only 1 of 4 places resolve to a gazetteer place (at least 50% must)"), p)
-    assert(p.value.contains("'eastern shipping lanes' (finding 2)") && p.value.contains("'the hinterland' (finding 4)"), p)
+    assert(
+      p.value.contains("'eastern shipping lanes' (finding 2)") && p.value.contains("'the hinterland' (finding 4)"),
+      p
+    )
     assert(
       p.value.contains(
         "give a place name the gazetteer knows (a site, city or region), or leave place null for a non-spatial claim"
@@ -88,7 +110,12 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
   test("placement: at the share it passes; findings with no place are non-spatial and do not count"):
     val half = List(
       finding("A ship carried copper.", copper, Some("Uluburun")),
-      finding("Vesuvius buried Pompeii.", pompeii, Some("Pompeii"), Some(StatedYear(AgentVerify.ToSignedYearValue(79), AgentVerify.YearUnit.Wire("CE")))),
+      finding(
+        "Vesuvius buried Pompeii.",
+        pompeii,
+        Some("Pompeii"),
+        Some(StatedYear(AgentVerify.ToSignedYearValue(79), AgentVerify.YearUnit.Wire("CE")))
+      ),
       finding("The cargo is Late Bronze Age.", cargo, Some("eastern shipping lanes")),
       finding("Rainfall rose.", rain, Some("the hinterland"))
     )
@@ -104,20 +131,40 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     // nothing named at all: nothing to place
     assert(check(List(finding("Rainfall rose.", rain))).isRight)
     // share 0 switches the guard off
-    assert(check(List(finding("Rainfall rose.", rain, Some("nowhere"))), guards(share = FindingGuards.MinPlacedShare(0.0))).isRight)
+    assert(
+      check(
+        List(finding("Rainfall rose.", rain, Some("nowhere"))),
+        guards(share = FindingGuards.MinPlacedShare(0.0))
+      ).isRight
+    )
 
   test("placement: the kind hint and the finding's period reach the gazetteer"):
     var asked = List.empty[(String, Geocode.KindHint, Option[Period])] // records the calls for the assertion
-    val g = FindingGuards(FindingGuards.MinPlacedShare(0.5), EnrichSource.FindingGuards.CenturyGapYears(500), Nil, (n, k, at) => { asked = asked :+ (n.value, k, at); true })
-    val f = finding("A ship carried copper.", cargo, Some(" Uluburun "), Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE"))))
-      .modify(_.placeKind).setTo(Some(Geocode.KindHint.Wire("site")))
+    val g = FindingGuards(
+      FindingGuards.MinPlacedShare(0.5),
+      EnrichSource.FindingGuards.CenturyGapYears(500),
+      Nil,
+      (n, k, at) => { asked = asked :+ (n.value, k, at); true }
+    )
+    val f = finding(
+      "A ship carried copper.",
+      cargo,
+      Some(" Uluburun "),
+      Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE")))
+    )
+      .modify(_.placeKind)
+      .setTo(Some(Geocode.KindHint.Wire("site")))
     assert(check(List(f), g).isRight)
     assertEquals(asked, List(("Uluburun", Geocode.KindHint.Site, Some(Period(Year(-1320), Year(-1320))))))
 
   // ── 2. centuries stored as years ──────────────────────────────────────────────────────────────
 
   test("century: a year below 100 for a claim or period name that mentions a century is sent back"):
-    val claim = finding("The town was walled in the 11th century.", walled, start = Some(StatedYear(AgentVerify.ToSignedYearValue(11), AgentVerify.YearUnit.Wire("CE"))))
+    val claim = finding(
+      "The town was walled in the 11th century.",
+      walled,
+      start = Some(StatedYear(AgentVerify.ToSignedYearValue(11), AgentVerify.YearUnit.Wire("CE")))
+    )
     val ps = check(List(claim)).left.toOption.get
     assertEquals(ps.size, 1, ps)
     assert(ps.head.value.startsWith("finding 1 (The town was walled"), ps)
@@ -128,14 +175,30 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       ps
     )
     // the period name alone is enough, and "15th c." is a century too
-    val named = finding("A hoard was buried.", hoard, start = Some(StatedYear(AgentVerify.ToSignedYearValue(15), AgentVerify.YearUnit.Wire("CE"))), periodName = Some("15th c."))
-    assert(check(List(named)).left.exists(_.head.value.contains("'15th century' is the years 1401–1500")), check(List(named)))
+    val named = finding(
+      "A hoard was buried.",
+      hoard,
+      start = Some(StatedYear(AgentVerify.ToSignedYearValue(15), AgentVerify.YearUnit.Wire("CE"))),
+      periodName = Some("15th c.")
+    )
+    assert(
+      check(List(named)).left.exists(_.head.value.contains("'15th century' is the years 1401–1500")),
+      check(List(named))
+    )
     // a BCE century stored as -5
-    val bce = finding("Copper reached the coast in the fifth century BCE.", copper, start = Some(StatedYear(AgentVerify.ToSignedYearValue(5), AgentVerify.YearUnit.Wire("BCE"))))
+    val bce = finding(
+      "Copper reached the coast in the fifth century BCE.",
+      copper,
+      start = Some(StatedYear(AgentVerify.ToSignedYearValue(5), AgentVerify.YearUnit.Wire("BCE")))
+    )
     assert(check(List(bce)).left.exists(_.head.value.contains("the year -5 looks like a century")), check(List(bce)))
 
   test("century: any year below 100 in a source whose own period is far later is sent back"):
-    val f = finding("Rainfall rose sharply.", rain, start = Some(StatedYear(AgentVerify.ToSignedYearValue(12), AgentVerify.YearUnit.Wire("CE"))))
+    val f = finding(
+      "Rainfall rose sharply.",
+      rain,
+      start = Some(StatedYear(AgentVerify.ToSignedYearValue(12), AgentVerify.YearUnit.Wire("CE")))
+    )
     assert(
       check(List(f), within = Some(Period(Year(1000), Year(1500)))).left
         .exists(_.head.value.contains("'12th century' is the years 1101–1200"))
@@ -145,12 +208,21 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     assert(check(List(f)).isRight) // no source period, no century mentioned
 
   test("century: a real early-CE year the text states, a first century, and a century stored right are valid"):
-    val pompeiiFinding = finding("Vesuvius buried Pompeii in 79 CE.", pompeii, start = Some(StatedYear(AgentVerify.ToSignedYearValue(79), AgentVerify.YearUnit.Wire("CE"))))
+    val pompeiiFinding = finding(
+      "Vesuvius buried Pompeii in 79 CE.",
+      pompeii,
+      start = Some(StatedYear(AgentVerify.ToSignedYearValue(79), AgentVerify.YearUnit.Wire("CE")))
+    )
     assert(check(List(pompeiiFinding), within = Some(Period(Year(1000), Year(1500)))).isRight)
     // stated in the quote only, as "AD 79", with a century mentioned beside it
     assert(statesYear(EnrichSource.StatesYearText("buried in AD 79, rediscovered in the 18th century"), Year(79)))
     assert(statesYear(EnrichSource.StatesYearText("in 79 B.C. the town"), Year(-79)))
-    assert(!statesYear(EnrichSource.StatesYearText("in 179 CE"), Year(79)) && !statesYear(EnrichSource.StatesYearText("the 79th entry"), Year(79)))
+    assert(
+      !statesYear(EnrichSource.StatesYearText("in 179 CE"), Year(79)) && !statesYear(
+        EnrichSource.StatesYearText("the 79th entry"),
+        Year(79)
+      )
+    )
     val first = finding(
       "Copper came in the 1st century CE.",
       copper,
@@ -185,19 +257,33 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     // whole words only, and the quote (the source's own words) is not checked
     assert(check(List(finding("Rainfall rose in this dated layer.", rain))).isRight)
     assert(check(List(finding("Rainfall rose.", "Rainfall rose sharply in the next period."))).isRight)
-    assertEquals(pointerPhrase(EnrichSource.FindingProposal.Claim("See THE NEXT COLUMN."), List(EnrichSource.FindingGuards.PointerPhrases("the next column"))), Some("the next column"))
+    assertEquals(
+      pointerPhrase(
+        EnrichSource.FindingProposal.Claim("See THE NEXT COLUMN."),
+        List(EnrichSource.FindingGuards.PointerPhrases("the next column"))
+      ),
+      Some("the next column")
+    )
 
   // ── the last attempt ──────────────────────────────────────────────────────────────────────────
 
   test("last attempt: the answer is kept, each guard's problem a warning"):
     val fs = List(
-      finding("The town was walled in the 11th century.", walled, Some("the citadel area"), Some(StatedYear(AgentVerify.ToSignedYearValue(11), AgentVerify.YearUnit.Wire("CE")))),
+      finding(
+        "The town was walled in the 11th century.",
+        walled,
+        Some("the citadel area"),
+        Some(StatedYear(AgentVerify.ToSignedYearValue(11), AgentVerify.YearUnit.Wire("CE")))
+      ),
       finding("Rainfall rose around this date.", rain, Some("the hinterland"))
     )
     val (kept, ws) = check(fs, last = true).toOption.get
     assertEquals(kept.findings.size, 2)
     assertEquals(kept.findings.head.start, Some(11L)) // kept as answered; a person sees the warning
-    assert(ws.exists(w => w.value.startsWith("kept finding 1") && w.value.contains("'11th century' is the years 1001–1100")), ws)
+    assert(
+      ws.exists(w => w.value.startsWith("kept finding 1") && w.value.contains("'11th century' is the years 1001–1100")),
+      ws
+    )
     assert(ws.exists(w => w.value.startsWith("kept finding 2") && w.value.contains("'this date'")), ws)
     assert(ws.exists(_.value.startsWith("kept only 0 of 2 places resolve")), ws)
     // a hard failure is still dropped on the last attempt, beside a kept guard warning

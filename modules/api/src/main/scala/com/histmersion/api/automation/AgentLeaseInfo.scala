@@ -8,11 +8,18 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseInfo.Until, expired: AgentLeaseInfo.Expired, thisServer: AgentLeaseInfo.ThisServer)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+final case class AgentLeaseInfo(
+    owner: AgentLeaseInfo.Owner,
+    until: AgentLeaseInfo.Until,
+    expired: AgentLeaseInfo.Expired,
+    thisServer: AgentLeaseInfo.ThisServer
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def describe: String =
-    (s"$owner${if (thisServer).value then " (this server)" else ""} until $until${if (expired).value then " — expired" else ""}")
+    (s"$owner${if (thisServer).value then " (this server)" else ""} until $until${
+        if (expired).value then " — expired" else ""
+      }")
 
 object AgentLeaseInfo:
 

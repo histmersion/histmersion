@@ -15,7 +15,8 @@ object MapArea:
 
   def parse(entry: String): Option[MapArea] =
     (entry).split('|').toList.map(_.trim) match
-      case List(label, box, gb) if label.nonEmpty && box.nonEmpty => gb.toDoubleOption.map(g => MapArea(Label(label), Bbox(box), ApproxGb(g)))
-      case _                                                      => None
+      case List(label, box, gb) if label.nonEmpty && box.nonEmpty =>
+        gb.toDoubleOption.map(g => MapArea(Label(label), Bbox(box), ApproxGb(g)))
+      case _ => None
 
   def size(gb: ApproxGb): String = (s"${BigDecimal((gb).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)} GB")

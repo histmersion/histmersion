@@ -31,9 +31,16 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   /** Never asked: registering opens nothing. */
   private object Offline extends Http:
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] = fail(s"asked $url")
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Http.Text] = fail(s"asked $url")
-    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, HttpAnswer.Body] = fail(s"asked $url")
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
+      fail(s"asked $url")
+    def text(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, Http.Text] = fail(s"asked $url")
+    def bytes(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, HttpAnswer.Body] = fail(s"asked $url")
 
   private def loaded(user: String, env: Map[String, String]): LoadedConfig =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), user).fold(e => fail(e.value), identity)
@@ -42,7 +49,11 @@ class FetcherPluginsSuite extends munit.FunSuite:
     * host's settings supplied.
     */
   private def generation(user: String = "", env: Map[String, String] = Map.empty, http: Http = Offline): Generation =
-    ServerPlugins.fetchers(loaded(user, env), () => HttpPlugin(http), core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    ServerPlugins.fetchers(
+      loaded(user, env),
+      () => HttpPlugin(http),
+      core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
+    )
 
   private def migrated(user: String = "", env: Map[String, String] = Map.empty): Generation = generation(user, env)
 
@@ -64,7 +75,8 @@ class FetcherPluginsSuite extends munit.FunSuite:
       .plan
       .map(_._1.value)
 
-  private def state(g: Generation, id: String): Option[String] = g.report.plugins.find(_.id.value == id).map(_.state.value)
+  private def state(g: Generation, id: String): Option[String] =
+    g.report.plugins.find(_.id.value == id).map(_.state.value)
 
   /** Today's order, which the default `acquire.chain` keeps. */
   private val Today = List("archive-org", "unpaywall", "core", "openalex", "pmc", "arxiv", "landing", "pmc-text")
@@ -95,7 +107,9 @@ class FetcherPluginsSuite extends munit.FunSuite:
       val g = generation(s"histmersion.plugins.$id.enabled = false")
       assertEquals(state(g, id), Some("disabled"))
       assertEquals(chain(g), Today.filterNot(_ == fetcher))
-      val e = generation(env = Map(LegacyPlugins.enabledEnv(com.histmersion.util.plugins.Plugin.Id.assume(id)).value -> "false"))
+      val e = generation(env =
+        Map(LegacyPlugins.enabledEnv(com.histmersion.util.plugins.Plugin.Id.assume(id)).value -> "false")
+      )
       assertEquals(chain(e), Today.filterNot(_ == fetcher), id)
     }
 
@@ -112,8 +126,14 @@ class FetcherPluginsSuite extends munit.FunSuite:
       asked = asked :+ (url.value -> headers.map((k, v) => k.value -> v.value))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       record(url, headers); Right(Json.obj())
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Http.Text] = Left(Http.Problem("no"))
-    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, HttpAnswer.Body] =
+    def text(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, Http.Text] = Left(Http.Problem("no"))
+    def bytes(
+        url: Http.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[Http.Problem, HttpAnswer.Body] =
       record(url, headers); Right(HttpAnswer.Body("{}".getBytes("UTF-8")))
     // CORE is asked once, not retried, through its budget
     override def once(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
@@ -252,7 +272,10 @@ class FetcherPluginsSuite extends munit.FunSuite:
       List("pmc", "oa-unpaywall", "oa-core", "oa-openalex", "oa-landing", "arxiv")
     )
     assert(!g.report.warnings.exists(_.value.contains("which is no plugin")), g.report.warnings.toString)
-    assert(g.report.warnings.exists(_.value.contains("names 'oa-index', which is deprecated")), g.report.warnings.toString)
+    assert(
+      g.report.warnings.exists(_.value.contains("names 'oa-index', which is deprecated")),
+      g.report.warnings.toString
+    )
 
   test("reload: a change of an oa-index key rebuilds the four successors, and only them"):
     val g = generation()
@@ -280,7 +303,11 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   test("a reordered chain is honoured, unlisted fetchers following in registration order"):
     val g = generation()
-    val (c, notes) = FetchChain.of(fetchers(g), List(com.histmersion.util.plugins.Plugin.Id("arxiv"), com.histmersion.util.plugins.Plugin.Id("pmc")), allowUnauthorised = FetchChain.AllowUnauthorised(false))
+    val (c, notes) = FetchChain.of(
+      fetchers(g),
+      List(com.histmersion.util.plugins.Plugin.Id("arxiv"), com.histmersion.util.plugins.Plugin.Id("pmc")),
+      allowUnauthorised = FetchChain.AllowUnauthorised(false)
+    )
     assertEquals(c.plan.map(_._1.value).take(2), List("arxiv", "pmc"))
     assertEquals(c.plan.map(_._1.value).toSet, Today.toSet)
     assertEquals(notes, Nil)
@@ -314,7 +341,8 @@ class FetcherPluginsSuite extends munit.FunSuite:
         else None
       body.map(b => HttpAnswer.Body(b.getBytes("UTF-8"))).toRight(Http.Problem(s"$url: HTTP 404"))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url)
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = answer(url).map(b => Http.Text(new String(b.value, "UTF-8")))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
+      answer(url).map(b => Http.Text(new String(b.value, "UTF-8")))
     def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       text(url, headers).flatMap(t => io.circe.parser.parse(t.value).left.map(e => Http.Problem(e.getMessage)))
 
@@ -380,7 +408,10 @@ class FetcherPluginsSuite extends munit.FunSuite:
       http = h
     )
     val got =
-      FetchChain(List(FetchChain.Step.Id("landing") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("landing"))), registered = id => Fetch.Context.RegisteredResult(g.registered.exists(_.value == id.value)))
+      FetchChain(
+        List(FetchChain.Step.Id("landing") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("landing"))),
+        registered = id => Fetch.Context.RegisteredResult(g.registered.exists(_.value == id.value))
+      )
         .fetch(Some(com.histmersion.domain.library.Doi("10.5281/zenodo.3695551")), None)
     assertEquals(got, Left(FetchChain.NoCopy))
     assert(h.asked.contains(s"${host.zenodo.url}/api/records/3695551"), h.asked.mkString("\n"))
@@ -419,4 +450,6 @@ class FetcherPluginsSuite extends munit.FunSuite:
 
   private object Ctx extends Fetch.Context:
     def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = compute
-    val log: Plugin.Log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage) = (); def warn(m: Plugin.Log.WarnMessage) = () }
+    val log: Plugin.Log = new Plugin.Log {
+      def info(m: Plugin.Log.InfoMessage) = (); def warn(m: Plugin.Log.WarnMessage) = ()
+    }

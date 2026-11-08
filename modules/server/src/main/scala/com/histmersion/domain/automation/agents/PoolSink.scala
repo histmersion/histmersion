@@ -15,7 +15,10 @@ trait PoolSink:
   def record(p: PoolId, rs: List[Reading]): Unit
 
   /** Why `p` may not take another call now, and when it frees; None = it may. */
-  def blocked(p: PoolId, model: Option[AgentsControllers.ModelName]): Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])]
+  def blocked(
+      p: PoolId,
+      model: Option[AgentsControllers.ModelName]
+  ): Option[(PoolSink.BlockedReason, Option[PlanQuotaRepo.EpochMillis])]
 
   /** Read the ChatGPT plan from the app-server when the last read is old enough (throttled). */
   def refresh(now: PlanQuotaRepo.EpochMillis): Unit

@@ -5,11 +5,17 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 object PassagesMarkdown:
   def render(r: PassageResult): String =
-    val what = if ((r.regex) == PassageResult.Regex(true)) then s"/${r.query}/" else s"\"${r.query}\""
+    val what = if (r.regex) == PassageResult.Regex(true) then s"/${r.query}/" else s"\"${r.query}\""
     if r.passages.isEmpty then (s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._")
     else
       val counted =
-        if ((r.capped) == PassageResult.Capped(true)) then s"${r.matches}+ matches (counting stopped)" else Plural.count(Plural.Count(r.matches.value.toLong), Plural.CountSingular("match"), Plural.CountPlural("matches"))
+        if (r.capped) == PassageResult.Capped(true) then s"${r.matches}+ matches (counting stopped)"
+        else
+          Plural.count(
+            Plural.Count(r.matches.value.toLong),
+            Plural.CountSingular("match"),
+            Plural.CountPlural("matches")
+          )
       val head = s"## Passages: $what in `${r.citekey}`\n\n" +
         s"_$counted in ${Plural.count(Plural.Count(r.total.value.toLong), Plural.CountSingular("passage"))} · showing ${r.passages.size} · " +
         "matches in **bold** · `get_source` with a passage's `offset` reads on from it_"

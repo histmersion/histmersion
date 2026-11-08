@@ -33,7 +33,14 @@ class FetcherGenerationSuite extends munit.FunSuite:
     settings = List(PluginSetting(PluginSetting.Key("contact-email"), PluginSetting.Value("null")))
   )
   private val vault =
-    PluginStatus(PluginStatus.Id("keepassxc"), PluginStatus.Version("0.1"), PluginStatus.SpiVersion(2), enabled = PluginStatus.Enabled(true), PluginStatus.State("registered"), provides = List(PluginDescription.Provides("secret-vault:keepassxc")))
+    PluginStatus(
+      PluginStatus.Id("keepassxc"),
+      PluginStatus.Version("0.1"),
+      PluginStatus.SpiVersion(2),
+      enabled = PluginStatus.Enabled(true),
+      PluginStatus.State("registered"),
+      provides = List(PluginDescription.Provides("secret-vault:keepassxc"))
+    )
   private def gen(
       p: List[(FetchChain.Step.Id, Access)] = plan,
       ps: List[PluginStatus] = List(unpaywall, core(PluginSetting.Value("null")), vault),
@@ -50,7 +57,11 @@ class FetcherGenerationSuite extends munit.FunSuite:
     assert(gen(ps = List(unpaywall, core(PluginSetting.Value("env:CORE_KEY")), vault)) != g)
     assert(gen(coreKey = true) != g)
     assert(gen(contact = false) != g)
-    assert(gen(ps = List(unpaywall.modify(_.version).setTo(PluginStatus.Version("1.1")), core(PluginSetting.Value("null")), vault)) != g)
+    assert(
+      gen(ps =
+        List(unpaywall.modify(_.version).setTo(PluginStatus.Version("1.1")), core(PluginSetting.Value("null")), vault)
+      ) != g
+    )
 
   test("a fetcher the config marks unauthorised, and a plugin that registers no legal fetcher, change nothing"):
     val g = gen()
@@ -65,8 +76,16 @@ class FetcherGenerationSuite extends munit.FunSuite:
       settings = List(PluginSetting(PluginSetting.Key("token"), PluginSetting.Value("env:X")))
     )
     assertEquals(
-      gen(p = plan :+ (FetchChain.Step.Id("stub") -> Access.Unauthorised), ps = List(unpaywall, core(PluginSetting.Value("null")), vault, stubPlugin)),
+      gen(
+        p = plan :+ (FetchChain.Step.Id("stub") -> Access.Unauthorised),
+        ps = List(unpaywall, core(PluginSetting.Value("null")), vault, stubPlugin)
+      ),
       g
     )
-    assertEquals(gen(ps = List(unpaywall, core(PluginSetting.Value("null")), vault.modify(_.version).setTo(PluginStatus.Version("0.2")))), g)
+    assertEquals(
+      gen(ps =
+        List(unpaywall, core(PluginSetting.Value("null")), vault.modify(_.version).setTo(PluginStatus.Version("0.2")))
+      ),
+      g
+    )
     assert(FetcherGeneration.parts(plan, Nil, true, false).head.value == "unpaywall:open")

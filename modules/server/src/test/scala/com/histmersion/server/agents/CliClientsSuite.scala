@@ -32,8 +32,18 @@ class CliClientsSuite extends munit.FunSuite:
   private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given JvmHome = JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  private val CodexCfg = CodexConfig(CodexConfig.Command("codex"), CodexConfig.Home(""), useApiKey = CodexConfig.UseApiKey(false), timeoutSeconds = CodexConfig.TimeoutSeconds(30), appServer = CodexConfig.AppServer(false))
-  private val OcCfg = OpencodeConfig(OpencodeConfig.Command("opencode"), timeoutSeconds = OpencodeConfig.TimeoutSeconds(30), chatgptLogin = OpencodeConfig.ChatgptLogin(true))
+  private val CodexCfg = CodexConfig(
+    CodexConfig.Command("codex"),
+    CodexConfig.Home(""),
+    useApiKey = CodexConfig.UseApiKey(false),
+    timeoutSeconds = CodexConfig.TimeoutSeconds(30),
+    appServer = CodexConfig.AppServer(false)
+  )
+  private val OcCfg = OpencodeConfig(
+    OpencodeConfig.Command("opencode"),
+    timeoutSeconds = OpencodeConfig.TimeoutSeconds(30),
+    chatgptLogin = OpencodeConfig.ChatgptLogin(true)
+  )
 
   private def runtime(sink: FakeCli.Sink = FakeCli.Sink()): (CliRuntime, Path) =
     val dir = Files.createTempDirectory("hm-cli-")
@@ -72,7 +82,11 @@ class CliClientsSuite extends munit.FunSuite:
     val fake = FakeCli("codex", CodexOk)
     val sink = FakeCli.Sink()
     val (rt, dir) = runtime(sink)
-    val r = CodexExecClient(ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5.6")), CodexCfg.modify(_.command).setTo(CodexConfig.Command(fake.script.toString)), rt)
+    val r = CodexExecClient(
+      ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5.6")),
+      CodexCfg.modify(_.command).setTo(CodexConfig.Command(fake.script.toString)),
+      rt
+    )
       .run(call(rt, StepAgent.Skeptic))
     assertEquals(r.finalAnswer, Right(ProbeAnswer(Citekey("x2020"), Title("X"), Some(Year(2020)))))
     assertEquals(r.usage, TokenUsage(Tokens(1200), Tokens(60), Tokens(800), Tokens.Zero, Tokens.Zero))
@@ -99,13 +113,18 @@ class CliClientsSuite extends munit.FunSuite:
     val fake = FakeCli("codex", lim)
     val (rt, _) = runtime()
     val e = intercept[ModelLimitReached](
-      CodexExecClient(ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5.6")), CodexCfg.modify(_.command).setTo(CodexConfig.Command(fake.script.toString)), rt)
+      CodexExecClient(
+        ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5.6")),
+        CodexCfg.modify(_.command).setTo(CodexConfig.Command(fake.script.toString)),
+        rt
+      )
         .run(call(rt, StepAgent.Skeptic))
     )
     assert(e.getMessage.contains("usage limit"), e.getMessage)
     val bare = CliRuntime(FakeCli.app(Files.createTempDirectory("hm-empty-")), EngineContributions.roster)
     val io = intercept[java.io.IOException](
-      CodexExecClient(ModelRef(ProviderKind.Codex, ModelRef.Model("x")), CodexCfg, bare).run(call(bare, StepAgent.Skeptic))
+      CodexExecClient(ModelRef(ProviderKind.Codex, ModelRef.Model("x")), CodexCfg, bare)
+        .run(call(bare, StepAgent.Skeptic))
     )
     assert(io.getMessage.contains("histmersion agent generate"), io.getMessage)
 
@@ -115,7 +134,11 @@ class CliClientsSuite extends munit.FunSuite:
       List("""{"type":"item.completed","item":{"id":"i","type":"agent_message","text":"I could not do it"}}""")
     )
     val (rt, _) = runtime()
-    val r = CodexExecClient(ModelRef(ProviderKind.Codex, ModelRef.Model("m")), CodexCfg.modify(_.command).setTo(CodexConfig.Command(fake.script.toString)), rt)
+    val r = CodexExecClient(
+      ModelRef(ProviderKind.Codex, ModelRef.Model("m")),
+      CodexCfg.modify(_.command).setTo(CodexConfig.Command(fake.script.toString)),
+      rt
+    )
       .run(call(rt, StepAgent.Skeptic))
     assert(r.finalAnswer.isLeft)
 
@@ -139,7 +162,11 @@ class CliClientsSuite extends munit.FunSuite:
     val fake = FakeCli("opencode", OcOk)
     val (rt, dir) = runtime()
     val r =
-      OpencodeRunClient(ModelRef(ProviderKind.Opencode, ModelRef.Model("openai/gpt-5")), OcCfg.modify(_.command).setTo(OpencodeConfig.Command(fake.script.toString)), rt)
+      OpencodeRunClient(
+        ModelRef(ProviderKind.Opencode, ModelRef.Model("openai/gpt-5")),
+        OcCfg.modify(_.command).setTo(OpencodeConfig.Command(fake.script.toString)),
+        rt
+      )
         .run(call(rt, StepAgent.Skeptic))
     assertEquals(r.finalAnswer, Right(ProbeAnswer(Citekey("x2020"), Title("X"), Some(Year(2020)))))
     assertEquals(r.usage, TokenUsage(Tokens(400), Tokens(25), Tokens(300), Tokens.Zero, Tokens.Zero))
@@ -161,11 +188,18 @@ class CliClientsSuite extends munit.FunSuite:
     )
     val (rt, _) = runtime()
     intercept[ModelLimitReached](
-      OpencodeRunClient(ModelRef(ProviderKind.Opencode, ModelRef.Model("openai/gpt-5")), OcCfg.modify(_.command).setTo(OpencodeConfig.Command(fake.script.toString)), rt)
+      OpencodeRunClient(
+        ModelRef(ProviderKind.Opencode, ModelRef.Model("openai/gpt-5")),
+        OcCfg.modify(_.command).setTo(OpencodeConfig.Command(fake.script.toString)),
+        rt
+      )
         .run(call(rt, StepAgent.Skeptic))
     )
     assert(
-      Opencode.client(OcCfg, rt, ModelRef(ProviderKind.Opencode, ModelRef.Model("gpt-5"))).left.exists(_.value.contains("<provider>/<model>"))
+      Opencode
+        .client(OcCfg, rt, ModelRef(ProviderKind.Opencode, ModelRef.Model("gpt-5")))
+        .left
+        .exists(_.value.contains("<provider>/<model>"))
     )
 
   test("the fence around a JSON answer is tolerated; plan limit wording is recognised"):

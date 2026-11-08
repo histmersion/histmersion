@@ -18,11 +18,19 @@ class LabelPlacementSuite extends munit.FunSuite:
     val c = project(Latitude(0), Longitude(0))
     assertEqualsDouble(c.x, 128.0, 1e-9)
     assertEqualsDouble(c.y, 128.0, 1e-9)
-    for (lat, lon) <- List((Latitude(35.1), Longitude(33.4)), (Latitude(-33.9), Longitude(151.2)), (Latitude(64.1), Longitude(-21.9))) do
+    for (lat, lon) <- List(
+        (Latitude(35.1), Longitude(33.4)),
+        (Latitude(-33.9), Longitude(151.2)),
+        (Latitude(64.1), Longitude(-21.9))
+      )
+    do
       val (la, lo) = unproject(project(lat, lon))
       assertEqualsDouble(la.value, lat.value, 1e-9)
       assertEqualsDouble(lo.value, lon.value, 1e-9)
-    assert(project(Latitude(60), Longitude(0)).y < project(Latitude(10), Longitude(0)).y, "north is up: y grows southwards")
+    assert(
+      project(Latitude(60), Longitude(0)).y < project(Latitude(10), Longitude(0)).y,
+      "north is up: y grows southwards"
+    )
 
   test("area: a square, a square with a hole, and a degenerate ring"):
     val sq = ring((0, 0), (10, 0), (10, 10), (0, 10))
@@ -58,8 +66,22 @@ class LabelPlacementSuite extends munit.FunSuite:
 
   test("a multipolygon is named in its largest part when that part is most of its land; its size is all the parts"):
     // a Cyprus-sized island and a large mainland part
-    val small = Seq(Seq((Latitude(35.0), Longitude(33.0)), (Latitude(35.0), Longitude(34.0)), (Latitude(35.5), Longitude(34.0)), (Latitude(35.5), Longitude(33.0))))
-    val large = Seq(Seq((Latitude(36.0), Longitude(28.0)), (Latitude(36.0), Longitude(40.0)), (Latitude(41.0), Longitude(40.0)), (Latitude(41.0), Longitude(28.0))))
+    val small = Seq(
+      Seq(
+        (Latitude(35.0), Longitude(33.0)),
+        (Latitude(35.0), Longitude(34.0)),
+        (Latitude(35.5), Longitude(34.0)),
+        (Latitude(35.5), Longitude(33.0))
+      )
+    )
+    val large = Seq(
+      Seq(
+        (Latitude(36.0), Longitude(28.0)),
+        (Latitude(36.0), Longitude(40.0)),
+        (Latitude(41.0), Longitude(40.0)),
+        (Latitude(41.0), Longitude(28.0))
+      )
+    )
     val s = shape(Seq(small, large)).get
     assert(s.lat.value > 36 && s.lat.value < 41 && s.lon.value > 28 && s.lon.value < 40, s.toString)
     assert(!s.archipelago)
@@ -67,14 +89,25 @@ class LabelPlacementSuite extends munit.FunSuite:
     assert(s.size0 > only.size0)
     assertEquals(s.parts.length, 2, "either part can take the name when the other is off screen")
     assertEquals(shape(Nil), None)
-    assertEquals(shape(Seq(Seq(Seq((Latitude(1.0), Longitude(1.0)), (Latitude(2.0), Longitude(2.0)))))), None, "a ring of two points names nothing")
+    assertEquals(
+      shape(Seq(Seq(Seq((Latitude(1.0), Longitude(1.0)), (Latitude(2.0), Longitude(2.0)))))),
+      None,
+      "a ring of two points names nothing"
+    )
 
   /** A 4 × 4 grid of small square islands, 0.2° a side, 1° apart — no island is half the land. */
   private val islands: Seq[Seq[Seq[(Latitude, Longitude)]]] =
     for i <- 0 until 4; j <- 0 until 4 yield
       val la = 36.0 + i
       val lo = 24.0 + j
-      Seq(Seq((Latitude(la), Longitude(lo)), (Latitude(la), Longitude(lo + 0.2)), (Latitude(la + 0.2), Longitude(lo + 0.2)), (Latitude(la + 0.2), Longitude(lo))))
+      Seq(
+        Seq(
+          (Latitude(la), Longitude(lo)),
+          (Latitude(la), Longitude(lo + 0.2)),
+          (Latitude(la + 0.2), Longitude(lo + 0.2)),
+          (Latitude(la + 0.2), Longitude(lo))
+        )
+      )
 
   test("an archipelago is named among its islands, at the middle of their hull, and is as big as the hull"):
     val s = shape(islands).get
@@ -129,7 +162,18 @@ class LabelPlacementSuite extends munit.FunSuite:
   // ── placement in a viewport ──────────────────────────────────────────────────────────────────────
 
   /** A 5° × 8° box around (35, 30) and a 1200 × 800 px viewport at zoom 6 centred on `c`. */
-  private val box = shape(Seq(Seq(Seq((Latitude(32.5), Longitude(26.0)), (Latitude(32.5), Longitude(34.0)), (Latitude(37.5), Longitude(34.0)), (Latitude(37.5), Longitude(26.0)))))).get
+  private val box = shape(
+    Seq(
+      Seq(
+        Seq(
+          (Latitude(32.5), Longitude(26.0)),
+          (Latitude(32.5), Longitude(34.0)),
+          (Latitude(37.5), Longitude(34.0)),
+          (Latitude(37.5), Longitude(26.0))
+        )
+      )
+    )
+  ).get
   private val z6 = math.pow(2, 6)
   private def viewAt(c: Pt, w: Double = 1200, h: Double = 800, scale: Double = z6): Rect =
     Rect(c.x - w / 2 / scale, c.y - h / 2 / scale, c.x + w / 2 / scale, c.y + h / 2 / scale)
@@ -179,7 +223,18 @@ class LabelPlacementSuite extends munit.FunSuite:
     assertEquals(place(box, viewAt(Pt(right.x + 1000 / z6, right.y)), z6, 50, 8), None)
 
   test("place: a small island in the band along the screen edge keeps its name beside it"):
-    val isle = shape(Seq(Seq(Seq((Latitude(35.0), Longitude(30.0)), (Latitude(35.0), Longitude(30.1)), (Latitude(35.1), Longitude(30.1)), (Latitude(35.1), Longitude(30.0)))))).get
+    val isle = shape(
+      Seq(
+        Seq(
+          Seq(
+            (Latitude(35.0), Longitude(30.0)),
+            (Latitude(35.0), Longitude(30.1)),
+            (Latitude(35.1), Longitude(30.1)),
+            (Latitude(35.1), Longitude(30.0))
+          )
+        )
+      )
+    ).get
     val c = isle.home
     // the island 20 px from the left edge; a 100 px name cannot be centred on it and stay on screen
     val v = Rect(c.x - 20 / z6, c.y - 400 / z6, c.x - 20 / z6 + 1200 / z6, c.y + 400 / z6)
@@ -188,8 +243,30 @@ class LabelPlacementSuite extends munit.FunSuite:
     assert(math.abs(p.x - c.x) * z6 <= 50 + NearPx, "beside its island")
 
   test("collision still culls: two placed names that overlap keep the larger shape's"):
-    val big = shape(Seq(Seq(Seq((Latitude(30.0), Longitude(20.0)), (Latitude(30.0), Longitude(40.0)), (Latitude(40.0), Longitude(40.0)), (Latitude(40.0), Longitude(20.0)))))).get
-    val small = shape(Seq(Seq(Seq((Latitude(35.0), Longitude(29.5)), (Latitude(35.0), Longitude(30.5)), (Latitude(35.5), Longitude(30.5)), (Latitude(35.5), Longitude(29.5)))))).get
+    val big = shape(
+      Seq(
+        Seq(
+          Seq(
+            (Latitude(30.0), Longitude(20.0)),
+            (Latitude(30.0), Longitude(40.0)),
+            (Latitude(40.0), Longitude(40.0)),
+            (Latitude(40.0), Longitude(20.0))
+          )
+        )
+      )
+    ).get
+    val small = shape(
+      Seq(
+        Seq(
+          Seq(
+            (Latitude(35.0), Longitude(29.5)),
+            (Latitude(35.0), Longitude(30.5)),
+            (Latitude(35.5), Longitude(30.5)),
+            (Latitude(35.5), Longitude(29.5))
+          )
+        )
+      )
+    ).get
     val z = 4.0
     val scale = math.pow(2, z)
     val v = viewAt(big.home, scale = scale)
@@ -229,7 +306,13 @@ class LabelPlacementSuite extends munit.FunSuite:
     val off = Rect(right.x - 150 / z6, right.y - 400 / z6, right.x - 150 / z6 + 1200 / z6, right.y + 400 / z6)
     val g = glide(box, off, z6, 50, 8, Some(box.home)).get
     assert(onScreen(g, off, 50, 8), g.toString)
-    assert(g.x <= right.x && g.y >= project(Latitude(37.5), Longitude(30)).y && g.y <= project(Latitude(32.5), Longitude(30)).y, "within the shape's box")
+    assert(
+      g.x <= right.x && g.y >= project(Latitude(37.5), Longitude(30)).y && g.y <= project(
+        Latitude(32.5),
+        Longitude(30)
+      ).y,
+      "within the shape's box"
+    )
     // the exact place of a settled view is a fixed point: a frame does not move it
     val exact = place(box, off, z6, 50, 8).get
     assertEquals(glide(box, off, z6, 50, 8, Some(exact)), Some(exact))
@@ -257,7 +340,8 @@ class LabelPlacementSuite extends munit.FunSuite:
     val clear = near.modify(_.cx).setTo((100 + 40 + 30 + PadPx + AppearPadPx + 1: Double))
     assertEquals(cull(Seq(big, clear), shown = Set("big")), Set("big", "clear".replace("clear", "near")))
     // two names drifting together then apart: shown, hidden at the touch, back only past the margin
-    val states = (0 to 40).map(i => 100 + 40 + 30 + PadPx + 20 - i).map(cx => near.modify(_.cx).setTo((cx.toDouble: Double)))
+    val states =
+      (0 to 40).map(i => 100 + 40 + 30 + PadPx + 20 - i).map(cx => near.modify(_.cx).setTo((cx.toDouble: Double)))
     var shown = Set("big", "near")
     val trace = (states ++ states.reverse).map { b =>
       shown = cull(Seq(big, b), shown = shown)

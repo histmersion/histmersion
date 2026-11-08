@@ -60,9 +60,7 @@ final class EnrichSourcePipeline(
         StepAgent.EnrichClassify,
         Prompt.UserText(classifyInput(loaded)),
         LibraryAnswers.classification
-      )((c, last) =>
-        accepted(checkClassification(c, MaxAbsYear(lib.verify.maxAbsYear.value), Last(last.value)))
-      )
+      )((c, last) => accepted(checkClassification(c, MaxAbsYear(lib.verify.maxAbsYear.value), Last(last.value))))
       verified <- findings(ctx, loaded, classified)
       geocoded <- ctx.code[Geocoded](AgentRepo.StepRecord.Name("geocode"))(Right(geocode(ctx, verified)))
       notes <- ctx.llm[Notes, String](
@@ -75,10 +73,14 @@ final class EnrichSourcePipeline(
           .map(_.map(p => RunCtx.Problem(p.value)))
           .map(d => Checked(d.value))
       )
-      patched <- ctx.code[Patched](AgentRepo.StepRecord.Name("patch"))(write(ctx, ck, loaded, classified, geocoded.findings, notes))
+      patched <- ctx.code[Patched](AgentRepo.StepRecord.Name("patch"))(
+        write(ctx, ck, loaded, classified, geocoded.findings, notes)
+      )
       _ <- ctx.code[Upstreamed](AgentRepo.StepRecord.Name("refs"))(Right(refs(ctx, loaded)))
       assessed <- ctx.code[Upstreamed](AgentRepo.StepRecord.Name("assess"))(Right(assess(ctx, loaded)))
-      routed <- ctx.code[StatusRouted](AgentRepo.StepRecord.Name("status"))(Right(status(ctx, ck, classified, patched, assessed)))
+      routed <- ctx.code[StatusRouted](AgentRepo.StepRecord.Name("status"))(
+        Right(status(ctx, ck, classified, patched, assessed))
+      )
       closed <- ctx.code[Closed](AgentRepo.StepRecord.Name("close"))(close(ctx, ck, patched, routed))
     yield PipelineDef.Summary(closed.line.value)
 
@@ -112,7 +114,11 @@ final class EnrichSourcePipeline(
             existingClaims = sw.findings.map(f => Loaded.ExistingClaims(f.claim.value)),
             updatedAt = s.updatedAt,
             head = Loaded.Head(body.take(lib.enrich.headChars.value)),
-            windows = windows(SourceBody(body), WindowChars(lib.enrich.windowChars.value), MaxWindows(lib.enrich.maxWindows.value)),
+            windows = windows(
+              SourceBody(body),
+              WindowChars(lib.enrich.windowChars.value),
+              MaxWindows(lib.enrich.maxWindows.value)
+            ),
             tags = s.tags.map(t => Tag(t.value)),
             doi = s.doi.flatMap(d => Doi.option(d.value))
           )
@@ -132,7 +138,8 @@ final class EnrichSourcePipeline(
     */
   private def findings(ctx: RunCtx, l: Loaded, c: Classified): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
-    val guards = lib.enrich.guards.guards((name, kind, at) => site.geocode(LibrarySite.PlaceName(name.value), kind, at).isDefined)
+    val guards =
+      lib.enrich.guards.guards((name, kind, at) => site.geocode(LibrarySite.PlaceName(name.value), kind, at).isDefined)
     l.windows.foldLeft[Either[Halt, List[VerifiedFinding]]](Right(Nil)) { (acc, w) =>
       acc.flatMap { sofar =>
         val user = s"Extract the findings of this stretch of the source.\n\n${meta(l)}\n" +
@@ -171,7 +178,9 @@ final class EnrichSourcePipeline(
     */
   private def geocode(ctx: RunCtx, fs: List[VerifiedFinding]): Geocoded =
     val placed = fs.map { f =>
-      val hit = f.place.flatMap(p => site.geocode(LibrarySite.PlaceName(p.value), f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period))
+      val hit = f.place.flatMap(p =>
+        site.geocode(LibrarySite.PlaceName(p.value), f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period)
+      )
       f.place.foreach { p =>
         hit match
           case None => ctx.warn(s"geocode: no gazetteer place named '$p' (finding kept without a point)")
@@ -225,7 +234,13 @@ final class EnrichSourcePipeline(
       site.sources.patch(ck, p).map(_ => ())
     )(Right(())) match
       case Right(_) =>
-        Right(Patched(Patched.FindingsAdded(fs.size), fields.map(f => Patched.FieldsSet(f.value)), proposal.map(d => Patched.StatusProposal(d.value))))
+        Right(
+          Patched(
+            Patched.FindingsAdded(fs.size),
+            fields.map(f => Patched.FieldsSet(f.value)),
+            proposal.map(d => Patched.StatusProposal(d.value))
+          )
+        )
       case Left(e) if e.code.exists(_.value == Write.CodePrecondition) =>
         load(ck).flatMap { fresh =>
           val again = fresh.modify(_.windows).setTo(Nil).modify(_.head).setTo(Loaded.Head(""))
@@ -318,18 +333,24 @@ final class EnrichSourcePipeline(
     * `assess` outranks any proposal.
     */
   private def status(ctx: RunCtx, ck: Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
-    if p.fieldsSet.contains(Patched.FieldsSet("status")) then StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
-    else if c.status == ApiSource.Status.Unassessed then StatusRouted(None, None, StatusRouted.Note("no status proposed"))
-    else if a.retracted.value then StatusRouted(None, None, StatusRouted.Note(s"${c.status.wire} not proposed: the source is retracted"))
+    if p.fieldsSet.contains(Patched.FieldsSet("status")) then
+      StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
+    else if c.status == ApiSource.Status.Unassessed then
+      StatusRouted(None, None, StatusRouted.Note("no status proposed"))
+    else if a.retracted.value then
+      StatusRouted(None, None, StatusRouted.Note(s"${c.status.wire} not proposed: the source is retracted"))
     else
       val proposal = AgentProposals.Proposal(
         ApprovalKind.StatusChange,
         ck,
         status = Some(c.status),
-        evidence = AgentProposals.Proposal.Evidence(Option(c.statusEvidence.value).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)"))
+        evidence = AgentProposals.Proposal.Evidence(
+          Option(c.statusEvidence.value).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)")
+        )
       )
       approvals.propose(ctx, proposal) match
-        case o @ SourceProposals.Outcome.Applied(w)      => StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note(o.line))
+        case o @ SourceProposals.Outcome.Applied(w) =>
+          StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note(o.line))
         case o @ SourceProposals.Outcome.Recorded(id, _) =>
           ctx.warn(s"status ${c.status.wire} not applied: approval $id waits for a person")
           StatusRouted(None, Some(StatusRouted.Approval(id.value)), StatusRouted.Note(o.line))
@@ -353,7 +374,11 @@ final class EnrichSourcePipeline(
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))
     val acquire = ctx.run.acquireItem.map(id =>
-      ctx.write(s"tick off acquisition item $id", io.circe.Json.obj("item" -> io.circe.Json.fromInt(id.value), "fulfilledBy" -> io.circe.Json.fromString(ck.value)))(
+      ctx.write(
+        s"tick off acquisition item $id",
+        io.circe.Json
+          .obj("item" -> io.circe.Json.fromInt(id.value), "fulfilledBy" -> io.circe.Json.fromString(ck.value))
+      )(
         tickOff(id, ck, ctx.run.id)
       )(s"acquisition item $id not ticked off (${AgentsMarkdown.DryRunNote})")
     )
@@ -362,7 +387,11 @@ final class EnrichSourcePipeline(
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
     val line = s"enrich-source [[$ck]] (agent run ${ctx.run.id.value.take(8)}): $what$approval" +
       acquire.fold("")(a => s"; $a")
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_ => Closed(Closed.Line(line), lint.map(d => Closed.Lint(d.value)), acquire.map(Closed.Acquire(_))))
+    Pipelines
+      .log(site.workLists, ctx, Pipelines.LogLine(line))
+      .left
+      .map(_.value)
+      .map(_ => Closed(Closed.Line(line), lint.map(d => Closed.Lint(d.value)), acquire.map(Closed.Acquire(_))))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
     * an item done or deleted meanwhile is left as it is, and said so.
@@ -371,6 +400,9 @@ final class EnrichSourcePipeline(
     Queue.fulfillable(id, site.queues.get(QueueItemId(id.value))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: $m"
       case Right(item) =>
-        site.workLists.patch(QueueItemId(id.value), Queue.fulfil(item, com.histmersion.api.library.Citekey(ck.value), Some(Queue.QueueItem.ClosedBy(runId.value)))) match
+        site.workLists.patch(
+          QueueItemId(id.value),
+          Queue.fulfil(item, com.histmersion.api.library.Citekey(ck.value), Some(Queue.QueueItem.ClosedBy(runId.value)))
+        ) match
           case Right(_) => s"ticked off acquisition item $id"
           case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message}"

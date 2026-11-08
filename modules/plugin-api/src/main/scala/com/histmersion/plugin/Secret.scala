@@ -47,8 +47,8 @@ object Secret:
 
     /** The reference as it may be shown: a literal is masked, everything else is shown as written. */
     def shown: Ref.ShownResult = this match
-      case Value(_)    => Ref.ShownResult(s"${Ref.ValueScheme}:${Ref.Mask}")
-      case Env(n)      => Ref.ShownResult(s"${Ref.EnvScheme}:$n")
+      case Value(_)        => Ref.ShownResult(s"${Ref.ValueScheme}:${Ref.Mask}")
+      case Env(n)          => Ref.ShownResult(s"${Ref.EnvScheme}:$n")
       case Ref.Vault(v, r) => Ref.ShownResult(s"$v:$r")
 
   object Ref:
@@ -99,8 +99,14 @@ object Secret:
                 case EnvName() => Right(Env(Env.Name(rest.trim)))
                 case _         => Left(ParseResultPart1(s"env:${rest.trim} is not an environment variable name"))
             case VaultName() =>
-              if rest.trim.isEmpty then Left(ParseResultPart1(s"$scheme: names no entry")) else Right(Vault(Vault.Value(scheme), Vault.Ref(rest.trim)))
-            case _ => Left(ParseResultPart1(s"a secret is a reference ($Forms); '$scheme' is not a vault name ([a-z0-9][a-z0-9-]*)"))
+              if rest.trim.isEmpty then Left(ParseResultPart1(s"$scheme: names no entry"))
+              else Right(Vault(Vault.Value(scheme), Vault.Ref(rest.trim)))
+            case _ =>
+              Left(
+                ParseResultPart1(
+                  s"a secret is a reference ($Forms); '$scheme' is not a vault name ([a-z0-9][a-z0-9-]*)"
+                )
+              )
 
   /** A secret backend (KeePassXC, 1Password, Bitwarden, …), registered by a plugin under its [[name]]: the host hands
     * it the part of a `<name>:<ref>` reference after the colon. `Left` names what went wrong (locked, no such entry,
@@ -117,7 +123,9 @@ object Secret:
       * database to unlock, a hardware key to touch — overrides it to pay once. The values are kept by the host for that
       * generation only.
       */
-    def resolveAll(refs: List[Vault.ResolveAllRefs]): Map[Vault.ResolveAllResultPart1, Either[Vault.ResolveAllResultPart2Part1, Vault.ResolveAllResultPart2Part2]] =
+    def resolveAll(
+        refs: List[Vault.ResolveAllRefs]
+    ): Map[Vault.ResolveAllResultPart1, Either[Vault.ResolveAllResultPart2Part1, Vault.ResolveAllResultPart2Part2]] =
       refs.distinct.map(r => r -> resolve(r)).toMap
 
   object Vault:

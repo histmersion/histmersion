@@ -30,7 +30,7 @@ object Iiif:
   type SizeText = SizeText.T
   object SizeText extends Newtype[String, Pure]
 
-  export com.histmersion.api.library.ArchiveFile.Format.{Problem as ParseFormatResultPart1}
+  export com.histmersion.api.library.ArchiveFile.Format.Problem as ParseFormatResultPart1
 
   val ApiContext = "http://iiif.io/api/image/3/context.json"
   val Protocol = "http://iiif.io/api/image"
@@ -140,10 +140,11 @@ object Iiif:
                 .toRight(Problem(s"invalid exact size: '$s'"))
             case _ => Left(Problem(s"invalid size: '$s'"))
 
-  def parseFormat(s: ArchiveFile.Format.Wire): Either[ArchiveFile.Format.Problem, Format] = (s).value.trim.toLowerCase match
-    case "jpg" | "jpeg" => Right(Format("jpg"))
-    case "png"          => Right(Format("png"))
-    case other          => Left(ArchiveFile.Format.Problem(s"unsupported format: '$other' (use jpg or png)"))
+  def parseFormat(s: ArchiveFile.Format.Wire): Either[ArchiveFile.Format.Problem, Format] =
+    (s).value.trim.toLowerCase match
+      case "jpg" | "jpeg" => Right(Format("jpg"))
+      case "png"          => Right(Format("png"))
+      case other          => Left(ArchiveFile.Format.Problem(s"unsupported format: '$other' (use jpg or png)"))
 
   def contentType(format: Format): Api.ContentType = format.value match
     case "png" => Api.ContentType("image/png")

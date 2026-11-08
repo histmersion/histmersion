@@ -14,7 +14,8 @@ final case class GraphNode(
     status: Option[com.histmersion.api.library.Source.Status] = None,
     depth: GraphNode.Depth = _root_.com.histmersion.api.library.Source.Graph.DepthCount(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object GraphNode:
-  export Source.Graph.{DepthCount as Depth}
+  export Source.Graph.DepthCount as Depth

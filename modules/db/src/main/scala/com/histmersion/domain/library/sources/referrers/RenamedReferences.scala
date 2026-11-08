@@ -6,7 +6,10 @@ package domain.library.sources.referrers
   */
 import com.histmersion.api.library.Rename
 import io.github.iltotore.iron.constraint.any.Pure
-final case class RenamedReferences(columns: List[Rename.Count] = Nil, texts: List[(RenamedReferences.TextsPart1, RenamedReferences.TextsPart2)] = Nil)
+final case class RenamedReferences(
+    columns: List[Rename.Count] = Nil,
+    texts: List[(RenamedReferences.TextsPart1, RenamedReferences.TextsPart2)] = Nil
+)
 
 object RenamedReferences:
   type TextsPart1 = TextsPart1.T

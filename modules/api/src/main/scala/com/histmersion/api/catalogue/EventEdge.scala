@@ -15,7 +15,8 @@ final case class EventEdge(
     citekey: Citekey,
     note: Option[EventEdge.Note] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventEdge:
   type Kind = Kind.T

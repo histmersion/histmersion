@@ -5,7 +5,7 @@ import com.histmersion.api.catalogue.Year
 
 object YearFmt:
 
-  export com.histmersion.api.catalogue.{Year as OpenPeriodStart, Year as OpenPeriodEnd}
+  export com.histmersion.api.catalogue.{Year as OpenPeriodEnd, Year as OpenPeriodStart}
 
   def apply(v: Year): String =
     if (v).value < 0 then (s"${-(v).value} BCE")
@@ -19,7 +19,11 @@ object YearFmt:
       case (Some(a), Some(b)) => if a == b then apply(a) else s"${apply(a)}–${apply(b)}"
       case _                  => ("")
 
-  def openPeriod(start: Option[YearFmt.OpenPeriodStart], end: Option[YearFmt.OpenPeriodEnd], none: String = ("undated")): String =
+  def openPeriod(
+      start: Option[YearFmt.OpenPeriodStart],
+      end: Option[YearFmt.OpenPeriodEnd],
+      none: String = ("undated")
+  ): String =
     (start, end) match
       case (Some(_), Some(_)) => ((period(start, end)))
       case (Some(a), None)    => s"from ${apply(a)}"

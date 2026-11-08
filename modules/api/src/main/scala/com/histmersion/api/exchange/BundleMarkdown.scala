@@ -7,7 +7,6 @@ import com.histmersion.api.given
 import com.histmersion.api.ByteCount
 object BundleMarkdown:
 
-
   def instance(i: InstanceInfo): String =
     (s"**Instance** ${i.id}" + i.label
       .map(l => s" · $l")
@@ -34,17 +33,22 @@ object BundleMarkdown:
     ).mkString("\n\n")
 
   def verify(r: Bundle.VerifyResult): String =
-    val head = if ((r.ok) == Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(Plural.CountN(r.blobsChecked.value.toLong), Plural.CountSingular("blob"))} verified"
+    val head = if (r.ok) == Bundle.VerifyResult.Ok(true) then
+      s"**OK** — every checksum, record and ${Plural.count(Plural.CountN(r.blobsChecked.value.toLong), Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(Plural.CountN((r.problems.size).toLong), Plural.CountSingular("problem"))}"
     (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems.map(_.value))).mkString("\n\n")
 
   def importResult(r: Bundle.ImportResult): String =
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"
-      else if ((r.dryRun) == Bundle.ImportResult.DryRun(true)) then "**Dry run** — nothing was written; this is what an import would do"
-      else if r.changed == Bundle.ChangedCount(0) then "**Nothing to change** — this instance already has everything in the bundle"
+      else if (r.dryRun) == Bundle.ImportResult.DryRun(true) then
+        "**Dry run** — nothing was written; this is what an import would do"
+      else if r.changed == Bundle.ChangedCount(0) then
+        "**Nothing to change** — this instance already has everything in the bundle"
       else
-        s"**Imported** — ${Plural.count(Plural.CountN(r.changed.value.toLong), Plural.CountSingular("row"))} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")
+        s"**Imported** — ${Plural.count(Plural.CountN(r.changed.value.toLong), Plural.CountSingular("row"))} changed" + r.mergeId
+          .map(m => s" (merge $m)")
+          .getOrElse("")
     val rows = r.counts.map(c =>
       s"| ${c.kind.wire} | ${c.inserted} | ${c.updated} | ${c.deleted} | ${c.unchanged} | ${c.keptLocal} | ${c.conflicts} | ${c.skippedDeleted} | ${c.held} |"
     )

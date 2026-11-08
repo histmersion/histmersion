@@ -25,7 +25,9 @@ final class SourceReferrers(val all: List[SourceReferrer]):
   def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit = all.foreach(_.deleting(source, report))
 
   /** The first entry a referrer kept of the deletion. */
-  def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using DbCon): Option[SourceReferrers.Entry] =
+  def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using
+      DbCon
+  ): Option[SourceReferrers.Entry] =
     all.iterator.map(_.recorded(source, line, day)).collectFirst { case Some(id) => id }
 
 object SourceReferrers:

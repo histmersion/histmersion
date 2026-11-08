@@ -58,7 +58,9 @@ class CliopatriaSuite extends munit.FunSuite:
     val places = Cliopatria.read(fixture).toOption.get
     val hittite1 = places.find(_.id.value.contains("-1650_-1401")).get
     assert(
-      hittite1.relations.exists(r => r.parentId.value == "cliopatria_hittite_empire" && r.kind.value == GazetteerRelation.PartOf)
+      hittite1.relations.exists(r =>
+        r.parentId.value == "cliopatria_hittite_empire" && r.kind.value == GazetteerRelation.PartOf
+      )
     )
 
   test("MemberOf creates an additional relation"):
@@ -143,7 +145,10 @@ class CliopatriaSuite extends munit.FunSuite:
     val http = new Plugin.Http:
       def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
         Left(Plugin.Http.GetResultPart1("get is not used"))
-      override def fetch(url: Plugin.Http.FetchUrl, headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]) =
+      override def fetch(
+          url: Plugin.Http.FetchUrl,
+          headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]
+      ) =
         asked += url
         Right(Plugin.HttpResponse(Plugin.HttpResponse.Status(200), Map.empty, Plugin.HttpResponse.Body(zip)))
     val all = Cliopatria.fetch(http).fold(e => fail(e.value), identity)
@@ -162,9 +167,15 @@ class CliopatriaSuite extends munit.FunSuite:
     def answering(status: Plugin.HttpResponse.Status, body: Plugin.HttpResponse.Body) = new Plugin.Http:
       def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
         Left(Plugin.Http.GetResultPart1("get is not used"))
-      override def fetch(url: Plugin.Http.FetchUrl, headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]) =
+      override def fetch(
+          url: Plugin.Http.FetchUrl,
+          headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]
+      ) =
         Right(Plugin.HttpResponse(status, Map.empty, body))
-    assertEquals(Cliopatria.fetch(answering(Plugin.HttpResponse.Status(404), Plugin.HttpResponse.Body(Array.emptyByteArray))), Left(s"HTTP 404 from ${Cliopatria.url}"))
+    assertEquals(
+      Cliopatria.fetch(answering(Plugin.HttpResponse.Status(404), Plugin.HttpResponse.Body(Array.emptyByteArray))),
+      Left(s"HTTP 404 from ${Cliopatria.url}")
+    )
     val empty =
       val out = java.io.ByteArrayOutputStream()
       val z = java.util.zip.ZipOutputStream(out)
@@ -172,7 +183,10 @@ class CliopatriaSuite extends munit.FunSuite:
       z.closeEntry()
       z.close()
       out.toByteArray
-    assertEquals(Cliopatria.fetch(answering(Plugin.HttpResponse.Status(200), Plugin.HttpResponse.Body(empty))), Left("zip contains no usable file"))
+    assertEquals(
+      Cliopatria.fetch(answering(Plugin.HttpResponse.Status(200), Plugin.HttpResponse.Body(empty))),
+      Left("zip contains no usable file")
+    )
 
   test("years in either order make one span; a year beyond what a Year holds leaves the slice undated"):
     val swapped = io.circe.parser

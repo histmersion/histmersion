@@ -38,9 +38,14 @@ private[histmersion] object ListSql:
     * filters give theirs); NULLs are not a value. `from` = `FROM … WHERE …` with the filters; `count` = what is counted
     * (`count(DISTINCT id)` where a row can appear twice).
     */
-  def facetOn(from: Sql, expr: String, max: PageSize, count: String = "count(*)")(using DbCon): List[(String, RowCount)] =
+  def facetOn(from: Sql, expr: String, max: PageSize, count: String = "count(*)")(using
+      DbCon
+  ): List[(String, RowCount)] =
     (Sql.raw(Sql.RawText(s"SELECT $expr, $count::int ")) ++ from ++
-      Sql.of(Sql.OfText(s" AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ?"), Param.I(Param.I.V(max.value)))).frag
+      Sql.of(
+        Sql.OfText(s" AND $expr IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1 LIMIT ?"),
+        Param.I(Param.I.V(max.value))
+      )).frag
       .query[(String, Int)]
       .run()
       .toList

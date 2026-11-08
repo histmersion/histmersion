@@ -12,11 +12,14 @@ import com.histmersion.api.research.Article
 import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class DeleteBlocker(kind: DeleteBlocker.Kind, id: DeleteBlocker.Id, title: Option[DeleteBlocker.Title] = None)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class DeleteBlocker(
+    kind: DeleteBlocker.Kind,
+    id: DeleteBlocker.Id,
+    title: Option[DeleteBlocker.Title] = None
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object DeleteBlocker:
-
 
   type Id = Id.T
   object Id extends Newtype[String, Pure]
@@ -35,7 +38,6 @@ object DeleteBlocker:
     object Wire extends Newtype[String, Pure]
     type Label = Label.T
     object Label extends Newtype[String, Pure]
-
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = values

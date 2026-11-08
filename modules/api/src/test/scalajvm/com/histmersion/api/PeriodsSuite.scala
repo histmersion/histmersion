@@ -73,12 +73,18 @@ class PeriodsSuite extends munit.FunSuite:
   test("a definition's span is its outer bounds, in signed years"):
     val d = parsed.authorities.flatMap(_.periods).map(p => p.id -> p).toMap
     assertEquals(d(HistoricalPeriod.Id("p0aaa01")).period, Period(Year(-3200), Year(-1050)))
-    assertEquals(d(HistoricalPeriod.Id("p0aaa02")).period, Period(Year(-1700), Year(-1050))) // earliest start, latest stop
+    assertEquals(
+      d(HistoricalPeriod.Id("p0aaa02")).period,
+      Period(Year(-1700), Year(-1050))
+    ) // earliest start, latest stop
     assertEquals(d(HistoricalPeriod.Id("p0bbb01")).period, Period(Year(-3200), Year(-1))) // a numeric year is read too
 
   test("labels are the authority's own in English, else its English alternative"):
     val d = parsed.authorities.flatMap(_.periods).map(p => p.id -> p).toMap
-    assertEquals(d(HistoricalPeriod.Id("p0aaa01")).label, "Bronze Age") // ROAD lists "Late Stone Age" first for "Neolithic"
+    assertEquals(
+      d(HistoricalPeriod.Id("p0aaa01")).label,
+      "Bronze Age"
+    ) // ROAD lists "Late Stone Age" first for "Neolithic"
     assertEquals(d(HistoricalPeriod.Id("p0bbb01")).label, "Early Bronze Age")
 
   test("the region is the coverage description, else the coverage labels"):
@@ -96,7 +102,10 @@ class PeriodsSuite extends munit.FunSuite:
 
   test("the authority citation names the PeriodO id, the source and its year"):
     val rows = byId(PeriodO.toPeriods(parsed))
-    assertEquals(rows(HistoricalPeriod.Id("p0aaa01")).authority, Some("PeriodO p0aaa01 · Archaeological periods of Somewhere (2022)"))
+    assertEquals(
+      rows(HistoricalPeriod.Id("p0aaa01")).authority,
+      Some("PeriodO p0aaa01 · Archaeological periods of Somewhere (2022)")
+    )
     assertEquals(rows(HistoricalPeriod.Id("p0bbb01")).authority, Some("PeriodO p0bbb01 · FASTI (2004)"))
 
   test("PeriodO `broader` links inside the batch are kept; everything else is a root"):
@@ -113,13 +122,25 @@ class PeriodsSuite extends munit.FunSuite:
           .parse(dump)
           .toOption
           .get
-          .copy(authorities = parsed.authorities.map(a => a.modify(_.periods).setTo(a.periods.filterNot(_.id == HistoricalPeriod.Id("p0aaa01")))))
+          .copy(authorities =
+            parsed.authorities
+              .map(a => a.modify(_.periods).setTo(a.periods.filterNot(_.id == HistoricalPeriod.Id("p0aaa01"))))
+          )
       )
     )
     assertEquals(rows(HistoricalPeriod.Id("p0aaa02")).parentId, None)
 
   test("the curated overlay wins over `broader`"):
-    val rows = byId(PeriodO.toPeriods(parsed.copy(parents = Map(PeriodODataset.ParentsKey("p0aaa03") -> PeriodODataset.ParentsValue("p0aaa01"), PeriodODataset.ParentsKey("p0bbb01") -> PeriodODataset.ParentsValue("p0aaa01")))))
+    val rows = byId(
+      PeriodO.toPeriods(
+        parsed.copy(parents =
+          Map(
+            PeriodODataset.ParentsKey("p0aaa03") -> PeriodODataset.ParentsValue("p0aaa01"),
+            PeriodODataset.ParentsKey("p0bbb01") -> PeriodODataset.ParentsValue("p0aaa01")
+          )
+        )
+      )
+    )
     assertEquals(rows(HistoricalPeriod.Id("p0aaa03")).parentId, Some("p0aaa01"))
     assertEquals(rows(HistoricalPeriod.Id("p0bbb01")).parentId, Some("p0aaa01"))
 
@@ -151,15 +172,32 @@ class PeriodsSuite extends munit.FunSuite:
     rows.zipWithIndex.foreach { (r, i) =>
       r.parentId.foreach(p => assert(rows.indexWhere(_.id.value == p.value) < i, s"${r.id} before its parent $p"))
     }
-    val a = HistoricalPeriod(HistoricalPeriod.Id("a"), HistoricalPeriod.Label("A"), None, Period(Year(1), Year(2)), None, Some(HistoricalPeriod.ParentId("b")))
-    val b = HistoricalPeriod(HistoricalPeriod.Id("b"), HistoricalPeriod.Label("B"), None, Period(Year(1), Year(2)), None, Some(HistoricalPeriod.ParentId("a")))
+    val a = HistoricalPeriod(
+      HistoricalPeriod.Id("a"),
+      HistoricalPeriod.Label("A"),
+      None,
+      Period(Year(1), Year(2)),
+      None,
+      Some(HistoricalPeriod.ParentId("b"))
+    )
+    val b = HistoricalPeriod(
+      HistoricalPeriod.Id("b"),
+      HistoricalPeriod.Label("B"),
+      None,
+      Period(Year(1), Year(2)),
+      None,
+      Some(HistoricalPeriod.ParentId("a"))
+    )
     val out = PeriodO.parentsFirst(List(a, b))
     assertEquals(out.map(_.id).toSet, Set("a", "b"))
     assertEquals(out.count(_.parentId.isEmpty), 1)
 
   test("only() keeps the named authorities; nothing named keeps them all"):
     assertEquals(parsed.only(Set(HistoricalPeriod.Id("p0bbb"))).authorities.map(_.id), List("p0bbb"))
-    assertEquals(parsed.only(Set(HistoricalPeriod.Id("p0bbb"))).skipped, Nil) // p0aaa's broken definitions are not p0bbb's
+    assertEquals(
+      parsed.only(Set(HistoricalPeriod.Id("p0bbb"))).skipped,
+      Nil
+    ) // p0aaa's broken definitions are not p0bbb's
     assertEquals(parsed.only(Set(HistoricalPeriod.Id("p0aaa"))).skipped.size, 2)
     assertEquals(parsed.only(Set.empty).authorities.size, 2)
 
@@ -219,7 +257,14 @@ class PeriodsSuite extends munit.FunSuite:
       Period.ImportResult.Periods(3),
       Period.ImportResult.Roots(0),
       Period.ImportResult.Presets(5),
-      List(SkippedPeriod(SkippedPeriod.Id("p0x1"), SkippedPeriod.Label("Old Kingdom"), Period.Skip.OutOfRange, SkippedPeriod.Detail("-2701 → 2150 lies outside -3000000..2100"))),
+      List(
+        SkippedPeriod(
+          SkippedPeriod.Id("p0x1"),
+          SkippedPeriod.Label("Old Kingdom"),
+          Period.Skip.OutOfRange,
+          SkippedPeriod.Detail("-2701 → 2150 lies outside -3000000..2100")
+        )
+      ),
       skippedCount = Period.ImportResult.SkippedCount(2)
     )
     val md = PeriodsMarkdown.imported(r)
@@ -227,7 +272,9 @@ class PeriodsSuite extends munit.FunSuite:
     assert(md.contains("`p0x1` Old Kingdom: -2701 → 2150 lies outside"), md)
     assert(md.contains("…and 1 more"), md)
     assert(
-      PeriodsMarkdown.imported(Period.ImportResult(Period.ImportResult.Periods(1), presets = Period.ImportResult.Presets(1))).startsWith("imported 1 period — 1 timeline preset")
+      PeriodsMarkdown
+        .imported(Period.ImportResult(Period.ImportResult.Periods(1), presets = Period.ImportResult.Presets(1)))
+        .startsWith("imported 1 period — 1 timeline preset")
     )
 
   test("what is not a PeriodO dataset is refused"):
@@ -327,17 +374,33 @@ class PeriodsSuite extends munit.FunSuite:
           s"${child.label} ${child.period} outside ${parent.label} ${parent.period}"
         )
     }
-    seedRows.foreach(r => r.parentId.foreach(p => assertEquals(r.id.value.take(7), p.value.take(7), s"${r.id} under $p")))
+    seedRows.foreach(r =>
+      r.parentId.foreach(p => assertEquals(r.id.value.take(7), p.value.take(7), s"${r.id} under $p"))
+    )
 
   test("the Aegean Bronze Age is divided Helladic / Cycladic / Minoan, down to the phases"):
     val m = byId(seedRows)
-    def chain(id: HistoricalPeriod.Id): List[String] = m.get(id).toList.flatMap(p => p.label.value :: p.parentId.toList.flatMap(pid => chain(HistoricalPeriod.Id(pid.value))))
+    def chain(id: HistoricalPeriod.Id): List[String] = m
+      .get(id)
+      .toList
+      .flatMap(p => p.label.value :: p.parentId.toList.flatMap(pid => chain(HistoricalPeriod.Id(pid.value))))
     // Late Minoan → Bronze Age Minoan → Bronze Age (the BSA's, for Greece) — and nothing above it
     assertEquals(chain(HistoricalPeriod.Id("p0ds9qjh4dh")), List("Late Minoan", "Bronze Age Minoan", "Bronze Age"))
-    assertEquals(m(HistoricalPeriod.Id("p0ds9qj9pc2")).parentId, Some("p0ds9qjq7b2")) // Bronze Age Helladic under the BSA's Bronze Age
+    assertEquals(
+      m(HistoricalPeriod.Id("p0ds9qj9pc2")).parentId,
+      Some("p0ds9qjq7b2")
+    ) // Bronze Age Helladic under the BSA's Bronze Age
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).parentId, None) // no longer under ROAD's Eurasia
-    assert(m.values.exists(p => p.label.value == "Early Helladic" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9pc2"))))
-    assert(m.values.exists(p => p.label.value == "Middle Minoan" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9kdj"))))
+    assert(
+      m.values.exists(p =>
+        p.label.value == "Early Helladic" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9pc2"))
+      )
+    )
+    assert(
+      m.values.exists(p =>
+        p.label.value == "Middle Minoan" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9kdj"))
+      )
+    )
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).region, Some("Greece"))
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).preset, Some(PresetRegion.Aegean))
     // the BSA dates Late Minoan from the earliest start to the latest end it gives
@@ -368,7 +431,12 @@ class PeriodsSuite extends munit.FunSuite:
       HistoricalPeriod.Id("p0aaa01") -> Some(HistoricalPeriod.Id("p0zzz01")),
       HistoricalPeriod.Id("p0aaa02") -> Some(HistoricalPeriod.Id("p0zzz01"))
     )
-    val seeded = byId(PeriodO.toPeriods(parsed.copy(presets = Map(PeriodODataset.PresetsKey("p0aaa01") -> PresetRegion.Aegean)), existing))
+    val seeded = byId(
+      PeriodO.toPeriods(
+        parsed.copy(presets = Map(PeriodODataset.PresetsKey("p0aaa01") -> PresetRegion.Aegean)),
+        existing
+      )
+    )
     assertEquals(seeded(HistoricalPeriod.Id("p0aaa01")).parentId, None) // the seed says: a root
     assertEquals(seeded(HistoricalPeriod.Id("p0aaa02")).parentId, Some("p0aaa01")) // its own broader
     val fetched = byId(PeriodO.toPeriods(parsed, existing))
@@ -395,9 +463,27 @@ class PeriodsSuite extends munit.FunSuite:
 
   test("the menu groups presets by region heading, oldest first, in the headings' order"):
     val ps = List(
-      preset(HistoricalPeriod.Id("b"), HistoricalPeriod.Label("Bronze Age"), Year(-1700), PresetRegion.Scandinavia, HistoricalPeriod.Region("Denmark")),
-      preset(HistoricalPeriod.Id("n"), HistoricalPeriod.Label("Neolithic"), Year(-3900), PresetRegion.Scandinavia, HistoricalPeriod.Region("Denmark")),
-      preset(HistoricalPeriod.Id("a"), HistoricalPeriod.Label("Bronze Age"), Year(-3200), PresetRegion.Aegean, HistoricalPeriod.Region("Greece")),
+      preset(
+        HistoricalPeriod.Id("b"),
+        HistoricalPeriod.Label("Bronze Age"),
+        Year(-1700),
+        PresetRegion.Scandinavia,
+        HistoricalPeriod.Region("Denmark")
+      ),
+      preset(
+        HistoricalPeriod.Id("n"),
+        HistoricalPeriod.Label("Neolithic"),
+        Year(-3900),
+        PresetRegion.Scandinavia,
+        HistoricalPeriod.Region("Denmark")
+      ),
+      preset(
+        HistoricalPeriod.Id("a"),
+        HistoricalPeriod.Label("Bronze Age"),
+        Year(-3200),
+        PresetRegion.Aegean,
+        HistoricalPeriod.Region("Greece")
+      ),
       HistoricalPeriod(HistoricalPeriod.Id("x"), HistoricalPeriod.Label("Not a preset"), None, Period(Year(1), Year(2)))
     )
     val gs = PresetMenu.groups(ps)
@@ -428,15 +514,42 @@ class PeriodsSuite extends munit.FunSuite:
 
   test("share: the part of a view inside a box"):
     val box = BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10))
-    assertEqualsDouble(PresetMenu.share(BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10)), box).value, 1.0, 1e-9)
-    assertEqualsDouble(PresetMenu.share(BBox(Longitude(5), Latitude(0), Longitude(15), Latitude(10)), box).value, 0.5, 1e-9)
-    assertEqualsDouble(PresetMenu.share(BBox(Longitude(20), Latitude(20), Longitude(30), Latitude(30)), box).value, 0.0, 1e-9)
-    assertEqualsDouble(PresetMenu.share(BBox(Longitude(170), Latitude(0), Longitude(-170), Latitude(10)), box).value, 0.0, 1e-9) // across the antimeridian
-    assertEqualsDouble(PresetMenu.share(BBox(Longitude(1), Latitude(1), Longitude(1), Latitude(1)), box).value, 0.0, 1e-9) // no area
+    assertEqualsDouble(
+      PresetMenu.share(BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10)), box).value,
+      1.0,
+      1e-9
+    )
+    assertEqualsDouble(
+      PresetMenu.share(BBox(Longitude(5), Latitude(0), Longitude(15), Latitude(10)), box).value,
+      0.5,
+      1e-9
+    )
+    assertEqualsDouble(
+      PresetMenu.share(BBox(Longitude(20), Latitude(20), Longitude(30), Latitude(30)), box).value,
+      0.0,
+      1e-9
+    )
+    assertEqualsDouble(
+      PresetMenu.share(BBox(Longitude(170), Latitude(0), Longitude(-170), Latitude(10)), box).value,
+      0.0,
+      1e-9
+    ) // across the antimeridian
+    assertEqualsDouble(
+      PresetMenu.share(BBox(Longitude(1), Latitude(1), Longitude(1), Latitude(1)), box).value,
+      0.0,
+      1e-9
+    ) // no area
 
   test("a row names its authority without the PeriodO id, and the id it cites"):
-    val p = preset(HistoricalPeriod.Id("p0ds9qjq7b2"), HistoricalPeriod.Label("Bronze Age"), Year(-3200), PresetRegion.Aegean)
+    val p =
+      preset(HistoricalPeriod.Id("p0ds9qjq7b2"), HistoricalPeriod.Label("Bronze Age"), Year(-3200), PresetRegion.Aegean)
     assertEquals(PresetMenu.source(p), Some("An authority (2020)"))
     assertEquals(PresetMenu.periodoId(p), Some("p0ds9qjq7b2"))
-    assertEquals(PresetMenu.source(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))), Some("Bryce 2005"))
-    assertEquals(PresetMenu.periodoId(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))), None)
+    assertEquals(
+      PresetMenu.source(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))),
+      Some("Bryce 2005")
+    )
+    assertEquals(
+      PresetMenu.periodoId(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))),
+      None
+    )

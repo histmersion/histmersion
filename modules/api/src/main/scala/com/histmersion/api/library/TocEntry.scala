@@ -7,11 +7,13 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object TocEntry:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
-
 
   /** A source's table of contents as `get_source` shows it. */
 

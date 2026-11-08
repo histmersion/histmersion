@@ -9,7 +9,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * `openai/…` models are signed in with a ChatGPT plan, so they draw on the same plan pool as Codex (otherwise they are
   * metered).
   */
-final case class OpencodeConfig(command: OpencodeConfig.Command, timeoutSeconds: OpencodeConfig.TimeoutSeconds, chatgptLogin: OpencodeConfig.ChatgptLogin) derives ConfigReader
+final case class OpencodeConfig(
+    command: OpencodeConfig.Command,
+    timeoutSeconds: OpencodeConfig.TimeoutSeconds,
+    chatgptLogin: OpencodeConfig.ChatgptLogin
+) derives ConfigReader
 
 object OpencodeConfig:
   type Command = Command.T

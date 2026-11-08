@@ -57,17 +57,24 @@ object LlmClient:
     (cfg, ref) =>
       BuiltinAi.lookup(ref.provider, providers()).left.map(why => ModelPicker.Problem(s"${ref.wire}: $why")).flatMap {
         case _: HostAiProvider => host(rt)(cfg, ref)
-        case p                 => PluginAiClient.client(ref, p, http, PluginAiClient.Loopback(rt.loopback)).left.map(e => ModelPicker.Problem(e.value))
+        case p                 =>
+          PluginAiClient
+            .client(ref, p, http, PluginAiClient.Loopback(rt.loopback))
+            .left
+            .map(e => ModelPicker.Problem(e.value))
       }
 
   /** The host's own providers: the command-line runtimes on `rt`. */
   def host(rt: CliRuntime): Factory =
     (cfg, ref) =>
       ref.provider match
-        case ProviderKind.ClaudeCode => ClaudeCode.client(cfg.providers.claudeCode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
-        case ProviderKind.Codex      => Codex.client(cfg.providers.codex, rt, ref).left.map(p => ModelPicker.Problem(p.value))
-        case ProviderKind.Opencode   => Opencode.client(cfg.providers.opencode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
-        case k                       => Left(ModelPicker.Problem(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
+        case ProviderKind.ClaudeCode =>
+          ClaudeCode.client(cfg.providers.claudeCode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+        case ProviderKind.Codex =>
+          Codex.client(cfg.providers.codex, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+        case ProviderKind.Opencode =>
+          Opencode.client(cfg.providers.opencode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+        case k => Left(ModelPicker.Problem(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
 
   /** sttp-ai's usage → ours. */
   def usage(u: TokenUsage): Agents.Usage =

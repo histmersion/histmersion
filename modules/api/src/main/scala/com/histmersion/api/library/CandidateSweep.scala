@@ -20,12 +20,14 @@ final case class CandidateSweep(
     dryRun: CandidateSweep.DryRun = CandidateSweep.DryRun(false),
     notes: List[CandidateSweep.Notes] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object CandidateSweep:
 
-  given Schema[Map[SkippedKey, SkippedValue]] = Schema.schemaForMap[SkippedKey, SkippedValue](_.value).copy(name = None, isOptional = true)
+  given Schema[Map[SkippedKey, SkippedValue]] =
+    Schema.schemaForMap[SkippedKey, SkippedValue](_.value).copy(name = None, isOptional = true)
 
-  export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
+  export com.histmersion.api.research.ReviewGoal.Slug as Goal
   type Found = Found.T
   object Found extends Newtype[Int, Pure]
   type Added = Added.T
@@ -45,9 +47,12 @@ object CandidateSweep:
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]
 
-  final case class Request(goal: Request.Goal, dryRun: Request.DryRun = Request.DryRun(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Request(goal: Request.Goal, dryRun: Request.DryRun = Request.DryRun(false))
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Request:
-    export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
+    export com.histmersion.api.research.ReviewGoal.Slug as Goal
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]

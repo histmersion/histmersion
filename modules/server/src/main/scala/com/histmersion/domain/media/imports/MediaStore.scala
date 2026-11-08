@@ -10,8 +10,14 @@ import com.histmersion.domain.catalogue.places.ExternalIds
   * map in a test.
   */
 trait MediaStore:
-  def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]): Map[AssetService.ProviderKey, Known]
-  def save(a: ProviderAsset, firstTarget: (ImportService.TargetType, ImportService.TargetId)): (AssetService.AssetUid, Boolean)
+  def known(
+      provider: ImportService.Provider,
+      keys: List[AssetService.ProviderKey]
+  ): Map[AssetService.ProviderKey, Known]
+  def save(
+      a: ProviderAsset,
+      firstTarget: (ImportService.TargetType, ImportService.TargetId)
+  ): (AssetService.AssetUid, Boolean)
   def refreshRights(uid: AssetService.AssetUid, r: Rights): Unit
   def link(
       uid: AssetService.AssetUid,
@@ -23,7 +29,13 @@ trait MediaStore:
       rank: AssetService.LinkRank
   ): Boolean
   def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id): Boolean
-  def checked(provider: ImportService.Provider, targetType: ImportService.TargetType, targetId: ImportService.TargetId, found: ImportService.FoundCount, qid: Option[Wikidata.Id]): Unit
+  def checked(
+      provider: ImportService.Provider,
+      targetType: ImportService.TargetType,
+      targetId: ImportService.TargetId,
+      found: ImportService.FoundCount,
+      qid: Option[Wikidata.Id]
+  ): Unit
 
   /** A link with the reason a collection's record is tied to its target (V094). */
   def linkBasis(
@@ -45,13 +57,16 @@ trait MediaStore:
   def mapPlacesNamed(keys: List[ImportService.PlaceKey]): Map[ImportService.PlaceKey, List[PlaceFacts]] = Map.empty
 
   /** The gazetteer ids each place carries (`ExternalIds` pairs). */
-  def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] = Map.empty
+  def placeExternalIds(ids: List[Place.Id]): Map[Place.Id, Set[(ExternalIds.Scheme, ExternalIds.ExternalId)]] =
+    Map.empty
 
   /** The Pleiades ids of places (those without one left out). */
   def pleiadesIds(ids: List[Place.Id]): Map[Place.Id, List[ExternalIds.ExternalId]] = Map.empty
 
   /** The places on the map carrying each gazetteer id. */
-  def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)]): Map[(ExternalIds.Scheme, ExternalIds.ExternalId), List[PlaceFacts]] = Map.empty
+  def mapPlacesWithIds(
+      ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)]
+  ): Map[(ExternalIds.Scheme, ExternalIds.ExternalId), List[PlaceFacts]] = Map.empty
 
 object MediaStore:
 
@@ -83,7 +98,13 @@ object MediaStore:
       )
     def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) =
       imports.commonsCategory(placeId, category, qid)
-    def checked(provider: ImportService.Provider, targetType: ImportService.TargetType, targetId: ImportService.TargetId, found: ImportService.FoundCount, qid: Option[Wikidata.Id]) =
+    def checked(
+        provider: ImportService.Provider,
+        targetType: ImportService.TargetType,
+        targetId: ImportService.TargetId,
+        found: ImportService.FoundCount,
+        qid: Option[Wikidata.Id]
+    ) =
       imports.checked(provider, targetType, targetId, found, qid)
     override def linkBasis(
         uid: AssetService.AssetUid,
@@ -109,4 +130,5 @@ object MediaStore:
     override def mapPlacesNamed(keys: List[ImportService.PlaceKey]) = imports.mapPlacesNamed(keys)
     override def placeExternalIds(ids: List[Place.Id]) = imports.placeExternalIds(ids)
     override def pleiadesIds(ids: List[Place.Id]) = imports.pleiadesIds(ids)
-    override def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)]) = imports.mapPlacesWithIds(ids)
+    override def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)]) =
+      imports.mapPlacesWithIds(ids)

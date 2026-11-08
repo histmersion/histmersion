@@ -29,15 +29,16 @@ object Query:
   type ToolDescription = ToolDescription.T
   object ToolDescription extends Newtype[String, Pure]
 
-
   type StatementsSql = String
   export QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
 
-  final case class QueryRequest(sql: QueryRequest.Sql) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class QueryRequest(sql: QueryRequest.Sql)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object QueryRequest:
-    export Query.{Statement as Sql}
-
+    export Query.Statement as Sql
 
   final case class QueryResult(
       columns: List[QueryResult.Columns],
@@ -46,7 +47,8 @@ object Query:
       truncated: QueryResult.Truncated,
       elapsedMs: QueryResult.ElapsedMs
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object QueryResult:
     type Columns = Columns.T
@@ -60,10 +62,13 @@ object Query:
     type ElapsedMs = ElapsedMs.T
     object ElapsedMs extends Newtype[Long, Pure]
 
-
-  final case class SchemaColumn(name: SchemaColumn.Name, dataType: SchemaColumn.DataType, nullable: SchemaColumn.Nullable)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class SchemaColumn(
+      name: SchemaColumn.Name,
+      dataType: SchemaColumn.DataType,
+      nullable: SchemaColumn.Nullable
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object SchemaColumn:
     type Name = Name.T
@@ -73,10 +78,10 @@ object Query:
     type Nullable = Nullable.T
     object Nullable extends Newtype[Boolean, Pure]
 
-
   final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object SchemaTable:
     type Name = Name.T
@@ -84,9 +89,10 @@ object Query:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
 
-
-  final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
+  final case class SchemaTables(tables: List[SchemaTable])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   private val Forbidden = Set(
     "SET",
@@ -183,20 +189,27 @@ object Query:
           val kw = leadingKeyword(one)
           if Forbidden.contains((kw)) then
             Left(
-              Problem(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
-                "WITH that only reads); transaction and session control are refused")
+              Problem(
+                s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
+                  "WITH that only reads); transaction and session control are refused"
+              )
             )
           else Right(one)
         case many =>
           Left(
-            Problem(s"${many.size} statements were given — `query` runs exactly ONE; " +
-              "drop the ';'-separated batch and ask again")
+            Problem(
+              s"${many.size} statements were given — `query` runs exactly ONE; " +
+                "drop the ';'-separated batch and ask again"
+            )
           )
 
   private def cell(v: Option[Query.MarkdownTableRows]): String =
     v.map(_.value).getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
-  def markdownTable(columns: List[Query.MarkdownTableColumns], rows: List[List[Option[Query.MarkdownTableRows]]]): String =
+  def markdownTable(
+      columns: List[Query.MarkdownTableColumns],
+      rows: List[List[Option[Query.MarkdownTableRows]]]
+  ): String =
     if columns.isEmpty then ("_(no columns)_")
     else
       val header = columns.map((_).value.replace("|", "\\|")).mkString("| ", " | ", " |")
@@ -207,7 +220,9 @@ object Query:
 
   def markdown(r: QueryResult): Markdown =
     val head =
-      s"### ${r.rowCount} row(s)${if ((r.truncated) == QueryResult.Truncated(true)) then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
+      s"### ${r.rowCount} row(s)${
+          if (r.truncated) == QueryResult.Truncated(true) then " (truncated by the row cap)" else ""
+        } · ${r.elapsedMs} ms"
     if r.rows.isEmpty then Markdown(s"$head\n\n_no rows_")
     else Markdown(s"$head\n\n${markdownTable(r.columns, r.rows)}")
 
@@ -259,10 +274,12 @@ object Query:
             s"${t.name}($cols)"
           }
           .mkString("; ")
-    ToolDescription("Run ONE read-only SQL statement against the Histmersion Postgres/PostGIS store and get columns + " +
-      "rows back as a Markdown table. Use it for the questions `search`/`facets`/`histogram` cannot " +
-      "express — cross-tabulations, counts by two dimensions, set differences. The statement runs " +
-      "in a READ ONLY transaction with a statement timeout and a row cap, so INSERT/UPDATE/DELETE/" +
-      "CREATE/DROP are refused by Postgres itself; SELECT only. Deep time is an int8range of SIGNED " +
-      "years (BCE negative) — read the inclusive upper bound as `upper(period) - 1`. Geometry is " +
-      "PostGIS; use ST_X/ST_Y/ST_AsText. Tables: " + tables + ".")
+    ToolDescription(
+      "Run ONE read-only SQL statement against the Histmersion Postgres/PostGIS store and get columns + " +
+        "rows back as a Markdown table. Use it for the questions `search`/`facets`/`histogram` cannot " +
+        "express — cross-tabulations, counts by two dimensions, set differences. The statement runs " +
+        "in a READ ONLY transaction with a statement timeout and a row cap, so INSERT/UPDATE/DELETE/" +
+        "CREATE/DROP are refused by Postgres itself; SELECT only. Deep time is an int8range of SIGNED " +
+        "years (BCE negative) — read the inclusive upper bound as `upper(period) - 1`. Geometry is " +
+        "PostGIS; use ST_X/ST_Y/ST_AsText. Tables: " + tables + "."
+    )

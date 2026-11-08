@@ -17,8 +17,6 @@ object TargetFlags:
   type Views = Views.T
   object Views extends Newtype[Boolean, Pure]
 
-
-
   final case class Raw(
       kind: String,
       id: Option[String],
@@ -58,6 +56,16 @@ object TargetFlags:
       zoom = r.zoom.map(MapZoom(_))
     yield
       val base = if kind.isItem then Target.item(kind, ItemKey(r.id.getOrElse(""))) else Target(kind)
-      base.modify(
-        _.lat).setTo(lat).modify(_.lon).setTo(lon).modify(_.zoom).setTo(zoom).modify(_.from).setTo(r.from.map(Year(_))).modify(_.to).setTo(r.to.map(Year(_))).modify(_.view).setTo(r.view.map(ViewState(_))
-      )
+      base
+        .modify(_.lat)
+        .setTo(lat)
+        .modify(_.lon)
+        .setTo(lon)
+        .modify(_.zoom)
+        .setTo(zoom)
+        .modify(_.from)
+        .setTo(r.from.map(Year(_)))
+        .modify(_.to)
+        .setTo(r.to.map(Year(_)))
+        .modify(_.view)
+        .setTo(r.view.map(ViewState(_)))

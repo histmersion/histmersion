@@ -112,7 +112,14 @@ class DomainSuite extends munit.FunSuite:
     assertEquals(r.idLabel, "10.1038/nature14317")
 
   test("SourceRef.idLabel falls back to citekey"):
-    val r = Source.Ref(Citekey("haak2015"), None, (Nil).map(AuthorName.apply), (Some(2015)).map(Year.apply), Title("Title"), Source.Status.Current)
+    val r = Source.Ref(
+      Citekey("haak2015"),
+      None,
+      (Nil).map(AuthorName.apply),
+      (Some(2015)).map(Year.apply),
+      Title("Title"),
+      Source.Status.Current
+    )
     assertEquals(r.idLabel, "haak2015")
 
   test("SourceRef.surname handles Firstname Lastname"):
@@ -133,7 +140,9 @@ class DomainSuite extends munit.FunSuite:
   test("SourceRef.shortAuthors three+ authors"):
     assertEquals(
       Source.Ref
-        .shortAuthors(List(AuthorName("Haak, Wolfgang"), AuthorName("Lazaridis, Iosif"), AuthorName("Patterson, Nick"))),
+        .shortAuthors(
+          List(AuthorName("Haak, Wolfgang"), AuthorName("Lazaridis, Iosif"), AuthorName("Patterson, Nick"))
+        ),
       "Haak et al."
     )
 

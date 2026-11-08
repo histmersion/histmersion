@@ -127,7 +127,13 @@ object OutboundTls:
       read: Read = read
   ): Option[(SSLContext, Summary)] =
     Option.when(cfg.custom) {
-      val sources = HttpPolicy.trust(HttpPolicy.SystemTrust(cfg.systemTrust.value), cfg.extraCa.map(f => HttpPolicy.Trust.PemFile.Path(f.value)), osName).filterNot(_ == HttpPolicy.Trust.Jdk)
+      val sources = HttpPolicy
+        .trust(
+          HttpPolicy.SystemTrust(cfg.systemTrust.value),
+          cfg.extraCa.map(f => HttpPolicy.Trust.PemFile.Path(f.value)),
+          osName
+        )
+        .filterNot(_ == HttpPolicy.Trust.Jdk)
       val got = sources.map(s => s -> roots(s, run, read))
       val extra = got.flatMap(_._2.toOption).flatten
       val notes = got.map {

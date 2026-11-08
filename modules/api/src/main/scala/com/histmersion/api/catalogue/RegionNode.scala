@@ -47,4 +47,6 @@ object RegionNode:
     (l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
 
   def rootEligible(n: RegionNode): Boolean =
-    RootKinds.contains(RootKindsText((n.kind).value)) && !((n.withdrawn) == Withdrawn(true)) && !((uncertainLabel(Label((n.label).value))) == (true))
+    RootKinds.contains(RootKindsText((n.kind).value)) && !((n.withdrawn) == Withdrawn(true)) && !((uncertainLabel(
+      Label((n.label).value)
+    )) == (true))

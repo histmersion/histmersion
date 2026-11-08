@@ -29,9 +29,24 @@ object Palette:
     com.histmersion.api.library.Edge.Kind.Wire("verifies")
   )
   val statuses: List[com.histmersion.api.library.Source.Status.Wire] =
-    List(com.histmersion.api.library.Source.Status.Wire("foundational"), com.histmersion.api.library.Source.Status.Wire("current"), com.histmersion.api.library.Source.Status.Wire("contested"), com.histmersion.api.library.Source.Status.Wire("superseded"), com.histmersion.api.library.Source.Status.Wire("debunked"), com.histmersion.api.library.Source.Status.Wire("retracted"), com.histmersion.api.library.Source.Status.Wire("unassessed"))
-  val mediaKinds: List[MediaItem.Kind] = List(MediaItem.Kind("figure"), MediaItem.Kind("photo"), MediaItem.Kind("map"), MediaItem.Kind("plan"), MediaItem.Kind("scan"))
-  val confidences: List[Confidence.Wire] = List(Confidence.Wire("high"), Confidence.Wire("medium"), Confidence.Wire("low"), Confidence.Wire("contested"))
+    List(
+      com.histmersion.api.library.Source.Status.Wire("foundational"),
+      com.histmersion.api.library.Source.Status.Wire("current"),
+      com.histmersion.api.library.Source.Status.Wire("contested"),
+      com.histmersion.api.library.Source.Status.Wire("superseded"),
+      com.histmersion.api.library.Source.Status.Wire("debunked"),
+      com.histmersion.api.library.Source.Status.Wire("retracted"),
+      com.histmersion.api.library.Source.Status.Wire("unassessed")
+    )
+  val mediaKinds: List[MediaItem.Kind] = List(
+    MediaItem.Kind("figure"),
+    MediaItem.Kind("photo"),
+    MediaItem.Kind("map"),
+    MediaItem.Kind("plan"),
+    MediaItem.Kind("scan")
+  )
+  val confidences: List[Confidence.Wire] =
+    List(Confidence.Wire("high"), Confidence.Wire("medium"), Confidence.Wire("low"), Confidence.Wire("contested"))
 
   val goalStages: List[Goal.Status.All] = Goal.Status.all
 
@@ -51,7 +66,9 @@ object Palette:
   def allTokens: List[CssVar] =
     (edgeKinds.map(edge) :+ CssVar("--edge-default")) ++ (statuses.map(status) :+ CssVar("--status-default")) ++
       (mediaKinds.map(media) :+ CssVar("--media-default")) ++ confidences.map(confidence) ++
-      (0 until rampStops.value).map(i => CssVar(s"--ramp-$i")) ++ goalStages.flatMap(s => List(goalStage(s), goalStageSoft(s))) ++
+      (0 until rampStops.value).map(i => CssVar(s"--ramp-$i")) ++ goalStages.flatMap(s =>
+        List(goalStage(s), goalStageSoft(s))
+      ) ++
       List("--graph-hover", "--graph-label", "--graph-label-hover", "--place-pick", "--place-preview").map(CssVar(_)) ++
       mapLabelTokens
 

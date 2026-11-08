@@ -25,17 +25,22 @@ object OaFetch:
       CoreBudget.quotas(core, CoreBudget.limits(loaded.config.acquire.core))
     )
     val cfg = loaded.config.acquire
-    FetchChain.of(
-      scala.collection.immutable.ListMap.from(
-        g.registries.sourceFetchers.iterator.map((k, v) => Plugin.Id.assume(k.value) -> v)
-      ),
-      cfg.chainIds.flatMap(c => Plugin.Id.option(c.value)),
-      FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
-      plugins = g.registered.map(p => Plugin.Id.assume(p.value))
-    )._1
+    FetchChain
+      .of(
+        scala.collection.immutable.ListMap.from(
+          g.registries.sourceFetchers.iterator.map((k, v) => Plugin.Id.assume(k.value) -> v)
+        ),
+        cfg.chainIds.flatMap(c => Plugin.Id.option(c.value)),
+        FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
+        plugins = g.registered.map(p => Plugin.Id.assume(p.value))
+      )
+      ._1
 
   /** Hex MD5 of a download, to compare with the one a PMC dataset record or a Zenodo record states; `None` when the
     * runtime offers no MD5 (the check is then skipped, never failed).
     */
   def md5(b: Bytes): Option[Md5] =
-    scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b.value).map("%02x".format(_)).mkString).toOption.map(Md5(_))
+    scala.util
+      .Try(java.security.MessageDigest.getInstance("MD5").digest(b.value).map("%02x".format(_)).mkString)
+      .toOption
+      .map(Md5(_))

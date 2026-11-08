@@ -20,8 +20,10 @@ final case class Bookmark(
     createdAt: Bookmark.CreatedAt = Bookmark.CreatedAt(""),
     updatedAt: Bookmark.UpdatedAt = Bookmark.UpdatedAt("")
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
-  def name: Bookmark.Name = Bookmark.Name(label.map(_.value: String).filter(_.trim.nonEmpty).getOrElse(title.value: String))
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
+  def name: Bookmark.Name =
+    Bookmark.Name(label.map(_.value: String).filter(_.trim.nonEmpty).getOrElse(title.value: String))
 
 object Bookmark:
   type Name = Name.T
@@ -29,16 +31,15 @@ object Bookmark:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
-
-
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]
 
-  final case class Edit(label: Option[Label] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
-
+  final case class Edit(label: Option[Label] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   type Id = Id.T
 
@@ -50,7 +51,7 @@ object Bookmark:
   type Label = Label.T
 
   object Label extends Newtype[String, Pure]:
-    export Bookmark.{Problem as TidyResultPart1}
+    export Bookmark.Problem as TidyResultPart1
 
     val MaxChars = 200
 
@@ -65,4 +66,5 @@ object Bookmark:
 
   final case class New(target: Target, label: Option[Label] = None, title: Option[Title] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

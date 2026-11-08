@@ -16,7 +16,6 @@ object CritiqueState:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: Wire): Option[CritiqueState] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given WireEnumValues[CritiqueState]:
     def all: Array[CritiqueState] = values

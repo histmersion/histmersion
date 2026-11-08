@@ -19,7 +19,8 @@ object Awmc extends DownloadedGazetteer:
   object Ordinal extends Newtype[Int, Pure]
 
   val title = GazetteerSource.TitleResult("AWMC classical-world regional names and features")
-  override val description = GazetteerSource.DescriptionResult("AWMC classical-world regional names and features (ODbL, ~2600 features)")
+  override val description =
+    GazetteerSource.DescriptionResult("AWMC classical-world regional names and features (ODbL, ~2600 features)")
   val url = Plugin.Http.GetUrl(
     "https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson"
   )
@@ -30,15 +31,19 @@ object Awmc extends DownloadedGazetteer:
   )
 
   def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
-    io.circe.parser.parse(text.value).left.map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
-      val features = doc.asObject
-        .flatMap(_("features"))
-        .flatMap(_.asArray)
-        .map(_.toList)
-        .orElse(doc.asArray.map(_.toList))
-        .toRight(DownloadedGazetteer.Problem("not a GeoJSON FeatureCollection"))
-      features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
-    }
+    io.circe.parser
+      .parse(text.value)
+      .left
+      .map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}"))
+      .flatMap { doc =>
+        val features = doc.asObject
+          .flatMap(_("features"))
+          .flatMap(_.asArray)
+          .map(_.toList)
+          .orElse(doc.asArray.map(_.toList))
+          .toRight(DownloadedGazetteer.Problem("not a GeoJSON FeatureCollection"))
+        features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
+      }
 
   def readFeature(j: Json, ordinal: Ordinal): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
     j.asObject.toRight(DownloadedGazetteer.Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
@@ -65,7 +70,8 @@ object Awmc extends DownloadedGazetteer:
             label = GazetteerPlace.Label(title),
             kind = kindOf(GazetteerPlace.Kind(pType)),
             geometry = geom.map(g => GazetteerPlace.Geometry(g)),
-            properties = Some(leftover).filter(_.nonEmpty).map(o => GazetteerPlace.Properties(Json.fromJsonObject(o).noSpaces)),
+            properties =
+              Some(leftover).filter(_.nonEmpty).map(o => GazetteerPlace.Properties(Json.fromJsonObject(o).noSpaces)),
             names = List(GazetteerName(GazetteerName.Name(title)))
           )
         )

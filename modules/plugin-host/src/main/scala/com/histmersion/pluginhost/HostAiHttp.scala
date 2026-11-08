@@ -43,8 +43,14 @@ final class HostAiHttp extends AiHttp:
       _.POST(java.net.http.HttpRequest.BodyPublishers.ofString(body.value, StandardCharsets.UTF_8))
     ).left.map(m => AiHttp.PostResultPart1(m))
 
-  def get(url: AiHttp.GetUrl, headers: Map[AiHttp.GetHeadersPart1, AiHttp.GetHeadersPart2], timeoutSeconds: AiHttp.GetTimeoutSeconds): Either[AiHttp.GetResultPart1, AiHttp.Response] =
-    send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET()).left.map(m => AiHttp.GetResultPart1(m))
+  def get(
+      url: AiHttp.GetUrl,
+      headers: Map[AiHttp.GetHeadersPart1, AiHttp.GetHeadersPart2],
+      timeoutSeconds: AiHttp.GetTimeoutSeconds
+  ): Either[AiHttp.GetResultPart1, AiHttp.Response] =
+    send(url.value, headers.map((k, v) => k.value -> v.value), timeoutSeconds.value, _.GET()).left.map(m =>
+      AiHttp.GetResultPart1(m)
+    )
 
   private def send(
       url: String,
@@ -64,7 +70,8 @@ final class HostAiHttp extends AiHttp:
           AiHttp.Response.Status(r.statusCode),
           AiHttp.Response.Body(r.body),
           r.headers.map.asScala.toMap.collect {
-            case (k, v) if !v.isEmpty => AiHttp.Response.HeadersKey(k.toLowerCase(java.util.Locale.ROOT)) -> AiHttp.Response.HeadersValue(v.get(0))
+            case (k, v) if !v.isEmpty =>
+              AiHttp.Response.HeadersKey(k.toLowerCase(java.util.Locale.ROOT)) -> AiHttp.Response.HeadersValue(v.get(0))
           }
         )
       )

@@ -55,7 +55,6 @@ final case class CalibreFixture(dir: Path):
 object CalibreFixture:
   private given CanEqual[Path, Path] = CanEqual.derived
 
-
   /** One book of the fixture, in `calibredb list --for-machine`'s terms (`authors` joined by ` & `). */
   private given LocalFiles = new DiskLocalFiles
   private given Processes = new SystemProcesses

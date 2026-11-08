@@ -82,7 +82,8 @@ object JobRuns:
     def createIn(run: RunRow)(using DbCon): Run.Id = JobRepo.insertRun(run)
     def pipelineVersion(id: Run.Id): Option[Pipeline.Version] = db.read(JobRepo.runPipelineVersion(id))
     def heartbeat(kind: Job.Kind, id: Run.Id): Unit = db.transact(JobRepo.runHeartbeat(kind, id))
-    def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount = db.read(JobRepo.runsIn(kind, statuses))
+    def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
+      db.read(JobRepo.runsIn(kind, statuses))
     def move(
         kind: Job.Kind,
         id: Run.Id,
@@ -91,7 +92,8 @@ object JobRuns:
         error: Option[JobRow.Error],
         progress: Option[JobRow.Progress],
         resumeAt: Option[Instant]
-    ): Boolean = db.transact(JobRepo.moveRun(kind, id, from, to, error, progress, resumeAt.map(t => JobRepo.ResumeAt(t.toString))))
+    ): Boolean =
+      db.transact(JobRepo.moveRun(kind, id, from, to, error, progress, resumeAt.map(t => JobRepo.ResumeAt(t.toString))))
     def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id] =
       db.read(JobRepo.runsDue(kind, paused, JobRepo.DueAt(now.toString)))
     def pausedWith(
@@ -101,8 +103,10 @@ object JobRuns:
         now: Instant
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], JobRepo.Problem)] =
       db.read(JobRepo.runsPausedLike(kind, paused, s"$prefix%", JobRepo.DueAt(now.toString)))
-    def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit = db.transact(JobRepo.runProgress(kind, id, text))
-    def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit = db.transact(JobRepo.runWarning(kind, id, warning))
+    def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
+      db.transact(JobRepo.runProgress(kind, id, text))
+    def warn(kind: Job.Kind, id: Run.Id, warning: JobRepo.WarningText): Unit =
+      db.transact(JobRepo.runWarning(kind, id, warning))
     def budget(kind: Job.Kind, id: Run.Id, usd: Option[BigDecimal], tokens: Option[JobRepo.TokenBudget]): Unit =
       db.transact(JobRepo.runBudget(kind, id, usd, tokens))
     def reconcile(
@@ -116,7 +120,6 @@ object JobRuns:
       db.transact(JobRepo.runsReconciled(kind, running, paused, error, queued, except))
     def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant): Boolean =
       db.transact(JobRepo.runResumesAt(kind, id, paused, JobRepo.ResumeAt(at.toString)))
-
 
   /** The same rows in memory, stamped by `now` (the database's `now()`), each with the order it was made and last
     * changed in; behaves as the database does.
@@ -146,10 +149,21 @@ object JobRuns:
       val n = stamp.incrementAndGet()
       val _ = state.updateAndGet(
         _.updated(
-          id,
-          {
+          id, {
             val at = now()
-            JobRunState(JobRunState.Id(id.value), run, None, None, None, Nil, None, JobRunState.Created(n), JobRunState.Updated(n), at, at)
+            JobRunState(
+              JobRunState.Id(id.value),
+              run,
+              None,
+              None,
+              None,
+              Nil,
+              None,
+              JobRunState.Created(n),
+              JobRunState.Updated(n),
+              at,
+              at
+            )
           }
         )
       )
@@ -160,7 +174,9 @@ object JobRuns:
       val _ = change(kind, id)(_.modify(_.heartbeatAt).setTo(Some(now())))
     def count(kind: Job.Kind, statuses: (RunRow.Status, RunRow.Status)): RowCount =
       RowCount(
-        state.get.values.count(r => r.row.kind.value == kind.value && (r.row.status == statuses._1 || r.row.status == statuses._2))
+        state.get.values.count(r =>
+          r.row.kind.value == kind.value && (r.row.status == statuses._1 || r.row.status == statuses._2)
+        )
       )
     def move(
         kind: Job.Kind,
@@ -201,10 +217,14 @@ object JobRuns:
     ): Vector[(Run.Id, Pipeline.Wire, Option[RunRow.Model], JobRepo.Problem)] =
       mine(kind)
         .filter((_, r) =>
-          r.row.status == paused && r.error.exists(_.value.startsWith(prefix.value)) && r.resumeAt.forall(_.isAfter(now))
+          r.row.status == paused && r.error.exists(_.value.startsWith(prefix.value)) && r.resumeAt.forall(
+            _.isAfter(now)
+          )
         )
         .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
-        .map((id, r) => (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, JobRepo.Problem(r.error.fold("")(_.value))))
+        .map((id, r) =>
+          (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, JobRepo.Problem(r.error.fold("")(_.value)))
+        )
         .toVector
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
       val _ = change(kind, id)(r => touched(r.modify(_.progress).setTo(Some(JobRunState.Progress(text.value)))))
@@ -227,11 +247,17 @@ object JobRuns:
         queued: RunRow.Status,
         except: List[Run.Id]
     ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
-      val moving = mine(kind).filter((id, r) => r.row.status == running && !except.contains(id)).sortBy[Long]((_, r) => r.created.value)
+      val moving = mine(kind)
+        .filter((id, r) => r.row.status == running && !except.contains(id))
+        .sortBy[Long]((_, r) => r.created.value)
       moving.foreach((id, _) =>
-        change(kind, id)(x => touched(x.modify(_.row.status).setTo(paused).modify(_.error).setTo(Some(JobRunState.Error(error.value))))): Unit
+        change(kind, id)(x =>
+          touched(x.modify(_.row.status).setTo(paused).modify(_.error).setTo(Some(JobRunState.Error(error.value))))
+        ): Unit
       )
-      val waiting = mine(kind).filter((id, r) => r.row.status == queued && !except.contains(id)).sortBy[Long]((_, r) => r.created.value)
+      val waiting = mine(kind)
+        .filter((id, r) => r.row.status == queued && !except.contains(id))
+        .sortBy[Long]((_, r) => r.created.value)
       (moving.map((id, r) => (id, Some(r.row.origin))).toVector, waiting.map(_._1).toVector)
     def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant): Boolean =
       get(id).exists(_.row.status == paused) && change(kind, id)(r => touched(r.modify(_.resumeAt).setTo(Some(at))))

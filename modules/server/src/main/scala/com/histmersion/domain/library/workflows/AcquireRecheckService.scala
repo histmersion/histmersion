@@ -114,17 +114,25 @@ final class AcquireRecheckService(
   final private case class Facts(item: Queue.QueueItem, action: Action, last: Option[AcquireCheckRow])
 
   private def facts(only: Option[RecheckRequest.Id]): List[Facts] =
-    val items = site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_.value == i.id.value))
+    val items =
+      site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_.value == i.id.value))
     val dois = items.map(i => i.id.value -> orderedDois(i.text)).toMap
     val held = checks.heldByDoi(dois.values.flatMap(_.headOption).toList)
     val last = checks.of(items.map(i => AcquireCheckRow.Item(i.id.value)))
     items.map(i =>
-      Facts(i, AcquireRecheck.action(dois.getOrElse(i.id.value, Nil), held.get), last.get(AcquireCheckRow.Item(i.id.value)))
+      Facts(
+        i,
+        AcquireRecheck.action(dois.getOrElse(i.id.value, Nil), held.get),
+        last.get(AcquireCheckRow.Item(i.id.value))
+      )
     )
 
   private def orderedDois(text: Queue.QueueItem.Text): List[Doi] =
     val lower = text.value.toLowerCase
-    Scheduling.dois(text.value).toList.sortBy(d => (lower.indexOf(d.value) match { case -1 => Int.MaxValue; case i => i }, d.value))
+    Scheduling
+      .dois(text.value)
+      .toList
+      .sortBy(d => (lower.indexOf(d.value) match { case -1 => Int.MaxValue; case i => i }, d.value))
 
   /** How many items were tried today, and how many of them fetched a copy. */
   private def triedToday(now: Instant): (Int, Int) =
@@ -156,7 +164,9 @@ final class AcquireRecheckService(
   /** The items with a DOI to look up, in [[AcquireRecheck.order]]. */
   private def fetchable(fs: List[Facts]): List[Facts] =
     val byId = fs.map(f => f.item.id.value -> f).toMap
-    AcquireRecheck.order(fs.filter(_.action.isInstanceOf[Action.Fetch]).map(candidate)).flatMap(c => byId.get(c.item.value))
+    AcquireRecheck
+      .order(fs.filter(_.action.isInstanceOf[Action.Fetch]).map(candidate))
+      .flatMap(c => byId.get(c.item.value))
 
   /** The items a pass would try, in order: due, the never-checked first, then the oldest check. */
   private def due(fs: List[Facts], generation: AcquireRecheck.LastCheck.Generation, now: Instant): List[Facts] =
@@ -196,15 +206,21 @@ final class AcquireRecheckService(
     */
   def run(in: RecheckRequest, now: Instant = Instant.now(agents.clock)): Either[Api.Error, RecheckResult] =
     in.id.filter(id =>
-      !site.queues.get(QueueItemId(id.value)).exists(i => i.list == Queue.Kind.Acquire.label && i.status.value == Queue.Open)
+      !site.queues
+        .get(QueueItemId(id.value))
+        .exists(i => i.list == Queue.Kind.Acquire.label && i.status.value == Queue.Open)
     ) match
       case Some(id) =>
         Left(Api.Error(Api.Error.Message(s"no open acquisition item #$id"), Some(Api.Error.Code(Write.CodeNotFound))))
-      case None if in.limit.exists(_.value < 0) => Left(Write.invalid(Api.Error.Message("--limit is 0 or more")))
+      case None if in.limit.exists(_.value < 0)    => Left(Write.invalid(Api.Error.Message("--limit is 0 or more")))
       case None if in.all.value && in.id.isDefined =>
         Left(Write.invalid(Api.Error.Message("--all re-checks every open item; --id one of them — not both")))
       case None if in.all.value && in.limit.isDefined =>
-        Left(Write.invalid(Api.Error.Message("--all re-checks every open item, past every cap; --limit caps a pass — not both")))
+        Left(
+          Write.invalid(
+            Api.Error.Message("--all re-checks every open item, past every cap; --limit caps a pass — not both")
+          )
+        )
       case None if !in.dryRun.value && jobSlot.isRunning => Left(busy)
       case None                                          =>
         if !in.dryRun.value && agents.drain.draining then
@@ -223,7 +239,11 @@ final class AcquireRecheckService(
         else site.maintenance.guard(WriteGate.OperationName("queue/acquire/recheck"))(byHand(in, now))
 
   private def busy: Api.Error =
-    BackgroundJob.busy(BackgroundJob.Work("an acquisition list re-check job"), jobSlot.current, Some(Api.Error.Code(AgentsApi.CodeConflict)))
+    BackgroundJob.busy(
+      BackgroundJob.Work("an acquisition list re-check job"),
+      jobSlot.current,
+      Some(Api.Error.Code(AgentsApi.CodeConflict))
+    )
 
   private def passBusy: Api.Error =
     if jobSlot.isRunning then busy else error("a re-check pass is running already; try again in a moment")
@@ -234,21 +254,42 @@ final class AcquireRecheckService(
   private def byHand(in: RecheckRequest, now: Instant): Either[Api.Error, RecheckResult] =
     val by = By(in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
     val fs = facts(None)
-    val base = RecheckResult(dryRun = RecheckResult.DryRun(false), RecheckResult.Open(fs.size), RecheckResult.WithDoi(fs.count(_.action != Action.NoDoi)))
+    val base = RecheckResult(
+      dryRun = RecheckResult.DryRun(false),
+      RecheckResult.Open(fs.size),
+      RecheckResult.WithDoi(fs.count(_.action != Action.NoDoi))
+    )
     if in.all.value then
       val stopped = latestJob()
         .filter(resumable)
-        .flatMap(j => j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).filter(_.all.value).flatMap(planOf).map(j -> _))
+        .flatMap(j =>
+          j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).filter(_.all.value).flatMap(planOf).map(j -> _)
+        )
       val todo = fetchable(fs)
       stopped match
         case Some((j, plan)) =>
           startJob(plan, by, Some(jobIdOf(j))).map(job =>
-            base.modify(
-              _.due).setTo(RecheckResult.Due(todo.size)).modify(_.allowance).setTo(RecheckResult.Allowance(todo.size)).modify(_.job).setTo(Some(job)).modify(_.note).setTo(Some(RecheckResult.Note(s"resumes job ${j.id} (${stopReason(j)}): the items it checked are skipped")))
+            base
+              .modify(_.due)
+              .setTo(RecheckResult.Due(todo.size))
+              .modify(_.allowance)
+              .setTo(RecheckResult.Allowance(todo.size))
+              .modify(_.job)
+              .setTo(Some(job))
+              .modify(_.note)
+              .setTo(
+                Some(RecheckResult.Note(s"resumes job ${j.id} (${stopReason(j)}): the items it checked are skipped"))
+              )
           )
         case None =>
           startJob(JobPlan(all = JobPlan.All(true), JobPlan.UpTo(0), now), by, None).map(job =>
-            base.modify(_.due).setTo(RecheckResult.Due(todo.size)).modify(_.allowance).setTo(RecheckResult.Allowance(todo.size)).modify(_.job).setTo(Some(job))
+            base
+              .modify(_.due)
+              .setTo(RecheckResult.Due(todo.size))
+              .modify(_.allowance)
+              .setTo(RecheckResult.Allowance(todo.size))
+              .modify(_.job)
+              .setTo(Some(job))
           )
     else
       val s = settings
@@ -268,7 +309,13 @@ final class AcquireRecheckService(
       if upTo <= 1 then pass(in, now).toRight(passBusy)
       else
         startJob(JobPlan(all = JobPlan.All(false), JobPlan.UpTo(upTo), now), by, None).map(job =>
-          base.modify(_.due).setTo(RecheckResult.Due(dueNow.size)).modify(_.allowance).setTo(RecheckResult.Allowance(upTo)).modify(_.job).setTo(Some(job))
+          base
+            .modify(_.due)
+            .setTo(RecheckResult.Due(dueNow.size))
+            .modify(_.allowance)
+            .setTo(RecheckResult.Allowance(upTo))
+            .modify(_.job)
+            .setTo(Some(job))
         )
 
   // ── the job ────────────────────────────────────────────────────────────────────────────────────
@@ -278,7 +325,10 @@ final class AcquireRecheckService(
     site.jobs.newest(jobKind)
 
   private def planOf(d: RecheckJob): Option[JobPlan] =
-    scala.util.Try(Instant.parse(d.since.value)).toOption.map(JobPlan(JobPlan.All(d.all.value), JobPlan.UpTo(d.upTo.value.toInt), _))
+    scala.util
+      .Try(Instant.parse(d.since.value))
+      .toOption
+      .map(JobPlan(JobPlan.All(d.all.value), JobPlan.UpTo(d.upTo.value.toInt), _))
 
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
@@ -325,7 +375,10 @@ final class AcquireRecheckService(
     passing.lock()
     try
       val up = upstream()
-      if !up.connected then BackgroundJob.Outcome.failed(BackgroundJob.Outcome.Error("the acquisition toolset is not connected: nothing tried"))
+      if !up.connected then
+        BackgroundJob.Outcome.failed(
+          BackgroundJob.Outcome.Error("the acquisition toolset is not connected: nothing tried")
+        )
       else
         val gen = up.fetcherGeneration
         def report(line: AcquireRecheck.ProgressLine): Unit = progress(JobInfo.Progress(line.value))
@@ -425,9 +478,20 @@ final class AcquireRecheckService(
     val noDoi = fs
       .filter(_.action == Action.NoDoi)
       .map(f =>
-        RecheckRow(RecheckRow.Item(f.item.id.value), None, RecheckRow.Action(NoDoi), RecheckRow.Detail("no DOI in its text"))
+        RecheckRow(
+          RecheckRow.Item(f.item.id.value),
+          None,
+          RecheckRow.Action(NoDoi),
+          RecheckRow.Detail("no DOI in its text")
+        )
       )
-    val base = RecheckResult(RecheckResult.DryRun(in.dryRun.value), RecheckResult.Open(fs.size), RecheckResult.WithDoi(withDoi), RecheckResult.Due(dueNow.size), RecheckResult.Allowance(room))
+    val base = RecheckResult(
+      RecheckResult.DryRun(in.dryRun.value),
+      RecheckResult.Open(fs.size),
+      RecheckResult.WithDoi(withDoi),
+      RecheckResult.Due(dueNow.size),
+      RecheckResult.Allowance(room)
+    )
     val capNote = Option.when(picks.size < dueNow.size && in.id.isEmpty && !in.all.value)(
       RecheckResult.Note(
         s"${dueNow.size - picks.size} due item(s) wait for the next pass: at most $perPass a pass, " +
@@ -460,15 +524,29 @@ final class AcquireRecheckService(
       base.modify(_.rows).setTo(rows).modify(_.note).setTo(capNote)
     else if !up.connected && picks.nonEmpty then
       val closed = closes.flatMap((f, ck) => close(f, ck, gen, now))
-      base.modify(
-        _.closed).setTo(RecheckResult.Closed(closed.size)).modify(_.rows).setTo(closed).modify(_.note).setTo(Some(RecheckResult.Note("the acquisition toolset is not connected: nothing tried"))
-      )
+      base
+        .modify(_.closed)
+        .setTo(RecheckResult.Closed(closed.size))
+        .modify(_.rows)
+        .setTo(closed)
+        .modify(_.note)
+        .setTo(Some(RecheckResult.Note("the acquisition toolset is not connected: nothing tried")))
     else
       val closed = closes.flatMap((f, ck) => close(f, ck, gen, now))
       val outs = picks.map(f => attempt(f, gen, now).row)
-      val r = base.modify(
-        _.closed).setTo(RecheckResult.Closed(closed.size)).modify(_.fetched).setTo(RecheckResult.Fetched(outs.count(_.action.value == Fetched))).modify(_.noCopy).setTo(RecheckResult.NoCopy(outs.count(_.action.value == NoCopy))).modify(_.failed).setTo(RecheckResult.Failed(outs.count(_.action.value == Failed))).modify(_.rows).setTo(closed ++ outs ++ (if in.id.isDefined then noDoi else Nil)).modify(_.note).setTo(capNote
-      )
+      val r = base
+        .modify(_.closed)
+        .setTo(RecheckResult.Closed(closed.size))
+        .modify(_.fetched)
+        .setTo(RecheckResult.Fetched(outs.count(_.action.value == Fetched)))
+        .modify(_.noCopy)
+        .setTo(RecheckResult.NoCopy(outs.count(_.action.value == NoCopy)))
+        .modify(_.failed)
+        .setTo(RecheckResult.Failed(outs.count(_.action.value == Failed)))
+        .modify(_.rows)
+        .setTo(closed ++ outs ++ (if in.id.isDefined then noDoi else Nil))
+        .modify(_.note)
+        .setTo(capNote)
       if r.closed.value + r.fetched.value + r.noCopy.value + r.failed.value > 0 then
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
         val _ = site.workLists.add(
@@ -485,7 +563,10 @@ final class AcquireRecheckService(
       now: Instant,
       job: Option[Job.Id] = None
   ): Option[RecheckRow] =
-    site.workLists.patch(QueueItemId(f.item.id.value), Queue.fulfil(f.item, apiCk(citekey), job.map(j => Queue.QueueItem.ClosedBy(j.value)))) match
+    site.workLists.patch(
+      QueueItemId(f.item.id.value),
+      Queue.fulfil(f.item, apiCk(citekey), job.map(j => Queue.QueueItem.ClosedBy(j.value)))
+    ) match
       case Left(e) =>
         scribe.warn(s"acquire re-check: item #${f.item.id} could not be closed: ${e.message}")
         None
@@ -516,7 +597,7 @@ final class AcquireRecheckService(
       case Action.Fetch(d, i) => (Some(d), i)
       case _                  => (None, None)
     val (outcome, detail, ck) = doi match
-      case None => (Outcome.Failed, "no DOI in its text", None)
+      case None    => (Outcome.Failed, "no DOI in its text", None)
       case Some(d) =>
         try
           upstream().ingestLegalInto(d, into) match
@@ -524,11 +605,17 @@ final class AcquireRecheckService(
             case Left(m)  => (AcquireRecheck.failure(IngestBacklog.Problem(m.value)), m.value, into.map(apiCk))
         catch
           case e: InterruptedException => throw e
-          case e: Exception            => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk))
+          case e: Exception => (Outcome.Failed, s"${e.getClass.getSimpleName}: ${e.getMessage}", into.map(apiCk))
     val why = AcquireRecheck.reason(now, outcome, AcquireRecheck.Detail(detail))
     checks.record(AcquireCheckRow.Item(f.item.id.value), now, generation, outcome, AcquireCheckRow.Reason(why.value))
     Tried(
-      RecheckRow(RecheckRow.Item(f.item.id.value), doi.map(apiDoi), RecheckRow.Action(outcome.wire.value), RecheckRow.Detail(why.value), ck),
+      RecheckRow(
+        RecheckRow.Item(f.item.id.value),
+        doi.map(apiDoi),
+        RecheckRow.Action(outcome.wire.value),
+        RecheckRow.Detail(why.value),
+        ck
+      ),
       outcome,
       detail
     )
@@ -551,7 +638,8 @@ final class AcquireRecheckService(
   /** The status line's facts (`agent autopilot status`, `about`); readable with agents off. */
   def status(now: Instant = Instant.now(agents.clock)): RecheckStatus =
     val s = settings
-    if !s.enabled.value then RecheckStatus(enabled = RecheckStatus.Enabled(false), job = jobLine().map(RecheckStatus.Job(_)))
+    if !s.enabled.value then
+      RecheckStatus(enabled = RecheckStatus.Enabled(false), job = jobLine().map(RecheckStatus.Job(_)))
     else
       val gen = upstream().fetcherGeneration
       val fs = facts(None)

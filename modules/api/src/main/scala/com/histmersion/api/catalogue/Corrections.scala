@@ -34,7 +34,11 @@ object Corrections:
     case Outcome.Conflict => StatusResult(Correction.Status.Conflict)
 
   def counts(os: Iterable[Outcome]): Correction.Counts =
-    Correction.Counts(Correction.Counts.Kept(os.count(_ == Outcome.Keep)), Correction.Counts.Retired(os.count(_ == Outcome.Retire)), Correction.Counts.Conflicts(os.count(_ == Outcome.Conflict)))
+    Correction.Counts(
+      Correction.Counts.Kept(os.count(_ == Outcome.Keep)),
+      Correction.Counts.Retired(os.count(_ == Outcome.Retire)),
+      Correction.Counts.Conflicts(os.count(_ == Outcome.Conflict))
+    )
 
   def show(json: String): String =
     io.circe.parser.parse(json).toOption match

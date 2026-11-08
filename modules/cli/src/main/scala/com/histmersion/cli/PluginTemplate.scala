@@ -14,7 +14,6 @@ object PluginTemplate:
   type ClassName = ClassName.T
   object ClassName extends Newtype[String, Pure]
 
-
   final case class Request(
       id: PluginId,
       kind: PluginKind,
@@ -46,7 +45,8 @@ object PluginTemplate:
 
   val ServicesPath = "resources/META-INF/services/com.histmersion.plugin.Plugin"
 
-  def defaultsPath(id: PluginId): TemplateFile.Path = TemplateFile.Path(s"resources/META-INF/histmersion/plugins/${id.value}.conf")
+  def defaultsPath(id: PluginId): TemplateFile.Path =
+    TemplateFile.Path(s"resources/META-INF/histmersion/plugins/${id.value}.conf")
 
   /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and name, so no two
     * jars' metadata files share a path.
@@ -65,7 +65,10 @@ object PluginTemplate:
     val name = r.id.typeName
     val core = List(
       TemplateFile(TemplateFile.Path(ProjectFile), TemplateFile.Content(fill(r, directives(r)))),
-      TemplateFile(TemplateFile.Path(s"$name.scala"), TemplateFile.Content(fill(r, header(r) + KindSources.main(r.kind)))),
+      TemplateFile(
+        TemplateFile.Path(s"$name.scala"),
+        TemplateFile.Content(fill(r, header(r) + KindSources.main(r.kind)))
+      ),
       TemplateFile(
         TemplateFile.Path(s"$name.test.scala"),
         TemplateFile.Content(fill(r, header(r) + KindSources.test(r.kind) + packagingSuite))

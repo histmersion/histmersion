@@ -17,7 +17,8 @@ final case class FormatIssue(
     message: FormatIssue.Message,
     fix: Option[FormatIssue.Fix] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object FormatIssue:
   type Line = Line.T

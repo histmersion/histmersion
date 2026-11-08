@@ -57,28 +57,66 @@ class EventCatalogSuite extends munit.FunSuite:
     assertEquals(EventTaxonomy.canonical(EventSummary.Kind("Rebellion")), EventTaxonomy.Revolt)
     assertEquals(EventTaxonomy.group(EventSummary.Kind("eruption")), EventTaxonomy.Natural)
     assertEquals(EventTaxonomy.group(EventSummary.Kind("siege")), EventTaxonomy.Human)
-    assertEquals(EventTaxonomy.group(EventSummary.Kind("coronation")), EventTaxonomy.Human, "an unknown kind is human, generic icon")
+    assertEquals(
+      EventTaxonomy.group(EventSummary.Kind("coronation")),
+      EventTaxonomy.Human,
+      "an unknown kind is human, generic icon"
+    )
     assertEquals(EventTaxonomy.icon(EventSummary.Kind("coronation")), "circle-dot")
 
   test("a natural_disaster becomes the sub-kind its label names, else stays generic"):
-    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Minoan eruption of Thera")), "eruption")
-    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("4.2 kiloyear climate event")), "climate_event")
-    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Severe drought coincident with Hittite collapse")), "drought")
-    assertEquals(EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Late Bronze Age environmental crisis")), "natural_disaster")
-    assertEquals(EventTaxonomy.refine(EventSummary.Kind("battle"), EventSummary.Label("Battle near a volcano")), "battle", "only the generic kind is refined")
+    assertEquals(
+      EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Minoan eruption of Thera")),
+      "eruption"
+    )
+    assertEquals(
+      EventTaxonomy.refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("4.2 kiloyear climate event")),
+      "climate_event"
+    )
+    assertEquals(
+      EventTaxonomy.refine(
+        EventSummary.Kind("natural_disaster"),
+        EventSummary.Label("Severe drought coincident with Hittite collapse")
+      ),
+      "drought"
+    )
+    assertEquals(
+      EventTaxonomy
+        .refine(EventSummary.Kind("natural_disaster"), EventSummary.Label("Late Bronze Age environmental crisis")),
+      "natural_disaster"
+    )
+    assertEquals(
+      EventTaxonomy.refine(EventSummary.Kind("battle"), EventSummary.Label("Battle near a volcano")),
+      "battle",
+      "only the generic kind is refined"
+    )
 
   test("a kind filter: a group selects its kinds (human = every non-natural one), a kind its aliases"):
     val nat = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("natural"))).get
     assert(!nat.negate.value && nat.kinds.contains("eruption") && nat.kinds.contains("plague"))
     val hum = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("human"))).get
     assert(hum.negate.value && hum.kinds == nat.kinds)
-    assertEquals(EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("revolt"))).get.kinds.toSet, Set("revolt", "rebellion", "uprising"))
+    assertEquals(
+      EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("revolt"))).get.kinds.toSet,
+      Set("revolt", "rebellion", "uprising")
+    )
     assertEquals(EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter(" "))), None)
-    assert(EventTaxonomy.matches(EventTaxonomy.KindCondition.Filter("natural"), EventSummary.Kind("tsunami")) && !EventTaxonomy.matches(EventTaxonomy.KindCondition.Filter("human"), EventSummary.Kind("tsunami")))
+    assert(
+      EventTaxonomy.matches(
+        EventTaxonomy.KindCondition.Filter("natural"),
+        EventSummary.Kind("tsunami")
+      ) && !EventTaxonomy.matches(EventTaxonomy.KindCondition.Filter("human"), EventSummary.Kind("tsunami"))
+    )
 
   test("thresholds: all inside the region, large ones outside, nothing without a position"):
     val region = BBox.parse(BBox.Text("-25,20,90,70"))
-    val t = EventProviders.Thresholds(region, EventProviders.Thresholds.RegionVei(0), EventProviders.Thresholds.OutsideVei(4), EventProviders.Thresholds.RegionMagnitude(0), EventProviders.Thresholds.OutsideMagnitude(6.5))
+    val t = EventProviders.Thresholds(
+      region,
+      EventProviders.Thresholds.RegionVei(0),
+      EventProviders.Thresholds.OutsideVei(4),
+      EventProviders.Thresholds.RegionMagnitude(0),
+      EventProviders.Thresholds.OutsideMagnitude(6.5)
+    )
     def erup(lat: Latitude, lon: Longitude, vei: Option[CatalogRecord.Vei]) =
       CatalogRecord(
         CatalogRecord.Provider("gvp"),
@@ -95,14 +133,26 @@ class EventCatalogSuite extends munit.FunSuite:
     assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), Some(CatalogRecord.Vei(3))), t).isLeft)
     assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), Some(CatalogRecord.Vei(4))), t).isRight)
     assert(EventProviders.keep(erup(Latitude(-10), Longitude(120), None), t).isLeft)
-    assertEquals(EventProviders.keep(erup(Latitude(37), Longitude(25), None).modify(_.lat).setTo(None: Option[Latitude]), t), Left("no position"))
     assertEquals(
-      EventProviders.keep(erup(Latitude(37), Longitude(25), Some(CatalogRecord.Vei(5))), t.modify(_.area).setTo(BBox.parse(BBox.Text("0,0,10,10")))),
+      EventProviders.keep(erup(Latitude(37), Longitude(25), None).modify(_.lat).setTo(None: Option[Latitude]), t),
+      Left("no position")
+    )
+    assertEquals(
+      EventProviders.keep(
+        erup(Latitude(37), Longitude(25), Some(CatalogRecord.Vei(5))),
+        t.modify(_.area).setTo(BBox.parse(BBox.Text("0,0,10,10")))
+      ),
       Left("outside --bbox")
     )
 
   test("thresholds over the default region, the world: a small eruption or quake anywhere is kept"):
-    val world = EventProviders.Thresholds(BBox.parse(BBox.Text("-180,-90,180,90")), EventProviders.Thresholds.RegionVei(0), EventProviders.Thresholds.OutsideVei(4), EventProviders.Thresholds.RegionMagnitude(0), EventProviders.Thresholds.OutsideMagnitude(6.5))
+    val world = EventProviders.Thresholds(
+      BBox.parse(BBox.Text("-180,-90,180,90")),
+      EventProviders.Thresholds.RegionVei(0),
+      EventProviders.Thresholds.OutsideVei(4),
+      EventProviders.Thresholds.RegionMagnitude(0),
+      EventProviders.Thresholds.OutsideMagnitude(6.5)
+    )
     def at(kind: CatalogRecord.Kind, lat: Latitude, lon: Longitude) =
       CatalogRecord(
         CatalogRecord.Provider("x"),
@@ -126,7 +176,10 @@ class EventCatalogSuite extends munit.FunSuite:
       ).map((la, lo) => (Latitude(la), Longitude(lo)))
     do
       assert(EventProviders.keep(at(CatalogRecord.Kind("eruption"), lat, lon), world).isRight, s"eruption at $lat,$lon")
-      assert(EventProviders.keep(at(CatalogRecord.Kind("earthquake"), lat, lon), world).isRight, s"earthquake at $lat,$lon")
+      assert(
+        EventProviders.keep(at(CatalogRecord.Kind("earthquake"), lat, lon), world).isRight,
+        s"earthquake at $lat,$lon"
+      )
 
   // ── merging ─────────────────────────────────────────────────────────────────────────────────
 
@@ -155,9 +208,33 @@ class EventCatalogSuite extends munit.FunSuite:
     )
 
   test("merge: one catalogue's two records are two events; another catalogue's record of the same thing joins"):
-    val a = rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), CatalogRecord.Kind("eruption"), Year(-1610), Latitude(36.4), Longitude(25.4), group = Some(CatalogRecord.Group("volcano:212040")))
-    val b = rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("2"), CatalogRecord.Kind("eruption"), Year(-1600), Latitude(36.4), Longitude(25.4), group = Some(CatalogRecord.Group("volcano:212040")))
-    val c = rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:1351"), CatalogRecord.Kind("eruption"), Year(-1610), Latitude(36.404), Longitude(25.396), group = Some(CatalogRecord.Group("volcano:212040")))
+    val a = rec(
+      CatalogRecord.Provider("gvp"),
+      CatalogRecord.ProviderId("1"),
+      CatalogRecord.Kind("eruption"),
+      Year(-1610),
+      Latitude(36.4),
+      Longitude(25.4),
+      group = Some(CatalogRecord.Group("volcano:212040"))
+    )
+    val b = rec(
+      CatalogRecord.Provider("gvp"),
+      CatalogRecord.ProviderId("2"),
+      CatalogRecord.Kind("eruption"),
+      Year(-1600),
+      Latitude(36.4),
+      Longitude(25.4),
+      group = Some(CatalogRecord.Group("volcano:212040"))
+    )
+    val c = rec(
+      CatalogRecord.Provider("noaa"),
+      CatalogRecord.ProviderId("volcano:1351"),
+      CatalogRecord.Kind("eruption"),
+      Year(-1610),
+      Latitude(36.404),
+      Longitude(25.396),
+      group = Some(CatalogRecord.Group("volcano:212040"))
+    )
     val placed = CatalogMerge.place(List(a, b, c), Nil, tol)
     assertEquals(placed.map(_._2.eventId), List("gvp_1", "gvp_2", "gvp_1"))
     assert(placed(2)._2.isInstanceOf[CatalogMerge.Placement.New])
@@ -196,10 +273,39 @@ class EventCatalogSuite extends munit.FunSuite:
     val stored = List(compiled, battle, known)
     val placed = CatalogMerge.place(
       List(
-        rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), CatalogRecord.Kind("eruption"), Year(-1610), Latitude(36.41), Longitude(25.39)),
-        rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q131386"), CatalogRecord.Kind("siege"), Year(-52), Latitude(10), Longitude(10), wd = Some(EventEntry.Wikidata("Q131386"))),
-        rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("9"), CatalogRecord.Kind("eruption"), Year(-79), Latitude(0), Longitude(0)),
-        rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("earthquake:5"), CatalogRecord.Kind("earthquake"), Year(-1610), Latitude(36.4), Longitude(25.4))
+        rec(
+          CatalogRecord.Provider("gvp"),
+          CatalogRecord.ProviderId("1"),
+          CatalogRecord.Kind("eruption"),
+          Year(-1610),
+          Latitude(36.41),
+          Longitude(25.39)
+        ),
+        rec(
+          CatalogRecord.Provider("wikidata"),
+          CatalogRecord.ProviderId("Q131386"),
+          CatalogRecord.Kind("siege"),
+          Year(-52),
+          Latitude(10),
+          Longitude(10),
+          wd = Some(EventEntry.Wikidata("Q131386"))
+        ),
+        rec(
+          CatalogRecord.Provider("gvp"),
+          CatalogRecord.ProviderId("9"),
+          CatalogRecord.Kind("eruption"),
+          Year(-79),
+          Latitude(0),
+          Longitude(0)
+        ),
+        rec(
+          CatalogRecord.Provider("noaa"),
+          CatalogRecord.ProviderId("earthquake:5"),
+          CatalogRecord.Kind("earthquake"),
+          Year(-1610),
+          Latitude(36.4),
+          Longitude(25.4)
+        )
       ),
       stored,
       tol
@@ -218,12 +324,49 @@ class EventCatalogSuite extends munit.FunSuite:
       Set(CatalogRecord.Provider("gvp") -> CatalogRecord.ProviderId("1")),
       catalogue = StoredEvent.Catalogue(true)
     )
-    val placed = CatalogMerge.place(List(rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("2"), CatalogRecord.Kind("eruption"), Year(-1605), Latitude(36.4), Longitude(25.4))), List(g1), tol)
+    val placed = CatalogMerge.place(
+      List(
+        rec(
+          CatalogRecord.Provider("gvp"),
+          CatalogRecord.ProviderId("2"),
+          CatalogRecord.Kind("eruption"),
+          Year(-1605),
+          Latitude(36.4),
+          Longitude(25.4)
+        )
+      ),
+      List(g1),
+      tol
+    )
     assertEquals(placed.head._2.eventId, "gvp_2")
 
   test("event ids from records are stable and safe"):
-    assertEquals(CatalogRecord.eventId(rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:1351"), CatalogRecord.Kind("eruption"), Year(0), Latitude(0), Longitude(0))), "noaa_volcano_1351")
-    assertEquals(CatalogRecord.eventId(rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q131386"), CatalogRecord.Kind("battle"), Year(0), Latitude(0), Longitude(0))), "wikidata_q131386")
+    assertEquals(
+      CatalogRecord.eventId(
+        rec(
+          CatalogRecord.Provider("noaa"),
+          CatalogRecord.ProviderId("volcano:1351"),
+          CatalogRecord.Kind("eruption"),
+          Year(0),
+          Latitude(0),
+          Longitude(0)
+        )
+      ),
+      "noaa_volcano_1351"
+    )
+    assertEquals(
+      CatalogRecord.eventId(
+        rec(
+          CatalogRecord.Provider("wikidata"),
+          CatalogRecord.ProviderId("Q131386"),
+          CatalogRecord.Kind("battle"),
+          Year(0),
+          Latitude(0),
+          Longitude(0)
+        )
+      ),
+      "wikidata_q131386"
+    )
 
   test("an import report adds up and reads as one line"):
     val a = EventImportReport(
@@ -238,7 +381,18 @@ class EventCatalogSuite extends munit.FunSuite:
       parts = EventImportReport.Parts(1)
     )
     val b =
-      a.modify(_.records).setTo(EventImportReport.Records(5)).modify(_.kept).setTo(EventImportReport.Kept(5)).modify(_.created).setTo(EventImportReport.Created(5)).modify(_.merged).setTo(EventImportReport.Merged(0)).modify(_.byKind).setTo(List(EventCount(EventCount.Key("eruption"), EventCount.N(5)))).modify(_.skipped).setTo(Nil)
+      a.modify(_.records)
+        .setTo(EventImportReport.Records(5))
+        .modify(_.kept)
+        .setTo(EventImportReport.Kept(5))
+        .modify(_.created)
+        .setTo(EventImportReport.Created(5))
+        .modify(_.merged)
+        .setTo(EventImportReport.Merged(0))
+        .modify(_.byKind)
+        .setTo(List(EventCount(EventCount.Key("eruption"), EventCount.N(5))))
+        .modify(_.skipped)
+        .setTo(Nil)
     val c = EventImportReport.combine(a, b)
     assertEquals((c.records, c.kept, c.created, c.merged, c.parts), (15, 9, 8, 1, 2))
     assertEquals(c.byKind, List(EventCount(EventCount.Key("eruption"), EventCount.N(9))))
@@ -248,7 +402,13 @@ class EventCatalogSuite extends munit.FunSuite:
     assert(CatalogProvider.parse(CatalogProviderInfo.Id("usgs")).isLeft)
 
   test("#6561: a part read under other thresholds is not read in this scope"):
-    val world = EventProviders.Thresholds(None, EventProviders.Thresholds.RegionVei(0), EventProviders.Thresholds.OutsideVei(4), EventProviders.Thresholds.RegionMagnitude(0.0), EventProviders.Thresholds.OutsideMagnitude(6.5))
+    val world = EventProviders.Thresholds(
+      None,
+      EventProviders.Thresholds.RegionVei(0),
+      EventProviders.Thresholds.OutsideVei(4),
+      EventProviders.Thresholds.RegionMagnitude(0.0),
+      EventProviders.Thresholds.OutsideMagnitude(6.5)
+    )
     val window = world.modify(_.region).setTo(Some(BBox(Longitude(-25), Latitude(5), Longitude(100), Latitude(72))))
     val (w, n) = (EventProviders.scope(world), EventProviders.scope(window))
     assertNotEquals(w, n)

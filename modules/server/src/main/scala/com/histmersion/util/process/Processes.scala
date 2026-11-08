@@ -64,7 +64,6 @@ object Processes:
         ProcessResult(p.waitFor(), lines.map(ProcessResult.Lines(_)))
       }
 
-
   final private class OsProcess(p: Process) extends RunningProcess:
     def pid: Pid = Pid(p.pid)
     def isAlive: Boolean = p.isAlive
@@ -75,7 +74,6 @@ object Processes:
     def destroy(): Unit = p.destroy()
     def destroyForcibly(): Unit =
       val _ = p.destroyForcibly()
-
 
   /** Processes that never start: each launch is recorded and answered by `answer` (its exit code and output). */
   final class InMemory(answer: ProcessLaunch => ProcessResult) extends Processes:
@@ -98,6 +96,9 @@ object Processes:
         def destroyForcibly(): Unit = ())
 
     def run(launch: ProcessLaunch): Either[Problem, ProcessResult] =
-      start(launch).map(p => ProcessResult(p.waitFor(), scala.io.Source.fromInputStream(p.output).getLines().toList.map(ProcessResult.Lines(_))))
-
-
+      start(launch).map(p =>
+        ProcessResult(
+          p.waitFor(),
+          scala.io.Source.fromInputStream(p.output).getLines().toList.map(ProcessResult.Lines(_))
+        )
+      )

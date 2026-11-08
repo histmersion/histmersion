@@ -123,7 +123,12 @@ object NoteEditor:
           cls("is-hidden") <-- preview.signal,
           rows := 10,
           placeholder := "Write your note. **bold**, *italic*, - a list, [[citekey]] for a source.",
-          controlled(value <-- text.signal.map(_.value), onInput.mapToValue --> { v => val t = Note.Text(v); text.set(t); NoteDrafts.put(draftKey, t) }),
+          controlled(
+            value <-- text.signal.map(_.value),
+            onInput.mapToValue --> { v =>
+              val t = Note.Text(v); text.set(t); NoteDrafts.put(draftKey, t)
+            }
+          ),
           onMountCallback(ctx => ctx.thisNode.ref.focus())
         ),
         div(
@@ -131,7 +136,8 @@ object NoteEditor:
           cls("is-hidden") <-- preview.signal.map(!_),
           aria.live := "polite",
           child <-- text.signal.map(t =>
-            if t.value.trim.isEmpty then p(cls := "muted", "Nothing written yet.") else NoteView(NoteMarkdown.Markdown(t.value))
+            if t.value.trim.isEmpty then p(cls := "muted", "Nothing written yet.")
+            else NoteView(NoteMarkdown.Markdown(t.value))
           )
         ),
         p(

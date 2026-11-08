@@ -13,7 +13,8 @@ object PersonalMarkdown:
       Option.when(where.value.nonEmpty)(where.value).toList).mkString(" · ")
 
   def bookmarkLine(b: Bookmark): String =
-    val label = b.label.map(_.value).filter(l => ((b.target.kind.isItem) == (true)) && l.trim.nonEmpty && l != b.title.value)
+    val label =
+      b.label.map(_.value).filter(l => ((b.target.kind.isItem) == (true)) && l.trim.nonEmpty && l != b.title.value)
     s"- **${b.name}**" + label.fold("")(_ =>
       s" (${b.title})"
     ) + s" — ${targetLine(b.target)} · ${minute(b.createdAt.value)} · id `${b.id.value}`"
@@ -38,13 +39,15 @@ object PersonalMarkdown:
       s"## Note on ${n.title}",
       "",
       s"_${targetLine(n.target)} · written ${minute(n.createdAt.value)}" +
-        (if n.updatedAt.value != n.createdAt.value then s", changed ${minute(n.updatedAt.value)}" else "") + s" · id `${n.id.value}`_",
+        (if n.updatedAt.value != n.createdAt.value then s", changed ${minute(n.updatedAt.value)}"
+         else "") + s" · id `${n.id.value}`_",
       "",
       n.text.value
     ).mkString("\n")
 
   def readLine(m: ReadMark): String =
-    val state = if ((m.read) == ReadMark.Read(true)) then s"read ${m.readAt.fold("")(a => minute(a.value))}" else "not read yet"
+    val state =
+      if (m.read) == ReadMark.Read(true) then s"read ${m.readAt.fold("")(a => minute(a.value))}" else "not read yet"
     s"- **${m.title}** — ${m.kind.label.value.toLowerCase} `${m.id.value}` · $state" + m.openedAt.fold("")(o =>
       s" · opened ${minute(o.value)}"
     )

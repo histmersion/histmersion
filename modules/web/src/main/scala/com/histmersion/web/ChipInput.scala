@@ -26,8 +26,6 @@ object ChipInput:
   type HintLabel = HintLabel.T
   object HintLabel extends Newtype[String, Pure]
 
-
-
   private var seq: Int = 0
 
   case class Config(
@@ -40,7 +38,10 @@ object ChipInput:
       /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
       onPreview: Option[Chip.Choice] => Unit = _ => (),
       /** How a value reads on its chip and in the suggestions. */
-      display: Chip.Choice => Config.DisplayResult = v => Config.DisplayResult(com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(v.value)).value),
+      display: Chip.Choice => Config.DisplayResult = v =>
+        Config.DisplayResult(
+          com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(v.value)).value
+        ),
       /** The classes of a value's mark, if it has one (a source status's `st-<status>`: the status code). */
       mark: Chip.Choice => Option[Config.MarkResult] = _ => None
   )
@@ -63,7 +64,8 @@ object ChipInput:
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.
     */
-  def apply(config: Config, values: StrictSignal[List[Chip.Choice]]): HtmlElement = view(config, values, () => values.now())
+  def apply(config: Config, values: StrictSignal[List[Chip.Choice]]): HtmlElement =
+    view(config, values, () => values.now())
 
   /** [[apply]] over a UiState field's values, which are plain text. */
   def ofStrings(config: Config, values: StrictSignal[List[String]]): HtmlElement =

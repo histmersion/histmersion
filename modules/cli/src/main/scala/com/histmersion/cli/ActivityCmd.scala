@@ -12,7 +12,7 @@ import com.histmersion.util.console.Console
   */
 object ActivityCmd:
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "activity",
       "What the agents, the server and you did, one list, newest first: agent runs, " +
@@ -42,11 +42,10 @@ object ActivityCmd:
             limit.map(Activity.Limit(_)),
             before.map(Activity.Cursor(_))
           )
-        )
-          .map(p =>
-            Output.emit(json, p)(
-              ActivityMarkdown.page(_, cursor => s"Older: `${PageCmd.next("activity", opts, cursor)}`")
-            )
+        ).map(p =>
+          Output.emit(json, p)(
+            ActivityMarkdown.page(_, cursor => s"Older: `${PageCmd.next("activity", opts, cursor)}`")
           )
+        )
       }
     }

@@ -9,4 +9,7 @@ import com.augustnagro.magnum.DbCon
   */
 object PeriodsData:
   def figures(using DbCon): List[DataCount] =
-    List(DataCount(DataCount.Noun("periods"), DataCount.Count(PeriodRepo.count.value.toLong)), DataCount(DataCount.Noun("presets"), DataCount.Count(PeriodRepo.presetCount.value.toLong)))
+    List(
+      DataCount(DataCount.Noun("periods"), DataCount.Count(PeriodRepo.count.value.toLong)),
+      DataCount(DataCount.Noun("presets"), DataCount.Count(PeriodRepo.presetCount.value.toLong))
+    )

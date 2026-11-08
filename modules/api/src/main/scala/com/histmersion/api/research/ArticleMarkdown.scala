@@ -12,14 +12,18 @@ object ArticleMarkdown:
 
   def article(v: Article.View, parts: List[Article.Part] = Nil): String =
     if parts.isEmpty then ((articleFull(v)))
-    else ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => Article.Part((refactorValue).value)))))
+    else
+      ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => Article.Part((refactorValue).value))))
+    )
 
   private def articleFull(v: Article.View): String =
     val a = v.article
     val body = a.body.value.trim
-    val line = metaLine(a.kind.value, a.regions.map(_.value), YearFmt.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
+    val line =
+      metaLine(a.kind.value, a.regions.map(_.value), YearFmt.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
     val head =
-      if Articles.heading(Article.Body(body)).isEmpty then s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
+      if Articles.heading(Article.Body(body)).isEmpty then
+        s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
       else if line.isEmpty then body
       else
         body.indexOf('\n') match
@@ -32,14 +36,21 @@ object ArticleMarkdown:
   private def coverage(v: Article.View): String = (v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
 
   private[api] def metaLine(kind: String, regions: List[String], period: String, tags: List[String]): String =
-    val parts = List(Label.display(Label.Text(kind.trim)).value, chipLinksList(regions, ("place")), period.trim, chipLinksList(tags, ("tag")))
+    val parts = List(
+      Label.display(Label.Text(kind.trim)).value,
+      chipLinksList(regions, ("place")),
+      period.trim,
+      chipLinksList(tags, ("tag"))
+    )
       .filter(_.nonEmpty)
     if parts.isEmpty then ("") else s"_${parts.mkString(" · ")}_"
 
   private def chipLinksList(values: List[String], hashKey: String): String =
     values
       .filter((_).nonEmpty)
-      .map(v => s"[${Label.display(Label.Text(v)).value.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})")
+      .map(v =>
+        s"[${Label.display(Label.Text(v)).value.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})"
+      )
       .mkString(", ")
 
   def stripSourcesSection(body: Article.Body): Article.Body =
@@ -62,9 +73,11 @@ object ArticleMarkdown:
 
     if show.contains("body") then
       val body = a.body.value.trim
-      val line = metaLine(a.kind.value, a.regions.map(_.value), YearFmt.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
+      val line =
+        metaLine(a.kind.value, a.regions.map(_.value), YearFmt.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
       val head =
-        if Articles.heading(Article.Body(body)).isEmpty then s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
+        if Articles.heading(Article.Body(body)).isEmpty then
+          s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
         else if line.isEmpty then body
         else
           body.indexOf('\n') match
@@ -91,7 +104,8 @@ object ArticleMarkdown:
     else (result.mkString("\n\n"))
 
   private def stripMd(s: String): String =
-    ((s).replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
+    ((s)
+      .replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
       .replaceAll("""\[\[([^\]]+)\]\]""", "$1")
       .replaceAll("""\[([^\]]+)\]\([^)]+\)""", "$1")
       .replaceAll("""[*_]{1,2}""", "")
@@ -101,7 +115,8 @@ object ArticleMarkdown:
     if rows.isEmpty then ("")
     else
       val items = rows.map { b =>
-        val title = b.title.map(t => if ((truncate) == (true)) then s" — ${stripMd(t.value).take(200)}" else s" — $t").getOrElse("")
+        val title =
+          b.title.map(t => if (truncate) == (true) then s" — ${stripMd(t.value).take(200)}" else s" — $t").getOrElse("")
         s"- [[${b.id}]]$title"
       }
       (s"\n\n## Backlinks (${rows.size})\n\n${items.mkString("\n")}")
@@ -110,8 +125,9 @@ object ArticleMarkdown:
     if rows.isEmpty then ("")
     else
       val items = rows.map { s =>
-        val t = s.title.map(_.value)
-          .map(v => if ((truncate) == (true)) then stripMd(v).take(200) else v)
+        val t = s.title
+          .map(_.value)
+          .map(v => if (truncate) == (true) then stripMd(v).take(200) else v)
           .getOrElse("_(not in the corpus)_")
         val auth = Source.Ref.shortAuthors(s.authors).value
         val yr = s.year.map(_.value.toInt).map(_.toString).getOrElse("")
@@ -137,12 +153,14 @@ object ArticleMarkdown:
     (s"### Version ${v.id} of ${v.slug}\n\n_saved ${v.updatedAt}, archived ${v.createdAt}_$sum\n\n---\n\n${v.body}")
 
   def list(r: Article.List): String =
-    OffsetPage.markdown(r.page, ("article(s)"), ("_No matching articles._"), r.articles) { a =>
-      val tagsStr = a.tags.mkString(", ")
-      val meta = List(a.kind.value, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .mkString(" · ")
-      val sum = a.summary.map(s => s"\n  ${s.value.trim}").getOrElse("")
-      (s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum")
-    }.value
+    OffsetPage
+      .markdown(r.page, ("article(s)"), ("_No matching articles._"), r.articles) { a =>
+        val tagsStr = a.tags.mkString(", ")
+        val meta = List(a.kind.value, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)
+          .map(_.trim)
+          .filter(_.nonEmpty)
+          .mkString(" · ")
+        val sum = a.summary.map(s => s"\n  ${s.value.trim}").getOrElse("")
+        (s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum")
+      }
+      .value

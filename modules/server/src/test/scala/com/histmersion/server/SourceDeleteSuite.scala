@@ -72,9 +72,12 @@ class SourceDeleteSuite extends DbSuite:
 
   private lazy val cfg =
     val b = AppConfig.load()
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString))).modify(_.acquire).setTo(b.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(acquire.toString))
-    )
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.converter)
+      .setTo(b.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString)))
+      .modify(_.acquire)
+      .setTo(b.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(acquire.toString)))
   private lazy val deps =
     val ds = testPool(cfg.db)
     Migrate.run(ds)
@@ -83,7 +86,9 @@ class SourceDeleteSuite extends DbSuite:
   private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
     def convert(
         file: Blob,
         filename: ConverterClient.Filename,
@@ -159,12 +164,34 @@ class SourceDeleteSuite extends DbSuite:
         OldCk,
         findings = 2,
         calibre = Some(Source.CalibreId("1693")),
-        edges = List(Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey(Other), Edge.Kind.Challenges), Edge(com.histmersion.api.library.Citekey(Old), com.histmersion.api.library.Citekey("zzdelmissing2001_x"), Edge.Kind.References))
+        edges = List(
+          Edge(
+            com.histmersion.api.library.Citekey(Old),
+            com.histmersion.api.library.Citekey(Other),
+            Edge.Kind.Challenges
+          ),
+          Edge(
+            com.histmersion.api.library.Citekey(Old),
+            com.histmersion.api.library.Citekey("zzdelmissing2001_x"),
+            Edge.Kind.References
+          )
+        )
       )
     )
     put(source(OtherCk, edges = Nil))
     SourceFixtures.rename(ds, OldCk, Citekeys.RenameToNewRaw(Del)).fold(e => fail(e.message.value), _ => ())
-    put(source(OtherCk, edges = List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), Edge.Kind.References))))
+    put(
+      source(
+        OtherCk,
+        edges = List(
+          Edge(
+            com.histmersion.api.library.Citekey(Other),
+            com.histmersion.api.library.Citekey(Del),
+            Edge.Kind.References
+          )
+        )
+      )
+    )
     connect(ds):
       sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Del".update.run()
       sql"INSERT INTO places (id, label, kind) VALUES ($Place, 'Zz place', 'site')".update.run()
@@ -217,7 +244,7 @@ class SourceDeleteSuite extends DbSuite:
     "the dry run lists every part, the parked edges, the aliases, the files and the Calibre id — and changes nothing"
   ):
     seed()
-    val d = h.library.sources.delete(DelCk,Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
+    val d = h.library.sources.delete(DelCk, Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
     assert(!d.applied.value && !d.refused, d.toString)
     assertEquals(d.title, s"Title $Old")
     import com.histmersion.api.library.DeletePart.*
@@ -247,7 +274,12 @@ class SourceDeleteSuite extends DbSuite:
     )
     assert(d.count(Chunks).value > 0 && d.count(FindingPlaces).value >= 1)
     assertEquals(d.aliases, List(Old))
-    assertEquals(d.edgesIn, List(Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), Edge.Kind.References)))
+    assertEquals(
+      d.edgesIn,
+      List(
+        Edge(com.histmersion.api.library.Citekey(Other), com.histmersion.api.library.Citekey(Del), Edge.Kind.References)
+      )
+    )
     assertEquals(d.coverage, List(Slug))
     assertEquals(d.calibreId, Some("1693"))
     assertEquals(d.mentions.size, 1)
@@ -270,16 +302,35 @@ class SourceDeleteSuite extends DbSuite:
     seed()
     List(s"See [[$Del]].", s"See [[$Old|the book]].", s"See [[zzdel2020]] (short).").zipWithIndex.foreach { (body, i) =>
       val slug = Article.Slug(s"${Slug}_cites$i")
-      val _ = ArticleFixtures.put(ds, Article(slug, Article.Title(s"Cites $i"), Article.KindValue("concept"), Article.Body(s"# C\n\n$body"), None, Nil, Nil, None))
-      val dry = h.library.sources.delete(DelCk,Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
-      assertEquals(dry.blockers.map(b => (b.kind, b.id.value: String)), List((DeleteBlocker.Kind.Article, slug.value: String)), body)
+      val _ = ArticleFixtures.put(
+        ds,
+        Article(
+          slug,
+          Article.Title(s"Cites $i"),
+          Article.KindValue("concept"),
+          Article.Body(s"# C\n\n$body"),
+          None,
+          Nil,
+          Nil,
+          None
+        )
+      )
+      val dry = h.library.sources.delete(DelCk, Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
+      assertEquals(
+        dry.blockers.map(b => (b.kind, b.id.value: String)),
+        List((DeleteBlocker.Kind.Article, slug.value: String)),
+        body
+      )
       val e = h.library.sources
-        .delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+        .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
         .swap
         .getOrElse(fail("the delete was not refused"))
       assert(e.message.value.contains(s"cited by article $slug") && e.message.value.contains("no override"), e.message)
       assert(SourceFixtures.load(ds, DelCk).isDefined, "a refused delete deleted")
-      ArticleFixtures.delete(ds, com.histmersion.domain.research.Slug.either(slug.value).fold(m => fail(m), identity)): Unit
+      ArticleFixtures.delete(
+        ds,
+        com.histmersion.domain.research.Slug.either(slug.value).fold(m => fail(m), identity)
+      ): Unit
     }
 
   test("refused while an event is sourced to it, or a job is still writing it"):
@@ -287,9 +338,9 @@ class SourceDeleteSuite extends DbSuite:
     connect(ds):
       sql"UPDATE events SET citekey = $Del WHERE id = $Event".update.run()
       sql"INSERT INTO jobs (id, kind, citekey, status) VALUES ('zzdel_job', 'ingest', $Old, 'running')".update.run()
-    val d = h.library.sources.delete(DelCk,Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
+    val d = h.library.sources.delete(DelCk, Source.DeleteRequest()).fold(e => fail(e.message.value), identity)
     assertEquals(d.blockers.map(_.kind), List(DeleteBlocker.Kind.Event, DeleteBlocker.Kind.Job))
-    assert(h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).isLeft)
+    assert(h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).isLeft)
     assert(SourceFixtures.load(ds, DelCk).isDefined)
 
   test(
@@ -310,7 +361,9 @@ class SourceDeleteSuite extends DbSuite:
   ):
     seed()
     val theUid = uid(Del)
-    val d = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).fold(e => fail(e.message.value), identity)
+    val d = h.library.sources
+      .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+      .fold(e => fail(e.message.value), identity)
     assert(d.applied.value && d.filesFailed.isEmpty, d.toString)
     assertEquals(d.calibreId, Some("1693"), "Calibre's id is reported, never touched")
 
@@ -344,7 +397,10 @@ class SourceDeleteSuite extends DbSuite:
     )
     assertEquals(count(sql"SELECT count(*)::int FROM assets WHERE citekey = $Other"), 1)
     // the article stays; only the reason keyed by the deleted source went
-    assertEquals(ArticleFixtures.load(ds, com.histmersion.domain.research.Slug("zzdel_article")).map(_.reasons), Some(Map(Other -> "kept")))
+    assertEquals(
+      ArticleFixtures.load(ds, com.histmersion.domain.research.Slug("zzdel_article")).map(_.reasons),
+      Some(Map(Other -> "kept"))
+    )
     // the queue item that mentions it is left as it is
     assertEquals(count(sql"SELECT count(*)::int FROM queue_items WHERE reason = ${s"ingested as [[$Del]]"}"), 1)
 
@@ -355,7 +411,10 @@ class SourceDeleteSuite extends DbSuite:
     )
     // the log entry
     val log = connect(ds)(
-      sql"SELECT text, topic FROM queue_items WHERE id = ${d.logEntry.get.value}".query[(String, Option[String])].run().head
+      sql"SELECT text, topic FROM queue_items WHERE id = ${d.logEntry.get.value}"
+        .query[(String, Option[String])]
+        .run()
+        .head
     )
     assert(log._1.startsWith(s"deleted $Del (Title $Old): 2 findings"), log._1)
     assert(log._1.contains("edges in (parked)") && log._1.contains("Calibre entry 1693 kept"), log._1)
@@ -372,17 +431,20 @@ class SourceDeleteSuite extends DbSuite:
     seed()
     put(source(TwinCk))
     connect(ds)(sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Twin".update.run(): Unit)
-    val d = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).fold(e => fail(e.message.value), identity)
+    val d = h.library.sources
+      .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+      .fold(e => fail(e.message.value), identity)
     assert(!d.files.map(_.value).contains(spool.resolve(s"$Sha.pdf").toString), d.files.toString)
     assert(Files.exists(spool.resolve(s"$Sha.pdf")))
 
   test("the delete is a write: refused while a restore holds the maintenance lock; the dry run is not"):
     seed()
-    var out: Either[Api.Error, Source.Deletion] = Left(Api.Error(Api.Error.Message("never ran"))) // set inside the lock, read after it
+    var out: Either[Api.Error, Source.Deletion] =
+      Left(Api.Error(Api.Error.Message("never ran"))) // set inside the lock, read after it
     var dry: Either[Api.Error, Source.Deletion] = Left(Api.Error(Api.Error.Message("never ran")))
     val _ = h.maintenance.exclusively(WriteGate.OperationName("test-restore")) {
-      out = h.library.sources.delete(DelCk,Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
-      dry = h.library.sources.delete(DelCk,Source.DeleteRequest())
+      out = h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+      dry = h.library.sources.delete(DelCk, Source.DeleteRequest())
       Right(())
     }
     assertEquals(out.swap.toOption.flatMap(_.code), Some(Backup.CodeMaintenance))

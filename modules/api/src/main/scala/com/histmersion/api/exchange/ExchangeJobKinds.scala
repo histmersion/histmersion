@@ -12,12 +12,14 @@ import com.histmersion.api.jobs.JobKindMeaning
   */
 object ExchangeJobKinds:
   type PlanHash = PlanHashValue
-  export MergePlan.{PlanHash as PlanHashValue}
+  export MergePlan.PlanHash as PlanHashValue
 
   val Init: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("init"),
     JobKinds.Wire("Import reference data"),
-    JobKindMeaning("The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches."),
+    JobKindMeaning(
+      "The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches."
+    ),
     stoppable = JobKindEntry.OfStoppable(true),
     subject = InitPlan.Detail.of(_).map(p => JobKinds.Subject(InitPlan.describe(p)))
   )

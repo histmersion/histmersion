@@ -23,7 +23,12 @@ trait BasemapJobs:
   /** `body` started as a job of `kind` described by `about`, given a progress reporter and answering its summary or why
     * it failed; `Left` — [[busy]] — while another runs.
     */
-  def start(kind: Job.Kind, about: BasemapJobs.Description, what: BasemapJobs.Target, busyCode: Option[BasemapJobs.Reason])(
+  def start(
+      kind: Job.Kind,
+      about: BasemapJobs.Description,
+      what: BasemapJobs.Target,
+      busyCode: Option[BasemapJobs.Reason]
+  )(
       body: (BasemapJobs.Target => Unit) => Either[BasemapJobs.Problem, BasemapJobs.Description]
   ): Either[Api.Error, JobInfo]
 

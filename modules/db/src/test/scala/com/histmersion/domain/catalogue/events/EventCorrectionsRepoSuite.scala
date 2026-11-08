@@ -70,7 +70,12 @@ class EventCorrectionsRepoSuite extends DbSuite:
     EventFixtures.put(
       ds,
       id,
-      EventPut(EventSummary.Label(s"Zqcr ${id.value}"), EventSummary.Kind("eruption"), ts, geometry = Some(EventPatch.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-45.0]}""")))
+      EventPut(
+        EventSummary.Label(s"Zqcr ${id.value}"),
+        EventSummary.Kind("eruption"),
+        ts,
+        geometry = Some(EventPatch.Geometry(s"""{"type":"Point","coordinates":[${lon.value},-45.0]}"""))
+      )
     )
 
   test("V088: the generated uncertainty is core.EventPrecision.uncertainty"):
@@ -94,18 +99,41 @@ class EventCorrectionsRepoSuite extends DbSuite:
     }
 
   test("the map's feed leaves the imprecise out and counts them; the list keeps them, with the class"):
-    put(BEventRow.Id("zqcr_precise"), TimeSpan(Some(Year(-1610)), Some(Year(-1610)), Some(Year(-1610)), Some(Year(-1610))))
+    put(
+      BEventRow.Id("zqcr_precise"),
+      TimeSpan(Some(Year(-1610)), Some(Year(-1610)), Some(Year(-1610)), Some(Year(-1610)))
+    )
     put(BEventRow.Id("zqcr_approx"), TimeSpan(Some(Year(-1800)), None, None, Some(Year(-1400))))
     put(BEventRow.Id("zqcr_imprecise"), TimeSpan(Some(Year(-4000)), None, None, Some(Year(1000))))
     val f = Filter(period = Some(Period(Year(-1700), Year(-1500))))
-    val geo = EventFixtures.geo(ds, f, PlaceScope.empty, Some(EventSelection.Text("Zqcr zqcr_")), None, None, None, PageSize(100), EventFixtures.GeoTolerance(0.01))
+    val geo = EventFixtures.geo(
+      ds,
+      f,
+      PlaceScope.empty,
+      Some(EventSelection.Text("Zqcr zqcr_")),
+      None,
+      None,
+      None,
+      PageSize(100),
+      EventFixtures.GeoTolerance(0.01)
+    )
     assertEquals(
       geo.events.map(g => g.id -> g.precision).toSet,
       Set("zqcr_precise" -> EventPrecision.Precise, "zqcr_approx" -> EventPrecision.Approximate)
     )
     assert(geo.imprecise.value >= 1, geo.imprecise.toString)
     val listed = EventFixtures
-      .list(ds, f, PlaceScope.empty, Some(EventSelection.Text("Zqcr zqcr_")), None, None, None, PageSize(100), Offset(0))
+      .list(
+        ds,
+        f,
+        PlaceScope.empty,
+        Some(EventSelection.Text("Zqcr zqcr_")),
+        None,
+        None,
+        None,
+        PageSize(100),
+        Offset(0)
+      )
       .events
       .map(e => e.id -> e.precision)
       .toMap
@@ -113,7 +141,13 @@ class EventCorrectionsRepoSuite extends DbSuite:
 
   test("the merge reads stored rows in id order and places shuffled inputs identically"):
     val ids = Random(7).shuffle((1 to 6).map(i => BEventRow.Id(s"zqcr_m$i")).toList)
-    ids.foreach(id => put(id, TimeSpan(Some(Year(-900 - id.value.last.asDigit)), None, None, Some(Year(-890 + id.value.last.asDigit))), Longitude(161.0)))
+    ids.foreach(id =>
+      put(
+        id,
+        TimeSpan(Some(Year(-900 - id.value.last.asDigit)), None, None, Some(Year(-890 + id.value.last.asDigit))),
+        Longitude(161.0)
+      )
+    )
     val stored = EventFixtures.stored(ds)
     assertEquals(stored.map(_.id), stored.map(_.id).sorted)
     val mine = stored.filter(_.id.value.startsWith("zqcr_m"))
@@ -172,12 +206,25 @@ class EventCorrectionsRepoSuite extends DbSuite:
   private val EventKind = Correction.TargetKind(Correction.Target.Event)
 
   private def reimport(r: CatalogRecord): EventSaved =
-    EventFixtures.save(ds, CatalogMerge.place(List(r), EventFixtures.stored(ds), CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))))
+    EventFixtures.save(
+      ds,
+      CatalogMerge.place(
+        List(r),
+        EventFixtures.stored(ds),
+        CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+      )
+    )
   private def event = EventFixtures.get(ds, Id).get
   private def corrections =
-    EventFixtures.corrections(ds, EventKind, Some(TargetId), Some(Correction.StatusValue("active")), PageSize(50), Offset(0)).corrections ++
-      EventFixtures.corrections(ds, EventKind, Some(TargetId), Some(Correction.StatusValue("conflict")), PageSize(50), Offset(0)).corrections ++
-      EventFixtures.corrections(ds, EventKind, Some(TargetId), Some(Correction.StatusValue("agreed")), PageSize(50), Offset(0)).corrections
+    EventFixtures
+      .corrections(ds, EventKind, Some(TargetId), Some(Correction.StatusValue("active")), PageSize(50), Offset(0))
+      .corrections ++
+      EventFixtures
+        .corrections(ds, EventKind, Some(TargetId), Some(Correction.StatusValue("conflict")), PageSize(50), Offset(0))
+        .corrections ++
+      EventFixtures
+        .corrections(ds, EventKind, Some(TargetId), Some(Correction.StatusValue("agreed")), PageSize(50), Offset(0))
+        .corrections
 
   test("corrections: a patch on a catalogue event is kept by a re-import while the catalogue is unchanged"):
     val first = reimport(upstream0)
@@ -211,7 +258,10 @@ class EventCorrectionsRepoSuite extends DbSuite:
       Some("Eruption of Zqcr")
     )
     val again = reimport(upstream0)
-    assertEquals((again.created, again.updated, again.corrections), (0, 1, Correction.Counts(kept = Correction.Counts.Kept(2))))
+    assertEquals(
+      (again.created, again.updated, again.corrections),
+      (0, 1, Correction.Counts(kept = Correction.Counts.Kept(2)))
+    )
     assertEquals(
       (event.event.label, event.event.description),
       ("Hekla 3 (Zqcr)", Some("my note")),
@@ -221,12 +271,19 @@ class EventCorrectionsRepoSuite extends DbSuite:
 
   test("corrections: retired once the catalogue agrees; flagged when it changes to something else"):
     val agrees = reimport(upstream0.modify(_.label).setTo(CatalogRecord.Label("Hekla 3 (Zqcr)")))
-    assertEquals(agrees.corrections, Correction.Counts(kept = Correction.Counts.Kept(1), retired = Correction.Counts.Retired(1)))
+    assertEquals(
+      agrees.corrections,
+      Correction.Counts(kept = Correction.Counts.Kept(1), retired = Correction.Counts.Retired(1))
+    )
     assertEquals(corrections.find(_.field.value == EventFields.Label).map(_.status), Some(Correction.Status.Agreed))
     assertEquals(event.event.label, "Hekla 3 (Zqcr)")
     // the catalogue now says something else about the description: the person's stays, flagged
     val changed =
-      upstream0.modify(_.label).setTo(CatalogRecord.Label("Hekla 3 (Zqcr)")).modify(_.description).setTo(Some(CatalogRecord.Description("Confirmed Eruption at Zqcr; area: SW flank")))
+      upstream0
+        .modify(_.label)
+        .setTo(CatalogRecord.Label("Hekla 3 (Zqcr)"))
+        .modify(_.description)
+        .setTo(Some(CatalogRecord.Description("Confirmed Eruption at Zqcr; area: SW flank")))
     val c = reimport(changed)
     assertEquals(c.corrections, Correction.Counts(conflicts = Correction.Counts.Conflicts(1)))
     assertEquals(event.event.description, Some("my note"))
@@ -243,9 +300,16 @@ class EventCorrectionsRepoSuite extends DbSuite:
     assert(lint.exists((id, detail) => id == TargetId && detail.value.startsWith("description:")), lint.toString)
     // still a conflict on the next import (the catalogue unchanged since), and back to active if it reverts
     assertEquals(reimport(changed).corrections, Correction.Counts(conflicts = Correction.Counts.Conflicts(1)))
-    assertEquals(reimport(upstream0.modify(_.label).setTo(CatalogRecord.Label("Hekla 3 (Zqcr)"))).corrections, Correction.Counts(kept = Correction.Counts.Kept(1)))
+    assertEquals(
+      reimport(upstream0.modify(_.label).setTo(CatalogRecord.Label("Hekla 3 (Zqcr)"))).corrections,
+      Correction.Counts(kept = Correction.Counts.Kept(1))
+    )
     // setting the field to the catalogue's value takes the catalogue's: the correction goes
-    assert(EventFixtures.patch(ds, Id, EventPatch(description = Some(EventSummary.Description("Confirmed Eruption at Zqcr")))).isRight)
+    assert(
+      EventFixtures
+        .patch(ds, Id, EventPatch(description = Some(EventSummary.Description("Confirmed Eruption at Zqcr"))))
+        .isRight
+    )
     assertEquals(corrections.filter(_.field.value == EventFields.Description), Nil)
 
   test("corrections: a span set by hand drops the stated year and ±, and survives; a rename and a delete carry them"):
@@ -263,8 +327,15 @@ class EventCorrectionsRepoSuite extends DbSuite:
     )
     // an event compiled from sources records nothing: no import rewrites it
     put(BEventRow.Id("zqcr_compiled"), TimeSpan(Some(Year(1)), Some(Year(1)), Some(Year(1)), Some(Year(1))))
-    assert(EventFixtures.patch(ds, BEventRow.Id("zqcr_compiled"), EventPatch(label = Some(EventSummary.Label("x")))).isRight)
-    assertEquals(EventFixtures.corrections(ds, EventKind, Some(Correction.TargetId("zqcr_compiled")), None, PageSize(10), Offset(0)).total, 0)
+    assert(
+      EventFixtures.patch(ds, BEventRow.Id("zqcr_compiled"), EventPatch(label = Some(EventSummary.Label("x")))).isRight
+    )
+    assertEquals(
+      EventFixtures
+        .corrections(ds, EventKind, Some(Correction.TargetId("zqcr_compiled")), None, PageSize(10), Offset(0))
+        .total,
+      0
+    )
     // rename: the corrections follow the event
     assert(EventFixtures.rename(ds, Id, BEventRow.Id("zzcr_renamed")).isRight)
     assertEquals(
@@ -278,4 +349,9 @@ class EventCorrectionsRepoSuite extends DbSuite:
     val _ = reimport(upstream0)
     assertEquals(EventFixtures.get(ds, BEventRow.Id("zzcr_renamed")).map(_.event.timeSpan), Some(mine))
     assert(EventFixtures.delete(ds, BEventRow.Id("zzcr_renamed")))
-    assertEquals(EventFixtures.corrections(ds, EventKind, Some(Correction.TargetId("zzcr_renamed")), None, PageSize(10), Offset(0)).total, 0)
+    assertEquals(
+      EventFixtures
+        .corrections(ds, EventKind, Some(Correction.TargetId("zzcr_renamed")), None, PageSize(10), Offset(0))
+        .total,
+      0
+    )

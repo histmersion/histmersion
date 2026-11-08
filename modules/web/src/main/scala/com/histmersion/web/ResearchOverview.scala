@@ -34,7 +34,8 @@ object ResearchOverview:
   /** A goal's progress: its managers' work items done, of all of them (done and still open). */
 
   final case class Progress(done: Progress.Done, total: Progress.Total):
-    def pct: Percent = if total.value <= 0 then Percent(0) else Percent((done.value * 100 / total.value).max(0).min(100))
+    def pct: Percent =
+      if total.value <= 0 then Percent(0) else Percent((done.value * 100 / total.value).max(0).min(100))
 
   object Progress:
 
@@ -60,7 +61,9 @@ object ResearchOverview:
   ): Option[UiLabels.Text] =
     focus
       .flatMap(_.waiting.find(_.slug == g.slug))
-      .map(w => Option(w.why).filter(_.value.nonEmpty).map(_.value).getOrElse(Wording.humanize(Wording.Id(w.code.value))))
+      .map(w =>
+        Option(w.why).filter(_.value.nonEmpty).map(_.value).getOrElse(Wording.humanize(Wording.Id(w.code.value)))
+      )
       .orElse(Option.when(g.openApprovals.value > 0)(if g.openApprovals.value == 1 then "waits for your decision"
       else s"waits for ${g.openApprovals} of your decisions"))
       .orElse(
@@ -82,19 +85,34 @@ object ResearchOverview:
   def evidence(a: ApprovalInfo): List[(UiLabels.Text, UiLabels.Text)] =
     val own = ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
-        List(UiLabels.Text("See the evidence") -> UiLabels.Text(SourceLink.href(Preview.Target.Source.Citekey(a.citekey.value))))
+        List(
+          UiLabels.Text("See the evidence") -> UiLabels.Text(
+            SourceLink.href(Preview.Target.Source.Citekey(a.citekey.value))
+          )
+        )
       case Some(ApprovalKind.Edge) =>
-        List(UiLabels.Text("See the evidence") -> UiLabels.Text(SourceLink.href(Preview.Target.Source.Citekey(a.citekey.value)))) ++ a.target.map(t =>
+        List(
+          UiLabels.Text("See the evidence") -> UiLabels.Text(
+            SourceLink.href(Preview.Target.Source.Citekey(a.citekey.value))
+          )
+        ) ++ a.target.map(t =>
           UiLabels.Text("Compare the two") -> UiLabels.Text(SourceLink.href(Preview.Target.Source.Citekey(t.value)))
         )
       case Some(ApprovalKind.ArticlePublish) | Some(ApprovalKind.ArticleFilter) =>
-        a.subject.map(s => UiLabels.Text("Read it first") -> UiLabels.Text(ArticleLink.href(Article.Slug(s.value)))).toList
+        a.subject
+          .map(s => UiLabels.Text("Read it first") -> UiLabels.Text(ArticleLink.href(Article.Slug(s.value))))
+          .toList
       case Some(ApprovalKind.GoalPlan) | Some(ApprovalKind.ArticlePlan) =>
-        a.subject.map(s => UiLabels.Text("Read the plan first") -> UiLabels.Text(Route.Goal(Goal.Slug(s.value)).path)).toList
+        a.subject
+          .map(s => UiLabels.Text("Read the plan first") -> UiLabels.Text(Route.Goal(Goal.Slug(s.value)).path))
+          .toList
       case Some(ApprovalKind.HintEffect) =>
-        a.subject.map(id => UiLabels.Text("See the manager") -> UiLabels.Text(Route.Manager(Route.ManagerId(id.value)).path)).toList
+        a.subject
+          .map(id => UiLabels.Text("See the manager") -> UiLabels.Text(Route.Manager(Route.ManagerId(id.value)).path))
+          .toList
       case None => Nil
-    if own.nonEmpty then own else List(UiLabels.Text("Read the whole proposal") -> UiLabels.Text(Route.Research(ResearchSection.Decisions).path))
+    if own.nonEmpty then own
+    else List(UiLabels.Text("Read the whole proposal") -> UiLabels.Text(Route.Research(ResearchSection.Decisions).path))
 
   /** `5 hours`, `2 days`: how long the oldest decision has waited. */
   def waited(createdMs: EpochMillis, nowMs: EpochMillis): UiLabels.Text =
@@ -124,7 +142,9 @@ object ResearchOverview:
     val quota = Var(List.empty[String])
     val busy = Var(false)
     val failed = Var(Option.empty[String])
-    val mode = status.signal.map(_.map(s => AgentMode.of(AgentMode.Step.Autopilot.On(s.on.value), AgentMode.Step.Drain.On(s.drain.isDefined))))
+    val mode = status.signal.map(
+      _.map(s => AgentMode.of(AgentMode.Step.Autopilot.On(s.on.value), AgentMode.Step.Drain.On(s.drain.isDefined)))
+    )
     def choose(m: AgentMode): Unit = write { () =>
       busy.set(true)
       ApiClient.setAgentMode(m).onComplete { r =>
@@ -187,7 +207,9 @@ object ResearchOverview:
         ApprovalsView
           .evidenceLine(a)
           .map(e => span(s"Reason given: ${e.take(240)}${if e.length > 240 then "…" else ""} ")),
-        a.runId.map(id => span("Proposed by ", RouteLink(Route.Run(Route.RunId(id.value)), s"agent work ${id.value.take(8)}"), "."))
+        a.runId.map(id =>
+          span("Proposed by ", RouteLink(Route.Run(Route.RunId(id.value)), s"agent work ${id.value.take(8)}"), ".")
+        )
       ),
       div(
         cls := "btn-group decision-actions",
@@ -239,7 +261,8 @@ object ResearchOverview:
             _.fold("")(as =>
               oldestFirst(as) match
                 case Nil    => ""
-                case h :: _ => s"${as.size} · oldest waiting ${waited(EpochMillis(js.Date.parse(h.createdAt.value)), EpochMillis(js.Date.now()))}"
+                case h :: _ =>
+                  s"${as.size} · oldest waiting ${waited(EpochMillis(js.Date.parse(h.createdAt.value)), EpochMillis(js.Date.now()))}"
             )
           )
         ),
@@ -273,7 +296,8 @@ object ResearchOverview:
       child <-- status.combineWith(managers).map {
         case (None, _)     => p(cls := "muted row", "Loading…")
         case (Some(s), ms) =>
-          val top = s.goals.filter(_.parent.isEmpty).sortBy(g => g.lastActivity.map(_.value).getOrElse("")).reverse.take(6)
+          val top =
+            s.goals.filter(_.parent.isEmpty).sortBy(g => g.lastActivity.map(_.value).getOrElse("")).reverse.take(6)
           if top.isEmpty then p(cls := "muted row", "No research goals yet.")
           else
             div(top.map { g =>

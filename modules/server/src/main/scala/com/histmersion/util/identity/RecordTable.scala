@@ -155,6 +155,7 @@ final case class RecordTable(
 object RecordTable:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** How many merges in a row are followed. */
 
   type Table = Table.T

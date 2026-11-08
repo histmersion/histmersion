@@ -6,7 +6,10 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 
-final case class LabelRename(to: LabelRename.To) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class LabelRename(to: LabelRename.To)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object LabelRename:
-  export com.histmersion.api.library.Label.{Text as To}
+  export com.histmersion.api.library.Label.Text as To

@@ -14,16 +14,17 @@ object RepairAcquire:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
-
-  final case class RepairRequest(dryRun: RepairRequest.DryRun = RepairRequest.DryRun(false), by: Option[RepairRequest.By] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class RepairRequest(
+      dryRun: RepairRequest.DryRun = RepairRequest.DryRun(false),
+      by: Option[RepairRequest.By] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RepairRequest:
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
-    export com.histmersion.api.automation.Activity.{Actor as By}
-
+    export com.histmersion.api.automation.Activity.Actor as By
 
   final case class RepairRow(
       item: RepairRow.Item,
@@ -34,10 +35,11 @@ object RepairAcquire:
       detail: RepairRow.Detail = RepairRow.Detail(""),
       backlogItem: Option[RepairRow.BacklogItem] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RepairRow:
-    export Acquire.{ItemNumber as Item}
+    export Acquire.ItemNumber as Item
     type Goals = Goals.T
     object Goals extends Newtype[String, Pure]
     type Watcher = Watcher.T
@@ -49,7 +51,6 @@ object RepairAcquire:
     type BacklogItem = BacklogItem.T
     object BacklogItem extends Newtype[Long, Pure]
 
-
   final case class RepairResult(
       dryRun: RepairResult.DryRun,
       moved: RepairResult.Moved = RepairResult.Moved(0),
@@ -60,7 +61,8 @@ object RepairAcquire:
       backlog: Managers.ManagerInfo.Backlog = Managers.ManagerInfo.Backlog(0),
       backlogDays: Option[Managers.ManagerInfo.BacklogDays] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RepairResult:
     export RepairRequest.DryRun
@@ -73,14 +75,15 @@ object RepairAcquire:
     type Untouched = Untouched.T
     object Untouched extends Newtype[Int, Pure]
 
-
   val Move = "move"
   val Remove = "remove"
   val Keep = "keep"
 
   def markdown(r: RepairResult): Markdown =
-    val verb = if ((r.dryRun) == RepairRequest.DryRun(true)) then "would " else ""
-    val head = s"# Repair of the acquisition list${if ((r.dryRun) == RepairRequest.DryRun(true)) then " (dry run: nothing changed)" else ""}\n\n" +
+    val verb = if (r.dryRun) == RepairRequest.DryRun(true) then "would " else ""
+    val head = s"# Repair of the acquisition list${
+        if (r.dryRun) == RepairRequest.DryRun(true) then " (dry run: nothing changed)" else ""
+      }\n\n" +
       s"- ${verb}move ${Plural.count(Plural.CountN(r.moved.value.toLong), Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +
       s"- ${verb}remove ${Plural.count(Plural.CountN(r.removed.value.toLong), Plural.CountSingular("item"))} already in the corpus\n" +
       s"- keep ${Plural.count(Plural.CountN(r.kept.value.toLong), Plural.CountSingular("sweep item"))} on the list (no legal open-access copy known, or a watcher that does not ingest)\n" +

@@ -14,8 +14,7 @@ import com.histmersion.util.console.Console
   */
 object NotesCmd:
 
-
-  private def list (using console: Console) = Opts.subcommand("list", "Your notes, last changed first") {
+  private def list(using console: Console) = Opts.subcommand("list", "Your notes, last changed first") {
     (
       Opts
         .option[String](
@@ -28,11 +27,12 @@ object NotesCmd:
       Opts.option[Int]("limit", s"How many (default ${PersonalIds.DefaultLimit})").orNone,
       Output.jsonFlag
     ).mapN { (kind, item, q, limit, json) => (c: Client) =>
-      c.call(PersonalApi.notes)((kind.map(ItemKind.Wire(_)), item.map(ItemKey(_)), q.map(PersonalApi.Search(_)), limit)).map(ns => Output.emit(json, ns)(PersonalMarkdown.notes))
+      c.call(PersonalApi.notes)((kind.map(ItemKind.Wire(_)), item.map(ItemKey(_)), q.map(PersonalApi.Search(_)), limit))
+        .map(ns => Output.emit(json, ns)(PersonalMarkdown.notes))
     }
   }
 
-  private def show (using console: Console) = Opts.subcommand("show", "One note in full") {
+  private def show(using console: Console) = Opts.subcommand("show", "One note in full") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
       c.call(PersonalApi.note)(Note.Id(id)).map(n => Output.emit(json, n)(PersonalMarkdown.note))
     }
@@ -45,14 +45,20 @@ object NotesCmd:
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Note.Text(Files.readString(p)))
         else Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
-      case _ => Left(Cli.Error(Cli.Error.Message("give the note's text with --text or --file (one of them)"), exitCode = ExitCode.Usage))
+      case _ =>
+        Left(
+          Cli.Error(
+            Cli.Error.Message("give the note's text with --text or --file (one of them)"),
+            exitCode = ExitCode.Usage
+          )
+        )
 
   private val textOpts = (
     Opts.option[String]("text", "The note (Markdown)").orNone,
     Opts.option[String]("file", "Read the note from this Markdown file").orNone
   )
 
-  private def add (using console: Console) = Opts.subcommand(
+  private def add(using console: Console) = Opts.subcommand(
     "add",
     "Leave a note on an item (`source anthony2007_horse --text …`) or on a " +
       "place on the map (`point --lat 37.73 --lon 22.75 [--from -1300 --to -1100] --text …`)"
@@ -72,7 +78,7 @@ object NotesCmd:
     }
   }
 
-  private def edit (using console: Console) = Opts.subcommand("edit", "Replace a note's text") {
+  private def edit(using console: Console) = Opts.subcommand("edit", "Replace a note's text") {
     (Opts.argument[String]("id"), textOpts._1, textOpts._2, Output.jsonFlag).mapN {
       (id, inline, file, json) => (c: Client) =>
         text(inline, file)
@@ -81,11 +87,12 @@ object NotesCmd:
     }
   }
 
-  private def rm (using console: Console) = Opts.subcommand("rm", "Remove a note (its id, from `notes list`)") {
+  private def rm(using console: Console) = Opts.subcommand("rm", "Remove a note (its id, from `notes list`)") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.call(PersonalApi.removeNote)(Note.Id(id)).map(n => Output.emit(json, n)(n => s"Removed the note on ${n.title}."))
+      c.call(PersonalApi.removeNote)(Note.Id(id))
+        .map(n => Output.emit(json, n)(n => s"Removed the note on ${n.title}."))
     }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("notes", "Your notes: list, show, add, edit, rm")(list orElse show orElse add orElse edit orElse rm)

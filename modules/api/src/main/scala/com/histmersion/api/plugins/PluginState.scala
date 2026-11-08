@@ -17,4 +17,5 @@ object PluginState:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-  def parse(s: Wire): Option[PluginState] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+  def parse(s: Wire): Option[PluginState] =
+    values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))

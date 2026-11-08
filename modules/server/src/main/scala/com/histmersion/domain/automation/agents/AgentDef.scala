@@ -49,6 +49,7 @@ final case class AgentDef(
 object AgentDef:
   type Fingerprint = Fingerprint.T
   object Fingerprint extends Newtype[String, Pure]
+
   /** `get_source` as `GetSource`. */
 
   type Name = Name.T

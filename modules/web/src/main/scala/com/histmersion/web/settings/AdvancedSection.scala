@@ -76,7 +76,9 @@ object AdvancedSection:
   )
 
   /** A block's name for a person. Pure. */
-  def sectionName(id: ConfigEdit.Section.Id): SectionName = SectionName(Names.getOrElse(id.value, Wording.humanize(Wording.Id(id.value))))
+  def sectionName(id: ConfigEdit.Section.Id): SectionName = SectionName(
+    Names.getOrElse(id.value, Wording.humanize(Wording.Id(id.value)))
+  )
 
   /** One block, folded until opened (or while the filter finds something in it). */
   private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[Query]): HtmlElement =
@@ -97,6 +99,9 @@ object AdvancedSection:
       ),
       children <-- open.signal.combineWith(query).map { (o, q) =>
         if !o && q.value.trim.isEmpty then Nil
-        else shown.filter(matches(_, q)).map(f => SettingControl(f, draft, Some(SettingsForm.Item.Name(f.relative.value.stripPrefix(s"${s.id}.")))))
+        else
+          shown
+            .filter(matches(_, q))
+            .map(f => SettingControl(f, draft, Some(SettingsForm.Item.Name(f.relative.value.stripPrefix(s"${s.id}.")))))
       }
     )

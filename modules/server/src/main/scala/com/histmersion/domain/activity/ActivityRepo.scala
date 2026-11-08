@@ -62,7 +62,8 @@ private[activity] object ActivityRepo:
     case Show.Problems   => s"kind IN ('run', 'job') AND state IN (${quoted(ActivityRules.ProblemStates)})"
 
   // the rules' own constants, never a client's text
-  private def quoted(states: Set[Entry.State]): String = states.toList.map(_.value).sorted.map(s => s"'$s'").mkString(", ")
+  private def quoted(states: Set[Entry.State]): String =
+    states.toList.map(_.value).sorted.map(s => s"'$s'").mkString(", ")
 
   private def where(q: ActivityQuery): Sql =
     Sql.raw(Sql.Text(s" WHERE ${showSql(q.show)}")) ++
@@ -80,7 +81,10 @@ private[activity] object ActivityRepo:
   /** One page of `q`, with the next page's cursor. */
   def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[ActivityCursor.Wire]) =
     val sql = Sql.raw(Sql.Text(s"$Projection FROM $Merged")) ++ where(q) ++
-      Sql.of(Sql.Text(""" ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ?"""), Param.I(Param.I.V(q.limit.value + 1)))
+      Sql.of(
+        Sql.Text(""" ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ?"""),
+        Param.I(Param.I.V(q.limit.value + 1))
+      )
     val rows = sql.frag.query[ActivityRow].run().toList.map(_.entry)
     val (kept, rest) = rows.splitAt(q.limit.value)
     (kept, Option.when(rest.nonEmpty)(kept.lastOption).flatten.map(ActivityRules.cursorOf(_).wire))
@@ -95,4 +99,10 @@ private[activity] object ActivityRepo:
                          FROM jobs"""),
       Param.S(Param.S.V(weekAgo.toString))
     )
-    sql.frag.query[(Long, Long)].run().headOption.fold(Activity.Counts())((r, p) => Activity.Counts(Activity.Counts.Running(r.toInt), Activity.Counts.ProblemsWeek(p.toInt)))
+    sql.frag
+      .query[(Long, Long)]
+      .run()
+      .headOption
+      .fold(Activity.Counts())((r, p) =>
+        Activity.Counts(Activity.Counts.Running(r.toInt), Activity.Counts.ProblemsWeek(p.toInt))
+      )

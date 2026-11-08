@@ -13,7 +13,8 @@ private[places] object GazetteerImport:
       source: Gazetteer.SourceInfo.Key,
       version: Gazetteer.LoadCounts.Version,
       apply: Boolean,
-      windowYears: Gazetteer.ValidityWindowYears = Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
+      windowYears: Gazetteer.ValidityWindowYears =
+        Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
       pointAreaKinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
   )(using con: DbCon): Session =
     val transactions = Transactor.onConnection
@@ -29,10 +30,15 @@ private[places] object GazetteerImport:
       if apply then transactions.transact(work) else transactions.rollback(work)
 
     def batch(records: List[GazRecord]): Gazetteer.LoadCounts =
-      @tailrec def dedupe(rest: List[GazRecord], ok: Vector[GazRecord], duplicates: List[Gazetteer.LoadCounts.Skipped]): (Vector[GazRecord], List[Gazetteer.LoadCounts.Skipped]) =
+      @tailrec def dedupe(
+          rest: List[GazRecord],
+          ok: Vector[GazRecord],
+          duplicates: List[Gazetteer.LoadCounts.Skipped]
+      ): (Vector[GazRecord], List[Gazetteer.LoadCounts.Skipped]) =
         rest match
-          case Nil => (ok, duplicates)
-          case record :: tail if ok.exists(_.ref == record.ref) => dedupe(tail, ok, duplicates :+ Gazetteer.LoadCounts.Skipped(s"${record.ref}: repeated"))
+          case Nil                                              => (ok, duplicates)
+          case record :: tail if ok.exists(_.ref == record.ref) =>
+            dedupe(tail, ok, duplicates :+ Gazetteer.LoadCounts.Skipped(s"${record.ref}: repeated"))
           case record :: tail => dedupe(tail, ok :+ record, duplicates)
       val (unique, duplicates) = dedupe(records, Vector.empty, Nil)
       val rows = unique.toList
@@ -53,4 +59,3 @@ private[places] object GazetteerImport:
   object Session:
     type Pruned = Pruned.T
     object Pruned extends Newtype[Long, Pure]
-

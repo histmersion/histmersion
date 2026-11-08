@@ -84,6 +84,7 @@ object PeriodImports:
   object Dataset extends Newtype[String, Pure]
   type DatasetBody = DatasetBody.T
   object DatasetBody extends Newtype[String, Pure]
+
   /** The text of a PeriodO dataset: the bundled seed or a dump. */
   type Document = Document.T
   object Document extends Newtype[String, Pure]
@@ -91,8 +92,8 @@ object PeriodImports:
   object Problem extends Newtype[String, Pure]
   type Replace = Replace.T
   object Replace extends Newtype[Boolean, Pure]
-  /** The `seed_versions` name of the bundled period seed. */
 
+  /** The `seed_versions` name of the bundled period seed. */
 
   val SeedName = "periods"
 

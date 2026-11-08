@@ -23,8 +23,12 @@ object AgentsRoutes:
     AgentsApi.setChain.serverLogic[Identity]((role, in) => a.setChain(role, in)),
     AgentsApi.resetChain.serverLogic[Identity](role => a.resetChain(role)),
     AgentsApi.setAllowance.serverLogic[Identity](in => a.setAllowance(in)),
-    AgentsApi.removeAllowance.serverLogic[Identity](target => a.removeAllowance(ModelChains.AllowanceSet.Target(target.value))),
-    AgentsApi.doctor.serverLogicSuccess[Identity](offline => a.doctor(AgentsControllers.Offline(offline.exists(_.value)))),
+    AgentsApi.removeAllowance.serverLogic[Identity](target =>
+      a.removeAllowance(ModelChains.AllowanceSet.Target(target.value))
+    ),
+    AgentsApi.doctor.serverLogicSuccess[Identity](offline =>
+      a.doctor(AgentsControllers.Offline(offline.exists(_.value)))
+    ),
     AgentsApi.probe.serverLogic[Identity](req => a.probe(req)),
     AgentsApi.startRun.serverLogic[Identity](req => a.startRun(req)),
     AgentsApi.runs.serverLogic[Identity]((f, limit, before, upTo) =>
@@ -38,14 +42,16 @@ object AgentsRoutes:
     AgentsApi.run.serverLogic[Identity](id => AgentsControllers.runId(id.value).flatMap(a.run)),
     AgentsApi.compare.serverLogic[Identity](ids => AgentsControllers.runIds(ids.map(_.value)).flatMap(a.compare)),
     AgentsApi.control.serverLogic[Identity]((id, action, usd, tokens) =>
-      AgentsControllers.runId(id.value).flatMap(i =>
-        a.control(
-          i,
-          action,
-          usd.map(u => AgentsControllers.BudgetUsd(u.value)),
-          tokens.map(t => AgentsControllers.BudgetTokens(t.value))
+      AgentsControllers
+        .runId(id.value)
+        .flatMap(i =>
+          a.control(
+            i,
+            action,
+            usd.map(u => AgentsControllers.BudgetUsd(u.value)),
+            tokens.map(t => AgentsControllers.BudgetTokens(t.value))
+          )
         )
-      )
     ),
     AgentsApi.approvals.serverLogic[Identity]((f, limit, before, upTo) =>
       a.approvalsPage(
@@ -59,7 +65,9 @@ object AgentsRoutes:
       a.decide(Approval.Id(id.value), Approval.Outcome(decision.value), req)
     ),
     AgentsApi.goalView.serverLogic[Identity](slug => AgentsControllers.goalSlug(slug.value).flatMap(a.goalView)),
-    AgentsApi.addGoalLink.serverLogic[Identity]((slug, in) => AgentsControllers.goalSlug(slug.value).flatMap(g => a.addGoalLink(g, in))),
+    AgentsApi.addGoalLink.serverLogic[Identity]((slug, in) =>
+      AgentsControllers.goalSlug(slug.value).flatMap(g => a.addGoalLink(g, in))
+    ),
     AgentsApi.removeGoalLink.serverLogic[Identity]((slug, kind, ref) =>
       AgentsControllers.goalSlug(slug.value).flatMap(g => a.removeGoalLink(g, kind, BGoalLinkRow.Ref(ref.value)))
     ),

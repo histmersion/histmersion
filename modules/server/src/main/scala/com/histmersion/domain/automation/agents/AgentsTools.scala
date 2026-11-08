@@ -52,7 +52,6 @@ object AgentsTools:
   type RepairAcquire = RepairAcquire.T
   object RepairAcquire extends Newtype[Boolean, Pure]
 
-
   import com.histmersion.util.mcp.ToolInputs.given
 
   /** `repairAcquire`: the acquisition list's one-shot repair (dry run or not), as Markdown — the library's, bound by
@@ -123,7 +122,7 @@ object AgentsTools:
               ToolResult.text(
                 AgentsControllers.runId(id).flatMap(a.run).fold(McpOut.refusal, AgentsMarkdown.run(_, in.messages))
               )
-            case None     =>
+            case None =>
               val f = in.filter
               ToolResult.text(
                 a.runsPage(f, in.limit.flatMap(PageSize.option(_)), in.before.map(Paging.Cursor(_)), None)
@@ -135,7 +134,13 @@ object AgentsTools:
                         page,
                         f.qualifier.map(q => Agents.RunInfo.Status(q.value)),
                         Paging
-                          .olderLine(page, c => Paging.OlderLine.Text(s"call `run_status` again with the same filters and `before: \"$c\"`")).map(t => Paging.Cursor(t.value))
+                          .olderLine(
+                            page,
+                            c =>
+                              Paging.OlderLine
+                                .Text(s"call `run_status` again with the same filters and `before: \"$c\"`")
+                          )
+                          .map(t => Paging.Cursor(t.value))
                       )
                   )
               )
@@ -169,7 +174,13 @@ object AgentsTools:
                       page,
                       f.qualifier.map(q => Approval.State.Wire(q.value)),
                       Paging
-                        .olderLine(page, c => Paging.OlderLine.Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")).map(t => Paging.Cursor(t.value))
+                        .olderLine(
+                          page,
+                          c =>
+                            Paging.OlderLine
+                              .Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")
+                        )
+                        .map(t => Paging.Cursor(t.value))
                     )
                 )
             )
@@ -194,8 +205,7 @@ object AgentsTools:
                   DomainApproval.Id(id),
                   DomainApproval.Outcome(in.decision),
                   DecisionRequest(in.note.map(DecisionRequest.Note(_)))
-                )
-                  .fold(McpOut.refusal, x => AgentsMarkdown.approvalLine(x))
+                ).fold(McpOut.refusal, x => AgentsMarkdown.approvalLine(x))
               )
             case None =>
               ToolResult.text(
@@ -290,7 +300,8 @@ object AgentsTools:
                     .map(s => AgentsMarkdown.scheduleLine(s))
                 )
             case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
-            case _            => Left(Api.Error(Api.Error.Message("give both `goal` and `kind`, or neither to list the schedules")))
+            case _            =>
+              Left(Api.Error(Api.Error.Message("give both `goal` and `kind`, or neither to list the schedules")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -306,7 +317,8 @@ object AgentsTools:
         )
         .input[ModelsInput]
         .handle { in =>
-          ToolResult.text(if in.doctor then AgentsMarkdown.doctor(a.doctor(offline = AgentsControllers.Offline(in.offline)))
+          ToolResult.text(if in.doctor then
+            AgentsMarkdown.doctor(a.doctor(offline = AgentsControllers.Offline(in.offline)))
           else if in.quota then AgentsMarkdown.quota(a.quota)
           else AgentsMarkdown.models(a.models))
         }
@@ -328,26 +340,33 @@ object AgentsTools:
         .input[SetModelsInput]
         .handle { in =>
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
-            case _ if in.refresh => a.refreshQuota(PlanQuota.QuotaRefresh(in.pool.map(PlanQuota.QuotaRefresh.Pool(_)))).map(AgentsMarkdown.refreshed)
+            case _ if in.refresh =>
+              a.refreshQuota(PlanQuota.QuotaRefresh(in.pool.map(PlanQuota.QuotaRefresh.Pool(_))))
+                .map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
-              if in.hold.isEmpty && in.floors.isEmpty then Left(Api.Error(Api.Error.Message("with `pool`, give `hold` and/or `floors`")))
-              else a.setPool(
-                PlanQuota.PoolIdText(in.pool.get.trim),
-                PlanQuota.PoolSet(in.hold.map(PlanQuota.PoolSet.Hold(_)), in.floors.map(PlanQuota.PoolSet.Floors(_)))
-              ).map(AgentsMarkdown.pool)
+              if in.hold.isEmpty && in.floors.isEmpty then
+                Left(Api.Error(Api.Error.Message("with `pool`, give `hold` and/or `floors`")))
+              else
+                a.setPool(
+                  PlanQuota.PoolIdText(in.pool.get.trim),
+                  PlanQuota.PoolSet(in.hold.map(PlanQuota.PoolSet.Hold(_)), in.floors.map(PlanQuota.PoolSet.Floors(_)))
+                ).map(AgentsMarkdown.pool)
             case (Some(r), None) if in.fallthrough.isDefined =>
               a.setFallthrough(
                 AgentRole.Wire(r),
                 PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(in.fallthrough.get))
               ).map(AgentsMarkdown.quota)
             case (Some(r), None) if in.reset => a.resetChain(AgentRole.Wire(r)).map(AgentsMarkdown.roleChain)
-            case (Some(r), None) => a.setChain(
+            case (Some(r), None)             =>
+              a.setChain(
                 AgentRole.Wire(r),
                 ModelChains.ChainSet(in.models.map(ModelChains.ChainSet.Models(_)))
               ).map(AgentsMarkdown.roleChain)
             case (None, Some(t)) if in.reset =>
               a.removeAllowance(ModelChains.AllowanceSet.Target(t))
-                .map(x => if x.removed.value then s"The saved allowance of $t is removed." else s"No saved allowance for $t.")
+                .map(x =>
+                  if x.removed.value then s"The saved allowance of $t is removed." else s"No saved allowance for $t."
+                )
             case (None, Some(t)) =>
               in.limits.map(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l))).partitionMap(identity) match
                 case (Nil, ls) =>
@@ -357,10 +376,10 @@ object AgentsTools:
                       ls.map(_.spec),
                       ModelChains.Allowance.ReservePct(in.reservePct)
                     )
-                  )
-                    .map(AgentsMarkdown.allowance)
+                  ).map(AgentsMarkdown.allowance)
                 case (errs, _) => Left(Api.Error(Api.Error.Message(errs.mkString("; "))))
-            case _ => Left(Api.Error(Api.Error.Message("give `role` (with `models`) or `target` (with `limits`), not both")))
+            case _ =>
+              Left(Api.Error(Api.Error.Message("give `role` (with `models`) or `target` (with `limits`), not both")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -402,11 +421,16 @@ object AgentsTools:
         .handle { in =>
           val m = a.managing
           val id = ManagerLight.Id(in.id.map(_.trim).filter(_.nonEmpty).getOrElse(Managers.ReviewId))
-          def target = in.target.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(Api.Error.Message(s"`${in.action}` needs `target`")))
+          def target = in.target
+            .map(_.trim)
+            .filter(_.nonEmpty)
+            .toRight(Api.Error(Api.Error.Message(s"`${in.action}` needs `target`")))
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
-            case "list"   => Right(ManagersMarkdown.list(m.list))
-            case "show"   => m.get(id).map(ManagersMarkdown.detail)
-            case "pause"  => m.action(id, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs))).map(ManagersMarkdown.line)
+            case "list"  => Right(ManagersMarkdown.list(m.list))
+            case "show"  => m.get(id).map(ManagersMarkdown.detail)
+            case "pause" =>
+              m.action(id, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs)))
+                .map(ManagersMarkdown.line)
             case "resume" => m.action(id, ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
             case "create" =>
               m.create(
@@ -415,23 +439,27 @@ object AgentsTools:
                   in.goal.map(Goal.Slug(_)),
                   cron = in.cron.map(Managers.ManagerCreate.Cron(_))
                 )
-              )
-                .map(ManagersMarkdown.line)
+              ).map(ManagersMarkdown.line)
             case "enqueue" =>
               target
                 .flatMap(t =>
                   if in.id.exists(_.trim.nonEmpty) then
-                    m.addItem(id, Managers.EnqueueRequest(
+                    m.addItem(
+                      id,
+                      Managers.EnqueueRequest(
                         Managers.EnqueueRequest.Kind(in.kind.getOrElse("")),
                         Managers.EnqueueRequest.Target(t),
                         in.priority.map(Managers.EnqueueRequest.Priority(_))
-                      ))
-                      .map(i => Managers.EnqueueResult(Managers.ManagerInfo.Id(id.value), List(i)))
-                  else m.enqueue(Managers.EnqueueRequest(
-                      Managers.EnqueueRequest.Kind(in.kind.getOrElse("review")),
-                      Managers.EnqueueRequest.Target(t),
-                      in.priority.map(Managers.EnqueueRequest.Priority(_))
-                    ))
+                      )
+                    ).map(i => Managers.EnqueueResult(Managers.ManagerInfo.Id(id.value), List(i)))
+                  else
+                    m.enqueue(
+                      Managers.EnqueueRequest(
+                        Managers.EnqueueRequest.Kind(in.kind.getOrElse("review")),
+                        Managers.EnqueueRequest.Target(t),
+                        in.priority.map(Managers.EnqueueRequest.Priority(_))
+                      )
+                    )
                 )
                 .map(ManagersMarkdown.enqueued)
             case "hold" =>
@@ -472,23 +500,37 @@ object AgentsTools:
             case "autopilot" =>
               in.on match
                 case None    => Right(autopilotPage(m.autopilot))
-                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(Autopilot.AutopilotSet.By("mcp")))).map(autopilotPage)
+                case Some(b) =>
+                  m.setAutopilot(
+                    Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(Autopilot.AutopilotSet.By("mcp")))
+                  ).map(autopilotPage)
             case "repair-acquire" =>
               repairAcquire(RepairAcquire(in.dryRun))
             case "drain" =>
-              m.drain(Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(Autopilot.DrainSet.By("mcp")))).map(autopilotPage)
+              m.drain(
+                Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(Autopilot.DrainSet.By("mcp")))
+              ).map(autopilotPage)
             case "mode" =>
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(Api.Error.Message("`mode` needs `mode`: working, finish or pause")))
-                .flatMap(md => m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(AgentMode.ModeSet.By("mcp")))))
+                .flatMap(md =>
+                  m.setMode(AgentMode.ModeSet(AgentMode.ModeSet.Mode(md), Some(AgentMode.ModeSet.By("mcp"))))
+                )
                 .map(autopilotPage)
             case "focus" =>
               in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
                 case None    => Right(AutopilotMarkdown.focus(m.focus))
                 case Some(v) =>
-                  m.setFocus(Autopilot.FocusSet(Autopilot.FocusSet.Action(v), in.goal.map(Goal.Slug(_)), in.value.map(Autopilot.FocusSet.Value(_)), Some(Autopilot.FocusSet.By("mcp")))).map(AutopilotMarkdown.focus)
+                  m.setFocus(
+                    Autopilot.FocusSet(
+                      Autopilot.FocusSet.Action(v),
+                      in.goal.map(Goal.Slug(_)),
+                      in.value.map(Autopilot.FocusSet.Value(_)),
+                      Some(Autopilot.FocusSet.By("mcp"))
+                    )
+                  ).map(AutopilotMarkdown.focus)
             case other =>
               Left(
                 Api.Error(
@@ -521,8 +563,9 @@ object AgentsTools:
         .handle { in =>
           val m = a.managing
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
-            case "status" | "" => Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit.flatMap(PageSize.option(_)))))
-            case "queue"       =>
+            case "status" | "" =>
+              Right(AgentSchedulerMarkdown.status(m.scheduler(in.limit.flatMap(PageSize.option(_)))))
+            case "queue" =>
               val st = m.scheduler(in.limit.orElse(Some(200)).flatMap(PageSize.option(_)))
               Right(if st.waiting.isEmpty then "_Nothing waits._"
               else
@@ -540,10 +583,18 @@ object AgentsTools:
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(Api.Error.Message("`strategy` needs `strategy`")))
-                .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(n), Some(AgentScheduler.SchedulerSet.By("mcp")))))
+                .flatMap(n =>
+                  m.setScheduler(
+                    AgentScheduler.SchedulerSet(
+                      AgentScheduler.SchedulerSet.Strategy(n),
+                      Some(AgentScheduler.SchedulerSet.By("mcp"))
+                    )
+                  )
+                )
                 .map(AgentSchedulerMarkdown.status)
             case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days.map(AgentAutopilotConfig.StallDays(_)))))
-            case other    => Left(Api.Error(Api.Error.Message(s"unknown action '$other' (status, queue, why, strategy, stalls)")))
+            case other    =>
+              Left(Api.Error(Api.Error.Message(s"unknown action '$other' (status, queue, why, strategy, stalls)")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -561,7 +612,8 @@ object AgentsTools:
       a.definitions.agent(n) match
         case Right(d) =>
           List(
-            McpServer(tools = d.tools.flatMap(a.toolbox.tool).map(mcpTool(_))).endpoint(List("mcp", "agent", d.name.value))
+            McpServer(tools = d.tools.flatMap(a.toolbox.tool).map(mcpTool(_)))
+              .endpoint(List("mcp", "agent", d.name.value))
           )
         case Left(m) =>
           scribe.warn(s"agent MCP: no endpoint for $n: $m")

@@ -22,18 +22,37 @@ import com.histmersion.util.console.Console
   * each, and of everything it depends on, is on the class path already. What remains goes into `lib/`. Exit codes: 0
   * done, 1 usage, 2 refused, 3 failed (a repository, a download, a file).
   */
-@main def pluginResolver(args: String*): Unit = sys.exit((DependencyResolver.exitCode((args.toList).map(refactorValue3 => Resolver.Argument(refactorValue3)))(using Console.system)).value)
+@main def pluginResolver(args: String*): Unit = sys.exit(
+  (DependencyResolver
+    .exitCode((args.toList).map(refactorValue3 => Resolver.Argument(refactorValue3)))(using Console.system))
+    .value
+)
 
 object DependencyResolver:
   private given CanEqual[Path, Path] = CanEqual.derived
 
-
-  export Resolver.{Problem as ParseLoopResultPart1, Argument as ParseLoopRest, ExitCode as ExitCodeResult, Argument as ExitCodeArgs, ExitCode as RunResult, Argument as RunArgs, Problem as ParseResultPart1, Argument as ParseArgs, ExitCode as ResolveResult, ExitCode as ResolveRootsResultPart1, ExitCode as ResolveSomeResultPart1, Problem as ServerModulesResultPart1, FileName as InputsResultPart1, Sha256 as InputsResultPart2}
+  export Resolver.{
+    Argument as ExitCodeArgs,
+    Argument as ParseArgs,
+    Argument as ParseLoopRest,
+    Argument as RunArgs,
+    ExitCode as ExitCodeResult,
+    ExitCode as ResolveResult,
+    ExitCode as ResolveRootsResultPart1,
+    ExitCode as ResolveSomeResultPart1,
+    ExitCode as RunResult,
+    FileName as InputsResultPart1,
+    Problem as ParseLoopResultPart1,
+    Problem as ParseResultPart1,
+    Problem as ServerModulesResultPart1,
+    Sha256 as InputsResultPart2
+  }
 
   private val Usage =
     "usage: pluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
 
-  def exitCode(args: List[DependencyResolver.ExitCodeArgs])(using console: Console): DependencyResolver.ExitCodeResult = try run(args)(using console)
+  def exitCode(args: List[DependencyResolver.ExitCodeArgs])(using console: Console): DependencyResolver.ExitCodeResult =
+    try run(args)(using console)
     catch
       case NonFatal(e) =>
         console.errorLine(s"pluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
@@ -49,17 +68,25 @@ object DependencyResolver:
   /** Pure: the request the arguments make. */
   def parse(args: List[DependencyResolver.ParseArgs]): Either[DependencyResolver.ParseResultPart1, ResolveRequest] =
     @annotation.tailrec
-    def loop(rest: List[DependencyResolver.ParseLoopRest], acc: ResolveRequest): Either[DependencyResolver.ParseLoopResultPart1, ResolveRequest] = rest match
-      case refactorPattern2 :: d :: t if (refactorPattern2.value == "--kit")              => loop(t, acc.copy(kit = Path.of((d).value)))
-      case refactorPattern3 :: d :: t if (refactorPattern3.value == "--lib")              => loop(t, acc.copy(lib = Path.of((d).value)))
-      case refactorPattern4 :: d :: t if (refactorPattern4.value == "--histmersion-repo") => loop(t, acc.copy(histmersionRepo = Some(Path.of((d).value))))
-      case refactorPattern5 :: r :: t if (refactorPattern5.value == "--repo")             =>
+    def loop(
+        rest: List[DependencyResolver.ParseLoopRest],
+        acc: ResolveRequest
+    ): Either[DependencyResolver.ParseLoopResultPart1, ResolveRequest] = rest match
+      case refactorPattern2 :: d :: t if (refactorPattern2.value == "--kit") =>
+        loop(t, acc.copy(kit = Path.of((d).value)))
+      case refactorPattern3 :: d :: t if (refactorPattern3.value == "--lib") =>
+        loop(t, acc.copy(lib = Path.of((d).value)))
+      case refactorPattern4 :: d :: t if (refactorPattern4.value == "--histmersion-repo") =>
+        loop(t, acc.copy(histmersionRepo = Some(Path.of((d).value))))
+      case refactorPattern5 :: r :: t if (refactorPattern5.value == "--repo") =>
         RepositoryUrl.fromArgument(Resolver.Argument((r).value)) match
           case Right(url) => loop(t, acc.copy(repositories = acc.repositories :+ url))
           case Left(e)    => Left(Resolver.Problem(s"--repo '$r': $e"))
-      case refactorPattern6 :: t if (refactorPattern6.value == "--check")                     => loop(t, acc.copy(check = ResolveRequest.Check(true)))
-      case flag :: _ if (flag).value.startsWith("--") => Left(DependencyResolver.ParseLoopResultPart1(s"unknown option $flag"))
-      case jars                               => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
+      case refactorPattern6 :: t if (refactorPattern6.value == "--check") =>
+        loop(t, acc.copy(check = ResolveRequest.Check(true)))
+      case flag :: _ if (flag).value.startsWith("--") =>
+        Left(DependencyResolver.ParseLoopResultPart1(s"unknown option $flag"))
+      case jars => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
     loop(args, ResolveRequest(empty, empty, None, Nil, ResolveRequest.Check(false), Nil))
       .filterOrElse(r => r.kit != empty && r.lib != empty, Resolver.Problem("--kit and --lib are required"))
@@ -88,7 +115,8 @@ object DependencyResolver:
               resolveRoots(roots, server, coursier)(using console) match
                 case Left(rc)    => rc
                 case Right(deps) =>
-                  if !(r.check).value then LibDirectory.write(r.lib, deps, inputs(r.jars), (r.repositories ++ stored).distinct)
+                  if !(r.check).value then
+                    LibDirectory.write(r.lib, deps, inputs(r.jars), (r.repositories ++ stored).distinct)
                   DependencyResolver.ResolveResult(0)
         finally deleteTree(scratch)
 
@@ -113,7 +141,9 @@ object DependencyResolver:
         .map(m => plugin.fileName -> m.map(_._1))
     }
     alone match
-      case Left(e)          => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(DependencyResolver.ResolveSomeResultPart1(3))
+      case Left(e) =>
+        console.errorLine(s"could not resolve the plugins' dependencies: $e");
+        Left(DependencyResolver.ResolveSomeResultPart1(3))
       case Right(perPlugin) =>
         perPlugin.flatMap((p, modules) => Resolution.conflicts(p, modules, server, Coursier.order)) match
           case conflicts if conflicts.nonEmpty =>
@@ -121,7 +151,9 @@ object DependencyResolver:
             Left(DependencyResolver.ResolveSomeResultPart1(2))
           case _ =>
             coursier.resolve(roots.map(_._2), server.shipped.keySet ++ server.excluded) match
-              case Left(e)      => console.errorLine(s"could not resolve the plugins' dependencies: $e"); Left(DependencyResolver.ResolveSomeResultPart1(3))
+              case Left(e) =>
+                console.errorLine(s"could not resolve the plugins' dependencies: $e");
+                Left(DependencyResolver.ResolveSomeResultPart1(3))
               case Right(joint) =>
                 val deps = Resolution.dependencies(joint, pluginKeys, server, Resolution.neededBy(perPlugin))
                 val provided = Resolution.provided(perPlugin.flatMap(_._2), pluginKeys, server)
@@ -132,16 +164,31 @@ object DependencyResolver:
     val modules = kit.resolve("modules")
     val excludes = kit.resolve("excludes")
     if !Files.isRegularFile(modules) then
-      Left(DependencyResolver.ServerModulesResultPart1(s"no module list in the kit ($modules): this kit predates plugin dependencies"))
+      Left(
+        DependencyResolver.ServerModulesResultPart1(
+          s"no module list in the kit ($modules): this kit predates plugin dependencies"
+        )
+      )
     else
       def lines(p: Path) = if Files.isRegularFile(p) then Files.readAllLines(p, UTF_8).asScala.toList else Nil
-      ServerModules.parse((lines(modules)).map(refactorValue => Resolver.ManifestLine(refactorValue)), (lines(excludes)).map(refactorValue2 => Resolver.ManifestLine(refactorValue2))).left.map(e => Resolver.Problem(s"$modules: $e"))
+      ServerModules
+        .parse(
+          (lines(modules)).map(refactorValue => Resolver.ManifestLine(refactorValue)),
+          (lines(excludes)).map(refactorValue2 => Resolver.ManifestLine(refactorValue2))
+        )
+        .left
+        .map(e => Resolver.Problem(s"$modules: $e"))
 
   /** Every plugin jar and the POM beside it, as `lib/inputs` lists them. */
-  private def inputs(jars: List[Path]): List[(DependencyResolver.InputsResultPart1, DependencyResolver.InputsResultPart2)] =
+  private def inputs(
+      jars: List[Path]
+  ): List[(DependencyResolver.InputsResultPart1, DependencyResolver.InputsResultPart2)] =
     jars
       .flatMap(j => j :: List(Pom.besideJar(j)).filter(Files.isRegularFile(_)))
-      .map(p => { val refactorTuple = p.getFileName.toString -> LibDirectory.sha256(p); (Resolver.FileName(refactorTuple._1), refactorTuple._2) })
+      .map { p =>
+        val refactorTuple = p.getFileName.toString -> LibDirectory.sha256(p);
+        (Resolver.FileName(refactorTuple._1), refactorTuple._2)
+      }
 
   private def deleteTree(dir: Path): Unit =
     Try {

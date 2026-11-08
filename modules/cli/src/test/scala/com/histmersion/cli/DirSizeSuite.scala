@@ -42,11 +42,17 @@ class DirSizeSuite extends munit.FunSuite:
 
   tmp.test("a missing directory is not there — zero, never an error"): d =>
     val r = DirSize.measure(d.resolve("nope"), DirSize.Budget.unlimited)
-    assertEquals(r, DirSize.Result(DirSize.Result.Bytes(0L), DirSize.Result.Files(0L), exists = DirSize.Result.Exists(false)))
+    assertEquals(
+      r,
+      DirSize.Result(DirSize.Result.Bytes(0L), DirSize.Result.Files(0L), exists = DirSize.Result.Exists(false))
+    )
 
   tmp.test("a regular file as the root is its own size"): d =>
     val f = file(d.resolve("one.pmtiles"), 1234)
-    assertEquals(DirSize.measure(f, DirSize.Budget.unlimited), DirSize.Result(DirSize.Result.Bytes(1234L), DirSize.Result.Files(1L), exists = DirSize.Result.Exists(true)))
+    assertEquals(
+      DirSize.measure(f, DirSize.Budget.unlimited),
+      DirSize.Result(DirSize.Result.Bytes(1234L), DirSize.Result.Files(1L), exists = DirSize.Result.Exists(true))
+    )
 
   tmp.test("links inside the tree are neither followed nor counted; a loop cannot hang the walk"): d =>
     val big = file(d.resolve("elsewhere/big.bin"), 10000).getParent
@@ -81,7 +87,11 @@ class DirSizeSuite extends munit.FunSuite:
     (1 to 20).foreach(i => file(d.resolve(s"f$i.bin"), 10))
     // a clock that passes the deadline after five reads
     var t = 0L
-    val b = new DirSize.Budget(DirSize.Budget.MaxEntries(Long.MaxValue), DirSize.Budget.DeadlineNanos(5L), () => { t += 1; t })
+    val b = new DirSize.Budget(
+      DirSize.Budget.MaxEntries(Long.MaxValue),
+      DirSize.Budget.DeadlineNanos(5L),
+      () => { t += 1; t }
+    )
     val r = DirSize.measure(d, b)
     assert(r.partial.value, r)
     assert(r.files.value < 20L, r)
@@ -103,7 +113,10 @@ class DirSizeSuite extends munit.FunSuite:
     val v = DirSize.volume(d.resolve("not/made/yet"))
     assert(v.isDefined)
     assertEquals(v.map(_.id), DirSize.volume(d).map(_.id))
-    assert(v.forall(x => x.totalBytes.value > 0 && x.freeBytes.value >= 0 && x.freeBytes.value <= x.totalBytes.value), v)
+    assert(
+      v.forall(x => x.totalBytes.value > 0 && x.freeBytes.value >= 0 && x.freeBytes.value <= x.totalBytes.value),
+      v
+    )
 
   tmp.test("children are listed by name; a missing directory has none"): d =>
     file(d.resolve("b/x"), 1); file(d.resolve("a"), 1)

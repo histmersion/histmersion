@@ -73,7 +73,11 @@ object ShelfRow:
       Target.item(u.kind, u.id),
       u.title.value,
       u.kind.label.value,
-      List(TableRow.authors(u.authors.map(_.value)), u.year.fold("")(_.toString), YearFmt.period(u.periodStart, u.periodEnd))
+      List(
+        TableRow.authors(u.authors.map(_.value)),
+        u.year.fold("")(_.toString),
+        YearFmt.period(u.periodStart, u.periodEnd)
+      )
         .filter(_.nonEmpty)
         .mkString(" · "),
       "",

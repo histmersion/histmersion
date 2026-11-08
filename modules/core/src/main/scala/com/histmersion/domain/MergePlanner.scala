@@ -95,8 +95,11 @@ object MergePlanner:
 
   /** One row of `merge_ledger`: the foreign rev merged, the local uid it maps to, the local rev left. */
 
-
-  final case class LedgerEntry(foreignRev: Ledger.ForeignRev, localUid: UUID, localRevAfter: Option[Ledger.LocalRevAfter])
+  final case class LedgerEntry(
+      foreignRev: Ledger.ForeignRev,
+      localUid: UUID,
+      localRevAfter: Option[Ledger.LocalRevAfter]
+  )
 
   /** Who has which label here: citekeys and old citekeys (aliases) → source uid; finding ids, article slugs, event ids,
     * goal slugs → uid; (source uid, asset name) → asset uid.
@@ -171,7 +174,9 @@ object MergePlanner:
 
     /** How the other collection is named in what the merge writes ("work"). */
     def fromLabel: Row.Label =
-      Row.Label(manifest.instance.label.map(_.value.trim).filter(_.nonEmpty).getOrElse(manifest.instance.id.toString.take(8)))
+      Row.Label(
+        manifest.instance.label.map(_.value.trim).filter(_.nonEmpty).getOrElse(manifest.instance.id.toString.take(8))
+      )
 
   object Input:
 
@@ -209,7 +214,12 @@ object MergePlanner:
   /** One of THIS collection's attestations, moved because the merge keeps the bundle's body: its new place, or `None`
     * (kept without a place — `keep-unanchored`); `drop` deletes it.
     */
-  final case class AttestationFix(uid: UUID, anchor: Option[Anchor], chunkOrd: Option[Chunk.Ord], drop: AttestationFix.Drop)
+  final case class AttestationFix(
+      uid: UUID,
+      anchor: Option[Anchor],
+      chunkOrd: Option[Chunk.Ord],
+      drop: AttestationFix.Drop
+  )
 
   object AttestationFix:
     type Drop = Drop.T
@@ -218,7 +228,12 @@ object MergePlanner:
   /** A version to record for an article here: the bundle's text, so the next merge finds it in this collection's
     * history (a common base).
     */
-  final case class ExtraVersion(articleUid: UUID, body: Bundle.Article.Body, summary: Option[Bundle.Article.Summary], versionOf: Bundle.Article.UpdatedAt)
+  final case class ExtraVersion(
+      articleUid: UUID,
+      body: Bundle.Article.Body,
+      summary: Option[Bundle.Article.Summary],
+      versionOf: Bundle.Article.UpdatedAt
+  )
 
   /** What `merge apply` does besides writing the decided lines. */
   final case class Apply(
@@ -346,10 +361,11 @@ object MergePlanner:
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 
   /** The letter of an issue id: the entity it is about (O for an OCR body, L for an alias). */
-  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter = kind match
-    case MergeIssue.Kind.BodyDiffers   => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("O")
-    case MergeIssue.Kind.AliasConflict => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("L")
-    case _                             => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter(entity.issueLetter)
+  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter =
+    kind match
+      case MergeIssue.Kind.BodyDiffers   => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("O")
+      case MergeIssue.Kind.AliasConflict => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("L")
+      case _ => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter(entity.issueLetter)
 
   /** `<letter>-<8 hex>`: sha256 of the kind, the sorted bundle uids, the sorted local uids, the two revs and anything
     * else that tells the issue apart (an alias). The same records unchanged → the same id; either side changed → a new
@@ -398,11 +414,16 @@ object MergePlanner:
   /** Two versions of an article, with the three-way merge's regions over their common version (or the whole text as one
     * region when there is none).
     */
-  private[domain] def articleText(base: Option[Bundle.Article.Body], left: Bundle.Article.Body, right: Bundle.Article.Body): IssueText =
+  private[domain] def articleText(
+      base: Option[Bundle.Article.Body],
+      left: Bundle.Article.Body,
+      right: Bundle.Article.Body
+  ): IssueText =
     val hunks = base match
       case Some(b) =>
         Diff3.merge(Diff3.MergeBase(b.value), Diff3.MergeLeft(left.value), Diff3.MergeRight(right.value)).hunks.map {
-          case Diff3.Hunk.Agreed(ls) => IssueHunk(conflict = IssueHunk.Conflict(false), left = ls.toList.map(l => IssueHunk.Left(l.value)))
+          case Diff3.Hunk.Agreed(ls) =>
+            IssueHunk(conflict = IssueHunk.Conflict(false), left = ls.toList.map(l => IssueHunk.Left(l.value)))
           case Diff3.Hunk.Conflict(o, a, c) =>
             IssueHunk(
               conflict = IssueHunk.Conflict(true),
@@ -503,7 +524,8 @@ object MergePlanner:
       .toMap
     val localRevs = in.local.revs
     // what the kinds' rules point at the records here (a place the bundle renamed, one matched under another id)
-    val localized = run.localized(localize(fes, mapped, localRevs.view.mapValues(x => Row.Label(x.label)).toMap), mapped)
+    val localized =
+      run.localized(localize(fes, mapped, localRevs.view.mapValues(x => Row.Label(x.label)).toMap), mapped)
     val locRevs = localized.revs
     val toLocal: UUID => UUID = u => mapped.getOrElse(u, u)
     val own = in.ownBundle
@@ -524,8 +546,9 @@ object MergePlanner:
                 else if localRevs.contains(l) then SourceFate.Same(l, SourceFate.Same.ByLedger(l != s.uid))
                 else
                   matched.find(_.right.uid == s.uid) match
-                    case Some(p) => p.gate.fold(SourceFate.Auto(p))(g => SourceFate.Gate(p, SourceFate.Gate.Issue(g.value)))
-                    case None    => SourceFate.New)
+                    case Some(p) =>
+                      p.gate.fold(SourceFate.Auto(p))(g => SourceFate.Gate(p, SourceFate.Gate.Issue(g.value)))
+                    case None => SourceFate.New)
     }.toMap
     val pairs: List[(SourcePair, Option[IssueCondition])] = fes.sources.flatMap(s =>
       fates(s.uid) match
@@ -582,7 +605,8 @@ object MergePlanner:
                 Bundle.Kind.Source,
                 MergeIssue.Title(
                   s"old citekey ${a.alias} names ${src.fold(a.sourceUid.toString)(_.citekey.value)} in the bundle, " +
-                    s"but ${sourcesByUid.get(o).fold(o.toString)(_.citekey.value)} here" + (if asCitekey then " (its citekey)"
+                    s"but ${sourcesByUid.get(o).fold(o.toString)(_.citekey.value)} here" + (if asCitekey then
+                                                                                              " (its citekey)"
                                                                                             else "")
                 ),
                 sourcesByUid.get(o).map(MergeIssue.Detail.side),
@@ -675,7 +699,8 @@ object MergePlanner:
     val localGoal = in.local.goals.map(g => g.uid -> g).toMap
     val localQueue = in.local.queue.map(q => q.uid -> q).toMap
     val rawArticle = fes.articles.map(a => a.uid -> a).toMap
-    def foreignHistory(f: UUID): Set[Sha256] = fes.versions.filter(_.articleUid == f).map(v => Sha256.assume(v.bodySha256.value)).toSet
+    def foreignHistory(f: UUID): Set[Sha256] =
+      fes.versions.filter(_.articleUid == f).map(v => Sha256.assume(v.bodySha256.value)).toSet
     def outcome(local: Bundle.Article, foreignUid: UUID): ArticleOutcome =
       MergeFold.articleOutcome(
         MergeFold.ArticleBody(local.body.value),
@@ -695,8 +720,8 @@ object MergePlanner:
     def articleMerge(f: UUID, o: UUID, oc: ArticleOutcome): Boolean = oc match
       case ArticleOutcome.Same | ArticleOutcome.Ours => merges(f) = o -> Merges.ArticleKeep; true
       case ArticleOutcome.Theirs                     => merges(f) = o -> Merges.ArticleTheirs; true
-      case ArticleOutcome.Merged(b, _)               => merges(f) = o -> Merges.ArticleMerged(Bundle.Article.Body(b.value)); true
-      case _                                         => false
+      case ArticleOutcome.Merged(b, _) => merges(f) = o -> Merges.ArticleMerged(Bundle.Article.Body(b.value)); true
+      case _                           => false
 
     // changed on both sides; deleted there and changed here — unless M4 merges it
     initialRows.filter(_.decision == Decision.Conflict).foreach { r =>
@@ -711,7 +736,8 @@ object MergePlanner:
           importable: Set[MergeDecision.Kind],
           detail: Option[IssueDetail] = None
       ): Unit =
-        val kind = if r.tombstone.value then MergeIssue.Kind.DeletedThereChangedHere else MergeIssue.Kind.ChangedBothSides
+        val kind =
+          if r.tombstone.value then MergeIssue.Kind.DeletedThereChangedHere else MergeIssue.Kind.ChangedBothSides
         add(
           Draft(
             MergeIssue(
@@ -731,7 +757,11 @@ object MergePlanner:
         )
       val article = List(km.KeepLeft, km.KeepRight, km.Both, km.File)
       if r.tombstone.value then
-        conflictIssue(MergeIssue.Title("deleted in the bundle, changed here since the last import"), lr, Set(km.KeepLeft, km.KeepRight))
+        conflictIssue(
+          MergeIssue.Title("deleted in the bundle, changed here since the last import"),
+          lr,
+          Set(km.KeepLeft, km.KeepRight)
+        )
       else
         r.kind match
           case Bundle.Kind.Article =>
@@ -768,11 +798,16 @@ object MergePlanner:
             run.conflict(r, localized) match
               case Some(how) => merges(r.foreignUid) = r.uid -> Merges.Contributed(how)
               case None      =>
-                conflictIssue(MergeIssue.Title("changed on both sides since the last import"), lr, Set(km.KeepLeft, km.KeepRight))
+                conflictIssue(
+                  MergeIssue.Title("changed on both sides since the last import"),
+                  lr,
+                  Set(km.KeepLeft, km.KeepRight)
+                )
     }
 
     // labels a different record has here — for the lines that would be written
-    val deleting: Set[UUID] = initialRows.filter(r => r.tombstone.value && r.decision == Decision.Delete).map(_.uid).toSet
+    val deleting: Set[UUID] =
+      initialRows.filter(r => r.tombstone.value && r.decision == Decision.Delete).map(_.uid).toSet
     val writesInitially: Set[UUID] =
       initialRows.filter(r => r.decision == Decision.Insert || r.decision == Decision.FastForward).map(_.uid).toSet
     def taken(owner: Option[UUID], self: UUID): Option[UUID] = owner.filter(o => o != self && !deleting(o))
@@ -1002,7 +1037,12 @@ object MergePlanner:
                   )
                 )
               case _ =>
-                add(Draft(blocking(MergeIssue.Title("two different articles under one slug (no common base)"), None), Set(km.KeepLeft)))
+                add(
+                  Draft(
+                    blocking(MergeIssue.Title("two different articles under one slug (no common base)"), None),
+                    Set(km.KeepLeft)
+                  )
+                )
       }
     }
 
@@ -1072,7 +1112,9 @@ object MergePlanner:
         .orElse(Option.when(localGoal.contains(r.uid))(r.uid))
       here.flatMap(localGoal.get).foreach { l =>
         MergeFold.scheduleDifferences(l, r).foreach { (k, a, b) =>
-          info += s"goal ${l.slug}: its $k schedule differs (here ${a.cron}${if a.enabled.value then "" else " off"}, " +
+          info += s"goal ${l.slug}: its $k schedule differs (here ${a.cron}${
+              if a.enabled.value then "" else " off"
+            }, " +
             s"the bundle's ${b.cron}${if b.enabled.value then "" else " off"}) — this collection's is kept"
         }
       }
@@ -1249,22 +1291,23 @@ object MergePlanner:
         case SourceFate.Gate(_, g) =>
           decisionIn(gateId(g)).filter(_.kind == km.Map).flatMap(_.argument).map(a => Citekey(a.value))
         case _ => None
-      mapTo.flatMap(ck => com.histmersion.domain.library.Citekey.option(ck.value).map(ck -> _)).foreach { (ck, domainCk) =>
-        fold(r.uid, l.uid, Bundle.Kind.Source)
-        foldedSources(r.uid) = l.uid
-        finalCitekey(r.uid) = ck
-        tally = tally.modify(_.sourcesMerged).using(n => MergeTally.SourcesMerged(n.value + 1))
-        // the source field by field and its findings, as the sources' rules fold them
-        val keepRightBody = run.foldSources(r, l, domainCk, folds)
+      mapTo.flatMap(ck => com.histmersion.domain.library.Citekey.option(ck.value).map(ck -> _)).foreach {
+        (ck, domainCk) =>
+          fold(r.uid, l.uid, Bundle.Kind.Source)
+          foldedSources(r.uid) = l.uid
+          finalCitekey(r.uid) = ck
+          tally = tally.modify(_.sourcesMerged).using(n => MergeTally.SourcesMerged(n.value + 1))
+          // the source field by field and its findings, as the sources' rules fold them
+          val keepRightBody = run.foldSources(r, l, domainCk, folds)
 
-        // what the kinds own of the pair before the rest: the figures
-        run.foldPairFirst(r, l, keepRightBody, folds)
+          // what the kinds own of the pair before the rest: the figures
+          run.foldPairFirst(r, l, keepRightBody, folds)
 
-        // what the kinds own of the pair: as the body question is decided
-        val alt = run.bodyIssue(r.uid) match
-          case Some(id) => Some(decisionIn(id).map(_.kind).getOrElse(km.KeepLeft))
-          case None     => None
-        run.foldPair(r, l, alt, folds)
+          // what the kinds own of the pair: as the body question is decided
+          val alt = run.bodyIssue(r.uid) match
+            case Some(id) => Some(decisionIn(id).map(_.kind).getOrElse(km.KeepLeft))
+            case None     => None
+          run.foldPair(r, l, alt, folds)
       }
     }
     // the citekey every other source of the bundle will have here
@@ -1314,7 +1357,18 @@ object MergePlanner:
       articleLine(o) = es =>
         val theirs = articleIn(es, o)
         val b = body.getOrElse(rewrite(theirs.body))
-        if theirsWins then theirs.modify(_.uid).setTo(loc.uid).modify(_.origin).setTo(loc.origin).modify(_.slug).setTo(loc.slug).modify(_.body).setTo(b).modify(_.rev).setTo(Bundle.Article.Rev(""))
+        if theirsWins then
+          theirs
+            .modify(_.uid)
+            .setTo(loc.uid)
+            .modify(_.origin)
+            .setTo(loc.origin)
+            .modify(_.slug)
+            .setTo(loc.slug)
+            .modify(_.body)
+            .setTo(b)
+            .modify(_.rev)
+            .setTo(Bundle.Article.Rev(""))
         else MergeFold.foldArticle(loc, theirs, MergeFold.ArticleBody(b.value))
       snapshots += o
       versions += ExtraVersion(o, raw.body, raw.summary, raw.updatedAt)
@@ -1377,10 +1431,25 @@ object MergePlanner:
                 overrides(f) = Decision.Kept
                 val copyUid = UUID.nameUUIDFromBytes(s"merge-both:$f".getBytes(java.nio.charset.StandardCharsets.UTF_8))
                 copies += (es =>
-                  articleIn(es, o).modify(_.uid).setTo(copyUid).modify(_.slug).setTo(slug).modify(_.body).setTo(rewrite(rawArticle(f).body)).modify(_.rev).setTo(Bundle.Article.Rev(""))
+                  articleIn(es, o)
+                    .modify(_.uid)
+                    .setTo(copyUid)
+                    .modify(_.slug)
+                    .setTo(slug)
+                    .modify(_.body)
+                    .setTo(rewrite(rawArticle(f).body))
+                    .modify(_.rev)
+                    .setTo(Bundle.Article.Rev(""))
                 )
               else
-                articleLine(f) = es => articleIn(es, f).modify(_.slug).setTo(slug).modify(_.body).setTo(rewrite(rawArticle(f).body)).modify(_.rev).setTo(Bundle.Article.Rev(""))
+                articleLine(f) = es =>
+                  articleIn(es, f)
+                    .modify(_.slug)
+                    .setTo(slug)
+                    .modify(_.body)
+                    .setTo(rewrite(rawArticle(f).body))
+                    .modify(_.rev)
+                    .setTo(Bundle.Article.Rev(""))
               reviews += slug
               tally = tally.modify(_.articlesBoth).using(n => MergeTally.ArticlesBoth(n.value + 1))
             case _ => ()
@@ -1398,7 +1467,8 @@ object MergePlanner:
           val raw = rawArticle(r.foreignUid)
           val b = rewrite(raw.body)
           if b != raw.body then
-            articleLine(r.uid) = es => articleIn(es, r.uid).modify(_.body).setTo(b).modify(_.rev).setTo(Bundle.Article.Rev(""))
+            articleLine(r.uid) =
+              es => articleIn(es, r.uid).modify(_.body).setTo(b).modify(_.rev).setTo(Bundle.Article.Rev(""))
             versions += ExtraVersion(r.uid, raw.body, raw.summary, raw.updatedAt)
         }
 
@@ -1539,10 +1609,18 @@ object MergePlanner:
     val resolvedRows = initialRows.map { r0 =>
       val owner = ownerSource(r0.foreignUid, r0.kind)
       val uid = if r0.tombstone.value then r0.uid else foldUids.getOrElse(r0.foreignUid, r0.uid)
-      val loc = if r0.tombstone.value then r0.localizedRev else finalRevs.get(uid).map(x => Local.Rev(x.rev)).getOrElse(r0.localizedRev)
-      val r = r0.modify(
-        _.uid).setTo(uid).modify(_.localizedRev).setTo(loc).modify(_.localRev).setTo(localRevs.get(uid).map(x => Local.Rev(x.rev))).modify(_.label).setTo(if r0.tombstone.value then r0.label else finalRevs.get(uid).map(x => Row.Label(x.label)).getOrElse(r0.label)
-      )
+      val loc = if r0.tombstone.value then r0.localizedRev
+      else finalRevs.get(uid).map(x => Local.Rev(x.rev)).getOrElse(r0.localizedRev)
+      val r = r0
+        .modify(_.uid)
+        .setTo(uid)
+        .modify(_.localizedRev)
+        .setTo(loc)
+        .modify(_.localRev)
+        .setTo(localRevs.get(uid).map(x => Local.Rev(x.rev)))
+        .modify(_.label)
+        .setTo(if r0.tombstone.value then r0.label
+        else finalRevs.get(uid).map(x => Row.Label(x.label)).getOrElse(r0.label))
       def foldDecision =
         if r.localRev.contains(loc) && !edgesGrow(uid) then Decision.Unchanged else Decision.FastForward
       if r0.tombstone.value then
@@ -1619,7 +1697,8 @@ object MergePlanner:
         s"${in.manifest.reference.periods} periods) — events point into them by id"
     if own then notes += "this instance's own bundle: rows changed here since are kept"
     // old citekeys of the bundle that were dropped here AFTER the bundle's alias was made (#827)
-    val droppedAliases = fes.aliases.filter(a => in.aliasTombstones.get(a.alias).exists(t => a.createdAt.value <= t.value))
+    val droppedAliases =
+      fes.aliases.filter(a => in.aliasTombstones.get(a.alias).exists(t => a.createdAt.value <= t.value))
     droppedAliases.foreach(a =>
       notes += s"old citekey ${a.alias}: dropped here (renamed back) on ${in.aliasTombstones(a.alias)} — not brought back"
     )
@@ -1758,7 +1837,9 @@ object MergePlanner:
           List(in.manifest.bundleId.toString) ++
             matched0 ++
             sorted.map(i => s"${i.id}=${i.decision.fold("")(_.wire.value)}") ++ problems ++
-            rows.map(r => s"${r.foreignUid}>${r.uid}:${r.decision}:${r.localizedRev}:${r.localRev.fold("")(_.value)}") ++
+            rows.map(r =>
+              s"${r.foreignUid}>${r.uid}:${r.decision}:${r.localizedRev}:${r.localRev.fold("")(_.value)}"
+            ) ++
             (apply.renames.map(_.toString) ++ apply.attestations.map(_.toString) ++ apply.folds.map(_.toString)).sorted
         ).mkString("\n")
       )

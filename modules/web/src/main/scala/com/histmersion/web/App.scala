@@ -153,7 +153,8 @@ object App:
   private def loadTagline(): Unit =
     ApiClient.sources(Filter(limit = Filter.Limit(1))).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
-        el.textContent = s"${Plural.count(Plural.CountN(r.total.value), Plural.CountSingular("source"))} · search, then read"
+        el.textContent =
+          s"${Plural.count(Plural.CountN(r.total.value), Plural.CountSingular("source"))} · search, then read"
       }
     }
 
@@ -216,7 +217,9 @@ object App:
     */
   def restoreSpan(from: Years.Astronomical, to: Years.Astronomical): Unit =
     MapView.render(
-      cachedFindings.filter(pt => pt.periodStart.forall(_.value <= to.value) && pt.periodEnd.forall(_.value >= from.value)),
+      cachedFindings.filter(pt =>
+        pt.periodStart.forall(_.value <= to.value) && pt.periodEnd.forall(_.value >= from.value)
+      ),
       (from, to)
     )
 
@@ -233,7 +236,10 @@ object App:
       else
         lastParams = Some(key)
         dom.window.clearTimeout(timer)
-        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(config.debounce.reloadMs.value)).value)
+        timer = dom.window.setTimeout(
+          () => load(),
+          UiState.reloadDelay(UiState.ReloadDelayNormalMs(config.debounce.reloadMs.value)).value
+        )
 
   private def load(): Unit =
     val mine = latest.start()

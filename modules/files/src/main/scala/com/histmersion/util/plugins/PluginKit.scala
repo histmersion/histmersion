@@ -72,7 +72,6 @@ object PluginKit:
 
   def renderJars(js: List[PluginJar]): String = js.asJson.printWith(printer)
 
-
   // ── status ────────────────────────────────────────────────────────────────────────────────────
 
   enum Verdict derives CanEqual:
@@ -129,7 +128,8 @@ object PluginKit:
     val removed = linked.keys.filterNot(now.contains).toList.sorted
     val changed = now.collect { case (f, h) if linked.get(f).exists(_ != h) => f }.toList.sorted
     val depsMoved = linkedDeps.exists(_ != dependencies.toMap)
-    val runningDigest = if serverAnswered then Some(running.fold(PluginSet.Digest(PluginSet.EmptyDigest))(_.digest)) else None
+    val runningDigest =
+      if serverAnswered then Some(running.fold(PluginSet.Digest(PluginSet.EmptyDigest))(_.digest)) else None
     val verdict = installed match
       case None                                           => Verdict.Unknown
       case Some(i) if i.digest != dirDigest || depsMoved  => Verdict.RelinkNeeded
@@ -180,9 +180,11 @@ object PluginKit:
     val scala3 = s"($Part)::($Part):($Part)".r
     val plain = s"($Part):($Part):($Part)".r
     s.trim match
-      case scala3(g, a, v) => Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(s"${a}_3"), Coordinates.Version(v)))
-      case plain(g, a, v)  => Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(a), Coordinates.Version(v)))
-      case other => Left(Problem(s"'$other' is not group:artifact:version (or group::artifact:version for a Scala 3 artifact)"))
+      case scala3(g, a, v) =>
+        Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(s"${a}_3"), Coordinates.Version(v)))
+      case plain(g, a, v) => Right(Coordinates(Coordinates.Group(g), Coordinates.Artifact(a), Coordinates.Version(v)))
+      case other          =>
+        Left(Problem(s"'$other' is not group:artifact:version (or group::artifact:version for a Scala 3 artifact)"))
 
   enum Origin derives CanEqual:
     case File(path: Origin.File.Path)
@@ -291,7 +293,11 @@ object PluginKit:
   /** Pure: what refuses a described jar before it is installed: no plugin in it, a foreign SPI, a provider that could
     * not be instantiated, an id another installed jar (or the binary itself) already has.
     */
-  def refusals(jar: PluginJar, spiVersion: PluginSet.SpiVersion, taken: Map[PluginDescription.Id, String]): List[Problem] =
+  def refusals(
+      jar: PluginJar,
+      spiVersion: PluginSet.SpiVersion,
+      taken: Map[PluginDescription.Id, String]
+  ): List[Problem] =
     val none = if jar.plugins.isEmpty then
       List(Problem(s"${jar.file} holds no plugin (no META-INF/services/com.histmersion.plugin.Plugin provider)"))
     else Nil
@@ -379,6 +385,7 @@ object PluginKit:
   def verifyKit(expected: List[KitFile], actual: Map[KitFile.File, KitFile.Sha256]): List[Problem] =
     val want = expected.map(f => f.file -> f.sha256).toMap
     val missing = want.keys.filterNot(actual.contains).toList.sorted.map(f => Problem(s"missing: $f"))
-    val changed = want.collect { case (f, h) if actual.get(f).exists(_ != h) => f }.toList.sorted.map(f => Problem(s"changed: $f"))
+    val changed =
+      want.collect { case (f, h) if actual.get(f).exists(_ != h) => f }.toList.sorted.map(f => Problem(s"changed: $f"))
     val extra = actual.keys.filterNot(want.contains).toList.sorted.map(f => Problem(s"not in the manifest: $f"))
     missing ++ changed ++ extra

@@ -45,5 +45,3 @@ object Blob:
   object Location extends Newtype[String, Pure]
   type Text = Text.T
   object Text extends Newtype[String, Pure]
-
-

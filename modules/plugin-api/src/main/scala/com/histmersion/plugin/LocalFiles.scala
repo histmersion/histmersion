@@ -4,8 +4,8 @@ package plugin
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** Local filesystem operations supplied by the host. Path construction alone performs no I/O.
-  * Read failures preserve the underlying IOException so a plugin can explain its own operation.
+/** Local filesystem operations supplied by the host. Path construction alone performs no I/O. Read failures preserve
+  * the underlying IOException so a plugin can explain its own operation.
   */
 trait LocalFiles:
   def isFile(path: Path): LocalFiles.IsFileResult
@@ -15,10 +15,12 @@ trait LocalFiles:
   def read(path: Path): LocalFiles.ReadResult
   def readPrefix(path: Path, length: LocalFiles.ReadPrefixLength): LocalFiles.ReadPrefixResult
 
-  /** The named file exists only while use runs. Cleanup also runs when use returns Left or throws.
-    * name must be a single filename, never a path. The supplied path must not escape the callback.
+  /** The named file exists only while use runs. Cleanup also runs when use returns Left or throws. name must be a
+    * single filename, never a path. The supplied path must not escape the callback.
     */
-  def staged[A](name: LocalFiles.StagedName, bytes: LocalFiles.StagedBytes)(use: Path => Either[LocalFiles.StagedUseResultPart1, A]): Either[LocalFiles.StagedResultPart1, A]
+  def staged[A](name: LocalFiles.StagedName, bytes: LocalFiles.StagedBytes)(
+      use: Path => Either[LocalFiles.StagedUseResultPart1, A]
+  ): Either[LocalFiles.StagedResultPart1, A]
 
 object LocalFiles:
   type ReadResult = ReadResult.T
@@ -46,7 +48,19 @@ object LocalFiles:
   object StagedUseResultPart1 extends Newtype[String, Pure]
 
   object Unavailable extends LocalFiles:
-    export LocalFiles.{ReadResult, ReadPrefixResult, StagedBytes, IsFileResult, IsDirectoryResult, ExistsResult, IsExecutableResult, ReadPrefixLength, StagedResultPart1, StagedName, StagedUseResultPart1}
+    export LocalFiles.{
+      ExistsResult,
+      IsDirectoryResult,
+      IsExecutableResult,
+      IsFileResult,
+      ReadPrefixLength,
+      ReadPrefixResult,
+      ReadResult,
+      StagedBytes,
+      StagedName,
+      StagedResultPart1,
+      StagedUseResultPart1
+    }
 
     private def unavailable: Nothing = throw UnsupportedOperationException("this host supplies no local files")
     def isFile(path: Path): IsFileResult = unavailable
@@ -55,5 +69,7 @@ object LocalFiles:
     def isExecutable(path: Path): IsExecutableResult = unavailable
     def read(path: Path): ReadResult = unavailable
     def readPrefix(path: Path, length: ReadPrefixLength): ReadPrefixResult = unavailable
-    def staged[A](name: StagedName, bytes: StagedBytes)(use: Path => Either[StagedUseResultPart1, A]): Either[StagedResultPart1, A] =
+    def staged[A](name: StagedName, bytes: StagedBytes)(
+        use: Path => Either[StagedUseResultPart1, A]
+    ): Either[StagedResultPart1, A] =
       Left(StagedResultPart1("this host supplies no local files"))

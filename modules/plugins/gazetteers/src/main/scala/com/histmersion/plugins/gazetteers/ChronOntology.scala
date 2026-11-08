@@ -15,19 +15,25 @@ import io.circe.{Json, JsonObject}
   */
 object ChronOntology extends DownloadedGazetteer:
   val title = GazetteerSource.TitleResult("ChronOntology named periods")
-  override val description = GazetteerSource.DescriptionResult("ChronOntology named periods (DAI, open access, ~14K periods)")
+  override val description =
+    GazetteerSource.DescriptionResult("ChronOntology named periods (DAI, open access, ~14K periods)")
   val url = Plugin.Http.GetUrl("https://chronontology.dainst.org/data/period?size=15000&from=0")
-  val rights: GazetteerRights = GazetteerRights(Licence("open access"), GazetteerRights.Credit("ChronOntology (DAI), open access"))
+  val rights: GazetteerRights =
+    GazetteerRights(Licence("open access"), GazetteerRights.Credit("ChronOntology (DAI), open access"))
 
   def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
-    io.circe.parser.parse(text.value).left.map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
-      val results = doc.asObject
-        .flatMap(_("results"))
-        .flatMap(_.asArray)
-        .map(_.toList)
-        .toRight(DownloadedGazetteer.Problem("expected {results: [...]}"))
-      results.map(_.flatMap(r => readResult(r).toOption))
-    }
+    io.circe.parser
+      .parse(text.value)
+      .left
+      .map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}"))
+      .flatMap { doc =>
+        val results = doc.asObject
+          .flatMap(_("results"))
+          .flatMap(_.asArray)
+          .map(_.toList)
+          .toRight(DownloadedGazetteer.Problem("expected {results: [...]}"))
+        results.map(_.flatMap(r => readResult(r).toOption))
+      }
 
   def readResult(j: Json): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
     j.asObject.toRight(DownloadedGazetteer.Problem("result is not a JSON object")).flatMap { wrapper =>
@@ -67,7 +73,10 @@ object ChronOntology extends DownloadedGazetteer:
   private def allNames(res: JsonObject): List[(GazetteerName.Name, GazetteerName.Lang)] =
     val names = res("names").flatMap(_.asObject).getOrElse(JsonObject.empty)
     names.toList.flatMap { (lang, arr) =>
-      arr.asArray.getOrElse(Vector.empty).flatMap(_.asString).map(n => (GazetteerName.Name(n), GazetteerName.Lang(lang)))
+      arr.asArray
+        .getOrElse(Vector.empty)
+        .flatMap(_.asString)
+        .map(n => (GazetteerName.Name(n), GazetteerName.Lang(lang)))
     }
 
   private def extractPeriod(res: JsonObject): Option[Period] =

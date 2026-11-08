@@ -138,7 +138,8 @@ object Composition:
       system: SystemContext = SystemContext.isolated
   )(using Ox): NettySyncServer =
     val selectedCore = core.getOrElse(CoreBudget(() => system.clock.instant()))
-    val sg = ServerGraph.start(hc, source, Some(plugins), selectedCore).fold(e => throw IllegalStateException(s"$e"), identity)
+    val sg =
+      ServerGraph.start(hc, source, Some(plugins), selectedCore).fold(e => throw IllegalStateException(s"$e"), identity)
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
@@ -159,7 +160,9 @@ object Composition:
       .attach(AgentUpstream.of(acq.controllers))
     val collections = collectionsControllers(sg, deps, h, acq.controllers)
     val mcp = McpTools(h, acq.controllers, collections)
-    h.agents.attachTools(mcp.toolNames.flatMap(n => ToolName.option(n))) // what the generated definitions' placeholders may name
+    h.agents.attachTools(
+      mcp.toolNames.flatMap(n => ToolName.option(n))
+    ) // what the generated definitions' placeholders may name
     val paused = h.agents.start()
     if paused > 0 then
       scribe.info(s"$paused interrupted agent run(s) paused; resume them with histmersion agent resume")
@@ -255,7 +258,10 @@ object Composition:
       .node[AcquireClients](
         Hot.Graph.Def.Name(ServerGraph.Acquisition),
         deps = List(sg.plugins),
-        keys = List(Hot.Graph.Def.Keys("histmersion.acquire"), Hot.Graph.Def.Keys("histmersion.media.max-retry-after-seconds"))
+        keys = List(
+          Hot.Graph.Def.Keys("histmersion.acquire"),
+          Hot.Graph.Def.Keys("histmersion.media.max-retry-after-seconds")
+        )
       ) { ctx =>
         Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core)(using deps.clock))
       }
@@ -279,7 +285,8 @@ object Composition:
       def patch(citekey: Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: Citekey) = h.calibreGaps.pushMeta(citekey)
       def pushed(req: CalibrePushRequest) = h.calibreGaps.pushed(req)
-      def gaps(limit: Option[CollectionLibrary.Limit]) = h.calibreGaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))
+      def gaps(limit: Option[CollectionLibrary.Limit]) =
+        h.calibreGaps.gaps(limit.map(l => CalibreGapControllers.Limit(l.value)))
       def original(citekey: Citekey) =
         h.ingest.controllers.original(citekey).flatMap { (file, disposition) =>
           scala.util
@@ -323,13 +330,20 @@ object Composition:
     * upstream clients built over it, and the chain of the generation's source fetchers (the built-in archive-org,
     * oa-unpaywall, oa-core, oa-openalex, oa-landing, pmc and arxiv unless switched off) in `acquire.chain` order.
     */
-  private def acquireClients(app: AppConfig, plugins: Generation, core: CoreBudget)(using clock: java.time.Clock): AcquireClients =
+  private def acquireClients(app: AppConfig, plugins: Generation, core: CoreBudget)(using
+      clock: java.time.Clock
+  ): AcquireClients =
     val cfg = app.acquire
     // the one outbound policy's Retry-After cap is the media one (`media.max-retry-after-seconds`)
     // `acquire.tls` (#1568): more roots than the JDK's, only when asked for
     val tls = OutboundTls.configure(cfg.tls)
     tls.foreach((_, line) => scribe.info(line.value))
-    val http = SttpHttp(cfg, maxRetryAfterSeconds = HttpPolicy.MaxRetryAfterSeconds(app.media.maxRetryAfterSeconds.value), tls = tls.map(_._1), clock = () => clock.instant())
+    val http = SttpHttp(
+      cfg,
+      maxRetryAfterSeconds = HttpPolicy.MaxRetryAfterSeconds(app.media.maxRetryAfterSeconds.value),
+      tls = tls.map(_._1),
+      clock = () => clock.instant()
+    )
     val openalex =
       OpenAlexDiscovery(
         OpenAlexCrossref(cfg.upstreamSettings, HttpPlugin(http), HostLog.scribe.plugin)

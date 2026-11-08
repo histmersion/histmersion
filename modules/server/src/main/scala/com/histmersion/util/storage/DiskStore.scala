@@ -92,7 +92,13 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
   def write(key: Store.Key, bytes: ByteSource.Content): Either[Store.Error, Stored] = io {
     val p = path(key)
     Option(p.getParent).foreach(Files.createDirectories(_))
-    Files.write(p, bytes.value, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
+    Files.write(
+      p,
+      bytes.value,
+      StandardOpenOption.CREATE,
+      StandardOpenOption.TRUNCATE_EXISTING,
+      StandardOpenOption.WRITE
+    )
     stored(p)
   }
 
@@ -162,7 +168,8 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
         Store.Measure.Files(1L),
         exists = Store.Measure.Exists(true)
       )
-    else if budget.exhausted then Store.Measure(
+    else if budget.exhausted then
+      Store.Measure(
         ByteCount.zero,
         Store.Measure.Files(0L),
         exists = Store.Measure.Exists(true),
@@ -206,7 +213,11 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     existing(root.toAbsolutePath).flatMap { e =>
       scala.util.Try {
         val s = Files.getFileStore(e)
-        Store.Volume(Store.Volume.Id(s.toString), ByteCount.applyUnsafe(s.getTotalSpace), ByteCount.applyUnsafe(s.getUsableSpace))
+        Store.Volume(
+          Store.Volume.Id(s.toString),
+          ByteCount.applyUnsafe(s.getTotalSpace),
+          ByteCount.applyUnsafe(s.getUsableSpace)
+        )
       }.toOption
     }
 
@@ -226,8 +237,6 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
 private[storage] object DiskStore:
 
   /** The files `rule` removes, oldest first. */
-
-
 
   def pruned(files: List[Stored], rule: PruneRule): List[Stored] =
     val oldest = files.sortBy(s => (s.modified, s.key.value))
@@ -258,7 +267,8 @@ private[storage] object DiskStore:
       }
       Sha256.applyUnsafe(md.digest().map(b => f"${b & 0xff}%02x").mkString)
 
-    def readAt(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = Using.resource(reader())(_.read(offset, length))
+    def readAt(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content =
+      Using.resource(reader())(_.read(offset, length))
 
     def reader(): RandomReader = ChannelReader(file)
 
@@ -266,8 +276,6 @@ private[storage] object DiskStore:
       Using.resource(FileChannel.open(file, StandardOpenOption.READ))(c =>
         c.map(FileChannel.MapMode.READ_ONLY, 0, c.size())
       )
-
-
 
   /** Positional reads on one channel, opened again when an interrupt closed it. */
   final class ChannelReader(file: Path) extends RandomReader:
@@ -316,9 +324,6 @@ private[storage] object DiskStore:
 
     def close(): Unit = synchronized { closed = true; ch.close() }
 
-
-
-
   final class FileReservation(
       val key: Store.Key,
       file: Path,
@@ -364,6 +369,3 @@ private[storage] object DiskStore:
     def close(): Unit = if !committed then discard()
 
     private[util] def onDisk: Either[Store.Error, Path] = Right(file)
-
-
-

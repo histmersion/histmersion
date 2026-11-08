@@ -65,7 +65,9 @@ final class ServerGraph private (
       restart = restart,
       clock = system.clock,
       environment = system.environment,
-      userPaths = system.userPaths, timer = system.timer, pause = system.pause
+      userPaths = system.userPaths,
+      timer = system.timer,
+      pause = system.pause
     )
 
   /** Throw away the pooled connections of the pools in use now (after a restore: see [[Db.evict]]). */
@@ -89,7 +91,13 @@ final class ServerGraph private (
       case Some(src) =>
         val report = (try src.read()
         catch case NonFatal(e) => Left(ConfigSource.Problem(s"reading the config failed: ${e.getMessage}"))) match
-          case Left(e)     => ReloadReport(published = ReloadReport.Published(false), generation, errors = List(ReloadReport.Errors(e.value)), file = file)
+          case Left(e) =>
+            ReloadReport(
+              published = ReloadReport.Published(false),
+              generation,
+              errors = List(ReloadReport.Errors(e.value)),
+              file = file
+            )
           case Right(next) =>
             val changed = ConfigReload.changed(running.loaded.merged, next.merged)
             val (applied, restart) = ConfigReload.split(changed)
@@ -105,7 +113,8 @@ final class ServerGraph private (
             else
               val eff = ConfigReload.effective(running.loaded.merged, next.merged, changed)
               AppConfig.fromMerged(eff).map(src.adjust) match
-                case Left(e)    => base.modify(_.errors).setTo(List(ReloadReport.Errors(s"the config does not decode: $e")))
+                case Left(e) =>
+                  base.modify(_.errors).setTo(List(ReloadReport.Errors(s"the config does not decode: $e")))
                 case Right(app) =>
                   val hc = HotConfig(app, next.modify(_.config).setTo(app).modify(_.merged).setTo(eff))
                   graph.reload(
@@ -144,28 +153,31 @@ final class ServerGraph private (
     */
   private[server] def addWatch(): Either[ServerGraph.Problem, Hot[Boolean]] =
     graph
-      .node[Boolean](Hot.Graph.Def.Name(ServerGraph.Watch), keys = List(Hot.Graph.Def.Keys("histmersion.config"))) { ctx =>
-        val c = ctx.config.app.config
-        val target = ctx.config.loaded.file.path.filter(_ => source.isDefined)
-        target match
-          case Some(f) if c.watch.value =>
-            forkDiscard(
-              ServerGraph.watch(
-                f,
-                math.max(50, c.watchDebounceMs.value).toLong,
-                () => {
-                  // a reload rebuilds this very node (when `config.*` changed) and closes this scope: never run
-                  // it on the watcher's own fork
-                  val _ = Thread.ofVirtual().name("histmersion-config-reload").start { () =>
-                    val _ = reload()
+      .node[Boolean](Hot.Graph.Def.Name(ServerGraph.Watch), keys = List(Hot.Graph.Def.Keys("histmersion.config"))) {
+        ctx =>
+          val c = ctx.config.app.config
+          val target = ctx.config.loaded.file.path.filter(_ => source.isDefined)
+          target match
+            case Some(f) if c.watch.value =>
+              forkDiscard(
+                ServerGraph.watch(
+                  f,
+                  math.max(50, c.watchDebounceMs.value).toLong,
+                  () => {
+                    // a reload rebuilds this very node (when `config.*` changed) and closes this scope: never run
+                    // it on the watcher's own fork
+                    val _ = Thread.ofVirtual().name("histmersion-config-reload").start { () =>
+                      val _ = reload()
+                    }
                   }
-                }
+                )
               )
-            )
-            scribe.info(s"config: watching $f for changes")
-            Right(true)
-          case _ => Right(false)
-      }.left.map(p => ServerGraph.Problem(p.value))
+              scribe.info(s"config: watching $f for changes")
+              Right(true)
+            case _ => Right(false)
+      }
+      .left
+      .map(p => ServerGraph.Problem(p.value))
 
   /** Close every component — the server's end. */
   def close(): Unit = graph.close()
@@ -218,7 +230,9 @@ object ServerGraph:
             scribe.info(s"schema version $v (${redact(ctx.config.app.db.url.value)})")
             forkDiscard(analyze(p))
             Right(v)
-          catch case NonFatal(e) => Left(Hot.Graph.Problem(s"migrating ${redact(ctx.config.app.db.url.value)} failed: ${e.getMessage}"))
+          catch
+            case NonFatal(e) =>
+              Left(Hot.Graph.Problem(s"migrating ${redact(ctx.config.app.db.url.value)} failed: ${e.getMessage}"))
         }
         q <- graph.node[ReadOnlyPool](
           Hot.Graph.Def.Name(QueryPool),
@@ -234,7 +248,8 @@ object ServerGraph:
         ) { ctx =>
           Right(ctx.previous match
             case None => plugins.getOrElse(ServerPlugins.load(ctx.config.loaded, core = core))
-            case prev => ServerPlugins.load(ctx.config.loaded, prev, ctx.changed.map(n => ConfigReload.ChangedKey(n.value)), core))
+            case prev =>
+              ServerPlugins.load(ctx.config.loaded, prev, ctx.changed.map(n => ConfigReload.ChangedKey(n.value)), core))
         }
       yield ServerGraph(graph, source, pool, mig, q, plug, core)
     built.left.foreach(_ => graph.close())

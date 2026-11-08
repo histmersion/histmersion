@@ -8,7 +8,12 @@ class CitationCountsSuite extends munit.FunSuite:
   private val Out = NeighborRow.Direction("out")
   private val In = NeighborRow.Direction("in")
 
-  private def row(direction: NeighborRow.Direction, kind: Edge.Kind, other: Citekey, target: NeighborTarget = NeighborTarget.Source) =
+  private def row(
+      direction: NeighborRow.Direction,
+      kind: Edge.Kind,
+      other: Citekey,
+      target: NeighborTarget = NeighborTarget.Source
+  ) =
     NeighborRow(direction, kind, other, None, target = target)
 
   test("what it cites is every edge out of it, as its page's Cites list counts them"):

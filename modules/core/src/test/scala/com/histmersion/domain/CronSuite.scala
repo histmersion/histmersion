@@ -15,7 +15,8 @@ import java.time.Instant
 class CronSuite extends munit.FunSuite:
 
   private def at(s: String) = Instant.parse(s)
-  private def next(expr: String, after: String): Option[Instant] = Cron.parse(Cron.Text(expr)).toOption.get.next(at(after))
+  private def next(expr: String, after: String): Option[Instant] =
+    Cron.parse(Cron.Text(expr)).toOption.get.next(at(after))
 
   test("the next firing is strictly after the given instant, in UTC"):
     assertEquals(next("30 2 * * *", "2026-10-04T01:00:00Z"), Some(at("2026-10-04T02:30:00Z")))

@@ -17,10 +17,10 @@ final case class MediaCoversReport(
     skipped: List[MediaCount] = Nil,
     failed: List[MediaCoversReport.Failed] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MediaCoversReport:
-
 
   type Sources = Sources.T
   object Sources extends Newtype[Int, Pure]
@@ -33,7 +33,10 @@ object MediaCoversReport:
 
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
-      RepairAcquire.RepairRequest.DryRun(((a.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) && ((b.dryRun) == RepairAcquire.RepairRequest.DryRun(true))),
+      RepairAcquire.RepairRequest.DryRun(
+        ((a.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) && ((b.dryRun) == RepairAcquire.RepairRequest
+          .DryRun(true))
+      ),
       Sources((a.sources).value + (b.sources).value),
       Covers((a.covers).value + (b.covers).value),
       Illustrations((a.illustrations).value + (b.illustrations).value),

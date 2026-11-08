@@ -22,8 +22,8 @@ object ModelsView:
 
   /** A chain as typed: `a > b > c` (commas also separate). */
 
-
-  def chainInput(s: String): List[ChainEntry.Model] = s.split("[>,]").toList.map(_.trim).filter(_.nonEmpty).map(ChainEntry.Model(_))
+  def chainInput(s: String): List[ChainEntry.Model] =
+    s.split("[>,]").toList.map(_.trim).filter(_.nonEmpty).map(ChainEntry.Model(_))
 
   /** Limits as typed: `2M tokens/5h, 5 usd/day` → their wire form, or the first problem. */
   def limitsInput(s: String): Either[String, List[LimitSpec]] =
@@ -35,11 +35,16 @@ object ModelsView:
   def reserveInput(s: String): Either[String, AllowanceSet.ReservePct] =
     val t = s.trim.stripSuffix("%").trim
     if t.isEmpty then Right(AllowanceSet.ReservePct(0))
-    else t.toIntOption.filter(r => r >= 0 && r <= 99).map(AllowanceSet.ReservePct(_)).toRight(s"'$s' is not a reserve of 0 to 99 %")
+    else
+      t.toIntOption
+        .filter(r => r >= 0 && r <= 99)
+        .map(AllowanceSet.ReservePct(_))
+        .toRight(s"'$s' is not a reserve of 0 to 99 %")
 
   /** How much of a limit is used, 0..100 (a bar's width). */
   def usedPct(l: LimitStatus): Int =
-    if l.amount.value <= 0 then 100 else math.max(0, math.min(100, math.round(l.used.value / l.amount.value * 100).toInt))
+    if l.amount.value <= 0 then 100
+    else math.max(0, math.min(100, math.round(l.used.value / l.amount.value * 100).toInt))
 
   /** The state class of one chained model. */
   def entryState(e: ChainEntry): String =
@@ -161,8 +166,9 @@ object ModelsView:
       .filter(_.nonEmpty)
       .map { f =>
         f.split("=", 2) match
-          case Array(k, v) => s"${Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(k.trim)).toLowerCase} ${v.trim.stripSuffix("%")} %"
-          case _           => f
+          case Array(k, v) =>
+            s"${Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(k.trim)).toLowerCase} ${v.trim.stripSuffix("%")} %"
+          case _ => f
       }
       .mkString(", ")
 
@@ -189,7 +195,8 @@ object ModelsView:
                 s" · floors ${if pl.floors.value.isEmpty then "none" else floorsText(pl.floors)} (${pl.floorsSource})" +
                   pl.planType.fold("")(t => s" · plan $t")
               ),
-              if !pl.available.value then span(cls := "run-paused", s" · ${pl.reason.getOrElse("unavailable: no login")}")
+              if !pl.available.value then
+                span(cls := "run-paused", s" · ${pl.reason.getOrElse("unavailable: no login")}")
               else if pl.held.value then span(cls := "run-paused", " · held")
               else if pl.usable.value then span(cls := "muted", pl.reason.fold(" · usable")(r => s" · usable ($r)"))
               else
@@ -210,7 +217,12 @@ object ModelsView:
                       title := (if pl.held.value then "let agent runs use this plan again"
                                 else "pause every agent use of this plan"),
                       if pl.held.value then "release" else "hold",
-                      onClick --> (_ => write(ApiClient.setPool(pl.pool, PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(!pl.held.value))))))
+                      onClick --> (_ =>
+                        write(
+                          ApiClient
+                            .setPool(pl.pool, PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(!pl.held.value))))
+                        )
+                      )
                     ),
                     " · ",
                     button(
@@ -246,7 +258,8 @@ object ModelsView:
                     cls := "allowance-name",
                     title := s"${w.limit} ${w.kind}",
                     if w.limit.value == "claude" || w.limit.value == "codex" then Wording.allowanceWindow(w.kind)
-                    else s"${Wording.humanize(Wording.Id(w.limit.value))}: ${Wording.allowanceWindow(w.kind).toLowerCase}"
+                    else
+                      s"${Wording.humanize(Wording.Id(w.limit.value))}: ${Wording.allowanceWindow(w.kind).toLowerCase}"
                   ),
                   div(
                     cls := s"allowance-bar plan-bar ${if w.usable.value then "" else "is-over"}",
@@ -257,7 +270,8 @@ object ModelsView:
                   span(
                     cls := "muted",
                     s"$used % used · floor ${w.floor} % left" + w.resetsAt.fold("")(t => s" · resets $t") +
-                      s" · read ${ageText(w.ageSeconds.value)} from ${w.source}" + (if w.stale.value then " (stale)" else "")
+                      s" · read ${ageText(w.ageSeconds.value)} from ${w.source}" + (if w.stale.value then " (stale)"
+                                                                                    else "")
                   )
                 )
               })
@@ -374,7 +388,11 @@ object ModelsView:
       a.limits.map { l =>
         div(
           cls := "allowance-limit",
-          span(cls := "allowance-name", title := l.limit.value, Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(l.limit.value))),
+          span(
+            cls := "allowance-name",
+            title := l.limit.value,
+            Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(l.limit.value))
+          ),
           div(
             cls := s"allowance-bar ${if l.usable.value then "" else "is-over"}",
             styleAttr := s"--pct:${usedPct(l)}%",
@@ -384,9 +402,8 @@ object ModelsView:
           span(
             cls := "muted",
             s"${amount(l.used.value, l.measure)} used · ${amount(l.remaining.value, l.measure)} left" +
-              (if l.reserve.value > 0 then s" · reserve ${amount(l.reserve.value, l.measure)}" else "") + l.freesAt.fold("")(t =>
-                s" · frees $t"
-              )
+              (if l.reserve.value > 0 then s" · reserve ${amount(l.reserve.value, l.measure)}" else "") + l.freesAt
+                .fold("")(t => s" · frees $t")
           )
         )
       },
@@ -467,11 +484,16 @@ object ModelsView:
       d.providers.map { p =>
         htmlTag[org.scalajs.dom.HTMLElement]("details")(
           // a used provider with a problem starts unfolded
-          onMountCallback(ctx => if p.used.value && p.level != CheckLevel.Ok then ctx.thisNode.ref.setAttribute("open", "")),
+          onMountCallback(ctx =>
+            if p.used.value && p.level != CheckLevel.Ok then ctx.thisNode.ref.setAttribute("open", "")
+          ),
           htmlTag("summary")(
             level(p.level),
             s" ${p.provider}",
-            span(cls := "muted", if p.used.value then s" · used by ${p.models.mkString(", ")}" else " · no role uses it")
+            span(
+              cls := "muted",
+              if p.used.value then s" · used by ${p.models.mkString(", ")}" else " · no role uses it"
+            )
           ),
           checks(p.checks)
         )

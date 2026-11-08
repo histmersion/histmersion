@@ -64,7 +64,8 @@ trait PlanRun:
   def labelsTakenFirst(questions: PlanQuestions): Unit = ()
 
   /** A decision's argument that names a source by its citekey checked (`map`, a rename no kind checks itself). */
-  def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] = None
+  def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+    None
 
   /** A pair of sources that folds, under `citekey`, before every kind's [[foldPairFirst]]: whether the folded source
     * takes the bundle's body.

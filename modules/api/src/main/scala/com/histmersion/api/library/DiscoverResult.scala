@@ -9,7 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class DiscoverResult(query: DiscoverResult.Query, count: DiscoverResult.Count, works: List[WorkRef])
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object DiscoverResult:
   type Query = Query.T

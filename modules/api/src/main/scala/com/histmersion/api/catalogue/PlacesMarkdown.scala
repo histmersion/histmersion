@@ -5,7 +5,6 @@ import com.histmersion.api.YearFmt
 
 object PlacesMarkdown:
 
-
   private[api] def kindOf(kind: Place.Summary.Kind, ps: Option[Year], pe: Option[Year]): String =
     val p = YearFmt.period(ps, pe)
     if p.isEmpty then kind.value else (s"$kind · $p")
@@ -17,7 +16,8 @@ object PlacesMarkdown:
     if rows.isEmpty then ("_No matching places._")
     else
       val items = rows.map { h =>
-        val alt = h.matchedName.filter(!_.value.equalsIgnoreCase(h.label.value)).map(n => s" (matched “$n”)").getOrElse("")
+        val alt =
+          h.matchedName.filter(!_.value.equalsIgnoreCase(h.label.value)).map(n => s" (matched “$n”)").getOrElse("")
         val src = h.source.map(s => s" · $s").getOrElse("")
         val meta = s"${kindWhen(h.toSummary)} · ${h.findings} finding(s)$src"
         s"- **${h.label}**${contestedMark(h.contested.value, h.label.value)}$alt — `${h.id}`  \n  _${meta}_"
@@ -47,7 +47,9 @@ object PlacesMarkdown:
       val head =
         "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
       val body = rows.map { r =>
-        val file = r.file.fold("—")(f => s"`$f`" + (if ((r.present) == Gazetteer.SourceInfo.Present(true)) then "" else " (missing)"))
+        val file = r.file.fold("—")(f =>
+          s"`$f`" + (if (r.present) == Gazetteer.SourceInfo.Present(true) then "" else " (missing)")
+        )
         val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.fold("")(_.value.take(10))})")
         val n = (x: Option[Int]) => x.fold("—")(_.toString)
         s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places.map(_.value))} | " +
@@ -59,8 +61,10 @@ object PlacesMarkdown:
     val lang = if r.lang.value.isEmpty then "" else s" (${r.lang})"
     val what =
       if !((r.added) == Place.NameChanged.Added(true)) then s"removed the name **${r.name}**$lang from"
-      else if !((r.changed) == Place.NameChanged.Changed(true)) then s"**${r.name}**$lang was already a name added by hand to"
-      else if ((r.wasImported) == Place.NameChanged.WasImported(true)) then s"kept **${r.name}**$lang (a name the seed gives) as one added by hand, on"
+      else if !((r.changed) == Place.NameChanged.Changed(true)) then
+        s"**${r.name}**$lang was already a name added by hand to"
+      else if (r.wasImported) == Place.NameChanged.WasImported(true) then
+        s"kept **${r.name}**$lang (a name the seed gives) as one added by hand, on"
       else s"added the name **${r.name}**$lang to"
     (s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed")
 
@@ -74,7 +78,8 @@ object PlacesMarkdown:
         .mkString("\n")
 
   def placeOverrideChanged(r: Place.OverrideChanged): String =
-    val kind = if r.kindBefore.value == r.kindAfter.value then s"kind ${r.kindAfter}" else s"kind ${r.kindBefore} → ${r.kindAfter}"
+    val kind = if r.kindBefore.value == r.kindAfter.value then s"kind ${r.kindAfter}"
+    else s"kind ${r.kindBefore} → ${r.kindAfter}"
     val period = if r.periodBefore.value == r.periodAfter.value then s"period ${r.periodAfter}"
     else s"period ${r.periodBefore} → ${r.periodAfter}"
     val point = (r.latBefore, r.lonBefore, r.latAfter, r.lonAfter) match
@@ -84,9 +89,11 @@ object PlacesMarkdown:
       case (_, _, Some(c), Some(d)) => s", point ${Place.Overrides.pointText(c, d)}"
       case _                        => ""
     val head =
-      if ((r.reset) == Place.OverrideChanged.Reset(true)) then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
+      if (r.reset) == Place.OverrideChanged.Reset(true) then
+        s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
       else s"set **${r.label}** `${r.placeId}`: $kind, $period$point — kept by every re-seed and re-import"
-    val lost = if r.unlocated == Place.OverrideChanged.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
+    val lost = if r.unlocated == Place.OverrideChanged.Unlocated(0) then ""
+    else s"; **${r.unlocated}** of them now have no place at all"
     (s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
   def placeGone(r: Place.Gone): String =
@@ -94,7 +101,8 @@ object PlacesMarkdown:
       case Some(into) =>
         s"merged **${r.label}** `${r.placeId}` into **${r.intoLabel.getOrElse(into)}** `$into` — `${r.placeId}` now resolves to it"
       case None => s"removed **${r.label}** `${r.placeId}`"
-    val lost = if r.unlocated == Place.Gone.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
+    val lost =
+      if r.unlocated == Place.Gone.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
     (s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
   def placeOverrides(rows: List[Place.Override]): String =
@@ -104,7 +112,11 @@ object PlacesMarkdown:
         .map { r =>
           val pt = for la <- r.lat; lo <- r.lon yield s"point ${Place.Overrides.pointText(la, lo)}"
           val set =
-            r.kind.toList ++ Option.when(((r.periodSet) == Place.Override.PeriodSet(true)))(Place.Overrides.periodText(r.periodStart, r.periodEnd)).toList ++
+            r.kind.toList ++ Option
+              .when(((r.periodSet) == Place.Override.PeriodSet(true)))(
+                Place.Overrides.periodText(r.periodStart, r.periodEnd)
+              )
+              .toList ++
               pt.toList
           val srcPt = if pt.isEmpty then ""
           else
@@ -134,10 +146,13 @@ object PlacesMarkdown:
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src = p.source.map(s => s"  \n**Source:** $s").getOrElse("") +
-      d.siteType.flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value))).map(t => s"  \n**Site type:** ${t.label}").getOrElse("")
+      d.siteType
+        .flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
+        .map(t => s"  \n**Site type:** ${t.label}")
+        .getOrElse("")
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
       d.locationNote.map(n => s"  \n**Location:** $n").getOrElse("")
-    val dating = if ((d.datedByFindings) == (true)) then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""
+    val dating = if (d.datedByFindings) == (true) then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""
     val names = if p.names.value.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
     val geom = d.geometry
       .map(g => s"  \n**Geometry:** ${g.value.take(40).takeWhile(_ != ',')}… (GeoJSON)")

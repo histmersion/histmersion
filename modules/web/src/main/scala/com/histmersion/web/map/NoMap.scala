@@ -39,9 +39,11 @@ object NoMap:
   def message(why: NoMapSurface.Why): (MessageText, MessageText) =
     (
       MessageText(s"The map cannot be drawn here: $why."),
-      MessageText("Every base map — the online ones and the local ones — is drawn with WebGL 2. Turn on hardware " +
-        "(graphics) acceleration in the browser's settings, or open the page in a current Chrome, Edge, " +
-        "Firefox or Safari. The list, the timeline and the articles work without the map.")
+      MessageText(
+        "Every base map — the online ones and the local ones — is drawn with WebGL 2. Turn on hardware " +
+          "(graphics) acceleration in the browser's settings, or open the page in a current Chrome, Edge, " +
+          "Firefox or Safari. The list, the timeline and the articles work without the map."
+      )
     )
 
   def html(why: NoMapSurface.Why): Html =

@@ -23,7 +23,6 @@ object SettingKind:
   type Describe = Describe.T
   object Describe extends Newtype[String, Pure]
 
-
   def of(v: ConfigValue): SettingKind = v.valueType match
     case ConfigValueType.STRING  => Text
     case ConfigValueType.NUMBER  => Number

@@ -38,13 +38,28 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
 
   test("a catalogue plugin has no setting the host owns: an endpoint in its block is refused"):
     val refused =
-      PluginHarness.load(Plugin.Info.Id("events-gvp"), "url = \"https://elsewhere.example\"", http = HttpMode.Offline, env = Map.empty)
+      PluginHarness.load(
+        Plugin.Info.Id("events-gvp"),
+        "url = \"https://elsewhere.example\"",
+        http = HttpMode.Offline,
+        env = Map.empty
+      )
     assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
 
   test("events-gvp: a window of years at the host's endpoint, each record checked and dated as the server stores it"):
-    val url = GvpCatalogue.url(GvpSettings.Url("https://webservices.volcano.si.edu/geoserver/GVP-VOTW/ows"), GvpCatalogue.Year(-2000), GvpCatalogue.Year(-1001), GvpSettings.PageSize(5000))
-    val h = load(Plugin.Info.Id("events-gvp"), Map(HttpTransport.Url(url.value) -> StubAnswer.text(fixture("gvp.json"), CoreQuota.HeaderValue("application/json"))))
-    val r = h.readCatalogue(Registries.EventCataloguesKey("gvp"),CatalogueQuery(Some(Year(-2000)), Year(-1001)))
+    val url = GvpCatalogue.url(
+      GvpSettings.Url("https://webservices.volcano.si.edu/geoserver/GVP-VOTW/ows"),
+      GvpCatalogue.Year(-2000),
+      GvpCatalogue.Year(-1001),
+      GvpSettings.PageSize(5000)
+    )
+    val h = load(
+      Plugin.Info.Id("events-gvp"),
+      Map(
+        HttpTransport.Url(url.value) -> StubAnswer.text(fixture("gvp.json"), CoreQuota.HeaderValue("application/json"))
+      )
+    )
+    val r = h.readCatalogue(Registries.EventCataloguesKey("gvp"), CatalogueQuery(Some(Year(-2000)), Year(-1001)))
     assertEquals(r.parts, List("years:-2000..-1001"))
     assertEquals(r.requests, List(s"GET $url"))
     assertEquals((r.failure, r.refused), (None, Nil))
@@ -57,15 +72,25 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
   test(
     "events-gvp: the host's own events.gvp keys reach the plugin (the user's endpoint, by its HISTMERSION_ variable)"
   ):
-    val url = GvpCatalogue.url(GvpSettings.Url("https://gvp.example/ows"), GvpCatalogue.Year(-2000), GvpCatalogue.Year(-1001), GvpSettings.PageSize(5000))
+    val url = GvpCatalogue.url(
+      GvpSettings.Url("https://gvp.example/ows"),
+      GvpCatalogue.Year(-2000),
+      GvpCatalogue.Year(-1001),
+      GvpSettings.PageSize(5000)
+    )
     val h = PluginHarness
       .load(
         Plugin.Info.Id("events-gvp"),
-        http = HttpMode.Stub(Map(HttpTransport.Url(url.value) -> StubAnswer.text(fixture("gvp.json"), CoreQuota.HeaderValue("application/json")))),
+        http = HttpMode.Stub(
+          Map(
+            HttpTransport
+              .Url(url.value) -> StubAnswer.text(fixture("gvp.json"), CoreQuota.HeaderValue("application/json"))
+          )
+        ),
         env = Map("HISTMERSION_EVENTS_GVP_URL" -> "https://gvp.example/ows")
       )
       .fold(e => fail(e.value), identity)
-    val r = h.readCatalogue(Registries.EventCataloguesKey("gvp"),CatalogueQuery(Some(Year(-2000)), Year(-1001)))
+    val r = h.readCatalogue(Registries.EventCataloguesKey("gvp"), CatalogueQuery(Some(Year(-2000)), Year(-1001)))
     assertEquals(r.requests, List(s"GET $url"))
     assertEquals(r.accepted.size, 3)
     assertEquals(
@@ -75,7 +100,9 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
 
   test("events-noaa and events-wikidata: their parts from the host's settings, every NOAA dataset from page 1"):
     assertEquals(
-      load(Plugin.Info.Id("events-noaa")).readCatalogue(Registries.EventCataloguesKey("noaa"),CatalogueQuery(None, Year(-2000))).parts,
+      load(Plugin.Info.Id("events-noaa"))
+        .readCatalogue(Registries.EventCataloguesKey("noaa"), CatalogueQuery(None, Year(-2000)))
+        .parts,
       List("earthquakes:1", "volcanoes:1", "tsunamis:1")
     )
     val wd = PluginHarness
@@ -85,4 +112,7 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
         env = Map("HISTMERSION_EVENTS_WIKIDATA_CLASSES" -> "Q188055:siege")
       )
       .fold(e => fail(e.value), identity)
-    assertEquals(wd.readCatalogue(Registries.EventCataloguesKey("wikidata"), CatalogueQuery(None, Year(-2000))).parts, List("class:Q188055"))
+    assertEquals(
+      wd.readCatalogue(Registries.EventCataloguesKey("wikidata"), CatalogueQuery(None, Year(-2000))).parts,
+      List("class:Q188055")
+    )

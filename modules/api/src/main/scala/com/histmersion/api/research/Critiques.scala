@@ -24,10 +24,11 @@ object Critiques:
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
 
+  val Kinds: List[Edge.Kind.Wire] =
+    List(Edge.Kind.Challenges, Edge.Kind.Refutes, Edge.Kind.Updates, Edge.Kind.SupersededBy).map(Edge.Kind.wireOf)
 
-  val Kinds: List[Edge.Kind.Wire] = List(Edge.Kind.Challenges, Edge.Kind.Refutes, Edge.Kind.Updates, Edge.Kind.SupersededBy).map(Edge.Kind.wireOf)
-
-  def olderFirst(kinds: List[CritiquePair.Kinds]): Boolean = (kinds.nonEmpty && kinds.forall(k => (k).value == "superseded_by"))
+  def olderFirst(kinds: List[CritiquePair.Kinds]): Boolean =
+    (kinds.nonEmpty && kinds.forall(k => (k).value == "superseded_by"))
 
   private val ListItem = "^([-*+]|\\d+[.)])\\s+.*".r
 
@@ -40,7 +41,7 @@ object Critiques:
     object From extends Newtype[Int, Pure]
     type To = To.T
     object To extends Newtype[Int, Pure]
-    export com.histmersion.api.text.WikiLinks.{Body as Text}
+    export com.histmersion.api.text.WikiLinks.Body as Text
 
   def units(body: Article.Body): List[Block] =
     val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
@@ -95,7 +96,13 @@ object Critiques:
     val mentions = units.flatMap(_.toList).groupBy(identity).view.mapValues(_.size).toMap
     def side(ck: Citekey) =
       val r = refs(ck)
-      CritiqueSide(ck, r.map(_._1), r.flatMap(_._2), CritiqueSide.Cited(cited(ck)), CritiqueSide.Mentions(mentions.getOrElse(ck, 0)))
+      CritiqueSide(
+        ck,
+        r.map(_._1),
+        r.flatMap(_._2),
+        CritiqueSide.Cited(cited(ck)),
+        CritiqueSide.Mentions(mentions.getOrElse(ck, 0))
+      )
     edges
       .filter(e => Kinds.contains(e.kind) && e.from != e.to && (cited(e.from) || cited(e.to)))
       .groupBy(e => (e.from, e.to))
@@ -119,7 +126,8 @@ object Critiques:
         )
       }
 
-  def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] = pairs.find((refactorCallback => ((refactorCallback.ref.same(r)) == (true))))
+  def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] =
+    pairs.find((refactorCallback => ((refactorCallback.ref.same(r)) == (true))))
 
   def count(pairs: List[CritiquePair], s: CritiqueState): Count = Count(pairs.count(_.state == s))
 
@@ -131,7 +139,9 @@ object Critiques:
 
   def ranked(pairs: List[CritiquePair]): List[CritiquePair] =
     def tier(p: CritiquePair) =
-      if !(p.critic.cited).value && (p.criticised.cited).value then 0 else if (p.critic.cited).value && (p.criticised.cited).value then 1 else 2
+      if !(p.critic.cited).value && (p.criticised.cited).value then 0
+      else if (p.critic.cited).value && (p.criticised.cited).value then 1
+      else 2
     def kind(p: CritiquePair) = p.kinds
       .map { k =>
         (k).value match
@@ -143,11 +153,21 @@ object Critiques:
       .getOrElse(3)
     pairs
       .filter((refactorCallback2 => ((refactorCallback2.open) == (true))))
-      .sortBy(p => (tier(p), kind(p), -((p.src.mentions).value + (p.dst.mentions).value), (p.src.citekey).value, (p.dst.citekey).value))
+      .sortBy(p =>
+        (
+          tier(p),
+          kind(p),
+          -((p.src.mentions).value + (p.dst.mentions).value),
+          (p.src.citekey).value,
+          (p.dst.citekey).value
+        )
+      )
 
   def summary(pairs: List[CritiquePair]): Summary =
-    Summary(s"${Plural.count(Plural.CountN((pairs.size).toLong), Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
-      s"${count(pairs, CritiqueState.Reasoned)} reasoned, ${count(pairs, CritiqueState.Open)} open")
+    Summary(
+      s"${Plural.count(Plural.CountN((pairs.size).toLong), Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
+        s"${count(pairs, CritiqueState.Reasoned)} reasoned, ${count(pairs, CritiqueState.Open)} open"
+    )
 
   def methodPart(pairs: List[CritiquePair]): Option[Method] =
     Option.when(pairs.nonEmpty)(Method(s"disagreements checked: ${summary(pairs)}"))
@@ -178,16 +198,24 @@ object Critiques:
           reasoned
             .map(p => s"- ${p.line} — ${p.reason.fold("")(r => (r).value)}${p.reasonBy.fold("")(b => s" _(by $b)_")}")
             .mkString("\n")
-      Markdown(s"### Disagreements checked\n\n${summary(pairs)} (a pair is addressed when both sources are cited in one paragraph)." +
-        openPart + reasonPart)
+      Markdown(
+        s"### Disagreements checked\n\n${summary(pairs)} (a pair is addressed when both sources are cited in one paragraph)." +
+          openPart + reasonPart
+      )
 
   def toRule(pairs: List[CritiquePair]): List[CritiquePair] =
     ranked(pairs)
       .filter((refactorCallback2 => ((refactorCallback2.bearing) == (true))))
-      .foldLeft(Vector.empty[CritiquePair])((acc, p) => if acc.exists((refactorCallback2 => ((refactorCallback2.ref.same(p.ref)) == (true)))) then acc else acc :+ p)
+      .foldLeft(Vector.empty[CritiquePair])((acc, p) =>
+        if acc.exists((refactorCallback2 => ((refactorCallback2.ref.same(p.ref)) == (true)))) then acc else acc :+ p
+      )
       .toList
 
-  def promptText(pairs: List[CritiquePair], maxOpen: OpenLimit, maxReasoned: ReasonedLimit): (Prompt, List[CritiquePair]) =
+  def promptText(
+      pairs: List[CritiquePair],
+      maxOpen: OpenLimit,
+      maxReasoned: ReasonedLimit
+  ): (Prompt, List[CritiquePair]) =
     val open = toRule(pairs)
     val shown = open.take(math.max(0, (maxOpen).value))
     val rest = open.drop(shown.size)
@@ -205,7 +233,8 @@ object Critiques:
          else
            "Open pairs — rule on each one:\n" + shown.map(p => s"- ${pairText(p)}").mkString("\n") +
              (if rest.isEmpty then ""
-              else s"\n(${Plural.count(Plural.CountN((rest.size).toLong), Plural.CountSingular("more open pair"))} not shown, for a later pass: ${names(rest)})")
+              else
+                s"\n(${Plural.count(Plural.CountN((rest.size).toLong), Plural.CountSingular("more open pair"))} not shown, for a later pass: ${names(rest)})")
         ) +
           (if background.isEmpty then ""
            else

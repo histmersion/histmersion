@@ -151,10 +151,14 @@ object Mvt:
       val out = ByteArrayOutputStream(bytes.length)
       fields(bytes, 0, bytes.length).foreach { f =>
         if f.number == 3 && f.wireType == 2 then
-          rules.get(LayerName(name(bytes, f))).orElse(Option.when(others.value)(Rule())).filterNot(_.none.value).foreach { rule =>
-            if rule.all then out.write(bytes, f.start, f.end - f.start)
-            else thinLayer(bytes, f, rule).foreach(l => writeField(out, 3, l))
-          }
+          rules
+            .get(LayerName(name(bytes, f)))
+            .orElse(Option.when(others.value)(Rule()))
+            .filterNot(_.none.value)
+            .foreach { rule =>
+              if rule.all then out.write(bytes, f.start, f.end - f.start)
+              else thinLayer(bytes, f, rule).foreach(l => writeField(out, 3, l))
+            }
       }
       TileBytes(out.toByteArray)
     }
@@ -188,7 +192,7 @@ object Mvt:
     if gone.size == features.size then scala.None
     else
       rule.props match
-        case Some(wanted)         => Some(withProps(b, fs, keys, gone, wanted.map(_.value)))
+        case Some(wanted)               => Some(withProps(b, fs, keys, gone, wanted.map(_.value)))
         case scala.None if gone.isEmpty => Some(b.slice(layer.payloadStart, layer.end))
         case scala.None                 =>
           val out = ByteArrayOutputStream(layer.end - layer.payloadStart)
@@ -272,7 +276,10 @@ object Mvt:
   /** The same with text or whole-number properties (a number as `sint_value`, as the Protomaps builds store
     * `min_zoom`), in the order given.
     */
-  def typedLayer(name: LayerName, features: List[(GeomType, Vector[GeometryCommand], List[(PropKey, String | Long)])]): LayerBytes =
+  def typedLayer(
+      name: LayerName,
+      features: List[(GeomType, Vector[GeometryCommand], List[(PropKey, String | Long)])]
+  ): LayerBytes =
     val keys = features.flatMap(_._3.map(_._1.value)).distinct.toVector
     val values = features.flatMap(_._3.map(_._2)).distinct.toVector
     val out = ByteArrayOutputStream()
@@ -358,7 +365,9 @@ object Mvt:
             .getOrElse(0)
           val props = tags(bytes, f)
             .grouped(2)
-            .collect { case Vector(k, v) => PropKey(keys.lift(k).getOrElse("?")) -> PropText(values.lift(v).getOrElse("")) }
+            .collect { case Vector(k, v) =>
+              PropKey(keys.lift(k).getOrElse("?")) -> PropText(values.lift(v).getOrElse(""))
+            }
             .toMap
           (LayerName(ln), GeomType(gt), props)
         }

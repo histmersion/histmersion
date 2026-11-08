@@ -125,7 +125,14 @@ object PlaceReview:
     )
 
     /** Move the place's findings, links and children to `into`, delete it, keep its id as an alias. */
-    case Merge(id: Evidence.Id, label: Evidence.Label, into: Evidence.Id, intoLabel: Evidence.Label, reason: Proposal.Reason, evidence: List[Proposal.EvidenceLine])
+    case Merge(
+        id: Evidence.Id,
+        label: Evidence.Label,
+        into: Evidence.Id,
+        intoLabel: Evidence.Label,
+        reason: Proposal.Reason,
+        evidence: List[Proposal.EvidenceLine]
+    )
 
     /** Nothing automatic: a person decides. */
     case Review(id: Evidence.Id, label: Evidence.Label, reason: Proposal.Reason, evidence: List[Proposal.EvidenceLine])
@@ -178,9 +185,7 @@ object PlaceReview:
     val tps = Option.when(e.timePeriods.nonEmpty)(s"Pleiades periods: ${e.timePeriods.mkString(", ")}")
     val items = e.items.flatMap(i =>
       i.itemClass.map(c =>
-        s"${i.ref}: ${WikidataClasses.get(c).fold(c.value)(_.value)}" + i.period.fold("")(p =>
-          s" ${periodText(p)}"
-        )
+        s"${i.ref}: ${WikidataClasses.get(c).fold(c.value)(_.value)}" + i.period.fold("")(p => s" ${periodText(p)}")
       )
     )
     val desc = e.descriptions.headOption.map(d => s"described as \"$d\"")
@@ -207,7 +212,16 @@ object PlaceReview:
       case Some(x) =>
         candidates.filter(_.id != e.id) match
           case List(c) =>
-            Some(Proposal.Merge(e.id, e.label, c.id, c.label, Proposal.Reason(s"withdrawn by Pleiades as a duplicate of '$x'"), ev))
+            Some(
+              Proposal.Merge(
+                e.id,
+                e.label,
+                c.id,
+                c.label,
+                Proposal.Reason(s"withdrawn by Pleiades as a duplicate of '$x'"),
+                ev
+              )
+            )
           case Nil =>
             Some(
               Proposal.Review(
@@ -222,7 +236,9 @@ object PlaceReview:
               Proposal.Review(
                 e.id,
                 e.label,
-                Proposal.Reason(s"withdrawn by Pleiades as a duplicate of '$x'; ${cs.size} seed places have that name (${cs.map(_.id).mkString(", ")})"),
+                Proposal.Reason(
+                  s"withdrawn by Pleiades as a duplicate of '$x'; ${cs.size} seed places have that name (${cs.map(_.id).mkString(", ")})"
+                ),
                 ev
               )
             )
@@ -246,18 +262,30 @@ object PlaceReview:
           // a polity whose own period is already the stated one needs no period write
           val write = period.filterNot(p => stated._1.contains(p.start) && stated._2.contains(p.end))
           if e.kind.value == Place.Kind.Polity && write.isEmpty then None
-          else Some(Proposal.Reclassify(e.id, e.label, e.kind, Place.Kind.Wire(Place.Kind.Polity), write, Proposal.Reason(note), ev))
+          else
+            Some(
+              Proposal
+                .Reclassify(e.id, e.label, e.kind, Place.Kind.Wire(Place.Kind.Polity), write, Proposal.Reason(note), ev)
+            )
         else if types.intersect(PeopleTypes).nonEmpty && !keepSite then
-          to(Place.Kind.Wire(Place.Kind.People), Proposal.Reason("a people or civic tribe — a group of persons, not a territory"))
+          to(
+            Place.Kind.Wire(Place.Kind.People),
+            Proposal.Reason("a people or civic tribe — a group of persons, not a territory")
+          )
         else if settled.nonEmpty && !RegionAside.matches(e.label.value) then
-          to(Place.Kind.Wire(Place.Kind.Site), Proposal.Reason(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region"))
+          to(
+            Place.Kind.Wire(Place.Kind.Site),
+            Proposal.Reason(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
+          )
         else if e.kind.value != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
           // Wikidata files Brittany and Messenia as historical countries too: evidence, not a verdict
           Some(
             Proposal.Review(
               e.id,
               e.label,
-              Proposal.Reason("the linked Wikidata item is a historical country — a polity, or a region named after one"),
+              Proposal.Reason(
+                "the linked Wikidata item is a historical country — a polity, or a region named after one"
+              ),
               ev
             )
           )

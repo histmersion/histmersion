@@ -97,7 +97,9 @@ object BackupService:
               .names()
               .map(n => Store.Key.of(n.value))
               .collect { case Right(k) if store.isFile(k) => k }
-              .flatMap(k => Backup.safeName(Backup.Name(k.name.value)).toOption.flatMap(n => store.stat(k).map(s => (n, s))))
+              .flatMap(k =>
+                Backup.safeName(Backup.Name(k.name.value)).toOption.flatMap(n => store.stat(k).map(s => (n, s)))
+              )
               .map((n, s) =>
                 Backup.Info(
                   n,
@@ -135,11 +137,15 @@ object BackupService:
     */
   private def pruned(store: Store, keep: Backup.Retention, keeping: PreparedBackup.File): List[Backup.Result.Pruned] =
     listing(store).toOption.toList.flatMap { rows =>
-      Backup.toPrune(rows.map(_.file), keep).filterNot(_.value == keeping.value).filter { n =>
-        scala.util
-          .Try(store.delete(Store.Key.applyUnsafe(n.value)))
-          .fold(e => { scribe.warn(s"backup: could not prune ${n.value}: ${e.getMessage}"); false }, identity)
-      }.map(n => Backup.Result.Pruned(n.value))
+      Backup
+        .toPrune(rows.map(_.file), keep)
+        .filterNot(_.value == keeping.value)
+        .filter { n =>
+          scala.util
+            .Try(store.delete(Store.Key.applyUnsafe(n.value)))
+            .fold(e => { scribe.warn(s"backup: could not prune ${n.value}: ${e.getMessage}"); false }, identity)
+        }
+        .map(n => Backup.Result.Pruned(n.value))
     }
 
   private def usable(store: Store): Either[Api.Error, Store] =
@@ -167,7 +173,10 @@ object BackupService:
       */
     private def exe(name: String): Either[Api.Error, ProcessLaunch.Command] =
       val key = Store.Key.applyUnsafe(name)
-      Option(backups.pgBinDir.value).map(_.trim).filter(_.nonEmpty).flatMap(_ => storage.find(Location.PostgresTools)) match
+      Option(backups.pgBinDir.value)
+        .map(_.trim)
+        .filter(_.nonEmpty)
+        .flatMap(_ => storage.find(Location.PostgresTools)) match
         case Some(tools) if tools.isExecutable(key) => Right(ProcessLaunch.Command(tools.where(key).value))
         case Some(tools)                            =>
           Left(
@@ -325,7 +334,6 @@ object BackupService:
       transactor.read(RowCount(guards(registry).map(g => BackupRepo.rows(g.table).value: Int).sum))
 
     def refusal(rows: RowCount): Api.Error = refusalOver(registry, rows)
-
 
   /** Dumps that are files of `store` holding `dumped` (no `pg_dump` runs), restores that change nothing, and guarded
     * rows that are `rows` (a test sets them). It lists, names, prunes and refuses as the database implementation does.

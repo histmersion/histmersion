@@ -9,7 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Backlink(kind: Backlink.Kind, id: Backlink.Id, title: Option[Backlink.Title])
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object Backlink:
   type Kind = Kind.T

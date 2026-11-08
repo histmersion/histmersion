@@ -12,12 +12,20 @@ import io.github.iltotore.iron.constraint.any.Pure
   * (`-1399` is 1400 BCE, as its "ca. 14th–13th century BCE" shows), so a year ≤ 0 is moved one back.
   */
 final class MetCollection(conf: CollectionSettings)
-    extends MuseumCollection(conf, MuseumCollection.Provider("The Metropolitan Museum of Art"), MuseumCollection.Key("media.met")):
+    extends MuseumCollection(
+      conf,
+      MuseumCollection.Provider("The Metropolitan Museum of Art"),
+      MuseumCollection.Key("media.met")
+    ):
   val title = MediaCollection.TitleResult("Met objects")
-  override val description = MediaCollection.DescriptionResult("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
+  override val description =
+    MediaCollection.DescriptionResult("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
   val role = MediaCollection.RoleResult(MediaCollection.Object)
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(
+      place: MediaPlace,
+      http: Plugin.Http
+  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(MetCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(j => MetCollection.ids(j).left.map(_.value))
@@ -47,10 +55,17 @@ object MetCollection:
     "--dry-run lists the matches with their reasons"
 
   /** Pure: the search for objects with images from a place: `q` and `geoLocation` both the name. */
-  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, limit: CollectionSettings.Candidates): Plugin.Http.GetUrl =
-    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/v1.1/search?hasImages=true&geoLocation=${name.value.enc}&q=${name.value.enc}&limit=${limit.value.max(1)}")
+  def searchUrl(
+      api: CollectionSettings.ApiUrl,
+      name: MediaPlace.Label,
+      limit: CollectionSettings.Candidates
+  ): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(
+      s"${api.value.stripSuffix("/")}/v1.1/search?hasImages=true&geoLocation=${name.value.enc}&q=${name.value.enc}&limit=${limit.value.max(1)}"
+    )
 
-  def objectUrl(api: CollectionSettings.ApiUrl, id: ObjectId): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/v1/objects/$id")
+  def objectUrl(api: CollectionSettings.ApiUrl, id: ObjectId): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/v1/objects/$id")
 
   /** Pure: the object ids of a search answer (`objectIDs` may be `null` when nothing matched). */
   def ids(json: Json): Either[Problem, List[ObjectId]] =
@@ -59,7 +74,15 @@ object MetCollection:
       .filter(_ => c.downField("objectIDs").focus.isEmpty)
       .map(m => Left(Problem(m)))
       .getOrElse(
-        Right(c.downField("objectIDs").focus.flatMap(_.asArray).toList.flatten.flatMap(_.asNumber.flatMap(_.toLong)).map(ObjectId(_)))
+        Right(
+          c.downField("objectIDs")
+            .focus
+            .flatMap(_.asArray)
+            .toList
+            .flatten
+            .flatMap(_.asNumber.flatMap(_.toLong))
+            .map(ObjectId(_))
+        )
       )
 
   /** Pure: astronomical year → the corpus' signed year (0 → 1 BCE = -1, -1399 → -1400). */
@@ -67,7 +90,9 @@ object MetCollection:
 
   /** The geography fields, most specific first. */
   val GeographyFields: List[MediaItem.GeographyPart1] =
-    List("excavation", "locus", "locale", "city", "county", "state", "subregion", "region", "river", "country").map(MediaItem.GeographyPart1(_))
+    List("excavation", "locus", "locale", "city", "county", "state", "subregion", "region", "river", "country").map(
+      MediaItem.GeographyPart1(_)
+    )
 
   /** Pure: one object. Not public domain → its rights are a `Left`. */
   def record(json: Json): Either[Problem, MediaItem] =
@@ -78,10 +103,14 @@ object MetCollection:
       val page = c.str("objectURL").getOrElse(s"https://www.metmuseum.org/art/collection/search/$id")
       val credit = (List(Some(title), artist).flatten :+ "The Metropolitan Museum of Art" :+ "CC0").mkString(", ")
       val rights: Either[MediaItem.RightsPart1, MediaRights] =
-        if c.bool("isPublicDomain").contains(true) then Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
+        if c.bool("isPublicDomain").contains(true) then
+          Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
         else Left(MediaItem.RightsPart1("not Open Access (isPublicDomain is false)"))
       val period = Period
-        .range(c.long("objectBeginDate").map(d => year(Year(d)).value), c.long("objectEndDate").map(d => year(Year(d)).value))
+        .range(
+          c.long("objectBeginDate").map(d => year(Year(d)).value),
+          c.long("objectEndDate").map(d => year(Year(d)).value)
+        )
         .filterNot(_ == Period.point(com.histmersion.plugin.Year(-1)))
       MediaItem(
         MediaItem.Key(id.toString),

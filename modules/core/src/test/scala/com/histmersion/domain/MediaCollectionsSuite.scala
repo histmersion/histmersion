@@ -33,13 +33,26 @@ class MediaCollectionsSuite extends munit.FunSuite:
     )
 
   private val mycenae =
-    MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("pleiades_570491"), MediaMatch.PlaceInfo.Label("Mycenae"), Set(MediaMatch.PlaceInfo.Keys("mycenae"), MediaMatch.PlaceInfo.Keys("mykenai")), DeepTime.span(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1100L)))
-  private val greece = MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("geonames_390903"), MediaMatch.PlaceInfo.Label("Greece"), Set(MediaMatch.PlaceInfo.Keys("greece")), DeepTime.span(DeepTime.SignedYear(-3000L), DeepTime.SignedYear(-100L)))
+    MediaMatch.PlaceInfo(
+      MediaMatch.PlaceInfo.Id("pleiades_570491"),
+      MediaMatch.PlaceInfo.Label("Mycenae"),
+      Set(MediaMatch.PlaceInfo.Keys("mycenae"), MediaMatch.PlaceInfo.Keys("mykenai")),
+      DeepTime.span(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1100L))
+    )
+  private val greece = MediaMatch.PlaceInfo(
+    MediaMatch.PlaceInfo.Id("geonames_390903"),
+    MediaMatch.PlaceInfo.Label("Greece"),
+    Set(MediaMatch.PlaceInfo.Keys("greece")),
+    DeepTime.span(DeepTime.SignedYear(-3000L), DeepTime.SignedYear(-100L))
+  )
   private val onMap: MediaMatch.Resolve = Map(
     MediaMatch.PlaceInfo.Keys("mycenae") -> Set(MediaMatch.PlaceInfo.Id("pleiades_570491")),
     MediaMatch.PlaceInfo.Keys("mykenai") -> Set(MediaMatch.PlaceInfo.Id("pleiades_570491")),
     MediaMatch.PlaceInfo.Keys("greece") -> Set(MediaMatch.PlaceInfo.Id("geonames_390903")),
-    MediaMatch.PlaceInfo.Keys("thebes") -> Set(MediaMatch.PlaceInfo.Id("thebes_egypt"), MediaMatch.PlaceInfo.Id("thebes_greece"))
+    MediaMatch.PlaceInfo.Keys("thebes") -> Set(
+      MediaMatch.PlaceInfo.Id("thebes_egypt"),
+      MediaMatch.PlaceInfo.Id("thebes_greece")
+    )
   ).withDefaultValue(Set.empty)
 
   test("museum rule: the most specific place field that names a place on the map decides, by name key, with the dates"):
@@ -65,7 +78,12 @@ class MediaCollectionsSuite extends munit.FunSuite:
       MediaMatch.museum(rec(List("culture" -> "probably Mycenae")), mycenae, onMap),
       Left("no place on the record")
     )
-    val thebes = MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("thebes_greece"), MediaMatch.PlaceInfo.Label("Thebes"), Set(MediaMatch.PlaceInfo.Keys("thebes")), DeepTime.span(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1100L)))
+    val thebes = MediaMatch.PlaceInfo(
+      MediaMatch.PlaceInfo.Id("thebes_greece"),
+      MediaMatch.PlaceInfo.Label("Thebes"),
+      Set(MediaMatch.PlaceInfo.Keys("thebes")),
+      DeepTime.span(DeepTime.SignedYear(-1600L), DeepTime.SignedYear(-1100L))
+    )
     assertEquals(
       MediaMatch.museum(rec(List("city" -> "Thebes")), thebes, onMap),
       Left("its place name is ambiguous on the map")
@@ -79,7 +97,11 @@ class MediaCollectionsSuite extends munit.FunSuite:
       Left("the place has no period to compare")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae"), DeepTime.span(DeepTime.SignedYear(1700L), DeepTime.SignedYear(1750L))), mycenae, onMap),
+      MediaMatch.museum(
+        rec(List("excavation" -> "Mycenae"), DeepTime.span(DeepTime.SignedYear(1700L), DeepTime.SignedYear(1750L))),
+        mycenae,
+        onMap
+      ),
       Left("its dates do not overlap the place's")
     )
     assertEquals(
@@ -89,17 +111,30 @@ class MediaCollectionsSuite extends munit.FunSuite:
     )
 
   test("map rule: any location naming the place alone, made by max-year"):
-    val m = rec(List("location" -> "greece", "location" -> "mycenae"), DeepTime.span(DeepTime.SignedYear(1880L), DeepTime.SignedYear(1880L)))
+    val m = rec(
+      List("location" -> "greece", "location" -> "mycenae"),
+      DeepTime.span(DeepTime.SignedYear(1880L), DeepTime.SignedYear(1880L))
+    )
     assertEquals(MediaMatch.map(m, mycenae, onMap, Year(1928)), Right("location = mycenae; map of 1880–1880 CE"))
     assertEquals(MediaMatch.map(m, greece, onMap, Year(1928)), Right("location = greece; map of 1880–1880 CE"))
     assertEquals(
-      MediaMatch.map(m.modify(_.period).setTo(DeepTime.span(DeepTime.SignedYear(1950L), DeepTime.SignedYear(1950L))), greece, onMap, Year(1928)),
+      MediaMatch.map(
+        m.modify(_.period).setTo(DeepTime.span(DeepTime.SignedYear(1950L), DeepTime.SignedYear(1950L))),
+        greece,
+        onMap,
+        Year(1928)
+      ),
       Left("made after 1928")
     )
     assertEquals(
       MediaMatch.map(
         rec(List("location" -> "thebes"), DeepTime.span(DeepTime.SignedYear(1880L), DeepTime.SignedYear(1880L))),
-        MediaMatch.PlaceInfo(MediaMatch.PlaceInfo.Id("thebes_egypt"), MediaMatch.PlaceInfo.Label("Thebes"), Set(MediaMatch.PlaceInfo.Keys("thebes")), None),
+        MediaMatch.PlaceInfo(
+          MediaMatch.PlaceInfo.Id("thebes_egypt"),
+          MediaMatch.PlaceInfo.Label("Thebes"),
+          Set(MediaMatch.PlaceInfo.Keys("thebes")),
+          None
+        ),
         onMap,
         Year(1928)
       ),
@@ -109,12 +144,30 @@ class MediaCollectionsSuite extends munit.FunSuite:
   test("year ranges read as a person reads them; overlap is inclusive"):
     def p(a: DeepTime.SignedYear, b: DeepTime.SignedYear) = DeepTime.span(a, b).get
     assertEquals(MediaMatch.years(p(DeepTime.SignedYear(-200L), DeepTime.SignedYear(100L))), "200 BCE–100 CE")
-    assert(MediaMatch.overlaps(p(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1100L)), p(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1000L))))
-    assert(!MediaMatch.overlaps(p(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1101L)), p(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1000L))))
+    assert(
+      MediaMatch.overlaps(
+        p(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1100L)),
+        p(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1000L))
+      )
+    )
+    assert(
+      !MediaMatch.overlaps(
+        p(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1101L)),
+        p(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1000L))
+      )
+    )
 
   test("deep time: two years in either order make a period; a year no Year holds makes none"):
-    assertEquals(DeepTime.span(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1200L)), DeepTime.span(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1100L)))
-    assertEquals(DeepTime.span(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1100L)).map(q => (q.start.value: Int, q.end.value: Int)), Some((-1200, -1100)))
+    assertEquals(
+      DeepTime.span(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1200L)),
+      DeepTime.span(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1100L))
+    )
+    assertEquals(
+      DeepTime
+        .span(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1100L))
+        .map(q => (q.start.value: Int, q.end.value: Int)),
+      Some((-1200, -1100))
+    )
     assertEquals(DeepTime.span(DeepTime.SignedYear(5L), DeepTime.SignedYear(5L)).map(_.isPoint), Some(true))
     assertEquals(DeepTime.span(DeepTime.SignedYear(-1L), DeepTime.SignedYear(Int.MaxValue.toLong + 1)), None)
     assertEquals(DeepTime.year(DeepTime.SignedYear(Int.MinValue.toLong - 1)), None)

@@ -20,7 +20,8 @@ final case class EventLinkCandidate(
     passages: List[EventPassage] = Nil,
     reasons: List[EventLinkCandidate.Reasons] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object EventLinkCandidate:
 
   /** Where a candidate link between an event and a source stands. */

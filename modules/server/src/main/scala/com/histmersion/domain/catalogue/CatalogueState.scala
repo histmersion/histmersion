@@ -24,7 +24,10 @@ final case class CatalogueState(
     corrections: Vector[Correction] = Vector.empty,
     lastCorrectionId: CatalogueState.LastCorrectionId = CatalogueState.LastCorrectionId(0L),
     catalogueRecords: Vector[(CatalogueState.CatalogueRecordsPart1, CatalogRecord)] = Vector.empty,
-    importParts: Map[CatalogueState.ImportPartsKey, Map[CatalogueState.ImportPartsValueKey, CatalogueState.ImportPartsValueValue]] = Map.empty,
+    importParts: Map[
+      CatalogueState.ImportPartsKey,
+      Map[CatalogueState.ImportPartsValueKey, CatalogueState.ImportPartsValueValue]
+    ] = Map.empty,
     candidates: Vector[EventLinkCandidate] = Vector.empty,
     checked: Set[CatalogueState.Checked] = Set.empty,
     sites: Vector[HeldSite] = Vector.empty,

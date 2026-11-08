@@ -127,7 +127,9 @@ class AgentGeneratorSuite extends munit.FunSuite:
       AgentDefinitions.parse(AgentDef.Name("x"), bad, ToolboxOrder.names)
     )
     assert(AgentDefinitions.parse(AgentDef.Name("y"), bad, ToolboxOrder.names).left.exists(_.contains("name 'x'")))
-    assert(AgentDefinitions.parse(AgentDef.Name("x"), AgentDefinitions.Markdown("no header"), ToolboxOrder.names).isLeft)
+    assert(
+      AgentDefinitions.parse(AgentDef.Name("x"), AgentDefinitions.Markdown("no header"), ToolboxOrder.names).isLeft
+    )
     val noRole = AgentDefinitions.Markdown(bad.value.replace("model-role: reviewer", "model-role: boss"))
     assert(AgentDefinitions.parse(AgentDef.Name("x"), noRole, ToolboxOrder.names).left.exists(_.contains("model-role")))
 
@@ -155,7 +157,11 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(d.system(sk, ToolStyle.Claude).contains("`mcp__histmersion__get_source`"), "placeholders follow the runtime")
     val withSkill = sk.copy(skills = List(AgentDef.Skills("histmersion-query")))
     assert(d.system(withSkill, ToolStyle.Bare).contains("# Skill: histmersion-query"))
-    assert(AgentDefinitions.system(sk.copy(include = List(AgentDef.Include("nope"))), d.fragments, d.skills, ToolStyle.Bare).isLeft)
+    assert(
+      AgentDefinitions
+        .system(sk.copy(include = List(AgentDef.Include("nope"))), d.fragments, d.skills, ToolStyle.Bare)
+        .isLeft
+    )
 
   private val Settings = GenSettings(
     GenSettings.AgentMcpUrl("http://127.0.0.1:18000/mcp/agent"),
@@ -253,7 +259,8 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val base = AgentGenerator.codexBase(Settings)
     assert(base.contains("[skills]\ninclude_instructions = false\n\n[skills.bundled]\nenabled = false"), base)
     assert(!base.contains("tool_output_token_limit"), "0: the model's own limit")
-    val limited = AgentGenerator.codexBase(Settings.modify(_.codexToolOutputTokens).setTo(GenSettings.CodexToolOutputTokens(6000)))
+    val limited =
+      AgentGenerator.codexBase(Settings.modify(_.codexToolOutputTokens).setTo(GenSettings.CodexToolOutputTokens(6000)))
     assert(limited.contains("\ntool_output_token_limit = 6000\n"), limited)
     assert(
       limited.indexOf("tool_output_token_limit") < limited.indexOf("[skills]"),
@@ -261,7 +268,11 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
 
   test("Codex lean: the home carries Histmersion's base prompt and names it; builtin writes neither"):
-    val lean = Settings.modify(_.codexLeanBase).setTo(GenSettings.CodexLeanBase(true)).modify(_.codexToolOutputTokens).setTo(GenSettings.CodexToolOutputTokens(6000))
+    val lean = Settings
+      .modify(_.codexLeanBase)
+      .setTo(GenSettings.CodexLeanBase(true))
+      .modify(_.codexToolOutputTokens)
+      .setTo(GenSettings.CodexToolOutputTokens(6000))
     val tree = AgentGenerator.codex(d, lean)
     val base = tree("codex/home/config.toml")
     assert(base.contains("\nmodel_instructions_file = \"base-instructions.md\"\n"), base)
@@ -287,7 +298,9 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
     assert(file.length < 1600, s"${file.length} characters")
     assertEquals(
-      AgentGenerator.codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(GenSettings.CodexLeanBase(true))).contains("@exec"),
+      AgentGenerator
+        .codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(GenSettings.CodexLeanBase(true)))
+        .contains("@exec"),
       false,
       "no output limit: no budget line"
     )
@@ -298,7 +311,12 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("agents.providers.codex.base-instructions: lean by default, builtin by config"):
     val c = AppConfig.load().agents.providers.codex
     assertEquals((c.baseInstructions, c.leanBase), ("lean", true))
-    assert(!c.modify(_.baseInstructions).setTo(CodexConfig.BaseInstructions(" Builtin ")).leanBase && c.modify(_.baseInstructions).setTo(CodexConfig.BaseInstructions("lean")).leanBase)
+    assert(
+      !c.modify(_.baseInstructions).setTo(CodexConfig.BaseInstructions(" Builtin ")).leanBase && c
+        .modify(_.baseInstructions)
+        .setTo(CodexConfig.BaseInstructions("lean"))
+        .leanBase
+    )
 
   test("TOML strings hold any text"):
     assertEquals(AgentGenerator.tomlString("a \"b\" \\ c\nd\te\u0001"), "\"a \\\"b\\\" \\\\ c\\nd\\te\\u0001\"")
@@ -318,16 +336,37 @@ class AgentGeneratorSuite extends munit.FunSuite:
     Files.createDirectories(auth.getParent)
     Files.writeString(auth, "{\"never\":\"read\"}")
     val r1 = AgentTrees
-      .write(summon[Stores].at(Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1", "codex/home/b.toml" -> "2"), List("codex"), Sha256.assume("sha1"))
+      .write(
+        summon[Stores].at(Location.AgentHomes, dir),
+        Map("codex/home/a.toml" -> "1", "codex/home/b.toml" -> "2"),
+        List("codex"),
+        Sha256.assume("sha1")
+      )
       .toOption
       .get
     assertEquals((r1.files, r1.written, r1.removed), (2, 2, 0))
-    val r2 = AgentTrees.write(summon[Stores].at(Location.AgentHomes, dir), Map("codex/home/a.toml" -> "1"), List("codex"), Sha256.assume("sha2")).toOption.get
+    val r2 = AgentTrees
+      .write(
+        summon[Stores].at(Location.AgentHomes, dir),
+        Map("codex/home/a.toml" -> "1"),
+        List("codex"),
+        Sha256.assume("sha2")
+      )
+      .toOption
+      .get
     assertEquals((r2.written, r2.removed), (0, 1), "unchanged files are not rewritten; the stale one goes")
     assert(!Files.exists(dir.resolve("codex/home/b.toml")))
     assertEquals(Files.readString(auth), "{\"never\":\"read\"}")
     assert(Files.readString(dir.resolve("manifest.json")).contains("\"definitions\": \"sha2\""))
-    val r3 = AgentTrees.write(summon[Stores].at(Location.AgentHomes, dir), Map("claude-code/x" -> "y"), List("claude-code"), Sha256.assume("s")).toOption.get
+    val r3 = AgentTrees
+      .write(
+        summon[Stores].at(Location.AgentHomes, dir),
+        Map("claude-code/x" -> "y"),
+        List("claude-code"),
+        Sha256.assume("s")
+      )
+      .toOption
+      .get
     assert(Files.isDirectory(dir.resolve("claude-code/login")), "the empty login dir for CLAUDE_CONFIG_DIR")
     assert(Files.exists(dir.resolve("codex/home/a.toml")), "another runtime's files stay")
     assertEquals(r3.removed, 0)
@@ -341,7 +380,10 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(Files.isRegularFile(dir.resolve("opencode/config/agents/enrich-classify.md")))
     assertEquals(rt.trees.codexHome, Some(dir.resolve("codex/home")))
     val unknown = rt.trees.generate(Set(ToolName("get_source")))
-    assert(unknown.left.exists(_.value.contains("which is not an MCP tool")), "a placeholder naming nothing fails generation")
+    assert(
+      unknown.left.exists(_.value.contains("which is not an MCP tool")),
+      "a placeholder naming nothing fails generation"
+    )
 
 /** The checked-in `plugin/` and `.claude-plugin/marketplace.json` are the generator's interactive Claude Code flavour,
   * file for file. Out of date: `just plugin`.
@@ -362,7 +404,9 @@ class PluginTreeSuite extends munit.FunSuite:
   test("plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)"):
     val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m.value), identity)
     val stale = tree.toList.sortBy(_._1.value).collect {
-      case (rel, text) if !Files.isRegularFile(root.resolve(rel.value)) || Files.readString(root.resolve(rel.value)) != text => rel
+      case (rel, text)
+          if !Files.isRegularFile(root.resolve(rel.value)) || Files.readString(root.resolve(rel.value)) != text =>
+        rel
     }
     assertEquals(stale, Nil)
     val extra = PluginTree.Owned

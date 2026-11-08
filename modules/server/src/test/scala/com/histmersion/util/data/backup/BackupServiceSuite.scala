@@ -40,7 +40,10 @@ class BackupServiceSuite extends munit.FunSuite:
     val (_, svc) = fixture(keep = BackupService.InMemory.Keep(0))
     val made = svc.create(Instant.parse("2026-10-31T10:00:00Z")).fold(e => fail(e.message.value), identity)
     assertEquals(svc.resolve(PreparedBackup.File(made.file.value)).map(_.value: String), Right(made.file))
-    assertEquals(svc.resolve(PreparedBackup.File("histmersion-20260101T000000Z.dump")).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(
+      svc.resolve(PreparedBackup.File("histmersion-20260101T000000Z.dump")).left.map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
     assert(svc.resolve(PreparedBackup.File("../x.dump")).isLeft)
     assertEquals(svc.resolve(PreparedBackup.File(made.file.value)).flatMap(svc.restore), Right((0L, Nil)))
     assert(svc.archive(PreparedBackup.File(made.file.value)).isLeft, "a dump in memory is no file to hand out")
@@ -52,4 +55,7 @@ class BackupServiceSuite extends munit.FunSuite:
       svc.refusal(RowCount(3)).message,
       "the database still holds 3 source(s); restoring would drop them — re-run with force"
     )
-    assertEquals(Backup.safeName(Backup.Name("histmersion-20261031T100000Z.dump")), Right("histmersion-20261031T100000Z.dump"))
+    assertEquals(
+      Backup.safeName(Backup.Name("histmersion-20261031T100000Z.dump")),
+      Right("histmersion-20261031T100000Z.dump")
+    )

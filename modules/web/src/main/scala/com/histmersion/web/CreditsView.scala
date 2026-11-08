@@ -35,7 +35,9 @@ object CreditsView:
               td(a(href := c.url.value, target := "_blank", rel := "noopener", c.name.value)),
               td(c.usedFor.value),
               td(
-                c.licenceUrl.fold(span(c.licence.value))(u => a(href := u.value, target := "_blank", rel := "noopener", c.licence.value))
+                c.licenceUrl.fold(span(c.licence.value))(u =>
+                  a(href := u.value, target := "_blank", rel := "noopener", c.licence.value)
+                )
               ),
               td(c.credit.value)
             )

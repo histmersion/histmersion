@@ -32,15 +32,23 @@ final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollect
       .map(e => SourceCollection.ItemResultPart1(e.value))
       .map(i => Some(ArchiveOrgCollection.item(i)))
 
-  def file(item: CollectionItem, format: Option[SourceCollection.FileFormat]): Either[SourceCollection.FileResultPart1, CollectionFile] =
+  def file(
+      item: CollectionItem,
+      format: Option[SourceCollection.FileFormat]
+  ): Either[SourceCollection.FileResultPart1, CollectionFile] =
     AcquireParse
-      .pickArchiveFile(item.files.map(ArchiveOrgCollection.archiveFile), format.map(f => AcquireParse.WantedFileKind(f.value)))
+      .pickArchiveFile(
+        item.files.map(ArchiveOrgCollection.archiveFile),
+        format.map(f => AcquireParse.WantedFileKind(f.value))
+      )
       .map(ArchiveOrgCollection.collectionFile)
       .toRight(SourceCollection.FileResultPart1(s"'${item.id.value}' has no epub/pdf file to download"))
 
   def original(item: CollectionItem, file: CollectionFile): Either[SourceCollection.OriginalResultPart1, FetchedFile] =
     if item.restricted.value then
-      Left(SourceCollection.OriginalResultPart1(s"'${item.id.value}' is a lending-only item — borrow it on archive.org"))
+      Left(
+        SourceCollection.OriginalResultPart1(s"'${item.id.value}' is a lending-only item — borrow it on archive.org")
+      )
     else
       client()
         .download(ArchiveId(item.id.value), ArchiveOrg.DownloadFile(file.name.value))

@@ -32,7 +32,13 @@ final class SourceProposals(
     status: Citekey => Option[Source.Status],
     apply: Proposal => Either[SourceProposals.Outcome.Failed.Why, SourceProposals.Outcome.Applied.What]
 ):
-  def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[Edge.Kind]], p.target)
+  def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(
+    p.kind,
+    p.citekey,
+    p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+    p.edgeKind.transformInto[Option[Edge.Kind]],
+    p.target
+  )
 
   import SourceProposals.Outcome
 
@@ -68,13 +74,24 @@ final class SourceProposals(
   def propose(runId: Option[Run.Id], p: Proposal): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
-    AgentProposals.route(p, now.transformInto[Option[Source.Status]], cfg.approvals.statusMode.transformInto[Approval.Mode], cfg.approvals.edgeMode.transformInto[Approval.Mode]) match
+    AgentProposals.route(
+      p,
+      now.transformInto[Option[Source.Status]],
+      cfg.approvals.statusMode.transformInto[Approval.Mode],
+      cfg.approvals.edgeMode.transformInto[Approval.Mode]
+    ) match
       case Route.Skip(why) => Outcome.Skipped(Outcome.Skipped.Why(s"${p.describe} ($why)"))
       case Route.Apply     =>
         apply(p) match
           case Left(m)  => Outcome.Failed(Outcome.Failed.Why(s"${p.describe}: $m"))
           case Right(w) =>
-            val _ = record(runId, p, now, ApprovalState.Approved, Some(ApprovalRecord.Result(s"${ListFilters.DecidedBy.AutoResult}: $w")))
+            val _ = record(
+              runId,
+              p,
+              now,
+              ApprovalState.Approved,
+              Some(ApprovalRecord.Result(s"${ListFilters.DecidedBy.AutoResult}: $w"))
+            )
             Outcome.Applied(w)
       case Route.Ask =>
         record(runId, p, now, ApprovalState.Open, None) match
@@ -134,4 +151,3 @@ object SourceProposals:
     object NotProposed:
       type What = OutcomeWhat
       val What: OutcomeWhat.type = OutcomeWhat
-

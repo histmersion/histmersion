@@ -122,12 +122,14 @@ object Place:
     object CellsMicroNumber extends Newtype[Long, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
+
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type CellsMicro = CellsMicroValue
     type CellsMicroValue = CellsMicroNumber
     val CellsMicroValue: CellsMicroNumber.type = CellsMicroNumber
 
-    val CellsMicro: List[CellsMicro] = List(CellsMicroNumber(5000000L), CellsMicroNumber(1000000L), CellsMicroNumber(500000L))
+    val CellsMicro: List[CellsMicro] =
+      List(CellsMicroNumber(5000000L), CellsMicroNumber(1000000L), CellsMicroNumber(500000L))
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
@@ -135,7 +137,9 @@ object Place:
     def gridCentre(lon: Longitude, lat: Latitude): Boolean =
       val x = math.round((lon).value * 1e6)
       val y = math.round((lat).value * 1e6)
-      (CellsMicro.exists(c => Math.floorMod(x, (c).value) == (c).value / 2 && Math.floorMod(y, (c).value) == (c).value / 2))
+      (CellsMicro.exists(c =>
+        Math.floorMod(x, (c).value) == (c).value / 2 && Math.floorMod(y, (c).value) == (c).value / 2
+      ))
 
     /** The precision of the point of place `placeId`. */
     def of(placeId: Id, lon: Longitude, lat: Latitude): Precision =
@@ -168,7 +172,7 @@ object Place:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     export Place.Source
-    export Name.{Value as Names, Lang}
+    export Name.{Lang, Value as Names}
 
     given Schema[Add] = KindlingsSchema
       .derived[Add]
@@ -226,9 +230,14 @@ object Place:
     type ShapeNotesResult = Note
     val ShapeNotesResult: Note.type = Note
 
-  final case class Counts(sources: Counts.Sources, findings: Counts.Findings, articles: Counts.Articles, events: Counts.Events)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Counts(
+      sources: Counts.Sources,
+      findings: Counts.Findings,
+      articles: Counts.Articles,
+      events: Counts.Events
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Counts:
     type Sources = Sources.T
@@ -239,7 +248,6 @@ object Place:
     object Articles extends Newtype[Int, Pure]
     type Events = Events.T
     object Events extends Newtype[Int, Pure]
-
 
   enum Dating derives CanEqual:
     case Stated, EndOnly, Unknown
@@ -270,16 +278,19 @@ object Place:
       case EndOnly => Description(end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown"))
       case Stated  => Description(YearFmt.openPeriod(start, end, none = ("")))
 
-  final case class Description(text: Description.Text, lang: Description.Lang = Name.Lang(""), source: Description.Source = _root_.com.histmersion.api.catalogue.Place.Source(""))
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Description(
+      text: Description.Text,
+      lang: Description.Lang = Name.Lang(""),
+      source: Description.Source = _root_.com.histmersion.api.catalogue.Place.Source("")
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Description:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
     export Name.Lang
     export Place.Source
-
 
   final case class Designation(
       id: Designation.Id,
@@ -372,7 +383,8 @@ object Place:
             "coordinates" -> Json.arr(Json.fromDoubleOrNull(in.lon.value), Json.fromDoubleOrNull(in.lat.value))
           )
           .noSpaces
-        val names = (Name(Name.Value(label)) :: extra.map(Name(_, l))).distinctBy(n => (n.name.value.toLowerCase, n.lang))
+        val names =
+          (Name(Name.Value(label)) :: extra.map(Name(_, l))).distinctBy(n => (n.name.value.toLowerCase, n.lang))
         Input(
           Place(
             Id(id),
@@ -389,10 +401,12 @@ object Place:
     def csv(rows: List[ManualPlaceName]): Csv =
       def cell(s: String) =
         if (s).exists(c => c == ',' || c == '"' || c == '\n') then "\"" + (s).replace("\"", "\"\"") + "\"" else s
-      Csv(("place_id,name,lang,why" :: rows.map(r =>
-        List(r.placeId.value, r.name.value, r.lang.value, s"added by hand to ${r.label}").map(cell).mkString(",")
-      ))
-        .mkString("", "\n", "\n"))
+      Csv(
+        ("place_id,name,lang,why" :: rows.map(r =>
+          List(r.placeId.value, r.name.value, r.lang.value, s"added by hand to ${r.label}").map(cell).mkString(",")
+        ))
+          .mkString("", "\n", "\n")
+      )
 
   /** The gazetteer's record of one place: the row, its GeoJSON geometry and the hierarchy around it at `asOf`, its
     * footprints, links, types and records; `counts`, what the corpus holds for it, filled by whoever shows its card.
@@ -414,8 +428,7 @@ object Place:
       descriptions: List[Description] = Nil,
       timeBasis: TimeBasis = TimeBasis.Dated,
       /** `grid-cell` for a Pleiades point that is only the centre of an atlas grid square. */
-      locationPrecision: Precision =
-        Precision.Stated,
+      locationPrecision: Precision = Precision.Stated,
       siteType: Option[Entry.SiteType] = None,
       record: Record = Record()
   ) extends Card
@@ -439,7 +452,8 @@ object Place:
       accuracyM: Option[Footprint.AccuracyM] = None,
       citekey: Option[Citekey] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
   object Footprint:
 
     type Roles = RolesValue
@@ -458,7 +472,8 @@ object Place:
     type AccuracyM = AccuracyM.T
     object AccuracyM extends Newtype[Float, Pure]
 
-    val Roles: List[Roles] = List(Role("extent"), Role("core"), Role("maximal"), Role("frontier"), Role("seat"), Role("snapshot"))
+    val Roles: List[Roles] =
+      List(Role("extent"), Role("core"), Role("maximal"), Role("frontier"), Role("seat"), Role("snapshot"))
     val Certainties: List[Certainties] = List(Certainty("definite"), Certainty("approximate"), Certainty("uncertain"))
 
   final case class Gone(
@@ -470,7 +485,8 @@ object Place:
       findingsAfter: Gone.FindingsAfter,
       unlocated: Gone.Unlocated
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Gone:
     export Place.Label
@@ -484,7 +500,6 @@ object Place:
     object FindingsAfter extends Newtype[Int, Pure]
     type Unlocated = Unlocated.T
     object Unlocated extends Newtype[Int, Pure]
-
 
   final case class Hit(
       id: Id,
@@ -500,7 +515,8 @@ object Place:
       dating: Dating = Dating.Stated,
       importSource: Option[Hit.ImportSource] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def toSummary: Summary =
       Summary(id, label, kind, periodStart, periodEnd, source, names, contested, dating, importSource)
 
@@ -516,7 +532,6 @@ object Place:
     export Summary.Contested
     export Match.ImportSource
 
-
   final case class ImportResult(
       places: ImportResult.Places,
       names: ImportResult.Names,
@@ -524,7 +539,8 @@ object Place:
       failed: List[ImportResult.Failed] = Nil,
       job: Option[ImportResult.Job] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ImportResult:
     type Places = Places.T
@@ -538,12 +554,16 @@ object Place:
     type Job = Job.T
     object Job extends Newtype[String, Pure]
 
-
   final case class Input(place: Place, names: List[Name] = Nil, relations: List[Relation] = Nil)
 
-  final case class Link(placeId: Id, scheme: Link.Scheme, externalId: Link.ExternalId, relation: Link.Relation = Link.Relation("close_match"))
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Link(
+      placeId: Id,
+      scheme: Link.Scheme,
+      externalId: Link.ExternalId,
+      relation: Link.Relation = Link.Relation("close_match")
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
   object Link:
     type SchemeTitle = SchemeTitle.T
     object SchemeTitle extends Newtype[String, Pure]
@@ -570,8 +590,10 @@ object Place:
     type Relation = Relation.T
     object Relation extends Newtype[String, Pure]
 
-    val Schemes: List[Schemes] = List(Scheme("pleiades"), Scheme("wikidata"), Scheme("tgn"), Scheme("geonames"), Scheme("whg"))
-    val Relations: List[Relations] = List(Relation("close_match"), Relation("exact_match"), Relation("broad_match"), Relation("see_also"))
+    val Schemes: List[Schemes] =
+      List(Scheme("pleiades"), Scheme("wikidata"), Scheme("tgn"), Scheme("geonames"), Scheme("whg"))
+    val Relations: List[Relations] =
+      List(Relation("close_match"), Relation("exact_match"), Relation("broad_match"), Relation("see_also"))
 
     def url(scheme: UrlScheme, externalId: UrlExternalId): Option[Url] =
       val id = (externalId).value.trim
@@ -595,7 +617,11 @@ object Place:
       case "commons"  => SchemeTitle("Commons category")
       case other      => SchemeTitle(other)
 
-  final case class Match(placeId: Id, importSource: Option[Match.ImportSource], native: Match.Native = Match.Native(true))
+  final case class Match(
+      placeId: Id,
+      importSource: Option[Match.ImportSource],
+      native: Match.Native = Match.Native(true)
+  )
 
   object Match:
     type ImportSource = ImportSource.T
@@ -629,7 +655,9 @@ object Place:
     type Lang = Lang.T
     object Lang extends Newtype[String, Pure]
 
-  final case class NameAdd(name: NameAdd.Name, lang: Option[NameAdd.Lang] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+  final case class NameAdd(name: NameAdd.Name, lang: Option[NameAdd.Lang] = None)
+      derives KindlingsSchema,
+        com.histmersion.api.json.Schema
   object NameAdd:
 
     type Name = Name.T
@@ -647,7 +675,8 @@ object Place:
       changed: NameChanged.Changed,
       wasImported: NameChanged.WasImported = NameChanged.WasImported(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object NameChanged:
     export Place.Label
@@ -661,8 +690,9 @@ object Place:
     type WasImported = WasImported.T
     object WasImported extends Newtype[Boolean, Pure]
 
-
-  final case class NameRemove(name: NameRemove.Name, lang: Option[NameRemove.Lang] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+  final case class NameRemove(name: NameRemove.Name, lang: Option[NameRemove.Lang] = None)
+      derives KindlingsSchema,
+        com.histmersion.api.json.Schema
   object NameRemove:
 
     type Name = Name.T
@@ -688,7 +718,8 @@ object Place:
       sourceLat: Option[Latitude] = None,
       sourceLon: Option[Longitude] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Override:
     export Place.Label
@@ -702,7 +733,6 @@ object Place:
     object SourceKind extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
-
 
   final case class OverrideChanged(
       placeId: Id,
@@ -720,7 +750,8 @@ object Place:
       latAfter: Option[Latitude] = None,
       lonAfter: Option[Longitude] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object OverrideChanged:
     export Place.Label
@@ -740,7 +771,6 @@ object Place:
     object FindingsAfter extends Newtype[Int, Pure]
     type Unlocated = Unlocated.T
     object Unlocated extends Newtype[Int, Pure]
-
 
   enum OverrideEdit derives CanEqual:
     case Reset
@@ -808,7 +838,7 @@ object Place:
       val reason = in.reason.map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       val period = Option.when(in.periodStart.isDefined || in.periodEnd.isDefined)((in.periodStart, in.periodEnd))
       val asked = in.pointLat.isDefined || in.pointLon.isDefined
-      if ((in.reset) == OverrideSet.Reset(true)) then
+      if (in.reset) == OverrideSet.Reset(true) then
         if kind.isDefined || period.isDefined || asked then
           Left(invalid("`reset` drops the override — pass no kind, period or point with it"))
         else Right(OverrideEdit.Reset)
@@ -821,20 +851,21 @@ object Place:
           )
           point <-
             (if !asked then Right(None)
-            else
-              (in.pointLat, in.pointLon) match
-                case (Some(lat), Some(lon)) =>
-                  if lat.value.isNaN || lon.value.isNaN || lat.value < -90 || lat.value > 90 || lon.value < -180 || lon.value > 180 then
-                    Left(invalid(s"($lat, $lon) is not a latitude/longitude"))
-                  else if reason.isEmpty then
-                    Left(
-                      invalid(
-                        "say where the point comes from (`reason`): a gazetteer value such as a Pleiades " +
-                          "representative point or a Wikidata coordinate — never an estimate"
-                      )
-                    )
-                  else Right(Some(GeoPoint(lon, lat)))
-                case _ => Left(invalid("a point needs both pointLat and pointLon"))): Either[Api.Error, Option[GeoPoint]]
+             else
+               (in.pointLat, in.pointLon) match
+                 case (Some(lat), Some(lon)) =>
+                   if lat.value.isNaN || lon.value.isNaN || lat.value < -90 || lat.value > 90 || lon.value < -180 || lon.value > 180
+                   then Left(invalid(s"($lat, $lon) is not a latitude/longitude"))
+                   else if reason.isEmpty then
+                     Left(
+                       invalid(
+                         "say where the point comes from (`reason`): a gazetteer value such as a Pleiades " +
+                           "representative point or a Wikidata coordinate — never an estimate"
+                       )
+                     )
+                   else Right(Some(GeoPoint(lon, lat)))
+                 case _ => Left(invalid("a point needs both pointLat and pointLon"))
+            ): Either[Api.Error, Option[GeoPoint]]
           _ <- kind.fold(Right(()))(k =>
             Either.cond(
               Kind.all.contains(k),
@@ -850,11 +881,20 @@ object Place:
             (),
             invalid(s"a reason is at most $MaxReason characters")
           )
-        yield OverrideEdit.Put(kind.map(OverrideEdit.Put.Kind(_)), period, reason.map(OverrideEdit.Put.Reason(_)), point)
+        yield OverrideEdit.Put(
+          kind.map(OverrideEdit.Put.Kind(_)),
+          period,
+          reason.map(OverrideEdit.Put.Reason(_)),
+          point
+        )
 
     def reason(raw: Option[Override.Reason]): Either[Api.Error, Option[Override.Reason]] =
       val r = raw.map((_).value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
-      Either.cond(r.forall(_.length <= MaxReason), (r).map(refactorValue10 => Override.Reason(refactorValue10)), invalid(s"a reason is at most $MaxReason characters"))
+      Either.cond(
+        r.forall(_.length <= MaxReason),
+        (r).map(refactorValue10 => Override.Reason(refactorValue10)),
+        invalid(s"a reason is at most $MaxReason characters")
+      )
 
     def parsePoint(raw: PointText): Either[Problem, (Latitude, Longitude)] =
       (raw).value.split(",", -1).map(_.trim).toList match
@@ -869,16 +909,19 @@ object Place:
         case _ => Left(Problem(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21"))
 
     def pointText(lat: Latitude, lon: Longitude): PointText =
-      PointText(String.format(
-        java.util.Locale.ROOT,
-        "%.4f %s %.4f %s",
-        math.abs((lat).value),
-        if (lat).value < 0 then "S" else "N",
-        math.abs((lon).value),
-        if (lon).value < 0 then "W" else "E"
-      ))
+      PointText(
+        String.format(
+          java.util.Locale.ROOT,
+          "%.4f %s %.4f %s",
+          math.abs((lat).value),
+          if (lat).value < 0 then "S" else "N",
+          math.abs((lon).value),
+          if (lon).value < 0 then "W" else "E"
+        )
+      )
 
-    def periodText(start: Option[Year], end: Option[Year]): Dating.Description = Dating.Description(YearFmt.openPeriod(start, end))
+    def periodText(start: Option[Year], end: Option[Year]): Dating.Description =
+      Dating.Description(YearFmt.openPeriod(start, end))
 
   final case class RebuildResult(
       links: RebuildResult.Links,
@@ -888,7 +931,8 @@ object Place:
       unlocated: RebuildResult.Unlocated,
       places: RebuildResult.Places
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RebuildResult:
     type Links = Links.T
@@ -903,7 +947,6 @@ object Place:
     object Unlocated extends Newtype[Int, Pure]
     type Places = Places.T
     object Places extends Newtype[Int, Pure]
-
 
   final case class Record(
       dateSource: Option[Record.DateSource] = None,
@@ -932,7 +975,9 @@ object Place:
       case p if p.startsWith("p2348-periodo") => DateSourceText("Wikidata: its time period, dated by PeriodO")
       case other                              => DateSourceText(other)
 
-  final case class Register(property: Register.Property, id: Register.Id) derives KindlingsCodecAsObject, KindlingsSchema:
+  final case class Register(property: Register.Property, id: Register.Id)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema:
     def name: Register.Name = Register.names.getOrElse(property, Register.Name((property).value))
 
   object Register:
@@ -949,12 +994,21 @@ object Place:
     object Id extends Newtype[String, Pure]
 
     val names: Map[Property, Name] = Map(
-      { val refactorTuple12 = "P13741" -> "Archaeological Cadastre (Greece)"; (Property(refactorTuple12._1), Name(refactorTuple12._2)) },
-      { val refactorTuple13 = "P2186" -> "Wiki Loves Monuments"; (Property(refactorTuple13._1), Name(refactorTuple13._2)) },
-      { val refactorTuple14 = "P9951" -> "Greek Castles"; (Property(refactorTuple14._1), Name(refactorTuple14._2)) },
-      { val refactorTuple6 = "P8218" -> "Archaeology in Greece Online"; (Property(refactorTuple6._1), Name(refactorTuple6._2)) },
-      { val refactorTuple7 = "P8068" -> "ToposText"; (Property(refactorTuple7._1), Name(refactorTuple7._2)) },
-      { val refactorTuple8 = "P1936" -> "DARE (Digital Atlas of the Roman Empire)"; (Property(refactorTuple8._1), Name(refactorTuple8._2)) }
+      {
+        val refactorTuple12 = "P13741" -> "Archaeological Cadastre (Greece)";
+        (Property(refactorTuple12._1), Name(refactorTuple12._2))
+      }, {
+        val refactorTuple13 = "P2186" -> "Wiki Loves Monuments";
+        (Property(refactorTuple13._1), Name(refactorTuple13._2))
+      },
+      { val refactorTuple14 = "P9951" -> "Greek Castles"; (Property(refactorTuple14._1), Name(refactorTuple14._2)) }, {
+        val refactorTuple6 = "P8218" -> "Archaeology in Greece Online";
+        (Property(refactorTuple6._1), Name(refactorTuple6._2))
+      },
+      { val refactorTuple7 = "P8068" -> "ToposText"; (Property(refactorTuple7._1), Name(refactorTuple7._2)) }, {
+        val refactorTuple8 = "P1936" -> "DARE (Digital Atlas of the Roman Empire)";
+        (Property(refactorTuple8._1), Name(refactorTuple8._2))
+      }
     )
 
   final case class Relation(
@@ -984,10 +1038,21 @@ object Place:
     val VersionOf = "version_of"
     val CapitalOf = "capital_of"
     val all: List[Kind] =
-      List(Kind(PartOf), Kind(PartOfAdmin), Kind(PartOfRegional), Kind(PartOfPhysical), Kind(Succeeds), Kind(SameAs), Kind(VersionOf), Kind(CapitalOf))
+      List(
+        Kind(PartOf),
+        Kind(PartOfAdmin),
+        Kind(PartOfRegional),
+        Kind(PartOfPhysical),
+        Kind(Succeeds),
+        Kind(SameAs),
+        Kind(VersionOf),
+        Kind(CapitalOf)
+      )
     val partOfKinds: Set[Kind] = Set(Kind(PartOf), Kind(PartOfAdmin), Kind(PartOfRegional), Kind(PartOfPhysical))
 
-  final case class RemoveIn(reason: Option[RemoveIn.Reason] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+  final case class RemoveIn(reason: Option[RemoveIn.Reason] = None)
+      derives KindlingsSchema,
+        com.histmersion.api.json.Schema
   object RemoveIn:
 
     type Reason = Reason.T
@@ -1000,12 +1065,13 @@ object Place:
     val IsAreaKind: Summary.Kind.type = Summary.Kind
     type PointOnlyAreaKind = IsAreaKind
     val PointOnlyAreaKind: IsAreaKind.type = IsAreaKind
-    export Summary.{Kind as IsPeopleKind}
+    export Summary.Kind as IsPeopleKind
 
     def isArea(kind: IsAreaKind): Boolean =
       (kind == IsAreaKind(Kind.Region) || kind == IsAreaKind(Kind.Polity))
 
-    def pointOnlyArea(kind: PointOnlyAreaKind, hasBoundary: Boolean): Boolean = (((isArea(kind)) == (true)) && !hasBoundary)
+    def pointOnlyArea(kind: PointOnlyAreaKind, hasBoundary: Boolean): Boolean =
+      (((isArea(kind)) == (true)) && !hasBoundary)
 
     val NoBoundaryNote: Card.Note = Card.Note("point only — boundary not yet available")
 
@@ -1025,7 +1091,8 @@ object Place:
       dating: Dating = Dating.Stated,
       importSource: Option[Summary.ImportSource] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def when: Dating.Description = Dating.describe(dating, periodStart, periodEnd)
 
   object Summary:
@@ -1038,7 +1105,6 @@ object Place:
     type Contested = Contested.T
     object Contested extends Newtype[Boolean, Pure]
     export Match.ImportSource
-
 
   enum TimeBasis derives CanEqual:
     case Dated, Timeless, Modern, Grouping, Findings
@@ -1065,7 +1131,8 @@ object Place:
     type FindingsNoteValue = FindingsNoteText
     val FindingsNoteValue: FindingsNoteText.type = FindingsNoteText
 
-    def parse(s: Wire): Option[TimeBasis] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: Wire): Option[TimeBasis] =
+      values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
     given WireEnumValues[TimeBasis]:
       def all: Array[TimeBasis] = values
@@ -1083,7 +1150,13 @@ object Place:
       else if undated then Findings
       else Dated
 
-    def visible(basis: TimeBasis, hi: VisibleEnd, modernFrom: ModernFrom, overlaps: => Boolean, evidence: => Boolean): Boolean =
+    def visible(
+        basis: TimeBasis,
+        hi: VisibleEnd,
+        modernFrom: ModernFrom,
+        overlaps: => Boolean,
+        evidence: => Boolean
+    ): Boolean =
       basis match
         case Timeless | Grouping => (true)
         case Modern              => hi.value >= modernFrom.value
@@ -1100,7 +1173,8 @@ object Place:
       findings: TreeRow.Findings,
       contested: TreeRow.Contested = TreeRow.Contested(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object TreeRow:
     export Place.Label
@@ -1113,14 +1187,14 @@ object Place:
     type Contested = Contested.T
     object Contested extends Newtype[Boolean, Pure]
 
-
   final case class Type(
       placeId: Id,
       typeLabel: Type.TypeLabel,
       period: Option[Period] = None,
       citekey: Option[Citekey] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Type:
     type TypeLabel = TypeLabel.T
@@ -1129,4 +1203,3 @@ object Place:
   type Id = Id.T
   object Id extends Newtype[String, io.github.iltotore.iron.constraint.any.Pure]:
     extension (id: Id) def isPleiades: Boolean = id.value.startsWith("pleiades_")
-

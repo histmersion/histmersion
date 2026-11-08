@@ -60,7 +60,9 @@ class StatsRepoSuite extends DbSuite:
 
   test("#718: the job queue by state adds up to the jobs table"):
     val before = count("jobs")
-    val j = JobCounts.of(connect(ds)(JobRepo.states).map((state, n) => (JobState.Wire(state.value), JobCounts.Count(n.value))))
+    val j = JobCounts.of(
+      connect(ds)(JobRepo.states).map((state, n) => (JobState.Wire(state.value), JobCounts.Count(n.value)))
+    )
     val after = count("jobs")
     val total = JobState.values.toList.map(state => j.of(state).value).sum
     assert(total >= before - 1 && total <= after + 1, s"$j vs $before..$after")
@@ -69,7 +71,9 @@ class StatsRepoSuite extends DbSuite:
     val (name, bytes) = connect(ds)(StatsRepo.databaseSize)
     assert(name.value.endsWith("_test"), name)
     assert(bytes.value > 0, bytes)
-    val top = connect(ds)(StatsRepo.tableBytes).take(5).map((table, size) => TableSize(TableSize.Name(table.value), ByteCount(size.value)))
+    val top = connect(ds)(StatsRepo.tableBytes)
+      .take(5)
+      .map((table, size) => TableSize(TableSize.Name(table.value), ByteCount(size.value)))
     assert(top.nonEmpty && top.size <= 5, top)
     assertEquals(top.map(_.bytes), top.map(_.bytes).sortBy(b => b.value: Long).reverse)
     assert(top.forall(t => t.bytes.value <= bytes.value), top)

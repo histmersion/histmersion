@@ -7,7 +7,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** One request an AI provider sent through a [[ScriptedAiHttp]]. Header values whose names suggest a credential
   * (`authorization`, `*key*`, `*token*`, `*secret*`) are shown as `***`.
   */
-final case class AiHttpRequest(method: AiHttpRequest.Method, url: AiHttpRequest.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue], body: Option[AiHttpRequest.Body])
+final case class AiHttpRequest(
+    method: AiHttpRequest.Method,
+    url: AiHttpRequest.Url,
+    headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue],
+    body: Option[AiHttpRequest.Body]
+)
 
 object AiHttpRequest:
   type Method = Method.T

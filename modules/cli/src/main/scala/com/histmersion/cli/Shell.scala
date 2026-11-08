@@ -16,6 +16,7 @@ object Shell:
   object Problem extends Newtype[String, Pure]
   type ProcessMatch = ProcessMatch.T
   object ProcessMatch extends Newtype[String, Pure]
+
   /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
 
   object System extends Shell:

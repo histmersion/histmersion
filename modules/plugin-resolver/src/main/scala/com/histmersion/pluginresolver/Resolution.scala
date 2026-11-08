@@ -16,7 +16,14 @@ object Resolution:
   object ReportLine extends Newtype[String, Pure]
 
   /** Orders two versions as Maven does: negative when the first is older. */
-  export Resolver.{FileName as ConflictsPlugin, FileName as NeededByResultPart2, FileName as NeededByPerPluginPart1, FileName as DependenciesNeededPart2, FileName as InputsFileFilesPart1, Sha256 as InputsFileFilesPart2}
+  export Resolver.{
+    FileName as ConflictsPlugin,
+    FileName as DependenciesNeededPart2,
+    FileName as InputsFileFilesPart1,
+    FileName as NeededByPerPluginPart1,
+    FileName as NeededByResultPart2,
+    Sha256 as InputsFileFilesPart2
+  }
 
   type VersionOrder = (ModuleVersion, ModuleVersion) => Int
 
@@ -40,7 +47,9 @@ object Resolution:
 
   /** The plugin jars each module is there for: a module is needed by every plugin whose own resolution has it.
     */
-  def neededBy(perPlugin: List[(Resolution.NeededByPerPluginPart1, List[ModuleCoordinates])]): Map[ModuleKey, List[Resolution.NeededByResultPart2]] =
+  def neededBy(
+      perPlugin: List[(Resolution.NeededByPerPluginPart1, List[ModuleCoordinates])]
+  ): Map[ModuleKey, List[Resolution.NeededByResultPart2]] =
     perPlugin
       .flatMap((plugin, modules) => modules.map(_.key -> plugin))
       .groupMap(_._1)(_._2)
@@ -69,7 +78,9 @@ object Resolution:
     resolved.map(_.key).filter(k => !plugins.contains(k) && (server.provides(k))).distinct.sortBy(_.toString)
 
   /** `lib/classpath`: the dependency jars' file names, one per line, in class-path order. */
-  def classpathFile(deps: List[Dependency]): ClasspathFile = ClasspathFile(deps.map(_.libName).map((_).value + "\n").mkString)
+  def classpathFile(deps: List[Dependency]): ClasspathFile = ClasspathFile(
+    deps.map(_.libName).map((_).value + "\n").mkString
+  )
 
   /** `lib/inputs`: `<sha256>  <file name>` of every plugin jar and POM the resolution was made from, sorted by name —
     * what `histmersion-server-jvm` compares with the plugins directory to know whether `lib/` is still current.

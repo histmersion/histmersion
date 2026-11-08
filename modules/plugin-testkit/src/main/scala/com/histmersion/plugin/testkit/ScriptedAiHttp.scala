@@ -54,10 +54,13 @@ object ScriptedAiHttp:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
-  private def masked(headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] =
+  private def masked(
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+  ): Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] =
     headers.map { (k, v) =>
       val n = k.value.toLowerCase(java.util.Locale.ROOT)
-      k -> (if n == "authorization" || n.contains("key") || n.contains("token") || n.contains("secret") then CoreQuota.HeaderValue("***")
+      k -> (if n == "authorization" || n.contains("key") || n.contains("token") || n.contains("secret") then
+              CoreQuota.HeaderValue("***")
             else v)
     }
 

@@ -37,7 +37,10 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
   stest("put and read back, edges seen from both ends, the tier and the precision") { s =>
     val e = s.events
     s.source("zzev2020_src")
-    e.put(Event.Id("zz_b"), EventPut(EventSummary.Label("Zz second"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190))))
+    e.put(
+      Event.Id("zz_b"),
+      EventPut(EventSummary.Label("Zz second"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190)))
+    )
     e.put(
       Event.Id("zz_a"),
       EventPut(
@@ -50,9 +53,32 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
         None,
         Some(EventSummary.Description("a long siege")),
         Some(Citekey("zzev2020_src")),
-        List(EventDating(com.histmersion.api.catalogue.Event.Id("ignored"), Citekey("zzev2020_src"), span(Year(-1251), Year(-1239)), Some(EventDating.Method("c14")), Some(EventDating.Note("n")))),
-        List(EventEdge(com.histmersion.api.catalogue.Event.Id("zz_a"), com.histmersion.api.catalogue.Event.Id("zz_b"), EventEdge.Kind("before"), Citekey("zzev2020_src"), None)),
-        List(EventParticipant(com.histmersion.api.catalogue.Event.Id("ignored"), EventParticipant.Actor("Achaeans"), EventParticipant.Role("attacker"), None)),
+        List(
+          EventDating(
+            com.histmersion.api.catalogue.Event.Id("ignored"),
+            Citekey("zzev2020_src"),
+            span(Year(-1251), Year(-1239)),
+            Some(EventDating.Method("c14")),
+            Some(EventDating.Note("n"))
+          )
+        ),
+        List(
+          EventEdge(
+            com.histmersion.api.catalogue.Event.Id("zz_a"),
+            com.histmersion.api.catalogue.Event.Id("zz_b"),
+            EventEdge.Kind("before"),
+            Citekey("zzev2020_src"),
+            None
+          )
+        ),
+        List(
+          EventParticipant(
+            com.histmersion.api.catalogue.Event.Id("ignored"),
+            EventParticipant.Actor("Achaeans"),
+            EventParticipant.Role("attacker"),
+            None
+          )
+        ),
         Some(EventSummary.Scale("regional"))
       )
     )
@@ -74,44 +100,114 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
 
   stest("the list: its own text, kind, historicity, period and tier, in time order, paged") { s =>
     val e = s.events
-    e.put(Event.Id("zz_late"), EventPut(EventSummary.Label("Zz late flood"), EventSummary.Kind("flood"), span(Year(-500), Year(-490)), description = Some(EventSummary.Description("rains"))))
-    e.put(Event.Id("zz_early"), EventPut(EventSummary.Label("Zz early battle"), EventSummary.Kind("battle"), span(Year(-1500), Year(-1490)), EventSummary.Historicity("legendary")))
-    e.put(Event.Id("zz_mid"), EventPut(EventSummary.Label("Zz middle eruption"), EventSummary.Kind("eruption"), span(Year(-1000), Year(-999)), description = Some(EventSummary.Description("ash fall"))))
+    e.put(
+      Event.Id("zz_late"),
+      EventPut(
+        EventSummary.Label("Zz late flood"),
+        EventSummary.Kind("flood"),
+        span(Year(-500), Year(-490)),
+        description = Some(EventSummary.Description("rains"))
+      )
+    )
+    e.put(
+      Event.Id("zz_early"),
+      EventPut(
+        EventSummary.Label("Zz early battle"),
+        EventSummary.Kind("battle"),
+        span(Year(-1500), Year(-1490)),
+        EventSummary.Historicity("legendary")
+      )
+    )
+    e.put(
+      Event.Id("zz_mid"),
+      EventPut(
+        EventSummary.Label("Zz middle eruption"),
+        EventSummary.Kind("eruption"),
+        span(Year(-1000), Year(-999)),
+        description = Some(EventSummary.Description("ash fall"))
+      )
+    )
     def ids(sel: EventSelection, limit: PageSize = PageSize(50), offset: Offset = Offset(0)) =
       e.list(sel, limit, offset).events.map(_.id)
     val all = EventSelection(Filter())
     assertEquals(ids(all), List("zz_early", "zz_mid", "zz_late"))
     assertEquals((e.list(all, PageSize(1), Offset(1)).total.value: Int), 3)
     assertEquals(ids(all, PageSize(1), Offset(1)), List("zz_mid"))
-    assertEquals(ids(all.modify(_.text).setTo(Some(EventSelection.Text("ASH")))), List("zz_mid"), "the description, any case")
+    assertEquals(
+      ids(all.modify(_.text).setTo(Some(EventSelection.Text("ASH")))),
+      List("zz_mid"),
+      "the description, any case"
+    )
     assertEquals(ids(all.modify(_.text).setTo(Some(EventSelection.Text("battle")))), List("zz_early"))
     assertEquals(ids(all.modify(_.kind).setTo(Some(EventSelection.Kind("natural")))), List("zz_mid", "zz_late"))
     assertEquals(ids(all.modify(_.kind).setTo(Some(EventSelection.Kind("human")))), List("zz_early"))
     assertEquals(ids(all.modify(_.historicity).setTo(Some(EventSelection.Historicity("Legendary")))), List("zz_early"))
     assertEquals(ids(EventSelection(Filter(period = Some(Period(Year(-1100), Year(-600)))))), List("zz_mid"))
     assertEquals(ids(EventSelection(Filter(title = Some(Filter.Title("late"))))), List("zz_late"))
-    assertEquals(ids(all.modify(_.narrow).setTo(EventSql.Narrow(tier = Some(EventSql.Narrow.Tier(EventTier.Attested))))), Nil)
+    assertEquals(
+      ids(all.modify(_.narrow).setTo(EventSql.Narrow(tier = Some(EventSql.Narrow.Tier(EventTier.Attested))))),
+      Nil
+    )
     assertEquals(ids(all.modify(_.text).setTo(Some(EventSelection.Text("100%")))), Nil, "a % is literal")
   }
 
   stest("the map: placed and well dated drawn, the unplaced and the imprecise counted") { s =>
     val e = s.events
-    e.put(Event.Id("zz_here"), EventPut(EventSummary.Label("Zz here"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190)), geometry = Some(point)))
-    e.put(Event.Id("zz_nowhere"), EventPut(EventSummary.Label("Zz nowhere"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190))))
-    e.put(Event.Id("zz_vague"), EventPut(EventSummary.Label("Zz vague"), EventSummary.Kind("battle"), span(Year(-5000), Year(-1000)), geometry = Some(point)))
+    e.put(
+      Event.Id("zz_here"),
+      EventPut(
+        EventSummary.Label("Zz here"),
+        EventSummary.Kind("battle"),
+        span(Year(-1200), Year(-1190)),
+        geometry = Some(point)
+      )
+    )
+    e.put(
+      Event.Id("zz_nowhere"),
+      EventPut(EventSummary.Label("Zz nowhere"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190)))
+    )
+    e.put(
+      Event.Id("zz_vague"),
+      EventPut(
+        EventSummary.Label("Zz vague"),
+        EventSummary.Kind("battle"),
+        span(Year(-5000), Year(-1000)),
+        geometry = Some(point)
+      )
+    )
     val g = e.geo(EventSelection(Filter()), PageSize(100), GeoTolerance(0.01))
     assertEquals(g.events.map(x => (x.id, x.lat, x.lon, x.anchor)), List(("zz_here", 37.7, 23.5, "event")))
     assertEquals((g.unplaced, g.imprecise), (1, 1))
-    assertEquals(e.geoOf(List(Event.Id("zz_here"), Event.Id("zz_nowhere"), Event.Id("zz_vague"))).keySet, Set("zz_here"))
+    assertEquals(
+      e.geoOf(List(Event.Id("zz_here"), Event.Id("zz_nowhere"), Event.Id("zz_vague"))).keySet,
+      Set("zz_here")
+    )
   }
 
   stest("a patch changes what it names; a missing event is refused") { s =>
     val e = s.events
-    e.put(Event.Id("zz_p"), EventPut(EventSummary.Label("Zz patched"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190)), description = Some(EventSummary.Description("before"))))
-    assertEquals(e.patch(Event.Id("zz_p"), EventPatch(label = Some(EventSummary.Label("Zz renamed label")), wikidata = Some(EventPatch.Wikidata("Q123")))), Right(()))
+    e.put(
+      Event.Id("zz_p"),
+      EventPut(
+        EventSummary.Label("Zz patched"),
+        EventSummary.Kind("battle"),
+        span(Year(-1200), Year(-1190)),
+        description = Some(EventSummary.Description("before"))
+      )
+    )
+    assertEquals(
+      e.patch(
+        Event.Id("zz_p"),
+        EventPatch(label = Some(EventSummary.Label("Zz renamed label")), wikidata = Some(EventPatch.Wikidata("Q123")))
+      ),
+      Right(())
+    )
     val d = e.get(Event.Id("zz_p")).get
     assertEquals((d.event.label, d.event.description, d.wikidata), ("Zz renamed label", Some("before"), Some("Q123")))
-    assertEquals(e.patch(Event.Id("zz_p"), EventPatch(wikidata = Some(EventPatch.Wikidata("")), geometry = Some(point))), Right(()))
+    assertEquals(
+      e.patch(Event.Id("zz_p"), EventPatch(wikidata = Some(EventPatch.Wikidata("")), geometry = Some(point))),
+      Right(())
+    )
     assertEquals(e.get(Event.Id("zz_p")).map(x => (x.wikidata, x.geometry.isDefined)), Some((None, true)))
     assertEquals(e.patch(Event.Id("zz_p"), EventPatch(geometry = Some(EventPatch.Geometry("")))), Right(()))
     assertEquals(e.get(Event.Id("zz_p")).flatMap(_.geometry), None, "\"\" clears the geometry")
@@ -125,16 +221,34 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
 
   stest("a rename leaves an alias; refused onto a taken or aliased id; renaming back drops the alias") { s =>
     val e = s.events
-    e.put(Event.Id("zz_old"), EventPut(EventSummary.Label("Zz event"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190))))
-    e.put(Event.Id("zz_other"), EventPut(EventSummary.Label("Zz other"), EventSummary.Kind("battle"), span(Year(-1100), Year(-1090))))
-    e.put(Event.Id("zz_child"), EventPut(EventSummary.Label("Zz child"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1195)), parentId = Some(com.histmersion.api.catalogue.Event.Id("zz_old"))))
+    e.put(
+      Event.Id("zz_old"),
+      EventPut(EventSummary.Label("Zz event"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190)))
+    )
+    e.put(
+      Event.Id("zz_other"),
+      EventPut(EventSummary.Label("Zz other"), EventSummary.Kind("battle"), span(Year(-1100), Year(-1090)))
+    )
+    e.put(
+      Event.Id("zz_child"),
+      EventPut(
+        EventSummary.Label("Zz child"),
+        EventSummary.Kind("battle"),
+        span(Year(-1200), Year(-1195)),
+        parentId = Some(com.histmersion.api.catalogue.Event.Id("zz_old"))
+      )
+    )
     assertEquals(e.rename(Event.Id("zz_old"), Event.Id("zz_new")), Right(()))
     assertEquals(e.renamedTo(Event.Id("zz_old")), Some("zz_new"))
     assertEquals(e.renamedTo(Event.Id("zz_new")), None, "a live id")
     assertEquals(e.get(Event.Id("zz_child")).flatMap(_.event.parentId), Some("zz_new"), "its parts follow")
     def refused(r: Either[Api.Error, Unit]) = r.left.map(_.code)
     assertEquals(refused(e.rename(Event.Id("zz_other"), Event.Id("zz_new"))), Left(Some(Write.CodeInvalid)), "taken")
-    assertEquals(refused(e.rename(Event.Id("zz_other"), Event.Id("zz_old"))), Left(Some(Write.CodeInvalid)), "an old id of another")
+    assertEquals(
+      refused(e.rename(Event.Id("zz_other"), Event.Id("zz_old"))),
+      Left(Some(Write.CodeInvalid)),
+      "an old id of another"
+    )
     assertEquals(refused(e.rename(Event.Id("zz_none"), Event.Id("zz_x"))), Left(Some(Write.CodeNotFound)))
     assertEquals(e.rename(Event.Id("zz_new"), Event.Id("zz_old")), Right(()))
     assertEquals((e.renamedTo(Event.Id("zz_old")), e.renamedTo(Event.Id("zz_new"))), (None, Some("zz_old")))
@@ -144,7 +258,10 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
     val e = s.events
     assertEquals(e.geometryError(EventDetailRow.Geometry(point.value)), None)
     assert(e.geometryError(EventDetailRow.Geometry("""{"type":"Point"}""")).isDefined)
-    e.put(Event.Id("zz_gone"), EventPut(EventSummary.Label("Zz gone"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190))))
+    e.put(
+      Event.Id("zz_gone"),
+      EventPut(EventSummary.Label("Zz gone"), EventSummary.Kind("battle"), span(Year(-1200), Year(-1190)))
+    )
     assert(e.delete(Event.Id("zz_gone")))
     assert(!e.delete(Event.Id("zz_gone")))
     assertEquals(e.get(Event.Id("zz_gone")), None)

@@ -6,7 +6,6 @@ import com.histmersion.api.given
 
 object ManagersMarkdown:
 
-
   import Managers.*
 
   private def counts(c: ItemCounts): String =
@@ -35,19 +34,27 @@ object ManagersMarkdown:
     if n >= 1000000 then (s"${one(((n) / 1e6))}M") else if n >= 1000 then (s"${one(((n) / 1e3))}k") else (n.toString)
 
   def backlog(n: ManagerInfo.Backlog, days: Option[ManagerInfo.BacklogDays]): String =
-    s"${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n.value == 0 then ""
-                                                                             else
-                                                                               days.map(_.value) match
-                                                                                 case Some(0) =>
-                                                                                   " (drained today at the current allowance)"
-                                                                                 case Some(d) =>
-                                                                                   s" (~${Plural.count(Plural.CountN(d.toLong), Plural.CountSingular("more day"))} at the current allowance)"
-                                                                                 case None =>
-                                                                                   " (not draining: auto-ingest off, a cap of 0, or the watcher not active)")
+    s"${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n.value == 0
+                                                                                                                               then
+                                                                                                                                 ""
+                                                                                                                               else
+                                                                                                                                 days.map(
+                                                                                                                                   _.value
+                                                                                                                                 ) match
+                                                                                                                                   case Some(
+                                                                                                                                         0
+                                                                                                                                       ) =>
+                                                                                                                                     " (drained today at the current allowance)"
+                                                                                                                                   case Some(
+                                                                                                                                         d
+                                                                                                                                       ) =>
+                                                                                                                                     s" (~${Plural.count(Plural.CountN(d.toLong), Plural.CountSingular("more day"))} at the current allowance)"
+                                                                                                                                   case None =>
+                                                                                                                                     " (not draining: auto-ingest off, a cap of 0, or the watcher not active)")
 
   def line(m: ManagerInfo): String =
     val goal = m.goal.fold("")(g => s" · goal $g")
-    val runs = if ((m.pauseRuns) == ManagerInfo.PauseRuns(true)) then " (its runs paused too)" else ""
+    val runs = if (m.pauseRuns) == ManagerInfo.PauseRuns(true) then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
       (if (m.backlog).value > 0 then s" · ${backlog(m.backlog, m.backlogDays)}" else "") +
       m.statusNote.filter(_.value.nonEmpty).fold("")(n => s" · $n") +
@@ -58,12 +65,16 @@ object ManagersMarkdown:
 
   def item(i: ManagerItem): String =
     val run = i.run.fold(i.runId.fold("")(r => s" · run ${r.value.take(8)}"))(r =>
-      s" · run ${r.id.value.take(8)} ${r.status}" + r.progress.filter(_.value.nonEmpty).fold("")(p => s" (${p.value.take(80)})")
+      s" · run ${r.id.value.take(8)} ${r.status}" + r.progress
+        .filter(_.value.nonEmpty)
+        .fold("")(p => s" (${p.value.take(80)})")
     )
     val hold = i.hold.fold("")(h =>
       s" · held${h.until.fold("")(u => s" until $u")}${h.untilSource.fold("")(s => s" until $s exists")}" +
         h.untilApproval
-          .fold("")(a => s" until approval #$a is decided") + Option(h.reason).filter(_.value.nonEmpty).fold("")(r => s": $r")
+          .fold("")(a => s" until approval #$a is decided") + Option(h.reason)
+          .filter(_.value.nonEmpty)
+          .fold("")(r => s": $r")
     )
     val nb = i.notBefore.fold("")(t => s" · not before $t")
     val kind = if i.kind == ManagerItem.Kind(ArticleReview) then "" else s" (${i.kind})"
@@ -76,7 +87,8 @@ object ManagersMarkdown:
     else
       (s"Items ${(p.offset).value + 1}–${(p.offset).value + p.items.size} of ${p.total}\n\n" + p.items
         .map(i => s"- ${item(i)}")
-        .mkString("\n"))
+        .mkString("\n")
+    )
 
   def event(e: ManagerEvent): String =
     s"${e.at} · ${e.kind}${e.itemId.fold("")(i => s" · item #$i")}${e.runId.fold("")(r => s" · run ${r.value.take(8)}")} · ${e.text}"
@@ -127,7 +139,7 @@ object ManagersMarkdown:
     val proposed = h.proposal.fold("")(a =>
       s" · proposed: ${h.proposed.fold("an action")(effect)} (approval #$a waits for a person)"
     )
-    (s"#${h.id} (${if ((h.standing) == ManagerHint.Standing(true)) then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
+    (s"#${h.id} (${if (h.standing) == ManagerHint.Standing(true) then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if (h.uses).value > 0 then s" · reached ${h.uses} run(s)" else ""))
 
   def enqueued(r: EnqueueResult): String =
@@ -149,16 +161,22 @@ object ManagersMarkdown:
       cfg.models.filter(_.nonEmpty).map(ms => s"models ${ms.map(_.text).mkString("; ")}"),
       cfg.budgetUsd.map(u => s"budget $u USD/run"),
       cfg.staleAfterDays.filter((_).value > 0).map(n => s"stale after $n days"),
-      cfg.inferFilter.map(b => s"infer-filter ${if ((b) == ManagerConfig.InferFilter(true)) then "on" else "off"}"),
+      cfg.inferFilter.map(b => s"infer-filter ${if (b) == ManagerConfig.InferFilter(true) then "on" else "off"}"),
       cfg.minSources.map(n => s"min-sources $n"),
       cfg.maxArticles.map(n => s"max-articles $n"),
       cfg.sweeps.map(ws => s"sweeps ${if ws.isEmpty then "none" else ws.mkString(", ")}"),
       cfg.autoIngest.map(b =>
-        if ((b) == ManagerConfig.AutoIngest(true)) then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
+        if (b) == ManagerConfig.AutoIngest(true) then
+          s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
         else "auto-ingest off"
       ),
-      cfg.dailyUsd.filter((_).value > 0).map(u => s"daily cap ${usd(u.value)} USD (metered spend; plan-billed runs count 0 USD)"),
-      cfg.autoApprove.map(b => if ((b) == ManagerConfig.AutoApprove(true)) then "its approvals decided by code checks" else "its approvals always a person's"),
+      cfg.dailyUsd
+        .filter((_).value > 0)
+        .map(u => s"daily cap ${usd(u.value)} USD (metered spend; plan-billed runs count 0 USD)"),
+      cfg.autoApprove.map(b =>
+        if (b) == ManagerConfig.AutoApprove(true) then "its approvals decided by code checks"
+        else "its approvals always a person's"
+      ),
       cfg.extendMinNew.filter((_).value > 0).map(n => s"extend at $n new sources")
     ).flatten.mkString(" · ")
     val cron = m.cron.fold("")(c => s"\n- cron `$c` (UTC)" + m.nextTickAt.fold("")(t => s", next $t"))

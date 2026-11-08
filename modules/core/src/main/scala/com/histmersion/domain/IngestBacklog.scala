@@ -38,7 +38,6 @@ object IngestBacklog:
     * acquisition list at once; any other failure is tried again later.
     */
 
-
   val NoLegalCopy = "no legal open-access copy of"
 
   def isNoLegalCopy(message: Problem): Boolean =
@@ -50,7 +49,12 @@ object IngestBacklog:
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
     * the watcher's own pending items (`ownBacklog`) and every drainable watcher's (`allBacklog`). Never negative.
     */
-  def sweepAllowance(own: OwnAllowance, shared: Option[SharedAllowance], ownBacklog: Lane.Backlog, allBacklog: TotalBacklog): SweepAllowance =
+  def sweepAllowance(
+      own: OwnAllowance,
+      shared: Option[SharedAllowance],
+      ownBacklog: Lane.Backlog,
+      allBacklog: TotalBacklog
+  ): SweepAllowance =
     val mine = own.value - math.max(0, ownBacklog.value)
     val all = shared.fold(Int.MaxValue)(_.value - math.max(0, allBacklog.value))
     SweepAllowance(math.max(0, math.min(mine, all)))
@@ -71,9 +75,20 @@ object IngestBacklog:
     * paused, auto-ingest off — drains nothing) and of the shared one (None = no shared cap); at most `max` (one tick's
     * share: an ingest fetches a file, so a tick takes only a few).
     */
-  def drain(entries: List[Entry], ownLeft: Map[Entry.ManagerId, Lane.LeftToday], shared: Option[SharedAllowance], now: Instant, max: DrainLimit): List[Entry] =
+  def drain(
+      entries: List[Entry],
+      ownLeft: Map[Entry.ManagerId, Lane.LeftToday],
+      shared: Option[SharedAllowance],
+      now: Instant,
+      max: DrainLimit
+  ): List[Entry] =
     val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority.value, e.id.value: Long))
-    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[Entry.ManagerId, Int], sh: Option[Int]): List[Entry] =
+    @tailrec def take(
+        rest: List[Entry],
+        acc: Vector[Entry],
+        left: Map[Entry.ManagerId, Int],
+        sh: Option[Int]
+    ): List[Entry] =
       rest match
         case Nil       => acc.toList
         case e :: tail =>
@@ -246,11 +261,13 @@ object IngestBacklog:
       object Why extends Newtype[String, Pure]
 
   def repairAction(f: RepairFacts): RepairAction =
-    if !f.isOa.value then RepairAction.Keep(RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
+    if !f.isOa.value then
+      RepairAction.Keep(RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
     else
       f.inCorpus match
-        case Some(ck)                     => RepairAction.Remove(ck)
-        case None if !f.watcherExists.value => RepairAction.Keep(RepairAction.Keep.Why(s"its watcher ${f.watcher} no longer exists"))
+        case Some(ck)                       => RepairAction.Remove(ck)
+        case None if !f.watcherExists.value =>
+          RepairAction.Keep(RepairAction.Keep.Why(s"its watcher ${f.watcher} no longer exists"))
         case None if !f.watcherAutoIngest.value =>
           RepairAction.Keep(RepairAction.Keep.Why(s"its watcher ${f.watcher} does not auto-ingest"))
-        case None                               => RepairAction.Move
+        case None => RepairAction.Move

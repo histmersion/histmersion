@@ -9,7 +9,9 @@ import com.histmersion.api.library.Citekey
 class NoteMarkdownSuite extends munit.FunSuite:
 
   test("blocks: a heading, a paragraph over two lines, a list, a quote, code"):
-    val text = NoteMarkdown.Markdown("# Bridge\nIt stands\nnear **Tiryns**.\n\n- one\n- two\n\n> a quote\n\n```\nx = 1\n```\n1. first")
+    val text = NoteMarkdown.Markdown(
+      "# Bridge\nIt stands\nnear **Tiryns**.\n\n- one\n- two\n\n> a quote\n\n```\nx = 1\n```\n1. first"
+    )
     assertEquals(
       NoteMarkdown.blocks(text),
       List(
@@ -24,7 +26,9 @@ class NoteMarkdownSuite extends munit.FunSuite:
 
   test("inlines: emphasis, code, a citekey, links — only links a person can follow safely"):
     assertEquals(
-      NoteMarkdown.inlines(NoteMarkdown.Markdown("*a* _b_ `c` [[cline2014_year]] [w](https://example.org) [x](javascript:alert(1))")),
+      NoteMarkdown.inlines(
+        NoteMarkdown.Markdown("*a* _b_ `c` [[cline2014_year]] [w](https://example.org) [x](javascript:alert(1))")
+      ),
       List(
         Inline.Em("a"),
         Inline.Text(" "),

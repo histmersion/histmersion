@@ -20,7 +20,8 @@ final case class MergeInfo(
     ledgerRows: MergeInfo.LedgerRows = MergeInfo.LedgerRows(0),
     redirects: MergeInfo.Redirects = MergeInfo.Redirects(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MergeInfo:
   type BundleSha256 = BundleSha256.T

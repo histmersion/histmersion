@@ -26,7 +26,11 @@ object Wcag:
     val h = (s).value.trim.stripPrefix("#")
     val full = if h.length == 3 then h.flatMap(c => s"$c$c") else h
     Option.when(full.length == 6 && full.forall(c => Character.digit(c, 16) >= 0))(
-      (Channel(Integer.parseInt(full.take(2), 16)), Channel(Integer.parseInt(full.slice(2, 4), 16)), Channel(Integer.parseInt(full.drop(4), 16)))
+      (
+        Channel(Integer.parseInt(full.take(2), 16)),
+        Channel(Integer.parseInt(full.slice(2, 4), 16)),
+        Channel(Integer.parseInt(full.drop(4), 16))
+      )
     )
 
   def contrast(a: (Channel, Channel, Channel), b: (Channel, Channel, Channel)): Ratio =

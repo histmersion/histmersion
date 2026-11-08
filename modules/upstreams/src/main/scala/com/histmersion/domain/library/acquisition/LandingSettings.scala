@@ -23,7 +23,9 @@ final case class LandingSettings(
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(
       LandingSettings.entries(allowHosts.value).map(RepositoryLanding.HostPattern(_)),
-      (LandingSettings.entries(denyHosts.value).map(RepositoryLanding.HostPattern(_)) ++ LandingSettings.entries(denyHostsExtra.value).map(RepositoryLanding.HostPattern(_))).distinct,
+      (LandingSettings.entries(denyHosts.value).map(RepositoryLanding.HostPattern(_)) ++ LandingSettings
+        .entries(denyHostsExtra.value)
+        .map(RepositoryLanding.HostPattern(_))).distinct,
       LandingSettings.entries(academicHostWords.value).map(RepositoryLanding.HostWord(_)),
       LandingSettings.entries(generators.value).map(RepositoryLanding.Rules.Generators(_)),
       LandingSettings.entries(denyGenerators.value).map(RepositoryLanding.Rules.DenyGenerators(_)),

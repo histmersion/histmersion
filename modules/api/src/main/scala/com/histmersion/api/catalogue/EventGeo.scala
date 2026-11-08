@@ -27,12 +27,11 @@ final case class EventGeo(
     precision: EventGeo.Precision = EventGeo.Precision(EventPrecision.Precise),
     dating: Option[EventGeo.Dating] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object EventGeo:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
-
-
 
   type Label = Label.T
   object Label extends Newtype[String, Pure]
@@ -68,9 +67,13 @@ object EventGeo:
     else if hasEnd && !hasStart then Some(Problem("start not recorded"))
     else None
 
-  final case class List(events: scala.List[EventGeo], unplaced: List.Unplaced = List.Unplaced(0), imprecise: List.Imprecise = List.Imprecise(0))
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class List(
+      events: scala.List[EventGeo],
+      unplaced: List.Unplaced = List.Unplaced(0),
+      imprecise: List.Imprecise = List.Imprecise(0)
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object List:
     type Unplaced = Unplaced.T

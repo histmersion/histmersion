@@ -31,21 +31,57 @@ class MergeFoldSuite extends munit.FunSuite:
 
   private val At = "2026-10-01T09:00:00.000000Z"
   test("goals, queue items and events folded"):
-    val gl = MergeFixture.goal("g1", "zz_g", "Goal", home, Some("home's plan")).copy(status = Bundle.Goal.Status(Goal.Status.Seeding))
-    val gr = MergeFixture.goal("g2", "zz_g", "Goal", work, Some("work's plan")).copy(status = Bundle.Goal.Status(Goal.Status.Compiled))
+    val gl = MergeFixture
+      .goal("g1", "zz_g", "Goal", home, Some("home's plan"))
+      .copy(status = Bundle.Goal.Status(Goal.Status.Seeding))
+    val gr = MergeFixture
+      .goal("g2", "zz_g", "Goal", work, Some("work's plan"))
+      .copy(status = Bundle.Goal.Status(Goal.Status.Compiled))
     val g = MergeFold.foldGoal(gl, gr, MergePlanner.Row.Label("work"))
     assertEquals(g.status, Goal.Status.Compiled)
     assertEquals(g.notes, Some("home's plan\n\n### From work\n\nwork's plan"))
     assertEquals(MergeFold.foldGoal(gl, gl.modify(_.uid).setTo(gr.uid), MergePlanner.Row.Label("work")).notes, gl.notes)
-    val q = Bundle.QueueItem(uid("q1"), home, Bundle.QueueItem.List("tasks"), Bundle.QueueItem.Text("Find the Kuhrt reprint"), None, Bundle.QueueItem.Status(Queue.Open), None, Bundle.QueueItem.CreatedAt(At), None, Bundle.QueueItem.UpdatedAt(At))
-    val qd = q.modify(_.uid).setTo(uid("q2")).modify(_.text).setTo(Bundle.QueueItem.Text("find the  kuhrt reprint")).modify(_.status).setTo(Bundle.QueueItem.Status(Queue.Done)).modify(_.doneAt).setTo(Some(Bundle.QueueItem.DoneAt(At)))
+    val q = Bundle.QueueItem(
+      uid("q1"),
+      home,
+      Bundle.QueueItem.List("tasks"),
+      Bundle.QueueItem.Text("Find the Kuhrt reprint"),
+      None,
+      Bundle.QueueItem.Status(Queue.Open),
+      None,
+      Bundle.QueueItem.CreatedAt(At),
+      None,
+      Bundle.QueueItem.UpdatedAt(At)
+    )
+    val qd = q
+      .modify(_.uid)
+      .setTo(uid("q2"))
+      .modify(_.text)
+      .setTo(Bundle.QueueItem.Text("find the  kuhrt reprint"))
+      .modify(_.status)
+      .setTo(Bundle.QueueItem.Status(Queue.Done))
+      .modify(_.doneAt)
+      .setTo(Some(Bundle.QueueItem.DoneAt(At)))
     assertEquals(MergeFold.queueKey(q.text), MergeFold.queueKey(qd.text))
     assertEquals(MergeFold.foldQueue(q, qd).status, Queue.Done)
     assertEquals(MergeFold.foldQueue(q, qd).doneAt, Some(At))
     val e1 = MergeFixture.event("e1", "zz_e", "Here", home)
     val e2 = MergeFixture
       .event("e2", "zz_e", "There", work)
-      .copy(datings = List(Bundle.EventDating(Citekey("a2000_x"), None, Some(Bundle.EventDating.NotBefore(-1200)), None, None, Some(Bundle.EventDating.NotAfter(-1190)), None, None)))
+      .copy(datings =
+        List(
+          Bundle.EventDating(
+            Citekey("a2000_x"),
+            None,
+            Some(Bundle.EventDating.NotBefore(-1200)),
+            None,
+            None,
+            Some(Bundle.EventDating.NotAfter(-1190)),
+            None,
+            None
+          )
+        )
+      )
     assert(EventPlan.sameCore(e1, e2))
     assert(!EventPlan.sameCore(e1, e2.modify(_.notAfter).setTo(Some(Bundle.Event.NotAfter(-1100)))))
     val e = EventPlan.foldEvent(e1, e2)
@@ -65,7 +101,12 @@ class MergeFoldSuite extends munit.FunSuite:
       ArticleOutcome.Merged(ArticleOutcome.Merged.Body("Intro (home).\n\nMiddle.\n\nEnd (work)."), sha(base))
     )
     assertEquals(
-      MergeFold.articleOutcome(ours, List(sha(base) -> base), MergeFold.ArticleBody("Intro (work).\n\nMiddle.\n\nEnd."), Set(sha(base))),
+      MergeFold.articleOutcome(
+        ours,
+        List(sha(base) -> base),
+        MergeFold.ArticleBody("Intro (work).\n\nMiddle.\n\nEnd."),
+        Set(sha(base))
+      ),
       ArticleOutcome.Conflict(ArticleOutcome.Conflict.Conflicts(1), sha(base))
     )
     assertEquals(MergeFold.articleOutcome(ours, List(sha(base) -> base), theirs, Set.empty), ArticleOutcome.NoBase)

@@ -29,11 +29,24 @@ object KeysSection:
   object ReferenceEntry extends Newtype[String, Pure]
 
   enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint) derives CanEqual:
-    case Env extends Form(Form.Scheme("env"), Form.Label("Environment variable"), Form.Hint("its name, e.g. HISTMERSION_CORE_KEY"))
-    case Keepassxc extends Form(Form.Scheme("keepassxc"), Form.Label("KeePassXC entry"), Form.Hint("Group/Entry#attribute"))
-    case OnePass extends Form(Form.Scheme("1password"), Form.Label("1Password item"), Form.Hint("op://Vault/Item/field"))
-    case Bitwarden extends Form(Form.Scheme("bitwarden"), Form.Label("Bitwarden item"), Form.Hint("the item's name or id[#field]"))
-    case Value extends Form(Form.Scheme("value"), Form.Label("The value itself, in the settings file"), Form.Hint("the key or password"))
+    case Env
+        extends Form(
+          Form.Scheme("env"),
+          Form.Label("Environment variable"),
+          Form.Hint("its name, e.g. HISTMERSION_CORE_KEY")
+        )
+    case Keepassxc
+        extends Form(Form.Scheme("keepassxc"), Form.Label("KeePassXC entry"), Form.Hint("Group/Entry#attribute"))
+    case OnePass
+        extends Form(Form.Scheme("1password"), Form.Label("1Password item"), Form.Hint("op://Vault/Item/field"))
+    case Bitwarden
+        extends Form(Form.Scheme("bitwarden"), Form.Label("Bitwarden item"), Form.Hint("the item's name or id[#field]"))
+    case Value
+        extends Form(
+          Form.Scheme("value"),
+          Form.Label("The value itself, in the settings file"),
+          Form.Hint("the key or password")
+        )
 
   object Form:
     type Scheme = Scheme.T
@@ -42,7 +55,6 @@ object KeysSection:
     object Label extends Newtype[String, Pure]
     type Hint = Hint.T
     object Hint extends Newtype[String, Pure]
-
 
     def of(scheme: Scheme): Form = values.find(_.scheme == scheme).getOrElse(Env)
 
@@ -137,7 +149,10 @@ object KeysSection:
                     "file: set the environment variable named for each where the server is started."
                 )
               ),
-              div(cls := "settings-card-body", creds.filter(_.credential.exists(_.rule.value == "environment")).map(envRow))
+              div(
+                cls := "settings-card-body",
+                creds.filter(_.credential.exists(_.rule.value == "environment")).map(envRow)
+              )
             )
           )
       },
@@ -168,7 +183,10 @@ object KeysSection:
         case Right(r)  =>
           problem.set(None)
           SettingsStore
-            .save(List(ConfigEdit.Change(ConfigEdit.Change.Key(f.key.value), Some(ConfigEdit.Change.Value(r.value)))), literalConsent = SettingsStore.SaveLiteralConsent(consent.now()))
+            .save(
+              List(ConfigEdit.Change(ConfigEdit.Change.Key(f.key.value), Some(ConfigEdit.Change.Value(r.value)))),
+              literalConsent = SettingsStore.SaveLiteralConsent(consent.now())
+            )
             .foreach(_ => entry.set(""))
     val id = "key-" + f.key.value.replaceAll("[^A-Za-z0-9_-]", "-")
     div(
@@ -181,7 +199,9 @@ object KeysSection:
       ),
       p(
         cls := "key-state",
-        f.credential.map(c => state(c).value + c.shown.filter(_ => c.form.value != "value").fold("")(s => s" ($s)")).getOrElse("")
+        f.credential
+          .map(c => state(c).value + c.shown.filter(_ => c.form.value != "value").fold("")(s => s" ($s)"))
+          .getOrElse("")
       ),
       div(
         cls := "key-edit toolbar",
@@ -190,7 +210,10 @@ object KeysSection:
           idAttr := s"$id-form",
           cls := "field key-form",
           Form.values.toList.map(x => option(value := x.scheme.value, x.label.value)),
-          controlled(value <-- form.signal.map(_.scheme.value), onChange.mapToValue --> (v => form.set(Form.of(Form.Scheme(v)))))
+          controlled(
+            value <-- form.signal.map(_.scheme.value),
+            onChange.mapToValue --> (v => form.set(Form.of(Form.Scheme(v))))
+          )
         ),
         label(forId := s"$id-entry", cls := "sr-only", "The reference"),
         input(

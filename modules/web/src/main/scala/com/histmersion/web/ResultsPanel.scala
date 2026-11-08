@@ -24,10 +24,12 @@ object ResultsPanel:
 
   /** The width, px: the one this browser kept, else the default. */
 
+  val width: Var[ResultsWidth.Width] = Var(
+    ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value)), viewport)
+  )
 
-  val width: Var[ResultsWidth.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value)), viewport))
-
-  private def viewport: ResultsWidth.ViewportWidth = ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
+  private def viewport: ResultsWidth.ViewportWidth =
+    ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
 
   private def resizeTo(w: ResultsWidth.Width, keep: KeepWidth): Unit =
     width.set(ResultsWidth.clamp(w, viewport))
@@ -53,7 +55,8 @@ object ResultsPanel:
   private val sorts = List("relevance", "cited", "period", "year", "title")
 
   /** Pure: a tab's label with its count, when known. */
-  def tabLabel(label: UiLabels.Text, count: Option[RowCount]): UiLabels.Text = count.fold(label)(n => UiLabels.Text(s"$label $n"))
+  def tabLabel(label: UiLabels.Text, count: Option[RowCount]): UiLabels.Text =
+    count.fold(label)(n => UiLabels.Text(s"$label $n"))
 
   private def counts(t: SidebarTab): Signal[Option[RowCount]] = t match
     case SidebarTab.Sources  => ResultsList.total.signal
@@ -117,14 +120,23 @@ object ResultsPanel:
         aria.orientation := "vertical",
         aria.label := "Width of the results (← wider, → narrower)",
         aria.valueMin := ResultsWidth.min.value.toDouble,
-        aria.valueMax <-- width.signal.map(_ => ResultsWidth.max(ResultsWidth.ViewportWidth(dom.window.innerWidth)).value.toDouble),
+        aria.valueMax <-- width.signal.map(_ =>
+          ResultsWidth.max(ResultsWidth.ViewportWidth(dom.window.innerWidth)).value.toDouble
+        ),
         aria.valueNow <-- width.signal.map(_.value.toDouble),
         title := "Drag, or use ← and →, to change the width of the results",
         onKeyDown --> { ev =>
-          ResultsWidth.step(width.now(), ResultsWidth.KeyName(ev.key), ResultsWidth.ShiftHeld(ev.shiftKey), ResultsWidth.StepViewport(dom.window.innerWidth)).foreach { w =>
-            ev.preventDefault()
-            resizeTo(w, keep = KeepWidth(true))
-          }
+          ResultsWidth
+            .step(
+              width.now(),
+              ResultsWidth.KeyName(ev.key),
+              ResultsWidth.ShiftHeld(ev.shiftKey),
+              ResultsWidth.StepViewport(dom.window.innerWidth)
+            )
+            .foreach { w =>
+              ev.preventDefault()
+              resizeTo(w, keep = KeepWidth(true))
+            }
         },
         onPointerDown --> { ev =>
           ev.preventDefault()
@@ -171,7 +183,10 @@ object ResultsPanel:
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Sources), ResultsList.element),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Articles), ArticlesTab.pane),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Events), EventsTab.pane),
-        div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Places), MapLists.pane(MapLists.places, MapLists.PaneName("places"))),
+        div(
+          cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Places),
+          MapLists.pane(MapLists.places, MapLists.PaneName("places"))
+        ),
         div(
           cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Pictures),
           MapLists.pane(MapLists.pictures, MapLists.PaneName("pictures"))
@@ -231,7 +246,12 @@ object ResultsPanel:
       onPointerUp --> { ev =>
         sheetOf(ev).foreach(_.classList.remove("sheet-dragging"))
         val next =
-          if dragged then Sheet.nearest(Sheet.Fraction((h - ev.clientY) / h), Sheet.Fraction(px("--sheet-peek") / h), Sheet.Fraction(1 - px("--sheet-full-gap") / h))
+          if dragged then
+            Sheet.nearest(
+              Sheet.Fraction((h - ev.clientY) / h),
+              Sheet.Fraction(px("--sheet-peek") / h),
+              Sheet.Fraction(1 - px("--sheet-full-gap") / h)
+            )
           else Sheet.next(UiState.sheet.now())
         UiState.set(UiState.sheet := next)()
       }

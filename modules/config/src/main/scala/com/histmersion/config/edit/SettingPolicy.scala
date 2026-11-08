@@ -18,7 +18,11 @@ object SettingPolicy:
   type CheckLiteralConsent = LiteralConsent
   val CheckLiteralConsent: LiteralConsent.type = LiteralConsent
 
-  def all(edits: List[SettingEdit], schema: ConfigSchema, literalConsent: LiteralConsent): Either[SettingError, List[Note]] =
+  def all(
+      edits: List[SettingEdit],
+      schema: ConfigSchema,
+      literalConsent: LiteralConsent
+  ): Either[SettingError, List[Note]] =
     @scala.annotation.tailrec
     def loop(rest: List[SettingEdit], notes: List[Note]): Either[SettingError, List[Note]] = rest match
       case Nil       => Right(notes)
@@ -28,7 +32,11 @@ object SettingPolicy:
           case Right(ns) => loop(tail, notes ++ ns)
     loop(edits, Nil)
 
-  def check(edit: SettingEdit, schema: ConfigSchema, literalConsent: CheckLiteralConsent): Either[SettingError, List[Note]] =
+  def check(
+      edit: SettingEdit,
+      schema: ConfigSchema,
+      literalConsent: CheckLiteralConsent
+  ): Either[SettingError, List[Note]] =
     val key = edit.key
     for
       field <- schema
@@ -41,7 +49,11 @@ object SettingPolicy:
         case SettingEdit.Set(_, v) => value(field, v, literalConsent)
     yield notes
 
-  private def value(field: SettingField, v: SettingValue, literalConsent: LiteralConsent): Either[SettingError, List[Note]] =
+  private def value(
+      field: SettingField,
+      v: SettingValue,
+      literalConsent: LiteralConsent
+  ): Either[SettingError, List[Note]] =
     val key = field.key
     val kindOk = field.kind == SettingKind.Any || field.kind == v.kind
     if !kindOk then Left(SettingError.WrongKind(key, field.kind, v.kind))
@@ -52,14 +64,20 @@ object SettingPolicy:
         case SecretRule.Reference       =>
           v match
             case SettingValue.Text(t) =>
-              SecretForm.reference(t.value).left.map(why => SettingError.NotAReference(key, SettingError.NotAReference.Why(why))).flatMap {
-                case SecretForm.Literal if !literalConsent.value => Left(SettingError.LiteralNeedsConsent(key))
-                case SecretForm.Literal                    =>
-                  Right(
-                    List(
-                      Note(s"${key.relative} holds the key itself (value:): anyone who can read the settings file can read it.")
+              SecretForm
+                .reference(t.value)
+                .left
+                .map(why => SettingError.NotAReference(key, SettingError.NotAReference.Why(why)))
+                .flatMap {
+                  case SecretForm.Literal if !literalConsent.value => Left(SettingError.LiteralNeedsConsent(key))
+                  case SecretForm.Literal                          =>
+                    Right(
+                      List(
+                        Note(
+                          s"${key.relative} holds the key itself (value:): anyone who can read the settings file can read it."
+                        )
+                      )
                     )
-                  )
-                case _ => Right(Nil)
-              }
+                  case _ => Right(Nil)
+                }
             case other => Left(SettingError.WrongKind(key, SettingKind.Text, other.kind))

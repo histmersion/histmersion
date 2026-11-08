@@ -123,11 +123,14 @@ class GazetteerLoadSuite extends DbSuite:
     val why = GazetteerLoad.extract(bare.stores, x0, noNet, Timeout).left.getOrElse(fail("a missing file"))
     val at = extractsOf(bare).resolve(x0.file.value).toString
     assert(
-      why.value.contains(s"is not at $at") && why.value.contains("no download url") && why.value.contains(FixtureSha.value) &&
+      why.value.contains(s"is not at $at") && why.value.contains("no download url") && why.value.contains(
+        FixtureSha.value
+      ) &&
         why.value.contains("places.sources.dir"),
       s"names the exact path, the checksum and the setting: $why"
     )
-    val net = layout(withFile = false, url = Some(Gazetteer.Extract.Url("https://example.org/geonames-fixture.ndjson.gz")))
+    val net =
+      layout(withFile = false, url = Some(Gazetteer.Extract.Url("https://example.org/geonames-fixture.ndjson.gz")))
     val x1 = GazetteerLoad.manifest(net.stores).toOption.get.extracts.head
     val fetchOk = serving(resourceBytes("geonames-fixture.ndjson.gz"))
     assertEquals(
@@ -150,15 +153,38 @@ class GazetteerLoadSuite extends DbSuite:
   test("the extracts default to the XDG cache directory; the LPF folder stays in the data directory"):
     val cfg = base
       .modify(_.places)
-      .setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("")).modify(_.lpfDir).setTo(PlaceSourcesConfig.LpfDir(""))))
+      .setTo(
+        base.places
+          .modify(_.sources)
+          .setTo(
+            base.places.sources
+              .modify(_.dir)
+              .setTo(PlaceSourcesConfig.Dir(""))
+              .modify(_.lpfDir)
+              .setTo(PlaceSourcesConfig.LpfDir(""))
+          )
+      )
       .modify(_.runtime)
       .setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir("/data")))
-    val p = GazetteerPaths.of(cfg, Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/u"), Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue("/xc"))).lookup, UserPaths.OsName("Linux"))
+    val p = GazetteerPaths.of(
+      cfg,
+      Environment(
+        Map(
+          Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/u"),
+          Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue("/xc")
+        )
+      ).lookup,
+      UserPaths.OsName("Linux")
+    )
     assertEquals(p.extracts, Path.of("/xc/histmersion/gazetteer"))
     assertEquals(p.lpf, Path.of("/data/gazetteer/lpf"))
     assertEquals(p.legacy, Some(Path.of("/data/gazetteer")), "the old default, adopted from")
     val own = GazetteerPaths.of(
-      cfg.modify(_.places).setTo(cfg.places.modify(_.sources).setTo(cfg.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("/mine")))),
+      cfg
+        .modify(_.places)
+        .setTo(
+          cfg.places.modify(_.sources).setTo(cfg.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("/mine")))
+        ),
       Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/u"))).lookup,
       UserPaths.OsName("Linux")
     )
@@ -196,7 +222,10 @@ class GazetteerLoadSuite extends DbSuite:
     assert(m.extracts.forall(x => x.sha256.value.matches("[0-9a-f]{64}") && x.file.value.nonEmpty), m.extracts.toString)
     // not on disk here: the error names the file to put in place, not "not pinned yet"
     assert(
-      GazetteerLoad.extract(p, tgn, noNet, Timeout).left.exists(e => e.value.contains(tgn.file.value) && !e.value.contains("not pinned yet"))
+      GazetteerLoad
+        .extract(p, tgn, noNet, Timeout)
+        .left
+        .exists(e => e.value.contains(tgn.file.value) && !e.value.contains("not pinned yet"))
     )
 
   test("the LPF drop folder lists data files only, never a sidecar"):
@@ -233,7 +262,9 @@ class GazetteerLoadSuite extends DbSuite:
     "LPF then GeoNames: dataset provenance, open-ended dated names, and a GeoNames record joining by a shared Wikidata id"
   ):
     val s = layout()
-    val lpf = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity)
+    val lpf = GazetteerLoad
+      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .fold(e => fail(e.value), identity)
     assertEquals(lpf.map(c => c.source -> c.created), List("lpf:zzgaz_hittite" -> 2L, "lpf:zzgaz_kultepe" -> 1L))
     val rows = PlaceFixtures.gazetteerSources(ds).filter(_.key.value.startsWith("lpf:zzgaz")).map(r => r.key -> r).toMap
     val hit = rows(GazetteerSourceRow.Key("lpf:zzgaz_hittite"))
@@ -242,7 +273,10 @@ class GazetteerLoadSuite extends DbSuite:
     assert(hit.citation.exists(_.value.startsWith("Fixture, A. (2026)")))
     assertEquals((hit.periodStart, hit.periodEnd), (Some(-1650), Some(-1180)), "the records' widest years")
     assertEquals(rows(GazetteerSourceRow.Key("lpf:zzgaz_kultepe")).title, "Zzgaz Kültepe (test fixture)")
-    assertEquals(rows(GazetteerSourceRow.Key("lpf:zzgaz_kultepe")).citation, Some("Fixture, B. (2026). Kültepe LP-TSV."))
+    assertEquals(
+      rows(GazetteerSourceRow.Key("lpf:zzgaz_kultepe")).citation,
+      Some("Fixture, B. (2026). Kültepe LP-TSV.")
+    )
     val hattusa = "lpf_zzgaz_hittite_hattusa"
     val (lo, hi, cite) = connect(ds)(
       sql"""SELECT lower(period), upper(period) - 1, citation FROM place_names
@@ -262,7 +296,10 @@ class GazetteerLoadSuite extends DbSuite:
 
     // GeoNames 999000202 names wd:Q999000101, which the LPF record links: its names go to the LPF place
     val gn =
-      GazetteerLoad.load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity).head
+      GazetteerLoad
+        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+        .fold(e => fail(e.value), identity)
+        .head
     assertEquals((gn.records, gn.created, gn.joined), (2L, 1L, 1L))
     val names = connect(ds)(
       sql"SELECT name FROM place_names WHERE place_id = $hattusa AND import_source = 'geonames' ORDER BY name"
@@ -272,13 +309,22 @@ class GazetteerLoadSuite extends DbSuite:
     )
     assertEquals(names, List("Zzgaz Mikoyan", "Zzgaz Yeghegnadzor"))
     assertEquals(
-      PlaceFixtures.gazetteerSources(ds).find(_.key == GazetteerSourceRow.Key("geonames")).map(r => (r.version, r.sha256.value: String)),
+      PlaceFixtures
+        .gazetteerSources(ds)
+        .find(_.key == GazetteerSourceRow.Key("geonames"))
+        .map(r => (r.version, r.sha256.value: String)),
       Some(("fixture-1", FixtureSha))
     )
 
     // idempotent: the same versions again change nothing
-    val again = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet).toOption.get ++
-      GazetteerLoad.load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply(true), _ => (), noNet).toOption.get
+    val again = GazetteerLoad
+      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .toOption
+      .get ++
+      GazetteerLoad
+        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+        .toOption
+        .get
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
   private val TgnSha = Gazetteer.Extract.Sha256("2c386aa87210da40fc3bcba558ebfd99ff6fa3924c4139f139212095882c4384")
@@ -303,13 +349,18 @@ class GazetteerLoadSuite extends DbSuite:
 
   dbTest("Getty TGN (#1403): joins by a shared tgn id only, keeps open name spans, drops a point-only region"):
     val s = withTgn(layout())
-    val _ = GazetteerLoad.load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity)
+    val _ = GazetteerLoad
+      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .fold(e => fail(e.value), identity)
     val hattusa = "lpf_zzgaz_hittite_hattusa"
     // what the Wikidata extract does for 25 753 items: a tgn: link on a place (here, by hand)
     connect(ds)(sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
                       VALUES ($hattusa, 'tgn', '999000301', 'close_match')""".update.run())
     val c =
-      GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity).head
+      GazetteerLoad
+        .load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+        .fold(e => fail(e.value), identity)
+        .head
     assertEquals((c.source, c.records, c.joined, c.created, c.pointAreasSkipped), ("tgn", 3L, 1L, 1L, 1L), c.describe)
     val span = connect(ds)(
       sql"""SELECT lower(period), upper(period) - 1 FROM place_names
@@ -327,7 +378,8 @@ class GazetteerLoadSuite extends DbSuite:
       0,
       "a TGN region known only by a point is no place"
     )
-    val src = PlaceFixtures.gazetteerSources(ds).find(_.key == GazetteerSourceRow.Key("tgn")).getOrElse(fail("recorded"))
+    val src =
+      PlaceFixtures.gazetteerSources(ds).find(_.key == GazetteerSourceRow.Key("tgn")).getOrElse(fail("recorded"))
     assertEquals((src.kind, src.version, src.licence), ("tgn", "fixture-t", Some("ODC-By 1.0")))
     val desc = connect(ds)(
       sql"SELECT text FROM place_descriptions WHERE place_id = $hattusa AND import_source = 'tgn'"
@@ -336,7 +388,9 @@ class GazetteerLoadSuite extends DbSuite:
         .toList
     )
     assertEquals(desc, List("Capital of the Hittites."))
-    val again = GazetteerLoad.load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply(true), _ => (), noNet).fold(e => fail(e.value), identity)
+    val again = GazetteerLoad
+      .load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .fold(e => fail(e.value), identity)
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
   dbTest("a dry run counts and keeps nothing"):

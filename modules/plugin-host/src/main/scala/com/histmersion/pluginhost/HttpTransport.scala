@@ -10,7 +10,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * any HTTP answer, a 429 included, is a `Right` — the policy decides what it means.
   */
 trait HttpTransport:
-  def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer]
+  def get(
+      url: HttpTransport.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+  ): Either[HttpTransport.Problem, HttpAnswer]
 
 object HttpTransport:
   type Problem = Problem.T

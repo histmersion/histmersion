@@ -23,10 +23,11 @@ final case class SearchHit(
     doi: Option[Doi] = None,
     authors: List[AuthorName] = (Nil).map(AuthorName.apply)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object SearchHit:
-  export Source.{Topics, Regions, Summary}
+  export Source.{Regions, Summary, Topics}
   export Search.Snippet
   type MatchedHeading = MatchedHeading.T
   object MatchedHeading extends Newtype[String, Pure]

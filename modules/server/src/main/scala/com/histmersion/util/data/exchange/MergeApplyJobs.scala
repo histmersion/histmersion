@@ -56,8 +56,15 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
     }.map { (id, done) =>
       try { val _ = done.get(math.max(0, waitSeconds).toLong, TimeUnit.SECONDS) }
       catch case _: TimeoutException => ()
-      status(id).getOrElse(MergeApplyJob(MergeApplyJob.Job(id.value), MergeJobState.Running, Bundle.Name(bundle.value), MergePlan.PlanHash(planHash.value), MergeApplyJob.ElapsedMs(0L)))
+      status(id).getOrElse(
+        MergeApplyJob(
+          MergeApplyJob.Job(id.value),
+          MergeJobState.Running,
+          Bundle.Name(bundle.value),
+          MergePlan.PlanHash(planHash.value),
+          MergeApplyJob.ElapsedMs(0L)
+        )
+      )
     }
 
   def status(id: Job.Id): Option[MergeApplyJob] = runs.status(id)
-

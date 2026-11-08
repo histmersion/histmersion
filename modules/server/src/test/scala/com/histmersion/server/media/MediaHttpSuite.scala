@@ -54,7 +54,11 @@ class MediaHttpSuite extends DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.media)
+      .setTo(base.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
   private lazy val ds =
     val d = testPool(cfg.db)
     Migrate.run(d)
@@ -123,7 +127,12 @@ class MediaHttpSuite extends DbSuite:
       EventFixtures.put(
         ds,
         EventId,
-        EventPut(EventSummary.Label("Zqmh battle"), EventSummary.Kind("battle"), TimeSpan(Some(Year(-1200)), None, None, Some(Year(-1190))), placeId = Some(PlaceId))
+        EventPut(
+          EventSummary.Label("Zqmh battle"),
+          EventSummary.Kind("battle"),
+          TimeSpan(Some(Year(-1200)), None, None, Some(Year(-1190))),
+          placeId = Some(PlaceId)
+        )
       )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
@@ -140,7 +149,8 @@ class MediaHttpSuite extends DbSuite:
   test("an import through the handler: dry run stores nothing; the real one stores, links, checks"):
     val fake = fakeProvider
     val h = MediaWiring(Deps(cfg, ds), fake)
-    val dry = h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message.value), identity)
+    val dry =
+      h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message.value), identity)
     assert(dry.dryRun.value)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
     assertEquals(AssetFixtures.thumbs(ds, Target.TargetType("place"), PlaceTarget), Nil)
@@ -149,7 +159,10 @@ class MediaHttpSuite extends DbSuite:
         .importMedia(MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), place = Some(PlaceId)))
         .fold(e => fail(e.message.value), identity)
     assertEquals((done.stored, done.linked, done.categories), (1, 1, 1))
-    assertEquals(AssetFixtures.thumbs(ds, Target.TargetType("place"), PlaceTarget).map(_.license), List(Some("CC-BY-SA-2.5")))
+    assertEquals(
+      AssetFixtures.thumbs(ds, Target.TargetType("place"), PlaceTarget).map(_.license),
+      List(Some("CC-BY-SA-2.5"))
+    )
     assert(fake.requests.forall(_._2 == Map("User-Agent" -> cfg.media.userAgent.value)))
     val checked = connect(ds)(sql"SELECT found FROM media_checks WHERE target_id = ${PlaceId.value}".query[Int].run())
     assertEquals(checked, Vector(1))
@@ -169,7 +182,10 @@ class MediaHttpSuite extends DbSuite:
         .exists(_.message.value.contains("no Wikidata link"))
     )
     assert(
-      h.imports.importMedia(MediaImportRequest(event = Some(ApiEventId))).left.exists(_.message.value.contains("events patch"))
+      h.imports
+        .importMedia(MediaImportRequest(event = Some(ApiEventId)))
+        .left
+        .exists(_.message.value.contains("events patch"))
     )
 
   test("the server: the place card carries the thumbnail, served locally with its type; list, show, facets"):
@@ -205,7 +221,10 @@ class MediaHttpSuite extends DbSuite:
         assertEquals(l.items.map(_.uid), List(t.uid))
         val (ss, sb) = get(s"$url/api/media/${t.uid}")
         assertEquals(ss, 200, sb)
-        assertEquals(decode[MediaItem](sb).map(_.targets.map(_.targetId.value: String)), Right(List(PlaceId.value: String)))
+        assertEquals(
+          decode[MediaItem](sb).map(_.targets.map(_.targetId.value: String)),
+          Right(List(PlaceId.value: String))
+        )
         val (fs, fb) = get(s"$url/api/media/facets")
         assertEquals(fs, 200, fb)
         assert(decode[MediaFacets](fb).exists(_.licences.exists(_.key.value == "CC-BY-SA-2.5")), fb)

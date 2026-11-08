@@ -77,7 +77,10 @@ class BundleFormatSuite extends munit.FunSuite:
     val h = BundleTar.header(BundleTar.Entry.Name("manifest.json"), ByteCount(10)).fold(e => fail(e.value), identity)
     assertEquals(h.length, 512)
     assertEquals(String(h.slice(257, 262), UTF_8), "ustar")
-    assertEquals(BundleTar.parseHeader(h), Right(Some(BundleTar.Entry(BundleTar.Entry.Name("manifest.json"), BundleTar.Entry.Size(10)))))
+    assertEquals(
+      BundleTar.parseHeader(h),
+      Right(Some(BundleTar.Entry(BundleTar.Entry.Name("manifest.json"), BundleTar.Entry.Size(10))))
+    )
     assert(BundleTar.parseHeader(h.updated(0, 'M'.toByte)).isLeft)
     assertEquals(BundleTar.parseHeader(new Array[Byte](512)), Right(None))
     assert(BundleTar.header(BundleTar.Entry.Name("x" * 101), ByteCount(1)).isLeft)
@@ -113,17 +116,27 @@ class BundleFormatSuite extends munit.FunSuite:
   test("the rev covers the content, not the timestamp: same content → same rev"):
     assertEquals(
       BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev,
-      BundleFormat.stamp(goal(Bundle.Goal.Slug("g"), updated = Bundle.Goal.UpdatedAt("2030-01-01T00:00:00.000000Z"))).rev
+      BundleFormat
+        .stamp(goal(Bundle.Goal.Slug("g"), updated = Bundle.Goal.UpdatedAt("2030-01-01T00:00:00.000000Z")))
+        .rev
     )
-    assertNotEquals(BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev, BundleFormat.stamp(goal(Bundle.Goal.Slug("g"), notes = Some(Bundle.Goal.Notes("n")))).rev)
+    assertNotEquals(
+      BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev,
+      BundleFormat.stamp(goal(Bundle.Goal.Slug("g"), notes = Some(Bundle.Goal.Notes("n")))).rev
+    )
     // a rev field already set is replaced, never trusted
-    assertEquals(BundleFormat.stamp(goal(Bundle.Goal.Slug("g")).modify(_.rev).setTo(Bundle.Goal.Rev("bogus"))).rev, BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev)
+    assertEquals(
+      BundleFormat.stamp(goal(Bundle.Goal.Slug("g")).modify(_.rev).setTo(Bundle.Goal.Rev("bogus"))).rev,
+      BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev
+    )
 
   test("decoding a line checks its rev; a tampered line is reported"):
     val line = BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).line
     assertEquals(BundleFormat.decodeLine[Bundle.Goal](line, stamped = true).map(_.slug), Right("g"))
     val tampered = line.replace("\"Title\"", "\"Other\"")
-    assert(BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.value.contains("does not match")))
+    assert(
+      BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.value.contains("does not match"))
+    )
     assert(BundleFormat.decodeLine[Bundle.Goal]("{not json", stamped = true).isLeft)
 
   test("content uuids: deterministic, version 8, RFC variant"):
@@ -144,15 +157,38 @@ class BundleFormatSuite extends munit.FunSuite:
       None,
       Nil,
       Bundle.Blobs(Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
-      Bundle.Reference(Bundle.Reference.Places(0), Bundle.Reference.PlacesDigest(""), Bundle.Reference.Periods(0), Bundle.Reference.PeriodsDigest(""))
+      Bundle.Reference(
+        Bundle.Reference.Places(0),
+        Bundle.Reference.PlacesDigest(""),
+        Bundle.Reference.Periods(0),
+        Bundle.Reference.PeriodsDigest("")
+      )
     )
     assertEquals(BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("33"))), Nil)
     assertEquals(BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("40"))), Nil)
-    assert(BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("32"))).exists(_.contains("newer than this server")))
-    assertEquals(BundleFormat.compatible(m.modify(_.format).setTo(Bundle.Manifest.Format("x")).modify(_.formatVersion).setTo(Bundle.Manifest.FormatVersion(99)), Some(Bundle.Manifest.SchemaVersion("33"))).size, 2)
+    assert(
+      BundleFormat.compatible(m, Some(Bundle.Manifest.SchemaVersion("32"))).exists(_.contains("newer than this server"))
+    )
+    assertEquals(
+      BundleFormat
+        .compatible(
+          m.modify(_.format)
+            .setTo(Bundle.Manifest.Format("x"))
+            .modify(_.formatVersion)
+            .setTo(Bundle.Manifest.FormatVersion(99)),
+          Some(Bundle.Manifest.SchemaVersion("33"))
+        )
+        .size,
+      2
+    )
 
   test("file checks list every missing, unexpected and differing file"):
-    val f = Bundle.FileInfo(Bundle.FileInfo.Path("entities/goals.ndjson"), Bundle.FileInfo.Lines(1), com.histmersion.api.ByteCount(10), Sha256("a"))
+    val f = Bundle.FileInfo(
+      Bundle.FileInfo.Path("entities/goals.ndjson"),
+      Bundle.FileInfo.Lines(1),
+      com.histmersion.api.ByteCount(10),
+      Sha256("a")
+    )
     val m = Bundle.Manifest(
       Bundle.Manifest.Format(Bundle.Format),
       Bundle.Manifest.FormatVersion(1),
@@ -161,11 +197,27 @@ class BundleFormatSuite extends munit.FunSuite:
       Bundle.Instance(I),
       None,
       None,
-      List(f, Bundle.FileInfo(Bundle.FileInfo.Path("entities/queue.ndjson"), Bundle.FileInfo.Lines(0), com.histmersion.api.ByteCount(0), Sha256("e"))),
+      List(
+        f,
+        Bundle.FileInfo(
+          Bundle.FileInfo.Path("entities/queue.ndjson"),
+          Bundle.FileInfo.Lines(0),
+          com.histmersion.api.ByteCount(0),
+          Sha256("e")
+        )
+      ),
       Bundle.Blobs(Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
-      Bundle.Reference(Bundle.Reference.Places(0), Bundle.Reference.PlacesDigest(""), Bundle.Reference.Periods(0), Bundle.Reference.PeriodsDigest(""))
+      Bundle.Reference(
+        Bundle.Reference.Places(0),
+        Bundle.Reference.PlacesDigest(""),
+        Bundle.Reference.Periods(0),
+        Bundle.Reference.PeriodsDigest("")
+      )
     )
-    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.modify(_.sha256).setTo(Sha256("b")), Bundle.FileInfo.Path("entities/x.ndjson") -> f))
+    val ps = BundleFormat.checkFiles(
+      m,
+      Map(f.path -> f.modify(_.sha256).setTo(Sha256("b")), Bundle.FileInfo.Path("entities/x.ndjson") -> f)
+    )
     assertEquals(ps.size, 3, ps.mkString("\n"))
 
   // ── entities ─────────────────────────────────────────────────────────────────────────────────
@@ -189,9 +241,7 @@ class BundleFormatSuite extends munit.FunSuite:
       )
     )
     assertEquals(Bundle.Files.all.distinct.size, Bundle.Files.all.size)
-    Bundle.Kind.values.foreach(k =>
-      assertEquals(Bundle.Kind.fromWire(k.wire), Some(k))
-    )
+    Bundle.Kind.values.foreach(k => assertEquals(Bundle.Kind.fromWire(k.wire), Some(k)))
 
   test("markdown: an import report says what it did, and lists every problem"):
     val r = Bundle.ImportResult(
@@ -210,5 +260,14 @@ class BundleFormatSuite extends munit.FunSuite:
     assert(md.contains("- source x: clash"), md)
     assert(md.contains("work ("), md)
     assert(
-      BundleMarkdown.importResult(r.modify(_.problems).setTo(Nil).modify(_.applied).setTo(Bundle.ImportResult.Applied(true)).modify(_.counts).setTo(Nil)).contains("Nothing to change")
+      BundleMarkdown
+        .importResult(
+          r.modify(_.problems)
+            .setTo(Nil)
+            .modify(_.applied)
+            .setTo(Bundle.ImportResult.Applied(true))
+            .modify(_.counts)
+            .setTo(Nil)
+        )
+        .contains("Nothing to change")
     )

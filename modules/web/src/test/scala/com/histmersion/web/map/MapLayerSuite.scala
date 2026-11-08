@@ -9,11 +9,22 @@ import scala.scalajs.js
 class MapLayerSuite extends munit.FunSuite:
 
   test("clustering: a point joins the nearest group whose first point is within the radius, else starts one"):
-    val g = Clustering.group(Array(0.0, 10.0, 100.0, 105.0, 300.0), Array(0.0, 0.0, 0.0, 0.0, 0.0), Clustering.GroupRadius(20))
+    val g = Clustering.group(
+      Array(0.0, 10.0, 100.0, 105.0, 300.0),
+      Array(0.0, 0.0, 0.0, 0.0, 0.0),
+      Clustering.GroupRadius(20)
+    )
     assertEquals(g.toList, List(0, 0, 1, 1, 2))
     // measured from a group's FIRST point (markercluster's rule): a chain does not keep growing
-    assertEquals(Clustering.group(Array(0.0, 15.0, 30.0), Array(0.0, 0.0, 0.0), Clustering.GroupRadius(20)).toList, List(0, 0, 1))
-    assertEquals(Clustering.group(Array(1.0, 1.0), Array(1.0, 1.0), Clustering.GroupRadius(0)).toList, List(0, 1), "radius 0: never")
+    assertEquals(
+      Clustering.group(Array(0.0, 15.0, 30.0), Array(0.0, 0.0, 0.0), Clustering.GroupRadius(20)).toList,
+      List(0, 0, 1)
+    )
+    assertEquals(
+      Clustering.group(Array(1.0, 1.0), Array(1.0, 1.0), Clustering.GroupRadius(0)).toList,
+      List(0, 1),
+      "radius 0: never"
+    )
 
   test("groups: each bubble stands at the mean of its points; whole zooms; Mercator world pixels"):
     val pts = List(
@@ -22,10 +33,16 @@ class MapLayerSuite extends munit.FunSuite:
       Clustering.GroupKey("c") -> LatLon(LatLon.Lat(10), LatLon.Lon(-40))
     )
     val gs = Clustering.groups(pts, Clustering.ZoomLevel(7), Clustering.GroupRadius(50))
-    assertEquals(gs.map(_._1), Vector(Vector(Clustering.GroupKey("a"), Clustering.GroupKey("b")), Vector(Clustering.GroupKey("c"))))
+    assertEquals(
+      gs.map(_._1),
+      Vector(Vector(Clustering.GroupKey("a"), Clustering.GroupKey("b")), Vector(Clustering.GroupKey("c")))
+    )
     assertEqualsDouble(gs.head._2.lat.value, 37.51, 1e-9)
     // zoomed in far enough, the two stand apart
-    assertEquals(Clustering.groups(pts, Clustering.ZoomLevel(14), Clustering.GroupRadius(50)).map(_._1.size), Vector(1, 1, 1))
+    assertEquals(
+      Clustering.groups(pts, Clustering.ZoomLevel(14), Clustering.GroupRadius(50)).map(_._1.size),
+      Vector(1, 1, 1)
+    )
     assertEquals(
       (Clustering.level(MapSurface.Zoom(6.49)), Clustering.level(MapSurface.Zoom(6.5))),
       (Clustering.ZoomLevel(6), Clustering.ZoomLevel(7))
@@ -74,7 +91,10 @@ class MapLayerSuite extends munit.FunSuite:
     val poly = js.JSON
       .parse("""{"type":"Polygon","coordinates":[[[30,36],[34,36],[34,39],[30,39],[30,36]]]}""")
       .asInstanceOf[js.Dynamic]
-    assertEquals(GeoBounds.ofGeometry(poly), Some(GeoBounds(GeoBounds.South(36), GeoBounds.West(30), GeoBounds.North(39), GeoBounds.East(34))))
+    assertEquals(
+      GeoBounds.ofGeometry(poly),
+      Some(GeoBounds(GeoBounds.South(36), GeoBounds.West(30), GeoBounds.North(39), GeoBounds.East(34)))
+    )
     val pt = js.JSON.parse("""{"type":"Point","coordinates":[22.75,37.73]}""").asInstanceOf[js.Dynamic]
     assertEquals(
       GeoBounds.ofGeometry(pt),
@@ -111,8 +131,18 @@ class MapLayerSuite extends munit.FunSuite:
   test("the fake engine's shapes: a restyle keeps the set, a new member sends it again"):
     val s = FakeSurface()
     val set = s.shapes(MapSurface.ShapesId("polities"), ShapeStyle())
-    set.set(List(ShapeFeature(ShapeFeature.Id("a"), js.Dynamic.literal(), ShapeFeature.Colour("red")), ShapeFeature(ShapeFeature.Id("b"), js.Dynamic.literal(), ShapeFeature.Colour("blue"))))
-    set.set(List(ShapeFeature(ShapeFeature.Id("a"), js.Dynamic.literal(), ShapeFeature.Colour("green")), ShapeFeature(ShapeFeature.Id("b"), js.Dynamic.literal(), ShapeFeature.Colour("blue"))))
+    set.set(
+      List(
+        ShapeFeature(ShapeFeature.Id("a"), js.Dynamic.literal(), ShapeFeature.Colour("red")),
+        ShapeFeature(ShapeFeature.Id("b"), js.Dynamic.literal(), ShapeFeature.Colour("blue"))
+      )
+    )
+    set.set(
+      List(
+        ShapeFeature(ShapeFeature.Id("a"), js.Dynamic.literal(), ShapeFeature.Colour("green")),
+        ShapeFeature(ShapeFeature.Id("b"), js.Dynamic.literal(), ShapeFeature.Colour("blue"))
+      )
+    )
     assertEquals(s.sets("polities").rebuilt, 1)
     assertEquals(s.sets("polities").drawn("a").colour, ShapeFeature.Colour("green"))
     set.set(List(ShapeFeature(ShapeFeature.Id("c"), js.Dynamic.literal())))

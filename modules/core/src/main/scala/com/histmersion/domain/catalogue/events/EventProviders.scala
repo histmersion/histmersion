@@ -21,17 +21,16 @@ object EventProviders:
   type WikidataProperty = WikidataProperty.T
   object WikidataProperty extends Newtype[String, Pure]
 
-
   private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
 
   object WikidataEvents:
     type Problem = Problem.T
     object Problem extends Newtype[String, Pure]
+
     /** Pure: the kind an item read in two classes keeps — the one whose class comes first in `order` (the configured
       * classes, the most specific first: a naval battle is also a battle, and stays a naval battle whichever class is
       * read last); a kind not in `order` yields to one that is.
       */
-
 
     def moreSpecific(order: List[EventSummary.Kind], a: EventSummary.Kind, b: EventSummary.Kind): EventSummary.Kind =
       def rank(k: EventSummary.Kind) = order.indexOf(EventTaxonomy.canonical(k)) match

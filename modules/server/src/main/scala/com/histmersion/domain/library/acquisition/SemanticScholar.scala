@@ -24,7 +24,11 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
     * `isInfluential` flag, which is what makes a follow-up worth reading. When it is down or rate limited we fall back
     * to OpenAlex's plain citation list — fewer signals, but never nothing.
     */
-  def citing(work: WorkRef, since: Option[Year], limit: CitationsClient.CitingLimit): Either[CitationsClient.Problem, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] =
+  def citing(
+      work: WorkRef,
+      since: Option[Year],
+      limit: CitationsClient.CitingLimit
+  ): Either[CitationsClient.Problem, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] =
     val semantic = CitationsClient.CitingResultPart2Part1("semantic-scholar")
     val openalex = CitationsClient.CitingResultPart2Part1("openalex")
     val found: Either[String, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] = work.doi match
@@ -60,7 +64,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
             val kept = acc ++ rows.filter(r => since.forall(y => r.year.forall(_.value >= y.value)))
             AcquireParse.s2Next(j) match
               case Some(next) if rows.nonEmpty && next > offset => page(next, kept)
-              case _                                                        => Right(kept)
+              case _                                            => Right(kept)
           }
     page(Offset(0), Nil)
 

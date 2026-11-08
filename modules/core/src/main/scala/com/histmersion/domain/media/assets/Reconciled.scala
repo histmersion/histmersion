@@ -14,7 +14,11 @@ object Reconciled:
   def of(existing: List[(NewFigure.Name, Sha256)], incoming: List[(NewFigure.Name, Sha256)]): Reconciled =
     val incomingNames = incoming.map(_._1).toSet
     val byName = existing.filter((n, _) => incomingNames(n)).map(_._1).toSet
-    @tailrec def rename(rest: List[(NewFigure.Name, Sha256)], acc: List[(NewFigure.Name, NewFigure.Name)], used: Set[NewFigure.Name]): Reconciled =
+    @tailrec def rename(
+        rest: List[(NewFigure.Name, Sha256)],
+        acc: List[(NewFigure.Name, NewFigure.Name)],
+        used: Set[NewFigure.Name]
+    ): Reconciled =
       rest match
         case Nil                 => Reconciled(acc.reverse, existing.map(_._1).filterNot(used))
         case (name, sha) :: tail =>

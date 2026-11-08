@@ -6,7 +6,10 @@ import com.histmersion.config.testsupport.ComparedByValue.given
 class SettingKeySuite extends munit.FunSuite:
 
   test("a key with or without histmersion. is the same key"):
-    assertEquals(SettingKey.parse(SettingKey.ParseRaw("backups.keep")).map(k => k.value: String), Right("histmersion.backups.keep"))
+    assertEquals(
+      SettingKey.parse(SettingKey.ParseRaw("backups.keep")).map(k => k.value: String),
+      Right("histmersion.backups.keep")
+    )
     assertEquals(
       SettingKey.parse(SettingKey.ParseRaw(" histmersion.backups.keep ")).map(k => k.value: String),
       Right("histmersion.backups.keep")

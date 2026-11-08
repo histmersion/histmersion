@@ -74,7 +74,8 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
             env => Codex.environment(cfg, home, grant.map(_.token), env),
             CliProcess.RunStdin(call.user.value),
             timeout,
-            CliProcess.RunHint("install the Codex CLI or set agents.providers.codex.command (HISTMERSION_AGENTS_CODEX_COMMAND)")
+            CliProcess
+              .RunHint("install the Codex CLI or set agents.providers.codex.command (HISTMERSION_AGENTS_CODEX_COMMAND)")
           )
           val o = Codex.parse(r.lines)
           val lastText = Option
@@ -105,7 +106,8 @@ final class CodexExecClient(val model: ModelRef, cfg: CodexConfig, rt: CliRuntim
               .flatMap(_._2)
               .map(ms => java.time.Instant.ofEpochMilli(ms.value))
             throw new ModelLimitReached(model, until, ModelLimitReached.Message(s"codex exec: $m".take(300)))
-          case None => CliOutcomes.result(
+          case None =>
+            CliOutcomes.result(
               o,
               call.user,
               call.schema,

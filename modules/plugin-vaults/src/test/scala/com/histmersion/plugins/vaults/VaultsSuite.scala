@@ -73,11 +73,24 @@ class VaultsSuite extends munit.FunSuite:
   test("locate: a bare name on the given PATH, a full path as given, and what is missing"):
     val d = bin()
     val t = script(d, "tool", "exit 0\n")
-    assertEquals(Subprocess.locate(Subprocess.Tool("tool"), Some(Plugin.Context.EnvResult(s"/nonexistent:$d"))), Right(t.toString))
+    assertEquals(
+      Subprocess.locate(Subprocess.Tool("tool"), Some(Plugin.Context.EnvResult(s"/nonexistent:$d"))),
+      Right(t.toString)
+    )
     assertEquals(Subprocess.locate(Subprocess.Tool(t.toString), None), Right(t.toString))
-    assert(Subprocess.locate(Subprocess.Tool("tool"), Some(Plugin.Context.EnvResult("/nonexistent"))).left.exists(_.value.contains("not found on the PATH")))
+    assert(
+      Subprocess
+        .locate(Subprocess.Tool("tool"), Some(Plugin.Context.EnvResult("/nonexistent")))
+        .left
+        .exists(_.value.contains("not found on the PATH"))
+    )
     assert(Subprocess.locate(Subprocess.Tool("tool"), None).isLeft)
-    assert(Subprocess.locate(Subprocess.Tool(d.resolve("nope").toString), None).left.exists(_.value.contains("not an executable")))
+    assert(
+      Subprocess
+        .locate(Subprocess.Tool(d.resolve("nope").toString), None)
+        .left
+        .exists(_.value.contains("not an executable"))
+    )
     assert(Subprocess.locate(Subprocess.Tool(" "), Some(Plugin.Context.EnvResult(d.toString))).isLeft)
 
   test("run: argv without a shell, stdin, extra env, exit code and both streams"):
@@ -87,13 +100,30 @@ class VaultsSuite extends munit.FunSuite:
       "echoer",
       "IFS= read -r line\nprintf '%s|%s|%s\\n' \"$1\" \"$line\" \"$EXTRA\"\necho oops >&2\nexit 3\n"
     )
-    val r = Subprocess.run(List(Processes.RunArgv(t.toString), Processes.RunArgv("a b; rm -rf /tmp/x")), Map(Processes.RunEnvPart1("EXTRA") -> Processes.RunEnvPart2("e")), Some(Processes.RunStdin("in\n")), 5.seconds)
-    assertEquals(r, Right(Subprocess.Result(Processes.Result.Exit(3), Processes.Result.Out("a b; rm -rf /tmp/x|in|e\n"), Processes.Result.Err("oops\n"))))
+    val r = Subprocess.run(
+      List(Processes.RunArgv(t.toString), Processes.RunArgv("a b; rm -rf /tmp/x")),
+      Map(Processes.RunEnvPart1("EXTRA") -> Processes.RunEnvPart2("e")),
+      Some(Processes.RunStdin("in\n")),
+      5.seconds
+    )
+    assertEquals(
+      r,
+      Right(
+        Subprocess.Result(
+          Processes.Result.Exit(3),
+          Processes.Result.Out("a b; rm -rf /tmp/x|in|e\n"),
+          Processes.Result.Err("oops\n")
+        )
+      )
+    )
 
   test("run: a tool that waits on a prompt sees end-of-file; one that hangs is killed at the timeout"):
     val d = bin()
     val prompt = script(d, "prompt", "IFS= read -r pw || { echo 'no input' >&2; exit 1; }\necho \"$pw\"\n")
-    assertEquals(Subprocess.run(List(Processes.RunArgv(prompt.toString)), Map.empty, None, 5.seconds).map(_.exit), Right(1))
+    assertEquals(
+      Subprocess.run(List(Processes.RunArgv(prompt.toString)), Map.empty, None, 5.seconds).map(_.exit),
+      Right(1)
+    )
     val slow = script(d, "slow", "sleep 30\n")
     val t0 = System.nanoTime
     val r = Subprocess.run(List(Processes.RunArgv(slow.toString)), Map.empty, None, 1.second)
@@ -107,7 +137,10 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(Subprocess.value(Subprocess.ValueOut("v\r\n")), "v")
     assertEquals(Subprocess.plain(Vaults.Operation("x"), Subprocess.Text("--help")), Left("x may not start with '-'"))
     assertEquals(Subprocess.plain(Vaults.Operation("x"), Subprocess.Text("")), Left("x is empty"))
-    assertEquals(Vaults.entryAndField(Secret.Vault.ResolveRef("A/B#UserName"), Vaults.Field("password")), ("A/B", "UserName"))
+    assertEquals(
+      Vaults.entryAndField(Secret.Vault.ResolveRef("A/B#UserName"), Vaults.Field("password")),
+      ("A/B", "UserName")
+    )
     assertEquals(Vaults.entryAndField(Secret.Vault.ResolveRef("A#B#c"), Vaults.Field("password")), ("A#B", "c"))
     assertEquals(Vaults.entryAndField(Secret.Vault.ResolveRef("A/B"), Vaults.Field("password")), ("A/B", "password"))
     assertEquals(Vaults.entryAndField(Secret.Vault.ResolveRef("A/B#"), Vaults.Field("password")), ("A/B", "password"))
@@ -150,8 +183,14 @@ class VaultsSuite extends munit.FunSuite:
     val ctx = Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(Secret.Ref.Env.Name("KP")) -> "master-pw"))
     val v = registered(KeePassXcPlugin(), s"""database = "$db", password = "env:KP"""", ctx)
     assertEquals(v.name, "keepassxc")
-    assertEquals(v.resolve(Secret.Vault.ResolveRef("Histmersion/Portal")), Right("value of Histmersion/Portal/password"))
-    assertEquals(v.resolve(Secret.Vault.ResolveRef("Histmersion/Portal#UserName")), Right("value of Histmersion/Portal/UserName"))
+    assertEquals(
+      v.resolve(Secret.Vault.ResolveRef("Histmersion/Portal")),
+      Right("value of Histmersion/Portal/password")
+    )
+    assertEquals(
+      v.resolve(Secret.Vault.ResolveRef("Histmersion/Portal#UserName")),
+      Right("value of Histmersion/Portal/UserName")
+    )
     val args = Files.readAllLines(d.resolve("kp-args")).asScala.toList
     assertEquals(args, List("show", "-q", "-a", "UserName", db.toString, "Histmersion/Portal"))
     assert(!args.exists(_.contains("master-pw")))
@@ -168,7 +207,10 @@ class VaultsSuite extends munit.FunSuite:
       List("show", "-q", "-a", "password", "-k", key.toString, "--no-password", db.toString, "E")
     )
     val bare = registered(KeePassXcPlugin(), s"""database = "$db"""", Ctx(Map("PATH" -> d.toString)))
-    assert(bare.resolve(Secret.Vault.ResolveRef("E")).left.exists(_.value.contains("the database is locked")), bare.resolve(Secret.Vault.ResolveRef("E")))
+    assert(
+      bare.resolve(Secret.Vault.ResolveRef("E")).left.exists(_.value.contains("the database is locked")),
+      bare.resolve(Secret.Vault.ResolveRef("E"))
+    )
 
   test("keepassxc: a wrong password is locked, a missing entry is named, a hung tool times out, options are refused"):
     val d = bin(); fakeKeePassXc(d)
@@ -217,41 +259,74 @@ class VaultsSuite extends munit.FunSuite:
 
   test("yubikey: parsing <slot>[:<serial>], lists without repeats, the setting as a string or a list"):
     assertEquals(YubiKey.parse(YubiKey.Text("2")), Right(YubiKey.Slot(YubiKey.Slot.Value(2), None)))
-    assertEquals(YubiKey.parse(YubiKey.Text(" 1:7370001 ")), Right(YubiKey.Slot(YubiKey.Slot.Value(1), Some(YubiKey.Slot.Serial(7370001L)))))
+    assertEquals(
+      YubiKey.parse(YubiKey.Text(" 1:7370001 ")),
+      Right(YubiKey.Slot(YubiKey.Slot.Value(1), Some(YubiKey.Slot.Serial(7370001L))))
+    )
     assertEquals(YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(5L))).shown, "2:5")
     List("3", "0", "x", "2:", "2:abc", "2:-1", "2:1:3", "", ":5").foreach(b =>
       assert(YubiKey.parse(YubiKey.Text(b)).left.exists(_.value.contains("<slot>[:<serial>]")), b)
     )
     assertEquals(
-      YubiKey.parseAll(List(YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries(""), YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries("1"))),
-      Right(List(YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(1))), YubiKey.Slot(YubiKey.Slot.Value(1), None)))
+      YubiKey.parseAll(
+        List(
+          YubiKey.Setting.Entries("2:1"),
+          YubiKey.Setting.Entries(""),
+          YubiKey.Setting.Entries("2:1"),
+          YubiKey.Setting.Entries("1")
+        )
+      ),
+      Right(
+        List(
+          YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(1))),
+          YubiKey.Slot(YubiKey.Slot.Value(1), None)
+        )
+      )
     )
-    assert(YubiKey.parseAll(List(YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries("9"))).left.exists(_.value.contains("'9'")))
+    assert(
+      YubiKey
+        .parseAll(List(YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries("9")))
+        .left
+        .exists(_.value.contains("'9'"))
+    )
     assertEquals(decode(KeePassXcPlugin(), "").yubikey, None)
     assertEquals(
       decode(KeePassXcPlugin(), "yubikey = \"2:12345678\"").yubikey,
       Some(YubiKey.Setting(List(YubiKey.Setting.Entries("2:12345678"))))
     )
-    assertEquals(decode(KeePassXcPlugin(), "yubikey = \"2:1, 1\"").yubikey, Some(YubiKey.Setting(List(YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries("1")))))
+    assertEquals(
+      decode(KeePassXcPlugin(), "yubikey = \"2:1, 1\"").yubikey,
+      Some(YubiKey.Setting(List(YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries("1"))))
+    )
     assertEquals(
       decode(KeePassXcPlugin(), "yubikey = [\"2:1\", \"2:2\", \"1\"]").yubikey,
-      Some(YubiKey.Setting(List(YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries("2:2"), YubiKey.Setting.Entries("1"))))
+      Some(
+        YubiKey.Setting(
+          List(YubiKey.Setting.Entries("2:1"), YubiKey.Setting.Entries("2:2"), YubiKey.Setting.Entries("1"))
+        )
+      )
     )
     val c = decode(KeePassXcPlugin(), "")
     assertEquals((c.yubikeyTimeoutSeconds, c.ykman), (30, "ykman"))
 
   test("yubikey: serials from ykman, the plan with and without detection, the last key first"):
     assertEquals(YubiKey.serials(YubiKey.SerialsOut("12345678\n 87654321 \nWARNING: x\n\n")), Set(12345678L, 87654321L))
-    val a = YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(1))); val b = YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(2))); val any = YubiKey.Slot(YubiKey.Slot.Value(1), None)
+    val a = YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(1)));
+    val b = YubiKey.Slot(YubiKey.Slot.Value(2), Some(YubiKey.Slot.Serial(2)));
+    val any = YubiKey.Slot(YubiKey.Slot.Value(1), None)
     assertEquals(YubiKey.plan(List(a, b, any), None), (List(a, b, any), Nil))
     assertEquals(YubiKey.plan(List(a, b, any), Some(Set(YubiKey.Slot.Serial(2L)))), (List(b, any), List(a)))
     assertEquals(YubiKey.plan(List(a, b, any), Some(Set.empty)), (Nil, List(a, b, any)))
-    assertEquals(YubiKey.plan(List(a, b, any), Some(Set(YubiKey.Slot.Serial(1L), YubiKey.Slot.Serial(2L))), Some(b)), (List(b, a, any), Nil))
+    assertEquals(
+      YubiKey.plan(List(a, b, any), Some(Set(YubiKey.Slot.Serial(1L), YubiKey.Slot.Serial(2L))), Some(b)),
+      (List(b, a, any), Nil)
+    )
     assertEquals(YubiKey.plan(List(a, b), Some(Set(YubiKey.Slot.Serial(1L))), Some(b)), (List(a), List(b)))
 
   test("yubikey: KeePassXC's messages — absent or failed is the next key; credentials, entry, touch stop"):
     import YubiKey.Failure.*
-    def f(m: String) = YubiKey.failure(YubiKey.Problem(m.toLowerCase(java.util.Locale.ROOT)),YubiKey.Setting.Entries("E"))
+    def f(m: String) =
+      YubiKey.failure(YubiKey.Problem(m.toLowerCase(java.util.Locale.ROOT)), YubiKey.Setting.Entries("E"))
     assert(f("Could not find hardware key with serial number 1. Please plug it in to continue.").isInstanceOf[Next])
     assert(f("Failed to complete a challenge-response, the specific error was: x").isInstanceOf[Next])
     assert(f("Hardware key slot is not configured.").isInstanceOf[Next])
@@ -260,7 +335,10 @@ class VaultsSuite extends munit.FunSuite:
         "Please present or touch your YubiKey to continue.\nError while reading the database: Invalid credentials were provided"
       ).isInstanceOf[Stop]
     )
-    assertEquals(f("Hardware key timed out waiting for user interaction."), Stop(Stop.Why("the YubiKey was not touched in time")))
+    assertEquals(
+      f("Hardware key timed out waiting for user interaction."),
+      Stop(Stop.Why("the YubiKey was not touched in time"))
+    )
     assertEquals(f("Could not find entry with path E."), Stop(YubiKey.Failure.Stop.Why("no entry 'E'")))
     assert(f("Segmentation fault").isInstanceOf[Stop])
     assertEquals(
@@ -459,20 +537,58 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(KeePassXcSession.prompt(Processes.Session.OutResult("Please touch\nResearch> ")), Some("Research> "))
     assertEquals(KeePassXcSession.prompt(Processes.Session.OutResult("v.kdbx")), None)
     assertEquals(KeePassXcSession.escape("A/Two words \"q\" b\\s\tt"), "A/Two\\ words\\ \\\"q\\\"\\ b\\\\s\\\tt")
-    assertEquals(KeePassXcSession.command(Vaults.Field("password"), KeePassXcSession.Entry("A/Two words")), "show -q -a password A/Two\\ words")
-    assert(!KeePassXcSession.sendable(KeePassXcSession.Entry("a\nb"), Vaults.Field("password")) && KeePassXcSession.sendable(KeePassXcSession.Entry("a b"), Vaults.Field("password")))
+    assertEquals(
+      KeePassXcSession.command(Vaults.Field("password"), KeePassXcSession.Entry("A/Two words")),
+      "show -q -a password A/Two\\ words"
+    )
+    assert(
+      !KeePassXcSession.sendable(KeePassXcSession.Entry("a\nb"), Vaults.Field("password")) && KeePassXcSession.sendable(
+        KeePassXcSession.Entry("a b"),
+        Vaults.Field("password")
+      )
+    )
     val out = "v.kdbx> show -q -a password A\nsecret\nv.kdbx> "
-    assertEquals(KeePassXcSession.segment(Processes.Session.OutResult(out),KeePassXcSession.SegmentFrom(8), KeePassXcSession.Prompt("v.kdbx> ")), Some("show -q -a password A\nsecret\n"))
-    assertEquals(KeePassXcSession.segment(Processes.Session.OutResult(out.dropRight(8)),KeePassXcSession.SegmentFrom(8), KeePassXcSession.Prompt("v.kdbx> ")), None, "not answered yet")
-    assertEquals(KeePassXcSession.segment(Processes.Session.OutResult("v.kdbx> "), KeePassXcSession.SegmentFrom(8), KeePassXcSession.Prompt("v.kdbx> ")), None, "the old prompt is not an answer")
-    assertEquals(KeePassXcSession.answer(KeePassXcSession.Segment("show -q -a password A\nsecret\n"), KeePassXcSession.Command("show -q -a password A")), "secret")
+    assertEquals(
+      KeePassXcSession.segment(
+        Processes.Session.OutResult(out),
+        KeePassXcSession.SegmentFrom(8),
+        KeePassXcSession.Prompt("v.kdbx> ")
+      ),
+      Some("show -q -a password A\nsecret\n")
+    )
+    assertEquals(
+      KeePassXcSession.segment(
+        Processes.Session.OutResult(out.dropRight(8)),
+        KeePassXcSession.SegmentFrom(8),
+        KeePassXcSession.Prompt("v.kdbx> ")
+      ),
+      None,
+      "not answered yet"
+    )
+    assertEquals(
+      KeePassXcSession.segment(
+        Processes.Session.OutResult("v.kdbx> "),
+        KeePassXcSession.SegmentFrom(8),
+        KeePassXcSession.Prompt("v.kdbx> ")
+      ),
+      None,
+      "the old prompt is not an answer"
+    )
+    assertEquals(
+      KeePassXcSession.answer(
+        KeePassXcSession.Segment("show -q -a password A\nsecret\n"),
+        KeePassXcSession.Command("show -q -a password A")
+      ),
+      "secret"
+    )
     assertEquals(
       KeePassXcSession.answer(KeePassXcSession.Segment("secret\n"), KeePassXcSession.Command("show -q -a password A")),
       "secret",
       "a session without readline echoes nothing"
     )
     assertEquals(
-      KeePassXcSession.answer(KeePassXcSession.Segment("show -q -a password A\n"), KeePassXcSession.Command("show -q -a password A")),
+      KeePassXcSession
+        .answer(KeePassXcSession.Segment("show -q -a password A\n"), KeePassXcSession.Command("show -q -a password A")),
       "",
       "a missing entry prints nothing"
     )
@@ -483,7 +599,15 @@ class VaultsSuite extends munit.FunSuite:
     val d = bin(); fakeKeePassXcYk(d); plug(d, "12345678")
     val (v, ctx) = ykVault(d, "ykman = \"\", yubikey = \"2:12345678\"")
     val quoted = "B/\"quoted\" back\\slash"
-    val r = v.resolveAll(List(Secret.Vault.ResolveRef("A/One"), Secret.Vault.ResolveRef("A/Two words#UserName"), Secret.Vault.ResolveRef("missing"), Secret.Vault.ResolveRef(quoted),Secret.Vault.ResolveRef("A/One")))
+    val r = v.resolveAll(
+      List(
+        Secret.Vault.ResolveRef("A/One"),
+        Secret.Vault.ResolveRef("A/Two words#UserName"),
+        Secret.Vault.ResolveRef("missing"),
+        Secret.Vault.ResolveRef(quoted),
+        Secret.Vault.ResolveRef("A/One")
+      )
+    )
     assertEquals(
       r,
       Map(
@@ -501,14 +625,20 @@ class VaultsSuite extends munit.FunSuite:
   test("keepassxc batch: the first YubiKey absent, the second opens the session; it goes first next time"):
     val d = bin(); fakeKeePassXcYk(d); plug(d, "87654321")
     val (v, ctx) = ykVault(d, "ykman = \"\", yubikey = [\"2:12345678\", \"2:87654321\"]")
-    assertEquals(v.resolveAll(List(Secret.Vault.ResolveRef("A"), Secret.Vault.ResolveRef("B"))), Map("A" -> Right("secret of A"), "B" -> Right("secret of B")))
+    assertEquals(
+      v.resolveAll(List(Secret.Vault.ResolveRef("A"), Secret.Vault.ResolveRef("B"))),
+      Map("A" -> Right("secret of A"), "B" -> Right("secret of B"))
+    )
     assertEquals(
       calls(d).map(_.split(' ').take(4).mkString(" ")),
       List("open -q -y 2:12345678", "open -q -y 2:87654321")
     )
     assertEquals(ctx.infos.count(_.contains("touch your YubiKey")), 2, "one line per open attempt")
     plug(d, "12345678", "87654321")
-    assertEquals(v.resolveAll(List(Secret.Vault.ResolveRef("C"), Secret.Vault.ResolveRef("D"))), Map("C" -> Right("secret of C"), "D" -> Right("secret of D")))
+    assertEquals(
+      v.resolveAll(List(Secret.Vault.ResolveRef("C"), Secret.Vault.ResolveRef("D"))),
+      Map("C" -> Right("secret of C"), "D" -> Right("secret of D"))
+    )
     assertEquals(calls(d).drop(2).map(_.split(' ').take(4).mkString(" ")), List("open -q -y 2:87654321"))
 
   test("keepassxc batch: a wrong password fails every reference after one open; no further key is tried"):
@@ -544,16 +674,25 @@ class VaultsSuite extends munit.FunSuite:
     assertEquals(calls(d), List(s"open -q $db"))
     assertEquals(v.resolveAll(List(Secret.Vault.ResolveRef("C"))), Map("C" -> Right("secret of C")))
     assertEquals(calls(d).last, s"show -q -a password $db C")
-    val bad = v.resolveAll(List(Secret.Vault.ResolveRef("-x"), Secret.Vault.ResolveRef("D"), Secret.Vault.ResolveRef("E")))
+    val bad =
+      v.resolveAll(List(Secret.Vault.ResolveRef("-x"), Secret.Vault.ResolveRef("D"), Secret.Vault.ResolveRef("E")))
     assertEquals(bad(Secret.Vault.ResolveRef("-x")), Left("the entry may not start with '-'"))
-    assertEquals((bad(Secret.Vault.ResolveRef("D")), bad(Secret.Vault.ResolveRef("E"))),(Right("secret of D"), Right("secret of E")))
+    assertEquals(
+      (bad(Secret.Vault.ResolveRef("D")), bad(Secret.Vault.ResolveRef("E"))),
+      (Right("secret of D"), Right("secret of E"))
+    )
     assertEquals(calls(d).last, s"open -q $db", "the refused one ran nothing")
     val wrong = registered(
       KeePassXcPlugin(),
       s"""database = "$db", password = "env:KP"""",
       Ctx(Map("PATH" -> d.toString), Map(Secret.Ref.Env(Secret.Ref.Env.Name("KP")) -> "nope"))
     )
-    assert(wrong.resolveAll(List(Secret.Vault.ResolveRef("A"), Secret.Vault.ResolveRef("B"))).values.forall(_.left.exists(_.value.contains("the database is locked"))))
+    assert(
+      wrong
+        .resolveAll(List(Secret.Vault.ResolveRef("A"), Secret.Vault.ResolveRef("B")))
+        .values
+        .forall(_.left.exists(_.value.contains("the database is locked")))
+    )
 
   test("keepassxc batch against the installed keepassxc-cli and a throwaway database (HISTMERSION_TEST_KEEPASSXC=1)"):
     val cli = Subprocess.locate(Subprocess.Tool("keepassxc-cli"), sys.env.get("PATH").map(Plugin.Context.EnvResult(_)))
@@ -566,7 +705,12 @@ class VaultsSuite extends munit.FunSuite:
     val db = d.resolve("throwaway.kdbx").toString
     def kp(args: List[String], stdin: String) =
       val r = Subprocess
-        .run(Processes.RunArgv(exe.value) :: args.map(Processes.RunArgv(_)), Map.empty, Some(Processes.RunStdin(stdin)), 60.seconds)
+        .run(
+          Processes.RunArgv(exe.value) :: args.map(Processes.RunArgv(_)),
+          Map.empty,
+          Some(Processes.RunStdin(stdin)),
+          60.seconds
+        )
         .fold(e => fail(e.value), identity)
       assertEquals(r.exit, 0, r.err)
     kp(List("db-create", "-q", "-p", db), "test-pw\ntest-pw\n")
@@ -580,7 +724,15 @@ class VaultsSuite extends munit.FunSuite:
       Ctx(Map("PATH" -> sys.env.getOrElse("PATH", "")), Map(Secret.Ref.Env(Secret.Ref.Env.Name("KP")) -> "test-pw"))
     )
     assertEquals(
-      v.resolveAll(List(Secret.Vault.ResolveRef("G/One"), Secret.Vault.ResolveRef("G/Two words \"q\" b\\s"), Secret.Vault.ResolveRef("missing"), Secret.Vault.ResolveRef("Three#UserName"), Secret.Vault.ResolveRef("Three"))),
+      v.resolveAll(
+        List(
+          Secret.Vault.ResolveRef("G/One"),
+          Secret.Vault.ResolveRef("G/Two words \"q\" b\\s"),
+          Secret.Vault.ResolveRef("missing"),
+          Secret.Vault.ResolveRef("Three#UserName"),
+          Secret.Vault.ResolveRef("Three")
+        )
+      ),
       Map(
         "G/One" -> Right("first value"),
         "G/Two words \"q\" b\\s" -> Right("second"),
@@ -616,9 +768,17 @@ class VaultsSuite extends munit.FunSuite:
       Files.readAllLines(d.resolve("op-args")).asScala.toList,
       List("read", "op://Private/Portal/password", "--account", "me")
     )
-    assertEquals(v.resolve(Secret.Vault.ResolveRef("Private/Nope/password")), Left("1password: no item at op://Private/Nope/password"))
+    assertEquals(
+      v.resolve(Secret.Vault.ResolveRef("Private/Nope/password")),
+      Left("1password: no item at op://Private/Nope/password")
+    )
     val unsigned = registered(OnePasswordPlugin(), "", Ctx(Map("PATH" -> d.toString)))
-    assert(unsigned.resolve(Secret.Vault.ResolveRef("Private/Portal/password")).left.exists(_.value.contains("not signed in")))
+    assert(
+      unsigned
+        .resolve(Secret.Vault.ResolveRef("Private/Portal/password"))
+        .left
+        .exists(_.value.contains("not signed in"))
+    )
 
   // ── Bitwarden ───────────────────────────────────────────────────────────────────────────────
 
@@ -649,7 +809,10 @@ class VaultsSuite extends munit.FunSuite:
       Files.readAllLines(d.resolve("bw-args")).asScala.toList,
       List("get", "username", "item-1", "--nointeraction")
     )
-    assertEquals(v.resolve(Secret.Vault.ResolveRef("dup")), Left("bitwarden: 'dup' matches more than one item — use its id"))
+    assertEquals(
+      v.resolve(Secret.Vault.ResolveRef("dup")),
+      Left("bitwarden: 'dup' matches more than one item — use its id")
+    )
     assertEquals(v.resolve(Secret.Vault.ResolveRef("other")), Left("bitwarden: no item 'other'"))
     val locked = registered(BitwardenPlugin(), "", Ctx(Map("PATH" -> d.toString)))
     assert(locked.resolve(Secret.Vault.ResolveRef("item-1")).left.exists(_.value.contains("the vault is locked")))
@@ -663,7 +826,7 @@ class VaultsSuite extends munit.FunSuite:
 
   test("the three are discoverable providers, built for this SPI, disabled by their defaults"):
     val found = java.util.ServiceLoader.load(classOf[Plugin]).iterator.asScala.toList
-    assertEquals(found.map(_.info.id.value).sorted,List("1password", "bitwarden", "keepassxc"))
+    assertEquals(found.map(_.info.id.value).sorted, List("1password", "bitwarden", "keepassxc"))
     found.foreach { p =>
       assertEquals(p.info.spiVersion, Spi.Version)
       val defs = ConfigFactory.parseResources(p.getClass.getClassLoader, p.defaultsResource.value).resolve()

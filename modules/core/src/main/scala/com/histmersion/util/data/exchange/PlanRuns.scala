@@ -29,7 +29,8 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def notices: List[PairQuestions.InfoLine] = runs.flatMap(_.notices)
 
-  override def sketchesWanted(cfg: MergeSettings): Set[Bundle.Source.BodySha256] = runs.flatMap(_.sketchesWanted(cfg)).toSet
+  override def sketchesWanted(cfg: MergeSettings): Set[Bundle.Source.BodySha256] =
+    runs.flatMap(_.sketchesWanted(cfg)).toSet
 
   override def matchSources(
       sketches: Map[Bundle.Source.BodySha256, MinHash],
@@ -56,7 +57,10 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def labelsTakenFirst(questions: PlanQuestions): Unit = runs.foreach(_.labelsTakenFirst(questions))
 
-  override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
+  override def citekeyArgument(
+      issue: MergeIssue,
+      decision: MergeDecision
+  ): Option[Either[MergePlan.ResolutionErrors, Unit]] =
     runs.iterator.flatMap(_.citekeyArgument(issue, decision)).nextOption()
 
   /** Every run folds; the folded source takes the bundle's body when one of them says so. */
@@ -125,7 +129,11 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities = through(runs, es)(_.lines(_, es0))
 
-  override def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[MergePlan.Problems] =
+  override def problems(
+      finalEs: BundleEntities,
+      live: UUID => Boolean,
+      writes: UUID => Boolean
+  ): List[MergePlan.Problems] =
     runs.flatMap(_.problems(finalEs, live, writes))
 
   override def dropped: Set[UUID] = runs.flatMap(_.dropped).toSet

@@ -91,12 +91,16 @@ object WindowManager:
         // the merge review screen is a screen: three columns of a source pair, a diff3 view
         val (w0, h0) = key match
           case WindowKey.Merge =>
-            (math.min(Layout.mergeWindowMaxWidth.value, vw * 0.94), math.min(vh * 0.88, Layout.mergeWindowMaxHeight.value))
+            (
+              math.min(Layout.mergeWindowMaxWidth.value, vw * 0.94),
+              math.min(vh * 0.88, Layout.mergeWindowMaxHeight.value)
+            )
           case _ => (math.min(Layout.windowMaxWidth.value, vw * 0.7), math.min(vh * 0.75, Layout.windowMaxHeight.value))
         val offset = ((wid - 1) % Layout.windowCascadeSlots.value) * Layout.windowCascadeOffset.value
         // centred over what the results column leaves free (on a wide screen), so a pinned item never covers
         // the column it was pinned from
-        val beside = if Viewport.narrowNow || key == WindowKey.Merge then 0.0 else ResultsPanel.width.now().value.toDouble
+        val beside =
+          if Viewport.narrowNow || key == WindowKey.Merge then 0.0 else ResultsPanel.width.now().value.toDouble
         val x0 =
           math.max(if key == WindowKey.Merge then 8 else 20, math.min((vw - beside - w0) / 2 + offset, vw - w0 - 8))
         val y0 = math.max(20, (if key == WindowKey.Merge then 30 else 60) + offset)
@@ -208,7 +212,8 @@ object WindowManager:
           m.foreach { mm =>
             ev.preventDefault()
             val linkId = mm.group(2)
-            val target = if mm.group(1) == "article" then WindowKey.Article(WindowKey.Article.Slug(linkId)) else WindowKey.Source(WindowKey.Source.Citekey(linkId))
+            val target = if mm.group(1) == "article" then WindowKey.Article(WindowKey.Article.Slug(linkId))
+            else WindowKey.Source(WindowKey.Source.Citekey(linkId))
             val qs = Option(mm.group(3)).getOrElse("")
             val params = new dom.URLSearchParams(qs)
             val paramsMap = scala.collection.mutable.Map.empty[String, String]

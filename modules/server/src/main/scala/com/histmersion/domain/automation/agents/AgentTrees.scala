@@ -27,7 +27,10 @@ import com.histmersion.util.storage.Store
   * login and sessions, and `claude-code/login` an optional CLAUDE_CONFIG_DIR. Login state is only ever created by the
   * vendor's own login command there.
   */
-final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths = AgentTrees.NoEnvironment)(using stores: Stores, clock: java.time.Clock):
+final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths = AgentTrees.NoEnvironment)(using
+    stores: Stores,
+    clock: java.time.Clock
+):
 
   private val cfg: AgentsConfig = app.agents
 
@@ -46,7 +49,8 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
   private def publicUrl = app.server.publicUrl.value.stripSuffix("/")
 
   def settings(version: AgentTrees.SettingsVersion): GenSettings =
-    val agentMcp = Option(cfg.providers.claudeCode.mcpUrl.value.trim).filter(_.nonEmpty).getOrElse(s"$publicUrl/mcp/agent")
+    val agentMcp =
+      Option(cfg.providers.claudeCode.mcpUrl.value.trim).filter(_.nonEmpty).getOrElse(s"$publicUrl/mcp/agent")
     GenSettings(
       GenSettings.AgentMcpUrl(agentMcp),
       Some(GenSettings.McpUrl(s"$publicUrl/mcp")),
@@ -82,7 +86,11 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
         .toRight(AgentTrees.Problem("no runtimes directory: set agents.runtimes.dir (HISTMERSION_AGENTS_RUNTIMES_DIR)"))
       d <- load(known)
       sha = AgentTrees.sha(d)
-      tree = AgentGenerator.tree(d, settings(AgentTrees.SettingsVersion(s"${AgentGenerator.PluginVersion}+${sha.value.take(12)}")), runtimes)
+      tree = AgentGenerator.tree(
+        d,
+        settings(AgentTrees.SettingsVersion(s"${AgentGenerator.PluginVersion}+${sha.value.take(12)}")),
+        runtimes
+      )
       res <- AgentTrees.write(stores.at(Location.AgentHomes, dir), tree, runtimes.map(_.wire.value), sha)
     yield res
 
@@ -155,5 +163,7 @@ object AgentTrees:
   /** Write `tree` under `dir`: each file atomically, only when its text changed; a file the previous manifest listed
     * (for one of these runtimes) and this tree does not have is removed.
     */
-  def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using java.time.Clock): Either[Problem, GenerateResult] =
+  def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using
+      java.time.Clock
+  ): Either[Problem, GenerateResult] =
     AgentTreeWriter.write(store, tree, runtimes, sha).left.map(Problem(_))

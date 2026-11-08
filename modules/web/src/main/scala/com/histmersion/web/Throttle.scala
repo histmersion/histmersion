@@ -50,4 +50,3 @@ object Throttle:
   object DelayMs extends Newtype[Double, Pure]
   type TimerId = TimerId.T
   object TimerId extends Newtype[Int, Pure]
-

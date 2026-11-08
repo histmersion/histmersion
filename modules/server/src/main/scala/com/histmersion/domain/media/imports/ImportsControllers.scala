@@ -34,7 +34,10 @@ final class ImportsControllers(
     imports: ImportService,
     store: MediaStore,
     jobs: MediaJobs,
-    collections: () => (ListMap[Registries.MediaCollectionsKey, MediaCollection], Map[Registries.MediaCollectionsKey, Plugin.Info.Id]),
+    collections: () => (
+        ListMap[Registries.MediaCollectionsKey, MediaCollection],
+        Map[Registries.MediaCollectionsKey, Plugin.Info.Id]
+    ),
     cfg: () => MediaConfig,
     http: HttpTransport,
     converter: ConverterClient,
@@ -95,7 +98,8 @@ final class ImportsControllers(
               .map(why => ImportsControllers.error(why.value, Write.CodeNotFound))
               .map { targets =>
                 val run = imp.start()
-                val report = run.run(targets, MediaImporter.DryRun(req.dryRun.value), ImportService.Refresh(req.refresh.value))
+                val report =
+                  run.run(targets, MediaImporter.DryRun(req.dryRun.value), ImportService.Refresh(req.refresh.value))
                 scribe.info(
                   s"media import ${imp.check} (${if req.dryRun.value then "dry run" else "stored"}): ${targets.size} target(s), " +
                     s"${report.files} file(s), ${report.stored} stored, ${run.requests} request(s)"

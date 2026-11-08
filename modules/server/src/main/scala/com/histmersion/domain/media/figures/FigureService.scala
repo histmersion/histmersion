@@ -22,8 +22,11 @@ object FigureService:
       if apply.value then db.transact(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied(true)))
       else db.read(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied(false)))
 
-
   /** Media's rows alone, in memory: no source is held, so no figure has a source licence to take. */
   final class InMemory extends FigureService:
-    def fillLicences(apply: Apply): FigureLicenceFill = FigureLicenceFill(FigureLicenceFill.Candidates(0), FigureLicenceFill.Updated(0), FigureLicenceFill.Applied(apply.value), Nil)
-
+    def fillLicences(apply: Apply): FigureLicenceFill = FigureLicenceFill(
+      FigureLicenceFill.Candidates(0),
+      FigureLicenceFill.Updated(0),
+      FigureLicenceFill.Applied(apply.value),
+      Nil
+    )

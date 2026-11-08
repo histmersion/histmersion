@@ -13,7 +13,9 @@ class MediaTextSuite extends munit.FunSuite:
 
   test("plain text out of Commons' HTML author fields"):
     assertEquals(
-      MediaText.plain(MediaText.Html("""<a href="//commons.wikimedia.org/wiki/User:X" title="User:X">David  Monniaux</a>""")),
+      MediaText.plain(
+        MediaText.Html("""<a href="//commons.wikimedia.org/wiki/User:X" title="User:X">David  Monniaux</a>""")
+      ),
       "David Monniaux"
     )
     assertEquals(MediaText.plain(MediaText.Html("Tom &amp; Jerry &#233;&#x20AC; &nbsp;x")), "Tom & Jerry é€ x")
@@ -21,8 +23,14 @@ class MediaTextSuite extends munit.FunSuite:
     assertEquals(MediaText.plain(MediaText.Html.applyUnsafe(null)), "")
 
   test("tracking parameters are stripped from file URLs, the rest kept"):
-    assertEquals(MediaText.stripTracking(RepositoryLanding.Candidate.Url("https://u/x.jpg?utm_source=a&utm_campaign=b")), "https://u/x.jpg")
-    assertEquals(MediaText.stripTracking(RepositoryLanding.Candidate.Url("https://u/x.jpg?page=2&utm_source=a")), "https://u/x.jpg?page=2")
+    assertEquals(
+      MediaText.stripTracking(RepositoryLanding.Candidate.Url("https://u/x.jpg?utm_source=a&utm_campaign=b")),
+      "https://u/x.jpg"
+    )
+    assertEquals(
+      MediaText.stripTracking(RepositoryLanding.Candidate.Url("https://u/x.jpg?page=2&utm_source=a")),
+      "https://u/x.jpg?page=2"
+    )
     assertEquals(MediaText.stripTracking(RepositoryLanding.Candidate.Url("https://u/x.jpg")), "https://u/x.jpg")
 
   test("a provider file title becomes a link-safe name"):

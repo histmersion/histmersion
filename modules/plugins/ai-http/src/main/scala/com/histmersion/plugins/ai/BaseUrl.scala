@@ -18,7 +18,14 @@ object BaseUrl:
   object Problem extends Newtype[String, Pure]
   type Setting = Setting.T
   object Setting extends Newtype[String, Pure]
+
   /** `text` as a base URL, or why not, naming the `setting` it came from. */
 
   def parse(text: ProviderSettings.BaseUrl, setting: Setting): Either[Problem, BaseUrl] =
-    (Uri.parse((text).value).left.map(e => s"$setting: $e").map(BaseUrl(_))).left.map(refactorError => Problem(refactorError))
+    (Uri
+      .parse((text).value)
+      .left
+      .map(e => s"$setting: $e")
+      .map(BaseUrl(_)))
+      .left
+      .map(refactorError => Problem(refactorError))

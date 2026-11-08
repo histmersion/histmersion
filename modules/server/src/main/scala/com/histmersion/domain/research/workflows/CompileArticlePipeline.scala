@@ -193,10 +193,22 @@ final class CompileArticlePipeline(
       )
     )
     // cited, or listed (a hand-written Not used list, or a stored reason): handled already
-    val already: Set[String] = AgentVerify.wikilinks(AgentVerify.Text(s.body.value)).map(w => w.value: String).toSet ++ s.reasons.map(r => r.citekey.value: String)
+    val already: Set[String] =
+      AgentVerify.wikilinks(AgentVerify.Text(s.body.value)).map(w => w.value: String).toSet ++ s.reasons.map(r =>
+        r.citekey.value: String
+      )
     if res.total.value > facts.size then
-      ctx.warn(s"filter: $line → ${res.total.value}; only the first ${facts.size} are read (agents.compile.max-sources)")
-    Right(Found(ArticleDraft.Filter(line), RowCount(res.total.value), facts, facts.map(_.citekey).filterNot(ck => already(ck.value))))
+      ctx.warn(
+        s"filter: $line → ${res.total.value}; only the first ${facts.size} are read (agents.compile.max-sources)"
+      )
+    Right(
+      Found(
+        ArticleDraft.Filter(line),
+        RowCount(res.total.value),
+        facts,
+        facts.map(_.citekey).filterNot(ck => already(ck.value))
+      )
+    )
 
   /** A source's record, as an extraction reads it: summary, findings, notes, then the body, cut at
     * `agents.compile.record-chars`.
@@ -254,7 +266,13 @@ final class CompileArticlePipeline(
       site.citations
         .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList.map(k => Edge.Kind.Wire(k.value)))
         .filter(n => n.direction.value == "out" && n.target == NeighborTarget.Source)
-        .map(n => EdgeFact(s.citekey, Article.Coverage.DisagreementKind(com.histmersion.api.library.Edge.Kind.wireOf(n.kind).value), Citekey.assume(n.citekey.value)))
+        .map(n =>
+          EdgeFact(
+            s.citekey,
+            Article.Coverage.DisagreementKind(com.histmersion.api.library.Edge.Kind.wireOf(n.kind).value),
+            Citekey.assume(n.citekey.value)
+          )
+        )
     }
     CompileArticle.evidence(found.filter, found.total, found.sources, extracted, edges)
 
@@ -294,9 +312,21 @@ final class CompileArticlePipeline(
           t => resolve(WikiLinks.Occurrence.Target(t.value)).isDefined,
           ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)
         )
-        val title = Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title.map(t => Title(t.value)))
+        val title =
+          Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title.map(t => Title(t.value)))
         CompileArticle
-          .checkDraft(a, s.slug, s.mode, s.kind, title, s.body, ev, found.filter, corpus, CompileArticle.Last(last.value))
+          .checkDraft(
+            a,
+            s.slug,
+            s.mode,
+            s.kind,
+            title,
+            s.body,
+            ev,
+            found.filter,
+            corpus,
+            CompileArticle.Last(last.value)
+          )
           .left
           .map(_.map(p => RunCtx.Problem(p.value)))
           .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
@@ -314,8 +344,11 @@ final class CompileArticlePipeline(
         Pipelines.EntryText(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.value.take(8)})"),
         Some(Pipelines.EntryTopic("agent compile"))
       )
-      val _ = ctx.write("tasks item", item.asJson)(site.workLists.add(WorkListControllers.ListName("tasks"), item).map(_ => ()))(Right(()))
-    if !decided.approved.value then Right(Written(written = Written.Value(false), Written.Why("the draft was rejected"), None))
+      val _ = ctx.write("tasks item", item.asJson)(
+        site.workLists.add(WorkListControllers.ListName("tasks"), item).map(_ => ())
+      )(Right(()))
+    if !decided.approved.value then
+      Right(Written(written = Written.Value(false), Written.Why("the draft was rejected"), None))
     else
       d.mode match
         case DraftMode.Create =>
@@ -323,13 +356,26 @@ final class CompileArticlePipeline(
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
             Right(Written(written = Written.Value(false), Written.Why("the slug was taken meanwhile"), None))
           else
-            val put = Article.Put(d.title, d.kind, Article.Body(d.text.value), d.summary, s.tags.map(t => Article.Put.Tags(t.value)), filter = s.filter, reasons = d.reasons)
+            val put = Article.Put(
+              d.title,
+              d.kind,
+              Article.Body(d.text.value),
+              d.summary,
+              s.tags.map(t => Article.Put.Tags(t.value)),
+              filter = s.filter,
+              reasons = d.reasons
+            )
             ctx.write(s"create article [[${s.slug}]]", put.asJson)(
-              site.articles.put(s.slug, put).left.map(_.message.value).map(_ => Written(written = Written.Value(true), Written.Why("created"), None))
+              site.articles
+                .put(s.slug, put)
+                .left
+                .map(_.message.value)
+                .map(_ => Written(written = Written.Value(true), Written.Why("created"), None))
             )(Right(Written(written = Written.Value(false), Written.Why(AgentsMarkdown.DryRunNote), None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
-          val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(Coverage.Entry.Reason("")))
+          val stale =
+            s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(Coverage.Entry.Reason("")))
           val patch = Article.Patch(
             append = Some(Article.Patch.Append(d.text.value)),
             section = d.section.map(x => Article.Patch.Section(x.value)),
@@ -340,8 +386,9 @@ final class CompileArticlePipeline(
           ctx.write(s"append to article [[${s.slug}]]${d.section.fold("")(x => s" under '$x'")}", patch.asJson)(
             site.articles.patch(s.slug, patch).map(_ => true)
           )(Right(false)) match
-            case Right(false) => Right(Written(written = Written.Value(false), Written.Why(AgentsMarkdown.DryRunNote), None))
-            case Right(_)     =>
+            case Right(false) =>
+              Right(Written(written = Written.Value(false), Written.Why(AgentsMarkdown.DryRunNote), None))
+            case Right(_) =>
               Right(
                 Written(
                   written = Written.Value(true),
@@ -437,11 +484,16 @@ object CompileArticlePipeline:
   ) derives KindlingsCodecAsObject
 
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */
-  final case class Found(filter: ArticleDraft.Filter, total: RowCount, sources: List[SourceFact], toExtract: List[Citekey])
-      derives KindlingsCodecAsObject
+  final case class Found(
+      filter: ArticleDraft.Filter,
+      total: RowCount,
+      sources: List[SourceFact],
+      toExtract: List[Citekey]
+  ) derives KindlingsCodecAsObject
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
-  final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion]) derives KindlingsCodecAsObject
+  final case class Written(written: Written.Value, why: Written.Why, previousVersion: Option[Written.PreviousVersion])
+      derives KindlingsCodecAsObject
 
   object Written:
     type Value = Value.T

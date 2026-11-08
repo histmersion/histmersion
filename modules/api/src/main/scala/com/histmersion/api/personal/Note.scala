@@ -20,21 +20,22 @@ final case class Note(
     createdAt: Note.CreatedAt = Note.CreatedAt(""),
     updatedAt: Note.UpdatedAt = Note.UpdatedAt("")
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object Note:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
-
 
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]
 
-  final case class Edit(text: Text, ifUpdatedAt: Option[UpdatedAt] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
-
-
+  final case class Edit(text: Text, ifUpdatedAt: Option[UpdatedAt] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   type Id = Id.T
 
@@ -45,14 +46,13 @@ object Note:
 
   final case class New(target: Target, text: Text, title: Option[Title] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   type Text = Text.T
 
   object Text extends Newtype[String, Pure]:
-    export Note.{Problem as TidyResultPart1}
+    export Note.Problem as TidyResultPart1
 
     val MaxChars = 50000
 

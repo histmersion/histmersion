@@ -180,7 +180,9 @@ final class ReviewArticlePipeline(
       for
         fixed <- fixer(ctx, st.snap, st.merged, c.ledger, r, c.reasons)
         after = ReviewLedger.applyFix(c.ledger, fixed, runId(ctx), ReviewLedger.ApplyFixRound(r))
-        patched <- ctx.code[ReviewArticle.Patched](AgentRepo.StepRecord.Name(s"patch-$r"))(write(ctx, st.snap, fixed, r, after))
+        patched <- ctx.code[ReviewArticle.Patched](AgentRepo.StepRecord.Name(s"patch-$r"))(
+          write(ctx, st.snap, fixed, r, after)
+        )
         carry = Carry(
           if patched.conflict.value then c.ledger else after,
           c.applied + fixed.applied.size,
@@ -225,8 +227,12 @@ final class ReviewArticlePipeline(
       confirming: Option[Snapshot] = None
   ): Either[Halt, State] =
     for
-      snap <- ctx.code[Snapshot](AgentRepo.StepRecord.Name(s"snapshot-$r"))(snapshot(ctx, slug, unwritten, carry.reasons))
-      mech <- ctx.code[List[Finding]](AgentRepo.StepRecord.Name(s"mechanical-$r"))(Right(mechanicalOf(ctx, snap, r, None)))
+      snap <- ctx.code[Snapshot](AgentRepo.StepRecord.Name(s"snapshot-$r"))(
+        snapshot(ctx, slug, unwritten, carry.reasons)
+      )
+      mech <- ctx.code[List[Finding]](AgentRepo.StepRecord.Name(s"mechanical-$r"))(
+        Right(mechanicalOf(ctx, snap, r, None))
+      )
       reports <- panel(ctx, snap, r, carry.ledger, fixable, confirming.isDefined)
       stored = notMaterial(ctx, reports)
       ledger <- ctx.code[Ledger](AgentRepo.StepRecord.Name(s"ledger-$r")) {
@@ -263,7 +269,12 @@ final class ReviewArticlePipeline(
         )
       )
       _ <- ctx.code[List[String]](AgentRepo.StepRecord.Name(s"proposals-$r"))(Right(propose(ctx, merged)))
-    yield State(merged, snap, carry.modify(_.ledger).setTo(ledger).modify(_.reasons).setTo(carry.reasons ++ stored), unwritten)
+    yield State(
+      merged,
+      snap,
+      carry.modify(_.ledger).setTo(ledger).modify(_.reasons).setTo(carry.reasons ++ stored),
+      unwritten
+    )
 
   /** A verification pass after a fix: the lint again, then each reviewer that owns a finding the fixer claims to have
     * fixed re-checks those, and the edited passages, only.
@@ -277,8 +288,12 @@ final class ReviewArticlePipeline(
       unwritten: Option[ReviewArticle.Fix.Body]
   ): Either[Halt, State] =
     for
-      snap <- ctx.code[Snapshot](AgentRepo.StepRecord.Name(s"snapshot-$r"))(snapshot(ctx, slug, unwritten, carry.reasons))
-      mech <- ctx.code[List[Finding]](AgentRepo.StepRecord.Name(s"mechanical-$r"))(Right(mechanicalOf(ctx, snap, r, Some(prev.body))))
+      snap <- ctx.code[Snapshot](AgentRepo.StepRecord.Name(s"snapshot-$r"))(
+        snapshot(ctx, slug, unwritten, carry.reasons)
+      )
+      mech <- ctx.code[List[Finding]](AgentRepo.StepRecord.Name(s"mechanical-$r"))(
+        Right(mechanicalOf(ctx, snap, r, Some(prev.body)))
+      )
       edited = ReviewLedger.editedPassages(prev.body, snap.body)
       checks <- recheck(ctx, snap, r, carry.ledger, edited)
       ledger <- ctx.code[Ledger](AgentRepo.StepRecord.Name(s"ledger-$r"))(
@@ -347,7 +362,12 @@ final class ReviewArticlePipeline(
     val run = runId(ctx)
     val (m, _) = ReviewLedger.recheckMechanical(l, mech, run, ReviewLedger.RecheckMechanicalRound(r))
     checks.foldLeft(m)((led, rc) =>
-      ReviewLedger.applyRecheck(led, rc.copy(checks = held(ctx, l, rc.checks, s)), run, ReviewLedger.ApplyRecheckRound(r))
+      ReviewLedger.applyRecheck(
+        led,
+        rc.copy(checks = held(ctx, l, rc.checks, s)),
+        run,
+        ReviewLedger.ApplyRecheckRound(r)
+      )
     )
 
   /** The checks of a pass, held to the checklist of the body it reviewed ([[holdPairChecks]]). */
@@ -438,7 +458,10 @@ final class ReviewArticlePipeline(
     else
       "\n\nCritiques the article sets aside with a stored reason (the generated Method note counts them; check a " +
         "reason against the records like a Not used reason):\n\n" +
-        Prompt.data("critique-reasons", reasoned.map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(_.value)}").mkString("\n"))
+        Prompt.data(
+          "critique-reasons",
+          reasoned.map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(_.value)}").mkString("\n")
+        )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -628,9 +651,7 @@ final class ReviewArticlePipeline(
             StepAgent.ColdReader,
             Prompt.UserText(user + ledger(false, Some(Reviewer.ColdReader))),
             ResearchAnswers.coldReader
-          )((a, last) =>
-            checked(checkColdReader(a, LastRound(last.value), prior(Reviewer.ColdReader)))
-          ),
+          )((a, last) => checked(checkColdReader(a, LastRound(last.value), prior(Reviewer.ColdReader)))),
         () =>
           ctx.llmAt[SkepticAnswer, Report](
             seqs(2),
@@ -696,7 +717,8 @@ final class ReviewArticlePipeline(
         .agent(agent)
         .toOption
         .map(d =>
-          AgentRepo.StepRecord.Turns(math.max(1, math.min(d.maxTurns.value, cfg.review.recheckTurns.value + asked.size)))
+          AgentRepo.StepRecord
+            .Turns(math.max(1, math.min(d.maxTurns.value, cfg.review.recheckTurns.value + asked.size)))
         )
       val ev =
         if rv == Reviewer.ColdReader then NoEvidence else evidenceCheck(isCitekey, records(), minRatio)
@@ -712,9 +734,7 @@ final class ReviewArticlePipeline(
           ResearchAnswers.recheck,
           None,
           turns
-        )((a, last) =>
-          checked(checkRecheck(rv, a, prior, edited.text, ev, LastRound(last.value), s.critiques))
-        )
+        )((a, last) => checked(checkRecheck(rv, a, prior, edited.text, ev, LastRound(last.value), s.critiques)))
     })
 
   /** What a re-check reads: the findings to verify (in full, with their evidence and the fixer's claim), the edited
@@ -986,7 +1006,8 @@ final class ReviewArticlePipeline(
     val line = logLine(outcome, last, runId(ctx)) +
       (if end.confirmed then ", confirmed by a full panel" else "") +
       (if end.deferred.isEmpty then ""
-       else s"; ${Plural.count(Plural.CountN(end.deferred.size.toLong), Plural.CountSingular("new MAJOR"))} of the final pass deferred to the next run") +
+       else
+         s"; ${Plural.count(Plural.CountN(end.deferred.size.toLong), Plural.CountSingular("new MAJOR"))} of the final pass deferred to the next run") +
       s"; ledger ${ledger.entries.count(_.status == ReviewLedger.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
     Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
@@ -1048,7 +1069,8 @@ final class ReviewArticlePipeline(
         val why = kept.fold(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}")(id =>
           s"superseded by #$id (one item per article)"
         )
-        val p = QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)), reason = Some(Queue.QueueItem.Reason(why)))
+        val p =
+          QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)), reason = Some(Queue.QueueItem.Reason(why)))
         val _ =
           ctx.write(s"tasks item #${item.id} done", p.asJson)(
             site.workLists.patch(QueueItemId(item.id.value), p).map(_ => ())

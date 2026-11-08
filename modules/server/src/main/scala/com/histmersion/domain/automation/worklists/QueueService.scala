@@ -44,13 +44,19 @@ object QueueService:
       .read(scope match
         case QueueScope.Open                            => QueueRepo.list(list, all = false)
         case QueueScope.All                             => QueueRepo.list(list, all = true)
-        case QueueScope.ForJob(job) => QueueRepo.forJob(list, QueueRepo.JobText(job.value))
+        case QueueScope.ForJob(job)                     => QueueRepo.forJob(list, QueueRepo.JobText(job.value))
         case QueueScope.ForGoal(goal, linked, withDone) =>
-          QueueRepo.forGoal(list, QueueRepo.GoalText(goal.value), linked.toList.map(l => GoalLink.Ref(l.value)), withDone.value))
+          QueueRepo.forGoal(
+            list,
+            QueueRepo.GoalText(goal.value),
+            linked.toList.map(l => GoalLink.Ref(l.value)),
+            withDone.value
+          ))
       .toList
 
     def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(QueueRepo.QueueItemId(id.value)))
-    def byIds(ids: List[QueueItemId]): List[QueueItem] = db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
+    def byIds(ids: List[QueueItemId]): List[QueueItem] =
+      db.read(QueueRepo.byIds(ids.map(i => QueueRepo.QueueItemId(i.value)))).toList
     def naming(list: Kind, doi: Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
     def add(list: Kind, item: QueueAdd): QueueItem = db.transact(QueueRepo.insert(list, item))
 
@@ -107,4 +113,3 @@ object QueueService:
         ImportCounts.Written(items.size),
         ImportCounts.Removed(if mode == ImportMode.Replace then before.listed(list, QueueScope.All).size else 0)
       )
-

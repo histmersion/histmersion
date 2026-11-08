@@ -77,8 +77,18 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
         Some(box(-129, -39, -125, -35)),
         Some(Period(Year(-1600), Year(-1000)))
       ),
-      List(Place.Name(Place.Name.Value("Zzia Realm")), Place.Name(Place.Name.Value("Old Zziarealm"), Place.Name.Lang("xx"), Some(Period(Year(-1600), Year(-1300))))),
-      List(Place.Relation(Place.Relation.ChildId("zzi_realm"), Place.Relation.ParentId("zzi_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1600), Year(-1000)))))
+      List(
+        Place.Name(Place.Name.Value("Zzia Realm")),
+        Place.Name(Place.Name.Value("Old Zziarealm"), Place.Name.Lang("xx"), Some(Period(Year(-1600), Year(-1300))))
+      ),
+      List(
+        Place.Relation(
+          Place.Relation.ChildId("zzi_realm"),
+          Place.Relation.ParentId("zzi_land"),
+          Place.Relation.Kind(Place.Relation.PartOf),
+          Some(Period(Year(-1600), Year(-1000)))
+        )
+      )
     ),
     Place.Input(
       Place(
@@ -102,13 +112,19 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
     // contains the query but does not START with it, and is only findable by a period-scoped name
     Place.Input(
       Place(Place.Id("zzi_hidden"), Place.Label("Hidden Place"), Place.KindValue(Place.Kind.Site)),
-      List(Place.Name(Place.Name.Value("Hidden Place")), Place.Name(Place.Name.Value("Zzia Hidden"), Place.Name.Lang("xx"), Some(Period(Year(-1500), Year(-1200)))))
+      List(
+        Place.Name(Place.Name.Value("Hidden Place")),
+        Place.Name(Place.Name.Value("Zzia Hidden"), Place.Name.Lang("xx"), Some(Period(Year(-1500), Year(-1200))))
+      )
     ),
     Place.Input(
       Place(Place.Id("zzi_inner"), Place.Label("The Zzia"), Place.KindValue(Place.Kind.Site)),
       List(Place.Name(Place.Name.Value("The Zzia")))
     ),
-    Place.Input(Place(Place.Id("zzi_exact"), Place.Label("Zzia"), Place.KindValue(Place.Kind.Site)), List(Place.Name(Place.Name.Value("Zzia")))),
+    Place.Input(
+      Place(Place.Id("zzi_exact"), Place.Label("Zzia"), Place.KindValue(Place.Kind.Site)),
+      List(Place.Name(Place.Name.Value("Zzia")))
+    ),
     // a present-day GeoNames/Wikidata place (made one in beforeAll): never in a search before modern-from
     Place.Input(
       Place(
@@ -117,7 +133,10 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
         Place.KindValue(Place.Kind.Site),
         Some(Place.Geometry("""{"type":"Point","coordinates":[-127.0,-36.0]}"""))
       ),
-      List(Place.Name(Place.Name.Value("Zzia Wikitown")), Place.Name(Place.Name.Value("Wikizzia"), Place.Name.Lang("xx")))
+      List(
+        Place.Name(Place.Name.Value("Zzia Wikitown")),
+        Place.Name(Place.Name.Value("Wikizzia"), Place.Name.Lang("xx"))
+      )
     )
   )
 
@@ -160,15 +179,31 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
           Citekey("zzi_a"),
           List(Source.Tags("zzi-tag")),
           List(
-            (Finding.Claim("at the town"), Some(GeoPoint(Longitude(-128.0), Latitude(-37.0))), Some(Finding.Region("Zzia Town")), Period(Year(-1400), Year(-1350))),
-            (Finding.Claim("in the east"), Some(GeoPoint(Longitude(-121.0), Latitude(-39.0))), None, Period(Year(-900), Year(-800)))
+            (
+              Finding.Claim("at the town"),
+              Some(GeoPoint(Longitude(-128.0), Latitude(-37.0))),
+              Some(Finding.Region("Zzia Town")),
+              Period(Year(-1400), Year(-1350))
+            ),
+            (
+              Finding.Claim("in the east"),
+              Some(GeoPoint(Longitude(-121.0), Latitude(-39.0))),
+              None,
+              Period(Year(-900), Year(-800))
+            )
           )
         ),
         cfg.limits.chunkChars
       )
       SourceFixtures.upsert(
         ds,
-        source(Citekey("zzi_b"), Nil, List((Finding.Claim("by name only"), None, Some(Finding.Region("Zzialand")), Period(Year(-1300), Year(-1250))))),
+        source(
+          Citekey("zzi_b"),
+          Nil,
+          List(
+            (Finding.Claim("by name only"), None, Some(Finding.Region("Zzialand")), Period(Year(-1300), Year(-1250)))
+          )
+        ),
         cfg.limits.chunkChars
       )
       SourceFixtures.upsert(
@@ -176,7 +211,14 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
         source(
           Citekey("zzi_c"),
           List(Source.Tags("zzi-tag")),
-          List((Finding.Claim("far away"), Some(GeoPoint(Longitude(-150.0), Latitude(60.0))), Some(Finding.Region("Elsewhere")), Period(Year(-1400), Year(-1300))))
+          List(
+            (
+              Finding.Claim("far away"),
+              Some(GeoPoint(Longitude(-150.0), Latitude(60.0))),
+              Some(Finding.Region("Elsewhere")),
+              Period(Year(-1400), Year(-1300))
+            )
+          )
         ),
         cfg.limits.chunkChars
       )
@@ -281,7 +323,12 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
     }
     // the fixtures are actually exercised: the region reaches the town's finding through the hierarchy
     assert(
-      citekeys(FilterSql.sourceKeys(Filter(places = List(Filter.Places("zzi_land"))), scope(Filter(places = List(Filter.Places("zzi_land"))))))
+      citekeys(
+        FilterSql.sourceKeys(
+          Filter(places = List(Filter.Places("zzi_land"))),
+          scope(Filter(places = List(Filter.Places("zzi_land"))))
+        )
+      )
         .contains("zzi_a")
     )
 
@@ -338,7 +385,11 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
     }
     assertEquals(
       SearchFixtures
-        .selectionCounts(ds, Filter(places = List(Filter.Places("zzi_land"))), scope(Filter(places = List(Filter.Places("zzi_land")))))
+        .selectionCounts(
+          ds,
+          Filter(places = List(Filter.Places("zzi_land"))),
+          scope(Filter(places = List(Filter.Places("zzi_land"))))
+        )
         .sources,
       2
     )
@@ -436,16 +487,43 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
 
   test("place search: the label-prefix fast path and the full path both reach the fixtures"):
     // "Zzia" has five label prefixes (Zzia, Zzia Land/Realm/Town/East): 3 come from the prefix pass alone
-    assertEquals(PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zzia")), None, PlaceFixtures.Limit(3)).head.id, "zzi_exact")
+    assertEquals(
+      PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zzia")), None, PlaceFixtures.Limit(3)).head.id,
+      "zzi_exact"
+    )
     // the period-scoped name is the only way to "Hidden Place": present in its window, absent outside
-    val inWindow = PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zzia Hidden")), Some(DeepTime.SignedYear(-1300L)), PlaceFixtures.Limit(20))
+    val inWindow = PlaceFixtures.search(
+      ds,
+      Some(PlaceFixtures.SearchText("Zzia Hidden")),
+      Some(DeepTime.SignedYear(-1300L)),
+      PlaceFixtures.Limit(20)
+    )
     assertEquals(inWindow.map(_.id), Vector("zzi_hidden"))
     assertEquals(inWindow.head.matchedName, Some("Zzia Hidden"))
-    assert(!PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zzia Hidden")), Some(DeepTime.SignedYear(0L)), PlaceFixtures.Limit(20)).exists(_.id.value == "zzi_hidden"))
+    assert(
+      !PlaceFixtures
+        .search(
+          ds,
+          Some(PlaceFixtures.SearchText("Zzia Hidden")),
+          Some(DeepTime.SignedYear(0L)),
+          PlaceFixtures.Limit(20)
+        )
+        .exists(_.id.value == "zzi_hidden")
+    )
     // a present-day import: by label and by name only from modern-from (the pre-modern passes skip it)
     List("Zzia Wiki", "Wikizz").foreach { q =>
-      assert(!PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText(q)), Some(DeepTime.SignedYear(-1400L)), PlaceFixtures.Limit(20)).exists(_.id.value == "zzi_wd_now"), q)
-      assert(PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText(q)), Some(DeepTime.SignedYear(1600L)), PlaceFixtures.Limit(20)).exists(_.id.value == "zzi_wd_now"), q)
+      assert(
+        !PlaceFixtures
+          .search(ds, Some(PlaceFixtures.SearchText(q)), Some(DeepTime.SignedYear(-1400L)), PlaceFixtures.Limit(20))
+          .exists(_.id.value == "zzi_wd_now"),
+        q
+      )
+      assert(
+        PlaceFixtures
+          .search(ds, Some(PlaceFixtures.SearchText(q)), Some(DeepTime.SignedYear(1600L)), PlaceFixtures.Limit(20))
+          .exists(_.id.value == "zzi_wd_now"),
+        q
+      )
     }
 
   // ── the map's base layers: the single statement, verbatim, as the reference ──────────────────
@@ -655,18 +733,28 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
         rows(referenceGeoQuery(kind, asOf, limit)),
         s"kind=$kind asOf=$asOf limit=$limit"
       )
-    val sites = rows(PlaceFixtures.geoJsonQuery(Some(KindWire("site")), Some(DeepTime.SignedYear(-1200L)), PlaceFixtures.Limit(100000))).mkString
+    val sites = rows(
+      PlaceFixtures.geoJsonQuery(Some(KindWire("site")), Some(DeepTime.SignedYear(-1200L)), PlaceFixtures.Limit(100000))
+    ).mkString
     assert(
       sites.contains("zzi_imp_hit") && !sites.contains("zzi_imp_miss"),
       "an imported site is drawn only with a finding"
     )
-    val polities = rows(PlaceFixtures.geoJsonQuery(Some(KindWire("polity")), Some(DeepTime.SignedYear(-1200L)), PlaceFixtures.Limit(100000))).mkString
+    val polities = rows(
+      PlaceFixtures.geoJsonQuery(
+        Some(KindWire("polity")),
+        Some(DeepTime.SignedYear(-1200L)),
+        PlaceFixtures.Limit(100000)
+      )
+    ).mkString
     assert(
       polities.contains("zzi_pol_ohm") && !polities.contains("zzi_pol_cl"),
       "the lower tier shadows the same state"
     )
     def siteIds(y: Long) = "\\(([a-z_]+),".r
-      .findAllMatchIn(rows(PlaceFixtures.geoJsonQuery(None, Some(DeepTime.SignedYear(y)), PlaceFixtures.Limit(100000))).mkString("\n"))
+      .findAllMatchIn(
+        rows(PlaceFixtures.geoJsonQuery(None, Some(DeepTime.SignedYear(y)), PlaceFixtures.Limit(100000))).mkString("\n")
+      )
       .map(_.group(1))
       .filter(_.startsWith("zzi_"))
       .toSet
@@ -680,7 +768,10 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
     )
     def layer(kind: String, y: Option[Long]) = "\\(([a-z_]+),".r
       .findAllMatchIn(
-        rows(PlaceFixtures.geoJsonQuery(Some(KindWire(kind)), y.map(DeepTime.SignedYear.apply), PlaceFixtures.Limit(100000)))
+        rows(
+          PlaceFixtures
+            .geoJsonQuery(Some(KindWire(kind)), y.map(DeepTime.SignedYear.apply), PlaceFixtures.Limit(100000))
+        )
           .mkString("\n")
       )
       .map(_.group(1))
@@ -696,8 +787,12 @@ class InteractiveQueriesSuite extends DbSuite with Bounded:
       "an undated people by its findings, as any undated place"
     )
     assert(
-      rows(PlaceFixtures.geoJsonQuery(Some(KindWire("people")), Some(DeepTime.SignedYear(-850L)), PlaceFixtures.Limit(100000))).exists(r =>
-        r.contains("zzi_people") && r.contains(",findings,")
-      ),
+      rows(
+        PlaceFixtures.geoJsonQuery(
+          Some(KindWire("people")),
+          Some(DeepTime.SignedYear(-850L)),
+          PlaceFixtures.Limit(100000)
+        )
+      ).exists(r => r.contains("zzi_people") && r.contains(",findings,")),
       "drawn as dated by its findings"
     )

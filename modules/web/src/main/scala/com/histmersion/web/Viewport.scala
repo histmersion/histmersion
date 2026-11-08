@@ -53,7 +53,9 @@ object Viewport:
     MediaQuery(s"(max-width: ${maxWidth.value}px), (max-height: ${maxHeight.value}px) and (pointer: coarse)")
 
   /** The tablet's: every width up to its own limit (the phone's query is asked first). */
-  def tabletQuery(tabletMaxWidth: UiConfig.TabletMaxWidthPx): MediaQuery = MediaQuery(s"(max-width: ${tabletMaxWidth.value}px)")
+  def tabletQuery(tabletMaxWidth: UiConfig.TabletMaxWidthPx): MediaQuery = MediaQuery(
+    s"(max-width: ${tabletMaxWidth.value}px)"
+  )
 
   private val current = Var(Mode.Wide)
 

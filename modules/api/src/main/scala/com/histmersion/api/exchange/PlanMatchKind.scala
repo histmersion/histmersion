@@ -23,7 +23,17 @@ final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A =>
 
   /** The matches the plan's Markdown lists (at most `limit`), one line each. */
   def lines(m: PlanMatches, limit: PlanMatchKind.LineLimit): List[PlanMatchKind.MatchLine] =
-    m.rows.flatMap(decoder.decodeJson(_).toOption).filter({ val refactorFunction = listed; (refactorValue) => ((refactorFunction(refactorValue)) == PlanMatchKind.ListedResult(true)) }).take((limit).value).map({ val refactorFunction3 = line; (refactorValue3) => PlanMatchKind.MatchLine((refactorFunction3(refactorValue3)).value) })
+    m.rows
+      .flatMap(decoder.decodeJson(_).toOption)
+      .filter {
+        val refactorFunction = listed;
+        (refactorValue) => ((refactorFunction(refactorValue)) == PlanMatchKind.ListedResult(true))
+      }
+      .take((limit).value)
+      .map {
+        val refactorFunction3 = line;
+        (refactorValue3) => PlanMatchKind.MatchLine((refactorFunction3(refactorValue3)).value)
+      }
 
 object PlanMatchKind:
   type LineLimit = LineLimit.T

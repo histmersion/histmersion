@@ -14,7 +14,7 @@ import com.histmersion.domain.automation.worklists.QueueService
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.library.acquisition.AcquireCheckService
 import com.histmersion.api.Api
-import com.histmersion.api.automation.{Goal as ApiGoal}
+import com.histmersion.api.automation.Goal as ApiGoal
 import com.histmersion.domain.automation.goals.GoalLinkRepo
 import com.histmersion.domain.library.acquisition.AcquireCheckRow
 import com.histmersion.api.library.Acquire
@@ -50,7 +50,7 @@ final class WorkListView(
               .toSet,
             withDone = QueueScope.ForGoal.WithDone(all.value)
           )
-        case (None, None)    => if all.value then QueueScope.All else QueueScope.Open
+        case (None, None) => if all.value then QueueScope.All else QueueScope.Open
       val items = queues.list(k, scope)
       val checks =
         if k != Kind.Acquire then Nil
@@ -80,9 +80,7 @@ final class WorkListView(
       val titles = items
         .flatMap(_.goal)
         .distinct
-        .flatMap(s =>
-          Goal.Slug.option(s.value).flatMap(goals.get).map(g => s -> ApiGoal.Title(g.title.value))
-        )
+        .flatMap(s => Goal.Slug.option(s.value).flatMap(goals.get).map(g => s -> ApiGoal.Title(g.title.value)))
         .toMap
       val own = items.flatMap(i => i.goal.map(s => (i.id, GoalRef(s, titles.getOrElse(s, ApiGoal.Title(s.value))))))
       QueueListing(k.label, items, checks, Queue.itemGoals(own, linked))

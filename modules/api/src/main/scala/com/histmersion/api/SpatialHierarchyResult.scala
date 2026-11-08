@@ -13,7 +13,8 @@ final case class SpatialHierarchyResult(
     pointPlaces: SpatialHierarchyResult.PointPlaces,
     job: Option[SpatialHierarchyResult.Job.Id] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object SpatialHierarchyResult:
   object Job:

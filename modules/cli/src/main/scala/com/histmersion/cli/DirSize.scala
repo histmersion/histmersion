@@ -32,7 +32,13 @@ object DirSize:
     * @param unreadable
     *   directories or files that could not be read
     */
-  final case class Result(bytes: Result.Bytes, files: Result.Files, exists: Result.Exists, partial: Result.Partial = Result.Partial(false), unreadable: Result.Unreadable = Result.Unreadable(0))
+  final case class Result(
+      bytes: Result.Bytes,
+      files: Result.Files,
+      exists: Result.Exists,
+      partial: Result.Partial = Result.Partial(false),
+      unreadable: Result.Unreadable = Result.Unreadable(0)
+  )
 
   object Result:
     type Bytes = ByteCount
@@ -49,7 +55,11 @@ object DirSize:
   /** The caps of one measurement: at most `maxEntries` visited entries over all its walks, and no walk past
     * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
     */
-  final class Budget(val maxEntries: Budget.MaxEntries, val deadlineNanos: Budget.DeadlineNanos, val clock: () => Long = () => System.nanoTime()):
+  final class Budget(
+      val maxEntries: Budget.MaxEntries,
+      val deadlineNanos: Budget.DeadlineNanos,
+      val clock: () => Long = () => System.nanoTime()
+  ):
     private val used = AtomicLong(0L)
 
     /** Count one entry; false once either cap is reached. */
@@ -63,17 +73,24 @@ object DirSize:
     type DeadlineNanos = DeadlineNanos.T
     object DeadlineNanos extends Newtype[Long, Pure]
 
-
     def of(maxEntries: StorageConfig.MaxEntries, maxMillis: StorageConfig.MaxMillis): Budget =
-      Budget(MaxEntries(maxEntries.value.toLong), DeadlineNanos(System.nanoTime() + maxMillis.value.toLong * 1_000_000L))
+      Budget(
+        MaxEntries(maxEntries.value.toLong),
+        DeadlineNanos(System.nanoTime() + maxMillis.value.toLong * 1_000_000L)
+      )
     val unlimited: Budget = Budget(MaxEntries(Long.MaxValue), DeadlineNanos(Long.MaxValue))
 
   def measure(root: Path, budget: Budget): Result =
     if !Files.exists(root) then Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists(false))
     else if Files.isRegularFile(root) then
       val _ = budget.take()
-      Result(Result.Bytes(scala.util.Try(Files.size(root)).getOrElse(0L)), Result.Files(1L), exists = Result.Exists(true))
-    else if budget.exhausted then Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists(true), partial = Result.Partial(true))
+      Result(
+        Result.Bytes(scala.util.Try(Files.size(root)).getOrElse(0L)),
+        Result.Files(1L),
+        exists = Result.Exists(true)
+      )
+    else if budget.exhausted then
+      Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists(true), partial = Result.Partial(true))
     else
       // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
       var bytes = 0L
@@ -98,7 +115,13 @@ object DirSize:
       try
         val _ = Files.walkFileTree(start, java.util.EnumSet.noneOf(classOf[FileVisitOption]), Int.MaxValue, visitor)
       catch case _: IOException => unreadable += 1
-      Result(Result.Bytes(bytes), Result.Files(files), exists = Result.Exists(true), Result.Partial(partial), Result.Unreadable(unreadable))
+      Result(
+        Result.Bytes(bytes),
+        Result.Files(files),
+        exists = Result.Exists(true),
+        Result.Partial(partial),
+        Result.Unreadable(unreadable)
+      )
 
   /** `p`, or the nearest of its parents that exists (a directory not made yet is on its parent's volume). */
   def existing(p: Path): Option[Path] =

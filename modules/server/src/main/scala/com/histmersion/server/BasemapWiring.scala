@@ -55,7 +55,9 @@ object BasemapWiring:
         .build(),
       JavaRangeHttp.TimeoutSeconds(cfg.timeoutSeconds.value),
       JavaRangeHttp.Retries(cfg.retries.value),
-      JavaRangeHttp.UserAgent(HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (terrain base map)")).value),
+      JavaRangeHttp.UserAgent(
+        HttpPolicy.userAgent(HttpPolicy.UserAgent(s"Histmersion/${Version.version} (terrain base map)")).value
+      ),
       Retries
     )(using clock)
 
@@ -120,8 +122,7 @@ object BasemapWiring:
         Some(deps.jobStops)
       )((_, note) =>
         BackgroundJob.Outcome.of(
-          body(t => note(JobInfo.Progress(t.value)))
-            .left
+          body(t => note(JobInfo.Progress(t.value))).left
             .map(p => BackgroundJob.Outcome.Error(p.value))
             .map(d => BackgroundJob.Outcome.Summary(d.value))
         )

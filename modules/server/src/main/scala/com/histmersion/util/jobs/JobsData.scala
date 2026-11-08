@@ -11,4 +11,6 @@ object JobsData extends DataContribution:
 
   val tables: List[OwnedTable] = OwnedTable.all("jobs")
 
-  def figures(using DbCon): DataFigures = DataFigures(JobRepo.states.map((state, n) => DataCount(DataCount.Noun(state.value), DataCount.Count(n.value.toLong))))
+  def figures(using DbCon): DataFigures = DataFigures(
+    JobRepo.states.map((state, n) => DataCount(DataCount.Noun(state.value), DataCount.Count(n.value.toLong)))
+  )

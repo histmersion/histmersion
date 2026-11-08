@@ -31,7 +31,8 @@ class SourceDeleteSuite extends munit.FunSuite:
     Ck,
     Source.Deletion.Title("The Ahhiyawa Texts"),
     applied = Source.Deletion.Applied(true),
-    counts = List(DeleteCount(DeletePart.Findings, DeleteCount.Rows(3)), DeleteCount(DeletePart.EdgesIn, DeleteCount.Rows(2))),
+    counts =
+      List(DeleteCount(DeletePart.Findings, DeleteCount.Rows(3)), DeleteCount(DeletePart.EdgesIn, DeleteCount.Rows(2))),
     files = List(Source.Deletion.Files("/spool/abc.pdf")),
     calibreId = Some(Source.CalibreId("1693")),
     logEntry = Some(Source.Deletion.LogEntry(42))
@@ -42,15 +43,27 @@ class SourceDeleteSuite extends munit.FunSuite:
       Source.Delete.logText(done),
       s"deleted $Ck (The Ahhiyawa Texts): 3 findings, 2 edges in (parked), 1 stored original, Calibre entry 1693 kept"
     )
-    assertEquals(Source.Delete.logText(Source.Deletion(Ck, Source.Deletion.Title("T"), applied = Source.Deletion.Applied(true))), s"deleted $Ck (T)")
+    assertEquals(
+      Source.Delete.logText(Source.Deletion(Ck, Source.Deletion.Title("T"), applied = Source.Deletion.Applied(true))),
+      s"deleted $Ck (T)"
+    )
 
   test("markdown: dry run, refused, applied"):
-    val dry = Source.Delete.markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None)).value
+    val dry = Source.Delete
+      .markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None))
+      .value
     assert(dry.contains("Would delete") && dry.contains("--apply") && dry.contains("findings: 3"), dry)
     assert(dry.contains("links entry 1693 (not checked against the library)"), dry)
-    val present = Source.Delete.markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None), Some(CalibreEntryCheck.Present)).value
+    val present = Source.Delete
+      .markdown(
+        done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None),
+        Some(CalibreEntryCheck.Present)
+      )
+      .value
     assert(present.contains("entry 1693 is linked and is NOT touched"), present)
-    val refused = Source.Delete.markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.blockers).setTo(blocked)).value
+    val refused = Source.Delete
+      .markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.blockers).setTo(blocked))
+      .value
     assert(
       refused.contains("Cannot delete") && refused.contains("no override") && !refused.contains("--apply"),
       refused
@@ -64,21 +77,36 @@ class SourceDeleteSuite extends munit.FunSuite:
       "Calibre: entry 1885 no longer exists in the library — nothing to remove there."
     )
     assert(
-      Source.Delete.calibreLine(Some(Source.CalibreId("1885")), Some(CalibreEntryCheck.Present)).value.contains("is linked and is NOT touched")
+      Source.Delete
+        .calibreLine(Some(Source.CalibreId("1885")), Some(CalibreEntryCheck.Present))
+        .value
+        .contains("is linked and is NOT touched")
     )
-    val un = Source.Delete.calibreLine(Some(Source.CalibreId("1885")), Some(CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason("no Calibre library at /x")))).value
+    val un = Source.Delete
+      .calibreLine(
+        Some(Source.CalibreId("1885")),
+        Some(CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason("no Calibre library at /x")))
+      )
+      .value
     assert(un.contains("could not be checked: no Calibre library at /x") && !un.contains("is linked and"), un)
     assertEquals(Source.Delete.calibreLine(None, Some(CalibreEntryCheck.Missing)), "Calibre: no linked entry.")
     val gone = Source.Delete.markdown(done, Some(CalibreEntryCheck.Missing)).value
     assert(gone.contains("entry 1693 no longer exists in the library") && !gone.contains("NOT touched"), gone)
 
   test("the wire shape round-trips, enums as their wire names"):
-    val d = done.modify(_.blockers).setTo(blocked).modify(_.edgesIn).setTo(List(Edge(Citekey("cline2014_1177"), Ck, Edge.Kind.Challenges)))
+    val d = done
+      .modify(_.blockers)
+      .setTo(blocked)
+      .modify(_.edgesIn)
+      .setTo(List(Edge(Citekey("cline2014_1177"), Ck, Edge.Kind.Challenges)))
     val json = d.asJson.noSpaces
     assert(json.contains("\"part\":\"edges-in\"") && json.contains("\"kind\":\"article\""), json)
     assertEquals(decode[Source.Deletion](json), Right(d))
 
   test("the request is strict: an unknown key is refused"):
-    assertEquals(decode[Source.DeleteRequest]("""{"apply":true}"""), Right(Source.DeleteRequest(Source.DeleteRequest.Apply(true))))
+    assertEquals(
+      decode[Source.DeleteRequest]("""{"apply":true}"""),
+      Right(Source.DeleteRequest(Source.DeleteRequest.Apply(true)))
+    )
     assertEquals(decode[Source.DeleteRequest]("{}"), Right(Source.DeleteRequest(Source.DeleteRequest.Apply(false))))
     assert(decode[Source.DeleteRequest]("""{"apply":true,"force":true}""").isLeft)

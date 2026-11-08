@@ -13,7 +13,6 @@ object Resources:
   type ResourceName = ResourceName.T
   object ResourceName extends Newtype[String, Pure]
 
-
   def classpath(loader: ClassLoader): Resources = new Resources:
     def text(name: ResourceName): Either[Problem, Blob.Text] =
       Option(loader.getResourceAsStream(name.value))
@@ -24,4 +23,5 @@ object Resources:
         )
 
   final class InMemory(contents: Map[ResourceName, Blob.Text]) extends Resources:
-    def text(name: ResourceName): Either[Problem, Blob.Text] = contents.get(name).toRight(Problem(s"missing prompt resource $name"))
+    def text(name: ResourceName): Either[Problem, Blob.Text] =
+      contents.get(name).toRight(Problem(s"missing prompt resource $name"))

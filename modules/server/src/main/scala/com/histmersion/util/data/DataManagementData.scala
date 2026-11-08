@@ -18,6 +18,14 @@ object DataManagementData extends DataContribution:
   override val stores: List[Location] = List(Location.Backups, Location.Bundles)
 
   override val caches: List[CacheSpec] =
-    List(CacheSpec(owner, CacheName("storage"), CacheSpec.Label("storage figures"), CacheHolding.InMemory, List(CacheEvent.Expired)))
+    List(
+      CacheSpec(
+        owner,
+        CacheName("storage"),
+        CacheSpec.Label("storage figures"),
+        CacheHolding.InMemory,
+        List(CacheEvent.Expired)
+      )
+    )
 
   def figures(using DbCon): DataFigures = DataFigures.empty

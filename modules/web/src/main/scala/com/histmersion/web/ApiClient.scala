@@ -66,7 +66,7 @@ import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.api.catalogue.Place
-import com.histmersion.api.exchange.{Bundle as ExchangeBundle}
+import com.histmersion.api.exchange.Bundle as ExchangeBundle
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
@@ -126,7 +126,12 @@ object ApiClient:
         case DecodeResult.Value(Right(o))    => Future.successful(o)
         case DecodeResult.Value(Left(e))     => Future.failed(refuse(ApiFailure(ApiFailure.Status(code), e)))
         case other                           =>
-          Future.failed(ApiFailure(ApiFailure.Status(code), Api.Error(Api.Error.Message(s"could not read the server's answer (HTTP $code): $other"))))
+          Future.failed(
+            ApiFailure(
+              ApiFailure.Status(code),
+              Api.Error(Api.Error.Message(s"could not read the server's answer (HTTP $code): $other"))
+            )
+          )
     }
 
   /** The URL template of a layer's tiles (`{z}`, `{x}`, `{y}` for the map to fill in): `q`'s request as the tile
@@ -136,7 +141,9 @@ object ApiClient:
   def tileTemplate(q: TilesApi.TileQuery): Url =
     val req = interp
       .toRequest(TilesApi.tile, None)
-      .apply(q.modify(_.z).setTo(TilePlaceholder.Z).modify(_.x).setTo(TilePlaceholder.X).modify(_.y).setTo(TilePlaceholder.Y))
+      .apply(
+        q.modify(_.z).setTo(TilePlaceholder.Z).modify(_.x).setTo(TilePlaceholder.X).modify(_.y).setTo(TilePlaceholder.Y)
+      )
     Url(dom.window.location.origin + TilePlaceholder.fill(req.uri.toString))
 
   def config(): Future[UiConfig] = call(Api.config)(())
@@ -146,7 +153,10 @@ object ApiClient:
   def facets(field: Api.Facets.Field, prefix: Option[Api.Facets.Prefix], f: Filter): Future[List[Facet]] =
     call(Api.facets)((field, prefix, f))
   def resolveId(id: Api.Lookup.Text): Future[ResolvedId] = call(Api.resolveId)(id)
-  def getSource(ck: Citekey, body: Api.SourceViewQuery.FullText = Api.SourceViewQuery.FullText(true)): Future[Source.WithFindings] =
+  def getSource(
+      ck: Citekey,
+      body: Api.SourceViewQuery.FullText = Api.SourceViewQuery.FullText(true)
+  ): Future[Source.WithFindings] =
     call(Api.getSource)((ck, body))
 
   /** The articles that cite a source (`GET /api/sources/{citekey}/articles`). */
@@ -161,10 +171,19 @@ object ApiClient:
   def neighbors(ck: Citekey, kinds: List[Edge.Kind.Wire] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
   def articles(q: Api.ArticleQuery): Future[Article.List] = call(Api.articles)(q)
-  def getArticle(slug: Article.Slug, brief: Article.FullText = Article.FullText(false)): Future[Article.View] = call(Api.getArticle)((ReviewGoal.Slug(slug.value), brief))
-  def places(q: Option[Api.Search.Text], asOf: Option[Api.AggregateQuery.AsOf], limit: Option[Paging.Limit]): Future[List[Place.Hit]] =
+  def getArticle(slug: Article.Slug, brief: Article.FullText = Article.FullText(false)): Future[Article.View] =
+    call(Api.getArticle)((ReviewGoal.Slug(slug.value), brief))
+  def places(
+      q: Option[Api.Search.Text],
+      asOf: Option[Api.AggregateQuery.AsOf],
+      limit: Option[Paging.Limit]
+  ): Future[List[Place.Hit]] =
     call(Api.places)((q.map(t => Place.Kind.Wire(t.value)), asOf, limit.map(l => Api.PlacesGeoQuery.Limit(l.value))))
-  def place(id: Place.Id, asOf: Option[Api.AggregateQuery.AsOf], counts: Place.Detail = Place.Detail(false)): Future[PlaceDetail] =
+  def place(
+      id: Place.Id,
+      asOf: Option[Api.AggregateQuery.AsOf],
+      counts: Place.Detail = Place.Detail(false)
+  ): Future[PlaceDetail] =
     call(Api.place)((id, asOf, Option.when(counts.value)(counts)))
   def about(): Future[About] = call(Api.about)(())
   def basemap(): Future[Basemap.Status] = call(BasemapApi.status)(())
@@ -187,8 +206,17 @@ object ApiClient:
       goal: Option[Goal.Slug],
       limit: Option[Paging.Limit],
       before: Option[Paging.Cursor]
-  ): Future[Activity.Page] = call(Api.activity)((show.map(s => Activity.Kind(s.value)), since, goal.map(g => Activity.Subject(g.value)), limit.map(l => Activity.Limit(l.value)), before.map(c => Activity.Cursor(c.value))))
-  def jobControl(id: SpatialHierarchyResult.Job.Id, action: Api.JobControl.Action): Future[JobInfo] = call(Api.jobControl)((id, action))
+  ): Future[Activity.Page] = call(Api.activity)(
+    (
+      show.map(s => Activity.Kind(s.value)),
+      since,
+      goal.map(g => Activity.Subject(g.value)),
+      limit.map(l => Activity.Limit(l.value)),
+      before.map(c => Activity.Cursor(c.value))
+    )
+  )
+  def jobControl(id: SpatialHierarchyResult.Job.Id, action: Api.JobControl.Action): Future[JobInfo] =
+    call(Api.jobControl)((id, action))
 
   // ── a person's bookmarks, notes and read marks ───────────────────────────────────────────────────
 
@@ -215,7 +243,8 @@ object ApiClient:
 
   // ── Settings and the setup ───────────────────────────────────────────────────────────────────────
 
-  def settings(prefix: Option[ConfigEdit.Page.Selector] = None): Future[ConfigEdit.Page] = call(ConfigEditApi.get)(prefix)
+  def settings(prefix: Option[ConfigEdit.Page.Selector] = None): Future[ConfigEdit.Page] =
+    call(ConfigEditApi.get)(prefix)
   def writeSettings(w: ConfigEdit.Write): Future[ConfigEdit.Written] = call(ConfigEditApi.write)(w)
   def restartServer(): Future[ConfigEdit.Restart] = call(ConfigEditApi.restart)(())
   def backupNow(): Future[Backup.Status] = call(Api.backup)(())
@@ -249,7 +278,14 @@ object ApiClient:
       from: Option[Year] = None,
       to: Option[Year] = None
   ): Future[List[HistoricalPeriod]] =
-    call(Api.periods)((q.map(t => CorpusCounts.Periods.Source(t.value)), region, from.map(y => Api.PlacesGeoQuery.From(y.value)), to.map(y => Api.PlacesGeoQuery.To(y.value))))
+    call(Api.periods)(
+      (
+        q.map(t => CorpusCounts.Periods.Source(t.value)),
+        region,
+        from.map(y => Api.PlacesGeoQuery.From(y.value)),
+        to.map(y => Api.PlacesGeoQuery.To(y.value))
+      )
+    )
 
   /** The places' GeoJSON — megabytes over a whole range, read as text by the browser ([[text]]). */
   def placesGeo(q: Api.PlacesGeoQuery): Future[Api.PlacesGeo.Json] = text(Api.placesGeo)(q).map(Api.PlacesGeo.Json(_))
@@ -272,9 +308,17 @@ object ApiClient:
       before: Option[Paging.Cursor] = None,
       upTo: Option[Paging.Cursor] = None
   ): Future[(List[JobInfo], Paging.Page)] =
-    call(Api.jobs)((f, limit.map(l => Api.Jobs.Limit(l.value)), before.map(c => Api.Jobs.Status(c.value)), upTo.map(c => Jobs.Filter(c.value))))
+    call(Api.jobs)(
+      (
+        f,
+        limit.map(l => Api.Jobs.Limit(l.value)),
+        before.map(c => Api.Jobs.Status(c.value)),
+        upTo.map(c => Jobs.Filter(c.value))
+      )
+    )
 
-  def patchSource(ck: Citekey, p: Source.Patch): Future[Source.WithFindings] = call(Api.patchSource)((ck, p, Api.Apply(false)))
+  def patchSource(ck: Citekey, p: Source.Patch): Future[Source.WithFindings] =
+    call(Api.patchSource)((ck, p, Api.Apply(false)))
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 
@@ -284,22 +328,35 @@ object ApiClient:
       before: Option[Paging.Cursor] = None,
       upTo: Option[Paging.Cursor] = None
   ): Future[(List[Agents.RunInfo], Paging.Page)] =
-    call(AgentsApi.runs)((f, limit, before.map(c => Agents.RunInfo.Status(c.value)), upTo.map(c => Agents.RunInfo.Pipeline(c.value))))
+    call(AgentsApi.runs)(
+      (f, limit, before.map(c => Agents.RunInfo.Status(c.value)), upTo.map(c => Agents.RunInfo.Pipeline(c.value)))
+    )
   def startRun(req: Agents.RunRequest): Future[Agents.RunInfo] = call(AgentsApi.startRun)(req)
   def agentRun(id: Agents.RunInfo.Id): Future[Agents.RunDetail] = call(AgentsApi.run)(id)
 
   /** pause | resume | cancel; a resume may raise the run's cost cap (the way out of a budget pause). */
-  def agentControl(id: Agents.RunInfo.Id, action: Api.JobControl.Action, budgetUsd: Option[Agents.RunRequest.BudgetUsd] = None): Future[Agents.RunInfo] =
+  def agentControl(
+      id: Agents.RunInfo.Id,
+      action: Api.JobControl.Action,
+      budgetUsd: Option[Agents.RunRequest.BudgetUsd] = None
+  ): Future[Agents.RunInfo] =
     call(AgentsApi.control)((id, Agents.Action(action.value), budgetUsd, None))
   def agentModels: Future[Agents.ModelsInfo] = call(AgentsApi.models)(())
-  def setChain(role: ModelChains.RoleChain.Role, models: List[ModelChains.ChainSet.Models]): Future[ModelChains.RoleChain] =
+  def setChain(
+      role: ModelChains.RoleChain.Role,
+      models: List[ModelChains.ChainSet.Models]
+  ): Future[ModelChains.RoleChain] =
     call(AgentsApi.setChain)((AgentRole.Wire(role.value), ModelChains.ChainSet(models)))
-  def resetChain(role: ModelChains.RoleChain.Role): Future[ModelChains.RoleChain] = call(AgentsApi.resetChain)(AgentRole.Wire(role.value))
+  def resetChain(role: ModelChains.RoleChain.Role): Future[ModelChains.RoleChain] =
+    call(AgentsApi.resetChain)(AgentRole.Wire(role.value))
   def setAllowance(in: ModelChains.AllowanceSet): Future[ModelChains.AllowanceStatus] = call(AgentsApi.setAllowance)(in)
-  def removeAllowance(target: ModelChains.AllowanceStatus.Target): Future[Goal.Plans.Removed] = call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target.value))
-  def agentDoctor(offline: Agents.DoctorReport.Online): Future[Agents.DoctorReport] = call(AgentsApi.doctor)(Some(offline))
+  def removeAllowance(target: ModelChains.AllowanceStatus.Target): Future[Goal.Plans.Removed] =
+    call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target.value))
+  def agentDoctor(offline: Agents.DoctorReport.Online): Future[Agents.DoctorReport] =
+    call(AgentsApi.doctor)(Some(offline))
   def agentQuota: Future[PlanQuota.QuotaInfo] = call(AgentsApi.quota)(())
-  def setPool(pool: PlanQuota.PoolId.Wire, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] = call(AgentsApi.setPool)((PlanQuota.PoolIdText(pool.value), in))
+  def setPool(pool: PlanQuota.PoolId.Wire, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] =
+    call(AgentsApi.setPool)((PlanQuota.PoolIdText(pool.value), in))
   def refreshQuota(pool: PlanQuota.PoolId.Wire): Future[PlanQuota.QuotaRefreshed] =
     call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(Some(pool)))
   def approvals(
@@ -308,13 +365,20 @@ object ApiClient:
       before: Option[Paging.Cursor] = None,
       upTo: Option[Paging.Cursor] = None
   ): Future[(List[Agents.ApprovalInfo], Paging.Page)] =
-    call(AgentsApi.approvals)((f, limit, before.map(c => Approval.State.Wire(c.value)), upTo.map(c => Approval.Kind.Wire(c.value))))
-  def decide(id: Agents.ApprovalInfo.Id, d: Agents.Decision, note: Option[Agents.DecisionRequest.Note]): Future[Agents.ApprovalInfo] =
+    call(AgentsApi.approvals)(
+      (f, limit, before.map(c => Approval.State.Wire(c.value)), upTo.map(c => Approval.Kind.Wire(c.value)))
+    )
+  def decide(
+      id: Agents.ApprovalInfo.Id,
+      d: Agents.Decision,
+      note: Option[Agents.DecisionRequest.Note]
+  ): Future[Agents.ApprovalInfo] =
     call(AgentsApi.decide)((id, d.wire, Agents.DecisionRequest(note)))
 
   // ── goals: the list, one goal's view, its links and schedules ───────────────────────────────────
 
-  def goals(limit: Option[Paging.Limit]): Future[Goal.List] = call(Api.goals)(Api.GoalQuery(None, limit.map(l => Api.GoalQuery.Limit(l.value)), None))
+  def goals(limit: Option[Paging.Limit]): Future[Goal.List] =
+    call(Api.goals)(Api.GoalQuery(None, limit.map(l => Api.GoalQuery.Limit(l.value)), None))
   def goalView(slug: Goal.Slug): Future[Goal.Plans.GoalView] = call(AgentsApi.goalView)(ReviewGoal.Slug(slug.value))
   def getGoal(slug: Goal.Slug): Future[Goal] = call(Api.getGoal)(Goal.Uid(slug.value))
 
@@ -322,7 +386,11 @@ object ApiClient:
   def putGoal(slug: Goal.Slug, in: Goal.Put): Future[Goal] = call(Api.putGoal)((Goal.Uid(slug.value), in))
   def addGoalLink(slug: Goal.Slug, in: Goal.Plans.LinkAdd): Future[Goal.Plans.GoalLink] =
     call(AgentsApi.addGoalLink)((ReviewGoal.Slug(slug.value), in))
-  def removeGoalLink(slug: Goal.Slug, kind: Goal.Plans.LinkKind, ref: Goal.Plans.GoalLink.Ref): Future[Goal.Plans.Removed] =
+  def removeGoalLink(
+      slug: Goal.Slug,
+      kind: Goal.Plans.LinkKind,
+      ref: Goal.Plans.GoalLink.Ref
+  ): Future[Goal.Plans.Removed] =
     call(AgentsApi.removeGoalLink)((ReviewGoal.Slug(slug.value), kind.wire, Citekey(ref.value)))
   def setSchedule(
       slug: Goal.Slug,
@@ -355,7 +423,12 @@ object ApiClient:
           .decode[Ingest.Accepted](body)
           .fold(
             e =>
-              result.failure(ApiFailure(ApiFailure.Status(xhr.status), Api.Error(Api.Error.Message(s"could not read the server's answer: ${e.getMessage}")))),
+              result.failure(
+                ApiFailure(
+                  ApiFailure.Status(xhr.status),
+                  Api.Error(Api.Error.Message(s"could not read the server's answer: ${e.getMessage}"))
+                )
+              ),
             ok => result.success(ok)
           )
       else
@@ -373,7 +446,8 @@ object ApiClient:
     call(Api.putMergeSession)((Api.Merge.Id(bundle.value), r))
   def parseResolutions(yaml: Api.Merge.Id): Future[MergeResolutions] = call(Api.parseResolutions)(yaml)
   def mergeApply(req: MergeApplyRequest): Future[MergeApplyJob] = call(Api.mergeApply)(req)
-  def mergeApplyStatus(job: MergeApplyJob.Job): Future[MergeApplyJob] = call(Api.mergeApplyStatus)(Api.Merge.Id(job.value))
+  def mergeApplyStatus(job: MergeApplyJob.Job): Future[MergeApplyJob] =
+    call(Api.mergeApplyStatus)(Api.Merge.Id(job.value))
 
   /** `POST /api/bundle/upload`, with upload progress — a bundle can be large; through `XMLHttpRequest` for the same
     * reason as [[ingest]].
@@ -396,7 +470,12 @@ object ApiClient:
           .decode[ExchangeBundle.Upload](body)
           .fold(
             e =>
-              result.failure(ApiFailure(ApiFailure.Status(xhr.status), Api.Error(Api.Error.Message(s"could not read the server's answer: ${e.getMessage}")))),
+              result.failure(
+                ApiFailure(
+                  ApiFailure.Status(xhr.status),
+                  Api.Error(Api.Error.Message(s"could not read the server's answer: ${e.getMessage}"))
+                )
+              ),
             ok => result.success(ok)
           )
       else
@@ -414,11 +493,16 @@ object ApiClient:
     call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on, Some(Autopilot.AutopilotSet.By("web"))))
 
   /** The autopilot's focus: pin/unpin/priority a goal, or the cap (`max`; no value: the config's). */
-  def setFocus(action: Autopilot.FocusSet.Action, goal: Option[Goal.Slug] = None, value: Option[Autopilot.FocusSet.Value] = None): Future[Autopilot.FocusInfo] =
+  def setFocus(
+      action: Autopilot.FocusSet.Action,
+      goal: Option[Goal.Slug] = None,
+      value: Option[Autopilot.FocusSet.Value] = None
+  ): Future[Autopilot.FocusInfo] =
     call(ManagersApi.setFocus)(Autopilot.FocusSet(action, goal, value, Some(Autopilot.FocusSet.By("web"))))
 
   /** The central scheduler: its status and queue (`limit` waiting items), a live strategy switch, one item's why. */
-  def scheduler(limit: Option[Paging.Limit] = None): Future[AgentScheduler.SchedulerStatus] = call(ManagersApi.scheduler)(limit.map(l => Managers.Scheduler.Limit(l.value)))
+  def scheduler(limit: Option[Paging.Limit] = None): Future[AgentScheduler.SchedulerStatus] =
+    call(ManagersApi.scheduler)(limit.map(l => Managers.Scheduler.Limit(l.value)))
   def setScheduler(strategy: AgentScheduler.SchedulerSet.Strategy): Future[AgentScheduler.SchedulerStatus] =
     call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(strategy, Some(AgentScheduler.SchedulerSet.By("web"))))
   def schedulerWhy(item: Managers.ManagerInfo.Id): Future[AgentScheduler.WhyInfo] = call(ManagersApi.schedulerWhy)(item)
@@ -437,16 +521,36 @@ object ApiClient:
     call(ManagersApi.update)((id, in))
 
   /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
-  def managerAction(id: Managers.ManagerInfo.Id, action: ManagersApi.ActionPart1Part2, runs: Boolean = false): Future[Managers.ManagerInfo] =
+  def managerAction(
+      id: Managers.ManagerInfo.Id,
+      action: ManagersApi.ActionPart1Part2,
+      runs: Boolean = false
+  ): Future[Managers.ManagerInfo] =
     call(ManagersApi.action)((id, action, Option.when(runs)(true)))
-  def managerItems(id: Managers.ManagerInfo.Id, status: Option[ItemStatus.Wire], offset: Offset, limit: Paging.Limit): Future[Managers.ItemPage] =
-    call(ManagersApi.items)((id, status, Some(Managers.ItemPage.Limit(offset.value)), Some(UnreadPage.Offset(limit.value))))
-  def managerPatchItem(id: Managers.ManagerInfo.Id, item: Managers.ManagerItem.Id, p: Managers.ItemPatch): Future[Managers.ManagerItem] =
+  def managerItems(
+      id: Managers.ManagerInfo.Id,
+      status: Option[ItemStatus.Wire],
+      offset: Offset,
+      limit: Paging.Limit
+  ): Future[Managers.ItemPage] =
+    call(ManagersApi.items)(
+      (id, status, Some(Managers.ItemPage.Limit(offset.value)), Some(UnreadPage.Offset(limit.value)))
+    )
+  def managerPatchItem(
+      id: Managers.ManagerInfo.Id,
+      item: Managers.ManagerItem.Id,
+      p: Managers.ItemPatch
+  ): Future[Managers.ManagerItem] =
     call(ManagersApi.patchItem)((id, Managers.ManagerItem.Ref(item.value.toString), p))
   def managerAddHint(id: Managers.ManagerInfo.Id, in: Managers.HintAdd): Future[Managers.ManagerHint] =
     call(ManagersApi.addHint)((id, in))
-  def managerRemoveHint(id: Managers.ManagerInfo.Id, hint: Managers.ManagerHint.Id): Future[Goal.Plans.Removed] = call(ManagersApi.removeHint)((id, hint))
-  def managerEvents(id: Managers.ManagerInfo.Id, before: Option[Managers.EventPage.Before], limit: Paging.Limit): Future[Managers.EventPage] =
+  def managerRemoveHint(id: Managers.ManagerInfo.Id, hint: Managers.ManagerHint.Id): Future[Goal.Plans.Removed] =
+    call(ManagersApi.removeHint)((id, hint))
+  def managerEvents(
+      id: Managers.ManagerInfo.Id,
+      before: Option[Managers.EventPage.Before],
+      limit: Paging.Limit
+  ): Future[Managers.EventPage] =
     call(ManagersApi.events)((id, before, Some(Managers.EventPage.Limit(limit.value))))
 
   /** A page button — Review, Extend, Enrich (an article or a goal), Extend a goal (`seed`): the target goes to the
@@ -456,7 +560,8 @@ object ApiClient:
     call(ManagersApi.enqueue)(Managers.EnqueueRequest(kind.wire, target, Some(Managers.EnqueueRequest.Priority(10))))
 
   /** The article window's Review button: the article goes to the review manager, first in line. */
-  def enqueueReview(slug: Article.Slug): Future[Managers.EnqueueResult] = enqueue(Managers.EnqueueKind.Review, Managers.EnqueueRequest.Target(slug.value))
+  def enqueueReview(slug: Article.Slug): Future[Managers.EnqueueResult] =
+    enqueue(Managers.EnqueueKind.Review, Managers.EnqueueRequest.Target(slug.value))
 
   /** A new manager (the New research area form's seeding manager); created paused. */
   def managerCreate(in: Managers.ManagerCreate): Future[Managers.ManagerInfo] = call(ManagersApi.create)(in)

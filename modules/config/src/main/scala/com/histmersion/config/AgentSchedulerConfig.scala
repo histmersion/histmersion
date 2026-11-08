@@ -86,7 +86,9 @@ object AgentSchedulerConfig:
   type SeedIngestPerGoal = SeedIngestPerGoal.T
   object SeedIngestPerGoal extends Newtype[Int, Pure]
 
-  val DefaultWeights: TypeWeights = TypeWeights("review=3, compile=3, enrich=3, propose=2, goal-plan=2, sweep=2, extend=1, filter=1, currency=1")
+  val DefaultWeights: TypeWeights = TypeWeights(
+    "review=3, compile=3, enrich=3, propose=2, goal-plan=2, sweep=2, extend=1, filter=1, currency=1"
+  )
 
   /** The job types' priorities when none are configured: finish first (a review before a compile before a proposal …),
     * the order the focus used.

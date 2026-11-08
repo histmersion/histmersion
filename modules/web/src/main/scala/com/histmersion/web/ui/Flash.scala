@@ -12,7 +12,6 @@ object Flash:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
-
   private val line = Var(Option.empty[String])
   // `var`: the timer that clears the line
   private var timer = 0

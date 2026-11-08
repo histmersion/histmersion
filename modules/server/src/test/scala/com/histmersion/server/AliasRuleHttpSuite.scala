@@ -126,7 +126,9 @@ class AliasRuleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       )
       assertEquals(a.targetId, "zz_alias_e2")
       assertEquals(
-        (decode[Attestation.List](ok(get(s"$url/api/attestations?targetType=event&targetId=zz_alias_e1"))).total.value: Int),
+        (decode[Attestation.List](
+          ok(get(s"$url/api/attestations?targetType=event&targetId=zz_alias_e1"))
+        ).total.value: Int),
         1
       )
       assertEquals(decode[EventDeleted](ok(delete(s"$url/api/events/zz_alias_e1"))).id, "zz_alias_e2")

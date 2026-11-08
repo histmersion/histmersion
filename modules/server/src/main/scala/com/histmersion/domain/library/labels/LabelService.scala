@@ -11,12 +11,23 @@ import com.histmersion.domain.library.search.FilterSql
   * no in-memory twin.
   */
 trait LabelService:
-  def facets(field: Facet.Field, prefix: Option[FilterSql.FacetPrefix], filter: Filter, limit: PageSize, scope: PlaceScope): List[Facet]
+  def facets(
+      field: Facet.Field,
+      prefix: Option[FilterSql.FacetPrefix],
+      filter: Filter,
+      limit: PageSize,
+      scope: PlaceScope
+  ): List[Facet]
 
 object LabelService:
   def apply(db: Transactor): LabelService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends LabelService:
-    def facets(field: Facet.Field, prefix: Option[FilterSql.FacetPrefix], filter: Filter, limit: PageSize, scope: PlaceScope): List[Facet] =
+    def facets(
+        field: Facet.Field,
+        prefix: Option[FilterSql.FacetPrefix],
+        filter: Filter,
+        limit: PageSize,
+        scope: PlaceScope
+    ): List[Facet] =
       db.read(LabelRepo.facets(field, prefix, filter, limit, scope)).toList
-

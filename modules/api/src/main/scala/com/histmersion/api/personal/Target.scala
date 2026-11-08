@@ -22,7 +22,8 @@ final case class Target(
     to: Option[Year] = None,
     view: Option[ViewState] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def itemKey: Option[ItemKey] = Option.when(kind.isItem)(id).flatten
 
   def identity: Option[Target.Identity] = itemKey.map(k => Target.Identity(s"${kind.wire}:$k"))
@@ -36,7 +37,6 @@ object Target:
   object Problem extends Newtype[String, Pure]
   type Where = Where.T
   object Where extends Newtype[String, Pure]
-
 
   export com.histmersion.api.personal.ItemKey
   type CheckWhat = String
@@ -57,7 +57,8 @@ object Target:
   object DegreesMinus:
     inline def apply(v: String): String = v
 
-  def item(kind: ItemKind, key: com.histmersion.api.personal.ItemKey): Target = Target(kind, Some(ItemKey((key).value.trim)))
+  def item(kind: ItemKind, key: com.histmersion.api.personal.ItemKey): Target =
+    Target(kind, Some(ItemKey((key).value.trim)))
 
   def check(t: Target, allowed: Set[ItemKind], what: String): Either[Problem, Target] =
     val years = (t.from, t.to) match
@@ -66,7 +67,9 @@ object Target:
       case _ => Right(())
     if !allowed.contains(t.kind) then
       Left(
-        Problem(s"a $what cannot be left on a ${t.kind.label.value.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}")
+        Problem(
+          s"a $what cannot be left on a ${t.kind.label.value.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}"
+        )
       )
     else
       years.flatMap { _ =>
@@ -103,7 +106,8 @@ object Target:
 
   def where(t: Target): Where =
     val span = YearFmt.period(t.from, t.to)
-    val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, ("N"), ("S"))}, ${degrees(lo.value, ("E"), ("W"))}")
+    val at =
+      t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, ("N"), ("S"))}, ${degrees(lo.value, ("E"), ("W"))}")
     t.kind match
       case ItemKind.Point => Where(List(at, span).filter(_.nonEmpty).mkString(" · "))
       case ItemKind.View  =>

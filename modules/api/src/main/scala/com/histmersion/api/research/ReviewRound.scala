@@ -14,7 +14,8 @@ final case class ReviewRound(
     startedAt: Option[ReviewRound.StartedAt],
     findings: List[ReviewFinding]
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ReviewRound:
   type Run = Run.T

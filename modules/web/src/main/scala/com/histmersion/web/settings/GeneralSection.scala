@@ -86,7 +86,9 @@ object GeneralSection:
     // the file's own values once read (another window may have changed them since this page loaded)
     def fromPage(p: ConfigEdit.Page): MapStartConfig =
       def text(k: String): Option[String] =
-        p.field(ConfigEdit.Field.Key(s"ui.map-start.$k")).flatMap(f => f.effective).map(v => Draft.plain(Some(Draft.Text(v.value))).value)
+        p.field(ConfigEdit.Field.Key(s"ui.map-start.$k"))
+          .flatMap(f => f.effective)
+          .map(v => Draft.plain(Some(Draft.Text(v.value))).value)
       MapStartConfig(
         text("mode").map(MapStartMode.Wire(_)).getOrElse(ui.mapStart.mode),
         text("lat").flatMap(_.toDoubleOption).map(Latitude(_)).getOrElse(ui.mapStart.lat),
@@ -104,7 +106,10 @@ object GeneralSection:
         h2(cls := "settings-card-title", "Where the map opens"),
         p(cls := "settings-card-intro", "For everyone who opens Histmersion from this server.")
       ),
-      div(cls := "settings-card-body", StartPlace.chooser(choice, StartPlace.ChooserName("general-start"), showLegend = false)),
+      div(
+        cls := "settings-card-body",
+        StartPlace.chooser(choice, StartPlace.ChooserName("general-start"), showLegend = false)
+      ),
       div(
         cls := "settings-save",
         child.maybe <-- Auth.writable.map(w =>

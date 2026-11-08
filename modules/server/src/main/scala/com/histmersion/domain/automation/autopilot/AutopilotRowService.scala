@@ -18,7 +18,11 @@ trait AutopilotRowService:
   def row(): AutopilotRepo.Row
 
   /** Switch it; `paused` = the managers it paused. True = it changed. */
-  def set(enabled: AutopilotRepo.Row.Enabled, by: AutopilotRepo.Row.ChangedBy, paused: List[AutopilotRepo.Row.Paused]): Boolean
+  def set(
+      enabled: AutopilotRepo.Row.Enabled,
+      by: AutopilotRepo.Row.ChangedBy,
+      paused: List[AutopilotRepo.Row.Paused]
+  ): Boolean
   def ensured(now: Instant): Unit
 
   /** Ensure again at the next tick. */
@@ -51,18 +55,25 @@ object AutopilotRowService:
 
   final private class Implementation(db: Transactor) extends AutopilotRowService:
     def row(): AutopilotRepo.Row = db.transact(AutopilotRepo.get())
-    def set(enabled: AutopilotRepo.Row.Enabled, by: AutopilotRepo.Row.ChangedBy, paused: List[AutopilotRepo.Row.Paused]): Boolean =
+    def set(
+        enabled: AutopilotRepo.Row.Enabled,
+        by: AutopilotRepo.Row.ChangedBy,
+        paused: List[AutopilotRepo.Row.Paused]
+    ): Boolean =
       db.transact(AutopilotRepo.set(enabled, by, paused))
     def ensured(now: Instant): Unit = db.transact(AutopilotRepo.ensured(now))
     def ensureSoon(): Unit = db.transact(AutopilotRepo.ensureSoon())
     def backedUp(now: Instant): Unit = db.transact(AutopilotRepo.backedUp(now))
     def linted(now: Instant): Unit = db.transact(AutopilotRepo.linted(now))
     def unpaused(managerId: Managers.ManagerInfo.Id): Unit = db.transact(AutopilotRepo.unpaused(managerId))
-    def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] = db.transact(AutopilotRepo.strategy())
-    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit = db.transact(AutopilotRepo.setStrategy(name, by))
+    def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
+      db.transact(AutopilotRepo.strategy())
+    def setStrategy(name: Option[AutopilotRepo.StrategyName], by: AutopilotRepo.Row.ChangedBy): Unit =
+      db.transact(AutopilotRepo.setStrategy(name, by))
     def lastDigest(): Option[AutopilotRepo.Digest] = db.transact(AutopilotRepo.lastDigest())
     def digested(now: Instant): Unit = db.transact(AutopilotRepo.digested(now))
-    def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] = db.transact(AutopilotRepo.drain())
+    def drain(): Option[(AutopilotRepo.DrainSince, AutopilotRepo.Row.ChangedBy, Option[AutopilotRepo.DrainedAt])] =
+      db.transact(AutopilotRepo.drain())
     def setDrain(on: Boolean, by: AutopilotRepo.Row.ChangedBy): Boolean = db.transact(AutopilotRepo.setDrain(on, by))
     def drained(at: Option[Instant]): Unit = db.transact(AutopilotRepo.drained(at))
 
@@ -94,7 +105,11 @@ object AutopilotRowService:
         r.lastBackupAt.map(at => AutopilotRepo.Row.LastBackupAt(text(at))),
         r.lastLintAt.map(at => AutopilotRepo.Row.LastLintAt(text(at)))
       )
-    def set(enabled: AutopilotRepo.Row.Enabled, by: AutopilotRepo.Row.ChangedBy, paused: List[AutopilotRepo.Row.Paused]): Boolean =
+    def set(
+        enabled: AutopilotRepo.Row.Enabled,
+        by: AutopilotRepo.Row.ChangedBy,
+        paused: List[AutopilotRepo.Row.Paused]
+    ): Boolean =
       change(_.enabled.value != enabled.value)(
         _.modify(_.enabled)
           .setTo(AutopilotRowState.Enabled(enabled.value))
@@ -111,7 +126,9 @@ object AutopilotRowService:
     def ensureSoon(): Unit = always(_.modify(_.lastEnsureAt).setTo(None))
     def backedUp(now: Instant): Unit = always(_.modify(_.lastBackupAt).setTo(Some(now)))
     def linted(now: Instant): Unit = always(_.modify(_.lastLintAt).setTo(Some(now)))
-    def unpaused(managerId: Managers.ManagerInfo.Id): Unit = always(_.modify(_.paused).using(_.filterNot(_.value == managerId.value)))
+    def unpaused(managerId: Managers.ManagerInfo.Id): Unit = always(
+      _.modify(_.paused).using(_.filterNot(_.value == managerId.value))
+    )
     def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
       val r = current()
       r.strategy.map(n =>

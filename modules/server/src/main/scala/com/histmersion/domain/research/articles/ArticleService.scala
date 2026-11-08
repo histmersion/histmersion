@@ -98,7 +98,8 @@ object ArticleService:
       if citekeys.isEmpty then Nil else db.read(ArticleRepo.citing(citekeys, limit))
     def sourcesCited(slug: Slug): List[CitedSource] = db.read(ArticleRepo.sourcesCited(slug))
     def versions(slug: Slug): List[Article.Version] = db.read(ArticleRepo.listVersions(slug))
-    def version(slug: Slug, id: ArticleRepo.VersionId): Option[Article.VersionFull] = db.read(ArticleRepo.getVersion(slug, id))
+    def version(slug: Slug, id: ArticleRepo.VersionId): Option[Article.VersionFull] =
+      db.read(ArticleRepo.getVersion(slug, id))
     def latestVersion(slug: Slug): Option[ArticleRepo.VersionId] = db.read(ArticleRepo.latestVersion(slug))
     def critiqueReasons(slug: Slug): List[CritiqueReason] = db.read(CritiqueRepo.list(slug))
     def articlesByGoal: Map[Goal.Slug, List[Slug]] = db.read(ArticleRepo.articlesByGoal)
@@ -173,10 +174,11 @@ object ArticleService:
 
     def refs(slugs: List[Slug]): List[Article.Ref] =
       val st = state.get
-      slugs.distinct
-        .sorted
+      slugs.distinct.sorted
         .flatMap(s =>
-          st.articles.get(articleKey(s)).map(o => Article.Ref(Article.Slug(s.value), o.article.title, o.article.summary))
+          st.articles
+            .get(articleKey(s))
+            .map(o => Article.Ref(Article.Slug(s.value), o.article.title, o.article.summary))
         )
 
     def backlinksForSource(citekey: Citekey): List[Backlink] = Nil
@@ -278,9 +280,13 @@ object ArticleService:
                       case Some(refusal) => Left(refusal)
                       case None          =>
                         val next = if patch.onlyCritiques then st else written(st, updated, now)
-                        Right(next -> next.articles.get(articleKey(slug)).fold(Article.UpdatedAt(""))(s => token(s.updatedAt)))
+                        Right(
+                          next -> next.articles
+                            .get(articleKey(slug))
+                            .fold(Article.UpdatedAt(""))(s => token(s.updatedAt))
+                        )
         outcome match
-          case Left(e)               => Left(e)
+          case Left(e)                => Left(e)
           case Right((next, stamped)) => if state.compareAndSet(st, next) then Right(stamped) else attempt()
       attempt()
 
@@ -334,7 +340,7 @@ object ArticleService:
             )
           else Right(renamed(st, oldSlug, newSlug, now))
         outcome match
-          case Left(e)               => Left(e)
+          case Left(e)              => Left(e)
           case Right((next, moved)) => if state.compareAndSet(st, next) then Right(moved) else attempt()
       attempt()
 
@@ -365,9 +371,16 @@ object ArticleService:
             }
         )
         .modify(_.versions)
-        .using(_.map(v => if v.slug.value == oldSlug.value then v.modify(_.slug).setTo(ResearchState.Replaced.Slug(newSlug.value)) else v))
+        .using(
+          _.map(v =>
+            if v.slug.value == oldSlug.value then v.modify(_.slug).setTo(ResearchState.Replaced.Slug(newSlug.value))
+            else v
+          )
+        )
         .modify(_.critiques)
-        .using(cs => cs.get(critiqueKey(oldSlug)).fold(cs)(rs => (cs - critiqueKey(oldSlug)).updated(critiqueKey(newSlug), rs)))
+        .using(cs =>
+          cs.get(critiqueKey(oldSlug)).fold(cs)(rs => (cs - critiqueKey(oldSlug)).updated(critiqueKey(newSlug), rs))
+        )
         .modify(_.ledgers)
         .using(ls => ls.get(ledgerKey(oldSlug)).fold(ls)(l => (ls - ledgerKey(oldSlug)).updated(ledgerKey(newSlug), l)))
       val to: WikiLinks.Occurrence.Target => Option[WikiLinks.Occurrence.Target] =
@@ -375,10 +388,15 @@ object ArticleService:
       val needle = oldSlug.value.toLowerCase
       val rewritten = moved.articles.keys.toList.sorted.filter { s =>
         val a = moved.articles(s).article
-        (a.body.value + " " + a.summary.fold("")(_.value) + " " + a.reasons.map((k, v) => s"$k $v").mkString(" ")).toLowerCase
+        (a.body.value + " " + a.summary
+          .fold("")(_.value) + " " + a.reasons.map((k, v) => s"$k $v").mkString(" ")).toLowerCase
           .contains(needle)
       }
-      @tailrec def loop(rest: List[ResearchState.ArticlesKey], acc: ResearchState, done: List[Slug]): (ResearchState, List[Slug]) =
+      @tailrec def loop(
+          rest: List[ResearchState.ArticlesKey],
+          acc: ResearchState,
+          done: List[Slug]
+      ): (ResearchState, List[Slug]) =
         rest match
           case Nil       => (acc, done.reverse)
           case s :: tail =>

@@ -14,7 +14,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * @param licenceUrl
   *   the licence's URL, when the provider gives one
   */
-final case class GazetteerRights(licence: Licence, credit: GazetteerRights.Credit, licenceUrl: Option[GazetteerRights.LicenceUrl] = None)
+final case class GazetteerRights(
+    licence: Licence,
+    credit: GazetteerRights.Credit,
+    licenceUrl: Option[GazetteerRights.LicenceUrl] = None
+)
 
 object GazetteerRights:
   type Credit = Credit.T

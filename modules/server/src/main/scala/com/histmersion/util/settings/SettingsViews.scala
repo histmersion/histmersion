@@ -69,7 +69,9 @@ object SettingsViews:
       o.backup.map(b => ConfigEdit.Written.Backup(b.value)),
       ConfigEdit.Written.Version(o.version.value),
       ConfigEdit.Written.Created(o.created.value),
-      o.restart.map((k, why) => ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))),
+      o.restart.map((k, why) =>
+        ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))
+      ),
       o.warnings.map(w => ConfigEdit.Written.Warnings(w.value)),
       reload,
       ConfigEdit.Written.Restartable(restartable)

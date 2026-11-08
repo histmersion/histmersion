@@ -26,7 +26,6 @@ object QueryTools:
 
   final case class SchemaInput() derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-
   def apply(queries: QueryControllers) =
     val query =
       tool("query")

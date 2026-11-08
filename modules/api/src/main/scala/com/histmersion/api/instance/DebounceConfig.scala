@@ -7,9 +7,14 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class DebounceConfig(suggestMs: DebounceConfig.SuggestMs, searchMs: DebounceConfig.SearchMs, reloadMs: DebounceConfig.ReloadMs, previewMs: DebounceConfig.PreviewMs)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class DebounceConfig(
+    suggestMs: DebounceConfig.SuggestMs,
+    searchMs: DebounceConfig.SearchMs,
+    reloadMs: DebounceConfig.ReloadMs,
+    previewMs: DebounceConfig.PreviewMs
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object DebounceConfig:
   type SuggestMs = SuggestMs.T

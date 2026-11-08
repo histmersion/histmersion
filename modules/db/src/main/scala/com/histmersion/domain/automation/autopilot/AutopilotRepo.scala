@@ -21,7 +21,6 @@ object AutopilotRepo:
   type DrainedAt = DrainedAt.T
   object DrainedAt extends Newtype[String, Pure]
 
-
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
@@ -114,7 +113,12 @@ object AutopilotRepo:
   /** When the daily approval digest was last written (V101), if ever. */
   def lastDigest()(using DbCon): Option[Digest] =
     val _ = get()
-    Sql.raw(Sql.RawText(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id")).frag.query[Option[Digest]].run().head
+    Sql
+      .raw(Sql.RawText(s"SELECT ${at("last_digest_at")} FROM agent_autopilot WHERE id"))
+      .frag
+      .query[Option[Digest]]
+      .run()
+      .head
 
   /** The digest was written at `now`. */
   def digested(now: java.time.Instant)(using DbCon): Unit =

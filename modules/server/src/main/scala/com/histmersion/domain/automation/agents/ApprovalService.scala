@@ -19,8 +19,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.automation.Run
 
-
-
 /** The approvals, as the engine's features reach them: what a run proposed for a person to decide — open until decided
   * (once), or recorded approved when it was applied at once — and the reads the lists, the digest, the autopilot and
   * the scheduler make of them.
@@ -30,8 +28,6 @@ trait ApprovalService:
   def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo]
 
   def payload(id: Approval.Id): Option[ApprovalService.Payload]
-
-
 
   def approval(id: Approval.Id): Option[ApprovalInfo]
 
@@ -55,7 +51,9 @@ trait ApprovalService:
   ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)]
 
   /** Per state (every filter but the state's), and the kind and decided-by facets (each without its own filter). */
-  def approvalFacets(q: ApprovalQuery): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])])
+  def approvalFacets(
+      q: ApprovalQuery
+  ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])])
 
   /** Every approval counted per state. */
   def approvalCounts(): List[(Approval.State.Wire, RowCount)]
@@ -122,7 +120,8 @@ object ApprovalService:
   def apply(db: Transactor, clock: Clock): ApprovalService = Implementation(db, clock)
 
   final private class Implementation(db: Transactor, clock: Clock) extends ApprovalService:
-    def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] = AgentRepo.approval(ApprovalInfo.Id(id.value))
+    def approvalIn(id: Approval.Id)(using com.augustnagro.magnum.DbCon): Option[ApprovalInfo] =
+      AgentRepo.approval(ApprovalInfo.Id(id.value))
     private def now: Instant = Instant.now(clock)
 
     def payload(id: Approval.Id): Option[Payload] =
@@ -159,7 +158,9 @@ object ApprovalService:
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
       )
-    def approvalFacets(q: ApprovalQuery): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
+    def approvalFacets(
+        q: ApprovalQuery
+    ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
       db.read(AgentRepo.approvalFacets(q))
     def approvalCounts(): List[(Approval.State.Wire, RowCount)] = db.read(AgentRepo.approvalCounts())
     def openForStep(
@@ -214,9 +215,17 @@ object ApprovalService:
       db.read(AgentRepo.openBySubject()).map((k, v) => ApprovalQuery.Subject(k.value) -> v)
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       db.read(AgentRepo.forStep(jobId, StepInfo.Seq(seq.value)))
-    def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount = db.transact(AgentRepo.closeForRun(jobId, why))
+    def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount =
+      db.transact(AgentRepo.closeForRun(jobId, why))
     def decide(id: Approval.Id, to: ApprovalState, note: Option[Approval.Note], result: Option[String]): Boolean =
-      db.transact(AgentRepo.decide(ApprovalInfo.Id(id.value), to, note.map(n => ApprovalInfo.Note(n.value)), result.map(ApprovalInfo.Result(_))))
+      db.transact(
+        AgentRepo.decide(
+          ApprovalInfo.Id(id.value),
+          to,
+          note.map(n => ApprovalInfo.Note(n.value)),
+          result.map(ApprovalInfo.Result(_))
+        )
+      )
     def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit =
       db.transact(AgentRepo.settle(ApprovalInfo.Id(id.value), to, ApprovalInfo.Result(result.value)))
 
@@ -257,18 +266,22 @@ object ApprovalService:
 
     private def decidedAt(st: ApprovalState): Option[Instant] = Option.when(st != ApprovalState.Open)(now)
 
-
-    def payload(id: Approval.Id): Option[Payload] = rows.find(_.id.value == id.value).map(r => Payload(r.proposal.value))
+    def payload(id: Approval.Id): Option[Payload] =
+      rows.find(_.id.value == id.value).map(r => Payload(r.proposal.value))
 
     def approval(id: Approval.Id): Option[ApprovalInfo] = rows.find(_.id.value == id.value).map(info)
     def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
-      newest(rows.filter(r => state.forall(_.wire.value == r.state.value))).take(math.max(1, limit.value)).toList.map(info)
+      newest(rows.filter(r => state.forall(_.wire.value == r.state.value)))
+        .take(math.max(1, limit.value))
+        .toList
+        .map(info)
     def approvalPage(
         state: Option[ApprovalState],
         limit: ApprovalQuery.Limit,
         before: Option[ApprovalQuery.Cursor],
         upTo: Option[ApprovalQuery.UpTo]
-    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] = approvalPage(ApprovalQuery(state), limit, before, upTo)
+    ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
+      approvalPage(ApprovalQuery(state), limit, before, upTo)
 
     private def decidedBy(r: ApprovalRecord): Option[String] =
       if r.state.value == Open then None
@@ -285,7 +298,10 @@ object ApprovalService:
       (except == "state" || q.state.forall(_.wire.value == r.state.value)) &&
       (except == "kind" || q.kinds.isEmpty || q.kinds.exists(_.wire.value == r.kind.value)) &&
       q.subject.forall(t =>
-        contains(r.subject.map(_.value), t.value) || contains(r.citekey.map(_.value), t.value) || contains(r.target.map(_.value), t.value) ||
+        contains(r.subject.map(_.value), t.value) || contains(r.citekey.map(_.value), t.value) || contains(
+          r.target.map(_.value),
+          t.value
+        ) ||
           run.exists(j => contains(j.row.goal.map(_.value), t.value) || contains(j.row.managerId.map(_.value), t.value))
       ) &&
       q.goal.forall(g => r.subject.exists(_.value == g.value) || run.exists(_.row.goal.exists(_.value == g.value))) &&
@@ -298,7 +314,9 @@ object ApprovalService:
         upTo: Option[ApprovalQuery.UpTo]
     ): Either[AgentRepo.CursorProblem, (List[ApprovalInfo], Boolean)] =
       def cursor(c: String): Either[AgentRepo.CursorProblem, ApprovalRecord] =
-        c.trim.toLongOption.flatMap(id => rows.find(_.id.value == id)).toRight(AgentRepo.CursorProblem(s"No approval '$c' to page from"))
+        c.trim.toLongOption
+          .flatMap(id => rows.find(_.id.value == id))
+          .toRight(AgentRepo.CursorProblem(s"No approval '$c' to page from"))
       for
         b <- before.fold(Right(None))(c => cursor(c.value).map(Some(_)))
         u <- upTo.fold(Right(None))(c => cursor(c.value).map(Some(_)))
@@ -308,15 +326,24 @@ object ApprovalService:
         val all = newest(rows.filter(matches(q, "")))
         val bounded =
           all.filter(r => b.forall(c => ordering.lt(key(r), key(c))) && u.forall(c => ordering.gteq(key(r), key(c))))
-        val (shown, more) = Paging.cut(bounded.take(math.max(1, limit.value) + 1), Paging.Limit(math.max(1, limit.value)))
+        val (shown, more) =
+          Paging.cut(bounded.take(math.max(1, limit.value) + 1), Paging.Limit(math.max(1, limit.value)))
         val older =
           if more || u.isEmpty then more
           else shown.lastOption.exists(last => all.exists(r => ordering.lt(key(r), key(last))))
         (shown.toList.map(info), older)
 
     private def facet(values: Vector[String]): List[(String, RowCount)] =
-      values.groupBy(identity).toList.map((v, n) => (v, n.size)).sortBy((v, n) => (-n, v)).take(ListFilters.FacetMax).map((v, n) => (v, RowCount(n)))
-    def approvalFacets(q: ApprovalQuery): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
+      values
+        .groupBy(identity)
+        .toList
+        .map((v, n) => (v, n.size))
+        .sortBy((v, n) => (-n, v))
+        .take(ListFilters.FacetMax)
+        .map((v, n) => (v, RowCount(n)))
+    def approvalFacets(
+        q: ApprovalQuery
+    ): (List[(Approval.State.Wire, RowCount)], List[(String, List[(String, RowCount)])]) =
       (
         facet(rows.filter(matches(q, "state")).map(_.state.value)).map((s, n) => (Approval.State.Wire(s), n)),
         List(
@@ -336,26 +363,28 @@ object ApprovalService:
         result: Option[OpenForStepResult]
     ): ApprovalInfo =
       val at = now
-      val _ = AutomationState.insertApproval(this.state)(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value))(id =>
-        ApprovalRecord(
-          ApprovalRecord.Id(id.value),
-          Some(jobId),
-          Some(ApprovalRecord.Seq(seq.value)),
-          ApprovalRecord.Kind(kind.wire.value),
-          None,
-          None,
-          None,
-          None,
-          None,
-          Some(ApprovalRecord.Subject(subject.value)),
-          ApprovalRecord.Proposal(payload.value),
-          ApprovalRecord.State(state.wire.value),
-          None,
-          result.map(r => ApprovalRecord.Result(r.value)),
-          at,
-          decidedAt(state)
+      val _ =
+        AutomationState.insertApproval(this.state)(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value))(
+          id =>
+            ApprovalRecord(
+              ApprovalRecord.Id(id.value),
+              Some(jobId),
+              Some(ApprovalRecord.Seq(seq.value)),
+              ApprovalRecord.Kind(kind.wire.value),
+              None,
+              None,
+              None,
+              None,
+              None,
+              Some(ApprovalRecord.Subject(subject.value)),
+              ApprovalRecord.Proposal(payload.value),
+              ApprovalRecord.State(state.wire.value),
+              None,
+              result.map(r => ApprovalRecord.Result(r.value)),
+              at,
+              decidedAt(state)
+            )
         )
-      )
       forStep(jobId, seq).get
     def openSubject(
         jobId: Option[Job.Id],
@@ -366,34 +395,42 @@ object ApprovalService:
         result: Option[OpenSubjectResult]
     ): ApprovalInfo =
       val at = now
-      AutomationState.insertApproval(this.state)(_ => false)(id =>
-        ApprovalRecord(
-          ApprovalRecord.Id(id.value),
-          jobId,
-          None,
-          ApprovalRecord.Kind(kind.wire.value),
-          None,
-          None,
-          None,
-          None,
-          None,
-          Some(ApprovalRecord.Subject(subject.value)),
-          ApprovalRecord.Proposal(payload.value),
-          ApprovalRecord.State(state.wire.value),
-          None,
-          result.map(r => ApprovalRecord.Result(r.value)),
-          at,
-          decidedAt(state)
+      AutomationState
+        .insertApproval(this.state)(_ => false)(id =>
+          ApprovalRecord(
+            ApprovalRecord.Id(id.value),
+            jobId,
+            None,
+            ApprovalRecord.Kind(kind.wire.value),
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some(ApprovalRecord.Subject(subject.value)),
+            ApprovalRecord.Proposal(payload.value),
+            ApprovalRecord.State(state.wire.value),
+            None,
+            result.map(r => ApprovalRecord.Result(r.value)),
+            at,
+            decidedAt(state)
+          )
         )
-      ).flatMap(approval).get
+        .flatMap(approval)
+        .get
     def approvalsOf(jobId: Job.Id, kind: Option[ApprovalKind]): List[ApprovalInfo] =
-      rows.filter(r => r.jobId.contains(jobId) && kind.forall(_.wire.value == r.kind.value)).sortBy[Long](_.id.value).toList.map(info)
+      rows
+        .filter(r => r.jobId.contains(jobId) && kind.forall(_.wire.value == r.kind.value))
+        .sortBy[Long](_.id.value)
+        .toList
+        .map(info)
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       rows
         .filter(r =>
-          r.kind.value == kind.wire.value && r.note.exists(_.value.startsWith("autopilot: approved")) && r.decidedAt.exists(
-            !_.isBefore(since)
-          )
+          r.kind.value == kind.wire.value && r.note.exists(_.value.startsWith("autopilot: approved")) && r.decidedAt
+            .exists(
+              !_.isBefore(since)
+            )
         )
         .sortBy[Long](_.id.value)
         .toList
@@ -418,15 +455,23 @@ object ApprovalService:
             ApprovalDigest.Open.CreatedAt(AutomationState.text(r.createdAt).value)
           )
         )
-    def openCount(kind: ApprovalKind): RowCount = RowCount(rows.count(r => r.state.value == Open && r.kind.value == kind.wire.value))
+    def openCount(kind: ApprovalKind): RowCount = RowCount(
+      rows.count(r => r.state.value == Open && r.kind.value == kind.wire.value)
+    )
     def openBySubject(): Map[ApprovalQuery.Subject, RowCount] =
-      rows.filter(_.state.value == Open).flatMap(_.subject).groupBy(_.value).map((s, rs) => ApprovalQuery.Subject(s) -> RowCount(rs.size))
+      rows
+        .filter(_.state.value == Open)
+        .flatMap(_.subject)
+        .groupBy(_.value)
+        .map((s, rs) => ApprovalQuery.Subject(s) -> RowCount(rs.size))
     def forStep(jobId: Job.Id, seq: StepSeq): Option[ApprovalInfo] =
       rows.find(r => r.jobId.contains(jobId) && r.seq.exists(_.value == seq.value)).map(info)
 
     /** Change the rows `which` selects by `f`; how many. */
     private def change(which: ApprovalRecord => Boolean)(f: ApprovalRecord => ApprovalRecord): RowCount =
-      RowCount(state.getAndUpdate(_.modify(_.approvals).using(_.map(r => if which(r) then f(r) else r))).approvals.count(which))
+      RowCount(
+        state.getAndUpdate(_.modify(_.approvals).using(_.map(r => if which(r) then f(r) else r))).approvals.count(which)
+      )
     def closeForRun(jobId: Job.Id, why: AgentRepo.CloseReason): RowCount =
       val at = now
       change(r => r.jobId.contains(jobId) && r.seq.isDefined && r.state.value == Open)(
@@ -450,4 +495,9 @@ object ApprovalService:
           .setTo(Some(at))
       ).value > 0
     def settle(id: Approval.Id, to: ApprovalState, result: Approval.Outcome): Unit =
-      val _ = change(_.id.value == id.value)(_.modify(_.state).setTo(ApprovalRecord.State(to.wire.value)).modify(_.result).setTo(Some(ApprovalRecord.Result(result.value))))
+      val _ = change(_.id.value == id.value)(
+        _.modify(_.state)
+          .setTo(ApprovalRecord.State(to.wire.value))
+          .modify(_.result)
+          .setTo(Some(ApprovalRecord.Result(result.value)))
+      )

@@ -19,7 +19,8 @@ final case class ReloadReport(
     warnings: List[ReloadReport.Warnings] = Nil,
     file: Option[ReloadReport.File] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def ok: Boolean = (errors.isEmpty)
 
 object ReloadReport:

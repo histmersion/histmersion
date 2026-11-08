@@ -9,9 +9,13 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class MergeLedger(query: Option[MergeLedger.Query], entries: List[LedgerRow], redirects: List[UidRedirect] = Nil)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class MergeLedger(
+    query: Option[MergeLedger.Query],
+    entries: List[LedgerRow],
+    redirects: List[UidRedirect] = Nil
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MergeLedger:
   type Query = Query.T

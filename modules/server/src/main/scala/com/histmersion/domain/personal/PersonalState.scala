@@ -19,7 +19,6 @@ final case class PersonalState(
 
 object PersonalState:
 
-
   final case class StoredBookmark(
       user: UserId,
       id: Bookmark.Id,

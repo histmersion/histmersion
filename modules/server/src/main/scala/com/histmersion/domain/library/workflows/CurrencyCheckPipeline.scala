@@ -91,14 +91,21 @@ final class CurrencyCheckPipeline(
   private def followups(ctx: RunCtx, goal: Goal.Slug, ts: List[Target]): Followed =
     val queued = queuedDois()
     val counts = ts.filter(_.doi.isDefined).map { t =>
-      upstream().followups(AgentUpstream.FollowupsId(t.citekey.value), None, Some(FollowupsInput.Limit(cfg.scheduler.followupsPerSource.value))) match
+      upstream().followups(
+        AgentUpstream.FollowupsId(t.citekey.value),
+        None,
+        Some(FollowupsInput.Limit(cfg.scheduler.followupsPerSource.value))
+      ) match
         case Left(m)  => ctx.warn(s"followups ${t.citekey}: $m"); (0, 0, 0)
         case Right(r) =>
           val acts = r.followups.map(CurrencyCheckRules.currencyAction(t.citekey, _))
           val proposed = acts.collect { case CurrencyAction.Propose(p) => p }.count { p =>
             val known = approvals.proposedBefore(p) ||
               site.citations
-                .neighbors(p.citekey, p.edgeKind.map(k => com.histmersion.domain.library.Edge.Kind.Wire(Edge.Kind.wireOf(k).value)).toList)
+                .neighbors(
+                  p.citekey,
+                  p.edgeKind.map(k => com.histmersion.domain.library.Edge.Kind.Wire(Edge.Kind.wireOf(k).value)).toList
+                )
                 .exists(n => n.direction.value == "out" && p.target.exists(_.value == n.citekey.value))
             !known && (approvals.propose(ctx, p) match
               case SourceProposals.Outcome.Recorded(id, w) => ctx.warn(s"approval $id waits for a person: $w"); true
@@ -109,25 +116,37 @@ final class CurrencyCheckPipeline(
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
             row.doi.flatMap(d => Ident.doi(Ident.Written(d.value))).exists { doi =>
-              queueOnce(ctx, goal, doi, Queue.QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value), queued) match
+              queueOnce(
+                ctx,
+                goal,
+                doi,
+                Queue.QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value),
+                queued
+              ) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false
                 case Right(added) => added
             }
           }
           (r.followups.size, proposed, fetched)
     }
-    Followed(Followed.Citing(counts.map(_._1).sum), Followed.Proposed(counts.map(_._2).sum), Followed.Queued(counts.map(_._3).sum))
+    Followed(
+      Followed.Citing(counts.map(_._1).sum),
+      Followed.Proposed(counts.map(_._2).sum),
+      Followed.Queued(counts.map(_._3).sum)
+    )
 
 object CurrencyCheckPipeline:
   final case class Target(citekey: Citekey, doi: Option[Doi]) derives KindlingsCodecAsObject
-  final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted]) derives KindlingsCodecAsObject
+  final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted])
+      derives KindlingsCodecAsObject
 
   object Assessed:
     type Checked = Checked.T
     object Checked extends Newtype[Int, Pure]
     type Retracted = Citekey
     val Retracted: Citekey.type = Citekey
-  final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued) derives KindlingsCodecAsObject
+  final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued)
+      derives KindlingsCodecAsObject
 
   object Followed:
     type Citing = Citing.T

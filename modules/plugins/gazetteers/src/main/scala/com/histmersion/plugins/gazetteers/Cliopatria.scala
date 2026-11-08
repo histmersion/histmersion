@@ -21,8 +21,10 @@ object Cliopatria extends DownloadedGazetteer:
   object Ordinal extends Newtype[Int, Pure]
 
   val title = GazetteerSource.TitleResult("Seshat Cliopatria polity polygons")
-  override val description = GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
-  val url = Plugin.Http.GetUrl("https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip")
+  override val description =
+    GazetteerSource.DescriptionResult("Seshat Cliopatria polity polygons (CC BY 4.0, ~13K features from 3400 BCE)")
+  val url =
+    Plugin.Http.GetUrl("https://github.com/Seshat-Global-History-Databank/cliopatria/raw/main/cliopatria.geojson.zip")
   val rights: GazetteerRights = GazetteerRights(
     Licence("CC BY 4.0"),
     GazetteerRights.Credit("Cliopatria (Seshat Databank), CC BY 4.0"),
@@ -36,15 +38,19 @@ object Cliopatria extends DownloadedGazetteer:
     download(http).flatMap(read).map(items => parentConcepts(items) ++ items)
 
   def read(text: DownloadedGazetteer.Text): Either[DownloadedGazetteer.Problem, List[GazetteerPlace]] =
-    io.circe.parser.parse(text.value).left.map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
-      val features = doc.asObject
-        .flatMap(_("features"))
-        .flatMap(_.asArray)
-        .map(_.toList)
-        .orElse(doc.asArray.map(_.toList))
-        .toRight(DownloadedGazetteer.Problem("not a GeoJSON FeatureCollection"))
-      features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
-    }
+    io.circe.parser
+      .parse(text.value)
+      .left
+      .map(e => DownloadedGazetteer.Problem(s"invalid JSON: ${e.getMessage}"))
+      .flatMap { doc =>
+        val features = doc.asObject
+          .flatMap(_("features"))
+          .flatMap(_.asArray)
+          .map(_.toList)
+          .orElse(doc.asArray.map(_.toList))
+          .toRight(DownloadedGazetteer.Problem("not a GeoJSON FeatureCollection"))
+        features.map(_.zipWithIndex.flatMap((f, i) => readFeature(f, Ordinal(i)).toOption))
+      }
 
   def readFeature(j: Json, ordinal: Ordinal): Either[DownloadedGazetteer.Problem, GazetteerPlace] =
     j.asObject.toRight(DownloadedGazetteer.Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
@@ -72,7 +78,9 @@ object Cliopatria extends DownloadedGazetteer:
             seshatId.map(s => "seshatId" -> Json.fromString(s.value)).toList ++
             memberOf.map(m => "memberOf" -> Json.fromString(m.value)).toList
         )
-        val relations = List(GazetteerRelation(GazetteerRelation.ChildId(sliceId), GazetteerRelation.ParentId(parentId), PartOf, period)) ++
+        val relations = List(
+          GazetteerRelation(GazetteerRelation.ChildId(sliceId), GazetteerRelation.ParentId(parentId), PartOf, period)
+        ) ++
           memberOf.map(m =>
             GazetteerRelation(
               GazetteerRelation.ChildId(sliceId),
@@ -88,7 +96,8 @@ object Cliopatria extends DownloadedGazetteer:
             kind = Polity,
             geometry = geom,
             period = period,
-            properties = Some(leftover).filter(_.nonEmpty).map(l => GazetteerPlace.Properties(Json.fromJsonObject(l).noSpaces)),
+            properties =
+              Some(leftover).filter(_.nonEmpty).map(l => GazetteerPlace.Properties(Json.fromJsonObject(l).noSpaces)),
             names = List(GazetteerName(GazetteerName.Name(rawName))),
             relations = relations
           )
@@ -113,9 +122,20 @@ object Cliopatria extends DownloadedGazetteer:
         val dated = spans.getOrElse(pid, Nil)
         val period =
           if dated.isEmpty then None
-          else span(DownloadedGazetteer.Year(dated.map(_.start.value.toLong).min), DownloadedGazetteer.Year(dated.map(_.end.value.toLong).max))
-        GazetteerPlace(id = GazetteerPlace.Id(pid.value), label = GazetteerPlace.Label(label), kind = Polity, period = period)
+          else
+            span(
+              DownloadedGazetteer.Year(dated.map(_.start.value.toLong).min),
+              DownloadedGazetteer.Year(dated.map(_.end.value.toLong).max)
+            )
+        GazetteerPlace(
+          id = GazetteerPlace.Id(pid.value),
+          label = GazetteerPlace.Label(label),
+          kind = Polity,
+          period = period
+        )
       }
 
   private def numYear(o: JsonObject, key: String): Option[DownloadedGazetteer.Year] =
-    o(key).flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption))).map(DownloadedGazetteer.Year(_))
+    o(key)
+      .flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.toLongOption)))
+      .map(DownloadedGazetteer.Year(_))

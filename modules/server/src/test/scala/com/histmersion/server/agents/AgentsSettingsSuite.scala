@@ -125,7 +125,9 @@ class AgentsSettingsSuite extends munit.FunSuite:
       "",
       "the settings files stay out through --setting-sources, which keeps the plan login (§3a P2)"
     )
-    assert(cfg.agents.runtimes.claudeMod.value && cfg.agents.runtimes.generate.value && !cfg.agents.runtimes.interactiveMod.value)
+    assert(
+      cfg.agents.runtimes.claudeMod.value && cfg.agents.runtimes.generate.value && !cfg.agents.runtimes.interactiveMod.value
+    )
     assertEquals(cfg.agents.quota.claudePlan.maxCallsInFlight, 1)
     assertEquals(
       (cfg.agents.quota.claudePlan.refresh, cfg.agents.quota.claudePlan.probeModel),
@@ -136,7 +138,11 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assert(!cfg.agents.providers.codex.useApiKey.value && !cfg.agents.providers.opencode.chatgptLogin.value)
     assertEquals(cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.Codex), None)
     assertEquals(cfg.agents.allowances, "")
-    assertEquals(cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.ClaudeCode), None, "claude-code is no HTTP provider")
+    assertEquals(
+      cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.ClaudeCode),
+      None,
+      "claude-code is no HTTP provider"
+    )
     val on = AppConfig.load(
       org.ekrich.config.ConfigFactory.parseMap(
         java.util.Map.of(
@@ -155,15 +161,33 @@ class AgentsSettingsSuite extends munit.FunSuite:
       parseChain(Chain.Spec(on.agents.role(AgentRole.Extractor))).map(_.map(_.wire)),
       Right(List("claude-code:sonnet", "local:qwen"))
     )
-    assertEquals(parseAllowances(Allowance.Spec(on.agents.allowances.value)).map(_.map(_.text)), Right(List("2M tokens/5h, reserve 20%")))
+    assertEquals(
+      parseAllowances(Allowance.Spec(on.agents.allowances.value)).map(_.map(_.text)),
+      Right(List("2M tokens/5h, reserve 20%"))
+    )
     assertEquals(on.agents.providers.claudeCode.command, "/opt/homebrew/bin/claude")
     assert(on.agents.providers.claudeCode.allowNonLoopback.value)
 
   test("config: article-plan/goal-plan take auto or checked; article-publish only checked reaches the supervisor"):
-    val c = AgentApprovalsConfig(AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("auto"), articlePlan = AgentApprovalsConfig.Gate("Auto"), goalPlan = AgentApprovalsConfig.Gate("checked"))
+    val c = AgentApprovalsConfig(
+      AgentApprovalsConfig.Gate("manual"),
+      AgentApprovalsConfig.Gate("manual"),
+      AgentApprovalsConfig.Gate("auto"),
+      articlePlan = AgentApprovalsConfig.Gate("Auto"),
+      goalPlan = AgentApprovalsConfig.Gate("checked")
+    )
     assert(c.checked(Approval.Kind.ArticlePlan) && c.checked(Approval.Kind.GoalPlan))
-    assert(c.checked(Approval.Kind.ArticlePublish), "auto publishes in the run; what it left open the supervisor checks")
-    assert(!AgentApprovalsConfig(AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("manual"), AgentApprovalsConfig.Gate("manual")).checked(Approval.Kind.ArticlePlan))
+    assert(
+      c.checked(Approval.Kind.ArticlePublish),
+      "auto publishes in the run; what it left open the supervisor checks"
+    )
+    assert(
+      !AgentApprovalsConfig(
+        AgentApprovalsConfig.Gate("manual"),
+        AgentApprovalsConfig.Gate("manual"),
+        AgentApprovalsConfig.Gate("manual")
+      ).checked(Approval.Kind.ArticlePlan)
+    )
     assert(!c.checked(Approval.Kind.Edge))
     assertEquals(c.publishMode, Approval.Mode.Auto)
     assertEquals(

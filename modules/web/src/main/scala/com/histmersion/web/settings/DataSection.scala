@@ -35,7 +35,6 @@ object DataSection:
 
   /** What Histmersion's files take, as a share of the free space left on the disk, 0–100. Pure. */
 
-
   def share(used: ByteCount, free: ByteCount): SharePercent =
     if used.value <= 0 then SharePercent(0)
     else if free.value <= 0 then SharePercent(100)
@@ -112,7 +111,9 @@ object DataSection:
             _.filter(_.kind != Gazetteer.Kind.Lpf).map(s =>
               row(
                 s.title.value,
-                (s.licence.map(_.value).toList ++ s.places.map(n => Plural.count(Plural.CountN(n.value), Plural.CountSingular("place")).value).toList).mkString(" · "),
+                (s.licence.map(_.value).toList ++ s.places
+                  .map(n => Plural.count(Plural.CountN(n.value), Plural.CountSingular("place")).value)
+                  .toList).mkString(" · "),
                 span(
                   cls := (if s.importedAt.isDefined then "data-state" else "data-state data-state--off"),
                   s.importedAt.fold("Not loaded")(t => s"Loaded ${t.value.take(10)}")
@@ -131,7 +132,11 @@ object DataSection:
                 c.title.value,
                 c.licence.value,
                 span(cls := "data-state", ""),
-                act(ActionLabel("Update now"), ActionWhat(s"events-${c.id}"), ApiClient.importEvents(EventImportRequest.Provider(c.id.value)))
+                act(
+                  ActionLabel("Update now"),
+                  ActionWhat(s"events-${c.id}"),
+                  ApiClient.importEvents(EventImportRequest.Provider(c.id.value))
+                )
               )
             )
           )
@@ -142,7 +147,9 @@ object DataSection:
         div(
           children <-- media.signal.map(ms =>
             ms.map { m =>
-              val on = ui.plugins.plugins.find(_.id.value == m.plugin.value).forall(_.state.value == PluginState.Registered.wire.value)
+              val on = ui.plugins.plugins
+                .find(_.id.value == m.plugin.value)
+                .forall(_.state.value == PluginState.Registered.wire.value)
               row(
                 m.title.value,
                 m.description.value,
@@ -150,7 +157,13 @@ object DataSection:
                   cls := (if on then "data-state" else "data-state data-state--off"),
                   if on then "" else "Turned off: see Plugins and Keys"
                 ),
-                if on then act(ActionLabel("Fetch new pictures"), ActionWhat(s"media-${m.name}"), ApiClient.importMedia(MediaItem.Provider(m.name.value))) else span()
+                if on then
+                  act(
+                    ActionLabel("Fetch new pictures"),
+                    ActionWhat(s"media-${m.name}"),
+                    ApiClient.importMedia(MediaItem.Provider(m.name.value))
+                  )
+                else span()
               )
             }
           )
@@ -191,7 +204,9 @@ object DataSection:
         r.toEither.left.map(SettingsStore.message) match
           case Left(why) => said.set(Some(Left(why.value)))
           case Right(j)
-              if j.detail.flatMap(JobDetail.Purpose.of).exists(_.value.startsWith("dry run")) || what.value.endsWith("-check") =>
+              if j.detail.flatMap(JobDetail.Purpose.of).exists(_.value.startsWith("dry run")) || what.value.endsWith(
+                "-check"
+              ) =>
             said.set(Some(Right(s"$text: checking…")))
             follow(text, j.id, 0)
           case Right(_) =>
@@ -218,7 +233,8 @@ object DataSection:
         Set(Basemap.Layer.Vector.wire, Basemap.Layer.Terrain.wire, Basemap.Layer.Labels.wire)(l.layer)
       )
     val sea = b.layers.filter(_.layer == Basemap.Layer.Bathymetry.wire)
-    def size(ls: List[Basemap.LayerInfo]) = Backup.humanBytes(ByteCount(ls.filter(_.present.value).map(_.bytes.value).sum))
+    def size(ls: List[Basemap.LayerInfo]) =
+      Backup.humanBytes(ByteCount(ls.filter(_.present.value).map(_.bytes.value).sum))
     def when(ls: List[Basemap.LayerInfo]) =
       ls.flatMap(_.fetchedAt).map(_.value).maxOption.map(t => s" · ${t.take(10)}").getOrElse("")
     val area = if b.bbox.value.trim.equalsIgnoreCase("world") then "the whole world" else b.bbox.value
@@ -232,7 +248,12 @@ object DataSection:
           cls := (if main.exists(_.present.value) then "data-state" else "data-state data-state--off"),
           if main.exists(_.present.value) then s"Installed${when(main)}" else "Not downloaded"
         ),
-        act(ActionLabel("Check for update"), ActionWhat("basemap-check"), ApiClient.basemapFetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun(true))), false),
+        act(
+          ActionLabel("Check for update"),
+          ActionWhat("basemap-check"),
+          ApiClient.basemapFetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun(true))),
+          false
+        ),
         act(
           if main.exists(_.present.value) then ActionLabel("Update") else ActionLabel("Download"),
           ActionWhat("basemap"),
@@ -248,7 +269,9 @@ object DataSection:
               disabled <-- Auth.writable.map(!_),
               onClick --> (_ =>
                 if removeAll.now() then
-                  ApiClient.basemapRemove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("all"))).foreach(_ => removeAll.set(false))
+                  ApiClient
+                    .basemapRemove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("all")))
+                    .foreach(_ => removeAll.set(false))
                 else removeAll.set(true)
               )
             )
@@ -281,7 +304,8 @@ object DataSection:
       div(
         cls := "data-disk-line",
         span("Disk used by Histmersion"),
-        strong(if r.entries.isEmpty then (if r.measuring.value then "measuring…" else "unknown") else Backup.humanBytes(used))
+        strong(if r.entries.isEmpty then (if r.measuring.value then "measuring…" else "unknown")
+        else Backup.humanBytes(used))
       ),
       div(cls := "meter", styleAttr := s"--share:$pct%", div(cls := "meter-fill")),
       div(

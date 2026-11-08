@@ -10,7 +10,13 @@ import com.histmersion.plugin.*
   * (natural-history specimens) are refused, and so is an object made after `max-year`.
   */
 final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key], licences: LicenceReader)
-    extends KeyedCollection(conf, KeyedCollection.Plugin("media-europeana"), key, KeyedCollection.Needs("a Europeana personal API key"), KeyedCollection.Settings("media.europeana")):
+    extends KeyedCollection(
+      conf,
+      KeyedCollection.Plugin("media-europeana"),
+      key,
+      KeyedCollection.Needs("a Europeana personal API key"),
+      KeyedCollection.Settings("media.europeana")
+    ):
   val title = MediaCollection.TitleResult("Europeana images")
   override val description = described(
     "Europeana's openly licensed images (reusability=open: CC0, PDM, CC BY, CC BY-SA), each record's own " +
@@ -25,9 +31,14 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
     CollectionSettings.items(conf.excludeDataProviders).map(i => Europeana.Exclusions.DataProviders(i.value)),
     CollectionSettings.items(conf.excludeTypes).map(i => Europeana.Exclusions.Types(i.value))
   )
-  private def headers = Map(Plugin.Http.GetHeadersPart1(Europeana.KeyHeader) -> Plugin.Http.GetHeadersPart2(apiKey.value))
+  private def headers = Map(
+    Plugin.Http.GetHeadersPart1(Europeana.KeyHeader) -> Plugin.Http.GetHeadersPart2(apiKey.value)
+  )
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(
+      place: MediaPlace,
+      http: Plugin.Http
+  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
       .flatMap(j => Europeana.records(j, conf.apiUrl, licences, exclusions).left.map(_.value))
@@ -41,4 +52,3 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedColle
       .flatMap(j => Europeana.item(j, item, licences, exclusions).left.map(_.value))
       .left
       .map(e => MediaCollection.CompleteResultPart1(explain(KeyedCollection.Problem(e)).value))
-

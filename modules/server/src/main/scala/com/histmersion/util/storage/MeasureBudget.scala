@@ -29,7 +29,6 @@ object MeasureBudget:
   type DeadlineNanos = DeadlineNanos.T
   object DeadlineNanos extends Newtype[Long, Pure]
 
-
   def of(maxEntries: MaxEntries, maxMillis: MaxMillis): MeasureBudget =
     MeasureBudget(maxEntries, DeadlineNanos(System.nanoTime() + maxMillis.value * 1_000_000L))
 

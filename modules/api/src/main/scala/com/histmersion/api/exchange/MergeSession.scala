@@ -12,9 +12,10 @@ final case class MergeSession(
     resolutions: MergeResolutions = MergeResolutions(),
     updatedAt: Option[MergeSession.UpdatedAt] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MergeSession:
-  export com.histmersion.api.exchange.Bundle.{Name as Bundle}
+  export com.histmersion.api.exchange.Bundle.Name as Bundle
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]

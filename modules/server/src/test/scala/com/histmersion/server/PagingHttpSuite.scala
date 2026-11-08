@@ -77,9 +77,15 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
           |             {"claim":"Third","lat":38.2,"lon":23.2,"periodStart":-1300,"periodEnd":-1250}]}""".stripMargin
       assertEquals(put(s"$url/api/sources/zz_page2021_geo", src)._1, 200)
       val p0 = decode[GeoHitPage](get(s"$url/api/findings/page?tag=zz-page-geo&limit=2")._2)
-      assertEquals(((p0.total.value: Int), p0.hits.map(_.claim), p0.next.map(n => (n.value: Int))), (3, List("First", "Second"), Some(2)))
+      assertEquals(
+        ((p0.total.value: Int), p0.hits.map(_.claim), p0.next.map(n => (n.value: Int))),
+        (3, List("First", "Second"), Some(2))
+      )
       val p1 = decode[GeoHitPage](get(s"$url/api/findings/page?tag=zz-page-geo&limit=2&offset=2")._2)
-      assertEquals((p1.hits.map(_.claim), (p1.offset.value: Int), p1.next.map(n => (n.value: Int))), (List("Third"), 2, None))
+      assertEquals(
+        (p1.hits.map(_.claim), (p1.offset.value: Int), p1.next.map(n => (n.value: Int))),
+        (List("Third"), 2, None)
+      )
       // the map feed honours the offset too, and stays a plain array
       assert(get(s"$url/api/findings?tag=zz-page-geo&limit=2&offset=2")._2.startsWith("["))
       val (_, md) = mcp(url, "geo_when", """{"tags":["zz-page-geo"],"limit":2}""")

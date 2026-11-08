@@ -10,7 +10,6 @@ object WikiLinks:
   type RetargetCount = RetargetCount.T
   object RetargetCount extends Newtype[Int, Pure]
 
-
   type NormalizeRaw = NormalizeRaw.T
   object NormalizeRaw extends Newtype[String, Pure]
   type RewriteLinksRenderArg3 = Alias
@@ -80,23 +79,32 @@ object WikiLinks:
       .filter(_.group(1).isEmpty)
       .flatMap(m => normalize(NormalizeRaw(m.group(2))))
       .toList
-      .distinct).map(refactorValue7 => Occurrence.Target((refactorValue7).value))
+      .distinct)
+      .map(refactorValue7 => Occurrence.Target((refactorValue7).value))
 
   /** Every link replaced by what `render` makes of its target, explicit label and written target; embeds and links to
     * no target are kept as written.
     */
   def rewriteLinks(md: Body)(render: (Occurrence.Target, Option[Alias], Alias) => String): Body =
-    Body(Link.replaceAllIn(
-      (md).value,
-      m =>
-        val raw = m.group(2)
-        val (targetPart, explicit) = raw.indexOf('|') match
-          case -1 => (raw, None)
-          case i  => (raw.take(i), Some(raw.drop(i + 1).trim))
-        java.util.regex.Matcher.quoteReplacement(normalize(NormalizeRaw(targetPart)) match
-          case Some(t) if m.group(1).isEmpty => (render(Occurrence.Target((t).value), (explicit).map(refactorValue => Alias(refactorValue)), Alias(targetPart.takeWhile(_ != '#').trim)))
-          case _                             => m.matched)
-    ))
+    Body(
+      Link.replaceAllIn(
+        (md).value,
+        m =>
+          val raw = m.group(2)
+          val (targetPart, explicit) = raw.indexOf('|') match
+            case -1 => (raw, None)
+            case i  => (raw.take(i), Some(raw.drop(i + 1).trim))
+          java.util.regex.Matcher.quoteReplacement(normalize(NormalizeRaw(targetPart)) match
+            case Some(t) if m.group(1).isEmpty => (
+              render(
+                Occurrence.Target((t).value),
+                (explicit).map(refactorValue => Alias(refactorValue)),
+                Alias(targetPart.takeWhile(_ != '#').trim)
+              )
+            )
+            case _ => m.matched)
+      )
+    )
 
   /** The links whose target `to` moves pointed at the new target, labels and anchors kept; with how many moved. */
   def retarget(md: Body, to: Occurrence.Target => Option[Occurrence.Target]): (Body, RetargetCount) =
@@ -123,4 +131,5 @@ object WikiLinks:
       (Body(out), RetargetCount(count))
 
   /** Whether a text links `ck` (any case). */
-  def links(text: Body, ck: com.histmersion.api.library.Citekey): Boolean = targets(text).exists(_.value.equalsIgnoreCase(ck.value))
+  def links(text: Body, ck: com.histmersion.api.library.Citekey): Boolean =
+    targets(text).exists(_.value.equalsIgnoreCase(ck.value))

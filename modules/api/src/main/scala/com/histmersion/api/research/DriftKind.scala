@@ -18,7 +18,6 @@ object DriftKind:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   given WireEnumValues[DriftKind]:
     def all: Array[DriftKind] = values
     def wire(e: DriftKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)

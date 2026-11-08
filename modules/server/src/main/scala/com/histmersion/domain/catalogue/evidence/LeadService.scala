@@ -37,7 +37,13 @@ trait LeadService:
   /** The facts of the leads of the events `selection` selects, the catalogue's and the largest first, one page; and how
     * many it selects.
     */
-  def leads(selection: EventSelection, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: PageSize, offset: Offset): (RowCount, List[LeadRow])
+  def leads(
+      selection: EventSelection,
+      km: CM.Tolerance.Km,
+      years: CM.Tolerance.Years,
+      limit: PageSize,
+      offset: Offset
+  ): (RowCount, List[LeadRow])
 
   /** The facts of one event's lead. */
   def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow]
@@ -55,8 +61,8 @@ trait LeadService:
   ): List[LeadService.ArticleCandidate]
 
 object LeadService:
-  /** A catalogue event an article's region and period hold: its id, label, kind, span, names, size, the findings near it
-    * and the catalogue it comes from.
+  /** A catalogue event an article's region and period hold: its id, label, kind, span, names, size, the findings near
+    * it and the catalogue it comes from.
     */
   type ArticleCandidate = (
       Event.Id,
@@ -74,12 +80,26 @@ object LeadService:
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends LeadService:
     def attestingSources(id: Event.Id): List[EventSourceRef] = db.read(LeadRepo.attestingSources(id))
-    def nearFindings(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: PageSize): List[EventFindingRef] =
+    def nearFindings(
+        id: Event.Id,
+        km: CM.Tolerance.Km,
+        years: CM.Tolerance.Years,
+        limit: PageSize
+    ): List[EventFindingRef] =
       db.read(LeadRepo.nearFindings(id, km, years, limit))
-    def leads(selection: EventSelection, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: PageSize, offset: Offset): (RowCount, List[LeadRow]) =
+    def leads(
+        selection: EventSelection,
+        km: CM.Tolerance.Km,
+        years: CM.Tolerance.Years,
+        limit: PageSize,
+        offset: Offset
+    ): (RowCount, List[LeadRow]) =
       db.read(LeadRepo.leadRows(selection.sql(related), km, years, limit, offset))
     def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] =
-      db.read(LeadRepo.leadRows(Sql.of(Sql.Text("e.id = ?"), Param.S(Param.S.V(id.value))), km, years, PageSize(1), Offset.Start))._2
+      db.read(
+        LeadRepo
+          .leadRows(Sql.of(Sql.Text("e.id = ?"), Param.S(Param.S.V(id.value))), km, years, PageSize(1), Offset.Start)
+      )._2
     def articleCandidates(
         citekeys: List[Citekey],
         period: Option[(SignedYear, SignedYear)],
@@ -89,7 +109,6 @@ object LeadService:
         limit: PageSize
     ): List[ArticleCandidate] =
       db.read(LeadRepo.articleCandidates(citekeys, period, km, minVei, minMagnitude, limit))
-
 
   /** The same rules over the shared in-memory state, which holds the catalogue's rows alone — no finding is stored, so
     * none is near an event and no article region holds one; `source` gives a source's title and year by its citekey
@@ -120,19 +139,31 @@ object LeadService:
             .option(a.citekey.value)
             .flatMap(source)
             .map((t, y) =>
-              EventSourceRef(a.citekey, t, y, EventSourceRef.Via("attestation"), a.quote.map(q => EventSourceRef.Quote(q.value)))
+              EventSourceRef(
+                a.citekey,
+                t,
+                y,
+                EventSourceRef.Via("attestation"),
+                a.quote.map(q => EventSourceRef.Quote(q.value))
+              )
             )
         )
         .toList
       own.toList ++ att.filterNot(a => own.exists(_.citekey == a.citekey))
 
-    def nearFindings(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: PageSize): List[EventFindingRef] = Nil
+    def nearFindings(
+        id: Event.Id,
+        km: CM.Tolerance.Km,
+        years: CM.Tolerance.Years,
+        limit: PageSize
+    ): List[EventFindingRef] = Nil
 
     private def factsOf(s: CatalogueState, id: Event.Id): Option[LeadRow] =
       s.events.find(_.id == id).map { e =>
         val recs = s.catalogueRecords.filter(_._1.value == id.value).map(_._2)
         val tier =
-          if e.citekey.isDefined || s.attestations.exists(a => a.targetType.value == "event" && a.targetId.value == id.value)
+          if e.citekey.isDefined || s.attestations
+              .exists(a => a.targetType.value == "event" && a.targetId.value == id.value)
           then EventTier.Attested
           else EventTier.Catalogue
         val cs = s.candidates.filter(_.eventId.value == id.value)
@@ -153,7 +184,13 @@ object LeadService:
         )
       }
 
-    def leads(selection: EventSelection, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: PageSize, offset: Offset): (RowCount, List[LeadRow]) =
+    def leads(
+        selection: EventSelection,
+        km: CM.Tolerance.Km,
+        years: CM.Tolerance.Years,
+        limit: PageSize,
+        offset: Offset
+    ): (RowCount, List[LeadRow]) =
       val s = state.get
       val listed = events.list(selection, PageSize(Int.MaxValue), Offset.Start)
       val rows = listed.events.flatMap(e => Event.Id.option(e.id.value).flatMap(factsOf(s, _))).sortBy { r =>
@@ -170,7 +207,8 @@ object LeadService:
         rows.slice(offset.value.max(0), offset.value.max(0) + limit.value.max(1))
       )
 
-    def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] = factsOf(state.get, id).toList
+    def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] =
+      factsOf(state.get, id).toList
 
     def articleCandidates(
         citekeys: List[Citekey],

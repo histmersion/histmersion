@@ -25,6 +25,7 @@ object ApprovalQuery:
   object State extends Newtype[String, Pure]
   type UpTo = UpTo.T
   object UpTo extends Newtype[String, Pure]
+
   /** Who decided an approval, in SQL — `ListFilters.DecidedBy.of`, the same rules. The two prefixes are the code's own
     * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
     * expression is used both to filter and to count.

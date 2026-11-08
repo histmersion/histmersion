@@ -20,7 +20,8 @@ final case class LedgerRow(
     decision: LedgerRow.Decision,
     recordedAt: LedgerRow.RecordedAt
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object LedgerRow:
   type Kind = Kind.T

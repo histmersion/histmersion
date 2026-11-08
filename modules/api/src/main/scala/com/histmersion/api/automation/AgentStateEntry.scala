@@ -14,7 +14,8 @@ final case class AgentStateEntry(
     value: AgentStateEntry.Value,
     updatedAt: Option[AgentStateEntry.UpdatedAt] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AgentStateEntry:
   export com.histmersion.api.Api.AgentState.Key

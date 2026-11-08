@@ -40,16 +40,23 @@ object CurrencyCheckRules:
         case None                      => CurrencyAction.Ignore
         case Some(citingKey)           =>
           Citekey.option(citingKey.value).fold(CurrencyAction.Ignore) { citing =>
-          val context = row.contexts.map(_.value.trim).filter(_.nonEmpty).headOption
-          val evidence = s"followups: the citing paper reads as '$kind'" +
-            (if row.intents.nonEmpty then s" (intents: ${row.intents.mkString(", ")})" else "") +
-            context.fold("")(c => s"; context: ${c.take(400)}")
-          val (from, edge, to) =
-            if kind == Acquire.EdgeKinds.Supersedes then (target, Edge.Kind.SupersededBy, citing)
-            else (citing, if kind == Acquire.EdgeKinds.Refutes then Edge.Kind.Refutes else Edge.Kind.Challenges, target)
-          CurrencyAction.Propose(
-            Proposal(Approval.Kind.Edge, from, edgeKind = Some(edge), target = Some(to), evidence = Proposal.Evidence(evidence))
-          )
+            val context = row.contexts.map(_.value.trim).filter(_.nonEmpty).headOption
+            val evidence = s"followups: the citing paper reads as '$kind'" +
+              (if row.intents.nonEmpty then s" (intents: ${row.intents.mkString(", ")})" else "") +
+              context.fold("")(c => s"; context: ${c.take(400)}")
+            val (from, edge, to) =
+              if kind == Acquire.EdgeKinds.Supersedes then (target, Edge.Kind.SupersededBy, citing)
+              else
+                (citing, if kind == Acquire.EdgeKinds.Refutes then Edge.Kind.Refutes else Edge.Kind.Challenges, target)
+            CurrencyAction.Propose(
+              Proposal(
+                Approval.Kind.Edge,
+                from,
+                edgeKind = Some(edge),
+                target = Some(to),
+                evidence = Proposal.Evidence(evidence)
+              )
+            )
           }
 
   /** The acquisition item a disagreeing paper outside the corpus becomes. */

@@ -26,4 +26,3 @@ trait PointTiles:
 
   /** Every tile of the view at the current template is in. */
   def loaded: Boolean
-

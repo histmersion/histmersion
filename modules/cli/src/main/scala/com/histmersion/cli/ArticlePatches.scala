@@ -64,9 +64,25 @@ object ArticlePatches:
               tagsReplace.map(t => csv1(t).map(ListPatch.Replace(_)))
             )
           )
-      base.modify(
-        _.title).setTo(title.orElse(base.title)).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.kind).setTo(kind.orElse(base.kind)).modify(_.body).setTo(body.orElse(base.body)).modify(_.append).setTo(app.orElse(base.append)).modify(_.tags).setTo(tags).modify(_.regions).setTo(regions.map(r => csv1(r).map(Article.Patch.Regions(_))).orElse(base.regions)).modify(_.period).setTo(per.orElse(base.period)).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
-      )
+      base
+        .modify(_.title)
+        .setTo(title.orElse(base.title))
+        .modify(_.summary)
+        .setTo(summary.orElse(base.summary))
+        .modify(_.kind)
+        .setTo(kind.orElse(base.kind))
+        .modify(_.body)
+        .setTo(body.orElse(base.body))
+        .modify(_.append)
+        .setTo(app.orElse(base.append))
+        .modify(_.tags)
+        .setTo(tags)
+        .modify(_.regions)
+        .setTo(regions.map(r => csv1(r).map(Article.Patch.Regions(_))).orElse(base.regions))
+        .modify(_.period)
+        .setTo(per.orElse(base.period))
+        .modify(_.ifUpdatedAt)
+        .setTo(ifUpdatedAt.orElse(base.ifUpdatedAt))
 
   /** The `--filter-*` flags as given; [[withCoverage]] turns them into the patch's `filter`. */
   final case class FilterFlags(
@@ -103,7 +119,10 @@ object ArticlePatches:
       _ <- Either.cond(
         !(f.clear.value && f.anyGiven),
         (),
-        Cli.Error(Cli.Error.Message("--clear-filter with --filter-* flags: give one or the other"), exitCode = ExitCode.Usage)
+        Cli.Error(
+          Cli.Error.Message("--clear-filter with --filter-* flags: give one or the other"),
+          exitCode = ExitCode.Usage
+        )
       )
       rs <- reasons.traverse { r =>
         r.value.indexOf('=') match
@@ -143,7 +162,10 @@ object ArticlePatches:
   def withCritiques(p: Article.Patch, reasons: List[CritiqueReason.Reason]): Either[Cli.Error, Article.Patch] =
     reasons
       .traverse(r =>
-        CritiqueReason.parse(r).left.map(m => Cli.Error(Cli.Error.Message(s"--critique-reason: $m"), exitCode = ExitCode.Usage))
+        CritiqueReason
+          .parse(r)
+          .left
+          .map(m => Cli.Error(Cli.Error.Message(s"--critique-reason: $m"), exitCode = ExitCode.Usage))
       )
       .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 

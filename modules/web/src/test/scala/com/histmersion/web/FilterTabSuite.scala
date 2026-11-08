@@ -70,8 +70,16 @@ class FilterTabSuite extends munit.FunSuite:
     assertEquals(s.moreLabel(ResultsPaging.PageNumber(25)).map(_.value), Some("show 25 more (387 left)"))
     assertEquals(TabState.more(s, ResultsPaging.PageNumber(25)).map((_.shown.value: Int)), Right(50))
     val atEnd = s.copy(shown = RowCount(200))
-    assertEquals(TabState.more(atEnd, ResultsPaging.PageNumber(25)).left.map(_.value), Left(200), "rows past the first fetch are fetched, no longer unreachable")
-    val next = TabState.appended(TabState.loading(atEnd), TabPage((201 to 400).toList, RowCount(412)), ResultsPaging.PageNumber(25))
+    assertEquals(
+      TabState.more(atEnd, ResultsPaging.PageNumber(25)).left.map(_.value),
+      Left(200),
+      "rows past the first fetch are fetched, no longer unreachable"
+    )
+    val next = TabState.appended(
+      TabState.loading(atEnd),
+      TabPage((201 to 400).toList, RowCount(412)),
+      ResultsPaging.PageNumber(25)
+    )
     assertEquals((next.rows.size, next.shown.value: Int, next.loading.value), (400, 225, false))
 
   test("TabState: the last rows; nothing more once every row is shown"):
@@ -83,8 +91,29 @@ class FilterTabSuite extends munit.FunSuite:
     assertEquals(TabState.more(few, ResultsPaging.PageNumber(25)).map((_.shown.value: Int)), Right(30))
 
   test("TabState: the count line — loading before the first answer, then the sidebar's one form with the extras"):
-    assertEquals(TabState[Int]().countLine(Plural.Noun.Singular("article"), Plural.Noun.Plural("articles")).value, "loading…")
-    val s = TabState.first(TabPage(rows, RowCount(412), List(TabPage.Extras("200 concepts"), TabPage.Extras("? → ?"))), ResultsPaging.PageNumber(25))
-    assertEquals(s.countLine(Plural.Noun.Singular("article"), Plural.Noun.Plural("articles")).value, "showing 1–25 of 412 articles · 200 concepts · ? → ?")
-    assertEquals(TabState.first(TabPage(List(1), RowCount(1)), ResultsPaging.PageNumber(25)).countLine(Plural.Noun.Singular("article"), Plural.Noun.Plural("articles")).value, "1 article")
-    assertEquals(TabState.first(TabPage(Nil, RowCount(0)), ResultsPaging.PageNumber(25)).countLine(Plural.Noun.Singular("event"), Plural.Noun.Plural("events")).value, "no events")
+    assertEquals(
+      TabState[Int]().countLine(Plural.Noun.Singular("article"), Plural.Noun.Plural("articles")).value,
+      "loading…"
+    )
+    val s = TabState.first(
+      TabPage(rows, RowCount(412), List(TabPage.Extras("200 concepts"), TabPage.Extras("? → ?"))),
+      ResultsPaging.PageNumber(25)
+    )
+    assertEquals(
+      s.countLine(Plural.Noun.Singular("article"), Plural.Noun.Plural("articles")).value,
+      "showing 1–25 of 412 articles · 200 concepts · ? → ?"
+    )
+    assertEquals(
+      TabState
+        .first(TabPage(List(1), RowCount(1)), ResultsPaging.PageNumber(25))
+        .countLine(Plural.Noun.Singular("article"), Plural.Noun.Plural("articles"))
+        .value,
+      "1 article"
+    )
+    assertEquals(
+      TabState
+        .first(TabPage(Nil, RowCount(0)), ResultsPaging.PageNumber(25))
+        .countLine(Plural.Noun.Singular("event"), Plural.Noun.Plural("events"))
+        .value,
+      "no events"
+    )

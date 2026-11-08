@@ -57,16 +57,26 @@ class ManagerCmdSuite extends munit.FunSuite:
       ManagerCmd.focusRequest(List("pin", "bronze-age")),
       Right(Some(FocusSet(FocusSet.Action("pin"), Some(Goal.Slug("bronze-age")), by = Some(FocusSet.By("cli")))))
     )
-    assertEquals(ManagerCmd.focusRequest(List("unpin", "x")).map(_.map(_.action)), Right(Some(FocusSet.Action("unpin"))))
+    assertEquals(
+      ManagerCmd.focusRequest(List("unpin", "x")).map(_.map(_.action)),
+      Right(Some(FocusSet.Action("unpin")))
+    )
     assertEquals(
       ManagerCmd.focusRequest(List("priority", "x", "4")),
-      Right(Some(FocusSet(FocusSet.Action("priority"), Some(Goal.Slug("x")), Some(FocusSet.Value(4)), Some(FocusSet.By("cli")))))
+      Right(
+        Some(
+          FocusSet(FocusSet.Action("priority"), Some(Goal.Slug("x")), Some(FocusSet.Value(4)), Some(FocusSet.By("cli")))
+        )
+      )
     )
     assertEquals(
       ManagerCmd.focusRequest(List("max", "3")),
       Right(Some(FocusSet(FocusSet.Action("max"), value = Some(FocusSet.Value(3)), by = Some(FocusSet.By("cli")))))
     )
-    assertEquals(ManagerCmd.focusRequest(List("max", "default")), Right(Some(FocusSet(FocusSet.Action("max"), by = Some(FocusSet.By("cli"))))))
+    assertEquals(
+      ManagerCmd.focusRequest(List("max", "default")),
+      Right(Some(FocusSet(FocusSet.Action("max"), by = Some(FocusSet.By("cli")))))
+    )
     List(List("pin"), List("max", "-1"), List("max", "many"), List("priority", "x"), List("bogus")).foreach { a =>
       assert(ManagerCmd.focusRequest(a).left.exists(_.exitCode == ExitCode.Usage), a)
     }
@@ -88,7 +98,16 @@ class ManagerCmdSuite extends munit.FunSuite:
       dryRun = RepairAcquire.RepairResult.DryRun(true),
       moved = RepairAcquire.RepairResult.Moved(1),
       untouched = RepairAcquire.RepairResult.Untouched(3),
-      rows = List(RepairAcquire.RepairRow(RepairAcquire.RepairRow.Item(7), Doi("10.1/x"), List(RepairAcquire.RepairRow.Goals("g")), RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.RepairRow.Action(RepairAcquire.Move), RepairAcquire.RepairRow.Detail("legal open access"))),
+      rows = List(
+        RepairAcquire.RepairRow(
+          RepairAcquire.RepairRow.Item(7),
+          Doi("10.1/x"),
+          List(RepairAcquire.RepairRow.Goals("g")),
+          RepairAcquire.RepairRow.Watcher("watch:g"),
+          RepairAcquire.RepairRow.Action(RepairAcquire.Move),
+          RepairAcquire.RepairRow.Detail("legal open access")
+        )
+      ),
       backlog = Managers.ManagerInfo.Backlog(1),
       backlogDays = Some(Managers.ManagerInfo.BacklogDays(1))
     )
@@ -120,5 +139,7 @@ class ManagerCmdSuite extends munit.FunSuite:
       val text = out.toString(UTF_8)
       assert(text.contains("would move 1 legal open-access work") && text.contains("#7 https://doi.org/10.1/x"), text)
       val bad = cmd.parse(List("autopilot", "repair"), Map.empty).fold(h => fail(h.toString), identity)
-      assert(bad(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.message.value.contains("repair-acquire")))
+      assert(
+        bad(new Client(Client.ServerUrl("http://127.0.0.1:1"))).left.exists(_.message.value.contains("repair-acquire"))
+      )
     finally srv.stop(0)

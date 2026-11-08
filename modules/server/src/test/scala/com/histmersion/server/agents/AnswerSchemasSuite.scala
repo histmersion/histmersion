@@ -28,7 +28,6 @@ import com.histmersion.domain.automation.agents.LlmCall
 class AnswerSchemasSuite extends munit.FunSuite:
   private given CanEqual[Json, Json] = CanEqual.derived
 
-
   /** Every step schema the server sends: the engine's, the library's and research's. */
   private val allSchemas = AnswerSchemas.all ++ LibraryAnswers.all ++ ResearchAnswers.all
 
@@ -282,7 +281,19 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   private def decode(s: ResponseSchema[?], answer: Json): Either[AgentFailure, Any] =
     CliOutcomes
-      .result(CliOutcome(Vector.empty, Vector.empty, Some(CliOutcome.FinalText(answer.noSpaces)), TokenUsage.Zero, None, CliOutcome.Turns(1)), LlmCall.User("u"), s, None)
+      .result(
+        CliOutcome(
+          Vector.empty,
+          Vector.empty,
+          Some(CliOutcome.FinalText(answer.noSpaces)),
+          TokenUsage.Zero,
+          None,
+          CliOutcome.Turns(1)
+        ),
+        LlmCall.User("u"),
+        s,
+        None
+      )
       .finalAnswer
 
   test("a Codex answer (every optional field null) is valid under the strict schema; one leaving them out is not"):

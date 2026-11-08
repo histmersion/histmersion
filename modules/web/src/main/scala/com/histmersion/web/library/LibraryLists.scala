@@ -55,7 +55,10 @@ object LibraryLists:
   /** [[refresh]] after the filter has stopped changing (typing in the words field), as Explore's lists do. */
   def refreshSoon(): Unit =
     dom.window.clearTimeout(timer)
-    timer = dom.window.setTimeout(() => refresh(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value)).value)
+    timer = dom.window.setTimeout(
+      () => refresh(),
+      UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value)).value
+    )
 
   /** Turn `section`'s list to the page starting at `offset`. */
   def turnTo(section: LibrarySection, offset: Offset): Unit =
@@ -63,7 +66,13 @@ object LibraryLists:
 
   private def readSources(f: Filter, offset: Offset): Unit =
     sources.update(_.copy(loading = true, error = None))
-    val page = f.modify(_.sort).setTo(sort.sort).modify(_.limit).setTo(Filter.Limit(Layout.libraryPage.value)).modify(_.offset).setTo(Filter.Offset(offset.value))
+    val page = f
+      .modify(_.sort)
+      .setTo(sort.sort)
+      .modify(_.limit)
+      .setTo(Filter.Limit(Layout.libraryPage.value))
+      .modify(_.offset)
+      .setTo(Filter.Offset(offset.value))
     latestSources(ApiClient.sources(page))(
       r => sources.set(ListPage(r.hits, r.offset, r.total, loaded = true)),
       m => sources.update(_.copy(loading = false, loaded = true, error = Some(ErrorLine.Problem(m))))
@@ -71,7 +80,11 @@ object LibraryLists:
 
   private def readArticles(f: Filter, offset: Offset): Unit =
     articles.update(_.copy(loading = true, error = None))
-    val page = f.modify(_.limit).setTo(Filter.Limit(Layout.libraryPage.value)).modify(_.offset).setTo(Filter.Offset(offset.value))
+    val page = f
+      .modify(_.limit)
+      .setTo(Filter.Limit(Layout.libraryPage.value))
+      .modify(_.offset)
+      .setTo(Filter.Offset(offset.value))
     latestArticles(ApiClient.articles(Api.ArticleQuery(page)))(
       r => articles.set(ListPage(r.articles, r.offset, r.total, loaded = true)),
       m => articles.update(_.copy(loading = false, loaded = true, error = Some(ErrorLine.Problem(m))))

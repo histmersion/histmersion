@@ -54,9 +54,15 @@ class LicenceFamilySuite extends munit.FunSuite:
       Licence.ofStatement(Licence.Statement("https://creativecommons.org/licenses/by/4.0/")),
       Licence.ofUrl(Licence.Url("https://creativecommons.org/licenses/by/4.0/"))
     )
-    assertEquals(Licence.ofStatement(Licence.Statement("CC BY 4.0")), Licence(Licence.Id("CC-BY-4.0"), Licence.Family.CcBy))
+    assertEquals(
+      Licence.ofStatement(Licence.Statement("CC BY 4.0")),
+      Licence(Licence.Id("CC-BY-4.0"), Licence.Family.CcBy)
+    )
     assertEquals(Licence.unknown(Licence.Statement("odd")), Licence(Licence.Id("odd"), Licence.Family.Unknown))
 
   test("an attribution the host states itself"):
     assertEquals(Attribution.cc0(None, Attribution.Cc0Credit("c")).licence.family, Licence.Family.Cc0)
-    assertEquals(Attribution.publicDomain(Some(AuthorName("a")), Attribution.PublicDomainCredit("c")).licenceUrl, Some(Attribution.PdmUrl))
+    assertEquals(
+      Attribution.publicDomain(Some(AuthorName("a")), Attribution.PublicDomainCredit("c")).licenceUrl,
+      Some(Attribution.PdmUrl)
+    )

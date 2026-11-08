@@ -36,7 +36,11 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
 
   private val skeleton = SkeletonIngest(sources)
 
-  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[IngestJobs.Problem, IngestOutcome] =
+  def enqueue(
+      copy: Option[FetchedCopy],
+      citekey: Citekey,
+      meta: IngestMeta
+  ): Either[IngestJobs.Problem, IngestOutcome] =
     for
       base <- skeleton.enqueue(None, citekey, meta) // metadata + edges, synchronously
       out <- copy match
@@ -61,7 +65,8 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       base: IngestOutcome
   ): Either[IngestJobs.Problem, IngestOutcome] =
     // a copy gone from the spool reads as an empty upload, which the ingest refuses
-    val upload = spooled(file).getOrElse(Upload.inline(Upload.Name(file.key.name.value), Upload.Bytes(Array.emptyByteArray)))
+    val upload =
+      spooled(file).getOrElse(Upload.inline(Upload.Name(file.key.name.value), Upload.Bytes(Array.emptyByteArray)))
     ingest
       .ingest(
         Ingest.Params(

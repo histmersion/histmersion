@@ -56,9 +56,9 @@ final class AttestationsControllers(
     // a key that is no citekey names no source, so no attestation
     val keys =
       citekey.map(c => Citekey.option(current(AliasKinds.SourceRecords, AttestationsControllers.Alias(c.value)).value))
-    if keys.contains(None) then
-      Attestation.List.of(RowCount(0), Nil, UnreadPage.Offset(0))
-    else attestations.list(keys.flatten, targetType, target.orElse(targetId), page(limit), offset.getOrElse(Offset.Start))
+    if keys.contains(None) then Attestation.List.of(RowCount(0), Nil, UnreadPage.Offset(0))
+    else
+      attestations.list(keys.flatten, targetType, target.orElse(targetId), page(limit), offset.getOrElse(Offset.Start))
 
   def get(id: Attestation.Id): Either[Api.Error, Attestation] =
     attestations.get(id).toRight(notFound(id))

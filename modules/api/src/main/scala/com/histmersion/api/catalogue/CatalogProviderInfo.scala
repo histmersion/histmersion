@@ -7,12 +7,18 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Citation, home: CatalogProviderInfo.Home)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class CatalogProviderInfo(
+    id: CatalogProviderInfo.Id,
+    title: CatalogProviderInfo.Title,
+    licence: CatalogProviderInfo.Licence,
+    citation: CatalogProviderInfo.Citation,
+    home: CatalogProviderInfo.Home
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CatalogProviderInfo:
-  export CatalogRecord.{Provider as Id}
-  export EventCatalogueRef.{Title, Licence, Citation}
+  export CatalogRecord.Provider as Id
+  export EventCatalogueRef.{Citation, Licence, Title}
   type Home = Home.T
   object Home extends Newtype[String, Pure]

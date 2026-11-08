@@ -26,19 +26,26 @@ object MediaImporters:
   /** Pure: the registered collection `asked` names (an alias resolved), or why none: unknown, or its plugin switched
     * off.
     */
-  def lookup(asked: ImporterKey, collections: ListMap[Registries.MediaCollectionsKey, MediaCollection]): Either[Refusal, (MediaImporter.ImporterName, MediaCollection)] =
+  def lookup(
+      asked: ImporterKey,
+      collections: ListMap[Registries.MediaCollectionsKey, MediaCollection]
+  ): Either[Refusal, (MediaImporter.ImporterName, MediaCollection)] =
     val name = BuiltinMedia.canonical(BuiltinMedia.CanonicalAsked(asked.value)).value
     collections
       .get(Registries.MediaCollectionsKey(name))
       .map(MediaImporter.ImporterName(name) -> _)
-      .toRight(Refusal(BuiltinMedia.entry(BuiltinMedia.EntryName(name)) match
-        case Some(e) if BuiltinMedia.keyed.contains(BuiltinMedia.EntryKey(name)) =>
-          s"${e.title} ($name) is switched off — it is off by default and needs ${BuiltinMedia.keyed(BuiltinMedia.EntryKey(name))}: set " +
-            s"histmersion.plugins.${e.plugin}.enabled = true and its api-key (a secret reference)"
-        case Some(e) => s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)"
-        case None    =>
-          s"unknown media provider '${asked.value.trim}' (one of: " +
-            s"${ordered(collections.keys.toList).map(_.value).mkString(", ")}; `histmersion media providers` lists them)"))
+      .toRight(
+        Refusal(
+          BuiltinMedia.entry(BuiltinMedia.EntryName(name)) match
+            case Some(e) if BuiltinMedia.keyed.contains(BuiltinMedia.EntryKey(name)) =>
+              s"${e.title} ($name) is switched off — it is off by default and needs ${BuiltinMedia.keyed(BuiltinMedia.EntryKey(name))}: set " +
+                s"histmersion.plugins.${e.plugin}.enabled = true and its api-key (a secret reference)"
+            case Some(e) => s"${e.title} ($name) is switched off (histmersion.plugins.${e.plugin}.enabled = false)"
+            case None    =>
+              s"unknown media provider '${asked.value.trim}' (one of: " +
+                s"${ordered(collections.keys.toList).map(_.value).mkString(", ")}; `histmersion media providers` lists them)"
+        )
+      )
 
   /** The import `asked` names, or why there is none: unknown, its plugin switched off, or the collection's own check
     * says no (its `media.<provider>.enabled` off, no key set). Every collection is run by the host's own import under

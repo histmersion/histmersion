@@ -50,7 +50,6 @@ object Approval:
     type Blocking = Blocking.T
     object Blocking extends Newtype[Boolean, Pure]
 
-
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
@@ -69,7 +68,6 @@ object Approval:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[Mode] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** `Failed` = a person approved it but applying it failed (the source changed or went away); the reason is kept in
@@ -85,7 +83,6 @@ object Approval:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** Who decided an approval. `Autopilot` = the checked auto approvals (their note starts [[AutopilotNote]]); `Auto` =
@@ -94,8 +91,10 @@ object Approval:
     */
   enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe) derives CanEqual:
     case Person extends DecidedBy(DecidedBy.Wire("person"), DecidedBy.Describe("decided by a person"))
-    case Autopilot extends DecidedBy(DecidedBy.Wire("autopilot"), DecidedBy.Describe("decided by the autopilot's checks"))
-    case Auto extends DecidedBy(DecidedBy.Wire("auto"), DecidedBy.Describe("applied when proposed (an auto approval mode)"))
+    case Autopilot
+        extends DecidedBy(DecidedBy.Wire("autopilot"), DecidedBy.Describe("decided by the autopilot's checks"))
+    case Auto
+        extends DecidedBy(DecidedBy.Wire("auto"), DecidedBy.Describe("applied when proposed (an auto approval mode)"))
 
   object DecidedBy:
     /** The note every autopilot decision starts with (`AutopilotPolicy.note`). */
@@ -103,7 +102,6 @@ object Approval:
     object Wire extends Newtype[String, Pure]
     type Describe = Describe.T
     object Describe extends Newtype[String, Pure]
-
 
     val AutopilotNote = "autopilot:"
 

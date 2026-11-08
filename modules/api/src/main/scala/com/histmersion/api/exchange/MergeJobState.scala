@@ -17,8 +17,10 @@ object MergeJobState:
 
   given WireEnumValues[MergeJobState]:
     def all: Array[MergeJobState] = values
-    def wire(e: MergeJobState): WireEnumValues.Wire = WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
-    def fromWire(s: WireEnumValues.Wire): Option[MergeJobState] = values.find(_.toString.equalsIgnoreCase((s).value.trim))
+    def wire(e: MergeJobState): WireEnumValues.Wire =
+      WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
+    def fromWire(s: WireEnumValues.Wire): Option[MergeJobState] =
+      values.find(_.toString.equalsIgnoreCase((s).value.trim))
   given Encoder[MergeJobState] = WireEnum.encoder
   given Decoder[MergeJobState] = WireEnum.decoder
   given Schema[MergeJobState] = WireEnum.schema

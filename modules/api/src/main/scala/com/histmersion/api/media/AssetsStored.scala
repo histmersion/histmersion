@@ -8,7 +8,10 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class AssetsStored(citekey: Citekey, stored: AssetsStored.Stored) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class AssetsStored(citekey: Citekey, stored: AssetsStored.Stored)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AssetsStored:
   type Stored = Stored.T

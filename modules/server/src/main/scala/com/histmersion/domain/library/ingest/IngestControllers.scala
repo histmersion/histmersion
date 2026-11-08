@@ -72,7 +72,10 @@ final class IngestControllers(
           citekey,
           sha,
           stored,
-          p.modify(_.citekey).setTo(com.histmersion.api.library.Citekey(citekey.value)).modify(_.filename).setTo(Some(Ingest.Params.Filename(stored.name.value)))
+          p.modify(_.citekey)
+            .setTo(com.histmersion.api.library.Citekey(citekey.value))
+            .modify(_.filename)
+            .setTo(Some(Ingest.Params.Filename(stored.name.value)))
         )
     }
 
@@ -133,7 +136,10 @@ final class IngestControllers(
               )
             else
               val name = AssetLinks.safeName(filename.fold("upload.pdf")(_.value))
-              ingest(params(Ingest.Params.Filename(name.value)), Upload.inline(Upload.Name(name.value), Upload.Bytes(raw)))
+              ingest(
+                params(Ingest.Params.Filename(name.value)),
+                Upload.inline(Upload.Name(name.value), Upload.Bytes(raw))
+              )
           }
       case (None, None) =>
         Left(error("give either `path` (a file the SERVER can see) or `base64` (the document itself)"))
@@ -165,7 +171,11 @@ final class IngestControllers(
                 citekey,
                 sha,
                 file,
-                Ingest.Params(com.histmersion.api.library.Citekey(citekey.value), Some(Ingest.Params.Filename(file.name.value)), quality = quality)
+                Ingest.Params(
+                  com.histmersion.api.library.Citekey(citekey.value),
+                  Some(Ingest.Params.Filename(file.name.value)),
+                  quality = quality
+                )
               )
             )
 
@@ -186,7 +196,8 @@ final class IngestControllers(
                   Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )
-            case Some(file) => Right(file -> Ingest.originalDisposition(s.citekey, Ingest.StoredName(file.key.name.value)))
+            case Some(file) =>
+              Right(file -> Ingest.originalDisposition(s.citekey, Ingest.StoredName(file.key.name.value)))
     }
 
   // ── the acquisition item ───────────────────────────────────────────────────────────────────
@@ -196,7 +207,11 @@ final class IngestControllers(
     */
   private def acquireItemOk(item: Option[Ingest.Params.AcquireItem]): Either[Api.Error, Unit] =
     item.fold(Right(()))(id =>
-      Queue.fulfillable(Queue.QueueItem.Id(id.value), queues.get(QueueItemId(id.value))).map(_ => ()).left.map(p => error(p.value))
+      Queue
+        .fulfillable(Queue.QueueItem.Id(id.value), queues.get(QueueItemId(id.value)))
+        .map(_ => ())
+        .left
+        .map(p => error(p.value))
     )
 
   // ── the originals' store ───────────────────────────────────────────────────────────────────

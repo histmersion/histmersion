@@ -116,8 +116,20 @@ class IngestHttpSuite extends munit.FunSuite:
           markdown = ConvertedDoc.Markdown("# Converted\n\nBefore.\n\n![Figure 1](assets/fig-1.png)\n\nAfter.\n"),
           pages = ConvertedDoc.Pages(3),
           images = List(
-            ConvertedImage(ConvertedImage.Name("fig-1.png"), ConvertedImage.Mime("image/png"), figureB64, Some(ImageSize.Width(120)), Some(ImageSize.Height(80))),
-            ConvertedImage(ConvertedImage.Name("fig-1-copy.png"), ConvertedImage.Mime("image/png"), figureB64, Some(ImageSize.Width(120)), Some(ImageSize.Height(80)))
+            ConvertedImage(
+              ConvertedImage.Name("fig-1.png"),
+              ConvertedImage.Mime("image/png"),
+              figureB64,
+              Some(ImageSize.Width(120)),
+              Some(ImageSize.Height(80))
+            ),
+            ConvertedImage(
+              ConvertedImage.Name("fig-1-copy.png"),
+              ConvertedImage.Mime("image/png"),
+              figureB64,
+              Some(ImageSize.Width(120)),
+              Some(ImageSize.Height(80))
+            )
           ),
           filename = Some(ConvertedDoc.Filename(filename.value))
         )
@@ -130,9 +142,17 @@ class IngestHttpSuite extends munit.FunSuite:
 
   private def cfg =
     val base = AppConfig.load()
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo(ServerConfig.PublicUrl("http://histmersion.test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool").toString))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.server)
+      .setTo(base.server.modify(_.publicUrl).setTo(ServerConfig.PublicUrl("http://histmersion.test")))
+      .modify(_.converter)
+      .setTo(
+        base.converter
+          .modify(_.spoolDir)
+          .setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-spool").toString))
+      )
 
   /** Poll until the job leaves queued/running. */
   private def await(url: String, id: String): String =
@@ -260,7 +280,14 @@ class IngestHttpSuite extends munit.FunSuite:
   test("a converter failure fails the job with the reason, and lists under status=failed"):
     supervised {
       val b =
-        Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter(Some(ConverterClient.Problem("converter at http://x is unreachable")))).start()
+        Composition
+          .server(
+            cfg,
+            ServerConfig.Host("127.0.0.1"),
+            ServerConfig.Port(0),
+            FakeConverter(Some(ConverterClient.Problem("converter at http://x is unreachable")))
+          )
+          .start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("boom")
 
@@ -363,7 +390,14 @@ class IngestHttpSuite extends munit.FunSuite:
 
   test("a failed OCR leaves the acquisition item open"):
     supervised {
-      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter(Some(ConverterClient.Problem("converter exploded")))).start()
+      val b = Composition
+        .server(
+          cfg,
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
+          FakeConverter(Some(ConverterClient.Problem("converter exploded")))
+        )
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       val pdf = tempPdf("fulfil-fail")
       val id = addItem(url, "zzfulfil a book whose scan fails")
@@ -409,7 +443,14 @@ class IngestHttpSuite extends munit.FunSuite:
   test("empty and oversized uploads are refused before a job is created"):
     supervised {
       val b =
-        Composition.server(cfg.copy(limits = cfg.limits.copy(uploadBytes = Limits.UploadBytes(4))), ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), FakeConverter()).start()
+        Composition
+          .server(
+            cfg.copy(limits = cfg.limits.copy(uploadBytes = Limits.UploadBytes(4))),
+            ServerConfig.Host("127.0.0.1"),
+            ServerConfig.Port(0),
+            FakeConverter()
+          )
+          .start()
       val url = s"http://127.0.0.1:${b.port}"
       val empty = Files.createTempFile("histmersion-empty-", ".pdf")
       val big = tempPdf("far too long for a four byte limit")
@@ -435,7 +476,14 @@ class IngestHttpSuite extends munit.FunSuite:
       def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
         entered.countDown()
         release.await(30, TimeUnit.SECONDS)
-        Right(ConvertedDoc(markdown = ConvertedDoc.Markdown("# Busy\n"), pages = ConvertedDoc.Pages(1), images = Nil, filename = Some(ConvertedDoc.Filename(filename.value))))
+        Right(
+          ConvertedDoc(
+            markdown = ConvertedDoc.Markdown("# Busy\n"),
+            pages = ConvertedDoc.Pages(1),
+            images = Nil,
+            filename = Some(ConvertedDoc.Filename(filename.value))
+          )
+        )
     val c = cfg.copy(converter = cfg.converter.copy(healthCacheMs = ConverterConfig.HealthCacheMs(0)))
     supervised {
       val b = Composition.server(c, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), conv).start()

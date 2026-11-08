@@ -41,13 +41,19 @@ class LatinFoldSuite extends munit.FunSuite:
     }
 
   test("citekeys keep accented letters instead of dropping them (#878)"):
-    assertEquals(Acquire.citekey(List(AuthorName("Hans Gustav Güterbock")), Some(Year(1946)), Some(Title("Kumarbi"))), "guterbock1946_kumarbi")
+    assertEquals(
+      Acquire.citekey(List(AuthorName("Hans Gustav Güterbock")), Some(Year(1946)), Some(Title("Kumarbi"))),
+      "guterbock1946_kumarbi"
+    )
     assertEquals(
       Acquire.citekey(List(AuthorName("López-Ruiz, Carolina")), Some(Year(2021)), Some(Title("Phoenicians"))),
       "lopezruiz2021_phoenicians"
     )
     // the topic word used to be `tter` — the tail of `Götter` after the dropped `ö`
-    assertEquals(Acquire.citekey(List(AuthorName("Walter Burkert")), Some(Year(1977)), Some(Title("Über die Götter"))), "burkert1977_uber")
+    assertEquals(
+      Acquire.citekey(List(AuthorName("Walter Burkert")), Some(Year(1977)), Some(Title("Über die Götter"))),
+      "burkert1977_uber"
+    )
     assertEquals(
       Acquire.citekey(List(AuthorName("Jaan Puhvel")), Some(Year(1987)), Some(Title("Comparative Mythology"))),
       "puhvel1987_comparative"

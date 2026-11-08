@@ -40,7 +40,10 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   val kind: Kind = Kind.Watch
 
   private def watch = lib.managers.watch
-  private def watchDefaults = WatchManagerDefaults(WatchManagerDefaults.MaxRuns(watch.maxRuns.value), WatchManagerDefaults.AutoIngestPerDay(watch.autoIngestPerDay.value))
+  private def watchDefaults = WatchManagerDefaults(
+    WatchManagerDefaults.MaxRuns(watch.maxRuns.value),
+    WatchManagerDefaults.AutoIngestPerDay(watch.autoIngestPerDay.value)
+  )
 
   override def cron: Option[ManagerLight.Cron] = Some(ManagerLight.Cron(watch.cron.value))
 
@@ -64,13 +67,23 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
         ManagerKindDefinition.FirePhrase(
           if open then s"${sw.itemKind} still open"
           else
-            val _ = c.upsert(id, itemKind, target, ItemOrigin.Cron, ManagerContext.Priority(0), reopen = ManagerContext.UpsertReopen(true))
+            val _ = c.upsert(
+              id,
+              itemKind,
+              target,
+              ItemOrigin.Cron,
+              ManagerContext.Priority(0),
+              reopen = ManagerContext.UpsertReopen(true)
+            )
             s"${sw.itemKind} due"
         )
       }
     }
 
-  override def housework(now: Instant, draining: => Boolean): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] =
+  override def housework(
+      now: Instant,
+      draining: => Boolean
+  ): List[(ManagerLight.Id, () => List[ManagerContext.TickLine])] =
     def lines(f: => List[String]): () => List[ManagerContext.TickLine] =
       () => f.map(ManagerContext.TickLine(_))
     List(
@@ -85,7 +98,9 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   def facts(c: ManagerContext, item: ManagerItem, run: Run.Id): StepFacts =
     item.kind.value match
       case AcquisitionSweep | CurrencyCheck =>
-        StepFacts.Finished(ManagerPolicy.ItemOutcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000)))
+        StepFacts.Finished(
+          ManagerPolicy.ItemOutcome(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000))
+        )
       case _ => StepFacts.Finished(ManagerPolicy.ItemOutcome("enriched"))
 
   /** What the sweep found, as the watcher's own event (the run's worklog line, and the works it picked). */
@@ -113,7 +128,9 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
           Some(ManagerContext.ItemId(item.id.value)),
           Some(r),
           ManagerContext.EventFeed(Feed.Swept),
-          ManagerContext.EventText((closeLine(c, r).getOrElse(s"${item.kind} of ${item.target} done") + works).take(2000))
+          ManagerContext.EventText(
+            (closeLine(c, r).getOrElse(s"${item.kind} of ${item.target} done") + works).take(2000)
+          )
         )
       }
 
@@ -121,12 +138,19 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   private def closeLine(c: ManagerContext, run: Run.Id): Option[String] =
     c.stepOutput(run, AgentRepo.StepRecord.Name("close")).flatMap(o => io.circe.parser.decode[String](o.value).toOption)
 
-  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+  def target(
+      m: ManagerInfo,
+      itemKind: ManagerContext.ItemKind,
+      raw: ManagerItem.Target
+  ): Either[Api.Error, ManagerContext.ItemTarget] =
     itemKind.value match
       case OaIngest =>
-        Doi.normalize(raw.value)
+        Doi
+          .normalize(raw.value)
           .map(d => ManagerContext.ItemTarget(d.value))
-          .toRight(Api.Error(Api.Error.Message(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)")))
+          .toRight(
+            Api.Error(Api.Error.Message(s"'$raw' is not a DOI (an ingest-backlog item is one legal open-access work)"))
+          )
       case AcquisitionSweep | CurrencyCheck =>
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
         Goal.Slug
@@ -182,7 +206,10 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
             // the deterministic search first (#3761, no model): no new candidate, no agent run — the schedule
             // stops spending model quota on sweeps that change nothing
             val swept =
-              Option.when(item.kind.value == AcquisitionSweep)(work.acquisition.sweepCandidates(Goal.Slug.assume(g.slug.value), dryRun = AgentUpstream.SweepCandidatesDryRun(false)))
+              Option.when(item.kind.value == AcquisitionSweep)(
+                work.acquisition
+                  .sweepCandidates(Goal.Slug.assume(g.slug.value), dryRun = AgentUpstream.SweepCandidatesDryRun(false))
+              )
             swept.filter(WatchManagerKind.nothingNew).flatMap(_.toOption) match
               case Some(s) =>
                 c.settleNow(
@@ -204,14 +231,16 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                       .ingestAllowance(
                         m.config,
                         WatchManagerDefaults.IngestedToday(
-                          c.countEvents(managerId, ManagerContext.EventFeed(Feed.Ingested), ManagerPolicy.dayStart(now)).value
+                          c.countEvents(managerId, ManagerContext.EventFeed(Feed.Ingested), ManagerPolicy.dayStart(now))
+                            .value
                         )
                       )
                       .value
                   else 0
                 )
                 // the autopilot's cap shared by every watcher (none while it is off)
-                val shared = if autoOn then c.sharedIngestLeft(now).map(n => IngestBacklog.SharedAllowance(n.value)) else None
+                val shared =
+                  if autoOn then c.sharedIngestLeft(now).map(n => IngestBacklog.SharedAllowance(n.value)) else None
                 // the ingest backlog drains first: a sweep's new finds get what it leaves of the allowance
                 val (mine, all) =
                   if autoOn then work.oaBacklog.reserved(managerId)
@@ -236,14 +265,23 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                     budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
                   ),
                   p =>
-                    if autoOn then p.modify(_.autoIngest).setTo(Option.when(allowed > 0)(RunParams.AutoIngest(allowed))).modify(_.oaBacklog).setTo(Some(RunParams.OaBacklog(true)))
+                    if autoOn then
+                      p.modify(_.autoIngest)
+                        .setTo(Option.when(allowed > 0)(RunParams.AutoIngest(allowed)))
+                        .modify(_.oaBacklog)
+                        .setTo(Some(RunParams.OaBacklog(true)))
                     else p,
                   item.state,
                   ManagerContext.StartWhat(s"${item.kind}$auto"),
                   out
                 )
       case other =>
-        c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy(s"'$other' items are not driven by a ${m.kind} manager"))
+        c.settleNow(
+          m,
+          item,
+          ItemStatus.Cancelled,
+          ManagerContext.SettleNowWhy(s"'$other' items are not driven by a ${m.kind} manager")
+        )
 
 object WatchManagerKind:
   /** Pure: does a candidate sweep say there is nothing for a ranking (#3761)? Only an answered sweep with no unseen

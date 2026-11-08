@@ -8,4 +8,3 @@ import com.histmersion.domain.library.Citekey
 trait ArticleCitations:
   /** The citekeys of the stored sources article `slug` cites, in its order. */
   def cited(slug: Slug): List[Citekey]
-

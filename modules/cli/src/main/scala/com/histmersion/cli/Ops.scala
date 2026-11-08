@@ -131,7 +131,8 @@ object Ops:
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
-    if !Files.isDirectory(dir) then Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+    if !Files.isDirectory(dir) then
+      Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
@@ -141,8 +142,7 @@ object Ops:
             c.queueImport(
               Queue.Wire(kind.label.value),
               QueueImport(Queue.QueueItem.Text(Files.readString(f)), QueueImport.Replace(replace.value))
-            )
-              .map(r => done :+ s"${kind.file}: ${r.items} item(s), ${r.notes} note block(s), ${r.replaced} replaced")
+            ).map(r => done :+ s"${kind.file}: ${r.items} item(s), ${r.notes} note block(s), ${r.replaced} replaced")
         }
       }
 
@@ -172,10 +172,14 @@ object Ops:
           (sources + r.sourcesReindexed.value, chunks + r.chunksWritten.value, edges + r.edgesResolved.value)
         // the geocode repair is not bounded: the first call made every move there was
         val mv =
-          moved.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded.value))
+          moved.orElse(
+            Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded.value)
+          )
         // …and neither is the fill of unplaced findings
         val pl =
-          placed.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingUnplaced)))(r.findingsPlaced.value))
+          placed.orElse(
+            Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingUnplaced)))(r.findingsPlaced.value)
+          )
         // …nor the gazetteer clean-up (place-kind, place-grid-point): its lines are the first call's
         val pc = places.orElse(
           Some(
@@ -215,7 +219,8 @@ object Ops:
     * back over the file. A note file's frontmatter is the note's own and is not sent.
     */
   private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[Cli.Error, FormatReport] =
-    if !java.nio.file.Files.isRegularFile(p) then Left(Cli.Error(Cli.Error.Message(s"no such file: $p"), exitCode = ExitCode.Usage))
+    if !java.nio.file.Files.isRegularFile(p) then
+      Left(Cli.Error(Cli.Error.Message(s"no such file: $p"), exitCode = ExitCode.Usage))
     else
       val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(FileFormat.Text(raw))
@@ -251,10 +256,11 @@ object Ops:
       ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
         def show(r: FormatReport)(using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
         (article, source, file) match
-          case (Some(slug), _, _) => (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug))).map(show)
-          case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(Citekey(ck)) else c.lintSource(Citekey(ck))).map(show)
-          case (_, _, Some(f))    => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
-          case _                  =>
+          case (Some(slug), _, _) =>
+            (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug))).map(show)
+          case (_, Some(ck), _) => (if fix then c.fixSourceFormat(Citekey(ck)) else c.lintSource(Citekey(ck))).map(show)
+          case (_, _, Some(f))  => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
+          case _                =>
             for
               fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
               rep <- c.lint(rules.map(Lint.Wire(_)))
@@ -311,37 +317,41 @@ object Ops:
       }
     }
 
-  private def run(c: Client, cmd: QueueCmd, json: Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] = cmd match
-    case QueueCmd.Show(list, all) =>
-      c.queueList(Queue.Wire(list.value), all)
-        .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
-    case QueueCmd.Add(list, text, topic, reason) =>
-      c.queueAdd(Queue.Wire(list.value), QueueAdd(text, topic, reason = reason))
-        .map(i => Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}"))
-    // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
-    case QueueCmd.Done(id) =>
-      c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
-        .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
-    case QueueCmd.Edit(id, text) =>
-      c.queuePatch(id, QueuePatch(text = Some(text))).map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
-    case QueueCmd.Rm(id) =>
-      c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
-    case QueueCmd.Export(dir) =>
-      writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
-    case QueueCmd.Import(dir) =>
-      readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
-    case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
-      c.call(AcquisitionWorkApi.acquireRecheck)(
-        Acquire.Checks.RecheckRequest(
-          Acquire.Checks.RecheckRequest.DryRun(dryRun),
-          limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
-          id.map(Acquire.Checks.RecheckRequest.Id(_)),
-          Some(Acquire.Checks.RecheckRequest.By("cli")),
-          Acquire.Checks.RecheckRequest.All(all)
-        )
-      ).flatMap { r =>
-        Output.emit(json, r)(AcquireChecksMarkdown.result)
-        r.job match
-          case Some(j) if !noWait && !json.value => IngestCmd.pollJob(c, j.id, 0)
-          case _                           => Right(())
-      }
+  private def run(c: Client, cmd: QueueCmd, json: Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] =
+    cmd match
+      case QueueCmd.Show(list, all) =>
+        c.queueList(Queue.Wire(list.value), all)
+          .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
+      case QueueCmd.Add(list, text, topic, reason) =>
+        c.queueAdd(Queue.Wire(list.value), QueueAdd(text, topic, reason = reason))
+          .map(i =>
+            Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}")
+          )
+      // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
+      case QueueCmd.Done(id) =>
+        c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
+          .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
+      case QueueCmd.Edit(id, text) =>
+        c.queuePatch(id, QueuePatch(text = Some(text)))
+          .map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
+      case QueueCmd.Rm(id) =>
+        c.queueDelete(id).map(i => Output.emit(json, i)(i => s"removed #${i.id}: ${i.text}"))
+      case QueueCmd.Export(dir) =>
+        writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
+      case QueueCmd.Import(dir) =>
+        readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
+      case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
+        c.call(AcquisitionWorkApi.acquireRecheck)(
+          Acquire.Checks.RecheckRequest(
+            Acquire.Checks.RecheckRequest.DryRun(dryRun),
+            limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
+            id.map(Acquire.Checks.RecheckRequest.Id(_)),
+            Some(Acquire.Checks.RecheckRequest.By("cli")),
+            Acquire.Checks.RecheckRequest.All(all)
+          )
+        ).flatMap { r =>
+          Output.emit(json, r)(AcquireChecksMarkdown.result)
+          r.job match
+            case Some(j) if !noWait && !json.value => IngestCmd.pollJob(c, j.id, 0)
+            case _                                 => Right(())
+        }

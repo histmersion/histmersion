@@ -30,8 +30,6 @@ private[citations] object CitationRepo:
   type Since = Since.T
   object Since extends Newtype[Long, Pure]
 
-
-
   private given DbCodec[NeighborTarget] = Vocab.codec(
     s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s.value)),
     e => WireEnumValues.Wire(e.toString.toLowerCase),
@@ -45,7 +43,9 @@ private[citations] object CitationRepo:
     * (`unresolved_edges`) is an `article` when a compiled article has that slug, else `unresolved`. Incoming edges are
     * always from stored sources. `kinds` narrows by edge kind; empty means all.
     */
-  def neighbors(citekey: Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil)(using DbCon): Vector[NeighborRow] =
+  def neighbors(citekey: Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil)(using
+      DbCon
+  ): Vector[NeighborRow] =
     val all = kinds.isEmpty
     sql"""SELECT 'out' AS direction, e.kind, e.dst AS citekey, s.title, s.status, 'source' AS target
             FROM edges e JOIN sources s ON s.citekey = e.dst
@@ -99,7 +99,13 @@ private[citations] object CitationRepo:
             .flatMap(e =>
               Edge.Kind
                 .fromWire(Edge.Kind.Wire(e.kind.value))
-                .map(k => GraphLink(com.histmersion.api.library.Citekey(e.src.value), com.histmersion.api.library.Citekey(e.dst.value), k))
+                .map(k =>
+                  GraphLink(
+                    com.histmersion.api.library.Citekey(e.src.value),
+                    com.histmersion.api.library.Citekey(e.dst.value),
+                    k
+                  )
+                )
             )
           val seen = grown.iterator.map(_.id).toSet
           val next = touching.iterator.flatMap(l => List(l.source, l.target)).filterNot(seen).toList.distinct

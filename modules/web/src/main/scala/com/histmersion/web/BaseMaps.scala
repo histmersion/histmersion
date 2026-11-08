@@ -45,7 +45,8 @@ object BaseMaps:
 
   /** The local style an extract draws best: Readable when it can draw it whole, else Physical. Pure. */
   def defaultLocal(s: Option[Basemap.Status]): BaseMap =
-    if s.exists(st => st.available.value && st.missing(BaseStyles.Readable.id).isEmpty) || s.isEmpty then BaseMap.Readable
+    if s.exists(st => st.available.value && st.missing(BaseStyles.Readable.id).isEmpty) || s.isEmpty then
+      BaseMap.Readable
     else BaseMap.Physical
 
   /** The base map drawn for the kept choice `b`: on a `local` page an online choice is the default local style, so a
@@ -63,7 +64,8 @@ object BaseMaps:
   def optionLabel(b: BaseMap, s: Option[Basemap.Status]): String =
     if b.online then b.label.value
     else if !s.forall(_.available.value) then s"${b.label} — not downloaded"
-    else if s.exists(st => st.missing(Basemap.StyleState.Id(b.wire.value)).nonEmpty) then s"${b.label} — needs the full download"
+    else if s.exists(st => st.missing(Basemap.StyleState.Id(b.wire.value)).nonEmpty) then
+      s"${b.label} — needs the full download"
     else b.label.value
 
   /** The notice over a vector style. */
@@ -100,7 +102,8 @@ object BaseMaps:
     s"""<a class="map-credits-all" href="${Route.Settings(SettingsSection.Credits).path}">Data sources</a>"""
 
   /** Pure: the credits line — each source's credit once, in order, separated by a middle dot. */
-  def creditsHtml(credits: Seq[BaseMapSpec.Raster.Attribution]): String = credits.map(_.value.trim).filter(_.nonEmpty).distinct.mkString(" · ")
+  def creditsHtml(credits: Seq[BaseMapSpec.Raster.Attribution]): String =
+    credits.map(_.value.trim).filter(_.nonEmpty).distinct.mkString(" · ")
 
   /** How far the notice's corner rises so it clears the right-hand corner's controls: their height and a gap when the
     * two would overlap side by side, else nothing — and nothing when that would take it past the `room` above it in the
@@ -142,7 +145,12 @@ object BaseMaps:
     val url = b.url.map(_.value).getOrElse(ui.tiles.value)
     val credit =
       if url.contains("openstreetmap.fr/hot") then s"$osm · tiles © Humanitarian OSM Team, OSM France" else osm
-    BaseMapSpec.Raster(BaseMapSpec.Raster.Template(url), BaseMapSpec.Raster.MaxZoom(ui.tilesMaxZoom.value), BaseMapSpec.Raster.Attribution(credit), dark = BaseMapSpec.Raster.Dark(BaseMap.darkened(b, MapTone.parse(MapTone.Wire(ui.tilesTone.value)))))
+    BaseMapSpec.Raster(
+      BaseMapSpec.Raster.Template(url),
+      BaseMapSpec.Raster.MaxZoom(ui.tilesMaxZoom.value),
+      BaseMapSpec.Raster.Attribution(credit),
+      dark = BaseMapSpec.Raster.Dark(BaseMap.darkened(b, MapTone.parse(MapTone.Wire(ui.tilesTone.value))))
+    )
 
   /** What is drawn for base map `b` (already [[effective]]), the server's status and the viewer's options: the spec,
     * the notice, and how deep the map zooms. Pure.
@@ -280,13 +288,16 @@ object BaseMaps:
       // open at first (the credits must be seen without any interaction), folded to its (i) button after the
       // reader's first pan or zoom; opened with the button it shows the notice about the past landscape too
       val open = footOpenNow(footOpen, moved, notice.exists(_._2))
-      box.innerHTML = MapFold.toggleHtml(
-        MapFold.ClassName("btn--icon map-foot-toggle"),
-        MapFold.ControlsId("map-foot-body"),
-        if notice.nonEmpty then MapFold.Label("about this map: its terrain and credits") else MapFold.Label("map credits"),
-        MapFold.InnerHtml(Icon.html(Icon.Info).value),
-        MapFold.Open(open)
-      ).value
+      box.innerHTML = MapFold
+        .toggleHtml(
+          MapFold.ClassName("btn--icon map-foot-toggle"),
+          MapFold.ControlsId("map-foot-body"),
+          if notice.nonEmpty then MapFold.Label("about this map: its terrain and credits")
+          else MapFold.Label("map credits"),
+          MapFold.InnerHtml(Icon.html(Icon.Info).value),
+          MapFold.Open(open)
+        )
+        .value
       MapFold.set(box, MapFold.Open(open))
       box.classList.toggle("is-expanded", footOpen.contains(true))
       // the online OpenStreetMap tiles' credit stays in sight, folded or not
@@ -405,7 +416,10 @@ object BaseMaps:
               value := b.wire.value,
               optionLabel(b, s),
               title := (if b.online then "Tiles from the internet"
-                        else s.map(_.missing(Basemap.StyleState.Id(b.wire.value)).map(_.value)).filter(_.nonEmpty).fold(PastNotice)(lackingNotice))
+                        else
+                          s.map(_.missing(Basemap.StyleState.Id(b.wire.value)).map(_.value))
+                            .filter(_.nonEmpty)
+                            .fold(PastNotice)(lackingNotice))
             )
           )
         ),
@@ -439,7 +453,8 @@ object BaseMaps:
     )
 
   /** The names' language unless the viewer chose one: `basemap.labels.language`, as the server reports it. */
-  private def defaultLanguage: String = if ui == null || ui.mapLanguage.value.isEmpty then "en" else ui.mapLanguage.value
+  private def defaultLanguage: String =
+    if ui == null || ui.mapLanguage.value.isEmpty then "en" else ui.mapLanguage.value
 
   /** The languages the menu offers: [[Languages]], and the configured default when it is not among them. Pure. */
   def languageChoices(default: String): List[(String, String)] =
@@ -502,7 +517,9 @@ object BaseMaps:
   def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
     if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
     else if soft then Some("not drawn without a GPU")
-    else if !s.exists(_.layers.exists(l => l.layer == Basemap.Layer.Bathymetry.wire && l.present.value && l.error.isEmpty))
+    else if !s.exists(
+        _.layers.exists(l => l.layer == Basemap.Layer.Bathymetry.wire && l.present.value && l.error.isEmpty)
+      )
     then Some(s"no sea floor downloaded — `${Basemap.FetchCommand} --layer bathymetry`")
     else None
 
@@ -529,7 +546,9 @@ object BaseMaps:
               typ := "checkbox",
               cls := "map-option-names",
               checked <-- UiState.mapOptions.signal.map(_.names.map(_.value).getOrElse(true)),
-              onInput.mapToChecked --> (on => setPrefs(_.modify(_.names).setTo(Option.when(!on)(MapPrefs.Names(false)))))
+              onInput.mapToChecked --> (on =>
+                setPrefs(_.modify(_.names).setTo(Option.when(!on)(MapPrefs.Names(false))))
+              )
             ),
             span("Names")
           )
@@ -563,7 +582,9 @@ object BaseMaps:
               checked <-- UiState.mapOptions.signal
                 .combineWith(why)
                 .map((p, w) => w.isEmpty && p.contours.map(_.value).getOrElse(true)),
-              onInput.mapToChecked --> (on => setPrefs(_.modify(_.contours).setTo(Option.when(!on)(MapPrefs.Contours(false)))))
+              onInput.mapToChecked --> (on =>
+                setPrefs(_.modify(_.contours).setTo(Option.when(!on)(MapPrefs.Contours(false))))
+              )
             ),
             span("Contour lines")
           ),
@@ -582,7 +603,9 @@ object BaseMaps:
               checked <-- UiState.mapOptions.signal
                 .combineWith(shown.signal, depthWhy)
                 .map((p, b, w) => w.isEmpty && b.vector.exists(p.seaDepth)),
-              onInput.mapToChecked --> (on => shown.now().vector.foreach(v => setPrefs(_.withSeaDepth(v, MapPrefs.SeaDepth(on)))))
+              onInput.mapToChecked --> (on =>
+                shown.now().vector.foreach(v => setPrefs(_.withSeaDepth(v, MapPrefs.SeaDepth(on))))
+              )
             ),
             span("Sea depth")
           ),
@@ -630,7 +653,9 @@ object BaseMaps:
           MapMotion.values.toList.map(m => option(value := m.wire.value, m.label.value)),
           controlled(
             value <-- UiState.mapMotion.signal.map(_.wire.value),
-            onChange.mapToValue --> (v => MapMotion.fromWire(MapMotion.Wire(v)).foreach(m => UiState.set(UiState.mapMotion := m)()))
+            onChange.mapToValue --> (v =>
+              MapMotion.fromWire(MapMotion.Wire(v)).foreach(m => UiState.set(UiState.mapMotion := m)())
+            )
           )
         )
       ),

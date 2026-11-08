@@ -15,7 +15,16 @@ class OutputSuite extends munit.FunSuite:
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
   test("render prints the DTO's own codec with --json, its Markdown without"):
-    val item = Queue.QueueItem(Queue.QueueItem.Id(7), Queue.QueueItem.List("tasks"), Queue.QueueItem.Text("Read Cline"), None, Queue.QueueItem.Status("open"), None, Some(Queue.QueueItem.CreatedAt("2026-10-17T00:00:00Z")), None)
+    val item = Queue.QueueItem(
+      Queue.QueueItem.Id(7),
+      Queue.QueueItem.List("tasks"),
+      Queue.QueueItem.Text("Read Cline"),
+      None,
+      Queue.QueueItem.Status("open"),
+      None,
+      Some(Queue.QueueItem.CreatedAt("2026-10-17T00:00:00Z")),
+      None
+    )
     assertEquals(Output.render(json = Cli.JsonOutput(false), item)(i => s"#${i.id}"), "#7")
     val js = Output.render(json = Cli.JsonOutput(true), item)(_ => "unused")
     assert(js.startsWith("{\n  \"id\" : 7,"), js)
@@ -48,10 +57,20 @@ class OutputSuite extends munit.FunSuite:
 
   test("calibre update --all --json names each outcome as before"):
     val ch = Calibre.Change(Calibre.Field.values.head, Calibre.Change.From("a"), Calibre.Change.To("b"))
-    val r = Calibre.Json.UpdateRow.of(UpdateEntry(UpdateEntry.CalibreId(3), List(UpdateEntry.Citekeys("ck")), UpdateOutcome.Failed(List(ch), UpdateOutcome.Failed.Reason("locked"))))
+    val r = Calibre.Json.UpdateRow.of(
+      UpdateEntry(
+        UpdateEntry.CalibreId(3),
+        List(UpdateEntry.Citekeys("ck")),
+        UpdateOutcome.Failed(List(ch), UpdateOutcome.Failed.Reason("locked"))
+      )
+    )
     assertEquals(
       (r.state, r.reason, r.changes.map(_.from)),
-      (Calibre.Json.UpdateRow.State("failed"), Some(Calibre.Json.UpdateRow.Reason("locked")), List(Calibre.Change.From("a")))
+      (
+        Calibre.Json.UpdateRow.State("failed"),
+        Some(Calibre.Json.UpdateRow.Reason("locked")),
+        List(Calibre.Change.From("a"))
+      )
     )
     assertEquals(
       Calibre.Json.UpdateRow.of(UpdateEntry(UpdateEntry.CalibreId(3), Nil, UpdateOutcome.UpToDate)).state,
@@ -99,7 +118,7 @@ class OutputSuite extends munit.FunSuite:
       }
     }
     val nl = System.lineSeparator()
-    assertEquals(out.toString("UTF-8"), s"雪${nl}null${nl}a${nl}b${nl}answer${nl}\"answer\"${nl}")
+    assertEquals(out.toString("UTF-8"), s"雪${nl}null${nl}a${nl}b${nl}answer$nl\"answer\"$nl")
     assertEquals(err.toString("UTF-8"), "")
     assertEquals(evaluated, 1)
     assertEquals(rendered, 1)
@@ -115,17 +134,19 @@ class OutputSuite extends munit.FunSuite:
     }
     var evaluated = 0
     Console.withErr(stream) {
-      summon[com.histmersion.util.console.Console].errorWrite({ evaluated += 1; "雪" })
+      summon[com.histmersion.util.console.Console].errorWrite { evaluated += 1; "雪" }
       summon[com.histmersion.util.console.Console].errorLine("line")
       summon[com.histmersion.util.console.Console].errorLine()
       summon[com.histmersion.util.console.Console].errorFlush()
       JobFollow.Progress.line("working")
       JobFollow.Progress.clear()
-      intercept[IllegalArgumentException] { summon[com.histmersion.util.console.Console].errorLine(throw new IllegalArgumentException("failed")) }
+      intercept[IllegalArgumentException] {
+        summon[com.histmersion.util.console.Console].errorLine(throw new IllegalArgumentException("failed"))
+      }
     }
     val nl = System.lineSeparator()
     val blank = " " * JobFollow.Progress.Width
-    assertEquals(bytes.toString("UTF-8"), s"雪line${nl}${nl}\r${blank}\rworking\r${blank}\r")
+    assertEquals(bytes.toString("UTF-8"), s"雪line$nl$nl\r$blank\rworking\r$blank\r")
     assertEquals(flushes, 1)
     assertEquals(lines, 1)
     assertEquals(evaluated, 1)
@@ -135,8 +156,16 @@ class OutputSuite extends munit.FunSuite:
     val a = new java.io.ByteArrayOutputStream
     val b = new java.io.ByteArrayOutputStream
     val errors = new java.io.ByteArrayOutputStream
-    val first = com.histmersion.util.console.Console.streams(new java.io.PrintStream(a, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => com.histmersion.util.console.Console.StreamsInputResult("yes"))
-    val second = com.histmersion.util.console.Console.streams(new java.io.PrintStream(b, true, "UTF-8"), new java.io.PrintStream(errors, true, "UTF-8"), () => com.histmersion.util.console.Console.StreamsInputResult("no"))
+    val first = com.histmersion.util.console.Console.streams(
+      new java.io.PrintStream(a, true, "UTF-8"),
+      new java.io.PrintStream(errors, true, "UTF-8"),
+      () => com.histmersion.util.console.Console.StreamsInputResult("yes")
+    )
+    val second = com.histmersion.util.console.Console.streams(
+      new java.io.PrintStream(b, true, "UTF-8"),
+      new java.io.PrintStream(errors, true, "UTF-8"),
+      () => com.histmersion.util.console.Console.StreamsInputResult("no")
+    )
     def answer(text: String)(using com.histmersion.util.console.Console): Unit = {
       Cli.out.println(text)
       Cli.out.flush()
@@ -149,16 +178,26 @@ class OutputSuite extends munit.FunSuite:
     assertEquals(first.readLine(), com.histmersion.util.console.Console.Line("yes"))
     assertEquals(second.readLine(), com.histmersion.util.console.Console.Line("no"))
     val nl = System.lineSeparator()
-    assertEquals(a.toString("UTF-8"), s"first${nl}again${nl}")
-    assertEquals(b.toString("UTF-8"), s"second${nl}")
-    assertEquals(errors.toString("UTF-8"), s"problem${nl}\\r${" " * JobFollow.Progress.Width}\\rworking".replace("\\r", "\r"))
+    assertEquals(a.toString("UTF-8"), s"first${nl}again$nl")
+    assertEquals(b.toString("UTF-8"), s"second$nl")
+    assertEquals(
+      errors.toString("UTF-8"),
+      s"problem$nl\\r${" " * JobFollow.Progress.Width}\\rworking".replace("\\r", "\r")
+    )
   }
 
   test("injected terminal prompts use supplied streams and input") {
     val out = new java.io.ByteArrayOutputStream
     val err = new java.io.ByteArrayOutputStream
-    val console = com.histmersion.util.console.Console.streams(new java.io.PrintStream(out), new java.io.PrintStream(err), () => com.histmersion.util.console.Console.StreamsInputResult("yes"))
-    assertEquals(console.readTerminalLine(com.histmersion.util.console.Console.Prompt("Proceed? ")), Some(com.histmersion.util.console.Console.ReadTerminalLineResult("yes")))
+    val console = com.histmersion.util.console.Console.streams(
+      new java.io.PrintStream(out),
+      new java.io.PrintStream(err),
+      () => com.histmersion.util.console.Console.StreamsInputResult("yes")
+    )
+    assertEquals(
+      console.readTerminalLine(com.histmersion.util.console.Console.Prompt("Proceed? ")),
+      Some(com.histmersion.util.console.Console.ReadTerminalLineResult("yes"))
+    )
     assertEquals(out.toString("UTF-8"), "")
     assertEquals(err.toString("UTF-8"), "Proceed? ")
   }

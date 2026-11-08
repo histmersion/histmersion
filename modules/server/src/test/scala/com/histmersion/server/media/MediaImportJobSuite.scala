@@ -137,11 +137,33 @@ class MediaImportJobSuite extends DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(base.media.modify(
-        _.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)).modify(_.importBatch).setTo(MediaConfig.ImportBatch(50)).modify(_.wikidata).setTo(base.media.wikidata.modify(_.apiUrl).setTo(MediaWikidataConfig.ApiUrl(s"$providerUrl/wikidata")).modify(_.batch).setTo(MediaWikidataConfig.Batch(50))).modify(_.commons).setTo(base.media.commons.modify(_.apiUrl).setTo(MediaCommonsConfig.ApiUrl(s"$providerUrl/commons")).modify(_.batch).setTo(MediaCommonsConfig.Batch(50))
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.media)
+      .setTo(
+        base.media
+          .modify(_.requestIntervalMs)
+          .setTo(MediaConfig.RequestIntervalMs(0))
+          .modify(_.importBatch)
+          .setTo(MediaConfig.ImportBatch(50))
+          .modify(_.wikidata)
+          .setTo(
+            base.media.wikidata
+              .modify(_.apiUrl)
+              .setTo(MediaWikidataConfig.ApiUrl(s"$providerUrl/wikidata"))
+              .modify(_.batch)
+              .setTo(MediaWikidataConfig.Batch(50))
+          )
+          .modify(_.commons)
+          .setTo(
+            base.media.commons
+              .modify(_.apiUrl)
+              .setTo(MediaCommonsConfig.ApiUrl(s"$providerUrl/commons"))
+              .modify(_.batch)
+              .setTo(MediaCommonsConfig.Batch(50))
+          )
       )
-    )
 
   /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
   private lazy val plugins = ServerPlugins.offlineWith(
@@ -172,7 +194,11 @@ class MediaImportJobSuite extends DbSuite:
         EventFixtures.put(
           ds,
           id(i),
-          EventPut(EventSummary.Label(s"Zqmj event $i"), EventSummary.Kind("battle"), TimeSpan(Some(Year(-1200)), None, None, Some(Year(-1190))))
+          EventPut(
+            EventSummary.Label(s"Zqmj event $i"),
+            EventSummary.Kind("battle"),
+            TimeSpan(Some(Year(-1200)), None, None, Some(Year(-1190)))
+          )
         )
       )
       connect(ds)(sql"""UPDATE events SET wikidata = 'Q' || (9100000 + substring(id FROM 7)::int)::text
@@ -194,7 +220,9 @@ class MediaImportJobSuite extends DbSuite:
 
   test("a 300-event import: the request answers at once with a job, progress is n/total, failures are collected"):
     supervised {
-      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition
+        .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins)
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         // the synchronous endpoint keeps the dry run and ONE place/event; many is a job

@@ -19,7 +19,8 @@ final case class HistoricalPeriod(
     parentId: Option[HistoricalPeriod.ParentId] = None,
     preset: Option[PresetRegion] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object HistoricalPeriod:
   type Id = Id.T

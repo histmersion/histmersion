@@ -8,9 +8,14 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class MediaSourceLine(citekey: Citekey, role: MediaSourceLine.Role, provider: MediaItem.Provider, detail: MediaSourceLine.Detail)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class MediaSourceLine(
+    citekey: Citekey,
+    role: MediaSourceLine.Role,
+    provider: MediaItem.Provider,
+    detail: MediaSourceLine.Detail
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MediaSourceLine:
   type Role = Role.T

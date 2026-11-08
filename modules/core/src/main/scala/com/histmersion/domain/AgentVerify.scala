@@ -72,11 +72,10 @@ object AgentVerify:
 
   object QuoteMatch:
     object Fuzzy:
-      export AgentVerify.{Ratio as Matched}
+      export AgentVerify.Ratio as Matched
 
     object Missing:
-      export AgentVerify.{Ratio as Best}
-
+      export AgentVerify.Ratio as Best
 
   /** The text an OCR'd body and a model's quote are compared in ([[ComparedText.normalise]]). */
   def normalise(s: Text): NormalisedText = normalised(s.value)
@@ -142,7 +141,8 @@ object AgentVerify:
             lcs(qw, bw.slice(from, math.min(bw.length, from + span + 3))).toDouble / qw.length
           }
           .foldLeft(0.0)(math.max)
-        if best >= minRatio.value then QuoteMatch.Fuzzy(QuoteMatch.Fuzzy.Matched(best)) else QuoteMatch.Missing(QuoteMatch.Missing.Best(best))
+        if best >= minRatio.value then QuoteMatch.Fuzzy(QuoteMatch.Fuzzy.Matched(best))
+        else QuoteMatch.Missing(QuoteMatch.Missing.Best(best))
 
   /** Titles compared the way a person would: normalised, punctuation ignored. */
   def sameTitle(a: Title, b: Title): Boolean =
@@ -159,17 +159,24 @@ object AgentVerify:
       .toRight(Problem(s"'$s' is not a status (one of: ${Source.Status.values.map(_.wire).mkString(", ")})"))
 
   def confidence(s: com.histmersion.domain.library.Confidence.Wire): Either[Problem, Confidence] =
-    Confidence.fromString(Confidence.Wire(s.value.trim)).toRight(Problem(s"'$s' is not a confidence (one of: high, medium, low, contested)"))
+    Confidence
+      .fromString(Confidence.Wire(s.value.trim))
+      .toRight(Problem(s"'$s' is not a confidence (one of: high, medium, low, contested)"))
 
   /** `[[x]]` targets in a text. */
   def wikilinks(text: Text): List[Wikilink] =
-    "\\[\\[([^\\]|]+)(?:\\|[^\\]]*)?\\]\\]".r.findAllMatchIn(text.value).map(m => Wikilink(m.group(1).trim)).toList.distinct
+    "\\[\\[([^\\]|]+)(?:\\|[^\\]]*)?\\]\\]".r
+      .findAllMatchIn(text.value)
+      .map(m => Wikilink(m.group(1).trim))
+      .toList
+      .distinct
 
   /** Every problem with a text's links: a target that is neither a citekey nor an article slug, and escaped links
     * (`\[\[…\]\]`), which render as text and link nothing.
     */
   def linkProblems(text: LinkProblemsText, isCitekey: Citekey => Boolean, isSlug: Slug => Boolean): List[Problem] =
-    val escaped = Option.when(text.value.contains("\\[\\["))(Problem("escaped link brackets (\\[\\[…\\]\\]) link nothing"))
+    val escaped =
+      Option.when(text.value.contains("\\[\\["))(Problem("escaped link brackets (\\[\\[…\\]\\]) link nothing"))
     val dangling = wikilinks(text)
       .filterNot(t =>
         Citekey.option(t.value).exists(isCitekey) ||
@@ -193,7 +200,6 @@ object AgentVerify:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[YearUnit] =
       s.value.trim match
         case "BCE" | "BC" | "bce" | "bc" | "B.C." | "B.C.E."        => Some(BCE)
@@ -208,21 +214,30 @@ object AgentVerify:
     */
   def toSignedYear(value: ToSignedYearValue, unit: YearUnit): Either[Problem, SignedYear] = unit match
     case YearUnit.BCE if value.value <= 0 => Left(Problem(s"$value BCE: a BCE year is a positive number"))
-    case YearUnit.CE if value.value <= 0  => Left(Problem(s"$value CE: there is no year 0 (or a negative CE year); use BCE"))
-    case YearUnit.BCE                     => Right(SignedYear(-value.value))
-    case YearUnit.CE                      => Right(SignedYear(value.value))
-    case YearUnit.CalBP                   =>
+    case YearUnit.CE if value.value <= 0  =>
+      Left(Problem(s"$value CE: there is no year 0 (or a negative CE year); use BCE"))
+    case YearUnit.BCE   => Right(SignedYear(-value.value))
+    case YearUnit.CE    => Right(SignedYear(value.value))
+    case YearUnit.CalBP =>
       Right(SignedYear(Years.fromAstronomical(Years.Astronomical(1950L - value.value)).value))
-    case YearUnit.BP => Left(Problem(s"$value BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year"))
+    case YearUnit.BP =>
+      Left(Problem(s"$value BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year"))
 
   /** A proposed period's problems (empty = sane): start after end, a year 0, a year beyond `maxAbsYear`, and — when the
     * source has a period of its own — a finding outside it.
     */
-  def periodProblems(start: PeriodStart, end: PeriodEnd, maxAbsYear: MaxAbsYear, within: Option[Period] = None): List[Problem] =
+  def periodProblems(
+      start: PeriodStart,
+      end: PeriodEnd,
+      maxAbsYear: MaxAbsYear,
+      within: Option[Period] = None
+  ): List[Problem] =
     List(
       Option.when(start.value > end.value)(Problem(s"starts ($start) after it ends ($end)")),
       Option.when(start.value == 0 || end.value == 0)(Problem("year 0 does not exist (1 BCE is -1, 1 CE is 1)")),
-      Option.when(math.abs(start.value) > maxAbsYear.value || math.abs(end.value) > maxAbsYear.value)(Problem(s"a year beyond ±$maxAbsYear")),
+      Option.when(math.abs(start.value) > maxAbsYear.value || math.abs(end.value) > maxAbsYear.value)(
+        Problem(s"a year beyond ±$maxAbsYear")
+      ),
       within.flatMap(p =>
         Option.when(start.value < p.start.value || end.value > p.end.value)(
           Problem(s"$start..$end lies outside the source's own period ${p.start}..${p.end}")

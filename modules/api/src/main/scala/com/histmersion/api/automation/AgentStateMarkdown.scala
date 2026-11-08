@@ -3,7 +3,6 @@ package api.automation
 
 object AgentStateMarkdown:
 
-
   def agentStateList(entries: List[AgentStateEntry]): String =
     if entries.isEmpty then ("_No agent state entries._")
     else

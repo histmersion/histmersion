@@ -24,10 +24,10 @@ object Pom:
   object ElementText extends Newtype[String, Pure]
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
-  export Resolver.{Problem as CoordinatesResultPart1}
-  export PluginArtifact.{Pom as CoordinatesXml, Pom as OfResult, Pom as EmbeddedResult}
-  export Resolver.{Problem as ParseResultPart1}
-  export PluginArtifact.{Pom as ParseXml}
+  export Resolver.Problem as CoordinatesResultPart1
+  export PluginArtifact.{Pom as CoordinatesXml, Pom as EmbeddedResult, Pom as OfResult}
+  export Resolver.Problem as ParseResultPart1
+  export PluginArtifact.Pom as ParseXml
   type TextName = ElementName
   val TextName: ElementName.type = ElementName
 
@@ -35,9 +35,13 @@ object Pom:
     for
       project <- parse(xml)
       parent = child(project, ElementName("parent"))
-      group <- text(project, ElementName("groupId")).orElse(parent.flatMap(text(_, ElementName("groupId")))).toRight(Resolver.Problem("the POM names no groupId"))
+      group <- text(project, ElementName("groupId"))
+        .orElse(parent.flatMap(text(_, ElementName("groupId"))))
+        .toRight(Resolver.Problem("the POM names no groupId"))
       artifact <- text(project, ElementName("artifactId")).toRight(Resolver.Problem("the POM names no artifactId"))
-      version <- text(project, ElementName("version")).orElse(parent.flatMap(text(_, ElementName("version")))).toRight(Resolver.Problem("the POM names no version"))
+      version <- text(project, ElementName("version"))
+        .orElse(parent.flatMap(text(_, ElementName("version"))))
+        .toRight(Resolver.Problem("the POM names no version"))
       coords <- ModuleCoordinates.parse(ModuleCoordinates.Text(s"$group:$artifact:$version"))
     yield coords
 

@@ -116,21 +116,47 @@ class EventTrafficSuite extends DbSuite:
 
   private def transcript: String =
     val sb = StringBuilder()
-    val plugins = ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
-    def handlers(f: FakeMediaHttp) = CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => DeepTime.SignedYear(2026L))
+    val plugins =
+      ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    def handlers(f: FakeMediaHttp) =
+      CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => DeepTime.SignedYear(2026L))
     def run(name: String, req: EventImportRequest): Unit =
       val f = FakeMediaHttp(route)
       val r = handlers(f).eventImporter.runImport(CatalogRecord.Provider(req.provider.value), req, None, _ => ())
       sb ++= s"## import $name\n" + requests(f) + s"report: ${r.asJson.noSpaces}\n"
     sb ++= s"catalogues: ${handlers(FakeMediaHttp(route)).eventImporter.catalogues.asJson.noSpaces}\n"
-    run("gvp (dry run)", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(true)))
+    run(
+      "gvp (dry run)",
+      EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(true))
+    )
     run("gvp", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false)))
     run("noaa", EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun(false)))
-    run("wikidata", EventImportRequest(EventImportRequest.Provider("wikidata"), dryRun = EventImportRequest.DryRun(false)))
+    run(
+      "wikidata",
+      EventImportRequest(EventImportRequest.Provider("wikidata"), dryRun = EventImportRequest.DryRun(false))
+    )
     run("gvp again", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false)))
-    run("noaa again", EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun(false)))
-    run("wikidata again, --refresh", EventImportRequest(EventImportRequest.Provider("wikidata"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true)))
-    run("smithsonian, --limit 1", EventImportRequest(EventImportRequest.Provider("smithsonian"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true), limit = Some(EventImportRequest.Limit(1))))
+    run(
+      "noaa again",
+      EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun(false))
+    )
+    run(
+      "wikidata again, --refresh",
+      EventImportRequest(
+        EventImportRequest.Provider("wikidata"),
+        dryRun = EventImportRequest.DryRun(false),
+        refresh = EventImportRequest.Refresh(true)
+      )
+    )
+    run(
+      "smithsonian, --limit 1",
+      EventImportRequest(
+        EventImportRequest.Provider("smithsonian"),
+        dryRun = EventImportRequest.DryRun(false),
+        refresh = EventImportRequest.Refresh(true),
+        limit = Some(EventImportRequest.Limit(1))
+      )
+    )
     sb ++= "## stored after the imports\n" + stored
     // stale rows: a GVP record as V085 stored it, spans that no longer match the catalogues' own records
     connect(ds):
@@ -147,7 +173,8 @@ class EventTrafficSuite extends DbSuite:
     val offline = FakeMediaHttp(url => Left(s"no network in a re-derivation: $url"))
     val r = handlers(offline).eventImporter.runRederive(None, dryRun = false, _ => ())
     sb ++= s"## rederive\n" + requests(offline) + s"report: ${r.asJson.noSpaces}\n"
-    val one = handlers(FakeMediaHttp(route)).eventImporter.runRederive(Some(CatalogRecord.Provider("noaa")), dryRun = false, _ => ())
+    val one = handlers(FakeMediaHttp(route)).eventImporter
+      .runRederive(Some(CatalogRecord.Provider("noaa")), dryRun = false, _ => ())
     sb ++= s"## rederive noaa\nreport: ${one.asJson.noSpaces}\n"
     sb ++= "## stored after rederive\n" + stored
     sb.result()

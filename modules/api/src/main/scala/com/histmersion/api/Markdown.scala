@@ -32,7 +32,9 @@ object Markdown:
   def chipLinks(values: List[String], hashKey: String): String =
     values
       .filter((_).nonEmpty)
-      .map(v => s"[${Label.display(Label.Text(v)).value.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(((v)))})")
+      .map(v =>
+        s"[${Label.display(Label.Text(v)).value.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(((v)))})"
+      )
       .mkString(", ")
 
   private[api] def enc(s: String): String = (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))

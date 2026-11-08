@@ -17,7 +17,8 @@ final case class CatalogRecord(
     timeSpan: TimeSpan,
     lat: Option[Latitude],
     lon: Option[Longitude],
-    historicity: CatalogRecord.Historicity = CatalogRecord.Historicity(com.histmersion.api.catalogue.Historicity.Attested),
+    historicity: CatalogRecord.Historicity =
+      CatalogRecord.Historicity(com.histmersion.api.catalogue.Historicity.Attested),
     vei: Option[CatalogRecord.Vei] = None,
     magnitude: Option[CatalogRecord.Magnitude] = None,
     deaths: Option[CatalogRecord.Deaths] = None,
@@ -33,8 +34,10 @@ final case class CatalogRecord(
     datingMethod: Option[CatalogRecord.DatingMethod] = None,
     raw: Option[CatalogRecord.Raw] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
-  def key: (CatalogRecord.Provider, EventCatalogueRef.ProviderId) = (CatalogRecord.Provider((provider).value), EventCatalogueRef.ProviderId((providerId).value))
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
+  def key: (CatalogRecord.Provider, EventCatalogueRef.ProviderId) =
+    (CatalogRecord.Provider((provider).value), EventCatalogueRef.ProviderId((providerId).value))
 object CatalogRecord:
   object Wikidata:
     type Class = Class.T
@@ -46,10 +49,9 @@ object CatalogRecord:
   type EventId = EventId.T
   object EventId extends Newtype[String, Pure]
 
-
   type EventIdProvider = Provider
   val EventIdProvider: Provider.type = Provider
-  export EventCatalogueRef.{ProviderId as EventIdProviderId}
+  export EventCatalogueRef.ProviderId as EventIdProviderId
   type OwnerKeysPart2 = OwnerKeysPart2.T
   object OwnerKeysPart2 extends Newtype[String, Pure]
 
@@ -62,7 +64,7 @@ object CatalogRecord:
   object Kind extends Newtype[String, Pure]
   type Historicity = Historicity.T
   object Historicity extends Newtype[String, Pure]
-  export EventCatalogueRef.{Vei, Magnitude, Deaths}
+  export EventCatalogueRef.{Deaths, Magnitude, Vei}
   type Wikidata = EventEntry.Wikidata
   export EventEntry.Names
   type Description = Description.T
@@ -75,15 +77,30 @@ object CatalogRecord:
   object Central extends Newtype[Long, Pure]
   type PlusMinus = PlusMinus.T
   object PlusMinus extends Newtype[Long, Pure]
-  export EventDating.{Method as DatingMethod}
+  export EventDating.Method as DatingMethod
   type Raw = Raw.T
   object Raw extends Newtype[String, Pure]
 
   def eventId(r: CatalogRecord): EventId = eventId(r.provider, r.providerId)
 
   def eventId(provider: EventIdProvider, providerId: CatalogRecord.EventIdProviderId): EventId =
-    EventId(((provider).value + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_"))
+    EventId(
+      ((provider).value + "_" + providerId)
+        .toLowerCase(java.util.Locale.ROOT)
+        .replaceAll("[^a-z0-9]+", "_")
+        .stripSuffix("_")
+    )
 
-  def owner(eventId: EventId, catalogue: Provider, keys: Iterable[(Provider, EventCatalogueRef.ProviderId)]): Option[(Provider, EventCatalogueRef.ProviderId)] =
+  def owner(
+      eventId: EventId,
+      catalogue: Provider,
+      keys: Iterable[(Provider, EventCatalogueRef.ProviderId)]
+  ): Option[(Provider, EventCatalogueRef.ProviderId)] =
     val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2.value)
-    (own.find(k => CatalogRecord.eventId(Provider((k._1).value), EventCatalogueRef.ProviderId((k._2).value)) == eventId).orElse(own.headOption)).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (Provider((refactorTuple2._1).value), EventCatalogueRef.ProviderId((refactorTuple2._2).value)) })
+    (own
+      .find(k => CatalogRecord.eventId(Provider((k._1).value), EventCatalogueRef.ProviderId((k._2).value)) == eventId)
+      .orElse(own.headOption))
+      .map { refactorValue2 =>
+        val refactorTuple2 = refactorValue2;
+        (Provider((refactorTuple2._1).value), EventCatalogueRef.ProviderId((refactorTuple2._2).value))
+      }

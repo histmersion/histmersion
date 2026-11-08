@@ -13,7 +13,8 @@ final case class CollectionLinked(
     id: CollectionLinked.Id,
     title: Title
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionLinked:
   type Id = Id.T

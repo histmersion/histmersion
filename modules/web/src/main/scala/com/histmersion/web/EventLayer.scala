@@ -77,7 +77,8 @@ object EventLayer:
     lastFrame = Some((playhead, yearsPerSecond))
     if running && config != null && TheMap.isUp then
       val localFade = EventPlayback.fadeYears(EventPlayback.Seconds(config.localFadeSeconds.value), yearsPerSecond)
-      val regionalFade = EventPlayback.fadeYears(EventPlayback.Seconds(config.regionalFadeSeconds.value), yearsPerSecond)
+      val regionalFade =
+        EventPlayback.fadeYears(EventPlayback.Seconds(config.regionalFadeSeconds.value), yearsPerSecond)
       val moved = mutable.Set.empty[EventPlayback.AnchorKey]
       var outlinesChanged = false
       items.foreach { (e, span) =>
@@ -127,7 +128,16 @@ object EventLayer:
 
   private def drawOutlines(): Unit =
     outlines.foreach(
-      _.set(outlined.toSeq.map((id, g) => ShapeFeature(ShapeFeature.Id(id.value), g, dashed = ShapeFeature.Dashed(true), alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value)))))
+      _.set(
+        outlined.toSeq.map((id, g) =>
+          ShapeFeature(
+            ShapeFeature.Id(id.value),
+            g,
+            dashed = ShapeFeature.Dashed(true),
+            alpha = ShapeFeature.Alpha(shown.get(id).fold(0.0)(_.alpha.value))
+          )
+        )
+      )
     )
 
   private def add(e: EventGeo, start: Year, a: Alpha): Shown =
@@ -167,7 +177,8 @@ object EventLayer:
   /** The visibility, as `--a` on the label and the outline's own. */
   private def setAlpha(id: Event.Id, s: Shown, a: Alpha): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
-    if s.outline then outlines.foreach(_.restyle(ShapeFeature.Id(id.value), ShapeFeature.Colour(""), ShapeFeature.Alpha(a.value)))
+    if s.outline then
+      outlines.foreach(_.restyle(ShapeFeature.Id(id.value), ShapeFeature.Colour(""), ShapeFeature.Alpha(a.value)))
 
   /** The stacking slot, as `--i`, on the label. */
   private def setSlot(s: Shown, slot: Slot): Unit =

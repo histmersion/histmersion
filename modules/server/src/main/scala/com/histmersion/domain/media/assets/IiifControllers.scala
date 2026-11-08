@@ -26,7 +26,10 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   def info(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, io.circe.Json] =
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     assets.figure(citekey, safeName) match
-      case None             => Left(Api.Error(Api.Error.Message(s"No asset '$safeName' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      case None =>
+        Left(
+          Api.Error(Api.Error.Message(s"No asset '$safeName' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
+        )
       case Some((_, bytes)) =>
         decodeImage(bytes) match
           case None      => Left(Api.Error(Api.Error.Message(s"Asset '$safeName' is not a decodable image")))
@@ -60,8 +63,12 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   /** Parse `default.jpg` or `default.png`. */
   private def parseFilename(filename: IiifControllers.Filename): Either[Api.Error, Iiif.Format] =
     filename.value match
-      case s"default.$ext" => Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(Api.Error.Message(p.value)))
-      case _ => Left(Api.Error(Api.Error.Message(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')")))
+      case s"default.$ext" =>
+        Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(Api.Error.Message(p.value)))
+      case _ =>
+        Left(
+          Api.Error(Api.Error.Message(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')"))
+        )
 
   /** Level 1 supports rotation `0` only. */
   private def validateRotation(s: Iiif.Rotation): Either[Api.Error, Unit] =
@@ -94,7 +101,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   /** Crop the image to the requested region. */
   private def applyRegion(img: BufferedImage, region: Iiif.Region): Either[Api.Error, BufferedImage] =
     region match
-      case Iiif.Region.Full               => Right(img)
+      case Iiif.Region.Full                   => Right(img)
       case Iiif.Region.Pixels(xr, yr, wr, hr) =>
         val (x, y, w, h) = (xr.value, yr.value, wr.value, hr.value)
         val imgW = img.getWidth
@@ -161,7 +168,10 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     else BufferedImage.TYPE_INT_RGB
 
   /** Encode a BufferedImage to the requested format. */
-  private def encode(img: BufferedImage, format: Iiif.Format): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
+  private def encode(
+      img: BufferedImage,
+      format: Iiif.Format
+  ): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
     val out = new ByteArrayOutputStream()
     // JPEG cannot encode alpha; convert to RGB if needed
     val toEncode =

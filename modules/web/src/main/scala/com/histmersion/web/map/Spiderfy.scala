@@ -15,6 +15,7 @@ object Spiderfy:
   object OffsetCoordinate extends Newtype[Double, Pure]
   type Svg = Svg.T
   object Svg extends Newtype[String, Pure]
+
   /** A fanned-out point's marker; the bubble it came out of; the legs' element. */
   type Count = Count.T
   object Count extends Newtype[Int, Pure]

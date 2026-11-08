@@ -52,7 +52,12 @@ private[periods] object PeriodRepo:
   /** The periods whose label holds `q` (a literal substring, any case), of the region `region` (any case), overlapping
     * `from..to` (either bound alone is a span too), by start then label.
     */
-  def search(q: Option[SearchText], region: Option[PeriodRow.Region], from: Option[DeepTime.SignedYear], to: Option[DeepTime.SignedYear])(using
+  def search(
+      q: Option[SearchText],
+      region: Option[PeriodRow.Region],
+      from: Option[DeepTime.SignedYear],
+      to: Option[DeepTime.SignedYear]
+  )(using
       DbCon
   ): Vector[HistoricalPeriod] =
     val text = q.map(_.value.trim).filter(_.nonEmpty)

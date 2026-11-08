@@ -35,7 +35,9 @@ object MapFold:
   def toggleHtml(cls: ClassName, controls: ControlsId, label: Label, inner: InnerHtml, open: Open): Html =
     Html(
       s"""<button type="button" class="btn btn--sm $cls" aria-controls="$controls" """ +
-        s"""aria-expanded="$open" aria-label="${Fmt.esc(label.value)}" title="${Fmt.esc(label.value)}">$inner</button>"""
+        s"""aria-expanded="$open" aria-label="${Fmt.esc(label.value)}" title="${Fmt.esc(
+            label.value
+          )}">$inner</button>"""
     )
 
   /** Open or close `box`, its button saying which. */

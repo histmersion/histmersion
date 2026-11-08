@@ -3,7 +3,15 @@ package domain.catalogue.events
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
-import com.histmersion.api.catalogue.{CatalogRecord, EventCatalogueRef, EventGeo, EventList, EventPatch, EventPut, EventSummary}
+import com.histmersion.api.catalogue.{
+  CatalogRecord,
+  EventCatalogueRef,
+  EventGeo,
+  EventList,
+  EventPatch,
+  EventPut,
+  EventSummary
+}
 import com.histmersion.api.views.EventDetail
 import com.histmersion.api.library.Filter
 import com.histmersion.util.database.Sql
@@ -66,14 +74,18 @@ object EventFixtures:
   def get(ds: DataSource, id: BEventRow.Id): Option[EventEntry] =
     connect(ds)(EventRepo.get(id))
   def put(ds: DataSource, id: BEventRow.Id, in: EventPut): Unit = transact(ds)(EventRepo.put(id, in))
-  def patch(ds: DataSource, id: BEventRow.Id, p: EventPatch): Either[Api.Error, Unit] = transact(ds)(EventRepo.patch(id, p))
+  def patch(ds: DataSource, id: BEventRow.Id, p: EventPatch): Either[Api.Error, Unit] =
+    transact(ds)(EventRepo.patch(id, p))
   def rename(ds: DataSource, from: BEventRow.Id, to: BEventRow.Id): Either[Api.Error, Unit] =
     transact(ds)(EventRepo.rename(BEventRow.Id(from.value.trim), BEventRow.Id(to.value.trim)))
   def renameIn(from: BEventRow.Id, to: BEventRow.Id)(using com.augustnagro.magnum.DbCon): Either[Api.Error, Unit] =
     EventRepo.rename(from, to)
   def renamedTo(ds: DataSource, id: BEventRow.Id): Option[BEventRow.Id] = connect(ds)(EventRepo.renamedTo(id))
   def delete(ds: DataSource, id: BEventRow.Id): Boolean = transact(ds)(EventRepo.delete(id))
-  def tierAndNames(ds: DataSource, id: BEventRow.Id): Option[(EventRepo.Tier, List[BEventRow.Names], Option[BEventRow.Label])] =
+  def tierAndNames(
+      ds: DataSource,
+      id: BEventRow.Id
+  ): Option[(EventRepo.Tier, List[BEventRow.Names], Option[BEventRow.Label])] =
     connect(ds)(EventRepo.tierAndNames(id))
 
   def stored(ds: DataSource): List[StoredEvent] = connect(ds)(EventImportRepo.stored)
@@ -81,9 +93,15 @@ object EventFixtures:
     transact(ds)(EventImportRepo.save(placed))
   def partsDone(ds: DataSource, provider: CatalogRecord.Provider): Set[EventImportRepo.PartName] =
     connect(ds)(EventImportRepo.partsDone(provider))
-  def markPart(ds: DataSource, provider: CatalogRecord.Provider, part: EventImportRepo.PartName, records: RowCount): Unit =
+  def markPart(
+      ds: DataSource,
+      provider: CatalogRecord.Provider,
+      part: EventImportRepo.PartName,
+      records: RowCount
+  ): Unit =
     transact(ds)(EventImportRepo.markPart(provider, part, records))
-  def clearParts(ds: DataSource, provider: CatalogRecord.Provider): Unit = transact(ds)(EventImportRepo.clearParts(provider))
+  def clearParts(ds: DataSource, provider: CatalogRecord.Provider): Unit =
+    transact(ds)(EventImportRepo.clearParts(provider))
   def catalogueRefs(ds: DataSource, id: Event.Id): List[EventCatalogueRef] =
     connect(ds)(EventImportRepo.catalogueRefs(id))
 

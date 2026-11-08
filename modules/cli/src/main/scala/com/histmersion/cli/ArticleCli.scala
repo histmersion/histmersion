@@ -45,7 +45,6 @@ object ArticleCli:
     * before.
     */
 
-
   final case class WikiLayout(sources: Path, root: Option[Path])
 
   object WikiLayout:
@@ -61,7 +60,10 @@ object ArticleCli:
     * fallback KIND — `concepts/` holds `concept`s), plus any `*.md` sitting at the top level (e.g. `wiki/index.md`).
     * Frontmatter `type:` always wins over the directory.
     */
-  def files(root: Path, skip: Set[MirrorPlacement.Directory] = Set(WikiLayout.SourcesDir)): List[(Path, Article.Kind.Wire)] =
+  def files(
+      root: Path,
+      skip: Set[MirrorPlacement.Directory] = Set(WikiLayout.SourcesDir)
+  ): List[(Path, Article.Kind.Wire)] =
     val top = markdown(root).map(_ -> kindOf(root))
     val sub = dirs(root)
       .filterNot(d => skip.contains(MirrorPlacement.Directory(d.getFileName.toString.toLowerCase)))
@@ -104,7 +106,9 @@ object ArticleCli:
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
     * (`histmersion seed`) can fold it into its own report.
     */
-  def importAll(c: Client, root: Path, force: Api.Overwrite, skip: Set[MirrorPlacement.Directory])(using console: Console): SeedResult =
+  def importAll(c: Client, root: Path, force: Api.Overwrite, skip: Set[MirrorPlacement.Directory])(using
+      console: Console
+  ): SeedResult =
     val fs = files(root, skip)
     val total = fs.size
     if total > 0 then Cli.out.println(s"importing $total article(s) from $root")
@@ -116,7 +120,7 @@ object ArticleCli:
         skipped: List[String]
     )(using console: Console): SeedResult =
       rest match
-        case Nil               =>
+        case Nil =>
           SeedResult(
             SeedResult.Imported(imported),
             failed.map(SeedResult.Failed(_)),
@@ -127,8 +131,15 @@ object ArticleCli:
           val name = f.getFileName.toString.stripSuffix(".md")
           Cli.out.println(s"$number/$total $kind/$name")
           c.importArticle(toImport(f, kind, force)) match
-            case Right(r) => loop(tail, number + 1, imported + r.imported.value, failed ++ r.failed.map(_.value), skipped ++ r.skipped.map(_.value))
-            case Left(e)  => loop(tail, number + 1, imported, failed :+ s"$name: ${e.message}", skipped)
+            case Right(r) =>
+              loop(
+                tail,
+                number + 1,
+                imported + r.imported.value,
+                failed ++ r.failed.map(_.value),
+                skipped ++ r.skipped.map(_.value)
+              )
+            case Left(e) => loop(tail, number + 1, imported, failed :+ s"$name: ${e.message}", skipped)
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
@@ -141,14 +152,23 @@ object ArticleCli:
           case Right(text) =>
             val dir = out.resolve(kindOfNote(text).value)
             val _ = Files.createDirectories(dir)
-            val _ = Files.writeString(dir.resolve(MirrorPlacement.noteFile(MirrorPlacement.RecordId(slug.value)).value), text.value)
+            val _ = Files.writeString(
+              dir.resolve(MirrorPlacement.noteFile(MirrorPlacement.RecordId(slug.value)).value),
+              text.value
+            )
             None
           case Left(e) => Some(s"$slug: ${e.message}")
       }
       Cli.out.println(s"exported ${total - failed.size} article(s) to $out, failed ${failed.size}")
       failed.take(10).foreach(f => Cli.err.println(s"  ! $f"))
       if failed.isEmpty then Right(Exported(total))
-      else Left(Cli.Error(Cli.Error.Message(s"${failed.size} of $total article(s) could not be exported"), exitCode = ExitCode.Refused))
+      else
+        Left(
+          Cli.Error(
+            Cli.Error.Message(s"${failed.size} of $total article(s) could not be exported"),
+            exitCode = ExitCode.Refused
+          )
+        )
     }
 
   /** The `type:` of an exported note — which subdirectory it belongs in. `ArticleNote.render` always writes the key, so
@@ -191,8 +211,7 @@ object ArticleCli:
             kind.map(Api.ArticleQuery.Kind(_)),
             q.map(_.trim).filter(_.nonEmpty).map(Api.ArticleQuery.Text(_))
           )
-        )
-          .map(r => Output.emit(json, r)(ArticleMarkdown.list))
+        ).map(r => Output.emit(json, r)(ArticleMarkdown.list))
       }
     }
 
@@ -229,18 +248,25 @@ object ArticleCli:
       )
         .mapN { (file, kind, strict) => (c: Client) =>
           val p = Path.of(file)
-          if !Files.isRegularFile(p) then Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+          if !Files.isRegularFile(p) then
+            Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
           else
             // an explicit `put` is always deliberate → force past the "newer in DB" guard
             val fallback = kind.map(Article.Kind.Wire(_)).getOrElse(kindOf(p.toAbsolutePath.getParent))
-            val req = toImport(p, fallback, force = Api.Overwrite(true)).modify(_.strict).setTo(Article.Import.Strict(strict))
+            val req =
+              toImport(p, fallback, force = Api.Overwrite(true)).modify(_.strict).setTo(Article.Import.Strict(strict))
             c.importArticle(req).map { r =>
               report(r)
               // the import answers with counts only: ask for the article's formatting problems by the
               // slug the note itself declares (as the server parsed it), so the writer sees them now
-              val slug = ArticleNote.parse(req.text.value, req.slug.getOrElse(Article.Slug("")), fallback).map(_.slug).filter(_.value.nonEmpty)
+              val slug = ArticleNote
+                .parse(req.text.value, req.slug.getOrElse(Article.Slug("")), fallback)
+                .map(_.slug)
+                .filter(_.value.nonEmpty)
               if r.imported.value > 0 then
-                slug.foreach(s => c.lintArticle(ReviewGoal.Slug(s.value)).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues))))
+                slug.foreach(s =>
+                  c.lintArticle(ReviewGoal.Slug(s.value)).foreach(f => Cli.out.println(FormatMarkdown.notice(f.issues)))
+                )
             }
         }
     }
@@ -295,7 +321,12 @@ object ArticleCli:
               io.circe.parser
                 .decode[List[Article.Edits.EditAnswer]](t)
                 .left
-                .map(err => Cli.Error(Cli.Error.Message(s"$e: not a JSON list of edits (${err.getMessage})"), exitCode = ExitCode.Usage))
+                .map(err =>
+                  Cli.Error(
+                    Cli.Error.Message(s"$e: not a JSON list of edits (${err.getMessage})"),
+                    exitCode = ExitCode.Usage
+                  )
+                )
             )
             .map(es => Article.Edits.ArticleCheckRequest(edits = es, kind = kind.map(Article.Kind.Wire(_))))
         case (None, Some(b)) =>
@@ -305,15 +336,22 @@ object ArticleCli:
               kind = kind.map(Article.Kind.Wire(_))
             )
           )
-        case _ => Left(Cli.Error(Cli.Error.Message("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage))
-      req.flatMap(c.checkArticle(ReviewGoal.Slug(slug), _)).map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
+        case _ =>
+          Left(
+            Cli.Error(Cli.Error.Message("give --edits-file or --body-file (one of them)"), exitCode = ExitCode.Usage)
+          )
+      req
+        .flatMap(c.checkArticle(ReviewGoal.Slug(slug), _))
+        .map(r => Output.emit(json, r)(Article.Edits.markdown(_).value))
     }
   }
 
   private def delete(using console: Console) = Opts.subcommand("delete", "Remove one article (its links go with it)") {
     Opts
       .argument[String]("slug")
-      .map(slug => (c: Client) => c.deleteArticle(ReviewGoal.Slug(slug)).map(d => Cli.out.println(s"deleted ${d.slug}")))
+      .map(slug =>
+        (c: Client) => c.deleteArticle(ReviewGoal.Slug(slug)).map(d => Cli.out.println(s"deleted ${d.slug}"))
+      )
   }
 
   private def exportCmd(using console: Console) =
@@ -330,7 +368,8 @@ object ArticleCli:
       (Opts.argument[String]("dir"), Opts.flag("force", "Overwrite articles newer than the files").orFalse)
         .mapN { (dir, force) => (c: Client) =>
           val p = Path.of(dir)
-          if !Files.isDirectory(p) then Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+          if !Files.isDirectory(p) then
+            Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
           else Right(report(importAll(c, p, Api.Overwrite(force), Set(WikiLayout.SourcesDir))))
         }
     }
@@ -479,14 +518,17 @@ object ArticleCli:
     Opts
       .argument[String]("slug")
       .map(slug =>
-        (c: Client) => c.articleVersions(ReviewGoal.Slug(slug)).map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug), vs)))
+        (c: Client) =>
+          c.articleVersions(ReviewGoal.Slug(slug))
+            .map(vs => Cli.out.println(ArticleMarkdown.versions(Article.Slug(slug), vs)))
       )
   }
 
   private def versionCmd(using console: Console) =
     Opts.subcommand("version", "Show one historical version's full body") {
       (Opts.argument[String]("slug"), Opts.argument[Long]("id")).mapN { (slug, id) => (c: Client) =>
-        c.articleVersion(ReviewGoal.Slug(slug), Article.VersionId(id)).map(v => Cli.out.println(ArticleMarkdown.version(v)))
+        c.articleVersion(ReviewGoal.Slug(slug), Article.VersionId(id))
+          .map(v => Cli.out.println(ArticleMarkdown.version(v)))
       }
     }
 

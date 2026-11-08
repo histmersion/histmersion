@@ -68,37 +68,76 @@ class EdgeRepoSuite extends DbSuite:
     val a = s"${Prefix}a2020_x"; val b = s"${Prefix}b2021_y"
     put(source(a, edges = List(Edge(Citekey(a), Citekey(b), Edge.Kind.Challenges))))
     // the domain read still carries it — a patch or an export must not lose it
-    assertEquals(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey.assume(a)).get.edges, List(Edge(Citekey(a), Citekey(b), Edge.Kind.Challenges)))
+    assertEquals(
+      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey.assume(a)).get.edges,
+      List(Edge(Citekey(a), Citekey(b), Edge.Kind.Challenges))
+    )
     assertEquals(
       CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
       Vector(b -> NeighborTarget.Unresolved)
     )
     put(source(b))
     assertEquals(
-      CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.direction, n.citekey, n.target, n.title)),
+      CitationFixtures
+        .neighbors(ds, com.histmersion.domain.library.Citekey.assume(a))
+        .map(n => (n.direction, n.citekey, n.target, n.title)),
       Vector(("out", b, NeighborTarget.Source, Some(s"Title $b")))
     )
-    assertEquals(CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(b)).map(n => (n.direction, n.citekey)), Vector("in" -> a))
+    assertEquals(
+      CitationFixtures
+        .neighbors(ds, com.histmersion.domain.library.Citekey.assume(b))
+        .map(n => (n.direction, n.citekey)),
+      Vector("in" -> a)
+    )
     val parked = connect(ds)(sql"SELECT count(*)::int FROM unresolved_edges WHERE src = $a".query[Int].run().head)
     assertEquals(parked, 0)
 
   test("a parked edge naming a compiled article is classified as an article"):
     val a = s"${Prefix}a2020_x"
     val slug = s"${Prefix}_topic"
-    val _ = ArticleFixtures.put(ds, Article(Article.Slug(slug), Article.Title("A topic"), Article.KindValue("concept"), Article.Body("# A topic"), None, Nil, Nil, None))
+    val _ = ArticleFixtures.put(
+      ds,
+      Article(
+        Article.Slug(slug),
+        Article.Title("A topic"),
+        Article.KindValue("concept"),
+        Article.Body("# A topic"),
+        None,
+        Nil,
+        Nil,
+        None
+      )
+    )
     put(source(a, edges = List(Edge(Citekey(a), Citekey(slug), Edge.Kind.Updates))))
     assertEquals(
-      CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target, n.title)),
+      CitationFixtures
+        .neighbors(ds, com.histmersion.domain.library.Citekey.assume(a))
+        .map(n => (n.citekey, n.target, n.title)),
       Vector((slug, NeighborTarget.Article, Some("A topic")))
     )
     // `kinds` narrows every branch
-    assertEquals(CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a), List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))), Vector.empty)
+    assertEquals(
+      CitationFixtures.neighbors(
+        ds,
+        com.histmersion.domain.library.Citekey.assume(a),
+        List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))
+      ),
+      Vector.empty
+    )
 
   test("edges/resolve promotes a unique short form and leaves an ambiguous one parked"):
     val a = s"${Prefix}a2020_x"
     put(source(s"${Prefix}c2019_full"))
     put(source(s"${Prefix}d2018_one")); put(source(s"${Prefix}d2018_two"))
-    put(source(a, edges = List(Edge(Citekey(a), Citekey(s"${Prefix}c2019"), Edge.Kind.References), Edge(Citekey(a), Citekey(s"${Prefix}d2018"), Edge.Kind.References))))
+    put(
+      source(
+        a,
+        edges = List(
+          Edge(Citekey(a), Citekey(s"${Prefix}c2019"), Edge.Kind.References),
+          Edge(Citekey(a), Citekey(s"${Prefix}d2018"), Edge.Kind.References)
+        )
+      )
+    )
     assert(SourceFixtures.resolveEdges(ds).value >= 1)
     assertEquals(
       CitationFixtures.neighbors(ds, com.histmersion.domain.library.Citekey.assume(a)).map(n => (n.citekey, n.target)),
@@ -108,8 +147,22 @@ class EdgeRepoSuite extends DbSuite:
   test("graph: every link joins two nodes of the result, whatever the depth cut-off"):
     val (a, b, c, d) = (s"${Prefix}a2020_x", s"${Prefix}b2021_y", s"${Prefix}c2019_z", s"${Prefix}d2018_w")
     List(b, c, d).foreach(k => put(source(k)))
-    put(source(a, edges = List(Edge(Citekey(a), Citekey(b), Edge.Kind.References), Edge(Citekey(a), Citekey("not_a_source_topic"), Edge.Kind.References))))
-    put(source(c, edges = List(Edge(Citekey(c), Citekey(a), Edge.Kind.Challenges), Edge(Citekey(c), Citekey(d), Edge.Kind.References))))
+    put(
+      source(
+        a,
+        edges = List(
+          Edge(Citekey(a), Citekey(b), Edge.Kind.References),
+          Edge(Citekey(a), Citekey("not_a_source_topic"), Edge.Kind.References)
+        )
+      )
+    )
+    put(
+      source(
+        c,
+        edges =
+          List(Edge(Citekey(c), Citekey(a), Edge.Kind.Challenges), Edge(Citekey(c), Citekey(d), Edge.Kind.References))
+      )
+    )
     val g1 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(1))
     assertEquals(g1.nodes.map(_.id).toSet, Set(a, b, c))
     assertEquals(g1.links.map(l => (l.source, l.target)).toSet, Set(a -> b, c -> a))
@@ -118,4 +171,7 @@ class EdgeRepoSuite extends DbSuite:
     val g2 = CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(2))
     assertEquals(g2.nodes.map(_.id).toSet, Set(a, b, c, d))
     assertEquals(g2.nodes.find(_.id.value == d).map(_.depth), Some(2))
-    assertEquals(CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(0)).links, Nil)
+    assertEquals(
+      CitationFixtures.graph(ds, com.histmersion.domain.library.Citekey.assume(a), Source.Graph.Depth(0)).links,
+      Nil
+    )

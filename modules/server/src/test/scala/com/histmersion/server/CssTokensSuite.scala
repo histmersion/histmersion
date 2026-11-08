@@ -68,7 +68,8 @@ class CssTokensSuite extends munit.FunSuite:
     (d(c._1), d(c._2), d(c._3))
 
   test("#1442: map names are AA on their halo and on every light and dark tile colour"):
-    def colour(t: String) = Wcag.hex(Wcag.Hex(rootTokens(t))).getOrElse(fail(s"$t is not a hex colour: ${rootTokens(t)}"))
+    def colour(t: String) =
+      Wcag.hex(Wcag.Hex(rootTokens(t))).getOrElse(fail(s"$t is not a hex colour: ${rootTokens(t)}"))
     val light = lightTiles.map(c => Wcag.hex(c).get)
     for (tone, tiles) <- List("light" -> light, "dark" -> light.map(darkened)) do
       val ink = colour(s"--map-label-ink-$tone")
@@ -238,16 +239,18 @@ class CssTokensSuite extends munit.FunSuite:
   /** A control's edge, the focus ring and the source-status marks against what they sit on: 3:1. */
   private val componentPairs: List[(String, String)] =
     for
-      fg <- List("--control-line", "--accent") ++ Palette.statuses.map(s => Palette.status(s).value) ++ Palette.goalStages.map(
-        s => Palette.goalStage(s).value
-      )
+      fg <- List("--control-line", "--accent") ++ Palette.statuses.map(s =>
+        Palette.status(s).value
+      ) ++ Palette.goalStages.map(s => Palette.goalStage(s).value)
       bg <- List("--bg", "--panel", "--sunk")
     yield fg -> bg
 
   for (name, theme) <- List("light" -> light, "dark" -> dark) do
     test(s"$name theme: every text pair is WCAG 2.2 AA (4.5:1)"):
       val low =
-        textPairs.map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)).value)).filter(_._3 < Wcag.AaText.value)
+        textPairs
+          .map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)).value))
+          .filter(_._3 < Wcag.AaText.value)
       assertEquals(low.map((f, b, c) => f"$f on $b: $c%.2f"), Nil)
 
     test(s"$name theme: every control edge and status mark is WCAG 2.2 AA for components (3:1)"):
@@ -404,7 +407,8 @@ class CssTokensSuite extends munit.FunSuite:
     assert(looks(Goal.Status.All("planned"))._3.contains("dashed"), looks(Goal.Status.All("planned"))._3)
     assert(looks(Goal.Status.All("seeding"))._3.contains("linear-gradient"), looks(Goal.Status.All("seeding"))._3)
     assert(
-      looks(Goal.Status.All("compiled"))._3.contains("border-radius:1px") && !looks(Goal.Status.All("compiled"))._3.contains("rotate"),
+      looks(Goal.Status.All("compiled"))._3.contains("border-radius:1px") && !looks(Goal.Status.All("compiled"))._3
+        .contains("rotate"),
       looks(Goal.Status.All("compiled"))._3
     )
     assert(looks(Goal.Status.All("reviewed"))._3.contains("rotate(45deg)"), looks(Goal.Status.All("reviewed"))._3)
@@ -419,4 +423,7 @@ class CssTokensSuite extends munit.FunSuite:
     assert(css.contains(":where(a) { color:var(--accent); }"), "every link takes the accent")
     assert(""":visited\s*\{""".r.findFirstIn(rules).isEmpty, "no rule gives visited links a colour of their own")
     for (name, theme) <- List("light" -> light, "dark" -> dark); bg <- List("--bg", "--panel", "--sunk") do
-      assert(Wcag.contrast(colour(theme, "--accent"), colour(theme, bg)).value >= Wcag.AaText.value, s"$name: the link on $bg")
+      assert(
+        Wcag.contrast(colour(theme, "--accent"), colour(theme, bg)).value >= Wcag.AaText.value,
+        s"$name: the link on $bg"
+      )

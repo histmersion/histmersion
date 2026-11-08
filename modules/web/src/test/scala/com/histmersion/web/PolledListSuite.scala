@@ -23,16 +23,23 @@ class PolledListSuite extends munit.FunSuite:
 
   private given ExecutionContext = ExecutionContext.parasitic
 
-  private def job(id: SpatialHierarchyResult.Job.Id, state: JobState = JobState.Done) = JobInfo(id, JobKinds.Wire(Ingest.KindIngest), state.wire)
+  private def job(id: SpatialHierarchyResult.Job.Id, state: JobState = JobState.Done) =
+    JobInfo(id, JobKinds.Wire(Ingest.KindIngest), state.wire)
   private def jobId(id: String) = SpatialHierarchyResult.Job.Id(id)
-  private def page(total: Paging.Page.Total, next: Option[Paging.Page.Next], counts: (Paging.Page.CountState, Paging.Count)*) = Paging.Page(total, next, counts.toList)
+  private def page(
+      total: Paging.Page.Total,
+      next: Option[Paging.Page.Next],
+      counts: (Paging.Page.CountState, Paging.Count)*
+  ) = Paging.Page(total, next, counts.toList)
 
   /** A fake server: each request waits for the test to answer it; a fake clock holds the next poll. */
   final private class Fixture(liveRows: Boolean):
-    val asked = mutable.ListBuffer.empty[(Option[Paging.Cursor], Option[Paging.Cursor], Promise[(List[JobInfo], Paging.Page)])]
+    val asked =
+      mutable.ListBuffer.empty[(Option[Paging.Cursor], Option[Paging.Cursor], Promise[(List[JobInfo], Paging.Page)])]
     val timers = mutable.ListBuffer.empty[(Poll.Revision, () => Unit)]
     val list = PolledList[JobInfo](
-      fetch = (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
+      fetch =
+        (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
       id = j => PolledList.ItemId(j.id.value),
       live = (_, _) => liveRows,
       later = (ms, f) => { timers += ((ms, f)); PolledList.TimerId(timers.size) },
@@ -66,7 +73,11 @@ class PolledListSuite extends munit.FunSuite:
     assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a").map(SpatialHierarchyResult.Job.Id.apply))
     f.list.refresh()
     assertEquals(f.asked(2)._1, Some("a"), "the poll reaches the last row shown")
-    f.answer(2, List(job(jobId("d")), job(jobId("c")), job(jobId("b")), job(jobId("a"))), page(Paging.Page.Total(4), None))
+    f.answer(
+      2,
+      List(job(jobId("d")), job(jobId("c")), job(jobId("b")), job(jobId("a"))),
+      page(Paging.Page.Total(4), None)
+    )
     assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a").map(SpatialHierarchyResult.Job.Id.apply))
 
   test("the last row shown is gone: the poll starts over from the newest page"):
@@ -144,9 +155,18 @@ class PolledListSuite extends munit.FunSuite:
 
   test("the shared schedule: quick on a change, slower while nothing changes, none when nothing is live"):
     assertEquals(Poll.next(None, live = Poll.LiveMode(false), changed = Poll.DataChanged(true)), None)
-    assertEquals(Poll.next(Some(Poll.Revision(1000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)), Some(1600))
-    assertEquals(Poll.next(Some(Poll.Revision(14000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)), Some(Poll.MaxMs))
-    assertEquals(Poll.next(Some(Poll.Revision(8000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(true)), Some(Poll.FirstMs))
+    assertEquals(
+      Poll.next(Some(Poll.Revision(1000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)),
+      Some(1600)
+    )
+    assertEquals(
+      Poll.next(Some(Poll.Revision(14000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)),
+      Some(Poll.MaxMs)
+    )
+    assertEquals(
+      Poll.next(Some(Poll.Revision(8000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(true)),
+      Some(Poll.FirstMs)
+    )
 
   test("manager events: a poll's newest page keeps the older pages loaded below it"):
     val loaded = List(9L, 8L, 7L, 6L, 5L, 4L)

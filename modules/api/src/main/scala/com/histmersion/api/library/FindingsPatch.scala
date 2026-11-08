@@ -14,9 +14,9 @@ final case class FindingsPatch(
     add: List[Finding.Input] = Nil,
     remove: List[FindingsPatch.Remove] = Nil,
     replace: Option[List[Finding.Input]] = None
-) derives KindlingsSchema, com.histmersion.api.json.Schema
+) derives KindlingsSchema,
+      com.histmersion.api.json.Schema
 object FindingsPatch:
-
 
   type Remove = Remove.T
   object Remove extends Newtype[String, Pure]

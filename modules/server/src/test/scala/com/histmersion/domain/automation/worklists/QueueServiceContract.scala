@@ -120,8 +120,12 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("a blank topic or reason in a patch clears it; the rest of the row stays") { q =>
-    val i = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("tidy up"), Some(QueueItem.Topic("Chores")), reason = Some(QueueItem.Reason("why not"))))
-    val p = q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(QueueItem.Reason(" ")))).toOption.get
+    val i = q.add(
+      Kind.Tasks,
+      QueueAdd(QueueItem.Text("tidy up"), Some(QueueItem.Topic("Chores")), reason = Some(QueueItem.Reason("why not")))
+    )
+    val p =
+      q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(QueueItem.Reason(" ")))).toOption.get
     assertEquals((p.topic, p.reason, p.text, p.status), (None, None, "tidy up", Open))
     val r = q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("Chores > Later")))).toOption.get
     assertEquals(r.topic, Some("Chores > Later"))
@@ -135,7 +139,10 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
 
   qtest("patching or deleting an unknown id is a not-found value, not an exception") { q =>
     val nope = QueueItemId(987654321)
-    assertEquals(q.patch(nope, QueuePatch(status = Some(status(Done)))).left.map(_.message), Left("No queue item #987654321"))
+    assertEquals(
+      q.patch(nope, QueuePatch(status = Some(status(Done)))).left.map(_.message),
+      Left("No queue item #987654321")
+    )
     assertEquals(q.delete(nope), Left(QueueError.NotFound(nope)))
   }
 
@@ -211,10 +218,18 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest(
     "an item keeps its goal and the run that wrote it; the job that ticks it off is recorded, reopening forgets it"
   ) { q =>
-    val added = q.add(Kind.Acquire, QueueAdd(QueueItem.Text("Drake 2012"), goal = Some(Goal.Slug("zz-links-goal")), job = Some(SpatialHierarchyResult.Job.Id("zz-run-1"))))
+    val added = q.add(
+      Kind.Acquire,
+      QueueAdd(
+        QueueItem.Text("Drake 2012"),
+        goal = Some(Goal.Slug("zz-links-goal")),
+        job = Some(SpatialHierarchyResult.Job.Id("zz-run-1"))
+      )
+    )
     assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
     val done =
-      q.patch(id(added), Queue.fulfil(added, Citekey("drake2012"), Some(QueueItem.ClosedBy("zz-job-9")))).fold(e => fail(e.message), identity)
+      q.patch(id(added), Queue.fulfil(added, Citekey("drake2012"), Some(QueueItem.ClosedBy("zz-job-9"))))
+        .fold(e => fail(e.message), identity)
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
     assertEquals(q.patch(id(added), QueuePatch(status = Some(status(Open)))).map(_.closedBy), Right(None))
   }
@@ -223,10 +238,23 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
     val own = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("own item"), goal = Some(Goal.Slug("zz-links-goal"))))
     val linked = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("linked item")))
     val other = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("someone else's")))
-    val closed = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("closed item"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Done))))
-    val _ = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("a note"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Note))))
+    val closed = q.add(
+      Kind.Tasks,
+      QueueAdd(QueueItem.Text("closed item"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Done)))
+    )
+    val _ = q.add(
+      Kind.Tasks,
+      QueueAdd(QueueItem.Text("a note"), goal = Some(Goal.Slug("zz-links-goal")), status = Some(status(Note)))
+    )
     def forGoal(k: Kind, withDone: QueueScope.ForGoal.WithDone) =
-      q.list(k, QueueScope.ForGoal(QueueScope.ForGoal.Goal("zz-links-goal"), Set(QueueScope.ForGoal.Linked(linked.id.toString), QueueScope.ForGoal.Linked("not-an-id")), withDone)).map(_.id)
+      q.list(
+        k,
+        QueueScope.ForGoal(
+          QueueScope.ForGoal.Goal("zz-links-goal"),
+          Set(QueueScope.ForGoal.Linked(linked.id.toString), QueueScope.ForGoal.Linked("not-an-id")),
+          withDone
+        )
+      ).map(_.id)
     assertEquals(forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(false)), List(own.id, linked.id))
     assertEquals(forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(true)), List(own.id, linked.id, closed.id))
     assert(!forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(true)).contains(other.id))
@@ -234,9 +262,17 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   }
 
   qtest("a run's or job's items: those it wrote and those it ticked off") { q =>
-    val wrote = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("wrote"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-7"))))
+    val wrote =
+      q.add(Kind.Tasks, QueueAdd(QueueItem.Text("wrote"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-7"))))
     val ticked = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("ticked")))
-    val _ = q.patch(id(ticked), QueuePatch(status = Some(status(Done)), closedBy = Some(QueuePatch.ClosedBy("zz-run-7"))))
-    val _ = q.add(Kind.Tasks, QueueAdd(QueueItem.Text("another run's"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-8"))))
-    assertEquals(q.list(Kind.Tasks, QueueScope.ForJob(QueueScope.ForJob.Job("zz-run-7"))).map(_.id), List(wrote.id, ticked.id))
+    val _ =
+      q.patch(id(ticked), QueuePatch(status = Some(status(Done)), closedBy = Some(QueuePatch.ClosedBy("zz-run-7"))))
+    val _ = q.add(
+      Kind.Tasks,
+      QueueAdd(QueueItem.Text("another run's"), job = Some(SpatialHierarchyResult.Job.Id("zz-run-8")))
+    )
+    assertEquals(
+      q.list(Kind.Tasks, QueueScope.ForJob(QueueScope.ForJob.Job("zz-run-7"))).map(_.id),
+      List(wrote.id, ticked.id)
+    )
   }

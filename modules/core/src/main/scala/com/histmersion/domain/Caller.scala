@@ -22,6 +22,5 @@ object Caller:
 
     def includes(other: Role): Boolean = ordinal >= other.ordinal
 
-
   /** The one person a server without accounts runs for: every request is theirs, with every permission. */
   val Local: Person = Person(UserId.Local, Role.Admin)

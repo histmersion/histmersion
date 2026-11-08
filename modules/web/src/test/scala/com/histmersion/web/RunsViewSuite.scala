@@ -26,17 +26,39 @@ class RunsViewSuite extends munit.FunSuite:
     UiState.loadHash(UiState.UrlHash(""))
 
   private def run(status: RunInfo.Status, error: Option[RunInfo.Error] = None) =
-    RunInfo(Agents.RunInfo.Id("r1"), Agents.RunInfo.Pipeline("enrich-source"), Agents.RunInfo.Target("a2020_b"), status, error = error)
+    RunInfo(
+      Agents.RunInfo.Id("r1"),
+      Agents.RunInfo.Pipeline("enrich-source"),
+      Agents.RunInfo.Target("a2020_b"),
+      status,
+      error = error
+    )
 
   test("only queued and running runs are live; the poll stops once nothing is"):
     assert(RunsView.live(Agents.RunInfo.Status("queued")) && RunsView.live(Agents.RunInfo.Status("running")))
-    assert(!RunsView.live(Agents.RunInfo.Status("paused")) && !RunsView.live(Agents.RunInfo.Status("done")) && !RunsView.live(Agents.RunInfo.Status("nonsense")))
+    assert(
+      !RunsView.live(Agents.RunInfo.Status("paused")) && !RunsView.live(Agents.RunInfo.Status("done")) && !RunsView
+        .live(Agents.RunInfo.Status("nonsense"))
+    )
     assertEquals(RunsView.nextPoll(None, anyLive = Poll.LiveMode(false), changed = Poll.DataChanged(true)), None)
-    assertEquals(RunsView.nextPoll(None, anyLive = Poll.LiveMode(true), changed = Poll.DataChanged(true)), Some(JobsView.Poll.FirstMs))
-    val slower = RunsView.nextPoll(Some(Poll.Revision(JobsView.Poll.FirstMs)), anyLive = Poll.LiveMode(true), changed = Poll.DataChanged(false)).get
+    assertEquals(
+      RunsView.nextPoll(None, anyLive = Poll.LiveMode(true), changed = Poll.DataChanged(true)),
+      Some(JobsView.Poll.FirstMs)
+    )
+    val slower = RunsView
+      .nextPoll(
+        Some(Poll.Revision(JobsView.Poll.FirstMs)),
+        anyLive = Poll.LiveMode(true),
+        changed = Poll.DataChanged(false)
+      )
+      .get
     assert(slower.value > JobsView.Poll.FirstMs)
     assertEquals(
-      RunsView.nextPoll(Some(Poll.Revision(JobsView.Poll.MaxMs)),anyLive = Poll.LiveMode(true), changed = Poll.DataChanged(false)),
+      RunsView.nextPoll(
+        Some(Poll.Revision(JobsView.Poll.MaxMs)),
+        anyLive = Poll.LiveMode(true),
+        changed = Poll.DataChanged(false)
+      ),
       Some(JobsView.Poll.MaxMs)
     )
 
@@ -49,8 +71,14 @@ class RunsViewSuite extends munit.FunSuite:
     assertEquals(RunsView.actions(Agents.RunInfo.Status("cancelled")), Nil)
 
   test("why a run paused, the filter, and a typed budget"):
-    assertEquals(RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("budget: the run spent 2 of its 2 USD")))), Some("budget"))
-    assertEquals(RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("interrupted")))), Some("interrupted"))
+    assertEquals(
+      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("budget: the run spent 2 of its 2 USD")))),
+      Some("budget")
+    )
+    assertEquals(
+      RunsView.pausedFor(run(RunInfo.Status("paused"), Some(RunInfo.Error("interrupted")))),
+      Some("interrupted")
+    )
     assertEquals(RunsView.pausedFor(run(RunInfo.Status("done"))), None)
     val rs = List(run(RunInfo.Status("done")), run(RunInfo.Status("paused")), run(RunInfo.Status("done")))
     assertEquals(RunsView.visible(rs, Some(RunState.Done)).size, 2)
@@ -62,7 +90,14 @@ class RunsViewSuite extends munit.FunSuite:
 
   test("an approval in words, and which ones can still be decided"):
     val status =
-      ApprovalInfo(Agents.ApprovalInfo.Id(1), None, Agents.ApprovalInfo.Kind("status-change"), Citekey("a2020_b"), status = Some(Agents.ApprovalInfo.Status("contested")), current = Some(Agents.ApprovalInfo.Current("current")))
+      ApprovalInfo(
+        Agents.ApprovalInfo.Id(1),
+        None,
+        Agents.ApprovalInfo.Kind("status-change"),
+        Citekey("a2020_b"),
+        status = Some(Agents.ApprovalInfo.Status("contested")),
+        current = Some(Agents.ApprovalInfo.Current("current"))
+      )
     val edge = ApprovalInfo(
       Agents.ApprovalInfo.Id(2),
       None,
@@ -94,10 +129,13 @@ class RunsViewSuite extends munit.FunSuite:
     )()
     val hash = UiState.hashString
     assert(
-      hash.value.contains("runs=paused") && hash.value.contains("apprState=all") && hash.value.contains("apprKind=goal-plan") &&
-        hash.value.contains("apprKind=edge") && hash.value.contains("runPipeline=review-article") && hash.value.contains(
-          "runSince=2026-10-01"
-        ) &&
+      hash.value.contains("runs=paused") && hash.value.contains("apprState=all") && hash.value.contains(
+        "apprKind=goal-plan"
+      ) &&
+        hash.value.contains("apprKind=edge") && hash.value.contains("runPipeline=review-article") && hash.value
+          .contains(
+            "runSince=2026-10-01"
+          ) &&
         hash.value.contains("jobKind=ingest") && hash.value.contains("jobSubject=a2020"),
       hash.value
     )
@@ -117,7 +155,13 @@ class RunsViewSuite extends munit.FunSuite:
     import RunsView.Action.*
     assertEquals(RunsView.actions(Agents.RunInfo.Status("waiting")), List(Cancel))
     assert(!RunsView.live(Agents.RunInfo.Status("waiting")), "a waiting run waits for a person, not for the server")
-    val w = RunInfo(Agents.RunInfo.Id("r2"), Agents.RunInfo.Pipeline("plan-goal"), Agents.RunInfo.Target("g"), Agents.RunInfo.Status("waiting"), progress = Some(Agents.RunInfo.Progress("approve: waiting for approval 42")))
+    val w = RunInfo(
+      Agents.RunInfo.Id("r2"),
+      Agents.RunInfo.Pipeline("plan-goal"),
+      Agents.RunInfo.Target("g"),
+      Agents.RunInfo.Status("waiting"),
+      progress = Some(Agents.RunInfo.Progress("approve: waiting for approval 42"))
+    )
     assertEquals(RunsView.waitingFor(w), Some(42L))
     assertEquals(RunsView.waitingFor(run(RunInfo.Status("done"))), None)
 
@@ -144,7 +188,14 @@ class RunsViewSuite extends munit.FunSuite:
       Article.Kind.Wire("concept"),
       Goal.Plans.ArticleDraft.Text("x")
     )
-    val pub = ApprovalInfo(Agents.ApprovalInfo.Id(4), Some(Agents.RunInfo.Id("r")), Agents.ApprovalInfo.Kind("article-publish"), Citekey(""), subject = Some(Agents.ApprovalInfo.Subject("tin")), article = Some(draft))
+    val pub = ApprovalInfo(
+      Agents.ApprovalInfo.Id(4),
+      Some(Agents.RunInfo.Id("r")),
+      Agents.ApprovalInfo.Kind("article-publish"),
+      Citekey(""),
+      subject = Some(Agents.ApprovalInfo.Subject("tin")),
+      article = Some(draft)
+    )
     assertEquals(ApprovalsView.describe(pub), "publish the new article tin: Tin")
     assertEquals(
       ApprovalsView.describe(
@@ -154,7 +205,9 @@ class RunsViewSuite extends munit.FunSuite:
     )
     assertEquals(ApprovalsView.selfCheck(draft), "The code self-check found nothing.")
     assertEquals(
-      ApprovalsView.selfCheck(draft.copy(problems = List(Goal.Plans.ArticleDraft.Problems("a"), Goal.Plans.ArticleDraft.Problems("b")))),
+      ApprovalsView.selfCheck(
+        draft.copy(problems = List(Goal.Plans.ArticleDraft.Problems("a"), Goal.Plans.ArticleDraft.Problems("b")))
+      ),
       "The code self-check still found 2 problems after the writer's last attempt:"
     )
 
@@ -176,7 +229,15 @@ class RunsViewSuite extends munit.FunSuite:
     assertEquals(cells.toMap.get("tokens"), Some("120/45"))
     assertEquals(cells.toMap.get("note"), Some("provider: overloaded"))
     // nothing to say is an empty cell (left out of a card), never a missing column
-    val bare = RunsView.stepCells(StepInfo(Agents.StepInfo.Seq(1), Agents.StepInfo.Name("plan"), Agents.StepInfo.Kind("tool"), Agents.StepInfo.Attempt(1), Agents.StepInfo.Status("done")))
+    val bare = RunsView.stepCells(
+      StepInfo(
+        Agents.StepInfo.Seq(1),
+        Agents.StepInfo.Name("plan"),
+        Agents.StepInfo.Kind("tool"),
+        Agents.StepInfo.Attempt(1),
+        Agents.StepInfo.Status("done")
+      )
+    )
     assertEquals(bare.size, RunsView.StepColumns.size)
     assertEquals(bare.filter(_._2.value.isEmpty).map(_._1), List("model", "note"))
     // #992: the model the provider reported beside the configured one; a dry run's skipped write

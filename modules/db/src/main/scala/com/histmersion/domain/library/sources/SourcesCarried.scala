@@ -47,7 +47,10 @@ object SourcesCarried:
     out =>
       out.write(
         Sql
-          .of(Sql.Text("SELECT convert_to(ocr_markdown, 'UTF8') FROM sources WHERE uid = ?::uuid"), Param.S(Param.S.V(uid.toString)))
+          .of(
+            Sql.Text("SELECT convert_to(ocr_markdown, 'UTF8') FROM sources WHERE uid = ?::uuid"),
+            Param.S(Param.S.V(uid.toString))
+          )
           .frag
           .query[Array[Byte]]
           .run()
@@ -108,15 +111,18 @@ object SourcesCarried:
     Bundle.Kind.Finding,
     TableName("findings"),
     List(rows(ImportRank(23))(SourceBundleRepo.findingsIn))
-  )(scope => SourceBundleRepo.findings(scope).toList)(f => CarriedKind.RecordsClock(f.updatedAt.value), (es, ls) => es.modify(_.findings).setTo(ls))
+  )(scope => SourceBundleRepo.findings(scope).toList)(
+    f => CarriedKind.RecordsClock(f.updatedAt.value),
+    (es, ls) => es.modify(_.findings).setTo(ls)
+  )
 
   /** The entry of a set records own, by its file's stem. */
   private def set(stem: Stem): BundleEntry = BundleEntry(s"entities/${stem.value}.ndjson")
 
   val edges: CarriedKind =
     CarriedKind
-      .owned[Bundle.Edge](Library, set(Stem("edges")), List(rows(ImportRank(20))(SourceBundleRepo.edgesIn)))(
-        scope => SourceBundleRepo.edges(scope).toList
+      .owned[Bundle.Edge](Library, set(Stem("edges")), List(rows(ImportRank(20))(SourceBundleRepo.edgesIn)))(scope =>
+        SourceBundleRepo.edges(scope).toList
       )(_ => None, (es, ls) => es.modify(_.edges).setTo(ls))
 
   val unresolvedEdges: CarriedKind = CarriedKind.owned[Bundle.UnresolvedEdge](
@@ -148,4 +154,5 @@ object SourcesCarried:
     )
 
   /** Every kind of the library, in the order the registry has always listed them. */
-  def all(referrers: SourceReferrers): List[CarriedKind] = List(sources(referrers), findings, edges, unresolvedEdges, assessments, aliases)
+  def all(referrers: SourceReferrers): List[CarriedKind] =
+    List(sources(referrers), findings, edges, unresolvedEdges, assessments, aliases)

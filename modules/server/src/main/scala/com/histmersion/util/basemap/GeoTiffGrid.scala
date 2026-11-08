@@ -52,14 +52,22 @@ final case class GeoTiffGrid(
     while r <= last + 1 do
       val contiguous = r <= last && rowOffsets(r).value == rowOffsets(r - 1).value + rowLength
       if !contiguous || r - start >= perRun then
-        out += RowRun(RowRun.FirstRow(start), RowRun.Rows(r - start), rowOffsets(start), RowRun.Length((r - start) * rowLength))
+        out += RowRun(
+          RowRun.FirstRow(start),
+          RowRun.Rows(r - start),
+          rowOffsets(start),
+          RowRun.Length((r - start) * rowLength)
+        )
         start = r
       r += 1
     out.result()
 
   /** The pixel whose area holds (`lon`, `lat`), fractional: its column and row, centres at `.5`. */
   def pixelAt(lon: Degrees, lat: Degrees): (GeoTiffGrid.PixelX, GeoTiffGrid.PixelY) =
-    (GeoTiffGrid.PixelX((lon.value - west.value) / stepX.value), GeoTiffGrid.PixelY((north.value - lat.value) / stepY.value))
+    (
+      GeoTiffGrid.PixelX((lon.value - west.value) / stepX.value),
+      GeoTiffGrid.PixelY((north.value - lat.value) / stepY.value)
+    )
 
 object GeoTiffGrid:
   type PixelX = PixelX.T
@@ -123,7 +131,10 @@ object GeoTiffGrid:
         read(ByteOffset.applyUnsafe(offset), ByteCount.applyUnsafe(length.toLong)).map(_.value).left.map(_.value)
     ).left.map(Problem(_))
 
-  private def parseBytes(head: Array[Byte], read: (Long, Int) => Either[String, Array[Byte]]): Either[String, GeoTiffGrid] =
+  private def parseBytes(
+      head: Array[Byte],
+      read: (Long, Int) => Either[String, Array[Byte]]
+  ): Either[String, GeoTiffGrid] =
     def bytesAt(offset: Long, length: Int): Either[String, Array[Byte]] =
       if offset + length <= head.length then
         Right(java.util.Arrays.copyOfRange(head, offset.toInt, offset.toInt + length))

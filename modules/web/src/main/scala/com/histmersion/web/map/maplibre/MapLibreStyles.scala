@@ -68,7 +68,8 @@ object MapLibreStyles:
     case BaseMapSpec.Blank     => Future.successful(blank())
     case r: BaseMapSpec.Raster => Future.successful(raster(r))
     case v: BaseMapSpec.Vector =>
-      val withContours = v.contours.value && !v.reduced.value && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
+      val withContours =
+        v.contours.value && !v.reduced.value && v.style == VectorStyle.Physical && deeperRelief(v.status).isDefined
       doc(v.style).flatMap { d =>
         val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin, v.seaDepth)
         if withContours then
@@ -93,11 +94,14 @@ object MapLibreStyles:
         )
         .map(_.source.toString)
         .distinct
-      drawn.flatMap { id =>
-        val src = s.sources.selectDynamic(id)
-        if js.isUndefined(src) || src == null || js.isUndefined(src.attribution) || src.attribution == null then None
-        else Some(src.attribution.toString).filter(_.trim.nonEmpty)
-      }.distinct.map(a => BaseMapSpec.Raster.Attribution(a))
+      drawn
+        .flatMap { id =>
+          val src = s.sources.selectDynamic(id)
+          if js.isUndefined(src) || src == null || js.isUndefined(src.attribution) || src.attribution == null then None
+          else Some(src.attribution.toString).filter(_.trim.nonEmpty)
+        }
+        .distinct
+        .map(a => BaseMapSpec.Raster.Attribution(a))
 
   /** `{s}` → the subdomains a, b, c. Pure. */
   def expand(template: BasemapApi.TileTemplate): js.Array[String] =
@@ -197,8 +201,11 @@ object MapLibreStyles:
       s.layers = s.layers
         .asInstanceOf[js.Array[js.Dynamic]]
         .filter(l => l.`type`.toString != "hillshade" && l.`type`.toString != "color-relief")
-      List("dem", "sea").foreach(id => if !js.isUndefined(s.sources.selectDynamic(id)) then drop(s, MapSurface.LayerId(id)))
-    if !names.value then s.layers = s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString != "symbol")
+      List("dem", "sea").foreach(id =>
+        if !js.isUndefined(s.sources.selectDynamic(id)) then drop(s, MapSurface.LayerId(id))
+      )
+    if !names.value then
+      s.layers = s.layers.asInstanceOf[js.Array[js.Dynamic]].filter(l => l.`type`.toString != "symbol")
     val seaSources =
       js.Object.keys(s.sources.asInstanceOf[js.Object]).filter(id => meta.get(id).contains("bathymetry")).toSet
     s.layers.asInstanceOf[js.Array[js.Dynamic]].foreach { l =>

@@ -141,9 +141,24 @@ class AgentSchemaSuite extends munit.FunSuite:
       ).contains("\"prefix\"")
     )
     assert(!schema(LibraryAgentTools.GetSource).contains("fullText"))
-    assertEquals(AgentGetSourceInput(Citekey.assume("x")).sectionOrBody, None, "no section: summary, findings and notes")
-    assertEquals(AgentGetSourceInput(Citekey.assume("x"), offset = Some(Offset(120))).sectionOrBody, Some("body"), "a slice reads the body")
-    assertEquals(AgentGetSourceInput(Citekey.assume("x"), section = Some(Source.Section.Wire("all")), offset = Some(Offset(120))).sectionOrBody, Some("all"))
+    assertEquals(
+      AgentGetSourceInput(Citekey.assume("x")).sectionOrBody,
+      None,
+      "no section: summary, findings and notes"
+    )
+    assertEquals(
+      AgentGetSourceInput(Citekey.assume("x"), offset = Some(Offset(120))).sectionOrBody,
+      Some("body"),
+      "a slice reads the body"
+    )
+    assertEquals(
+      AgentGetSourceInput(
+        Citekey.assume("x"),
+        section = Some(Source.Section.Wire("all")),
+        offset = Some(Offset(120))
+      ).sectionOrBody,
+      Some("all")
+    )
 
   test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
     import io.circe.parser.decode
@@ -152,8 +167,14 @@ class AgentSchemaSuite extends munit.FunSuite:
       decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
       Right(AgentSearchInput(topics = List(Filter.Topics("dragon_slaying_myth")), limit = Some(Filter.Limit(50))))
     )
-    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput(Citekey.assume("x"))))
-    assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput(AgentFacetsInput.Field("tags"))))
+    assertEquals(
+      decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""),
+      Right(AgentGetSourceInput(Citekey.assume("x")))
+    )
+    assertEquals(
+      decode[AgentFacetsInput]("""{"field":"tags"}"""),
+      Right(AgentFacetsInput(AgentFacetsInput.Field("tags")))
+    )
     assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(FollowupsInput.Id("x"))))
     val t = box.tool(LibraryAgentTools.Search).get
     assert(
@@ -162,4 +183,7 @@ class AgentSchemaSuite extends munit.FunSuite:
     )
 
 object AgentSchemaSuite:
-  final case class Titled(title: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Titled(title: String)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

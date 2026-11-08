@@ -131,7 +131,10 @@ class ManagersHttpSuite extends DbSuite:
         assertEquals(ss, 200, sb)
         val st = decode[AgentScheduler.SchedulerStatus](sb)
           .fold(e => fail(s"$e: $sb"), identity)
-        assertEquals((st.strategy.value: String, st.strategyFrom), (cfg.agents.scheduler.strategy.value: String, "config"))
+        assertEquals(
+          (st.strategy.value: String, st.strategyFrom),
+          (cfg.agents.scheduler.strategy.value: String, "config")
+        )
         assert(st.strategies.map(_.name).contains("goal-first"), st.strategies)
         val (ws, wb) = get(s"$url/api/agents/scheduler/why/zqmgr2019_tin")
         assertEquals(ws, 200, wb)

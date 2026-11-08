@@ -24,10 +24,16 @@ private[periods] object PeriodBundleRepo:
   def periods(scope: BundleScope, alsoIds: List[BPeriodRow.Id] = Nil)(using DbCon): Vector[Bundle.Period] =
     val own = Sql.raw(Sql.Text("p.dataset = 'local' AND ")) ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
-    else Sql.raw(Sql.RawText("((")) ++ own ++ Sql.of(Sql.Text(") OR p.id = ANY(?::text[]))"), Param.A(alsoIds.distinct.map(i => Param.A.V(i.value))))
-    (Sql.raw(Sql.Text(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
+    else
+      Sql.raw(Sql.RawText("((")) ++ own ++ Sql.of(
+        Sql.Text(") OR p.id = ANY(?::text[]))"),
+        Param.A(alsoIds.distinct.map(i => Param.A.V(i.value)))
+      )
+    (Sql.raw(
+      Sql.Text(s"""SELECT p.uid, p.origin, p.id, p.label, p.authority, ${rangeCols("p.period")}, p.region, p.parent_id,
                        ${ts("p.updated_at")}
-                FROM periods p WHERE """)) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>
+                FROM periods p WHERE """)
+    ) ++ sel ++ " ORDER BY p.uid").frag.query[BPeriodRow].run().map { r =>
       Bundle.Period(
         r.uid,
         r.origin,

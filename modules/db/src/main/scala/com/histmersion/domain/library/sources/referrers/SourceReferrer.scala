@@ -21,5 +21,6 @@ trait SourceReferrer:
   def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit = ()
 
   /** The source went: the entry this domain keeps of it (the log's), with `line` as its text and `day` as its topic. */
-  def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using DbCon): Option[SourceReferrers.Entry] = None
-
+  def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using
+      DbCon
+  ): Option[SourceReferrers.Entry] = None

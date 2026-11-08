@@ -65,7 +65,9 @@ class YearsSuite extends munit.FunSuite:
     assertEquals(Years.fromAstronomical(Years.Astronomical(640)), 640L)
     assertEquals(Years.toAstronomical(Year(-1)), 0L)
     assertEquals(Years.toAstronomical(Year(0)), 0L, "a stored 0 reads as 1 BCE")
-    (-3000L to 3000L).filter(_ != 0).foreach(h => assertEquals(Years.fromAstronomical(Years.toAstronomical(Year(h))), h))
+    (-3000L to 3000L)
+      .filter(_ != 0)
+      .foreach(h => assertEquals(Years.fromAstronomical(Years.toAstronomical(Year(h))), h))
 
   test("shift crosses the era boundary without a year 0"):
     assertEquals(Years.shift(Years.ShiftH(-1), Years.Shift(1)), 1L)
@@ -111,7 +113,18 @@ class YearsSuite extends munit.FunSuite:
     assertEquals(YearFmt.spanLong(TimeSpan()), "undated")
 
   test("goal periods print in BCE/CE, not as raw signed years (#1798)"):
-    val g = Goal(Goal.Slug("g"), Goal.Title("A goal"), Goal.StatusValue("active"), None, Nil, Nil, Some(Year(-1200)), Some(Year(-1000)), None, None)
+    val g = Goal(
+      Goal.Slug("g"),
+      Goal.Title("A goal"),
+      Goal.StatusValue("active"),
+      None,
+      Nil,
+      Nil,
+      Some(Year(-1200)),
+      Some(Year(-1000)),
+      None,
+      None
+    )
     assert(
       GoalsMarkdown.goalList(Goal.List(RowCount(1), List(g))).contains("(1200 BCE–1000 BCE)"),
       GoalsMarkdown.goalList(Goal.List(RowCount(1), List(g)))
@@ -124,5 +137,13 @@ class YearsSuite extends munit.FunSuite:
   test("the places and periods views use the same formatter"):
     assertEquals(Place.Overrides.periodText(Some(Year(0)), Some(Year(5))), "1 BCE–5 CE")
     assertEquals(Place.Dating.describe(Place.Dating.Stated, None, None), "")
-    val md = PeriodsMarkdown.list(Vector(HistoricalPeriod(HistoricalPeriod.Id("p"), HistoricalPeriod.Label("Late Bronze Age"), period = Period(Year(-1600), Year(-1100)))))
+    val md = PeriodsMarkdown.list(
+      Vector(
+        HistoricalPeriod(
+          HistoricalPeriod.Id("p"),
+          HistoricalPeriod.Label("Late Bronze Age"),
+          period = Period(Year(-1600), Year(-1100))
+        )
+      )
+    )
     assert(md.contains("1600 BCE–1100 BCE"), md)

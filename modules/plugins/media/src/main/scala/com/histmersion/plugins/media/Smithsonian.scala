@@ -38,7 +38,12 @@ object Smithsonian:
         (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
     )
 
-  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, rows: CollectionSettings.Candidates, excludedUnits: List[Unit] = Nil): Plugin.Http.GetUrl =
+  def searchUrl(
+      api: CollectionSettings.ApiUrl,
+      name: MediaPlace.Label,
+      rows: CollectionSettings.Candidates,
+      excludedUnits: List[Unit] = Nil
+  ): Plugin.Http.GetUrl =
     Plugin.Http.GetUrl(
       s"${api.value.stripSuffix("/")}/search?q=${query(name, excludedUnits).value.enc}&rows=${rows.value.max(1).min(1000)}" +
         "&type=edanmdm&row_group=objects"
@@ -47,7 +52,11 @@ object Smithsonian:
   /** Pure: the unit a row comes from — `descriptiveNonRepeating.unit_code`, else the row's `unitCode`. */
   def unitOf(json: Json): Option[Unit] =
     val c = json.hcursor
-    c.downField("content").downField("descriptiveNonRepeating").str("unit_code").orElse(c.str("unitCode")).map(u => Unit(u))
+    c.downField("content")
+      .downField("descriptiveNonRepeating")
+      .str("unit_code")
+      .orElse(c.str("unitCode"))
+      .map(u => Unit(u))
 
   /** The labels of `freetext.date` that name when the object was made. */
   val DateLabels: Set[Label] =
@@ -126,7 +135,7 @@ object Smithsonian:
           .filter(m => m.str("type").forall(_.equalsIgnoreCase("Images")))
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
         val rights: Either[Problem, MediaRights] = cc0 match
-          case Some(_)               => Right(MediaRights.cc0(maker.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
+          case Some(_) => Right(MediaRights.cc0(maker.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
           case None if media.isEmpty => Left(Problem("no image on the record"))
           case None                  =>
             val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
@@ -163,7 +172,9 @@ object Smithsonian:
           .nextOption()
           .flatMap((a, b) => Period.span(a.value, b.value))
         val excluded =
-          unitOf(json).filter(u => excludedUnits.exists(_.value.equalsIgnoreCase(u.value))).map(u => MediaItem.Withheld(s"an excluded unit (${u.value})"))
+          unitOf(json)
+            .filter(u => excludedUnits.exists(_.value.equalsIgnoreCase(u.value)))
+            .map(u => MediaItem.Withheld(s"an excluded unit (${u.value})"))
         MediaItem(
           MediaItem.Key(key),
           MediaItem.Title(title),

@@ -6,4 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 
-final case class CalibrePushRequest(citekey: Citekey, calibreId: Source.CalibreId) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class CalibrePushRequest(citekey: Citekey, calibreId: Source.CalibreId)
+    derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

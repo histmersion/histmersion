@@ -23,7 +23,16 @@ class QueueSuite extends munit.FunSuite:
   /** Parsed rows as the database would hand them back: ids in insertion order. */
   private def store(kind: Kind, text: FileText): List[QueueItem] =
     Queue.parse(kind, text).zipWithIndex.map { (r, i) =>
-      QueueItem(QueueItem.Id(i + 1), kind.label, r.text, r.topic, r.status.getOrElse(QueueItem.Status(Open)), r.reason, r.createdAt, None)
+      QueueItem(
+        QueueItem.Id(i + 1),
+        kind.label,
+        r.text,
+        r.topic,
+        r.status.getOrElse(QueueItem.Status(Open)),
+        r.reason,
+        r.createdAt,
+        None
+      )
     }
 
   private def roundTrip(kind: Kind, text: FileText): String = Queue.render(kind, store(kind, text)).value
@@ -133,48 +142,130 @@ class QueueSuite extends munit.FunSuite:
     }
 
   test("checkbox lists render [ ] / [x]; the log renders plain bullets"):
-    def item(status: QueueItem.Status) = QueueItem(QueueItem.Id(1), QueueItem.List("x"), QueueItem.Text("a thing"), Some(QueueItem.Topic("Topic")), status, None, None)
+    def item(status: QueueItem.Status) = QueueItem(
+      QueueItem.Id(1),
+      QueueItem.List("x"),
+      QueueItem.Text("a thing"),
+      Some(QueueItem.Topic("Topic")),
+      status,
+      None,
+      None
+    )
     assert(Queue.render(Kind.Acquire, List(item(QueueItem.Status(Open)))).value.contains("- [ ] a thing"))
     assert(Queue.render(Kind.Acquire, List(item(QueueItem.Status(Done)))).value.contains("- [x] a thing"))
     assert(Queue.render(Kind.Log, List(item(QueueItem.Status(Open)))).value.contains("- a thing"))
     assert(!Queue.render(Kind.Log, List(item(QueueItem.Status(Open)))).value.contains("[ ]"))
 
   test("a topic path renders ## / ### / bold, one level per segment; a heading hugs its content"):
-    val out = Queue.render(
-      Kind.Tasks,
-      List(QueueItem(QueueItem.Id(1), QueueItem.List("tasks"), QueueItem.Text("x"), Some(QueueItem.Topic(s"A${Sep}B$Sep**C**")), QueueItem.Status(Open), None, None))
-    ).value
+    val out = Queue
+      .render(
+        Kind.Tasks,
+        List(
+          QueueItem(
+            QueueItem.Id(1),
+            QueueItem.List("tasks"),
+            QueueItem.Text("x"),
+            Some(QueueItem.Topic(s"A${Sep}B$Sep**C**")),
+            QueueItem.Status(Open),
+            None,
+            None
+          )
+        )
+      )
+      .value
     // heading → heading is separated; heading → item hugs
     assert(out.endsWith("\n## A\n\n### B\n\n**C**\n- [ ] x\n"), out)
 
   test("later items join an existing topic group instead of repeating its heading"):
-    val out = Queue.render(
-      Kind.Tasks,
-      List(
-        QueueItem(QueueItem.Id(1), QueueItem.List("tasks"), QueueItem.Text("first"), Some(QueueItem.Topic("A")), QueueItem.Status(Open), None, None),
-        QueueItem(QueueItem.Id(2), QueueItem.List("tasks"), QueueItem.Text("other"), Some(QueueItem.Topic("B")), QueueItem.Status(Open), None, None),
-        QueueItem(QueueItem.Id(3), QueueItem.List("tasks"), QueueItem.Text("second"), Some(QueueItem.Topic("A")), QueueItem.Status(Open), None, None)
+    val out = Queue
+      .render(
+        Kind.Tasks,
+        List(
+          QueueItem(
+            QueueItem.Id(1),
+            QueueItem.List("tasks"),
+            QueueItem.Text("first"),
+            Some(QueueItem.Topic("A")),
+            QueueItem.Status(Open),
+            None,
+            None
+          ),
+          QueueItem(
+            QueueItem.Id(2),
+            QueueItem.List("tasks"),
+            QueueItem.Text("other"),
+            Some(QueueItem.Topic("B")),
+            QueueItem.Status(Open),
+            None,
+            None
+          ),
+          QueueItem(
+            QueueItem.Id(3),
+            QueueItem.List("tasks"),
+            QueueItem.Text("second"),
+            Some(QueueItem.Topic("A")),
+            QueueItem.Status(Open),
+            None,
+            None
+          )
+        )
       )
-    ).value
+      .value
     assertEquals(out.linesIterator.count(_ == "## A"), 1)
     assert(out.indexOf("- [ ] second") > out.indexOf("- [ ] first"))
 
   test("log entries are ordered newest first, so an added line lands on top"):
-    val out = Queue.render(
-      Kind.Log,
-      List(
-        QueueItem(QueueItem.Id(1), QueueItem.List("log"), QueueItem.Text("old"), Some(QueueItem.Topic("2026-01-01 — old")), QueueItem.Status(Open), None, Some(QueueItem.CreatedAt("2026-01-01T00:00:00Z")), None),
-        QueueItem(QueueItem.Id(2), QueueItem.List("log"), QueueItem.Text("new"), Some(QueueItem.Topic("2026-08-25 — new")), QueueItem.Status(Open), None, Some(QueueItem.CreatedAt("2026-08-25T00:00:00Z")), None)
+    val out = Queue
+      .render(
+        Kind.Log,
+        List(
+          QueueItem(
+            QueueItem.Id(1),
+            QueueItem.List("log"),
+            QueueItem.Text("old"),
+            Some(QueueItem.Topic("2026-01-01 — old")),
+            QueueItem.Status(Open),
+            None,
+            Some(QueueItem.CreatedAt("2026-01-01T00:00:00Z")),
+            None
+          ),
+          QueueItem(
+            QueueItem.Id(2),
+            QueueItem.List("log"),
+            QueueItem.Text("new"),
+            Some(QueueItem.Topic("2026-08-25 — new")),
+            QueueItem.Status(Open),
+            None,
+            Some(QueueItem.CreatedAt("2026-08-25T00:00:00Z")),
+            None
+          )
+        )
       )
-    ).value
+      .value
     assert(out.indexOf("## 2026-08-25 — new") < out.indexOf("## 2026-01-01 — old"), out)
 
   // ── the terminal listing ─────────────────────────────────────────────────────────────────────
 
   test("the `queue <list>` listing shows ids and hides note blocks"):
     val items = List(
-      QueueItem(QueueItem.Id(7), QueueItem.List("acquire"), QueueItem.Text("buy a book"), Some(QueueItem.Topic("Books")), QueueItem.Status(Open), None, None),
-      QueueItem(QueueItem.Id(8), QueueItem.List("acquire"), QueueItem.Text("# preamble"), None, QueueItem.Status(Note), None, None)
+      QueueItem(
+        QueueItem.Id(7),
+        QueueItem.List("acquire"),
+        QueueItem.Text("buy a book"),
+        Some(QueueItem.Topic("Books")),
+        QueueItem.Status(Open),
+        None,
+        None
+      ),
+      QueueItem(
+        QueueItem.Id(8),
+        QueueItem.List("acquire"),
+        QueueItem.Text("# preamble"),
+        None,
+        QueueItem.Status(Note),
+        None,
+        None
+      )
     )
     val md = Queue.markdown(Kind.Acquire, items).value
     assert(md.contains("`#7`"), md)
@@ -182,10 +273,22 @@ class QueueSuite extends munit.FunSuite:
     assert(!md.contains("preamble"), md)
 
   test("the listing strips a bold group's own ** so the heading is not doubled"):
-    val md = Queue.markdown(
-      Kind.Acquire,
-      List(QueueItem(QueueItem.Id(1), QueueItem.List("acquire"), QueueItem.Text("x"), Some(QueueItem.Topic(s"🟡 Outstanding$Sep**Highest value**")), QueueItem.Status(Open), None, None))
-    ).value
+    val md = Queue
+      .markdown(
+        Kind.Acquire,
+        List(
+          QueueItem(
+            QueueItem.Id(1),
+            QueueItem.List("acquire"),
+            QueueItem.Text("x"),
+            Some(QueueItem.Topic(s"🟡 Outstanding$Sep**Highest value**")),
+            QueueItem.Status(Open),
+            None,
+            None
+          )
+        )
+      )
+      .value
     assert(md.contains("**🟡 Outstanding > Highest value**"), md)
     assert(!md.contains("****"), md)
 
@@ -209,7 +312,10 @@ class QueueSuite extends munit.FunSuite:
     assert(e.value.contains("open, done, note"), e)
 
   test("created_at must be an ISO instant — it is cast to timestamptz in SQL"):
-    assertEquals(Queue.createdAtOf(Some(QueueItem.CreatedAt("2026-08-25T00:00:00Z"))), Right(Some("2026-08-25T00:00:00Z")))
+    assertEquals(
+      Queue.createdAtOf(Some(QueueItem.CreatedAt("2026-08-25T00:00:00Z"))),
+      Right(Some("2026-08-25T00:00:00Z"))
+    )
     assertEquals(Queue.createdAtOf(None), Right(None))
     val e = Queue.createdAtOf(Some(QueueItem.CreatedAt("yesterday"))).swap.toOption.get
     assert(e.value.contains("not an ISO-8601 instant"), e)
@@ -217,9 +323,21 @@ class QueueSuite extends munit.FunSuite:
     assert(Queue.createdAtOf(Some(QueueItem.CreatedAt("'); drop table queue_items --"))).isLeft)
 
   test("a patch changes only what it carries; a blank topic or reason clears it"):
-    val cur = QueueItem(QueueItem.Id(7), QueueItem.List("acquire"), QueueItem.Text("a book"), Some(QueueItem.Topic("Books")), QueueItem.Status(Open), Some(QueueItem.Reason("for the review")), None, None)
+    val cur = QueueItem(
+      QueueItem.Id(7),
+      QueueItem.List("acquire"),
+      QueueItem.Text("a book"),
+      Some(QueueItem.Topic("Books")),
+      QueueItem.Status(Open),
+      Some(QueueItem.Reason("for the review")),
+      None,
+      None
+    )
     assertEquals(Queue.applyPatch(cur, QueuePatch()), cur)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(text = Some(QueueItem.Text("a better book")))), cur.modify(_.text).setTo(QueueItem.Text("a better book")))
+    assertEquals(
+      Queue.applyPatch(cur, QueuePatch(text = Some(QueueItem.Text("a better book")))),
+      cur.modify(_.text).setTo(QueueItem.Text("a better book"))
+    )
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  Papers ")))).topic, Some("Papers"))
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  ")))).topic, None)
     assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(QueueItem.Reason("")))).reason, None)
@@ -235,21 +353,35 @@ class QueueSuite extends munit.FunSuite:
 
   // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
 
-  private def item(id: QueueItem.Id, list: QueueItem.List = QueueItem.List("acquire"), status: QueueItem.Status = QueueItem.Status(Open), reason: Option[QueueItem.Reason] = None) =
+  private def item(
+      id: QueueItem.Id,
+      list: QueueItem.List = QueueItem.List("acquire"),
+      status: QueueItem.Status = QueueItem.Status(Open),
+      reason: Option[QueueItem.Reason] = None
+  ) =
     QueueItem(id, list, QueueItem.Text(s"item ${id.value}"), Some(QueueItem.Topic("linear_b")), status, reason)
 
   test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted"):
-    assertEquals(Queue.fulfilledReason(None, Citekey("lambert2013_babylonian")), "ingested as [[lambert2013_babylonian]]")
+    assertEquals(
+      Queue.fulfilledReason(None, Citekey("lambert2013_babylonian")),
+      "ingested as [[lambert2013_babylonian]]"
+    )
     assertEquals(Queue.fulfilledReason(Some(QueueItem.Reason("  ")), Citekey("a2020_b")), "ingested as [[a2020_b]]")
     assertEquals(
       Queue.fulfilledReason(Some(QueueItem.Reason("Nagy 2001 argues against it")), Citekey("finkelberg2000_cypria")),
       "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]"
     )
     // recording the same source twice adds nothing
-    assertEquals(Queue.fulfilledReason(Some(QueueItem.Reason("ingested as [[a2020_b]]")), Citekey("a2020_b")), "ingested as [[a2020_b]]")
+    assertEquals(
+      Queue.fulfilledReason(Some(QueueItem.Reason("ingested as [[a2020_b]]")), Citekey("a2020_b")),
+      "ingested as [[a2020_b]]"
+    )
     assertEquals(
       Queue.fulfil(item(QueueItem.Id(567)), Citekey("lambert2013_babylonian")),
-      QueuePatch(status = Some(QueueItem.Status(Done)), reason = Some(QueueItem.Reason("ingested as [[lambert2013_babylonian]]")))
+      QueuePatch(
+        status = Some(QueueItem.Status(Done)),
+        reason = Some(QueueItem.Reason("ingested as [[lambert2013_babylonian]]"))
+      )
     )
 
   test("an upload may name only an existing, open acquisition item"):
@@ -259,5 +391,8 @@ class QueueSuite extends munit.FunSuite:
       Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), list = QueueItem.List("tasks")))),
       Left("item 7 is on the tasks list, not the acquisition list")
     )
-    assertEquals(Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Done)))), Left("acquisition item 7 is already done"))
+    assertEquals(
+      Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Done)))),
+      Left("acquisition item 7 is already done")
+    )
     assert(Queue.fulfillable(QueueItem.Id(7), Some(item(QueueItem.Id(7), status = QueueItem.Status(Note)))).isLeft)

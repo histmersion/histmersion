@@ -33,17 +33,28 @@ class PluginsReportSuite extends munit.FunSuite:
     enabled = PluginStatus.Enabled(true),
     PluginStatus.State(PluginState.Registered.wire.value),
     provides = List(PluginDescription.Provides("secret-vault:keepassxc")),
-    settings = List(PluginSetting(PluginSetting.Key("database"), PluginSetting.Value("/v.kdbx")), PluginSetting(PluginSetting.Key("password"), PluginSetting.Value("env:KP_PASSWORD")))
+    settings = List(
+      PluginSetting(PluginSetting.Key("database"), PluginSetting.Value("/v.kdbx")),
+      PluginSetting(PluginSetting.Key("password"), PluginSetting.Value("env:KP_PASSWORD"))
+    )
   )
-  private val off = PluginStatus(PluginStatus.Id("bitwarden"), PluginStatus.Version("0.1.0"), PluginStatus.SpiVersion(1), enabled = PluginStatus.Enabled(false), PluginStatus.State(PluginState.Disabled.wire.value))
+  private val off = PluginStatus(
+    PluginStatus.Id("bitwarden"),
+    PluginStatus.Version("0.1.0"),
+    PluginStatus.SpiVersion(1),
+    enabled = PluginStatus.Enabled(false),
+    PluginStatus.State(PluginState.Disabled.wire.value)
+  )
   private val broken = PluginStatus(
     PluginStatus.Id("portal"),
     PluginStatus.Version("2.0.0"),
     PluginStatus.SpiVersion(1),
     enabled = PluginStatus.Enabled(true),
     PluginStatus.State(PluginState.Failed.wire.value),
-    warnings = List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
-    error = Some(PluginDescription.Error("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"))
+    warnings =
+      List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
+    error =
+      Some(PluginDescription.Error("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set"))
   )
   private val alien = PluginStatus(
     PluginStatus.Id("old"),
@@ -85,7 +96,11 @@ class PluginsReportSuite extends munit.FunSuite:
         None,
         None,
         None,
-        plugins = PluginsReport(PluginsReport.SpiVersion(1), List(vault, off, broken), List(PluginsReport.Warnings("histmersion.plugins.helo configures no plugin")))
+        plugins = PluginsReport(
+          PluginsReport.SpiVersion(1),
+          List(vault, off, broken),
+          List(PluginsReport.Warnings("histmersion.plugins.helo configures no plugin"))
+        )
       )
     )
     assert(md.contains("- plugins: 3 plugins in this binary · 2 enabled · PROBLEMS"), md)
@@ -96,14 +111,28 @@ class PluginsReportSuite extends munit.FunSuite:
     )
     assert(md.contains("  - warning: histmersion.plugins.helo configures no plugin"), md)
     val none = AboutMarkdown.render(
-      About(About.Name("histmersion"), BuildStamp(BuildStamp.Version("1")), Health(Health.Status("ok"), Health.Db("ok"), None, None), JobCounts(), None, None, None)
+      About(
+        About.Name("histmersion"),
+        BuildStamp(BuildStamp.Version("1")),
+        Health(Health.Status("ok"), Health.Db("ok"), None, None),
+        JobCounts(),
+        None,
+        None,
+        None
+      )
     )
     assert(
       none.contains("- plugins: 0 plugins in this binary · 0 enabled\n  - plugin set: first-party plugins only"),
       none
     )
     // a relinked binary names its plugin set (docs/research-plugins.md §7.3)
-    val set = PluginKit.pluginSet(List(PluginJar(PluginJar.File("hello-0.1.0.jar"), Sha256("ab"))), PluginSet.SpiVersion(1), PluginSet.Mode("native"), None, None)
+    val set = PluginKit.pluginSet(
+      List(PluginJar(PluginJar.File("hello-0.1.0.jar"), Sha256("ab"))),
+      PluginSet.SpiVersion(1),
+      PluginSet.Mode("native"),
+      None,
+      None
+    )
     val linked = AboutMarkdown.render(
       About(
         About.Name("histmersion"),
@@ -135,22 +164,41 @@ class PluginsReportSuite extends munit.FunSuite:
     assert(ok.contains("- plugins: 2 plugins · 1 enabled"), ok)
     assert(ok.contains("    password = env:KP_PASSWORD"), ok)
     assert(ok.endsWith("self-check passed"), ok)
-    val bad = PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(PluginsReport.SpiVersion(1), List(broken), List(PluginsReport.Warnings("w"))))
+    val bad = PluginsMarkdown.selfCheck(
+      ConfigFileInfo(),
+      PluginsReport(PluginsReport.SpiVersion(1), List(broken), List(PluginsReport.Warnings("w")))
+    )
     assert(bad.contains("- warning: w"), bad)
     assert(bad.endsWith("self-check FAILED"), bad)
     // the binary's own checks (the time zones) are listed, and one that fails fails the verdict
     val zones =
-      PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(PluginsReport.SpiVersion(1), List(vault)), List(true -> "time zones: ok"))
+      PluginsMarkdown.selfCheck(
+        ConfigFileInfo(),
+        PluginsReport(PluginsReport.SpiVersion(1), List(vault)),
+        List(true -> "time zones: ok")
+      )
     assert(zones.contains("- plugin-set digest: " + PluginSet.EmptyDigest + "\n- time zones: ok\n\n- "), zones)
     assert(zones.endsWith("self-check passed"), zones)
     val noZones =
-      PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(PluginsReport.SpiVersion(1), List(vault)), List(false -> "time zones: BROKEN"))
+      PluginsMarkdown.selfCheck(
+        ConfigFileInfo(),
+        PluginsReport(PluginsReport.SpiVersion(1), List(vault)),
+        List(false -> "time zones: BROKEN")
+      )
     assert(noZones.contains("- time zones: BROKEN"), noZones)
     assert(noZones.endsWith("self-check FAILED"), noZones)
 
   test("the report crosses the wire; an About or UiConfig from a server without plugins still decodes"):
     val r = PluginsReport(PluginsReport.SpiVersion(1), List(vault, broken), List(PluginsReport.Warnings("w")))
     assertEquals(io.circe.parser.decode[PluginsReport](r.asJson.noSpaces), Right(r))
-    val about = About(About.Name("histmersion"), BuildStamp(BuildStamp.Version("1")), Health(Health.Status("ok"), Health.Db("ok"), None, None), JobCounts(), None, None, None)
+    val about = About(
+      About.Name("histmersion"),
+      BuildStamp(BuildStamp.Version("1")),
+      Health(Health.Status("ok"), Health.Db("ok"), None, None),
+      JobCounts(),
+      None,
+      None,
+      None
+    )
     val older = about.asJson.mapObject(_.remove("plugins")).noSpaces
     assertEquals(io.circe.parser.decode[About](older).map(_.plugins), Right(PluginsReport()))

@@ -15,5 +15,6 @@ final case class CheckContext(
     config: AppConfig,
     dataSource: DataSource,
     format: (WikiLinks.Occurrence.Target => Boolean) => FormatChecker,
-    write: GuardedWrite, timer: Timer
+    write: GuardedWrite,
+    timer: Timer
 )

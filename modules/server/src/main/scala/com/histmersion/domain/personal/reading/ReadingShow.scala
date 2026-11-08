@@ -13,7 +13,6 @@ object ReadingShow:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 

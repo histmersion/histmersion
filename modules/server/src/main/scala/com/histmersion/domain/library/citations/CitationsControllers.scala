@@ -31,4 +31,3 @@ final class CitationsControllers(citations: CitationService, sources: SourceServ
   def resolveEdges: Either[Api.Error, EdgesResolved] =
     maintenance.guard(WriteGate.OperationName("edges/resolve")):
       Right(EdgesResolved(EdgesResolved.Resolved(sources.resolveEdges(Caller.Local).value)))
-

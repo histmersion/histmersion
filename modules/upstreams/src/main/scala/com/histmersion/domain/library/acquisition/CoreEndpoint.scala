@@ -7,7 +7,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final case class CoreEndpoint(url: CoreEndpoint.Url, apiKey: CoreEndpoint.ApiKey) derives ConfigReader:
   /** The key, when one is configured. */
-  def key: Option[CoreEndpoint.ApiKey] = (Option(apiKey).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => CoreEndpoint.ApiKey(refactorValue))
+  def key: Option[CoreEndpoint.ApiKey] =
+    (Option(apiKey).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => CoreEndpoint.ApiKey(refactorValue))
 
 object CoreEndpoint:
 

@@ -48,7 +48,15 @@ object EventMarkers:
       TilesApi.TileQuery.Z(0),
       TilesApi.TileQuery.X(0),
       TilesApi.TileQuery.Y(0),
-      filter.modify(_.period).setTo(Some(Period(tiles._1, tiles._2))).modify(_.limit).setTo(Filter().limit).modify(_.offset).setTo(Filter.Offset(0)).modify(_.sort).setTo(Filter().sort),
+      filter
+        .modify(_.period)
+        .setTo(Some(Period(tiles._1, tiles._2)))
+        .modify(_.limit)
+        .setTo(Filter().limit)
+        .modify(_.offset)
+        .setTo(Filter.Offset(0))
+        .modify(_.sort)
+        .setTo(Filter().sort),
       kind = kind.map(k => TilesApi.TileQuery.Kind(k.value)),
       tier = tier.map(t => TilesApi.TileQuery.Tier(t.value)),
       context = Some(TilesApi.TileQuery.Context(true)),
@@ -59,7 +67,13 @@ object EventMarkers:
   def load(tiles: (Year, Year), span: (Years.Astronomical, Years.Astronomical)): Unit =
     layer.load(
       ApiClient.tileTemplate(
-        query(UiState.toFilter(), tiles, UiState.eventKind.now().map(Api.EventQuery.Kind(_)), UiState.eventTier.now().map(Api.EventQuery.Tier(_)), Undated(UiState.eventsUndated.now()))
+        query(
+          UiState.toFilter(),
+          tiles,
+          UiState.eventKind.now().map(Api.EventQuery.Kind(_)),
+          UiState.eventTier.now().map(Api.EventQuery.Tier(_)),
+          Undated(UiState.eventsUndated.now())
+        )
       ),
       span
     )

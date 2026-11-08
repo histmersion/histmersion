@@ -54,8 +54,8 @@ final class AcquireClient(c: Client):
   def archiveInfo(id: ArchiveId): Either[Cli.Error, ArchiveItem] = c.call(AcquireApi.archiveInfo)(id)
   def archiveImport(req: ArchiveImportRequest): Either[Cli.Error, Ingest.Report] =
     c.call(AcquireApi.archiveImport)(req)
-  def calibreGaps(limit: Option[AcquireApi.Limit]): Either[Cli.Error, CalibreGaps] = c.call(AcquireApi.calibreGaps)(limit)
+  def calibreGaps(limit: Option[AcquireApi.Limit]): Either[Cli.Error, CalibreGaps] =
+    c.call(AcquireApi.calibreGaps)(limit)
   def calibreMeta(citekey: Citekey): Either[Cli.Error, CalibreGap] = c.call(AcquireApi.calibreMeta)(citekey)
   def calibrePushed(req: CalibrePushRequest): Either[Cli.Error, CalibrePushResult] =
     c.call(AcquireApi.calibrePushed)(req)
-

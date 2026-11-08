@@ -139,7 +139,13 @@ class ArticleCoverageHttpSuite extends DbSuite:
           List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy[String](_._1.value)
         )
         assertEquals(c.citedOutside, List(Outside))
-        assertEquals(c.statuses, List(StatusCount(Source.Status.Current, StatusCount.Count(4)), StatusCount(Source.Status.Contested, StatusCount.Count(1))))
+        assertEquals(
+          c.statuses,
+          List(
+            StatusCount(Source.Status.Current, StatusCount.Count(4)),
+            StatusCount(Source.Status.Contested, StatusCount.Count(1))
+          )
+        )
         assertEquals(c.edges, List(Coverage.Edge(Critic, Coverage.Edge.Kind("challenges"), Cited2)))
         assertEquals(c.searches.map(s => (s.query, s.cited)), List(("synoikism", List(Outside))))
         assertEquals(

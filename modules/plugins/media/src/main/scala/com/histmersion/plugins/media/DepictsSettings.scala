@@ -6,7 +6,11 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion.media.depicts`: pictures kept per event, P180 files looked at, and whether P1299 is read. */
-final case class DepictsSettings(perEvent: DepictsSettings.PerEvent, searchLimit: DepictsSettings.SearchLimit, depictedBy: DepictsSettings.DepictedBy) derives ConfigReader
+final case class DepictsSettings(
+    perEvent: DepictsSettings.PerEvent,
+    searchLimit: DepictsSettings.SearchLimit,
+    depictedBy: DepictsSettings.DepictedBy
+) derives ConfigReader
 
 object DepictsSettings:
   type PerEvent = PerEvent.T

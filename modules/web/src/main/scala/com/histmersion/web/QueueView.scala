@@ -63,15 +63,15 @@ object QueueView:
 
   object Seg:
     object Text:
-      export com.histmersion.api.UiLabels.{Text as S}
+      export com.histmersion.api.UiLabels.Text as S
     object Bold:
-      export com.histmersion.api.UiLabels.{Text as S}
+      export com.histmersion.api.UiLabels.Text as S
     object Italic:
-      export com.histmersion.api.UiLabels.{Text as S}
+      export com.histmersion.api.UiLabels.Text as S
     object Doi:
-      export QueueItemRef.Ref.{Doi as Value}
+      export QueueItemRef.Ref.Doi as Value
     object Url:
-      export Preview.Item.{Href as Value}
+      export Preview.Item.Href as Value
     object Cite:
       type Citekey = Preview.Target.Source.Citekey
       val Citekey: Preview.Target.Source.Citekey.type = Preview.Target.Source.Citekey
@@ -144,7 +144,15 @@ object QueueView:
         (Spec.TickDone("mark as done"), Spec.TickReopen("mark as still open"))
       )
     case Queue.Kind.Log =>
-      Spec(kind, Icon.Log, Spec.Empty("Nothing in the worklog."), Spec.Untitled("Undated"), Spec.OpenNoun(""), None, (Spec.TickDone(""), Spec.TickReopen("")))
+      Spec(
+        kind,
+        Icon.Log,
+        Spec.Empty("Nothing in the worklog."),
+        Spec.Untitled("Undated"),
+        Spec.OpenNoun(""),
+        None,
+        (Spec.TickDone(""), Spec.TickReopen(""))
+      )
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -174,7 +182,10 @@ object QueueView:
   /** A topic path (`**Group** > sub_topic`) as its heading and the path above it, readable; `untitled` stands in for an
     * item with no topic.
     */
-  def heading(topic: Option[Queue.QueueItem.Topic], untitled: UiLabels.Text = UiLabels.Text("Uncategorised")): (UiLabels.Text, List[UiLabels.Text]) =
+  def heading(
+      topic: Option[Queue.QueueItem.Topic],
+      untitled: UiLabels.Text = UiLabels.Text("Uncategorised")
+  ): (UiLabels.Text, List[UiLabels.Text]) =
     val parts = topic
       .map(_.value)
       .getOrElse("")
@@ -205,7 +216,10 @@ object QueueView:
   /** The items grouped by topic, each group in id order. The checkbox lists keep the groups in the order their first
     * item was added; the worklog puts the newest date first (ties: file order).
     */
-  def groups(kind: Queue.Kind, items: List[Queue.QueueItem]): List[(Option[Queue.QueueItem.Topic], List[Queue.QueueItem])] =
+  def groups(
+      kind: Queue.Kind,
+      items: List[Queue.QueueItem]
+  ): List[(Option[Queue.QueueItem.Topic], List[Queue.QueueItem])] =
     val gs = items.groupBy(_.topic).toList.map((t, is) => t -> is.sortBy(_.id))
     if kind.checkboxes.value then gs.sortBy((_, is) => is.head.id)
     else
@@ -239,7 +253,11 @@ object QueueView:
     item.id -> Queue.fulfil(item, com.histmersion.api.library.Citekey(citekey.value))
 
   /** The add form, as typed. */
-  final case class AddDraft(text: AddDraft.Text = AddDraft.Text(""), topic: AddDraft.Topic = AddDraft.Topic(""), reason: AddDraft.Reason = AddDraft.Reason(""))
+  final case class AddDraft(
+      text: AddDraft.Text = AddDraft.Text(""),
+      topic: AddDraft.Topic = AddDraft.Topic(""),
+      reason: AddDraft.Reason = AddDraft.Reason("")
+  )
 
   object AddDraft:
     type Text = Text.T
@@ -268,7 +286,11 @@ object QueueView:
   /** The patch an inline edit makes: only what changed (`None` = nothing did); a blank topic moves the item out of its
     * group; a blank text is refused.
     */
-  def editPatch(item: Queue.QueueItem, text: Queue.QueueItem.Text, topic: Queue.QueueItem.Topic): Either[Problem, Option[Queue.QueuePatch]] =
+  def editPatch(
+      item: Queue.QueueItem,
+      text: Queue.QueueItem.Text,
+      topic: Queue.QueueItem.Topic
+  ): Either[Problem, Option[Queue.QueuePatch]] =
     if text.value.trim.isEmpty then Left(Problem(EmptyText))
     else
       val t = text.value.strip
@@ -280,7 +302,11 @@ object QueueView:
   /** The topics to offer while one is typed: those the list already uses, in the order they first appear, matching what
     * is typed (case and underscores aside), without the one typed exactly.
     */
-  def topicSuggestions(items: List[Queue.QueueItem], typed: Api.Search.Text, limit: Paging.Limit = Paging.Limit(12)): List[Queue.QueueItem.Topic] =
+  def topicSuggestions(
+      items: List[Queue.QueueItem],
+      typed: Api.Search.Text,
+      limit: Paging.Limit = Paging.Limit(12)
+  ): List[Queue.QueueItem.Topic] =
     def norm(s: String) = Label.display(Label.Text(s)).value.toLowerCase.trim
     val q = norm(typed.value)
     items
@@ -361,8 +387,7 @@ object QueueView:
         )(),
       edit = (item, p, after) =>
         write(UiLabels.Text(s"edit item ${item.id}"), ApiClient.queuePatch(item.id, p))(_ => after()),
-      delete = item =>
-        write(UiLabels.Text(s"delete item ${item.id}"), ApiClient.queueDelete(item.id))(),
+      delete = item => write(UiLabels.Text(s"delete item ${item.id}"), ApiClient.queueDelete(item.id))(),
       fulfil = (item, ck) =>
         val (id, p) = fulfil(item, ck)
         write(UiLabels.Text(s"tick item $id off"), ApiClient.queuePatch(id, p))()
@@ -370,17 +395,29 @@ object QueueView:
       recheck = item =>
         write(
           UiLabels.Text(s"re-check item ${item.id}"),
-          ApiClient.acquireRecheck(Acquire.Checks.RecheckRequest(id = Some(Acquire.Checks.RecheckRequest.Id(item.id.value)), by = Some(Acquire.Checks.RecheckRequest.By("web"))))
+          ApiClient.acquireRecheck(
+            Acquire.Checks.RecheckRequest(
+              id = Some(Acquire.Checks.RecheckRequest.Id(item.id.value)),
+              by = Some(Acquire.Checks.RecheckRequest.By("web"))
+            )
+          )
         )(r => recheck.set(Some(Right(r))))
     )
 
     def recheckAll(): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
-        ApiClient.acquireRecheck(Acquire.Checks.RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true), by = Some(Acquire.Checks.RecheckRequest.By("web")))).onComplete { r =>
-          recheck.set(Some(r.toEither.left.map(_.getMessage)))
-          load()
-        }
+        ApiClient
+          .acquireRecheck(
+            Acquire.Checks.RecheckRequest(
+              all = Acquire.Checks.RecheckRequest.All(true),
+              by = Some(Acquire.Checks.RecheckRequest.By("web"))
+            )
+          )
+          .onComplete { r =>
+            recheck.set(Some(r.toEither.left.map(_.getMessage)))
+            load()
+          }
 
     div(
       cls := s"tool-pane queue-pane ${kind.label}-pane",
@@ -591,7 +628,15 @@ object QueueView:
       ul(
         cls := "queue-items",
         its.map(i =>
-          renderItem(sp, i, ops, topicsId, checks.get(i.id), goals.getOrElse(i.id, Nil), ItemIsTarget(target.contains(i.id)))
+          renderItem(
+            sp,
+            i,
+            ops,
+            topicsId,
+            checks.get(i.id),
+            goals.getOrElse(i.id, Nil),
+            ItemIsTarget(target.contains(i.id))
+          )
         )
       )
     )
@@ -630,12 +675,18 @@ object QueueView:
           case Mode.Editing => editForm(item, ops, topicsId, () => mode.set(Mode.Idle))
           case _            => div(cls := "item-text", segments(UiLabels.Text(item.text.value)).map(render))
         },
-        item.reason.filter(_.value.trim.nonEmpty).map(r => div(cls := "item-reason muted", segments(UiLabels.Text(r.value)).map(render))),
+        item.reason
+          .filter(_.value.trim.nonEmpty)
+          .map(r => div(cls := "item-reason muted", segments(UiLabels.Text(r.value)).map(render))),
         item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.value.take(10)}")),
         check
           .filter(_ => !done)
           .map(c =>
-            div(cls := "item-reason muted", title := s"checked ${c.checks} time(s)", segments(UiLabels.Text(c.reason.value)).map(render))
+            div(
+              cls := "item-reason muted",
+              title := s"checked ${c.checks} time(s)",
+              segments(UiLabels.Text(c.reason.value)).map(render)
+            )
           ),
         Option.when(goals.nonEmpty)(
           div(
@@ -696,10 +747,14 @@ object QueueView:
   /** Who wrote an item and who ticked it off: the agent run or background job, each a link to its page. */
   private def provenance(item: Queue.QueueItem): Option[HtmlElement] =
     val parts = item.createdBy
-      .map(id => span("Written by ", RouteLink(Route.Job(Pages.JobId(id.value)), s"agent work or job ${id.value.take(8)}")))
+      .map(id =>
+        span("Written by ", RouteLink(Route.Job(Pages.JobId(id.value)), s"agent work or job ${id.value.take(8)}"))
+      )
       .toList ++
       item.closedBy
-        .map(id => span("ticked off by ", RouteLink(Route.Job(Pages.JobId(id.value)), s"agent work or job ${id.value.take(8)}")))
+        .map(id =>
+          span("ticked off by ", RouteLink(Route.Job(Pages.JobId(id.value)), s"agent work or job ${id.value.take(8)}"))
+        )
         .toList
     Option.when(parts.nonEmpty)(
       div(cls := "item-provenance muted", parts.flatMap(p => List[Modifier[HtmlElement]](" · ", p)).drop(1))
@@ -725,8 +780,15 @@ object QueueView:
               is.map { i =>
                 val kind = Queue.Kind.parse(i.list).getOrElse(Queue.Kind.Log)
                 li(
-                  span(cls := "muted", if i.closedBy.exists(_.value == jobId.value) then "ticked off · " else "wrote · "),
-                  QueueItemLink(kind, Goal.Plans.GoalLink.QueueNumber(i.id.value), s"${listName(kind)}: ${i.text.value.take(120)}")
+                  span(
+                    cls := "muted",
+                    if i.closedBy.exists(_.value == jobId.value) then "ticked off · " else "wrote · "
+                  ),
+                  QueueItemLink(
+                    kind,
+                    Goal.Plans.GoalLink.QueueNumber(i.id.value),
+                    s"${listName(kind)}: ${i.text.value.take(120)}"
+                  )
                 )
               }
             )
@@ -781,7 +843,10 @@ object QueueView:
         listId := topicsId,
         aria.label := "topic",
         placeholder := "topic — empty moves it out of its group",
-        controlled(value <-- topic.signal.map(_.value), onInput.mapToValue.map(Queue.QueueItem.Topic(_)) --> topic.writer)
+        controlled(
+          value <-- topic.signal.map(_.value),
+          onInput.mapToValue.map(Queue.QueueItem.Topic(_)) --> topic.writer
+        )
       ),
       child.maybe <-- error.signal.map(_.map(m => div(cls := "field-error", role := "alert", m))),
       div(
@@ -854,7 +919,8 @@ object QueueView:
     case Seg.Text(t)   => t.value
     case Seg.Bold(t)   => b(t.value)
     case Seg.Italic(t) => em(t.value)
-    case Seg.Doi(d)    => a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d.value)
+    case Seg.Doi(d)    =>
+      a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d.value)
     case Seg.Url(u)    => a(href := u.value, target := "_blank", rel := "noopener", u.value)
     case Seg.Cite(ck)  => SourceLink(ck)
     case Seg.Ident(id) => IdentLink(id)

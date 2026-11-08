@@ -12,6 +12,7 @@ final case class Upload(name: Upload.Name, size: Upload.Size, bytes: ByteSource)
 object Upload:
   type Bytes = Bytes.T
   object Bytes extends Newtype[Array[Byte], Pure]
+
   /** The file the HTTP layer streamed a request body into, where it put it. */
   type InlineName = Name
   val InlineName: Name.type = Name
@@ -27,4 +28,5 @@ object Upload:
   def stored(blob: Blob): Upload = Upload(Name(blob.key.name.value), Size(blob.size.value), blob.asSource)
 
   /** Bytes in memory, under `name`. */
-  def inline(name: InlineName, bytes: Bytes): Upload = Upload(name, Size(bytes.value.length.toLong), ByteSource.bytes(ByteSource.Content(bytes.value)))
+  def inline(name: InlineName, bytes: Bytes): Upload =
+    Upload(name, Size(bytes.value.length.toLong), ByteSource.bytes(ByteSource.Content(bytes.value)))

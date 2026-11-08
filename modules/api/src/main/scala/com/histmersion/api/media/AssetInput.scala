@@ -17,7 +17,8 @@ final case class AssetInput(
     height: Option[ImageSize.Height] = None,
     sha256: Option[Sha256] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AssetInput:
   type Base64 = Base64.T

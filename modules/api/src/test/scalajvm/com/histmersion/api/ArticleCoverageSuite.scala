@@ -32,7 +32,8 @@ class ArticleCoverageSuite extends munit.FunSuite:
     src(Citekey("graf1993_mythology")),
     src(Citekey("nilsson1927_minoan"), Source.Status.Superseded)
   )
-  private val cited = List(Citekey("walker1995_theseus"), Citekey("gantz1993_earlymyth"), Citekey("middleton2020_collapse"))
+  private val cited =
+    List(Citekey("walker1995_theseus"), Citekey("gantz1993_earlymyth"), Citekey("middleton2020_collapse"))
   private val reasons = Map(
     Citekey("graves2017_greek") -> Coverage.Entry.Reason("retells the myths with no dated finding on their origin"),
     Citekey("bremmer2008_religion") -> Coverage.Entry.Reason("a handbook; nothing on synoikism"),
@@ -42,10 +43,16 @@ class ArticleCoverageSuite extends munit.FunSuite:
   )
   private val edges = List(
     Coverage.Edge(Citekey("simpson1970_catalogue"), Coverage.Edge.Kind("challenges"), Citekey("gantz1993_earlymyth")),
-    Coverage.Edge(Citekey("walker1995_theseus"), Coverage.Edge.Kind("references"), Citekey("gantz1993_earlymyth")), // not a disagreement
+    Coverage.Edge(
+      Citekey("walker1995_theseus"),
+      Coverage.Edge.Kind("references"),
+      Citekey("gantz1993_earlymyth")
+    ), // not a disagreement
     Coverage.Edge(Citekey("roller1999_search"), Coverage.Edge.Kind("refutes"), Citekey("graves2017_greek"))
   ) // touches no cited source
-  private val searches = List(CoverageSearch(CoverageSearch.Query("synoikism"), CoverageSearch.Total(4), List(Citekey("middleton2020_collapse"))))
+  private val searches = List(
+    CoverageSearch(CoverageSearch.Query("synoikism"), CoverageSearch.Total(4), List(Citekey("middleton2020_collapse")))
+  )
 
   private def cov(
       total: Article.Coverage.ComputeTotal = Article.Coverage.ComputeTotal(6),
@@ -91,7 +98,16 @@ class ArticleCoverageSuite extends munit.FunSuite:
         StatusCount(Source.Status.Superseded, StatusCount.Count(1))
       )
     )
-    assertEquals(c.edges, List(Coverage.Edge(Citekey("simpson1970_catalogue"), Coverage.Edge.Kind("challenges"), Citekey("gantz1993_earlymyth"))))
+    assertEquals(
+      c.edges,
+      List(
+        Coverage.Edge(
+          Citekey("simpson1970_catalogue"),
+          Coverage.Edge.Kind("challenges"),
+          Citekey("gantz1993_earlymyth")
+        )
+      )
+    )
 
   test("compute: drift — unplaced, a reason for a cited source, a reason outside the filter"):
     val c = cov()
@@ -114,9 +130,16 @@ class ArticleCoverageSuite extends munit.FunSuite:
 
   test("unplacedAfter: what a fixer's citations and reasons would leave unplaced"):
     val c = cov()
-    assertEquals(Article.Coverage.unplacedAfter(c, Set(Citekey("walker1995_theseus")), reasons), List("nilsson1927_minoan"))
+    assertEquals(
+      Article.Coverage.unplacedAfter(c, Set(Citekey("walker1995_theseus")), reasons),
+      List("nilsson1927_minoan")
+    )
     assertEquals(Article.Coverage.unplacedAfter(c, Set(Citekey("nilsson1927_minoan")), reasons), Nil)
-    assertEquals(Article.Coverage.unplacedAfter(c, Set.empty, reasons + (Citekey("nilsson1927_minoan") -> Coverage.Entry.Reason("superseded"))), Nil)
+    assertEquals(
+      Article.Coverage
+        .unplacedAfter(c, Set.empty, reasons + (Citekey("nilsson1927_minoan") -> Coverage.Entry.Reason("superseded"))),
+      Nil
+    )
 
   test("render: the counts sentence, reasons grouped, a missing one is 'not yet assessed', statuses stated"):
     val text = Article.Coverage.notUsed(cov())
@@ -147,10 +170,30 @@ class ArticleCoverageSuite extends munit.FunSuite:
       Article.Coverage.notUsed(allCited).value.endsWith("_All 2 sources the filter returns are cited above._"),
       Article.Coverage.notUsed(allCited)
     )
-    val none = Article.Coverage.compute(Article.Coverage.ComputeSlug("a"), filter, Article.Coverage.ComputeTotal(0), Nil, Set.empty, Nil, Map.empty, Nil, Nil)
+    val none = Article.Coverage.compute(
+      Article.Coverage.ComputeSlug("a"),
+      filter,
+      Article.Coverage.ComputeTotal(0),
+      Nil,
+      Set.empty,
+      Nil,
+      Map.empty,
+      Nil,
+      Nil
+    )
     assert(Article.Coverage.notUsed(none).value.endsWith("_The filter returns no source._"))
     val one =
-      Article.Coverage.compute(Article.Coverage.ComputeSlug("a"), filter, Article.Coverage.ComputeTotal(2), hits.take(2), Set.empty, List(Citekey("walker1995_theseus")), Map.empty, Nil, Nil)
+      Article.Coverage.compute(
+        Article.Coverage.ComputeSlug("a"),
+        filter,
+        Article.Coverage.ComputeTotal(2),
+        hits.take(2),
+        Set.empty,
+        List(Citekey("walker1995_theseus")),
+        Map.empty,
+        Nil,
+        Nil
+      )
     assert(
       Article.Coverage
         .notUsed(one)
@@ -165,7 +208,17 @@ class ArticleCoverageSuite extends munit.FunSuite:
       ),
       capped
     )
-    val noneCited = Article.Coverage.compute(Article.Coverage.ComputeSlug("a"), filter, Article.Coverage.ComputeTotal(2), hits.take(2), Set.empty, Nil, Map.empty, Nil, Nil)
+    val noneCited = Article.Coverage.compute(
+      Article.Coverage.ComputeSlug("a"),
+      filter,
+      Article.Coverage.ComputeTotal(2),
+      hits.take(2),
+      Set.empty,
+      Nil,
+      Map.empty,
+      Nil,
+      Nil
+    )
     assert(Article.Coverage.notUsed(noneCited).value.contains("None of them is cited above; the other 2 are listed"))
 
   test("render: the Method note — filter and total, statuses, further searches, outside citations, edges"):
@@ -203,7 +256,17 @@ class ArticleCoverageSuite extends munit.FunSuite:
       cov(),
       cov(total = Article.Coverage.ComputeTotal(812)),
       cov(rs = Map.empty),
-      Article.Coverage.compute(Article.Coverage.ComputeSlug("a"), filter, Article.Coverage.ComputeTotal(0), Nil, Set.empty, Nil, Map.empty, Nil, Nil),
+      Article.Coverage.compute(
+        Article.Coverage.ComputeSlug("a"),
+        filter,
+        Article.Coverage.ComputeTotal(0),
+        Nil,
+        Set.empty,
+        Nil,
+        Map.empty,
+        Nil,
+        Nil
+      ),
       Article.Coverage.compute(
         Article.Coverage.ComputeSlug("a"),
         filter,
@@ -242,9 +305,21 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("filter: normalised, statuses checked, an empty one clears, extra queries need a filter"):
     assertEquals(
       Article.Filter.normalise(
-        Article.Filter(query = Some(Filter.Q(" tin ")), topics = List(Filter.Topics("a, b"), Filter.Topics(" "), Filter.Topics("a")), status = List(Filter.Status("Current")))
+        Article.Filter(
+          query = Some(Filter.Q(" tin ")),
+          topics = List(Filter.Topics("a, b"), Filter.Topics(" "), Filter.Topics("a")),
+          status = List(Filter.Status("Current"))
+        )
       ),
-      Right(Some(Article.Filter(query = Some(Filter.Q("tin")), topics = List(Filter.Topics("a"), Filter.Topics("b")), status = List(Filter.Status("current")))))
+      Right(
+        Some(
+          Article.Filter(
+            query = Some(Filter.Q("tin")),
+            topics = List(Filter.Topics("a"), Filter.Topics("b")),
+            status = List(Filter.Status("current"))
+          )
+        )
+      )
     )
     assert(
       Article.Filter
@@ -252,11 +327,20 @@ class ArticleCoverageSuite extends munit.FunSuite:
         .left
         .exists(_.value.contains("'famous'"))
     )
-    assert(Article.Filter.normalise(Article.Filter(tags = List(Filter.Tags("x")), from = Some(Year(-100)), to = Some(Year(-200)))).isLeft)
+    assert(
+      Article.Filter
+        .normalise(Article.Filter(tags = List(Filter.Tags("x")), from = Some(Year(-100)), to = Some(Year(-200))))
+        .isLeft
+    )
     assertEquals(Article.Filter.normalise(Article.Filter(query = Some(Filter.Q("  ")))), Right(None))
-    assert(Article.Filter.normalise(Article.Filter(extraQueries = List(Article.Filter.ExtraQueries("synoikism")))).isLeft)
+    assert(
+      Article.Filter.normalise(Article.Filter(extraQueries = List(Article.Filter.ExtraQueries("synoikism")))).isLeft
+    )
     assertEquals(
-      Article.Filter(topics = List(Filter.Topics("tin")), from = Some(Year(-1300)), to = Some(Year(-1100))).toFilter.period,
+      Article
+        .Filter(topics = List(Filter.Topics("tin")), from = Some(Year(-1300)), to = Some(Year(-1100)))
+        .toFilter
+        .period,
       Some(Period(Year(-1300), Year(-1100)))
     )
 
@@ -264,7 +348,10 @@ class ArticleCoverageSuite extends munit.FunSuite:
     val m = Coverage.Reason
       .merge(
         Map(Citekey("a2019_tin") -> Coverage.Entry.Reason("old")),
-        List(Coverage.Reason(Citekey("[[A2019_tin]]"), Coverage.Entry.Reason("new\n  reason")), Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason("about Egypt")))
+        List(
+          Coverage.Reason(Citekey("[[A2019_tin]]"), Coverage.Entry.Reason("new\n  reason")),
+          Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason("about Egypt"))
+        )
       )
       .toOption
       .get
@@ -274,7 +361,9 @@ class ArticleCoverageSuite extends munit.FunSuite:
       Right(Map("a2019_tin" -> "new reason"))
     )
     assert(Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("Not A Key"), Coverage.Entry.Reason("x")))).isLeft)
-    assert(Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("a2019_tin"), Coverage.Entry.Reason("x" * 501)))).isLeft)
+    assert(
+      Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("a2019_tin"), Coverage.Entry.Reason("x" * 501)))).isLeft
+    )
     assertEquals(Coverage.Reason.list(m).map(_.citekey), List("a2019_tin", "b2020_iso"))
 
   test("bodies: a hand-written Not used section is not citation; the export block is dropped on import"):
@@ -303,29 +392,56 @@ class ArticleCoverageSuite extends munit.FunSuite:
     assertEquals(put.filter, Some(Article.Filter(tags = List(Filter.Tags("tin")))))
     assertEquals(put.reasons, Map("b2020_iso" -> "about Egypt"))
     val kept = Articles
-      .applyPatch(put, Article.Patch(summary = Some(Article.SummaryText("A summary of where the tin of the Aegean came from, by sea."))))
+      .applyPatch(
+        put,
+        Article.Patch(summary =
+          Some(Article.SummaryText("A summary of where the tin of the Aegean came from, by sea."))
+        )
+      )
       .toOption
       .get
     assertEquals((kept.filter, kept.reasons), (put.filter, put.reasons), "a patch that names neither leaves them")
     val more = Articles
       .applyPatch(
         put,
-        Article.Patch(reasons = List(Coverage.Reason(Citekey("c2001_old"), Coverage.Entry.Reason("older")), Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason(""))))
+        Article.Patch(reasons =
+          List(
+            Coverage.Reason(Citekey("c2001_old"), Coverage.Entry.Reason("older")),
+            Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason(""))
+          )
+        )
       )
       .toOption
       .get
     assertEquals(more.reasons, Map("c2001_old" -> "older"))
     assertEquals(Articles.applyPatch(put, Article.Patch(filter = Some(Article.Filter()))).toOption.get.filter, None)
-    assert(Articles.applyPatch(put, Article.Patch(filter = Some(Article.Filter(status = List(Filter.Status("nope")))))).isLeft)
-    assertEquals(Article.Put.of(more).reasons, List(Coverage.Reason(Citekey("c2001_old"), Coverage.Entry.Reason("older"))))
+    assert(
+      Articles
+        .applyPatch(put, Article.Patch(filter = Some(Article.Filter(status = List(Filter.Status("nope"))))))
+        .isLeft
+    )
+    assertEquals(
+      Article.Put.of(more).reasons,
+      List(Coverage.Reason(Citekey("c2001_old"), Coverage.Entry.Reason("older")))
+    )
 
   test("an exported note sent back as a body: the generated block never enters the store"):
     val exported = "# T\n\nBody [[a2019_tin]].\n\n" + Article.Coverage.exported(cov())
     assertEquals(
-      Articles.applyPut(Article.Slug("t"), Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body(exported))).toOption.get.body,
+      Articles
+        .applyPut(
+          Article.Slug("t"),
+          Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body(exported))
+        )
+        .toOption
+        .get
+        .body,
       "# T\n\nBody [[a2019_tin]]."
     )
-    val a = Articles.applyPut(Article.Slug("t"), Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body("# T"))).toOption.get
+    val a = Articles
+      .applyPut(Article.Slug("t"), Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body("# T")))
+      .toOption
+      .get
     assertEquals(
       Articles.applyPatch(a, Article.Patch(body = Some(Article.Body(exported)))).toOption.get.body,
       "# T\n\nBody [[a2019_tin]]."

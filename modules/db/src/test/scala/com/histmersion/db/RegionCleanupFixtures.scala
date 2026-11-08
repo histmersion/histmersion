@@ -67,7 +67,12 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
   protected val PeirId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100009")
 
   protected val places = List(
-    Place(Place.Id(City), Place.Label("Zzrc City"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.0), Latitude(-50.0))),
+    Place(
+      Place.Id(City),
+      Place.Label("Zzrc City"),
+      Place.KindValue(Place.Kind.Site),
+      pt(Longitude(140.0), Latitude(-50.0))
+    ),
     Place(
       Place.Id(Regio1),
       Place.Label("Zzrc Regio I (Porta Capena)"),
@@ -89,7 +94,12 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
       pt(Longitude(140.2), Latitude(-50.0)),
       properties = types("people")
     ),
-    Place(Place.Id(Athens), Place.Label("Zzrc Athens"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.21), Latitude(-50.02))),
+    Place(
+      Place.Id(Athens),
+      Place.Label("Zzrc Athens"),
+      Place.KindValue(Place.Kind.Site),
+      pt(Longitude(140.21), Latitude(-50.02))
+    ),
     Place(
       Place.Id(Thess),
       Place.Label("Zzrc Thessalia"),
@@ -135,20 +145,43 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
   )
 
   protected def f(n: Int, region: Option[Finding.Region], at: Option[GeoPoint]) =
-    Finding(Finding.Id(s"zzrc_src#$n"), Citekey("zzrc_src"), Finding.Claim(s"claim $n"), region, at, None, None, Nil, None)
+    Finding(
+      Finding.Id(s"zzrc_src#$n"),
+      Citekey("zzrc_src"),
+      Finding.Claim(s"claim $n"),
+      region,
+      at,
+      None,
+      None,
+      Nil,
+      None
+    )
 
   protected val findings = List(
     f(0, Some(Finding.Region("Zzrc City")), Some(GeoPoint(Longitude(140.0), Latitude(-50.0)))),
-    f(1, Some(Finding.Region("Zzrc Regio I (Porta Capena)")), Some(GeoPoint(Longitude(140.0), Latitude(-50.0)))), // named, placed on the city
+    f(
+      1,
+      Some(Finding.Region("Zzrc Regio I (Porta Capena)")),
+      Some(GeoPoint(Longitude(140.0), Latitude(-50.0)))
+    ), // named, placed on the city
     f(2, Some(Finding.Region("Zzrc Athens")), Some(GeoPoint(Longitude(140.21), Latitude(-50.02)))),
-    f(3, Some(Finding.Region("Zzrc Aiantis")), Some(GeoPoint(Longitude(140.2), Latitude(-50.0)))), // on the tribe's own point
-    f(4, Some(Finding.Region("near the grid site")), Some(GeoPoint(Longitude(143.52), Latitude(-46.51)))), // 2 km from a grid centre
+    f(
+      3,
+      Some(Finding.Region("Zzrc Aiantis")),
+      Some(GeoPoint(Longitude(140.2), Latitude(-50.0)))
+    ), // on the tribe's own point
+    f(
+      4,
+      Some(Finding.Region("near the grid site")),
+      Some(GeoPoint(Longitude(143.52), Latitude(-46.51)))
+    ), // 2 km from a grid centre
     f(5, Some(Finding.Region("Zzrc Achaia")), None), // a name, no point
     f(6, Some(Finding.Region("Zzrc Hellas")), Some(GeoPoint(Longitude(142.5), Latitude(-47.5))))
   ) // round numbers ON a grid centre
 
   protected def seed(): Unit =
-    val _ = PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))))
+    val _ =
+      PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))))
     SourceFixtures.upsert(
       ds,
       Source(

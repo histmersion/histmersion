@@ -28,7 +28,8 @@ import com.histmersion.api.catalogue.EventSummary
   * lock.
   */
 class EventsControllersSuite extends munit.FunSuite:
-  private val renamed = Map[(AliasKind, Event.Id), Event.Id]((AliasKinds.EventRecords, Event.Id("zz_old")) -> Event.Id("zz_ev"))
+  private val renamed =
+    Map[(AliasKind, Event.Id), Event.Id]((AliasKinds.EventRecords, Event.Id("zz_old")) -> Event.Id("zz_ev"))
   private def current(k: AliasKind, id: Event.Id) = renamed.getOrElse((k, id), id)
   private val span = TimeSpan(Some(Year(-1200)), None, None, Some(Year(-1190)))
 
@@ -47,11 +48,16 @@ class EventsControllersSuite extends munit.FunSuite:
 
   test("an old id reads and writes the event it was renamed to; the card is added"):
     val c = controllers()
-    val put = c.put(Caller.Local, Event.Id("zz_old"), EventPut(EventSummary.Label("Zz event"), EventSummary.Kind("battle"), span))
+    val put = c.put(
+      Caller.Local,
+      Event.Id("zz_old"),
+      EventPut(EventSummary.Label("Zz event"), EventSummary.Kind("battle"), span)
+    )
     assertEquals(put.map(d => (d.event.id, d.names)), Right(("zz_ev", List("from the card"))))
     assertEquals(c.get(Event.Id("zz_old")).map(_.event.id), Right("zz_ev"))
     assertEquals(
-      c.patch(Caller.Local, Event.Id("zz_old"), EventPatch(label = Some(EventSummary.Label("Zz again")))).map(_.event.label),
+      c.patch(Caller.Local, Event.Id("zz_old"), EventPatch(label = Some(EventSummary.Label("Zz again"))))
+        .map(_.event.label),
       Right("Zz again")
     )
     assertEquals(code(c.get(Event.Id("zz_missing"))), Some(Write.CodeNotFound))
@@ -61,17 +67,46 @@ class EventsControllersSuite extends munit.FunSuite:
   test("a scale, a geometry or a Wikidata item the store cannot take is refused before the write"):
     val c = controllers()
     assertEquals(
-      code(c.put(Caller.Local, Event.Id("zz_s"), EventPut(EventSummary.Label("Zz"), EventSummary.Kind("battle"), span, scale = Some(EventSummary.Scale("huge"))))),
+      code(
+        c.put(
+          Caller.Local,
+          Event.Id("zz_s"),
+          EventPut(
+            EventSummary.Label("Zz"),
+            EventSummary.Kind("battle"),
+            span,
+            scale = Some(EventSummary.Scale("huge"))
+          )
+        )
+      ),
       Some(Write.CodeInvalid)
     )
     assertEquals(
-      code(c.put(Caller.Local, Event.Id("zz_g"), EventPut(EventSummary.Label("Zz"), EventSummary.Kind("battle"), span, geometry = Some(EventPatch.Geometry("POINT(1 2)"))))),
+      code(
+        c.put(
+          Caller.Local,
+          Event.Id("zz_g"),
+          EventPut(
+            EventSummary.Label("Zz"),
+            EventSummary.Kind("battle"),
+            span,
+            geometry = Some(EventPatch.Geometry("POINT(1 2)"))
+          )
+        )
+      ),
       Some(Write.CodeInvalid)
     )
     assertEquals(code(c.get(Event.Id("zz_s"))), Some(Write.CodeNotFound), "nothing written")
     val _ = c.put(Caller.Local, Event.Id("zz_w"), EventPut(EventSummary.Label("Zz"), EventSummary.Kind("battle"), span))
-    assertEquals(code(c.patch(Caller.Local, Event.Id("zz_w"), EventPatch(wikidata = Some(EventPatch.Wikidata("x1"))))), Some(Write.CodeInvalid))
-    assertEquals(c.patch(Caller.Local, Event.Id("zz_w"), EventPatch(scale = Some(EventSummary.Scale("auto")))).map(_.event.scaleStated), Right(false))
+    assertEquals(
+      code(c.patch(Caller.Local, Event.Id("zz_w"), EventPatch(wikidata = Some(EventPatch.Wikidata("x1"))))),
+      Some(Write.CodeInvalid)
+    )
+    assertEquals(
+      c.patch(Caller.Local, Event.Id("zz_w"), EventPatch(scale = Some(EventSummary.Scale("auto"))))
+        .map(_.event.scaleStated),
+      Right(false)
+    )
 
   test("the list's page from its filter; the map's limit"):
     val c = controllers()
@@ -79,7 +114,12 @@ class EventsControllersSuite extends munit.FunSuite:
       c.put(
         Caller.Local,
         Event.Id.applyUnsafe(id),
-        EventPut(EventSummary.Label(s"Zz $id"), EventSummary.Kind("battle"), span, geometry = Some(EventPut.Geometry("""{"type":"Point","coordinates":[1,2]}""")))
+        EventPut(
+          EventSummary.Label(s"Zz $id"),
+          EventSummary.Kind("battle"),
+          span,
+          geometry = Some(EventPut.Geometry("""{"type":"Point","coordinates":[1,2]}"""))
+        )
       )
     )
     val l = c.list(Api.EventQuery(Filter(limit = Filter.Limit(50))))
@@ -88,8 +128,13 @@ class EventsControllersSuite extends munit.FunSuite:
 
   test("a rename checks the new id against the current one; a held lock refuses every write"):
     val c = controllers()
-    val _ = c.put(Caller.Local, Event.Id("zz_ev"), EventPut(EventSummary.Label("Zz event"), EventSummary.Kind("battle"), span))
-    def bad(from: Event.Id) = Left(Api.Error(Api.Error.Message(s"'$from' is already that event id"), Some(Api.Error.Code(Write.CodeInvalid))))
+    val _ = c.put(
+      Caller.Local,
+      Event.Id("zz_ev"),
+      EventPut(EventSummary.Label("Zz event"), EventSummary.Kind("battle"), span)
+    )
+    def bad(from: Event.Id) =
+      Left(Api.Error(Api.Error.Message(s"'$from' is already that event id"), Some(Api.Error.Code(Write.CodeInvalid))))
     assertEquals(code(c.rename(Caller.Local, Event.Id("zz_old"), bad)), Some(Write.CodeInvalid))
     assertEquals(c.rename(Caller.Local, Event.Id("zz_old"), _ => Right(Event.Id("zz_new"))), Right(("zz_ev", "zz_new")))
     val gate = WriteGate()
@@ -97,7 +142,9 @@ class EventsControllersSuite extends munit.FunSuite:
     val held = gate.exclusively(WriteGate.OperationName("restore"))(
       Right(
         List(
-          locked.put(Caller.Local, Event.Id("zz_x"), EventPut(EventSummary.Label("Zz"), EventSummary.Kind("battle"), span)).isLeft,
+          locked
+            .put(Caller.Local, Event.Id("zz_x"), EventPut(EventSummary.Label("Zz"), EventSummary.Kind("battle"), span))
+            .isLeft,
           locked.patch(Caller.Local, Event.Id("zz_x"), EventPatch()).isLeft,
           locked.delete(Caller.Local, Event.Id("zz_x")).isLeft,
           locked.rename(Caller.Local, Event.Id("zz_x"), _ => Right(Event.Id("zz_y"))).isLeft

@@ -11,7 +11,15 @@ import com.histmersion.api.library.Citekey
 class QueueLinksSuite extends munit.FunSuite:
 
   private val open =
-    QueueItem(QueueItem.Id(7), QueueItem.List("acquire"), QueueItem.Text("Drake 2012"), None, QueueItem.Status(Open), goal = Some(Goal.Slug("collapse")), createdBy = Some(QueueItem.CreatedBy("run-1")))
+    QueueItem(
+      QueueItem.Id(7),
+      QueueItem.List("acquire"),
+      QueueItem.Text("Drake 2012"),
+      None,
+      QueueItem.Status(Open),
+      goal = Some(Goal.Slug("collapse")),
+      createdBy = Some(QueueItem.CreatedBy("run-1"))
+    )
 
   test("ticking an item off records the run or job that did it; reopening forgets it"):
     val done = applyPatch(open, fulfil(open, Citekey("drake2012"), Some(QueueItem.ClosedBy("job-9"))))
@@ -23,7 +31,11 @@ class QueueLinksSuite extends munit.FunSuite:
       "an edit keeps it"
     )
     assertEquals(applyPatch(done, QueuePatch(status = Some(QueueItem.Status(Open)))).closedBy, None)
-    assertEquals(applyPatch(open, QueuePatch(status = Some(QueueItem.Status(Done)))).closedBy, None, "ticked off by a person")
+    assertEquals(
+      applyPatch(open, QueuePatch(status = Some(QueueItem.Status(Done)))).closedBy,
+      None,
+      "ticked off by a person"
+    )
 
   test("a goal is set, kept, and cleared by a blank"):
     assertEquals(applyPatch(open, QueuePatch(goal = Some(Goal.Slug("anatolia")))).goal, Some("anatolia"))
@@ -42,7 +54,13 @@ class QueueLinksSuite extends munit.FunSuite:
     assertEquals(
       got,
       List(
-        ItemGoals(QueueItem.Id(7), List(GoalRef(Goal.Slug("collapse"), Goal.Title("Collapse")), GoalRef(Goal.Slug("anatolia"), Goal.Title("Anatolia")))),
+        ItemGoals(
+          QueueItem.Id(7),
+          List(
+            GoalRef(Goal.Slug("collapse"), Goal.Title("Collapse")),
+            GoalRef(Goal.Slug("anatolia"), Goal.Title("Anatolia"))
+          )
+        ),
         ItemGoals(QueueItem.Id(9), List(GoalRef(Goal.Slug("anatolia"), Goal.Title("Anatolia"))))
       )
     )

@@ -19,29 +19,45 @@ object PlaybackFeed:
     * (`windowHalf` either side of the playhead).
     */
 
-  def chunkYears(windowHalf: WindowHalfYears, yearsPerSecond: PlaybackBuckets.YearsPerSecond, seconds: PlaybackBuckets.Seconds): PlaybackBuckets.BucketYears =
-    PlaybackBuckets.BucketYears(math.max(8 * math.max(1L, windowHalf.value), math.ceil(math.abs(yearsPerSecond.value) * seconds.value).toLong))
+  def chunkYears(
+      windowHalf: WindowHalfYears,
+      yearsPerSecond: PlaybackBuckets.YearsPerSecond,
+      seconds: PlaybackBuckets.Seconds
+  ): PlaybackBuckets.BucketYears =
+    PlaybackBuckets.BucketYears(
+      math.max(8 * math.max(1L, windowHalf.value), math.ceil(math.abs(yearsPerSecond.value) * seconds.value).toLong)
+    )
 
   /** Pure: the next period to ask for, given the findings held cover the years up to `coveredTo` (`None`: nothing yet),
     * the playhead `ph`, the window's half `wh`, the stretch `chunk` and the last year played `end`: the first stretch
     * from the window's start; then the next one once the window's end is within half a stretch of what is held; nothing
     * once the end is covered.
     */
-  def next(coveredTo: Option[Years.Astronomical], ph: Years.Astronomical, wh: WindowHalfYears, chunk: PlaybackBuckets.BucketYears, end: Years.Astronomical): Option[(Years.Astronomical, Years.Astronomical)] =
+  def next(
+      coveredTo: Option[Years.Astronomical],
+      ph: Years.Astronomical,
+      wh: WindowHalfYears,
+      chunk: PlaybackBuckets.BucketYears,
+      end: Years.Astronomical
+  ): Option[(Years.Astronomical, Years.Astronomical)] =
     val last = end.value + wh.value
     val a = Years.Astronomical
     coveredTo.map(_.value) match
-      case None                                  => Some((a(ph.value - wh.value), a(math.min(last, ph.value + wh.value + chunk.value))))
-      case Some(hi) if hi >= last                => None
+      case None => Some((a(ph.value - wh.value), a(math.min(last, ph.value + wh.value + chunk.value))))
+      case Some(hi) if hi >= last                                  => None
       case Some(hi) if ph.value + wh.value + chunk.value / 2 >= hi =>
         Some((a(hi + 1), a(math.min(last, math.max(hi + 1, ph.value + wh.value) + chunk.value))))
-      case _                                     => None
+      case _ => None
 
   /** Pure: the years an answer to `asked` covers. The feed is ordered by start year and capped at `limit`: a full
     * answer may have been cut, so it covers only up to the year before its latest start (every finding starting earlier
     * is in it); a shorter one covers all it was asked for.
     */
-  def covered(asked: (Years.Astronomical, Years.Astronomical), got: Seq[GeoHit], limit: Paging.Limit): Years.Astronomical =
+  def covered(
+      asked: (Years.Astronomical, Years.Astronomical),
+      got: Seq[GeoHit],
+      limit: Paging.Limit
+  ): Years.Astronomical =
     if got.size < limit.value then asked._2
     else
       got
@@ -54,7 +70,9 @@ object PlaybackFeed:
     * finding is never in a window).
     */
   def inWindow(points: Iterable[GeoHit], lo: Years.Astronomical, hi: Years.Astronomical): List[GeoHit] =
-    points.iterator.filter(p => p.periodStart.exists(_.value <= hi.value) && p.periodEnd.exists(_.value >= lo.value)).toList
+    points.iterator
+      .filter(p => p.periodStart.exists(_.value <= hi.value) && p.periodEnd.exists(_.value >= lo.value))
+      .toList
 
   /** Pure: what is worth keeping once the window starts at `lo` — every finding that ends at or after it. */
   def keep(points: Iterable[GeoHit], lo: Years.Astronomical): List[GeoHit] =

@@ -24,7 +24,7 @@ import com.histmersion.api.catalogue.EventEntry
   * turned into the host's [[CatalogRecord]]s. Pure but for [[http]].
   */
 object PluginEvents:
-  export MediaConfig.{RequestIntervalMs as IntervalMs}
+  export MediaConfig.RequestIntervalMs as IntervalMs
   type PartName = PartName.T
   object PartName extends Newtype[String, Pure]
   type Problem = Problem.T
@@ -33,7 +33,7 @@ object PluginEvents:
   val Provider: CatalogRecord.Provider.type = CatalogRecord.Provider
   type Reason = Reason.T
   object Reason extends Newtype[String, Pure]
-  export Polite.{IntervalMs as SleepMs}
+  export Polite.IntervalMs as SleepMs
 
   /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a dating stored under
@@ -65,7 +65,10 @@ object PluginEvents:
         r.copy(timeSpan =
           timeSpan(
             CatalogDating.span(
-              Some(CatalogDating.year(CatalogDating.HistoricalYear(c.value), r.plusMinus.map(m => CatalogDating.YearMargin(m.value)))),
+              Some(
+                CatalogDating
+                  .year(CatalogDating.HistoricalYear(c.value), r.plusMinus.map(m => CatalogDating.YearMargin(m.value)))
+              ),
               None
             )
           )
@@ -76,7 +79,12 @@ object PluginEvents:
   /** Pure: a span as the dating rules read it. */
   def span(ts: TimeSpan): CatalogDating.Span =
     def historical(y: Option[com.histmersion.api.catalogue.Year]) = y.map(v => CatalogDating.HistoricalYear(v.value))
-    CatalogDating.Span(historical(ts.notBefore), historical(ts.beginBy), historical(ts.endFrom), historical(ts.notAfter))
+    CatalogDating.Span(
+      historical(ts.notBefore),
+      historical(ts.beginBy),
+      historical(ts.endFrom),
+      historical(ts.notAfter)
+    )
 
   /** Pure: a span as the host stores it. */
   def timeSpan(s: CatalogDating.Span): TimeSpan =
@@ -139,8 +147,7 @@ object PluginEvents:
       from.map(SpiValues.yearBound),
       SpiValues.yearBound(to),
       area.flatMap(b =>
-        for
-          a <- SpiValues.area(
+        for a <- SpiValues.area(
             Longitude(b.minLon.value),
             Latitude(b.minLat.value),
             Longitude(b.maxLon.value),
@@ -245,7 +252,9 @@ object PluginEvents:
     if id.isEmpty then Left(Problem("a record without an id"))
     else if label.isEmpty then Left(Problem(s"$id: no label"))
     else if !Historicity.all.exists(_.value == e.historicity.value) then
-      Left(Problem(s"$id: historicity '${e.historicity.value}' is none of ${Historicity.all.map(_.value).mkString(", ")}"))
+      Left(
+        Problem(s"$id: historicity '${e.historicity.value}' is none of ${Historicity.all.map(_.value).mkString(", ")}")
+      )
     else
       for
         notBefore <- stated(e.notBefore)(SpiValues.yearOf)
@@ -254,7 +263,11 @@ object PluginEvents:
         notAfter <- stated(e.notAfter)(SpiValues.yearOf)
         central <- stated(e.central)(SpiValues.yearOf)
         points = List(notBefore, beginBy, endFrom, notAfter).flatten.map(_.value)
-        _ <- Either.cond(!points.zip(points.drop(1)).exists((a, b) => a > b), (), Problem(s"$id: its dating runs backwards"))
+        _ <- Either.cond(
+          !points.zip(points.drop(1)).exists((a, b) => a > b),
+          (),
+          Problem(s"$id: its dating runs backwards")
+        )
       yield
         def long(y: Option[com.histmersion.Year]) = y.map(v => com.histmersion.api.catalogue.Year(v.value.toLong))
         val record = CatalogRecord(

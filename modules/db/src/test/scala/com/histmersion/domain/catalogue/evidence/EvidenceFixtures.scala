@@ -2,7 +2,14 @@ package com.histmersion
 package domain.catalogue.evidence
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{ArticleEventLead, CatalogRecord, EventEntry, EventFindingRef, EventLinkCandidate, EventSourceRef}
+import com.histmersion.api.catalogue.{
+  ArticleEventLead,
+  CatalogRecord,
+  EventEntry,
+  EventFindingRef,
+  EventLinkCandidate,
+  EventSourceRef
+}
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.{BEventRow, CatalogMerge}

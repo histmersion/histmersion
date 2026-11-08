@@ -9,8 +9,19 @@ import com.histmersion.api.automation.AgentRole
 class RunTokensClockSuite extends munit.FunSuite:
   private val epoch = Instant.parse("2001-01-01T00:00:00Z")
   private val agent = AgentDef(
-    AgentDef.Name("probe"), AgentDef.Description("clock test"), AgentRole.Probe, Nil, Nil, Nil,
-    WebAccess.None, Writes.None, AgentDef.MaxTurns(1), None, Set.empty, None, AgentDef.Body("")
+    AgentDef.Name("probe"),
+    AgentDef.Description("clock test"),
+    AgentRole.Probe,
+    Nil,
+    Nil,
+    Nil,
+    WebAccess.None,
+    Writes.None,
+    AgentDef.MaxTurns(1),
+    None,
+    Set.empty,
+    None,
+    AgentDef.Body("")
   )
 
   test("default issuance and authentication use the supplied fixed clock"):

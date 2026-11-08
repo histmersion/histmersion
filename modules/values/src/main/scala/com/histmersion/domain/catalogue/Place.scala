@@ -76,6 +76,7 @@ object Place:
   object Precision:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
+
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type CellsMicro = CellsMicroValue
     type CellsMicroValue = CellsMicroValue.T
@@ -84,7 +85,8 @@ object Place:
     type ApproximateValue = ApproximateValue.T
     object ApproximateValue extends Newtype[String, Pure]
 
-    val CellsMicro: List[CellsMicro] = List(CellsMicroValue(5000000L), CellsMicroValue(1000000L), CellsMicroValue(500000L))
+    val CellsMicro: List[CellsMicro] =
+      List(CellsMicroValue(5000000L), CellsMicroValue(1000000L), CellsMicroValue(500000L))
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.

@@ -65,4 +65,13 @@ class ColorsSuite extends munit.FunSuite:
 
   test("a ramp with no stops (no stylesheet) gives no colour rather than a wrong one"):
     assertEquals(Fmt.colorOn(Vector.empty, Fmt.RampPosition(0.5)), "")
-    assertEquals(Fmt.colorOn(Vector((Wcag.Channel(0), Wcag.Channel(0), Wcag.Channel(0)), (Wcag.Channel(100), Wcag.Channel(200), Wcag.Channel(50))), Fmt.RampPosition(0.5)), "rgb(50,100,25)")
+    assertEquals(
+      Fmt.colorOn(
+        Vector(
+          (Wcag.Channel(0), Wcag.Channel(0), Wcag.Channel(0)),
+          (Wcag.Channel(100), Wcag.Channel(200), Wcag.Channel(50))
+        ),
+        Fmt.RampPosition(0.5)
+      ),
+      "rgb(50,100,25)"
+    )

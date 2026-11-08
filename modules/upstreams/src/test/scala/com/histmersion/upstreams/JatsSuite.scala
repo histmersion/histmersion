@@ -12,7 +12,9 @@ class JatsSuite extends munit.FunSuite:
 
   test("a JATS article is recognised through its prolog, comments and DOCTYPE"):
     assert(Jats.isJats(Jats.Xml(article)))
-    assert(Jats.isJats(Jats.Xml("\n<!DOCTYPE article PUBLIC \"x\" \"y\">\n<article dtd-version=\"1.4\"><front/></article>")))
+    assert(
+      Jats.isJats(Jats.Xml("\n<!DOCTYPE article PUBLIC \"x\" \"y\">\n<article dtd-version=\"1.4\"><front/></article>"))
+    )
     assert(Jats.isJats(Jats.Xml("<article/>")))
 
   test("anything else is not JATS"):
@@ -72,7 +74,8 @@ class JatsSuite extends munit.FunSuite:
     assert(Jats.toMarkdown(Jats.Xml("<article><body><p>a</q></p></body></article>")).value.contains("a"))
 
   test("an attribute value may hold a '>'"):
-    val out = Jats.toMarkdown(Jats.Xml("""<article><body><p><ext-link href="a>b">link</ext-link> text</p></body></article>"""))
+    val out =
+      Jats.toMarkdown(Jats.Xml("""<article><body><p><ext-link href="a>b">link</ext-link> text</p></body></article>"""))
     assertEquals(out.value.trim, "link text")
 
   test("a body that opens with running text is set off from the abstract"):

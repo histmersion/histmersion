@@ -79,9 +79,13 @@ object BundleTar:
       val prefix = field(345, 155)
       val name = if prefix.isEmpty then field(0, 100) else s"$prefix/${field(0, 100)}"
       if !stored.contains(actual) then Left(Problem(s"$name: header checksum mismatch"))
-      else if typeflag != '0' && typeflag != '\u0000' then Left(Problem(s"$name: not a regular file (type '$typeflag')"))
+      else if typeflag != '0' && typeflag != '\u0000' then
+        Left(Problem(s"$name: not a regular file (type '$typeflag')"))
       else
-        octal(124, 12).flatMap(ByteCount.option(_)).toRight(Problem(s"$name: unreadable size")).map(size => Some(Entry(Entry.Name(name), size)))
+        octal(124, 12)
+          .flatMap(ByteCount.option(_))
+          .toRight(Problem(s"$name: unreadable size"))
+          .map(size => Some(Entry(Entry.Name(name), size)))
 
   def padding(size: ByteCount): Int = ((Block - (size.value % Block)) % Block).toInt
 
@@ -118,7 +122,6 @@ object BundleTar:
     override def write(b: Int): Unit = { underlying.write(b); count += 1 }
     override def write(b: Array[Byte], off: Int, len: Int): Unit = { underlying.write(b, off, len); count += len }
     override def close(): Unit = ()
-
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────
 

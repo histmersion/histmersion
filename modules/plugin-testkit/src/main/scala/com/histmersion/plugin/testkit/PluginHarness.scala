@@ -179,8 +179,10 @@ final class PluginHarness private (
         FetchOutcome.Found(fetcher, file, saveTo.map(dir => PluginHarness.save(dir, fetcher, work, file)))
       case Left(noCopy) =>
         val refused = answers.filter(_.refused)
-        if refused.nonEmpty then FetchOutcome.Refused(FetchOutcome.Refused.Why(refused.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
-        else if answers.nonEmpty then FetchOutcome.Miss(FetchOutcome.Miss.Why(answers.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
+        if refused.nonEmpty then
+          FetchOutcome.Refused(FetchOutcome.Refused.Why(refused.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
+        else if answers.nonEmpty then
+          FetchOutcome.Miss(FetchOutcome.Miss.Why(answers.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
         else
           FetchOutcome.Miss(
             FetchOutcome.Miss.Why(
@@ -198,7 +200,13 @@ final class PluginHarness private (
     */
   def searchMedia(collection: Registries.MediaCollectionsKey, place: MediaPlace): MediaReport =
     registries.mediaCollections.get(collection) match
-      case None      => MediaReport(Nil, Some(MediaReport.Failure(s"the plugin registered no media collection '$collection'")), Nil, Nil)
+      case None =>
+        MediaReport(
+          Nil,
+          Some(MediaReport.Failure(s"the plugin registered no media collection '$collection'")),
+          Nil,
+          Nil
+        )
       case Some(col) =>
         val ((verdicts, failure), logged, asked) = run {
           val polite = PluginMedia.polite(
@@ -228,12 +236,21 @@ final class PluginHarness private (
           case None      =>
             PluginMedia.guard(col.complete(item, http)) match
               case Left(why) =>
-                MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id), Some(PluginMedia.Refusal(why.value)))
+                MediaVerdict(
+                  rec.key,
+                  Some(item),
+                  rec.rights.toOption.map(_.licence.id),
+                  Some(PluginMedia.Refusal(why.value))
+                )
               case Right(full) =>
                 val completed = PluginMedia.record(full)
                 val again = PluginMedia
                   .refusal(completed, allow, name)
-                  .map(why => if why.value.startsWith("licence") then PluginMedia.Refusal("licence not allowed on the full record") else why)
+                  .map(why =>
+                    if why.value.startsWith("licence") then
+                      PluginMedia.Refusal("licence not allowed on the full record")
+                    else why
+                  )
                 MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id), again)
 
   /** One import of the plugin's event catalogue `catalogue`: its parts for `query`, each read page by page through the
@@ -259,7 +276,10 @@ final class PluginHarness private (
         val refused = List.newBuilder[CatalogueReport.Refused]
         val leftOut = List.newBuilder[CatalogueReport.LeftOut]
         val ((parts, failure), logged, asked) = run {
-          val interval = PluginEvents.safe(cat.requestIntervalMs).map(i => PluginEvents.IntervalMs(i.value)).getOrElse(PluginEvents.IntervalMs(1000))
+          val interval = PluginEvents
+            .safe(cat.requestIntervalMs)
+            .map(i => PluginEvents.IntervalMs(i.value))
+            .getOrElse(PluginEvents.IntervalMs(1000))
           val polite = PluginEvents.polite(
             wire.transport(JavaHttpTransport(HttpTransport.TimeoutSeconds(host.events.timeoutSeconds.value))),
             host.media,
@@ -319,12 +339,21 @@ final class PluginHarness private (
     */
   def readGazetteer(name: Registries.GazetteerSourcesKey): GazetteerReport =
     registries.gazetteerSources.get(name) match
-      case None      => GazetteerReport(Nil, Nil, Some(GazetteerReport.Failure(s"the plugin registered no gazetteer source '$name'")), Nil, Nil)
+      case None =>
+        GazetteerReport(
+          Nil,
+          Nil,
+          Some(GazetteerReport.Failure(s"the plugin registered no gazetteer source '$name'")),
+          Nil,
+          Nil
+        )
       case Some(src) =>
         val (got, logged, asked) = run {
           val http = PluginGazetteers.http(wire.transport(PluginGazetteers.transport(host.places)), hostLog)
           PluginGazetteers.guard(src.fetch(http)).map { places =>
-            val credit = PluginGazetteers.guard(Right(Attribution.Credit(src.rights.credit.value))).getOrElse(Attribution.Credit(""))
+            val credit = PluginGazetteers
+              .guard(Right(Attribution.Credit(src.rights.credit.value)))
+              .getOrElse(Attribution.Credit(""))
             places.map(p => PluginGazetteers.input(p, credit).map(in => AcceptedPlace(p, in.place.source)))
           }
         }
@@ -357,7 +386,10 @@ final class PluginHarness private (
   /** `<vault>:<ref>` resolved by the plugin's secret vault `vault`, as the server resolves a secret reference in any
     * plugin's config.
     */
-  def resolveSecret(vault: Secret.Ref.Vault.Value, ref: Secret.Ref.Vault.Ref): Either[PluginHost.Problem, PluginHost.SecretValue] =
+  def resolveSecret(
+      vault: Secret.Ref.Vault.Value,
+      ref: Secret.Ref.Vault.Ref
+  ): Either[PluginHost.Problem, PluginHost.SecretValue] =
     PluginHost.resolve(
       Secret.Ref.Vault(vault, ref),
       env,
@@ -410,7 +442,9 @@ object PluginHarness:
       histmersionConf: Option[Path] = None
   ): Either[Problem, PluginHarness] =
     val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
-    val envSecrets = secrets.collect { case (k, v) if k.value.startsWith(s"${Secret.Ref.EnvScheme}:") => k.value.drop(4).trim -> v.value }
+    val envSecrets = secrets.collect {
+      case (k, v) if k.value.startsWith(s"${Secret.Ref.EnvScheme}:") => k.value.drop(4).trim -> v.value
+    }
     val environment = env ++ envSecrets
     val envConfig = ConfigValueFactory.fromMap(environment.asJava).toConfig
     for
@@ -489,7 +523,9 @@ object PluginHarness:
           )
 
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
-  private def testVaults(secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2]): Either[Problem, Option[Plugin]] =
+  private def testVaults(
+      secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2]
+  ): Either[Problem, Option[Plugin]] =
     val refs = secrets.toList
       .filterNot(_._1.value.startsWith(s"${Secret.Ref.EnvScheme}:"))
       .map((k, v) => Secret.Ref.parse(k).map(_ -> v))
@@ -566,8 +602,19 @@ object PluginHarness:
     val lines = Lines()
     val wire = Wire(mode, scrub)
     val acquisition =
-      PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), ms => if mode.live then Thread.sleep(ms.value), lines.host)
-    val services = HostServices(() => acquisition.plugin, env, lines.plugin, files = new DiskLocalFiles, processes = new SystemProcesses)
+      PolicyHttp.acquisition(
+        host,
+        wire.transport(PolicyHttp.acquisitionTransport(host)),
+        ms => if mode.live then Thread.sleep(ms.value),
+        lines.host
+      )
+    val services = HostServices(
+      () => acquisition.plugin,
+      env,
+      lines.plugin,
+      files = new DiskLocalFiles,
+      processes = new SystemProcesses
+    )
     // a first-party plugin is supplied the server's own settings it reads, as the server supplies them
     val supplied = FirstPartySettings.hostView(loaded.merged, user, env, List(plugin))
     val generation = PluginHost.build(
@@ -579,9 +626,10 @@ object PluginHarness:
       firstParty = id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))
     )
     val statuses = generation.report.plugins
-    val failedVaults = statuses.find(s => s.id.value == TestVaultsId.value && s.state.value != PluginState.Registered.wire.value)
+    val failedVaults =
+      statuses.find(s => s.id.value == TestVaultsId.value && s.state.value != PluginState.Registered.wire.value)
     statuses.find(_.id.value == id.value) match
-      case None                                                => Left(Problem(s"$id: the server did not consider the plugin"))
+      case None => Left(Problem(s"$id: the server did not consider the plugin"))
       case Some(st) if st.state.value == PluginState.Registered.wire.value =>
         Right(
           PluginHarness(
@@ -600,12 +648,25 @@ object PluginHarness:
       case Some(st) if st.state.value == PluginState.Disabled.wire.value =>
         Left(Problem(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
       case Some(st) =>
-        Left(Problem(st.error.map(_.value).getOrElse(st.state.value) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)")))
+        Left(
+          Problem(
+            st.error
+              .map(_.value)
+              .getOrElse(st.state.value) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)")
+          )
+        )
 
   /** Where a found copy is written: `<dir>/<fetcher>-<identifier>.<extension>`. */
   private def save(dir: Path, fetcher: FetchChain.Outcome.FoundBy, work: WorkKey, file: FetchedFile): Path =
     val ident =
-      List(work.doi.map(_.value), work.isbn.map(_.value), work.arxiv.map(_.value), work.pmcid.map(_.value), work.pmid.map(_.value), work.archive.map(_.value)).flatten.headOption
+      List(
+        work.doi.map(_.value),
+        work.isbn.map(_.value),
+        work.arxiv.map(_.value),
+        work.pmcid.map(_.value),
+        work.pmid.map(_.value),
+        work.archive.map(_.value)
+      ).flatten.headOption
         .getOrElse("work")
     val ext = Option(file.extension.value).map(_.replaceAll("[^A-Za-z0-9]", "")).filter(_.nonEmpty).getOrElse("bin")
     Files.createDirectories(dir)

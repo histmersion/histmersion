@@ -10,4 +10,8 @@ import com.histmersion.pluginhost.PluginAi
   * @param turn
   *   `None` when the check said no
   */
-final case class AiReport(check: Either[PluginAi.Problem, Unit], turn: Option[Either[AiFailure, AiTurn]], log: List[LogLine])
+final case class AiReport(
+    check: Either[PluginAi.Problem, Unit],
+    turn: Option[Either[AiFailure, AiTurn]],
+    log: List[LogLine]
+)

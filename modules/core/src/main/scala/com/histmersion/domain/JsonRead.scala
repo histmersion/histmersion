@@ -23,7 +23,12 @@ private[domain] object JsonRead:
   object Unencoded extends Newtype[String, Pure]
 
   def str(c: ACursor, k: Key): Option[Text] =
-    c.downField(k.value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty).map(Text(_))
+    c.downField(k.value)
+      .focus
+      .flatMap(j => j.asString.orElse(j.asNumber.map(_.toString)))
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .map(Text(_))
   def strs(c: ACursor, k: Key): List[Text] =
     c.downField(k.value)
       .focus
@@ -33,7 +38,10 @@ private[domain] object JsonRead:
       .filter(_.nonEmpty)
       .map(Text(_))
   def long(c: ACursor, k: Key): Option[Number] =
-    c.downField(k.value).focus.flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption))).map(Number(_))
+    c.downField(k.value)
+      .focus
+      .flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption)))
+      .map(Number(_))
   def bool(c: ACursor, k: Key): Option[Boolean] =
     c.downField(k.value).focus.flatMap(j => j.asBoolean.orElse(j.asString.map(_.trim.equalsIgnoreCase("true"))))
   def enc(s: Unencoded): Encoded = Encoded(URLEncoder.encode(s.value, UTF_8))

@@ -3,10 +3,11 @@ package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-
-
-
-final case class ImportOptions(dryRun: ImportOptions.DryRun, chunkChars: ImportOptions.ChunkChars, toleranceKm: ImportOptions.ToleranceKm)
+final case class ImportOptions(
+    dryRun: ImportOptions.DryRun,
+    chunkChars: ImportOptions.ChunkChars,
+    toleranceKm: ImportOptions.ToleranceKm
+)
 
 object ImportOptions:
   type DryRun = DryRun.T

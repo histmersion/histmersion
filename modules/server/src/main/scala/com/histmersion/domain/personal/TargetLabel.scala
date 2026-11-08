@@ -10,6 +10,7 @@ type TargetLabel = TargetLabel.T
 object TargetLabel extends Newtype[String, Pure]:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
+
   /** The most characters a name keeps. */
 
   val MaxChars = 300

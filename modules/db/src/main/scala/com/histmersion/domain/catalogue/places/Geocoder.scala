@@ -31,7 +31,6 @@ import com.histmersion.api.library.Finding
   */
 private[places] object Geocoder:
 
-
   private given DbCodec[Candidate] = DbCodec.derived
 
   /** The places whose label or one of whose names has `key`, with a geometry, optionally only those intersecting place
@@ -83,12 +82,22 @@ private[places] object Geocoder:
   )(using DbCon): Option[Resolution] =
     resolveIn(name, hint, at, placeholderMin)
 
-  def resolveIn(name: Attempt.Name, hint: KindHint, at: Option[Period], placeholderMin: GeocodeSettings.PlaceholderMin)(using
-      DbCon
+  def resolveIn(name: Attempt.Name, hint: KindHint, at: Option[Period], placeholderMin: GeocodeSettings.PlaceholderMin)(
+      using DbCon
   ): Option[Resolution] =
-    Geocode.attempts(name).iterator.flatMap(a => attempt(Resolution.Asked(name.value.trim), a, hint, at, placeholderMin)).nextOption()
+    Geocode
+      .attempts(name)
+      .iterator
+      .flatMap(a => attempt(Resolution.Asked(name.value.trim), a, hint, at, placeholderMin))
+      .nextOption()
 
-  private def attempt(asked: Resolution.Asked, a: Attempt, hint: KindHint, at: Option[Period], min: GeocodeSettings.PlaceholderMin)(using
+  private def attempt(
+      asked: Resolution.Asked,
+      a: Attempt,
+      hint: KindHint,
+      at: Option[Period],
+      min: GeocodeSettings.PlaceholderMin
+  )(using
       DbCon
   ): Option[Resolution] =
     // the place a qualifier names ("…, Croatia"), or that stands in for an unknown one, is an AREA
@@ -116,7 +125,13 @@ private[places] object Geocoder:
           .headOption
           .fold(r)((lon, lat) => r.copy(lon = Longitude(lon), lat = Latitude(lat)))
 
-  private def chosen(asked: Resolution.Asked, a: Attempt, h: KindHint, at: Option[Period], min: GeocodeSettings.PlaceholderMin)(using
+  private def chosen(
+      asked: Resolution.Asked,
+      a: Attempt,
+      h: KindHint,
+      at: Option[Period],
+      min: GeocodeSettings.PlaceholderMin
+  )(using
       DbCon
   ): Option[Resolution] =
     val pm = Geocode.Placeholder.Min(min.value)
@@ -251,8 +266,13 @@ private[places] object Geocoder:
 
   // ── the fill (#987) ─────────────────────────────────────────────────────────────────────────────
 
-  final private case class Unplaced(id: Unplaced.Id, citekey: Citekey, region: Unplaced.Region, from: Option[Unplaced.From], to: Option[Unplaced.To])
-      derives DbCodec
+  final private case class Unplaced(
+      id: Unplaced.Id,
+      citekey: Citekey,
+      region: Unplaced.Region,
+      from: Option[Unplaced.From],
+      to: Option[Unplaced.To]
+  ) derives DbCodec
 
   object Unplaced:
     type Id = Id.T

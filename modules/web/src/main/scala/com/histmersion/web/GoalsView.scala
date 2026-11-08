@@ -40,10 +40,10 @@ object GoalsView:
   /** How many goals the tree lists, and how many of a goal's runs its window shows. */
 
   export NewArea.{Plan as NewAreaPlan, Seed as NewAreaSeed}
-  export Goal.{StatusValue as BadgeStatus}
+  export Goal.StatusValue as BadgeStatus
   type BadgeText = BadgeText.T
   object BadgeText extends Newtype[String, Pure]
-  export Goal.{Slug as PlanSectionSlug}
+  export Goal.Slug as PlanSectionSlug
 
   val Limit = 500
   val RunLimit = 15
@@ -86,9 +86,10 @@ object GoalsView:
 
   /** A link to add, from the editor's kind and text: `None` when the text is blank. */
   def linkToAdd(kind: LinkKind, raw: Goal.Plans.LinkAdd.Ref, note: Goal.Plans.LinkAdd.Note): Option[LinkAdd] =
-    Option(raw.value).map(_.trim).filter(_.nonEmpty).map(r =>
-      LinkAdd(kind, LinkAdd.Ref(r), Option(note.value).map(_.trim).filter(_.nonEmpty).map(LinkAdd.Note(_)))
-    )
+    Option(raw.value)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .map(r => LinkAdd(kind, LinkAdd.Ref(r), Option(note.value).map(_.trim).filter(_.nonEmpty).map(LinkAdd.Note(_))))
 
   /** A slug from a title: lower case, runs of anything but letters and digits as one '-'. */
   def slugify(title: Goal.Title): Goal.Slug =
@@ -140,7 +141,8 @@ object GoalsView:
       val w = Option.when(watch.value)(
         Managers.ManagerConfig(
           autoIngest = Some(autoIngest),
-          autoIngestPerDay = if autoIngest.value then cap.toIntOption.map(Managers.ManagerConfig.AutoIngestPerDay(_)) else None
+          autoIngestPerDay =
+            if autoIngest.value then cap.toIntOption.map(Managers.ManagerConfig.AutoIngestPerDay(_)) else None
         )
       )
       Right(
@@ -168,12 +170,15 @@ object GoalsView:
   ): CreatedNote =
     def made(id: Managers.ManagerInfo.Id, resume: String) =
       if active(id) then s"$id created active (the autopilot is on)" else s"$id created paused — resume it $resume"
-    CreatedNote(s"research area ${a.slug} created" + (if planned.value then "; the planner is running (its plan waits for you)" else "") +
-      seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
-      watched.fold("")(id =>
-        s"; watcher ${made(id, "for its weekly sweeps")}" +
-          (if a.watch.exists(_.autoIngest.exists(_.value)) then " (it ingests legal open-access finds)" else "")
-      ))
+    CreatedNote(
+      s"research area ${a.slug} created" + (if planned.value then "; the planner is running (its plan waits for you)"
+                                            else "") +
+        seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
+        watched.fold("")(id =>
+          s"; watcher ${made(id, "for its weekly sweeps")}" +
+            (if a.watch.exists(_.autoIngest.exists(_.value)) then " (it ingests legal open-access finds)" else "")
+        )
+    )
 
   // ── the goals window ────────────────────────────────────────────────────────────────────────────
 
@@ -225,7 +230,11 @@ object GoalsView:
 
   /** The stages, left to right, each badge with what it means. */
   private def legend: HtmlElement =
-    ul(cls := "goal-legend", aria.label := "goal stages", stages.map((s, m) => li(badge(BadgeStatus(s.value)), span(cls := "muted", m.value))))
+    ul(
+      cls := "goal-legend",
+      aria.label := "goal stages",
+      stages.map((s, m) => li(badge(BadgeStatus(s.value)), span(cls := "muted", m.value)))
+    )
 
   /** New research area: a goal, and — ticked — a plan-goal run for it, a seeding manager and a watcher (both created
     * paused; the watcher's auto-ingest of legal open-access finds is off unless ticked, with its daily cap). The slug
@@ -275,16 +284,28 @@ object GoalsView:
               }
               .flatMap { _ =>
                 val planned = if a.plan.value then
-                  ApiClient.startRun(Agents.RunRequest(Agents.RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), Agents.RunRequest.Target(a.slug.value))).map(_ => true)
+                  ApiClient
+                    .startRun(
+                      Agents.RunRequest(
+                        Agents.RunRequest.Pipeline(Pipeline.PlanGoal.wire.value),
+                        Agents.RunRequest.Target(a.slug.value)
+                      )
+                    )
+                    .map(_ => true)
                 else scala.concurrent.Future.successful(false)
                 planned.flatMap { p =>
                   val seeded = if a.seed.value then
-                    ApiClient.managerCreate(Managers.ManagerCreate(Managers.ManagerCreate.Kind("seed"), Some(a.slug))).map(m => Some(m))
+                    ApiClient
+                      .managerCreate(Managers.ManagerCreate(Managers.ManagerCreate.Kind("seed"), Some(a.slug)))
+                      .map(m => Some(m))
                   else scala.concurrent.Future.successful(None)
                   seeded.flatMap { sd =>
-                    val watched = a.watch.fold(scala.concurrent.Future.successful(Option.empty[Managers.ManagerInfo]))(
-                      c => ApiClient.managerCreate(Managers.ManagerCreate(Managers.ManagerCreate.Kind("watch"), Some(a.slug), c)).map(m => Some(m))
-                    )
+                    val watched =
+                      a.watch.fold(scala.concurrent.Future.successful(Option.empty[Managers.ManagerInfo]))(c =>
+                        ApiClient
+                          .managerCreate(Managers.ManagerCreate(Managers.ManagerCreate.Kind("watch"), Some(a.slug), c))
+                          .map(m => Some(m))
+                      )
                     watched.map(w =>
                       createdNote(
                         a,
@@ -386,7 +407,9 @@ object GoalsView:
         .goalView(slug)
         .onComplete(_.fold(e => failure.set(Some(e.getMessage)), v => { failure.set(None); view.set(Some(v)) }))
       if RunsView.enabled.now().value then
-        ApiClient.agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(Paging.Limit(RunLimit))).foreach(r => runs.set(r._1))
+        ApiClient
+          .agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(Paging.Limit(RunLimit)))
+          .foreach(r => runs.set(r._1))
       // the goal's own open plan, filtered on the server (it used to be looked for among the newest 100 open approvals)
       ApiClient
         .approvals(
@@ -408,18 +431,20 @@ object GoalsView:
 
     def plan(): Unit =
       busy.set(true)
-      ApiClient.startRun(RunRequest(RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), RunRequest.Target(slug.value))).onComplete { r =>
-        busy.set(false)
-        r.fold(
-          e => failure.set(Some(s"plan: ${e.getMessage}")),
-          run => {
-            failure.set(None)
-            message.set(Some("The planner is running; its plan will wait here for your approval."))
-            WindowManager.open(WindowKey.Run(WindowKey.Run.Id(run.id.value)))
-          }
-        )
-        refresh()
-      }
+      ApiClient
+        .startRun(RunRequest(RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), RunRequest.Target(slug.value)))
+        .onComplete { r =>
+          busy.set(false)
+          r.fold(
+            e => failure.set(Some(s"plan: ${e.getMessage}")),
+            run => {
+              failure.set(None)
+              message.set(Some("The planner is running; its plan will wait here for your approval."))
+              WindowManager.open(WindowKey.Run(WindowKey.Run.Id(run.id.value)))
+            }
+          )
+          refresh()
+        }
 
     div(
       cls := "tool-pane goal-pane",
@@ -442,7 +467,9 @@ object GoalsView:
               dt("Identifier"),
               dd(code(v.goal.slug.value)),
               Option
-                .when(v.goal.tags.nonEmpty)(List(dt("Tags"), dd(v.goal.tags.map(t => Wording.value(t.value)).mkString(", "))))
+                .when(v.goal.tags.nonEmpty)(
+                  List(dt("Tags"), dd(v.goal.tags.map(t => Wording.value(t.value)).mkString(", ")))
+                )
                 .toList
                 .flatten,
               Option
@@ -451,7 +478,9 @@ object GoalsView:
                 )
                 .toList
                 .flatten,
-              v.goal.parentSlug.toList.flatMap(ps => List(dt("part of"), dd(WinLink(WindowKey.Goal(WindowKey.Goal.Slug(ps.value)), ps.value)))),
+              v.goal.parentSlug.toList.flatMap(ps =>
+                List(dt("part of"), dd(WinLink(WindowKey.Goal(WindowKey.Goal.Slug(ps.value)), ps.value)))
+              ),
               v.budgetUsd.toList.flatMap(b => List(dt("run cap"), dd(s"${AgentsMarkdown.usd(b.value)} USD")))
             ),
             planSection(slug, approvals.signal, busy.signal, () => plan()),
@@ -459,7 +488,11 @@ object GoalsView:
             Option.when(v.children.nonEmpty)(
               div(
                 h4("Sub-goals"),
-                ul(v.children.map(c => li(WinLink(WindowKey.Goal(WindowKey.Goal.Slug(c.slug.value)), c.title.value), " ", badge(c.status))))
+                ul(
+                  v.children.map(c =>
+                    li(WinLink(WindowKey.Goal(WindowKey.Goal.Slug(c.slug.value)), c.title.value), " ", badge(c.status))
+                  )
+                )
               )
             ),
             linksSection(slug, v.links, busy.signal, write),
@@ -526,12 +559,19 @@ object GoalsView:
     def entry(l: GoalLink): HtmlElement =
       li(
         l.kind match
-          case LinkKind.Source    => SourceLink(Preview.Target.Source.Citekey(l.ref.value), label = l.title.map(t => UiLabels.Text(s"${l.ref.value} — ${t.value}")))
+          case LinkKind.Source =>
+            SourceLink(
+              Preview.Target.Source.Citekey(l.ref.value),
+              label = l.title.map(t => UiLabels.Text(s"${l.ref.value} — ${t.value}"))
+            )
           case LinkKind.Article   => ArticleLink(Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value))
           case LinkKind.Query     => span(s"“${l.ref}”")
           case LinkKind.QueueItem =>
             val text = span(s"#${l.ref} ", span(cls := "muted", l.title.map(_.value).getOrElse("(gone)")))
-            l.queue.flatMap(q => Queue.Kind.parse(Queue.Kind.Label(q.value))).zip(l.ref.value.toIntOption).fold(text)((k, id) => QueueItemLink(k, GoalLink.QueueNumber(id), text)),
+            l.queue
+              .flatMap(q => Queue.Kind.parse(Queue.Kind.Label(q.value)))
+              .zip(l.ref.value.toIntOption)
+              .fold(text)((k, id) => QueueItemLink(k, GoalLink.QueueNumber(id), text)),
         Option.when(l.title.isEmpty && l.kind != LinkKind.Query)(span(cls := "muted", " (missing)")),
         l.note.filter(_.value.nonEmpty).map(n => span(cls := "muted", s" · ${n.value}")),
         child.maybe <-- Auth.writable.map(w =>
@@ -630,7 +670,9 @@ object GoalsView:
             cls := "muted",
             c.nextRunAt.fold("not scheduled")(n => s"next $n"),
             c.lastRunAt.map(l => s" · last run $l"),
-            c.lastRun.map(id => span(" · ", WinLink(WindowKey.Run(WindowKey.Run.Id(id.value)), s"run ${id.value.take(8)}"))),
+            c.lastRun.map(id =>
+              span(" · ", WinLink(WindowKey.Run(WindowKey.Run.Id(id.value)), s"run ${id.value.take(8)}"))
+            ),
             c.lastNote.filter(_.value.nonEmpty).map(n => s" · ${n.value}")
           )
         ),

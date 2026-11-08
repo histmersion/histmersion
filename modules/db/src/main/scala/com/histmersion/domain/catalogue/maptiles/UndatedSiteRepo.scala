@@ -20,7 +20,7 @@ private[maptiles] object UndatedSiteRepo:
   /** The group of `map_changes` a write to an undated site moves (V106's trigger). */
   type Group = Group.T
   object Group extends Newtype[String, Pure]
-  export TileRepo.{SiteType as CandidatesSiteType}
+  export TileRepo.SiteType as CandidatesSiteType
 
   val UndatedGroup: Group = Group("undated")
 
@@ -39,7 +39,11 @@ private[maptiles] object UndatedSiteRepo:
   /** The undated sites in the box `envelope` (of type `siteType` when one is asked for), but those of `except`, as a
     * tile's candidates ([[TileRepo.cellsSql]]: no dates, each marked `ub`). Pure.
     */
-  def candidates(siteType: Option[UndatedSiteRepo.CandidatesSiteType], envelope: Sql, except: List[TileRepo.SiteId] = Nil): Sql =
+  def candidates(
+      siteType: Option[UndatedSiteRepo.CandidatesSiteType],
+      envelope: Sql,
+      except: List[TileRepo.SiteId] = Nil
+  ): Sql =
     Sql.raw(
       Sql.Text(
         "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, NULL::bigint AS ps, NULL::bigint AS pe, true AS ub" +
@@ -49,11 +53,12 @@ private[maptiles] object UndatedSiteRepo:
     ) ++ envelope ++
       Sql.of(Sql.OfText(" AND p.label !~* ?"), Param.S(Param.S.V(PlaceSql.UninformativeLabel))) ++ typed(siteType) ++
       (if except.isEmpty then Sql.empty
-       else
-         Sql.of(Sql.OfText(" AND NOT (p.id = ANY(?::text[]))"), Param.A(except.map(e => Param.A.V(e.value)))))
+       else Sql.of(Sql.OfText(" AND NOT (p.id = ANY(?::text[]))"), Param.A(except.map(e => Param.A.V(e.value)))))
 
   /** Every undated site in tile `c`, each alone, but those of `except`. */
-  def items(c: TileCoord, siteType: Option[TileRepo.SiteType], except: List[TileRepo.SiteId])(using DbCon): List[TileCell] =
+  def items(c: TileCoord, siteType: Option[TileRepo.SiteType], except: List[TileRepo.SiteId])(using
+      DbCon
+  ): List[TileCell] =
     TileRepo.items(candidates(siteType, TileRepo.envelope(c), except), c)
 
   /** The undated sites in tile `c` counted by the grid's squares, read from the sites themselves. */
@@ -83,7 +88,9 @@ private[maptiles] object UndatedSiteRepo:
       Sql.raw(Sql.Text(" GROUP BY gx, gy"))
 
   /** The kept counts of tile `c`'s squares ([[keptSql]]). */
-  def kept(c: TileCoord, perSide: UndatedBuild.PerSide, siteType: Option[TileRepo.SiteType])(using DbCon): List[GridCell] =
+  def kept(c: TileCoord, perSide: UndatedBuild.PerSide, siteType: Option[TileRepo.SiteType])(using
+      DbCon
+  ): List[GridCell] =
     keptSql(c, perSide, siteType).frag.query[GridCell].run().toList
 
   /** What the kept counts were built from: the `undated` group's version, the grid's squares a tile side, the deepest
@@ -98,7 +105,10 @@ private[maptiles] object UndatedSiteRepo:
 
   /** The `undated` group's version now (0 before any write to an undated site). */
   def version()(using DbCon): UndatedBuild.Version =
-    sql"SELECT coalesce(sum(weight), 0)::bigint FROM map_changes WHERE grp = $UndatedGroup".query[UndatedBuild.Version].run().head
+    sql"SELECT coalesce(sum(weight), 0)::bigint FROM map_changes WHERE grp = $UndatedGroup"
+      .query[UndatedBuild.Version]
+      .run()
+      .head
 
   /** The sites' places on Web Mercator's unit square, each axis held inside it (as [[TileRepo.unitsSql]]), over the
     * columns `lon` and `lat`.
@@ -124,13 +134,18 @@ private[maptiles] object UndatedSiteRepo:
       )
     ) ++
       Sql.of(Sql.OfText(" AND p.label !~* ?) s) m"), Param.S(Param.S.V(PlaceSql.UninformativeLabel))) ++
-      Sql.of(Sql.OfText(" CROSS JOIN generate_series(0, ?) z(z) GROUP BY 1, 2, 3, 4"), Param.I(Param.I.V(maxZoom.value)))
+      Sql.of(
+        Sql.OfText(" CROSS JOIN generate_series(0, ?) z(z) GROUP BY 1, 2, 3, 4"),
+        Param.I(Param.I.V(maxZoom.value))
+      )
 
   /** Count every undated site again ([[rebuildSql]]) and record what from (`version` of the `undated` group, read
     * before), replacing the kept counts — in the caller's transaction, so readers see the old counts until it commits.
     * False when another rebuild holds the lock (it does the same work).
     */
-  def rebuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom)(using DbCon): Boolean =
+  def rebuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom)(using
+      DbCon
+  ): Boolean =
     val locked =
       sql"SELECT pg_try_advisory_xact_lock(hashtext('histmersion.site_undated_cells'))".query[Boolean].run().head
     if locked then

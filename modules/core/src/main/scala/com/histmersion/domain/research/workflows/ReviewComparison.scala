@@ -26,7 +26,9 @@ object ReviewComparison extends OutputComparison:
     val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, "merge-").map(_ -> n)).sortBy(_._1)
     val last = merges.lastOption.flatMap((_, n) => CompareRuns.output[Merged](d, n))
     val first = CompareRuns.output[Merged](d, CompareRuns.OutputName("merge-1"))
-    val reports = List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n => CompareRuns.output[Report](d, CompareRuns.OutputName(n)))
+    val reports = List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n =>
+      CompareRuns.output[Report](d, CompareRuns.OutputName(n))
+    )
     val mech = CompareRuns.output[List[Finding]](d, CompareRuns.OutputName("mechanical-1"))
     val reviewers = reports.map(r =>
       ReviewerSide(
@@ -72,7 +74,9 @@ object ReviewComparison extends OutputComparison:
       ComparedText.normalise(ComparedText.NormaliseS(Option(a.where).fold("")(_.value))) ==
         ComparedText.normalise(ComparedText.NormaliseS(Option(b.where).fold("")(_.value)))
     (qa.value.nonEmpty && qa == qb) ||
-    (sameWhere && CompareRuns.similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value)).value >= ProblemSimilarity)
+    (sameWhere && CompareRuns
+      .similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value))
+      .value >= ProblemSimilarity)
 
   /** Each pair of runs: how many of round 1's majors match one-to-one (greedily, in order). */
   def overlap(a: List[Finding], b: List[Finding]): List[(Finding, Finding)] =
@@ -90,7 +94,9 @@ object ReviewComparison extends OutputComparison:
     loop(a, Nil, b)
 
   override def overlaps(runs: List[Run]): List[MajorOverlap] =
-    val majors = runs.map(d => d.run.id -> CompareRuns.output[Merged](d, CompareRuns.OutputName("merge-1")).toList.flatMap(_.majors))
+    val majors = runs.map(d =>
+      d.run.id -> CompareRuns.output[Merged](d, CompareRuns.OutputName("merge-1")).toList.flatMap(_.majors)
+    )
     for
       (i, j) <- majors.indices.toList.combinations(2).toList.map(p => (p(0), p(1)))
       (ra, ma) = majors(i)

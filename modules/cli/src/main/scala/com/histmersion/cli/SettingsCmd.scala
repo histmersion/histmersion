@@ -17,7 +17,6 @@ import com.histmersion.util.console.Console
   */
 object SettingsCmd:
 
-
   private val local = Opts
     .flag(
       "local",
@@ -62,9 +61,11 @@ object SettingsCmd:
       page.flatMap { p =>
         key match
           case Some(k) =>
-            p.field(ConfigEdit.Field.Key(k)).toRight(Cli.Error(Cli.Error.Message(s"There is no setting called $k."), ExitCode.Usage)).map { f =>
-              Output.emit(json, f)(ConfigEditMarkdown.field)
-            }
+            p.field(ConfigEdit.Field.Key(k))
+              .toRight(Cli.Error(Cli.Error.Message(s"There is no setting called $k."), ExitCode.Usage))
+              .map { f =>
+                Output.emit(json, f)(ConfigEditMarkdown.field)
+              }
           case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
       }
     }
@@ -177,16 +178,22 @@ object SettingsCmd:
           ConfigEdit.Page.Exists(state.text.isDefined),
           ConfigEdit.Page.Version(state.version.value),
           fields.map(_.section).distinct.map(id => ConfigEdit.Section(id, fields = fields.filter(_.section == id))),
-          loaded.fold(l => List(ConfigEdit.Page.Problems(l.value)), _.file.warnings.map(w => ConfigEdit.Page.Problems(w.value)))
+          loaded.fold(
+            l => List(ConfigEdit.Page.Problems(l.value)),
+            _.file.warnings.map(w => ConfigEdit.Page.Problems(w.value))
+          )
         )
 
     def write(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] =
       for
         fw <- writer
-        edits <- SettingEdit.parseAll(
-          w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),
-          ConfigSchema.reference
-        ).left.map(failed)
+        edits <- SettingEdit
+          .parseAll(
+            w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),
+            ConfigSchema.reference
+          )
+          .left
+          .map(failed)
         out <- fw.write(edits, None, SettingPolicy.LiteralConsent(w.literalConsent.value)).left.map(failed)
       yield ConfigEdit.Written(
         ConfigEdit.Written.File(out.file.value),
@@ -195,6 +202,8 @@ object SettingsCmd:
         out.backup.map(b => ConfigEdit.Written.Backup(b.value)),
         ConfigEdit.Written.Version(out.version.value),
         ConfigEdit.Written.Created(out.created.value),
-        out.restart.map((k, why) => ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))),
+        out.restart.map((k, why) =>
+          ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))
+        ),
         out.warnings.map(n => ConfigEdit.Written.Warnings(n.value))
       )

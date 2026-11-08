@@ -32,23 +32,28 @@ final class SeedImport(
       val name = SeedFolder.Name(listed.value)
       try
         folder.read(name) match
-          case None => Left(s"$name: no frontmatter")
+          case None    => Left(s"$name: no frontmatter")
           case Some(n) =>
             Citekey.parse(n.source.citekey.value) match
-              case Left(problem) => Left(s"$name: ${problem.value}")
+              case Left(problem)                                                 => Left(s"$name: ${problem.value}")
               case Right(ck) if SeedImport.isStale(stored, ck, n.modifiedMillis) =>
                 Right(Some(n.source.citekey))
               case Right(ck) =>
                 val found = folder.figures(name, ck, assetBytes)
-                val s = n.source.modify(_.ocrMarkdown).using(
-                  _.map(md =>
-                    Source.OcrMarkdown(
-                      AssetLinks
-                        .normalizeBody(AssetLinks.NormalizeBodyMd(md.value), AssetLinks.NormalizeBodyTitle(n.source.title.value))
-                        .value
+                val s = n.source
+                  .modify(_.ocrMarkdown)
+                  .using(
+                    _.map(md =>
+                      Source.OcrMarkdown(
+                        AssetLinks
+                          .normalizeBody(
+                            AssetLinks.NormalizeBodyMd(md.value),
+                            AssetLinks.NormalizeBodyTitle(n.source.title.value)
+                          )
+                          .value
+                      )
                     )
                   )
-                )
                 val _ = sources.put(s, Caller.Local)
                 if found.nonEmpty then
                   val _ = addFigures(ck, found)

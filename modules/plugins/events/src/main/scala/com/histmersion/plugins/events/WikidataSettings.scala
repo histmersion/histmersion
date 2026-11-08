@@ -8,11 +8,17 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** `histmersion.events.wikidata`: the query service, the pace, the classes read (`Q178561:battle,…`, the most specific
   * first) and the label languages.
   */
-final case class WikidataSettings(sparqlUrl: WikidataSettings.SparqlUrl, requestIntervalMs: WikidataSettings.RequestIntervalMs, classes: WikidataSettings.Classes, languages: WikidataSettings.Languages)
-    derives ConfigReader:
+final case class WikidataSettings(
+    sparqlUrl: WikidataSettings.SparqlUrl,
+    requestIntervalMs: WikidataSettings.RequestIntervalMs,
+    classes: WikidataSettings.Classes,
+    languages: WikidataSettings.Languages
+) derives ConfigReader:
   /** The label languages, English always among them. */
   def labelLanguages: WikidataSettings.LabelLanguage =
-    WikidataSettings.LabelLanguage((languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList :+ "en").distinct.mkString(","))
+    WikidataSettings.LabelLanguage(
+      (languages.value.split(",").map(_.trim).filter(_.nonEmpty).toList :+ "en").distinct.mkString(",")
+    )
 
 object WikidataSettings:
   type LabelLanguage = LabelLanguage.T

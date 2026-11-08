@@ -56,25 +56,111 @@ object UiState:
   import FieldCodec.given
 
   // ── the fields ────────────────────────────────────────────────────────────────────────────────
-  val q = Field[Option[String]](Field.Key("q"), Field.HashKey("q"), None, Persist.Hash, Role.Filter, Some(Field.Label("search")))
-  val tags = Field[List[String]](Field.Key("tags"), Field.HashKey("tag"), Nil, Persist.Hash, Role.Filter, Some(Field.Label("tag")))
-  val authors = Field[List[String]](Field.Key("authors"), Field.HashKey("author"), Nil, Persist.Hash, Role.Filter, Some(Field.Label("author")))
-  val places = Field[List[String]](Field.Key("places"), Field.HashKey("place"), Nil, Persist.Hash, Role.Filter, Some(Field.Label("place")))
-  val placeIds = Field[List[String]](Field.Key("placeIds"), Field.HashKey("placeId"), Nil, Persist.Hash, Role.Filter, Some(Field.Label("place")))
-  val topics = Field[List[String]](Field.Key("topics"), Field.HashKey("topic"), Nil, Persist.Hash, Role.Filter, Some(Field.Label("topic")))
-  val status = Field[List[String]](Field.Key("status"), Field.HashKey("status"), Nil, Persist.Hash, Role.Filter, Some(Field.Label("status")))
-  val yearFrom = Field[Option[Long]](Field.Key("yearFrom"), Field.HashKey("yearFrom"), None, Persist.Hash, Role.Filter, Some(Field.Label("published from")))
-  val yearTo = Field[Option[Long]](Field.Key("yearTo"), Field.HashKey("yearTo"), None, Persist.Hash, Role.Filter, Some(Field.Label("published to")))
-  val sort = Field[Option[String]](Field.Key("sort"), Field.HashKey("sort"), None, Persist.Hash, Role.Filter, Some(Field.Label("sort")), chip = Field.Chip(false))
+  val q = Field[Option[String]](
+    Field.Key("q"),
+    Field.HashKey("q"),
+    None,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("search"))
+  )
+  val tags = Field[List[String]](
+    Field.Key("tags"),
+    Field.HashKey("tag"),
+    Nil,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("tag"))
+  )
+  val authors = Field[List[String]](
+    Field.Key("authors"),
+    Field.HashKey("author"),
+    Nil,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("author"))
+  )
+  val places = Field[List[String]](
+    Field.Key("places"),
+    Field.HashKey("place"),
+    Nil,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("place"))
+  )
+  val placeIds = Field[List[String]](
+    Field.Key("placeIds"),
+    Field.HashKey("placeId"),
+    Nil,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("place"))
+  )
+  val topics = Field[List[String]](
+    Field.Key("topics"),
+    Field.HashKey("topic"),
+    Nil,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("topic"))
+  )
+  val status = Field[List[String]](
+    Field.Key("status"),
+    Field.HashKey("status"),
+    Nil,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("status"))
+  )
+  val yearFrom = Field[Option[Long]](
+    Field.Key("yearFrom"),
+    Field.HashKey("yearFrom"),
+    None,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("published from"))
+  )
+  val yearTo = Field[Option[Long]](
+    Field.Key("yearTo"),
+    Field.HashKey("yearTo"),
+    None,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("published to"))
+  )
+  val sort = Field[Option[String]](
+    Field.Key("sort"),
+    Field.HashKey("sort"),
+    None,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("sort")),
+    chip = Field.Chip(false)
+  )
 
   /** The title quick-filter above the tabs: narrows every list by its items' own title (a source's title, an article's
     * title, an event's label). A filter the user typed, so "clear all" clears it; not a chip, because the input showing
     * it is always on screen.
     */
-  val title = Field[Option[String]](Field.Key("title"), Field.HashKey("title"), None, Persist.Hash, Role.Filter, Some(Field.Label("title")), chip = Field.Chip(false))
+  val title = Field[Option[String]](
+    Field.Key("title"),
+    Field.HashKey("title"),
+    None,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("title")),
+    chip = Field.Chip(false)
+  )
 
   /** A research goal's sources only (its goal page's "sources brought in", in Library or on the map). */
-  val goal = Field[Option[String]](Field.Key("goal"), Field.HashKey("goal"), None, Persist.Hash, Role.Filter, Some(Field.Label("goal")))
+  val goal = Field[Option[String]](
+    Field.Key("goal"),
+    Field.HashKey("goal"),
+    None,
+    Persist.Hash,
+    Role.Filter,
+    Some(Field.Label("goal"))
+  )
   val from = Field[Option[Long]](Field.Key("from"), Field.HashKey("from"), None, Persist.Hash, Role.Span)
   val to = Field[Option[Long]](Field.Key("to"), Field.HashKey("to"), None, Persist.Hash, Role.Span)
   val bbox = Field[Option[String]](Field.Key("bbox"), Field.HashKey("bbox"), None, Persist.Hash, Role.Span)
@@ -84,7 +170,8 @@ object UiState:
   val open = Field[List[WindowKey]](Field.Key("open"), Field.HashKey("open"), Nil, Persist.Hash, Role.View)
 
   /** Library's order of its sources ([[library.LibrarySort]]): a view of the list, not a filter. */
-  val librarySort = Field[Option[String]](Field.Key("librarySort"), Field.HashKey("lsort"), None, Persist.Hash, Role.View)
+  val librarySort =
+    Field[Option[String]](Field.Key("librarySort"), Field.HashKey("lsort"), None, Persist.Hash, Role.View)
   val tab = Field[Option[String]](Field.Key("tab"), Field.HashKey("tab"), None, Persist.Hash, Role.View)
   val layers = Field[Set[MapLayer]](Field.Key("layers"), Field.HashKey("layers"), Set.empty, Persist.Local, Role.View)
 
@@ -93,27 +180,35 @@ object UiState:
     * of its own that is absent until first toggled keeps them on.
     */
   val sources = Field[Boolean](Field.Key("sources"), Field.HashKey("sources"), true, Persist.Local, Role.View)
-  val baseMap = Field[BaseMap](Field.Key("baseMap"), Field.HashKey("baseMap"), BaseMap.Standard, Persist.Local, Role.View)
+  val baseMap =
+    Field[BaseMap](Field.Key("baseMap"), Field.HashKey("baseMap"), BaseMap.Standard, Persist.Local, Role.View)
 
   /** The viewer's options over the vector styles ([[BaseMaps]]): names, their language, contours. Per device. */
-  val mapOptions = Field[MapPrefs](Field.Key("mapOptions"), Field.HashKey("mapOptions"), MapPrefs(), Persist.Local, Role.View)
+  val mapOptions =
+    Field[MapPrefs](Field.Key("mapOptions"), Field.HashKey("mapOptions"), MapPrefs(), Persist.Local, Role.View)
 
   /** The media layer's provider and licence filters (#1446): `None` = every one. Per device. */
-  val mediaProvider = Field[Option[String]](Field.Key("mediaProvider"), Field.HashKey("mediaProvider"), None, Persist.Local, Role.View)
-  val mediaLicense = Field[Option[String]](Field.Key("mediaLicense"), Field.HashKey("mediaLicense"), None, Persist.Local, Role.View)
+  val mediaProvider =
+    Field[Option[String]](Field.Key("mediaProvider"), Field.HashKey("mediaProvider"), None, Persist.Local, Role.View)
+  val mediaLicense =
+    Field[Option[String]](Field.Key("mediaLicense"), Field.HashKey("mediaLicense"), None, Persist.Local, Role.View)
 
   /** The events layer's filters (#1449): a kind or a group (`natural` | `human`), and the tier (`attested` |
     * `catalogue`); `None` = every one. The sites layer's: one site type. Per device.
     */
-  val eventKind = Field[Option[String]](Field.Key("eventKind"), Field.HashKey("eventKind"), None, Persist.Local, Role.View)
-  val eventTier = Field[Option[String]](Field.Key("eventTier"), Field.HashKey("eventTier"), None, Persist.Local, Role.View)
+  val eventKind =
+    Field[Option[String]](Field.Key("eventKind"), Field.HashKey("eventKind"), None, Persist.Local, Role.View)
+  val eventTier =
+    Field[Option[String]](Field.Key("eventTier"), Field.HashKey("eventTier"), None, Persist.Local, Role.View)
   val siteType = Field[Option[String]](Field.Key("siteType"), Field.HashKey("siteType"), None, Persist.Local, Role.View)
 
   /** "Also show sites (events) with no known date": drawn beneath the dated ones, outlined dashed. Off by default; per
     * device.
     */
-  val sitesUndated = Field[Boolean](Field.Key("sitesUndated"), Field.HashKey("sitesUndated"), false, Persist.Local, Role.View)
-  val eventsUndated = Field[Boolean](Field.Key("eventsUndated"), Field.HashKey("eventsUndated"), false, Persist.Local, Role.View)
+  val sitesUndated =
+    Field[Boolean](Field.Key("sitesUndated"), Field.HashKey("sitesUndated"), false, Persist.Local, Role.View)
+  val eventsUndated =
+    Field[Boolean](Field.Key("eventsUndated"), Field.HashKey("eventsUndated"), false, Persist.Local, Role.View)
 
   /** How the boundaries layer reads the period ([[GeoPick]]): a snapshot at its middle (the default), start or end, or
     * every state in it with its earliest or latest shape. Sites follow a snapshot's year and the middle otherwise;
@@ -124,7 +219,8 @@ object UiState:
   /** The map's motion (#4718): follow the system's reduced-motion setting (the default), always animate, or never. Per
     * device; [[MotionPref]] answers "does the map animate now?" from it.
     */
-  val mapMotion = Field[MapMotion](Field.Key("mapMotion"), Field.HashKey("mapMotion"), MapMotion.System, Persist.Local, Role.View)
+  val mapMotion =
+    Field[MapMotion](Field.Key("mapMotion"), Field.HashKey("mapMotion"), MapMotion.System, Persist.Local, Role.View)
 
   /** The sidebar's bottom sheet in the narrow layout (a per-device preference, never in a link). */
   val sheet = Field[Sheet](Field.Key("sheet"), Field.HashKey("sheet"), Sheet.Peek, Persist.Local, Role.View)
@@ -136,34 +232,46 @@ object UiState:
   val jobKinds = Field[List[String]](Field.Key("jobKinds"), Field.HashKey("jobKind"), Nil, Persist.Hash, Role.View)
   val jobSince = Field[Option[String]](Field.Key("jobSince"), Field.HashKey("jobSince"), None, Persist.Hash, Role.View)
   val jobUntil = Field[Option[String]](Field.Key("jobUntil"), Field.HashKey("jobUntil"), None, Persist.Hash, Role.View)
-  val jobSubject = Field[Option[String]](Field.Key("jobSubject"), Field.HashKey("jobSubject"), None, Persist.Hash, Role.View)
+  val jobSubject =
+    Field[Option[String]](Field.Key("jobSubject"), Field.HashKey("jobSubject"), None, Persist.Hash, Role.View)
 
   /** The agent runs window's filters (`ListFilters.RunFilter`): the state (`None` = every run), the pipelines and
     * origins (any of), one manager, provider, model and goal, the start dates, the target text.
     */
-  val runStatus = Field[Option[Agents.RunState]](Field.Key("runStatus"), Field.HashKey("runs"), None, Persist.Hash, Role.View)
-  val runPipelines = Field[List[String]](Field.Key("runPipelines"), Field.HashKey("runPipeline"), Nil, Persist.Hash, Role.View)
-  val runOrigins = Field[List[String]](Field.Key("runOrigins"), Field.HashKey("runOrigin"), Nil, Persist.Hash, Role.View)
-  val runManager = Field[Option[String]](Field.Key("runManager"), Field.HashKey("runManager"), None, Persist.Hash, Role.View)
-  val runProvider = Field[Option[String]](Field.Key("runProvider"), Field.HashKey("runProvider"), None, Persist.Hash, Role.View)
+  val runStatus =
+    Field[Option[Agents.RunState]](Field.Key("runStatus"), Field.HashKey("runs"), None, Persist.Hash, Role.View)
+  val runPipelines =
+    Field[List[String]](Field.Key("runPipelines"), Field.HashKey("runPipeline"), Nil, Persist.Hash, Role.View)
+  val runOrigins =
+    Field[List[String]](Field.Key("runOrigins"), Field.HashKey("runOrigin"), Nil, Persist.Hash, Role.View)
+  val runManager =
+    Field[Option[String]](Field.Key("runManager"), Field.HashKey("runManager"), None, Persist.Hash, Role.View)
+  val runProvider =
+    Field[Option[String]](Field.Key("runProvider"), Field.HashKey("runProvider"), None, Persist.Hash, Role.View)
   val runModel = Field[Option[String]](Field.Key("runModel"), Field.HashKey("runModel"), None, Persist.Hash, Role.View)
   val runGoal = Field[Option[String]](Field.Key("runGoal"), Field.HashKey("runGoal"), None, Persist.Hash, Role.View)
   val runSince = Field[Option[String]](Field.Key("runSince"), Field.HashKey("runSince"), None, Persist.Hash, Role.View)
   val runUntil = Field[Option[String]](Field.Key("runUntil"), Field.HashKey("runUntil"), None, Persist.Hash, Role.View)
-  val runSubject = Field[Option[String]](Field.Key("runSubject"), Field.HashKey("runSubject"), None, Persist.Hash, Role.View)
+  val runSubject =
+    Field[Option[String]](Field.Key("runSubject"), Field.HashKey("runSubject"), None, Persist.Hash, Role.View)
 
   /** The approvals window's filters (`ListFilters.ApprovalFilter`): the state (`None` = the open ones, `all` = every
     * one), the kinds and deciders (any of), the subject text.
     */
-  val approvalState = Field[Option[String]](Field.Key("approvalState"), Field.HashKey("apprState"), None, Persist.Hash, Role.View)
-  val approvalKinds = Field[List[String]](Field.Key("approvalKinds"), Field.HashKey("apprKind"), Nil, Persist.Hash, Role.View)
+  val approvalState =
+    Field[Option[String]](Field.Key("approvalState"), Field.HashKey("apprState"), None, Persist.Hash, Role.View)
+  val approvalKinds =
+    Field[List[String]](Field.Key("approvalKinds"), Field.HashKey("apprKind"), Nil, Persist.Hash, Role.View)
   val approvalBy = Field[List[String]](Field.Key("approvalBy"), Field.HashKey("apprBy"), Nil, Persist.Hash, Role.View)
-  val approvalSubject = Field[Option[String]](Field.Key("approvalSubject"), Field.HashKey("apprSubject"), None, Persist.Hash, Role.View)
+  val approvalSubject =
+    Field[Option[String]](Field.Key("approvalSubject"), Field.HashKey("apprSubject"), None, Persist.Hash, Role.View)
 
   /** The scheduler panel's filters over its queue: the job types and the reasons (any of), the target text. */
-  val schedTypes = Field[List[String]](Field.Key("schedTypes"), Field.HashKey("schedType"), Nil, Persist.Hash, Role.View)
+  val schedTypes =
+    Field[List[String]](Field.Key("schedTypes"), Field.HashKey("schedType"), Nil, Persist.Hash, Role.View)
   val schedCodes = Field[List[String]](Field.Key("schedCodes"), Field.HashKey("schedWhy"), Nil, Persist.Hash, Role.View)
-  val schedSubject = Field[Option[String]](Field.Key("schedSubject"), Field.HashKey("schedSubject"), None, Persist.Hash, Role.View)
+  val schedSubject =
+    Field[Option[String]](Field.Key("schedSubject"), Field.HashKey("schedSubject"), None, Persist.Hash, Role.View)
 
   /** The acquisition window also lists the items already done. */
   val acquireDone = Field[Boolean](Field.Key("acquireDone"), Field.HashKey("acqDone"), false, Persist.Hash, Role.View)
@@ -174,7 +282,8 @@ object UiState:
   /** The bundle the merge review screen is reviewing — its sha256 on the server, so a reload (or a link) reopens the
     * same review.
     */
-  val mergeBundle = Field[Option[String]](Field.Key("mergeBundle"), Field.HashKey("bundle"), None, Persist.Hash, Role.View)
+  val mergeBundle =
+    Field[Option[String]](Field.Key("mergeBundle"), Field.HashKey("bundle"), None, Persist.Hash, Role.View)
 
   /** The API key writes are sent with, when the server asks for one ([[Auth]]). In this browser's storage only — never
     * in the URL, so a shared link cannot carry it.
@@ -278,12 +387,13 @@ object UiState:
   /** How long a reload scheduled NOW waits: `normalMs`, or less after a preview — the pointer resting on a suggestion
     * should see its lists at once, not after the typing debounce.
     */
-  def reloadDelay(normalMs: ReloadDelayNormalMs): ReloadDelay = if previewChange then ReloadDelay(math.min(normalMs.value, previewMs.value)) else ReloadDelay(normalMs.value)
+  def reloadDelay(normalMs: ReloadDelayNormalMs): ReloadDelay =
+    if previewChange then ReloadDelay(math.min(normalMs.value, previewMs.value)) else ReloadDelay(normalMs.value)
 
   private def withPreview(key: String, vs: List[String]): List[String] =
     preview.now() match
       case Some(p) if p.key.value == key && !vs.contains(p.value.value) => vs :+ p.value.value
-      case _                                                           => vs
+      case _                                                            => vs
 
   // ── history sequence (the timeline's back/forward buttons read it) ─────────────────────────────
 
@@ -352,7 +462,8 @@ object UiState:
     val f = Filter.of(
       q = (if keep("q") then q.now() else None).map(Filter.Q(_)),
       tags = (if keep("tags", "tag") then withPreview("tags", tags.now()) else Nil).map(Filter.Tags(_)),
-      authors = (if keep("authors", "author") then withPreview("authors", authors.now()) else Nil).map(Filter.Authors(_)),
+      authors =
+        (if keep("authors", "author") then withPreview("authors", authors.now()) else Nil).map(Filter.Authors(_)),
       places = ((if keep("places", "place") then withPreview("places", places.now()) else Nil) ++
         (if keep("placeIds", "place") then placeIds.now() else Nil)).map(Filter.Places(_)),
       topics = (if keep("topics", "topic") then withPreview("topics", topics.now()) else Nil).map(Filter.Topics(_)),
@@ -382,12 +493,14 @@ object UiState:
   /** What the Articles tab asks for: the global filter, title included — the server lists the articles citing the
     * sources it selects.
     */
-  def articleQuery(): Api.ArticleQuery = Api.ArticleQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
+  def articleQuery(): Api.ArticleQuery =
+    Api.ArticleQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
 
   /** What the Events tab asks for: the global filter, title included — the server lists the events whose source it
     * selects, in its period.
     */
-  def eventQuery(): Api.EventQuery = Api.EventQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
+  def eventQuery(): Api.EventQuery =
+    Api.EventQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
 
   private[web] def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
     s.split(",").flatMap(_.trim.toDoubleOption).toList match
@@ -399,7 +512,12 @@ object UiState:
     writeHash(push = NavigatePush(false))
     bump()
 
-  case class ActiveChip(key: ActiveChip.Key, label: ActiveChip.Label, value: ActiveChip.Value, shown: Option[ActiveChip.Shown] = None)
+  case class ActiveChip(
+      key: ActiveChip.Key,
+      label: ActiveChip.Label,
+      value: ActiveChip.Value,
+      shown: Option[ActiveChip.Shown] = None
+  )
 
   object ActiveChip:
     type Key = Key.T
@@ -414,7 +532,15 @@ object UiState:
   def activeChips(): List[ActiveChip] =
     fields
       .filter(f => f.role == Role.Filter && f.chip.value)
-      .flatMap(f => f.encoded.map(v => ActiveChip(ActiveChip.Key(f.key.value), ActiveChip.Label(f.label.map(_.value).getOrElse(f.key.value)), ActiveChip.Value(v.value))))
+      .flatMap(f =>
+        f.encoded.map(v =>
+          ActiveChip(
+            ActiveChip.Key(f.key.value),
+            ActiveChip.Label(f.label.map(_.value).getOrElse(f.key.value)),
+            ActiveChip.Value(v.value)
+          )
+        )
+      )
 
   def removeChip(key: RemoveChipKey, value: FilterTerm): Unit =
     fields.find(_.key.value == key.value).foreach(_.remove(Field.Token(value.value)))
@@ -479,7 +605,9 @@ object UiState:
     localFields.foreach { f =>
       store
         .get(LocalPrefix + f.key)
-        .foreach(raw => Try(js.JSON.parse(raw).asInstanceOf[js.Array[String]].toList).foreach(l => f.load(l.map(Field.Token(_)))))
+        .foreach(raw =>
+          Try(js.JSON.parse(raw).asInstanceOf[js.Array[String]].toList).foreach(l => f.load(l.map(Field.Token(_))))
+        )
     }
     store.get(LegacyLayersKey).foreach { raw =>
       if store.get(LocalPrefix + layers.key).isEmpty then
@@ -513,7 +641,8 @@ object UiState:
       "popstate",
       { (e: dom.PopStateEvent) =>
         val state = e.state
-        seq = if state != null then ChangeSeq(Try(state.asInstanceOf[js.Dynamic].histmersionSeq.asInstanceOf[Int]).getOrElse(0))
+        seq = if state != null then
+          ChangeSeq(Try(state.asInstanceOf[js.Dynamic].histmersionSeq.asInstanceOf[Int]).getOrElse(0))
         else ChangeSeq(0)
         loadHash(UrlHash(window.location.hash))
         bump()

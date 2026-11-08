@@ -11,7 +11,15 @@ import com.histmersion.domain.media.MediaRole
 import com.histmersion.domain.media.assets.{AssetService, ProviderAsset, Rights}
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.upstreams.media.MediaText
-import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, MediaItem, MediaProvider, MediaSample, MediaTarget}
+import com.histmersion.api.media.{
+  ImageSize,
+  MediaCount,
+  MediaImportReport,
+  MediaItem,
+  MediaProvider,
+  MediaSample,
+  MediaTarget
+}
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.api.library.RepairAcquire
@@ -29,7 +37,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaConfig, converter: ConverterClient):
 
-  final private case class Judged(target: Target, rec: MediaRecord, decision: Either[MediaMatch.Refusal, MediaMatch.Basis])
+  final private case class Judged(
+      target: Target,
+      rec: MediaRecord,
+      decision: Either[MediaMatch.Refusal, MediaMatch.Basis]
+  )
 
   /** The role a record's picture plays: its own, else the collection's. */
   private def roleOf(rec: MediaRecord): MediaRole.Wire = rec.role.map(r => MediaRole.Wire(r.value)).getOrElse(col.role)
@@ -38,7 +50,12 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
 
   private def placeId(t: Target): Place.Id = Place.Id.assume(t.id.value)
 
-  def run(targets: List[Target], dryRun: CollectionImport.DryRun, refresh: CollectionImport.Refresh, store: MediaStore): MediaImportReport =
+  def run(
+      targets: List[Target],
+      dryRun: CollectionImport.DryRun,
+      refresh: CollectionImport.Refresh,
+      store: MediaStore
+  ): MediaImportReport =
     val failed = List.newBuilder[String]
     val allow = LicencePolicy.of(Licence.AllowList(col.conf.licences.value))
     val places = targets.filter(_.targetType == ImportRepo.Place)
@@ -72,8 +89,11 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     }
 
     // 2. what the records' places name on the map
-    val keys = answered.flatMap(_._3).flatMap(_.geography.map(g => MediaMatch.keyOf(g._2))).filter(_.value.nonEmpty).distinct
-    val named = store.mapPlacesNamed(keys.map(k => ImportService.PlaceKey(k.value))).map((k, v) => MediaMatch.PlaceInfo.Keys(k.value) -> v)
+    val keys =
+      answered.flatMap(_._3).flatMap(_.geography.map(g => MediaMatch.keyOf(g._2))).filter(_.value.nonEmpty).distinct
+    val named = store
+      .mapPlacesNamed(keys.map(k => ImportService.PlaceKey(k.value)))
+      .map((k, v) => MediaMatch.PlaceInfo.Keys(k.value) -> v)
 
     // 3. judge each record for its place (by the ids the place carries too, when the collection names them)
     val (own, byId) =
@@ -134,7 +154,13 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       byLicence = records
         .groupBy(SearchedCollection.licenceKey)
         .toList
-        .map((k, rs) => MediaCount(MediaCount.Key(k.value), MediaCount.N(rs.size), MediaCount.Allowed(rs.head.rights.exists(r => allow.allows(r.licence)))))
+        .map((k, rs) =>
+          MediaCount(
+            MediaCount.Key(k.value),
+            MediaCount.N(rs.size),
+            MediaCount.Allowed(rs.head.rights.exists(r => allow.allows(r.licence)))
+          )
+        )
         .sortBy(c => (-c.n.value, c.key.value)),
       byRole = MediaCount.of(kept.map(j => MediaCount.Key(roleOf(j.rec).value))),
       rejected = MediaCount.of(judged.flatMap(_.decision.left.toOption).map(r => MediaCount.Key(r.value))),
@@ -175,12 +201,19 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     val uids = scala.collection.mutable.Map.empty[String, AssetService.AssetUid]
     def rightsOf(rec: MediaRecord) =
       val r = rec.rights.toOption.get // kept ⇒ readable rights
-      Rights(Rights.License(r.licence.id.value), r.licenceUrl.map(u => Rights.LicenseUrl(u.value)), r.author.map(a => Rights.Author(a.value)), Rights.Credit(r.credit.value))
+      Rights(
+        Rights.License(r.licence.id.value),
+        r.licenceUrl.map(u => Rights.LicenseUrl(u.value)),
+        r.author.map(a => Rights.Author(a.value)),
+        Rights.Credit(r.credit.value)
+      )
     kept.distinctBy(_.rec.key).foreach { j =>
       knownOf(j.rec) match
         case Some(k) =>
           if refresh.value then
-            each(s"${j.rec.key} (licence re-read)")(db.refreshRights(AssetService.AssetUid(k.uid.value), rightsOf(j.rec)))
+            each(s"${j.rec.key} (licence re-read)")(
+              db.refreshRights(AssetService.AssetUid(k.uid.value), rightsOf(j.rec))
+            )
             updated += 1
           uids(j.rec.key.value) = AssetService.AssetUid(k.uid.value)
         case None =>
@@ -247,39 +280,80 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
         db.checked(col.provider, t.targetType, t.id, ImportService.FoundCount(found.getOrElse(t.id, 0)), None)
       )
     )
-    base.modify(_.stored).setTo(MediaImportReport.Stored(stored)).modify(_.updated).setTo(MediaImportReport.Updated(updated)).modify(_.linked).setTo(MediaImportReport.Linked(linked)).modify(_.revoked).setTo(revoked.sorted.map(MediaImportReport.Revoked(_))).modify(_.failed).setTo(failed.result().map(MediaImportReport.Failed(_)))
+    base
+      .modify(_.stored)
+      .setTo(MediaImportReport.Stored(stored))
+      .modify(_.updated)
+      .setTo(MediaImportReport.Updated(updated))
+      .modify(_.linked)
+      .setTo(MediaImportReport.Linked(linked))
+      .modify(_.revoked)
+      .setTo(revoked.sorted.map(MediaImportReport.Revoked(_)))
+      .modify(_.failed)
+      .setTo(failed.result().map(MediaImportReport.Failed(_)))
 
   /** The record's rendition (at most `max-bytes`) and its thumbnail — the collection's own small rendition, else one
     * made here; without either the card shows no picture for it.
     */
   private def download(
       rec: MediaRecord
-  ): Either[String, (ProviderAsset.Bytes, ProviderAsset.Mime, Option[(ProviderAsset.Thumb, ProviderAsset.ThumbMime, Option[ProviderAsset.ThumbWidth], Option[ProviderAsset.ThumbHeight])])] =
-    rec.imageUrl.toRight("no image").flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(_.value)).flatMap { (bytes, mime) =>
-      if bytes.value.length.toLong > cfg.maxBytes.value then
-        Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
-      else if !mime.value.startsWith("image/") then Left(s"not an image ($mime)")
-      else
-        val own = rec.thumbUrl.flatMap { u =>
-          fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")) match
-            case Right((tb, tm)) if tm.value.startsWith("image/") =>
-              val s = ImageSize.of(ImageSize.Bytes(tb.value))
-              Some((ProviderAsset.Thumb(tb.value), ProviderAsset.ThumbMime(tm.value), s.map(x => ProviderAsset.ThumbWidth(x._1.value)), s.map(x => ProviderAsset.ThumbHeight(x._2.value))))
-            case Right(_)  => None
-            case Left(why) => scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: $why"); None
-        }
-        val made = own.orElse(
-          converter.thumbnail(
-            ConverterClient.DocumentBytes(bytes.value),
-            ConverterClient.Filename(MediaText.safeName(WorkKey.Title(rec.key.value)).value + ".jpg"),
-            Pixels(cfg.thumbPx.value)
-          ) match
-            case Right(t) =>
-              Some((ProviderAsset.Thumb(t.bytes.value), ProviderAsset.ThumbMime(t.mime.value), Some(t.width.value).filter(_ > 0).map(ProviderAsset.ThumbWidth(_)), Some(t.height.value).filter(_ > 0).map(ProviderAsset.ThumbHeight(_))))
-            case Left(why) => scribe.info(s"media: no thumbnail for ${col.provider} ${rec.key} ($why)"); None
-        )
-        Right((ProviderAsset.Bytes(bytes.value), ProviderAsset.Mime(mime.value), made))
-    }
+  ): Either[
+    String,
+    (
+        ProviderAsset.Bytes,
+        ProviderAsset.Mime,
+        Option[
+          (
+              ProviderAsset.Thumb,
+              ProviderAsset.ThumbMime,
+              Option[ProviderAsset.ThumbWidth],
+              Option[ProviderAsset.ThumbHeight]
+          )
+        ]
+    )
+  ] =
+    rec.imageUrl
+      .toRight("no image")
+      .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")).left.map(_.value))
+      .flatMap { (bytes, mime) =>
+        if bytes.value.length.toLong > cfg.maxBytes.value then
+          Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
+        else if !mime.value.startsWith("image/") then Left(s"not an image ($mime)")
+        else
+          val own = rec.thumbUrl.flatMap { u =>
+            fetch.file(HttpTransport.Url(u.value), Polite.Mime("image/jpeg")) match
+              case Right((tb, tm)) if tm.value.startsWith("image/") =>
+                val s = ImageSize.of(ImageSize.Bytes(tb.value))
+                Some(
+                  (
+                    ProviderAsset.Thumb(tb.value),
+                    ProviderAsset.ThumbMime(tm.value),
+                    s.map(x => ProviderAsset.ThumbWidth(x._1.value)),
+                    s.map(x => ProviderAsset.ThumbHeight(x._2.value))
+                  )
+                )
+              case Right(_)  => None
+              case Left(why) => scribe.warn(s"media: thumbnail of ${col.provider} ${rec.key} not fetched: $why"); None
+          }
+          val made = own.orElse(
+            converter.thumbnail(
+              ConverterClient.DocumentBytes(bytes.value),
+              ConverterClient.Filename(MediaText.safeName(WorkKey.Title(rec.key.value)).value + ".jpg"),
+              Pixels(cfg.thumbPx.value)
+            ) match
+              case Right(t) =>
+                Some(
+                  (
+                    ProviderAsset.Thumb(t.bytes.value),
+                    ProviderAsset.ThumbMime(t.mime.value),
+                    Some(t.width.value).filter(_ > 0).map(ProviderAsset.ThumbWidth(_)),
+                    Some(t.height.value).filter(_ > 0).map(ProviderAsset.ThumbHeight(_))
+                  )
+                )
+              case Left(why) => scribe.info(s"media: no thumbnail for ${col.provider} ${rec.key} ($why)"); None
+          )
+          Right((ProviderAsset.Bytes(bytes.value), ProviderAsset.Mime(mime.value), made))
+      }
 
 object CollectionImport:
   type DryRun = DryRun.T

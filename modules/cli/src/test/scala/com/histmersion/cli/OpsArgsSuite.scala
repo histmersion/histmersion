@@ -19,16 +19,33 @@ class OpsArgsSuite extends munit.FunSuite:
     assertEquals(parse("log"), Right(QueueCmd.Show(Queue.Kind.Label("log"), false)))
 
   test("--all is carried into the show command"):
-    assertEquals(QueueArgs.parse(List("tasks"), None, None, all = true), Right(QueueCmd.Show(Queue.Kind.Label("tasks"), true)))
+    assertEquals(
+      QueueArgs.parse(List("tasks"), None, None, all = true),
+      Right(QueueCmd.Show(Queue.Kind.Label("tasks"), true))
+    )
 
   test("`queue <list> add \"text\"` adds, with --topic when given"):
     assertEquals(
       parse("acquire", "add", "Eller, Myth of Matriarchal Prehistory"),
-      Right(QueueCmd.Add(Queue.Kind.Label("acquire"), Queue.QueueItem.Text("Eller, Myth of Matriarchal Prehistory"), None, None))
+      Right(
+        QueueCmd.Add(
+          Queue.Kind.Label("acquire"),
+          Queue.QueueItem.Text("Eller, Myth of Matriarchal Prehistory"),
+          None,
+          None
+        )
+      )
     )
     assertEquals(
       QueueArgs.parse(List("tasks", "add", "enrich x"), Some("Backlog"), None, all = false),
-      Right(QueueCmd.Add(Queue.Kind.Label("tasks"), Queue.QueueItem.Text("enrich x"), Some(Queue.QueueItem.Topic("Backlog")), None))
+      Right(
+        QueueCmd.Add(
+          Queue.Kind.Label("tasks"),
+          Queue.QueueItem.Text("enrich x"),
+          Some(Queue.QueueItem.Topic("Backlog")),
+          None
+        )
+      )
     )
 
   test("`add` without text is a usage error, not an empty item"):

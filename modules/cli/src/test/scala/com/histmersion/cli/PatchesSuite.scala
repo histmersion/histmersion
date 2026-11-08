@@ -156,7 +156,12 @@ class PatchesSuite extends munit.FunSuite:
 
   test("--tags-replace with --tags-remove keeps both parts"):
     val p = build(tagsReplace = Some("a,b"), tagsRemove = Some("b")).toOption.get
-    assertEquals(p.tags, Some(ListPatch(remove = List(Write.ListItem("b")), replace = Some(List(Write.ListItem("a"), Write.ListItem("b"))))))
+    assertEquals(
+      p.tags,
+      Some(
+        ListPatch(remove = List(Write.ListItem("b")), replace = Some(List(Write.ListItem("a"), Write.ListItem("b"))))
+      )
+    )
 
   // a book's OCR (> 1 MB) could not be moved between records: --json on the command line was the only way
   test("--body-file replaces the body with the file's text; a missing file is an error"):

@@ -20,7 +20,10 @@ class ListSqlSuite extends munit.FunSuite:
       ListSql.anyOf("kind", List("edge", "goal-plan")),
       Sql(Sql.Text(" AND kind = ANY(?::text[])"), List(Param.A(List(Param.A.V("edge"), Param.A.V("goal-plan")))))
     )
-    assertEquals(ListSql.equal("j.goal_slug", Some("g")), Sql(Sql.Text(" AND j.goal_slug = ?"), List(Param.S(Param.S.V("g")))))
+    assertEquals(
+      ListSql.equal("j.goal_slug", Some("g")),
+      Sql(Sql.Text(" AND j.goal_slug = ?"), List(Param.S(Param.S.V("g"))))
+    )
 
   test("a time range is bound as instants; either side may be open"):
     val s = Instant.parse("2026-10-01T00:00:00Z")
@@ -29,7 +32,9 @@ class ListSqlSuite extends munit.FunSuite:
     assertEquals(ListSql.between("created_at", None, None), Sql.empty)
 
   test("a facet is counted under every condition but its own"):
-    val c = ListSql.Conds(List("state" -> Sql.raw(Sql.Text(" AND state = 'open'")), "kind" -> Sql.raw(Sql.Text(" AND kind = 'edge'"))))
+    val c = ListSql.Conds(
+      List("state" -> Sql.raw(Sql.Text(" AND state = 'open'")), "kind" -> Sql.raw(Sql.Text(" AND kind = 'edge'")))
+    )
     assertEquals(c.all.text, " AND state = 'open' AND kind = 'edge'")
     assertEquals(c.except("kind").text, " AND state = 'open'")
     assertEquals(c.except("nothing").text, c.all.text)

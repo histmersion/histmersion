@@ -15,14 +15,23 @@ final class BitwardenVault(
     session: Option[Plugin.Context.SecretResultPart2],
     field: Vaults.Field,
     timeout: FiniteDuration
-)(using processes: Processes) extends Secret.Vault:
+)(using processes: Processes)
+    extends Secret.Vault:
   def resolve(ref: Secret.Vault.ResolveRef): Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2] =
     val (item, f) = Vaults.entryAndField(ref, field)
     for
-      i <- Subprocess.plain(Vaults.Operation("the item"), Subprocess.Text(item.value)).left.map(e => Secret.Vault.ResolveResultPart1(e.value))
-      g <- Subprocess.plain(Vaults.Operation("the field"), Subprocess.Text(f.value)).left.map(e => Secret.Vault.ResolveResultPart1(e.value))
+      i <- Subprocess
+        .plain(Vaults.Operation("the item"), Subprocess.Text(item.value))
+        .left
+        .map(e => Secret.Vault.ResolveResultPart1(e.value))
+      g <- Subprocess
+        .plain(Vaults.Operation("the field"), Subprocess.Text(f.value))
+        .left
+        .map(e => Secret.Vault.ResolveResultPart1(e.value))
       argv = List(exe.value, "get", g.value, i.value, "--nointeraction").map(a => Processes.RunArgv(a))
-      env: Map[Subprocess.RunEnvPart1, Subprocess.RunEnvPart2] = session.map(s => Map(Subprocess.RunEnvPart1("BW_SESSION") -> Subprocess.RunEnvPart2(s.value))).getOrElse(Map.empty)
+      env: Map[Subprocess.RunEnvPart1, Subprocess.RunEnvPart2] = session
+        .map(s => Map(Subprocess.RunEnvPart1("BW_SESSION") -> Subprocess.RunEnvPart2(s.value)))
+        .getOrElse(Map.empty)
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(i.value))
     yield v
 

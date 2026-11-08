@@ -9,7 +9,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * `histmersion.media.*`, which the host supplies it; its block holds `enabled` and, for a keyed one, its key.
   */
 trait MediaPlugin(id: String) extends Plugin:
-  val info: Plugin.Info = Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(MediaPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
+  val info: Plugin.Info =
+    Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(MediaPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
 
 object MediaPlugin:
   val Version = "0.1.0"

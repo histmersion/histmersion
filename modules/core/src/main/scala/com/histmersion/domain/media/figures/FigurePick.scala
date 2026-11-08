@@ -87,16 +87,21 @@ object FigurePick:
   /** Pure: a figure's order in its document by its name alone — the page for `fig-…`, the sequence number for docling's
     * `image_…`.
     */
-  def order(name: Figure.Name): Option[Order] = page(name).map(p => Order(p.value)).orElse(name.value match
-    case SeqName(n) => n.toIntOption.map(Order(_))
-    case _          => None)
+  def order(name: Figure.Name): Option[Order] = page(name)
+    .map(p => Order(p.value))
+    .orElse(name.value match
+      case SeqName(n) => n.toIntOption.map(Order(_))
+      case _          => None)
 
   /** Pure: the sizes that are page scans — `pageScanMin` or more portrait figures (height/width between 1.2 and 1.6)
     * whose sides agree within 2 %.
     */
   def pageScanSizes(figs: List[Figure], rules: Rules): Set[(Figure.Width, Figure.Height)] =
     val portrait = figs.flatMap(f =>
-      for w <- f.width; h <- f.height if w.value > 0 && h.value.toDouble / w.value >= 1.2 && h.value.toDouble / w.value <= 1.6 yield (w, h)
+      for
+        w <- f.width; h <- f.height
+        if w.value > 0 && h.value.toDouble / w.value >= 1.2 && h.value.toDouble / w.value <= 1.6
+      yield (w, h)
     )
     def near(a: (Figure.Width, Figure.Height), b: (Figure.Width, Figure.Height)) =
       math.abs(a._1.value - b._1.value) <= a._1.value * 0.02 && math.abs(a._2.value - b._2.value) <= a._2.value * 0.02
@@ -130,7 +135,9 @@ object FigurePick:
     val scans = pageScanSizes(figs, rules)
     figs
       .filter(reject(_, rules, scans).isEmpty)
-      .sortBy(f => (-score(f, rules).value, order(f.name).fold(Int.MaxValue)(_.value), f.firstAt.fold(1.0)(_.value), f.name.value))
+      .sortBy(f =>
+        (-score(f, rules).value, order(f.name).fold(Int.MaxValue)(_.value), f.firstAt.fold(1.0)(_.value), f.name.value)
+      )
       .headOption
 
   private val AssetLink = """assets/([A-Za-z0-9._-]+)""".r
@@ -153,4 +160,6 @@ object FigurePick:
   /** Pure: the figures with their links counted in `body`. */
   def withRefs(figs: List[Figure], body: ConvertedText): List[Figure] =
     val r = refs(body)
-    figs.map(f => r.get(f.name).fold(f.copy(refs = Figure.Refs(0), firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at))))
+    figs.map(f =>
+      r.get(f.name).fold(f.copy(refs = Figure.Refs(0), firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at)))
+    )

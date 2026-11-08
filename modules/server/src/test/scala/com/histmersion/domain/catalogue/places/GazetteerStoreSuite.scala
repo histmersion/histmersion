@@ -58,7 +58,8 @@ class GazetteerStoreSuite extends DbSuite:
   private def http: Plugin.Http =
     val wire = PluginGazetteers.transport(cfg.places)
     PluginGazetteers.http(new HttpTransport:
-      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = wire.get(HttpTransport.Url(loop.local(url.value)), headers))
+      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
+        wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
   private def importOnce(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
     val db = Transactor(ds)
@@ -104,7 +105,11 @@ class GazetteerStoreSuite extends DbSuite:
     run(Registries.GazetteerSourcesKey("awmc"), "awmc.geojson", fixture("awmc.geojson"))
     run(Registries.GazetteerSourcesKey("chronontology"), "chronontology.json", fixture("chronontology.json"))
     sb ++= "## stored after the three imports\n" + stored
-    run(Registries.GazetteerSourcesKey("cliopatria"), "cliopatria-more.geojson, zipped (over the first)", zipped("cliopatria-more.geojson"))
+    run(
+      Registries.GazetteerSourcesKey("cliopatria"),
+      "cliopatria-more.geojson, zipped (over the first)",
+      zipped("cliopatria-more.geojson")
+    )
     run(Registries.GazetteerSourcesKey("awmc"), "awmc-more.geojson", fixture("awmc-more.geojson"))
     run(Registries.GazetteerSourcesKey("chronontology"), "chronontology-more.json", fixture("chronontology-more.json"))
     run(Registries.GazetteerSourcesKey("cliopatria"), "cliopatria.geojson again, zipped", zipped("cliopatria.geojson"))

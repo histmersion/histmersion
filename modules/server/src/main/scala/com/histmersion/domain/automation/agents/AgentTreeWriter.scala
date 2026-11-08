@@ -9,29 +9,42 @@ import io.circe.Json
 import io.circe.syntax.*
 
 private[agents] object AgentTreeWriter:
-  private val Manifest = Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error.value), identity)
+  private val Manifest =
+    Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error.value), identity)
 
-  def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using clock: Clock): Either[String, GenerateResult] =
+  def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: Sha256)(using
+      clock: Clock
+  ): Either[String, GenerateResult] =
     try
-      def key(name: String): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error.value), identity)
+      def key(name: String): Store.Key =
+        Store.Key.of(name).fold(error => throw IllegalArgumentException(error.value), identity)
       store.makeDirectory().fold(error => throw java.io.IOException(error.message.value), identity)
       val previous = store.get(Manifest).toList.flatMap { blob =>
-        io.circe.parser.parse(blob.text().value).toOption
+        io.circe.parser
+          .parse(blob.text().value)
+          .toOption
           .flatMap(_.hcursor.downField("files").as[Map[String, String]].toOption)
-          .map(_.keys.toList).getOrElse(Nil)
+          .map(_.keys.toList)
+          .getOrElse(Nil)
       }
       val entries = tree.toList.sortBy(_._1).map((name, text) => (key(name), text))
       var written = 0
       entries.foreach { (target, text) =>
         val same = store.get(target).exists(_.text().value == text)
         if !same then
-          store.put(target, ByteSource.Content(text.getBytes(UTF_8))).fold(error => throw java.io.IOException(error.message.value), _ => ())
+          store
+            .put(target, ByteSource.Content(text.getBytes(UTF_8)))
+            .fold(error => throw java.io.IOException(error.message.value), _ => ())
           written += 1
       }
       val gone = previous.filter(p => runtimes.exists(r => p.startsWith(s"$r/")) && !tree.contains(p))
-      gone.foreach(name => { val _ = store.delete(key(name)) })
+      gone.foreach { name =>
+        val _ = store.delete(key(name))
+      }
       if runtimes.contains(AgentRuntime.ClaudeCode.wire.value) then
-        store.makeDirectory(key("claude-code/login")).fold(error => throw java.io.IOException(error.message.value), identity)
+        store
+          .makeDirectory(key("claude-code/login"))
+          .fold(error => throw java.io.IOException(error.message.value), identity)
       val keep = previous.filterNot(p => runtimes.exists(r => p.startsWith(s"$r/")))
       val files = (keep.flatMap(name => store.get(key(name)).map(blob => name -> Prompt.sha256(blob.text().value))) ++
         tree.toList.map((name, text) => name -> Prompt.sha256(text))).sortBy(_._1)
@@ -42,7 +55,9 @@ private[agents] object AgentTreeWriter:
         "runtimes" -> runtimes.asJson,
         "files" -> Json.obj(files.map((name, sha) => name -> Json.fromString(sha.value))*)
       )
-      store.write(Manifest, ByteSource.Content(AgentGenerator.pretty(manifest).getBytes(UTF_8))).fold(error => throw java.io.IOException(error.message.value), _ => ())
+      store
+        .write(Manifest, ByteSource.Content(AgentGenerator.pretty(manifest).getBytes(UTF_8)))
+        .fold(error => throw java.io.IOException(error.message.value), _ => ())
       Right(
         GenerateResult(
           GenerateResult.Dir(store.where().value),
@@ -53,4 +68,6 @@ private[agents] object AgentTreeWriter:
           GenerateResult.Definitions(sha.value)
         )
       )
-    catch case error: Exception => Left(s"generating into ${store.where()} failed: ${error.getClass.getSimpleName}: ${error.getMessage}")
+    catch
+      case error: Exception =>
+        Left(s"generating into ${store.where()} failed: ${error.getClass.getSimpleName}: ${error.getMessage}")

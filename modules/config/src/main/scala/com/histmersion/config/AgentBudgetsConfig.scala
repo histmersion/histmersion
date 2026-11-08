@@ -38,13 +38,15 @@ object AgentBudgetsConfig:
   object CacheReadWeight extends Newtype[Double, Pure]
 
   def parsePipelineTokens(s: PipelineRunTokens): Map[Pipeline.Wire, RunTokens] =
-    s.value.split(",")
+    s.value
+      .split(",")
       .toList
       .map(_.trim)
       .filter(_.nonEmpty)
       .flatMap(e =>
         e.split("=", 2) match
-          case Array(k, v) => v.trim.replace("_", "").toLongOption.filter(_ > 0).map(n => Pipeline.Wire(k.trim) -> RunTokens(n))
-          case _           => None
+          case Array(k, v) =>
+            v.trim.replace("_", "").toLongOption.filter(_ > 0).map(n => Pipeline.Wire(k.trim) -> RunTokens(n))
+          case _ => None
       )
       .toMap

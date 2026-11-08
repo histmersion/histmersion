@@ -57,7 +57,9 @@ object WriteOutcome:
       f.envVar
         .filter(v => env.hasPath(v.value))
         .map(v =>
-          SettingPolicy.Note(s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set.")
+          SettingPolicy.Note(
+            s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set."
+          )
         )
     )
     WriteOutcome(

@@ -47,7 +47,11 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       ConverterClient.PageCount.Scanned(json.hcursor.get[Int]("scanned").getOrElse(0))
     )).toOption
 
-  def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality): Either[ConverterClient.Problem, ConvertedDoc] =
+  def convert(
+      file: Blob,
+      filename: ConverterClient.Filename,
+      quality: ConverterClient.HighQuality
+  ): Either[ConverterClient.Problem, ConvertedDoc] =
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     val allowed = ConverterClient.timeoutFor(cfg, pages(file, filename), quality)
     (for

@@ -16,31 +16,120 @@ abstract class ImportServiceContract extends MediaStoreSuite:
 
   stest("nothing on the map: a target by id refused, a batch empty, nothing pending, no facts") { s =>
     val i = s.imports
-    assertEquals(i.targets(ImportService.Provider("zq"), Some(Place.Id.assume(" zq_p ")), None, ImportService.TargetsLimit(10), refresh = ImportService.Refresh(false), None), Left("No place 'zq_p'"))
-    assertEquals(i.targets(ImportService.Provider("zq"), None, Some(Event.Id("zq_e")), ImportService.TargetsLimit(10), refresh = ImportService.Refresh(false), None), Left("No event 'zq_e'"))
-    assertEquals(i.targets(ImportService.Provider("zq"), None, None, ImportService.TargetsLimit(10), refresh = ImportService.Refresh(true), None), Right(Nil))
+    assertEquals(
+      i.targets(
+        ImportService.Provider("zq"),
+        Some(Place.Id.assume(" zq_p ")),
+        None,
+        ImportService.TargetsLimit(10),
+        refresh = ImportService.Refresh(false),
+        None
+      ),
+      Left("No place 'zq_p'")
+    )
+    assertEquals(
+      i.targets(
+        ImportService.Provider("zq"),
+        None,
+        Some(Event.Id("zq_e")),
+        ImportService.TargetsLimit(10),
+        refresh = ImportService.Refresh(false),
+        None
+      ),
+      Left("No event 'zq_e'")
+    )
+    assertEquals(
+      i.targets(
+        ImportService.Provider("zq"),
+        None,
+        None,
+        ImportService.TargetsLimit(10),
+        refresh = ImportService.Refresh(true),
+        None
+      ),
+      Right(Nil)
+    )
     assertEquals(i.pending(ImportService.Provider("zq"), None), 0)
     assertEquals(
-      i.collectionTargets(ImportService.CheckName("zq"), places = ImportService.Places(false), Some(Place.Id("zq_p")), None, ImportService.CollectionTargetsLimit(10), ImportService.Refresh(false), None, ImportService.PleiadesOnly(false)),
+      i.collectionTargets(
+        ImportService.CheckName("zq"),
+        places = ImportService.Places(false),
+        Some(Place.Id("zq_p")),
+        None,
+        ImportService.CollectionTargetsLimit(10),
+        ImportService.Refresh(false),
+        None,
+        ImportService.PleiadesOnly(false)
+      ),
       Left("this import is about events: name one with --event")
     )
     assertEquals(
-      i.collectionTargets(ImportService.CheckName("zq"), places = ImportService.Places(true), None, Some(Event.Id("zq_e")), ImportService.CollectionTargetsLimit(10), ImportService.Refresh(false), None, ImportService.PleiadesOnly(false)),
+      i.collectionTargets(
+        ImportService.CheckName("zq"),
+        places = ImportService.Places(true),
+        None,
+        Some(Event.Id("zq_e")),
+        ImportService.CollectionTargetsLimit(10),
+        ImportService.Refresh(false),
+        None,
+        ImportService.PleiadesOnly(false)
+      ),
       Left("this import is about places: name one with --place")
     )
     assertEquals(
-      i.collectionTargets(ImportService.CheckName("zq"), places = ImportService.Places(true), Some(Place.Id("zq_p")), None, ImportService.CollectionTargetsLimit(10), ImportService.Refresh(false), None, ImportService.PleiadesOnly(true)),
+      i.collectionTargets(
+        ImportService.CheckName("zq"),
+        places = ImportService.Places(true),
+        Some(Place.Id("zq_p")),
+        None,
+        ImportService.CollectionTargetsLimit(10),
+        ImportService.Refresh(false),
+        None,
+        ImportService.PleiadesOnly(true)
+      ),
       Left("No place 'zq_p'")
     )
-    assertEquals(i.collectionTargets(ImportService.CheckName("zq"), places = ImportService.Places(true), None, None, ImportService.CollectionTargetsLimit(10), ImportService.Refresh(false), None, ImportService.PleiadesOnly(false)), Right(Nil))
-    assertEquals(i.collectionPending(ImportService.CheckName("zq"), places = ImportService.Places(false), None, pleiadesOnly = ImportService.PleiadesOnly(false)), 0)
+    assertEquals(
+      i.collectionTargets(
+        ImportService.CheckName("zq"),
+        places = ImportService.Places(true),
+        None,
+        None,
+        ImportService.CollectionTargetsLimit(10),
+        ImportService.Refresh(false),
+        None,
+        ImportService.PleiadesOnly(false)
+      ),
+      Right(Nil)
+    )
+    assertEquals(
+      i.collectionPending(
+        ImportService.CheckName("zq"),
+        places = ImportService.Places(false),
+        None,
+        pleiadesOnly = ImportService.PleiadesOnly(false)
+      ),
+      0
+    )
     assertEquals(i.placeFacts(List(Place.Id("zq_p"))), Map.empty)
     assertEquals(i.mapPlacesNamed(List(ImportService.PlaceKey("zq"))), Map.empty)
     assertEquals(i.mapPlacesWithIds(List(ExternalIds.Pleiades -> ExternalIds.ExternalId("1"))), Map.empty)
     assertEquals(i.pleiadesIds(List(Place.Id("zq_p"))), Map.empty)
     assertEquals(i.placeExternalIds(List(Place.Id("zq_p"))), Map.empty)
-    i.checked(ImportService.Provider("zq"), ImportService.TargetType("place"), ImportService.TargetId("zq_p"), ImportService.FoundCount(2), Some(Wikidata.Id("Q1")))
-    i.checked(ImportService.Provider("zq"), ImportService.TargetType("place"), ImportService.TargetId("zq_p"), ImportService.FoundCount(0), None)
+    i.checked(
+      ImportService.Provider("zq"),
+      ImportService.TargetType("place"),
+      ImportService.TargetId("zq_p"),
+      ImportService.FoundCount(2),
+      Some(Wikidata.Id("Q1"))
+    )
+    i.checked(
+      ImportService.Provider("zq"),
+      ImportService.TargetType("place"),
+      ImportService.TargetId("zq_p"),
+      ImportService.FoundCount(0),
+      None
+    )
   }
 
 class ImportServiceInMemorySuite extends ImportServiceContract with MediaStoreSuite.InMemory

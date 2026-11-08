@@ -23,14 +23,14 @@ final case class AssetLink(
     xywh: Option[AssetLink.Xywh] = None,
     notes: Option[AssetLink.Notes] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AssetLink:
 
-
   type Id = Id.T
   object Id extends Newtype[Long, Pure]
-  export AssetRelation.{Wire as Relation}
+  export AssetRelation.Wire as Relation
   type Xywh = Xywh.T
   object Xywh extends Newtype[String, Pure]
   type Notes = Notes.T
@@ -40,13 +40,12 @@ object AssetLink:
       id: Id,
       deleted: Deleted.Value
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Deleted:
     type Value = Value.T
     object Value extends Newtype[Boolean, Pure]
-
-
 
   final case class List(
       total: RowCount,
@@ -54,14 +53,19 @@ object AssetLink:
       offset: Offset = Offset(0),
       next: Option[Offset] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(links.size))
 
   object List:
 
-
     def of(total: RowCount, rows: scala.List[AssetLink], offset: UnreadPage.Offset): List =
-      List(RowCount((total).value), rows, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next)
+      List(
+        RowCount((total).value),
+        rows,
+        Offset((offset).value),
+        OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
+      )
 
   final case class Put(
       citekey: Citekey,
@@ -72,4 +76,5 @@ object AssetLink:
       xywh: Option[Xywh] = None,
       notes: Option[Notes] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

@@ -21,7 +21,12 @@ final case class AiCapabilities(
     verbatimFailures: AiCapabilities.VerbatimFailures = AiCapabilities.VerbatimFailures(false)
 ):
   /** The constructor of a provider compiled before the loop's notes and verbatim failures existed. */
-  def this(tools: Boolean, structuredOutput: Boolean) = this(AiCapabilities.Tools(tools), AiCapabilities.StructuredOutput(structuredOutput), AiCapabilities.IterationMarkers(false), AiCapabilities.VerbatimFailures(false))
+  def this(tools: Boolean, structuredOutput: Boolean) = this(
+    AiCapabilities.Tools(tools),
+    AiCapabilities.StructuredOutput(structuredOutput),
+    AiCapabilities.IterationMarkers(false),
+    AiCapabilities.VerbatimFailures(false)
+  )
 
 object AiCapabilities:
   /** The capabilities as a provider compiled before the loop's notes and verbatim failures wrote them. */

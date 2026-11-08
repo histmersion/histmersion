@@ -31,7 +31,13 @@ object PresetMenu:
       .flatMap { r =>
         byRegion
           .get(r)
-          .map(rows => Group(r, rows.sortBy(p => (p.period.start.value: Long, p.period.end.value: Long, p.label.value: String)), cover(r).value >= MinShare.value))
+          .map(rows =>
+            Group(
+              r,
+              rows.sortBy(p => (p.period.start.value: Long, p.period.end.value: Long, p.label.value: String)),
+              cover(r).value >= MinShare.value
+            )
+          )
       }
       .sortBy(g => if g.inView then (0, -cover(g.region).value) else (1, 0.0))
 

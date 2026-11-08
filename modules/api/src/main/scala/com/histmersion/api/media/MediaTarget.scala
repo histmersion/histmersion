@@ -15,7 +15,8 @@ final case class MediaTarget(
     item: Option[MediaTarget.Item] = None,
     basis: Option[MediaTarget.Basis] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MediaTarget:
   type TargetType = TargetType.T

@@ -82,11 +82,31 @@ class CritiquesSuite extends munit.FunSuite:
         |""".stripMargin
     )
     val edges = List(
-      edge(Citekey("smith1987_dying"), Coverage.Edge.Kind("refutes"), Citekey("frazer1922_golden")), // both cited, one paragraph (via a short form)
-      edge(Citekey("brown1999_rites"), Coverage.Edge.Kind("challenges"), Citekey("frazer1922_golden")), // critic not cited
-      edge(Citekey("jones2001_myth"), Coverage.Edge.Kind("updates"), Citekey("lee1990_ritual")), // cited critic, target not cited
-      edge(Citekey("lee1990_ritual"), Coverage.Edge.Kind("challenges"), Citekey("jones2001_myth")), // the same two sources, other way round
-      edge(Citekey("brown1999_rites"), Coverage.Edge.Kind("references"), Citekey("frazer1922_golden")), // not a disagreement kind
+      edge(
+        Citekey("smith1987_dying"),
+        Coverage.Edge.Kind("refutes"),
+        Citekey("frazer1922_golden")
+      ), // both cited, one paragraph (via a short form)
+      edge(
+        Citekey("brown1999_rites"),
+        Coverage.Edge.Kind("challenges"),
+        Citekey("frazer1922_golden")
+      ), // critic not cited
+      edge(
+        Citekey("jones2001_myth"),
+        Coverage.Edge.Kind("updates"),
+        Citekey("lee1990_ritual")
+      ), // cited critic, target not cited
+      edge(
+        Citekey("lee1990_ritual"),
+        Coverage.Edge.Kind("challenges"),
+        Citekey("jones2001_myth")
+      ), // the same two sources, other way round
+      edge(
+        Citekey("brown1999_rites"),
+        Coverage.Edge.Kind("references"),
+        Citekey("frazer1922_golden")
+      ), // not a disagreement kind
       edge(Citekey("x2000_a"), Coverage.Edge.Kind("refutes"), Citekey("y2001_b"))
     ) // touches no cited source
     val reasons = List(
@@ -110,7 +130,13 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(pairs.head.reason, Some("The article cites it for the calendar only."))
     assertEquals(
       pairs.last.dst,
-      CritiqueSide(Citekey("frazer1922_golden"), Some(Title("The golden bough")), Some(Year(1922)), cited = CritiqueSide.Cited(true), mentions = CritiqueSide.Mentions(2))
+      CritiqueSide(
+        Citekey("frazer1922_golden"),
+        Some(Title("The golden bough")),
+        Some(Year(1922)),
+        cited = CritiqueSide.Cited(true),
+        mentions = CritiqueSide.Mentions(2)
+      )
     )
     // a reason on an addressed pair: the text wins
     val both = Critiques.build(
@@ -123,7 +149,9 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(both.map(_.state), List(CritiqueState.Addressed))
     // an empty stored reason is no reason
     assertEquals(
-      Critiques.build(body, resolve, edges.slice(1, 2), List(reasons.head.copy(reason = CritiqueReason.Reason(" "))), refs).map(_.state),
+      Critiques
+        .build(body, resolve, edges.slice(1, 2), List(reasons.head.copy(reason = CritiqueReason.Reason(" "))), refs)
+        .map(_.state),
       List(CritiqueState.Open)
     )
 
@@ -132,7 +160,10 @@ class CritiquesSuite extends munit.FunSuite:
     val pairs = Critiques.build(
       body,
       selfResolve,
-      List(edge(Citekey("b2001_y"), Coverage.Edge.Kind("updates"), Citekey("a2000_x")), edge(Citekey("b2001_y"), Coverage.Edge.Kind("refutes"), Citekey("a2000_x"))),
+      List(
+        edge(Citekey("b2001_y"), Coverage.Edge.Kind("updates"), Citekey("a2000_x")),
+        edge(Citekey("b2001_y"), Coverage.Edge.Kind("refutes"), Citekey("a2000_x"))
+      ),
       Nil
     )
     assertEquals(pairs.map(p => (p.kinds, p.state)), List((List("refutes", "updates"), CritiqueState.Open)))
@@ -163,20 +194,74 @@ class CritiquesSuite extends munit.FunSuite:
     "ranked: an uncited critic of a cited source first, refutes before challenges before updates, the more-cited first"
   ):
     val ps = List(
-      pair(Citekey("c1"), CritiquePair.Kinds("updates"), Citekey("d1"), CritiqueSide.Cited(false), CritiqueSide.Cited(true), CritiqueSide.Mentions(9)),
-      pair(Citekey("c2"), CritiquePair.Kinds("challenges"), Citekey("d2"), CritiqueSide.Cited(true), CritiqueSide.Cited(false)),
-      pair(Citekey("c3"), CritiquePair.Kinds("challenges"), Citekey("d3"), CritiqueSide.Cited(false), CritiqueSide.Cited(true), CritiqueSide.Mentions(1)),
-      pair(Citekey("c4"), CritiquePair.Kinds("challenges"), Citekey("d4"), CritiqueSide.Cited(false), CritiqueSide.Cited(true), CritiqueSide.Mentions(5)),
-      pair(Citekey("c5"), CritiquePair.Kinds("refutes"), Citekey("d5"), CritiqueSide.Cited(true), CritiqueSide.Cited(true)),
-      pair(Citekey("c6"), CritiquePair.Kinds("refutes"), Citekey("d6"), CritiqueSide.Cited(false), CritiqueSide.Cited(true)),
-      pair(Citekey("c7"), CritiquePair.Kinds("refutes"), Citekey("d7"), CritiqueSide.Cited(false), CritiqueSide.Cited(true), state = CritiqueState.Addressed)
+      pair(
+        Citekey("c1"),
+        CritiquePair.Kinds("updates"),
+        Citekey("d1"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Mentions(9)
+      ),
+      pair(
+        Citekey("c2"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("d2"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(false)
+      ),
+      pair(
+        Citekey("c3"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("d3"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Mentions(1)
+      ),
+      pair(
+        Citekey("c4"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("d4"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Mentions(5)
+      ),
+      pair(
+        Citekey("c5"),
+        CritiquePair.Kinds("refutes"),
+        Citekey("d5"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(true)
+      ),
+      pair(
+        Citekey("c6"),
+        CritiquePair.Kinds("refutes"),
+        Citekey("d6"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true)
+      ),
+      pair(
+        Citekey("c7"),
+        CritiquePair.Kinds("refutes"),
+        Citekey("d7"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true),
+        state = CritiqueState.Addressed
+      )
     )
     assertEquals(Critiques.ranked(ps).map(_.src.citekey), List("c6", "c4", "c3", "c1", "c5", "c2"))
 
   test(
     "the skeptic's brief: the counts, the first N open pairs in full, the rest by name, the reasoned ones with their reasons"
   ):
-    val open = (1 to 5).toList.map(i => pair(Citekey(s"c$i"), CritiquePair.Kinds("challenges"), Citekey("d"), CritiqueSide.Cited(false), CritiqueSide.Cited(true)))
+    val open = (1 to 5).toList.map(i =>
+      pair(
+        Citekey(s"c$i"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("d"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true)
+      )
+    )
     val why = pair(
       Citekey("r1"),
       CritiquePair.Kinds("refutes"),
@@ -186,7 +271,8 @@ class CritiquesSuite extends munit.FunSuite:
       state = CritiqueState.Reasoned,
       reason = Some(CritiquePair.Reason("off the point"))
     )
-    val (text, shown) = Critiques.promptText(open :+ why, maxOpen = Critiques.OpenLimit(2), maxReasoned = Critiques.ReasonedLimit(10))
+    val (text, shown) =
+      Critiques.promptText(open :+ why, maxOpen = Critiques.OpenLimit(2), maxReasoned = Critiques.ReasonedLimit(10))
     assertEquals(shown.map(_.src.citekey), List("c1", "c2"))
     assert(text.value.startsWith("6 pairs — 0 addressed, 1 reasoned, 5 open."), text)
     assert(text.value.contains("- c1>d: [[c1]] (not cited) challenges [[d]] (cited)"), text)
@@ -194,16 +280,56 @@ class CritiquesSuite extends munit.FunSuite:
     assert(text.value.contains("- r1>d: off the point"), text)
     // nothing open, nothing reasoned: nothing to say
     assertEquals(
-      Critiques.promptText(List(pair(Citekey("a"), CritiquePair.Kinds("refutes"), Citekey("b"), CritiqueSide.Cited(true), CritiqueSide.Cited(true), state = CritiqueState.Addressed)), Critiques.OpenLimit(5), Critiques.ReasonedLimit(5)),
+      Critiques.promptText(
+        List(
+          pair(
+            Citekey("a"),
+            CritiquePair.Kinds("refutes"),
+            Citekey("b"),
+            CritiqueSide.Cited(true),
+            CritiqueSide.Cited(true),
+            state = CritiqueState.Addressed
+          )
+        ),
+        Critiques.OpenLimit(5),
+        Critiques.ReasonedLimit(5)
+      ),
       ("", Nil)
     )
-    assert(Critiques.promptText(List(why), Critiques.OpenLimit(5), Critiques.ReasonedLimit(5))._1.value.contains("No pair is open."))
+    assert(
+      Critiques
+        .promptText(List(why), Critiques.OpenLimit(5), Critiques.ReasonedLimit(5))
+        ._1
+        .value
+        .contains("No pair is open.")
+    )
 
   test("the Method note gains the counts only when there is a pair; coverage shows the open and the reasoned ones"):
     val ps = List(
-      pair(Citekey("a"), CritiquePair.Kinds("refutes"), Citekey("b"), CritiqueSide.Cited(true), CritiqueSide.Cited(true), state = CritiqueState.Addressed),
-      pair(Citekey("c"), CritiquePair.Kinds("challenges"), Citekey("b"), CritiqueSide.Cited(false), CritiqueSide.Cited(true), state = CritiqueState.Reasoned, reason = Some(CritiquePair.Reason("not the point"))),
-      pair(Citekey("d"), CritiquePair.Kinds("updates"), Citekey("b"), CritiqueSide.Cited(false), CritiqueSide.Cited(true))
+      pair(
+        Citekey("a"),
+        CritiquePair.Kinds("refutes"),
+        Citekey("b"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(true),
+        state = CritiqueState.Addressed
+      ),
+      pair(
+        Citekey("c"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("b"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true),
+        state = CritiqueState.Reasoned,
+        reason = Some(CritiquePair.Reason("not the point"))
+      ),
+      pair(
+        Citekey("d"),
+        CritiquePair.Kinds("updates"),
+        Citekey("b"),
+        CritiqueSide.Cited(false),
+        CritiqueSide.Cited(true)
+      )
     )
     assertEquals(Critiques.methodPart(ps), Some("disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open"))
     assertEquals(Critiques.methodPart(Nil), None)
@@ -244,7 +370,11 @@ class CritiquesSuite extends munit.FunSuite:
     )
     assertEquals(CritiqueRef.parse(CritiqueRef.Wire("a2000_x -> b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
     assertEquals(CritiqueRef.parse(CritiqueRef.Wire("a2000_x → b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
-    assert(CritiqueRef.parse(CritiqueRef.Wire("a2000_x")).isLeft && CritiqueRef.parse(CritiqueRef.Wire("a>a")).isLeft && CritiqueRef.parse(CritiqueRef.Wire(">b")).isLeft)
+    assert(
+      CritiqueRef.parse(CritiqueRef.Wire("a2000_x")).isLeft && CritiqueRef
+        .parse(CritiqueRef.Wire("a>a"))
+        .isLeft && CritiqueRef.parse(CritiqueRef.Wire(">b")).isLeft
+    )
     assertEquals(
       CritiqueReason.parse(CritiqueReason.Reason("a2000_x>b2001_y=Not the point.  ")),
       Right(CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), CritiqueReason.Reason("Not the point.")))
@@ -253,11 +383,27 @@ class CritiquesSuite extends munit.FunSuite:
     assert(CritiqueReason.parse(CritiqueReason.Reason("a2000_x>b2001_y")).isLeft)
     assert(CritiqueReason.tidy(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x" * 501))).isLeft)
     assertEquals(
-      CritiqueReason.tidy(CritiqueReason(Citekey(" A "), Citekey("b"), CritiqueReason.Reason(" one\n line "))).map(r => (r.src, r.reason)),
+      CritiqueReason
+        .tidy(CritiqueReason(Citekey(" A "), Citekey("b"), CritiqueReason.Reason(" one\n line ")))
+        .map(r => (r.src, r.reason)),
       Right(("a", "one line"))
     )
-    assert(Article.Patch(critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x"))), ifUpdatedAt = Some(Article.UpdatedAt("t"))).onlyCritiques)
-    assert(!Article.Patch(body = Some(Article.Body("b")), critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x")))).onlyCritiques)
+    assert(
+      Article
+        .Patch(
+          critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x"))),
+          ifUpdatedAt = Some(Article.UpdatedAt("t"))
+        )
+        .onlyCritiques
+    )
+    assert(
+      !Article
+        .Patch(
+          body = Some(Article.Body("b")),
+          critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x")))
+        )
+        .onlyCritiques
+    )
     assert(!Article.Patch().onlyCritiques)
 
   // ── §6.9: blocks with their lines, the criticised side, bearing pairs ─────────────────────────
@@ -281,24 +427,70 @@ class CritiquesSuite extends munit.FunSuite:
   test(
     "criticised: the target of challenges/refutes/updates, the source of superseded_by; bearing = open on a cited work"
   ):
-    val ch = pair(Citekey("c1"), CritiquePair.Kinds("challenges"), Citekey("d1"), CritiqueSide.Cited(false), CritiqueSide.Cited(true))
+    val ch = pair(
+      Citekey("c1"),
+      CritiquePair.Kinds("challenges"),
+      Citekey("d1"),
+      CritiqueSide.Cited(false),
+      CritiqueSide.Cited(true)
+    )
     assertEquals((ch.criticised.citekey, ch.critic.citekey, ch.bearing), ("d1", "c1", true))
-    val sup = pair(Citekey("old1"), CritiquePair.Kinds("superseded_by"), Citekey("new1"), CritiqueSide.Cited(false), CritiqueSide.Cited(true))
+    val sup = pair(
+      Citekey("old1"),
+      CritiquePair.Kinds("superseded_by"),
+      Citekey("new1"),
+      CritiqueSide.Cited(false),
+      CritiqueSide.Cited(true)
+    )
     assertEquals((sup.criticised.citekey, sup.critic.citekey, sup.bearing), ("old1", "new1", false))
     assert(
-      !pair(Citekey("c2"), CritiquePair.Kinds("challenges"), Citekey("d2"), CritiqueSide.Cited(true), CritiqueSide.Cited(false)).bearing,
+      !pair(
+        Citekey("c2"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("d2"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(false)
+      ).bearing,
       "a cited critic of an uncited work: background"
     )
-    assert(!pair(Citekey("c3"), CritiquePair.Kinds("refutes"), Citekey("d3"), CritiqueSide.Cited(true), CritiqueSide.Cited(true), state = CritiqueState.Addressed).bearing)
+    assert(
+      !pair(
+        Citekey("c3"),
+        CritiquePair.Kinds("refutes"),
+        Citekey("d3"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(true),
+        state = CritiqueState.Addressed
+      ).bearing
+    )
 
   test("the skeptic's brief rules only on bearing pairs, once per two sources; the background is named, owing nothing"):
     val ps = List(
-      pair(Citekey("a1"), CritiquePair.Kinds("refutes"), Citekey("b1"), CritiqueSide.Cited(true), CritiqueSide.Cited(true)),
-      pair(Citekey("b1"), CritiquePair.Kinds("challenges"), Citekey("a1"), CritiqueSide.Cited(true), CritiqueSide.Cited(true)),
-      pair(Citekey("c2"), CritiquePair.Kinds("challenges"), Citekey("d2"), CritiqueSide.Cited(true), CritiqueSide.Cited(false))
+      pair(
+        Citekey("a1"),
+        CritiquePair.Kinds("refutes"),
+        Citekey("b1"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(true)
+      ),
+      pair(
+        Citekey("b1"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("a1"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(true)
+      ),
+      pair(
+        Citekey("c2"),
+        CritiquePair.Kinds("challenges"),
+        Citekey("d2"),
+        CritiqueSide.Cited(true),
+        CritiqueSide.Cited(false)
+      )
     )
     assertEquals(Critiques.toRule(ps).map(_.ref.wire), List("a1>b1"))
-    val (text, shown) = Critiques.promptText(ps, maxOpen = Critiques.OpenLimit(10), maxReasoned = Critiques.ReasonedLimit(10))
+    val (text, shown) =
+      Critiques.promptText(ps, maxOpen = Critiques.OpenLimit(10), maxReasoned = Critiques.ReasonedLimit(10))
     assertEquals(shown.map(_.ref.wire), List("a1>b1"))
     assert(
       text.value.contains(

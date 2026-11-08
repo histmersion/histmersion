@@ -70,7 +70,18 @@ object AiTurn:
         maxTokens: Int,
         iteration: Int,
         maxIterations: Int
-    ) = this(Request.Model(model), Request.System(system), messages, tools, (answerSchema).map(refactorValue => Request.AnswerSchema(refactorValue)), Request.MaxTokens(maxTokens), Request.Iteration(iteration), Request.MaxIterations(maxIterations), None, None)
+    ) = this(
+      Request.Model(model),
+      Request.System(system),
+      messages,
+      tools,
+      (answerSchema).map(refactorValue => Request.AnswerSchema(refactorValue)),
+      Request.MaxTokens(maxTokens),
+      Request.Iteration(iteration),
+      Request.MaxIterations(maxIterations),
+      None,
+      None
+    )
 
   object Request:
     /** The request as a host or a test compiled before the rendered schema and its description were passed wrote it. */

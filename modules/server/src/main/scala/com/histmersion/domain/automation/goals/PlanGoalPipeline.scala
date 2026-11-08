@@ -29,7 +29,7 @@ import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Goal.Plans.GoalLink
-import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.automation.Goal as DomainGoal
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.Title
 import com.histmersion.domain.automation.Run
@@ -193,7 +193,9 @@ final class PlanGoalPipeline(
             runId(ctx)
           )
           .value
-      ).map(l => Applied(PlanGoal.LogLine(l), PlanGoal.CreatedCount(0), PlanGoal.LinkedCount(0), PlanGoal.QueuedCount(0)))
+      ).map(l =>
+        Applied(PlanGoal.LogLine(l), PlanGoal.CreatedCount(0), PlanGoal.LinkedCount(0), PlanGoal.QueuedCount(0))
+      )
     else
       ctx.write(
         s"apply the plan of goal ${slug.value}: ${plan.subGoals.size} sub-goal(s), ${plan.queries.size} query(ies), " +
@@ -239,7 +241,12 @@ final class PlanGoalPipeline(
               case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug.value}' not created — ${e.message.value}"); false
     }
     plan.queries.foreach(q =>
-      goals.link(slug, DomainGoal.LinkKind.SearchQuery, GoalLink.Ref(q.value), Some(GoalLink.Note("from the approved plan")))
+      goals.link(
+        slug,
+        DomainGoal.LinkKind.SearchQuery,
+        GoalLink.Ref(q.value),
+        Some(GoalLink.Note("from the approved plan"))
+      )
     )
     val queued = workLists
       .kindOf(WorkListControllers.KindOfList("acquire"))
@@ -280,7 +287,8 @@ final class PlanGoalPipeline(
             DomainGoal.LinkKind.QueueItem,
             GoalLink.Ref(id.value.toString),
             Some(GoalLink.Note(w.doi.value))
-          ); Some(id)
+          );
+          Some(id)
         case Left(e) => ctx.warn(s"apply: ${w.doi.value} not queued — ${e.message.value}"); None
     }
     goals.setPlan(slug, BGoalRow.Plan(plan.asJson.noSpaces))

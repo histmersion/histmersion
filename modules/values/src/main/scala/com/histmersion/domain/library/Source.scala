@@ -21,7 +21,6 @@ object Source:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def fromString(s: Wire): Status =
       values.find(_.toString.equalsIgnoreCase((s).value)).getOrElse(Unassessed)
 

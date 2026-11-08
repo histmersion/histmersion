@@ -14,7 +14,8 @@ import com.histmersion.util.console.Console
 object Output:
   /** `--json` — the same flag, with the same help, on every command that has one. */
 
-  val jsonFlag: Opts[Cli.JsonOutput] = Opts.flag("json", "Print the raw JSON response instead of Markdown").orFalse.map(Cli.JsonOutput(_))
+  val jsonFlag: Opts[Cli.JsonOutput] =
+    Opts.flag("json", "Print the raw JSON response instead of Markdown").orFalse.map(Cli.JsonOutput(_))
 
   /** A response as `--json` prints it: the DTO's own codec, two-space indented. Pure. */
   def json[A: Encoder](a: A): String = a.asJson.spaces2
@@ -24,5 +25,5 @@ object Output:
     if json.value then Output.json(a) else markdown(a)
 
   /** Print `a` as JSON when `json`, else as its Markdown. */
-  def emit[A: Encoder](json: Cli.JsonOutput, a: A)(markdown: A => String)(using console: Console) : Unit =
+  def emit[A: Encoder](json: Cli.JsonOutput, a: A)(markdown: A => String)(using console: Console): Unit =
     Cli.out.println(render(json, a)(markdown))

@@ -81,7 +81,9 @@ class ArticleRepoSuite extends DbSuite:
   )
 
   private def reset(): Unit =
-    List(slug, Slug("zz_article_other"), Slug("zz_article_tmp"), Slug("zz_article_myth")).foreach(s => ArticleFixtures.delete(ds, s))
+    List(slug, Slug("zz_article_other"), Slug("zz_article_tmp"), Slug("zz_article_myth")).foreach(s =>
+      ArticleFixtures.delete(ds, s)
+    )
 
   test("put → get round-trip, inclusive int8range bounds and a fresh updatedAt token"):
     reset()
@@ -99,11 +101,22 @@ class ArticleRepoSuite extends DbSuite:
     // back as two tags, and list/get/load disagreed with each other
     reset()
     val tags = List("trade, long-distance", "sea-peoples")
-    val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\nbody")).modify(_.tags).setTo(tags.map(Article.Tags(_))).modify(_.regions).setTo(List(Article.Regions("Syria, coast"))))
+    val _ = ArticleFixtures.put(
+      ds,
+      article(Article.Body("# T\n\nbody"))
+        .modify(_.tags)
+        .setTo(tags.map(Article.Tags(_)))
+        .modify(_.regions)
+        .setTo(List(Article.Regions("Syria, coast")))
+    )
     assertEquals(ArticleFixtures.get(ds, slug).get.tags, tags)
     assertEquals(ArticleFixtures.load(ds, slug).get.regions, List("Syria, coast"))
     assertEquals(
-      ArticleFixtures.list(ds, Filter(), PlaceScope.empty, None, None, ArticleFixtures.Limit(50), Offset(0)).articles.find(_.slug.value == slug.value).map(_.tags),
+      ArticleFixtures
+        .list(ds, Filter(), PlaceScope.empty, None, None, ArticleFixtures.Limit(50), Offset(0))
+        .articles
+        .find(_.slug.value == slug.value)
+        .map(_.tags),
       Some(tags)
     )
     val _ = seedSource("zz_comma2020_authors")
@@ -112,7 +125,12 @@ class ArticleRepoSuite extends DbSuite:
       SourceFixtures
         .load(ds, com.histmersion.domain.library.Citekey("zz_comma2020_authors"))
         .get
-        .copy(authors = List(com.histmersion.api.library.AuthorName("Stocker, Sharon R."), com.histmersion.api.library.AuthorName("Davis, Jack L."))),
+        .copy(authors =
+          List(
+            com.histmersion.api.library.AuthorName("Stocker, Sharon R."),
+            com.histmersion.api.library.AuthorName("Davis, Jack L.")
+          )
+        ),
       Limits.ChunkChars(4000)
     )
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\n[[zz_comma2020_authors]]")))
@@ -139,10 +157,14 @@ class ArticleRepoSuite extends DbSuite:
       (Some("Title of zz_cline2014_year"), Some(2014L), Some(Source.Status.Foundational))
     )
     // the article link is stored too — it is what makes the target's backlinks work
-    val _ = ArticleFixtures.put(ds, article(Article.Body("# Other\n\n[[zz_article_sea]]"), Article.Slug("zz_article_other")))
+    val _ =
+      ArticleFixtures.put(ds, article(Article.Body("# Other\n\n[[zz_article_sea]]"), Article.Slug("zz_article_other")))
     // article backlinks only: a source note left behind by another test in this suite may also
     // mention this slug (that path is asserted separately, below)
-    assertEquals(ArticleFixtures.backlinks(ds, slug).filter(_.kind.value == "article").map(_.id), List("zz_article_other"))
+    assertEquals(
+      ArticleFixtures.backlinks(ds, slug).filter(_.kind.value == "article").map(_.id),
+      List("zz_article_other")
+    )
 
   test("a rewritten body replaces the links, it does not accumulate them"):
     reset()
@@ -167,7 +189,11 @@ class ArticleRepoSuite extends DbSuite:
     assertEquals(a1.tags, List("collapse", "sea-peoples", "levant"))
     assertEquals(a1.body, "# T\n\noriginal prose")
 
-    val _ = ArticleFixtures.patch(ds, slug, Article.Patch(append = Some(Article.Patch.Append("## More\n\n[[zz_ghost2019_absent]]"))))
+    val _ = ArticleFixtures.patch(
+      ds,
+      slug,
+      Article.Patch(append = Some(Article.Patch.Append("## More\n\n[[zz_ghost2019_absent]]")))
+    )
     val a2 = ArticleFixtures.load(ds, slug).get
     assert(a2.body.value.contains("original prose") && a2.body.value.contains("## More"), a2.body)
     assertEquals(a2.tags, a1.tags)
@@ -184,13 +210,26 @@ class ArticleRepoSuite extends DbSuite:
     reset()
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\nbody")))
     val e =
-      ArticleFixtures.patch(ds, slug, Article.Patch(summary = Some(Article.SummaryText("x")), ifUpdatedAt = Some(Article.UpdatedAt("stale")))).left.toOption.get
+      ArticleFixtures
+        .patch(
+          ds,
+          slug,
+          Article.Patch(summary = Some(Article.SummaryText("x")), ifUpdatedAt = Some(Article.UpdatedAt("stale")))
+        )
+        .left
+        .toOption
+        .get
     assertEquals(e.code, Some(Write.CodePrecondition))
     assertEquals(ArticleFixtures.load(ds, slug).get.summary, Some("A loose label."))
 
   test("patching an unknown slug is not_found"):
     assertEquals(
-      ArticleFixtures.patch(ds, Slug("zz_no_such_article"), Article.Patch(summary = Some(Article.SummaryText("x")))).left.toOption.get.code,
+      ArticleFixtures
+        .patch(ds, Slug("zz_no_such_article"), Article.Patch(summary = Some(Article.SummaryText("x"))))
+        .left
+        .toOption
+        .get
+        .code,
       Some(Write.CodeNotFound)
     )
 
@@ -200,7 +239,12 @@ class ArticleRepoSuite extends DbSuite:
     val _ = ArticleFixtures.put(
       ds,
       article(Article.Body("# Other\n\nunrelated"), Article.Slug("zz_article_other"))
-        .modify(_.title).setTo(Article.Title("Something else")).modify(_.tags).setTo(List(Article.Tags("other"))).modify(_.summary).setTo(Some(Article.SummaryText("nothing here")))
+        .modify(_.title)
+        .setTo(Article.Title("Something else"))
+        .modify(_.tags)
+        .setTo(List(Article.Tags("other")))
+        .modify(_.summary)
+        .setTo(Some(Article.SummaryText("nothing here")))
     )
 
     def slugs(q: Option[Search.Query] = None, kind: Option[com.histmersion.domain.research.Article.Kind] = None) =
@@ -220,25 +264,59 @@ class ArticleRepoSuite extends DbSuite:
     reset()
     val _ = ArticleFixtures.put(ds, article(Article.Body("# The Sea Peoples\n\nbody")))
     assert(
-      ArticleFixtures.list(ds, Filter(), PlaceScope.empty, None, Some(Search.Query("Peopl")), ArticleFixtures.Limit(50), Offset(0)).articles.exists(_.slug.value == slug.value)
+      ArticleFixtures
+        .list(ds, Filter(), PlaceScope.empty, None, Some(Search.Query("Peopl")), ArticleFixtures.Limit(50), Offset(0))
+        .articles
+        .exists(_.slug.value == slug.value)
     )
 
   test("list: total ignores limit/offset"):
     reset()
     // a title nothing else in the suite (or in a suite sharing this database) uses: `total` counts
     // every matching row, so a fixture left behind by another test would make this flaky
-    val onlyMine = (b: Article.Body, s: Article.Slug) => article(b, s).modify(_.title).setTo(Article.Title("zz total marker"))
+    val onlyMine =
+      (b: Article.Body, s: Article.Slug) => article(b, s).modify(_.title).setTo(Article.Title("zz total marker"))
     val _ = ArticleFixtures.put(ds, onlyMine(Article.Body("# T\n\nbody"), Article.Slug(slug.value)))
     val _ = ArticleFixtures.put(ds, onlyMine(Article.Body("# T2\n\nbody"), Article.Slug("zz_article_other")))
     val r =
-      ArticleFixtures.list(ds, Filter(title = Some(Filter.Title("ZZ TOTAL marker"))), PlaceScope.empty, Some(com.histmersion.domain.research.Article.Kind("concept")), None, ArticleFixtures.Limit(1), Offset(0))
+      ArticleFixtures.list(
+        ds,
+        Filter(title = Some(Filter.Title("ZZ TOTAL marker"))),
+        PlaceScope.empty,
+        Some(com.histmersion.domain.research.Article.Kind("concept")),
+        None,
+        ArticleFixtures.Limit(1),
+        Offset(0)
+      )
     assertEquals(r.articles.size, 1)
     assertEquals((r.total.value: Int), 2)
-    assertEquals(r.kinds, List(Article.KindCount(Article.Kind.Wire("concept"), Article.KindCount.Count(2))), "the per-kind counts ignore limit/offset too")
-    val myth = onlyMine(Article.Body("# T3\n\nbody"), Article.Slug("zz_article_myth")).copy(kind = Article.KindValue("myth"))
+    assertEquals(
+      r.kinds,
+      List(Article.KindCount(Article.Kind.Wire("concept"), Article.KindCount.Count(2))),
+      "the per-kind counts ignore limit/offset too"
+    )
+    val myth =
+      onlyMine(Article.Body("# T3\n\nbody"), Article.Slug("zz_article_myth")).copy(kind = Article.KindValue("myth"))
     val _ = ArticleFixtures.put(ds, myth)
-    val all = ArticleFixtures.list(ds, Filter(title = Some(Filter.Title("ZZ TOTAL marker"))), PlaceScope.empty, None, None, ArticleFixtures.Limit(1), Offset(0))
-    assertEquals(((all.total.value: Int), all.kinds), (3, List(Article.KindCount(Article.Kind.Wire("concept"), Article.KindCount.Count(2)), Article.KindCount(Article.Kind.Wire("myth"), Article.KindCount.Count(1)))))
+    val all = ArticleFixtures.list(
+      ds,
+      Filter(title = Some(Filter.Title("ZZ TOTAL marker"))),
+      PlaceScope.empty,
+      None,
+      None,
+      ArticleFixtures.Limit(1),
+      Offset(0)
+    )
+    assertEquals(
+      ((all.total.value: Int), all.kinds),
+      (
+        3,
+        List(
+          Article.KindCount(Article.Kind.Wire("concept"), Article.KindCount.Count(2)),
+          Article.KindCount(Article.Kind.Wire("myth"), Article.KindCount.Count(1))
+        )
+      )
+    )
 
   test("delete removes the article and its links"):
     reset()
@@ -299,7 +377,10 @@ class ArticleRepoSuite extends DbSuite:
     val _ = ArticleFixtures.put(ds, article(Article.Body("# T\n\nsecond body")))
     val vs = ArticleFixtures.listVersions(ds, slug)
     assertEquals(vs.size, 1)
-    assertEquals(ArticleFixtures.getVersion(ds, slug, ArticleFixtures.VersionId(vs.head.id.value)).get.body, "# T\n\nfirst body")
+    assertEquals(
+      ArticleFixtures.getVersion(ds, slug, ArticleFixtures.VersionId(vs.head.id.value)).get.body,
+      "# T\n\nfirst body"
+    )
 
   test("getVersion returns None for a non-existent version id"):
     reset()
@@ -326,7 +407,11 @@ class ArticleRepoSuite extends DbSuite:
     )
     val _ = ArticleFixtures.put(
       ds,
-      article(Article.Body("# T\n\nbody")).modify(_.filter).setTo(Some(f)).modify(_.reasons).setTo(Map(Citekey("zz_cov2001_egypt") -> Article.ReasonsValue("about Egypt")))
+      article(Article.Body("# T\n\nbody"))
+        .modify(_.filter)
+        .setTo(Some(f))
+        .modify(_.reasons)
+        .setTo(Map(Citekey("zz_cov2001_egypt") -> Article.ReasonsValue("about Egypt")))
     )
     val a = ArticleFixtures.load(ds, slug).get
     assertEquals((a.filter, a.reasons), (Some(f), Map("zz_cov2001_egypt" -> "about Egypt")))
@@ -334,7 +419,10 @@ class ArticleRepoSuite extends DbSuite:
       ds,
       slug,
       Article.Patch(reasons =
-        List(Coverage.Reason(Citekey("zz_cov2002_hatti"), Coverage.Entry.Reason("about Hatti")), Coverage.Reason(Citekey("zz_cov2001_egypt"), Coverage.Entry.Reason("")))
+        List(
+          Coverage.Reason(Citekey("zz_cov2002_hatti"), Coverage.Entry.Reason("about Hatti")),
+          Coverage.Reason(Citekey("zz_cov2001_egypt"), Coverage.Entry.Reason(""))
+        )
       )
     )
     assertEquals(ArticleFixtures.load(ds, slug).get.reasons, Map("zz_cov2002_hatti" -> "about Hatti"))
@@ -359,8 +447,19 @@ class ArticleRepoSuite extends DbSuite:
     val _ = ArticleFixtures.put(
       ds,
       article(Article.Body("# T\n\nbody"))
-        .modify(_.filter).setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x"))))).modify(_.reasons).setTo(Map(Citekey("zz_covren2001_old") -> Article.ReasonsValue("about Egypt")))
+        .modify(_.filter)
+        .setTo(Some(Article.Filter(tags = List(Article.Filter.Tags("x")))))
+        .modify(_.reasons)
+        .setTo(Map(Citekey("zz_covren2001_old") -> Article.ReasonsValue("about Egypt")))
     )
-    assert(SourceFixtures.rename(ds, com.histmersion.domain.library.Citekey("zz_covren2001_old"), Citekeys.RenameToNewRaw("zz_covren2001_new")).isRight)
+    assert(
+      SourceFixtures
+        .rename(
+          ds,
+          com.histmersion.domain.library.Citekey("zz_covren2001_old"),
+          Citekeys.RenameToNewRaw("zz_covren2001_new")
+        )
+        .isRight
+    )
     assertEquals(ArticleFixtures.load(ds, slug).get.reasons, Map("zz_covren2001_new" -> "about Egypt"))
     wipe()

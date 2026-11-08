@@ -10,7 +10,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 /** OpenAlex + Crossref: search, metadata, deposited reference lists and amendment notices. */
 trait DiscoveryClient:
-  def search(query: Search.Query, since: Option[Year], sort: Option[DiscoveryClient.SearchSort], limit: DiscoveryClient.SearchLimit): Either[DiscoveryClient.Problem, List[WorkRef]]
+  def search(
+      query: Search.Query,
+      since: Option[Year],
+      sort: Option[DiscoveryClient.SearchSort],
+      limit: DiscoveryClient.SearchLimit
+  ): Either[DiscoveryClient.Problem, List[WorkRef]]
   def meta(doi: Doi): Either[DiscoveryClient.Problem, WorkRef]
 
   /** `(backend, references)` — Crossref's deposited list, falling back to OpenAlex's `referenced_works` resolved to

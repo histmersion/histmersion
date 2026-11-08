@@ -16,7 +16,6 @@ private[acquisition] object UpstreamQuotaRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image), a day as its ISO text.
 
-
   def load(upstream: ProviderKind.Wire)(using DbCon): Option[CoreQuota.State] =
     sql"""SELECT day::text, lookup_tokens, search_tokens, (extract(epoch FROM blocked_until) * 1000)::bigint, blocked_why,
                  rate_limit, rate_remaining, (extract(epoch FROM observed_at) * 1000)::bigint

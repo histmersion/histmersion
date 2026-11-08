@@ -20,10 +20,31 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
   private val Me = Caller.Local
 
   private def article(slug: Slug): Article =
-    Article(Article.Slug(slug.value), Article.Title("Walls"), Article.KindValue("concept"), Article.Body("## Overview\n\nThe walls.\n"), None, Nil, Nil, None, None, None, Map.empty)
+    Article(
+      Article.Slug(slug.value),
+      Article.Title("Walls"),
+      Article.KindValue("concept"),
+      Article.Body("## Overview\n\nThe walls.\n"),
+      None,
+      Nil,
+      Nil,
+      None,
+      None,
+      None,
+      Map.empty
+    )
 
   private def finding(id: Finding.Id, severity: Severity) =
-    Finding(id, Reviewer.Rules, severity, Finding.Kind("synth"), Finding.Where(s"where $id"), Finding.Quote(s"quote $id"), Finding.Problem(s"problem $id"), Finding.Fix("fix"))
+    Finding(
+      id,
+      Reviewer.Rules,
+      severity,
+      Finding.Kind("synth"),
+      Finding.Where(s"where $id"),
+      Finding.Quote(s"quote $id"),
+      Finding.Problem(s"problem $id"),
+      Finding.Fix("fix")
+    )
 
   private val Walls = Slug("zr_walls")
   private val Gate = Slug("zr_gate")
@@ -34,7 +55,11 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
     s =>
       val _ = s.articles.put(article(Walls), Me)
       assertEquals(s.ledgers.get(Walls), Right(None))
-      val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), Entry.Run.assume("run-1"), Entry.Round(1))), task = Some(Ledger.Task(7)))
+      val l = Ledger(
+        Walls,
+        List(Entry(finding(R1, Severity.Major), Entry.Run.assume("run-1"), Entry.Round(1))),
+        task = Some(Ledger.Task(7))
+      )
       s.ledgers.put(l)
       assertEquals(s.ledgers.get(Walls), Right(Some(l)))
       val again = l.modify(_.task).setTo(None)

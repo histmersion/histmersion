@@ -16,7 +16,8 @@ object FormatField:
 
   given WireEnumValues[FormatField]:
     def all: Array[FormatField] = values
-    def wire(e: FormatField): WireEnumValues.Wire = WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
+    def wire(e: FormatField): WireEnumValues.Wire =
+      WireEnumValues.Wire((Wire(e.toString.toLowerCase(java.util.Locale.ROOT))).value)
     def fromWire(s: WireEnumValues.Wire): Option[FormatField] = values.find(_.toString.equalsIgnoreCase((s).value))
   given Encoder[FormatField] = WireEnum.encoder
   given Decoder[FormatField] = WireEnum.decoder

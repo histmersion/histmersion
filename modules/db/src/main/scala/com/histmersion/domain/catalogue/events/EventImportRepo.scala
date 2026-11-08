@@ -2,7 +2,15 @@ package com.histmersion
 package domain.catalogue.events
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventCatalogueRef, EventEntry, EventFields, EventSummary, EventTaxonomy}
+import com.histmersion.api.catalogue.{
+  CatalogRecord,
+  Corrections,
+  EventCatalogueRef,
+  EventEntry,
+  EventFields,
+  EventSummary,
+  EventTaxonomy
+}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.database.Jsonb
@@ -23,7 +31,6 @@ private[events] object EventImportRepo:
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).
     */
-
 
   def stored(using DbCon): List[StoredEvent] =
     sql"""SELECT e.id, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
@@ -144,11 +151,15 @@ private[events] object EventImportRepo:
   private def pointSql(r: CatalogRecord): Option[String] =
     for la <- r.lat; lo <- r.lon yield s"SRID=4326;POINT($lo $la)"
 
-  private def insertEvent(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using DbCon): Unit =
+  private def insertEvent(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using
+      DbCon
+  ): Unit =
     val geom = pointSql(r)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after, historicity, geom,
                               description, wikidata, names, catalogue, central, plus_minus, dating_method)
-          VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(EventSummary.Kind(r.kind.value))}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
+          VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(
+        EventSummary.Kind(r.kind.value)
+      )}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
                   ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter}, ${r.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_GeomFromEWKT($geom::text) END,
                   ${r.description}, $wd, $names::text[], ${r.provider}, ${r.central}, ${r.plusMinus},
@@ -165,24 +176,31 @@ private[events] object EventImportRepo:
     * are compared with when a person corrects them. `None`: not an import's event.
     */
   def upstreamOf(id: Event.Id)(using DbCon): Option[(CatalogRecord.Provider, CatalogRecord)] =
-    sql"SELECT catalogue FROM events WHERE id = $id".query[Option[CatalogRecord.Provider]].run().headOption.flatten.flatMap { cat =>
-      val rows = sql"""SELECT provider, provider_id, record::text FROM event_catalogue
+    sql"SELECT catalogue FROM events WHERE id = $id"
+      .query[Option[CatalogRecord.Provider]]
+      .run()
+      .headOption
+      .flatten
+      .flatMap { cat =>
+        val rows = sql"""SELECT provider, provider_id, record::text FROM event_catalogue
                        WHERE event_id = $id AND provider = $cat ORDER BY provider_id"""
-        .query[(CatalogRecord.Provider, EventCatalogueRef.ProviderId, Jsonb.JsonText)]
-        .run()
-        .toList
-      CatalogRecord
-        .owner(CatalogRecord.EventId(id.value), cat, rows.map(r => (r._1, r._2)))
-        .flatMap(k => rows.find(r => (r._1, r._2) == k))
-        .flatMap(r => Jsonb.read[CatalogRecord](r._3))
-        .map(cat -> _)
-    }
+          .query[(CatalogRecord.Provider, EventCatalogueRef.ProviderId, Jsonb.JsonText)]
+          .run()
+          .toList
+        CatalogRecord
+          .owner(CatalogRecord.EventId(id.value), cat, rows.map(r => (r._1, r._2)))
+          .flatMap(k => rows.find(r => (r._1, r._2) == k))
+          .flatMap(r => Jsonb.read[CatalogRecord](r._3))
+          .map(cat -> _)
+      }
 
   /** The stored records of `provider` (every catalogue's when `None`), as read, with the event each is of and that
     * event's kind, in key order — what `events rederive` computes again. A row whose record no longer decodes is
     * counted in the second value and left alone.
     */
-  def records(provider: Option[CatalogRecord.Provider])(using DbCon): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
+  def records(provider: Option[CatalogRecord.Provider])(using
+      DbCon
+  ): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], RowCount) =
     val rows =
       sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
                      WHERE ${provider.isEmpty} OR c.provider = ${provider.fold("")(_.value)}
@@ -196,7 +214,9 @@ private[events] object EventImportRepo:
   /** The kind each stored record of `provider` has, by key — what an item read again in another class is compared with
     * ([[EventProviders.WikidataEvents.moreSpecific]]).
     */
-  def storedKinds(provider: CatalogRecord.Provider)(using DbCon): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
+  def storedKinds(
+      provider: CatalogRecord.Provider
+  )(using DbCon): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
     sql"SELECT provider, provider_id, kind FROM event_catalogue WHERE provider = $provider"
       .query[(CatalogRecord.Provider, EventCatalogueRef.ProviderId, EventSummary.Kind)]
       .run()
@@ -207,7 +227,9 @@ private[events] object EventImportRepo:
     val json = Jsonb.write(r)
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                                        end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record)
-          VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(EventSummary.Kind(r.kind.value))},
+          VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(
+        EventSummary.Kind(r.kind.value)
+      )},
                   ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy}, ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter},
                   ${r.lat}, ${r.lon}, ${r.vei}, ${r.magnitude}, ${r.deaths}, ${r.historicity}, $json::jsonb)
           ON CONFLICT (provider, provider_id) DO UPDATE SET

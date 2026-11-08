@@ -22,7 +22,8 @@ final case class MediaCollectionConfig(
     maxYear: MediaCollectionConfig.MaxYear,
     licences: MediaCollectionConfig.Licences,
     /** Seconds to wait, one step per 403 of a request, before asking again (#2561); "" = a 403 is final. */
-    refusalBackoffSeconds: MediaCollectionConfig.RefusalBackoffSeconds = MediaCollectionConfig.RefusalBackoffSeconds(""),
+    refusalBackoffSeconds: MediaCollectionConfig.RefusalBackoffSeconds =
+      MediaCollectionConfig.RefusalBackoffSeconds(""),
     /** Comma-separated providers whose records are refused: Europeana's aggregators (`PROVIDER`, exact names), the
       * Smithsonian's units (`unit_code`).
       */

@@ -18,7 +18,7 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
       case Some(id) =>
         val archive = client()
         archive.info(ArchiveId(id.value)) match
-          case Left(e)                         => Fetch.Miss(Fetch.Miss.Why(e.value))
+          case Left(e)                               => Fetch.Miss(Fetch.Miss.Why(e.value))
           case Right(item) if item.lendingOnly.value =>
             Fetch.Refused(Fetch.Refused.Why(s"'${item.identifier}' is a lending-only item — borrow it on archive.org"))
           case Right(item) =>

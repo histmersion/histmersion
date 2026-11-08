@@ -32,20 +32,19 @@ object Gazetteer:
   type Rank = Rank.T
   object Rank extends Newtype[Int, Pure]
 
-
   type ImportedSources = ImportedSourcesValue
-  export SourceInfo.{Key as ImportedSourcesValue}
+  export SourceInfo.Key as ImportedSourcesValue
   type DefaultOpenStartWindowYears = DefaultOpenStartWindowYearsValue
   type DefaultOpenStartWindowYearsValue = OpenStartWindowYears
   val DefaultOpenStartWindowYearsValue: OpenStartWindowYears.type = OpenStartWindowYears
-  export SourceInfo.{Key as ValiditySourceKey}
+  export SourceInfo.Key as ValiditySourceKey
   type ValidityWindowYears = ValidityWindowYears.T
   object ValidityWindowYears extends Newtype[Int, Pure]
   type DefaultPointAreaKinds = DefaultPointAreaKindsValue
   type DefaultPointAreaKindsValue = PointAreaKinds
   val DefaultPointAreaKindsValue: PointAreaKinds.type = PointAreaKinds
   type PointAreaSources = PointAreaSourcesValue
-  export SourceInfo.{Key as PointAreaSourcesValue}
+  export SourceInfo.Key as PointAreaSourcesValue
   type FromFeatureDataset = DatasetName
   val FromFeatureDataset: DatasetName.type = DatasetName
   type FromTsvRowDataset = DatasetName
@@ -53,7 +52,7 @@ object Gazetteer:
 
   def sourceKey(kind: Kind, dataset: Option[DatasetName] = None): SourceInfo.Key = kind match
     case Kind.Lpf => SourceInfo.Key(s"lpf:${dataset.getOrElse("")}")
-    case k                                                => SourceInfo.Key(k.wire.value)
+    case k        => SourceInfo.Key(k.wire.value)
 
   def datasetSlug(fileName: SourceInfo.File): DatasetName =
     val base = fileName.value
@@ -65,7 +64,7 @@ object Gazetteer:
     ((s).trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
   def rank(m: Place.Match): Rank = m.importSource.flatMap(s => Kind.ofKey(SourceInfo.Key(s.value))) match
-    case None                                                        => if m.importSource.isEmpty then Rank(0) else Rank(5)
+    case None                => if m.importSource.isEmpty then Rank(0) else Rank(5)
     case Some(Kind.Lpf)      => Rank(1)
     case Some(Kind.Wikidata) => Rank(2)
     case Some(Kind.Tgn)      => Rank(3)
@@ -82,9 +81,11 @@ object Gazetteer:
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
       .groupBy(_._1.placeId)
       .values
-      .map(_.minBy((m, via) => (if ((m.native) == Place.Match.Native(true)) then 0 else 1, via)))
+      .map(_.minBy((m, via) => (if (m.native) == Place.Match.Native(true) then 0 else 1, via)))
       .toList
-      .sortBy((m, via) => (if ((m.native) == Place.Match.Native(true)) then 0 else 1, via, rank(m).value: Int, m.placeId.value: String))
+      .sortBy((m, via) =>
+        (if (m.native) == Place.Match.Native(true) then 0 else 1, via, rank(m).value: Int, m.placeId.value: String)
+      )
       .headOption
       .map(_._1.placeId)
 
@@ -98,10 +99,15 @@ object Gazetteer:
       .ofKey(sourceKey)
       .exists(k => k != Kind.Lpf)
 
-  def validity(sourceKey: Gazetteer.ValiditySourceKey, span: Span, windowYears: ValidityWindowYears): Validity = span match
-    case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == (true)) =>
-      Validity(Some(Year((end).value - math.max(0, (windowYears).value))), Some(end), startUnknown = Validity.StartUnknown(true))
-    case Span(from, to) => Validity(from, to, startUnknown = Validity.StartUnknown(false))
+  def validity(sourceKey: Gazetteer.ValiditySourceKey, span: Span, windowYears: ValidityWindowYears): Validity =
+    span match
+      case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == (true)) =>
+        Validity(
+          Some(Year((end).value - math.max(0, (windowYears).value))),
+          Some(end),
+          startUnknown = Validity.StartUnknown(true)
+        )
+      case Span(from, to) => Validity(from, to, startUnknown = Validity.StartUnknown(false))
 
   val DefaultPointAreaKinds: List[DefaultPointAreaKinds] = List(
     PointAreaKinds(Place.Kind.Region),
@@ -110,7 +116,8 @@ object Gazetteer:
   )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
-  val PointAreaSources: List[PointAreaSources] = (ImportedSources).map(refactorValue16 => SourceInfo.Key((refactorValue16).value))
+  val PointAreaSources: List[PointAreaSources] =
+    (ImportedSources).map(refactorValue16 => SourceInfo.Key((refactorValue16).value))
 
   def pointOnly(g: Option[GazGeometry]): Boolean = g match
     case None                     => (true)
@@ -133,8 +140,12 @@ object Gazetteer:
     if ((r.span.isEmpty) == (true)) && !((ds.span.isEmpty) == (true)) then r.modify(_.span).setTo(ds.span) else r
 
   def mergeNames(ns: List[GazName]): List[GazName] =
-    ns.map(n => n.modify(_.name).setTo(GazName.Name(n.name.value.trim)).modify(_.lang).setTo(GazName.Lang(n.lang.value.trim.toLowerCase(java.util.Locale.ROOT))))
-      .filter(_.name.value.nonEmpty)
+    ns.map(n =>
+      n.modify(_.name)
+        .setTo(GazName.Name(n.name.value.trim))
+        .modify(_.lang)
+        .setTo(GazName.Lang(n.lang.value.trim.toLowerCase(java.util.Locale.ROOT)))
+    ).filter(_.name.value.nonEmpty)
       .groupBy(n => (n.name.value, n.lang.value))
       .toList
       .map { case ((name, lang), group) =>
@@ -143,19 +154,30 @@ object Gazetteer:
           if dated.isEmpty then Span.always
           else
             Span(
-              if dated.forall(_.span.from.isDefined) then Some(dated.flatMap(_.span.from).minBy(y => y.value: Long)) else None,
-              if dated.forall(_.span.to.isDefined) then Some(dated.flatMap(_.span.to).maxBy(y => y.value: Long)) else None
+              if dated.forall(_.span.from.isDefined) then Some(dated.flatMap(_.span.from).minBy(y => y.value: Long))
+              else None,
+              if dated.forall(_.span.to.isDefined) then Some(dated.flatMap(_.span.to).maxBy(y => y.value: Long))
+              else None
             )
         val cites =
           group.flatMap(_.citation).flatMap(_.value.split("; ").toList).map(_.trim).filter(_.nonEmpty).distinct.sorted
-        GazName(GazName.Name(name), GazName.Lang(lang), span, Option.when(cites.nonEmpty)(GazName.Citation(cites.mkString("; "))))
+        GazName(
+          GazName.Name(name),
+          GazName.Lang(lang),
+          span,
+          Option.when(cites.nonEmpty)(GazName.Citation(cites.mkString("; ")))
+        )
       }
       .sortBy(n => (n.name.value.toLowerCase(java.util.Locale.ROOT), n.name.value, n.lang.value))
 
   def span(j: Json): Span = Lpf.parseWhen(j).getOrElse(Span.always)
 
   private def str(o: JsonObject, keys: String*): Option[String] =
-    (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue9 => (refactorValue9))
+    (keys.iterator
+      .flatMap(k => o(k).flatMap(_.asString))
+      .map(_.trim)
+      .find(_.nonEmpty))
+      .map(refactorValue9 => (refactorValue9))
 
   private def citationOf(n: JsonObject): Option[GazName.Citation] =
     val cites = n("citations").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { c =>
@@ -177,7 +199,12 @@ object Gazetteer:
         .map(s => GazName(GazName.Name(s)))
         .orElse(j.asObject.flatMap { o =>
           str(o, "toponym", "name", "label").map(t =>
-            GazName(GazName.Name(t), GazName.Lang(str(o, "lang", "language").getOrElse("")), o("when").fold(Span.always)(span), citationOf(o))
+            GazName(
+              GazName.Name(t),
+              GazName.Lang(str(o, "lang", "language").getOrElse("")),
+              o("when").fold(Span.always)(span),
+              citationOf(o)
+            )
           )
         })
     }
@@ -193,11 +220,18 @@ object Gazetteer:
           .orElse(
             j.asObject.flatMap(o =>
               str(o, "value", "description", "text")
-                .map(v => GazDescription(GazDescription.Text(v), GazDescription.Lang(str(o, "lang", "language").getOrElse(""))))
+                .map(v =>
+                  GazDescription(GazDescription.Text(v), GazDescription.Lang(str(o, "lang", "language").getOrElse("")))
+                )
             )
           )
       }
-      .map(d => d.modify(_.text).setTo(GazDescription.Text(d.text.value.trim)).modify(_.lang).setTo(GazDescription.Lang(d.lang.value.trim.toLowerCase(java.util.Locale.ROOT))))
+      .map(d =>
+        d.modify(_.text)
+          .setTo(GazDescription.Text(d.text.value.trim))
+          .modify(_.lang)
+          .setTo(GazDescription.Lang(d.lang.value.trim.toLowerCase(java.util.Locale.ROOT)))
+      )
       .filter(_.text.value.nonEmpty)
       .distinctBy(d => (d.lang.value, d.text.value))
 
@@ -218,7 +252,9 @@ object Gazetteer:
   def placeIdFor(own: Option[ExternalId], ref: PlaceRef, dataset: DatasetName): Place.Id =
     own.map(o => Place.Id(o.placeId.value)).getOrElse {
       val tail = slug((ref).value.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref.value))
-      Place.Id(s"lpf_${dataset}_${if tail.nonEmpty then tail.take(64) else "x" + Integer.toHexString(ref.value.hashCode)}")
+      Place.Id(
+        s"lpf_${dataset}_${if tail.nonEmpty then tail.take(64) else "x" + Integer.toHexString(ref.value.hashCode)}"
+      )
     }
 
   def fromFeature(
@@ -245,7 +281,9 @@ object Gazetteer:
           span = f("when").orElse(f("properties").flatMap(_.asObject).flatMap(_("when"))).fold(Span.always)(span),
           names = mergeNames(all),
           links = readLinks(f).filterNot(l => own.contains(l.id)),
-          source = in.place.source.map(s => GazRecord.Source(s.value)).orElse(defaultSource.map(k => GazRecord.Source(k.value))),
+          source = in.place.source
+            .map(s => GazRecord.Source(s.value))
+            .orElse(defaultSource.map(k => GazRecord.Source(k.value))),
           properties = in.place.properties.map(p => GazRecord.Properties(p.value)),
           descriptions = readDescriptions(f),
           itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class")).map(c => GazRecord.ItemClass(c))
@@ -275,7 +313,10 @@ object Gazetteer:
       defaultSource: Option[SourceInfo.Key] = None
   ): Either[Problem, GazRecord] =
     val row =
-      header.map((_).trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).trim) ++ List.fill(header.size)("")).toMap
+      header
+        .map((_).trim.toLowerCase(java.util.Locale.ROOT))
+        .zip(cells.map((_).trim) ++ List.fill(header.size)(""))
+        .toMap
     def get(k: String): Option[String] = (row.get((k)).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
     (get(("id")), get(("title"))) match
       case (None, _)                => Left(Problem(s"line $line: no id"))
@@ -290,7 +331,10 @@ object Gazetteer:
         }
         val links = get(("matches")).toList
           .flatMap((_).split(";").toList)
-          .flatMap({ val refactorFunction3 = ExternalId.parse; (refactorValue8) => refactorFunction3(ExternalId.Reference(refactorValue8)) })
+          .flatMap {
+            val refactorFunction3 = ExternalId.parse;
+            (refactorValue8) => refactorFunction3(ExternalId.Reference(refactorValue8))
+          }
           .filterNot(own.contains)
           .distinct
           .map(GazLink(_, LinkMatch.Close))
@@ -300,13 +344,24 @@ object Gazetteer:
         yield GazGeometry.GeoJson(GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
         val kind =
           get(("types"))
-            .flatMap(t => (t).split(";").toList.flatMap({ val refactorFunction4 = Place.Kind.parse; (refactorValue10) => refactorFunction4(Place.Kind.ParseS(refactorValue10)) }).headOption)
+            .flatMap(t =>
+              (t)
+                .split(";")
+                .toList
+                .flatMap {
+                  val refactorFunction4 = Place.Kind.parse;
+                  (refactorValue10) => refactorFunction4(Place.Kind.ParseS(refactorValue10))
+                }
+                .headOption
+            )
             .map(_.value)
             .getOrElse(Place.Kind.Site)
         val sp = Span(get(("start")).flatMap(Lpf.parseYear), get(("end")).flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
           get(("ccodes"))
-            .map(c => "ccodes" -> Json.arr((c).split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
+            .map(c =>
+              "ccodes" -> Json.arr((c).split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*)
+            )
             .toList ++
             get(("types")).map(t => "types" -> Json.fromString((t))).toList
         )
@@ -321,7 +376,9 @@ object Gazetteer:
             span = sp,
             names = mergeNames(GazName(GazName.Name(title)) :: variants),
             links = links,
-            source = get(("title_source")).map(s => GazRecord.Source(s)).orElse(defaultSource.map(k => GazRecord.Source(k.value))),
+            source = get(("title_source"))
+              .map(s => GazRecord.Source(s))
+              .orElse(defaultSource.map(k => GazRecord.Source(k.value))),
             properties = Option.when(props.nonEmpty)(GazRecord.Properties(Json.fromJsonObject(props).noSpaces)),
             descriptions = get(("description")).map(d => GazDescription(GazDescription.Text(d))).toList
           )
@@ -358,7 +415,7 @@ object Gazetteer:
     object Features extends Newtype[Long, Pure]
     type Version = Version.T
     object Version extends Newtype[String, Pure]
-    export SourceInfo.{Title, Licence}
+    export SourceInfo.{Licence, Title}
     type Attribution = Attribution.T
     object Attribution extends Newtype[String, Pure]
     type Url = Url.T
@@ -449,7 +506,7 @@ object Gazetteer:
 
   object LoadCounts:
 
-    export SourceInfo.{Key as Source, ImportedVersion as Version}
+    export SourceInfo.{ImportedVersion as Version, Key as Source}
     type Records = Records.T
     object Records extends Newtype[Long, Pure]
     type Created = Created.T

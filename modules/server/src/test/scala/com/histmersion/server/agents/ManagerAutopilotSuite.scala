@@ -21,7 +21,7 @@ import com.histmersion.api.automation.Autopilot.AutopilotSet
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.ReviewLedger.{absorb, Ledger}
-import com.histmersion.domain.automation.worklists.{QueueRows}
+import com.histmersion.domain.automation.worklists.QueueRows
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.domain.automation.goals.{GoalLinkRepo, GoalRepo}
@@ -34,7 +34,7 @@ import sttp.ai.core.agent.*
 
 import java.time.Instant
 import com.histmersion.api.automation.{AgentScheduler, Goal, Queue}
-import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.automation.Goal as DomainGoal
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.library.Citekey
@@ -105,20 +105,90 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private lazy val autoCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2")).modify(_.maxConcurrentRuns).setTo(AgentsConfig.MaxConcurrentRuns(20)).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(AgentRolesConfig.Writer(m.value))).modify(_.approvals).setTo(b.agents.approvals.modify(
-          _.articlePublish).setTo(AgentApprovalsConfig.Gate("checked")).modify(_.articlePlan).setTo(AgentApprovalsConfig.Gate("auto")).modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("auto")).modify(_.auto).setTo(b.agents.approvals.auto.modify(_.publishMinSources).setTo(AutoApprovalsConfig.PublishMinSources(2))
-        )).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(AgentAutopilotConfig.LintHours(0)).modify(_.ingestPerDay).setTo(AgentAutopilotConfig.IngestPerDay(2))
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(AgentSeedConfig.MinSources(2)))).modify(_.researchAgents).setTo(b.researchAgents.modify(_.review).setTo(b.researchAgents.review.modify(_.spotChecks).setTo(AgentReviewConfig.SpotChecks(0)))
-    )
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.agents)
+      .setTo(
+        b.agents
+          .modify(_.enabled)
+          .setTo(AgentsConfig.Enabled(true))
+          .modify(_.prices)
+          .setTo(AgentsConfig.Prices("scripted=1/2"))
+          .modify(_.maxConcurrentRuns)
+          .setTo(AgentsConfig.MaxConcurrentRuns(20))
+          .modify(_.roles)
+          .setTo(
+            b.agents.roles
+              .modify(_.extractor)
+              .setTo(AgentRolesConfig.Extractor(m.value))
+              .modify(_.reviewer)
+              .setTo(AgentRolesConfig.Reviewer(m.value))
+              .modify(_.coldReader)
+              .setTo(AgentRolesConfig.ColdReader(m.value))
+              .modify(_.skeptic)
+              .setTo(AgentRolesConfig.Skeptic(m.value))
+              .modify(_.fixer)
+              .setTo(AgentRolesConfig.Fixer(m.value))
+              .modify(_.planner)
+              .setTo(AgentRolesConfig.Planner(m.value))
+              .modify(_.writer)
+              .setTo(AgentRolesConfig.Writer(m.value))
+          )
+          .modify(_.approvals)
+          .setTo(
+            b.agents.approvals
+              .modify(_.articlePublish)
+              .setTo(AgentApprovalsConfig.Gate("checked"))
+              .modify(_.articlePlan)
+              .setTo(AgentApprovalsConfig.Gate("auto"))
+              .modify(_.goalPlan)
+              .setTo(AgentApprovalsConfig.Gate("auto"))
+              .modify(_.auto)
+              .setTo(
+                b.agents.approvals.auto.modify(_.publishMinSources).setTo(AutoApprovalsConfig.PublishMinSources(2))
+              )
+          )
+          .modify(_.autopilot)
+          .setTo(
+            b.agents.autopilot
+              .modify(_.backupHours)
+              .setTo(AgentAutopilotConfig.BackupHours(0))
+              .modify(_.lintHours)
+              .setTo(AgentAutopilotConfig.LintHours(0))
+              .modify(_.ingestPerDay)
+              .setTo(AgentAutopilotConfig.IngestPerDay(2))
+          )
+      )
+      .modify(_.libraryAgents)
+      .setTo(
+        b.libraryAgents
+          .modify(_.seed)
+          .setTo(b.libraryAgents.seed.modify(_.minSources).setTo(AgentSeedConfig.MinSources(2)))
+      )
+      .modify(_.researchAgents)
+      .setTo(
+        b.researchAgents
+          .modify(_.review)
+          .setTo(b.researchAgents.review.modify(_.spotChecks).setTo(AgentReviewConfig.SpotChecks(0)))
+      )
 
   /** The same with every approval a person's (the shipped defaults). */
   private lazy val manualCfg =
-    autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.articlePublish).setTo(AgentApprovalsConfig.Gate("manual")).modify(_.articlePlan).setTo(AgentApprovalsConfig.Gate("manual")).modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("manual"))
+    autoCfg
+      .modify(_.agents)
+      .setTo(
+        autoCfg.agents
+          .modify(_.approvals)
+          .setTo(
+            autoCfg.agents.approvals
+              .modify(_.articlePublish)
+              .setTo(AgentApprovalsConfig.Gate("manual"))
+              .modify(_.articlePlan)
+              .setTo(AgentApprovalsConfig.Gate("manual"))
+              .modify(_.goalPlan)
+              .setTo(AgentApprovalsConfig.Gate("manual"))
+          )
       )
-    )
 
   private lazy val ds = testPool(autoCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -165,7 +235,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
             status = Some(Source.Status.Current),
             summary = Some(Source.Summary("The Uluburun ship carried ten tons of copper and one ton of tin.")),
             body = Some(
-              Source.OcrMarkdown("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
+              Source.OcrMarkdown(
+                "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+              )
             )
           )
         )
@@ -179,7 +251,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
             title = com.histmersion.api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(Year.apply),
             topics = List(Source.Topics("zzagent_tin")),
-            body = Some(Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia."))
+            body = Some(
+              Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+            )
           )
         )
         .isRight
@@ -197,7 +271,10 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       h.goals
         .put(
           Goal,
-          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz tin in the Bronze Age"), notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from")))
+          com.histmersion.api.automation.Goal.Put(
+            com.histmersion.api.automation.Goal.Title("Zz tin in the Bronze Age"),
+            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          )
         )
         .isRight
     )
@@ -256,7 +333,8 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       .filter(_.managerId.exists(_.value.startsWith("watch:")))
       .foreach(r => a.engine.execute(ApiIds.run(r.id)))
 
-  private def status(g: DomainGoal.Slug): com.histmersion.api.automation.Goal.StatusValue = connect(ds)(GoalRepo.get(g)).get.status
+  private def status(g: DomainGoal.Slug): com.histmersion.api.automation.Goal.StatusValue =
+    connect(ds)(GoalRepo.get(g)).get.status
 
   /** A clock from the wall clock (the switch records real times) that moves six minutes a tick — past the autopilot's
     * ensure interval every tick.
@@ -274,9 +352,14 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     a.managers.ensureDefaults()
     // the review manager's own selection narrowed to this goal (other suites' articles must not take its slots)
     a.managing
-      .update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeGoal = Some(ManagerConfig.IncludeGoal("zzagent-apgoal"))))))
+      .update(
+        ApiIds.manager(Review),
+        ManagerUpdate(Some(ManagerConfig(includeGoal = Some(ManagerConfig.IncludeGoal("zzagent-apgoal")))))
+      )
       .fold(e => fail(e.message.value), identity)
-    val on = a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test")))).fold(e => fail(e.message.value), identity)
+    val on = a.managing
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .fold(e => fail(e.message.value), identity)
     assert(on.on.value)
     assert(
       on.changes.contains(s"${seedId(ref(Goal))} created") && on.changes.contains(s"${watchId(ref(Goal))} created") &&
@@ -285,7 +368,13 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(status(Goal), com.histmersion.domain.automation.Goal.Status.Seeding, "managed: seeding")
     val seedM = connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).get
-    assertEquals((seedM.state, seedM.cron.map(_.value: String)), ("active", Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))))
+    assertEquals(
+      (seedM.state, seedM.cron.map(_.value: String)),
+      (
+        "active",
+        Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))
+      )
+    )
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).map(m => (m.state, m.config.autoIngest)),
       Some(("active", Some(true)))
@@ -293,7 +382,10 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assertEquals(item(seedId(ref(Goal)), PlanGoalKind, itemTarget(Goal)).priority, 1)
     assert(on.goals.exists(g => g.slug.value == Goal.value && g.managers.size == 2), on.goals)
     // again: nothing more to do
-    assertEquals(a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).toOption.get.changes, List("already on"))
+    assertEquals(
+      a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).toOption.get.changes,
+      List("already on")
+    )
 
     // 1. plan-goal first (the proposal waits for it); its plan is approved by the checks, the run applies it
     c.scripts += Seq(text(planJson))
@@ -306,7 +398,11 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assertEquals(exec(a, plan.id).status, "waiting", why(connect(ds)(AgentRepo.get(plan.id)).get))
     clock.tick(a)
     val gp =
-      a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.find(a => a.kind.value == "goal-plan" && a.subject.contains(GoalSubject)).get
+      a.approvalsList(Some(ApprovalQuery.State("all")), None)
+        .toOption
+        .get
+        .find(a => a.kind.value == "goal-plan" && a.subject.contains(GoalSubject))
+        .get
     assertEquals(gp.state, "approved")
     assert(gp.note.exists(_.value.startsWith("autopilot: approved — 0 sub-goals, 1 query")), gp.note)
     assertEquals(exec(a, plan.id).status, "done", why(connect(ds)(AgentRepo.get(plan.id)).get))
@@ -366,7 +462,10 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     // 4. the review (settled by hand: it converged) → the goal is reviewed
     val rev = runOf(Review, ReviewKind, NewTarget)
     assert(TestRuns.transition(ds, ApiIds.run(rev.id), RunState.Queued, RunState.Running).isDefined)
-    ReviewLedgerFixtures.put(ds, absorb(Ledger(Ledger.Slug("zzagent_new")), Nil, ApiIds.run(rev.id), ReviewLedger.Closure.Round(1))._1)
+    ReviewLedgerFixtures.put(
+      ds,
+      absorb(Ledger(Ledger.Slug("zzagent_new")), Nil, ApiIds.run(rev.id), ReviewLedger.Closure.Round(1))._1
+    )
     assert(TestRuns.transition(ds, ApiIds.run(rev.id), RunState.Running, RunState.Done).isDefined)
     clock.tick(a)
     assertEquals(item(Review, ReviewKind, NewTarget).status, "done")
@@ -376,7 +475,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       connect(ds)(ManagerRepo.events(seedId(ref(Goal)), None, PageSize(200)))
         .exists(e => e.kind.value == Feed.Autopilot && e.text.value.contains("compiled → reviewed"))
     )
-    assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.contains(s"goal $Goal: compiled → reviewed")))
+    assert(
+      QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.contains(s"goal $Goal: compiled → reviewed"))
+    )
     val st = a.managing.autopilot
     note("autopilot, the goal reviewed", a.autopilotPage(st))
     val g = st.goals.find(_.slug.value == Goal.value).get
@@ -387,7 +488,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assert(g.doneLast7.value >= 3, g)
     assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
     assert(!a.autopilotPage(st).contains("crons are off"))
-    assert(a.autopilotPage(st.modify(_.cronsEnabled).setTo(AutopilotStatus.CronsEnabled(false))).contains("crons are off"))
+    assert(
+      a.autopilotPage(st.modify(_.cronsEnabled).setTo(AutopilotStatus.CronsEnabled(false))).contains("crons are off")
+    )
 
   test("autopilot, approvals a person's (the defaults): managers and plans start, nothing is approved by itself"):
     val c = ScriptedClient(Model)
@@ -418,7 +521,12 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       a.focus.info().waiting.exists(w => w.slug.value == Goal.value && w.code.value == GoalFocus.Code.Person.value),
       a.focus.info().waiting
     )
-    assert(!a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.exists(_.note.exists(_.value.startsWith("autopilot:"))))
+    assert(
+      !a.approvalsList(Some(ApprovalQuery.State("all")), None)
+        .toOption
+        .get
+        .exists(_.note.exists(_.value.startsWith("autopilot:")))
+    )
     note("autopilot, approvals a person's", a.autopilotPage(a.managing.autopilot))
     assertEquals(a.managing.autopilot.goals.find(_.slug.value == Goal.value).map(_.openApprovals), Some(1))
     assert(a.managing.autopilot.approvals.forall(_.mode.value == "person"), a.managing.autopilot.approvals)
@@ -436,7 +544,11 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     clock.tick(a)
     clock.tick(a)
     assertEquals(
-      a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.find(_.kind.value == "goal-plan").map(_.state),
+      a.approvalsList(Some(ApprovalQuery.State("all")), None)
+        .toOption
+        .get
+        .find(_.kind.value == "goal-plan")
+        .map(_.state),
       Some("approved")
     )
 
@@ -448,14 +560,21 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     assert(
       h.goals
-        .put(ChildGoal, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz child"), parentSlug = Some(GoalSlug)))
+        .put(
+          ChildGoal,
+          com.histmersion.api.automation.Goal
+            .Put(com.histmersion.api.automation.Goal.Title("Zz child"), parentSlug = Some(GoalSlug))
+        )
         .isRight
     )
     assert(
       h.goals
         .put(
           GrandGoal,
-          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz grandchild"), parentSlug = Some(com.histmersion.api.automation.Goal.Slug("zzagent-apchild")))
+          com.histmersion.api.automation.Goal.Put(
+            com.histmersion.api.automation.Goal.Title("Zz grandchild"),
+            parentSlug = Some(com.histmersion.api.automation.Goal.Slug("zzagent-apchild"))
+          )
         )
         .isRight
     )
@@ -478,12 +597,17 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       "depth 2: no sub-goals"
     )
     // a person pauses one watcher; off pauses the others it runs, on resumes those only
-    a.managing.action(ApiIds.manager(watchId(ref(ChildGoal))), ManagersControllers.Action("pause"), None).fold(e => fail(e.message.value), identity)
-    val off = a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(false))).fold(e => fail(e.message.value), identity)
+    a.managing
+      .action(ApiIds.manager(watchId(ref(ChildGoal))), ManagersControllers.Action("pause"), None)
+      .fold(e => fail(e.message.value), identity)
+    val off =
+      a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(false))).fold(e => fail(e.message.value), identity)
     assert(!off.on.value)
     assert(off.changes.exists(_.value.contains("paused 5 managers")), off.changes)
     assert(
-      connect(ds)(ManagerRepo.list()).filter(m => m.kind.value == "seed" || m.kind.value == "watch").forall(_.state.value == "paused")
+      connect(ds)(ManagerRepo.list())
+        .filter(m => m.kind.value == "seed" || m.kind.value == "watch")
+        .forall(_.state.value == "paused")
     )
     assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("active"), "the library-wide ones stay")
     assertEquals(Clock().tick(a).filter(_.value.startsWith("goal")), Nil, "off: nothing ensured")
@@ -494,19 +618,56 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       "the person's pause holds"
     )
     assertEquals(
-      connect(ds)(ManagerRepo.list()).count(m => (m.kind.value == "seed" || m.kind.value == "watch") && m.state.value == "active"),
+      connect(ds)(ManagerRepo.list()).count(m =>
+        (m.kind.value == "seed" || m.kind.value == "watch") && m.state.value == "active"
+      ),
       5
     )
     assertEquals(transact(ds)(AutopilotRepo.get()).paused, Nil)
     // a goal added while it is on gets its managers at the next ensure
-    assert(h.goals.put(DomainGoal.Slug("zzagent-aplate"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz later"))).isRight)
+    assert(
+      h.goals
+        .put(
+          DomainGoal.Slug("zzagent-aplate"),
+          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz later"))
+        )
+        .isRight
+    )
     Clock(Instant.now(suiteClock).plusSeconds(3600)).tick(a)
-    assertEquals(connect(ds)(ManagerRepo.get(seedId(com.histmersion.api.automation.Goal.Ref("zzagent-aplate")))).map(_.state), Some("active"))
-    // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
-    assert(h.goals.put(DomainGoal.Slug("zzagent-apform"), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz form"))).isRight)
-    assertEquals(a.managing.create(ManagerCreate(Managers.ManagerCreate.Kind("watch"), Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")))).map(_.state), Right("active"))
     assertEquals(
-      a.managing.create(ManagerCreate(Managers.ManagerCreate.Kind("seed"), Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")), paused = Some(Managers.ManagerCreate.Paused(true)))).map(_.state),
+      connect(ds)(ManagerRepo.get(seedId(com.histmersion.api.automation.Goal.Ref("zzagent-aplate")))).map(_.state),
+      Some("active")
+    )
+    // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)
+    assert(
+      h.goals
+        .put(
+          DomainGoal.Slug("zzagent-apform"),
+          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz form"))
+        )
+        .isRight
+    )
+    assertEquals(
+      a.managing
+        .create(
+          ManagerCreate(
+            Managers.ManagerCreate.Kind("watch"),
+            Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform"))
+          )
+        )
+        .map(_.state),
+      Right("active")
+    )
+    assertEquals(
+      a.managing
+        .create(
+          ManagerCreate(
+            Managers.ManagerCreate.Kind("seed"),
+            Some(com.histmersion.api.automation.Goal.Slug("zzagent-apform")),
+            paused = Some(Managers.ManagerCreate.Paused(true))
+          )
+        )
+        .map(_.state),
       Right("paused")
     )
 
@@ -517,7 +678,11 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .patch(
           Goal,
           com.histmersion.api.automation.Goal
-            .Patch(status = Some(com.histmersion.api.automation.Goal.StatusValue(com.histmersion.domain.automation.Goal.Status.Reviewed)))
+            .Patch(status =
+              Some(
+                com.histmersion.api.automation.Goal.StatusValue(com.histmersion.domain.automation.Goal.Status.Reviewed)
+              )
+            )
         )
         .isRight
     )
@@ -533,24 +698,53 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   test(
     "article-plan cap: the area's daily cap leaves a second plan for a person; a manager that says no is never decided"
   ):
-    val capped = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.auto).setTo(autoCfg.agents.approvals.auto.modify(_.articlesPerGoalPerDay).setTo(AutoApprovalsConfig.ArticlesPerGoalPerDay(2)))
+    val capped = autoCfg
+      .modify(_.agents)
+      .setTo(
+        autoCfg.agents
+          .modify(_.approvals)
+          .setTo(
+            autoCfg.agents.approvals
+              .modify(_.auto)
+              .setTo(
+                autoCfg.agents.approvals.auto
+                  .modify(_.articlesPerGoalPerDay)
+                  .setTo(AutoApprovalsConfig.ArticlesPerGoalPerDay(2))
+              )
+          )
       )
-    )
     val (a, h) = handlers(ScriptedClient(Model), capped); seed(h)
     import io.circe.syntax.*
     def plan(slugs: Article.Slug*) = Article.Plans.ArticlePlan(
       GoalPlanGoal,
       Article.Plans.ArticlePlan.Rationale("r"),
       slugs.toList.map(s =>
-        Article.Plans.ProposedArticle(s, Article.Title(s"Zz $s"), Article.Kind.Wire("concept"), Article.Filter(topics = List(Filter.Topics("zzagent_tin"))))
+        Article.Plans.ProposedArticle(
+          s,
+          Article.Title(s"Zz $s"),
+          Article.Kind.Wire("concept"),
+          Article.Filter(topics = List(Filter.Topics("zzagent_tin")))
+        )
       )
     )
     val p1 =
       TestRuns
         .approvals(ds)
-        .openSubject(None, ApprovalKind.ArticlePlan, GoalQuerySubject, ApprovalService.Payload(plan(Article.Slug("zzagent_p1"), Article.Slug("zzagent_p2")).asJson.noSpaces))
+        .openSubject(
+          None,
+          ApprovalKind.ArticlePlan,
+          GoalQuerySubject,
+          ApprovalService.Payload(plan(Article.Slug("zzagent_p1"), Article.Slug("zzagent_p2")).asJson.noSpaces)
+        )
     val p2 =
-      TestRuns.approvals(ds).openSubject(None, ApprovalKind.ArticlePlan, GoalQuerySubject, ApprovalService.Payload(plan(Article.Slug("zzagent_p3")).asJson.noSpaces))
+      TestRuns
+        .approvals(ds)
+        .openSubject(
+          None,
+          ApprovalKind.ArticlePlan,
+          GoalQuerySubject,
+          ApprovalService.Payload(plan(Article.Slug("zzagent_p3")).asJson.noSpaces)
+        )
     val now = Instant.now(suiteClock)
     a.autoApprovals.sweep(now)
     assertEquals(TestRuns.approvals(ds).approval(ApiIds.approval(p1.id)).map(_.state), Some("approved"))
@@ -576,7 +770,12 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
               Article.Plans.ArticlePlan.Rationale("r"),
               List(
                 Article.Plans
-                  .ProposedArticle(Article.Slug("zzagent_p4"), Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Filter(query = Some(Filter.Q("zzagent nothing at all"))))
+                  .ProposedArticle(
+                    Article.Slug("zzagent_p4"),
+                    Article.Title("Zz"),
+                    Article.Kind.Wire("concept"),
+                    Article.Filter(query = Some(Filter.Q("zzagent nothing at all")))
+                  )
               )
             )
             .asJson
@@ -588,16 +787,35 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assertEquals(d3.state, "rejected")
     assert(d3.note.exists(_.value.contains("returns 0 source(s), fewer than 2")), d3.note)
     // the manager whose run opened it says autoApprove = false: never decided by code
-    val m = ManagerInfo(ManagerInfo.Id("seed:x"), ManagerInfo.Kind("seed"), config = ManagerConfig(autoApprove = Some(ManagerConfig.AutoApprove(false))))
+    val m = ManagerInfo(
+      ManagerInfo.Id("seed:x"),
+      ManagerInfo.Kind("seed"),
+      config = ManagerConfig(autoApprove = Some(ManagerConfig.AutoApprove(false)))
+    )
     assert(!a.autoApprovals.checked(TestRuns.approvals(ds).approval(ApiIds.approval(p2.id)).get, Some(m)))
 
   test("older approvals a person decides never crowd the code-decided ones out of a tick"):
     val personPlans =
-      autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.approvals).setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("manual"))))
+      autoCfg
+        .modify(_.agents)
+        .setTo(
+          autoCfg.agents
+            .modify(_.approvals)
+            .setTo(autoCfg.agents.approvals.modify(_.goalPlan).setTo(AgentApprovalsConfig.Gate("manual")))
+        )
     val (a, h) = handlers(ScriptedClient(Model), personPlans); seed(h)
     import io.circe.syntax.*
     val waiting =
-      (1 to 60).map(i => TestRuns.approvals(ds).openSubject(None, ApprovalKind.GoalPlan, ApprovalQuery.Subject(s"zzagent-crowd-$i"), ApprovalService.Payload("{}")))
+      (1 to 60).map(i =>
+        TestRuns
+          .approvals(ds)
+          .openSubject(
+            None,
+            ApprovalKind.GoalPlan,
+            ApprovalQuery.Subject(s"zzagent-crowd-$i"),
+            ApprovalService.Payload("{}")
+          )
+      )
     val plan = TestRuns
       .approvals(ds)
       .openSubject(
@@ -630,7 +848,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   test("shared ingest cap: every watcher's ingests today count; at the cap a sweep ingests nothing"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)
-    transact(ds)(ManagerRepo.event(watchId(ref(Goal)), None, None, IngestedKind, ManagerRepo.EventText("[[zzagent_a]] ingested")))
+    transact(ds)(
+      ManagerRepo.event(watchId(ref(Goal)), None, None, IngestedKind, ManagerRepo.EventText("[[zzagent_a]] ingested"))
+    )
     val now = Instant.now(suiteClock)
     // the goal's plan-goal run starts beside it: a sweep does not wait for it
     Clock(now).tick(a, 0)
@@ -641,7 +861,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       "min(own 5 − 1, shared 2 − 1)"
     )
     assertEquals(a.managing.autopilot.ingestedToday, 1)
-    transact(ds)(ManagerRepo.event(watchId(ref(Goal)), None, None, IngestedKind, ManagerRepo.EventText("[[zzagent_b]] ingested")))
+    transact(ds)(
+      ManagerRepo.event(watchId(ref(Goal)), None, None, IngestedKind, ManagerRepo.EventText("[[zzagent_b]] ingested"))
+    )
     assertEquals(a.autopilot.sharedIngestLeft(now), Some(0))
 
   // ── new sources reach the article ──────────────────────────────────────────────────────────────
@@ -667,7 +889,15 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     // no selection (refill batch 0): only the extension
     a.managing.update(
       ApiIds.manager(Review),
-      ManagerUpdate(Some(ManagerConfig(extendMinNew = Some(ManagerConfig.ExtendMinNew(1)), refillBatch = Some(ManagerConfig.RefillBatch(0)), includeTags = Some(List(ManagerConfig.IncludeTags("zzx"))))))
+      ManagerUpdate(
+        Some(
+          ManagerConfig(
+            extendMinNew = Some(ManagerConfig.ExtendMinNew(1)),
+            refillBatch = Some(ManagerConfig.RefillBatch(0)),
+            includeTags = Some(List(ManagerConfig.IncludeTags("zzx")))
+          )
+        )
+      )
     )
     a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
     val out = a.managers.tick(t0)
@@ -686,7 +916,11 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     // a reason for the source: nothing new
     assert(
       h.research.articles
-        .patch(Slug("zzagent_x"), Article.Patch(reasons = List(Coverage.Reason(ApiCk2, Coverage.Entry.Reason("a later study, cited elsewhere")))))
+        .patch(
+          Slug("zzagent_x"),
+          Article
+            .Patch(reasons = List(Coverage.Reason(ApiCk2, Coverage.Entry.Reason("a later study, cited elsewhere"))))
+        )
         .isRight
     )
     assertEquals(h.research.articles.newFilterSources(Slug("zzagent_x")), Some(0))
@@ -694,7 +928,13 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   // ── housekeeping ───────────────────────────────────────────────────────────────────────────────
 
   test("housekeeping: the safe lint repairs run on their cadence, recorded and logged; off, nothing runs"):
-    val hk = autoCfg.modify(_.agents).setTo(autoCfg.agents.modify(_.autopilot).setTo(autoCfg.agents.autopilot.modify(_.lintHours).setTo(AgentAutopilotConfig.LintHours(24))))
+    val hk = autoCfg
+      .modify(_.agents)
+      .setTo(
+        autoCfg.agents
+          .modify(_.autopilot)
+          .setTo(autoCfg.agents.autopilot.modify(_.lintHours).setTo(AgentAutopilotConfig.LintHours(24)))
+      )
     val (a, _) = handlers(ScriptedClient(Model), hk)
     assertEquals(a.autopilot.tick(t0), Nil, "off")
     a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).fold(e => fail(e.message.value), identity)

@@ -67,11 +67,11 @@ extension (c: AgentsConfig)
 
 extension (c: AgentPlanConfig)
   def caps: PlanGoal.Caps = PlanGoal.Caps(
-      PlanGoal.Caps.SubGoals(c.maxSubGoals.value),
-      PlanGoal.Caps.Queries(c.maxQueries.value),
-      PlanGoal.Caps.Works(c.maxWorks.value),
-      PlanGoal.Caps.QueryChars(c.queryChars.value)
-    )
+    PlanGoal.Caps.SubGoals(c.maxSubGoals.value),
+    PlanGoal.Caps.Queries(c.maxQueries.value),
+    PlanGoal.Caps.Works(c.maxWorks.value),
+    PlanGoal.Caps.QueryChars(c.queryChars.value)
+  )
 
 extension (s: ScheduledRefresh)
   def readSchedule: ReadSchedule = s match

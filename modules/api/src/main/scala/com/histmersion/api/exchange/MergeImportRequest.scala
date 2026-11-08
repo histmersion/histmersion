@@ -12,9 +12,10 @@ final case class MergeImportRequest(
     resolutions: MergeResolutions = MergeResolutions(),
     dryRun: MergeImportRequest.DryRun = MergeImportRequest.DryRun(false)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MergeImportRequest:
-  export com.histmersion.api.exchange.Bundle.{Name as Bundle}
+  export com.histmersion.api.exchange.Bundle.Name as Bundle
   type DryRun = DryRun.T
   object DryRun extends Newtype[Boolean, Pure]

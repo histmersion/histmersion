@@ -16,7 +16,9 @@ import com.histmersion.domain.library.Citekey
   */
 object ArticlesData:
 
-  def figures(using DbCon): List[DataCount] = List(DataCount(DataCount.Noun("articles"), DataCount.Count(ArticleRepo.count().value)))
+  def figures(using DbCon): List[DataCount] = List(
+    DataCount(DataCount.Noun("articles"), DataCount.Count(ArticleRepo.count().value))
+  )
 
   final private class Check(val owner: DataOwner, name: Rule.Name, override val fix: Option[SafeFix]) extends CheckRule:
     val rule: Rule = Lint.rule(name).getOrElse(Rule(name, Rule.Description(name.value)))

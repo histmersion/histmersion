@@ -14,7 +14,6 @@ import com.histmersion.api.Api
 object ActivityRules:
   private given CanEqual[Instant, Instant] = CanEqual.derived
 
-
   /** The statuses of a run or job that is going now. */
   val RunningStates: Set[Entry.State] = Set(Entry.State("running"))
 
@@ -28,8 +27,10 @@ object ActivityRules:
       case Show.Everything => true
       case Show.Running    => isRunOrJob(e) && RunningStates.contains(e.state)
       case Show.Agents     =>
-        kind.contains(EntryKind.Run) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Agent.wire.value))
-      case Show.Jobs => kind.contains(EntryKind.Job) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Job.wire.value))
+        kind
+          .contains(EntryKind.Run) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Agent.wire.value))
+      case Show.Jobs =>
+        kind.contains(EntryKind.Job) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Job.wire.value))
       case Show.Yours    => kind.contains(EntryKind.Decision)
       case Show.Problems => isRunOrJob(e) && ProblemStates.contains(e.state)
 
@@ -37,7 +38,9 @@ object ActivityRules:
 
   /** Does `e` pass every filter of `q` but the page's place? */
   def matches(q: ActivityQuery, e: Entry): Boolean =
-    shows(q.show, e) && q.goal.forall(g => e.goal.exists(_.value == g.value)) && q.since.forall(s => !instantOf(e).isBefore(s))
+    shows(q.show, e) && q.goal.forall(g => e.goal.exists(_.value == g.value)) && q.since.forall(s =>
+      !instantOf(e).isBefore(s)
+    )
 
   private def instantOf(e: Entry): Instant = Instant.parse(e.at.value)
 
@@ -54,7 +57,11 @@ object ActivityRules:
   def page(entries: List[Entry], q: ActivityQuery, counts: Activity.Counts): Activity.Page =
     val kept = entries.filter(e => matches(q, e) && q.before.forall(after(_, e))).sorted(using newestFirst)
     val (rows, rest) = kept.splitAt(q.limit.value)
-    Activity.Page(rows, Option.when(rest.nonEmpty)(rows.lastOption).flatten.map(e => Activity.Page.Next(cursorOf(e).wire.value)), counts)
+    Activity.Page(
+      rows,
+      Option.when(rest.nonEmpty)(rows.lastOption).flatten.map(e => Activity.Page.Next(cursorOf(e).wire.value)),
+      counts
+    )
 
   def cursorOf(e: Entry): ActivityCursor = ActivityCursor(instantOf(e), ActivityCursor.Key(e.key.value))
 
@@ -85,7 +92,9 @@ object ActivityRules:
         .map(_.value.trim)
         .filter(_.nonEmpty)
         .fold(Right(Show.Everything))(w =>
-          Show.parse(Show.Wire(w)).toRight(bad(s"unknown kind '$w' — one of: ${Show.values.map(_.wire).mkString(", ")}"))
+          Show
+            .parse(Show.Wire(w))
+            .toRight(bad(s"unknown kind '$w' — one of: ${Show.values.map(_.wire).mkString(", ")}"))
         )
       t <- since
         .map(v => ListFilters.TimeBound(v.value.trim))

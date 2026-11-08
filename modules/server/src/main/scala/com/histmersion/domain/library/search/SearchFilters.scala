@@ -18,7 +18,11 @@ final class SearchFilters(places: PlaceService, cfg: () => AppConfig):
   def page(f: Filter): Filter =
     val c = cfg()
     f.modify(_.limit)
-      .setTo(Filter.Limit(c.limits.page(PageSize.option(f.limit.value), PageSize.applyUnsafe(math.max(1, c.limits.search.value))).value))
+      .setTo(
+        Filter.Limit(
+          c.limits.page(PageSize.option(f.limit.value), PageSize.applyUnsafe(math.max(1, c.limits.search.value))).value
+        )
+      )
       .modify(_.offset)
       .setTo(Filter.Offset(f.offset.value.max(0)))
 
@@ -28,4 +32,5 @@ final class SearchFilters(places: PlaceService, cfg: () => AppConfig):
     * at all.
     */
   def scope(f: Filter): PlaceScope =
-    if f.places.isEmpty then PlaceScope.empty else places.scopeFor(f.places.map(p => PlaceService.ScopeForValues(p.value)), f.period)
+    if f.places.isEmpty then PlaceScope.empty
+    else places.scopeFor(f.places.map(p => PlaceService.ScopeForValues(p.value)), f.period)

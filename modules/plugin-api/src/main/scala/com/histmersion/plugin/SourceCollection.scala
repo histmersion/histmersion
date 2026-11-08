@@ -47,7 +47,10 @@ trait SourceCollection:
   /** The file of `item` an import takes: `format` when asked for and present, else the collection's own preference;
     * `Left` when the item has no file the host can convert. Reads nothing.
     */
-  def file(item: CollectionItem, format: Option[SourceCollection.FileFormat]): Either[SourceCollection.FileResultPart1, CollectionFile]
+  def file(
+      item: CollectionItem,
+      format: Option[SourceCollection.FileFormat]
+  ): Either[SourceCollection.FileResultPart1, CollectionFile]
 
   /** The bytes of `file` of `item`. */
   def original(item: CollectionItem, file: CollectionFile): Either[SourceCollection.OriginalResultPart1, FetchedFile]
@@ -62,25 +65,39 @@ trait SourceCollection:
   /** Replace the file of the same format in item `id` with `file` (the original of the host's source `key`), keeping
     * the item and every link to it; the format replaced.
     */
-  def replace(id: CollectionId, key: SourceCollection.ReplaceKey, file: FetchedFile): Either[SourceCollection.ReplaceResultPart1, SourceCollection.ReplaceResultPart2] =
+  def replace(
+      id: CollectionId,
+      key: SourceCollection.ReplaceKey,
+      file: FetchedFile
+  ): Either[SourceCollection.ReplaceResultPart1, SourceCollection.ReplaceResultPart2] =
     Left(SourceCollection.ReplaceResultPart1(s"$title does not take new files: $readOnlyReason"))
 
   /** Bring item `id` in line with `metadata`; the fields written (none when it already agrees). */
-  def update(id: CollectionId, metadata: CollectionMetadata): Either[SourceCollection.UpdateResultPart1, List[CollectionChange]] =
+  def update(
+      id: CollectionId,
+      metadata: CollectionMetadata
+  ): Either[SourceCollection.UpdateResultPart1, List[CollectionChange]] =
     Left(SourceCollection.UpdateResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Plan the update of every linked item at once (against one reading of the collection), and with `apply` write the
     * items that would change; one entry per item, in id order.
     */
-  def updateAll(links: List[CollectionLink], apply: SourceCollection.UpdateAllApply): Either[SourceCollection.UpdateAllResultPart1, List[CollectionUpdateEntry]] =
+  def updateAll(
+      links: List[CollectionLink],
+      apply: SourceCollection.UpdateAllApply
+  ): Either[SourceCollection.UpdateAllResultPart1, List[CollectionUpdateEntry]] =
     Left(SourceCollection.UpdateAllResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Set named fields on item `id`, as `name -> value` pairs in the collection's own field names. */
-  def set(id: CollectionId, fields: List[(SourceCollection.SetFieldsPart1, SourceCollection.SetFieldsPart2)]): Either[SourceCollection.SetResultPart1, Unit] =
+  def set(
+      id: CollectionId,
+      fields: List[(SourceCollection.SetFieldsPart1, SourceCollection.SetFieldsPart2)]
+  ): Either[SourceCollection.SetResultPart1, Unit] =
     Left(SourceCollection.SetResultPart1(s"$title does not rewrite its items: $readOnlyReason"))
 
   /** Compare every linked item with the host's record of it; the items that disagree, in id order. */
-  def audit(records: List[CollectionRecord]): Either[SourceCollection.AuditResultPart1, List[CollectionFinding]] = Right(Nil)
+  def audit(records: List[CollectionRecord]): Either[SourceCollection.AuditResultPart1, List[CollectionFinding]] =
+    Right(Nil)
 
 object SourceCollection:
   type TitleResult = TitleResult.T

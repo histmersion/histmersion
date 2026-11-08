@@ -11,7 +11,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class InstanceInfo(id: UUID, label: Option[InstanceInfo.Label], createdAt: InstanceInfo.CreatedAt)
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object InstanceInfo:
   type Label = Label.T

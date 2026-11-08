@@ -14,11 +14,17 @@ object EventLeads:
   def size(vei: Option[LeadFacts.Vei], magnitude: Option[LeadFacts.Magnitude]): Option[String] =
     (vei
       .map(v => s"VEI $v")
-      .orElse(magnitude.map(m => s"M ${BigDecimal((m).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))).map(refactorValue2 => (refactorValue2))
+      .orElse(magnitude.map(m => s"M ${BigDecimal((m).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)}")))
+      .map(refactorValue2 => (refactorValue2))
 
   private def q(s: String): String = ("\"" + (s).replace("\"", "'") + "\"")
 
-  def actions(eventId: Event.Id, label: EventLead.Label, yrs: EventLead.Years, proposed: LeadFacts.Proposed): List[EventLead.Action] =
+  def actions(
+      eventId: Event.Id,
+      label: EventLead.Label,
+      yrs: EventLead.Years,
+      proposed: LeadFacts.Proposed
+  ): List[EventLead.Action] =
     List(
       EventLead.Action(
         EventLead.Action.Kind("discover"),
@@ -29,13 +35,24 @@ object EventLeads:
       EventLead.Action(
         EventLead.Action.Kind("acquire"),
         EventLead.Action.Label("add to the acquire queue"),
-        EventLead.Action.Command(s"histmersion queue acquire add ${q((s"literature on ${label.value} ($yrs)"))} --topic events")
+        EventLead.Action.Command(
+          s"histmersion queue acquire add ${q((s"literature on ${label.value} ($yrs)"))} --topic events"
+        )
       ),
-      EventLead.Action(EventLead.Action.Kind("goal"), EventLead.Action.Label("link to a goal"), EventLead.Action.Command(s"histmersion goals link <goal> --query ${q(label.value)}"), Some(EventLead.Action.Query(label.value)))
+      EventLead.Action(
+        EventLead.Action.Kind("goal"),
+        EventLead.Action.Label("link to a goal"),
+        EventLead.Action.Command(s"histmersion goals link <goal> --query ${q(label.value)}"),
+        Some(EventLead.Action.Query(label.value))
+      )
     ) ++
       Option
         .when(proposed.value > 0)(
-          EventLead.Action(EventLead.Action.Kind("confirm"), EventLead.Action.Label("review the proposed sources"), EventLead.Action.Command(s"histmersion events links $eventId"))
+          EventLead.Action(
+            EventLead.Action.Kind("confirm"),
+            EventLead.Action.Label("review the proposed sources"),
+            EventLead.Action.Command(s"histmersion events links $eventId")
+          )
         )
         .toList
 

@@ -12,8 +12,14 @@ class PluralSuite extends munit.FunSuite:
   test("the noun agrees with its count; an irregular plural is given"):
     assertEquals(Plural.count(Plural.CountN(1), Plural.CountSingular("turn")), "1 turn")
     assertEquals(Plural.count(Plural.CountN(0), Plural.CountSingular("turn")), "0 turns")
-    assertEquals(Plural.count(Plural.CountN(3), Plural.CountSingular("match"), Plural.CountPlural("matches")), "3 matches")
-    assertEquals(Plural.noun(Plural.Count(2), Plural.Noun.Singular("category"), Plural.Noun.Plural("categories")), "categories")
+    assertEquals(
+      Plural.count(Plural.CountN(3), Plural.CountSingular("match"), Plural.CountPlural("matches")),
+      "3 matches"
+    )
+    assertEquals(
+      Plural.noun(Plural.Count(2), Plural.Noun.Singular("category"), Plural.Noun.Plural("categories")),
+      "categories"
+    )
 
   test("no count picks its noun's ending by hand"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules")

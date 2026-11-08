@@ -65,7 +65,11 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
       filter = if look.dash.isEmpty then notPoint else js.Array("all", notPoint, js.Array("!", js.Array("get", "d"))),
       layout = js.Dynamic.literal(`line-join` = "round"),
       paint = js.Dynamic
-        .literal(`line-color` = colourExpr, `line-width` = look.lineWidth.value, `line-opacity` = times(look.lineOpacity.value))
+        .literal(
+          `line-color` = colourExpr,
+          `line-width` = look.lineWidth.value,
+          `line-opacity` = times(look.lineOpacity.value)
+        )
     )
     val dashed = Option.when(look.dash.nonEmpty)(
       js.Dynamic.literal(
@@ -140,7 +144,8 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: NoMap.Shapes.Id, val l
   // `var`: how many times the outlines were sent (diagnostics)
   private var sent = 0
   override def uploads: ShapeSet.UploadCount = ShapeSet.UploadCount(sent)
-  override def styleOf(k: ShapeFeature.Id): Option[(ShapeStyle.Colour, ShapeFeature.Alpha)] = drawn.get(k).map(d => (ShapeStyle.Colour(d.colour.value), d.alpha))
+  override def styleOf(k: ShapeFeature.Id): Option[(ShapeStyle.Colour, ShapeFeature.Alpha)] =
+    drawn.get(k).map(d => (ShapeStyle.Colour(d.colour.value), d.alpha))
 
   /** The shapes under map point `at` (screen point `p`), topmost (last drawn) first: an area that holds it, a point
     * within its circle.

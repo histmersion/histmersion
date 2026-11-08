@@ -10,4 +10,5 @@ import com.histmersion.api.json.NewtypeCodecs.given
 final case class CollectionUpdateOne(
     citekey: Citekey
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

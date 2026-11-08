@@ -77,10 +77,10 @@ object ImportTarget:
     */
   def of(ck: Citekey, id: Id, explicit: OfExplicit, existing: Option[Option[Previous]]): Either[Problem, ImportTarget] =
     existing match
-      case None                                             => Right(Create)
+      case None                                           => Right(Create)
       case Some(Some(linked)) if linked.value == id.value => Right(Update(None))
-      case Some(linked) if explicit.value                   => Right(Update(linked))
-      case Some(linked)                                     =>
+      case Some(linked) if explicit.value                 => Right(Update(linked))
+      case Some(linked)                                   =>
         val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
         Left(
           Problem(

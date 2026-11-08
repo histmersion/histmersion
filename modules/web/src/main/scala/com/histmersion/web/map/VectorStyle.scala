@@ -17,5 +17,4 @@ object VectorStyle:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
-
   def parse(s: Id): Option[VectorStyle] = values.find(_.id.value == s.value.trim.toLowerCase)

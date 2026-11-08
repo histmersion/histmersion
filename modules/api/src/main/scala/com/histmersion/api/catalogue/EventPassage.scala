@@ -7,9 +7,15 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class EventPassage(start: EventPassage.Start, end: EventPassage.End, quote: EventPassage.Quote, name: EventPassage.Name, context: EventPassage.Context = EventPassage.Context(""))
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class EventPassage(
+    start: EventPassage.Start,
+    end: EventPassage.End,
+    quote: EventPassage.Quote,
+    name: EventPassage.Name,
+    context: EventPassage.Context = EventPassage.Context("")
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventPassage:
   type Start = Start.T

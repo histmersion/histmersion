@@ -15,8 +15,22 @@ class StorageSuite extends munit.FunSuite:
   private val vol = Storage.Volume.Id("/Volumes/Data (/dev/disk3s5)")
   private val entryVolume = Storage.Entry.Volume(vol.value)
 
-  private def e(key: Storage.Entry.Key, path: Option[Storage.Entry.Path], bytes: ByteCount, shrink: Option[Storage.Entry.Shrink] = None) =
-    Storage.Entry(key, Storage.Entry.Label(key.value), Storage.Entry.Group("caches"), path, Some(bytes), Some(Storage.FileCount(1L)), volume = Some(entryVolume), shrink = shrink)
+  private def e(
+      key: Storage.Entry.Key,
+      path: Option[Storage.Entry.Path],
+      bytes: ByteCount,
+      shrink: Option[Storage.Entry.Shrink] = None
+  ) =
+    Storage.Entry(
+      key,
+      Storage.Entry.Label(key.value),
+      Storage.Entry.Group("caches"),
+      path,
+      Some(bytes),
+      Some(Storage.FileCount(1L)),
+      volume = Some(entryVolume),
+      shrink = shrink
+    )
 
   private def shrinkOf(key: Storage.Entry.Key, keep: Storage.Advice.Keep): Option[Storage.Entry.Shrink] =
     Storage.Advice.shrink(key, keep).map(h => Storage.Entry.Shrink(h.value))
@@ -32,7 +46,14 @@ class StorageSuite extends munit.FunSuite:
         e(Storage.Entry.Key("kit"), Some(Storage.Entry.Path("/h/kit")), ByteCount(2)),
         e(Storage.Entry.Key("deep"), Some(Storage.Entry.Path("/h/kit/lib")), ByteCount(1)),
         e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), ByteCount(3)),
-        Storage.Entry(Storage.Entry.Key("database"), Storage.Entry.Label("db"), Storage.Entry.Group("database"), None, (Some(5L)).map(ByteCount.apply), within = Some(Storage.Entry.Key("cluster")))
+        Storage.Entry(
+          Storage.Entry.Key("database"),
+          Storage.Entry.Label("db"),
+          Storage.Entry.Group("database"),
+          None,
+          (Some(5L)).map(ByteCount.apply),
+          within = Some(Storage.Entry.Key("cluster"))
+        )
       )
     )
     assertEquals(
@@ -48,20 +69,40 @@ class StorageSuite extends munit.FunSuite:
 
   test("the total counts every byte once: what is inside another entry is not added again"):
     val es = Storage.nest(
-      List(e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), ByteCount(10 * GB)), e(Storage.Entry.Key("kit"), Some(Storage.Entry.Path("/h/kit")), ByteCount(2 * GB)), e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), ByteCount(GB)))
+      List(
+        e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), ByteCount(10 * GB)),
+        e(Storage.Entry.Key("kit"), Some(Storage.Entry.Path("/h/kit")), ByteCount(2 * GB)),
+        e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), ByteCount(GB))
+      )
     )
     assertEquals(Storage.total(es), ByteCount(11 * GB))
     // the same path twice: the later one is within the earlier
-    val twice = Storage.nest(List(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/x")), ByteCount(5)), e(Storage.Entry.Key("b"), Some(Storage.Entry.Path("/x")), ByteCount(5))))
+    val twice = Storage.nest(
+      List(
+        e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/x")), ByteCount(5)),
+        e(Storage.Entry.Key("b"), Some(Storage.Entry.Path("/x")), ByteCount(5))
+      )
+    )
     assertEquals(twice.map(_.within), List(None, Some("a")))
     assertEquals(Storage.total(twice), ByteCount(5L))
 
   test("shown: children follow their parent, missing locations are left out"):
     val es = Storage.nest(
       List(
-        Storage.Entry(Storage.Entry.Key("database"), Storage.Entry.Label("db"), Storage.Entry.Group("database"), None, (Some(5L)).map(ByteCount.apply), within = Some(Storage.Entry.Key("cluster"))),
+        Storage.Entry(
+          Storage.Entry.Key("database"),
+          Storage.Entry.Label("db"),
+          Storage.Entry.Group("database"),
+          None,
+          (Some(5L)).map(ByteCount.apply),
+          within = Some(Storage.Entry.Key("cluster"))
+        ),
         e(Storage.Entry.Key("cluster"), Some(Storage.Entry.Path("/d/pg")), ByteCount(6)),
-        e(Storage.Entry.Key("gone"), Some(Storage.Entry.Path("/nope")), ByteCount(0)).modify(_.exists).setTo(Storage.Entry.Exists(false)).modify(_.bytes).setTo((None: Option[ByteCount])),
+        e(Storage.Entry.Key("gone"), Some(Storage.Entry.Path("/nope")), ByteCount(0))
+          .modify(_.exists)
+          .setTo(Storage.Entry.Exists(false))
+          .modify(_.bytes)
+          .setTo((None: Option[ByteCount])),
         e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), ByteCount(1))
       )
     )
@@ -71,14 +112,41 @@ class StorageSuite extends munit.FunSuite:
     val r = Storage.Report(
       entries = Storage.nest(
         List(
-          e(Storage.Entry.Key("backups"), Some(Storage.Entry.Path("/d/backups")), ByteCount(30 * GB), shrinkOf(Storage.Entry.Key("backups"), Storage.Advice.Keep(5))),
-          e(Storage.Entry.Key("basemap"), Some(Storage.Entry.Path("/c/basemap")), ByteCount(3 * GB), shrinkOf(Storage.Entry.Key("basemap"), Storage.Advice.Keep(5))),
-          e(Storage.Entry.Key("originals"), Some(Storage.Entry.Path("/d/uploads")), ByteCount(40 * GB)), // nothing to do about it: not named
-          e(Storage.Entry.Key("gazetteer"), Some(Storage.Entry.Path("/c/gazetteer")), ByteCount(1 * GB), shrinkOf(Storage.Entry.Key("gazetteer"), Storage.Advice.Keep(5))),
-          e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), ByteCount(GB / 2), shrinkOf(Storage.Entry.Key("logs"), Storage.Advice.Keep(5)))
+          e(
+            Storage.Entry.Key("backups"),
+            Some(Storage.Entry.Path("/d/backups")),
+            ByteCount(30 * GB),
+            shrinkOf(Storage.Entry.Key("backups"), Storage.Advice.Keep(5))
+          ),
+          e(
+            Storage.Entry.Key("basemap"),
+            Some(Storage.Entry.Path("/c/basemap")),
+            ByteCount(3 * GB),
+            shrinkOf(Storage.Entry.Key("basemap"), Storage.Advice.Keep(5))
+          ),
+          e(
+            Storage.Entry.Key("originals"),
+            Some(Storage.Entry.Path("/d/uploads")),
+            ByteCount(40 * GB)
+          ), // nothing to do about it: not named
+          e(
+            Storage.Entry.Key("gazetteer"),
+            Some(Storage.Entry.Path("/c/gazetteer")),
+            ByteCount(1 * GB),
+            shrinkOf(Storage.Entry.Key("gazetteer"), Storage.Advice.Keep(5))
+          ),
+          e(
+            Storage.Entry.Key("logs"),
+            Some(Storage.Entry.Path("/d/logs")),
+            ByteCount(GB / 2),
+            shrinkOf(Storage.Entry.Key("logs"), Storage.Advice.Keep(5))
+          )
         )
       ),
-      volumes = List(Storage.Volume(vol, ByteCount(500 * GB), ByteCount(4 * GB)), Storage.Volume(Storage.Volume.Id("/other"), ByteCount(100 * GB), ByteCount(50 * GB)))
+      volumes = List(
+        Storage.Volume(vol, ByteCount(500 * GB), ByteCount(4 * GB)),
+        Storage.Volume(Storage.Volume.Id("/other"), ByteCount(100 * GB), ByteCount(50 * GB))
+      )
     )
     val hints = Storage.hints(r)
     assertEquals(hints.size, 1, hints)
@@ -93,32 +161,74 @@ class StorageSuite extends munit.FunSuite:
     assert(h.value.contains("gazetteer 1.0 GB"), h)
     assert(!h.value.contains("logs") && !h.value.contains("originals"), h)
     assertEquals(Storage.hints(r.modify(_.lowFreeBytes).setTo(ByteCount(GB))), Nil)
-    assertEquals(Storage.hints(r.modify(_.entries).setTo(Nil)), List(s"Low disk space on $vol: 4.0 GB free of 500.0 GB."))
+    assertEquals(
+      Storage.hints(r.modify(_.entries).setTo(Nil)),
+      List(s"Low disk space on $vol: 4.0 GB free of 500.0 GB.")
+    )
 
   test("every location with something to do about it says what"):
-    assert(Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(0)).exists(_.value.contains("now 0")))
-    assert(Storage.Advice.shrink(Storage.Entry.Key("toolchain"), Storage.Advice.Keep(5)).exists(_.value.contains("histmersion-toolchain remove")))
-    assert(Storage.Advice.shrink(Storage.Entry.Key("database"), Storage.Advice.Keep(5)).exists(_.value.contains("maintenance vacuum")))
+    assert(
+      Storage.Advice.shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(0)).exists(_.value.contains("now 0"))
+    )
+    assert(
+      Storage.Advice
+        .shrink(Storage.Entry.Key("toolchain"), Storage.Advice.Keep(5))
+        .exists(_.value.contains("histmersion-toolchain remove"))
+    )
+    assert(
+      Storage.Advice
+        .shrink(Storage.Entry.Key("database"), Storage.Advice.Keep(5))
+        .exists(_.value.contains("maintenance vacuum"))
+    )
     assert(Storage.Advice.shrink(Storage.Entry.Key("cache:thumbs"), Storage.Advice.Keep(5)).isDefined)
     assertEquals(Storage.Advice.shrink(Storage.Entry.Key("originals"), Storage.Advice.Keep(5)), None)
     assertEquals(Storage.Advice.shrink(Storage.Entry.Key("plugins"), Storage.Advice.Keep(5)), None)
 
   test("sizes: at least for a capped walk, a dash for nothing measured, not there for a missing path"):
     assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(2 * GB))), "2.0 GB")
-    assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(2 * GB)).modify(_.partial).setTo(Storage.Entry.Partial(true))), "at least 2.0 GB")
-    assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(0)).modify(_.bytes).setTo((None: Option[ByteCount]))), "—")
-    assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(0)).modify(_.bytes).setTo((None: Option[ByteCount])).modify(_.exists).setTo(Storage.Entry.Exists(false))), "not there")
+    assertEquals(
+      Storage.size(
+        e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(2 * GB))
+          .modify(_.partial)
+          .setTo(Storage.Entry.Partial(true))
+      ),
+      "at least 2.0 GB"
+    )
+    assertEquals(
+      Storage.size(
+        e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(0))
+          .modify(_.bytes)
+          .setTo((None: Option[ByteCount]))
+      ),
+      "—"
+    )
+    assertEquals(
+      Storage.size(
+        e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(0))
+          .modify(_.bytes)
+          .setTo((None: Option[ByteCount]))
+          .modify(_.exists)
+          .setTo(Storage.Entry.Exists(false))
+      ),
+      "not there"
+    )
 
   test("the CLI's own locations join the report; one the server reports already is not listed twice"):
     val server = Storage.Report(
       entries = List(e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), ByteCount(10 * GB))),
       volumes = List(Storage.Volume(vol, ByteCount(500 * GB), ByteCount(400 * GB)))
     )
-    val local = List(e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), ByteCount(10 * GB)), e(Storage.Entry.Key("calibre-originals"), Some(Storage.Entry.Path("/o")), ByteCount(2 * GB)))
+    val local = List(
+      e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), ByteCount(10 * GB)),
+      e(Storage.Entry.Key("calibre-originals"), Some(Storage.Entry.Path("/o")), ByteCount(2 * GB))
+    )
     val merged = Storage.addLocal(
       server,
       local,
-      List(Storage.Volume(vol, ByteCount(500 * GB), ByteCount(400 * GB)), Storage.Volume(Storage.Volume.Id("/usb"), ByteCount(10 * GB), ByteCount(1 * GB)))
+      List(
+        Storage.Volume(vol, ByteCount(500 * GB), ByteCount(400 * GB)),
+        Storage.Volume(Storage.Volume.Id("/usb"), ByteCount(10 * GB), ByteCount(1 * GB))
+      )
     )
     assertEquals(merged.entries.map(x => x.key -> x.host), List("install" -> "server", "calibre-originals" -> "cli"))
     assertEquals(merged.volumes.map(_.id), List(vol, Storage.Volume.Id("/usb")))
@@ -158,7 +268,15 @@ class StorageSuite extends munit.FunSuite:
           volume = Some(entryVolume),
           shrink = shrinkOf(Storage.Entry.Key("backups"), Storage.Advice.Keep(5))
         ),
-        Storage.Entry(Storage.Entry.Key("toolchain"), Storage.Entry.Label("GraalVM toolchain"), Storage.Entry.Group("install"), Some(Storage.Entry.Path("/d/toolchain")), None, None, exists = Storage.Entry.Exists(false)),
+        Storage.Entry(
+          Storage.Entry.Key("toolchain"),
+          Storage.Entry.Label("GraalVM toolchain"),
+          Storage.Entry.Group("install"),
+          Some(Storage.Entry.Path("/d/toolchain")),
+          None,
+          None,
+          exists = Storage.Entry.Exists(false)
+        ),
         Storage.Entry(
           Storage.Entry.Key("basemap"),
           Storage.Entry.Label("terrain base map (cache)"),
@@ -172,9 +290,19 @@ class StorageSuite extends munit.FunSuite:
         )
       )
     ),
-    tables = List(TableSize(TableSize.Name("sources"), ByteCount(5 * GB)), TableSize(TableSize.Name("assets"), ByteCount(2 * GB))),
+    tables = List(
+      TableSize(TableSize.Name("sources"), ByteCount(5 * GB)),
+      TableSize(TableSize.Name("assets"), ByteCount(2 * GB))
+    ),
     volumes = List(Storage.Volume(vol, ByteCount(994 * GB), ByteCount(120 * GB))),
-    backups = Some(BackupsUsage(BackupsUsage.Count(5), ByteCount(28 * GB), Some(BackupsUsage.Newest("histmersion-20261019T212919Z.dump")), BackupsUsage.Keep(5)))
+    backups = Some(
+      BackupsUsage(
+        BackupsUsage.Count(5),
+        ByteCount(28 * GB),
+        Some(BackupsUsage.Newest("histmersion-20261019T212919Z.dump")),
+        BackupsUsage.Keep(5)
+      )
+    )
   )
 
   test("histmersion about: the Storage section — total, nesting, backups, tables, free space"):
@@ -202,7 +330,9 @@ class StorageSuite extends munit.FunSuite:
     assert(!md.contains("toolchain"), md)
     assert(md.contains(s"- free space: $vol: 120.0 GB free of 994.0 GB"), md)
     assert(!md.contains("LOW") && !md.contains("Low disk space"), md)
-    val low = Storage.withHints(report.modify(_.volumes).setTo(List(Storage.Volume(vol, ByteCount(994 * GB), ByteCount(5 * GB)))))
+    val low = Storage.withHints(
+      report.modify(_.volumes).setTo(List(Storage.Volume(vol, ByteCount(994 * GB), ByteCount(5 * GB))))
+    )
     val lmd = StorageMarkdown.render(low).mkString("\n")
     assert(lmd.contains("5.0 GB free of 994.0 GB — LOW"), lmd)
     assert(lmd.contains("- Low disk space on"), lmd)

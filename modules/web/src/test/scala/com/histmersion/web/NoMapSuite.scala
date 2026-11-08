@@ -14,15 +14,35 @@ class NoMapSuite extends munit.FunSuite:
 
   test("MapLibre needs WebGL 2: WebGL off, or WebGL 1 only, is said as such; a software WebGL 2 draws"):
     assertEquals(
-      MapLibreEngine.unsupported(Capabilities(webgl = Capabilities.Webgl(false), software = Capabilities.Software(true), renderer = Capabilities.Renderer(""), webgl2 = Capabilities.Webgl2(false))),
+      MapLibreEngine.unsupported(
+        Capabilities(
+          webgl = Capabilities.Webgl(false),
+          software = Capabilities.Software(true),
+          renderer = Capabilities.Renderer(""),
+          webgl2 = Capabilities.Webgl2(false)
+        )
+      ),
       Some("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)")
     )
     assertEquals(
-      MapLibreEngine.unsupported(Capabilities(webgl = Capabilities.Webgl(true), software = Capabilities.Software(false), renderer = Capabilities.Renderer("Apple M4"), webgl2 = Capabilities.Webgl2(false))),
+      MapLibreEngine.unsupported(
+        Capabilities(
+          webgl = Capabilities.Webgl(true),
+          software = Capabilities.Software(false),
+          renderer = Capabilities.Renderer("Apple M4"),
+          webgl2 = Capabilities.Webgl2(false)
+        )
+      ),
       Some("this browser draws WebGL 1 only, not WebGL 2")
     )
     assertEquals(
-      MapLibreEngine.unsupported(Capabilities(webgl = Capabilities.Webgl(true), software = Capabilities.Software(true), renderer = Capabilities.Renderer("SwiftShader"))),
+      MapLibreEngine.unsupported(
+        Capabilities(
+          webgl = Capabilities.Webgl(true),
+          software = Capabilities.Software(true),
+          renderer = Capabilities.Renderer("SwiftShader")
+        )
+      ),
       None
     )
 
@@ -34,4 +54,6 @@ class NoMapSuite extends munit.FunSuite:
         "work without the map"
       )
     )
-    assert(NoMap.html(NoMapSurface.Why("the map engine did not start (<b>x</b>)")).value.contains("(&lt;b&gt;x&lt;/b&gt;)"))
+    assert(
+      NoMap.html(NoMapSurface.Why("the map engine did not start (<b>x</b>)")).value.contains("(&lt;b&gt;x&lt;/b&gt;)")
+    )

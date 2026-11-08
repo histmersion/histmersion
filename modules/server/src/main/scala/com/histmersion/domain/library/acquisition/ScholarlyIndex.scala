@@ -14,7 +14,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 trait ScholarlyIndex:
   def name: ScholarlyIndex.Name
-  def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit): Either[ScholarlyIndex.Problem, List[WorkRef]]
+  def search(
+      query: Search.Query,
+      since: LocalDate,
+      limit: ScholarlyIndex.Limit
+  ): Either[ScholarlyIndex.Problem, List[WorkRef]]
 
   /** Why the index would not be asked now (CORE's budget spent, CORE asked to wait), if it would not: a sweep then
     * leaves its watches unread, keeping their watermarks, and says so.

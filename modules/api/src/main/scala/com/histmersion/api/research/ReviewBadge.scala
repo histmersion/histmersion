@@ -17,7 +17,8 @@ final case class ReviewBadge(
     runs: ReviewBadge.Runs = ReviewBadge.Runs(0),
     round: Option[ReviewBadge.Round] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ReviewBadge:
   type Label = Label.T

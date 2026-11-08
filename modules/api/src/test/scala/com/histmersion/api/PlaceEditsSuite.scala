@@ -49,9 +49,15 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(Place.Edits.defaultId(Place.Label("Ze'elim Gully")), "local_zeelim_gully")
 
   test("a hand-added place becomes a point import row with its label, names, period and source"):
-    val in = add().modify(
-      _.names).setTo(List(Place.Add.Names("Gornij"), Place.Add.Names(" Gornji  Grad "))).modify(_.lang).setTo(Some(Place.Add.Lang("HR"))).modify(_.periodStart).setTo(Some(Year(-1300))).modify(_.periodEnd).setTo(Some(Year(-1100))
-    )
+    val in = add()
+      .modify(_.names)
+      .setTo(List(Place.Add.Names("Gornij"), Place.Add.Names(" Gornji  Grad ")))
+      .modify(_.lang)
+      .setTo(Some(Place.Add.Lang("HR")))
+      .modify(_.periodStart)
+      .setTo(Some(Year(-1300)))
+      .modify(_.periodEnd)
+      .setTo(Some(Year(-1100)))
     val r = Place.Edits.toInput(in).fold(e => fail(e.message.value), identity)
     assertEquals(r.place.id, Place.Id("local_gornji_grad"))
     assertEquals(r.place.kind, Place.Kind.Site)
@@ -93,14 +99,27 @@ class PlaceEditsSuite extends munit.FunSuite:
     refused(add(label = Place.Add.Label(" ")), "label is empty")
     refused(add(label = Place.Add.Label("Ἀθῆναι")), "gives no id")
     refused(add().modify(_.id).setTo(Some(Place.Id("Bad Id"))), "is not a place id")
-    refused(add().modify(_.periodStart).setTo(Some(Year(-100))).modify(_.periodEnd).setTo(Some(Year(-200))), "starts (-100) after it ends (-200)")
+    refused(
+      add().modify(_.periodStart).setTo(Some(Year(-100))).modify(_.periodEnd).setTo(Some(Year(-200))),
+      "starts (-100) after it ends (-200)"
+    )
     refused(add().modify(_.lang).setTo(Some(Place.Add.Lang("??"))), "language tag")
 
   test("the CSV export is the supplement's format, quoted where it must be"):
     val csv = Place.Edits.csv(
       List(
-        ManualPlaceName(Place.Id("ne_lake_1"), ManualPlaceName.Label("Sea of Galilee"), ManualPlaceName.Name("Lake Kinneret"), ManualPlaceName.Lang("en")),
-        ManualPlaceName(Place.Id("p2"), ManualPlaceName.Label("Tell, \"the\" mound"), ManualPlaceName.Name("Tall"), ManualPlaceName.Lang(""))
+        ManualPlaceName(
+          Place.Id("ne_lake_1"),
+          ManualPlaceName.Label("Sea of Galilee"),
+          ManualPlaceName.Name("Lake Kinneret"),
+          ManualPlaceName.Lang("en")
+        ),
+        ManualPlaceName(
+          Place.Id("p2"),
+          ManualPlaceName.Label("Tell, \"the\" mound"),
+          ManualPlaceName.Name("Tall"),
+          ManualPlaceName.Lang("")
+        )
       )
     )
     assertEquals(
@@ -126,24 +145,51 @@ class PlaceEditsSuite extends munit.FunSuite:
       PlacesMarkdown.placeNameChanged(added),
       "added the name **Lake Kinneret** (en) to **Sea of Galilee** `ne_lake_1` — names added by hand survive every re-seed"
     )
-    assert(PlacesMarkdown.placeNameChanged(added.modify(_.changed).setTo(Place.NameChanged.Changed(false))).contains("was already a name added by hand"))
-    assert(PlacesMarkdown.placeNameChanged(added.modify(_.wasImported).setTo(Place.NameChanged.WasImported(true))).contains("(a name the seed gives)"))
+    assert(
+      PlacesMarkdown
+        .placeNameChanged(added.modify(_.changed).setTo(Place.NameChanged.Changed(false)))
+        .contains("was already a name added by hand")
+    )
+    assert(
+      PlacesMarkdown
+        .placeNameChanged(added.modify(_.wasImported).setTo(Place.NameChanged.WasImported(true)))
+        .contains("(a name the seed gives)")
+    )
     assert(
       PlacesMarkdown
         .placeNameChanged(added.modify(_.added).setTo(Place.NameChanged.Added(false)))
         .startsWith("removed the name **Lake Kinneret** (en) from")
     )
     assertEquals(PlacesMarkdown.manualPlaceNames(Nil), "_No names added by hand._")
-    assert(PlacesMarkdown.manualPlaceNames(List(ManualPlaceName(Place.Id("p"), ManualPlaceName.Label("P"), ManualPlaceName.Name("N"), ManualPlaceName.Lang("")))).contains("- **N** → P `p`"))
+    assert(
+      PlacesMarkdown
+        .manualPlaceNames(
+          List(
+            ManualPlaceName(
+              Place.Id("p"),
+              ManualPlaceName.Label("P"),
+              ManualPlaceName.Name("N"),
+              ManualPlaceName.Lang("")
+            )
+          )
+        )
+        .contains("- **N** → P `p`")
+    )
 
   // ── a person's kind and period for a place (V080) ───────────────────────────────────────────────
 
   test("an override: a kind (lower-cased), a period with one or both sides, a reason; or a reset alone"):
     assertEquals(
       Place.Overrides.edit(
-        Place.OverrideSet(kind = Some(Place.OverrideSet.Kind(" Region ")), reason = Some(Place.OverrideSet.Reason("  one of   14 ")))
+        Place.OverrideSet(
+          kind = Some(Place.OverrideSet.Kind(" Region ")),
+          reason = Some(Place.OverrideSet.Reason("  one of   14 "))
+        )
       ),
-      Right(Place.OverrideEdit.Put(Some(Place.OverrideEdit.Put.Kind("region")), None, Some(Place.OverrideEdit.Put.Reason("one of 14"))))
+      Right(
+        Place.OverrideEdit
+          .Put(Some(Place.OverrideEdit.Put.Kind("region")), None, Some(Place.OverrideEdit.Put.Reason("one of 14")))
+      )
     )
     assertEquals(
       Place.Overrides
@@ -153,9 +199,16 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(
       Place.Overrides.edit(
         Place
-          .OverrideSet(kind = Some(Place.OverrideSet.Kind("polity")), periodStart = Some(Year(-27)), periodEnd = Some(Year(410)))
+          .OverrideSet(
+            kind = Some(Place.OverrideSet.Kind("polity")),
+            periodStart = Some(Year(-27)),
+            periodEnd = Some(Year(410))
+          )
       ),
-      Right(Place.OverrideEdit.Put(Some(Place.OverrideEdit.Put.Kind("polity")), Some((Some(Year(-27L)), Some(Year(410L)))), None))
+      Right(
+        Place.OverrideEdit
+          .Put(Some(Place.OverrideEdit.Put.Kind("polity")), Some((Some(Year(-27L)), Some(Year(410L)))), None)
+      )
     )
     assertEquals(
       Place.Overrides.edit(Place.OverrideSet(reset = Place.OverrideSet.Reset(true))),
@@ -167,7 +220,9 @@ class PlaceEditsSuite extends munit.FunSuite:
       Place.Overrides.edit(in).left.map(_.code)
     assertEquals(refused(Place.OverrideSet()), Left(Some(Write.CodeInvalid)))
     assertEquals(
-      refused(Place.OverrideSet(kind = Some(Place.OverrideSet.Kind("  ")), reason = Some(Place.OverrideSet.Reason("why")))),
+      refused(
+        Place.OverrideSet(kind = Some(Place.OverrideSet.Kind("  ")), reason = Some(Place.OverrideSet.Reason("why")))
+      ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
@@ -224,11 +279,21 @@ class PlaceEditsSuite extends munit.FunSuite:
         "re-seed and re-import\n\nfindings matched again: 59 → 0"
     )
     assert(
-      PlacesMarkdown.placeOverrideChanged(set.modify(_.unlocated).setTo(Place.OverrideChanged.Unlocated(2))).endsWith("; **2** of them now have no place at all")
+      PlacesMarkdown
+        .placeOverrideChanged(set.modify(_.unlocated).setTo(Place.OverrideChanged.Unlocated(2)))
+        .endsWith("; **2** of them now have no place at all")
     )
     assert(
       PlacesMarkdown
-        .placeOverrideChanged(set.modify(_.reset).setTo(Place.OverrideChanged.Reset(true)).modify(_.kindBefore).setTo(Place.OverrideChanged.KindBefore("region")).modify(_.kindAfter).setTo(Place.OverrideChanged.KindAfter("site")))
+        .placeOverrideChanged(
+          set
+            .modify(_.reset)
+            .setTo(Place.OverrideChanged.Reset(true))
+            .modify(_.kindBefore)
+            .setTo(Place.OverrideChanged.KindBefore("region"))
+            .modify(_.kindAfter)
+            .setTo(Place.OverrideChanged.KindAfter("site"))
+        )
         .startsWith(
           "reset **Regio XII (Piscina Publica)** `pleiades_886355306` to what its source says: kind region → site"
         )
@@ -259,11 +324,20 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(
       Place.Overrides.edit(
         Place
-          .OverrideSet(pointLat = Some(Latitude(38.5)), pointLon = Some(Longitude(57.5)), reason = Some(Place.OverrideSet.Reason("Pleiades reprPoint")))
+          .OverrideSet(
+            pointLat = Some(Latitude(38.5)),
+            pointLon = Some(Longitude(57.5)),
+            reason = Some(Place.OverrideSet.Reason("Pleiades reprPoint"))
+          )
       ),
       Right(
         Place.OverrideEdit
-          .Put(None, None, Some(Place.OverrideEdit.Put.Reason("Pleiades reprPoint")), Some(GeoPoint(Longitude(57.5), Latitude(38.5))))
+          .Put(
+            None,
+            None,
+            Some(Place.OverrideEdit.Put.Reason("Pleiades reprPoint")),
+            Some(GeoPoint(Longitude(57.5), Latitude(38.5)))
+          )
       )
     )
     assertEquals(
@@ -277,7 +351,12 @@ class PlaceEditsSuite extends munit.FunSuite:
       ),
       Right(
         Place.OverrideEdit
-          .Put(Some(Place.OverrideEdit.Put.Kind("region")), None, Some(Place.OverrideEdit.Put.Reason("Wikidata P625")), Some(GeoPoint(Longitude(31.4), Latitude(-16.1))))
+          .Put(
+            Some(Place.OverrideEdit.Put.Kind("region")),
+            None,
+            Some(Place.OverrideEdit.Put.Reason("Wikidata P625")),
+            Some(GeoPoint(Longitude(31.4), Latitude(-16.1)))
+          )
       )
     )
     def refused(in: Place.OverrideSet) =
@@ -293,27 +372,44 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
     assertEquals(
       refused(
-        Place.OverrideSet(pointLat = Some(Latitude(91)), pointLon = Some(Longitude(0)), reason = Some(Place.OverrideSet.Reason("x")))
+        Place.OverrideSet(
+          pointLat = Some(Latitude(91)),
+          pointLon = Some(Longitude(0)),
+          reason = Some(Place.OverrideSet.Reason("x"))
+        )
       ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
-        Place.OverrideSet(pointLat = Some(Latitude(0)), pointLon = Some(Longitude(-181)), reason = Some(Place.OverrideSet.Reason("x")))
+        Place.OverrideSet(
+          pointLat = Some(Latitude(0)),
+          pointLon = Some(Longitude(-181)),
+          reason = Some(Place.OverrideSet.Reason("x"))
+        )
       ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
         Place
-          .OverrideSet(pointLat = Some(Latitude(Double.NaN)), pointLon = Some(Longitude(0)), reason = Some(Place.OverrideSet.Reason("x")))
+          .OverrideSet(
+            pointLat = Some(Latitude(Double.NaN)),
+            pointLon = Some(Longitude(0)),
+            reason = Some(Place.OverrideSet.Reason("x"))
+          )
       ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
         Place
-          .OverrideSet(pointLat = Some(Latitude(1)), pointLon = Some(Longitude(1)), reason = Some(Place.OverrideSet.Reason("x")), reset = Place.OverrideSet.Reset(true))
+          .OverrideSet(
+            pointLat = Some(Latitude(1)),
+            pointLon = Some(Longitude(1)),
+            reason = Some(Place.OverrideSet.Reason("x")),
+            reset = Place.OverrideSet.Reset(true)
+          )
       ),
       Left(Some(Write.CodeInvalid))
     )
@@ -323,7 +419,11 @@ class PlaceEditsSuite extends munit.FunSuite:
       ),
       Right(
         Place
-          .OverrideSet(reason = Some(Place.OverrideSet.Reason("r")), pointLat = Some(Latitude(38.5)), pointLon = Some(Longitude(57.5)))
+          .OverrideSet(
+            reason = Some(Place.OverrideSet.Reason("r")),
+            pointLat = Some(Latitude(38.5)),
+            pointLon = Some(Longitude(57.5))
+          )
       )
     )
 
@@ -371,7 +471,9 @@ class PlaceEditsSuite extends munit.FunSuite:
     assert(km > 1200 && km < 1400, s"Ctesiphon to the grid square is about 1 300 km, not $km")
     assert(
       !PlacesMarkdown
-        .placeOverrideChanged(moved.modify(_.latAfter).setTo(Some(Latitude(33.09361))).modify(_.lonAfter).setTo(Some(Longitude(44.58083))))
+        .placeOverrideChanged(
+          moved.modify(_.latAfter).setTo(Some(Latitude(33.09361))).modify(_.lonAfter).setTo(Some(Longitude(44.58083)))
+        )
         .contains("→ 33"),
       "an unmoved point is stated once"
     )

@@ -26,7 +26,9 @@ object WikidataEntities:
   /** Pure: the `wbgetentities` URL for up to the API's batch of ids. `maxlag` 0 = not sent. */
   def url(api: Api, ids: List[WikidataItem.Id], maxlag: Maxlag): RepositoryLanding.Candidate.Url =
     val lag = if (maxlag).value > 0 then s"&maxlag=$maxlag" else ""
-    RepositoryLanding.Candidate.Url(s"$api?action=wbgetentities&format=json&formatversion=2&props=claims&ids=${enc((ids.mkString("|")))}$lag")
+    RepositoryLanding.Candidate.Url(
+      s"$api?action=wbgetentities&format=json&formatversion=2&props=claims&ids=${enc((ids.mkString("|")))}$lag"
+    )
 
   /** Pure: the items of a `wbgetentities` answer, keyed by the id ASKED for (a redirected item answers under the id
     * that was asked, with the statements of its target). `props` are the picture properties to keep; P373 is always
@@ -52,10 +54,21 @@ object WikidataEntities:
                 val snak = s.downField("mainsnak")
                 val v = snak.downField("datavalue").get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
                 if rank == "deprecated" || snak.get[String]("snaktype").toOption.exists(_ != "value") then None
-                else v.map(f => WikidataStatement(p, WikidataStatement.File(f), WikidataStatement.Preferred(rank == "preferred"), WikidataStatement.Order(i)))
+                else
+                  v.map(f =>
+                    WikidataStatement(
+                      p,
+                      WikidataStatement.File(f),
+                      WikidataStatement.Preferred(rank == "preferred"),
+                      WikidataStatement.Order(i)
+                    )
+                  )
               }
             val pictures = props.toList.sorted.flatMap(statementsOf)
-            val category = WikidataStatement.best(statementsOf(WikidataStatement.Property(CommonsCategory)), WikidataStatement.BestPer(1)).headOption.map(st => WikidataItem.CommonsCategory(st.file.value))
+            val category = WikidataStatement
+              .best(statementsOf(WikidataStatement.Property(CommonsCategory)), WikidataStatement.BestPer(1))
+              .headOption
+              .map(st => WikidataItem.CommonsCategory(st.file.value))
             val id = WikidataItem.Id(key)
             Some(id -> WikidataItem(id, pictures, category))
         }.toMap)

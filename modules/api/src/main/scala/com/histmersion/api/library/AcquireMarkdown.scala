@@ -5,7 +5,6 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 object AcquireMarkdown:
 
-
   private def esc(s: String): String = ((s).replace("|", "\\|").replace("\n", " ").trim)
   private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
   private def num(n: Option[Int]): String = (n.map(_.toString).getOrElse("—"))
@@ -30,7 +29,8 @@ object AcquireMarkdown:
           w.citekey.map(_.value.toString).map(esc).getOrElse("—"),
           esc(w.title.map(_.value).getOrElse("(untitled)")),
           num(w.year.map(_.value.toInt)),
-          esc(w.authors.map(_.value).take(2).mkString(", ") + (if w.authors.map(_.value).size > 2 then " et al." else "")),
+          esc(w.authors.map(_.value).take(2).mkString(", ") + (if w.authors.map(_.value).size > 2 then " et al."
+                                                               else "")),
           num(w.citedByCount.map(_.value)),
           doiLink(w.doi),
           if flag.isEmpty then "—" else flag
@@ -49,7 +49,7 @@ object AcquireMarkdown:
     ).filter(_.nonEmpty).mkString(" · ")
     // OpenAlex and Unpaywall set `oaStatus` (`closed` when there is no copy); Crossref records no access at all.
     val oa =
-      if ((w.isOa) == Source.Candidate.IsOa(true)) then s"open access (${w.oaStatus.getOrElse("?")})"
+      if (w.isOa) == Source.Candidate.IsOa(true) then s"open access (${w.oaStatus.getOrElse("?")})"
       else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
       else "no OA copy known"
     val lines = List(
@@ -61,8 +61,10 @@ object AcquireMarkdown:
       s"**Citekey (proposed):** `${w.citekey.map(_.value.toString).getOrElse("—")}`  ",
       s"**Cited by:** ${num(w.citedByCount.map(_.value))}  ",
       s"**Access:** $oa" + w.oaUrl.map(u => s" — $u").getOrElse(""),
-      if ((w.isRetracted) == WorkRef.IsRetracted(true)) then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
-      if ((w.inDb) == WorkRef.InDb(true)) then s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._" else "",
+      if (w.isRetracted) == WorkRef.IsRetracted(true) then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
+      if (w.inDb) == WorkRef.InDb(true) then
+        s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._"
+      else "",
       w.abstractText.map(a => s"\n## Abstract\n\n$a").getOrElse("")
     )
     lines.filter(_.nonEmpty).mkString("\n")
@@ -78,7 +80,8 @@ object AcquireMarkdown:
         "\n\n_A trailhead, not a reading list: assess before ingesting (`histmersion assess <doi>`)._"
 
   def refs(r: RefsResult): String =
-    if r.references.isEmpty then s"_No reference list deposited for **${esc(r.target.value)}** (backend: ${r.backend})._"
+    if r.references.isEmpty then
+      s"_No reference list deposited for **${esc(r.target.value)}** (backend: ${r.backend})._"
     else
       val rows = r.references.map { x =>
         List(
@@ -146,7 +149,7 @@ object AcquireMarkdown:
 
   def retractionsUpdate(r: RetractionsUpdate): String =
     r.error match
-      case Some(e)           => (s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
+      case Some(e) => (s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
       case None if ((r.running) == RetractionsUpdate.Running(true)) =>
         (s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished.")
@@ -201,9 +204,12 @@ object AcquireMarkdown:
     val files =
       if i.files.isEmpty then "_no epub/pdf files_"
       else
-        table(List(("file"), ("format"), ("MB")), i.files.map(f => List(esc(f.name.value), cell(f.format.map(_.value)), (f.megabytes.toString))))
+        table(
+          List(("file"), ("format"), ("MB")),
+          i.files.map(f => List(esc(f.name.value), cell(f.format.map(_.value)), (f.megabytes.toString)))
+        )
     val restriction =
-      if ((i.lendingOnly) == ArchiveItem.LendingOnly(true)) then
+      if (i.lendingOnly) == ArchiveItem.LendingOnly(true) then
         List(
           "",
           "> ⛔ **Lending-only item.** It must be BORROWED on archive.org; it is never " +
@@ -222,7 +228,8 @@ object AcquireMarkdown:
       .mkString("\n")
 
   def ingest(r: Ingest.Report): String =
-    val steps = r.steps.map(s => s"- ${if ((s.ok) == Ingest.Step.Ok(true)) then "✓" else "✗"} **${s.step}** — ${s.detail}")
+    val steps =
+      r.steps.map(s => s"- ${if (s.ok) == Ingest.Step.Ok(true) then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>
         s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(Plural.CountN(p.bytes.value), Plural.CountSingular("byte"))})"
@@ -231,7 +238,7 @@ object AcquireMarkdown:
       case None => "**PDF:** none found through legal open access"
     // No stripMargin: `assessment` embeds tables, whose rows start with '|'.
     (List(
-      s"### ${if ((r.created) == Ingest.Report.Created(true)) then "Ingested" else "Updated"} `${r.citekey}`",
+      s"### ${if (r.created) == Ingest.Report.Created(true) then "Ingested" else "Updated"} `${r.citekey}`",
       "",
       r.title.map(_.value).getOrElse("(untitled)") + "  ",
       s"**DOI:** ${doiLink(r.doi)}  ",
@@ -257,7 +264,11 @@ object AcquireMarkdown:
           Option.when(said)(x.storedOriginal.fold("?")(v => if v.value then "stored" else "none")).toList
       )
       (s"### ${g.count} source(s) not in Calibre\n\n" +
-        table((List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList).map(refactorValue10 => (refactorValue10)), rows) +
+        table(
+          (List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList)
+            .map(refactorValue10 => (refactorValue10)),
+          rows
+        ) +
         "\n\n_Push them with `histmersion calibre sync --apply`: the file is the original the server stored " +
         "(or `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host); one with none needs " +
         "`histmersion calibre push <citekey> --file <path>`._")

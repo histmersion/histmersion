@@ -18,4 +18,3 @@ enum ToolStyle derives CanEqual:
     case Claude   => s"mcp__${AgentDefinitions.McpServer}__$name"
     case Opencode => s"${AgentDefinitions.McpServer}_$name"
     case Bare     => name.value
-

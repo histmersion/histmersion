@@ -162,7 +162,8 @@ object CliProcess:
     h.foreach(_.register(p))
     val stdout = ConcurrentLinkedQueue[Run.Lines]()
     val stderr = StringBuilder()
-    val stopped = java.util.concurrent.atomic.AtomicReference[Option[Run.Stopped]](None) // set once by the reader thread
+    val stopped =
+      java.util.concurrent.atomic.AtomicReference[Option[Run.Stopped]](None) // set once by the reader thread
     val tOut = Thread.ofVirtual().start { () =>
       try
         p.inputReader(StandardCharsets.UTF_8).lines().forEach { l =>

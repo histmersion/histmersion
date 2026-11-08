@@ -74,13 +74,27 @@ class PlaceRepoSuite extends DbSuite:
     Place.Input(asia, List(Place.Name(Place.Name.Value("Asia")))),
     Place.Input(
       turkey,
-      List(Place.Name(Place.Name.Value("Turkey")), Place.Name(Place.Name.Value("Zzpland")), Place.Name(Place.Name.Value("Türkiye"), Place.Name.Lang("tr"))),
+      List(
+        Place.Name(Place.Name.Value("Turkey")),
+        Place.Name(Place.Name.Value("Zzpland")),
+        Place.Name(Place.Name.Value("Türkiye"), Place.Name.Lang("tr"))
+      ),
       List(Place.Relation(Place.Relation.ChildId("zzp_turkey"), Place.Relation.ParentId("zzp_asia")))
     ),
     Place.Input(
       hatti,
-      List(Place.Name(Place.Name.Value("Hittite Empire")), Place.Name(Place.Name.Value("Hatti"), Place.Name.Lang("hit"))),
-      List(Place.Relation(Place.Relation.ChildId("zzp_hatti"), Place.Relation.ParentId("zzp_turkey"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1650), Year(-1180)))))
+      List(
+        Place.Name(Place.Name.Value("Hittite Empire")),
+        Place.Name(Place.Name.Value("Hatti"), Place.Name.Lang("hit"))
+      ),
+      List(
+        Place.Relation(
+          Place.Relation.ChildId("zzp_hatti"),
+          Place.Relation.ParentId("zzp_turkey"),
+          Place.Relation.Kind(Place.Relation.PartOf),
+          Some(Period(Year(-1650), Year(-1180)))
+        )
+      )
     ),
     Place.Input(
       hattusa,
@@ -201,27 +215,36 @@ class PlaceRepoSuite extends DbSuite:
   test("a finding on a border counts in EVERY containing place (counts are non-additive)"):
     seed()
     // the shared edge of two adjoining boxes: a point ON it is within both
-    val west = Place(Place.Id("zzp_west"), Place.Label("West"), Place.KindValue(Place.Kind.Polity), Some(box(0, 0, 10, 10)))
-    val east = Place(Place.Id("zzp_east"), Place.Label("East"), Place.KindValue(Place.Kind.Polity), Some(box(10, 0, 20, 10)))
+    val west =
+      Place(Place.Id("zzp_west"), Place.Label("West"), Place.KindValue(Place.Kind.Polity), Some(box(0, 0, 10, 10)))
+    val east =
+      Place(Place.Id("zzp_east"), Place.Label("East"), Place.KindValue(Place.Kind.Polity), Some(box(10, 0, 20, 10)))
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(west, List(Place.Name(Place.Name.Value("West")))), Place.Input(east, List(Place.Name(Place.Name.Value("East")))))
-    )
-    val border = src.modify(
-      _.citekey).setTo(Citekey("zzp_border")).modify(_.findings).setTo(List(
-        Finding(
-          Finding.Id("zzp_border#0"),
-          Citekey("zzp_border"),
-          Finding.Claim("On the frontier"),
-          None,
-          Some(GeoPoint(Longitude(10.0), Latitude(5.0))),
-          Some(Period(Year(-1303), Year(-1203))),
-          None,
-          Nil,
-          None
-        )
+      List(
+        Place.Input(west, List(Place.Name(Place.Name.Value("West")))),
+        Place.Input(east, List(Place.Name(Place.Name.Value("East"))))
       )
     )
+    val border = src
+      .modify(_.citekey)
+      .setTo(Citekey("zzp_border"))
+      .modify(_.findings)
+      .setTo(
+        List(
+          Finding(
+            Finding.Id("zzp_border#0"),
+            Citekey("zzp_border"),
+            Finding.Claim("On the frontier"),
+            None,
+            Some(GeoPoint(Longitude(10.0), Latitude(5.0))),
+            Some(Period(Year(-1303), Year(-1203))),
+            None,
+            Nil,
+            None
+          )
+        )
+      )
     SourceFixtures.upsert(ds, border, cfg.limits.chunkChars)
     val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assertEquals(PlaceFixtures.placesOf(ds, Finding.Id("zzp_border#0")).map(_.id).toSet, Set("zzp_west", "zzp_east"))
@@ -232,10 +255,25 @@ class PlaceRepoSuite extends DbSuite:
     assertEquals(hits.head.id, "zzp_turkey")
     assertEquals(hits.head.matchedName, Some("Zzpland"))
     assert(hits.head.names.value.contains("Türkiye"), hits.head.names)
-    assert(PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Hatti")), None, PlaceFixtures.Limit(10)).map(_.id.value).contains("zzp_hatti"))
+    assert(
+      PlaceFixtures
+        .search(ds, Some(PlaceFixtures.SearchText("Hatti")), None, PlaceFixtures.Limit(10))
+        .map(_.id.value)
+        .contains("zzp_hatti")
+    )
     // the Hittite Empire row is only valid inside its own period
-    assert(PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Hatti")), Some(DeepTime.SignedYear(-1300L)), PlaceFixtures.Limit(10)).map(_.id.value).contains("zzp_hatti"))
-    assert(!PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Hatti")), Some(DeepTime.SignedYear(-700L)), PlaceFixtures.Limit(10)).map(_.id.value).contains("zzp_hatti"))
+    assert(
+      PlaceFixtures
+        .search(ds, Some(PlaceFixtures.SearchText("Hatti")), Some(DeepTime.SignedYear(-1300L)), PlaceFixtures.Limit(10))
+        .map(_.id.value)
+        .contains("zzp_hatti")
+    )
+    assert(
+      !PlaceFixtures
+        .search(ds, Some(PlaceFixtures.SearchText("Hatti")), Some(DeepTime.SignedYear(-700L)), PlaceFixtures.Limit(10))
+        .map(_.id.value)
+        .contains("zzp_hatti")
+    )
 
   // #769: `ESCAPE '\'` inside a Magnum sql"…" reached Postgres as `ESCAPE ''`, so `_` never matched
   test("search: `_` and `%` in the query are literal characters"):
@@ -249,13 +287,25 @@ class PlaceRepoSuite extends DbSuite:
         )
       )
     )
-    assertEquals(PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zzp_U")), None, PlaceFixtures.Limit(10)).map(_.id), Vector("zzp_under"))
-    assertEquals(PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("50%")), None, PlaceFixtures.Limit(10)).map(_.id), Vector("zzp_under"))
     assertEquals(
-      PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zzp_Under 5")), None, PlaceFixtures.Limit(10)).headOption.flatMap(_.matchedName),
+      PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zzp_U")), None, PlaceFixtures.Limit(10)).map(_.id),
+      Vector("zzp_under")
+    )
+    assertEquals(
+      PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("50%")), None, PlaceFixtures.Limit(10)).map(_.id),
+      Vector("zzp_under")
+    )
+    assertEquals(
+      PlaceFixtures
+        .search(ds, Some(PlaceFixtures.SearchText("Zzp_Under 5")), None, PlaceFixtures.Limit(10))
+        .headOption
+        .flatMap(_.matchedName),
       Some("Zzp_Under 50%")
     )
-    assert(PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zz_l")), None, PlaceFixtures.Limit(10)).isEmpty, "`_` is not a wildcard (Zzpland)")
+    assert(
+      PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zz_l")), None, PlaceFixtures.Limit(10)).isEmpty,
+      "`_` is not a wildcard (Zzpland)"
+    )
 
   test("get: geometry as GeoJSON, parents/children as of a year, union for a shapeless place"):
     seed()
@@ -271,23 +321,53 @@ class PlaceRepoSuite extends DbSuite:
 
   test("hierarchy: a recursive walk of the edges valid at asOf"):
     seed()
-    val lba = PlaceFixtures.hierarchy(ds, Some(DeepTime.SignedYear(-1300L)), Some(PlaceId("zzp_asia")), PlaceFixtures.Depth(6), PlaceFixtures.Limit(100))
+    val lba = PlaceFixtures.hierarchy(
+      ds,
+      Some(DeepTime.SignedYear(-1300L)),
+      Some(PlaceId("zzp_asia")),
+      PlaceFixtures.Depth(6),
+      PlaceFixtures.Limit(100)
+    )
     // undated Hattusa's only finding (1401–1351 BCE) is not of 1300 BCE: the time rule leaves it out;
     // undated Turkey is in by its 1301–1201 BCE finding, shapeless Asia as a grouping node
     assertEquals(lba.map(r => (r.id, r.depth)), Vector(("zzp_asia", 0), ("zzp_turkey", 1), ("zzp_hatti", 2)))
-    assertEquals(PlaceFixtures.hierarchy(ds, Some(DeepTime.SignedYear(-1380L)), Some(PlaceId("zzp_asia")), PlaceFixtures.Depth(6), PlaceFixtures.Limit(100)).map(_.id).last, "zzp_hattusa")
+    assertEquals(
+      PlaceFixtures
+        .hierarchy(
+          ds,
+          Some(DeepTime.SignedYear(-1380L)),
+          Some(PlaceId("zzp_asia")),
+          PlaceFixtures.Depth(6),
+          PlaceFixtures.Limit(100)
+        )
+        .map(_.id)
+        .last,
+      "zzp_hattusa"
+    )
     // (750 BCE: undated Turkey is in by its 801–701 BCE finding)
-    val iron = PlaceFixtures.hierarchy(ds, Some(DeepTime.SignedYear(-750L)), Some(PlaceId("zzp_asia")), PlaceFixtures.Depth(6), PlaceFixtures.Limit(100))
+    val iron = PlaceFixtures.hierarchy(
+      ds,
+      Some(DeepTime.SignedYear(-750L)),
+      Some(PlaceId("zzp_asia")),
+      PlaceFixtures.Depth(6),
+      PlaceFixtures.Limit(100)
+    )
     assertEquals(iron.map(_.id), Vector("zzp_asia", "zzp_turkey"), "the Hatti edge is out of validity")
     assert(
-      PlaceFixtures.hierarchy(ds, Some(DeepTime.SignedYear(-1300L)), None, PlaceFixtures.Depth(6), PlaceFixtures.Limit(100)).map(_.id).contains("zzp_asia"),
+      PlaceFixtures
+        .hierarchy(ds, Some(DeepTime.SignedYear(-1300L)), None, PlaceFixtures.Depth(6), PlaceFixtures.Limit(100))
+        .map(_.id)
+        .contains("zzp_asia"),
       "no root → every place with children but no parent"
     )
 
   test("scopeFor: a place id expands to its descendants as of the filter period; a name does not"):
     seed()
     val lba = PlaceFixtures.scopeFor(ds, List(Filter.Places("zzp_asia")), Some(Period(Year(-1400), Year(-1200))))
-    assertEquals(lba.idsFor(PlaceScope.Value("zzp_asia")).map(_.toSet), Some(Set("zzp_asia", "zzp_turkey", "zzp_hatti", "zzp_hattusa")))
+    assertEquals(
+      lba.idsFor(PlaceScope.Value("zzp_asia")).map(_.toSet),
+      Some(Set("zzp_asia", "zzp_turkey", "zzp_hatti", "zzp_hattusa"))
+    )
     val iron = PlaceFixtures.scopeFor(ds, List(Filter.Places("zzp_asia")), Some(Period(Year(-800), Year(-700))))
     assertEquals(iron.idsFor(PlaceScope.Value("zzp_asia")).map(_.toSet), Some(Set("zzp_asia", "zzp_turkey")))
     assert(PlaceFixtures.scopeFor(ds, List(Filter.Places("Zzpland")), None).isEmpty, "a plain name is not a place id")
@@ -301,16 +381,30 @@ class PlaceRepoSuite extends DbSuite:
         period = Some(Period(Year(from), Year(to))),
         limit = Filter.Limit(50)
       )
-      val r = SearchFixtures.sources(ds, f, Search.SnippetWords(cfg.limits.snippetWords.value), PlaceFixtures.scopeFor(ds, f.places, f.period))
+      val r = SearchFixtures.sources(
+        ds,
+        f,
+        Search.SnippetWords(cfg.limits.snippetWords.value),
+        PlaceFixtures.scopeFor(ds, f.places, f.period)
+      )
       r.hits.map(_.source.citekey).toSet
     assert(found("zzp_asia", -1400, -1200).contains(Citekey("zzp_src")), "Hattusa → Hatti → Turkey → Asia")
     assert(found("zzp_hatti", -1400, -1200).contains(Citekey("zzp_src")))
     assert(!found("zzp_hatti", -600, -500).contains(Citekey("zzp_src")), "no finding of it is in that window")
     // the matched finding explains WHICH place chip it satisfied — by the place's NAME, not by the
     // gazetteer id the filter carries (item 15: `place: pleiades_589831` explains nothing)
-    val f = Filter(places = List(Filter.Places("zzp_hattusa")), period = Some(Period(Year(-1400), Year(-1200))), limit = Filter.Limit(50))
+    val f = Filter(
+      places = List(Filter.Places("zzp_hattusa")),
+      period = Some(Period(Year(-1400), Year(-1200))),
+      limit = Filter.Limit(50)
+    )
     val hit = SearchFixtures
-      .sources(ds, f, Search.SnippetWords(cfg.limits.snippetWords.value), PlaceFixtures.scopeFor(ds, f.places, f.period))
+      .sources(
+        ds,
+        f,
+        Search.SnippetWords(cfg.limits.snippetWords.value),
+        PlaceFixtures.scopeFor(ds, f.places, f.period)
+      )
       .hits
       .find(_.source.citekey.value == "zzp_src")
       .get
@@ -358,11 +452,13 @@ class PlaceRepoSuite extends DbSuite:
 
   test("a put re-materialises: a finding that MOVED lands in its new places"):
     seed()
-    val moved = src.modify(_.findings).setTo(src.findings.map {
-      case f if f.id.value == "zzp_src#0" =>
-        f.modify(_.geo).setTo(Some(GeoPoint(Longitude(-30.0), Latitude(45.0)))) // out to the Atlantic
-      case f                        => f
-    })
+    val moved = src
+      .modify(_.findings)
+      .setTo(src.findings.map {
+        case f if f.id.value == "zzp_src#0" =>
+          f.modify(_.geo).setTo(Some(GeoPoint(Longitude(-30.0), Latitude(45.0)))) // out to the Atlantic
+        case f => f
+      })
     val _ = SourceFixtures.put(ds, moved, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
     assertEquals(
       PlaceFixtures.placesOf(ds, Finding.Id("zzp_src#0")).map(_.id).toSet,
@@ -377,7 +473,10 @@ class PlaceRepoSuite extends DbSuite:
     seed()
     val fewer = src.modify(_.findings).setTo(src.findings.filter(_.id.value != "zzp_src#1"))
     val _ = SourceFixtures.put(ds, fewer, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
-    assertEquals(SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzp_src")).get.findings.map(_.id), List("zzp_src#0", "zzp_src#2", "zzp_src#3"))
+    assertEquals(
+      SourceFixtures.load(ds, com.histmersion.domain.library.Citekey("zzp_src")).get.findings.map(_.id),
+      List("zzp_src#0", "zzp_src#2", "zzp_src#3")
+    )
     assert(PlaceFixtures.placesOf(ds, Finding.Id("zzp_src#0")).nonEmpty)
 
   test("the fallback tolerance matches the configured one, so they cannot drift"):
@@ -390,9 +489,16 @@ class PlaceRepoSuite extends DbSuite:
     // close the loop: Asia is part of Hattusa, which is (transitively) part of Asia
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(asia, List(Place.Name(Place.Name.Value("Asia"))), List(Place.Relation(Place.Relation.ChildId("zzp_asia"), Place.Relation.ParentId("zzp_hattusa")))))
+      List(
+        Place.Input(
+          asia,
+          List(Place.Name(Place.Name.Value("Asia"))),
+          List(Place.Relation(Place.Relation.ChildId("zzp_asia"), Place.Relation.ParentId("zzp_hattusa")))
+        )
+      )
     )
-    val rows = PlaceFixtures.hierarchy(ds, None, Some(PlaceId("zzp_turkey")), PlaceFixtures.Depth(20), PlaceFixtures.Limit(500))
+    val rows =
+      PlaceFixtures.hierarchy(ds, None, Some(PlaceId("zzp_turkey")), PlaceFixtures.Depth(20), PlaceFixtures.Limit(500))
     val ids = rows.map(_.id)
     assertEquals(ids.size, ids.distinct.size, s"a place appears twice on one walk: $ids")
     assert(ids.contains("zzp_hatti"), ids.toString)
@@ -401,9 +507,34 @@ class PlaceRepoSuite extends DbSuite:
 
   test("depthCap bounds a caller asking for an absurd depth"):
     seed()
-    val deep = PlaceFixtures.hierarchy(ds, None, Some(PlaceId("zzp_asia")), PlaceFixtures.Depth(10000), PlaceFixtures.Limit(500), depthCap = PlaceFixtures.Depth(1))
+    val deep = PlaceFixtures.hierarchy(
+      ds,
+      None,
+      Some(PlaceId("zzp_asia")),
+      PlaceFixtures.Depth(10000),
+      PlaceFixtures.Limit(500),
+      depthCap = PlaceFixtures.Depth(1)
+    )
     assert(deep.forall(_.depth.value <= 1), deep.map(r => r.id -> r.depth).toString)
-    val deeper = PlaceFixtures.hierarchy(ds, None, Some(PlaceId("zzp_asia")), PlaceFixtures.Depth(10000), PlaceFixtures.Limit(500), depthCap = PlaceFixtures.Depth(6))
+    val deeper = PlaceFixtures.hierarchy(
+      ds,
+      None,
+      Some(PlaceId("zzp_asia")),
+      PlaceFixtures.Depth(10000),
+      PlaceFixtures.Limit(500),
+      depthCap = PlaceFixtures.Depth(6)
+    )
     assert(deeper.size >= deep.size)
     // …and the caller's own smaller number still wins
-    assert(PlaceFixtures.hierarchy(ds, None, Some(PlaceId("zzp_asia")), PlaceFixtures.Depth(0), PlaceFixtures.Limit(500), depthCap = PlaceFixtures.Depth(6)).forall(_.depth.value == 0))
+    assert(
+      PlaceFixtures
+        .hierarchy(
+          ds,
+          None,
+          Some(PlaceId("zzp_asia")),
+          PlaceFixtures.Depth(0),
+          PlaceFixtures.Limit(500),
+          depthCap = PlaceFixtures.Depth(6)
+        )
+        .forall(_.depth.value == 0)
+    )

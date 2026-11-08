@@ -40,7 +40,13 @@ trait ManagerKindDefinition:
   /** A manager's settings in effect: its saved config `c` over the defaults of its kind (by default the run limits,
     * failures and backoff the engine knows; a kind whose items have more to set reads them itself).
     */
-  def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(io.scalaland.chimney.Transformer.derive[Manager.Kind, com.histmersion.domain.automation.Manager.Kind].transform(kind), c, m)
+  def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings = ReviewSettings.forKind(
+    io.scalaland.chimney.Transformer
+      .derive[Manager.Kind, com.histmersion.domain.automation.Manager.Kind]
+      .transform(kind),
+    c,
+    m
+  )
 
   /** The pipeline an item of `itemKind` runs. */
   def pipelineOf(itemKind: ManagerContext.ItemKind): Pipeline
@@ -104,13 +110,28 @@ trait ManagerKindDefinition:
   /** The target an item of `itemKind` names when a person adds one to manager `m` (an article's slug, a source's
     * citekey, the manager's goal), checked; or why it cannot be added.
     */
-  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: Managers.ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget]
+  def target(
+      m: ManagerInfo,
+      itemKind: ManagerContext.ItemKind,
+      raw: Managers.ManagerItem.Target
+  ): Either[Api.Error, ManagerContext.ItemTarget]
 
   /** A person added (or brought back) an item: what goes with it (the review kind: an infer-filter item first). */
-  def added(c: ManagerContext, m: ManagerInfo, itemKind: ManagerContext.ItemKind, target: ManagerContext.ItemTarget, priority: ManagerContext.Priority): Unit = ()
+  def added(
+      c: ManagerContext,
+      m: ManagerInfo,
+      itemKind: ManagerContext.ItemKind,
+      target: ManagerContext.ItemTarget,
+      priority: ManagerContext.Priority
+  ): Unit = ()
 
   /** What a person's enqueue of this kind names: the targets to add and, for the others named, why they are skipped. */
-  def expand(c: ManagerContext, raw: Managers.ManagerItem.Target): Either[Api.Error, (List[ManagerContext.ItemTarget], List[ManagerKindDefinition.ExpandSkipped])] = Right((List(ManagerContext.ItemTarget(raw.value)), Nil))
+  def expand(
+      c: ManagerContext,
+      raw: Managers.ManagerItem.Target
+  ): Either[Api.Error, (List[ManagerContext.ItemTarget], List[ManagerKindDefinition.ExpandSkipped])] = Right(
+    (List(ManagerContext.ItemTarget(raw.value)), Nil)
+  )
 
   /** Per manager of this kind: what waits in its backlog and the days it takes to drain (a watcher's ingest backlog).
     */

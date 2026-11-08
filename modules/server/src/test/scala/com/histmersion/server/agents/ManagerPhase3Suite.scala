@@ -29,7 +29,7 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import com.histmersion.db.*
 import com.histmersion.api.automation.{AgentsMarkdown, Goal, ManagersMarkdown, Queue}
-import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.automation.Goal as DomainGoal
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.{PdfInfo, Query, WorkRef}
 import com.histmersion.api.library.Ingest
@@ -87,12 +87,34 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     val m = Model.wire
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(AgentRolesConfig.Writer(m.value))
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.agents)
+      .setTo(
+        b.agents
+          .modify(_.enabled)
+          .setTo(AgentsConfig.Enabled(true))
+          .modify(_.prices)
+          .setTo(AgentsConfig.Prices("scripted=1/2"))
+          .modify(_.roles)
+          .setTo(
+            b.agents.roles
+              .modify(_.extractor)
+              .setTo(AgentRolesConfig.Extractor(m.value))
+              .modify(_.reviewer)
+              .setTo(AgentRolesConfig.Reviewer(m.value))
+              .modify(_.coldReader)
+              .setTo(AgentRolesConfig.ColdReader(m.value))
+              .modify(_.skeptic)
+              .setTo(AgentRolesConfig.Skeptic(m.value))
+              .modify(_.fixer)
+              .setTo(AgentRolesConfig.Fixer(m.value))
+              .modify(_.planner)
+              .setTo(AgentRolesConfig.Planner(m.value))
+              .modify(_.writer)
+              .setTo(AgentRolesConfig.Writer(m.value))
+          )
       )
-    )
 
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -126,7 +148,13 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private def seed(a: AgentsControllers, h: ServerWiring): Unit =
     assert(
       h.goals
-        .put(Goal, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz tin watched"), notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))))
+        .put(
+          Goal,
+          com.histmersion.api.automation.Goal.Put(
+            com.histmersion.api.automation.Goal.Title("Zz tin watched"),
+            notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))
+          )
+        )
         .isRight
     )
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, QueryRef)).isRight)
@@ -134,7 +162,13 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private def ref(g: DomainGoal.Slug) = com.histmersion.api.automation.Goal.Ref(g.value)
 
   private def work(doi: String, title: String, oa: WorkRef.IsOa) =
-    WorkRef(doi = (Some(doi)).map(Doi.apply), title = (Some(title)).map(com.histmersion.api.library.Title.apply), year = (Some(2023)).map(Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), isOa = oa)
+    WorkRef(
+      doi = (Some(doi)).map(Doi.apply),
+      title = (Some(title)).map(com.histmersion.api.library.Title.apply),
+      year = (Some(2023)).map(Year.apply),
+      authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
+      isOa = oa
+    )
 
   /** The fixture's legal ingest: stores the source (as an ingest would) unless the DOI has no legal copy. */
   private def legalIngest(h: ServerWiring, noCopy: Set[String])(doi: String): Either[String, Ingest.Report] =
@@ -142,7 +176,16 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     else
       val ck = Citekey.assume("zzagent" + doi.replaceAll("[^a-z0-9]", ""))
       assert(
-        h.library.sources.put(ck, Source.Put(title = com.histmersion.api.library.Title(s"Ingested $doi"), year = (Some(2023)).map(Year.apply), doi = (Some(doi)).map(Doi.apply))).isRight
+        h.library.sources
+          .put(
+            ck,
+            Source.Put(
+              title = com.histmersion.api.library.Title(s"Ingested $doi"),
+              year = (Some(2023)).map(Year.apply),
+              doi = (Some(doi)).map(Doi.apply)
+            )
+          )
+          .isRight
       )
       Right(
         Ingest.Report(
@@ -150,25 +193,40 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           Some(Doi(doi)),
           Some(com.histmersion.api.library.Title(s"Ingested $doi")),
           created = Ingest.Report.Created(true),
-          Some(PdfInfo(PdfInfo.Source("unpaywall"), Some(PdfInfo.Url(s"https://example.invalid/$doi.pdf")), ByteCount(2048), None)),
+          Some(
+            PdfInfo(
+              PdfInfo.Source("unpaywall"),
+              Some(PdfInfo.Url(s"https://example.invalid/$doi.pdf")),
+              ByteCount(2048),
+              None
+            )
+          ),
           Ingest.Report.EdgesAdded(0),
           None,
           Nil
         )
       )
 
-  private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind): ManagerItem = connect(ds)(ManagerRepo.itemFor(mid, kind, GoalTarget)).get
+  private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind): ManagerItem =
+    connect(ds)(ManagerRepo.itemFor(mid, kind, GoalTarget)).get
 
   private def events(mid: ManagerInfo.Id, kind: ManagerEvent.Kind): List[ManagerEvent] =
     connect(ds)(ManagerRepo.events(mid, None, PageSize(200))).filter(_.kind == kind)
 
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
-    h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains("zzagent"))
+    h.workListView
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains("zzagent"))
 
   test("watch: created paused with its cron and one item per sweep; nothing starts before it is resumed"):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val now = Instant.parse("2026-10-17T12:00:00Z")
-    val m = a.managing.create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug)), now).fold(e => fail(e.message.value), identity)
+    val m = a.managing
+      .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug)), now)
+      .fold(e => fail(e.message.value), identity)
     assertEquals(
       (m.id, m.kind, m.goal.map(_.value: String), m.state, m.cron),
       (watchId(ref(Goal)), "watch", Some(Goal), "paused", Some("@weekly"))
@@ -183,8 +241,18 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         .sortBy(_._1.value),
       List((AcquisitionSweep, Goal, "pending"), (CurrencyCheck, Goal, "pending"))
     )
-    assert(a.managing.create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug))).left.exists(_.message.value.contains("exists already")))
-    assert(a.managing.create(ManagerCreate(ManagerCreate.Kind("watch"))).left.exists(_.message.value.contains("give its goal")))
+    assert(
+      a.managing
+        .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug)))
+        .left
+        .exists(_.message.value.contains("exists already"))
+    )
+    assert(
+      a.managing
+        .create(ManagerCreate(ManagerCreate.Kind("watch")))
+        .left
+        .exists(_.message.value.contains("give its goal"))
+    )
     assertEquals(a.managers.tick(now).filter(_.value.contains("started")), Nil, "paused: nothing starts")
     assertEquals(connect(ds)(AgentRepo.forManager(m.id)), Vector.empty)
 
@@ -212,11 +280,20 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val now = Instant.now()
     val m = a.managing
       .create(
-        ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug), ManagerConfig(autoIngest = Some(ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(2)))),
+        ManagerCreate(
+          ManagerCreate.Kind("watch"),
+          Some(GoalSlug),
+          ManagerConfig(
+            autoIngest = Some(ManagerConfig.AutoIngest(true)),
+            autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(2))
+          )
+        ),
         now
       )
       .fold(e => fail(e.message.value), identity)
-    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing
+      .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
+      .fold(e => fail(e.message.value), identity)
     val out = a.managers.tick(now)
     val sweep = item(m.id, SweepKind)
     assertEquals(sweep.status, "active", out.mkString("\n"))
@@ -242,11 +319,15 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       "only open-access picks, until two were ingested"
     )
     assertEquals(
-      h.library.sources.get(Citekey("zzagent105555zzagenta"), body = SourcesControllers.GetBody(false)).map(_.source.title),
+      h.library.sources
+        .get(Citekey("zzagent105555zzagenta"), body = SourcesControllers.GetBody(false))
+        .map(_.source.title),
       Right("Ingested 10.5555/zzagent.a")
     )
     assert(
-      connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == GoalLink.Ref("zzagent105555zzagentd"))
+      connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
+        l.kind == LinkKind.Source && l.ref == GoalLink.Ref("zzagent105555zzagentd")
+      )
     )
     val queued = acquire(h).map(_.text)
     assertEquals(queued.size, 2, queued.mkString("\n"))
@@ -288,7 +369,9 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     // the same day, the next sweep has nothing left of the cap: it ingests nothing
     c.scripts += Seq(text("""{"picks":[{"doi":"10.5555/zzagent.f","why":"open"}]}"""))
     up.found = Map(Query -> List(work("10.5555/zzagent.f", "F", oa = Open)))
-    a.managing.patchItem(ApiIds.manager(m.id), ManagerItem.Ref(sweep.id.toString), ItemPatch(ItemPatch.Action("reopen"))).fold(e => fail(e.message.value), identity)
+    a.managing
+      .patchItem(ApiIds.manager(m.id), ManagerItem.Ref(sweep.id.toString), ItemPatch(ItemPatch.Action("reopen")))
+      .fold(e => fail(e.message.value), identity)
     a.managers.tick(now)
     val again = connect(ds)(AgentRepo.get(item(m.id, SweepKind).runId.get)).get
     assertEquals(again.params.autoIngest, None, "the daily cap is spent")
@@ -311,14 +394,22 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     up.found = Map(Query -> List(work("10.5555/zzagent.a", "A", oa = Open)))
     up.onIngest = legalIngest(h, Set.empty)
     val m = a.managing
-      .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug), ManagerConfig(sweeps = Some(List(Sweep.Wire("acquisition"))))))
+      .create(
+        ManagerCreate(
+          ManagerCreate.Kind("watch"),
+          Some(GoalSlug),
+          ManagerConfig(sweeps = Some(List(Sweep.Wire("acquisition"))))
+        )
+      )
       .fold(e => fail(e.message.value), identity)
     assertEquals(
       Transactor(ds).read(ManagerRepo.itemPage(m.id, None, Offset(0), PageSize(10)))._1.map(_.kind),
       List(AcquisitionSweep),
       "only the sweeps it names"
     )
-    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing
+      .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
+      .fold(e => fail(e.message.value), identity)
     a.managers.tick(Instant.now())
     val run = connect(ds)(AgentRepo.get(item(m.id, SweepKind).runId.get)).get
     assertEquals(run.params.autoIngest, None)
@@ -327,7 +418,10 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.count(_.startsWith("ingest")), 0)
     assertEquals(acquire(h).count(_.text.value.contains("zzagent.a")), 1)
-    assert(connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(1000))).forall(_.name.value != "ingest"), "no ingest step without auto-ingest")
+    assert(
+      connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(1000))).forall(_.name.value != "ingest"),
+      "no ingest step without auto-ingest"
+    )
     assertEquals(events(m.id, IngestedKind), Nil)
 
   test(
@@ -336,16 +430,35 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val t0 = Instant.parse("2026-10-17T12:00:00Z")
     val m = a.managing
-      .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug), ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(0)))), t0)
+      .create(
+        ManagerCreate(
+          ManagerCreate.Kind("watch"),
+          Some(GoalSlug),
+          ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(0)))
+        ),
+        t0
+      )
       .fold(e => fail(e.message.value), identity)
     // settle both items by hand (skip), as if they ran
     List(SweepKind, CurrencyKind).foreach(k =>
-      a.managing.patchItem(ApiIds.manager(m.id), ManagerItem.Ref(item(m.id, k).id.toString), ItemPatch(ItemPatch.Action("skip"))).fold(e => fail(e.message.value), identity)
+      a.managing
+        .patchItem(
+          ApiIds.manager(m.id),
+          ManagerItem.Ref(item(m.id, k).id.toString),
+          ItemPatch(ItemPatch.Action("skip"))
+        )
+        .fold(e => fail(e.message.value), identity)
     )
     val sunday = Instant.parse("2026-10-18T00:00:30Z")
     assertEquals(a.managers.tick(sunday).filter(_.value.contains("cron")), Nil, "paused: its cron does not fire")
-    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
-    assertEquals(a.managers.tick(Instant.parse("2026-10-17T13:00:00Z")).filter(_.value.contains("cron")), Nil, "not due yet")
+    a.managing
+      .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
+      .fold(e => fail(e.message.value), identity)
+    assertEquals(
+      a.managers.tick(Instant.parse("2026-10-17T13:00:00Z")).filter(_.value.contains("cron")),
+      Nil,
+      "not due yet"
+    )
     val out = a.managers.tick(sunday)
     assert(out.map(_.value).contains(s"${m.id}: cron fired"), out)
     assertEquals(connect(ds)(ManagerRepo.get(m.id)).get.nextTickAt, Some("2026-10-25T00:00:00Z"))
@@ -366,7 +479,13 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
     assertEquals(connect(ds)(ManagerRepo.get(m.id)).get.nextTickAt, Some("2026-11-15T00:00:00Z"))
     // agents.scheduler.enabled = false stops every cron
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.scheduler).setTo(baseCfg.agents.scheduler.modify(_.enabled).setTo(AgentSchedulerConfig.Enabled(false))))
+    val off = baseCfg
+      .modify(_.agents)
+      .setTo(
+        baseCfg.agents
+          .modify(_.scheduler)
+          .setTo(baseCfg.agents.scheduler.modify(_.enabled).setTo(AgentSchedulerConfig.Enabled(false)))
+      )
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     assertEquals(b.managers.tick(Instant.parse("2026-12-01T00:00:00Z")).filter(_.value.contains("cron")), Nil)
 
@@ -383,21 +502,38 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         .exists(_.message.value.contains("min-interval"))
     )
     assert(
-      a.managing.update(ApiIds.manager(Review), ManagerUpdate(cron = Some(ManagerUpdate.Cron("nope"))), t0).left.exists(_.message.value.contains("five fields"))
+      a.managing
+        .update(ApiIds.manager(Review), ManagerUpdate(cron = Some(ManagerUpdate.Cron("nope"))), t0)
+        .left
+        .exists(_.message.value.contains("five fields"))
     )
     assert(
-      a.managing.update(ApiIds.manager(Enrich), ManagerUpdate(cron = Some(ManagerUpdate.Cron("@daily"))), t0).left.exists(_.message.value.contains("no cron"))
+      a.managing
+        .update(ApiIds.manager(Enrich), ManagerUpdate(cron = Some(ManagerUpdate.Cron("@daily"))), t0)
+        .left
+        .exists(_.message.value.contains("no cron"))
     )
     val r = a.managing
-      .update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(lowWater = Some(ManagerConfig.LowWater(0)), maxRuns = Some(ManagerConfig.MaxRuns(0)))), Some(ManagerUpdate.Cron("@daily"))), t0)
+      .update(
+        ApiIds.manager(Review),
+        ManagerUpdate(
+          Some(ManagerConfig(lowWater = Some(ManagerConfig.LowWater(0)), maxRuns = Some(ManagerConfig.MaxRuns(0)))),
+          Some(ManagerUpdate.Cron("@daily"))
+        ),
+        t0
+      )
       .fold(e => fail(e.message.value), identity)
     assertEquals((r.cron, r.nextTickAt), (Some("@daily"), Some("2026-10-18T00:00:00Z")))
-    a.managing.action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing
+      .action(ApiIds.manager(Review), ManagersControllers.Action("resume"), None)
+      .fold(e => fail(e.message.value), identity)
     val out = a.managers.tick(Instant.parse("2026-10-18T00:01:00Z"))
     assert(out.map(_.value).contains("review: cron fired"), out)
     assert(events(Review, CronKind).head.text.value.contains("selection refilled"))
     // cleared: no cron, no next firing
-    val cleared = a.managing.update(ApiIds.manager(Review), ManagerUpdate(cron = Some(ManagerUpdate.Cron(""))), t0).fold(e => fail(e.message.value), identity)
+    val cleared = a.managing
+      .update(ApiIds.manager(Review), ManagerUpdate(cron = Some(ManagerUpdate.Cron(""))), t0)
+      .fold(e => fail(e.message.value), identity)
     assertEquals((cleared.cron, cleared.nextTickAt), (None, None))
 
   // ── LLM-proposed hint effects, person-confirmed ────────────────────────────────────────────────
@@ -407,14 +543,32 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
 
   /** The (paused) enrich manager with two source items. */
   private def enrichItems(a: AgentsControllers, h: ServerWiring): Unit =
-    assert(h.library.sources.put(CkA, Source.Put(title = com.histmersion.api.library.Title("Hint A"), year = (Some(2020)).map(Year.apply))).isRight)
-    assert(h.library.sources.put(CkB, Source.Put(title = com.histmersion.api.library.Title("Hint B"), year = (Some(2021)).map(Year.apply))).isRight)
+    assert(
+      h.library.sources
+        .put(CkA, Source.Put(title = com.histmersion.api.library.Title("Hint A"), year = (Some(2020)).map(Year.apply)))
+        .isRight
+    )
+    assert(
+      h.library.sources
+        .put(CkB, Source.Put(title = com.histmersion.api.library.Title("Hint B"), year = (Some(2021)).map(Year.apply)))
+        .isRight
+    )
     a.managers.ensureDefaults()
     List(CkA, CkB).foreach(ck =>
-      a.managing.addItem(ApiIds.manager(Enrich), EnqueueRequest(EnqueueRequest.Kind("enrich"), EnqueueRequest.Target(ck.value), Some(EnqueueRequest.Priority(0)))).fold(e => fail(e.message.value), identity)
+      a.managing
+        .addItem(
+          ApiIds.manager(Enrich),
+          EnqueueRequest(
+            EnqueueRequest.Kind("enrich"),
+            EnqueueRequest.Target(ck.value),
+            Some(EnqueueRequest.Priority(0))
+          )
+        )
+        .fold(e => fail(e.message.value), identity)
     )
 
-  private def enrichItem(ck: Citekey): ManagerItem = connect(ds)(ManagerRepo.itemFor(Enrich, EnrichKind, ManagerItem.Target(ck.value))).get
+  private def enrichItem(ck: Citekey): ManagerItem =
+    connect(ds)(ManagerRepo.itemFor(Enrich, EnrichKind, ManagerItem.Target(ck.value))).get
 
   private def openHintApprovals(a: AgentsControllers): List[ApprovalInfo] =
     a.approvalsList(None, None).toOption.get.filter(_.kind.value == "hint-effect")
@@ -423,11 +577,20 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     "a model's effect (MCP: propose) waits for a person: nothing changes until approved; approve applies it, reject leaves it"
   ):
     val (a, h, _) = handlers(ScriptedClient(Model)); enrichItems(a, h)
-    val hold = HintEffect(HintEffect.Action("hold"), List(HintEffect.Targets(CkA.value)), until = Some(HintEffect.Until("2026-12-01")))
+    val hold = HintEffect(
+      HintEffect.Action("hold"),
+      List(HintEffect.Targets(CkA.value)),
+      until = Some(HintEffect.Until("2026-12-01"))
+    )
     val hint = a.managing
       .addHint(
         ApiIds.manager(Enrich),
-        HintAdd(HintAdd.Text("wait with A until December"), effect = Some(hold), author = Some(HintAdd.Author("mcp")), propose = Some(HintAdd.Propose(true)))
+        HintAdd(
+          HintAdd.Text("wait with A until December"),
+          effect = Some(hold),
+          author = Some(HintAdd.Author("mcp")),
+          propose = Some(HintAdd.Propose(true))
+        )
       )
       .fold(e => fail(e.message.value), identity)
     assertEquals(hint.effect, None, "not applied")
@@ -444,7 +607,9 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       ManagersMarkdown.hint(hint)
     )
     // approve: applied through the same path as a person's own hold, and recorded on the hint
-    val decided = a.decide(ApiIds.approval(ap.head.id), Approval.Outcome("approve"), DecisionRequest()).fold(e => fail(e.message.value), identity)
+    val decided = a
+      .decide(ApiIds.approval(ap.head.id), Approval.Outcome("approve"), DecisionRequest())
+      .fold(e => fail(e.message.value), identity)
     assertEquals(decided.state, "approved")
     assert(decided.result.exists(_.value.contains("hold")), decided.result)
     assertEquals((enrichItem(CkA).status, enrichItem(CkA).hold.flatMap(_.until)), ("held", Some("2026-12-01")))
@@ -453,10 +618,20 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     assertEquals((after.effect.map(_.action), after.proposal), (Some("hold"), None))
     // a rejected one changes nothing
     val skip = a.managing
-      .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("drop B"), effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))), propose = Some(HintAdd.Propose(true))))
+      .addHint(
+        ApiIds.manager(Enrich),
+        HintAdd(
+          HintAdd.Text("drop B"),
+          effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))),
+          propose = Some(HintAdd.Propose(true))
+        )
+      )
       .fold(e => fail(e.message.value), identity)
     val ap2 = openHintApprovals(a).head
-    assertEquals(a.decide(ApiIds.approval(ap2.id), Approval.Outcome("reject"), DecisionRequest()).map(_.state), Right("rejected"))
+    assertEquals(
+      a.decide(ApiIds.approval(ap2.id), Approval.Outcome("reject"), DecisionRequest()).map(_.state),
+      Right("rejected")
+    )
     assertEquals(enrichItem(CkB).status, "pending")
     assertEquals(Transactor(ds).read(ManagerRepo.hint(skip.id)).get.effect, None)
 
@@ -468,7 +643,15 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       a.managing
         .addHint(
           ApiIds.manager(Enrich),
-          HintAdd(HintAdd.Text("slower"), effect = Some(HintEffect(HintEffect.Action("config"), config = Some(ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(1)))))))
+          HintAdd(
+            HintAdd.Text("slower"),
+            effect = Some(
+              HintEffect(
+                HintEffect.Action("config"),
+                config = Some(ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(1))))
+              )
+            )
+          )
         )
         .left
         .exists(_.message.value.contains("config instead"))
@@ -479,7 +662,12 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           ApiIds.manager(Enrich),
           HintAdd(
             HintAdd.Text("x"),
-            effect = Some(HintEffect(HintEffect.Action("config"), config = Some(ManagerConfig(rounds = Some(ManagerConfig.Rounds(99)))))),
+            effect = Some(
+              HintEffect(
+                HintEffect.Action("config"),
+                config = Some(ManagerConfig(rounds = Some(ManagerConfig.Rounds(99))))
+              )
+            ),
             propose = Some(HintAdd.Propose(true))
           )
         )
@@ -491,15 +679,27 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         ApiIds.manager(Enrich),
         HintAdd(
           HintAdd.Text("one at a time please"),
-          effect = Some(HintEffect(HintEffect.Action("config"), config = Some(ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(1)))))),
+          effect = Some(
+            HintEffect(
+              HintEffect.Action("config"),
+              config = Some(ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(1))))
+            )
+          ),
           propose = Some(HintAdd.Propose(true))
         )
       )
       .fold(e => fail(e.message.value), identity)
-    assertEquals(a.managing.get(ApiIds.manager(Enrich)).toOption.get.manager.config.maxRuns, None, "not before approval")
+    assertEquals(
+      a.managing.get(ApiIds.manager(Enrich)).toOption.get.manager.config.maxRuns,
+      None,
+      "not before approval"
+    )
     val ap = openHintApprovals(a).head
     assert(AgentsMarkdown.change(ap).contains("settings: maxRuns=1"), AgentsMarkdown.change(ap))
-    assertEquals(a.decide(ApiIds.approval(ap.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(
+      a.decide(ApiIds.approval(ap.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state),
+      Right("approved")
+    )
     assertEquals(a.managing.get(ApiIds.manager(Enrich)).toOption.get.manager.config.maxRuns, Some(1))
 
   test(
@@ -520,10 +720,16 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
     val (a, h, _) = handlers(c); enrichItems(a, h)
     val hint = a.managing
-      .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("please leave A alone until December"), suggest = Some(HintAdd.Suggest(true))))
+      .addHint(
+        ApiIds.manager(Enrich),
+        HintAdd(HintAdd.Text("please leave A alone until December"), suggest = Some(HintAdd.Suggest(true)))
+      )
       .fold(e => fail(e.message.value), identity)
     val run = connect(ds)(AgentRepo.list(None, PageSize(20))).find(_.pipeline.value == "hint-effect").get
-    assertEquals((run.target, run.origin, run.params.hint.map(_.value)), (EnrichId, Some("person"), Some(hint.id.value)))
+    assertEquals(
+      (run.target, run.origin, run.params.hint.map(_.value)),
+      (EnrichId, Some("person"), Some(hint.id.value))
+    )
     a.engine.execute(ApiIds.run(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
@@ -541,19 +747,32 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
       connect(ds)(ManagerRepo.events(Enrich, None, PageSize(20)))
         .exists(e => e.kind == HintKind && e.text.value.contains("a model proposed hold"))
     )
-    assertEquals(a.decide(ApiIds.approval(ap.head.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(
+      a.decide(ApiIds.approval(ap.head.id), Approval.Outcome("approve"), DecisionRequest()).map(_.state),
+      Right("approved")
+    )
     assertEquals(enrichItem(CkA).status, "held")
     // a suggestion and an effect together are refused; with agents off a suggestion is refused before the hint is kept
     assert(
       a.managing
-        .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))), suggest = Some(HintAdd.Suggest(true))))
+        .addHint(
+          ApiIds.manager(Enrich),
+          HintAdd(
+            HintAdd.Text("x"),
+            effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))),
+            suggest = Some(HintAdd.Suggest(true))
+          )
+        )
         .isLeft
     )
     val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(AgentsConfig.Enabled(false)))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     val before = Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size
     assert(
-      b.managing.addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), suggest = Some(HintAdd.Suggest(true)))).left.exists(_.message.value.contains("agents are off"))
+      b.managing
+        .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), suggest = Some(HintAdd.Suggest(true))))
+        .left
+        .exists(_.message.value.contains("agents are off"))
     )
     assertEquals(Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size, before)
 
@@ -564,7 +783,13 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   ):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val m = a.managing
-      .create(ManagerCreate(ManagerCreate.Kind("watch"), Some(GoalSlug), ManagerConfig(sweeps = Some(List(Sweep.Wire("currency"))), dailyUsd = Some(ManagerConfig.DailyUsd(0.01)))))
+      .create(
+        ManagerCreate(
+          ManagerCreate.Kind("watch"),
+          Some(GoalSlug),
+          ManagerConfig(sweeps = Some(List(Sweep.Wire("currency"))), dailyUsd = Some(ManagerConfig.DailyUsd(0.01)))
+        )
+      )
       .fold(e => fail(e.message.value), identity)
     // a run of this manager that already cost 0.02 USD today (and one plan-billed step: 0 USD, tokens only)
     val spent = com.augustnagro.magnum.transact(ds)(
@@ -593,7 +818,9 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val info = a.managing.get(ApiIds.manager(m.id)).toOption.get.manager
     assertEquals((info.spentTodayUsd, info.tokensToday), (0.02, 6500L))
     assert(ManagersMarkdown.line(info).contains("today 0.0200 of 0.0100 USD, 6.5k tokens"), ManagersMarkdown.line(info))
-    a.managing.action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
+    a.managing
+      .action(ApiIds.manager(m.id), ManagersControllers.Action("resume"), None)
+      .fold(e => fail(e.message.value), identity)
     val now = Instant.now()
     assertEquals(a.managers.tick(now).filter(_.value.contains("started")), Nil)
     assertEquals(item(m.id, CurrencyKind).status, "pending")
@@ -610,7 +837,12 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
     // the cap raised: it starts
     a.managing
-      .update(ApiIds.manager(m.id), ManagerUpdate(Some(ManagerConfig(sweeps = Some(List(Sweep.Wire("currency"))), dailyUsd = Some(ManagerConfig.DailyUsd(1.0))))))
+      .update(
+        ApiIds.manager(m.id),
+        ManagerUpdate(
+          Some(ManagerConfig(sweeps = Some(List(Sweep.Wire("currency"))), dailyUsd = Some(ManagerConfig.DailyUsd(1.0))))
+        )
+      )
       .fold(e => fail(e.message.value), identity)
     a.managers.tick(now)
     assertEquals(item(m.id, CurrencyKind).status, "active")
@@ -618,6 +850,11 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     assertEquals(ManagerPolicy.dailyCap(ManagerConfig(), ManagerDefaultsViews.defaults(baseCfg.agents.managers)), None)
     assertEquals(
       ManagerPolicy
-        .dailyCap(ManagerConfig(), ManagerDefaultsViews.defaults(baseCfg.agents.managers.modify(_.dailyUsd).setTo(AgentManagersConfig.DailyUsd(3.0)))),
+        .dailyCap(
+          ManagerConfig(),
+          ManagerDefaultsViews.defaults(
+            baseCfg.agents.managers.modify(_.dailyUsd).setTo(AgentManagersConfig.DailyUsd(3.0))
+          )
+        ),
       Some(3.0)
     )

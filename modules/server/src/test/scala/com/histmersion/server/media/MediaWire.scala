@@ -104,7 +104,10 @@ object MediaWire:
     */
   final class Wire(answer: String => Either[String, HttpAnswer] = route) extends HttpTransport:
     private val out = StringBuilder()
-    def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] = synchronized {
+    def get(
+        url: HttpTransport.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[HttpTransport.Problem, HttpAnswer] = synchronized {
       val a = answer(url.value)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
@@ -125,9 +128,22 @@ object MediaWire:
         quality: ConverterClient.HighQuality
     ): Either[ConverterClient.Problem, ConvertedDoc] =
       Left(ConverterClient.Problem("not used"))
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
-    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
-      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(jpeg(s"thumb:$filename:$maxPx")), ConverterClient.Thumb.Mime("image/jpeg"), ConverterClient.Thumb.Width(maxPx.value), ConverterClient.Thumb.Height(maxPx.value * 3 / 4)))
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
+    override def thumbnail(
+        bytes: ConverterClient.DocumentBytes,
+        filename: ConverterClient.Filename,
+        maxPx: Pixels
+    ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+      Right(
+        ConverterClient.Thumb(
+          ConverterClient.Thumb.Bytes(jpeg(s"thumb:$filename:$maxPx")),
+          ConverterClient.Thumb.Mime("image/jpeg"),
+          ConverterClient.Thumb.Width(maxPx.value),
+          ConverterClient.Thumb.Height(maxPx.value * 3 / 4)
+        )
+      )
 
   val env: Map[String, String] = Map("ZQMT_SI_KEY" -> "si-fixture-key", "ZQMT_EU_KEY" -> "eu-fixture-key")
 
@@ -152,9 +168,22 @@ object MediaWire:
   def load(more: String): Either[ConfigProblem, LoadedConfig] =
     AppConfig.loadWithUserText(ConfigFactory.parseMap(env.asJava), text + more)
 
-  private def place(id: Place.Id, label: Place.Label, kind: Place.KindValue, lon: Longitude, lat: Latitude, period: Option[Period]) =
+  private def place(
+      id: Place.Id,
+      label: Place.Label,
+      kind: Place.KindValue,
+      lon: Longitude,
+      lat: Latitude,
+      period: Option[Period]
+  ) =
     Place.Input(
-      Place(id, label, kind, Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},${lat.value}]}""")), period),
+      Place(
+        id,
+        label,
+        kind,
+        Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},${lat.value}]}""")),
+        period
+      ),
       List(Place.Name(Place.Name.Value(label.value)))
     )
 

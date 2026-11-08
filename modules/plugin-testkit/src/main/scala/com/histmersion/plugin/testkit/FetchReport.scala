@@ -32,6 +32,8 @@ final case class FetchReport(
       .flatMap(_.licence)
       .map(l => com.histmersion.domain.Licence.Id(l.value))
       .orElse(log.collectFirst {
-        case l if !l.source.value.startsWith("acquire") && l.message.value.toLowerCase(java.util.Locale.ROOT).contains("licen") =>
+        case l
+            if !l.source.value
+              .startsWith("acquire") && l.message.value.toLowerCase(java.util.Locale.ROOT).contains("licen") =>
           com.histmersion.domain.Licence.Id(l.message.value)
       })

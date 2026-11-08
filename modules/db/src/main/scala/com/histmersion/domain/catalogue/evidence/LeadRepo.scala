@@ -2,7 +2,14 @@ package com.histmersion
 package domain.catalogue.evidence
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{ArticleEventLead, CatalogRecord, EventEntry, EventFindingRef, EventSourceRef, EventTier}
+import com.histmersion.api.catalogue.{
+  ArticleEventLead,
+  CatalogRecord,
+  EventEntry,
+  EventFindingRef,
+  EventSourceRef,
+  EventTier
+}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.EventSql
@@ -43,7 +50,9 @@ private[evidence] object LeadRepo:
   /** The dated, placed findings within `km` of an event's anchor and `years` of its outer span, nearest in time then
     * space first: their distance and the years between (0 = overlapping).
     */
-  def nearFindings(id: Event.Id, km: CatalogMerge.Tolerance.Km, years: CatalogMerge.Tolerance.Years, limit: PageSize)(using DbCon): List[EventFindingRef] =
+  def nearFindings(id: Event.Id, km: CatalogMerge.Tolerance.Km, years: CatalogMerge.Tolerance.Years, limit: PageSize)(
+      using DbCon
+  ): List[EventFindingRef] =
     sql"""WITH ev AS (
               SELECT ${SqlLiteral(EventSql.AnchorSql)} AS pt, e.outer_span AS span
               FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE e.id = $id)
@@ -84,7 +93,13 @@ private[evidence] object LeadRepo:
   /** The facts of the leads of the events `where` selects (over `events e`, `ep` its place): tier, size, findings near
     * (within `km`, `years`), proposed and confirmed sources. Catalogue events first, the largest first.
     */
-  def leadRows(where: Sql, km: CatalogMerge.Tolerance.Km, years: CatalogMerge.Tolerance.Years, limit: PageSize, offset: Offset)(using DbCon): (RowCount, List[LeadRow]) =
+  def leadRows(
+      where: Sql,
+      km: CatalogMerge.Tolerance.Km,
+      years: CatalogMerge.Tolerance.Years,
+      limit: PageSize,
+      offset: Offset
+  )(using DbCon): (RowCount, List[LeadRow]) =
     val total = (Sql.raw(
       Sql.RawText("SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE ")
     ) ++ where).frag.query[Int].run().head
@@ -111,9 +126,20 @@ private[evidence] object LeadRepo:
             " coalesce(e.not_before, e.begin_by), e.id"
         )
       ) ++
-      Sql.of(Sql.OfText(" LIMIT ? OFFSET ?"), Param.I(Param.I.V(limit.value.max(1))), Param.I(Param.I.V(offset.value.max(0)))))
+      Sql.of(
+        Sql.OfText(" LIMIT ? OFFSET ?"),
+        Param.I(Param.I.V(limit.value.max(1))),
+        Param.I(Param.I.V(offset.value.max(0)))
+      ))
     // the three `?` of the findings count come first in the text
-    val withParams = Sql(rows.text, List(Param.D(Param.D.V(km.value * 1000.0)), Param.L(Param.L.V(years.value)), Param.L(Param.L.V(years.value))) ++ rows.params)
+    val withParams = Sql(
+      rows.text,
+      List(
+        Param.D(Param.D.V(km.value * 1000.0)),
+        Param.L(Param.L.V(years.value)),
+        Param.L(Param.L.V(years.value))
+      ) ++ rows.params
+    )
     (RowCount(total), withParams.frag.query[LeadRow].run().toList)
 
   /** Catalogue events an article's period and region hold: those overlapping `period` within `km` of one of `citekeys`'
@@ -127,7 +153,21 @@ private[evidence] object LeadRepo:
       minVei: CatalogRecord.Vei,
       minMagnitude: CatalogRecord.Magnitude,
       limit: PageSize
-  )(using DbCon): List[(Event.Id, CatalogRecord.Label, CatalogRecord.Kind, TimeSpan, List[EventEntry.Names], Option[CatalogRecord.Vei], Option[CatalogRecord.Magnitude], ArticleEventLead.FindingsNear, CatalogRecord.Provider)] =
+  )(using
+      DbCon
+  ): List[
+    (
+        Event.Id,
+        CatalogRecord.Label,
+        CatalogRecord.Kind,
+        TimeSpan,
+        List[EventEntry.Names],
+        Option[CatalogRecord.Vei],
+        Option[CatalogRecord.Magnitude],
+        ArticleEventLead.FindingsNear,
+        CatalogRecord.Provider
+    )
+  ] =
     if citekeys.isEmpty then Nil
     else
       val (p0, p1) = period.map((a, b) => (a.value, b.value)).getOrElse((Long.MinValue / 4, Long.MaxValue / 4))

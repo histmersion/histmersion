@@ -14,9 +14,17 @@ class HotPlanSuite extends munit.FunSuite:
   private val nodes = List(
     HotNode(HotNode.Name("pool"), Nil, List(HotNode.Keys("histmersion.db"))),
     HotNode(HotNode.Name("migrations"), List(HotNode.Deps("pool")), Nil),
-    HotNode(HotNode.Name("query-pool"), List(HotNode.Deps("pool"), HotNode.Deps("migrations")), List(HotNode.Keys("histmersion.query"), HotNode.Keys("histmersion.db"))),
+    HotNode(
+      HotNode.Name("query-pool"),
+      List(HotNode.Deps("pool"), HotNode.Deps("migrations")),
+      List(HotNode.Keys("histmersion.query"), HotNode.Keys("histmersion.db"))
+    ),
     HotNode(HotNode.Name("lease"), List(HotNode.Deps("migrations")), Nil),
-    HotNode(HotNode.Name("plugins"), Nil, List(HotNode.Keys("histmersion.plugins"), HotNode.Keys("histmersion.acquire"))),
+    HotNode(
+      HotNode.Name("plugins"),
+      Nil,
+      List(HotNode.Keys("histmersion.plugins"), HotNode.Keys("histmersion.acquire"))
+    ),
     HotNode(HotNode.Name("acquisition"), List(HotNode.Deps("plugins")), List(HotNode.Keys("histmersion.acquire"))),
     HotNode(HotNode.Name("watch"), Nil, List(HotNode.Keys("histmersion.config")))
   )
@@ -27,7 +35,11 @@ class HotPlanSuite extends munit.FunSuite:
       Right(List("pool", "migrations", "query-pool", "lease", "plugins", "acquisition", "watch"))
     )
     // declared out of order: still built after what it needs
-    val shuffled = List(HotNode(HotNode.Name("b"), List(HotNode.Deps("a")), Nil), HotNode(HotNode.Name("c"), Nil, Nil), HotNode(HotNode.Name("a"), Nil, Nil))
+    val shuffled = List(
+      HotNode(HotNode.Name("b"), List(HotNode.Deps("a")), Nil),
+      HotNode(HotNode.Name("c"), Nil, Nil),
+      HotNode(HotNode.Name("a"), Nil, Nil)
+    )
     assertEquals(HotPlan.order(shuffled), Right(List("c", "a", "b")))
 
   test("order refuses a cycle, naming it; a dependency on no node; a name used twice"):
@@ -40,10 +52,23 @@ class HotPlanSuite extends munit.FunSuite:
     val e = HotPlan.order(cyc).swap.getOrElse(fail("a cycle was ordered"))
     assert(e.value.contains("cycle"), e)
     assert(e.value.contains("a → c → b → a"), e)
-    val self = HotPlan.order(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("a")), Nil))).swap.getOrElse(fail("self-loop ordered"))
+    val self = HotPlan
+      .order(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("a")), Nil)))
+      .swap
+      .getOrElse(fail("self-loop ordered"))
     assert(self.value.contains("a → a"), self)
-    assert(HotPlan.order(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("nope")), Nil))).swap.exists(_.value.contains("a → nope")))
-    assert(HotPlan.order(List(HotNode(HotNode.Name("a"), Nil, Nil), HotNode(HotNode.Name("a"), Nil, Nil))).swap.exists(_.value.contains("twice")))
+    assert(
+      HotPlan
+        .order(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("nope")), Nil)))
+        .swap
+        .exists(_.value.contains("a → nope"))
+    )
+    assert(
+      HotPlan
+        .order(List(HotNode(HotNode.Name("a"), Nil, Nil), HotNode(HotNode.Name("a"), Nil, Nil)))
+        .swap
+        .exists(_.value.contains("twice"))
+    )
 
   test("keyMatches: the key, a key under it, a block above it — not a sibling sharing a prefix"):
     assert(HotPlan.keyMatches(ConfigReload.ChangedKey("histmersion.db.url"), ConfigReload.Key("histmersion.db")))
@@ -57,15 +82,28 @@ class HotPlanSuite extends munit.FunSuite:
       HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.db.url"))),
       Right(List("pool", "migrations", "query-pool", "lease"))
     )
-    assertEquals(HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.query.password"))), Right(List("query-pool")))
+    assertEquals(
+      HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.query.password"))),
+      Right(List("query-pool"))
+    )
     assertEquals(
       HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.plugins.keepassxc.enabled"))),
       Right(List("plugins", "acquisition"))
     )
-    assertEquals(HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.acquire.chain"))), Right(List("plugins", "acquisition")))
+    assertEquals(
+      HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.acquire.chain"))),
+      Right(List("plugins", "acquisition"))
+    )
     assertEquals(HotPlan.plan(nodes, List(ConfigReload.ChangedKey("histmersion.limits.search"))), Right(Nil))
     assertEquals(HotPlan.plan(nodes, Nil, forced = Set(HotNode.Name("lease"))), Right(List("lease")))
-    assert(HotPlan.plan(List(HotNode(HotNode.Name("a"), List(HotNode.Deps("a")), List(HotNode.Keys("k")))), List(ConfigReload.ChangedKey("k"))).isLeft)
+    assert(
+      HotPlan
+        .plan(
+          List(HotNode(HotNode.Name("a"), List(HotNode.Deps("a")), List(HotNode.Keys("k")))),
+          List(ConfigReload.ChangedKey("k"))
+        )
+        .isLeft
+    )
 
   // ── ConfigReload ───────────────────────────────────────────────────────────────────────────────
 
@@ -114,7 +152,9 @@ class HotPlanSuite extends munit.FunSuite:
     val second = AppConfig.loadWithUserFile(env, Some(f)).fold(p => fail(p.value), identity)
     val changed = ConfigReload.changed(first.merged, second.merged)
     assertEquals(changed, List("histmersion.db.url", "histmersion.server.port"))
-    val cfg = AppConfig.fromMerged(ConfigReload.effective(first.merged, second.merged, changed)).fold(p => fail(p.value), identity)
+    val cfg = AppConfig
+      .fromMerged(ConfigReload.effective(first.merged, second.merged, changed))
+      .fold(p => fail(p.value), identity)
     assertEquals(cfg.db.url, "jdbc:postgresql://h/b_test")
     assertEquals(cfg.db.pool.max, 3) // the environment still wins
     assertEquals(cfg.server.port, first.config.server.port)

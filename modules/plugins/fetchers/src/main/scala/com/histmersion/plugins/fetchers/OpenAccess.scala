@@ -41,10 +41,22 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     * an e-mail, so without one it is not asked. The `unpaywall` step and the landing step share it when they use the
     * same contact.
     */
-  private def unpaywallRecord(ctx: Fetch.Context, doi: OaRecords.Doi, email: Option[UnpaywallConfig.ContactEmail]): Option[Json] =
+  private def unpaywallRecord(
+      ctx: Fetch.Context,
+      doi: OaRecords.Doi,
+      email: Option[UnpaywallConfig.ContactEmail]
+  ): Option[Json] =
     email.flatMap(e =>
       ctx.memo(Fetch.Context.MemoKey(s"oa:unpaywall:$e:$doi"))(
-        http.json(Url(RepositoryLanding.Candidate.Url(cfg.unpaywall.url.value), Url.UrlPath(s"/$doi"), "email" -> e.value).value).toOption
+        http
+          .json(
+            Url(
+              RepositoryLanding.Candidate.Url(cfg.unpaywall.url.value),
+              Url.UrlPath(s"/$doi"),
+              "email" -> e.value
+            ).value
+          )
+          .toOption
       )
     )
 
@@ -58,7 +70,9 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   def core(key: Option[OpenAccess.CoreKey], quota: UpstreamQuota): SourceFetcher = new SourceFetcher:
     val access = Access.Open
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
-      work.doi.map(d => OaRecords.Doi(d.value)).fold[Fetch](Fetch.Miss(Fetch.Miss.Why("core needs a DOI")))(corePdf(ctx, _, key, quota))
+      work.doi
+        .map(d => OaRecords.Doi(d.value))
+        .fold[Fetch](Fetch.Miss(Fetch.Miss.Why("core needs a DOI")))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi(ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))
 
@@ -71,7 +85,9 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       landingPdf(
         ctx,
         records(ctx, d),
-        Option.when(ctx.registered(OpenAccess.Unpaywall).value)(unpaywallEmail).flatMap(e => unpaywallRecord(ctx, d, e)),
+        Option
+          .when(ctx.registered(OpenAccess.Unpaywall).value)(unpaywallEmail)
+          .flatMap(e => unpaywallRecord(ctx, d, e)),
         ctx.registered(OpenAccess.OpenAlex).value
       )
   )
@@ -83,9 +99,21 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("unpaywall"), Plugin.Http.GetUrl(u.value)))
       .headOption
 
-  private def corePdf(ctx: Fetch.Context, doi: OaRecords.Doi, key: Option[OpenAccess.CoreKey], quota: UpstreamQuota): Fetch =
-    key.fold[Fetch](Fetch.Miss(Fetch.Miss.Why("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)"))) { key =>
-      CoreApi(cfg.core, http, quota).searchWorks(CoreApi.SearchWorksKey(key.value), CoreApi.SearchWorksQuery(s"""doi:"$doi""""), PageSize(1), OpenAccess.Lookup) match
+  private def corePdf(
+      ctx: Fetch.Context,
+      doi: OaRecords.Doi,
+      key: Option[OpenAccess.CoreKey],
+      quota: UpstreamQuota
+  ): Fetch =
+    key.fold[Fetch](
+      Fetch.Miss(Fetch.Miss.Why("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)"))
+    ) { key =>
+      CoreApi(cfg.core, http, quota).searchWorks(
+        CoreApi.SearchWorksKey(key.value),
+        CoreApi.SearchWorksQuery(s"""doi:"$doi""""),
+        PageSize(1),
+        OpenAccess.Lookup
+      ) match
         case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(Fetch.Miss.Why(skip.message.value))
         case Left(CoreFailure.Failed(why))       =>
           ctx.log.info(Plugin.Log.InfoMessage(s"CORE lookup failed ($why)"))
@@ -128,14 +156,18 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       val indexed = RepositoryLanding.distinct(
         RepositoryLanding
           .zenodoRecordId(RepositoryLanding.ZenodoLocator(r.doi.value))
-          .map(_ => RepositoryLanding.Candidate(RepositoryLanding.Candidate.Url(doiUrl), RepositoryLanding.Candidate.Repository(true)))
+          .map(_ =>
+            RepositoryLanding
+              .Candidate(RepositoryLanding.Candidate.Url(doiUrl), RepositoryLanding.Candidate.Repository(true))
+          )
           .toList ++
           unpaywall.toList.flatMap(RepositoryLanding.unpaywallCandidates) ++
           (if openalex then r.openalex.toList else Nil).flatMap(RepositoryLanding.openalexCandidates)
       )
       def viaDoi(c: RepositoryLanding.Candidate): LazyList[RepositoryLanding.Candidate] =
         val isDoi = RepositoryLanding.host(c.url).exists(h => h.value == "doi.org" || h.value == "dx.doi.org")
-        if !isDoi || RepositoryLanding.zenodoRecordId(RepositoryLanding.ZenodoLocator(c.url.value)).isDefined then LazyList(c)
+        if !isDoi || RepositoryLanding.zenodoRecordId(RepositoryLanding.ZenodoLocator(c.url.value)).isDefined then
+          LazyList(c)
         else
           val d = OaRecords.Doi(c.url.value.replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", ""))
           val own = d.value.equalsIgnoreCase(r.doi.value)
@@ -154,13 +186,29 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
           )
       // the DOI's own DataCite landing page last, unless a location already named it
       val pages = (LazyList.from(indexed).flatMap(viaDoi) ++
-        LazyList(()).flatMap(_ => LazyList.from(r.datacite.map(u => RepositoryLanding.Candidate(RepositoryLanding.Candidate.Url(u.value), RepositoryLanding.Candidate.Repository(false))))))
-        .scanLeft((Set.empty[RepositoryLanding.Candidate.Url], Option.empty[RepositoryLanding.Candidate])) { case ((seen, _), c) =>
-          if seen(c.url) then (seen, None) else (seen + c.url, Some(c))
+        LazyList(()).flatMap(_ =>
+          LazyList.from(
+            r.datacite.map(u =>
+              RepositoryLanding.Candidate(
+                RepositoryLanding.Candidate.Url(u.value),
+                RepositoryLanding.Candidate.Repository(false)
+              )
+            )
+          )
+        ))
+        .scanLeft((Set.empty[RepositoryLanding.Candidate.Url], Option.empty[RepositoryLanding.Candidate])) {
+          case ((seen, _), c) =>
+            if seen(c.url) then (seen, None) else (seen + c.url, Some(c))
         }
         .flatMap(_._2)
         // a publisher's page is never read, and does not use up the pages a work may read
-        .filter(c => RepositoryLanding.zenodoRecordId(RepositoryLanding.ZenodoLocator(c.url.value)).isDefined || !publisherPage(ctx, c, rules))
+        .filter(c =>
+          RepositoryLanding.zenodoRecordId(RepositoryLanding.ZenodoLocator(c.url.value)).isDefined || !publisherPage(
+            ctx,
+            c,
+            rules
+          )
+        )
         .take(math.max(0, cfg.landing.maxPages.value))
       pages.map(resolvePage(ctx, _, rules)).collectFirst { case Some(f) => f }
 
@@ -196,18 +244,34 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
           case Left(e) =>
             ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} failed ($e)")); None
           case Right(b) if Downloads.looksLikePdf(FetchedFile.Bytes(b.value)) =>
-            Some(FetchedFile(source, Some(FetchedFile.Url(c.url.value)), FetchedFile.Bytes(b.value), FetchedFile.Extension("pdf")))
+            Some(
+              FetchedFile(
+                source,
+                Some(FetchedFile.Url(c.url.value)),
+                FetchedFile.Bytes(b.value),
+                FetchedFile.Extension("pdf")
+              )
+            )
           case Right(b) if !RepositoryLanding.looksLikeHtml(RepositoryLanding.PageBytes(b.value)) =>
             ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} is neither a PDF nor a page — skipping")); None
           case Right(b) =>
             val html = String(b.value, "UTF-8")
-            val pdfs = RepositoryLanding.pdfsOf(c.url, c.repository, RepositoryLanding.Html(html), rules, RepositoryLanding.Candidate.Publisher(oaPub))
+            val pdfs = RepositoryLanding.pdfsOf(
+              c.url,
+              c.repository,
+              RepositoryLanding.Html(html),
+              rules,
+              RepositoryLanding.Candidate.Publisher(oaPub)
+            )
             if pdfs.isEmpty then
               val why = if oaPub then "names no PDF on its own hosts"
-              else if RepositoryLanding.isRepository(c.url, c.repository, RepositoryLanding.Html(html), rules) then "names no citation_pdf_url"
+              else if RepositoryLanding.isRepository(c.url, c.repository, RepositoryLanding.Html(html), rules) then
+                "names no citation_pdf_url"
               else "is not a repository's page"
               ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} $why — skipping"))
-            pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.GetUrl(u.value))).collectFirst { case Some(f) => f }
+            pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.GetUrl(u.value))).collectFirst {
+              case Some(f) => f
+            }
 
   /** An open Zenodo record's PDF, by its REST API, checked against the record's MD5. */
   private def zenodo(ctx: Fetch.Context, id: RepositoryLanding.ZenodoRecordId): Option[FetchedFile] =
@@ -221,7 +285,10 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
           .map { f =>
             downloads.pdf(ctx.log, FetchedFile.Source("zenodo"), Plugin.Http.GetUrl(f.url.value)).filter { got =>
               val ok = f.md5.forall(m => Downloads.md5(got.bytes).forall(_.value == m.value))
-              if !ok then ctx.log.warn(Plugin.Log.WarnMessage(s"zenodo: ${f.url} does not match the MD5 its record gives — skipping"))
+              if !ok then
+                ctx.log.warn(
+                  Plugin.Log.WarnMessage(s"zenodo: ${f.url} does not match the MD5 its record gives — skipping")
+                )
               ok
             }
           }

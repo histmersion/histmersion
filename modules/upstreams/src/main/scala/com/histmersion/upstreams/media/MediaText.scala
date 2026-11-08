@@ -54,7 +54,8 @@ object MediaText:
     (url).value.split("\\?", 2) match
       case Array(base, query) =>
         val kept = query.split("&").filterNot(p => p.toLowerCase(Locale.ROOT).startsWith("utm_") || p.isEmpty)
-        if kept.isEmpty then RepositoryLanding.Candidate.Url(base) else RepositoryLanding.Candidate.Url(base + "?" + kept.mkString("&"))
+        if kept.isEmpty then RepositoryLanding.Candidate.Url(base)
+        else RepositoryLanding.Candidate.Url(base + "?" + kept.mkString("&"))
       case _ => RepositoryLanding.Candidate.Url((url).value)
 
   /** Pure: a link-safe file name for a provider's file title (`File:Lions Gate.jpg` → `Lions_Gate.jpg`). */

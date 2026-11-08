@@ -30,5 +30,10 @@ object FetcherGeneration:
     (legal.map((id, access) => s"$id:${access.toString.toLowerCase(java.util.Locale.ROOT)}") ++ owners ++
       List(s"contact=$contact", s"core-key=$coreKey")).map(AcquireRecheck.GenerationPart(_))
 
-  def of(plan: List[(FetchChain.Step.Id, Access)], plugins: List[PluginStatus], contact: Boolean, coreKey: Boolean): AcquireClients.Generation =
+  def of(
+      plan: List[(FetchChain.Step.Id, Access)],
+      plugins: List[PluginStatus],
+      contact: Boolean,
+      coreKey: Boolean
+  ): AcquireClients.Generation =
     AcquireClients.Generation(AcquireRecheck.generation(parts(plan, plugins, contact, coreKey)).value)

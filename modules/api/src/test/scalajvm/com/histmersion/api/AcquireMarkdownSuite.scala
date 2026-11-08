@@ -46,7 +46,13 @@ class AcquireMarkdownSuite extends munit.FunSuite:
   )
 
   test("discover renders a table and flags what is already stored"):
-    val md = AcquireMarkdown.discover(DiscoverResult(DiscoverResult.Query("steppe"), DiscoverResult.Count(2), List(work, work.modify(_.inDb).setTo(WorkRef.InDb(true)))))
+    val md = AcquireMarkdown.discover(
+      DiscoverResult(
+        DiscoverResult.Query("steppe"),
+        DiscoverResult.Count(2),
+        List(work, work.modify(_.inDb).setTo(WorkRef.InDb(true)))
+      )
+    )
     assert(md.contains("| citekey | title | year | authors | cited | doi | notes |"))
     assert(md.contains("haak2015_massive"))
     assert(md.contains("in db"))
@@ -54,15 +60,69 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(md.contains("[10.1038/nature14317](https://doi.org/10.1038/nature14317)"))
 
   test("empty results say so instead of rendering an empty table"):
-    assert(AcquireMarkdown.discover(DiscoverResult(DiscoverResult.Query("nothing"), DiscoverResult.Count(0), Nil)).contains("_No works found"))
-    assert(AcquireMarkdown.followups(FollowupsResult(FollowupsResult.Target("x"), None, FollowupsResult.Backend("s2"), FollowupsResult.Count(0), FollowupsResult.EdgesAdded(0), Nil)).contains("_Nothing cites"))
-    assert(AcquireMarkdown.refs(RefsResult(RefsResult.Target("x"), None, RefsResult.Backend("crossref"), RefsResult.Count(0), RefsResult.Resolved(0), RefsResult.EdgesAdded(0), Nil)).contains("_No reference list"))
-    assert(AcquireMarkdown.calibreGaps(CalibreGaps(CalibreGaps.Count(0), Nil)).contains("_Every stored source is in Calibre._"))
+    assert(
+      AcquireMarkdown
+        .discover(DiscoverResult(DiscoverResult.Query("nothing"), DiscoverResult.Count(0), Nil))
+        .contains("_No works found")
+    )
+    assert(
+      AcquireMarkdown
+        .followups(
+          FollowupsResult(
+            FollowupsResult.Target("x"),
+            None,
+            FollowupsResult.Backend("s2"),
+            FollowupsResult.Count(0),
+            FollowupsResult.EdgesAdded(0),
+            Nil
+          )
+        )
+        .contains("_Nothing cites")
+    )
+    assert(
+      AcquireMarkdown
+        .refs(
+          RefsResult(
+            RefsResult.Target("x"),
+            None,
+            RefsResult.Backend("crossref"),
+            RefsResult.Count(0),
+            RefsResult.Resolved(0),
+            RefsResult.EdgesAdded(0),
+            Nil
+          )
+        )
+        .contains("_No reference list")
+    )
+    assert(
+      AcquireMarkdown
+        .calibreGaps(CalibreGaps(CalibreGaps.Count(0), Nil))
+        .contains("_Every stored source is in Calibre._")
+    )
 
   test("calibre gaps show whether the server stores each original, only when the server says"):
     def gap(ck: Citekey, stored: Option[CalibreGap.StoredOriginal]) =
-      CalibreGap(ck, CalibreGap.Title("T"), List(CalibreGap.Authors("A")), None, Some(Year(2000)), None, None, Nil, Some(CalibreGap.Provenance("unpaywall")), storedOriginal = stored)
-    val md = AcquireMarkdown.calibreGaps(CalibreGaps(CalibreGaps.Count(2), List(gap(Citekey("a"), Some(CalibreGap.StoredOriginal(true))), gap(Citekey("b"), Some(CalibreGap.StoredOriginal(false))))))
+      CalibreGap(
+        ck,
+        CalibreGap.Title("T"),
+        List(CalibreGap.Authors("A")),
+        None,
+        Some(Year(2000)),
+        None,
+        None,
+        Nil,
+        Some(CalibreGap.Provenance("unpaywall")),
+        storedOriginal = stored
+      )
+    val md = AcquireMarkdown.calibreGaps(
+      CalibreGaps(
+        CalibreGaps.Count(2),
+        List(
+          gap(Citekey("a"), Some(CalibreGap.StoredOriginal(true))),
+          gap(Citekey("b"), Some(CalibreGap.StoredOriginal(false)))
+        )
+      )
+    )
     assert(md.contains("| original |") && md.contains("| stored |") && md.contains("| none |"), md)
     assert(md.contains("--file"), md)
     val old = AcquireMarkdown.calibreGaps(CalibreGaps(CalibreGaps.Count(1), List(gap(Citekey("a"), None))))
@@ -75,7 +135,9 @@ class AcquireMarkdownSuite extends munit.FunSuite:
 
   test("the single-work view tells 'no free copy' from 'nobody said' (#599)"):
     assert(AcquireMarkdown.work(work).contains("**Access:** open access (green)"))
-    val closed = AcquireMarkdown.work(work.modify(_.isOa).setTo(WorkRef.IsOa(false)).modify(_.oaStatus).setTo(Some(WorkRef.OaStatus("closed"))))
+    val closed = AcquireMarkdown.work(
+      work.modify(_.isOa).setTo(WorkRef.IsOa(false)).modify(_.oaStatus).setTo(Some(WorkRef.OaStatus("closed")))
+    )
     assert(closed.contains("**Access:** no OA copy known"), closed)
     // a Crossref-only record carries no access information at all
     val unknown = AcquireMarkdown.work(work.modify(_.isOa).setTo(WorkRef.IsOa(false)).modify(_.oaStatus).setTo(None))
@@ -90,12 +152,19 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       RefsResult.Count(2),
       RefsResult.Resolved(1),
       RefsResult.EdgesAdded(0),
-      List(RefRow(title = (Some("A")).map(Title.apply), citekey = (Some("drews1993_bronze")).map(Citekey.apply)), RefRow(title = (Some("B")).map(Title.apply)))
+      List(
+        RefRow(title = (Some("A")).map(Title.apply), citekey = (Some("drews1993_bronze")).map(Citekey.apply)),
+        RefRow(title = (Some("B")).map(Title.apply))
+      )
     )
     val md = AcquireMarkdown.refs(r)
     assert(md.contains("1 of 2 resolve to stored sources; re-run with `--apply`"), md)
     assert(!md.contains("Lambda") && !md.contains("$"), md)
-    assert(AcquireMarkdown.refs(r.modify(_.edgesAdded).setTo(RefsResult.EdgesAdded(3))).contains("3 `references` edge(s) written"))
+    assert(
+      AcquireMarkdown
+        .refs(r.modify(_.edgesAdded).setTo(RefsResult.EdgesAdded(3)))
+        .contains("3 `references` edge(s) written")
+    )
 
   test("an assessment shows the verdict, the notices and whether it was applied"):
     val a = Assessment(
@@ -106,11 +175,25 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       Some(Acquire.CitedByCount(3)),
       None,
       isRetracted = Assessment.IsRetracted(true),
-      retractionWatch = List(RetractionNotice(Some(RetractionNotice.Nature("Retraction")), Some(RetractionNotice.Reason("+Fabrication")), Some(RetractionNotice.Date("2021-12-15")))),
-      crossrefUpdates = List(UpdateNotice(Some(UpdateNotice.Kind("retraction")), Some(UpdateNotice.Label("Retraction")), Some(Doi("10.1038/y")))),
+      retractionWatch = List(
+        RetractionNotice(
+          Some(RetractionNotice.Nature("Retraction")),
+          Some(RetractionNotice.Reason("+Fabrication")),
+          Some(RetractionNotice.Date("2021-12-15"))
+        )
+      ),
+      crossrefUpdates = List(
+        UpdateNotice(
+          Some(UpdateNotice.Kind("retraction")),
+          Some(UpdateNotice.Label("Retraction")),
+          Some(Doi("10.1038/y"))
+        )
+      ),
       flagged = Assessment.Flagged(true),
       verdict = Acquire.Verdicts.Retracted,
-      recommendation = Assessment.Recommendation(Acquire.recommendation(Acquire.Verdicts.Retracted, Some(Acquire.CitedByCount(3))).value)
+      recommendation = Assessment.Recommendation(
+        Acquire.recommendation(Acquire.Verdicts.Retracted, Some(Acquire.CitedByCount(3))).value
+      )
     )
     val md = AcquireMarkdown.assessment(a)
     assert(md.contains("⛔ RETRACTED"))
@@ -134,14 +217,29 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       proposedKind = FollowupRow.ProposedKind(Acquire.EdgeKinds.Refutes),
       citekey = Some(Citekey("critic2021_x"))
     )
-    val md = AcquireMarkdown.followups(FollowupsResult(FollowupsResult.Target("haak2015_massive"), None, FollowupsResult.Backend("semantic-scholar"), FollowupsResult.Count(1), FollowupsResult.EdgesAdded(0), List(f)))
+    val md = AcquireMarkdown.followups(
+      FollowupsResult(
+        FollowupsResult.Target("haak2015_massive"),
+        None,
+        FollowupsResult.Backend("semantic-scholar"),
+        FollowupsResult.Count(1),
+        FollowupsResult.EdgesAdded(0),
+        List(f)
+      )
+    )
     assert(md.contains("**refutes**"))
     assert(md.contains("★"))
     assert(md.contains("> these data contradict it"))
     assert(md.contains("`critic2021_x`"))
 
   test("a lending-only archive item renders the refusal prominently"):
-    val md = AcquireMarkdown.archiveItem(ArchiveItem(ArchiveItem.Identifier("x"), title = Some(ArchiveItem.Title("Black Athena")), lendingOnly = ArchiveItem.LendingOnly(true)))
+    val md = AcquireMarkdown.archiveItem(
+      ArchiveItem(
+        ArchiveItem.Identifier("x"),
+        title = Some(ArchiveItem.Title("Black Athena")),
+        lendingOnly = ArchiveItem.LendingOnly(true)
+      )
+    )
     assert(md.contains("Lending-only item"))
     assert(md.contains("borrowed") || md.contains("BORROWED"))
 
@@ -154,7 +252,10 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       pdf = None,
       edgesAdded = Ingest.Report.EdgesAdded(0),
       assessment = None,
-      steps = List(Ingest.Step(Ingest.Step.Value("metadata"), Ingest.Step.Ok(true), Ingest.Step.Detail("ok")), Ingest.Step(Ingest.Step.Value("fetch"), Ingest.Step.Ok(false), Ingest.Step.Detail("no OA copy"))),
+      steps = List(
+        Ingest.Step(Ingest.Step.Value("metadata"), Ingest.Step.Ok(true), Ingest.Step.Detail("ok")),
+        Ingest.Step(Ingest.Step.Value("fetch"), Ingest.Step.Ok(false), Ingest.Step.Detail("no OA copy"))
+      ),
       dropIn = Some(Ingest.DropInPath("Drop it at …"))
     )
     val md = AcquireMarkdown.ingest(r)
@@ -169,7 +270,8 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       title = Some(ArchiveItem.Title("A Book")),
       creator = List(ArchiveItem.Creator("C")),
       year = Some(Year(1939)),
-      files = List(ArchiveFile(ArchiveFile.Name("a.pdf"), Some(ArchiveFile.Format("Text PDF")), ArchiveFile.Megabytes(12.0)))
+      files =
+        List(ArchiveFile(ArchiveFile.Name("a.pdf"), Some(ArchiveFile.Format("Text PDF")), ArchiveFile.Megabytes(12.0)))
     )
     val lines = AcquireMarkdown.archiveItem(item).linesIterator.toList
     val sep = lines.filter(_.contains("---"))
@@ -183,7 +285,20 @@ class AcquireMarkdownSuite extends munit.FunSuite:
         None,
         Ingest.Report.EdgesAdded(0),
         Some(
-          Assessment(Assessment.Target("k"), None, None, None, Some(Acquire.CitedByCount(9)), None, Assessment.IsRetracted(false), Nil, Nil, Assessment.Flagged(false), Acquire.Verdicts.Current, Assessment.Recommendation("KEEP"))
+          Assessment(
+            Assessment.Target("k"),
+            None,
+            None,
+            None,
+            Some(Acquire.CitedByCount(9)),
+            None,
+            Assessment.IsRetracted(false),
+            Nil,
+            Nil,
+            Assessment.Flagged(false),
+            Acquire.Verdicts.Current,
+            Assessment.Recommendation("KEEP")
+          )
         ),
         List(Ingest.Step(Ingest.Step.Value("metadata"), Ingest.Step.Ok(true), Ingest.Step.Detail("ok")))
       )
@@ -192,5 +307,11 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(ing.contains("CURRENT"))
 
   test("pipes in a title cannot break the table"):
-    val md = AcquireMarkdown.discover(DiscoverResult(DiscoverResult.Query("q"), DiscoverResult.Count(1), List(work.modify(_.title).setTo(Some(Title("A | B"))))))
+    val md = AcquireMarkdown.discover(
+      DiscoverResult(
+        DiscoverResult.Query("q"),
+        DiscoverResult.Count(1),
+        List(work.modify(_.title).setTo(Some(Title("A | B"))))
+      )
+    )
     assert(md.contains("A \\| B"), md)

@@ -40,4 +40,8 @@ object CoverChoice:
           .headOption
           .map(i => Pick.OpenLibrary(Pick.OpenLibrary.Kind("isbn"), Pick.OpenLibrary.Id(i.value)))
       )
-      .orElse(oclc.flatMap(OpenLibrary.oclc).map(o => Pick.OpenLibrary(Pick.OpenLibrary.Kind("oclc"), Pick.OpenLibrary.Id(o.value))))
+      .orElse(
+        oclc
+          .flatMap(OpenLibrary.oclc)
+          .map(o => Pick.OpenLibrary(Pick.OpenLibrary.Kind("oclc"), Pick.OpenLibrary.Id(o.value)))
+      )

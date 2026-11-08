@@ -6,7 +6,10 @@ import com.histmersion.web.ui.Layout
 
 class SpiderfySuite extends munit.FunSuite:
 
-  private def dist(a: (Spiderfy.OffsetCoordinate, Spiderfy.OffsetCoordinate), b: (Spiderfy.OffsetCoordinate, Spiderfy.OffsetCoordinate)) =
+  private def dist(
+      a: (Spiderfy.OffsetCoordinate, Spiderfy.OffsetCoordinate),
+      b: (Spiderfy.OffsetCoordinate, Spiderfy.OffsetCoordinate)
+  ) =
     math.hypot(a._1.value - b._1.value, a._2.value - b._2.value)
 
   test("a few dots go on one ring around the spot, a marker apart or more, none on the spot") {
@@ -36,7 +39,10 @@ class SpiderfySuite extends munit.FunSuite:
 
   test("the legs: a line from the centre of the square to each dot") {
     val svg = Spiderfy.legsSvg(
-      Vector((Spiderfy.OffsetCoordinate(10.0), Spiderfy.OffsetCoordinate(0.0)), (Spiderfy.OffsetCoordinate(0.0), Spiderfy.OffsetCoordinate(-10.0))),
+      Vector(
+        (Spiderfy.OffsetCoordinate(10.0), Spiderfy.OffsetCoordinate(0.0)),
+        (Spiderfy.OffsetCoordinate(0.0), Spiderfy.OffsetCoordinate(-10.0))
+      ),
       Spiderfy.Side(24)
     )
     assert(svg.value.startsWith("""<svg width="24" height="24" viewBox="0 0 24 24""""), svg.value)
@@ -45,14 +51,29 @@ class SpiderfySuite extends munit.FunSuite:
   }
 
   test("one spot: a bubble no zoom parts") {
-    assert(Clustering.onePlace(Seq(LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52)), LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52)), LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52)))))
-    assert(!Clustering.onePlace(Seq(LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52)), LatLon(LatLon.Lat(34.5577), LatLon.Lon(36.52)))))
+    assert(
+      Clustering.onePlace(
+        Seq(
+          LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52)),
+          LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52)),
+          LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52))
+        )
+      )
+    )
+    assert(
+      !Clustering.onePlace(
+        Seq(LatLon(LatLon.Lat(34.5576), LatLon.Lon(36.52)), LatLon(LatLon.Lat(34.5577), LatLon.Lon(36.52)))
+      )
+    )
     assert(!Clustering.onePlace(Nil))
   }
 
   test("a bubble is fanned out when it holds dots only, and not too many") {
     assert(MapView.spiderfies(DotCluster.Total(4), holdsCell = MapView.HoldsCell(false)))
-    assert(!MapView.spiderfies(DotCluster.Total(4), holdsCell = MapView.HoldsCell(true)), "a tile's counted cell is no one dot")
+    assert(
+      !MapView.spiderfies(DotCluster.Total(4), holdsCell = MapView.HoldsCell(true)),
+      "a tile's counted cell is no one dot"
+    )
     assert(!MapView.spiderfies(DotCluster.Total(1), holdsCell = MapView.HoldsCell(false)))
     assert(!MapView.spiderfies(DotCluster.Total(Layout.spiderMax.value + 1), holdsCell = MapView.HoldsCell(false)))
   }

@@ -23,7 +23,13 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
     assertEquals(a(s).row().changedBy, "p")
     a(s).ensured(t)
     assertEquals(a(s).row().lastEnsureAt, Some("2026-10-20T08:30:00Z"))
-    assert(a(s).set(enabled = AutopilotRepo.Row.Enabled(false), AutopilotRepo.Row.ChangedBy("q"), List(AutopilotRepo.Row.Paused("seed:x"), AutopilotRepo.Row.Paused("watch:x"))))
+    assert(
+      a(s).set(
+        enabled = AutopilotRepo.Row.Enabled(false),
+        AutopilotRepo.Row.ChangedBy("q"),
+        List(AutopilotRepo.Row.Paused("seed:x"), AutopilotRepo.Row.Paused("watch:x"))
+      )
+    )
     assertEquals(
       (a(s).row().enabled, a(s).row().paused, a(s).row().lastEnsureAt),
       (false, List("seed:x", "watch:x"), None)

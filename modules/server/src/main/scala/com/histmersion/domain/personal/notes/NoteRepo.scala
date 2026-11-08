@@ -17,7 +17,6 @@ private[notes] object NoteRepo:
   type RowsChanged = RowsChanged.T
   object RowsChanged extends Newtype[Int, Pure]
 
-
   private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
@@ -39,7 +38,10 @@ private[notes] object NoteRepo:
         )
       ) ++
       Sql.raw(Sql.Text(" ORDER BY n.updated_at DESC, n.id DESC")) ++
-      size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag.query[Note.Row].run().toList
+      size.fold(Sql.empty)(s => Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(s.value))))).frag
+      .query[Note.Row]
+      .run()
+      .toList
 
   def live(user: UserId, id: com.histmersion.api.personal.Note.Id)(using DbCon): Option[Note.Row] =
     Sql
@@ -77,9 +79,13 @@ private[notes] object NoteRepo:
   )(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE notes SET body = $text, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))
+          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+      .run()
+      .pipe(RowsChanged(_))
 
   def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): RowsChanged =
     val stamp = at.iso
     sql"""UPDATE notes SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
-          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run().pipe(RowsChanged(_))
+          WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update
+      .run()
+      .pipe(RowsChanged(_))

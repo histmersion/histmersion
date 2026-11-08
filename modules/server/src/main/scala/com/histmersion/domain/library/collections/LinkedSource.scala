@@ -6,7 +6,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.AuthorName
 
 /** A source linked to an item of the Calibre library (`sources.calibre_id`), with what an audit compares. */
-final case class LinkedSource(citekey: Citekey, id: LinkedSource.Id, title: LinkedSource.Title, authors: List[LinkedSource.Authors], year: Option[Year])
+final case class LinkedSource(
+    citekey: Citekey,
+    id: LinkedSource.Id,
+    title: LinkedSource.Title,
+    authors: List[LinkedSource.Authors],
+    year: Option[Year]
+)
 
 object LinkedSource:
   type Id = Id.T

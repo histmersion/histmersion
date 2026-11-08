@@ -11,18 +11,34 @@ import java.util.concurrent.atomic.AtomicReference
   * listed one by one but those the span already shows.
   */
 class UndatedSitesSuite extends munit.FunSuite:
-  private val grid = TileGrid.of(maxZoom = TileGrid.MaxZoom(11), maxPoints = TileGrid.MaxPoints(600), cellPx = TileGrid.CellPx(32))
+  private val grid =
+    TileGrid.of(maxZoom = TileGrid.MaxZoom(11), maxPoints = TileGrid.MaxPoints(600), cellPx = TileGrid.CellPx(32))
   private val sites = (0 until 30)
     .flatMap(i =>
       (0 until 30)
-        .map(j => UndatedSite(UndatedSite.Id(f"u$i%02d$j%02d"), Latitude.applyUnsafe(37.0 + i * 0.01), Longitude.applyUnsafe(22.0 + j * 0.01), Option.when(i % 2 == 0)(UndatedSite.SiteType("tower"))))
+        .map(j =>
+          UndatedSite(
+            UndatedSite.Id(f"u$i%02d$j%02d"),
+            Latitude.applyUnsafe(37.0 + i * 0.01),
+            Longitude.applyUnsafe(22.0 + j * 0.01),
+            Option.when(i % 2 == 0)(UndatedSite.SiteType("tower"))
+          )
+        )
     )
     .toList
   private val service = UndatedSites.InMemory(AtomicReference(sites))
 
   private def tileAt(z: TileCoord.Z, lat: Latitude, lon: Longitude): TileCoord =
     val (mx, my) = TileCoord.mercator(lat, lon)
-    TileCoord.of(z, TileCoord.X(math.floor(mx * (1 << z.value)).toLong), TileCoord.Y(math.floor(my * (1 << z.value)).toLong), TileCoord.Z(22)).toOption.get
+    TileCoord
+      .of(
+        z,
+        TileCoord.X(math.floor(mx * (1 << z.value)).toLong),
+        TileCoord.Y(math.floor(my * (1 << z.value)).toLong),
+        TileCoord.Z(22)
+      )
+      .toOption
+      .get
 
   test("counted by squares, the counts add up to every site of the tile, of a type when asked"):
     val c = tileAt(TileCoord.Z(6), Latitude(37.1), Longitude(22.1))
@@ -30,7 +46,11 @@ class UndatedSitesSuite extends munit.FunSuite:
     assertEquals(counted.map(_.n.value).sum, 900)
     assertEquals(service.counted(c, grid, Some(TileRepo.SiteType("tower"))).map(_.n.value).sum, 450)
     assert(
-      counted.forall(g => g.gx.value / UndatedSites.perSideOf(grid).value == c.x.value && g.gy.value / UndatedSites.perSideOf(grid).value == c.y.value)
+      counted.forall(g =>
+        g.gx.value / UndatedSites.perSideOf(grid).value == c.x.value && g.gy.value / UndatedSites
+          .perSideOf(grid)
+          .value == c.y.value
+      )
     )
 
   test("merged with no dated site, a crowded tile's cells all say how many have no known date"):

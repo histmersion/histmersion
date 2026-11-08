@@ -46,7 +46,11 @@ object RunsView:
     RunState.parse(stateWire(status)).exists(s => s == RunState.Queued || s == RunState.Running)
 
   /** The polling schedule: `None` = stop (nothing is live); a change goes back to the quick delay. */
-  def nextPoll(previous: Option[Poll.Revision], anyLive: Poll.LiveMode, changed: Poll.DataChanged): Option[Poll.Revision] =
+  def nextPoll(
+      previous: Option[Poll.Revision],
+      anyLive: Poll.LiveMode,
+      changed: Poll.DataChanged
+  ): Option[Poll.Revision] =
     Poll.next(previous, anyLive, changed)
 
   /** A run state as a person reads it — the filter buttons and the badges say `waiting for approval`, not the wire word
@@ -56,7 +60,9 @@ object RunsView:
 
   /** A pipeline as a person reads it ([[Wording.pipeline]]); its identifier stays in the tooltip. */
   def pipelineLabel(pipeline: RunInfo.Pipeline): Text =
-    Pipeline.parse(Pipeline.Wire(pipeline.value)).fold(Text(Wording.humanize(Wording.Id(pipeline.value))))(p => Text(Wording.pipeline(p)))
+    Pipeline
+      .parse(Pipeline.Wire(pipeline.value))
+      .fold(Text(Wording.humanize(Wording.Id(pipeline.value))))(p => Text(Wording.pipeline(p)))
 
   /** What each run state means for a person, and what comes next; a tooltip on its filter button. */
   def stateMeaning(s: RunState): Text = s match
@@ -71,10 +77,12 @@ object RunsView:
       Text("Waits for a person to decide its approval; it holds no worker and is queued again once decided.")
     case RunState.Done      => Text("Finished every step.")
     case RunState.Failed    => Text("Ended with the error shown on its row.")
-    case RunState.Cancelled => Text("Stopped for good by a person, or because its manager was stopped; it does not resume.")
+    case RunState.Cancelled =>
+      Text("Stopped for good by a person, or because its manager was stopped; it does not resume.")
 
   /** [[stateLabel]] of a status as stored; an unknown one as words. */
-  def statusLabel(status: RunInfo.Status): Text = RunState.parse(stateWire(status)).fold(Text(Wording.humanize(Wording.Id(status.value))))(stateLabel)
+  def statusLabel(status: RunInfo.Status): Text =
+    RunState.parse(stateWire(status)).fold(Text(Wording.humanize(Wording.Id(status.value))))(stateLabel)
 
   /** The runs a status filter shows. */
   def visible(runs: List[RunInfo], filter: Option[RunState]): List[RunInfo] =
@@ -94,11 +102,12 @@ object RunsView:
 
   /** What each pipeline does; a tooltip on its filter chip. */
   def pipelineMeaning(pipeline: RunInfo.Pipeline): Option[Text] = pipeline.value match
-    case "plan-goal" => Some(Text("Plans a research goal: sub-goals, search queries, works to read (a goal-plan approval)."))
-    case "propose-articles"  => Some(Text("Proposes which articles a goal needs (an article-plan approval)."))
-    case "compile-article"   => Some(Text("Writes an article draft from the corpus (an article-publish approval)."))
-    case "review-article"    => Some(Text("Reviews an article: rules, cold-reader and skeptic reviewers, then a fixer."))
-    case "enrich-source"     => Some(Text("Reads a newly ingested source: summary, findings, dates, places, status."))
+    case "plan-goal" =>
+      Some(Text("Plans a research goal: sub-goals, search queries, works to read (a goal-plan approval)."))
+    case "propose-articles" => Some(Text("Proposes which articles a goal needs (an article-plan approval)."))
+    case "compile-article"  => Some(Text("Writes an article draft from the corpus (an article-publish approval)."))
+    case "review-article"   => Some(Text("Reviews an article: rules, cold-reader and skeptic reviewers, then a fixer."))
+    case "enrich-source"    => Some(Text("Reads a newly ingested source: summary, findings, dates, places, status."))
     case "acquisition-sweep" =>
       Some(Text("Searches for new literature for a goal; ingests legal open access, queues the rest."))
     case "currency-check" => Some(Text("Checks a goal's sources for retractions and newer critiques."))
@@ -125,7 +134,9 @@ object RunsView:
     case Agents.Origin.Run =>
       Text("Started by another run, such as a compile-article run starting the review of its article.")
     case Agents.Origin.FromIngest =>
-      Text("Queued by an ingest for the source it brought in (automatic enrichment), before the enrich manager took that over.")
+      Text(
+        "Queued by an ingest for the source it brought in (automatic enrichment), before the enrich manager took that over."
+      )
     case Agents.Origin.Manager => Text("Dispatched by a process manager for one of its work items.")
   }
 
@@ -135,7 +146,8 @@ object RunsView:
   def providerMeaning(provider: Agents.ProviderDoctor.Provider): Option[Text] = provider.value match
     case "anthropic" => Some(Text("Anthropic's API, with an API key: metered, billed per token."))
     case "openai"    => Some(Text("OpenAI's API, with an API key: metered, billed per token."))
-    case "local" => Some(Text("A model behind an OpenAI-compatible endpoint you run (llama.cpp, LM Studio, vLLM, Ollama)."))
+    case "local"     =>
+      Some(Text("A model behind an OpenAI-compatible endpoint you run (llama.cpp, LM Studio, vLLM, Ollama)."))
     case "claude-code" =>
       Some(Text("Your own claude command-line tool on your Claude login: your plan's usage, not an API key."))
     case "codex"    => Some(Text("Your own codex command-line tool on its ChatGPT plan login."))
@@ -229,7 +241,8 @@ object RunsView:
     )
 
   /** A budget the person typed: a positive number of dollars, or nothing. */
-  def budget(s: Text): Option[RunRequest.BudgetUsd] = s.value.trim.toDoubleOption.filter(_ > 0).map(Agents.RunRequest.BudgetUsd(_))
+  def budget(s: Text): Option[RunRequest.BudgetUsd] =
+    s.value.trim.toDoubleOption.filter(_ > 0).map(Agents.RunRequest.BudgetUsd(_))
 
   def tokens(u: Agents.Usage): Text = Text(s"${u.input} in / ${u.output} out")
 
@@ -249,7 +262,8 @@ object RunsView:
         s.modelText,
         s"${s.usage.input}/${s.usage.output}",
         AgentsMarkdown.usd(s.costUsd.value),
-        (s.error.toList.map(_.value) ++ s.wouldWrite.map(w => s"${AgentsMarkdown.DryRunNote}: ${w.what}")).mkString("; ")
+        (s.error.toList.map(_.value) ++ s.wouldWrite.map(w => s"${AgentsMarkdown.DryRunNote}: ${w.what}"))
+          .mkString("; ")
       ).map(Text(_))
     )
 
@@ -290,7 +304,8 @@ object RunsView:
 
   /** The rows, the poll and "Show older" ([[PolledList]]). */
   private val list = PolledList[RunInfo](
-    fetch = (upTo, before) => ApiClient.agentRuns(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
+    fetch =
+      (upTo, before) => ApiClient.agentRuns(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
     id = r => PolledList.ItemId(r.id.value),
     live = (rows, page) => anyLive(rows, page)
   )
@@ -469,7 +484,11 @@ object RunsView:
         cls := "job-main",
         div(
           cls := "job-subject",
-          WinLink(WindowKey.Run(WindowKey.Run.Id(r.id.value)), title := s"Open this run (${r.pipeline})", pipelineLabel(r.pipeline).value),
+          WinLink(
+            WindowKey.Run(WindowKey.Run.Id(r.id.value)),
+            title := s"Open this run (${r.pipeline})",
+            pipelineLabel(r.pipeline).value
+          ),
           " · ",
           target(r),
           Option(AgentsMarkdown.options(r)).filter(_.nonEmpty).map(o => span(cls := "muted", s" · $o"))
@@ -477,12 +496,17 @@ object RunsView:
         r.progress.filter(_.value.nonEmpty).map(pr => div(cls := "job-progress", pr.value)),
         r.error.filter(_.value.nonEmpty).map(e => div(cls := "job-error", e.value)),
         Option.when(r.warnings.nonEmpty)(
-          div(cls := "run-warn-count muted", s"${Plural.count(Plural.CountN(r.warnings.size.toLong), Plural.CountSingular("warning"))}")
+          div(
+            cls := "run-warn-count muted",
+            s"${Plural.count(Plural.CountN(r.warnings.size.toLong), Plural.CountSingular("warning"))}"
+          )
         ),
         div(
           cls := "job-meta muted",
           span(title := s"run ${r.id}", s"run ${r.id.value.take(8)}"),
-          span(s" · ${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"),
+          span(
+            s" · ${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
+          ),
           Option(r.createdAt).filter(_.value.nonEmpty).map(c => span(title := c.value, s" · started ${ago(c.value)}"))
         )
       )
@@ -576,12 +600,16 @@ object RunsView:
           WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.value)), title := g.value, Wording.humanize(Wording.Id(g.value)))
         )
       ),
-      r.error.filter(e => e.value.nonEmpty && stateWire(r.status) != RunState.Paused.wire).map(e => p(cls := "job-error", e.value)),
+      r.error
+        .filter(e => e.value.nonEmpty && stateWire(r.status) != RunState.Paused.wire)
+        .map(e => p(cls := "job-error", e.value)),
       r.progress.filter(_.value.nonEmpty).map(pr => p(cls := "job-progress", pr.value)),
       dl(
         cls := "run-facts",
         dt("spent"),
-        dd(s"${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"),
+        dd(
+          s"${tokens(r.usage)} · ${AgentsMarkdown.usd(r.costUsd.value)} of ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
+        ),
         dt("model"),
         dd(r.model.fold("the configured roles")(_.value)),
         dt("run"),
@@ -592,7 +620,9 @@ object RunsView:
         dd(r.updatedAt.value)
       ),
       controls(r, busy, raise, act),
-      Option.when(r.warnings.nonEmpty)(div(cls := "run-warnings", h4("Warnings"), ul(r.warnings.map(w => li(w.value))))),
+      Option.when(r.warnings.nonEmpty)(
+        div(cls := "run-warnings", h4("Warnings"), ul(r.warnings.map(w => li(w.value))))
+      ),
       h4("Steps"),
       table(
         cls := "run-steps",
@@ -603,7 +633,12 @@ object RunsView:
           tr(
             cls := s"step-${s.status}",
             stepCells(s).map { (col, v) =>
-              td(dataAttr("label") := col.value, cls("step-note") := col.value == "note", cls("is-empty") := v.value.isEmpty, v.value)
+              td(
+                dataAttr("label") := col.value,
+                cls("step-note") := col.value == "note",
+                cls("is-empty") := v.value.isEmpty,
+                v.value
+              )
             }
           )
         })
@@ -615,7 +650,9 @@ object RunsView:
           d.messages.groupBy(_.seq).toList.sortBy(t => t._1.value: Int).map { (seq, ms) =>
             val name = d.steps.find(_.seq.value == seq.value).map(_.name.value).getOrElse(s"step $seq")
             htmlTag("details")(
-              htmlTag("summary")(s"$name — ${Plural.count(Plural.CountN(ms.size.toLong), Plural.CountSingular("message"))}"),
+              htmlTag("summary")(
+                s"$name — ${Plural.count(Plural.CountN(ms.size.toLong), Plural.CountSingular("message"))}"
+              ),
               ms.map { m =>
                 div(
                   cls := s"trace-msg trace-${m.role}",
@@ -623,7 +660,14 @@ object RunsView:
                     cls := "trace-head muted",
                     s"${m.role}${m.toolName.fold("")(t => s" · $t")}${m.latencyMs.fold("")(l => s" · $l ms")}"
                   ),
-                  pre(cls := "trace-body", m.content.map(_.value).orElse(m.toolInput.map(_.value)).orElse(m.toolResult.map(_.value)).getOrElse(""))
+                  pre(
+                    cls := "trace-body",
+                    m.content
+                      .map(_.value)
+                      .orElse(m.toolInput.map(_.value))
+                      .orElse(m.toolResult.map(_.value))
+                      .getOrElse("")
+                  )
                 )
               }
             )

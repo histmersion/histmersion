@@ -38,7 +38,8 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       .map(AcquireParse.openalexWorks(_).map(_.wire))
 
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
-    works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query)).left.map(ScholarlyIndex.Problem(_))
+    works(s"from_publication_date:$since,type:article|book|book-chapter", limit.value, Some(query)).left
+      .map(ScholarlyIndex.Problem(_))
 
   private def work(doi: Doi): Either[String, io.circe.Json] =
     http
@@ -62,7 +63,11 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       .map(CitationAlerts.Problem(_))
 
   def authors(doi: Doi) =
-    work(doi).map(j => Candidates.openalexAuthorIds(j).map(id => AuthorName(id.value))).left.map(CitationAlerts.Problem(_))
+    work(doi)
+      .map(j => Candidates.openalexAuthorIds(j).map(id => AuthorName(id.value)))
+      .left
+      .map(CitationAlerts.Problem(_))
 
   def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit) =
-    works(s"authorships.author.id:$authorId,from_publication_date:$since", limit.value, None).left.map(CitationAlerts.Problem(_))
+    works(s"authorships.author.id:$authorId,from_publication_date:$since", limit.value, None).left
+      .map(CitationAlerts.Problem(_))

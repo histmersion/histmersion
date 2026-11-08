@@ -52,9 +52,13 @@ class PromptTrimSuite extends munit.FunSuite:
   test("markers that do not pair up, nest or name an audience are reported"):
     assertEquals(AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer -->x<!-- /only:writer -->")), Nil)
     assert(AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer -->x")).exists(_.contains("never closed")))
-    assert(AgentDefinitions.markerProblems(AgentDef.Body("x<!-- /only:writer -->")).exists(_.contains("closes nothing")))
     assert(
-      AgentDefinitions.markerProblems(AgentDef.Body("<!-- only:writer --><!-- only:headless -->")).exists(_.contains("opens inside"))
+      AgentDefinitions.markerProblems(AgentDef.Body("x<!-- /only:writer -->")).exists(_.contains("closes nothing"))
+    )
+    assert(
+      AgentDefinitions
+        .markerProblems(AgentDef.Body("<!-- only:writer --><!-- only:headless -->"))
+        .exists(_.contains("opens inside"))
     )
     assert(
       AgentDefinitions
@@ -62,7 +66,10 @@ class PromptTrimSuite extends munit.FunSuite:
         .exists(_.contains("names no audience"))
     )
     assertEquals(
-      AgentGenerator.check(d, Generated.known(AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)).map(_.value)),
+      AgentGenerator.check(
+        d,
+        Generated.known(AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)).map(_.value)
+      ),
       Nil,
       "the bundled definitions are clean"
     )

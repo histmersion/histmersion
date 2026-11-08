@@ -16,4 +16,7 @@ object QueueCarried:
     Bundle.Kind.QueueItem,
     TableName("queue_items"),
     List(RowsIn(ImportStage.Rows, ImportRank(50), QueueBundleRepo.queueItemsIn))
-  )(scope => QueueBundleRepo.queue(scope).toList)(q => CarriedKind.RecordsClock(q.updatedAt.value), (es, ls) => es.modify(_.queue).setTo(ls))
+  )(scope => QueueBundleRepo.queue(scope).toList)(
+    q => CarriedKind.RecordsClock(q.updatedAt.value),
+    (es, ls) => es.modify(_.queue).setTo(ls)
+  )

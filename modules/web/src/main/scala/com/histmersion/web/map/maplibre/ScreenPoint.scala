@@ -12,4 +12,3 @@ import com.histmersion.web.map.ScreenPt
 trait ScreenPoint extends js.Object:
   val x: ScreenPt.X = js.native
   val y: ScreenPt.Y = js.native
-

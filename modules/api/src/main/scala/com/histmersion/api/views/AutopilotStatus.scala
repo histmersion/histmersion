@@ -39,7 +39,8 @@ final case class AutopilotStatus(
     /** Absent from an older server. */
     acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
 
   /** The automation's part of the page. */
   def engine: Autopilot.EngineStatus = Autopilot.EngineStatus(
@@ -73,8 +74,25 @@ final case class AutopilotStatus(
         .filter(_.fetchedToday.value > 0)
         .fold("")(r => s", ${r.fetchedToday} of them by the acquisition list's re-check"),
       beforeBacklog = upstreams.map(q => (s"- ${UpstreamQuotaMarkdown.line(q)}")),
-      afterBacklog = (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => (refactorValue8))
+      afterBacklog =
+        (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => (refactorValue8))
     )
 
 object AutopilotStatus:
-  export Autopilot.EngineStatus.{On, Since, By, AgentsEnabled, ManagersEnabled, CronsEnabled, IngestedToday, IngestCap, MaxConcurrentRuns, LastBackup, LastLint, Changes, Backlog, BacklogDays, GoalPlansWait}
+  export Autopilot.EngineStatus.{
+    AgentsEnabled,
+    Backlog,
+    BacklogDays,
+    By,
+    Changes,
+    CronsEnabled,
+    GoalPlansWait,
+    IngestCap,
+    IngestedToday,
+    LastBackup,
+    LastLint,
+    ManagersEnabled,
+    MaxConcurrentRuns,
+    On,
+    Since
+  }

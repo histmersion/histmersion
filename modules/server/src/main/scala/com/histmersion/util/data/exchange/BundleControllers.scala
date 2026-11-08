@@ -37,7 +37,9 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     maintenance.guard(WriteGate.OperationName("instance"))(Right(bundles.setLabel(label)))
 
   /** `GET /api/bundle?since=` — the bundle file and its download name. */
-  def exportBundle(since: Option[BundleScope.Since.At]): Either[Api.Error, (HandedFile, BundleControllers.Disposition)] =
+  def exportBundle(
+      since: Option[BundleScope.Since.At]
+  ): Either[Api.Error, (HandedFile, BundleControllers.Disposition)] =
     BundleControllers.since(since).flatMap(bundles.exportBundle).map((f, m) => f -> BundleControllers.disposition(m))
 
   /** `POST /api/bundle/verify`. */
@@ -47,7 +49,9 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     * any open issue refuses it (decide them, then `POST /api/merge/import`).
     */
   def importBundle(dryRun: ImportOptions.DryRun, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
-    maintenance.guard(WriteGate.OperationName("bundle/import"))(readable(upload).flatMap(bundles.importBundle(_, dryRun)))
+    maintenance.guard(WriteGate.OperationName("bundle/import"))(
+      readable(upload).flatMap(bundles.importBundle(_, dryRun))
+    )
 
   /** `POST /api/bundle/upload` — keep the bundle under its sha256 so it can be planned and imported by name. The
     * manifest is read back, and what reading the file found wrong is reported.
@@ -61,7 +65,9 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
   /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
   def importUploaded(req: MergeImportRequest): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard(WriteGate.OperationName("merge/import")):
-      BundleControllers.sha256(req.bundle.value).flatMap(bundles.importKept(_, req.resolutions, ImportOptions.DryRun(req.dryRun.value)))
+      BundleControllers
+        .sha256(req.bundle.value)
+        .flatMap(bundles.importKept(_, req.resolutions, ImportOptions.DryRun(req.dryRun.value)))
 
   /** `POST /api/merge/apply` — carry out the reviewed plan of an uploaded bundle (M5). A write, and the one that takes
     * a backup first (`histmersion backup`'s `pg_dump`, into `backups.dir`). It runs as a background job
@@ -71,7 +77,9 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     */
   def applyUploaded(req: MergeApplyRequest): Either[Api.Error, MergeApplyJob] =
     maintenance.guard(WriteGate.OperationName("merge/apply")):
-      BundleControllers.sha256(req.bundle.value).flatMap(bundles.applyKept(_, MergeRow.PlanHash(req.planHash.value), req.resolutions))
+      BundleControllers
+        .sha256(req.bundle.value)
+        .flatMap(bundles.applyKept(_, MergeRow.PlanHash(req.planHash.value), req.resolutions))
 
   /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
   def applyStatus(job: Job.Id): Either[Api.Error, MergeApplyJob] =
@@ -88,7 +96,8 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       )
 
   /** `GET /api/merge/sessions/{bundle}`. */
-  def session(bundle: Api.Merge.Id): Either[Api.Error, MergeSession] = BundleControllers.sha256(bundle.value).map(bundles.session)
+  def session(bundle: Api.Merge.Id): Either[Api.Error, MergeSession] =
+    BundleControllers.sha256(bundle.value).map(bundles.session)
 
   /** `PUT /api/merge/sessions/{bundle}`. */
   def putSession(bundle: Api.Merge.Id, r: MergeResolutions): Either[Api.Error, MergeSession] =
@@ -97,24 +106,37 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
   /** `POST /api/merge/resolutions` — the YAML of a resolution file, read; every bad line at once. */
   def parseResolutions(text: MergeResolutionsFile.Text): Either[Api.Error, MergeResolutions] =
-    MergeResolutionsFile.parse(text).left.map(es => Api.Error(Api.Error.Message(es.mkString("; ")), Some(Api.Error.Code(Write.CodeInvalid))))
+    MergeResolutionsFile
+      .parse(text)
+      .left
+      .map(es => Api.Error(Api.Error.Message(es.mkString("; ")), Some(Api.Error.Code(Write.CodeInvalid))))
 
   def merges(limit: Option[Api.Merge.Limit]): List[MergeInfo] =
     bundles.merges(limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.ListLimit))
 
   def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
 
-  def mergeLedger(uid: Option[MergeRepo.UidText], merge: Option[MergeRepo.MergeIdOrPrefix], limit: Option[Api.Merge.Limit]): Either[Api.Error, MergeLedger] =
-    bundles.mergeLedger(uid, merge, limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.LedgerLimit))
+  def mergeLedger(
+      uid: Option[MergeRepo.UidText],
+      merge: Option[MergeRepo.MergeIdOrPrefix],
+      limit: Option[Api.Merge.Limit]
+  ): Either[Api.Error, MergeLedger] =
+    bundles.mergeLedger(
+      uid,
+      merge,
+      limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.LedgerLimit)
+    )
 
   private def readable(f: HandedFile): Either[Api.Error, ByteSource] =
     val source = HandedFile.source(f)
-    if source.size.value <= 0 then Left(Api.Error(Api.Error.Message("the upload is empty — send a .hmx bundle as the body")))
+    if source.size.value <= 0 then
+      Left(Api.Error(Api.Error.Message("the upload is empty — send a .hmx bundle as the body")))
     else Right(source)
 
 object BundleControllers:
   type Disposition = Disposition.T
   object Disposition extends Newtype[String, Pure]
+
   /** How many merges `merge list` shows, and ledger rows `merge ledger`, unless asked. */
 
   val ListLimit: PageSize = PageSize(50)
@@ -126,7 +148,9 @@ object BundleControllers:
       .either(raw.trim.toLowerCase(java.util.Locale.ROOT))
       .left
       .map(_ =>
-        Api.Error(Api.Error.Message(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)"))
+        Api.Error(
+          Api.Error.Message(s"'$raw' is not a bundle's sha256 (64 hex digits, as `POST /api/bundle/upload` answers)")
+        )
       )
 
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */

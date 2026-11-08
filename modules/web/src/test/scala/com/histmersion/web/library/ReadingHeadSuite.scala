@@ -73,16 +73,28 @@ class ReadingHeadSuite extends munit.FunSuite:
   test("an unknown type is left out, not called unknown"):
     val paperless = detail.modify(_.provenance).setTo(None).modify(_.venue).setTo(None)
     assertEquals(ReadingHead.of(Source.WithFindings(paperless, Nil)).what, "2014")
-    val cover = MediaThumb(MediaItem.Uid("u"), MediaThumb.Role(MediaRole.Cover), MediaThumb.Url("/x.jpg"), MediaItem.Credit("credit"))
+    val cover = MediaThumb(
+      MediaItem.Uid("u"),
+      MediaThumb.Role(MediaRole.Cover),
+      MediaThumb.Url("/x.jpg"),
+      MediaItem.Credit("credit")
+    )
     assertEquals(
       ReadingHead.of(Source.WithFindings(paperless, Nil, illustration = Some(cover))).what,
       "Book · 2014"
     )
 
   test("the map shows the box around a source's located findings; none when none is located"):
-    def f(lat: Option[Latitude], lon: Option[Longitude]) = Finding.Row(Finding.Claim("c"), None, lon, lat, None, None, None, Nil, None)
+    def f(lat: Option[Latitude], lon: Option[Longitude]) =
+      Finding.Row(Finding.Claim("c"), None, lon, lat, None, None, None, Nil, None)
     assertEquals(
-      ReadingPane.bounds(List(f(Some(Latitude(35.6)), Some(Longitude(35.8))), f(Some(Latitude(40.0)), Some(Longitude(34.6))), f(None, None))),
+      ReadingPane.bounds(
+        List(
+          f(Some(Latitude(35.6)), Some(Longitude(35.8))),
+          f(Some(Latitude(40.0)), Some(Longitude(34.6))),
+          f(None, None)
+        )
+      ),
       Some(GeoBounds(GeoBounds.South(35.6), GeoBounds.West(34.6), GeoBounds.North(40.0), GeoBounds.East(35.8)))
     )
     assertEquals(ReadingPane.bounds(List(f(None, None))), None)

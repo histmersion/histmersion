@@ -22,6 +22,17 @@ class ItemCountsSuite extends munit.FunSuite:
         ItemStatus.Wire("weird") -> ItemCounts.Count(9)
       )
     )
-    assertEquals(c, ItemCounts(ItemCounts.Pending(12), ItemCounts.Held(1), ItemCounts.Active(3), ItemCounts.Done(40), ItemCounts.Stopped(5), ItemCounts.Failed(6), ItemCounts.Cancelled(7)))
+    assertEquals(
+      c,
+      ItemCounts(
+        ItemCounts.Pending(12),
+        ItemCounts.Held(1),
+        ItemCounts.Active(3),
+        ItemCounts.Done(40),
+        ItemCounts.Stopped(5),
+        ItemCounts.Failed(6),
+        ItemCounts.Cancelled(7)
+      )
+    )
     assertEquals(c.open, 16)
     assertEquals(ItemCounts.of(Nil), ItemCounts())

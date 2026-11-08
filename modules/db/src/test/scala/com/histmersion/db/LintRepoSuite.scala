@@ -88,7 +88,13 @@ class LintRepoSuite extends DbSuite:
     edges = edges
   )
 
-  private def finding(id: Finding.Id, ck: String, period: Option[Period], region: Option[Finding.Region], geo: Option[GeoPoint]) =
+  private def finding(
+      id: Finding.Id,
+      ck: String,
+      period: Option[Period],
+      region: Option[Finding.Region],
+      geo: Option[GeoPoint]
+  ) =
     Finding(id, Citekey(ck), Finding.Claim("a claim"), region, geo, period, None, Nil, Some(Confidence.High))
 
   /** Fresh fixtures for every test — the rules are order-independent, but a half-written corpus from a previous failure
@@ -148,7 +154,14 @@ class LintRepoSuite extends DbSuite:
     Lint.names.filterNot(OwnRules).foreach(n => assert(SourceCheckFixtures.sqlOf(n).nonEmpty, s"$n has no statement"))
 
   test("every rule executes against the real schema"):
-    val rep = SourceCheckFixtures.run(ds, Lint.all, Lint.ItemLimit(cfg.lint.maxItems.value), Lint.ItemLimit(cfg.lint.suggestions.value), checker, geo)
+    val rep = SourceCheckFixtures.run(
+      ds,
+      Lint.all,
+      Lint.ItemLimit(cfg.lint.maxItems.value),
+      Lint.ItemLimit(cfg.lint.suggestions.value),
+      checker,
+      geo
+    )
     assertEquals(rep.rules.map(_.rule), Lint.names)
 
   test("no-findings / no-period / no-regions / empty-summary / unassessed-status"):
@@ -181,7 +194,10 @@ class LintRepoSuite extends DbSuite:
 
   test("no-findings carries the title, so the report is actionable without a second lookup"):
     put(source(Prefix + "bare", findings = Nil))
-    assert(run(Lint.Rule.Name(NoFindings)).head.detail.value.contains("Fixture"), run(Lint.Rule.Name(NoFindings)).head.detail)
+    assert(
+      run(Lint.Rule.Name(NoFindings)).head.detail.value.contains("Fixture"),
+      run(Lint.Rule.Name(NoFindings)).head.detail
+    )
 
   test("dangling-edges finds targets that are not citekeys and suggests the closest"):
     put(
@@ -202,7 +218,9 @@ class LintRepoSuite extends DbSuite:
     assert(items.exists(_.detail.value.contains("refutes → " + Prefix + "vanished")), items.toString)
 
   test("unresolved-short-citekeys is the fixable subset, and `lint --fix` really fixes it"):
-    put(source(Prefix + "src", edges = List(Edge(Citekey(Prefix + "src"), Citekey(Prefix + "target"), Edge.Kind.Cites))))
+    put(
+      source(Prefix + "src", edges = List(Edge(Citekey(Prefix + "src"), Citekey(Prefix + "target"), Edge.Kind.Cites)))
+    )
     put(source(Prefix + "target_full"))
     assertEquals(run(Lint.Rule.Name(UnresolvedShortCitekeys)).size, 1)
     assert(run(Lint.Rule.Name(UnresolvedShortCitekeys)).head.detail.value.contains("resolves to"))
@@ -212,7 +230,12 @@ class LintRepoSuite extends DbSuite:
 
   test("orphan-sources: no edges in, no edges out"):
     put(source(Prefix + "lonely"))
-    put(source(Prefix + "linked", edges = List(Edge(Citekey(Prefix + "linked"), Citekey(Prefix + "lonely"), Edge.Kind.Cites))))
+    put(
+      source(
+        Prefix + "linked",
+        edges = List(Edge(Citekey(Prefix + "linked"), Citekey(Prefix + "lonely"), Edge.Kind.Cites))
+      )
+    )
     val ks = keys(Lint.Rule.Name(OrphanSources))
     assert(!ks.contains(Prefix + "lonely"), "an incoming edge is enough")
     assert(!ks.contains(Prefix + "linked"), "an outgoing edge is enough")
@@ -241,13 +264,25 @@ class LintRepoSuite extends DbSuite:
     // NB: `reindexStale` is corpus-wide, so it also sweeps whatever other suites left stale in this
     // shared test database. That is exactly why it is best-effort per source; the assertion is about
     // THIS suite's fixture.
-    val r = SourceCheckFixtures.reindexStale(ds, Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val r = SourceCheckFixtures.reindexStale(
+      ds,
+      Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
+      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+    )
     assert(r.chunks.value > 0, s"reindexStale wrote no chunks: $r")
     assertEquals(keys(Lint.Rule.Name(StaleChunks)), Nil)
 
   test("reindexStale reports nothing left once it has swept everything stale"):
-    val _ = SourceCheckFixtures.reindexStale(ds, Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
-    val r = SourceCheckFixtures.reindexStale(ds, Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val _ = SourceCheckFixtures.reindexStale(
+      ds,
+      Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
+      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+    )
+    val r = SourceCheckFixtures.reindexStale(
+      ds,
+      Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
+      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+    )
     assertEquals(r.remaining, 0)
 
   test("undated-findings and unlocated-findings, named by finding id"):
@@ -256,9 +291,21 @@ class LintRepoSuite extends DbSuite:
       source(
         ck,
         findings = List(
-          finding(Finding.Id(s"$ck#0"), ck, None, Some(Finding.Region("Anatolia")), Some(GeoPoint(Longitude(32.0), Latitude(39.0)))), // undated
+          finding(
+            Finding.Id(s"$ck#0"),
+            ck,
+            None,
+            Some(Finding.Region("Anatolia")),
+            Some(GeoPoint(Longitude(32.0), Latitude(39.0)))
+          ), // undated
           finding(Finding.Id(s"$ck#1"), ck, Some(Period(Year(-1800), Year(-1700))), None, None), // unlocated
-          finding(Finding.Id(s"$ck#2"), ck, Some(Period(Year(-1800), Year(-1700))), Some(Finding.Region("Anatolia")), Some(GeoPoint(Longitude(32.0), Latitude(39.0))))
+          finding(
+            Finding.Id(s"$ck#2"),
+            ck,
+            Some(Period(Year(-1800), Year(-1700))),
+            Some(Finding.Region("Anatolia")),
+            Some(GeoPoint(Longitude(32.0), Latitude(39.0)))
+          )
         )
       )
     )
@@ -285,9 +332,26 @@ class LintRepoSuite extends DbSuite:
   test("article-markdown and note-markdown check every article body and summary, every source's summary and notes"):
     val slug = Prefix + "fmt_article"
     connect(ds)(sql"DELETE FROM articles WHERE slug = $slug".update.run())
-    ArticleFixtures.put(ds, Article(Article.Slug(slug), Article.Title("Fmt"), Article.KindValue("concept"), Article.Body("# Fmt\n\nA ** bad line."), Some(Article.SummaryText("a fine summary"))))
-    put(source(Prefix + "fmt_note", summary = Some(Source.Summary("a **bad summary"))).modify(_.notes).setTo(Some(Source.Notes("fine notes"))))
-    put(source(Prefix + "fmt_clean", summary = Some(Source.Summary("clean"))).modify(_.notes).setTo(Some(Source.Notes("clean"))))
+    ArticleFixtures.put(
+      ds,
+      Article(
+        Article.Slug(slug),
+        Article.Title("Fmt"),
+        Article.KindValue("concept"),
+        Article.Body("# Fmt\n\nA ** bad line."),
+        Some(Article.SummaryText("a fine summary"))
+      )
+    )
+    put(
+      source(Prefix + "fmt_note", summary = Some(Source.Summary("a **bad summary")))
+        .modify(_.notes)
+        .setTo(Some(Source.Notes("fine notes")))
+    )
+    put(
+      source(Prefix + "fmt_clean", summary = Some(Source.Summary("clean")))
+        .modify(_.notes)
+        .setTo(Some(Source.Notes("clean")))
+    )
     try
       val art = run(Lint.Rule.Name(ArticleFormat))
       assertEquals(art.map(_.citekey), List(slug))

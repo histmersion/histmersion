@@ -23,9 +23,13 @@ import com.histmersion.api.personal.ItemKey
 object PersonalTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class BookmarksInput(kind: Option[BookmarksInput.Kind] = None, query: Option[BookmarksInput.Query] = None, limit: Option[BookmarksInput.Limit] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class BookmarksInput(
+      kind: Option[BookmarksInput.Kind] = None,
+      query: Option[BookmarksInput.Query] = None,
+      limit: Option[BookmarksInput.Limit] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object BookmarksInput:
     type Kind = Kind.T
@@ -35,7 +39,6 @@ object PersonalTools:
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
 
-
   final case class NotesInput(
       id: Option[NotesInput.Id] = None,
       kind: Option[NotesInput.Kind] = None,
@@ -43,7 +46,8 @@ object PersonalTools:
       query: Option[NotesInput.Query] = None,
       limit: Option[NotesInput.Limit] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object NotesInput:
     type Id = Id.T
@@ -56,7 +60,6 @@ object PersonalTools:
     object Query extends Newtype[String, Pure]
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
-
 
   def apply(personal: PersonalControllers) =
     val bookmarks =
@@ -92,7 +95,9 @@ object PersonalTools:
         .handle { in =>
           in.id.map(_.value.trim).filter(_.nonEmpty) match
             case Some(id) =>
-              personal.note(Caller.Local, Note.Id(id)).fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
+              personal
+                .note(Caller.Local, Note.Id(id))
+                .fold(McpOut.error, n => ToolResult.text(PersonalMarkdown.note(n)))
             case None =>
               personal
                 .listNotes(

@@ -31,7 +31,11 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
   def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] =
     cfg.datasetList.map(ds => EventCatalogue.PartsResult(s"${ds.value}:1"))
 
-  def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
+  def read(
+      part: EventCatalogue.ReadPart,
+      query: CatalogueQuery,
+      http: Plugin.Http
+  ): Either[EventCatalogue.ReadResultPart1, CataloguePage] =
     part.value match
       case NoaaCatalogue.Page(dataset, page) =>
         val p = page.toInt
@@ -40,12 +44,8 @@ final class NoaaCatalogue(cfg: NoaaSettings) extends EventCatalogue:
           NoaaCatalogue.url(cfg.url, ds, query.from, query.to, NoaaCatalogue.PageNumber(p), cfg.pageSize)
         ).left
           .map(e => EventCatalogue.ReadResultPart1(e.value))
-          .flatMap(j =>
-            NoaaCatalogue.parse(ds, j).left.map(e => EventCatalogue.ReadResultPart1(e.value))
-          )
-          .map((rs, pages) =>
-            CataloguePage(rs, Option.when(p < pages.value)(CataloguePage.Next(s"$dataset:${p + 1}")))
-          )
+          .flatMap(j => NoaaCatalogue.parse(ds, j).left.map(e => EventCatalogue.ReadResultPart1(e.value)))
+          .map((rs, pages) => CataloguePage(rs, Option.when(p < pages.value)(CataloguePage.Next(s"$dataset:${p + 1}"))))
       case other =>
         Left(EventCatalogue.ReadResultPart1(s"'$other' is no page of NOAA's datasets"))
 
@@ -82,9 +82,17 @@ object NoaaCatalogue:
   private def path(ds: Dataset): Path = if ds == Tsunamis then Path("tsunamis/events") else Path(ds.value)
 
   /** Pure: one page of a dataset's events up to `to` (and from `from`). */
-  def url(base: NoaaSettings.Url, dataset: Dataset, from: Option[Year], to: Year, page: PageNumber, perPage: NoaaSettings.PageSize): Plugin.Http.GetUrl =
+  def url(
+      base: NoaaSettings.Url,
+      dataset: Dataset,
+      from: Option[Year],
+      to: Year,
+      page: PageNumber,
+      perPage: NoaaSettings.PageSize
+  ): Plugin.Http.GetUrl =
     Plugin.Http.GetUrl(
-      s"${base.value.stripSuffix("/")}/${path(dataset).value}?maxYear=${to.value}${from.fold("")(f => s"&minYear=${f.value}")}" +
+      s"${base.value
+          .stripSuffix("/")}/${path(dataset).value}?maxYear=${to.value}${from.fold("")(f => s"&minYear=${f.value}")}" +
         s"&itemsPerPage=${perPage.value}&page=${page.value}"
     )
 
@@ -128,7 +136,10 @@ object NoaaCatalogue:
       year <- long(i, JsonFields.Key("year"))
       if dataset != Tsunamis || validity.forall(_.value >= 1)
     yield
-      val where = str(i, JsonFields.Key("locationName")).orElse(str(i, JsonFields.Key("name"))).map(t => titleCase(t).value).getOrElse("unknown place")
+      val where = str(i, JsonFields.Key("locationName"))
+        .orElse(str(i, JsonFields.Key("name")))
+        .map(t => titleCase(t).value)
+        .getOrElse("unknown place")
       val one = singular(dataset).value
       val label = dataset match
         case Volcanoes => s"Eruption of ${str(i, JsonFields.Key("name")).map(_.value).getOrElse(where)}"
@@ -152,20 +163,33 @@ object NoaaCatalogue:
         lon = longitude(dbl(i, JsonFields.Key("longitude"))),
         historicity = CatalogueEvent.Historicity(if validity.exists(_.value <= 2) then "contested" else "attested"),
         // a tsunami's record carries the magnitude of the earthquake behind it: not the tsunami's size
-        vei = long(i, JsonFields.Key("vei")).map(v => CatalogueEvent.Vei(v.value.toInt)).filter(_ => dataset == Volcanoes),
-        magnitude = dbl(i, JsonFields.Key("eqMagnitude")).map(m => CatalogueEvent.Magnitude(m.value)).filter(_ => dataset == Earthquakes),
+        vei =
+          long(i, JsonFields.Key("vei")).map(v => CatalogueEvent.Vei(v.value.toInt)).filter(_ => dataset == Volcanoes),
+        magnitude = dbl(i, JsonFields.Key("eqMagnitude"))
+          .map(m => CatalogueEvent.Magnitude(m.value))
+          .filter(_ => dataset == Earthquakes),
         deaths = deaths.map(n => CatalogueEvent.Deaths(n.value)),
-        names = Option.when(dataset == Volcanoes)(str(i, JsonFields.Key("name")).map(n => CatalogueEvent.Names(s"${n.value} eruption"))).flatten.toList,
+        names = Option
+          .when(dataset == Volcanoes)(
+            str(i, JsonFields.Key("name")).map(n => CatalogueEvent.Names(s"${n.value} eruption"))
+          )
+          .flatten
+          .toList,
         description = Some(
           CatalogueEvent.Description(
             (List(s"$where") ++ dbl(i, JsonFields.Key("eqMagnitude")).map(m =>
-              if dataset == Earthquakes then s"magnitude ${m.value}" else s"caused by an earthquake of magnitude ${m.value}"
+              if dataset == Earthquakes then s"magnitude ${m.value}"
+              else s"caused by an earthquake of magnitude ${m.value}"
             ) ++
-              long(i, JsonFields.Key("vei")).map(v => s"VEI ${v.value}") ++ deaths.map(n => s"${n.value} deaths recorded") ++
+              long(i, JsonFields.Key("vei")).map(v => s"VEI ${v.value}") ++ deaths.map(n =>
+                s"${n.value} deaths recorded"
+              ) ++
               dbl(i, JsonFields.Key("maxWaterHeight")).map(h => s"max. water height ${h.value} m")).mkString("; ")
           )
         ),
-        group = if dataset == Volcanoes then long(i, JsonFields.Key("volcanoLocationNewNum")).map(v => CatalogueEvent.Group(s"volcano:${v.value}")) else None,
+        group = if dataset == Volcanoes then
+          long(i, JsonFields.Key("volcanoLocationNewNum")).map(v => CatalogueEvent.Group(s"volcano:${v.value}"))
+        else None,
         central = Dated.year(CatalogDating.HistoricalYear(year.value)),
         raw = i.focus.map(j => CatalogueEvent.Raw(j.noSpaces))
       )

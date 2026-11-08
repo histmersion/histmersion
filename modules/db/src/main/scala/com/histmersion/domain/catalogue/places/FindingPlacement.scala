@@ -23,7 +23,9 @@ object FindingPlacement:
     */
   val DefaultToleranceKm: Implementation.ToleranceKm = Implementation.ToleranceKm(10.0)
 
-  def apply(toleranceKm: Implementation.ToleranceKm = DefaultToleranceKm): FindingPlacement = Implementation(toleranceKm)
+  def apply(toleranceKm: Implementation.ToleranceKm = DefaultToleranceKm): FindingPlacement = Implementation(
+    toleranceKm
+  )
 
   /** Every finding on a placeholder point (one standing for a named place), as `lint --rule finding-placeholder` reads
     * them: id, place name, period, citekey and point.
@@ -33,7 +35,8 @@ object FindingPlacement:
   /** The findings on a placeholder point whose place name the geocoder does not resolve, or that have none: (citekey,
     * line), by citekey and finding id.
     */
-  def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, FindingPlaceRepo.Placeholder.Detail)] = FindingPlaceRepo.unresolvedPlaceholdersIn()
+  def unresolvedPlaceholdersIn()(using DbCon): List[(Citekey, FindingPlaceRepo.Placeholder.Detail)] =
+    FindingPlaceRepo.unresolvedPlaceholdersIn()
 
   /** The findings whose stored point is the one the old geocoder chose for their place name, as
     * `lint --rule finding-geocode` reads them.
@@ -54,10 +57,12 @@ object FindingPlacement:
   def placementsIn(s: GeocodeSettings)(using DbCon): List[Geocode.Placement] = Geocoder.placementsIn(s)
 
   /** The moves applied (compare-and-set), the touched sources' findings placed again; the findings moved. */
-  def move(ms: List[Geocode.Move], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount = Geocoder.apply(ms, toleranceKm)
+  def move(ms: List[Geocode.Move], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount =
+    Geocoder.apply(ms, toleranceKm)
 
   /** The points given (compare-and-set), the touched sources' findings placed again; the findings placed. */
-  def place(ps: List[Geocode.Placement], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount = Geocoder.place(ps, toleranceKm)
+  def place(ps: List[Geocode.Placement], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount =
+    Geocoder.place(ps, toleranceKm)
 
   final private class Implementation(val toleranceKm: Implementation.ToleranceKm) extends FindingPlacement:
     def placeSource(citekey: Citekey)(using DbCon): RowCount = FindingPlaceRepo.materialiseFor(citekey, toleranceKm)
@@ -65,4 +70,3 @@ object FindingPlacement:
   object Implementation:
     type ToleranceKm = GeocodeSettings.ToleranceKm
     val ToleranceKm: GeocodeSettings.ToleranceKm.type = GeocodeSettings.ToleranceKm
-

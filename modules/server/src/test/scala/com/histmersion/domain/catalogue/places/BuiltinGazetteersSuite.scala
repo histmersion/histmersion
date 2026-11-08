@@ -27,7 +27,9 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology"))
     assertEquals(BuiltinGazetteers.thirdParty(registered), Nil)
     assertEquals(
-      BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("awmc"), registered, GazetteerImports.Problem("unknown")).map(_.title),
+      BuiltinGazetteers
+        .resolve(BuiltinGazetteers.Entry.Name("awmc"), registered, GazetteerImports.Problem("unknown"))
+        .map(_.title),
       Right(
         "AWMC classical-world regional names and features"
       )
@@ -46,10 +48,21 @@ class BuiltinGazetteersSuite extends munit.FunSuite:
           "(histmersion.plugins.gazetteer-awmc.enabled = false)"
       )
     )
-    assertEquals(BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("nowhere"), off, GazetteerImports.Problem("unknown 'nowhere'")), Left("unknown 'nowhere'"))
+    assertEquals(
+      BuiltinGazetteers
+        .resolve(BuiltinGazetteers.Entry.Name("nowhere"), off, GazetteerImports.Problem("unknown 'nowhere'")),
+      Left("unknown 'nowhere'")
+    )
     assertEquals(BuiltinGazetteers.available(off), List("cliopatria", "awmc", "chronontology"))
 
   test("a plugin's source is listed after the first-party ones and found by its name"):
-    val registered = ListMap[Registries.GazetteerSourcesKey, GazetteerSource](Registries.GazetteerSourcesKey("elsewhere") -> Elsewhere, Registries.GazetteerSourcesKey("cliopatria") -> Elsewhere)
+    val registered = ListMap[Registries.GazetteerSourcesKey, GazetteerSource](
+      Registries.GazetteerSourcesKey("elsewhere") -> Elsewhere,
+      Registries.GazetteerSourcesKey("cliopatria") -> Elsewhere
+    )
     assertEquals(BuiltinGazetteers.available(registered), List("cliopatria", "awmc", "chronontology", "elsewhere"))
-    assertEquals(BuiltinGazetteers.resolve(BuiltinGazetteers.Entry.Name("elsewhere"), registered, GazetteerImports.Problem("unknown")), Right(Elsewhere))
+    assertEquals(
+      BuiltinGazetteers
+        .resolve(BuiltinGazetteers.Entry.Name("elsewhere"), registered, GazetteerImports.Problem("unknown")),
+      Right(Elsewhere)
+    )

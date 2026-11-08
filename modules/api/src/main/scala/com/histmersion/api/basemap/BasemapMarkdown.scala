@@ -6,10 +6,9 @@ import com.histmersion.api.given
 import com.histmersion.api.ByteCount
 object BasemapMarkdown:
 
-
   def status(s: Basemap.Status): String =
     val head =
-      if ((s.available) == Basemap.Status.Available(true)) then "The local base map is downloaded."
+      if (s.available) == Basemap.Status.Available(true) then "The local base map is downloaded."
       else s"The local base map is not downloaded — run `${s.fetchCommand}`."
     val rows = s.layers.map { l =>
       val what = Basemap.Layer.parse(l.layer).map(_.title).getOrElse(l.layer)
@@ -25,14 +24,19 @@ object BasemapMarkdown:
     }
     val table = ("| layer | what | size | zoom | region | source, fetched |" :: "|---|---|---|---|---|---|" :: rows)
       .mkString("\n")
-    val kept = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && ((l.present) == Basemap.LayerInfo.Present(true))).flatMap(_.kept)
+    val kept = s.layers
+      .find(l => l.layer == Basemap.Layer.Vector.wire && ((l.present) == Basemap.LayerInfo.Present(true)))
+      .flatMap(_.kept)
     val terrain = s.layers.find(_.layer == Basemap.Layer.Terrain.wire)
     val focus =
       terrain.toList.flatMap(_.focus).map(f => s"- focus region `${f.name}`: zoom ${f.minZoom}–${f.maxZoom}, ${f.bbox}, ${Backup.humanBytes(f.bytes)}${f.fetchedAt.fold("")(t => s", $t")}")
     val notes = List(
       kept.map(k => s"The vector layer keeps $k."),
       terrain.flatMap(_.onDemand).map(onDemand),
-      s.layers.find(_.layer == Basemap.Layer.Vector.wire).flatMap(_.onDemand).map(outside(("The map"), Basemap.Layer.Wire("vector"), _)),
+      s.layers
+        .find(_.layer == Basemap.Layer.Vector.wire)
+        .flatMap(_.onDemand)
+        .map(outside(("The map"), Basemap.Layer.Wire("vector"), _)),
       s.layers
         .find(_.layer == Basemap.Layer.Bathymetry.wire)
         .flatMap(_.onDemand)
@@ -50,21 +54,29 @@ object BasemapMarkdown:
       ),
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
       Option.when(s.hints.nonEmpty)(s.hints.mkString(" ")),
-      Option.when(s.layers.exists((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present(true)))))(
-        "Credits: " + s.layers.filter((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present(true)))).map(l => plain(l.attribution.value)).distinct.mkString(" · ")
+      Option.when(
+        s.layers.exists((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present(true))))
+      )(
+        "Credits: " + s.layers
+          .filter((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present(true))))
+          .map(l => plain(l.attribution.value))
+          .distinct
+          .mkString(" · ")
       )
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
   def onDemand(o: Basemap.OnDemand): String =
-    if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then ("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
+    if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then
+      ("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(ByteCount(o.maxBytes.value))} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
   def outside(what: String, key: Basemap.Layer.Wire, o: Basemap.OnDemand): String =
-    if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then (s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
+    if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then
+      (s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(ByteCount(o.maxBytes.value))} at `${o.dir}`" +

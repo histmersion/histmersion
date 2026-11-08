@@ -29,7 +29,11 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
   private def apiKey(citekey: Citekey): com.histmersion.api.library.Citekey =
     com.histmersion.api.library.Citekey(citekey.value)
 
-  def enqueue(copy: Option[FetchedCopy], citekey: Citekey, meta: IngestMeta): Either[IngestJobs.Problem, IngestOutcome] =
+  def enqueue(
+      copy: Option[FetchedCopy],
+      citekey: Citekey,
+      meta: IngestMeta
+  ): Either[IngestJobs.Problem, IngestOutcome] =
     val exists = sources.exists(citekey)
     val result =
       if exists then patchExisting(citekey, meta)

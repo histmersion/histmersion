@@ -9,7 +9,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Papers CITING a work, with whatever intent signal the backend has. */
 trait CitationsClient:
   /** `(backend, rows)` — Semantic Scholar (intents + influence + contexts), OpenAlex as fallback. */
-  def citing(work: WorkRef, since: Option[Year], limit: CitationsClient.CitingLimit): Either[CitationsClient.Problem, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])]
+  def citing(
+      work: WorkRef,
+      since: Option[Year],
+      limit: CitationsClient.CitingLimit
+  ): Either[CitationsClient.Problem, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])]
 
 object CitationsClient:
   type Problem = Problem.T

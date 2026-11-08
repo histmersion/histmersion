@@ -23,7 +23,8 @@ final case class SitePoint(
     undated: SitePoint.Undated = SitePoint.Undated(false)
 ):
   def name: UiLabels.Text = UiLabels.Text(if label.value.nonEmpty then label.value else id.fold("site")(_.value))
-  def mid: Option[PlaybackAreas.FractionalYear] = period.map((a, b) => PlaybackAreas.FractionalYear((a.value + b.value) / 2))
+  def mid: Option[PlaybackAreas.FractionalYear] =
+    period.map((a, b) => PlaybackAreas.FractionalYear((a.value + b.value) / 2))
 
   /** Its type, when it is one the map knows. */
   def known: Option[SiteTypes.SiteType] = siteType.flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
@@ -52,7 +53,10 @@ object SitePoint:
     val ps = p.selectDynamic("periodStart")
     val pe = p.selectDynamic("periodEnd")
     val period = if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
-    else Some((PlaybackAreas.FractionalYear(ps.asInstanceOf[Double]), PlaybackAreas.FractionalYear(pe.asInstanceOf[Double])))
+    else
+      Some(
+        (PlaybackAreas.FractionalYear(ps.asInstanceOf[Double]), PlaybackAreas.FractionalYear(pe.asInstanceOf[Double]))
+      )
     SitePoint(
       str(p.id).map(Id(_)),
       Label(str(p.label).getOrElse("")),

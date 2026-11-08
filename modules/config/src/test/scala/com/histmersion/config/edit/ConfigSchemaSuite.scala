@@ -61,4 +61,7 @@ class ConfigSchemaSuite extends munit.FunSuite:
     val names = schema.sections.map(_._1.value)
     assertEquals(names.take(3), List("server", "db", "converter"))
     assert(names.contains("setup") && names.contains("basemap"))
-    assert(schema.blockDoc(key("config")).value.startsWith("reloading this config in place"), schema.blockDoc(key("config")))
+    assert(
+      schema.blockDoc(key("config")).value.startsWith("reloading this config in place"),
+      schema.blockDoc(key("config"))
+    )

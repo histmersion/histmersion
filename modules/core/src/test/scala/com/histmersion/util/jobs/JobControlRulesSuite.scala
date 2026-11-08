@@ -18,7 +18,8 @@ import com.histmersion.api.exchange.ExchangeJobKinds
 
 class JobControlRulesSuite extends munit.FunSuite:
 
-  private def job(kind: JobInfo.Kind, status: JobInfo.Status) = JobInfo(SpatialHierarchyResult.Job.Id("j1"), JobKinds.Wire(kind.value), status, None)
+  private def job(kind: JobInfo.Kind, status: JobInfo.Status) =
+    JobInfo(SpatialHierarchyResult.Job.Id("j1"), JobKinds.Wire(kind.value), status, None)
 
   test("an agent run takes its own control, whatever it is asked"):
     JobAction.values.foreach(a =>
@@ -82,7 +83,9 @@ class JobControlRulesSuite extends munit.FunSuite:
   test("resume: only a paused job this server can go on with"):
     val paused = job(ImportJobKinds.MediaImport.kind, JobInfo.Status("paused"))
     assertEquals(JobControlRules.decide(paused, JobAction.Resume, resumable = true), Right(JobControlStep.Resume))
-    assert(JobControlRules.decide(paused, JobAction.Resume, resumable = false).left.exists(_.value.contains("restarted")))
+    assert(
+      JobControlRules.decide(paused, JobAction.Resume, resumable = false).left.exists(_.value.contains("restarted"))
+    )
     assert(
       JobControlRules
         .decide(
@@ -95,17 +98,19 @@ class JobControlRulesSuite extends munit.FunSuite:
     )
 
   test("an ended job is left as it ended; a paused one is not paused twice; a queued one is cancelled, not paused"):
-    List("done", "failed", "cancelled").map(JobInfo.Status(_)).foreach(s =>
-      JobAction.values.foreach(a =>
-        assert(
-          JobControlRules
-            .decide(job(ImportJobKinds.MediaImport.kind, s), a, resumable = true)
-            .left
-            .exists(_.value.contains("ended")),
-          s"$s $a"
+    List("done", "failed", "cancelled")
+      .map(JobInfo.Status(_))
+      .foreach(s =>
+        JobAction.values.foreach(a =>
+          assert(
+            JobControlRules
+              .decide(job(ImportJobKinds.MediaImport.kind, s), a, resumable = true)
+              .left
+              .exists(_.value.contains("ended")),
+            s"$s $a"
+          )
         )
       )
-    )
     assert(
       JobControlRules
         .decide(
@@ -128,7 +133,10 @@ class JobControlRulesSuite extends munit.FunSuite:
     )
 
   test("a stopped job keeps what it had done in its progress line"):
-    assertEquals(JobControlRules.stoppedLine(JobStop.Pause, Some(JobInfo.Progress("12/40 places"))), "paused after: 12/40 places")
+    assertEquals(
+      JobControlRules.stoppedLine(JobStop.Pause, Some(JobInfo.Progress("12/40 places"))),
+      "paused after: 12/40 places"
+    )
     assertEquals(JobControlRules.stoppedLine(JobStop.Cancel, None), "cancelled")
     assertEquals(JobAction.parse(JobAction.Wire(" Pause ")), Some(JobAction.Pause))
     assertEquals(JobAction.parse(JobAction.Wire("stop")), None)

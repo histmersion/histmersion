@@ -21,18 +21,28 @@ object ModelChains:
   /** One model is a chain of one, so a `roles.*` setting written before chains existed still reads. A model id never
     * contains `>`.
     */
-  def parseChain(s: Chain.Spec, known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[Chain.Problem, List[ModelRef]] =
+  def parseChain(
+      s: Chain.Spec,
+      known: Set[ProviderKind.Plugin.Name] = Set.empty
+  ): Either[Chain.Problem, List[ModelRef]] =
     val parts = (s).value.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
-    else (parseModels((parts).map(refactorValue => ModelRef.Model.Spec(refactorValue)), known)).left.map(refactorError => Chain.Problem((refactorError).value))
+    else
+      (parseModels((parts).map(refactorValue => ModelRef.Model.Spec(refactorValue)), known)).left.map(refactorError =>
+        Chain.Problem((refactorError).value)
+      )
 
-  def parseModels(refs: List[ModelRef.Model.Spec], known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[ModelRef.Model.Problem, List[ModelRef]] =
+  def parseModels(
+      refs: List[ModelRef.Model.Spec],
+      known: Set[ProviderKind.Plugin.Name] = Set.empty
+  ): Either[ModelRef.Model.Problem, List[ModelRef]] =
     val parsed = refs.map((_).value.trim).filter(_.nonEmpty).map(r => ModelRef.parse(ModelRef.Wire(r), known))
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
         val dup = ms.diff(ms.distinct).map(_.wire).distinct
-        if dup.nonEmpty then Left(ModelRef.Model.Problem(s"a chain names a model twice: ${dup.mkString(", ")}")) else Right(ms)
+        if dup.nonEmpty then Left(ModelRef.Model.Problem(s"a chain names a model twice: ${dup.mkString(", ")}"))
+        else Right(ms)
       case errs => Left(ModelRef.Model.Problem(errs.mkString("; ")))
 
   def chainText(ms: List[ModelRef]): String = (ms.map(_.wire).mkString(" > "))
@@ -44,7 +54,6 @@ object ModelChains:
   object Measure:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[Measure] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
     given WireEnumValues[Measure]:
@@ -82,9 +91,11 @@ object ModelChains:
         Option.when(t.length >= 2)(t.last).flatMap(Unit.get).flatMap(u => t.init.toLongOption.filter(_ > 0).map(_ * u))
       }
       secs match
-        case None => Left(Limit.Problem(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)"))
-        case Some(x) if x < 60 || x > MaxSeconds.value => Left(Limit.Problem(s"window '$s' must be between 1 minute and 90 days"))
-        case Some(x)                             => Right(Window(Seconds(x)))
+        case None =>
+          Left(Limit.Problem(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)"))
+        case Some(x) if x < 60 || x > MaxSeconds.value =>
+          Left(Limit.Problem(s"window '$s' must be between 1 minute and 90 days"))
+        case Some(x) => Right(Window(Seconds(x)))
 
   final case class Limit(amount: BigDecimal, measure: Measure, window: Window):
     def text: String = measure match
@@ -97,7 +108,6 @@ object ModelChains:
     object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
-
 
     def compact(a: BigDecimal): String =
       val units = List(BigDecimal(1000000000) -> "G", BigDecimal(1000000) -> "M", BigDecimal(1000) -> "k")
@@ -129,12 +139,19 @@ object ModelChains:
           val parsed: Either[Problem, (BigDecimal, Measure)] = words match
             case List(a) if a.startsWith("$") => amount((a)).map(_ -> Measure.Usd)
             case List(a, m)                   =>
-              Measure.parse(Measure.Wire(m)).toRight(Problem(s"'$m' is neither tokens nor usd")).flatMap(me => amount((a)).map(_ -> me))
+              Measure
+                .parse(Measure.Wire(m))
+                .toRight(Problem(s"'$m' is neither tokens nor usd"))
+                .flatMap(me => amount((a)).map(_ -> me))
             case _ => Left(Problem(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
           for
             am <- parsed
             w <- Window.parse(LimitSpec.Window(win))
-            _ <- Either.cond(am._2 == Measure.Usd || am._1.isWhole, (), Problem(s"'$t': a token count is a whole number"))
+            _ <- Either.cond(
+              am._2 == Measure.Usd || am._1.isWhole,
+              (),
+              Problem(s"'$t': a token count is a whole number")
+            )
           yield Limit(am._1, am._2, w)
 
     def fromSpec(s: LimitSpec): Either[Problem, Limit] =
@@ -146,7 +163,11 @@ object ModelChains:
           BigDecimal(amt),
           Problem(s"a limit's amount must be positive, not $amt")
         )
-        _ <- Either.cond(s.measure == Measure.Usd || a.isWhole, (), Problem(s"a token count is a whole number, not $amt"))
+        _ <- Either.cond(
+          s.measure == Measure.Usd || a.isWhole,
+          (),
+          Problem(s"a token count is a whole number, not $amt")
+        )
       yield Limit(a, s.measure, w)
 
   /** `claude-code:*` covers every model of the provider: a Claude plan is one pool, whichever model spends it. */
@@ -198,29 +219,47 @@ object ModelChains:
     object ReservePct extends Newtype[Int, Pure]
 
     def of(target: Target, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
-      if (reservePct).value < 0 || (reservePct).value > 99 then Left(Problem(s"a reserve is 0 to 99 %, not $reservePct"))
+      if (reservePct).value < 0 || (reservePct).value > 99 then
+        Left(Problem(s"a reserve is 0 to 99 %, not $reservePct"))
       else
         val windows =
           limits.groupBy(l => (l.measure, l.window.seconds)).collect { case (k, ls) if ls.size > 1 => ls.head }
         if windows.nonEmpty then
-          Left(Problem(s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})"))
+          Left(
+            Problem(
+              s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})"
+            )
+          )
         else Right(Allowance(target, limits, reservePct))
 
-  def parseAllowances(s: Allowance.Spec, known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[Allowance.Problem, List[Allowance]] =
+  def parseAllowances(
+      s: Allowance.Spec,
+      known: Set[ProviderKind.Plugin.Name] = Set.empty
+  ): Either[Allowance.Problem, List[Allowance]] =
     val entries = (s).value.split(';').toList.map(_.trim).filter(_.nonEmpty)
     val parsed = entries.map { e =>
       e.indexOf('=') match
         case -1 => Left(Allowance.Problem(s"'$e' is not <provider:model or provider:*> = <limits>"))
-        case i  => parseAllowance(Target.Spec(e.substring(0, i)), (e.substring(i + 1).split(',').toList).map(refactorValue11 => Limit.Spec(refactorValue11)), known)
+        case i  =>
+          parseAllowance(
+            Target.Spec(e.substring(0, i)),
+            (e.substring(i + 1).split(',').toList).map(refactorValue11 => Limit.Spec(refactorValue11)),
+            known
+          )
     }
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val as = parsed.collect { case Right(a) => a }
         val dup = as.groupBy(_.target.wire).collect { case (t, xs) if xs.size > 1 => t }
-        if dup.nonEmpty then Left(Allowance.Problem(s"an allowance is given twice for ${dup.mkString(", ")}")) else Right(as)
+        if dup.nonEmpty then Left(Allowance.Problem(s"an allowance is given twice for ${dup.mkString(", ")}"))
+        else Right(as)
       case errs => Left(Allowance.Problem(errs.mkString("; ")))
 
-  def parseAllowance(target: Target.Spec, items: List[Limit.Spec], known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[Allowance.Problem, Allowance] =
+  def parseAllowance(
+      target: Target.Spec,
+      items: List[Limit.Spec],
+      known: Set[ProviderKind.Plugin.Name] = Set.empty
+  ): Either[Allowance.Problem, Allowance] =
     val ts = items.map((_).value.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
     for
@@ -236,7 +275,16 @@ object ModelChains:
     yield a
 
   def parseReserve(s: Allowance.ReserveSpec): Either[Allowance.Problem, Allowance.ReservePct] =
-    (((s).value.trim.stripPrefix("=").trim.stripSuffix("%").trim.toIntOption.toRight(s"'${(s).value.trim}' is not a reserve percentage")).left.map(refactorError4 => Allowance.Problem(refactorError4))).map(refactorValue15 => Allowance.ReservePct(refactorValue15))
+    (((s).value.trim
+      .stripPrefix("=")
+      .trim
+      .stripSuffix("%")
+      .trim
+      .toIntOption
+      .toRight(s"'${(s).value.trim}' is not a reserve percentage"))
+      .left
+      .map(refactorError4 => Allowance.Problem(refactorError4)))
+      .map(refactorValue15 => Allowance.ReservePct(refactorValue15))
 
   final case class Spend(at: Spend.At, tokens: Spend.Tokens, usd: BigDecimal)
 
@@ -283,7 +331,14 @@ object ModelChains:
             (left - measureOf(s, limit.measure), Some((s.at).value + windowMs))
           }
           .collectFirst { case (left, Some(at)) if left < threshold => at }
-    LimitState(limit, used, (limit.amount - used).max(0), reserve, LimitState.Usable(usable), (freesAt).map(refactorValue16 => LimitState.FreesAt(refactorValue16)))
+    LimitState(
+      limit,
+      used,
+      (limit.amount - used).max(0),
+      reserve,
+      LimitState.Usable(usable),
+      (freesAt).map(refactorValue16 => LimitState.FreesAt(refactorValue16))
+    )
 
   def states(a: Allowance, spends: Seq[Spend], now: LimitState.Now): List[LimitState] =
     a.limits.map(limitState(_, a.reservePct, spends, now))
@@ -300,7 +355,8 @@ object ModelChains:
 
   final case class LimitSpec(amount: LimitSpec.Amount, measure: Measure, window: LimitSpec.Window)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object LimitSpec:
     type Amount = Amount.T
@@ -308,22 +364,26 @@ object ModelChains:
     type Window = Window.T
     object Window extends Newtype[String, Pure]
 
-
-  final case class ChainSet(models: List[ChainSet.Models]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ChainSet(models: List[ChainSet.Models])
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ChainSet:
-    export ChainEntry.{Model as Models}
+    export ChainEntry.Model as Models
 
-
-  final case class AllowanceSet(target: AllowanceSet.Target, limits: List[LimitSpec] = Nil, reservePct: AllowanceSet.ReservePct = Allowance.ReservePct(0))
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class AllowanceSet(
+      target: AllowanceSet.Target,
+      limits: List[LimitSpec] = Nil,
+      reservePct: AllowanceSet.ReservePct = Allowance.ReservePct(0)
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object AllowanceSet:
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     export Allowance.ReservePct
-
 
   enum SettingSource(val wire: SettingSource.Wire) derives CanEqual:
     case Config extends SettingSource(SettingSource.Wire("config"))
@@ -344,7 +404,8 @@ object ModelChains:
       usable: LimitStatus.Usable,
       freesAt: Option[LimitStatus.FreesAt] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object LimitStatus:
     type Limit = Limit.T
@@ -364,7 +425,6 @@ object ModelChains:
     type FreesAt = FreesAt.T
     object FreesAt extends Newtype[String, Pure]
 
-
   final case class AllowanceStatus(
       target: AllowanceStatus.Target,
       source: AllowanceStatus.Source,
@@ -374,7 +434,8 @@ object ModelChains:
       freesAt: Option[AllowanceStatus.FreesAt] = None,
       note: Option[AllowanceStatus.Note] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object AllowanceStatus:
     type Target = Target.T
@@ -388,7 +449,6 @@ object ModelChains:
     type Note = Note.T
     object Note extends Newtype[String, Pure]
 
-
   final case class ChainEntry(
       model: ChainEntry.Model,
       ready: ChainEntry.Ready,
@@ -398,7 +458,8 @@ object ModelChains:
       billing: Option[ChainEntry.Billing] = None,
       cooling: ChainEntry.Cooling = ChainEntry.Cooling(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ChainEntry:
     type Model = Model.T
@@ -415,7 +476,6 @@ object ModelChains:
     type Cooling = Cooling.T
     object Cooling extends Newtype[Boolean, Pure]
 
-
   final case class RoleChain(
       role: RoleChain.Role,
       source: RoleChain.Source,
@@ -423,7 +483,8 @@ object ModelChains:
       active: Option[RoleChain.Active] = None,
       problem: Option[RoleChain.Problem] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RoleChain:
     type Role = Role.T

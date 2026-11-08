@@ -26,7 +26,10 @@ object GoalsCarried:
     Bundle.Kind.Goal,
     TableName("goals"),
     List(rows(42)(GoalBundleRepo.goalRenamesIn), rows(48)(GoalBundleRepo.goalsIn))
-  )(scope => GoalBundleRepo.goals(scope).toList)(g => CarriedKind.RecordsClock(g.updatedAt.value), (es, ls) => es.modify(_.goals).setTo(ls))
+  )(scope => GoalBundleRepo.goals(scope).toList)(
+    g => CarriedKind.RecordsClock(g.updatedAt.value),
+    (es, ls) => es.modify(_.goals).setTo(ls)
+  )
 
   val aliases: CarriedKind =
     CarriedKind.owned[Bundle.GoalAlias](

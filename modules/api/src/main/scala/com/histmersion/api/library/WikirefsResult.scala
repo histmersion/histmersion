@@ -15,7 +15,8 @@ final case class WikirefsResult(
     arxiv: List[WikirefsResult.Arxiv],
     known: List[WikirefsResult.Known] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object WikirefsResult:
   type Article = Article.T
@@ -26,6 +27,6 @@ object WikirefsResult:
   object DoiCount extends Newtype[Int, Pure]
   type Dois = Dois.T
   object Dois extends Newtype[String, Pure]
-  export Source.Candidate.{ArxivId as Arxiv}
+  export Source.Candidate.ArxivId as Arxiv
   type Known = Known.T
   object Known extends Newtype[String, Pure]

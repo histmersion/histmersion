@@ -40,19 +40,18 @@ object ReviewLedger:
   type TaskTextLimit = TaskTextLimit.T
   object TaskTextLimit extends Newtype[Int, Pure]
 
-
-  export com.histmersion.domain.automation.Run.{Id as ApplyChecksRun}
-  export ReviewArticle.Merged.{Round as ApplyChecksRound}
-  export com.histmersion.domain.automation.Run.{Id as RecheckMechanicalRun}
-  export ReviewArticle.Merged.{Round as RecheckMechanicalRound}
-  export com.histmersion.domain.automation.Run.{Id as RecheckTermCountRun}
-  export ReviewArticle.Merged.{Round as RecheckTermCountRound}
-  export com.histmersion.domain.automation.Run.{Id as ApplyFixRun}
-  export ReviewArticle.Merged.{Round as ApplyFixRound}
-  export com.histmersion.domain.automation.Run.{Id as LearnRun}
-  export ReviewArticle.Merged.{Round as LearnRound}
-  export com.histmersion.domain.automation.Run.{Id as ApplyRecheckRun}
-  export ReviewArticle.Merged.{Round as ApplyRecheckRound}
+  export com.histmersion.domain.automation.Run.Id as ApplyChecksRun
+  export ReviewArticle.Merged.Round as ApplyChecksRound
+  export com.histmersion.domain.automation.Run.Id as RecheckMechanicalRun
+  export ReviewArticle.Merged.Round as RecheckMechanicalRound
+  export com.histmersion.domain.automation.Run.Id as RecheckTermCountRun
+  export ReviewArticle.Merged.Round as RecheckTermCountRound
+  export com.histmersion.domain.automation.Run.Id as ApplyFixRun
+  export ReviewArticle.Merged.Round as ApplyFixRound
+  export com.histmersion.domain.automation.Run.Id as LearnRun
+  export ReviewArticle.Merged.Round as LearnRound
+  export com.histmersion.domain.automation.Run.Id as ApplyRecheckRun
+  export ReviewArticle.Merged.Round as ApplyRecheckRound
   type ArticleTaskSlug = com.histmersion.domain.research.Slug
   val ArticleTaskSlug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
 
@@ -159,7 +158,8 @@ object ReviewLedger:
     type Deferred = com.histmersion.domain.automation.Run.Id
     val Deferred: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
 
-  final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round) derives KindlingsCodecAsObject
+  final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round)
+      derives KindlingsCodecAsObject
 
   object Lesson:
     type Text = ReviewArticle.Recheck.Lessons
@@ -224,12 +224,15 @@ object ReviewLedger:
         val quoted = qa.nonEmpty && qb.nonEmpty &&
           (qa == qb || (math.min(qa.length, qb.length) >= 20 && (qa.contains(qb) || qb.contains(qa))))
         quoted || (normalised(a.where.value) == normalised(b.where.value) &&
-          CompareRuns.similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value)).value >= ReviewComparison.ProblemSimilarity)
+          CompareRuns
+            .similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value))
+            .value >= ReviewComparison.ProblemSimilarity)
     }
 
   /** The next ledger id of a reviewer: its letter and one more than the highest number it used. */
   def nextId(l: Ledger, r: Reviewer): Finding.Id =
-    val used = l.entries.map(_.id.value).filter(_.startsWith(r.prefix.value)).flatMap(_.drop(r.prefix.value.length).toIntOption)
+    val used =
+      l.entries.map(_.id.value).filter(_.startsWith(r.prefix.value)).flatMap(_.drop(r.prefix.value.length).toIntOption)
     Finding.Id(s"${r.prefix}${used.maxOption.getOrElse(0) + 1}")
 
   // ── transitions ────────────────────────────────────────────────────────────────────────────────
@@ -243,7 +246,12 @@ object ReviewLedger:
     * back MAJOR. Anything else is a new entry with the next id. Returns the ledger and the findings under their ledger
     * ids, in the order given.
     */
-  def absorb(l: Ledger, fs: List[Finding], run: com.histmersion.domain.automation.Run.Id, round: Closure.Round): (Ledger, List[Finding]) =
+  def absorb(
+      l: Ledger,
+      fs: List[Finding],
+      run: com.histmersion.domain.automation.Run.Id,
+      round: Closure.Round
+  ): (Ledger, List[Finding]) =
     @tailrec def absorbAll(
         rest: List[Finding],
         led: Ledger,
@@ -258,13 +266,19 @@ object ReviewLedger:
               val id = e.id
               val next: Entry = e.status match
                 case Status.Open =>
-                  e.copy(finding = f.copy(id = id, escalated = Finding.Escalated(f.escalated.value || e.finding.escalated.value)), claimed = Entry.Claimed(false))
+                  e.copy(
+                    finding =
+                      f.copy(id = id, escalated = Finding.Escalated(f.escalated.value || e.finding.escalated.value)),
+                    claimed = Entry.Claimed(false)
+                  )
                 case Status.Fixed =>
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
                     claimed = Entry.Claimed(false),
-                    notFixed = Some(Entry.NotFixed(s"fixed in pass ${e.closed.fold(0)(_.round.value)}, raised again in pass $round")),
+                    notFixed = Some(
+                      Entry.NotFixed(s"fixed in pass ${e.closed.fold(0)(_.round.value)}, raised again in pass $round")
+                    ),
                     reopened = Entry.Reopened(e.reopened.value + 1),
                     closed = None
                   )
@@ -300,7 +314,13 @@ object ReviewLedger:
     * text); not fixed → open, unclaimed, with the reviewer's note. A check of another reviewer's finding, or of a
     * closed one, changes nothing.
     */
-  def applyChecks(l: Ledger, r: Reviewer, checks: List[Check], run: ReviewLedger.ApplyChecksRun, round: ReviewLedger.ApplyChecksRound): Ledger =
+  def applyChecks(
+      l: Ledger,
+      r: Reviewer,
+      checks: List[Check],
+      run: ReviewLedger.ApplyChecksRun,
+      round: ReviewLedger.ApplyChecksRound
+  ): Ledger =
     checks.foldLeft(l) { (led, c) =>
       led.entry(c.id).filter(e => e.open && e.reviewer == r).fold(led) { _ =>
         update(led, c.id) { e =>
@@ -324,7 +344,12 @@ object ReviewLedger:
   /** The mechanical re-check, by code: an open mechanical finding that no longer recurs is fixed; one that recurs stays
     * open (unclaimed); a new one is opened.
     */
-  def recheckMechanical(l: Ledger, now: List[Finding], run: ReviewLedger.RecheckMechanicalRun, round: ReviewLedger.RecheckMechanicalRound): (Ledger, List[Finding]) =
+  def recheckMechanical(
+      l: Ledger,
+      now: List[Finding],
+      run: ReviewLedger.RecheckMechanicalRun,
+      round: ReviewLedger.RecheckMechanicalRound
+  ): (Ledger, List[Finding]) =
     val gone = l.open.filter(_.reviewer == Reviewer.Mechanical).filterNot(e => now.exists(same(e.finding, _)))
     val closed = gone.foldLeft(l)((led, e) =>
       update(led, e.id)(
@@ -342,7 +367,12 @@ object ReviewLedger:
     * entry the pass did not raise again (8 terms or fewer now) is fixed. One it did raise again is matched by
     * [[absorb]], which replaces it — a MAJOR stored by an earlier run becomes the pass's minor one under the same id.
     */
-  def recheckTermCount(l: Ledger, cold: List[Finding], run: ReviewLedger.RecheckTermCountRun, round: ReviewLedger.RecheckTermCountRound): Ledger =
+  def recheckTermCount(
+      l: Ledger,
+      cold: List[Finding],
+      run: ReviewLedger.RecheckTermCountRun,
+      round: ReviewLedger.RecheckTermCountRound
+  ): Ledger =
     if cold.exists(TermCount.is) then l
     else
       l.open
@@ -380,7 +410,10 @@ object ReviewLedger:
         .filter(e => e.open && !e.claimed.value)
         .fold(led)(_ =>
           update(led, w.id)(e =>
-            e.copy(notFixed = Some(Entry.NotFixed(s"pass $round: ${w.reason}".take(300))), notFixedCount = Entry.NotFixedCount(e.notFixedCount.value + 1))
+            e.copy(
+              notFixed = Some(Entry.NotFixed(s"pass $round: ${w.reason}".take(300))),
+              notFixedCount = Entry.NotFixedCount(e.notFixedCount.value + 1)
+            )
           )
         )
     )
@@ -393,7 +426,9 @@ object ReviewLedger:
             _.copy(
               status = Status.Rejected,
               claimed = Entry.Claimed(false),
-              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(r.reason.value), r.quote, Some(r.citekey)))
+              closed = Some(
+                Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(r.reason.value), r.quote, Some(r.citekey))
+              )
             )
           )
         )
@@ -404,7 +439,11 @@ object ReviewLedger:
         .filter(e => e.open && !e.major)
         .fold(led)(_ =>
           update(led, w.id)(
-            _.copy(status = Status.WontFix, claimed = Entry.Claimed(false), closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(w.reason.value))))
+            _.copy(
+              status = Status.WontFix,
+              claimed = Entry.Claimed(false),
+              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(w.reason.value)))
+            )
           )
         )
     )
@@ -419,17 +458,37 @@ object ReviewLedger:
               finding = e.finding.copy(pair = Some(a.pair)),
               status = Status.SetAside,
               claimed = Entry.Claimed(false),
-              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(a.reason.value), Closure.Quote(a.pair.wire.value)))
+              closed = Some(
+                Closure(
+                  Reviewer.Wire("fixer"),
+                  round,
+                  run,
+                  Closure.Note(a.reason.value),
+                  Closure.Quote(a.pair.wire.value)
+                )
+              )
             )
           )
         )
     )
-    learn(setAside, f.rejected.map(r => Lesson.Text(s"[[${r.citekey}]]: ${r.reason}")), LessonSource.Rejection, run, round)
+    learn(
+      setAside,
+      f.rejected.map(r => Lesson.Text(s"[[${r.citekey}]]: ${r.reason}")),
+      LessonSource.Rejection,
+      run,
+      round
+    )
 
   /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice, the newest
     * [[MaxLessons]] kept.
     */
-  def learn(l: Ledger, texts: List[Lesson.Text], source: LessonSource, run: ReviewLedger.LearnRun, round: ReviewLedger.LearnRound): Ledger =
+  def learn(
+      l: Ledger,
+      texts: List[Lesson.Text],
+      source: LessonSource,
+      run: ReviewLedger.LearnRun,
+      round: ReviewLedger.LearnRound
+  ): Ledger =
     val fresh = texts.map(_.value.trim.replaceAll("\\s+", " ").take(LessonChars)).filter(_.nonEmpty)
     val all = fresh.foldLeft(l.lessons.toVector) { (acc, t) =>
       if acc.exists(x => normalised(x.text.value) == normalised(t)) then acc
@@ -438,7 +497,12 @@ object ReviewLedger:
     l.modify(_.lessons).setTo(all.takeRight(MaxLessons).toList)
 
   /** A verification pass, for one reviewer: its checks, then its new findings and its lessons. */
-  def applyRecheck(l: Ledger, rc: Recheck, run: ReviewLedger.ApplyRecheckRun, round: ReviewLedger.ApplyRecheckRound): Ledger =
+  def applyRecheck(
+      l: Ledger,
+      rc: Recheck,
+      run: ReviewLedger.ApplyRecheckRun,
+      round: ReviewLedger.ApplyRecheckRound
+  ): Ledger =
     val checked = applyChecks(l, rc.reviewer, rc.checks, run, round)
     learn(absorb(checked, rc.findings, run, round)._1, rc.lessons, LessonSource.Recheck, run, round)
 
@@ -471,7 +535,9 @@ object ReviewLedger:
     l.open
       .flatMap(e =>
         e.notFixed
-          .map(n => e.id -> s"not fixed yet${if e.notFixedCount.value > 1 then s" (${e.notFixedCount} times)" else ""} — $n")
+          .map(n =>
+            e.id -> s"not fixed yet${if e.notFixedCount.value > 1 then s" (${e.notFixedCount} times)" else ""} — $n"
+          )
       )
       .toMap
 
@@ -480,7 +546,8 @@ object ReviewLedger:
     val at = Option(e.finding.where.value).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
     val how = (e.status, e.closed) match
       case (Status.Fixed, Some(c))    => s"fixed, verified by ${c.by} in pass ${c.round}"
-      case (Status.Rejected, Some(c)) => s"rejected${c.citekey.fold("")(ck => s" — [[$ck]]: \"${c.quote.value.take(120)}\"")}"
+      case (Status.Rejected, Some(c)) =>
+        s"rejected${c.citekey.fold("")(ck => s" — [[$ck]]: \"${c.quote.value.take(120)}\"")}"
       case (Status.WontFix, Some(c))  => s"won't fix — ${c.note.value.take(120)}"
       case (Status.SetAside, Some(c)) => s"set aside as not material (${c.quote}) — ${c.note.value.take(160)}"
       case (s, _)                     => s.wire.value
@@ -506,7 +573,10 @@ object ReviewLedger:
           .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.value.trim.take(160)}")
           .mkString("\n")
       case OpenStyle.Full =>
-        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), Closure.Round(0)), notes(l).map((id, n) => id.value -> n)) +
+        "Open findings:\n" + findingsText(
+          merged(l.modify(_.entries).setTo(open), Closure.Round(0)),
+          notes(l).map((id, n) => id.value -> n)
+        ) +
           (if open.exists(_.claimed.value) then
              "\n(The fixer claims to have fixed: " + open.filter(_.claimed.value).map(_.id).mkString(", ") + ".)"
            else "")
@@ -538,7 +608,8 @@ object ReviewLedger:
     def render: String =
       val ps = passages.map(p => p.heading.fold("")(h => s"[under: $h]\n") + p.text).mkString("\n\n---\n\n")
       val rs =
-        if removed.isEmpty then "" else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.value.take(300)}").mkString("\n")
+        if removed.isEmpty then ""
+        else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.value.take(300)}").mkString("\n")
       ps + rs
 
   object Edited:
@@ -555,7 +626,11 @@ object ReviewLedger:
     * whitespace-normalised paragraphs), each changed paragraph of `after` widened by `margin` paragraphs on each side,
     * adjacent ones joined; plus the paragraphs of `before` that are gone.
     */
-  def editedPassages(before: ReviewArticle.Fix.Body, after: ReviewArticle.Fix.Body, margin: PassageMargin = PassageMargin(1)): Edited =
+  def editedPassages(
+      before: ReviewArticle.Fix.Body,
+      after: ReviewArticle.Fix.Body,
+      margin: PassageMargin = PassageMargin(1)
+  ): Edited =
     val a = paragraphs(before)
     val b = paragraphs(after)
     def key(p: String) = p.replaceAll("\\s+", " ")
@@ -601,7 +676,12 @@ object ReviewLedger:
     * MAJOR — logged, in the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
     * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids.
     */
-  def deferFinal(before: Ledger, after: Ledger, run: com.histmersion.domain.automation.Run.Id, regression: Finding => Boolean): (Ledger, List[Finding.Id]) =
+  def deferFinal(
+      before: Ledger,
+      after: Ledger,
+      run: com.histmersion.domain.automation.Run.Id,
+      regression: Finding => Boolean
+  ): (Ledger, List[Finding.Id]) =
     val fresh = after.open
       .filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
       .filterNot(e => regression(e.finding))
@@ -642,14 +722,22 @@ object ReviewLedger:
       minRatio: ReviewArticle.CritiqueRule.MinRatio
   ): List[Regression] =
     def in(q: String, body: ReviewArticle.Fix.Body) =
-      AgentVerify.findQuote(AgentProposals.Proposal.Quote(q), AgentVerify.SourceBody(body.value), AgentVerify.MinRatio(minRatio.value)).accepted
+      AgentVerify
+        .findQuote(
+          AgentProposals.Proposal.Quote(q),
+          AgentVerify.SourceBody(body.value),
+          AgentVerify.MinRatio(minRatio.value)
+        )
+        .accepted
     l.entries.filter(_.status == Status.Fixed).flatMap { e =>
       val pair = e.finding.pair
         .filter(r => answered(before, r) && !answered(after, r))
         .map(r =>
           Regression(
             e.id,
-            Regression.Why(s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again")
+            Regression.Why(
+              s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
+            )
           )
         )
       val q = Option(e.finding.quote.value).map(_.trim).getOrElse("")
@@ -674,7 +762,11 @@ object ReviewLedger:
   // ── the backlog item (#934) ────────────────────────────────────────────────────────────────────
 
   /** The article's one backlog item while a MAJOR is open: how many, and each one's line. */
-  def taskText(l: Ledger, runId: com.histmersion.domain.automation.Run.Id, maxChars: TaskTextLimit = TaskTextLimit(1500)): Option[TaskText] =
+  def taskText(
+      l: Ledger,
+      runId: com.histmersion.domain.automation.Run.Id,
+      maxChars: TaskTextLimit = TaskTextLimit(1500)
+  ): Option[TaskText] =
     val majors = l.openMajors
     Option.when(majors.nonEmpty) {
       val lines = majors.map { e =>
@@ -683,7 +775,8 @@ object ReviewLedger:
         val at = Option(e.finding.where.value).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
         s"${e.id}$at: ${e.finding.problem.value.trim.take(160)}$esc"
       }
-      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(Plural.Count(majors.size.toLong), Plural.Noun.Singular("MAJOR"))} — "
+      val head =
+        s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(Plural.Count(majors.size.toLong), Plural.Noun.Singular("MAJOR"))} — "
       val tail = s" (agent run ${runId.value.take(8)})"
       val body = lines.mkString("; ")
       val room = math.max(40, maxChars.value - head.length - tail.length)

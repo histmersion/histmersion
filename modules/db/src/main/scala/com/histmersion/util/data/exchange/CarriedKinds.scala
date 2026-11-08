@@ -43,6 +43,7 @@ final class CarriedKinds private (val inBundleOrder: List[CarriedKind]):
 object CarriedKinds:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** The kinds in the format's order, or what is wrong with them: an entry no kind carries, one carried twice, one the
     * format does not have.
     */

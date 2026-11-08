@@ -22,8 +22,6 @@ object ByteSource:
   type Content = Content.T
   object Content extends Newtype[Array[Byte], Pure]
 
-
-
   def file(path: Path): ByteSource = new ByteSource:
     def size: ByteCount = ByteCount.assume(Files.size(path))
     def open(): InputStream = Files.newInputStream(path)

@@ -24,7 +24,10 @@ object EventsCarried:
     Bundle.Kind.Event,
     TableName("events"),
     List(rows(41)(EventBundleRepo.eventRenames), rows(46)(EventBundleRepo.eventsIn))
-  )(scope => EventBundleRepo.events(scope).toList)(e => CarriedKind.RecordsClock(e.updatedAt.value), (es, ls) => es.modify(_.events).setTo(ls))
+  )(scope => EventBundleRepo.events(scope).toList)(
+    e => CarriedKind.RecordsClock(e.updatedAt.value),
+    (es, ls) => es.modify(_.events).setTo(ls)
+  )
 
   val eventAliases: CarriedKind = CarriedKind.owned[Bundle.EventAlias](
     Catalogue,

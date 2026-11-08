@@ -13,13 +13,32 @@ import com.histmersion.web.ui.Layout
 class PlaceGlyphSuite extends munit.FunSuite:
 
   test("a polygon is an area; a point region or polity is a label; a point site is a dot"):
-    assertEquals(PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Polity), PlaceGlyph.GeometryType("MultiPolygon")), PlaceGlyph.Area)
-    assertEquals(PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Region), PlaceGlyph.GeometryType("Polygon")), PlaceGlyph.Area)
-    assertEquals(PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Region), PlaceGlyph.GeometryType("Point")), PlaceGlyph.Label)
-    assertEquals(PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Polity), PlaceGlyph.GeometryType("Point")), PlaceGlyph.Label)
+    assertEquals(
+      PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Polity), PlaceGlyph.GeometryType("MultiPolygon")),
+      PlaceGlyph.Area
+    )
+    assertEquals(
+      PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Region), PlaceGlyph.GeometryType("Polygon")),
+      PlaceGlyph.Area
+    )
+    assertEquals(
+      PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Region), PlaceGlyph.GeometryType("Point")),
+      PlaceGlyph.Label
+    )
+    assertEquals(
+      PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Polity), PlaceGlyph.GeometryType("Point")),
+      PlaceGlyph.Label
+    )
     assertEquals(PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Site), PlaceGlyph.GeometryType("Point")), PlaceGlyph.Dot)
-    assertEquals(PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Feature), PlaceGlyph.GeometryType("Point")), PlaceGlyph.Dot)
-    assertEquals(PlaceGlyph.of(Place.Summary.Kind(Place.Kind.People), PlaceGlyph.GeometryType("Point")), PlaceGlyph.Label, "a people is named, never a dot")
+    assertEquals(
+      PlaceGlyph.of(Place.Summary.Kind(Place.Kind.Feature), PlaceGlyph.GeometryType("Point")),
+      PlaceGlyph.Dot
+    )
+    assertEquals(
+      PlaceGlyph.of(Place.Summary.Kind(Place.Kind.People), PlaceGlyph.GeometryType("Point")),
+      PlaceGlyph.Label,
+      "a people is named, never a dot"
+    )
 
   test("a people's label says 'people', not that a boundary is missing"):
     val h = PlaceGlyph.labelHtml(UiLabels.Text("Ubii"), Place.Summary.Kind(Place.Kind.People))
@@ -39,8 +58,14 @@ class PlaceGlyphSuite extends munit.FunSuite:
 
   test("a chosen place's chip: label and kind, never the (humanised) id"):
     val lookup = Map(
-      PlacesInput.PlaceId("wikidata_q131839713") -> (UiLabels.Text("Kingdom of Patones"), PlacesInput.KnownPlace.Kind("polity"))
+      PlacesInput.PlaceId("wikidata_q131839713") -> (
+        UiLabels.Text("Kingdom of Patones"),
+        PlacesInput.KnownPlace.Kind("polity")
+      )
     ).get
-    assertEquals(PlacesInput.chipText(PlacesInput.PlaceId("wikidata_q131839713"), lookup), "Kingdom of Patones (polity)")
+    assertEquals(
+      PlacesInput.chipText(PlacesInput.PlaceId("wikidata_q131839713"), lookup),
+      "Kingdom of Patones (polity)"
+    )
     val unknown = PlacesInput.chipText(PlacesInput.PlaceId("wikidata_q131839713"), _ => None)
     assert(!unknown.value.toLowerCase.contains("wikidata") && !unknown.value.contains("q131839713"), unknown.value)

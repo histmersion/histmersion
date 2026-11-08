@@ -57,15 +57,30 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
 
   private val places = List(
     Place.Input(
-      Place(Place.Id("zqes_site"), Place.Label("Zqes site"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(124.0)).map(Place.Geometry(_))),
+      Place(
+        Place.Id("zqes_site"),
+        Place.Label("Zqes site"),
+        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+        pt(Longitude(124.0)).map(Place.Geometry(_))
+      ),
       List(Place.Name(Place.Name.Value("Zqes site")))
     ),
     Place.Input(
-      Place(Place.Id("zqes_area"), Place.Label("Zqes area"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), Square.map(Place.Geometry(_))),
+      Place(
+        Place.Id("zqes_area"),
+        Place.Label("Zqes area"),
+        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+        Square.map(Place.Geometry(_))
+      ),
       List(Place.Name(Place.Name.Value("Zqes area")))
     ),
     Place.Input(
-      Place(Place.Id("zqes_ptregion"), Place.Label("Zqes point region"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), pt(Longitude(125.0)).map(Place.Geometry(_))),
+      Place(
+        Place.Id("zqes_ptregion"),
+        Place.Label("Zqes point region"),
+        Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+        pt(Longitude(125.0)).map(Place.Geometry(_))
+      ),
       List(Place.Name(Place.Name.Value("Zqes point region")))
     )
   )
@@ -100,23 +115,76 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
     if testDb.isDefined then
       clean()
       val _ = PlaceFixtures.upsertPlaces(ds, places)
-      ev(BEventRow.Id("zqes_battle_area"), EventSummary.Kind("battle"), place = Some(Place.Id("zqes_area"))) // kind: local, at an area
-      ev(BEventRow.Id("zqes_migration"), EventSummary.Kind("migration"), place = Some(Place.Id("zqes_area"))) // kind: regional, with an outline
-      ev(BEventRow.Id("zqes_event_site"), EventSummary.Kind("event"), place = Some(Place.Id("zqes_site"))) // place kind: local
-      ev(BEventRow.Id("zqes_event_area"), EventSummary.Kind("event"), place = Some(Place.Id("zqes_area"))) // place kind: regional
-      ev(BEventRow.Id("zqes_drought"), EventSummary.Kind("natural_disaster"), place = Some(Place.Id("zqes_ptregion"))) // regional, point only: no outline
-      ev(BEventRow.Id("zqes_sub"), EventSummary.Kind("event"), parent = Some(Event.Id("zqes_migration"))) // a sub-event, nothing else: local
-      ev(BEventRow.Id("zqes_sub_area"), EventSummary.Kind("event"), place = Some(Place.Id("zqes_area")), parent = Some(Event.Id("zqes_migration"))) // the area decides
-      ev(BEventRow.Id("zqes_own_point"), EventSummary.Kind("event"), geometry = pt(Longitude(123.5)).map(EventPut.Geometry(_))) // its own point: local
-      ev(BEventRow.Id("zqes_own_area"), EventSummary.Kind("event"), geometry = Square.map(EventPut.Geometry(_))) // its own area: regional
+      ev(
+        BEventRow.Id("zqes_battle_area"),
+        EventSummary.Kind("battle"),
+        place = Some(Place.Id("zqes_area"))
+      ) // kind: local, at an area
+      ev(
+        BEventRow.Id("zqes_migration"),
+        EventSummary.Kind("migration"),
+        place = Some(Place.Id("zqes_area"))
+      ) // kind: regional, with an outline
+      ev(
+        BEventRow.Id("zqes_event_site"),
+        EventSummary.Kind("event"),
+        place = Some(Place.Id("zqes_site"))
+      ) // place kind: local
+      ev(
+        BEventRow.Id("zqes_event_area"),
+        EventSummary.Kind("event"),
+        place = Some(Place.Id("zqes_area"))
+      ) // place kind: regional
+      ev(
+        BEventRow.Id("zqes_drought"),
+        EventSummary.Kind("natural_disaster"),
+        place = Some(Place.Id("zqes_ptregion"))
+      ) // regional, point only: no outline
+      ev(
+        BEventRow.Id("zqes_sub"),
+        EventSummary.Kind("event"),
+        parent = Some(Event.Id("zqes_migration"))
+      ) // a sub-event, nothing else: local
+      ev(
+        BEventRow.Id("zqes_sub_area"),
+        EventSummary.Kind("event"),
+        place = Some(Place.Id("zqes_area")),
+        parent = Some(Event.Id("zqes_migration"))
+      ) // the area decides
+      ev(
+        BEventRow.Id("zqes_own_point"),
+        EventSummary.Kind("event"),
+        geometry = pt(Longitude(123.5)).map(EventPut.Geometry(_))
+      ) // its own point: local
+      ev(
+        BEventRow.Id("zqes_own_area"),
+        EventSummary.Kind("event"),
+        geometry = Square.map(EventPut.Geometry(_))
+      ) // its own area: regional
       ev(BEventRow.Id("zqes_unplaced"), EventSummary.Kind("battle")) // nowhere
-      ev(BEventRow.Id("zqes_stated"), EventSummary.Kind("battle"), place = Some(Place.Id("zqes_area")), scale = Some(EventSummary.Scale("regional")))
+      ev(
+        BEventRow.Id("zqes_stated"),
+        EventSummary.Kind("battle"),
+        place = Some(Place.Id("zqes_area")),
+        scale = Some(EventSummary.Scale("regional"))
+      )
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def summary(id: BEventRow.Id): EventSummary = EventFixtures.get(ds, id).getOrElse(fail(s"no ${id.value}")).event
+  private def summary(id: BEventRow.Id): EventSummary =
+    EventFixtures.get(ds, id).getOrElse(fail(s"no ${id.value}")).event
 
   private def geo(): EventGeo.List =
-    val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some(EventSelection.Text("Zqes")), None, None, None, PageSize(1000), EventFixtures.GeoTolerance(0.01))
+    val all = EventFixtures.geo(
+      ds,
+      Filter(),
+      PlaceScope.empty,
+      Some(EventSelection.Text("Zqes")),
+      None,
+      None,
+      None,
+      PageSize(1000),
+      EventFixtures.GeoTolerance(0.01)
+    )
     all.modify(_.events).setTo(all.events.filter(_.id.value.startsWith("zqes")))
 
   test("V078: the scale column takes local, regional or nothing — and nothing else"):
@@ -162,7 +230,17 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
     assert(!summary(BEventRow.Id("zqes_migration")).scaleStated.value)
     // the list carries the same
     val listed = EventFixtures
-      .list(ds, Filter(), PlaceScope.empty, Some(EventSelection.Text("Zqes")), None, None, None, PageSize(100), Offset(0))
+      .list(
+        ds,
+        Filter(),
+        PlaceScope.empty,
+        Some(EventSelection.Text("Zqes")),
+        None,
+        None,
+        None,
+        PageSize(100),
+        Offset(0)
+      )
       .events
       .map(e => e.id -> e.scale)
       .toMap
@@ -170,13 +248,32 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
     assertEquals(listed(Event.Id("zqes_stated")), "regional")
 
   test("a stated scale wins; a patch states one, and `auto` forgets it"):
-    assertEquals((summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated), ("regional", true))
-    assertEquals(EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(scale = Some(EventSummary.Scale("auto")))), Right(()))
-    assertEquals((summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated), ("local", false))
-    assertEquals(EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(scale = Some(EventSummary.Scale("Regional")))), Right(()))
-    assertEquals((summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated), ("regional", true))
+    assertEquals(
+      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated),
+      ("regional", true)
+    )
+    assertEquals(
+      EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(scale = Some(EventSummary.Scale("auto")))),
+      Right(())
+    )
+    assertEquals(
+      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated),
+      ("local", false)
+    )
+    assertEquals(
+      EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(scale = Some(EventSummary.Scale("Regional")))),
+      Right(())
+    )
+    assertEquals(
+      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated),
+      ("regional", true)
+    )
     // a patch of something else keeps it
-    assertEquals(EventFixtures.patch(ds, BEventRow.Id("zqes_stated"), EventPatch(description = Some(EventSummary.Description("d")))), Right(()))
+    assertEquals(
+      EventFixtures
+        .patch(ds, BEventRow.Id("zqes_stated"), EventPatch(description = Some(EventSummary.Description("d")))),
+      Right(())
+    )
     assertEquals(summary(BEventRow.Id("zqes_stated")).scale, "regional")
 
   test("the map feed: the anchor, the outline of a regional area only, the unplaced count"):
@@ -192,10 +289,16 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
     // an area's point-on-surface lies inside the square
     List("zqes_battle_area", "zqes_migration", "zqes_own_area").foreach { id =>
       val e = by(Event.Id(id))
-      assert(e.lon.value > 120 && e.lon.value < 122 && e.lat.value > -51 && e.lat.value < -49, s"$id at ${e.lon},${e.lat}")
+      assert(
+        e.lon.value > 120 && e.lon.value < 122 && e.lat.value > -51 && e.lat.value < -49,
+        s"$id at ${e.lon},${e.lat}"
+      )
     }
     // the outline: regional with an area — not a local event at the same area, not a point-only region
-    assert(by(Event.Id("zqes_migration")).outline.exists(_.value.contains("Polygon")), by(Event.Id("zqes_migration")).toString)
+    assert(
+      by(Event.Id("zqes_migration")).outline.exists(_.value.contains("Polygon")),
+      by(Event.Id("zqes_migration")).toString
+    )
     assert(by(Event.Id("zqes_own_area")).outline.isDefined)
     assert(by(Event.Id("zqes_event_area")).outline.isDefined)
     assertEquals(by(Event.Id("zqes_battle_area")).outline, None)

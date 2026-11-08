@@ -77,7 +77,13 @@ class AssetsJobsSuite extends DbSuite:
       ds,
       ck,
       List(
-        NewFigure(NewFigure.Name("a.png"), NewFigure.Mime("image/png"), png(1), Some(NewFigure.Width(10)), Some(NewFigure.Height(20))),
+        NewFigure(
+          NewFigure.Name("a.png"),
+          NewFigure.Mime("image/png"),
+          png(1),
+          Some(NewFigure.Width(10)),
+          Some(NewFigure.Height(20))
+        ),
         NewFigure(NewFigure.Name("b.png"), NewFigure.Mime("image/png"), png(2), None, None)
       )
     )
@@ -107,10 +113,22 @@ class AssetsJobsSuite extends DbSuite:
 
   test("replace clears the previous set; add keeps it"):
     seed()
-    AssetFixtures.replace(ds, ck, List(NewFigure(NewFigure.Name("old.png"), NewFigure.Mime("image/png"), png(1), None, None)))
-    AssetFixtures.add(ds, ck, List(NewFigure(NewFigure.Name("new.png"), NewFigure.Mime("image/png"), png(2), None, None)))
+    AssetFixtures.replace(
+      ds,
+      ck,
+      List(NewFigure(NewFigure.Name("old.png"), NewFigure.Mime("image/png"), png(1), None, None))
+    )
+    AssetFixtures.add(
+      ds,
+      ck,
+      List(NewFigure(NewFigure.Name("new.png"), NewFigure.Mime("image/png"), png(2), None, None))
+    )
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("new.png", "old.png"))
-    AssetFixtures.replace(ds, ck, List(NewFigure(NewFigure.Name("only.png"), NewFigure.Mime("image/png"), png(3), None, None)))
+    AssetFixtures.replace(
+      ds,
+      ck,
+      List(NewFigure(NewFigure.Name("only.png"), NewFigure.Mime("image/png"), png(3), None, None))
+    )
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("only.png"))
 
   test("a re-conversion keeps each asset's uid and links: same name in place, a moved picture renamed (#826)"):
@@ -127,17 +145,50 @@ class AssetsJobsSuite extends DbSuite:
     )
     import com.augustnagro.magnum.*
     def uid(name: String) =
-      connect(ds)(sql"SELECT uid::text FROM assets WHERE citekey = ${ck.value} AND name = $name".query[String].run().headOption)
-    def links = AssetLinkFixtures.list(ds, Some(ck), None, None, None).links.map(l => l.assetName -> l.targetId).sortBy((a, t) => (a.value, t.value))
+      connect(ds)(
+        sql"SELECT uid::text FROM assets WHERE citekey = ${ck.value} AND name = $name".query[String].run().headOption
+      )
+    def links = AssetLinkFixtures
+      .list(ds, Some(ck), None, None, None)
+      .links
+      .map(l => l.assetName -> l.targetId)
+      .sortBy((a, t) => (a.value, t.value))
     val (u1, u2) = (uid("fig-1.png"), uid("fig-2.png"))
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), Bundle.Asset.FileName("fig-1.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("place"), MediaTarget.TargetId("hattusa")))
+      .create(
+        ds,
+        AssetLink.Put(
+          com.histmersion.api.library.Citekey(ck.value),
+          Bundle.Asset.FileName("fig-1.png"),
+          AssetRelation.Wire("depicts"),
+          MediaTarget.TargetType("place"),
+          MediaTarget.TargetId("hattusa")
+        )
+      )
       .fold(e => fail(e.message.value), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), Bundle.Asset.FileName("fig-2.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("place"), MediaTarget.TargetId("troy")))
+      .create(
+        ds,
+        AssetLink.Put(
+          com.histmersion.api.library.Citekey(ck.value),
+          Bundle.Asset.FileName("fig-2.png"),
+          AssetRelation.Wire("depicts"),
+          MediaTarget.TargetType("place"),
+          MediaTarget.TargetId("troy")
+        )
+      )
       .fold(e => fail(e.message.value), _ => ())
     AssetLinkFixtures
-      .create(ds, AssetLink.Put(com.histmersion.api.library.Citekey(ck.value), Bundle.Asset.FileName("fig-3.png"), AssetRelation.Wire("depicts"), MediaTarget.TargetType("place"), MediaTarget.TargetId("mycenae")))
+      .create(
+        ds,
+        AssetLink.Put(
+          com.histmersion.api.library.Citekey(ck.value),
+          Bundle.Asset.FileName("fig-3.png"),
+          AssetRelation.Wire("depicts"),
+          MediaTarget.TargetType("place"),
+          MediaTarget.TargetId("mycenae")
+        )
+      )
       .fold(e => fail(e.message.value), _ => ())
     // re-OCR: fig-1 re-rendered under its name, fig-2's picture now numbered fig-4, fig-3 gone
     AssetFixtures.replace(
@@ -150,13 +201,20 @@ class AssetsJobsSuite extends DbSuite:
     )
     assertEquals(AssetFixtures.list(ds, ck).map(_.name).toList, List("fig-1.png", "fig-4.png"))
     assertEquals(uid("fig-1.png"), u1, "re-rendered at the same name: the same asset")
-    assertEquals(AssetFixtures.read(ds, ck, AssetInfoRow.Name("fig-1.png")).map(_._2.value.toList), Some(png(11).value.toList))
+    assertEquals(
+      AssetFixtures.read(ds, ck, AssetInfoRow.Name("fig-1.png")).map(_._2.value.toList),
+      Some(png(11).value.toList)
+    )
     assertEquals(uid("fig-4.png"), u2, "the same picture under a new name: renamed, not replaced")
     assertEquals(links, List("fig-1.png" -> "hattusa", "fig-4.png" -> "troy"))
 
   test("assets die with their source (ON DELETE CASCADE)"):
     seed()
-    AssetFixtures.replace(ds, ck, List(NewFigure(NewFigure.Name("x.png"), NewFigure.Mime("image/png"), png(1), None, None)))
+    AssetFixtures.replace(
+      ds,
+      ck,
+      List(NewFigure(NewFigure.Name("x.png"), NewFigure.Mime("image/png"), png(1), None, None))
+    )
     connectForTest(s"DELETE FROM sources WHERE citekey = '$ck'")
     assertEquals(AssetFixtures.count(ds, ck), 0)
 
@@ -180,13 +238,22 @@ class AssetsJobsSuite extends DbSuite:
     val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), Some(Sha256.assume("abc"))))
     assertEquals(j.status, JobState.Queued.wire)
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(Job.Id.assume(j.id.value), JobState.Queued, JobState.Running, Some(JobRow.Progress("converting")))),
+      Transactor(ds).transact(
+        JobRepo
+          .transition(Job.Id.assume(j.id.value), JobState.Queued, JobState.Running, Some(JobRow.Progress("converting")))
+      ),
       Some(JobState.Running)
     )
     Transactor(ds).transact(JobRepo.progress(Job.Id.assume(j.id.value), JobRow.Progress("storing 3 asset(s)")))
-    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).flatMap(_.progress), Some("storing 3 asset(s)"))
     assertEquals(
-      Transactor(ds).transact(JobRepo.transition(Job.Id.assume(j.id.value), JobState.Running, JobState.Done, Some(JobRow.Progress("1 page(s)")))),
+      Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).flatMap(_.progress),
+      Some("storing 3 asset(s)")
+    )
+    assertEquals(
+      Transactor(ds).transact(
+        JobRepo
+          .transition(Job.Id.assume(j.id.value), JobState.Running, JobState.Done, Some(JobRow.Progress("1 page(s)")))
+      ),
       Some(JobState.Done)
     )
     val done = Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).get
@@ -194,10 +261,13 @@ class AssetsJobsSuite extends DbSuite:
     assert(done.succeeded && done.isTerminal)
 
   test("a job remembers the acquisition item it ticks off; one without an item reads back none"):
-    val j = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None, acquireItem = Some(JobRow.AcquireItem(4242))))
+    val j =
+      Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None, acquireItem = Some(JobRow.AcquireItem(4242))))
     assertEquals(j.acquireItem, Some(4242))
     assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(j.id.value))).flatMap(_.acquireItem), Some(4242))
-    assert(Transactor(ds).read(JobRepo.list(None, PageSize(50))).exists(x => x.id == j.id && x.acquireItem.contains(4242)))
+    assert(
+      Transactor(ds).read(JobRepo.list(None, PageSize(50))).exists(x => x.id == j.id && x.acquireItem.contains(4242))
+    )
     assertEquals(
       Transactor(ds)
         .read(JobRepo.get(Job.Id.assume(Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None)).id.value)))
@@ -238,8 +308,14 @@ class AssetsJobsSuite extends DbSuite:
     val queued = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
 
     assert(Transactor(ds).transact(JobRepo.failInterrupted()).value >= 2)
-    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error), Some(Some(JobState.Interrupted)))
-    assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(queued.id.value))).map(_.status), Some(JobState.Failed.wire))
+    assertEquals(
+      Transactor(ds).read(JobRepo.get(Job.Id.assume(running.id.value))).map(_.error),
+      Some(Some(JobState.Interrupted))
+    )
+    assertEquals(
+      Transactor(ds).read(JobRepo.get(Job.Id.assume(queued.id.value))).map(_.status),
+      Some(JobState.Failed.wire)
+    )
     assertEquals(Transactor(ds).read(JobRepo.get(Job.Id.assume(done.id.value))).map(_.status), Some(JobState.Done.wire))
 
   test("jobs list is newest-first and filterable by status"):
@@ -247,8 +323,12 @@ class AssetsJobsSuite extends DbSuite:
     val a = Transactor(ds).transact(JobRepo.create(ingestKind, Some(ck), None))
     val all = Transactor(ds).read(JobRepo.list(None, PageSize(10)))
     assertEquals(all.headOption.map(_.id), Some(a.id))
-    assert(Transactor(ds).read(JobRepo.list(Some(JobState.Wire("queued")), PageSize(10))).forall(_.status.value == "queued"))
-    assert(Transactor(ds).read(JobRepo.list(Some(JobState.Wire("done")), PageSize(10))).forall(_.status.value == "done"))
+    assert(
+      Transactor(ds).read(JobRepo.list(Some(JobState.Wire("queued")), PageSize(10))).forall(_.status.value == "queued")
+    )
+    assert(
+      Transactor(ds).read(JobRepo.list(Some(JobState.Wire("done")), PageSize(10))).forall(_.status.value == "done")
+    )
     assertEquals(Transactor(ds).read(JobRepo.list(Some(JobState.Wire("nonsense")), PageSize(10))), Vector.empty)
     assertEquals(Transactor(ds).read(JobRepo.get(Job.Id("00000000-0000-0000-0000-000000000000"))), None)
 

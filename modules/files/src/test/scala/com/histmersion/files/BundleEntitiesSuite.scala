@@ -164,9 +164,18 @@ class BundleEntitiesSuite extends munit.FunSuite:
     assertEquals(BundleFormat.decodeLine[Bundle.Event](plain.line, stamped = true).map(_.names), Right(None))
     val gvp = BundleFormat.stamp(
       event(
-        _.modify(
-          _.catalogue).setTo(Some(Bundle.Event.Catalogue("gvp"))).modify(_.names).setTo(Some(List(Bundle.Event.Names("Thera"), Bundle.Event.Names("Santorini")))).modify(_.wikidata).setTo(Some(Bundle.Event.Wikidata("Q1"))).modify(_.central).setTo(Some(Bundle.Event.Central(-1560L))).modify(_.plusMinus).setTo(Some(Bundle.Event.PlusMinus(10L))).modify(_.datingMethod).setTo(Some(Bundle.Event.DatingMethod("radiocarbon"))
-        )
+        _.modify(_.catalogue)
+          .setTo(Some(Bundle.Event.Catalogue("gvp")))
+          .modify(_.names)
+          .setTo(Some(List(Bundle.Event.Names("Thera"), Bundle.Event.Names("Santorini"))))
+          .modify(_.wikidata)
+          .setTo(Some(Bundle.Event.Wikidata("Q1")))
+          .modify(_.central)
+          .setTo(Some(Bundle.Event.Central(-1560L)))
+          .modify(_.plusMinus)
+          .setTo(Some(Bundle.Event.PlusMinus(10L)))
+          .modify(_.datingMethod)
+          .setTo(Some(Bundle.Event.DatingMethod("radiocarbon")))
       )
     )
     assertNotEquals(gvp.rev, plain.rev)
@@ -231,7 +240,13 @@ class BundleEntitiesSuite extends munit.FunSuite:
           None
         )
       ),
-      siteTypes = List(Bundle.SiteType(Bundle.SiteType.PlaceId("pleiades:599928"), Some(Bundle.SiteType.Value("settlement")), Some(Bundle.SiteType.CheckedAt(at))))
+      siteTypes = List(
+        Bundle.SiteType(
+          Bundle.SiteType.PlaceId("pleiades:599928"),
+          Some(Bundle.SiteType.Value("settlement")),
+          Some(Bundle.SiteType.CheckedAt(at))
+        )
+      )
     )
     val payloads = es.payloads.toMap
     List(
@@ -265,15 +280,45 @@ class BundleEntitiesSuite extends munit.FunSuite:
 
   test("merging the sets: a decision is kept over a proposal, never a proposal over a decision; the newer row wins"):
     import com.histmersion.api.exchange.Bundle.EventSets.*
-    assertEquals(candidateStatus(Bundle.EventCandidate.Status("proposed"), Bundle.EventCandidate.Status("confirmed")), "confirmed")
-    assertEquals(candidateStatus(Bundle.EventCandidate.Status("proposed"), Bundle.EventCandidate.Status("rejected")), "rejected")
-    assertEquals(candidateStatus(Bundle.EventCandidate.Status("proposed"), Bundle.EventCandidate.Status("proposed")), "proposed")
-    assertEquals(candidateStatus(Bundle.EventCandidate.Status("confirmed"), Bundle.EventCandidate.Status("proposed")), "confirmed")
-    assertEquals(candidateStatus(Bundle.EventCandidate.Status("rejected"), Bundle.EventCandidate.Status("confirmed")), "rejected")
+    assertEquals(
+      candidateStatus(Bundle.EventCandidate.Status("proposed"), Bundle.EventCandidate.Status("confirmed")),
+      "confirmed"
+    )
+    assertEquals(
+      candidateStatus(Bundle.EventCandidate.Status("proposed"), Bundle.EventCandidate.Status("rejected")),
+      "rejected"
+    )
+    assertEquals(
+      candidateStatus(Bundle.EventCandidate.Status("proposed"), Bundle.EventCandidate.Status("proposed")),
+      "proposed"
+    )
+    assertEquals(
+      candidateStatus(Bundle.EventCandidate.Status("confirmed"), Bundle.EventCandidate.Status("proposed")),
+      "confirmed"
+    )
+    assertEquals(
+      candidateStatus(Bundle.EventCandidate.Status("rejected"), Bundle.EventCandidate.Status("confirmed")),
+      "rejected"
+    )
     assert(newer(None, Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))))
-    assert(newer(Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")), Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000001Z"))))
-    assert(!newer(Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")), Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))))
-    assert(!newer(Some(Bundle.UpdatedAt("2026-10-06T00:00:00.000000Z")), Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))))
+    assert(
+      newer(
+        Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")),
+        Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000001Z"))
+      )
+    )
+    assert(
+      !newer(
+        Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")),
+        Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))
+      )
+    )
+    assert(
+      !newer(
+        Some(Bundle.UpdatedAt("2026-10-06T00:00:00.000000Z")),
+        Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))
+      )
+    )
     assert(!newer(Some(Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")), None))
     assert(!newer(None, None))
 
@@ -290,7 +335,12 @@ class BundleEntitiesSuite extends munit.FunSuite:
       None,
       ps.map((p, b) => BundleFormat.fileInfo(Bundle.FileInfo.Path(p), b)),
       Bundle.Blobs(Bundle.Blobs.Count(1), ByteCount(3)),
-      Bundle.Reference(Bundle.Reference.Places(0), Bundle.Reference.PlacesDigest(""), Bundle.Reference.Periods(0), Bundle.Reference.PeriodsDigest(""))
+      Bundle.Reference(
+        Bundle.Reference.Places(0),
+        Bundle.Reference.PlacesDigest(""),
+        Bundle.Reference.Periods(0),
+        Bundle.Reference.PeriodsDigest("")
+      )
     )
     val ok = tar(
       (Bundle.ManifestPath -> BundleFormat.manifestBytes(m)) :: ps.map(identity) ++

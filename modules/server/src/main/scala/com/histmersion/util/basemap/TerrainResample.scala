@@ -40,7 +40,13 @@ object TerrainResample:
   /** The part of an ancestor tile (`src`, `n` × `n` pixels) that tile `(ox, oy)` of the `2^dz` × `2^dz` under it
     * covers, resampled to `n` × `n` pixels bilinearly in metres; terrarium pixels out. Pure.
     */
-  def resample(src: Png.Pixels, n: Vp8l.Image.Width, dz: ZoomDelta, ox: PmTiles.TileColumn, oy: PmTiles.TileRow): Png.Pixels =
+  def resample(
+      src: Png.Pixels,
+      n: Vp8l.Image.Width,
+      dz: ZoomDelta,
+      ox: PmTiles.TileColumn,
+      oy: PmTiles.TileRow
+  ): Png.Pixels =
     val side: Int = n.value
     val from: Array[Int] = src.value
     val s = 1L << (dz.value: Int)

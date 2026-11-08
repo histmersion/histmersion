@@ -11,7 +11,6 @@ object FadingLayer:
   type Key = Key.T
   object Key extends Newtype[String, Pure]
 
-
   final case class Plan(entering: Set[Key], staying: Set[Key], exiting: Set[Key])
 
   /** Pure: what enters, stays and leaves going from `before` to `after`. */

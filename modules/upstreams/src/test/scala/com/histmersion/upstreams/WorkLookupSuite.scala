@@ -25,5 +25,11 @@ class WorkLookupSuite extends munit.FunSuite:
         year = Some(Year(1999))
       )
     )
-    assertEquals(WorkLookup.key(None, Some(ArxivId("hep-th/9901001")), None), WorkKey(arxiv = Some(WorkKey.Arxiv("hep-th/9901001"))))
-    assertEquals(WorkLookup.key(Some(Doi("not a doi")), Some(ArxivId("2101.00001")), None), WorkKey(arxiv = Some(WorkKey.Arxiv("2101.00001"))))
+    assertEquals(
+      WorkLookup.key(None, Some(ArxivId("hep-th/9901001")), None),
+      WorkKey(arxiv = Some(WorkKey.Arxiv("hep-th/9901001")))
+    )
+    assertEquals(
+      WorkLookup.key(Some(Doi("not a doi")), Some(ArxivId("2101.00001")), None),
+      WorkKey(arxiv = Some(WorkKey.Arxiv("2101.00001")))
+    )

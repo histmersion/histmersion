@@ -208,7 +208,11 @@ final class PointSet[D](
             sub.cancel()
             andThen()
         }
-        s.setView(p, MapSurface.Zoom(math.min(s.maxZoom.value, math.max(s.zoom.value + 1, level.value + 2))), animate = MapSurface.SetViewAnimate(true))
+        s.setView(
+          p,
+          MapSurface.Zoom(math.min(s.maxZoom.value, math.max(s.zoom.value + 1, level.value + 2))),
+          animate = MapSurface.SetViewAnimate(true)
+        )
     }
 
   private def fadeAway(mp: (DomMarker, MarkerPane)): Unit =
@@ -413,7 +417,8 @@ final class PointSet[D](
     val slides = mutable.ListBuffer.empty[ClusterMotion.Slide]
     fresh.foreach { (m, ks) =>
       ClusterMotion.origin(ks.flatMap(was.get)) match
-        case Some(from) if !from._1.value.isNaN && (from._1.value != m.screen._1.value || from._2.value != m.screen._2.value) =>
+        case Some(from)
+            if !from._1.value.isNaN && (from._1.value != m.screen._1.value || from._2.value != m.screen._2.value) =>
           slides += ClusterMotion.Slide(m, from, m.screen)
         case Some(_) => ()
         case None    => if ks.exists(was.contains) then arriving += m

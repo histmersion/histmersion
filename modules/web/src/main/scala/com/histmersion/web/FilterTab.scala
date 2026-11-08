@@ -56,10 +56,15 @@ final class FilterTab[Q, Row](
         _.error.map(m => p(cls := "form-error", role := "alert", s"Could not list $noun: $m"))
       ),
       child.maybe <-- state.signal.map(s =>
-        Option.when(s.loaded.value && !s.loading.value && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty.value))
+        Option
+          .when(s.loaded.value && !s.loading.value && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty.value))
       ),
       ul(cls := s"$name-list", children <-- state.signal.map(s => s.rows.take(s.shown.value).map(render))),
-      ResultsPaging.moreButton(state.signal.map(_.moreLabel(page)), state.signal.map(s => ResultsPaging.Loading(s.loading.value)), () => more())
+      ResultsPaging.moreButton(
+        state.signal.map(_.moreLabel(page)),
+        state.signal.map(s => ResultsPaging.Loading(s.loading.value)),
+        () => more()
+      )
     )
 
   /** Called on every UiState change: refetch only when the query has changed, after the debounce. */
@@ -75,7 +80,10 @@ final class FilterTab[Q, Row](
     val q = query()
     lastQuery = Some(q)
     state.update(TabState.loading)
-    latest(fetch(q, Filter.Offset(0)))(p => state.set(TabState.first(p, page)), m => state.update(TabState.failed(_, TabState.Problem(m))))
+    latest(fetch(q, Filter.Offset(0)))(
+      p => state.set(TabState.first(p, page)),
+      m => state.update(TabState.failed(_, TabState.Problem(m)))
+    )
 
   /** "show more": the loaded rows first, then the next page from the server. */
   def more(): Unit =
@@ -94,4 +102,3 @@ object FilterTab:
   object Name extends Newtype[String, Pure]
   type Empty = Empty.T
   object Empty extends Newtype[String, Pure]
-

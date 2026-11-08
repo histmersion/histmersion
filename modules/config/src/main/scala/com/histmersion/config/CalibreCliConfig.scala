@@ -18,14 +18,19 @@ import io.github.iltotore.iron.constraint.any.Pure
   *   optional host directory holding the fetched originals as `<citekey>/paper.*`, an override for
   *   `calibre push`/`sync`, which otherwise download the original the server stored
   */
-final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calibredb: CalibreCliConfig.Calibredb, sqlite: CalibreCliConfig.Sqlite, originalsDir: CalibreCliConfig.OriginalsDir)
-    derives ConfigReader:
+final case class CalibreCliConfig(
+    libraryDir: CalibreCliConfig.LibraryDir,
+    calibredb: CalibreCliConfig.Calibredb,
+    sqlite: CalibreCliConfig.Sqlite,
+    originalsDir: CalibreCliConfig.OriginalsDir
+) derives ConfigReader:
 
   private def expand(p: String): String =
     if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p
 
   def library: CalibreCliConfig.LibraryDir = CalibreCliConfig.LibraryDir(expand(libraryDir.value))
-  def originals: Option[CalibreCliConfig.OriginalsDir] = Option(originalsDir).map(d => expand(d.value).trim).filter(_.nonEmpty).map(CalibreCliConfig.OriginalsDir(_))
+  def originals: Option[CalibreCliConfig.OriginalsDir] =
+    Option(originalsDir).map(d => expand(d.value).trim).filter(_.nonEmpty).map(CalibreCliConfig.OriginalsDir(_))
 
 object CalibreCliConfig:
 

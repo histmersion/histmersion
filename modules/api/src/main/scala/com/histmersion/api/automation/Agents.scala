@@ -44,29 +44,46 @@ object Agents:
       type Spec = Spec.T
       object Spec extends Newtype[String, Pure]
 
-    def parse(s: Wire, known: Set[com.histmersion.api.automation.ProviderKind.Plugin.Name] = Set.empty): Either[Problem, ModelRef] =
+    def parse(
+        s: Wire,
+        known: Set[com.histmersion.api.automation.ProviderKind.Plugin.Name] = Set.empty
+    ): Either[Problem, ModelRef] =
       val t = (s).value.trim
       t.indexOf(':') match
         case -1 => Left(Problem(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})"))
         case i  =>
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
           ProviderKind.parse(com.histmersion.api.automation.ProviderKind.Wire(p), known) match
-            case None                 => Left(Problem(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})"))
+            case None => Left(Problem(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})"))
             case Some(_) if m.isEmpty => Left(Problem(s"'$t' names no model"))
             case Some(k)              => Right(ModelRef(k, Model(m)))
 
   /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
     * `cacheRead`/`cacheWrite` are subsets of it.
     */
-  final case class Usage(input: Usage.Input = Usage.Input((0).toLong), output: Usage.Output = Usage.Output((0).toLong), cacheRead: Usage.CacheRead = Usage.CacheRead((0).toLong), cacheWrite: Usage.CacheWrite = Usage.CacheWrite((0).toLong))
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+  final case class Usage(
+      input: Usage.Input = Usage.Input((0).toLong),
+      output: Usage.Output = Usage.Output((0).toLong),
+      cacheRead: Usage.CacheRead = Usage.CacheRead((0).toLong),
+      cacheWrite: Usage.CacheWrite = Usage.CacheWrite((0).toLong)
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
-      Usage(Usage.Input((input).value + (o.input).value), Usage.Output((output).value + (o.output).value), Usage.CacheRead((cacheRead).value + (o.cacheRead).value), Usage.CacheWrite((cacheWrite).value + (o.cacheWrite).value))
+      Usage(
+        Usage.Input((input).value + (o.input).value),
+        Usage.Output((output).value + (o.output).value),
+        Usage.CacheRead((cacheRead).value + (o.cacheRead).value),
+        Usage.CacheWrite((cacheWrite).value + (o.cacheWrite).value)
+      )
     def total: Usage.TotalTokens = Usage.TotalTokens((input).value + (output).value)
 
     def budgeted(cacheReadWeight: Usage.CacheReadWeight): Usage.BudgetedTokens =
-      Usage.BudgetedTokens(math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round((cacheRead).value.toDouble * math.max(0.0, cacheReadWeight.value)))
+      Usage.BudgetedTokens(
+        math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round(
+          (cacheRead).value.toDouble * math.max(0.0, cacheReadWeight.value)
+        )
+      )
 
   object Usage:
     type BudgetedTokens = BudgetedTokens.T
@@ -87,7 +104,6 @@ object Agents:
 
     val Zero: Usage = Usage()
 
-
   final case class Price(
       input: BigDecimal,
       output: BigDecimal,
@@ -97,12 +113,13 @@ object Agents:
     def cost(u: Usage): BigDecimal =
       val plain = math.max(u.input.value - u.cacheRead.value - u.cacheWrite.value, 0L)
       (BigDecimal(plain) * input + BigDecimal(u.cacheRead.value) * cacheRead.getOrElse(input) +
-        BigDecimal(u.cacheWrite.value) * cacheWrite.getOrElse(input) + BigDecimal(u.output.value) * output) / Prices.Million
+        BigDecimal(u.cacheWrite.value) * cacheWrite.getOrElse(input) + BigDecimal(
+          u.output.value
+        ) * output) / Prices.Million
 
     def text: String =
       val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
       ((List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/"))
-
 
   enum Billing derives CanEqual:
     case Plan(pool: PlanQuota.PoolId)
@@ -116,13 +133,12 @@ object Agents:
       case Plan(p)    => (s"plan pool: ${p.wire}")
       case Metered(p) => (s"price: ${p.text} USD per million tokens")
 
-
   object Prices:
     type Problem = Problem.T
     object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-    export ModelRef.{Model as CostModel}
+    export ModelRef.Model as CostModel
 
     private[Agents] val Million = BigDecimal(1000000)
 
@@ -153,7 +169,11 @@ object Agents:
     def cost(prices: Map[ModelRef.Model, Price], model: Prices.CostModel, u: Usage): Either[Problem, BigDecimal] =
       (prices.get(model).toRight(unpriced(model)).map(_.cost(u))).left.map(refactorError => Problem(refactorError))
 
-    def billing(prices: Map[ModelRef.Model, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[Problem, Billing] =
+    def billing(
+        prices: Map[ModelRef.Model, Price],
+        m: ModelRef,
+        pool: Option[PlanQuota.PoolId]
+    ): Either[Problem, Billing] =
       pool match
         case Some(p) => Right(Billing.Plan(p))
         case None    => prices.get(m.model).map(Billing.Metered(_)).toRight(Problem(unpriced(m.model) + metered(m)))
@@ -193,7 +213,6 @@ object Agents:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[StepKind] = values.find(_.wire == s)
 
   enum Origin(val wire: Origin.Wire) derives CanEqual:
@@ -212,24 +231,25 @@ object Agents:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[Origin] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   final case class ProbeRequest(citekey: Citekey, model: Option[ProbeRequest.Model] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ProbeRequest:
     type Model = Model.T
     object Model extends Newtype[String, Pure]
-
 
   final case class ProbeAnswer(citekey: Citekey, title: com.histmersion.api.library.Title, year: Option[Year])
       derives KindlingsCodecAsObject,
         KindlingsSchema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[ProbeAnswer.Problem] = List(
-      Option.when(Option(citekey).forall(_.value.trim.isEmpty))(ProbeAnswer.Problem("the citekey is empty — give the source's citekey")),
+      Option.when(Option(citekey).forall(_.value.trim.isEmpty))(
+        ProbeAnswer.Problem("the citekey is empty — give the source's citekey")
+      ),
       Option.when(Option(title).forall(_.value.trim.isEmpty))(
         ProbeAnswer.Problem("the title is empty — copy the source's exact title from get_source")
       ),
@@ -246,7 +266,6 @@ object Agents:
     type RecordYear = RecordYear.T
     object RecordYear extends Newtype[Int, Pure]
 
-
   final case class ProbeResult(
       model: ProbeResult.Model,
       answer: Option[ProbeAnswer],
@@ -261,7 +280,8 @@ object Agents:
       problems: List[ProbeResult.Problems] = Nil,
       attempts: ProbeResult.Attempts = ProbeResult.Attempts(1)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ProbeResult:
     type Model = Model.T
@@ -285,7 +305,6 @@ object Agents:
     type Attempts = Attempts.T
     object Attempts extends Newtype[Int, Pure]
 
-
   final case class RunRequest(
       pipeline: RunRequest.Pipeline,
       target: RunRequest.Target,
@@ -305,7 +324,8 @@ object Agents:
       dryRun: Option[RunRequest.DryRun] = None,
       modelFor: List[ModelOverride] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RunRequest:
     type Pipeline = Pipeline.T
@@ -335,8 +355,10 @@ object Agents:
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
 
-
-  final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
+  final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def text: ModelOverride.Wire = ModelOverride.Wire(s"$role=$model")
   object ModelOverride:
     type Problem = Problem.T
@@ -344,9 +366,7 @@ object Agents:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
-
-    export AgentRole.{Wire as Role}
+    export AgentRole.Wire as Role
     type Model = Model.T
     object Model extends Newtype[String, Pure]
 
@@ -354,7 +374,8 @@ object Agents:
       (s).value.indexOf('=') match
         case -1 => Left(Problem(s"'${(s).value.trim}' is not <role>=<provider:model>"))
         case i  =>
-          val (r, m) = ((s).value.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), (s).value.substring(i + 1).trim)
+          val (r, m) =
+            ((s).value.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), (s).value.substring(i + 1).trim)
           if r.isEmpty then Left(Problem(s"'${(s).value.trim}' names no role"))
           else if m.isEmpty then Left(Problem(s"'${(s).value.trim}' names no model"))
           else Right(ModelOverride(AgentRole.Wire(r), Model(m)))
@@ -377,9 +398,14 @@ object Agents:
       subGoals: Option[RunParams.SubGoals] = None,
       oaBacklog: Option[RunParams.OaBacklog] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def fixes: Boolean = (fix.contains(RunRequest.Fix(true)))
-    def noteList: List[RunParams.Notes] = (notes.getOrElse(Nil).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue4 => RunParams.Notes(refactorValue4))
+    def noteList: List[RunParams.Notes] = (notes
+      .getOrElse(Nil)
+      .map((_).value.trim)
+      .filter(_.nonEmpty))
+      .map(refactorValue4 => RunParams.Notes(refactorValue4))
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
 
   object RunParams:
@@ -400,7 +426,6 @@ object Agents:
     object SubGoals extends Newtype[Int, Pure]
     type OaBacklog = OaBacklog.T
     object OaBacklog extends Newtype[Boolean, Pure]
-
 
   final case class RunInfo(
       id: RunInfo.Id,
@@ -429,7 +454,9 @@ object Agents:
       managerItem: Option[Managers.ManagerItem.Id] = None,
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema,
+        CanEqual:
     def isWaiting: Boolean = (status.value == Run.State.WaitingApproval.wire.value)
 
     def modelFor(role: Role): Option[RunInfo.Model] =
@@ -465,7 +492,7 @@ object Agents:
     object UpdatedAt extends Newtype[String, Pure]
     type TargetKind = TargetKind.T
     object TargetKind extends Newtype[String, Pure]
-    export Agents.Origin.{Wire as Origin}
+    export Agents.Origin.Wire as Origin
     type ResumeAt = ResumeAt.T
     object ResumeAt extends Newtype[String, Pure]
     type DryRun = DryRun.T
@@ -473,15 +500,16 @@ object Agents:
     type HeartbeatAt = HeartbeatAt.T
     object HeartbeatAt extends Newtype[String, Pure]
 
-
-  final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object WouldWrite:
     type What = What.T
     object What extends Newtype[String, Pure]
     type Payload = Payload.T
     object Payload extends Newtype[String, Pure]
-
 
   final case class StepInfo(
       seq: StepInfo.Seq,
@@ -502,12 +530,13 @@ object Agents:
       firstCallTokens: Option[StepInfo.FirstCallTokens] = None,
       turns: Option[StepInfo.Turns] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def modelText: String = (model, actualModel) match
       case (Some(m), Some(a)) if StepInfo.ActualModel((m).value.drop((m).value.indexOf(':') + 1)) != a => (s"$m → $a")
-      case (Some(m), _)                                          => ((m).value)
-      case (None, Some(a))                                       => ((a).value)
-      case (None, None)                                          => ("")
+      case (Some(m), _)                                                                                => ((m).value)
+      case (None, Some(a))                                                                             => ((a).value)
+      case (None, None)                                                                                => ("")
 
   object StepInfo:
 
@@ -542,7 +571,6 @@ object Agents:
     type Turns = Turns.T
     object Turns extends Newtype[Int, Pure]
 
-
   final case class MessageInfo(
       seq: MessageInfo.Seq,
       n: MessageInfo.N,
@@ -553,7 +581,8 @@ object Agents:
       toolResult: Option[MessageInfo.ToolResult] = None,
       latencyMs: Option[MessageInfo.LatencyMs] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object MessageInfo:
     type Seq = Seq.T
@@ -573,25 +602,29 @@ object Agents:
     type LatencyMs = LatencyMs.T
     object LatencyMs extends Newtype[Int, Pure]
 
-
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual
+        KindlingsSchema,
+        com.histmersion.api.json.Schema,
+        CanEqual
 
-
-  final case class RoleModel(role: RoleModel.Role, model: Option[RoleModel.Model], ready: RoleModel.Ready, problem: Option[RoleModel.Problem])
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class RoleModel(
+      role: RoleModel.Role,
+      model: Option[RoleModel.Model],
+      ready: RoleModel.Ready,
+      problem: Option[RoleModel.Problem]
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object RoleModel:
-    export AgentRole.{Wire as Role}
+    export AgentRole.Wire as Role
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type Ready = Ready.T
     object Ready extends Newtype[Boolean, Pure]
     type Problem = Problem.T
     object Problem extends Newtype[String, Pure]
-
 
   final case class ModelsInfo(
       enabled: ModelsInfo.Enabled,
@@ -603,7 +636,8 @@ object Agents:
       allowances: List[ModelChains.AllowanceStatus] = Nil,
       now: ModelsInfo.Now = ModelsInfo.Now("")
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ModelsInfo:
     type Enabled = Enabled.T
@@ -617,7 +651,6 @@ object Agents:
     type Now = Now.T
     object Now extends Newtype[String, Pure]
 
-
   enum CheckLevel(val wire: CheckLevel.Wire) derives CanEqual:
     case Ok extends CheckLevel(CheckLevel.Wire("ok"))
     case Warn extends CheckLevel(CheckLevel.Wire("warn"))
@@ -626,7 +659,6 @@ object Agents:
   object CheckLevel:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[CheckLevel] = values.find(_.wire == s)
     given WireEnumValues[CheckLevel]:
@@ -639,14 +671,14 @@ object Agents:
 
   final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object DoctorCheck:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
-
 
   final case class ProviderDoctor(
       provider: ProviderDoctor.Provider,
@@ -655,7 +687,8 @@ object Agents:
       checks: List[DoctorCheck],
       upstreamModels: List[ProviderDoctor.UpstreamModels] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def level: CheckLevel =
       if checks.exists(_.level == CheckLevel.Fail) then CheckLevel.Fail
       else if checks.exists(_.level == CheckLevel.Warn) then CheckLevel.Warn
@@ -671,14 +704,14 @@ object Agents:
     type UpstreamModels = UpstreamModels.T
     object UpstreamModels extends Newtype[String, Pure]
 
-
   final case class DoctorReport(
       enabled: DoctorReport.Enabled,
       online: DoctorReport.Online,
       providers: List[ProviderDoctor],
       checks: List[DoctorCheck]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object DoctorReport:
     type Enabled = Enabled.T
@@ -686,17 +719,18 @@ object Agents:
     type Online = Online.T
     object Online extends Newtype[Boolean, Pure]
 
-
-  final case class GenerateRequest(runtimes: List[GenerateRequest.Runtimes] = Nil, out: Option[GenerateRequest.Out] = None)
-      derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+  final case class GenerateRequest(
+      runtimes: List[GenerateRequest.Runtimes] = Nil,
+      out: Option[GenerateRequest.Out] = None
+  ) derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object GenerateRequest:
     type Runtimes = Runtimes.T
     object Runtimes extends Newtype[String, Pure]
     type Out = Out.T
     object Out extends Newtype[String, Pure]
-
 
   final case class GenerateResult(
       dir: GenerateResult.Dir,
@@ -706,7 +740,8 @@ object Agents:
       removed: GenerateResult.Removed,
       definitions: GenerateResult.Definitions
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object GenerateResult:
     type Dir = Dir.T
@@ -722,7 +757,6 @@ object Agents:
     type Definitions = Definitions.T
     object Definitions extends Newtype[String, Pure]
 
-
   enum Decision(val wire: Decision.Wire) derives CanEqual:
     case Approve extends Decision(Decision.Wire("approve"))
     case Reject extends Decision(Decision.Wire("reject"))
@@ -730,7 +764,6 @@ object Agents:
   object Decision:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[Decision] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
@@ -757,7 +790,9 @@ object Agents:
       articles: Option[Article.Plans.ArticlePlan] = None,
       hintEffect: Option[Managers.HintProposal] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema, CanEqual:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema,
+        CanEqual:
     def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
 
     /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a
@@ -766,28 +801,40 @@ object Agents:
     def withArticleProposal(payload: Option[io.circe.Json]): Option[ApprovalInfo] =
       if approvalKind.exists((refactorCallback => ((refactorCallback.proposesFilter) == (true)))) then
         val f = payload.flatMap(_.as[Article.Plans.FilterProposal].toOption)
-        Some(this.modify(_.filter).setTo(f).modify(_.evidence).setTo(ApprovalInfo.Evidence(f.map(_.rationale.value).getOrElse(""))))
+        Some(
+          this
+            .modify(_.filter)
+            .setTo(f)
+            .modify(_.evidence)
+            .setTo(ApprovalInfo.Evidence(f.map(_.rationale.value).getOrElse("")))
+        )
       else if approvalKind.exists((refactorCallback => ((refactorCallback.proposesArticles) == (true)))) then
         val p = payload.flatMap(_.as[Article.Plans.ArticlePlan].toOption)
-        Some(this.modify(_.articles).setTo(p).modify(_.evidence).setTo(ApprovalInfo.Evidence(p.map(_.rationale.value).getOrElse(""))))
+        Some(
+          this
+            .modify(_.articles)
+            .setTo(p)
+            .modify(_.evidence)
+            .setTo(ApprovalInfo.Evidence(p.map(_.rationale.value).getOrElse("")))
+        )
       else None
 
   object ApprovalInfo:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
-    export Approval.Kind.{Wire as Kind}
+    export Approval.Kind.Wire as Kind
     type Status = Status.T
     object Status extends Newtype[String, Pure]
     type Current = Current.T
     object Current extends Newtype[String, Pure]
-    export com.histmersion.api.library.Edge.Kind.{Wire as EdgeKind}
+    export com.histmersion.api.library.Edge.Kind.Wire as EdgeKind
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type Evidence = Evidence.T
     object Evidence extends Newtype[String, Pure]
     type Quote = Quote.T
     object Quote extends Newtype[String, Pure]
-    export Approval.State.{Wire as State}
+    export Approval.State.Wire as State
     export Approval.Note
     type Result = Result.T
     object Result extends Newtype[String, Pure]
@@ -798,8 +845,10 @@ object Agents:
     type Subject = Subject.T
     object Subject extends Newtype[String, Pure]
 
-
-  final case class DecisionRequest(note: Option[DecisionRequest.Note] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class DecisionRequest(note: Option[DecisionRequest.Note] = None)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object DecisionRequest:
     export Approval.Note

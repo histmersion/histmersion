@@ -14,7 +14,7 @@ object EventScale:
   object LocalKinds extends Newtype[String, Pure]
   type RegionalKinds = RegionalKinds.T
   object RegionalKinds extends Newtype[String, Pure]
-  export EventSummary.{Kind as OfKindKind, Kind as EffectiveKind}
+  export EventSummary.{Kind as EffectiveKind, Kind as OfKindKind}
 
   val Local = "local"
   val Regional = "regional"
@@ -59,20 +59,21 @@ object EventScale:
       case Auto     => Some(None)
       case _        => None
 
-  def normKind(kind: EventSummary.Kind): EventSummary.Kind = EventSummary.Kind((kind).value.trim.toLowerCase.replaceAll("[\\s-]+", "_"))
+  def normKind(kind: EventSummary.Kind): EventSummary.Kind =
+    EventSummary.Kind((kind).value.trim.toLowerCase.replaceAll("[\\s-]+", "_"))
 
   def ofKind(kind: EventScale.OfKindKind): Option[EventSummary.Scale] =
     val k = normKind(kind)
     if localKinds(LocalKinds((k).value)) then Some(EventSummary.Scale(Local))
-    else if regionalKinds(RegionalKinds((k).value)) || (k).value.endsWith("_era") then Some(EventSummary.Scale(Regional))
+    else if regionalKinds(RegionalKinds((k).value)) || (k).value.endsWith("_era") then
+      Some(EventSummary.Scale(Regional))
     else None
 
   def ofPlaceKind(placeKind: Place.Kind.Wire): Option[EventSummary.Scale] =
     (placeKind).value.trim.toLowerCase match
       case Place.Kind.Site | Place.Kind.Feature =>
         Some(EventSummary.Scale(Local))
-      case Place.Kind.Region | Place.Kind.Polity |
-          Place.Kind.People =>
+      case Place.Kind.Region | Place.Kind.Polity | Place.Kind.People =>
         Some(EventSummary.Scale(Regional))
       case _ => None
 

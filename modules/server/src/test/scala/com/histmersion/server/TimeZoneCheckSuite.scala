@@ -7,7 +7,11 @@ import java.time.{Instant, ZoneOffset}
 
 class TimeZoneCheckSuite extends munit.FunSuite:
 
-  private val probe = TimeZoneCheck.Probe(TimeZoneCheck.Probe.Zone("Europe/Warsaw"), Instant.parse("2026-01-15T12:00:00Z"), ZoneOffset.ofHours(1))
+  private val probe = TimeZoneCheck.Probe(
+    TimeZoneCheck.Probe.Zone("Europe/Warsaw"),
+    Instant.parse("2026-01-15T12:00:00Z"),
+    ZoneOffset.ofHours(1)
+  )
 
   test("every probe at its offset and a default zone: ok, with the count, the tzdb version and the default"):
     val (ok, line) = TimeZoneCheck.report(
@@ -21,7 +25,13 @@ class TimeZoneCheckSuite extends munit.FunSuite:
     assertEquals(line, "time zones: 600 from the JDK's tzdb 2026a · default Europe/Warsaw · 1 offsets checked")
 
   test("a wrong offset, an unknown zone, no zone ids or no default zone: BROKEN, naming each"):
-    val (ok1, wrong) = TimeZoneCheck.report(List(probe), (_, _) => Right(ZoneOffset.UTC), TimeZoneCheck.ZoneCount(600), None, Right(TimeZoneCheck.Probe.Zone("UTC")))
+    val (ok1, wrong) = TimeZoneCheck.report(
+      List(probe),
+      (_, _) => Right(ZoneOffset.UTC),
+      TimeZoneCheck.ZoneCount(600),
+      None,
+      Right(TimeZoneCheck.Probe.Zone("UTC"))
+    )
     assert(!ok1)
     assertEquals(wrong, "time zones: BROKEN — Europe/Warsaw at 2026-01-15T12:00:00Z: Z, expected +01:00")
     val (ok2, unknown) = TimeZoneCheck.report(

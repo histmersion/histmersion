@@ -28,11 +28,11 @@ final case class EventImportReport(
     citation: EventImportReport.Citation = EventImportReport.Citation(""),
     corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object EventImportReport:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
-
 
   /** An events import job's report, in its detail. */
   type MarkdownResult = Markdown

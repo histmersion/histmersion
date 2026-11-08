@@ -25,6 +25,6 @@ object UpdateOutcome:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
   object Failed:
-    export UpdateOutcome.{Problem as Reason}
+    export UpdateOutcome.Problem as Reason
   object Refused:
-    export UpdateOutcome.{Problem as Reason}
+    export UpdateOutcome.Problem as Reason

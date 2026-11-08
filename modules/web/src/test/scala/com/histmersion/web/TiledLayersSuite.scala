@@ -59,7 +59,9 @@ class TiledLayersSuite extends munit.FunSuite:
     assert(!TileDecode.isCell(f))
     // an open end: no period on the ramp, as the feed's
     assertEquals(
-      TileDecode.site(feature(LatLon.Lat(1), LatLon.Lon(2), "id" -> "x", "label" -> "X", "periodStart" -> -10)).flatMap(_.period),
+      TileDecode
+        .site(feature(LatLon.Lat(1), LatLon.Lon(2), "id" -> "x", "label" -> "X", "periodStart" -> -10))
+        .flatMap(_.period),
       None
     )
 
@@ -152,14 +154,26 @@ class TiledLayersSuite extends munit.FunSuite:
     val c = TileDecode.cell(f, DotKind.Site)
     assertEquals(
       c,
-      TileCellPoint(TileCellPoint.Key("c4/1/2"), DotKind.Site, TileCellPoint.Lat(10), TileCellPoint.Lon(20), TileCellPoint.N(37), Some(TileCellPoint.MidLo(-1500.5)), Some(TileCellPoint.MidHi(-200.0)), GeoBounds(GeoBounds.South(9), GeoBounds.West(19), GeoBounds.North(11), GeoBounds.East(21)))
+      TileCellPoint(
+        TileCellPoint.Key("c4/1/2"),
+        DotKind.Site,
+        TileCellPoint.Lat(10),
+        TileCellPoint.Lon(20),
+        TileCellPoint.N(37),
+        Some(TileCellPoint.MidLo(-1500.5)),
+        Some(TileCellPoint.MidHi(-200.0)),
+        GeoBounds(GeoBounds.South(9), GeoBounds.West(19), GeoBounds.North(11), GeoBounds.East(21))
+      )
     )
     val m = CellKind(DotKind.Site).member(c)
     assertEquals((m.kind, m.n, m.mids, m.aggregate), (DotKind.Site, 37, List(-1500.5, -200.0), true))
     val held = DotCluster.Contents(List(m, Member(DotKind.Event, Member.N(1), Nil, Certainty.NoSay)))
     assertEquals(held.total, 38)
     assert(held.counted)
-    assertEquals(held.cells, List(GeoBounds(GeoBounds.South(9), GeoBounds.West(19), GeoBounds.North(11), GeoBounds.East(21))))
+    assertEquals(
+      held.cells,
+      List(GeoBounds(GeoBounds.South(9), GeoBounds.West(19), GeoBounds.North(11), GeoBounds.East(21)))
+    )
     assert(!DotCluster.Contents(List(Member(DotKind.Event, Member.N(1), Nil, Certainty.NoSay))).counted)
 
   test("playback buckets: a round number of years a bucket, the window widened to whole ones"):
@@ -167,9 +181,18 @@ class TiledLayersSuite extends munit.FunSuite:
     assertEquals(PlaybackBuckets.years(PlaybackBuckets.YearsPerSecond(30), PlaybackBuckets.Seconds(1.0)), 50L)
     assertEquals(PlaybackBuckets.years(PlaybackBuckets.YearsPerSecond(0), PlaybackBuckets.Seconds(1.0)), 1L)
     assertEquals(PlaybackBuckets.years(PlaybackBuckets.YearsPerSecond(1000), PlaybackBuckets.Seconds(1.0)), 1000L)
-    assertEquals(PlaybackBuckets.widen((Years.Astronomical(-1650L), Years.Astronomical(-1550L)), PlaybackBuckets.BucketYears(200)), (-1800L, -1401L))
-    assertEquals(PlaybackBuckets.widen((Years.Astronomical(10L), Years.Astronomical(10L)), PlaybackBuckets.BucketYears(100)), (0L, 99L))
-    assertEquals(PlaybackBuckets.widen((Years.Astronomical(-1L), Years.Astronomical(0L)), PlaybackBuckets.BucketYears(100)), (-100L, 99L))
+    assertEquals(
+      PlaybackBuckets.widen((Years.Astronomical(-1650L), Years.Astronomical(-1550L)), PlaybackBuckets.BucketYears(200)),
+      (-1800L, -1401L)
+    )
+    assertEquals(
+      PlaybackBuckets.widen((Years.Astronomical(10L), Years.Astronomical(10L)), PlaybackBuckets.BucketYears(100)),
+      (0L, 99L)
+    )
+    assertEquals(
+      PlaybackBuckets.widen((Years.Astronomical(-1L), Years.Astronomical(0L)), PlaybackBuckets.BucketYears(100)),
+      (-100L, 99L)
+    )
 
   test("a tile URL template: the placeholder tile becomes {z}/{x}/{y}"):
     val uri = s"/api/tiles/sites/${TilePlaceholder.Z}/${TilePlaceholder.X}/${TilePlaceholder.Y}?from=-10&to=20"

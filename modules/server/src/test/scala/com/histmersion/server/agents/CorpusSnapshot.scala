@@ -32,7 +32,11 @@ object CorpusSnapshot:
     connect(ds):
       Tables.map { t =>
         t -> Sql
-          .raw(Sql.Text(s"SELECT coalesce(md5(string_agg(x::text, '|' ORDER BY x::text)), '') || ':' || count(*) FROM $t x"))
+          .raw(
+            Sql.Text(
+              s"SELECT coalesce(md5(string_agg(x::text, '|' ORDER BY x::text)), '') || ':' || count(*) FROM $t x"
+            )
+          )
           .frag
           .query[String]
           .run()

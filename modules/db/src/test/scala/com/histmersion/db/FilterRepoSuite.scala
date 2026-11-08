@@ -283,10 +283,19 @@ class FilterRepoSuite extends DbSuite:
 
   test("authors are any-of and case-insensitive substrings"):
     assertEquals(keys(run(Filter(authors = List(Filter.Authors("cline"))))), List("zzf_alpha"))
-    assertEquals(keys(run(Filter(authors = List(Filter.Authors("cline"), Filter.Authors("anthony"))))).sorted, List("zzf_alpha", "zzf_beta"))
-    assertEquals(find(run(Filter(authors = List(Filter.Authors("cline")))), "zzf_alpha").why, List("author: Eric H. Cline"))
+    assertEquals(
+      keys(run(Filter(authors = List(Filter.Authors("cline"), Filter.Authors("anthony"))))).sorted,
+      List("zzf_alpha", "zzf_beta")
+    )
+    assertEquals(
+      find(run(Filter(authors = List(Filter.Authors("cline")))), "zzf_alpha").why,
+      List("author: Eric H. Cline")
+    )
     // the row carries its authors, for a table of sources
-    assertEquals(find(run(Filter(authors = List(Filter.Authors("cline")))), "zzf_alpha").source.authors, List("Eric H. Cline"))
+    assertEquals(
+      find(run(Filter(authors = List(Filter.Authors("cline")))), "zzf_alpha").source.authors,
+      List("Eric H. Cline")
+    )
 
   test("places match sources.regions ∪ findings.region_name"):
     assertEquals(keys(run(Filter(places = List(Filter.Places("Levant"))))), List("zzf_alpha"))
@@ -300,7 +309,10 @@ class FilterRepoSuite extends DbSuite:
     assertEquals(find(split, "zzf_gamma").matched.map(_.id.value).sorted, List("zzf_gamma#0", "zzf_gamma#1"))
     val west = run(Filter(bbox = Some(BBox(Longitude(170.0), Latitude(-20.0), Longitude(180.0), Latitude(-5.0)))))
     assertEquals(find(west, "zzf_gamma").matched.map(_.id), List("zzf_gamma#0"))
-    assertEquals(keys(run(Filter(bbox = Some(BBox(Longitude(30.0), Latitude(30.0), Longitude(40.0), Latitude(40.0)))))), List("zzf_alpha"))
+    assertEquals(
+      keys(run(Filter(bbox = Some(BBox(Longitude(30.0), Latitude(30.0), Longitude(40.0), Latitude(40.0)))))),
+      List("zzf_alpha")
+    )
 
   test("free text matches title, summary or body; why says which"):
     val r = run(Filter(q = Some(Filter.Q("Steppe horses"))))
@@ -315,12 +327,18 @@ class FilterRepoSuite extends DbSuite:
   test("total is count(DISTINCT source) and ignores limit/offset"):
     val f = Filter(places = List(Filter.Places("Levant"), Filter.Places("Pontic"), Filter.Places("Oceania")))
     assertEquals((run(f).total.value: Int), 3)
-    val page = SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(1)).modify(_.sort).setTo(Sort.Title), words)
+    val page =
+      SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(1)).modify(_.sort).setTo(Sort.Title), words)
     assertEquals((page.total.value: Int), 3)
     assertEquals(page.hits.size, 1)
     val next = SearchFixtures.sources(
       ds,
-      f.modify(_.limit).setTo(Filter.Limit(1)).modify(_.offset).setTo(Filter.Offset(1)).modify(_.sort).setTo(Sort.Title),
+      f.modify(_.limit)
+        .setTo(Filter.Limit(1))
+        .modify(_.offset)
+        .setTo(Filter.Offset(1))
+        .modify(_.sort)
+        .setTo(Sort.Title),
       words
     )
     assertEquals((next.total.value: Int), 3)
@@ -329,27 +347,38 @@ class FilterRepoSuite extends DbSuite:
   test("sorting: by publication year, newest or oldest first"):
     val f = Filter(places = List(Filter.Places("Levant"), Filter.Places("Pontic"), Filter.Places("Oceania")))
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Year), words)),
+      keys(
+        SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Year), words)
+      ),
       List("zzf_gamma", "zzf_alpha", "zzf_beta")
     )
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Oldest), words)),
+      keys(
+        SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Oldest), words)
+      ),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
 
   test("sorting: by title, by citations, by period start"):
     val f = Filter(places = List(Filter.Places("Levant"), Filter.Places("Pontic"), Filter.Places("Oceania")))
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Title), words)),
+      keys(
+        SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Title), words)
+      ),
       List("zzf_alpha", "zzf_gamma", "zzf_beta")
     )
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Cited), words)),
+      keys(
+        SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.Cited), words)
+      ),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
     // undated sources sort last on period
     assertEquals(
-      keys(SearchFixtures.sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.PeriodStart), words)),
+      keys(
+        SearchFixtures
+          .sources(ds, f.modify(_.limit).setTo(Filter.Limit(50)).modify(_.sort).setTo(Sort.PeriodStart), words)
+      ),
       List("zzf_beta", "zzf_alpha", "zzf_gamma")
     )
 
@@ -366,8 +395,14 @@ class FilterRepoSuite extends DbSuite:
     assertEquals(tags.get(Facet.Value("island")), None)
 
   test("facet prefix is a case-insensitive prefix, not a substring"):
-    assertEquals(facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("pon"))).get(Facet.Value("Pontic Steppe")), Some(1))
-    assertEquals(facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("steppe"))).get(Facet.Value("Pontic Steppe")), None)
+    assertEquals(
+      facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("pon"))).get(Facet.Value("Pontic Steppe")),
+      Some(1)
+    )
+    assertEquals(
+      facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("steppe"))).get(Facet.Value("Pontic Steppe")),
+      None
+    )
 
   test("places facet unions sources.regions with findings.region_name"):
     val places = facetMap(Facet.Field.Places)
@@ -421,16 +456,28 @@ class FilterRepoSuite extends DbSuite:
 
   test("map feed: q= restricts it to the findings of sources whose text matches"):
     assertEquals(feed(Filter(q = Some(Filter.Q("Steppe horses")))).map(_.claim).toList, List("Yamnaya expansion"))
-    assertEquals(feed(Filter(q = Some(Filter.Q("Collapse of the Bronze Age")))).map(_.citekey).toList.distinct, List("zzf_alpha"))
+    assertEquals(
+      feed(Filter(q = Some(Filter.Q("Collapse of the Bronze Age")))).map(_.citekey).toList.distinct,
+      List("zzf_alpha")
+    )
     assertEquals(feed(Filter(q = Some(Filter.Q("zzz no such text anywhere")))).toList, Nil)
 
   test("map feed: period and place are judged per FINDING, not per source"):
     // alpha itself is dated -1300…-1100, but only its Ugarit finding lies in this window
-    assertEquals(feed(Filter(period = Some(Period(Year(-1200), Year(-1180))))).map(_.claim).toList, List("Ugarit destroyed"))
-    assertEquals(feed(Filter(places = List(Filter.Places("cyprus")))).map(_.claim).toList, List("Cypriot trade revives"))
+    assertEquals(
+      feed(Filter(period = Some(Period(Year(-1200), Year(-1180))))).map(_.claim).toList,
+      List("Ugarit destroyed")
+    )
+    assertEquals(
+      feed(Filter(places = List(Filter.Places("cyprus")))).map(_.claim).toList,
+      List("Cypriot trade revives")
+    )
 
   test("map feed: the limit is honoured"):
-    assertEquals(FindingFixtures.findingsFor(ds, Filter(tags = List(Filter.Tags("sea-peoples")), limit = Filter.Limit(1))).size, 1)
+    assertEquals(
+      FindingFixtures.findingsFor(ds, Filter(tags = List(Filter.Tags("sea-peoples")), limit = Filter.Limit(1))).size,
+      1
+    )
 
   // ── facets fold case (plan §1.3) ────────────────────────────────────────────────────────────
   private val caseScope = Filter(places = List(Filter.Places("zzftolia")))
@@ -446,8 +493,14 @@ class FilterRepoSuite extends DbSuite:
     assertEquals(tags.get(Facet.Value("zzftag")), None)
 
   test("a facet prefix stays case-insensitive over the folded bucket"):
-    assertEquals(facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("ZZFT")), caseScope).get(Facet.Value("Zzftolia")), Some(3))
-    assertEquals(facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("zzft")), caseScope).get(Facet.Value("Zzftolia")), Some(3))
+    assertEquals(
+      facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("ZZFT")), caseScope).get(Facet.Value("Zzftolia")),
+      Some(3)
+    )
+    assertEquals(
+      facetMap(Facet.Field.Places, Some(FilterSql.FacetPrefix("zzft")), caseScope).get(Facet.Value("Zzftolia")),
+      Some(3)
+    )
 
   test("tags and places match case-insensitively, so either spelling finds the whole bucket"):
     val all = List("zzc_one", "zzc_three", "zzc_two")

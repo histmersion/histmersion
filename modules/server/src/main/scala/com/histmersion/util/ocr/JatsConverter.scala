@@ -11,7 +11,11 @@ import com.histmersion.util.storage.Blob
   * sidecar unchanged.
   */
 final class JatsConverter(sidecar: ConverterClient) extends ConverterClient:
-  def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality): Either[ConverterClient.Problem, ConvertedDoc] =
+  def convert(
+      file: Blob,
+      filename: ConverterClient.Filename,
+      quality: ConverterClient.HighQuality
+  ): Either[ConverterClient.Problem, ConvertedDoc] =
     val jats =
       if !filename.value.toLowerCase.endsWith(".xml") then None
       else scala.util.Try(Jats.Xml(file.text().value)).toOption.filter(Jats.isJats)

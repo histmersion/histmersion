@@ -24,7 +24,11 @@ private[workflows] object ReviewLedgerRepo:
     sql"SELECT ledger::text FROM review_ledgers WHERE slug = $slug".query[String].run().headOption match
       case None       => Right(None)
       case Some(json) =>
-        Jsonb.decode[Ledger](Jsonb.JsonText(json)).left.map(e => s"the review ledger of '$slug' does not decode: $e").map(Some(_))
+        Jsonb
+          .decode[Ledger](Jsonb.JsonText(json))
+          .left
+          .map(e => s"the review ledger of '$slug' does not decode: $e")
+          .map(Some(_))
 
   /** Write the ledger (insert or replace). The article must exist. */
   def put(l: Ledger)(using DbCon): Unit =

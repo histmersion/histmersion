@@ -38,7 +38,8 @@ final case class UiConfig(
     mapStart: MapStartConfig = MapStartConfig(),
     setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object UiConfig:
   type Tiles = Tiles.T
@@ -77,7 +78,7 @@ object UiConfig:
   object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
   object DocsUrl extends Newtype[String, Pure]
-  export com.histmersion.api.basemap.BaseMapSource.{Wire as BaseMapSource}
+  export com.histmersion.api.basemap.BaseMapSource.Wire as BaseMapSource
   type MapLanguage = MapLanguage.T
   object MapLanguage extends Newtype[String, Pure]
   type SetupDue = SetupDue.T

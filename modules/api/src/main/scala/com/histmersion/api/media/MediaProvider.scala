@@ -78,7 +78,8 @@ object MediaProvider:
       builtin: Info.Builtin,
       licences: Info.Licences
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Info:
     type Title = Title.T

@@ -40,10 +40,14 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
   private def writer(f: Path, env: Config = noEnv) = ConfigFileWriter(fileAt(f), env, ConfigSchema.reference)
 
   private def ok(f: Path, edits: SettingEdit*): WriteOutcome =
-    writer(f).write(edits.toList, None, literalConsent = SettingPolicy.LiteralConsent(false)).fold(e => fail(e.message.value), identity)
+    writer(f)
+      .write(edits.toList, None, literalConsent = SettingPolicy.LiteralConsent(false))
+      .fold(e => fail(e.message.value), identity)
 
   private def refused(f: Path, edits: SettingEdit*): SettingError =
-    writer(f).write(edits.toList, None, literalConsent = SettingPolicy.LiteralConsent(false)).fold(identity, o => fail(s"written: $o"))
+    writer(f)
+      .write(edits.toList, None, literalConsent = SettingPolicy.LiteralConsent(false))
+      .fold(identity, o => fail(s"written: $o"))
 
   private def read(f: Path) = Files.readString(f)
 
@@ -177,7 +181,11 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
 
   test("a value the server could not start with is refused before the file is touched"):
     val f = fileWith(Commented)
-    val e = refused(f, set(K("ui.base-map-source"), text(T("auto"))), set(K("basemap.bathymetry.source"), text(T("nonsense"))))
+    val e = refused(
+      f,
+      set(K("ui.base-map-source"), text(T("auto"))),
+      set(K("basemap.bathymetry.source"), text(T("nonsense")))
+    )
     assert(e.isInstanceOf[SettingError.Invalid], s"$e")
     assert(e.message.value.contains("could not") || e.message.value.contains("cannot"), e.message)
     assertEquals(read(f), Commented)
@@ -200,14 +208,18 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
       Left(SettingError.Changed)
     )
     val now = w.read().toOption.get.version
-    assert(w.write(List(set(K("backups.keep"), num(8))), Some(now), literalConsent = SettingPolicy.LiteralConsent(false)).isRight)
+    assert(
+      w.write(List(set(K("backups.keep"), num(8))), Some(now), literalConsent = SettingPolicy.LiteralConsent(false))
+        .isRight
+    )
 
   test("credentials: the value itself never goes in the file; a plugin's is a reference, value: only when confirmed"):
     val f = fileWith(Commented)
     assert(refused(f, set(K("auth.api-key"), text(T("s3cret")))).message.value.contains("HISTMERSION_API_KEY"))
     assert(refused(f, set(K("plugins.oa-core.api-key"), text(T("s3cret")))).message.value.contains("reference"))
     assert(
-      refused(f, set(K("plugins.oa-core.api-key"), text(T("value:s3cret")))).isInstanceOf[SettingError.LiteralNeedsConsent]
+      refused(f, set(K("plugins.oa-core.api-key"), text(T("value:s3cret"))))
+        .isInstanceOf[SettingError.LiteralNeedsConsent]
     )
     assert(!read(f).contains("s3cret"))
     ok(f, set(K("plugins.oa-core.api-key"), text(T("keepassxc:Histmersion/CORE#password"))))
@@ -216,7 +228,11 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
       "keepassxc:Histmersion/CORE#password"
     )
     val lit = writer(f)
-      .write(List(set(K("plugins.oa-core.api-key"), text(T("value:s3cret")))), None, literalConsent = SettingPolicy.LiteralConsent(true))
+      .write(
+        List(set(K("plugins.oa-core.api-key"), text(T("value:s3cret")))),
+        None,
+        literalConsent = SettingPolicy.LiteralConsent(true)
+      )
       .fold(e => fail(e.message.value), identity)
     assert(lit.warnings.exists(_.value.contains("anyone who can read")), s"${lit.warnings}")
 
@@ -230,7 +246,11 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val f = fileWith(Commented)
     val env = ConfigFactory.parseMap(java.util.Map.of("HISTMERSION_BACKUPS_KEEP", "1"))
     val o = writer(f, env)
-      .write(List(set(K("server.port"), num(8123)), set(K("backups.keep"), num(6))), None, literalConsent = SettingPolicy.LiteralConsent(false))
+      .write(
+        List(set(K("server.port"), num(8123)), set(K("backups.keep"), num(6))),
+        None,
+        literalConsent = SettingPolicy.LiteralConsent(false)
+      )
       .fold(e => fail(e.message.value), identity)
     assertEquals(o.restart.map(_._1.relative), List("server.port"))
     assert(o.warnings.exists(_.value.contains("HISTMERSION_BACKUPS_KEEP")), s"${o.warnings}")

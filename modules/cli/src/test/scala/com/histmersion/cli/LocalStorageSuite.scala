@@ -23,20 +23,41 @@ class LocalStorageSuite extends munit.FunSuite:
     None,
     None,
     None,
-    storage =
-      Storage.Report(entries = List(Storage.Entry(Storage.Entry.Key("backups"), Storage.Entry.Label("backups"), Storage.Entry.Group("backups"), Some(Storage.Entry.Path("/srv/backups")), (Some(10L)).map(ByteCount.apply))))
+    storage = Storage.Report(entries =
+      List(
+        Storage.Entry(
+          Storage.Entry.Key("backups"),
+          Storage.Entry.Label("backups"),
+          Storage.Entry.Group("backups"),
+          Some(Storage.Entry.Path("/srv/backups")),
+          (Some(10L)).map(ByteCount.apply)
+        )
+      )
+    )
   )
 
   private def config(originals: Path, install: Path): AppConfig =
     val base = AppConfig.load()
-    base.modify(_.cli).setTo(base.cli.modify(
-        _.calibre).setTo(base.cli.calibre.modify(_.originalsDir).setTo(CalibreCliConfig.OriginalsDir(originals.toString))).modify(_.plugins).setTo(base.cli.plugins.modify(_.installDir).setTo(CliPluginsConfig.InstallDir(install.toString))
+    base
+      .modify(_.cli)
+      .setTo(
+        base.cli
+          .modify(_.calibre)
+          .setTo(base.cli.calibre.modify(_.originalsDir).setTo(CalibreCliConfig.OriginalsDir(originals.toString)))
+          .modify(_.plugins)
+          .setTo(base.cli.plugins.modify(_.installDir).setTo(CliPluginsConfig.InstallDir(install.toString)))
       )
-    )
 
   test("a server on another machine: nothing of this machine is mixed in"):
     val d = Files.createTempDirectory("local-storage")
-    val a = LocalStorage.add(about, Client.ServerUrl("https://histmersion.example.org"), config(d, d), _ => None, UserPaths.OsName("Linux"), None)
+    val a = LocalStorage.add(
+      about,
+      Client.ServerUrl("https://histmersion.example.org"),
+      config(d, d),
+      _ => None,
+      UserPaths.OsName("Linux"),
+      None
+    )
     assertEquals(a, about)
 
   test("on this machine: the originals folder and the install, measured, marked as this machine's"):
@@ -53,7 +74,9 @@ class LocalStorageSuite extends munit.FunSuite:
     val a = LocalStorage.add(
       about,
       Client.ServerUrl("http://127.0.0.1:8000"),
-      cfg.modify(_.runtime).setTo(cfg.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(d.resolve("data").toString))),
+      cfg
+        .modify(_.runtime)
+        .setTo(cfg.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir(d.resolve("data").toString))),
       env,
       UserPaths.OsName("Linux"),
       None
@@ -70,15 +93,25 @@ class LocalStorageSuite extends munit.FunSuite:
     val md = AboutMarkdown.render(a)
     assert(md.contains("- originals folder (cli.calibre.originals-dir) [on this machine]: 1.2 kB · 1 file"), md)
     // the server reports the install already: not listed twice
-    val known = about.modify(_.storage).setTo(about.storage.modify(_.entries).setTo(about.storage.entries :+
-          Storage.Entry(
-            Storage.Entry.Key("install"),
-            Storage.Entry.Label("install"),
-            Storage.Entry.Group("install"),
-            Some(Storage.Entry.Path(d.resolve("install").toAbsolutePath.normalize.toString)),
-            (Some(100L)).map(ByteCount.apply)
+    val known = about
+      .modify(_.storage)
+      .setTo(
+        about.storage
+          .modify(_.entries)
+          .setTo(
+            about.storage.entries :+
+              Storage.Entry(
+                Storage.Entry.Key("install"),
+                Storage.Entry.Label("install"),
+                Storage.Entry.Group("install"),
+                Some(Storage.Entry.Path(d.resolve("install").toAbsolutePath.normalize.toString)),
+                (Some(100L)).map(ByteCount.apply)
+              )
           )
       )
+    val again =
+      LocalStorage.add(known, Client.ServerUrl("http://localhost:8000"), cfg, env, UserPaths.OsName("Linux"), None)
+    assertEquals(
+      again.storage.entries.filter(_.host == Storage.Entry.Host("cli")).map(_.key),
+      List(Storage.Entry.Key("calibre-originals"))
     )
-    val again = LocalStorage.add(known, Client.ServerUrl("http://localhost:8000"), cfg, env, UserPaths.OsName("Linux"), None)
-    assertEquals(again.storage.entries.filter(_.host == Storage.Entry.Host("cli")).map(_.key), List(Storage.Entry.Key("calibre-originals")))

@@ -26,7 +26,6 @@ import com.histmersion.api.catalogue.EventSummary
   */
 private[events] object EventBundleRepo:
 
-
   given given_DbCodec_BundleCorrection: DbCodec[Bundle.Correction] = DbCodec.derived
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
@@ -182,7 +181,13 @@ private[events] object EventBundleRepo:
   /** Who has each of `labels` here, by the query's (label, uid) rows. */
   private def owners(q: String, labels: List[BEventRow.Id])(using DbCon): Map[BEventRow.Id, UUID] =
     if labels.isEmpty then Map.empty
-    else Sql.of(Sql.Text(q), Param.A(labels.distinct.map(l => Param.A.V(l.value)))).frag.query[(BEventRow.Id, UUID)].run().toMap
+    else
+      Sql
+        .of(Sql.Text(q), Param.A(labels.distinct.map(l => Param.A.V(l.value))))
+        .frag
+        .query[(BEventRow.Id, UUID)]
+        .run()
+        .toMap
 
   /** The events here among `ids` → their uids. */
   def eventsNamed(ids: List[BEventRow.Id])(using DbCon): Map[BEventRow.Id, UUID] =
@@ -234,7 +239,9 @@ private[events] object EventBundleRepo:
               catalogue, names, wikidata, central, plus_minus, dating_method)
             VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
               ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
-              ${e.placeId.map(p => placeHere(BPlaceRow.Id(p.value)))}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
+              ${e.placeId.map(p =>
+          placeHere(BPlaceRow.Id(p.value))
+        )}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
               ${e.scale.flatMap(s => EventScale.parse(EventSummary.Scale(s.value)).flatten)},
               ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod})
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
@@ -304,8 +311,11 @@ private[events] object EventBundleRepo:
         .map((p, i, at) => (p, i) -> at)
         .toMap
       w.es.eventCatalogue.foreach { c =>
-        eventIds(c.eventUid).filter(_ => newer(here.get((c.provider.value, c.providerId.value)), Some(Bundle.UpdatedAt(c.retrievedAt.value)))).foreach {
-          id =>
+        eventIds(c.eventUid)
+          .filter(_ =>
+            newer(here.get((c.provider.value, c.providerId.value)), Some(Bundle.UpdatedAt(c.retrievedAt.value)))
+          )
+          .foreach { id =>
             val record = BundleFormat.printer.print(c.record)
             sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                   end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record, retrieved_at)
@@ -318,7 +328,7 @@ private[events] object EventBundleRepo:
                   lat = EXCLUDED.lat, lon = EXCLUDED.lon, vei = EXCLUDED.vei, magnitude = EXCLUDED.magnitude,
                   deaths = EXCLUDED.deaths, historicity = EXCLUDED.historicity, record = EXCLUDED.record,
                   retrieved_at = EXCLUDED.retrieved_at""".update.run()
-        }
+          }
       }
 
   /** The corrections by hand: the newer change wins; an event's follows the event here, a place's the place. */
@@ -341,11 +351,14 @@ private[events] object EventBundleRepo:
         val target: Option[String] =
           if c.targetKind.value == "event" then
             c.targetUid
-              .fold(Option.when(eventExists(BEventRow.Id(c.targetId.value)))(c.targetId.value))(u => eventIds(u).map(_.value))
+              .fold(Option.when(eventExists(BEventRow.Id(c.targetId.value)))(c.targetId.value))(u =>
+                eventIds(u).map(_.value)
+              )
           else Some(placeHere(BPlaceRow.Id(c.targetId.value)).value)
         val at = (c.updatedAt.value :: c.checkedAt.toList.map(_.value)).max
-        target.filter(t => newer(here.get((c.targetKind.value, t, c.field.value)), Some(Bundle.UpdatedAt(at)))).foreach { t =>
-          sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now,
+        target.filter(t => newer(here.get((c.targetKind.value, t, c.field.value)), Some(Bundle.UpdatedAt(at)))).foreach {
+          t =>
+            sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now,
                   status, created_at, updated_at, checked_at)
                 VALUES (${c.targetKind}, $t, ${c.field}, ${c.value}::jsonb, ${c.upstream}, ${c.upstreamValue}::jsonb,
                   ${c.upstreamNow}::jsonb, ${c.status}, ${c.createdAt}::timestamptz, ${c.updatedAt}::timestamptz,

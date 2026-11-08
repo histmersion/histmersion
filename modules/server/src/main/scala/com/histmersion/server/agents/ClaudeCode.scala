@@ -90,7 +90,14 @@ object ClaudeCode:
     val denied = all.filterNot(offered.contains)
     val how = launch match
       case Launch.Agent(dir, name, settings) =>
-        List("--plugin-dir", dir.value, "--agent", s"${AgentGenerator.HeadlessPlugin}:${name.value}", "--settings", settings.value)
+        List(
+          "--plugin-dir",
+          dir.value,
+          "--agent",
+          s"${AgentGenerator.HeadlessPlugin}:${name.value}",
+          "--settings",
+          settings.value
+        )
       case Launch.SystemPrompt(file) => List("--system-prompt-file", file.value)
     (List(
       cfg.command.value,
@@ -120,8 +127,7 @@ object ClaudeCode:
       List("--allowedTools", (offered.map(toolId) ++ web :+ AgentGenerator.ClaudeAnswerTool).mkString(",")) ++
       (if mcpFile.nonEmpty && denied.nonEmpty then List("--disallowedTools", denied.map(toolId).mkString(","))
        else Nil) ++
-      cfg.extraArgs.value.trim.split("\\s+").toList.filter(_.nonEmpty)
-    ).map(Argument(_))
+      cfg.extraArgs.value.trim.split("\\s+").toList.filter(_.nonEmpty)).map(Argument(_))
 
   /** The CLI's environment: the server's with the configured `env` applied (a value set, an empty one removed), then —
     * whatever `env` said — minus an Anthropic key unless asked (a key always wins in `-p` and would bill the API), no
@@ -188,7 +194,11 @@ object ClaudeCode:
   /** The probe's environment: a run's ([[environment]]: no API key unless asked, no claude.ai connectors, the config
     * dir), with the output capped at `maxTokens` and no run token or quota URL.
     */
-  def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: ClaudePlanConfig.ProbeMaxTokens, env: java.util.Map[String, String])(using JvmHome): Unit =
+  def probeEnvironment(
+      cfg: ClaudeCodeConfig,
+      maxTokens: ClaudePlanConfig.ProbeMaxTokens,
+      env: java.util.Map[String, String]
+  )(using JvmHome): Unit =
     environment(cfg, LlmCall.MaxTokens(maxTokens.value), None, GenSettings.QuotaUrl(""), env)
     val _ = env.remove(AgentGenerator.QuotaUrlEnv)
     val _ = env.remove(AgentGenerator.TokenEnv)
@@ -199,8 +209,11 @@ object ClaudeCode:
   def watch(line: CliProcess.Run.Lines, pools: PoolSink): Option[CliProcess.Run.Stopped] =
     if !line.value.contains("rate_limit_event") then None
     else
-      parser.parse(line.value).toOption.filter(_.hcursor.downField("type").as[String].contains("rate_limit_event")).flatMap {
-        j =>
+      parser
+        .parse(line.value)
+        .toOption
+        .filter(_.hcursor.downField("type").as[String].contains("rate_limit_event"))
+        .flatMap { j =>
           val now = System.currentTimeMillis()
           val rs = j.hcursor
             .downField("rate_limit_info")
@@ -209,7 +222,7 @@ object ClaudeCode:
             .getOrElse(Nil)
           pools.record(PlanQuota.PoolId.ClaudePlan, rs)
           pools.blocked(PlanQuota.PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(b._1.value))
-      }
+        }
 
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason: "aborted_streaming"` with an empty
     * answer (§3a P3).
@@ -366,15 +379,14 @@ object ClaudeCode:
         case "rate_limit_event" =>
           c.downField("rate_limit_info")
             .focus
-            .foreach(i =>
-              readings ++= PlanPools.claudeReadings(i, PlanQuota.Source.Run, PlanQuota.Now(now))
-            )
+            .foreach(i => readings ++= PlanPools.claudeReadings(i, PlanQuota.Source.Run, PlanQuota.Now(now)))
         // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>
           val modelUsage = c.downField("modelUsage").focus.flatMap(_.asObject).toList.flatMap(_.toList)
           usage = Some(if modelUsage.nonEmpty then modelUsage.map((_, u) => usageOf(u)).reduce(_ + _)
           else c.downField("usage").focus.fold(TokenUsage.Zero)(usageOf))
-          served = modelUsage.map((m, u) => ModelRef.Model(m) -> usageOf(u)).sortBy((m, u) => (-u.outputTokens.value, m.value))
+          served =
+            modelUsage.map((m, u) => ModelRef.Model(m) -> usageOf(u)).sortBy((m, u) => (-u.outputTokens.value, m.value))
           model = served.headOption.map(_._1).orElse(model)
           result = Some(
             Result(
@@ -389,7 +401,11 @@ object ClaudeCode:
                 .as[List[Json]]
                 .getOrElse(Nil)
                 .map(d => Result.Denials(d.hcursor.downField("tool_name").as[String].getOrElse(d.noSpaces))),
-              errors = c.downField("errors").as[List[Json]].getOrElse(Nil).map(j => Result.Errors(j.asString.getOrElse(j.noSpaces))),
+              errors = c
+                .downField("errors")
+                .as[List[Json]]
+                .getOrElse(Nil)
+                .map(j => Result.Errors(j.asString.getOrElse(j.noSpaces))),
               terminalReason = c.downField("terminal_reason").as[String].toOption.map(Result.TerminalReason(_))
             )
           )
@@ -420,7 +436,9 @@ object ClaudeCode:
     val all = (r.text.value :: r.errors.map(_.value)).mkString(" ")
     val low = all.toLowerCase(java.util.Locale.ROOT)
     Option.when(
-      r.isError.value && (low.contains("usage limit") || low.contains("limit reached") || low.contains("hit your limit"))
+      r.isError.value && (low.contains("usage limit") || low.contains("limit reached") || low.contains(
+        "hit your limit"
+      ))
     ) {
       val epoch = "\\|(\\d{9,11})".r.findFirstMatchIn(all).flatMap(_.group(1).toLongOption)
       Limit(Limit.Message(s"claude -p: ${all.take(300)}"), epoch.map(java.time.Instant.ofEpochSecond))
@@ -443,7 +461,18 @@ object ClaudeCode:
       user: LlmCall.User,
       schema: ResponseSchema[Out]
   ): Either[Limit, AgentResult[Either[AgentFailure, Out]]] =
-    val r = o.result.getOrElse(Result(Result.Subtype("missing"), isError = Result.IsError(true), Result.Text(""), None, Result.Turns(0), None, Nil, Nil))
+    val r = o.result.getOrElse(
+      Result(
+        Result.Subtype("missing"),
+        isError = Result.IsError(true),
+        Result.Text(""),
+        None,
+        Result.Turns(0),
+        None,
+        Nil,
+        Nil
+      )
+    )
     usageLimit(r) match
       case Some(l) => Left(l)
       case None    =>
@@ -455,7 +484,9 @@ object ClaudeCode:
             FinishReason.Error(
               (List(Option(r.text.value).filter(_.nonEmpty), Some(other).filter(_.nonEmpty)).flatten ++
                 r.errors.map(_.value) ++ o.mcpProblem.toList.map(_.value) ++
-                Option.when(r.denials.nonEmpty)(s"denied: ${r.denials.map(_.value).mkString(", ")}").toList).mkString("; ").take(600)
+                Option.when(r.denials.nonEmpty)(s"denied: ${r.denials.map(_.value).mkString(", ")}").toList)
+                .mkString("; ")
+                .take(600)
             )
         // a model that wrote the JSON as text instead of calling the answer tool still answered
         val structured =
@@ -469,7 +500,11 @@ object ClaudeCode:
               AgentIncomplete(
                 raw,
                 finish,
-                Option.when(finish == FinishReason.NaturalStop)(CliOutcomes.textProblem(CliOutcomes.TextProblemText(r.text.value))).flatten
+                Option
+                  .when(finish == FinishReason.NaturalStop)(
+                    CliOutcomes.textProblem(CliOutcomes.TextProblemText(r.text.value))
+                  )
+                  .flatten
               )
             )
         val entries = (ConversationEntry.UserPrompt(user.value) +: o.entries) ++
@@ -478,7 +513,15 @@ object ClaudeCode:
         val calls = if o.served.isEmpty then Seq(LlmCallUsage(o.modelId.map(_.value), o.usage))
         else o.served.map((m, u) => LlmCallUsage(Some(m.value), u))
         Right(
-          AgentResult(answer, math.max(1, r.turns.value), o.toolCalls, finish, o.usage, calls, ConversationHistory(entries))
+          AgentResult(
+            answer,
+            math.max(1, r.turns.value),
+            o.toolCalls,
+            finish,
+            o.usage,
+            calls,
+            ConversationHistory(entries)
+          )
         )
 
   /** The `claude-code` client for `ref`, or why it cannot be used here. */

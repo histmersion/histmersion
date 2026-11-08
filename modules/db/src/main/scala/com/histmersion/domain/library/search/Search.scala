@@ -152,7 +152,10 @@ object Search:
     val qmarks = List.fill(citekeys.size)("?").mkString(", ")
     // inner: find the best chunk (citekey, ord) per source — no ts_headline
     val inner = Sql.raw(Sql.RawText("SELECT DISTINCT ON (citekey) citekey, ord")) ++
-      Sql(Sql.Text(" FROM source_chunks WHERE citekey IN (" + qmarks + ") AND tsv @@ "), citekeys.map(c => Param.S(Param.S.V(c.value)))) ++
+      Sql(
+        Sql.Text(" FROM source_chunks WHERE citekey IN (" + qmarks + ") AND tsv @@ "),
+        citekeys.map(c => Param.S(Param.S.V(c.value)))
+      ) ++
       tsQuery(q) ++ " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
       "' THEN ts_rank_cd(tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(tsv, " ++
       tsQuery(q) ++ ") END DESC, ord"

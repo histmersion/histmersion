@@ -117,8 +117,18 @@ object MapLabels:
   /** What the names hold, for [[Diagnostics]]: the names placed, their per-name state, the shapes. */
   def stats: List[(Key, BoundedCache.Stats)] =
     List(
-      Key("labels.entries") -> BoundedCache.Stats(BoundedCache.Stats.Entries(entries.size), BoundedCache.Stats.MaxEntries(0), BoundedCache.Stats.Weight(0L), BoundedCache.Stats.MaxWeight(0L)),
-      Key("labels.state") -> BoundedCache.Stats(BoundedCache.Stats.Entries(state.size), BoundedCache.Stats.MaxEntries(0), BoundedCache.Stats.Weight(0L), BoundedCache.Stats.MaxWeight(0L)),
+      Key("labels.entries") -> BoundedCache.Stats(
+        BoundedCache.Stats.Entries(entries.size),
+        BoundedCache.Stats.MaxEntries(0),
+        BoundedCache.Stats.Weight(0L),
+        BoundedCache.Stats.MaxWeight(0L)
+      ),
+      Key("labels.state") -> BoundedCache.Stats(
+        BoundedCache.Stats.Entries(state.size),
+        BoundedCache.Stats.MaxEntries(0),
+        BoundedCache.Stats.Weight(0L),
+        BoundedCache.Stats.MaxWeight(0L)
+      ),
       Key("labels.shapes") -> BoundedCache.stats(shapes)
     )
   private def live(k: String): Live = state.getOrElseUpdate(k, Live())
@@ -313,7 +323,10 @@ object MapLabels:
     new DomMarker(
       s.lat,
       s.lon,
-      DomMarker.element(wrapClass.value, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label.value)}</span>""")
+      DomMarker.element(
+        wrapClass.value,
+        s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label.value)}</span>"""
+      )
     )
 
   // ── shapes ─────────────────────────────────────────────────────────────────────────────────────

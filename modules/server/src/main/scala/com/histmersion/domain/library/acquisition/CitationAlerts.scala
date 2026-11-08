@@ -13,9 +13,17 @@ import io.github.iltotore.iron.constraint.any.Pure
   * and an author's newer works.
   */
 trait CitationAlerts:
-  def citing(doi: Doi, since: LocalDate, limit: CitationAlerts.CitingLimit): Either[CitationAlerts.Problem, List[WorkRef]]
+  def citing(
+      doi: Doi,
+      since: LocalDate,
+      limit: CitationAlerts.CitingLimit
+  ): Either[CitationAlerts.Problem, List[WorkRef]]
   def authors(doi: Doi): Either[CitationAlerts.Problem, List[AuthorName]]
-  def byAuthor(authorId: CitationAlerts.ByAuthorAuthorId, since: LocalDate, limit: CitationAlerts.ByAuthorLimit): Either[CitationAlerts.Problem, List[WorkRef]]
+  def byAuthor(
+      authorId: CitationAlerts.ByAuthorAuthorId,
+      since: LocalDate,
+      limit: CitationAlerts.ByAuthorLimit
+  ): Either[CitationAlerts.Problem, List[WorkRef]]
 
 object CitationAlerts:
   type Problem = Problem.T

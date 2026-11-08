@@ -6,7 +6,13 @@ package util.basemap
   */
 import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
-final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
+final case class GebcoPart(
+    name: GebcoPart.Name,
+    url: GebcoPart.Url,
+    grid: GeoTiffGrid,
+    window: GridWindow,
+    runs: List[RowRun]
+):
   def bytes: ByteCount = ByteCount.applyUnsafe(runs.map(_.length.value).sum)
 
   /** The file `run` is kept in, in the fetch's work store. */

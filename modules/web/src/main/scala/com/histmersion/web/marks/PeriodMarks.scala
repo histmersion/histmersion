@@ -22,7 +22,11 @@ object PeriodMarks:
 
   /** A period's target. Pure. */
   def target(from: Year, to: Year): Target =
-    Target(ItemKind.Period, from = Some(Year(math.min(from.value, to.value).toInt)), to = Some(Year(math.max(from.value, to.value).toInt)))
+    Target(
+      ItemKind.Period,
+      from = Some(Year(math.min(from.value, to.value).toInt)),
+      to = Some(Year(math.max(from.value, to.value).toInt))
+    )
 
   /** The settings the timeline opens on, for these years. Pure. */
   def startChanges(from: Year, to: Year): List[(ConfigEdit.Change.Key, ConfigEdit.Change.Value)] =
@@ -59,7 +63,11 @@ object PeriodMarks:
   /** "My periods" at the head of the presets menu: each a button that shows its years, × to remove it; and, while
     * `naming` holds a name, the form that keeps the years shown under it.
     */
-  def section(naming: Var[Option[Bookmark.Label]], current: () => (Year, Year), choose: (Year, Year) => Unit): HtmlElement =
+  def section(
+      naming: Var[Option[Bookmark.Label]],
+      current: () => (Year, Year),
+      choose: (Year, Year) => Unit
+  ): HtmlElement =
     div(
       cls := "tl-my-periods",
       child.maybe <-- mine

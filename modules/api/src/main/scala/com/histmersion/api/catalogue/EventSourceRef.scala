@@ -15,7 +15,8 @@ final case class EventSourceRef(
     via: EventSourceRef.Via = EventSourceRef.Via("citekey"),
     quote: Option[EventSourceRef.Quote] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventSourceRef:
   type Title = Title.T

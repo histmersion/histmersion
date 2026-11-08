@@ -10,4 +10,3 @@ trait Popup:
   def close(): Unit
   def isOpen: Boolean
   def element: Option[dom.HTMLElement]
-

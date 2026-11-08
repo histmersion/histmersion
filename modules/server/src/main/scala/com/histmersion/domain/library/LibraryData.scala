@@ -42,7 +42,8 @@ final class LibraryData(referrers: SourceReferrers) extends DataContribution:
   override val stores: List[Location] = List(Location.IngestOriginals, Location.Spool, Location.CorpusFolder)
 
   /** A restore that would drop sources is refused unless asked. */
-  override val backup: BackupShare = BackupShare(guarded = List(GuardedTable(TableName("sources"), GuardedTable.Noun("source"))))
+  override val backup: BackupShare =
+    BackupShare(guarded = List(GuardedTable(TableName("sources"), GuardedTable.Noun("source"))))
 
   /** The sources and what they own. */
   override val carried: List[CarriedKind] = LibraryExchange.carried(referrers)
@@ -64,7 +65,6 @@ final class LibraryData(referrers: SourceReferrers) extends DataContribution:
   override val checks: List[CheckRule] = SourcesData.checks(owner)
 
   def figures(using DbCon): DataFigures = DataFigures(SourcesData.figures)
-
 
 object LibraryData:
   val owner: DataOwner = DataOwner("library")

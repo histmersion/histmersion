@@ -48,7 +48,11 @@ class RenameHttpSuite extends DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.auth)
+      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)

@@ -14,7 +14,6 @@ enum Ident derives CanEqual:
 
 object Ident:
 
-
   object Citekey:
     type Value = Value.T
     object Value extends Newtype[String, Pure]

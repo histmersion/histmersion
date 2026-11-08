@@ -34,7 +34,8 @@ object Event:
     val Triggers = "triggers"
     val RespondsTo = "responds_to"
     val FallsWithin = "falls_within"
-    val allen: Set[Wire] = Set(Wire(Before), Wire(Meets), Wire(Overlaps), Wire(During), Wire(Starts), Wire(Finishes), Wire(Equals))
+    val allen: Set[Wire] =
+      Set(Wire(Before), Wire(Meets), Wire(Overlaps), Wire(During), Wire(Starts), Wire(Finishes), Wire(Equals))
     val causal: Set[Wire] = Set(Wire(Causes), Wire(Enables), Wire(Triggers), Wire(RespondsTo), Wire(FallsWithin))
     val all: List[Wire] =
       List(

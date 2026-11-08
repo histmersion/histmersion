@@ -3,7 +3,6 @@ package api.library
 import com.histmersion.api.given
 object CandidatesMarkdown:
 
-
   private def counts(cs: List[CandidateCount]): String =
     if cs.isEmpty then ("none yet") else (cs.map(c => s"${c.count} ${c.state}").mkString(", "))
 
@@ -13,7 +12,8 @@ object CandidatesMarkdown:
     val rows = l.candidates.map { c =>
       val who = c.authors.headOption.fold("")(a => s"$a${if c.authors.size > 1 then " et al." else ""}, ")
       s"- **#${c.id}** `${c.doi}` — ${c.title} ($who${c.year.fold("n.d.")(_.toString)}${c.venue.fold("")(v => s", $v")})" +
-        (if ((c.isOa) == Source.Candidate.IsOa(true)) then " · open access" else "") + (if l.goal.isEmpty then s" · goal `${c.goal}`" else "") +
+        (if (c.isOa) == Source.Candidate.IsOa(true) then " · open access"
+         else "") + (if l.goal.isEmpty then s" · goal `${c.goal}`" else "") +
         s"\n  found by ${c.foundBy.mkString("; ")} · first seen ${c.firstSeen.value.take(10)}" +
         c.abstractText.fold("")(a => s"\n  ${a.value.take(400)}${if a.value.length > 400 then "…" else ""}")
     }
@@ -28,7 +28,9 @@ object CandidatesMarkdown:
     }
     val left = if s.skipped.isEmpty then ""
     else " Left out: " + s.skipped.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ") + "."
-    ((s"# Candidate sweep of goal `${s.goal}`${if ((s.dryRun) == CandidateSweep.DryRun(true)) then " (dry run: nothing stored)" else ""}" :: "" ::
+    ((s"# Candidate sweep of goal `${s.goal}`${
+        if (s.dryRun) == CandidateSweep.DryRun(true) then " (dry run: nothing stored)" else ""
+      }" :: "" ::
       s"${s.found} work(s) found by ${s.watches.size} watch(es): ${s.added} new candidate(s), ${s.again} found again.$left " +
       s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" ::
       (s.notes.map(n => s"- **$n**") ++ (if s.notes.isEmpty then Nil else List("")) ++ w)).mkString("\n"))

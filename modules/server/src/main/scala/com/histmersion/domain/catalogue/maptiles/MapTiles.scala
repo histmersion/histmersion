@@ -15,6 +15,7 @@ object MapTiles:
   object Etag extends Newtype[String, Pure]
   type TileKey = TileKey.T
   object TileKey extends Newtype[String, Pure]
+
   /** A tile's caching rule: the browser asks again each time and the server answers 304 while the data's version is
     * unchanged — never a stale tile after a write, a few bytes when nothing changed.
     */
@@ -28,17 +29,28 @@ object MapTiles:
     * (the rest — a filter's paging, another layer's options — left out, so they never split one tile into many) and the
     * versions of the groups it reads.
     */
-  def key(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, versions: Map[TileRepo.GroupName, UndatedBuild.Version]): TileKey =
+  def key(
+      layer: TileLayer,
+      c: TileCoord,
+      q: TilesApi.TileQuery,
+      versions: Map[TileRepo.GroupName, UndatedBuild.Version]
+  ): TileKey =
     val f = q.filter
     val time = f.period.fold("")(p => s"${p.start}..${p.end}")
     val undated = if q.withUndated then "undated" else ""
     val params = layer match
-      case TileLayer.Sites  => List(time, q.siteType.fold("")(_.value), undated)
-      case TileLayer.Media  =>
+      case TileLayer.Sites => List(time, q.siteType.fold("")(_.value), undated)
+      case TileLayer.Media =>
         List(time, q.kind.fold("")(_.value), q.provider.fold("")(_.value), q.license.fold("")(_.value))
       case TileLayer.Events =>
         List(
-          f.modify(_.limit).setTo(Filter.Limit(0)).modify(_.offset).setTo(Filter.Offset(0)).modify(_.sort).setTo(Filter().sort).toString,
+          f.modify(_.limit)
+            .setTo(Filter.Limit(0))
+            .modify(_.offset)
+            .setTo(Filter.Offset(0))
+            .modify(_.sort)
+            .setTo(Filter().sort)
+            .toString,
           q.kind.fold("")(_.value),
           q.tier.fold("")(_.value),
           q.historicity.fold("")(_.value),

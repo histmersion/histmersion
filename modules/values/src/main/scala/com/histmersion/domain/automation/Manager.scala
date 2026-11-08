@@ -19,7 +19,6 @@ object Manager:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
@@ -33,6 +32,5 @@ object Manager:
   object State:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-
 
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

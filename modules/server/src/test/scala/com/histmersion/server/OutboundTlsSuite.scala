@@ -24,7 +24,6 @@ import com.histmersion.domain.library.acquisition.Http
 class OutboundTlsSuite extends munit.FunSuite:
   private given CanEqual[X509Certificate, X509Certificate] = CanEqual.derived
 
-
   private def resource(name: String): String =
     new String(getClass.getResourceAsStream(s"/tls/$name").readAllBytes(), "US-ASCII")
 
@@ -41,12 +40,18 @@ class OutboundTlsSuite extends munit.FunSuite:
     scala.util.Try(CertPathValidator.getInstance("PKIX").validate(path, params)).isSuccess
 
   test("PEM blocks parse into certificates; junk around them is skipped"):
-    val cs = OutboundTls.certificates(HttpPolicy.PemText("keychain: \"/x\"\n" + rootPem + "\nnot a cert\n" + intermediatePem))
+    val cs =
+      OutboundTls.certificates(HttpPolicy.PemText("keychain: \"/x\"\n" + rootPem + "\nnot a cert\n" + intermediatePem))
     assertEquals(
       cs.map(subject).map(_.takeWhile(_ != ',')),
       List("CN=HARICA TLS RSA Root CA 2021", "CN=GEANT TLS RSA 1")
     )
-    assertEquals(OutboundTls.certificates(HttpPolicy.PemText("-----BEGIN CERTIFICATE-----\nnot base64!\n-----END CERTIFICATE-----")), Nil)
+    assertEquals(
+      OutboundTls.certificates(
+        HttpPolicy.PemText("-----BEGIN CERTIFICATE-----\nnot base64!\n-----END CERTIFICATE-----")
+      ),
+      Nil
+    )
 
   test("the merged store keeps every JDK root and adds the extra one; the chain then validates"):
     val root = OutboundTls.certificates(rootPem).head
@@ -66,7 +71,11 @@ class OutboundTlsSuite extends munit.FunSuite:
 
   test("system trust on macOS reads the system keychains with `security`"):
     val seen = collection.mutable.Buffer.empty[List[String]]
-    val got = OutboundTls.configure(TlsConfig(systemTrust = TlsConfig.SystemTrust(true), extraCaFile = TlsConfig.ExtraCaFile("")), HttpPolicy.OsName("Mac OS X"), fakeRun(seen))
+    val got = OutboundTls.configure(
+      TlsConfig(systemTrust = TlsConfig.SystemTrust(true), extraCaFile = TlsConfig.ExtraCaFile("")),
+      HttpPolicy.OsName("Mac OS X"),
+      fakeRun(seen)
+    )
     val (_, line) = got.getOrElse(fail("configured"))
     assertEquals(seen.headOption.map(_.take(4)), Some(List("/usr/bin/security", "find-certificate", "-a", "-p")))
     assert(line.value.contains("macOS system keychains: 1 root(s)"), line)
@@ -75,14 +84,26 @@ class OutboundTlsSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("tls")
     val pem = dir.resolve("extra.pem")
     Files.writeString(pem, rootPem.value)
-    val (_, ok) = OutboundTls.configure(TlsConfig(TlsConfig.SystemTrust(false), TlsConfig.ExtraCaFile(pem.toString)), HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
+    val (_, ok) = OutboundTls
+      .configure(
+        TlsConfig(TlsConfig.SystemTrust(false), TlsConfig.ExtraCaFile(pem.toString)),
+        HttpPolicy.OsName("Linux")
+      )
+      .getOrElse(fail("configured"))
     assert(ok.value.contains(s"$pem: 1 root(s)"), ok)
     val missing = TlsConfig.ExtraCaFile(dir.resolve("nope.pem").toString)
-    val (_, bad) = OutboundTls.configure(TlsConfig(TlsConfig.SystemTrust(false), missing), HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
+    val (_, bad) = OutboundTls
+      .configure(TlsConfig(TlsConfig.SystemTrust(false), missing), HttpPolicy.OsName("Linux"))
+      .getOrElse(fail("configured"))
     assert(bad.value.contains(s"$missing: NOT used"), bad)
     val empty = dir.resolve("empty.pem")
     Files.writeString(empty, "nothing here")
-    val (_, none) = OutboundTls.configure(TlsConfig(TlsConfig.SystemTrust(false), TlsConfig.ExtraCaFile(empty.toString)), HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
+    val (_, none) = OutboundTls
+      .configure(
+        TlsConfig(TlsConfig.SystemTrust(false), TlsConfig.ExtraCaFile(empty.toString)),
+        HttpPolicy.OsName("Linux")
+      )
+      .getOrElse(fail("configured"))
     assert(none.value.contains("holds no PEM certificate"), none)
 
   test("off by default: no custom context, the HTTP client keeps its own"):
@@ -101,8 +122,15 @@ class OutboundTlsSuite extends munit.FunSuite:
       "live, macOS only"
     )
     val cfg = AppConfig.load().acquire
-    val plain = SttpHttp(cfg, tries = PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
+    val plain =
+      SttpHttp(cfg, tries = PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
+        .bytes(Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
     assert(plain.isLeft, s"premise: with the JDK's roots alone the handshake fails, got $plain")
     val tls = OutboundTls.configure(cfg.tls.modify(_.systemTrust).setTo(TlsConfig.SystemTrust(true))).map(_._1)
-    val fixed = SttpHttp(cfg, tries = PolicyHttp.Tries(1), tls = tls, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
+    val fixed = SttpHttp(
+      cfg,
+      tries = PolicyHttp.Tries(1),
+      tls = tls,
+      clock = () => java.time.Instant.now(java.time.Clock.systemUTC())
+    ).bytes(Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
     assert(fixed.isRight, s"with the system's roots: $fixed")

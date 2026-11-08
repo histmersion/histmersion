@@ -27,7 +27,6 @@ object PeriodO:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   type MinYear = MinYearValue
   type MinYearValue = MinYearNumber
   val MinYearValue: MinYearNumber.type = MinYearNumber
@@ -95,7 +94,16 @@ object PeriodO:
           strings(Wire("parents")).map((k, v) => PeriodODataset.ParentsKey(k) -> PeriodODataset.ParentsValue(v)).toMap,
           read.flatMap(_._2),
           ps,
-          overlay.downField("version").focus.flatMap(_.asNumber).flatMap((refactorCallback2 => (refactorCallback2.toInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))))
+          overlay
+            .downField("version")
+            .focus
+            .flatMap(_.asNumber)
+            .flatMap(
+              (
+                  refactorCallback2 =>
+                    (refactorCallback2.toInt).map(refactorValue3 => PeriodODataset.Version(refactorValue3))
+              )
+            )
         )
     }
 
@@ -129,7 +137,9 @@ object PeriodO:
       val others = judged.filter(o => o.id != d.id && o.region == d.region)
       val longest = others.map(span).maxOption.getOrElse(0L)
       val crossesEra = (d.period.start).value < 0 && (d.period.end).value > 0
-      if !crossesEra || umbrellas.contains(d.id) || others.size < MinSiblings.value || span(d) < MinImplausibleSpan.value ||
+      if !crossesEra || umbrellas.contains(d.id) || others.size < MinSiblings.value || span(
+          d
+        ) < MinImplausibleSpan.value ||
         span(d) <= SpanFactor.value * longest
       then Right(d)
       else
@@ -138,8 +148,10 @@ object PeriodO:
             SkippedPeriod.Id(d.id.value),
             SkippedPeriod.Label(d.label.value),
             Period.Skip.ImplausibleSpan,
-            SkippedPeriod.Detail(s"spans ${span(d)} years (${d.period.start} → ${d.period.end}), more than $SpanFactor× the longest " +
-              s"other ${d.region.fold("unlocated")(_.value)} period of its authority ($longest years)")
+            SkippedPeriod.Detail(
+              s"spans ${span(d)} years (${d.period.start} → ${d.period.end}), more than $SpanFactor× the longest " +
+                s"other ${d.region.fold("unlocated")(_.value)} period of its authority ($longest years)"
+            )
           )
         )
     }
@@ -178,25 +190,48 @@ object PeriodO:
         .filter(_.nonEmpty)
       Option.when(labels.nonEmpty)(labels.mkString(", "))
     }
-    def skip(reason: Period.Skip, detail: SkippedPeriod.Detail) = Left(SkippedPeriod(SkippedPeriod.Id(id.value), SkippedPeriod.Label(label), reason, detail))
+    def skip(reason: Period.Skip, detail: SkippedPeriod.Detail) = Left(
+      SkippedPeriod(SkippedPeriod.Id(id.value), SkippedPeriod.Label(label), reason, detail)
+    )
     def outside(y: Year) = (y).value < (MinYear).value || (y).value > (MaxYear).value
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
         skip(Period.Skip.OutOfRange, SkippedPeriod.Detail(s"$s → $e lies outside $MinYear..$MaxYear"))
       case (Some(s), Some(e)) if s <= e =>
-        Right(Definition(id, HistoricalPeriod.Label(label), Period(s, e), region.map(HistoricalPeriod.Region(_)), str(c, Wire("broader")).map(HistoricalPeriod.Id(_))))
-      case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, SkippedPeriod.Detail(s"starts after it ends ($s > $e)"))
-      case _                  => skip(Period.Skip.NoSpan, SkippedPeriod.Detail("no readable start or stop year"))
+        Right(
+          Definition(
+            id,
+            HistoricalPeriod.Label(label),
+            Period(s, e),
+            region.map(HistoricalPeriod.Region(_)),
+            str(c, Wire("broader")).map(HistoricalPeriod.Id(_))
+          )
+        )
+      case (Some(s), Some(e)) =>
+        skip(Period.Skip.EndsBeforeStart, SkippedPeriod.Detail(s"starts after it ends ($s > $e)"))
+      case _ => skip(Period.Skip.NoSpan, SkippedPeriod.Detail("no readable start or stop year"))
 
   private def bound(in: ACursor, outer: Wire): Option[Year] =
-    (yearAt(in, Wire("year")).orElse(yearAt(in, Wire((outer).value)))).map(refactorValue7 => Year((refactorValue7).value))
+    (yearAt(in, Wire("year"))
+      .orElse(yearAt(in, Wire((outer).value))))
+      .map(refactorValue7 => Year((refactorValue7).value))
 
   private def yearAt(c: ACursor, key: Wire): Option[Year] =
     c.downField((key).value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap(isoYear)
 
-  private def str(c: ACursor, key: Wire): Option[String] = c.downField((key).value).focus.flatMap((refactorCallback => (refactorCallback.asString).map(refactorValue4 => (refactorValue4))))
+  private def str(c: ACursor, key: Wire): Option[String] = c
+    .downField((key).value)
+    .focus
+    .flatMap((refactorCallback => (refactorCallback.asString).map(refactorValue4 => (refactorValue4))))
   private def int(c: ACursor, key: Wire): Option[Year] =
-    c.downField((key).value).focus.flatMap(j => (j.asNumber.flatMap(_.toInt).orElse(j.asString.flatMap(_.toIntOption))).map(refactorValue12 => Year(refactorValue12)))
+    c.downField((key).value)
+      .focus
+      .flatMap(j =>
+        (j.asNumber
+          .flatMap(_.toInt)
+          .orElse(j.asString.flatMap(_.toIntOption)))
+          .map(refactorValue12 => Year(refactorValue12))
+      )
 
   def toPeriods(
       ds: PeriodODataset,
@@ -213,16 +248,22 @@ object PeriodO:
             a.id,
             a.title,
             Some(HistoricalPeriod.Authority(s"PeriodO ${a.id}")),
-            Period(a.periods.map(_.period.start).minBy(y => (y.value: Long)), a.periods.map(_.period.end).maxBy(y => (y.value: Long))),
+            Period(
+              a.periods.map(_.period.start).minBy(y => (y.value: Long)),
+              a.periods.map(_.period.end).maxBy(y => (y.value: Long))
+            ),
             parentId = existing.get(a.id).flatten.map(p => HistoricalPeriod.ParentId(p.value))
           )
         }
     val rows = defs.map { (a, d) =>
-      val parent = ds.parents.get(PeriodODataset.ParentsKey(d.id.value)).map(v => HistoricalPeriod.Id(v.value)).filter(ids.contains) match
+      val parent = ds.parents
+        .get(PeriodODataset.ParentsKey(d.id.value))
+        .map(v => HistoricalPeriod.Id(v.value))
+        .filter(ids.contains) match
         case curated @ Some(_) => curated
         case None              =>
           val own = d.broader.filter(ids.contains).orElse(Option.when((roots))(a.id))
-          if ((ds.curated) == (true)) then own else existing.getOrElse(d.id, own)
+          if (ds.curated) == (true) then own else existing.getOrElse(d.id, own)
       HistoricalPeriod(
         d.id,
         d.label,
@@ -250,7 +291,12 @@ object PeriodO:
     rows.foreach(r => visit(r, Set(r.id)))
     out.values.toList
 
-  final case class Authority(id: HistoricalPeriod.Id, title: HistoricalPeriod.Label, year: Option[Year], periods: List[Definition]):
+  final case class Authority(
+      id: HistoricalPeriod.Id,
+      title: HistoricalPeriod.Label,
+      year: Option[Year],
+      periods: List[Definition]
+  ):
     /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
     def cite(periodId: HistoricalPeriod.Id): HistoricalPeriod.Authority =
       HistoricalPeriod.Authority(s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}")

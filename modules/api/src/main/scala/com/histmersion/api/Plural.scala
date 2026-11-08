@@ -18,9 +18,12 @@ object Plural:
 
   type CountN = Count
   val CountN: Count.type = Count
-  export Noun.{Singular as CountSingular, Plural as CountPlural}
+  export Noun.{Plural as CountPlural, Singular as CountSingular}
 
   def noun(n: Count, singular: Noun.Singular, plural: Noun.Plural = Noun.Plural("")): Noun.Form =
-    if n.value == 1 then Noun.Form((singular).value) else if (plural).value.nonEmpty then Noun.Form((plural).value) else Noun.Form((singular).value + "s")
+    if n.value == 1 then Noun.Form((singular).value)
+    else if (plural).value.nonEmpty then Noun.Form((plural).value)
+    else Noun.Form((singular).value + "s")
 
-  def count(n: CountN, singular: Plural.CountSingular, plural: Plural.CountPlural = Plural.CountPlural("")): Phrase = Phrase(s"$n ${noun(n, singular, plural)}")
+  def count(n: CountN, singular: Plural.CountSingular, plural: Plural.CountPlural = Plural.CountPlural("")): Phrase =
+    Phrase(s"$n ${noun(n, singular, plural)}")

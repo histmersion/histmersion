@@ -48,13 +48,27 @@ class StorageFiguresSuite extends munit.FunSuite:
     val basemap = storage.store(Location.Basemap)
     basemap.put(Store.Key.applyUnsafe("vector.pmtiles"), ByteSource.Content(Array.fill[Byte](2000)(1))): Unit
     basemap.put(Store.Key.applyUnsafe(".terrain.part/0001"), ByteSource.Content(Array.fill[Byte](1000)(1))): Unit
-    basemap.put(Store.Key.applyUnsafe("vector-cache/tiles/3/0/0.mvt"), ByteSource.Content(Array.fill[Byte](3000)(1))): Unit
+    basemap.put(
+      Store.Key.applyUnsafe("vector-cache/tiles/3/0/0.mvt"),
+      ByteSource.Content(Array.fill[Byte](3000)(1))
+    ): Unit
     val r = figures.measure(storage, Nil, cfg, None, Right(Nil), MeasureBudget.unlimited)
-    val entry = r.entries.find(_.key == com.histmersion.api.maintenance.Storage.Entry.Key("basemap")).getOrElse(fail(r.entries.map(_.key).toString))
+    val entry = r.entries
+      .find(_.key == com.histmersion.api.maintenance.Storage.Entry.Key("basemap"))
+      .getOrElse(fail(r.entries.map(_.key).toString))
     assertEquals(entry.detail, Some("vector 2.0 kB · terrain download unfinished 1.0 kB · map cache 3.0 kB"))
     assertEquals((entry.bytes, entry.files), (Some(6000L), Some(3L)))
     assertEquals(
-      r.entries.find(_.key == com.histmersion.api.maintenance.Storage.Entry.Key("backups")).map(_.shrink.map(_.value: String)),
-      Some(com.histmersion.api.maintenance.Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(cfg.backups.keep.value)).map(_.value: String))
+      r.entries
+        .find(_.key == com.histmersion.api.maintenance.Storage.Entry.Key("backups"))
+        .map(_.shrink.map(_.value: String)),
+      Some(
+        com.histmersion.api.maintenance.Storage.Advice
+          .shrink(
+            com.histmersion.api.maintenance.Storage.Entry.Key("backups"),
+            com.histmersion.api.maintenance.Storage.Advice.Keep(cfg.backups.keep.value)
+          )
+          .map(_.value: String)
+      )
     )
     assertEquals(r.problems, Nil)

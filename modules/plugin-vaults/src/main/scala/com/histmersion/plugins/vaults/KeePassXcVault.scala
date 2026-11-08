@@ -21,7 +21,8 @@ final class KeePassXcVault(
     ykman: Option[Vaults.Path],
     yubikeyTimeout: FiniteDuration,
     log: Plugin.Log
-)(using processes: Processes) extends Secret.Vault:
+)(using processes: Processes)
+    extends Secret.Vault:
 
   /** The YubiKey that opened the database last, tried first next time (a resolve may run on any thread). */
   private val lastOpened = new java.util.concurrent.atomic.AtomicReference[Option[YubiKey.Slot]](None)
@@ -46,7 +47,9 @@ final class KeePassXcVault(
     * single reference (or one whose entry holds a line break) is read as [[resolve]] reads it; a failed unlock is every
     * reference's error, a missing entry only its own.
     */
-  override def resolveAll(refs: List[Secret.Vault.ResolveRef]): Map[Secret.Vault.ResolveRef, Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2]] =
+  override def resolveAll(
+      refs: List[Secret.Vault.ResolveRef]
+  ): Map[Secret.Vault.ResolveRef, Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2]] =
     val asked = refs.distinct
     val requests = asked.map(r => r -> request(r))
     val batched = requests.collect {
@@ -57,11 +60,19 @@ final class KeePassXcVault(
     else single ++ session(batched)
 
   /** `<entry>#<attribute>` as two arguments that cannot read as options. */
-  private def request(ref: Secret.Vault.ResolveRef): Either[Secret.Vault.ResolveResultPart1, (KeePassXcSession.Entry, Vaults.Field)] =
+  private def request(
+      ref: Secret.Vault.ResolveRef
+  ): Either[Secret.Vault.ResolveResultPart1, (KeePassXcSession.Entry, Vaults.Field)] =
     val (entry, attr) = Vaults.entryAndField(ref, attribute)
     for
-      _ <- Subprocess.plain(Vaults.Operation("the entry"), Subprocess.Text(entry.value)).left.map(e => Secret.Vault.ResolveResultPart1(e.value))
-      _ <- Subprocess.plain(Vaults.Operation("the attribute"), Subprocess.Text(attr.value)).left.map(e => Secret.Vault.ResolveResultPart1(e.value))
+      _ <- Subprocess
+        .plain(Vaults.Operation("the entry"), Subprocess.Text(entry.value))
+        .left
+        .map(e => Secret.Vault.ResolveResultPart1(e.value))
+      _ <- Subprocess
+        .plain(Vaults.Operation("the attribute"), Subprocess.Text(attr.value))
+        .left
+        .map(e => Secret.Vault.ResolveResultPart1(e.value))
     yield (entry, attr)
 
   private def stdin = password.map(p => Processes.RunStdin(p.value + "\n"))
@@ -70,8 +81,14 @@ final class KeePassXcVault(
     keyFile.toList.flatMap(k => List("-k", k.value)) ++ yk.toList.flatMap(y => List("-y", y.shown.value)) ++
       (if password.isEmpty then List("--no-password") else Nil)
 
-  private def argv(attr: Vaults.Field, entry: KeePassXcSession.Entry, yk: Option[YubiKey.Slot]): List[Processes.RunArgv] =
-    (List(exe.value, "show", "-q", "-a", attr.value) ++ unlocking(yk) ++ List(db.value, entry.value)).map(a => Processes.RunArgv(a))
+  private def argv(
+      attr: Vaults.Field,
+      entry: KeePassXcSession.Entry,
+      yk: Option[YubiKey.Slot]
+  ): List[Processes.RunArgv] =
+    (List(exe.value, "show", "-q", "-a", attr.value) ++ unlocking(yk) ++ List(db.value, entry.value)).map(a =>
+      Processes.RunArgv(a)
+    )
 
   final private case class Opened(session: Subprocess.Session, prompt: KeePassXcSession.Prompt)
 
@@ -79,30 +96,53 @@ final class KeePassXcVault(
     * `Left` = it could not start or did not answer within `wait` (killed). The password line is written alone, before
     * any request: the unlock reads stdin ahead of the prompt.
     */
-  private def open(yk: Option[YubiKey.Slot], wait: FiniteDuration): Either[Secret.Vault.ResolveResultPart1, Either[Subprocess.Result, Opened]] =
+  private def open(
+      yk: Option[YubiKey.Slot],
+      wait: FiniteDuration
+  ): Either[Secret.Vault.ResolveResultPart1, Either[Subprocess.Result, Opened]] =
     Subprocess.Session
-      .start((List(exe.value, "open", "-q") ++ unlocking(yk) ++ List(db.value)).map(a => Processes.StartArgv(a)), Map.empty)
+      .start(
+        (List(exe.value, "open", "-q") ++ unlocking(yk) ++ List(db.value)).map(a => Processes.StartArgv(a)),
+        Map.empty
+      )
       .left
       .map(e => Secret.Vault.ResolveResultPart1(e.toString))
       .flatMap { s =>
         password.foreach(pw => s.send(Processes.Session.SendLine(pw.value)))
-        val up = s.awaitOut(wait)(o => Processes.Session.AwaitOutReadyResult(KeePassXcSession.prompt(Processes.Session.OutResult(o.value)).isDefined)).value
+        val up = s
+          .awaitOut(wait)(o =>
+            Processes.Session
+              .AwaitOutReadyResult(KeePassXcSession.prompt(Processes.Session.OutResult(o.value)).isDefined)
+          )
+          .value
         KeePassXcSession.prompt(s.out) match
           case Some(p) if up && s.alive.value => Right(Right(Opened(s, p)))
           case _ if !s.alive.value            =>
-            Right(Left(Subprocess.Result(Processes.Result.Exit(s.exit(timeout).fold(-1)(_.value)), Processes.Result.Out(""), Processes.Result.Err(s.err.value))))
+            Right(
+              Left(
+                Subprocess.Result(
+                  Processes.Result.Exit(s.exit(timeout).fold(-1)(_.value)),
+                  Processes.Result.Out(""),
+                  Processes.Result.Err(s.err.value)
+                )
+              )
+            )
           case _ =>
             val _ = s.close(1.second)
             Left(Secret.Vault.ResolveResultPart1(s"keepassxc-cli did not answer within ${wait.toSeconds} s"))
       }
 
-  private def session(batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]): Map[Secret.Vault.ResolveRef, Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2]] =
+  private def session(
+      batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]
+  ): Map[Secret.Vault.ResolveRef, Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2]] =
     val what = s"open $file for ${batched.size} references"
     val opened: Either[Secret.Vault.ResolveResultPart1, Opened] =
       if yubikeys.nonEmpty then
-        withYubiKey(what, s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})", KeePassXcSession.Entry(""))(yk =>
-          open(Some(yk), yubikeyTimeout)
-        )
+        withYubiKey(
+          what,
+          s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})",
+          KeePassXcSession.Entry("")
+        )(yk => open(Some(yk), yubikeyTimeout))
       else
         open(None, timeout) match
           case Left(why)      => Left(Secret.Vault.ResolveResultPart1(s"$name: could not $what (${why.value})"))
@@ -110,12 +150,17 @@ final class KeePassXcVault(
             Left(
               Secret.Vault.ResolveResultPart1(
                 classify(KeePassXcSession.Entry(""))(r.err.value.toLowerCase(java.util.Locale.ROOT))
-                  .getOrElse(s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(YubiKey.Problem(r.err.value))})")
+                  .getOrElse(
+                    s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(YubiKey.Problem(r.err.value))})"
+                  )
               )
             )
           case Right(Right(o)) => Right(o)
     opened match
-      case Left(e)  => batched.map((r, _) => r -> (Left(e): Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2])).toMap
+      case Left(e) =>
+        batched
+          .map((r, _) => r -> (Left(e): Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2]))
+          .toMap
       case Right(o) =>
         try readAll(o, batched)
         finally
@@ -124,7 +169,10 @@ final class KeePassXcVault(
 
   /** One request after another, each answered before the next is sent; a session that stops answering fails the rest.
     */
-  private def readAll(o: Opened, batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]): Map[Secret.Vault.ResolveRef, Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2]] =
+  private def readAll(
+      o: Opened,
+      batched: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))]
+  ): Map[Secret.Vault.ResolveRef, Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2]] =
     val s = o.session
     @tailrec def read(
         rest: List[(Secret.Vault.ResolveRef, (KeePassXcSession.Entry, Vaults.Field))],
@@ -135,12 +183,21 @@ final class KeePassXcVault(
       (rest, broken) match
         case (Nil, _)                    => acc
         case ((ref, _) :: tail, Some(b)) =>
-          read(tail, acc.updated(ref, Left(Secret.Vault.ResolveResultPart1(s"$name: could not read '$ref' ($b)"))), KeePassXcSession.SegmentFrom(0), broken)
+          read(
+            tail,
+            acc.updated(ref, Left(Secret.Vault.ResolveResultPart1(s"$name: could not read '$ref' ($b)"))),
+            KeePassXcSession.SegmentFrom(0),
+            broken
+          )
         case ((ref, (entry, attr)) :: tail, None) =>
           val cmd = KeePassXcSession.command(attr, entry)
           val errMark = s.err.value.length
           val answered = s.send(Processes.Session.SendLine(cmd.value)).left.map(e => e.value).flatMap { _ =>
-            val _ = s.awaitOut(timeout)(out => Processes.Session.AwaitOutReadyResult(KeePassXcSession.segment(Processes.Session.OutResult(out.value), mark, o.prompt).isDefined))
+            val _ = s.awaitOut(timeout)(out =>
+              Processes.Session.AwaitOutReadyResult(
+                KeePassXcSession.segment(Processes.Session.OutResult(out.value), mark, o.prompt).isDefined
+              )
+            )
             val out = s.out
             KeePassXcSession
               .segment(out, mark, o.prompt)
@@ -150,7 +207,12 @@ final class KeePassXcVault(
           }
           answered match
             case Left(broken) =>
-              read(tail, acc.updated(ref, Left(Secret.Vault.ResolveResultPart1(s"$name: could not read '$ref' ($broken)"))), mark, Some(broken))
+              read(
+                tail,
+                acc.updated(ref, Left(Secret.Vault.ResolveResultPart1(s"$name: could not read '$ref' ($broken)"))),
+                mark,
+                Some(broken)
+              )
             case Right((seg, next)) =>
               val v = KeePassXcSession.answer(seg, cmd)
               val result: Either[Secret.Vault.ResolveResultPart1, Secret.Vault.ResolveResultPart2] =
@@ -175,7 +237,11 @@ final class KeePassXcVault(
       Subprocess.run(List(y.value, "list", "--serials").map(a => Processes.RunArgv(a)), Map.empty, None, timeout) match
         case Right(r) if r.exit.value == 0 => Some(YubiKey.serials(YubiKey.SerialsOut(r.out.value)))
         case Right(r)                      =>
-          log.info(Plugin.Log.InfoMessage(s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(Subprocess.Problem(r.err.value))}): trying the YubiKeys in order"));
+          log.info(
+            Plugin.Log.InfoMessage(
+              s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(Subprocess.Problem(r.err.value))}): trying the YubiKeys in order"
+            )
+          );
           None
         case Left(why) => log.info(Plugin.Log.InfoMessage(s"$why: trying the YubiKeys in order")); None
     }
@@ -196,10 +262,13 @@ final class KeePassXcVault(
       Left(Secret.Vault.ResolveResultPart1(s"$name: could not $what with a YubiKey — $parts$tail"))
     if planned.isEmpty then
       val seen = found.fold("")(s =>
-        if s.isEmpty then " (ykman sees no YubiKey)" else s" (ykman sees ${s.toList.sortBy(x => x.value: Long).mkString(", ")})"
+        if s.isEmpty then " (ykman sees no YubiKey)"
+        else s" (ykman sees ${s.toList.sortBy(x => x.value: Long).mkString(", ")})"
       )
       Left(
-        Secret.Vault.ResolveResultPart1(s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in")
+        Secret.Vault.ResolveResultPart1(
+          s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in"
+        )
       )
     else
       @annotation.tailrec
@@ -207,8 +276,10 @@ final class KeePassXcVault(
         case Nil        => report(tried, " — plug in (or touch) one of them")
         case yk :: more =>
           log.info(
-            Plugin.Log.InfoMessage(s"opening $file with YubiKey ${yk.shown} $purpose — touch your YubiKey if it blinks " +
-              s"(waiting up to ${yubikeyTimeout.toSeconds} s)")
+            Plugin.Log.InfoMessage(
+              s"opening $file with YubiKey ${yk.shown} $purpose — touch your YubiKey if it blinks " +
+                s"(waiting up to ${yubikeyTimeout.toSeconds} s)"
+            )
           )
           attempt(yk) match
             case Left(why) =>
@@ -219,7 +290,10 @@ final class KeePassXcVault(
               Right(a)
             case Right(Left(r)) =>
               val msg = YubiKey.problem(YubiKey.Problem(r.err.value))
-              YubiKey.failure(YubiKey.Problem(r.err.value.toLowerCase(java.util.Locale.ROOT)), YubiKey.Setting.Entries(entry.value)) match
+              YubiKey.failure(
+                YubiKey.Problem(r.err.value.toLowerCase(java.util.Locale.ROOT)),
+                YubiKey.Setting.Entries(entry.value)
+              ) match
                 case YubiKey.Failure.Next(why) => go(more, tried :+ s"${yk.shown}: $why ($msg)")
                 case YubiKey.Failure.Stop(why) =>
                   if why.value.startsWith("no entry") then Left(Secret.Vault.ResolveResultPart1(s"$name: $why"))

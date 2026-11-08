@@ -34,7 +34,10 @@ class UiNoticesSuite extends munit.FunSuite:
       Counter(Board.Wire("tasks"), Some(Counter.Count(3)), Some(l2), Some(s1), fresh = Counter.Fresh(true))
     )
     assertEquals(counter(Board.Goals, Some(Counter.Count(26)), Some(l1), Some(s1)).count, None)
-    assertEquals(counter(Board.Log, Some(Counter.Count(9)), None, None), Counter(Board.Wire("log"), None, None, None, fresh = Counter.Fresh(false)))
+    assertEquals(
+      counter(Board.Log, Some(Counter.Count(9)), None, None),
+      Counter(Board.Wire("log"), None, None, None, fresh = Counter.Fresh(false))
+    )
 
   test("boards parse from their wire keys, which are the windows' own"):
     assertEquals(Board.parse(Board.Wire("approvals")), Some(Board.Approvals))

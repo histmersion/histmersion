@@ -12,7 +12,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class HoverIntent[K](
     delayMs: HoverIntent.DelayMs,
     fire: K => Unit,
-    later: (HoverIntent.DelayMs, () => Unit) => HoverIntent.TimerId = (ms, g) => HoverIntent.TimerId(dom.window.setTimeout(() => g(), ms.value.toDouble)),
+    later: (HoverIntent.DelayMs, () => Unit) => HoverIntent.TimerId = (ms, g) =>
+      HoverIntent.TimerId(dom.window.setTimeout(() => g(), ms.value.toDouble)),
     cancel: HoverIntent.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 )(using CanEqual[K, K]):
   // `var`: the one pending hover and its timer
@@ -38,4 +39,3 @@ object HoverIntent:
   object DelayMs extends Newtype[Int, Pure]
   type TimerId = TimerId.T
   object TimerId extends Newtype[Int, Pure]
-

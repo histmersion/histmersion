@@ -10,27 +10,35 @@ object TileFeatures:
   import com.histmersion.api.catalogue.{EventGeo, SiteTile, TileProps as P}
 
   /** A text property; none when there is no value. */
-  def text(k: String, v: String): Seq[(TilePoint.PropKey, TileValue)] = Seq(prop(k, TileValue.Text(TileValue.Text.Value(v))))
+  def text(k: String, v: String): Seq[(TilePoint.PropKey, TileValue)] = Seq(
+    prop(k, TileValue.Text(TileValue.Text.Value(v)))
+  )
   def text(k: String, v: Option[String]): Seq[(TilePoint.PropKey, TileValue)] =
     v.toSeq.map(s => prop(k, TileValue.Text(TileValue.Text.Value(s))))
 
   private def prop(k: String, v: TileValue): (TilePoint.PropKey, TileValue) = TilePoint.PropKey(k) -> v
 
-  private def real(k: String, v: Double): (TilePoint.PropKey, TileValue) = prop(k, TileValue.Real(TileValue.Real.Value(v)))
+  private def real(k: String, v: Double): (TilePoint.PropKey, TileValue) =
+    prop(k, TileValue.Real(TileValue.Real.Value(v)))
 
   /** A whole-number property; none when there is no value. */
-  def whole(k: String, v: Option[TileValue.Whole.Value]): Seq[(TilePoint.PropKey, TileValue)] = v.toSeq.map(n => prop(k, TileValue.Whole(n)))
+  def whole(k: String, v: Option[TileValue.Whole.Value]): Seq[(TilePoint.PropKey, TileValue)] =
+    v.toSeq.map(n => prop(k, TileValue.Whole(n)))
 
   /** How many of a cell's items (or whether an item) have no known date: left out when none. */
   private def undated(c: TileCell): Seq[(TilePoint.PropKey, TileValue)] =
-    Option.when(c.undated.value > 0)(prop(P.Undated, TileValue.Whole(TileValue.Whole.Value(c.undated.value.toLong)))).toSeq
+    Option
+      .when(c.undated.value > 0)(prop(P.Undated, TileValue.Whole(TileValue.Whole.Value(c.undated.value.toLong))))
+      .toSeq
 
   /** A cell of several items: its key, count, dates' range and box. */
   def cell(c: TileCell): TilePoint =
     TilePoint(
       c.x,
       c.y,
-      text(P.Key, c.key.value) ++ Seq(prop(P.Count, TileValue.Whole(TileValue.Whole.Value(c.n.value.toLong)))) ++ undated(c) ++
+      text(P.Key, c.key.value) ++ Seq(
+        prop(P.Count, TileValue.Whole(TileValue.Whole.Value(c.n.value.toLong)))
+      ) ++ undated(c) ++
         c.midLo.toSeq.map(v => real(P.MidLo, v.value)) ++ c.midHi.toSeq.map(v => real(P.MidHi, v.value)) ++
         Seq(
           real(P.West, c.west.value),
@@ -44,7 +52,10 @@ object TileFeatures:
     TilePoint(
       c.x,
       c.y,
-      text(P.Key, c.key.value) ++ text(P.Id, s.id.value) ++ text(P.Label, s.label.value) ++ text(P.Kind, s.kind.value) ++
+      text(P.Key, c.key.value) ++ text(P.Id, s.id.value) ++ text(P.Label, s.label.value) ++ text(
+        P.Kind,
+        s.kind.value
+      ) ++
         text(P.SiteType, s.siteType.map(_.value)) ++ text(P.Basis, s.basis.value) ++ whole(
           P.PeriodStart,
           s.periodStart.map(y => TileValue.Whole.Value(y.value))
@@ -59,7 +70,10 @@ object TileFeatures:
     TilePoint(
       c.x,
       c.y,
-      text(P.Key, c.key.value) ++ text(P.Id, e.id.value) ++ text(P.Label, e.label.value) ++ text(P.Kind, e.kind.value) ++
+      text(P.Key, c.key.value) ++ text(P.Id, e.id.value) ++ text(P.Label, e.label.value) ++ text(
+        P.Kind,
+        e.kind.value
+      ) ++
         text(P.Scale, e.scale.value) ++ text(P.Historicity, e.historicity.value) ++ whole(
           P.NotBefore,
           e.timeSpan.notBefore.map(y => TileValue.Whole.Value(y.value))

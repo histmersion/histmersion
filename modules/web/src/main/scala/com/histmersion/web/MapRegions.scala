@@ -35,7 +35,6 @@ object MapRegions:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
 
-
     def parse(s: Name): Content = values.find(_.toString == s.value).getOrElse(Map)
 
   /** One entry of the region list: what it is called and its box (`None`: the box typed in). */
@@ -59,9 +58,18 @@ object MapRegions:
           .setTo(RegionChoice.Id("configured"))
           .modify(_.label)
           .setTo(RegionChoice.Label("the configured region (the whole world)"))
-      else RegionChoice(RegionChoice.Id("configured"), RegionChoice.Label(s"the configured region (${s.bbox})"), Some(s.bbox))
-    List(configured) ++ s.regions.map(r => RegionChoice(RegionChoice.Id(r.name.value), RegionChoice.Label(s"${r.name} (${r.bbox})"), Some(r.bbox))) ++
-      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(RegionChoice.Id(OwnBox), RegionChoice.Label("a box of my own"), None))
+      else
+        RegionChoice(
+          RegionChoice.Id("configured"),
+          RegionChoice.Label(s"the configured region (${s.bbox})"),
+          Some(s.bbox)
+        )
+    List(configured) ++ s.regions.map(r =>
+      RegionChoice(RegionChoice.Id(r.name.value), RegionChoice.Label(s"${r.name} (${r.bbox})"), Some(r.bbox))
+    ) ++
+      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(
+        RegionChoice(RegionChoice.Id(OwnBox), RegionChoice.Label("a box of my own"), None)
+      )
 
   /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank: the
     * configured one). A relief download is a focus region: the named one, or one named after its box.
@@ -84,7 +92,7 @@ object MapRegions:
             .map(Some(_))
             .toRight(Basemap.Problem(s"the deepest zoom is a number from 0 to ${Basemap.MaxZoomCap}"))
     yield content match
-      case Content.Map    =>
+      case Content.Map =>
         Basemap.FetchQuery(
           bbox = Some(Basemap.FetchQuery.Bbox(typed)),
           maxZoom = z.map(Basemap.FetchQuery.MaxZoom(_)),
@@ -114,6 +122,7 @@ object MapRegions:
   def sizes(answer: SizesText): List[LayerSizes] =
     answer.value.split("; ").toList.map(_.trim).filter(_.nonEmpty).foldLeft(List.empty[LayerSizes]) { (acc, part) =>
       if part.startsWith("by zoom — ") && acc.nonEmpty then
-        acc.init :+ acc.last.copy(zooms = part.stripPrefix("by zoom — ").split(" · ").toList.map(z => LayerSizes.Zooms(z.trim)))
+        acc.init :+ acc.last
+          .copy(zooms = part.stripPrefix("by zoom — ").split(" · ").toList.map(z => LayerSizes.Zooms(z.trim)))
       else acc :+ LayerSizes(LayerSizes.Line(part), Nil)
     }

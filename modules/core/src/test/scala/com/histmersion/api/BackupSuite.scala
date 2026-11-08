@@ -79,8 +79,14 @@ class BackupSuite extends munit.FunSuite:
   // ── the path-traversal gate ──────────────────────────────────────────────────────────────────
 
   test("safeName accepts a plain dump file name"):
-    assertEquals(Backup.safeName(Backup.Name("histmersion-20260825T145112Z.dump")), Right("histmersion-20260825T145112Z.dump"))
-    assertEquals(Backup.safeName(Backup.Name("  histmersion-20260825T145112Z.dump  ")), Right("histmersion-20260825T145112Z.dump"))
+    assertEquals(
+      Backup.safeName(Backup.Name("histmersion-20260825T145112Z.dump")),
+      Right("histmersion-20260825T145112Z.dump")
+    )
+    assertEquals(
+      Backup.safeName(Backup.Name("  histmersion-20260825T145112Z.dump  ")),
+      Right("histmersion-20260825T145112Z.dump")
+    )
     assertEquals(Backup.safeName(Backup.Name("my_copy-2.dump")), Right("my_copy-2.dump"))
 
   test("safeName rejects every path component"):
@@ -122,7 +128,8 @@ class BackupSuite extends munit.FunSuite:
     assertEquals(t.args, List("-h", "db.internal", "-p", "6000", "-d", "histmersion", "-w"))
 
   test("parseJdbc: query parameters are not part of the database name"):
-    val t = Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://h:6000/histmersion?ssl=true&ApplicationName=x")).toOption.get
+    val t =
+      Backup.parseJdbc(Backup.JdbcUrl("jdbc:postgresql://h:6000/histmersion?ssl=true&ApplicationName=x")).toOption.get
     assertEquals(t.database, "histmersion")
 
   test("parseJdbc: a missing port is left to libpq (no -p, and no port literal in the code)"):
@@ -155,7 +162,9 @@ class BackupSuite extends munit.FunSuite:
   // ── how pg_restore's exit code is read ───────────────────────────────────────────────────────
 
   private val skew = List(
-    Backup.ToolOutput("""pg_restore: error: could not execute query: ERROR:  unrecognized configuration parameter "transaction_timeout""""),
+    Backup.ToolOutput(
+      """pg_restore: error: could not execute query: ERROR:  unrecognized configuration parameter "transaction_timeout""""
+    ),
     Backup.ToolOutput("Command was: SET transaction_timeout = 0;"),
     Backup.ToolOutput("pg_restore: warning: errors ignored on restore: 1")
   )
@@ -171,7 +180,10 @@ class BackupSuite extends munit.FunSuite:
     assert(out.toOption.get.exists(_.value.contains("transaction_timeout")), out.toString)
 
   test("restoreOutcome: exit 1 WITHOUT that summary is a failure, quoting the output"):
-    val out = Backup.restoreOutcome(Backup.ExitCode(1), List(Backup.ToolOutput("pg_restore: error: could not open input file: No such file")))
+    val out = Backup.restoreOutcome(
+      Backup.ExitCode(1),
+      List(Backup.ToolOutput("pg_restore: error: could not open input file: No such file"))
+    )
     assert(out.isLeft, out.toString)
     assert(out.left.exists(_.value.contains("could not open input file")), out.toString)
     assert(out.left.exists(_.value.contains("exit 1")), out.toString)
@@ -180,7 +192,10 @@ class BackupSuite extends munit.FunSuite:
     assert(Backup.restoreOutcome(Backup.ExitCode(2), Nil).left.exists(_.value.contains("exit 2")))
 
   test("restoreOutcome: warnings keep only the notable lines, trimmed"):
-    val out = Backup.restoreOutcome(Backup.ExitCode(0), List(Backup.ToolOutput(""), Backup.ToolOutput("  pg_restore: warning: x  "), Backup.ToolOutput("chatter")))
+    val out = Backup.restoreOutcome(
+      Backup.ExitCode(0),
+      List(Backup.ToolOutput(""), Backup.ToolOutput("  pg_restore: warning: x  "), Backup.ToolOutput("chatter"))
+    )
     assertEquals(out, Right(List("pg_restore: warning: x")))
 
   // ── rendering ────────────────────────────────────────────────────────────────────────────────
@@ -203,7 +218,14 @@ class BackupSuite extends munit.FunSuite:
     finally Locale.setDefault(saved)
 
   test("Markdown.backup names the file, the size and the checksum"):
-    val md = Markdown.backup(Backup.Result(Backup.Result.File("histmersion-20260825T145112Z.dump"), ByteCount(2500000), Sha256("abc123"), Backup.Result.DurationMs(812)))
+    val md = Markdown.backup(
+      Backup.Result(
+        Backup.Result.File("histmersion-20260825T145112Z.dump"),
+        ByteCount(2500000),
+        Sha256("abc123"),
+        Backup.Result.DurationMs(812)
+      )
+    )
     assert(md.contains("histmersion-20260825T145112Z.dump"), md)
     assert(md.contains("2.5 MB"), md)
     assert(md.contains("abc123"), md)
@@ -213,15 +235,30 @@ class BackupSuite extends munit.FunSuite:
     assertEquals(Markdown.backups(Vector.empty), "_No backups on the server yet._")
     val md = Markdown.backups(
       Vector(
-        Backup.Info(Backup.Info.File("histmersion-20260825T145112Z.dump"), ByteCount(1000), Backup.Info.CreatedAt("2026-08-25T14:51:12Z")),
-        Backup.Info(Backup.Info.File("histmersion-20260824T145112Z.dump"), ByteCount(2000), Backup.Info.CreatedAt("2026-08-24T14:51:12Z"))
+        Backup.Info(
+          Backup.Info.File("histmersion-20260825T145112Z.dump"),
+          ByteCount(1000),
+          Backup.Info.CreatedAt("2026-08-25T14:51:12Z")
+        ),
+        Backup.Info(
+          Backup.Info.File("histmersion-20260824T145112Z.dump"),
+          ByteCount(2000),
+          Backup.Info.CreatedAt("2026-08-24T14:51:12Z")
+        )
       )
     )
     assert(md.startsWith("### 2 backup(s)"), md)
     assert(md.indexOf("20260825") < md.indexOf("20260824"), md)
 
   test("Markdown.restored reports the schema version, the counts and any ignored errors"):
-    val r = RestoreResult(RestoreResult.File("histmersion-20260825T145112Z.dump"), RestoreResult.SchemaVersion("4"), RestoreResult.SourcesBefore(0), RestoreResult.SourcesAfter(137), RestoreResult.DurationMs(4200), List(RestoreResult.Warnings("pg_restore: warning: x")))
+    val r = RestoreResult(
+      RestoreResult.File("histmersion-20260825T145112Z.dump"),
+      RestoreResult.SchemaVersion("4"),
+      RestoreResult.SourcesBefore(0),
+      RestoreResult.SourcesAfter(137),
+      RestoreResult.DurationMs(4200),
+      List(RestoreResult.Warnings("pg_restore: warning: x"))
+    )
     val md = Markdown.restored(r)
     assert(md.contains("schema version:** 4"), md)
     assert(md.contains("0 → 137"), md)

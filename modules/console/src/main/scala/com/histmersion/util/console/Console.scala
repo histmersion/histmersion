@@ -47,7 +47,8 @@ object Console:
     () => Line(scala.io.StdIn.readLine()),
     prompt => Option(System.console()).flatMap(c => Option(Line(c.readLine((prompt).value))))
   )
-  def standard: Console = Streams(() => scala.Console.out, () => scala.Console.err, () => Line(scala.io.StdIn.readLine()))
+  def standard: Console =
+    Streams(() => scala.Console.out, () => scala.Console.err, () => Line(scala.io.StdIn.readLine()))
   def streams(out: java.io.PrintStream, err: java.io.PrintStream, input: () => StreamsInputResult): Console =
     Streams(() => out, () => err, input, prompt => { err.print(prompt); err.flush(); Option(input()) })
 

@@ -122,7 +122,10 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val graph = Source.Graph(
     Source.Graph.Root("zq_alpha_2001"),
     Source.Graph.Depth(2),
-    List(GraphNode(Citekey("zq_alpha_2001"), Some(Title("Zq Alpha")), Some(Year(2001)), Some(Source.Status.Current)), GraphNode(Citekey("zq_gamma"))),
+    List(
+      GraphNode(Citekey("zq_alpha_2001"), Some(Title("Zq Alpha")), Some(Year(2001)), Some(Source.Status.Current)),
+      GraphNode(Citekey("zq_gamma"))
+    ),
     List(GraphLink(Citekey("zq_alpha_2001"), Citekey("zq_gamma"), Edge.Kind.Challenges))
   )
   private val contradictions = ContradictionsResult(
@@ -172,7 +175,14 @@ class WireSnapshotSuite extends munit.FunSuite:
       periodStart = Some(Year(-3000)),
       periodEnd = Some(Year(-500))
     ),
-    Gazetteer.SourceInfo(Gazetteer.SourceInfo.Key("zq-missing"), Gazetteer.Kind.Geonames, Gazetteer.SourceInfo.Title("Zq missing"), None, present = Gazetteer.SourceInfo.Present(false), None)
+    Gazetteer.SourceInfo(
+      Gazetteer.SourceInfo.Key("zq-missing"),
+      Gazetteer.Kind.Geonames,
+      Gazetteer.SourceInfo.Title("Zq missing"),
+      None,
+      present = Gazetteer.SourceInfo.Present(false),
+      None
+    )
   )
   private val summary =
     Place.Summary(
@@ -213,7 +223,14 @@ class WireSnapshotSuite extends munit.FunSuite:
     sourceUrl = Some(MediaItem.SourceUrl("https://example.org/zq")),
     thumbUrl = Some(MediaItem.ThumbUrl("/api/media/zq/thumb")),
     fileUrl = MediaItem.FileUrl("/api/media/zq"),
-    targets = List(MediaTarget(MediaTarget.TargetType("place"), MediaTarget.TargetId("zq_tell"), MediaTarget.Role("depicts"), property = Some(MediaTarget.Property("P180"))))
+    targets = List(
+      MediaTarget(
+        MediaTarget.TargetType("place"),
+        MediaTarget.TargetId("zq_tell"),
+        MediaTarget.Role("depicts"),
+        property = Some(MediaTarget.Property("P180"))
+      )
+    )
   )
   private val event = EventDetail(
     EventSummary(
@@ -227,9 +244,23 @@ class WireSnapshotSuite extends munit.FunSuite:
       citekey = Some(Citekey("zq_alpha_2001"))
     ),
     geometry = Some(EventGeometry.Geojson("POINT(30.5 40.25)")),
-    children = List(EventSummary(Event.Id("zq-child"), EventSummary.Label("Zq ash fall"), EventSummary.Kind("ashfall"), TimeSpan(notBefore = Some(Year(-1610))), EventSummary.Historicity("inferred"))),
-    datings =
-      List(EventDating(Event.Id("zq-event"), Citekey("zq_alpha_2001"), TimeSpan(Some(Year(-1620)), None, None, Some(Year(-1590))), Some(EventDating.Method("c14")))),
+    children = List(
+      EventSummary(
+        Event.Id("zq-child"),
+        EventSummary.Label("Zq ash fall"),
+        EventSummary.Kind("ashfall"),
+        TimeSpan(notBefore = Some(Year(-1610))),
+        EventSummary.Historicity("inferred")
+      )
+    ),
+    datings = List(
+      EventDating(
+        Event.Id("zq-event"),
+        Citekey("zq_alpha_2001"),
+        TimeSpan(Some(Year(-1620)), None, None, Some(Year(-1590))),
+        Some(EventDating.Method("c14"))
+      )
+    ),
     wikidata = Some(EventEntry.Wikidata("Q1")),
     media = List(thumb),
     names = List(EventEntry.Names("Zq eruption"), EventEntry.Names("Zq event"))
@@ -237,7 +268,17 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val place = PlaceDetail(
     summary,
     Some(Place.Geometry("POINT(30.5 40.25)")),
-    List(Place.Summary(Place.Id("zq_land"), Place.Summary.Label("Zqland"), Place.Summary.Kind("region"), None, None, None, Place.Summary.Names("Zqland"))),
+    List(
+      Place.Summary(
+        Place.Id("zq_land"),
+        Place.Summary.Label("Zqland"),
+        Place.Summary.Kind("region"),
+        None,
+        None,
+        None,
+        Place.Summary.Names("Zqland")
+      )
+    ),
     Nil,
     findings = Place.Counts.Findings(3),
     asOf = Some(Year(-1500)),
@@ -265,14 +306,37 @@ class WireSnapshotSuite extends munit.FunSuite:
       "bodySlice" -> Markdown.bodySlice(Source.Body("Zq body text."), UnreadPage.Offset(10), 40),
       "gazetteerSources" -> PlacesMarkdown.gazetteerSources(gazetteers),
       "placeGone" -> PlacesMarkdown.placeGone(
-        Place.Gone(Place.Id("zq_tell"), Place.Gone.Label("Zq Tell"), Some(Place.Gone.Into("zq_land")), Some(Place.Gone.IntoLabel("Zqland")), Place.Gone.FindingsBefore(3), Place.Gone.FindingsAfter(2), Place.Gone.Unlocated(1))
+        Place.Gone(
+          Place.Id("zq_tell"),
+          Place.Gone.Label("Zq Tell"),
+          Some(Place.Gone.Into("zq_land")),
+          Some(Place.Gone.IntoLabel("Zqland")),
+          Place.Gone.FindingsBefore(3),
+          Place.Gone.FindingsAfter(2),
+          Place.Gone.Unlocated(1)
+        )
       ),
       "placeGone none" -> PlacesMarkdown.placeGone(
-        Place.Gone(Place.Id("zq_tell"), Place.Gone.Label("Zq Tell"), None, None, Place.Gone.FindingsBefore(0), Place.Gone.FindingsAfter(0), Place.Gone.Unlocated(0))
+        Place.Gone(
+          Place.Id("zq_tell"),
+          Place.Gone.Label("Zq Tell"),
+          None,
+          None,
+          Place.Gone.FindingsBefore(0),
+          Place.Gone.FindingsAfter(0),
+          Place.Gone.Unlocated(0)
+        )
       ),
       "placeAdded" -> PlacesMarkdown.placeAdded(summary),
       "placeRebuild" -> PlacesMarkdown.placeRebuild(
-        Place.RebuildResult(Place.RebuildResult.Links(10), Place.RebuildResult.ByGeometry(4), Place.RebuildResult.ByName(5), Place.RebuildResult.Located(9), Place.RebuildResult.Unlocated(1), Place.RebuildResult.Places(7))
+        Place.RebuildResult(
+          Place.RebuildResult.Links(10),
+          Place.RebuildResult.ByGeometry(4),
+          Place.RebuildResult.ByName(5),
+          Place.RebuildResult.Located(9),
+          Place.RebuildResult.Unlocated(1),
+          Place.RebuildResult.Places(7)
+        )
       ),
       "attestation" -> AttestationsMarkdown.attestation(
         Attestation(
@@ -290,10 +354,19 @@ class WireSnapshotSuite extends munit.FunSuite:
         )
       ),
       "agentStateList" -> AgentStateMarkdown.agentStateList(
-        List(AgentStateEntry(AgentStateEntry.Key("zq-key"), AgentStateEntry.Value("zq value"), Some(AgentStateEntry.UpdatedAt("2026-01-02T03:04:05Z"))), AgentStateEntry(AgentStateEntry.Key("zq-other"), AgentStateEntry.Value("x")))
+        List(
+          AgentStateEntry(
+            AgentStateEntry.Key("zq-key"),
+            AgentStateEntry.Value("zq value"),
+            Some(AgentStateEntry.UpdatedAt("2026-01-02T03:04:05Z"))
+          ),
+          AgentStateEntry(AgentStateEntry.Key("zq-other"), AgentStateEntry.Value("x"))
+        )
       ),
       "agentStateList empty" -> AgentStateMarkdown.agentStateList(Nil),
-      "agentState" -> AgentStateMarkdown.agentState(AgentStateEntry(AgentStateEntry.Key("zq-key"), AgentStateEntry.Value("zq value"))),
+      "agentState" -> AgentStateMarkdown.agentState(
+        AgentStateEntry(AgentStateEntry.Key("zq-key"), AgentStateEntry.Value("zq value"))
+      ),
       "assetDetail" -> MediaMarkdown.assetDetail(
         Citekey("zq_alpha_2001"),
         AssetDetail(
@@ -314,24 +387,70 @@ class WireSnapshotSuite extends munit.FunSuite:
       ),
       "mediaThumbLine" -> thumb.markdownLine.value,
       "mediaList" -> MediaMarkdown.mediaList(
-        MediaList(RowCount(2), List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = (Some(2)).map(Offset.apply))
+        MediaList(
+          RowCount(2),
+          List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)),
+          next = (Some(2)).map(Offset.apply)
+        )
       ),
       "mediaFacets" -> MediaMarkdown.mediaFacets(
-        MediaFacets(List(MediaCount(MediaCount.Key("zq-provider"), MediaCount.N(3))), List(MediaCount(MediaCount.Key("CC0-1.0"), MediaCount.N(2)), MediaCount(MediaCount.Key("zq"), MediaCount.N(1), MediaCount.Allowed(false))))
+        MediaFacets(
+          List(MediaCount(MediaCount.Key("zq-provider"), MediaCount.N(3))),
+          List(
+            MediaCount(MediaCount.Key("CC0-1.0"), MediaCount.N(2)),
+            MediaCount(MediaCount.Key("zq"), MediaCount.N(1), MediaCount.Allowed(false))
+          )
+        )
       ),
       "figureLicenceFill" -> MediaMarkdown.figureLicenceFill(
-        FigureLicenceFill(FigureLicenceFill.Candidates(5), FigureLicenceFill.Updated(3), applied = FigureLicenceFill.Applied(false), List(MediaCount(MediaCount.Key("zq_alpha_2001"), MediaCount.N(3))))
+        FigureLicenceFill(
+          FigureLicenceFill.Candidates(5),
+          FigureLicenceFill.Updated(3),
+          applied = FigureLicenceFill.Applied(false),
+          List(MediaCount(MediaCount.Key("zq_alpha_2001"), MediaCount.N(3)))
+        )
       ),
       "assetLink" -> MediaMarkdown.assetLink(
-        AssetLink(AssetLink.Id(3), Citekey("zq_alpha_2001"), Bundle.Asset.FileName("zq.png"), AssetLink.Relation("depicts"), MediaTarget.TargetType("place"), MediaTarget.TargetId("zq_tell"), Some(AssetLink.Xywh("0,0,10,10")), Some(AssetLink.Notes("zq notes")))
+        AssetLink(
+          AssetLink.Id(3),
+          Citekey("zq_alpha_2001"),
+          Bundle.Asset.FileName("zq.png"),
+          AssetLink.Relation("depicts"),
+          MediaTarget.TargetType("place"),
+          MediaTarget.TargetId("zq_tell"),
+          Some(AssetLink.Xywh("0,0,10,10")),
+          Some(AssetLink.Notes("zq notes"))
+        )
       ),
       "assetLinkLine" -> MediaMarkdown.assetLinkLine(
-        AssetLink(AssetLink.Id(4), Citekey("zq_alpha_2001"), Bundle.Asset.FileName("zq.png"), AssetLink.Relation("shows"), MediaTarget.TargetType("event"), MediaTarget.TargetId("zq-event"))
+        AssetLink(
+          AssetLink.Id(4),
+          Citekey("zq_alpha_2001"),
+          Bundle.Asset.FileName("zq.png"),
+          AssetLink.Relation("shows"),
+          MediaTarget.TargetType("event"),
+          MediaTarget.TargetId("zq-event")
+        )
       ),
       "backupStatus" -> Markdown.backupStatus(
-        Backup.Status(Backup.Status.File("zq.dump"), Backup.State.Wire("done"), Backup.Status.DurationMs(1500), Some(ByteCount(4096)), Some(Sha256("cd" * 32)), None, List(Backup.Result.Pruned("old.dump")))
+        Backup.Status(
+          Backup.Status.File("zq.dump"),
+          Backup.State.Wire("done"),
+          Backup.Status.DurationMs(1500),
+          Some(ByteCount(4096)),
+          Some(Sha256("cd" * 32)),
+          None,
+          List(Backup.Result.Pruned("old.dump"))
+        )
       ),
-      "backupStatus failed" -> Markdown.backupStatus(Backup.Status(Backup.Status.File("zq.dump"), Backup.State.Wire("failed"), Backup.Status.DurationMs(10), error = Some(Backup.Status.Error("zq error")))),
+      "backupStatus failed" -> Markdown.backupStatus(
+        Backup.Status(
+          Backup.Status.File("zq.dump"),
+          Backup.State.Wire("failed"),
+          Backup.Status.DurationMs(10),
+          error = Some(Backup.Status.Error("zq error"))
+        )
+      ),
       "event" -> event.markdown.value,
       "place" -> PlacesMarkdown.place(place),
       "event json" -> event.asJson.spaces2,
@@ -339,7 +458,14 @@ class WireSnapshotSuite extends munit.FunSuite:
       "resolved source json" -> ResolvedId(
         ResolvedId.Id("zq_alpha_2001"),
         source = Some(
-          ResolvedSource(Citekey("zq_alpha_2001"), Some(Doi("10.0/zq")), List(AuthorName("Zq A")), Some(Year(2001)), ResolvedSource.Title("Zq Alpha"), Source.Status.Current)
+          ResolvedSource(
+            Citekey("zq_alpha_2001"),
+            Some(Doi("10.0/zq")),
+            List(AuthorName("Zq A")),
+            Some(Year(2001)),
+            ResolvedSource.Title("Zq Alpha"),
+            Source.Status.Current
+          )
         )
       ).asJson.spaces2,
       "resolved article json" -> ResolvedId(
@@ -351,7 +477,10 @@ class WireSnapshotSuite extends munit.FunSuite:
         .Detail(Some(InitPlan(gazetteer = InitPlan.Gazetteer(true), fetch = List(InitPlan.Fetch("zq-gaz")))))
         .set(SkippedPeriod.SkippedCount, Period.ImportResult.SkippedCount(2))
         .set(ExchangeJobKinds.PlanHash, Some(MergePlan.PlanHash("zq-hash")))
-        .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), tables = List(VacuumPlan.Tables("sources")))))
+        .set(
+          VacuumPlan.Detail,
+          Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), tables = List(VacuumPlan.Tables("sources"))))
+        )
         .set(ImportJobKinds.Media, Some(JobKinds.Subject("a media run")))
         .set(EventsJobKinds.Catalogue, Some(JobKinds.Subject("zq-catalogue")))
         .set(JobDetail.Purpose, Some(JobKinds.Subject("zq_alpha_2001")))

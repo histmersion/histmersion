@@ -13,7 +13,7 @@ import com.histmersion.api.library.Title
   */
 object BookmarksCmd:
 
-  private def list (using console: Console) = Opts.subcommand("list", "Your bookmarks, newest first") {
+  private def list(using console: Console) = Opts.subcommand("list", "Your bookmarks, newest first") {
     (
       Opts.option[String]("kind", s"Only: ${ItemKind.values.map(_.wire).mkString(", ")}").orNone,
       Opts.option[String]("query", "Words the bookmark's name or the item's title holds").orNone,
@@ -26,7 +26,7 @@ object BookmarksCmd:
     }
   }
 
-  private def add (using console: Console) = Opts.subcommand(
+  private def add(using console: Console) = Opts.subcommand(
     "add",
     "Bookmark an item (`source anthony2007_horse`), a place on the map " +
       "(`point --lat 37.73 --lon 22.75`), a view (`view --view 'from=-1300&to=-1100' --lat .. --lon .. --zoom 6`) or a " +
@@ -47,11 +47,12 @@ object BookmarksCmd:
     }
   }
 
-  private def rm (using console: Console) = Opts.subcommand("rm", "Remove a bookmark (its id, from `bookmarks list`)") {
+  private def rm(using console: Console) = Opts.subcommand("rm", "Remove a bookmark (its id, from `bookmarks list`)") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.call(PersonalApi.removeBookmark)(Bookmark.Id(id)).map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))
+      c.call(PersonalApi.removeBookmark)(Bookmark.Id(id))
+        .map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))
     }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("bookmarks", "Your bookmarks: list, add, rm")(list orElse add orElse rm)

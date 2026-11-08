@@ -47,13 +47,16 @@ private[sources] object SourceRepo:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
 
-  private def apiCitekey(ck: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(ck.value)
+  private def apiCitekey(ck: Citekey): com.histmersion.api.library.Citekey =
+    com.histmersion.api.library.Citekey(ck.value)
 
   private def apiToDomain(ck: com.histmersion.api.library.Citekey): Citekey = Citekey.applyUnsafe(ck.value)
 
-  private def apiCitekeyOf(t: WikiLinks.Occurrence.Target): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(t.value)
+  private def apiCitekeyOf(t: WikiLinks.Occurrence.Target): com.histmersion.api.library.Citekey =
+    com.histmersion.api.library.Citekey(t.value)
 
-  private def domainCitekey(ck: com.histmersion.api.library.Citekey): Option[Citekey] = Citekey.either(ck.value).toOption
+  private def domainCitekey(ck: com.histmersion.api.library.Citekey): Option[Citekey] =
+    Citekey.either(ck.value).toOption
 
   import com.histmersion.api.library.SourceColumns.given
 
@@ -71,7 +74,9 @@ private[sources] object SourceRepo:
   /** The findings of `citekey` placed again (`finding_places`), inside the caller's transaction: what a write that
     * touched the source's findings leaves to do.
     */
-  private[histmersion] def placeFindingsIn(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): RowCount =
+  private[histmersion] def placeFindingsIn(citekey: Citekey, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(
+      using DbCon
+  ): RowCount =
     FindingPlacement(toleranceKm).placeSource(citekey)
 
   /** How many sources and findings are stored (what About counts). */
@@ -82,12 +87,19 @@ private[sources] object SourceRepo:
     )
 
   /** [[put]] inside the caller's transaction. */
-  def putIn(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Source.UpdatedAt =
+  def putIn(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(
+      using DbCon
+  ): Source.UpdatedAt =
     write(s, chunkChars, toleranceKm)
     Source.UpdatedAt(domainCitekey(s.citekey).flatMap(token(_)).getOrElse(""))
 
   /** [[patch]] inside the caller's transaction. */
-  def patchIn(requested: Citekey, p: Source.Patch, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
+  def patchIn(
+      requested: Citekey,
+      p: Source.Patch,
+      chunkChars: Chunker.ChunkMaxChars,
+      toleranceKm: FindingPlacement.Implementation.ToleranceKm
+  )(using
       DbCon
   ): Either[Api.Error, Source.UpdatedAt] =
     // an OLD citekey (V027) patches the source it was renamed to — see [[canonical]]
@@ -103,8 +115,11 @@ private[sources] object SourceRepo:
         Source.Write.precondition(existing, p) match
           case Left(msg) => Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
           case Right(_)  =>
-            Source.Write.applyPatch(existing, Source.Write.srcAliased(p, apiCitekey(requested), apiCitekey(citekey))) match
-              case Left(msg)      => Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
+            Source.Write.applyPatch(
+              existing,
+              Source.Write.srcAliased(p, apiCitekey(requested), apiCitekey(citekey))
+            ) match
+              case Left(msg) => Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
               case Right(updated) =>
                 write(updated, chunkChars, toleranceKm); Right(Source.UpdatedAt(token(citekey).getOrElse("")))
 
@@ -115,7 +130,11 @@ private[sources] object SourceRepo:
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $citekey FOR UPDATE".query[String].run()
 
   /** The write itself, inside the caller's transaction. */
-  private def write(s: Source, chunkChars: Chunker.ChunkMaxChars, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Unit =
+  private def write(
+      s: Source,
+      chunkChars: Chunker.ChunkMaxChars,
+      toleranceKm: FindingPlacement.Implementation.ToleranceKm
+  )(using DbCon): Unit =
     // Creating a source under an OLD citekey would make the alias and a new row answer to the same
     // name. The handlers refuse it with a readable 400 first; this is the net under every other
     // writer (a seed of a stale `<old>.md`, an ingest job queued before the rename).
@@ -177,7 +196,11 @@ private[sources] object SourceRepo:
     sql"DELETE FROM unresolved_edges WHERE src = ${s.citekey}".update.run()
     val _ = insertEdges(s.edges.map(_.modify(_.src).setTo(s.citekey)))
     promote(ck)
-    val _ = replaceChunks(ck, s.ocrMarkdown.map(o => Chunker.ChunkMarkdown(o.value)), chunkChars) // FTS index follows every body write
+    val _ = replaceChunks(
+      ck,
+      s.ocrMarkdown.map(o => Chunker.ChunkMarkdown(o.value)),
+      chunkChars
+    ) // FTS index follows every body write
 
   /** Store edges, routed by their target (V026): an edge to a stored source goes into `edges`, one to anything else — a
     * work not ingested yet, a short form, a DOI — is parked in `unresolved_edges` until [[promote]] or [[resolveEdges]]
@@ -189,12 +212,14 @@ private[sources] object SourceRepo:
     if es.isEmpty then RowCount(0)
     else
       // an edge to an OLD citekey (V027) is an edge to the source it was renamed to
-      val known = canonicalAll(es.flatMap(e => domainCitekey(e.dst)).distinct).map((key, value) => apiCitekey(key) -> value)
+      val known =
+        canonicalAll(es.flatMap(e => domainCitekey(e.dst)).distinct).map((key, value) => apiCitekey(key) -> value)
       es.map { e =>
         if known.contains(e.dst) then
           sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, ${known(e.dst)}, ${Edge.Kind.wireOf(e.kind)})
                 ON CONFLICT DO NOTHING""".update.run()
-        else sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${Edge.Kind.wireOf(e.kind)})
+        else
+          sql"""INSERT INTO unresolved_edges (src, dst, kind) VALUES (${e.src}, ${e.dst}, ${Edge.Kind.wireOf(e.kind)})
                 ON CONFLICT DO NOTHING""".update.run()
       }.sum
         .pipe(RowCount(_))
@@ -297,7 +322,11 @@ private[sources] object SourceRepo:
     * chunks, and one round trip per chunk makes a full reindex take minutes (long enough for the server's request
     * timeout to cut it off).
     */
-  private[histmersion] def replaceChunks(citekey: Citekey, markdown: Option[Chunker.ChunkMarkdown], chunkChars: Chunker.ChunkMaxChars)(using DbCon): RowCount =
+  private[histmersion] def replaceChunks(
+      citekey: Citekey,
+      markdown: Option[Chunker.ChunkMarkdown],
+      chunkChars: Chunker.ChunkMaxChars
+  )(using DbCon): RowCount =
     sql"DELETE FROM source_chunks WHERE citekey = $citekey".update.run()
     val chunks = markdown.map(Chunker.chunk(_, chunkChars)).getOrElse(Nil)
     if chunks.nonEmpty then
@@ -321,7 +350,10 @@ private[sources] object SourceRepo:
     val aliases = resolveAliases(parked.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
     val moves =
       parked.flatMap(e =>
-        aliases.get(WikiLinks.Occurrence.Target(e.dst.value.trim.toLowerCase)).filter(_.value != e.src.value).map(e -> _)
+        aliases
+          .get(WikiLinks.Occurrence.Target(e.dst.value.trim.toLowerCase))
+          .filter(_.value != e.src.value)
+          .map(e -> _)
       )
     moves.foreach { (e, ck) =>
       sql"""INSERT INTO edges (src, dst, kind) VALUES (${e.src}, $ck, ${e.kind})
@@ -338,7 +370,9 @@ private[sources] object SourceRepo:
     * `lint --rule unresolved-short-citekeys` is where a human picks one. One query for the whole body, whatever its
     * number of links.
     */
-  def resolveAliases(targets: List[WikiLinks.Occurrence.Target])(using DbCon): Map[WikiLinks.Occurrence.Target, Citekey] =
+  def resolveAliases(targets: List[WikiLinks.Occurrence.Target])(using
+      DbCon
+  ): Map[WikiLinks.Occurrence.Target, Citekey] =
     val wanted = targets.map(_.value.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Map.empty
     else
@@ -395,7 +429,11 @@ private[sources] object SourceRepo:
 
   /** The Calibre book id recorded for a source, if any. */
   def calibreId(ck: Citekey)(using DbCon): Option[FullSourceRow.CalibreId] =
-    (sql"SELECT calibre_id FROM sources WHERE citekey = $ck".query[Option[FullSourceRow.CalibreId]].run().headOption.flatten)
+    (sql"SELECT calibre_id FROM sources WHERE citekey = $ck"
+      .query[Option[FullSourceRow.CalibreId]]
+      .run()
+      .headOption
+      .flatten)
 
   /** Every old citekey and the source it names now, by alias. */
   def aliases(using DbCon): List[Source.Alias] =
@@ -425,7 +463,9 @@ private[sources] object SourceRepo:
     *   - Parked edges that named `new` (or a short form now unique to it) become real edges.
     *   - `old` becomes an alias of `new`, so it keeps resolving.
     */
-  def rename(oldCk: Citekey, newRaw: Citekeys.RenameToNewRaw, referrers: SourceReferrers)(using DbCon): Either[Api.Error, Rename.Counts] =
+  def rename(oldCk: Citekey, newRaw: Citekeys.RenameToNewRaw, referrers: SourceReferrers)(using
+      DbCon
+  ): Either[Api.Error, Rename.Counts] =
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
@@ -465,7 +505,9 @@ private[sources] object SourceRepo:
         case Some(other) if other != oldCk =>
           Left(
             Api.Error(
-              Api.Error.Message(s"'${newCk.value}' is an old citekey of '${other.value}' and still resolves to it — pick another"),
+              Api.Error.Message(
+                s"'${newCk.value}' is an old citekey of '${other.value}' and still resolves to it — pick another"
+              ),
               Some(Api.Error.Code(Write.CodeInvalid))
             )
           )
@@ -492,7 +534,9 @@ private[sources] object SourceRepo:
   private def renameNow(oldCk: Citekey, newCk: Citekey, referrers: SourceReferrers)(using DbCon): Rename.Counts =
     // the short forms that pointed at the old key — decided BEFORE it moves
     val forms = Rename.shortForms(apiCitekey(oldCk))
-    val shorts = resolveAliases(forms.map(f => WikiLinks.Occurrence.Target(f.value))).collect { case (f, ck) if ck == oldCk => f }.toSet
+    val shorts = resolveAliases(forms.map(f => WikiLinks.Occurrence.Target(f.value))).collect {
+      case (f, ck) if ck == oldCk => f
+    }.toSet
 
     // the key itself: ON UPDATE CASCADE (V027) carries every foreign key
     sql"UPDATE sources SET citekey = $newCk, updated_at = now() WHERE citekey = $oldCk".update.run()
@@ -543,7 +587,9 @@ private[sources] object SourceRepo:
   /** Rewrite links in every source's notes and summary; returns (citekey, links moved) per source that changed. A plain
     * UPDATE, not [[write]]: nothing but the text changes, so the findings, chunks and edges need no rewrite.
     */
-  private def retargetSourceText(needle: SourceRename.Needle, to: Citekey => Option[Citekey])(using DbCon): List[(Citekey, RowCount)] =
+  private def retargetSourceText(needle: SourceRename.Needle, to: Citekey => Option[Citekey])(using
+      DbCon
+  ): List[(Citekey, RowCount)] =
     sql"""SELECT citekey, notes, summary FROM sources
           WHERE strpos(lower(coalesce(notes, '') || ' ' || coalesce(summary, '')), $needle) > 0
           ORDER BY citekey"""
@@ -551,8 +597,8 @@ private[sources] object SourceRepo:
       .run()
       .toList
       .flatMap { (ck, notes, summary) =>
-        val target: WikiLinks.Occurrence.Target => Option[WikiLinks.Occurrence.Target] = t =>
-          domainCitekey(apiCitekeyOf(t)).flatMap(to).map(c => WikiLinks.Occurrence.Target(c.value))
+        val target: WikiLinks.Occurrence.Target => Option[WikiLinks.Occurrence.Target] =
+          t => domainCitekey(apiCitekeyOf(t)).flatMap(to).map(c => WikiLinks.Occurrence.Target(c.value))
         val n = notes.map(v => WikiLinks.retarget(WikiLinks.Body(v), target))
         val s = summary.map(v => WikiLinks.retarget(WikiLinks.Body(v), target))
         val moved = n.fold(0)(_._2.value) + s.fold(0)(_._2.value)
@@ -735,7 +781,9 @@ private[sources] object SourceRepo:
 
   /** Write the Calibre id back after a push; how many sources it named (0 or 1). */
   def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId)(using DbCon): RowCount =
-    sql"UPDATE sources SET calibre_id = $calibreId, updated_at = now() WHERE citekey = $citekey".update.run().pipe(RowCount(_))
+    sql"UPDATE sources SET calibre_id = $calibreId, updated_at = now() WHERE citekey = $citekey".update
+      .run()
+      .pipe(RowCount(_))
 
   def bodyText(citekey: Citekey)(using DbCon): FullSourceRow.OcrMarkdown =
     val chunks = sql"""SELECT body FROM source_chunks
@@ -772,7 +820,9 @@ private[sources] object SourceRepo:
         .toList
 
   /** Body text under a specific heading: chunks whose heading matches case-insensitively (prefix). */
-  def bodyUnderHeading(citekey: Citekey, heading: FilterSql.SnippetRow.Heading)(using DbCon): FullSourceRow.OcrMarkdown =
+  def bodyUnderHeading(citekey: Citekey, heading: FilterSql.SnippetRow.Heading)(using
+      DbCon
+  ): FullSourceRow.OcrMarkdown =
     val lower = heading.value.trim.toLowerCase
     sql"""SELECT body FROM source_chunks
             WHERE citekey = $citekey AND lower(heading) LIKE ${lower + "%"}

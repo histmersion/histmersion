@@ -100,7 +100,15 @@ class ListOptsSuite extends munit.FunSuite:
   test("jobs: kinds, states, dates, subject"):
     assertEquals(
       parse(ListOpts.jobs, "--kind", "ingest", "--kind", "reocr", "--status", "failed", "--since", "2026-09-01"),
-      Right(JobFilter(List(JobState.Wire("failed")), List(JobKinds.Wire("ingest"), JobKinds.Wire("reocr")), Some(JobFilter.Since("2026-09-01")), None, None))
+      Right(
+        JobFilter(
+          List(JobState.Wire("failed")),
+          List(JobKinds.Wire("ingest"), JobKinds.Wire("reocr")),
+          Some(JobFilter.Since("2026-09-01")),
+          None,
+          None
+        )
+      )
     )
 
   test("the commands take the filters, --limit, --before and --json; approve/reject take several ids"):
@@ -131,12 +139,25 @@ class ListOptsSuite extends munit.FunSuite:
     assert(parse(AcquireCmd.ingest, "ingest", "10.1038/zz1", "--legal").isLeft)
 
   test("the next-page line repeats every filter, a list option once per value"):
-    val f = ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan,edge")), decidedBy = List(Approval.DecidedBy.Wire("person")))
+    val f = ApprovalFilter(
+      kind = List(Approval.Kind.Wire("goal-plan,edge")),
+      decidedBy = List(Approval.DecidedBy.Wire("person"))
+    )
     assertEquals(
-      PageCmd.next("agent approvals", f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> Some("20")), Paging.Cursor("41")),
+      PageCmd.next(
+        "agent approvals",
+        f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> Some("20")),
+        Paging.Cursor("41")
+      ),
       "histmersion agent approvals --kind goal-plan --kind edge --decided-by person --limit 20 --before 41"
     )
     assertEquals(
-      PageCmd.next("agent runs", RunFilter(manager = List(RunFilter.Manager("seed:tin")), since = Some(RunFilter.Since("7d"))).options.map((k, v) => (k.value, v.map(_.value))), Paging.Cursor("r9")),
+      PageCmd.next(
+        "agent runs",
+        RunFilter(manager = List(RunFilter.Manager("seed:tin")), since = Some(RunFilter.Since("7d"))).options.map(
+          (k, v) => (k.value, v.map(_.value))
+        ),
+        Paging.Cursor("r9")
+      ),
       "histmersion agent runs --manager seed:tin --since 7d --before r9"
     )

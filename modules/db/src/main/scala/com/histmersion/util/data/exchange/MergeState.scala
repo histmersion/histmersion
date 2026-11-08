@@ -40,8 +40,6 @@ import com.histmersion.domain.catalogue.evidence.TextAnchor
 object MergeState:
   private given CanEqual[UUID, UUID] = CanEqual.derived
 
-
-
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
 
   def load(
@@ -146,7 +144,11 @@ object MergeState:
       BundleRepo.reference,
       // the same rendering as BundleSql.ts, so a bundle alias's createdAt compares as a string
       aliasTombstones = sql"""SELECT alias, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
-               FROM alias_tombstones""".query[(String, String)].run().map((a, t) => Citekey(a) -> Input.AliasTombstonesValue(t)).toMap,
+               FROM alias_tombstones"""
+        .query[(String, String)]
+        .run()
+        .map((a, t) => Citekey(a) -> Input.AliasTombstonesValue(t))
+        .toMap,
       articleHistory = history,
       remembered = remembered,
       chunkChars = TextAnchor.ChunkChars(chunkChars.value)
@@ -215,7 +217,9 @@ object MergeState:
     * from one pass over its blobs. Only bodies of pairs whose score they can change are asked for
     * ([[MergePlanner.sketchesWanted]]).
     */
-  def sketches(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256], size: MinHash.Size)(using DbCon): Map[Bundle.Source.BodySha256, MinHash] =
+  def sketches(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256], size: MinHash.Size)(using
+      DbCon
+  ): Map[Bundle.Source.BodySha256, MinHash] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -236,7 +240,9 @@ object MergeState:
   /** The OCR bodies `wanted` names (by sha256), as text: this collection's from the database, the bundle's from one
     * pass over its blobs ([[MergePlanner.bodiesWanted]]).
     */
-  def bodies(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256])(using DbCon): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
+  def bodies(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256])(using
+      DbCon
+  ): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -254,7 +260,10 @@ object MergeState:
       val there = wanted -- here.keySet
       here ++ (if there.isEmpty then Map.empty else blobTexts(bundle, there))
 
-  private def blobTexts(bundle: ByteSource, wanted: Set[Bundle.Source.BodySha256]): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
+  private def blobTexts(
+      bundle: ByteSource,
+      wanted: Set[Bundle.Source.BodySha256]
+  ): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
@@ -271,7 +280,11 @@ object MergeState:
       loop(Map.empty)
     }
 
-  private def bundleSketches(bundle: ByteSource, wanted: Set[Bundle.Source.BodySha256], size: MinHash.Size): Map[Bundle.Source.BodySha256, MinHash] =
+  private def bundleSketches(
+      bundle: ByteSource,
+      wanted: Set[Bundle.Source.BodySha256],
+      size: MinHash.Size
+  ): Map[Bundle.Source.BodySha256, MinHash] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file

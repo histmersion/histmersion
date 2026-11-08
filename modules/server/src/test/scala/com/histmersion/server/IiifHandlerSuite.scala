@@ -56,7 +56,10 @@ class IiifHandlerSuite extends munit.FunSuite:
   // ── Size edge cases ───────────────────────────────────────────────────────────────────────
 
   test("Size: best fit with equal dimensions"):
-    assertEquals(Iiif.Size.parse(Iiif.Size.Wire("!100,100")), Right(Iiif.Size.BestFit(Iiif.Size.BestFit.W(100), Iiif.Size.BestFit.H(100))))
+    assertEquals(
+      Iiif.Size.parse(Iiif.Size.Wire("!100,100")),
+      Right(Iiif.Size.BestFit(Iiif.Size.BestFit.W(100), Iiif.Size.BestFit.H(100)))
+    )
 
   test("Size: single dimension w"):
     assertEquals(Iiif.Size.parse(Iiif.Size.Wire("50,")), Right(Iiif.Size.Width(Iiif.Size.Width.W(50))))
@@ -67,7 +70,11 @@ class IiifHandlerSuite extends munit.FunSuite:
   // ── info.json ─────────────────────────────────────────────────────────────────────────────
 
   test("infoJson includes IIIF required fields"):
-    val json = Iiif.infoJson(Iiif.ImageId("http://localhost:8000/iiif/test2024/fig1.png"), ImageSize.Width(1024), ImageSize.Height(768))
+    val json = Iiif.infoJson(
+      Iiif.ImageId("http://localhost:8000/iiif/test2024/fig1.png"),
+      ImageSize.Width(1024),
+      ImageSize.Height(768)
+    )
     val c = json.hcursor
     assert(c.get[String]("@context").isRight)
     assert(c.get[String]("type").isRight)

@@ -18,5 +18,7 @@ object GoalReferable:
       RecordTable.Key("t.slug"),
       RecordTable.Title("t.title"),
       Some(RecordTable.Uid("t.uid")),
-      Some(AliasColumns(AliasColumns.Table("goal_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("goal_slug")))
+      Some(
+        AliasColumns(AliasColumns.Table("goal_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("goal_slug"))
+      )
     )

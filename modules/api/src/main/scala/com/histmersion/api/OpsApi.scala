@@ -14,8 +14,8 @@ import com.histmersion.api.automation.Goal
 object OpsApi:
 
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
-  export Queue.{Export as QueueExportPart3}
-  export com.histmersion.api.automation.Goal.{Export as GoalsExportPart3}
+  export Queue.Export as QueueExportPart3
+  export com.histmersion.api.automation.Goal.Export as GoalsExportPart3
 
   import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
   import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}
@@ -25,7 +25,11 @@ object OpsApi:
 
   private lazy val opsErrors =
     oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])((Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))).andThen(refactorResult2 => ((refactorResult2) == (true)))),
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(
+        (Api.Error
+          .hasCode(Api.Error.Code(Write.CodeNotFound)))
+          .andThen(refactorResult2 => ((refactorResult2) == (true)))
+      ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 
@@ -34,10 +38,19 @@ object OpsApi:
       .in("api" / "lint")
       .in(sttp.tapir.query[List[String]]("rule"))
       .errorOut(opsErrors)
-      .out(jsonBody[LintReport])).mapIn[List[Lint.Wire]]((refactorDecoded10: List[String]) => (refactorDecoded10).map(refactorElement9 => Lint.Wire(refactorElement9)))((refactorEncoded10: List[Lint.Wire]) => (refactorEncoded10).map(refactorElement10 => (refactorElement10).value))
+      .out(jsonBody[LintReport]))
+      .mapIn[List[Lint.Wire]]((refactorDecoded10: List[String]) =>
+        (refactorDecoded10).map(refactorElement9 => Lint.Wire(refactorElement9))
+      )((refactorEncoded10: List[Lint.Wire]) => (refactorEncoded10).map(refactorElement10 => (refactorElement10).value))
 
   lazy val lintFix: PublicEndpoint[List[Lint.Wire], Api.Error, LintFixResult, Any] =
-    (base.post.in("lint" / "fix").in(sttp.tapir.query[List[String]]("rule")).out(jsonBody[LintFixResult])).mapIn[List[Lint.Wire]]((refactorDecoded11: List[String]) => (refactorDecoded11).map(refactorElement11 => Lint.Wire(refactorElement11)))((refactorEncoded11: List[Lint.Wire]) => (refactorEncoded11).map(refactorElement12 => (refactorElement12).value))
+    (base.post
+      .in("lint" / "fix")
+      .in(sttp.tapir.query[List[String]]("rule"))
+      .out(jsonBody[LintFixResult]))
+      .mapIn[List[Lint.Wire]]((refactorDecoded11: List[String]) =>
+        (refactorDecoded11).map(refactorElement11 => Lint.Wire(refactorElement11))
+      )((refactorEncoded11: List[Lint.Wire]) => (refactorEncoded11).map(refactorElement12 => (refactorElement12).value))
 
   lazy val lintMarkdown: PublicEndpoint[FormatCheck, Api.Error, FormatReport, Any] =
     base.post.in("lint" / "markdown").in(jsonBody[FormatCheck]).out(jsonBody[FormatReport])
@@ -48,15 +61,22 @@ object OpsApi:
       .in("api" / "queue" / "items" / path[Int]("id"))
       .in(jsonBody[QueuePatch])
       .errorOut(opsErrors)
-      .out(jsonBody[QueueItem])).mapIn[(Queue.Id, QueuePatch)]((refactorDecoded12: (Int, QueuePatch)) => (Queue.Id((refactorDecoded12)._1), (refactorDecoded12)._2))((refactorEncoded12: (Queue.Id, QueuePatch)) => (((refactorEncoded12)._1).value, (refactorEncoded12)._2))
+      .out(jsonBody[QueueItem]))
+      .mapIn[(Queue.Id, QueuePatch)]((refactorDecoded12: (Int, QueuePatch)) =>
+        (Queue.Id((refactorDecoded12)._1), (refactorDecoded12)._2)
+      )((refactorEncoded12: (Queue.Id, QueuePatch)) => (((refactorEncoded12)._1).value, (refactorEncoded12)._2))
 
   lazy val queueDelete: PublicEndpoint[Queue.Id, Api.Error, QueueItem, Any] =
     (endpoint.delete
       .in("api" / "queue" / "items" / path[Int]("id"))
       .errorOut(opsErrors)
-      .out(jsonBody[QueueItem])).mapIn[Queue.Id]((refactorDecoded4: Int) => Queue.Id(refactorDecoded4))((refactorEncoded4: Queue.Id) => (refactorEncoded4).value)
+      .out(jsonBody[QueueItem]))
+      .mapIn[Queue.Id]((refactorDecoded4: Int) => Queue.Id(refactorDecoded4))((refactorEncoded4: Queue.Id) =>
+        (refactorEncoded4).value
+      )
 
-  lazy val queueList: PublicEndpoint[(Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire]), Api.Error, QueueListing, Any] =
+  lazy val queueList
+      : PublicEndpoint[(Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire]), Api.Error, QueueListing, Any] =
     (endpoint.get
       .in("api" / "queue" / path[String]("list"))
       .in(sttp.tapir.query[Boolean]("all").default(false))
@@ -67,31 +87,64 @@ object OpsApi:
           .description("only the items this agent run or background job wrote or ticked off (its id)")
       )
       .errorOut(opsErrors)
-      .out(jsonBody[QueueListing])).mapIn[(Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire])]((refactorDecoded5: (String, Boolean, Option[String], Option[String])) => (Queue.Wire((refactorDecoded5)._1), ((refactorDecoded5)._2), ((refactorDecoded5)._3).map(refactorElement5 => Queue.Wire(refactorElement5)), ((refactorDecoded5)._4).map(refactorElement6 => Queue.Wire(refactorElement6))))((refactorEncoded5: (Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire])) => (((refactorEncoded5)._1).value, ((refactorEncoded5)._2), ((refactorEncoded5)._3).map(refactorElement7 => (refactorElement7).value), ((refactorEncoded5)._4).map(refactorElement8 => (refactorElement8).value)))
+      .out(jsonBody[QueueListing]))
+      .mapIn[(Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire])](
+        (refactorDecoded5: (String, Boolean, Option[String], Option[String])) =>
+          (
+            Queue.Wire((refactorDecoded5)._1),
+            ((refactorDecoded5)._2),
+            ((refactorDecoded5)._3).map(refactorElement5 => Queue.Wire(refactorElement5)),
+            ((refactorDecoded5)._4).map(refactorElement6 => Queue.Wire(refactorElement6))
+          )
+      )((refactorEncoded5: (Queue.Wire, Boolean, Option[Queue.Wire], Option[Queue.Wire])) =>
+        (
+          ((refactorEncoded5)._1).value,
+          ((refactorEncoded5)._2),
+          ((refactorEncoded5)._3).map(refactorElement7 => (refactorElement7).value),
+          ((refactorEncoded5)._4).map(refactorElement8 => (refactorElement8).value)
+        )
+      )
 
   lazy val queueAdd: PublicEndpoint[(Queue.Wire, QueueAdd), Api.Error, QueueItem, Any] =
     (endpoint.post
       .in("api" / "queue" / path[String]("list"))
       .in(jsonBody[QueueAdd])
       .errorOut(opsErrors)
-      .out(jsonBody[QueueItem])).mapIn[(Queue.Wire, QueueAdd)]((refactorDecoded15: (String, QueueAdd)) => (Queue.Wire((refactorDecoded15)._1), (refactorDecoded15)._2))((refactorEncoded15: (Queue.Wire, QueueAdd)) => (((refactorEncoded15)._1).value, (refactorEncoded15)._2))
+      .out(jsonBody[QueueItem]))
+      .mapIn[(Queue.Wire, QueueAdd)]((refactorDecoded15: (String, QueueAdd)) =>
+        (Queue.Wire((refactorDecoded15)._1), (refactorDecoded15)._2)
+      )((refactorEncoded15: (Queue.Wire, QueueAdd)) => (((refactorEncoded15)._1).value, (refactorEncoded15)._2))
 
   lazy val queueExport: PublicEndpoint[Queue.Wire, Api.Error, Queue.Export, Any] =
     (endpoint.get
       .in("api" / "queue" / path[String]("list") / "export")
       .errorOut(opsErrors)
-      .out(stringBody)).mapIn[Queue.Wire]((refactorDecoded7: String) => Queue.Wire(refactorDecoded7))((refactorEncoded7: Queue.Wire) => (refactorEncoded7).value).mapOut[Queue.Export]((refactorDecoded8: String) => Queue.Export(refactorDecoded8))((refactorEncoded8: Queue.Export) => (refactorEncoded8).value)
+      .out(stringBody))
+      .mapIn[Queue.Wire]((refactorDecoded7: String) => Queue.Wire(refactorDecoded7))((refactorEncoded7: Queue.Wire) =>
+        (refactorEncoded7).value
+      )
+      .mapOut[Queue.Export]((refactorDecoded8: String) => Queue.Export(refactorDecoded8))(
+        (refactorEncoded8: Queue.Export) => (refactorEncoded8).value
+      )
 
   lazy val queueImport: PublicEndpoint[(Queue.Wire, QueueImport), Api.Error, QueueImported, Any] =
     (endpoint.post
       .in("api" / "queue" / path[String]("list") / "import")
       .in(jsonBody[QueueImport])
       .errorOut(opsErrors)
-      .out(jsonBody[QueueImported])).mapIn[(Queue.Wire, QueueImport)]((refactorDecoded18: (String, QueueImport)) => (Queue.Wire((refactorDecoded18)._1), (refactorDecoded18)._2))((refactorEncoded18: (Queue.Wire, QueueImport)) => (((refactorEncoded18)._1).value, (refactorEncoded18)._2))
+      .out(jsonBody[QueueImported]))
+      .mapIn[(Queue.Wire, QueueImport)]((refactorDecoded18: (String, QueueImport)) =>
+        (Queue.Wire((refactorDecoded18)._1), (refactorDecoded18)._2)
+      )((refactorEncoded18: (Queue.Wire, QueueImport)) => (((refactorEncoded18)._1).value, (refactorEncoded18)._2))
 
   /** Under `export/` rather than `goals/` so it is never read as a goal slug. */
   lazy val goalsExport: PublicEndpoint[Unit, Api.Error, Goal.Export, Any] =
-    (base.get.in("export" / "goals").out(stringBody)).mapOut[Goal.Export]((refactorDecoded2: String) => Goal.Export(refactorDecoded2))((refactorEncoded2: Goal.Export) => (refactorEncoded2).value)
+    (base.get
+      .in("export" / "goals")
+      .out(stringBody))
+      .mapOut[Goal.Export]((refactorDecoded2: String) => Goal.Export(refactorDecoded2))(
+        (refactorEncoded2: Goal.Export) => (refactorEncoded2).value
+      )
 
   lazy val query: PublicEndpoint[QueryRequest, Api.Error, QueryResult, Any] =
     base.post.in("query").in(jsonBody[QueryRequest]).out(jsonBody[QueryResult])

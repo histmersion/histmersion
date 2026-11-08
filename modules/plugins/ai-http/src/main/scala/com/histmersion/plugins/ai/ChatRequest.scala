@@ -21,18 +21,19 @@ object ChatRequest:
   /** The request for `r`. */
   def of(r: AiTurn.Request, strictTools: ProviderSettings.StrictTools): ChatRequest =
     val system = Json.obj("content" -> Json.fromString(r.system.value), "role" -> Json.fromString("system"))
-    val format = r.answerSchemaRendered.map(_.value).orElse(r.answerSchema.map(_.value)).flatMap(s => parse(s).toOption).map { s =>
-      Json.obj(
-        "type" -> Json.fromString("json_schema"),
-        "json_schema" -> Json.fromFields(
-          List(
-            "name" -> Json.fromString("final_response"),
-            "strict" -> Json.True,
-            "schema" -> SchemaJson(s).strict.json
-          ) ++ r.answerDescription.map(d => "description" -> Json.fromString(d.value))
+    val format =
+      r.answerSchemaRendered.map(_.value).orElse(r.answerSchema.map(_.value)).flatMap(s => parse(s).toOption).map { s =>
+        Json.obj(
+          "type" -> Json.fromString("json_schema"),
+          "json_schema" -> Json.fromFields(
+            List(
+              "name" -> Json.fromString("final_response"),
+              "strict" -> Json.True,
+              "schema" -> SchemaJson(s).strict.json
+            ) ++ r.answerDescription.map(d => "description" -> Json.fromString(d.value))
+          )
         )
-      )
-    }
+      }
     val tools = Option.when(r.tools.nonEmpty)(Json.fromValues(r.tools.map { t =>
       val raw = parse(t.inputSchema.value).getOrElse(Json.obj())
       val schema = if strictTools.value then SchemaJson(raw).strict.json else raw
@@ -58,12 +59,13 @@ object ChatRequest:
     ChatRequest(Json.fromFields(fields))
 
   private def message(m: AiMessage): Json = m match
-    case AiMessage.User(t)             => Json.obj("content" -> Json.fromString(t.value), "role" -> Json.fromString("user"))
+    case AiMessage.User(t) => Json.obj("content" -> Json.fromString(t.value), "role" -> Json.fromString("user"))
     case AiMessage.Assistant(t, calls) =>
       val toolCalls = calls.map { c =>
         Json.obj(
           "type" -> Json.fromString("function"),
-          "function" -> Json.obj("arguments" -> Json.fromString(c.input.value), "name" -> Json.fromString(c.tool.value)),
+          "function" -> Json
+            .obj("arguments" -> Json.fromString(c.input.value), "name" -> Json.fromString(c.tool.value)),
           "id" -> Json.fromString(c.id.value)
         )
       }

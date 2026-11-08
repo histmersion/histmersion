@@ -8,12 +8,17 @@ import com.histmersion.api.Api
 
 object ConfigEditApi:
 
-
   private def errors =
     oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])((Api.Error.hasCode(Api.Error.Code(ConfigEdit.CodeChanged))).andThen(refactorResult => ((refactorResult) == (true)))),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(
+        (Api.Error
+          .hasCode(Api.Error.Code(ConfigEdit.CodeChanged)))
+          .andThen(refactorResult => ((refactorResult) == (true)))
+      ),
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        (Api.Error.hasCode(Api.Error.Code(ConfigEdit.CodeUnavailable))).andThen(refactorResult4 => ((refactorResult4) == (true)))
+        (Api.Error
+          .hasCode(Api.Error.Code(ConfigEdit.CodeUnavailable)))
+          .andThen(refactorResult4 => ((refactorResult4) == (true)))
       ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
@@ -23,7 +28,12 @@ object ConfigEditApi:
       .in("api" / "settings")
       .in(query[Option[String]]("prefix"))
       .errorOut(errors)
-      .out(jsonBody[ConfigEdit.Page])).mapIn[Option[ConfigEdit.Page.Selector]]((refactorDecoded2: Option[String]) => (refactorDecoded2).map(refactorElement3 => ConfigEdit.Page.Selector(refactorElement3)))((refactorEncoded2: Option[ConfigEdit.Page.Selector]) => (refactorEncoded2).map(refactorElement4 => (refactorElement4).value))
+      .out(jsonBody[ConfigEdit.Page]))
+      .mapIn[Option[ConfigEdit.Page.Selector]]((refactorDecoded2: Option[String]) =>
+        (refactorDecoded2).map(refactorElement3 => ConfigEdit.Page.Selector(refactorElement3))
+      )((refactorEncoded2: Option[ConfigEdit.Page.Selector]) =>
+        (refactorEncoded2).map(refactorElement4 => (refactorElement4).value)
+      )
 
   lazy val write: PublicEndpoint[ConfigEdit.Write, Api.Error, ConfigEdit.Written, Any] =
     endpoint.post

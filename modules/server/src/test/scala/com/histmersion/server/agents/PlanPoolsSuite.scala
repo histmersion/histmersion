@@ -100,7 +100,14 @@ class PlanPoolsSuite extends munit.FunSuite:
 
   test("a mod's report: percentUsed and the ISO reset"):
     val rs = PlanPools.modReadings(
-      List(ModWindow(ModWindow.Kind("five_hour"), ModWindow.PercentUsed(12), Some(ModWindow.ResetsAt("2026-10-05T21:40:00.000Z"))), ModWindow(ModWindow.Kind("seven_day"), ModWindow.PercentUsed(42), None)),
+      List(
+        ModWindow(
+          ModWindow.Kind("five_hour"),
+          ModWindow.PercentUsed(12),
+          Some(ModWindow.ResetsAt("2026-10-05T21:40:00.000Z"))
+        ),
+        ModWindow(ModWindow.Kind("seven_day"), ModWindow.PercentUsed(42), None)
+      ),
       Source.Mod,
       Now(5L)
     )

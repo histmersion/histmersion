@@ -39,4 +39,6 @@ object EventCardView:
       e: EventEntry
   ): EventEntry =
     val withContext = context(e)
-    withContext.modify(_.articles).setTo(citing(withContext.sources.map(s => Citekey.assume(s.citekey.value)), PageSize(10)))
+    withContext
+      .modify(_.articles)
+      .setTo(citing(withContext.sources.map(s => Citekey.assume(s.citekey.value)), PageSize(10)))

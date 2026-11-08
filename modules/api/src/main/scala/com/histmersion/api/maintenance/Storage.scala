@@ -20,7 +20,6 @@ object Storage:
   type Hint = Hint.T
   object Hint extends Newtype[String, Pure]
 
-
   val DefaultLowFreeBytes: ByteCount = ByteCount(10L * 1000 * 1000 * 1000)
 
   def under(child: Entry.Path, parent: Entry.Path): Boolean =
@@ -53,16 +52,23 @@ object Storage:
       .sortBy(e => -e.bytes.map(_.value.toLong).getOrElse(0L))
 
   def hints(report: Report): List[Hint] =
-    report.volumes.filter(_.freeBytes.value.toLong < report.lowFreeBytes.value.toLong).sortBy(_.freeBytes.value.toLong).map { v =>
-      val big = onVolume(report.entries, v.id).filter(_.shrink.isDefined).take(3)
-      val head =
-        s"Low disk space on ${v.id}: ${Backup.humanBytes(ByteCount(v.freeBytes.value.toLong))} free of ${Backup.humanBytes(ByteCount(v.totalBytes.value.toLong))}"
-      if big.isEmpty then Hint(s"$head.")
-      else
-        Hint(s"$head. Biggest here: " + big
-          .map(e => s"${e.label} ${Backup.humanBytes(e.bytes.getOrElse(ByteCount(0L)))} (${e.shrink.getOrElse("")})")
-          .mkString("; ") + ".")
-    }
+    report.volumes
+      .filter(_.freeBytes.value.toLong < report.lowFreeBytes.value.toLong)
+      .sortBy(_.freeBytes.value.toLong)
+      .map { v =>
+        val big = onVolume(report.entries, v.id).filter(_.shrink.isDefined).take(3)
+        val head =
+          s"Low disk space on ${v.id}: ${Backup.humanBytes(ByteCount(v.freeBytes.value.toLong))} free of ${Backup.humanBytes(ByteCount(v.totalBytes.value.toLong))}"
+        if big.isEmpty then Hint(s"$head.")
+        else
+          Hint(
+            s"$head. Biggest here: " + big
+              .map(e =>
+                s"${e.label} ${Backup.humanBytes(e.bytes.getOrElse(ByteCount(0L)))} (${e.shrink.getOrElse("")})"
+              )
+              .mkString("; ") + "."
+          )
+      }
 
   def addLocal(r: Report, local: List[Entry], volumes: List[Volume]): Report =
     val known = r.entries.flatMap(_.path).toSet
@@ -70,27 +76,37 @@ object Storage:
     if add.isEmpty then r
     else
       withHints(
-        r.modify(
-          _.entries).setTo(r.entries ++ nest(add)).modify(_.volumes).setTo((r.volumes ++ volumes.filterNot(v => r.volumes.exists(_.id == v.id)))
-        )
+        r.modify(_.entries)
+          .setTo(r.entries ++ nest(add))
+          .modify(_.volumes)
+          .setTo((r.volumes ++ volumes.filterNot(v => r.volumes.exists(_.id == v.id))))
       )
 
   def withHints(r: Report): Report = r.modify(_.hints).setTo(hints(r))
 
   def details(r: Report, e: Entry): List[Entry.Detail] =
-    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Entry.Detail(Plural.count(Plural.Count(n), Plural.Noun.Singular("file")).value)).toList
+    val files = e.files
+      .map(_.value.toLong)
+      .filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined)
+      .map(n => Entry.Detail(Plural.count(Plural.Count(n), Plural.Noun.Singular("file")).value))
+      .toList
     val extra = e.key.value match
       case "backups" =>
         r.backups
           .map(b =>
-            Entry.Detail(Plural.count(Plural.Count(b.count.value.toLong), Plural.Noun.Singular("archive")).value + b.newest.fold("")(n => s", newest $n") +
-              s", keeps ${if b.keep.value > 0 then b.keep.toString else "every one"}")
+            Entry.Detail(
+              Plural.count(Plural.Count(b.count.value.toLong), Plural.Noun.Singular("archive")).value + b.newest
+                .fold("")(n => s", newest $n") +
+                s", keeps ${if b.keep.value > 0 then b.keep.toString else "every one"}"
+            )
           )
           .toList
       case "database" =>
         Option
           .when(r.tables.nonEmpty)(
-            Entry.Detail("largest tables: " + r.tables.map(t => s"${t.name} ${Backup.humanBytes(t.bytes)}").mkString(", "))
+            Entry.Detail(
+              "largest tables: " + r.tables.map(t => s"${t.name} ${Backup.humanBytes(t.bytes)}").mkString(", ")
+            )
           )
           .toList
       case _ => Nil
@@ -107,31 +123,34 @@ object Storage:
 
   def size(e: Entry): String =
     e.bytes.map(_.value.toLong) match
-      case None                 => if ((e.exists) == Entry.Exists(true)) then ("—") else ("not there")
+      case None => if (e.exists) == Entry.Exists(true) then ("—") else ("not there")
       case Some(b) if ((e.partial) == Entry.Partial(true)) => (s"at least ${Backup.humanBytes(ByteCount(b))}")
-      case Some(b)              => Backup.humanBytes(ByteCount(b))
+      case Some(b)                                         => Backup.humanBytes(ByteCount(b))
 
   object Advice:
     type Keep = Keep.T
     object Keep extends Newtype[Int, Pure]
 
-
     def shrink(key: Entry.Key, keep: Keep): Option[Hint] = key.value match
       case "backups" =>
-        Some(if (keep).value > 0 then Hint(s"lower backups.keep (now $keep) — the next backup deletes the older archives")
-        else Hint("set backups.keep (now 0 = keep every archive), or delete old archives"))
-      case "basemap" => Some(Hint("histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)"))
-      case "gazetteer" => Some(Hint("delete the cached extracts — histmersion places load fetches them again"))
-      case "database" =>
-        Some(Hint("histmersion maintenance vacuum; agents.keep-messages-days trims the agents' message traces"))
-      case "toolchain" => Some(Hint("histmersion-toolchain remove (needed again only to relink plugins)"))
-      case "logs" => Some(Hint("delete old log files (the server reopens them)"))
-      case "bundles" => Some(Hint("scratch: safe to empty while no bundle export or import is running"))
-      case "acquire-spool" => Some(Hint("scratch: safe to empty while no acquisition is running"))
-      case "codex-home" =>
         Some(
-          Hint("lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite " +
-            "files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login")
+          if (keep).value > 0 then Hint(s"lower backups.keep (now $keep) — the next backup deletes the older archives")
+          else Hint("set backups.keep (now 0 = keep every archive), or delete old archives")
+        )
+      case "basemap"   => Some(Hint("histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)"))
+      case "gazetteer" => Some(Hint("delete the cached extracts — histmersion places load fetches them again"))
+      case "database"  =>
+        Some(Hint("histmersion maintenance vacuum; agents.keep-messages-days trims the agents' message traces"))
+      case "toolchain"     => Some(Hint("histmersion-toolchain remove (needed again only to relink plugins)"))
+      case "logs"          => Some(Hint("delete old log files (the server reopens them)"))
+      case "bundles"       => Some(Hint("scratch: safe to empty while no bundle export or import is running"))
+      case "acquire-spool" => Some(Hint("scratch: safe to empty while no acquisition is running"))
+      case "codex-home"    =>
+        Some(
+          Hint(
+            "lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite " +
+              "files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login"
+          )
         )
       case k if k.startsWith("cache:") => Some(Hint("a cache: safe to delete, it is fetched or rebuilt again"))
       case _                           => None
@@ -217,4 +236,3 @@ object Storage:
 
     type DurationMillis = DurationMillis.T
     object DurationMillis extends Newtype[Long, io.github.iltotore.iron.constraint.any.Pure]
-

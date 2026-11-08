@@ -92,7 +92,13 @@ object MediaImporter:
       val title = what
       val over = MediaImporter.over(asks)
       def batch = cfg().importBatch
-      def targets(place: Option[Place.Id], event: Option[Event.Id], limit: ImportService.TargetsLimit, refresh: ImportService.Refresh, since: Option[ImportService.Since]) =
+      def targets(
+          place: Option[Place.Id],
+          event: Option[Event.Id],
+          limit: ImportService.TargetsLimit,
+          refresh: ImportService.Refresh,
+          since: Option[ImportService.Since]
+      ) =
         if both then imports.targets(ImportService.Provider(check.value), place, event, limit, refresh, since)
         else
           imports.collectionTargets(
@@ -127,8 +133,10 @@ object MediaImporter:
                 .map(ms => MediaConfig.RequestIntervalMs(ms.value))
                 .getOrElse(media.requestIntervalMs)
             ),
-          refusalBackoffMs =
-            PluginMedia.guard(Right(col.refusalBackoffMs)).map(_.map(ms => Polite.RefusalBackoffMs(ms.value))).getOrElse(Nil)
+          refusalBackoffMs = PluginMedia
+            .guard(Right(col.refusalBackoffMs))
+            .map(_.map(ms => Polite.RefusalBackoffMs(ms.value)))
+            .getOrElse(Nil)
         )
         val runs: (List[Target], DryRun, ImportService.Refresh) => MediaImportReport =
           if own then OwnImport(name, col, fetch, media).run(_, _, _, store)

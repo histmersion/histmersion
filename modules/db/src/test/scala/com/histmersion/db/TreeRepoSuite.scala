@@ -63,7 +63,12 @@ class TreeRepoSuite extends DbSuite:
       List(Place.Name(Place.Name.Value("Zzt World")))
     ),
     Place.Input(
-      Place(Place.Id("zzt_land"), Place.Label("Zzt Land"), Place.KindValue(Place.Kind.Region), Some(box(170, -50, 179, -40))),
+      Place(
+        Place.Id("zzt_land"),
+        Place.Label("Zzt Land"),
+        Place.KindValue(Place.Kind.Region),
+        Some(box(170, -50, 179, -40))
+      ),
       List(Place.Name(Place.Name.Value("Zzt Land"))),
       List(Place.Relation(Place.Relation.ChildId("zzt_land"), Place.Relation.ParentId("zzt_world")))
     ),
@@ -77,7 +82,14 @@ class TreeRepoSuite extends DbSuite:
         Some(Place.Source("test fixture"))
       ),
       List(Place.Name(Place.Name.Value("Zzt North"))),
-      List(Place.Relation(Place.Relation.ChildId("zzt_north"), Place.Relation.ParentId("zzt_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1650), Year(-1180)))))
+      List(
+        Place.Relation(
+          Place.Relation.ChildId("zzt_north"),
+          Place.Relation.ParentId("zzt_land"),
+          Place.Relation.Kind(Place.Relation.PartOf),
+          Some(Period(Year(-1650), Year(-1180)))
+        )
+      )
     ),
     Place.Input(
       Place(
@@ -89,7 +101,14 @@ class TreeRepoSuite extends DbSuite:
         Some(Place.Source("test fixture"))
       ),
       List(Place.Name(Place.Name.Value("Zzt South"))),
-      List(Place.Relation(Place.Relation.ChildId("zzt_south"), Place.Relation.ParentId("zzt_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(Year(-1500), Year(-1300)))))
+      List(
+        Place.Relation(
+          Place.Relation.ChildId("zzt_south"),
+          Place.Relation.ParentId("zzt_land"),
+          Place.Relation.Kind(Place.Relation.PartOf),
+          Some(Period(Year(-1500), Year(-1300)))
+        )
+      )
     )
   )
 
@@ -205,7 +224,16 @@ class TreeRepoSuite extends DbSuite:
 
   test("a window that excludes the fixture returns no rows"):
     seed()
-    assertEquals(SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("sources"), filter.modify(_.period).setTo(Some(Period(Year(-500), Year(-200))))).toList, Nil)
+    assertEquals(
+      SearchFixtures
+        .treeRows(
+          ds,
+          SearchFixtures.AggregateUnit("sources"),
+          filter.modify(_.period).setTo(Some(Period(Year(-500), Year(-200))))
+        )
+        .toList,
+      Nil
+    )
 
   // ── the gazetteer slice ──────────────────────────────────────────────────────────────────────
 
@@ -216,13 +244,20 @@ class TreeRepoSuite extends DbSuite:
     assert(ns.exists(_.id.value == "zzt_world"), "the ancestor nobody is materialised into is still needed")
     assertEquals(ns.find(_.id.value == "zzt_north").flatMap(_.period), Some(Period(Year(-1650), Year(-1180))))
     assertEquals(ns.find(_.id.value == "zzt_world").flatMap(_.period), None)
-    assertEquals(ns.find(_.id.value == "zzt_land").map(_.kind), Some(com.histmersion.domain.catalogue.Place.Kind.Region))
+    assertEquals(
+      ns.find(_.id.value == "zzt_land").map(_.kind),
+      Some(com.histmersion.domain.catalogue.Place.Kind.Region)
+    )
     assert(rels.exists(r => r.childId.value == "zzt_north" && r.parentId.value == "zzt_land"))
     assertEquals(rels.find(_.childId.value == "zzt_south").flatMap(_.period), Some(Period(Year(-1500), Year(-1300))))
     assert(rels.forall(_.kind.value == Place.Relation.PartOf))
 
   test("gazetteer() runs no query at all when nothing is located"):
-    assertEquals(PlaceFixtures.gazetteer(ds, Vector(TreeRow(TreeRow.Key("x"), Citekey("x"), com.histmersion.api.library.Title("X")))), (Nil, Nil))
+    assertEquals(
+      PlaceFixtures
+        .gazetteer(ds, Vector(TreeRow(TreeRow.Key("x"), Citekey("x"), com.histmersion.api.library.Title("X")))),
+      (Nil, Nil)
+    )
 
   // ── repo + pure tree, end to end ─────────────────────────────────────────────────────────────
 
@@ -258,7 +293,15 @@ class TreeRepoSuite extends DbSuite:
     seed()
     val rows = SearchFixtures.treeRows(ds, SearchFixtures.AggregateUnit("sources"), filter).toList
     val (ns, rels) = PlaceFixtures.gazetteer(ds, rows)
-    val tree = Tree.timeRegionTree(rows, Year(-1600), Year(-1200), ns, rels, Tree.TimeRegionTreeDepth(2), Tree.TimeRegionTreeSamples(1))
+    val tree = Tree.timeRegionTree(
+      rows,
+      Year(-1600),
+      Year(-1200),
+      ns,
+      rels,
+      Tree.TimeRegionTreeDepth(2),
+      Tree.TimeRegionTreeSamples(1)
+    )
     val bucket = tree.find(_.start.contains(-1400L)).get
     assertEquals(bucket.kind, Tree.KindTime)
     assertEquals(bucket.count, 1)
@@ -271,13 +314,19 @@ class TreeRepoSuite extends DbSuite:
     val scope = PlaceScope(
       Map(PlaceScope.Value("zzt_north") -> List(PlaceId("zzt_north"), PlaceId("zzt_land")))
     )
-    val sql = SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("findings"), Filter(places = List(Filter.Places("zzt_north"))), scope)
+    val sql = SearchFixtures.treeRowsQuery(
+      SearchFixtures.AggregateUnit("findings"),
+      Filter(places = List(Filter.Places("zzt_north"))),
+      scope
+    )
     assert(sql.text.value.contains("finding_places"), sql.text)
     assert(sql.params.exists(_ == Param.A(List(Param.A.V("zzt_north"), Param.A.V("zzt_land")))), sql.params.toString)
 
   test("rowsQuery(sources) gates on a matching finding exactly as the histogram does"):
     val f = Filter(places = List(Filter.Places("anywhere")), period = Some(Period(Year(-1600), Year(-1200))))
-    assert(SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("sources"), f).text.value.contains("fp.matched > 0"))
+    assert(
+      SearchFixtures.treeRowsQuery(SearchFixtures.AggregateUnit("sources"), f).text.value.contains("fp.matched > 0")
+    )
     assert(
       !SearchFixtures
         .treeRowsQuery(SearchFixtures.AggregateUnit("sources"), Filter(period = Some(Period(Year(-1600), Year(-1200)))))

@@ -24,9 +24,22 @@ class AgentVerifySuite extends munit.FunSuite:
   )
 
   test("quote: verbatim modulo hyphenation, ligatures, Unicode quotes and whitespace"):
-    assertEquals(findQuote(AgentProposals.Proposal.Quote("ten tons of copper and one ton of tin"), body, MinRatio(0.9)), QuoteMatch.Verbatim)
-    assertEquals(findQuote(AgentProposals.Proposal.Quote("\"a ratio typical of bronze\" according to the excavators"), body, MinRatio(0.9)), QuoteMatch.Verbatim)
-    assertEquals(findQuote(AgentProposals.Proposal.Quote("The finds date to about 1320 BCE."), body, MinRatio(0.9)), QuoteMatch.Verbatim)
+    assertEquals(
+      findQuote(AgentProposals.Proposal.Quote("ten tons of copper and one ton of tin"), body, MinRatio(0.9)),
+      QuoteMatch.Verbatim
+    )
+    assertEquals(
+      findQuote(
+        AgentProposals.Proposal.Quote("\"a ratio typical of bronze\" according to the excavators"),
+        body,
+        MinRatio(0.9)
+      ),
+      QuoteMatch.Verbatim
+    )
+    assertEquals(
+      findQuote(AgentProposals.Proposal.Quote("The finds date to about 1320 BCE."), body, MinRatio(0.9)),
+      QuoteMatch.Verbatim
+    )
 
   test("quote: OCR noise (a slipped letter, a dropped word) is a fuzzy match with its ratio"):
     val noisy = AgentProposals.Proposal.Quote("The Uluburun shlp carried ten tons of copper and one ton of qxzv tin")
@@ -35,8 +48,20 @@ class AgentVerifySuite extends munit.FunSuite:
       case other               => fail(s"expected Fuzzy, got $other")
 
   test("quote: an invented or paraphrased quote is missing"):
-    assert(!findQuote(AgentProposals.Proposal.Quote("The ship sank off the coast of Cyprus after a storm in winter"), body, MinRatio(0.9)).accepted)
-    assert(!findQuote(AgentProposals.Proposal.Quote("carried copper and tin from Cornwall to Egypt by sea"), body, MinRatio(0.9)).accepted)
+    assert(
+      !findQuote(
+        AgentProposals.Proposal.Quote("The ship sank off the coast of Cyprus after a storm in winter"),
+        body,
+        MinRatio(0.9)
+      ).accepted
+    )
+    assert(
+      !findQuote(
+        AgentProposals.Proposal.Quote("carried copper and tin from Cornwall to Egypt by sea"),
+        body,
+        MinRatio(0.9)
+      ).accepted
+    )
 
   test("quote: a short quote must be verbatim — three words match anywhere by chance"):
     assert(!findQuote(AgentProposals.Proposal.Quote("ten tins of"), body, MinRatio(0.5)).accepted)
@@ -72,17 +97,26 @@ class AgentVerifySuite extends munit.FunSuite:
 
   test("period sanity: order, year 0, bound, and the source's own span"):
     assertEquals(periodProblems(PeriodStart(-1600), PeriodEnd(-1500), MaxAbsYear(3000000)), Nil)
-    assert(periodProblems(PeriodStart(-1500), PeriodEnd(-1600), MaxAbsYear(3000000)).exists(_.value.contains("after it ends")))
+    assert(
+      periodProblems(PeriodStart(-1500), PeriodEnd(-1600), MaxAbsYear(3000000)).exists(
+        _.value.contains("after it ends")
+      )
+    )
     assert(periodProblems(PeriodStart(0), PeriodEnd(10), MaxAbsYear(3000000)).exists(_.value.contains("year 0")))
     assert(periodProblems(PeriodStart(-4000000), PeriodEnd(-1), MaxAbsYear(3000000)).exists(_.value.contains("beyond")))
-    assert(periodProblems(PeriodStart(-3000), PeriodEnd(-2900), MaxAbsYear(3000000), Some(Period(Year(-1700), Year(-1200)))).exists(_.value.contains("outside")))
+    assert(
+      periodProblems(PeriodStart(-3000), PeriodEnd(-2900), MaxAbsYear(3000000), Some(Period(Year(-1700), Year(-1200))))
+        .exists(_.value.contains("outside"))
+    )
 
   test("status vocabulary: a typo is rejected, not turned into unassessed"):
     assertEquals(status(com.histmersion.domain.library.Source.Status.Wire("Current")), Right(Source.Status.Current))
     assert(status(com.histmersion.domain.library.Source.Status.Wire("debunk")).isLeft)
 
   test("links: dangling targets and escaped brackets are problems"):
-    val text = LinkProblemsText("See [[haak2015_massive]] and [[ie-migrations|the article]] and [[nope2020_x]]. Also \\[\\[x\\]\\].")
+    val text = LinkProblemsText(
+      "See [[haak2015_massive]] and [[ie-migrations|the article]] and [[nope2020_x]]. Also \\[\\[x\\]\\]."
+    )
     val ps = linkProblems(text, _.value == "haak2015_massive", _.value == "ie-migrations")
     assertEquals(ps.size, 2, ps)
     assert(ps.exists(_.value.contains("[[nope2020_x]]")))

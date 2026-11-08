@@ -63,13 +63,25 @@ class AcquireAutoMatchSuite extends DbSuite:
   private object Stub extends ConverterClient:
     def health = Right(ConverterClient.HealthSummary("ok"))
     def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
-      Right(ConvertedDoc(markdown = ConvertedDoc.Markdown("# Converted\n\nBody.\n"), pages = ConvertedDoc.Pages(1), filename = Some(ConvertedDoc.Filename(filename.value))))
+      Right(
+        ConvertedDoc(
+          markdown = ConvertedDoc.Markdown("# Converted\n\nBody.\n"),
+          pages = ConvertedDoc.Pages(1),
+          filename = Some(ConvertedDoc.Filename(filename.value))
+        )
+      )
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-automatch").toString))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.converter)
+      .setTo(
+        base.converter
+          .modify(_.spoolDir)
+          .setTo(ConverterConfig.SpoolDir(Files.createTempDirectory("histmersion-automatch").toString))
+      )
 
   private def clean(): Unit =
     val ds = testPool(cfg.db)

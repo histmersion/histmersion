@@ -12,13 +12,17 @@ import com.histmersion.domain.library.Citekey
 class SeedNoteFilesSuite extends munit.FunSuite:
 
   test("mdPathOf reads the frontmatter key, quoted or not"):
-    assertEquals(Figures.mdPathOf(Figures.NoteText("---\nmd_path: md/haak2015/paper.md\n---\n")), Some("md/haak2015/paper.md"))
+    assertEquals(
+      Figures.mdPathOf(Figures.NoteText("---\nmd_path: md/haak2015/paper.md\n---\n")),
+      Some("md/haak2015/paper.md")
+    )
     assertEquals(Figures.mdPathOf(Figures.NoteText("---\nmd_path: \"md/x/paper.md\"\n---\n")), Some("md/x/paper.md"))
     assertEquals(Figures.mdPathOf(Figures.NoteText("---\ntitle: no md path\n---\n")), None)
 
   test("dirFor puts figures next to the converted body named by md_path"):
     val note = Path.of("/corpus/wiki/sources/haak2015.md")
-    val dir = SeedNoteFiles.dirFor(note, Figures.NoteText("---\nmd_path: md/haak2015/paper.md\n---\n"), Citekey("haak2015"))
+    val dir =
+      SeedNoteFiles.dirFor(note, Figures.NoteText("---\nmd_path: md/haak2015/paper.md\n---\n"), Citekey("haak2015"))
     assertEquals(dir.map(_.toString), Some("/corpus/md/haak2015/figures"))
 
   test("dirFor falls back to the md/<citekey>/figures convention"):

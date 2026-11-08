@@ -11,7 +11,6 @@ import com.histmersion.api.personal.UnreadPage
 /** Appended to [[Api.all]] before the event routes: otherwise `events/leads` would be read as the event `leads`. */
 object EventsApi:
 
-
   private lazy val eventQuery: EndpointInput[Api.EventQuery] =
     Api.filterQuery
       .and(query[Option[String]]("text"))
@@ -39,8 +38,12 @@ object EventsApi:
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])
 
-  lazy val corrections
-      : PublicEndpoint[(Option[Event.Id], Option[EventCorrection.Status], Option[UnreadPage.Offset], Option[EventList.Limit]), Api.Error, Correction.List, Any] =
+  lazy val corrections: PublicEndpoint[
+    (Option[Event.Id], Option[EventCorrection.Status], Option[UnreadPage.Offset], Option[EventList.Limit]),
+    Api.Error,
+    Correction.List,
+    Any
+  ] =
     (endpoint.get
       .in("api" / "events" / "corrections")
       .in(query[Option[String]]("status"))
@@ -48,7 +51,29 @@ object EventsApi:
       .in(query[Option[Int]]("limit"))
       .in(query[Option[Int]]("offset"))
       .errorOut(Api.writeErrors)
-      .out(jsonBody[Correction.List])).mapIn[(Option[Event.Id], Option[EventCorrection.Status], Option[UnreadPage.Offset], Option[EventList.Limit])]((refactorDecoded4: (Option[String], Option[String], Option[Int], Option[Int])) => (((refactorDecoded4)._1).map(refactorElement9 => Event.Id(refactorElement9)), ((refactorDecoded4)._2).map(refactorElement10 => EventCorrection.Status(refactorElement10)), ((refactorDecoded4)._3).map(refactorElement11 => UnreadPage.Offset(refactorElement11)), ((refactorDecoded4)._4).map(refactorElement12 => EventList.Limit(refactorElement12))))((refactorEncoded4: (Option[Event.Id], Option[EventCorrection.Status], Option[UnreadPage.Offset], Option[EventList.Limit])) => (((refactorEncoded4)._1).map(refactorElement13 => (refactorElement13).value), ((refactorEncoded4)._2).map(refactorElement14 => (refactorElement14).value), ((refactorEncoded4)._3).map(refactorElement15 => (refactorElement15).value), ((refactorEncoded4)._4).map(refactorElement16 => (refactorElement16).value)))
+      .out(jsonBody[Correction.List]))
+      .mapIn[(Option[Event.Id], Option[EventCorrection.Status], Option[UnreadPage.Offset], Option[EventList.Limit])](
+        (refactorDecoded4: (Option[String], Option[String], Option[Int], Option[Int])) =>
+          (
+            ((refactorDecoded4)._1).map(refactorElement9 => Event.Id(refactorElement9)),
+            ((refactorDecoded4)._2).map(refactorElement10 => EventCorrection.Status(refactorElement10)),
+            ((refactorDecoded4)._3).map(refactorElement11 => UnreadPage.Offset(refactorElement11)),
+            ((refactorDecoded4)._4).map(refactorElement12 => EventList.Limit(refactorElement12))
+          )
+      )(
+        (refactorEncoded4: (
+            Option[Event.Id],
+            Option[EventCorrection.Status],
+            Option[UnreadPage.Offset],
+            Option[EventList.Limit]
+        )) =>
+          (
+            ((refactorEncoded4)._1).map(refactorElement13 => (refactorElement13).value),
+            ((refactorEncoded4)._2).map(refactorElement14 => (refactorElement14).value),
+            ((refactorEncoded4)._3).map(refactorElement15 => (refactorElement15).value),
+            ((refactorEncoded4)._4).map(refactorElement16 => (refactorElement16).value)
+          )
+      )
 
   lazy val catalogues: PublicEndpoint[Unit, Api.Error, List[CatalogProviderInfo], Any] =
     endpoint.get
@@ -75,14 +100,20 @@ object EventsApi:
     (endpoint.get
       .in("api" / "events" / path[String]("id") / "links")
       .errorOut(Api.writeErrors)
-      .out(jsonBody[EventLinkList])).mapIn[Event.Id]((refactorDecoded2: String) => Event.Id(refactorDecoded2))((refactorEncoded2: Event.Id) => (refactorEncoded2).value)
+      .out(jsonBody[EventLinkList]))
+      .mapIn[Event.Id]((refactorDecoded2: String) => Event.Id(refactorDecoded2))((refactorEncoded2: Event.Id) =>
+        (refactorEncoded2).value
+      )
 
   lazy val applyLinks: PublicEndpoint[(Event.Id, EventLinksRequest), Api.Error, EventLinksResult, Any] =
     (endpoint.post
       .in("api" / "events" / path[String]("id") / "links")
       .in(jsonBody[EventLinksRequest])
       .errorOut(Api.writeErrors)
-      .out(jsonBody[EventLinksResult])).mapIn[(Event.Id, EventLinksRequest)]((refactorDecoded3: (String, EventLinksRequest)) => (Event.Id((refactorDecoded3)._1), (refactorDecoded3)._2))((refactorEncoded3: (Event.Id, EventLinksRequest)) => (((refactorEncoded3)._1).value, (refactorEncoded3)._2))
+      .out(jsonBody[EventLinksResult]))
+      .mapIn[(Event.Id, EventLinksRequest)]((refactorDecoded3: (String, EventLinksRequest)) =>
+        (Event.Id((refactorDecoded3)._1), (refactorDecoded3)._2)
+      )((refactorEncoded3: (Event.Id, EventLinksRequest)) => (((refactorEncoded3)._1).value, (refactorEncoded3)._2))
 
   lazy val refineSiteTypes: PublicEndpoint[SiteTypes.Request, Api.Error, JobInfo, Any] =
     endpoint.post

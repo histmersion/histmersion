@@ -90,7 +90,9 @@ final class Deps(
     /** The time, the environment and the per-user paths: read once by the entry point, never globally. */
     val clock: Clock = Clock.systemUTC(),
     val environment: Environment = Environment.empty,
-    val userPaths: UserPaths = UserPaths(Environment.empty, UserPaths.OsName("")), val timer: Timer = new SystemTimer, val pause: Pause = new ThreadPause
+    val userPaths: UserPaths = UserPaths(Environment.empty, UserPaths.OsName("")),
+    val timer: Timer = new SystemTimer,
+    val pause: Pause = new ThreadPause
 ):
 
   /** Transactions on the application role ([[ds]]). */
@@ -156,9 +158,21 @@ object Deps:
       maintenance: WriteGate = WriteGate(),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
-      clock: Clock = Clock.systemUTC(), timer: Timer = new SystemTimer, pause: Pause = new ThreadPause
+      clock: Clock = Clock.systemUTC(),
+      timer: Timer = new SystemTimer,
+      pause: Pause = new ThreadPause
   ): Deps =
-    new Deps(() => cfg, ds, queryDs, maintenance, () => configFile, () => plugins, clock = clock, timer = timer, pause = pause)
+    new Deps(
+      () => cfg,
+      ds,
+      queryDs,
+      maintenance,
+      () => configFile,
+      () => plugins,
+      clock = clock,
+      timer = timer,
+      pause = pause
+    )
 
   /** A fixed `Deps` whose read-only DataSource is the application one: for a test that does not exercise `query` (a
     * second role would need a second pool someone has to own and close).

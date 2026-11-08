@@ -19,38 +19,80 @@ class VacuumSuite extends munit.FunSuite:
   private val existing = Set("places", "place_names", "finding_places", "findings", "events").map(Vacuum.Table(_))
 
   test("no table named: the configured ones; named ones are trimmed, lower-cased, de-duplicated, comma lists split"):
-    assertEquals(Vacuum.plan(Vacuum.Request(), defaults, existing), Right(
+    assertEquals(
+      Vacuum.plan(Vacuum.Request(), defaults, existing),
+      Right(
         VacuumPlan(
           VacuumPlan.Analyze(false),
-          List(Vacuum.Request.Tables("places"), Vacuum.Request.Tables("place_names"), Vacuum.Request.Tables("finding_places"))
+          List(
+            Vacuum.Request.Tables("places"),
+            Vacuum.Request.Tables("place_names"),
+            Vacuum.Request.Tables("finding_places")
+          )
         )
       )
     )
     assertEquals(
-      Vacuum.plan(Vacuum.Request(analyze = Vacuum.Request.Analyze(true), tables = List(Vacuum.Request.Tables(" Findings "), Vacuum.Request.Tables("events,findings"))), defaults, existing),
-      Right(VacuumPlan(VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("findings"), Vacuum.Request.Tables("events"))))
+      Vacuum.plan(
+        Vacuum.Request(
+          analyze = Vacuum.Request.Analyze(true),
+          tables = List(Vacuum.Request.Tables(" Findings "), Vacuum.Request.Tables("events,findings"))
+        ),
+        defaults,
+        existing
+      ),
+      Right(
+        VacuumPlan(VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("findings"), Vacuum.Request.Tables("events")))
+      )
     )
 
   test("a name that is no identifier, or no table of the store, is refused — and so is an empty list"):
     def refused(tables: List[Vacuum.Request.Tables], d: List[Vacuum.Table] = defaults) =
       Vacuum.plan(Vacuum.Request(tables = tables), d, existing).left.map(e => (e.code, e.message))
-    assertEquals(refused(List(Vacuum.Request.Tables("places; DROP TABLE x"))).left.map(_._1), Left(Some(Write.CodeInvalid)))
-    assertEquals(refused(List(Vacuum.Request.Tables("pg_catalog.pg_class"))).left.map(_._1), Left(Some(Write.CodeInvalid)))
+    assertEquals(
+      refused(List(Vacuum.Request.Tables("places; DROP TABLE x"))).left.map(_._1),
+      Left(Some(Write.CodeInvalid))
+    )
+    assertEquals(
+      refused(List(Vacuum.Request.Tables("pg_catalog.pg_class"))).left.map(_._1),
+      Left(Some(Write.CodeInvalid))
+    )
     assertEquals(refused(List(Vacuum.Request.Tables("nope"))), Left((Some(Write.CodeInvalid), "no such table: nope")))
     assertEquals(refused(Nil, Nil).left.map(_._1), Left(Some(Write.CodeInvalid)))
 
   test("the statement quotes the table; ANALYZE only when asked"):
-    assertEquals(Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze(false)), "VACUUM \"place_names\"")
-    assertEquals(Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze(true)), "VACUUM (ANALYZE) \"place_names\"")
+    assertEquals(
+      Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze(false)),
+      "VACUUM \"place_names\""
+    )
+    assertEquals(
+      Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze(true)),
+      "VACUUM (ANALYZE) \"place_names\""
+    )
 
   test("a job says what it vacuums, and each table's line what it reclaimed"):
     assertEquals(
-      Vacuum.describe(VacuumPlan(VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("places"), Vacuum.Request.Tables("place_names")))),
+      Vacuum.describe(
+        VacuumPlan(
+          VacuumPlan.Analyze(true),
+          List(Vacuum.Request.Tables("places"), Vacuum.Request.Tables("place_names"))
+        )
+      ),
       "VACUUM (ANALYZE) of places, place_names"
     )
-    assertEquals(Vacuum.describe(VacuumPlan(VacuumPlan.Analyze(false), List(Vacuum.Request.Tables("places")))), "VACUUM of places")
     assertEquals(
-      Vacuum.tableLine(Vacuum.Table("place_names"), Vacuum.DeadRows(1237921), Vacuum.DeadRows(0), ByteCount(3738000000L), ByteCount(3738000000L), Storage.Report.DurationMillis(81234)),
+      Vacuum.describe(VacuumPlan(VacuumPlan.Analyze(false), List(Vacuum.Request.Tables("places")))),
+      "VACUUM of places"
+    )
+    assertEquals(
+      Vacuum.tableLine(
+        Vacuum.Table("place_names"),
+        Vacuum.DeadRows(1237921),
+        Vacuum.DeadRows(0),
+        ByteCount(3738000000L),
+        ByteCount(3738000000L),
+        Storage.Report.DurationMillis(81234)
+      ),
       "place_names: 1237921 → 0 dead rows, 3.7 GB → 3.7 GB (81.2 s)"
     )
     val job = JobInfo(
@@ -63,7 +105,8 @@ class VacuumSuite extends munit.FunSuite:
       None,
       JobInfo.CreatedAt("t"),
       JobInfo.UpdatedAt("t"),
-      detail = Some(VacuumPlan.Detail(Some(VacuumPlan(VacuumPlan.Analyze(false), List(Vacuum.Request.Tables("places"))))))
+      detail =
+        Some(VacuumPlan.Detail(Some(VacuumPlan(VacuumPlan.Analyze(false), List(Vacuum.Request.Tables("places"))))))
     )
     assertEquals(JobDetail.subject(job), Some("VACUUM of places"))
     assert(IngestMarkdown.job(job).contains("- **vacuums:** VACUUM of places"))

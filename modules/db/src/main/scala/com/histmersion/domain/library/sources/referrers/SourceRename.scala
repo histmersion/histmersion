@@ -20,7 +20,13 @@ final case class SourceRename(from: Citekey, to: Citekey, shortForms: Set[Citeke
   def findingPrefix: SourceKeys.FindingPrefix = SourceKeys.FindingPrefix(from.value + "#")
 
   /** `text` with the old citekey replaced wherever it stands as a whole token. */
-  def inText(text: SourceKeys.Text): SourceKeys.Text = SourceKeys.Text(Rename.replaceToken(text.value, com.histmersion.api.library.Citekey(from.value), com.histmersion.api.library.Citekey(to.value)))
+  def inText(text: SourceKeys.Text): SourceKeys.Text = SourceKeys.Text(
+    Rename.replaceToken(
+      text.value,
+      com.histmersion.api.library.Citekey(from.value),
+      com.histmersion.api.library.Citekey(to.value)
+    )
+  )
 
 object SourceRename:
   type Needle = Needle.T

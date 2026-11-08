@@ -167,7 +167,12 @@ object GazetteerLoad:
   /** The pinned extract (moved over from the legacy place once), fetched first when it is missing and its pin names a
     * url.
     */
-  def extract(p: Stores, x: Gazetteer.Extract, download: Download, timeoutSeconds: Settings.DownloadTimeoutSeconds): Either[Problem, Blob] =
+  def extract(
+      p: Stores,
+      x: Gazetteer.Extract,
+      download: Download,
+      timeoutSeconds: Settings.DownloadTimeoutSeconds
+  ): Either[Problem, Blob] =
     if x.sha256.value.trim.isEmpty || x.file.value.trim.isEmpty then Left(missing(p, x))
     else
       Store.Key.of(x.file.value) match
@@ -183,7 +188,9 @@ object GazetteerLoad:
                   for
                     _ <- p.extracts.makeDirectory().left.map(e => Problem(e.toString))
                     r <- p.extracts.reserve(key).left.map(e => Problem(e.toString))
-                    _ <- download(HttpDownload.Url(url), r, timeoutSeconds).left.map { e => r.discard(); Problem(e.value) }
+                    _ <- download(HttpDownload.Url(url), r, timeoutSeconds).left.map { e =>
+                      r.discard(); Problem(e.value)
+                    }
                     _ <- r.commit().left.map(e => Problem(e.toString))
                     f <- verify(p.extracts, key, x).left.map { e =>
                       val _ = p.extracts.delete(key)
@@ -212,13 +219,17 @@ object GazetteerLoad:
   final private class Batcher(size: Int, sink: List[GazRecord] => Gazetteer.LoadCounts):
     private val buf = List.newBuilder[GazRecord] // the batch being filled
     private var n = 0 // its size
-    var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts(Gazetteer.LoadCounts.Source(""), Gazetteer.LoadCounts.Version("")) // the running sum
+    var total: Gazetteer.LoadCounts =
+      Gazetteer.LoadCounts(Gazetteer.LoadCounts.Source(""), Gazetteer.LoadCounts.Version("")) // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
     def add(r: Either[Gazetteer.Problem, GazRecord]): Unit = r match
       case Left(e)    => total = total.copy(skipped = (total.skipped :+ Gazetteer.LoadCounts.Skipped(e.value)).take(20))
       case Right(rec) =>
-        span = Span((span.from ++ rec.span.from).minByOption(_.value: Long), (span.to ++ rec.span.to).maxByOption(_.value: Long))
+        span = Span(
+          (span.from ++ rec.span.from).minByOption(_.value: Long),
+          (span.to ++ rec.span.to).maxByOption(_.value: Long)
+        )
         buf += rec
         n += 1
         if n >= size then flush()
@@ -241,7 +252,8 @@ object GazetteerLoad:
       downloadTimeoutSeconds: Settings.DownloadTimeoutSeconds,
       toleranceKm: GeocodeSettings.ToleranceKm,
       rebuild: Settings.Rebuild = Settings.Rebuild(true),
-      openStartWindowYears: Gazetteer.ValidityWindowYears = Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
+      openStartWindowYears: Gazetteer.ValidityWindowYears =
+        Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
       pointAreaKinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
   )
 
@@ -282,7 +294,15 @@ object GazetteerLoad:
           x <- pin(s.stores, k)
           f <- extract(s.stores, x, download, s.downloadTimeoutSeconds)
         yield
-          val (c, _) = run(db, s, Gazetteer.sourceKey(k), Gazetteer.LoadCounts.Version(x.version.value), apply.value, note, f.key.name.value) { b =>
+          val (c, _) = run(
+            db,
+            s,
+            Gazetteer.sourceKey(k),
+            Gazetteer.LoadCounts.Version(x.version.value),
+            apply.value,
+            note,
+            f.key.name.value
+          ) { b =>
             lines(f)((line, n) => b.add(parseLine(line, n, Gazetteer.DatasetName(""), None)))
           }
           if apply.value then
@@ -308,7 +328,12 @@ object GazetteerLoad:
       cs
     }
 
-  private def parseLine(line: String, n: Int, dataset: Gazetteer.DatasetName, source: Option[Gazetteer.SourceInfo.Key]): Either[Gazetteer.Problem, GazRecord] =
+  private def parseLine(
+      line: String,
+      n: Int,
+      dataset: Gazetteer.DatasetName,
+      source: Option[Gazetteer.SourceInfo.Key]
+  ): Either[Gazetteer.Problem, GazRecord] =
     io.circe.parser
       .parse(line)
       .left
@@ -342,7 +367,11 @@ object GazetteerLoad:
       b.flush()
       val swept = session.sweep()
       (
-        (b.total + swept + Gazetteer.LoadCounts(key, version, placesRemoved = Gazetteer.LoadCounts.PlacesRemoved(pruned.value)))
+        (b.total + swept + Gazetteer.LoadCounts(
+          key,
+          version,
+          placesRemoved = Gazetteer.LoadCounts.PlacesRemoved(pruned.value)
+        ))
           .copy(source = key, version = version),
         b.span
       )
@@ -355,7 +384,9 @@ object GazetteerLoad:
   def lpfFiles(dir: Store): List[Blob] =
     dir
       .list()
-      .filter(f => f.isFile && LpfFile.matches(f.key.name.value) && !f.key.name.value.toLowerCase.endsWith(".meta.json"))
+      .filter(f =>
+        f.isFile && LpfFile.matches(f.key.name.value) && !f.key.name.value.toLowerCase.endsWith(".meta.json")
+      )
       .sortBy(_.key.name.value)
       .flatMap(f => dir.get(f.key))
 
@@ -405,7 +436,13 @@ object GazetteerLoad:
             else
               b.add(
                 Gazetteer
-                  .fromTsvRow(header, Gazetteer.tsvCells(line), slug, n, meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value)))
+                  .fromTsvRow(
+                    header,
+                    Gazetteer.tsvCells(line),
+                    slug,
+                    n,
+                    meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value))
+                  )
                   .map(Gazetteer.inDataset(_, meta))
               )
           }
@@ -511,8 +548,18 @@ object GazetteerLoad:
       }
     }
     val lpf = lpfFiles(s.stores.lpf).map { f =>
-      val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(Gazetteer.datasetSlug(Gazetteer.SourceInfo.File(f.key.name.value))))
-      Gazetteer.SourceInfo(key, Gazetteer.Kind.Lpf, Gazetteer.SourceInfo.Title(f.key.name.value), Some(Gazetteer.SourceInfo.File(f.where.value)), present = Gazetteer.SourceInfo.Present(true), None)
+      val key = Gazetteer.sourceKey(
+        Gazetteer.Kind.Lpf,
+        Some(Gazetteer.datasetSlug(Gazetteer.SourceInfo.File(f.key.name.value)))
+      )
+      Gazetteer.SourceInfo(
+        key,
+        Gazetteer.Kind.Lpf,
+        Gazetteer.SourceInfo.Title(f.key.name.value),
+        Some(Gazetteer.SourceInfo.File(f.where.value)),
+        present = Gazetteer.SourceInfo.Present(true),
+        None
+      )
     }
     val onDisk = (pinned ++ lpf).map(_.key).toSet
     val gone = stored.filterNot((k, _) => onDisk.contains(k)).values.toList.sortBy(_.key.value).flatMap { r =>

@@ -8,45 +8,93 @@ package plugin
 class SpiAdditionsSuite extends munit.FunSuite:
 
   private object Bodies extends Plugin.Http:
-    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] =
-      if (url).value.endsWith("/missing") then Left(Plugin.Http.GetResultPart1(s"$url: HTTP 404")) else Right(Plugin.HttpResponse.Body(s"body of $url".getBytes("UTF-8")))
+    def get(
+        url: Plugin.Http.GetUrl,
+        headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
+    ): Either[Plugin.Http.GetResultPart1, Plugin.HttpResponse.Body] =
+      if (url).value.endsWith("/missing") then Left(Plugin.Http.GetResultPart1(s"$url: HTTP 404"))
+      else Right(Plugin.HttpResponse.Body(s"body of $url".getBytes("UTF-8")))
 
   test("Plugin.Http.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
     val r = Bodies.fetch(Plugin.Http.GetUrl("https://x.example/a")).fold(e => fail((e).value), identity)
     assertEquals(
-      ({ val refactorTuple7 = (r.status, r.headers, String((r.body).value, "UTF-8")); ((refactorTuple7._1).value, (refactorTuple7._2).iterator.map { case (refactorKey, refactorItem) => ((refactorKey).value, (refactorItem).value) }.toMap, refactorTuple7._3) }: (Int, Map[String, String], String)),
+      ({
+        val refactorTuple7 = (r.status, r.headers, String((r.body).value, "UTF-8"));
+        (
+          (refactorTuple7._1).value,
+          (refactorTuple7._2).iterator.map { case (refactorKey, refactorItem) =>
+            ((refactorKey).value, (refactorItem).value)
+          }.toMap,
+          refactorTuple7._3
+        )
+      }: (Int, Map[String, String], String)),
       (200, Map.empty[String, String], "body of https://x.example/a")
     )
-    assertEquals((((Bodies.fetch(Plugin.Http.GetUrl("https://x.example/missing")).map(_.status)).left.map(refactorError => (refactorError).value)).map(refactorValue => (refactorValue).value): Either[String, Int]), Left("https://x.example/missing: HTTP 404"))
+    assertEquals(
+      (((Bodies
+        .fetch(Plugin.Http.GetUrl("https://x.example/missing"))
+        .map(_.status))
+        .left
+        .map(refactorError => (refactorError).value))
+        .map(refactorValue => (refactorValue).value): Either[String, Int]),
+      Left("https://x.example/missing: HTTP 404")
+    )
 
   test("a response's header is found in any case"):
-    val r = Plugin.HttpResponse(Plugin.HttpResponse.Status(429), Map({ val refactorTuple = "x-ratelimit-remaining" -> "0"; (Plugin.HttpResponse.HeadersKey(refactorTuple._1), Plugin.HttpResponse.HeadersValue(refactorTuple._2)) }), Plugin.HttpResponse.Body(Array.emptyByteArray))
-    assertEquals(((r.header(Plugin.HttpResponse.HeaderName("X-RateLimit-Remaining"))).map(refactorValue7 => (refactorValue7).value): Option[String]), Some("0"))
+    val r = Plugin.HttpResponse(
+      Plugin.HttpResponse.Status(429),
+      Map {
+        val refactorTuple = "x-ratelimit-remaining" -> "0";
+        (Plugin.HttpResponse.HeadersKey(refactorTuple._1), Plugin.HttpResponse.HeadersValue(refactorTuple._2))
+      },
+      Plugin.HttpResponse.Body(Array.emptyByteArray)
+    )
+    assertEquals(
+      ((r
+        .header(Plugin.HttpResponse.HeaderName("X-RateLimit-Remaining")))
+        .map(refactorValue7 => (refactorValue7).value): Option[String]),
+      Some("0")
+    )
     assertEquals(r.header(Plugin.HttpResponse.HeaderName("Retry-After")), None)
 
   test("the unlimited quota lets every call go and keeps nothing"):
     val q = UpstreamQuota.Unlimited
     assertEquals(List.fill(1000)(q.take(UpstreamQuota.TakePurpose("lookup"))).distinct, List(Right(())))
-    q.observe(UpstreamQuota.ObserveStatus(429), Map({ val refactorTuple2 = "retry-after" -> "3600"; (UpstreamQuota.ObserveHeadersPart1(refactorTuple2._1), UpstreamQuota.ObserveHeadersPart2(refactorTuple2._2)) }))
+    q.observe(
+      UpstreamQuota.ObserveStatus(429),
+      Map {
+        val refactorTuple2 = "retry-after" -> "3600";
+        (UpstreamQuota.ObserveHeadersPart1(refactorTuple2._1), UpstreamQuota.ObserveHeadersPart2(refactorTuple2._2))
+      }
+    )
     assertEquals(q.take(UpstreamQuota.TakePurpose("search")), Right(()))
     assertEquals(q.waitingUntil, None)
 
   /** A context as a plugin of SPI 2's first release wrote it: no quota of its own. */
   private object EarlyContext extends Plugin.Context:
     def http = Bodies
-    def log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = () }
+    def log = new Plugin.Log {
+      def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+    }
     def env(name: Plugin.Context.EnvName): Option[Plugin.Context.EnvResult] = None
-    def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] = Left(Plugin.Context.SecretResultPart1("none"))
+    def secret(s: Secret): Either[Plugin.Context.SecretResultPart1, Plugin.Context.SecretResultPart2] = Left(
+      Plugin.Context.SecretResultPart1("none")
+    )
     def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
 
   test("a context written before budgets existed lends the unlimited quota for any upstream"):
     assertEquals(EarlyContext.quota(Plugin.Context.QuotaUpstream("core")), UpstreamQuota.Unlimited)
-    assertEquals(EarlyContext.quota(Plugin.Context.QuotaUpstream("anything")).take(UpstreamQuota.TakePurpose("lookup")), Right(()))
+    assertEquals(
+      EarlyContext.quota(Plugin.Context.QuotaUpstream("anything")).take(UpstreamQuota.TakePurpose("lookup")),
+      Right(())
+    )
 
   test("a fetch context written before peers were told says no plugin is registered"):
     val ctx = new Fetch.Context:
       def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = compute
-      val log = new Plugin.Log { def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = () }
+      val log = new Plugin.Log {
+        def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+      }
     assert(!(ctx.registered(Fetch.Context.RegisteredPluginId("oa-unpaywall"))).value)
 
   /** A catalogue as one written before re-reading existed: it re-reads nothing, and its parts stay read. */
@@ -56,10 +104,21 @@ class SpiAdditionsSuite extends munit.FunSuite:
     def citation: EventCatalogue.CitationResult = EventCatalogue.CitationResult("Floods")
     def home: EventCatalogue.HomeResult = EventCatalogue.HomeResult("https://floods.example")
     def parts(query: CatalogueQuery): List[EventCatalogue.PartsResult] = List(EventCatalogue.PartsResult("all"))
-    def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[EventCatalogue.ReadResultPart1, CataloguePage] = Right(CataloguePage(Nil))
+    def read(
+        part: EventCatalogue.ReadPart,
+        query: CatalogueQuery,
+        http: Plugin.Http
+    ): Either[EventCatalogue.ReadResultPart1, CataloguePage] = Right(CataloguePage(Nil))
 
   test("a catalogue re-reads nothing by default, and a part read once stays read"):
-    val stored = CatalogueEvent(CatalogueEvent.Id("f1"), CatalogueEvent.Url("https://floods.example/f1"), CatalogueEvent.Label("Flood"), CatalogueEvent.Kind("flood"), Some(Year(-500)), Some(Year(-500)))
+    val stored = CatalogueEvent(
+      CatalogueEvent.Id("f1"),
+      CatalogueEvent.Url("https://floods.example/f1"),
+      CatalogueEvent.Label("Flood"),
+      CatalogueEvent.Kind("flood"),
+      Some(Year(-500)),
+      Some(Year(-500))
+    )
     assertEquals(Floods.reread(stored), None)
     assert(!(Floods.everyPartEachImport).value)
 
@@ -67,23 +126,66 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   test("a provider asks for no request option by default: no iteration notes, its failures prefixed as before"):
     val caps = AiCapabilities()
-    assertEquals(({ val refactorTuple3 = (caps.iterationMarkers, caps.verbatimFailures); ((refactorTuple3._1).value, (refactorTuple3._2).value) }: (Boolean, Boolean)), (false, false))
+    assertEquals(
+      ({
+        val refactorTuple3 = (caps.iterationMarkers, caps.verbatimFailures);
+        ((refactorTuple3._1).value, (refactorTuple3._2).value)
+      }: (Boolean, Boolean)),
+      (false, false)
+    )
     val early = new AiProvider:
       def title = AiProvider.TitleResult("Early")
       def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error(AiFailure.Error.Message("none")))
-    assertEquals(early.capabilities, AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false)))
+    assertEquals(
+      early.capabilities,
+      AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false))
+    )
 
   test("the members a provider or host compiled before them used still exist, with their old shapes"):
     val longs = Array.fill(4)(classOf[Long])
-    assertEquals(new AiUsage(1, 2, 3, 4), AiUsage(AiUsage.Input((1).toLong), AiUsage.Output((2).toLong), AiUsage.CacheRead((3).toLong), AiUsage.CacheWrite((4).toLong), AiUsage.Reasoning((0).toLong)))
-    assertEquals(((AiUsage(AiUsage.Input((1).toLong), AiUsage.Output((2).toLong), AiUsage.CacheRead((3).toLong), AiUsage.CacheWrite((4).toLong)).reasoning).value: Long), 0L)
+    assertEquals(
+      new AiUsage(1, 2, 3, 4),
+      AiUsage(
+        AiUsage.Input((1).toLong),
+        AiUsage.Output((2).toLong),
+        AiUsage.CacheRead((3).toLong),
+        AiUsage.CacheWrite((4).toLong),
+        AiUsage.Reasoning((0).toLong)
+      )
+    )
+    assertEquals(
+      ((AiUsage(
+        AiUsage.Input((1).toLong),
+        AiUsage.Output((2).toLong),
+        AiUsage.CacheRead((3).toLong),
+        AiUsage.CacheWrite((4).toLong)
+      ).reasoning).value: Long),
+      0L
+    )
     assert(classOf[AiUsage].getConstructor(longs*) != null)
     assert(AiUsage.getClass.getMethod("apply", longs*) != null)
     val bools = Array.fill(2)(classOf[Boolean])
-    assertEquals(new AiCapabilities(false, true), AiCapabilities(AiCapabilities.Tools(false), AiCapabilities.StructuredOutput(true), AiCapabilities.IterationMarkers(false), AiCapabilities.VerbatimFailures(false)))
+    assertEquals(
+      new AiCapabilities(false, true),
+      AiCapabilities(
+        AiCapabilities.Tools(false),
+        AiCapabilities.StructuredOutput(true),
+        AiCapabilities.IterationMarkers(false),
+        AiCapabilities.VerbatimFailures(false)
+      )
+    )
     assert(classOf[AiCapabilities].getConstructor(bools*) != null)
     assert(AiCapabilities.getClass.getMethod("apply", bools*) != null)
-    val old = AiTurn.Request(AiTurn.Request.Model("m"), AiTurn.Request.System("s"), Nil, Nil, (Some("{}")).map(refactorValue4 => AiTurn.Request.AnswerSchema(refactorValue4)), AiTurn.Request.MaxTokens(10), AiTurn.Request.Iteration(1), AiTurn.Request.MaxIterations(2))
+    val old = AiTurn.Request(
+      AiTurn.Request.Model("m"),
+      AiTurn.Request.System("s"),
+      Nil,
+      Nil,
+      (Some("{}")).map(refactorValue4 => AiTurn.Request.AnswerSchema(refactorValue4)),
+      AiTurn.Request.MaxTokens(10),
+      AiTurn.Request.Iteration(1),
+      AiTurn.Request.MaxIterations(2)
+    )
     assertEquals((old.answerSchemaRendered, old.answerDescription), (None, None))
     assertEquals(new AiTurn.Request("m", "s", Nil, Nil, Some("{}"), 10, 1, 2), old)
     val request = Array[Class[?]](
@@ -110,18 +212,57 @@ class SpiAdditionsSuite extends munit.FunSuite:
       else
         Right(
           List(
-            Right(MediaItem(MediaItem.Key(s"${place.id}-1"), MediaItem.Title((place.label).value), MediaItem.PageUrl("https://portal.example/1"), None, Left(MediaItem.RightsPart1("closed")))),
+            Right(
+              MediaItem(
+                MediaItem.Key(s"${place.id}-1"),
+                MediaItem.Title((place.label).value),
+                MediaItem.PageUrl("https://portal.example/1"),
+                None,
+                Left(MediaItem.RightsPart1("closed"))
+              )
+            ),
             Left(MediaCollection.SearchResultPart2Part1("one record unreadable"))
           )
         )
 
   test("an item built as SPI 2's first release built it has no role of its own and no rendition"):
     val rights = Left("not open access")
-    val applied = MediaItem(MediaItem.Key("k"), MediaItem.Title("t"), MediaItem.PageUrl("https://p"), None, (rights).left.map(refactorError2 => MediaItem.RightsPart1(refactorError2)), None, None, Nil, None, Nil, None)
+    val applied = MediaItem(
+      MediaItem.Key("k"),
+      MediaItem.Title("t"),
+      MediaItem.PageUrl("https://p"),
+      None,
+      (rights).left.map(refactorError2 => MediaItem.RightsPart1(refactorError2)),
+      None,
+      None,
+      Nil,
+      None,
+      Nil,
+      None
+    )
     val constructed = new MediaItem("k", "t", "https://p", None, rights, None, None, Nil, None, Nil, Some("withheld"))
     assertEquals((applied.role, applied.rendition), (None, None))
-    assertEquals(({ val refactorTuple6 = (constructed.role, constructed.rendition, constructed.withheld); ((refactorTuple6._1).map(refactorValue5 => (refactorValue5).value), refactorTuple6._2, (refactorTuple6._3).map(refactorValue6 => (refactorValue6).value)) }: (Option[String], Option[MediaRendition], Option[String])), (None, None, Some("withheld")))
-    assertEquals(applied, MediaItem(MediaItem.Key("k"), MediaItem.Title("t"), MediaItem.PageUrl("https://p"), None, (rights).left.map(refactorError3 => MediaItem.RightsPart1(refactorError3))))
+    assertEquals(
+      ({
+        val refactorTuple6 = (constructed.role, constructed.rendition, constructed.withheld);
+        (
+          (refactorTuple6._1).map(refactorValue5 => (refactorValue5).value),
+          refactorTuple6._2,
+          (refactorTuple6._3).map(refactorValue6 => (refactorValue6).value)
+        )
+      }: (Option[String], Option[MediaRendition], Option[String])),
+      (None, None, Some("withheld"))
+    )
+    assertEquals(
+      applied,
+      MediaItem(
+        MediaItem.Key("k"),
+        MediaItem.Title("t"),
+        MediaItem.PageUrl("https://p"),
+        None,
+        (rights).left.map(refactorError3 => MediaItem.RightsPart1(refactorError3))
+      )
+    )
 
   test("a place described as SPI 2's first release described it carries no gazetteer ids"):
     val applied = MediaPlace(MediaPlace.Id("p"), MediaPlace.Label("Mycenae"), None, None, None, None)
@@ -130,7 +271,10 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(applied, MediaPlace(MediaPlace.Id("p"), MediaPlace.Label("Mycenae")))
 
   test("a collection's new members by default: its role alone, places, no events, always asked, refusals final"):
-    assertEquals(((Portal.roles).map(refactorValue8 => (refactorValue8).value): Set[String]), Set(MediaCollection.Object))
+    assertEquals(
+      ((Portal.roles).map(refactorValue8 => (refactorValue8).value): Set[String]),
+      Set(MediaCollection.Object)
+    )
     assertEquals(Portal.asks, Set(MediaTarget.Places))
     assertEquals(Portal.searchEvent(MediaEvent(MediaEvent.Id("e"), MediaEvent.Label("Fall of X")), Bodies), Right(Nil))
     assertEquals(Portal.check, Right(()))
@@ -140,7 +284,10 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   test("searchTargets by default: search for each place and searchEvent for each event, in order, failures counted"):
     val found = Portal.searchTargets(
-      List(MediaPlace(MediaPlace.Id("a"), MediaPlace.Label("Mycenae")), MediaPlace(MediaPlace.Id("b"), MediaPlace.Label("Nowhere"))),
+      List(
+        MediaPlace(MediaPlace.Id("a"), MediaPlace.Label("Mycenae")),
+        MediaPlace(MediaPlace.Id("b"), MediaPlace.Label("Nowhere"))
+      ),
       List(MediaEvent(MediaEvent.Id("e"), MediaEvent.Label("Fall of X"))),
       Bodies
     )
@@ -150,16 +297,39 @@ class SpiAdditionsSuite extends munit.FunSuite:
         MediaTarget.Id(MediaTarget.Places, MediaTarget.Id.Value("b")),
         MediaTarget.Id(MediaTarget.Events, MediaTarget.Id.Value("e"))
       )
-    assertEquals(((found.uses.map(u => (u.target, u.item.key, u.rank))).map(refactorValue2 => { val refactorTuple4 = refactorValue2; (refactorTuple4._1, (refactorTuple4._2).value, (refactorTuple4._3).value) }): List[(MediaTarget.Id, String, Int)]), List((a, "a-1", 0)))
+    assertEquals(
+      ((found.uses.map(u => (u.target, u.item.key, u.rank))).map { refactorValue2 =>
+        val refactorTuple4 = refactorValue2; (refactorTuple4._1, (refactorTuple4._2).value, (refactorTuple4._3).value)
+      }: List[(MediaTarget.Id, String, Int)]),
+      List((a, "a-1", 0))
+    )
     assertEquals(found.asked, List(a, b, e))
     assertEquals(found.unanswered, Set(b), "a failed search is not recorded as asked")
     assertEquals(((found.read).value: Int), 2)
-    assertEquals(((found.failed).map(refactorValue3 => (refactorValue3).value): List[String]), List("a: one record unreadable", "Portal objects search for b: offline"))
+    assertEquals(
+      ((found.failed).map(refactorValue3 => (refactorValue3).value): List[String]),
+      List("a: one record unreadable", "Portal objects search for b: offline")
+    )
     assertEquals((found.notTaken, found.categories), (Nil, Nil))
 
   test("completeAll by default: complete for each item, by its key"):
     val items =
-      List(MediaItem(MediaItem.Key("k1"), MediaItem.Title("t"), MediaItem.PageUrl("https://p"), None, Left(MediaItem.RightsPart1("x"))), MediaItem(MediaItem.Key("k2"), MediaItem.Title("t"), MediaItem.PageUrl("https://p"), None, Left(MediaItem.RightsPart1("y"))))
+      List(
+        MediaItem(
+          MediaItem.Key("k1"),
+          MediaItem.Title("t"),
+          MediaItem.PageUrl("https://p"),
+          None,
+          Left(MediaItem.RightsPart1("x"))
+        ),
+        MediaItem(
+          MediaItem.Key("k2"),
+          MediaItem.Title("t"),
+          MediaItem.PageUrl("https://p"),
+          None,
+          Left(MediaItem.RightsPart1("y"))
+        )
+      )
     assertEquals(Portal.completeAll(items, Bodies), MediaCompleted(items.map(i => i.key -> i).toMap))
     val failing = new MediaCollection:
       val title = MediaCollection.TitleResult("Failing")
@@ -167,7 +337,13 @@ class SpiAdditionsSuite extends munit.FunSuite:
       def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
       override def complete(item: MediaItem, http: Plugin.Http) =
         if item.key == MediaItem.Key("k1") then Left(MediaCollection.CompleteResultPart1("gone")) else Right(item)
-    assertEquals(failing.completeAll(items, Bodies), MediaCompleted(Map({ val refactorTuple5 = "k2" -> items(1); (MediaItem.Key(refactorTuple5._1), refactorTuple5._2) }), List(MediaCompleted.Failed("k1: gone"))))
+    assertEquals(
+      failing.completeAll(items, Bodies),
+      MediaCompleted(
+        Map { val refactorTuple5 = "k2" -> items(1); (MediaItem.Key(refactorTuple5._1), refactorTuple5._2) },
+        List(MediaCompleted.Failed("k1: gone"))
+      )
+    )
 
   test("the roles a collection's pictures may play are the ones the host stores"):
     assertEquals(
@@ -177,11 +353,23 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   test("a context written before the host lent its licence reading reads every statement as unknown"):
     val l = EarlyContext.licences
-    assertEquals(l.readName(LicenceReader.ReadNameName("CC BY 4.0")), Licence.Read(Licence.Read.Id("CC BY 4.0"), Licence.Read.Family(Licence.Read.Unknown)))
+    assertEquals(
+      l.readName(LicenceReader.ReadNameName("CC BY 4.0")),
+      Licence.Read(Licence.Read.Id("CC BY 4.0"), Licence.Read.Family(Licence.Read.Unknown))
+    )
     assertEquals(
       l.readUrl(LicenceReader.ReadUrlUrl("https://creativecommons.org/licenses/by/4.0")),
       Licence.Read.unknown(Licence.Read.UnknownStatement("https://creativecommons.org/licenses/by/4.0"))
     )
-    assertEquals(l.readFirst(List(LicenceReader.ReadFirstStatements(" "), LicenceReader.ReadFirstStatements("cc0"), LicenceReader.ReadFirstStatements("pd"))), Licence.Read(Licence.Read.Id("cc0"), Licence.Read.Family(Licence.Read.Unknown)))
+    assertEquals(
+      l.readFirst(
+        List(
+          LicenceReader.ReadFirstStatements(" "),
+          LicenceReader.ReadFirstStatements("cc0"),
+          LicenceReader.ReadFirstStatements("pd")
+        )
+      ),
+      Licence.Read(Licence.Read.Id("cc0"), Licence.Read.Family(Licence.Read.Unknown))
+    )
     assertEquals(l.readFirst(Nil), Licence.Read.unknown(Licence.Read.UnknownStatement("")))
     assert(!(l.readName(LicenceReader.ReadNameName("cc-by-4.0")).needsAttribution).value)

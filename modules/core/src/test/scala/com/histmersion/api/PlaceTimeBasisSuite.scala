@@ -37,7 +37,11 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(of(OfKind(Place.Kind.Feature), undated = true), Timeless)
     assertEquals(of(OfKind(Place.Kind.Feature), modern = true, undated = true), Timeless, "a Natural Earth sea")
     assertEquals(of(OfKind(Place.Kind.Region), modern = true, undated = true), Timeless, "a Natural Earth peninsula")
-    assertEquals(of(OfKind(Place.Kind.Feature), imported = true, undated = true), Findings, "never a GeoNames/Wikidata place")
+    assertEquals(
+      of(OfKind(Place.Kind.Feature), imported = true, undated = true),
+      Findings,
+      "never a GeoNames/Wikidata place"
+    )
 
   test("a present-day place is modern: the Natural Earth cities, an undated GeoNames or Wikidata place"):
     assertEquals(of(OfKind(Place.Kind.Site), modern = true, undated = true), Modern)
@@ -64,7 +68,10 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assert(!vis(Modern, VisibleEnd(1499), overlaps = true, evidence = true))
     assert(vis(Modern, VisibleEnd(1500), overlaps = true, evidence = false))
     assert(vis(Findings, VisibleEnd(-2500), overlaps = true, evidence = true))
-    assert(!vis(Findings, VisibleEnd(-2500), overlaps = true, evidence = false), "undated and no dated evidence: hidden")
+    assert(
+      !vis(Findings, VisibleEnd(-2500), overlaps = true, evidence = false),
+      "undated and no dated evidence: hidden"
+    )
 
   test("the wire names round-trip"):
     assertEquals(values.toList.flatMap(b => parse(b.wire)), values.toList)
@@ -72,8 +79,24 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     assertEquals(parse(Wire("sometimes")), None)
 
   test("a card at a time says a place is there by its findings; with no time, or dated, it says nothing"):
-    val p = com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("x"), com.histmersion.api.catalogue.Place.Summary.Label("Anatolia"), com.histmersion.api.catalogue.Place.Summary.Kind(Place.Kind.Region), None, None, None, com.histmersion.api.catalogue.Place.Summary.Names(""))
-    val d = PlaceDetail(p, None, Nil, Nil, com.histmersion.api.catalogue.Place.Counts.Findings(0), Some(Year(-2500L)), timeBasis = Findings)
+    val p = com.histmersion.api.catalogue.Place.Summary(
+      com.histmersion.api.catalogue.Place.Id("x"),
+      com.histmersion.api.catalogue.Place.Summary.Label("Anatolia"),
+      com.histmersion.api.catalogue.Place.Summary.Kind(Place.Kind.Region),
+      None,
+      None,
+      None,
+      com.histmersion.api.catalogue.Place.Summary.Names("")
+    )
+    val d = PlaceDetail(
+      p,
+      None,
+      Nil,
+      Nil,
+      com.histmersion.api.catalogue.Place.Counts.Findings(0),
+      Some(Year(-2500L)),
+      timeBasis = Findings
+    )
     assert(d.datedByFindings)
     assert(!d.modify(_.asOf).setTo(None).datedByFindings)
     assert(!d.modify(_.timeBasis).setTo(Dated).datedByFindings)

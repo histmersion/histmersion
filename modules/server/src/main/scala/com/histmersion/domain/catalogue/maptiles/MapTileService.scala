@@ -66,7 +66,16 @@ final class MapTileService(
         )
       else
         val bytes = cache.get(k).getOrElse {
-          val b = cut(layer, coord, q, TileGrid.of(TileGrid.MaxZoom(s.maxZoom.value), TileGrid.MaxPoints(s.maxPoints.value), TileGrid.CellPx(s.cellPx.value)))
+          val b = cut(
+            layer,
+            coord,
+            q,
+            TileGrid.of(
+              TileGrid.MaxZoom(s.maxZoom.value),
+              TileGrid.MaxPoints(s.maxPoints.value),
+              TileGrid.CellPx(s.cellPx.value)
+            )
+          )
           cache.put(k, b)
           b
         }
@@ -145,13 +154,17 @@ final class MapTileService(
         val records = events.geoOf(cells.filter(_.isItem).map(cell => Event.Id.assume(cell.key.value)))
         TileFeatures.of(c.z, cells, key => records.get(Event.Id.assume(key.value)), TileFeatures.event)
       case TileLayer.Media =>
-        val cells = db.read(TileRepo.cells(media.candidates(
+        val cells = db.read(
+          TileRepo.cells(
+            media.candidates(
               q,
-              window(q.filter).map((lo, hi) =>
-                (BPeriodRow.PLo(lo.value), BPeriodRow.PHi(hi.value))
-              ),
+              window(q.filter).map((lo, hi) => (BPeriodRow.PLo(lo.value), BPeriodRow.PHi(hi.value))),
               TileRepo.envelope(c)
-            ), c, grid))
+            ),
+            c,
+            grid
+          )
+        )
         val drawn = media.features(cells.filter(_.isItem).map(cell => TileKey(cell.key.value)))
         TileFeatures.of(c.z, cells, key => drawn.get(TileKey(key.value)), (cell, feature) => feature(cell))
     VectorTileWriter.tile(Seq(VectorTileWriter.LayerName(layer.wire.value) -> points))

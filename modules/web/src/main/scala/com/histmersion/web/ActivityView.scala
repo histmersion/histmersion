@@ -61,7 +61,8 @@ object ActivityView:
   def kindOf(e: Entry): String = e.entryKind.fold(Wording.humanize(Wording.Id(e.kind.value)))(_.wording)
 
   /** The query string of a page of the list: its goal, kept from one chip to the next. */
-  def search(goal: Option[Goal.Slug]): Pages.UrlQuery = Pages.UrlQuery(goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g.value)}"))
+  def search(goal: Option[Goal.Slug]): Pages.UrlQuery =
+    Pages.UrlQuery(goal.fold("")(g => s"?goal=${js.URIUtils.encodeURIComponent(g.value)}"))
 
   /** A `name=value` of a page's query string (`?goal=…`), decoded; `None` when absent or blank. */
   def param(search: Pages.UrlQuery, name: ParamName): Option[ParamText] =
@@ -106,7 +107,10 @@ object ActivityView:
         .filter(_ == EntryKind.Run)
         .flatMap(_ => e.job)
         .map(id => span(" · ", RouteLink(Route.Run(Route.Run.Id(id.value)), "see what it did"))),
-      kind.filter(_ == EntryKind.Job).flatMap(_ => e.job).map(id => span(" · ", RouteLink(Route.Job(Route.Job.Id(id.value)), "the job"))),
+      kind
+        .filter(_ == EntryKind.Job)
+        .flatMap(_ => e.job)
+        .map(id => span(" · ", RouteLink(Route.Job(Route.Job.Id(id.value)), "the job"))),
       kind
         .filter(k => k == EntryKind.Log || k == EntryKind.Decision)
         .flatMap(_ => e.job)
@@ -131,8 +135,13 @@ object ActivityView:
 
   private def headline(e: Entry): Modifier[HtmlElement] = e.entryKind match
     case Some(EntryKind.Decision) =>
-      val what = Agents.ApprovalKind.parse(Approval.Kind.Wire(e.what.value)).fold[String](Wording.humanize(Wording.Id(e.what.value)))(Wording.approvalKind)
-      val outcome = Agents.ApprovalState.parse(Approval.State.Wire(e.state.value)).fold[String](e.state.value)(Wording.approvalState).toLowerCase
+      val what = Agents.ApprovalKind
+        .parse(Approval.Kind.Wire(e.what.value))
+        .fold[String](Wording.humanize(Wording.Id(e.what.value)))(Wording.approvalKind)
+      val outcome = Agents.ApprovalState
+        .parse(Approval.State.Wire(e.state.value))
+        .fold[String](e.state.value)(Wording.approvalState)
+        .toLowerCase
       List[Modifier[HtmlElement]](
         span(s"$what — $outcome"),
         e.citekey.map(ck => span(" · ", SourceLink(ck))),
@@ -245,7 +254,12 @@ object ActivityView:
     List(onMountCallback(_ => feed.first()), EventStream.periodic(15000).drop(1) --> (_ => feed.tick()))
 
   /** The chips: each a link to its page, the goal kept; the running and the problems counted. */
-  def chips(ui: UiConfig, on: Option[ActivityTab], goal: Option[Goal.Slug], counts: Signal[Activity.Counts]): HtmlElement =
+  def chips(
+      ui: UiConfig,
+      on: Option[ActivityTab],
+      goal: Option[Goal.Slug],
+      counts: Signal[Activity.Counts]
+  ): HtmlElement =
     navTag(
       cls := "activity-chips",
       aria.label := "Show",
@@ -315,6 +329,8 @@ object ActivityView:
   def shortChips(ui: UiConfig): HtmlElement =
     val counts = Var(Activity.Counts())
     div(
-      onMountCallback(_ => ApiClient.activity(None, None, None, Some(Paging.Limit(1)), None).foreach(p => counts.set(p.counts))),
+      onMountCallback(_ =>
+        ApiClient.activity(None, None, None, Some(Paging.Limit(1)), None).foreach(p => counts.set(p.counts))
+      ),
       chips(ui, None, None, counts.signal)
     )

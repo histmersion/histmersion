@@ -30,8 +30,19 @@ class EventPlaybackSuite extends munit.FunSuite:
     (Some("p")).map(Place.Id.apply),
     Some(EventGeo.PlaceLabel("Kadesh"))
   )
-  private val migration = kadesh.modify(_.id).setTo(Event.Id("m")).modify(_.label).setTo(EventGeo.Label("Yamnaya expansion")).modify(_.kind).setTo(EventGeo.Kind("migration")).modify(_.scale).setTo(EventGeo.Scale(EventScale.Regional)).modify(_.timeSpan).setTo(TimeSpan(Some(Year(-3300)), None, None, Some(Year(-2200)))).modify(_.placeLabel).setTo(None
-  )
+  private val migration = kadesh
+    .modify(_.id)
+    .setTo(Event.Id("m"))
+    .modify(_.label)
+    .setTo(EventGeo.Label("Yamnaya expansion"))
+    .modify(_.kind)
+    .setTo(EventGeo.Kind("migration"))
+    .modify(_.scale)
+    .setTo(EventGeo.Scale(EventScale.Regional))
+    .modify(_.timeSpan)
+    .setTo(TimeSpan(Some(Year(-3300)), None, None, Some(Year(-2200))))
+    .modify(_.placeLabel)
+    .setTo(None)
 
   test("alpha: nothing before the span, full inside it, a linear fade after it, then nothing"):
     val span = (Year(-1274L), Year(-1274L))
@@ -40,7 +51,11 @@ class EventPlaybackSuite extends munit.FunSuite:
     assertEquals(EventPlayback.alpha(span, Year(-1269), EventPlayback.FadeYears(10)).value, 0.5)
     assertEquals(EventPlayback.alpha(span, Year(-1264), EventPlayback.FadeYears(10)).value, 0.0)
     assertEquals(EventPlayback.alpha(span, Year(-1200), EventPlayback.FadeYears(10)).value, 0.0)
-    assertEquals(EventPlayback.alpha(span, Year(-1273), EventPlayback.FadeYears(0)).value, 0.0, "no fade: gone the year after")
+    assertEquals(
+      EventPlayback.alpha(span, Year(-1273), EventPlayback.FadeYears(0)).value,
+      0.0,
+      "no fade: gone the year after"
+    )
     assertEquals(EventPlayback.alpha((Year(-3300L), Year(-2200L)), Year(-2800), EventPlayback.FadeYears(10)).value, 1.0)
 
   test("a fade of N seconds lasts N seconds whatever the speed: it is converted to years at the rate playing"):
@@ -70,13 +85,22 @@ class EventPlaybackSuite extends munit.FunSuite:
 
   test("the note: kind and years — one year alone, or a range"):
     assertEquals(EventPlayback.note(kadesh).value, s"${Fmt.display(UiLabels.Text("battle"))} · ${Fmt.yr(Year(-1274))}")
-    assertEquals(EventPlayback.note(migration).value, s"${Fmt.display(UiLabels.Text("migration"))} · ${Fmt.yr(Year(-3300))}–${Fmt.yr(Year(-2200))}")
+    assertEquals(
+      EventPlayback.note(migration).value,
+      s"${Fmt.display(UiLabels.Text("migration"))} · ${Fmt.yr(Year(-3300))}–${Fmt.yr(Year(-2200))}"
+    )
 
   test("events at one point stack: slots number the SHOWN ones in their order there"):
     assertEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.modify(_.id).setTo(Event.Id("other"))))
-    assertNotEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.modify(_.lat).setTo(Latitude(34.56))))
+    assertNotEquals(
+      EventPlayback.anchorKey(kadesh),
+      EventPlayback.anchorKey(kadesh.modify(_.lat).setTo(Latitude(34.56)))
+    )
     val order = List("first", "second", "third")
-    assertEquals(EventPlayback.slots(order, _ => true).map((k, v) => k -> v.value), Map("first" -> 0, "second" -> 1, "third" -> 2))
+    assertEquals(
+      EventPlayback.slots(order, _ => true).map((k, v) => k -> v.value),
+      Map("first" -> 0, "second" -> 1, "third" -> 2)
+    )
     // the first gone, the others move up
     assertEquals(EventPlayback.slots(order, _ != "first").map((k, v) => k -> v.value), Map("second" -> 0, "third" -> 1))
     assertEquals(EventPlayback.slots(order, _ => false).map((k, v) => k -> v.value), Map.empty[String, Int])
@@ -90,7 +114,10 @@ class EventPlaybackSuite extends munit.FunSuite:
     assert(EventPlayback.rank(migration, Year(-1000)).value > EventPlayback.rank(migration, Year(-3300)).value)
     assert(EventPlayback.rank(kadesh, Year(-1177)).value > battle, "the later of two local events wins")
     assert(EventPlayback.rank(kadesh, Year(2000)).value < EventPlayback.rank(kadesh, Year(2001)).value)
-    assert(EventPlayback.rank(migration, Year(3000)).value < EventPlayback.rank(kadesh, Year(-4000)).value, "local over regional at any year")
+    assert(
+      EventPlayback.rank(migration, Year(3000)).value < EventPlayback.rank(kadesh, Year(-4000)).value,
+      "local over regional at any year"
+    )
 
   test(
     "cull: an event name over a large area's name keeps the event, drops the area; two events at nearby sites do not overlap"

@@ -27,9 +27,16 @@ object StorageLocations:
     val env = environment.lookup
     def dataDir = UserPaths.dataDir(cfg.runtime.dataDir, env, userPaths.osName)
     location match
-      case Location.IngestOriginals   => Some(Path.of(cfg.converter.spoolDir.value))
-      case Location.Spool             => Some(spool(cfg.acquire.spoolDir))
-      case Location.Basemap           => Some(UserPaths.basemapDir(UserPaths.BasemapDir(cfg.basemap.dir.value), RuntimeConfig.DataDir(cfg.init.dataDir.value), env))
+      case Location.IngestOriginals => Some(Path.of(cfg.converter.spoolDir.value))
+      case Location.Spool           => Some(spool(cfg.acquire.spoolDir))
+      case Location.Basemap         =>
+        Some(
+          UserPaths.basemapDir(
+            UserPaths.BasemapDir(cfg.basemap.dir.value),
+            RuntimeConfig.DataDir(cfg.init.dataDir.value),
+            env
+          )
+        )
       case Location.Backups           => Some(Path.of(cfg.backups.dir.value).toAbsolutePath.normalize)
       case Location.Bundles           => Some(Path.of(cfg.bundles.dir.value))
       case Location.GazetteerExtracts => Some(GazetteerPaths.of(cfg, env, userPaths.osName).extracts)
@@ -81,7 +88,8 @@ object StorageLocations:
     * bundle's layout when `HISTMERSION_RUNTIME` is not set).
     */
   def measured(cfg: AppConfig, env: UserPaths.Lookup, osName: UserPaths.OsName, exe: Option[Path]): Storage =
-    val bundled = cfg.runtime.enabled.value || (env(Environment.VariablesKey("HISTMERSION_RUNTIME")).forall(_.value.trim.isEmpty) && Supervisor.bundled(exe))
+    val bundled = cfg.runtime.enabled.value || (env(Environment.VariablesKey("HISTMERSION_RUNTIME"))
+      .forall(_.value.trim.isEmpty) && Supervisor.bundled(exe))
     val home = Option.when(bundled)(Supervisor.layout(cfg.runtime, exe, env, osName).toOption.map(_.home)).flatten
     val data = UserPaths.dataDir(cfg.runtime.dataDir, env, osName).map(_.toAbsolutePath.normalize)
     val gazetteer = GazetteerPaths.of(cfg, env, osName)
@@ -95,17 +103,24 @@ object StorageLocations:
       case Location.GazetteerExtracts => Some(gazetteer.extracts)
       case Location.GazetteerFolder   => gazetteer.legacy
       case Location.GazetteerDrop     => Some(gazetteer.lpf)
-      case Location.Basemap           => Some(UserPaths.basemapDir(UserPaths.BasemapDir(cfg.basemap.dir.value), RuntimeConfig.DataDir(cfg.init.dataDir.value), env))
-      case Location.Install           => home
-      case Location.Converter         => home.map(_.resolve("converter"))
-      case Location.RelinkKit         => home.map(_.resolve("kit"))
-      case Location.Toolchain         => data.map(_.resolve("toolchain"))
-      case Location.Plugins           => data.map(_.resolve("plugins"))
-      case Location.AgentHomes        => AgentTrees.root(cfg, env, osName)
-      case Location.CodexSessions     => AgentTrees.codexHome(cfg, env, osName)
-      case Location.Logs              => data.map(_.resolve("logs"))
-      case Location.DataDirectory     => data
-      case Location.CacheDirectory    => UserPaths.cacheDir(env)
+      case Location.Basemap           =>
+        Some(
+          UserPaths.basemapDir(
+            UserPaths.BasemapDir(cfg.basemap.dir.value),
+            RuntimeConfig.DataDir(cfg.init.dataDir.value),
+            env
+          )
+        )
+      case Location.Install        => home
+      case Location.Converter      => home.map(_.resolve("converter"))
+      case Location.RelinkKit      => home.map(_.resolve("kit"))
+      case Location.Toolchain      => data.map(_.resolve("toolchain"))
+      case Location.Plugins        => data.map(_.resolve("plugins"))
+      case Location.AgentHomes     => AgentTrees.root(cfg, env, osName)
+      case Location.CodexSessions  => AgentTrees.codexHome(cfg, env, osName)
+      case Location.Logs           => data.map(_.resolve("logs"))
+      case Location.DataDirectory  => data
+      case Location.CacheDirectory => UserPaths.cacheDir(env)
       case Location.UserConfig | Location.Postgres | Location.PostgresTools | Location.Executables |
           Location.GazetteerSeed =>
         None

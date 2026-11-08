@@ -39,7 +39,7 @@ object AutoEnrich:
 
   object Skip:
     object Enriched:
-      export AutoEnrich.{Reason as Why}
+      export AutoEnrich.Reason as Why
 
   /** One earlier `enrich-source` run of the source: its id and state. */
   final case class PriorRun(id: PriorRun.Id, state: Run.State)
@@ -63,7 +63,9 @@ object AutoEnrich:
   def enrichedBy(findings: FindingCount, notes: Option[Notes], runs: List[PriorRun]): Option[Reason] =
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
     if findings.value > 0 then
-      Some(Reason(s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"))
+      Some(
+        Reason(s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}")
+      )
     else if notes.exists(_.value.trim.nonEmpty) then Some(Reason("it already has notes"))
     else live.map(r => Reason(s"enrich-source run ${r.id} is ${r.state.wire}"))
 

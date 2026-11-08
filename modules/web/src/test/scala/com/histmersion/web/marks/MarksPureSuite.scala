@@ -21,7 +21,10 @@ class MarksPureSuite extends munit.FunSuite:
   private val src = ItemRef.source(Citekey("cline2014_year"), Title("1177 B.C. [revised]"))
 
   test("an item copied as text, as Markdown and as a link"):
-    assertEquals(ItemMenu.link(ItemMenu.Origin("https://h.example.org/"), src), "https://h.example.org/source/cline2014_year")
+    assertEquals(
+      ItemMenu.link(ItemMenu.Origin("https://h.example.org/"), src),
+      "https://h.example.org/source/cline2014_year"
+    )
     assertEquals(ItemMenu.text(src, "Eric H. Cline, 2014"), "1177 B.C. [revised] — Eric H. Cline, 2014")
     assertEquals(
       ItemMenu.markdown(ItemMenu.Origin("https://h.example.org"), src, ""),
@@ -44,7 +47,11 @@ class MarksPureSuite extends munit.FunSuite:
   test("a point from the map: on the world's first copy, its zoom rounded"):
     assertEquals(MapMenu.wrap(LatLon.Lon(190)), -170.0)
     assertEquals(MapMenu.wrap(LatLon.Lon(-185)), 175.0)
-    val p = MapMenu.point(LatLon(LatLon.Lat(37.123), LatLon.Lon(382.75)), MapSurface.Zoom(6.04),Some((Year(-1300L), Year(-1100L))))
+    val p = MapMenu.point(
+      LatLon(LatLon.Lat(37.123), LatLon.Lon(382.75)),
+      MapSurface.Zoom(6.04),
+      Some((Year(-1300L), Year(-1100L)))
+    )
     assertEquals(
       (
         p.lat.map(_.value.toDouble),
@@ -63,7 +70,10 @@ class MarksPureSuite extends munit.FunSuite:
     )
 
   test("a saved view's suggested name"):
-    assertEquals(SavedViews.suggestedName(Some(" tin "), Some(Year(-1300)), Some(Year(-1100))), "“tin”, 1300 BCE–1100 BCE")
+    assertEquals(
+      SavedViews.suggestedName(Some(" tin "), Some(Year(-1300)), Some(Year(-1100))),
+      "“tin”, 1300 BCE–1100 BCE"
+    )
     assertEquals(SavedViews.suggestedName(None, None, None), "My view")
 
   test("a draft is the note's own, or what it is being left on"):
@@ -88,7 +98,10 @@ class MarksPureSuite extends munit.FunSuite:
     assertEquals(Ago(Ago.Millis(now - 3 * 60_000), Ago.Millis(now), Ago.IsoDate("")), "3 minutes ago")
     assertEquals(Ago(Ago.Millis(now - 3_600_000), Ago.Millis(now), Ago.IsoDate("")), "1 hour ago")
     assertEquals(Ago(Ago.Millis(now - 3 * 86_400_000), Ago.Millis(now), Ago.IsoDate("")), "3 days ago")
-    assertEquals(Ago(Ago.Millis(now - 30 * 86_400_000.0), Ago.Millis(now), Ago.IsoDate("2026-09-30T12:00:00Z")), "2026-09-30")
+    assertEquals(
+      Ago(Ago.Millis(now - 30 * 86_400_000.0), Ago.Millis(now), Ago.IsoDate("2026-09-30T12:00:00Z")),
+      "2026-09-30"
+    )
 
   test("the notes a map layer draws: those left at a point"):
     val id = Note.Id("0190f3c2-1111-7000-8000-000000000002")

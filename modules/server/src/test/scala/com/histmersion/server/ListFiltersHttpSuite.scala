@@ -30,7 +30,9 @@ class ListFiltersHttpSuite extends DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(90, "s")
 
-  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))) }
+  private lazy val cfg = {
+    val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+  }
   private lazy val ds = testPool(cfg.db)
   private val tag = s"zzlh${System.nanoTime().toHexString.takeRight(8)}"
 
@@ -112,7 +114,10 @@ class ListFiltersHttpSuite extends DbSuite:
       assertEquals(h1(Paging.TotalHeader.toLowerCase), "2")
       // the kind counts are taken under the state (open) but not the kind filter
       assertEquals(facets(h1)(ListFilters.FacetName("kind")), Map("goal-plan" -> 2, "article-publish" -> 1))
-      assertEquals(Paging.decodeCounts(Activity.Counts.Wire(h1(Paging.CountsHeader.toLowerCase))).toMap, Map("open" -> 2))
+      assertEquals(
+        Paging.decodeCounts(Activity.Counts.Wire(h1(Paging.CountsHeader.toLowerCase))).toMap,
+        Map("open" -> 2)
+      )
       val (_, ball, hall) = get(s"$url/api/agents/approvals?subject=$tag&state=all&kind=goal-plan,edge")
       assertEquals(hall(Paging.TotalHeader.toLowerCase), "3", ball.take(300))
       assertEquals(facets(hall)(ListFilters.FacetName("decidedBy")), Map("person" -> 1))

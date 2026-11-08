@@ -48,8 +48,10 @@ class ArticlesControllersSuite extends munit.FunSuite:
 
   /** The library's reads as a database with no source answers them. */
   private val noSources = new CoverageService:
-    def sourceSet(filter: Filter, scope: PlaceScope, cap: ArticleRepo.Limit): (RowCount, List[Coverage.Source]) = (RowCount(0), Nil)
-    def members(filter: Filter, scope: PlaceScope, citekeys: List[Citekey]): (RowCount, Set[Citekey]) = (RowCount(0), Set.empty)
+    def sourceSet(filter: Filter, scope: PlaceScope, cap: ArticleRepo.Limit): (RowCount, List[Coverage.Source]) =
+      (RowCount(0), Nil)
+    def members(filter: Filter, scope: PlaceScope, citekeys: List[Citekey]): (RowCount, Set[Citekey]) =
+      (RowCount(0), Set.empty)
     def edgesTouching(citekeys: List[Citekey], kinds: List[Edge.Kind.Wire]): List[Coverage.Edge] = Nil
 
   /** The engine's records as a database with no manager item, ledger, run or goal answers them. */
@@ -61,7 +63,14 @@ class ArticlesControllersSuite extends munit.FunSuite:
 
   /** Not reached by these tests: the list is a mechanism over the library's filter SQL. */
   private val noSearch = new ArticleSearch:
-    def list(f: Filter, s: PlaceScope, k: Option[com.histmersion.domain.research.Article.Kind], t: Option[Search.Query], l: ArticleRepo.Limit, o: Offset): Article.List =
+    def list(
+        f: Filter,
+        s: PlaceScope,
+        k: Option[com.histmersion.domain.research.Article.Kind],
+        t: Option[Search.Query],
+        l: ArticleRepo.Limit,
+        o: Offset
+    ): Article.List =
       Article.List.of(Article.List.Total(0), Nil, UnreadPage.Offset(0))
 
   private val formatting = new SourceFormatting:
@@ -81,7 +90,8 @@ class ArticlesControllersSuite extends munit.FunSuite:
         () => LibraryStoreSuite.Settings
       )
     val media = new MediaSources:
-      def current(citekey: Citekey): Option[MediaSources.Current] = sourceStore.current(citekey).map(c => MediaSources.Current(c.value))
+      def current(citekey: Citekey): Option[MediaSources.Current] =
+        sourceStore.current(citekey).map(c => MediaSources.Current(c.value))
       def lookup(citekey: Citekey): Either[MediaSources.Error, MediaSources.Key] =
         if sourceStore.load(citekey).isDefined then Right(MediaSources.Key(citekey.value))
         else Left(MediaSources.Error.NotFound)
@@ -136,7 +146,12 @@ class ArticlesControllersSuite extends munit.FunSuite:
     val c = controllers()
     assertEquals(c.put(Slug.assume("Not A Slug"), put).left.map(_.code), Left(Some(Write.CodeInvalid)))
     val messy = put.modify(_.body).setTo(Article.Body("<div> never closed\n"))
-    assertEquals(c.put(Slug("zr_walls"), messy, strict = com.histmersion.domain.research.Article.StrictMode(true)).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(
+      c.put(Slug("zr_walls"), messy, strict = com.histmersion.domain.research.Article.StrictMode(true))
+        .left
+        .map(_.code),
+      Left(Some(Write.CodeInvalid))
+    )
     assertEquals(c.store.exists(Slug("zr_walls")), false)
     val written = c.put(Slug("zr_walls"), messy).toOption.get
     assert(written.formatting.exists(_.severity == FormatSeverity.Error), written.formatting)
@@ -144,8 +159,22 @@ class ArticlesControllersSuite extends munit.FunSuite:
   test("an old slug is followed by every read and write; the coverage of a filter that returns no source"):
     val c = controllers()
     val _ = c.put(Slug("zr_walls"), put)
-    val _ = c.put(Slug("zr_index"), put.modify(_.title).setTo(Article.Title("Index")).modify(_.kind).setTo(Article.Kind.Wire("index")).modify(_.body).setTo(Article.Body("- [[zr_walls]]\n")).modify(_.filter).setTo(None))
-    assertEquals(c.rename(Slug("zr_walls"), LabelRename(LabelRename.To("zr_city_walls"))).map(_.rewritten), Right(List("zr_index")))
+    val _ = c.put(
+      Slug("zr_index"),
+      put
+        .modify(_.title)
+        .setTo(Article.Title("Index"))
+        .modify(_.kind)
+        .setTo(Article.Kind.Wire("index"))
+        .modify(_.body)
+        .setTo(Article.Body("- [[zr_walls]]\n"))
+        .modify(_.filter)
+        .setTo(None)
+    )
+    assertEquals(
+      c.rename(Slug("zr_walls"), LabelRename(LabelRename.To("zr_city_walls"))).map(_.rewritten),
+      Right(List("zr_index"))
+    )
     assertEquals(c.get(Slug.parse("ZR_WALLS").toOption.get).map(_.article.slug), Right("zr_city_walls"))
     assertEquals(
       c.patch(Slug("zr_walls"), Article.Patch(title = Some(Article.Title("City walls")))).map(_.article.title),
@@ -165,8 +194,15 @@ class ArticlesControllersSuite extends munit.FunSuite:
     val c = controllers()
     val _ = c.put(Slug("zr_walls"), put)
     val note = Article.Import.Text(c.exportNote(Slug("zr_walls")).toOption.get.value)
-    assertEquals(c.importNote(Article.Import(note, mtime = Some(Article.Import.Mtime(1000L)))).map(_.skipped), Right(List("zr_walls")))
-    assertEquals(c.importNote(Article.Import(note, mtime = Some(Article.Import.Mtime(1000L)), force = Article.Import.Force(true))).map(_.imported), Right(1))
+    assertEquals(
+      c.importNote(Article.Import(note, mtime = Some(Article.Import.Mtime(1000L)))).map(_.skipped),
+      Right(List("zr_walls"))
+    )
+    assertEquals(
+      c.importNote(Article.Import(note, mtime = Some(Article.Import.Mtime(1000L)), force = Article.Import.Force(true)))
+        .map(_.imported),
+      Right(1)
+    )
     val _ = c.rename(Slug("zr_walls"), LabelRename(LabelRename.To("zr_city_walls")))
     assertEquals(c.importNote(Article.Import(note)).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(c.importNote(Article.Import(Article.Import.Text("no frontmatter"))).isLeft, true)

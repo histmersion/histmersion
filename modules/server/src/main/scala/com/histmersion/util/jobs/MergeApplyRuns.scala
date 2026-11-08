@@ -72,7 +72,17 @@ object MergeApplyRuns:
         val bundle = Bundle.Name(r.bundle.value)
         val plan = MergePlan.PlanHash(r.planHash.value)
         r.outcome match
-          case None => MergeApplyJob(job, MergeJobState.Running, bundle, plan, MergeApplyJob.ElapsedMs(0L))
-          case Some(Right(a)) => MergeApplyJob.of(job, JobState.Done, bundle, plan, MergeApplyJob.ElapsedMs(0L), None, Some(a))
-          case Some(Left(e))  => MergeApplyJob.of(job, JobState.Failed, bundle, plan, MergeApplyJob.ElapsedMs(0L), Some(MergeApplyJob.Error(e.value)), None)
+          case None           => MergeApplyJob(job, MergeJobState.Running, bundle, plan, MergeApplyJob.ElapsedMs(0L))
+          case Some(Right(a)) =>
+            MergeApplyJob.of(job, JobState.Done, bundle, plan, MergeApplyJob.ElapsedMs(0L), None, Some(a))
+          case Some(Left(e)) =>
+            MergeApplyJob.of(
+              job,
+              JobState.Failed,
+              bundle,
+              plan,
+              MergeApplyJob.ElapsedMs(0L),
+              Some(MergeApplyJob.Error(e.value)),
+              None
+            )
       }

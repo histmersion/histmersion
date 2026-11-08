@@ -70,7 +70,13 @@ class WriteRepoSuite extends DbSuite:
         Some(Confidence.High)
       )
     ),
-    edges = List(Edge(com.histmersion.api.library.Citekey(citekey.value), com.histmersion.api.library.Citekey("zz_other"), Edge.Kind.References)),
+    edges = List(
+      Edge(
+        com.histmersion.api.library.Citekey(citekey.value),
+        com.histmersion.api.library.Citekey("zz_other"),
+        Edge.Kind.References
+      )
+    ),
     notes = Some(Source.Notes("# article\n\nagent-written prose"))
   )
 
@@ -89,7 +95,13 @@ class WriteRepoSuite extends DbSuite:
 
   test("put is idempotent and replaces everything under the citekey"):
     val _ = fresh()
-    val s2 = seedSource().modify(_.tags).setTo(List(Source.Tags("only"))).modify(_.findings).setTo(Nil).modify(_.summary).setTo(None)
+    val s2 = seedSource()
+      .modify(_.tags)
+      .setTo(List(Source.Tags("only")))
+      .modify(_.findings)
+      .setTo(Nil)
+      .modify(_.summary)
+      .setTo(None)
     val _ = SourceFixtures.put(ds, s2, chunkChars)
     val (d, fs) = SourceFixtures.get(ds, ck).get
     assertEquals(d.tags, List("only"))
@@ -102,7 +114,16 @@ class WriteRepoSuite extends DbSuite:
     assertEquals(s.tags, List("adna", "yamnaya"))
     assertEquals(s.findings.map(_.id), List(s"$ck#0"))
     assertEquals(s.findings.head.geo, Some(GeoPoint(Longitude(32.0), Latitude(39.0))))
-    assertEquals(s.edges, List(Edge(com.histmersion.api.library.Citekey(ck.value), com.histmersion.api.library.Citekey("zz_other"), Edge.Kind.References)))
+    assertEquals(
+      s.edges,
+      List(
+        Edge(
+          com.histmersion.api.library.Citekey(ck.value),
+          com.histmersion.api.library.Citekey("zz_other"),
+          Edge.Kind.References
+        )
+      )
+    )
     assertEquals(s.period, Some(Period(Year(-2000), Year(-1500))))
     assert(s.updatedAt.isDefined)
 
@@ -110,7 +131,12 @@ class WriteRepoSuite extends DbSuite:
   test("patch {tags:{add:[sea-peoples]}} leaves findings and body untouched"):
     val _ = fresh()
     val before = SourceFixtures.load(ds, ck).get
-    val r = SourceFixtures.patch(ds, ck, Source.Patch(tags = Some(ListPatch(add = List(Write.ListItem("sea-peoples"))))), chunkChars)
+    val r = SourceFixtures.patch(
+      ds,
+      ck,
+      Source.Patch(tags = Some(ListPatch(add = List(Write.ListItem("sea-peoples"))))),
+      chunkChars
+    )
     assert(r.isRight, r.toString)
     val after = SourceFixtures.load(ds, ck).get
     assertEquals(after.tags, List("adna", "yamnaya", "sea-peoples"))
@@ -149,13 +175,24 @@ class WriteRepoSuite extends DbSuite:
         .patch(
           ds,
           ck,
-          Source.Patch(findings = Some(FindingsPatch(add = List(Finding.Input(Finding.Claim("second")), Finding.Input(Finding.Claim("third")))))),
+          Source.Patch(findings =
+            Some(
+              FindingsPatch(add = List(Finding.Input(Finding.Claim("second")), Finding.Input(Finding.Claim("third"))))
+            )
+          ),
           chunkChars
         )
         .isRight
     )
     assert(
-      SourceFixtures.patch(ds, ck, Source.Patch(findings = Some(FindingsPatch(remove = List(FindingsPatch.Remove(s"$ck#1"))))), chunkChars).isRight
+      SourceFixtures
+        .patch(
+          ds,
+          ck,
+          Source.Patch(findings = Some(FindingsPatch(remove = List(FindingsPatch.Remove(s"$ck#1"))))),
+          chunkChars
+        )
+        .isRight
     )
     assertEquals(SourceFixtures.load(ds, ck).get.findings.map(_.claim), List("claim one", "third"))
 
@@ -167,20 +204,36 @@ class WriteRepoSuite extends DbSuite:
     assertEquals(SourceFixtures.load(ds, Citekey("zz_write_other")).get.summary, Some("sum"))
 
   test("patch of a missing citekey is not_found, not a crash"):
-    val e = SourceFixtures.patch(ds, Citekey("zz_no_such_source"), Source.Patch(summary = Some(Source.Summary("x"))), chunkChars).swap.toOption.get
+    val e = SourceFixtures
+      .patch(ds, Citekey("zz_no_such_source"), Source.Patch(summary = Some(Source.Summary("x"))), chunkChars)
+      .swap
+      .toOption
+      .get
     assertEquals(e.code, Some(Write.CodeNotFound))
 
   test("ifUpdatedAt: current token succeeds, stale token is refused and changes nothing"):
     val t1 = fresh()
-    assert(SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(Source.Summary("one")), ifUpdatedAt = Some(t1)), chunkChars).isRight)
+    assert(
+      SourceFixtures
+        .patch(ds, ck, Source.Patch(summary = Some(Source.Summary("one")), ifUpdatedAt = Some(t1)), chunkChars)
+        .isRight
+    )
     val e =
-      SourceFixtures.patch(ds, ck, Source.Patch(summary = Some(Source.Summary("two")), ifUpdatedAt = Some(t1)), chunkChars).swap.toOption.get
+      SourceFixtures
+        .patch(ds, ck, Source.Patch(summary = Some(Source.Summary("two")), ifUpdatedAt = Some(t1)), chunkChars)
+        .swap
+        .toOption
+        .get
     assertEquals(e.code, Some(Write.CodePrecondition))
     assertEquals(SourceFixtures.load(ds, ck).get.summary, Some("one"))
 
   test("an invalid patch is rejected as invalid and writes nothing"):
     val _ = fresh()
-    val e = SourceFixtures.patch(ds, ck, Source.Patch(period = Some(Period.Input(Year(-100), Year(-900)))), chunkChars).swap.toOption.get
+    val e = SourceFixtures
+      .patch(ds, ck, Source.Patch(period = Some(Period.Input(Year(-100), Year(-900)))), chunkChars)
+      .swap
+      .toOption
+      .get
     assertEquals(e.code, Some(Write.CodeInvalid))
     assertEquals(SourceFixtures.load(ds, ck).get.period, Some(Period(Year(-2000), Year(-1500))))
 

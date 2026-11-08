@@ -11,6 +11,10 @@ object Url:
   type UrlPath = UrlPath.T
   object UrlPath extends Newtype[String, Pure]
 
-  def apply(base: RepositoryLanding.Candidate.Url, path: UrlPath = UrlPath(""), params: (String, String)*): RepositoryLanding.Candidate.Url =
+  def apply(
+      base: RepositoryLanding.Candidate.Url,
+      path: UrlPath = UrlPath(""),
+      params: (String, String)*
+  ): RepositoryLanding.Candidate.Url =
     val u = Uri.unsafeParse((base).value + path)
     RepositoryLanding.Candidate.Url(u.addParams(params.filter(_._2.nonEmpty)*).toString)

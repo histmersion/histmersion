@@ -29,7 +29,10 @@ class ArticleQuerySuite extends munit.FunSuite:
 
   test("match control: hidden at zero, singular at one, points at the first mark"):
     assertEquals(ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(0)), "")
-    assert(ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(1)).value.contains("1 match ·"), ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(1)))
+    assert(
+      ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(1)).value.contains("1 match ·"),
+      ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(1))
+    )
     val nav = ArticleHtml.matchNav(ArticleHtml.MatchNavMatches(7))
     assert(nav.value.contains("""data-matches="7""""), nav)
     assert(nav.value.contains("7 matches"), nav)

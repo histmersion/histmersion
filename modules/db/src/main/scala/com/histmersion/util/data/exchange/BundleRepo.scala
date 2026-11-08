@@ -26,8 +26,6 @@ object BundleRepo:
 
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
-
-
   def instance(using DbCon): InstanceInfo =
     Sql.raw(Sql.Text(s"SELECT id, label, ${ts("created_at")} FROM instance")).frag.query[InstanceInfo].run().head
 
@@ -62,6 +60,12 @@ object BundleRepo:
   // ── the schema ─────────────────────────────────────────────────────────────────────────────
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
-  private[histmersion] def schemaVersion(using DbCon): Option[com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion] =
+  private[histmersion] def schemaVersion(using
+      DbCon
+  ): Option[com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion] =
     sql"""SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
-          ORDER BY installed_rank DESC LIMIT 1""".query[String].run().headOption.map(v => com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion(v))
+          ORDER BY installed_rank DESC LIMIT 1"""
+      .query[String]
+      .run()
+      .headOption
+      .map(v => com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion(v))

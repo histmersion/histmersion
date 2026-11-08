@@ -5,7 +5,6 @@ import com.histmersion.api.{Plural, YearFmt}
 import com.histmersion.api.given
 object PeriodsMarkdown:
 
-
   private def years(p: Period): String = YearFmt.period(Some(p.start), Some(p.end))
 
   def list(ps: Vector[HistoricalPeriod]): String =
@@ -42,9 +41,12 @@ object PeriodsMarkdown:
 
   def imported(r: Period.ImportResult): String =
     val head = s"imported ${Plural.count(Plural.CountN(r.periods.value.toLong), Plural.CountSingular("period"))}" +
-      (if r.roots.value > 0 then s", ${r.roots} of them ${Plural.noun(Plural.CountN(r.roots.value.toLong), Plural.CountSingular("authority node"))}" else "") +
+      (if r.roots.value > 0 then
+         s", ${r.roots} of them ${Plural.noun(Plural.CountN(r.roots.value.toLong), Plural.CountSingular("authority node"))}"
+       else "") +
       s" — ${Plural.count(Plural.CountN(r.presets.value.toLong), Plural.CountSingular("timeline preset"))} in the store" +
-      (if r.removed.value > 0 then s"; removed ${Plural.count(Plural.CountN(r.removed.value.toLong), Plural.CountSingular("earlier seed period"))} the seed no longer has"
+      (if r.removed.value > 0 then
+         s"; removed ${Plural.count(Plural.CountN(r.removed.value.toLong), Plural.CountSingular("earlier seed period"))} the seed no longer has"
        else "")
     if r.skippedCount == Period.ImportResult.SkippedCount(0) then head
     else

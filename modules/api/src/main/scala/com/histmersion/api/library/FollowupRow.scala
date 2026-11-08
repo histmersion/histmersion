@@ -20,12 +20,13 @@ final case class FollowupRow(
     proposedKind: FollowupRow.ProposedKind = FollowupRow.ProposedKind("cites"),
     citekey: Option[Citekey] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object FollowupRow:
   type Arxiv = Arxiv.T
   object Arxiv extends Newtype[String, Pure]
-  export Acquire.{CitedByCount as CitedBy}
+  export Acquire.CitedByCount as CitedBy
   type IsInfluential = IsInfluential.T
   object IsInfluential extends Newtype[Boolean, Pure]
   type Intents = Intents.T

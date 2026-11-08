@@ -11,7 +11,9 @@ class WikiLinksSuite extends munit.FunSuite:
 
   test("targets: links with a label or an anchor, escaped ones too; not embeds or in-page anchors"):
     assertEquals(
-      WikiLinks.targets(WikiLinks.Body("""[[a2000_x|A]] \[\[b2001_y\]\] ![[map.png]] [[#Sources|s]] [[C2002_z#p]] [[a2000_x]]""")),
+      WikiLinks.targets(
+        WikiLinks.Body("""[[a2000_x|A]] \[\[b2001_y\]\] ![[map.png]] [[#Sources|s]] [[C2002_z#p]] [[a2000_x]]""")
+      ),
       List("a2000_x", "b2001_y", "c2002_z")
     )
 

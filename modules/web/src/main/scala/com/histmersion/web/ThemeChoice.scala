@@ -12,7 +12,8 @@ import com.histmersion.api.UiLabels
   * button cycles them in that order, as the documentation site's does.
   */
 enum ThemeChoice(val wire: ThemeChoice.Wire, val label: ThemeChoice.Label, val icon: Icon) derives CanEqual:
-  case System extends ThemeChoice(ThemeChoice.Wire("system"), ThemeChoice.Label("Theme: follows the system"), Icon.ThemeSystem)
+  case System
+      extends ThemeChoice(ThemeChoice.Wire("system"), ThemeChoice.Label("Theme: follows the system"), Icon.ThemeSystem)
   case Light extends ThemeChoice(ThemeChoice.Wire("light"), ThemeChoice.Label("Theme: light"), Icon.ThemeLight)
   case Dark extends ThemeChoice(ThemeChoice.Wire("dark"), ThemeChoice.Label("Theme: dark"), Icon.ThemeDark)
 
@@ -23,8 +24,8 @@ object ThemeChoice:
   type Label = UiLabels.Text
   val Label: UiLabels.Text.type = UiLabels.Text
 
-
-  def fromWire(s: String): ThemeChoice = values.find(_.wire == Wire(Option(s).fold("")(_.trim.toLowerCase))).getOrElse(System)
+  def fromWire(s: String): ThemeChoice =
+    values.find(_.wire == Wire(Option(s).fold("")(_.trim.toLowerCase))).getOrElse(System)
 
   /** The button's next choice: system → light → dark → system. */
   def next(c: ThemeChoice): ThemeChoice = c match

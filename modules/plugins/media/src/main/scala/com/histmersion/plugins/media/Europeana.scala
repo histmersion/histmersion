@@ -40,7 +40,11 @@ object Europeana:
     * `types` (letters compared, any case: `Preserved Specimen` = `PreservedSpecimen`). The aggregators and types are
     * excluded in the search as well; a type is read again from the Record API, since a search item does not carry it.
     */
-  final case class Exclusions(providers: List[Exclusions.Providers], dataProviders: List[Exclusions.DataProviders], types: List[Exclusions.Types])
+  final case class Exclusions(
+      providers: List[Exclusions.Providers],
+      dataProviders: List[Exclusions.DataProviders],
+      types: List[Exclusions.Types]
+  )
   object Exclusions:
     type Providers = Providers.T
     object Providers extends Newtype[String, Pure]
@@ -61,10 +65,18 @@ object Europeana:
     */
   def query(name: MediaPlace.Label, ex: Exclusions = Exclusions.none): CollectionQuery.Text =
     CollectionQuery.Text(
-      s"where:(${phrase(name.value)})" + anyOf("PROVIDER", ex.providers.map(_.value)) + anyOf("proxy_dc_type", ex.types.map(_.value))
+      s"where:(${phrase(name.value)})" + anyOf("PROVIDER", ex.providers.map(_.value)) + anyOf(
+        "proxy_dc_type",
+        ex.types.map(_.value)
+      )
     )
 
-  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, rows: CollectionSettings.Candidates, ex: Exclusions = Exclusions.none): Plugin.Http.GetUrl =
+  def searchUrl(
+      api: CollectionSettings.ApiUrl,
+      name: MediaPlace.Label,
+      rows: CollectionSettings.Candidates,
+      ex: Exclusions = Exclusions.none
+  ): Plugin.Http.GetUrl =
     Plugin.Http.GetUrl(
       s"${api.value.stripSuffix("/")}/record/v2/search.json?query=${query(name, ex).value.enc}&reusability=open&media=true" +
         s"&thumbnail=true&qf=${"TYPE:IMAGE".enc}&profile=rich&rows=${rows.value.max(1).min(100)}"
@@ -73,7 +85,11 @@ object Europeana:
   private def letters(s: String) = s.toLowerCase(Locale.ROOT).filter(_.isLetterOrDigit)
 
   /** Pure: why a record's aggregator or institution excludes it, or `None`. */
-  def excludedBy(providers: List[Exclusions.Providers], dataProviders: List[Exclusions.DataProviders], ex: Exclusions): Option[Clause] =
+  def excludedBy(
+      providers: List[Exclusions.Providers],
+      dataProviders: List[Exclusions.DataProviders],
+      ex: Exclusions
+  ): Option[Clause] =
     providers
       .find(p => ex.providers.exists(_.value.trim.equalsIgnoreCase(p.value)))
       .map(p => Clause(s"an excluded provider (${p.value})"))
@@ -99,7 +115,11 @@ object Europeana:
   /** Pure: the Thumbnail API v3 URL of a media file at `width` (200 or 400). */
   def thumbnailUrl(api: CollectionSettings.ApiUrl, media: Source, width: MediaRendition.Width): Plugin.Http.GetUrl =
     val md5 =
-      java.security.MessageDigest.getInstance("MD5").digest(media.value.getBytes(UTF_8)).map(b => f"${b & 0xff}%02x").mkString
+      java.security.MessageDigest
+        .getInstance("MD5")
+        .digest(media.value.getBytes(UTF_8))
+        .map(b => f"${b & 0xff}%02x")
+        .mkString
     Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/thumbnail/v3/${width.value}/$md5.jpg")
 
   /** Pure: the media URL a search's `edmPreview` (a Thumbnail API v2 URL) was made from — its `uri` parameter — or
@@ -172,11 +192,13 @@ object Europeana:
   ): Either[Problem, MediaItem] =
     val c = json.hcursor
     c.str("id").filter(_.startsWith("/")).toRight(Problem("no Europeana id")).map { id =>
-      val title = values(c, Field("title")).headOption.orElse(values(c, Field("dcTitleLangAware")).headOption).getOrElse(id)
+      val title =
+        values(c, Field("title")).headOption.orElse(values(c, Field("dcTitleLangAware")).headOption).getOrElse(id)
       val creator = values(c, Field("dcCreator")).filterNot(isUri).headOption
       val provider = values(c, Field("dataProvider")).headOption
       val shownBy = values(c, Field("edmIsShownBy")).headOption
-      val media = values(c, Field("edmPreview")).headOption.flatMap(v => previewSource(Preview(v)).map(_.value)).orElse(shownBy)
+      val media =
+        values(c, Field("edmPreview")).headOption.flatMap(v => previewSource(Preview(v)).map(_.value)).orElse(shownBy)
       val rights: Either[Problem, MediaRights] = values(c, Field("rights")).headOption match
         case None    => Left(Problem("no rights statement on the record"))
         case Some(u) =>
@@ -188,7 +210,10 @@ object Europeana:
                 Licence(u),
                 Some(MediaRights.LicenceUrl(u)),
                 creator.map(MediaRights.Author(_)),
-                MediaRights.Credit((List(Some(title), creator, provider).flatten ++ List("via Europeana", shortName(lic).value)).mkString(", "))
+                MediaRights.Credit(
+                  (List(Some(title), creator, provider).flatten ++ List("via Europeana", shortName(lic).value))
+                    .mkString(", ")
+                )
               )
             )
       val spatial = values(c, Field("dctermsSpatial"))
@@ -237,7 +262,15 @@ object Europeana:
       val obj = c.downField("object")
       val aggs = obj.downField("aggregations").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor)
       val types =
-        obj.downField("proxies").focus.flatMap(_.asArray).toList.flatten.map(_.hcursor).flatMap(values(_, Field("dcType"))).map(Exclusions.Types(_))
+        obj
+          .downField("proxies")
+          .focus
+          .flatMap(_.asArray)
+          .toList
+          .flatten
+          .map(_.hcursor)
+          .flatMap(values(_, Field("dcType")))
+          .map(Exclusions.Types(_))
       val firstAggregation: Either[Problem, ACursor] = excludedType(types, ex) match
         case Some(t) => Left(Problem(s"an excluded type (${t.value})"))
         case None    => aggs.headOption.toRight(Problem("no aggregation on the record"))
@@ -252,7 +285,9 @@ object Europeana:
           .map(_.hcursor)
           .find(r => shownBy.isDefined && r.str("about") == shownBy)
         val stated =
-          resource.flatMap(values(_, Field("webResourceEdmRights")).headOption).orElse(values(agg, Field("edmRights")).headOption)
+          resource
+            .flatMap(values(_, Field("webResourceEdmRights")).headOption)
+            .orElse(values(agg, Field("edmRights")).headOption)
         rec.rights.left.map(p => Problem(p.value)).flatMap { r =>
           val searched = licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value))
           stated.map(u => licences.readUrl(LicenceReader.ReadUrlUrl(u))) match

@@ -30,20 +30,40 @@ object OpenLibrary:
 
   def isbn(raw: Isbn): Option[Isbn] =
     val s = raw.value.trim.toUpperCase(Locale.ROOT).filter(c => c.isDigit || c == 'X')
-    Option(s).filter(x => (x.length == 10 && x.init.forall(_.isDigit)) || (x.length == 13 && x.forall(_.isDigit))).map(Isbn(_))
+    Option(s)
+      .filter(x => (x.length == 10 && x.init.forall(_.isDigit)) || (x.length == 13 && x.forall(_.isDigit)))
+      .map(Isbn(_))
 
   /** Pure: an OCLC number — its digits (`ocm00012345`, `(OCoLC)12345` → `12345`). */
   def oclc(raw: Oclc): Option[Oclc] =
-    Option(raw.value.trim.dropWhile(!_.isDigit).takeWhile(_.isDigit).dropWhile(_ == '0')).filter(_.nonEmpty).map(Oclc(_))
+    Option(raw.value.trim.dropWhile(!_.isDigit).takeWhile(_.isDigit).dropWhile(_ == '0'))
+      .filter(_.nonEmpty)
+      .map(Oclc(_))
 
   /** Pure: what to ask for — by ISBN first (the API's own preference), else by OCLC number. */
-  def key(isbnRaw: Option[Isbn], oclcRaw: Option[Oclc]): Option[(CoverChoice.Pick.OpenLibrary.Kind, CoverChoice.Pick.OpenLibrary.Id)] =
-    isbnRaw.flatMap(isbn).map(i => CoverChoice.Pick.OpenLibrary.Kind("isbn") -> CoverChoice.Pick.OpenLibrary.Id(i.value))
-      .orElse(oclcRaw.flatMap(oclc).map(o => CoverChoice.Pick.OpenLibrary.Kind("oclc") -> CoverChoice.Pick.OpenLibrary.Id(o.value)))
+  def key(
+      isbnRaw: Option[Isbn],
+      oclcRaw: Option[Oclc]
+  ): Option[(CoverChoice.Pick.OpenLibrary.Kind, CoverChoice.Pick.OpenLibrary.Id)] =
+    isbnRaw
+      .flatMap(isbn)
+      .map(i => CoverChoice.Pick.OpenLibrary.Kind("isbn") -> CoverChoice.Pick.OpenLibrary.Id(i.value))
+      .orElse(
+        oclcRaw
+          .flatMap(oclc)
+          .map(o => CoverChoice.Pick.OpenLibrary.Kind("oclc") -> CoverChoice.Pick.OpenLibrary.Id(o.value))
+      )
 
   /** Pure: a cover's URL; a missing cover answers 404. */
-  def coverUrl(base: BaseUrl, kind: CoverChoice.Pick.OpenLibrary.Kind, id: CoverChoice.Pick.OpenLibrary.Id, size: CoverSize): CoverUrl =
-    CoverUrl(s"${base.value.stripSuffix("/")}/b/${kind.value}/${URLEncoder.encode(id.value, UTF_8)}-${size.value.trim.toUpperCase(Locale.ROOT).take(1)}.jpg?default=false")
+  def coverUrl(
+      base: BaseUrl,
+      kind: CoverChoice.Pick.OpenLibrary.Kind,
+      id: CoverChoice.Pick.OpenLibrary.Id,
+      size: CoverSize
+  ): CoverUrl =
+    CoverUrl(
+      s"${base.value.stripSuffix("/")}/b/${kind.value}/${URLEncoder.encode(id.value, UTF_8)}-${size.value.trim.toUpperCase(Locale.ROOT).take(1)}.jpg?default=false"
+    )
 
   /** Pure: the book's page, for the credit line's link. */
   def pageUrl(base: BaseUrl, kind: CoverChoice.Pick.OpenLibrary.Kind, id: CoverChoice.Pick.OpenLibrary.Id): PageUrl =

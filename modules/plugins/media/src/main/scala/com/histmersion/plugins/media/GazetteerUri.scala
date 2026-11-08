@@ -13,8 +13,9 @@ object GazetteerUri:
   private val GeoNamesUri = """^https?://(?:www\.|sws\.)?geonames\.org/([0-9]+)(?:[/#?].*)?$""".r
   private val WikidataUri = """^https?://(?:www\.)?wikidata\.org/(?:entity|wiki)/(Q[1-9][0-9]*)(?:[/#?].*)?$""".r
 
-  def of(uri: GazetteerPlace.Id): Option[(MediaItem.IdsPart1, MediaItem.IdsPart2)] = Option(uri).map(_.value.trim).getOrElse("") match
-    case PleiadesUri(id) => Some(MediaItem.IdsPart1("pleiades") -> MediaItem.IdsPart2(id))
-    case GeoNamesUri(id) => Some(MediaItem.IdsPart1("geonames") -> MediaItem.IdsPart2(id))
-    case WikidataUri(id) => Some(MediaItem.IdsPart1("wikidata") -> MediaItem.IdsPart2(id))
-    case _               => None
+  def of(uri: GazetteerPlace.Id): Option[(MediaItem.IdsPart1, MediaItem.IdsPart2)] =
+    Option(uri).map(_.value.trim).getOrElse("") match
+      case PleiadesUri(id) => Some(MediaItem.IdsPart1("pleiades") -> MediaItem.IdsPart2(id))
+      case GeoNamesUri(id) => Some(MediaItem.IdsPart1("geonames") -> MediaItem.IdsPart2(id))
+      case WikidataUri(id) => Some(MediaItem.IdsPart1("wikidata") -> MediaItem.IdsPart2(id))
+      case _               => None

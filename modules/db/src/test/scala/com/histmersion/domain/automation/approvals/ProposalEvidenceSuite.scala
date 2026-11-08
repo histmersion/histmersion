@@ -29,7 +29,12 @@ class ProposalEvidenceSuite extends munit.FunSuite:
       target = Some(Citekey("b2001_y")),
       evidence = Proposal.Evidence("e")
     ),
-    Proposal(Approval.Kind.Edge, Citekey("a2000_x"), edgeKind = Some(Edge.Kind.Challenges), target = Some(Citekey("b2001_y")))
+    Proposal(
+      Approval.Kind.Edge,
+      Citekey("a2000_x"),
+      edgeKind = Some(Edge.Kind.Challenges),
+      target = Some(Citekey("b2001_y"))
+    )
   )
 
   test("every proposal's payload reads as its evidence and quote"):

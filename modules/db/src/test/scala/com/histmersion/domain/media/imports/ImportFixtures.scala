@@ -8,7 +8,7 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 
 /** The imports' repository as the db and server suites reach it from outside the feature. */
 object ImportFixtures:
-  export ImportRepo.{Limit, Refresh, Since, Places, PleiadesOnly, Category, NameKey}
+  export ImportRepo.{Category, Limit, NameKey, Places, PleiadesOnly, Refresh, Since}
 
   val Place: Target.TargetType = ImportRepo.Place
   val Event: Target.TargetType = ImportRepo.Event
@@ -21,7 +21,8 @@ object ImportFixtures:
       limit: ImportRepo.Limit,
       refresh: ImportRepo.Refresh,
       since: Option[ImportRepo.Since] = None
-  ): Either[ImportRepo.Problem, List[Target]] = connect(ds)(ImportRepo.targets(provider, place, event, limit, refresh, since))
+  ): Either[ImportRepo.Problem, List[Target]] =
+    connect(ds)(ImportRepo.targets(provider, place, event, limit, refresh, since))
   def pending(ds: DataSource, provider: MediaItemRow.Provider, since: Option[ImportRepo.Since] = None): RowCount =
     connect(ds)(ImportRepo.pending(provider, since))
   def collectionTargets(

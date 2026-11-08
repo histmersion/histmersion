@@ -12,7 +12,9 @@ final class TileCache(maxBytes: () => ByteCount):
   // `var`: the bytes held
   private var held = 0L
 
-  def get(key: MapTiles.TileKey): Option[VectorTileWriter.VectorTile] = synchronized(Option(tiles.get(key.value)).map(VectorTileWriter.VectorTile(_)))
+  def get(key: MapTiles.TileKey): Option[VectorTileWriter.VectorTile] = synchronized(
+    Option(tiles.get(key.value)).map(VectorTileWriter.VectorTile(_))
+  )
 
   def put(key: MapTiles.TileKey, bytes: VectorTileWriter.VectorTile): Unit = synchronized:
     val raw = bytes.value
@@ -28,7 +30,9 @@ final class TileCache(maxBytes: () => ByteCount):
     tiles.clear()
     held = 0L
 
-  def stats: (TileCache.EntryCount, ByteCount) = synchronized((TileCache.EntryCount(tiles.size), ByteCount.assume(held)))
+  def stats: (TileCache.EntryCount, ByteCount) = synchronized(
+    (TileCache.EntryCount(tiles.size), ByteCount.assume(held))
+  )
 
 object TileCache:
   type EntryCount = EntryCount.T

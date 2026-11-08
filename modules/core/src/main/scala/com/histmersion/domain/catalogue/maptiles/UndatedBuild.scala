@@ -7,9 +7,17 @@ import io.github.iltotore.iron.constraint.any.Pure
   * the squares a tile side they count by, the deepest zoom they hold. Counts built from another version or grid are not
   * read.
   */
-final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom):
+final case class UndatedBuild(
+    version: UndatedBuild.Version,
+    perSide: UndatedBuild.PerSide,
+    maxZoom: UndatedBuild.MaxZoom
+):
   /** Do they answer for the writes up to `current`, on a grid of `wantedPerSide` squares to `wantedMaxZoom`? */
-  def answers(current: UndatedBuild.Version, wantedPerSide: UndatedBuild.PerSide, wantedMaxZoom: UndatedBuild.MaxZoom): Boolean =
+  def answers(
+      current: UndatedBuild.Version,
+      wantedPerSide: UndatedBuild.PerSide,
+      wantedMaxZoom: UndatedBuild.MaxZoom
+  ): Boolean =
     version == current && perSide == wantedPerSide && maxZoom >= wantedMaxZoom
 
 object UndatedBuild:

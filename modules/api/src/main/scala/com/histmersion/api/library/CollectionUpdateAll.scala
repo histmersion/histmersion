@@ -12,10 +12,10 @@ final case class CollectionUpdateAll(
     rows: List[CollectionUpdateRow],
     applied: CollectionUpdateAll.Applied
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionUpdateAll:
-
 
   /** Plan the rewrite of every linked item from its record; with `apply`, write it. */
   type Applied = Applied.T
@@ -24,7 +24,8 @@ object CollectionUpdateAll:
   final case class Request(
       apply: Request.Apply = Request.Apply(false)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Request:
     type Apply = Apply.T

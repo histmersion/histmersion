@@ -70,9 +70,18 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles.modify(_.planner).setTo(AgentRolesConfig.Planner(Model.wire.value)))
-    )
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.agents)
+      .setTo(
+        b.agents
+          .modify(_.enabled)
+          .setTo(AgentsConfig.Enabled(true))
+          .modify(_.prices)
+          .setTo(AgentsConfig.Prices("scripted=1/2"))
+          .modify(_.roles)
+          .setTo(b.agents.roles.modify(_.planner).setTo(AgentRolesConfig.Planner(Model.wire.value)))
+      )
 
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -102,15 +111,36 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
   private def seed(h: ServerWiring): Unit =
     assert(
       h.library.sources
-        .put(Ck, Source.Put(title = com.histmersion.api.library.Title("Old tin"), year = (Some(2000)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some("10.5555/zzagent.old")).map(com.histmersion.api.library.Doi.apply)))
+        .put(
+          Ck,
+          Source.Put(
+            title = com.histmersion.api.library.Title("Old tin"),
+            year = (Some(2000)).map(com.histmersion.api.catalogue.Year.apply),
+            doi = (Some("10.5555/zzagent.old")).map(com.histmersion.api.library.Doi.apply)
+          )
+        )
         .isRight
     )
     assert(
       h.library.sources
-        .put(Ck2, Source.Put(title = com.histmersion.api.library.Title("New tin"), year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some("10.5555/zzagent.new")).map(com.histmersion.api.library.Doi.apply)))
+        .put(
+          Ck2,
+          Source.Put(
+            title = com.histmersion.api.library.Title("New tin"),
+            year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
+            doi = (Some("10.5555/zzagent.new")).map(com.histmersion.api.library.Doi.apply)
+          )
+        )
         .isRight
     )
-    assert(h.goals.put(Goal, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz scheduled tin"))).isRight)
+    assert(
+      h.goals
+        .put(
+          Goal,
+          com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz scheduled tin"))
+        )
+        .isRight
+    )
     assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, CkRef, None)))
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
@@ -151,10 +181,22 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.toList, List(s"assess $Ck", s"followups $Ck"))
     val open = a.approvalsList(None, None).toOption.get.filter(_.citekey == ApiCk2)
-    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target.map(_.value: String))), List(("edge", Some("refutes"), Some(Ck))))
+    assertEquals(
+      open.map(x => (x.kind, x.edgeKind, x.target.map(_.value: String))),
+      List(("edge", Some("refutes"), Some(Ck)))
+    )
     assert(open.head.evidence.value.contains("we refute the old dating"), open.head.evidence)
-    assertEquals(h.library.citations.neighbors(Ck2, List(Edge.Kind.Wire("refutes"))), Nil, "nothing applied before approval")
-    def queued = h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains("zzagent.out"))
+    assertEquals(
+      h.library.citations.neighbors(Ck2, List(Edge.Kind.Wire("refutes"))),
+      Nil,
+      "nothing applied before approval"
+    )
+    def queued = h.workListView
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains("zzagent.out"))
     assertEquals(queued.size, 1)
     assert(
       connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
@@ -173,8 +215,18 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     assertEquals(start(a, RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget)).status, "done")
     assertEquals(a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.count(_.citekey == ApiCk2), 1)
 
-  private def work(doi: com.histmersion.api.library.Doi, title: com.histmersion.api.library.Title, inDb: WorkRef.InDb = WorkRef.InDb(false)) =
-    WorkRef(doi = Some(doi), title = Some(title), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), inDb = inDb)
+  private def work(
+      doi: com.histmersion.api.library.Doi,
+      title: com.histmersion.api.library.Title,
+      inDb: WorkRef.InDb = WorkRef.InDb(false)
+  ) =
+    WorkRef(
+      doi = Some(doi),
+      title = Some(title),
+      year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply),
+      authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply),
+      inDb = inDb
+    )
 
   test(
     "acquisition-sweep: the goal's queries searched, corpus and queue left out, the ranking model's picks queued once"
@@ -185,8 +237,20 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       Seq(text("""{"picks":[{"doi":"10.5555/zzagent.a","why":"core study"}]}"""))
     )
     val (a, h, up) = handlers(c); seed(h)
-    assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))).isRight)
-    assert(h.workLists.add(WorkListControllers.ListName("acquire"), Queue.QueueAdd(Queue.QueueItem.Text("Zzagent queued. https://doi.org/10.5555/zzagent.q"))).isRight)
+    assert(
+      a.addGoalLink(
+        Goal,
+        LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))
+      ).isRight
+    )
+    assert(
+      h.workLists
+        .add(
+          WorkListControllers.ListName("acquire"),
+          Queue.QueueAdd(Queue.QueueItem.Text("Zzagent queued. https://doi.org/10.5555/zzagent.q"))
+        )
+        .isRight
+    )
     up.found = Map(
       "zzagent tin trade" -> List(
         work(ApiDoi("10.5555/zzagent.a"), ApiTitle("A")),
@@ -207,7 +271,12 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       offered
     )
     assertEquals(c.steps.size, 2, "the invented DOI was refused and the ranking asked again")
-    val items = h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains("zzagent.a"))
+    val items = h.workListView
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains("zzagent.a"))
     assertEquals(items.size, 1)
     assert(items.head.text.value.contains("for goal zzagent-sched: core study"), items.head.text)
     assert(run.progress.exists(_.value.contains("2 new candidate(s), 1 picked, 1 queued")), run.progress)
@@ -216,7 +285,15 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     c.scripts += Seq(text("""{"picks":[]}"""))
     val again = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(again.status, "done", again.error)
-    assertEquals(h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true)).toOption.get.items.count(_.text.value.contains("zzagent.a")), 1)
+    assertEquals(
+      h.workListView
+        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+        .toOption
+        .get
+        .items
+        .count(_.text.value.contains("zzagent.a")),
+      1
+    )
 
   /** The candidate search (#3761) answered from memory: what the goal's watches stored, and the marks set. */
   final private class CandidateUpstream extends AgentUpstream:
@@ -226,7 +303,9 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     def meta(doi: Doi) = Left(AgentUpstream.Problem("not stubbed"))
     def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(AgentUpstream.Problem("not stubbed"))
     def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) = Left(AgentUpstream.Problem("not stubbed"))
-    def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(AgentUpstream.Problem("not stubbed"))
+    def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) = Left(
+      AgentUpstream.Problem("not stubbed")
+    )
     def discover(query: Search.Query, limit: AgentUpstream.Limit) = Left(
       AgentUpstream.Problem("the live search must not run when the candidate search is connected")
     )
@@ -235,7 +314,14 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       Right(
         CandidateSweep(
           CandidateSweep.Goal(goal.value),
-          List(CandidateWatch(CandidateWatch.Goal(goal.value), CandidateWatch.Kind("query"), CandidateWatch.Subject("zzagent tin trade"), CandidateWatch.Index("openalex"))),
+          List(
+            CandidateWatch(
+              CandidateWatch.Goal(goal.value),
+              CandidateWatch.Kind("query"),
+              CandidateWatch.Subject("zzagent tin trade"),
+              CandidateWatch.Index("openalex")
+            )
+          ),
           CandidateSweep.Found(stored.size),
           CandidateSweep.Added(0),
           CandidateSweep.Again(stored.size),
@@ -248,7 +334,8 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       stored.filter(_.state == Source.Candidate.State(state.value)).take(limit.value)
     )
     override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
-      stored = stored.map(c => if ids.contains(c.id) then c.modify(_.state).setTo(Source.Candidate.State(state.value)) else c)
+      stored =
+        stored.map(c => if ids.contains(c.id) then c.modify(_.state).setTo(Source.Candidate.State(state.value)) else c)
       Right(RowCount(ids.size))
 
   test(
@@ -288,7 +375,14 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       up.stored.map(c => c.doi -> c.state).toMap,
       Map("10.5555/zzagent.a" -> "queued", "10.5555/zzagent.b" -> "seen")
     )
-    assert(h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true)).toOption.get.items.exists(_.text.value.contains("zzagent.a")))
+    assert(
+      h.workListView
+        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+        .toOption
+        .get
+        .items
+        .exists(_.text.value.contains("zzagent.a"))
+    )
     // the next sweep: every candidate decided — no model is asked
     val again = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(again.status, "done", again.error)
@@ -309,12 +403,44 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
   ):
     cleanManagers()
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(h)
-    assert(a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("not cron")), Now).left.exists(_.message.value.contains("five fields")))
     assert(
-      a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")), Now).left.exists(_.message.value.contains("min-interval"))
+      a.setSchedule(
+        Goal,
+        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("not cron")),
+        Now
+      ).left
+        .exists(_.message.value.contains("five fields"))
     )
-    assert(a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("weekly"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily")), Now).isLeft)
-    val s = a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily"), budgetUsd = Some(com.histmersion.api.automation.Goal.Plans.ScheduleSet.BudgetUsd(0.5))), Now).toOption.get
+    assert(
+      a.setSchedule(
+        Goal,
+        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("*/5 * * * *")),
+        Now
+      ).left
+        .exists(_.message.value.contains("min-interval"))
+    )
+    assert(
+      a.setSchedule(
+        Goal,
+        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("weekly"),
+        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily")),
+        Now
+      ).isLeft
+    )
+    val s = a
+      .setSchedule(
+        Goal,
+        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        ScheduleSet(
+          com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@daily"),
+          budgetUsd = Some(com.histmersion.api.automation.Goal.Plans.ScheduleSet.BudgetUsd(0.5))
+        ),
+        Now
+      )
+      .toOption
+      .get
     assertEquals(
       (s.kind, s.cron, s.enabled, s.budgetUsd, s.nextRunAt),
       (ScheduleKind.Currency, "@daily", true, Some(0.5), Some("2026-10-05T00:00:00Z"))
@@ -326,17 +452,42 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       ("watch", "paused", Some("@daily"), Some(List("currency")), Some(0.5))
     )
     // the acquisition sweep joins it; the cron is the watcher's, shared
-    val acq = a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@weekly")), Now).toOption.get
+    val acq = a
+      .setSchedule(
+        Goal,
+        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition"),
+        ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@weekly")),
+        Now
+      )
+      .toOption
+      .get
     assertEquals((acq.kind, acq.cron), (ScheduleKind.Acquisition, "@weekly"))
     assertEquals(
       a.goalView(Goal).toOption.get.schedules.map(s => (s.kind, s.cron)),
       List((ScheduleKind.Acquisition, "@weekly"), (ScheduleKind.Currency, "@weekly"))
     )
-    val off = a.setSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"), ScheduleSet(com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@weekly"), enabled = com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(false)), Now).toOption.get
+    val off = a
+      .setSchedule(
+        Goal,
+        com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
+        ScheduleSet(
+          com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron("@weekly"),
+          enabled = com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(false)
+        ),
+        Now
+      )
+      .toOption
+      .get
     assertEquals(off.enabled, false)
     assertEquals(a.goalView(Goal).toOption.get.schedules.map(_.kind), List(ScheduleKind.Acquisition))
-    assertEquals(a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed), Right(true))
-    assertEquals(a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed), Right(false))
+    assertEquals(
+      a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed),
+      Right(true)
+    )
+    assertEquals(
+      a.removeSchedule(Goal, com.histmersion.api.automation.Goal.Plans.ScheduleKind.Wire("acquisition")).map(_.removed),
+      Right(false)
+    )
     assertEquals(a.goalView(Goal).toOption.get.schedules, Nil)
     assert(a.managing.get(Managers.watchId(GoalRef).transformInto[ManagerLight.Id]).isRight, "the watcher stays")
     cleanManagers()
@@ -376,17 +527,33 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       (w.state, w.cron, w.nextTickAt, w.config.sweeps, w.config.budgetUsd),
       ("paused", Some("@daily"), Some("2026-10-05T00:00:00Z"), Some(List("acquisition", "currency")), Some(0.25))
     )
-    val ev = connect(ds)(ManagerRepo.events(w.id, None, PageSize(10))).filter(_.kind == Managers.ManagerEvent.Kind(Managers.Feed.Migrated))
+    val ev = connect(ds)(ManagerRepo.events(w.id, None, PageSize(10)))
+      .filter(_.kind == Managers.ManagerEvent.Kind(Managers.Feed.Migrated))
     assertEquals(ev.size, 1)
     assert(
       ev.head.text.value.contains("created paused") && ev.head.text.value.contains("`@daily` (fires most often)"),
       ev.head.text
     )
-    val log = h.workListView.list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true)).toOption.get.items.map(_.text.value).filter(_.contains(Goal.value))
+    val log = h.workListView
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .map(_.text.value)
+      .filter(_.contains(Goal.value))
     assert(log.exists(_.contains("2 goal schedules moved into this watcher")), log)
     assertEquals(a.managers.migrateSchedules(Now), Nil, "idempotent")
     // a schedule brought in later (a bundle import) joins the watcher, which keeps its own cron
-    transact(ds)(GoalLinkRepo.setSchedule(Goal, ScheduleKind.Currency, com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"), com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(false), None, None))
+    transact(ds)(
+      GoalLinkRepo.setSchedule(
+        Goal,
+        ScheduleKind.Currency,
+        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"),
+        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(false),
+        None,
+        None
+      )
+    )
     assertEquals(a.managers.migrateSchedules(Now).size, 1)
     val w2 = a.managing.get(Managers.watchId(GoalRef).transformInto[ManagerLight.Id]).toOption.get.manager
     assertEquals((w2.cron, w2.config.sweeps), (Some("@daily"), Some(List("acquisition", "currency"))))
@@ -396,20 +563,39 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
       )
     )
     // the tick migrates too (with agents on)
-    transact(ds)(GoalLinkRepo.setSchedule(Goal, ScheduleKind.Acquisition, com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"), com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true), None, None))
+    transact(ds)(
+      GoalLinkRepo.setSchedule(
+        Goal,
+        ScheduleKind.Acquisition,
+        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"),
+        com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+        None,
+        None
+      )
+    )
     assert(a.managers.tick(Now).contains(s"${Managers.watchId(GoalRef)}: migrated"))
     cleanManagers()
 
   test("a run a schedule started (origin scheduler) that pauses leaves a backlog item; a person's does not"):
     val c = ScriptedClient(Model); c.fail = true
     val (a, h, up) = handlers(c); seed(h)
-    assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent q"))).isRight)
+    assert(
+      a.addGoalLink(Goal, LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent q")))
+        .isRight
+    )
     up.found = Map("zzagent q" -> List(work(ApiDoi("10.5555/zzagent.z"), ApiTitle("Z"))))
     val id =
-      a.startRunAs(RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget), Origin.Scheduler, None).fold(e => fail(e.message.value), _.id)
+      a.startRunAs(RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget), Origin.Scheduler, None)
+        .fold(e => fail(e.message.value), _.id)
     a.engine.execute(ApiIds.run(id))
     assertEquals(connect(ds)(AgentRepo.get(id)).get.status, "paused")
-    def tasks = h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false)).toOption.get.items.map(_.text.value).filter(_.contains(Goal.value))
+    def tasks = h.workListView
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+      .toOption
+      .get
+      .items
+      .map(_.text.value)
+      .filter(_.contains(Goal.value))
     assert(tasks.exists(t => t.contains("scheduled acquisition-sweep") && t.contains("paused (provider)")), tasks)
     val mine = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(mine.status, "paused")
@@ -423,7 +609,10 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     val (a, h, up) = handlers(ScriptedClient(Model)); seed(h)
     up.citing = Map(Ck.value -> citing)
     val before = CorpusSnapshot.of(ds)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget, dryRun = Some(RunRequest.DryRun(true))))
+    val run = start(
+      a,
+      RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget, dryRun = Some(RunRequest.DryRun(true)))
+    )
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)
     val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000)))
@@ -440,12 +629,28 @@ class SchedulerRunSuite extends DbSuite with com.histmersion.db.Bounded with Run
     val c = ScriptedClient(Model)
     c.scripts += Seq(text("""{"picks":[{"doi":"10.5555/zzagent.a","why":"core study"}]}"""))
     val (a, h, up) = handlers(c); seed(h)
-    assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))).isRight)
-    up.found = Map("zzagent tin trade" -> List(work(ApiDoi("10.5555/zzagent.a"), ApiTitle("A")), work(ApiDoi("10.5555/zzagent.b"), ApiTitle("B"))))
+    assert(
+      a.addGoalLink(
+        Goal,
+        LinkAdd(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref("zzagent tin trade"))
+      ).isRight
+    )
+    up.found = Map(
+      "zzagent tin trade" -> List(
+        work(ApiDoi("10.5555/zzagent.a"), ApiTitle("A")),
+        work(ApiDoi("10.5555/zzagent.b"), ApiTitle("B"))
+      )
+    )
     val before = CorpusSnapshot.of(ds)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget, dryRun = Some(RunRequest.DryRun(true))))
+    val run = start(
+      a,
+      RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget, dryRun = Some(RunRequest.DryRun(true)))
+    )
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)
-    val queue = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000))).find(_.name == StepInfo.Name("queue")).get.wouldWrite
+    val queue = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000)))
+      .find(_.name == StepInfo.Name("queue"))
+      .get
+      .wouldWrite
     assertEquals(queue.map(_.what), List(s"acquire item for 10.5555/zzagent.a, linked to goal $Goal"))
     assert(queue.head.payload.value.contains("core study"), queue.head.payload)

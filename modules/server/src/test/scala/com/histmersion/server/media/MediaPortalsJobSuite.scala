@@ -134,11 +134,32 @@ class MediaPortalsJobSuite extends DbSuite:
   private lazy val cfg =
     val base = AppConfig.load()
     val m = base.media
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(m.modify(
-        _.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)).modify(_.commons).setTo(m.commons.modify(_.apiUrl).setTo(MediaCommonsConfig.ApiUrl(s"$providerUrl/w/api.php"))).modify(_.pleiades).setTo(m.pleiades.modify(_.apiUrl).setTo(MediaCollectionConfig.ApiUrl(providerUrl)).modify(_.requestIntervalMs).setTo(MediaCollectionConfig.RequestIntervalMs(0))).modify(_.openContext).setTo(m.openContext.modify(_.apiUrl).setTo(MediaCollectionConfig.ApiUrl(providerUrl)).modify(_.requestIntervalMs).setTo(MediaCollectionConfig.RequestIntervalMs(0))
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.media)
+      .setTo(
+        m.modify(_.requestIntervalMs)
+          .setTo(MediaConfig.RequestIntervalMs(0))
+          .modify(_.commons)
+          .setTo(m.commons.modify(_.apiUrl).setTo(MediaCommonsConfig.ApiUrl(s"$providerUrl/w/api.php")))
+          .modify(_.pleiades)
+          .setTo(
+            m.pleiades
+              .modify(_.apiUrl)
+              .setTo(MediaCollectionConfig.ApiUrl(providerUrl))
+              .modify(_.requestIntervalMs)
+              .setTo(MediaCollectionConfig.RequestIntervalMs(0))
+          )
+          .modify(_.openContext)
+          .setTo(
+            m.openContext
+              .modify(_.apiUrl)
+              .setTo(MediaCollectionConfig.ApiUrl(providerUrl))
+              .modify(_.requestIntervalMs)
+              .setTo(MediaCollectionConfig.RequestIntervalMs(0))
+          )
       )
-    )
 
   /** The plugins, supplied the same media settings as [[cfg]]: the collections ask the stand-in, never a real API. */
   private lazy val plugins = ServerPlugins.offlineWith(
@@ -184,15 +205,30 @@ class MediaPortalsJobSuite extends DbSuite:
         ds,
         List(
           Place.Input(
-            Place(Place.Id("zqmp_site"), Place.Label("Zqmpetra"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(140.0))),
+            Place(
+              Place.Id("zqmp_site"),
+              Place.Label("Zqmpetra"),
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              pt(Longitude(140.0))
+            ),
             List(Place.Name(Place.Name.Value("Zqmpetra")))
           ),
           Place.Input(
-            Place(Place.Id("zqmp_region"), Place.Label("Zqmpjordan"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), pt(Longitude(141.0))),
+            Place(
+              Place.Id("zqmp_region"),
+              Place.Label("Zqmpjordan"),
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+              pt(Longitude(141.0))
+            ),
             List(Place.Name(Place.Name.Value("Zqmpjordan")))
           ),
           Place.Input(
-            Place(Place.Id("pleiades_99900002"), Place.Label("Zqmp Zygouries"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(Longitude(142.0))),
+            Place(
+              Place.Id("pleiades_99900002"),
+              Place.Label("Zqmp Zygouries"),
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              pt(Longitude(142.0))
+            ),
             List(Place.Name(Place.Name.Value("Zqmp Zygouries")))
           )
         )
@@ -227,7 +263,11 @@ class MediaPortalsJobSuite extends DbSuite:
     val byId =
       ImportFixtures.mapPlacesWithIds(
         ds,
-        List(pleiades -> ExternalIds.ExternalId("99900001"), pleiades -> ExternalIds.ExternalId("99900002"), pleiades -> ExternalIds.ExternalId("99900003"))
+        List(
+          pleiades -> ExternalIds.ExternalId("99900001"),
+          pleiades -> ExternalIds.ExternalId("99900002"),
+          pleiades -> ExternalIds.ExternalId("99900003")
+        )
       )
     assertEquals(
       byId.view.mapValues(_.map(_.id)).toMap,
@@ -260,13 +300,24 @@ class MediaPortalsJobSuite extends DbSuite:
       pleiadesOnly = ImportFixtures.PleiadesOnly(true)
     )
     assert(none.left.exists(_.value.contains("no Pleiades id")), none.toString)
-    assert(ImportFixtures.collectionPending(ds, MediaItemRow.Provider(MediaProvider.Pleiades), places = ImportFixtures.Places(true), pleiadesOnly = ImportFixtures.PleiadesOnly(true)).value >= 2)
+    assert(
+      ImportFixtures
+        .collectionPending(
+          ds,
+          MediaItemRow.Provider(MediaProvider.Pleiades),
+          places = ImportFixtures.Places(true),
+          pleiadesOnly = ImportFixtures.PleiadesOnly(true)
+        )
+        .value >= 2
+    )
 
   test(
     "Open Context and Pleiades through the server: a dry run's reason, both jobs storing with the basis on the link"
   ):
     supervised {
-      val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins).start()
+      val b = Composition
+        .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), MediaWiring.NoThumbnails, plugins = plugins)
+        .start()
       val url = s"http://127.0.0.1:${b.port}"
       def job(body: String): JobInfo =
         val (js, jb) = post(s"$url/api/media/import/job", body)
@@ -295,7 +346,9 @@ class MediaPortalsJobSuite extends DbSuite:
         assertEquals(rs, 200, rb)
         val region = decode[MediaImportReport](rb).fold(e => fail(s"$e: $rb"), identity)
         assert(
-          region.samples.isEmpty && region.rejected.exists(_.key.value == "its place id names another place on the map"),
+          region.samples.isEmpty && region.rejected.exists(
+            _.key.value == "its place id names another place on the map"
+          ),
           region.toString
         )
 

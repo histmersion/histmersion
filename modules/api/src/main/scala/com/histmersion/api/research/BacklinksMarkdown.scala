@@ -3,7 +3,6 @@ package api.research
 
 object BacklinksMarkdown:
 
-
   def sourceArticles(rows: Vector[Backlink]): String =
     if rows.isEmpty then ("")
     else

@@ -214,7 +214,11 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(ch.get(ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_WORKFLOWS")), Some(None))
     assertEquals(ch.get(ClaudeCodeConfig.EnvKey("MY_FLAG")), Some(Some("x")))
     assertEquals(ch.get(ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_ARTIFACT")), Some(Some("true")))
-    assertEquals(ch.get(ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_BUNDLED_SKILLS")), Some(Some("1")), "the other defaults stay")
+    assertEquals(
+      ch.get(ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_BUNDLED_SKILLS")),
+      Some(Some("1")),
+      "the other defaults stay"
+    )
     assert(!l.config.agents.providers.claudeCode.disableSlashCommands.value)
 
   test("claude-code env: a variable in the server's own environment wins over the file and the default"):
@@ -333,10 +337,17 @@ class ConfigSuite extends munit.FunSuite:
     )
     assertEquals(UserPaths.configFile(e()), None)
     assertEquals(
-      UserPaths.dataDir(RuntimeConfig.DataDir(""), e("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xd"), UserPaths.OsName("Linux")),
+      UserPaths.dataDir(
+        RuntimeConfig.DataDir(""),
+        e("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xd"),
+        UserPaths.OsName("Linux")
+      ),
       Some(Path.of("/xd/histmersion"))
     )
-    assertEquals(UserPaths.dataDir(RuntimeConfig.DataDir("/own"), e("HOME" -> "/home/u"), UserPaths.OsName("Linux")), Some(Path.of("/own")))
+    assertEquals(
+      UserPaths.dataDir(RuntimeConfig.DataDir("/own"), e("HOME" -> "/home/u"), UserPaths.OsName("Linux")),
+      Some(Path.of("/own"))
+    )
 
   test("the map's geo feed has its own cap, above a listing page: a range draws every state in it"):
     val c = AppConfig.load()
@@ -344,12 +355,20 @@ class ConfigSuite extends munit.FunSuite:
     assert(c.places.geoMaxLimit.value > c.limits.maxPage.value)
     val p = c.places.copy(geoMaxLimit = PlacesConfig.GeoLimit(2000))
     assertEquals(p.geoLimit(Some(PlacesConfig.GeoLimit(400)), PlacesConfig.GeoLimit(100)), 400)
-    assertEquals(p.geoLimit(Some(PlacesConfig.GeoLimit(1744)), PlacesConfig.GeoLimit(100)), 1744) // past limits.max-page
+    assertEquals(
+      p.geoLimit(Some(PlacesConfig.GeoLimit(1744)), PlacesConfig.GeoLimit(100)),
+      1744
+    ) // past limits.max-page
     assertEquals(p.geoLimit(Some(PlacesConfig.GeoLimit(5000)), PlacesConfig.GeoLimit(100)), 2000)
     assertEquals(p.geoLimit(None, PlacesConfig.GeoLimit(100)), 100)
     assertEquals(p.geoLimit(Some(PlacesConfig.GeoLimit(0)), PlacesConfig.GeoLimit(100)), 100)
     assertEquals(p.geoLimit(Some(PlacesConfig.GeoLimit(-3)), PlacesConfig.GeoLimit(100)), 100)
-    assertEquals(c.places.copy(geoMaxLimit = PlacesConfig.GeoLimit(0)).geoLimit(Some(PlacesConfig.GeoLimit(50)), PlacesConfig.GeoLimit(100)), 1)
+    assertEquals(
+      c.places
+        .copy(geoMaxLimit = PlacesConfig.GeoLimit(0))
+        .geoLimit(Some(PlacesConfig.GeoLimit(50)), PlacesConfig.GeoLimit(100)),
+      1
+    )
 
   /** Guard for plan §1.9: no port numbers / service URLs hardcoded anywhere in main sources. */
   test("no hardcoded ports or CDN hosts in src/main (only reference.conf may carry them)"):

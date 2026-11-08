@@ -39,15 +39,25 @@ trait AgentUpstream:
   /** `refs --apply`: the deposited reference list, written as `references` edges (`apply = false`, a dry run: read,
     * nothing written).
     */
-  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply = AgentUpstream.RefsApply(true)): Either[AgentUpstream.Problem, RefsResult]
+  def refs(
+      citekey: Citekey,
+      apply: AgentUpstream.RefsApply = AgentUpstream.RefsApply(true)
+  ): Either[AgentUpstream.Problem, RefsResult]
 
   /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply = false`, a dry run:
     * the verdict only — neither applied nor recorded).
     */
-  def assess(citekey: Citekey, apply: AgentUpstream.AssessApply = AgentUpstream.AssessApply(true)): Either[AgentUpstream.Problem, Assessment]
+  def assess(
+      citekey: Citekey,
+      apply: AgentUpstream.AssessApply = AgentUpstream.AssessApply(true)
+  ): Either[AgentUpstream.Problem, Assessment]
 
   /** The papers citing a source, read only (never `apply`). */
-  def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]): Either[AgentUpstream.Problem, FollowupsResult]
+  def followups(
+      id: AgentUpstream.FollowupsId,
+      since: Option[Year],
+      limit: Option[FollowupsInput.Limit]
+  ): Either[AgentUpstream.Problem, FollowupsResult]
 
   /** An OpenAlex search, each hit marked `inDb` (the discover path). */
   def discover(query: Search.Query, limit: AgentUpstream.Limit): Either[AgentUpstream.Problem, DiscoverResult]
@@ -56,7 +66,9 @@ trait AgentUpstream:
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
-  def ingestLegal(doi: Doi): Either[AgentUpstream.Problem, Ingest.Report] = Left(AgentUpstream.Problem("the acquisition toolset is not connected"))
+  def ingestLegal(doi: Doi): Either[AgentUpstream.Problem, Ingest.Report] = Left(
+    AgentUpstream.Problem("the acquisition toolset is not connected")
+  )
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
     * `into` when there is one (its enrichment stays).
@@ -73,17 +85,27 @@ trait AgentUpstream:
     * stored (a dry run stores nothing). Not connected by default: a fixture that does not answer it keeps the sweep's
     * live search.
     */
-  def sweepCandidates(goal: Goal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun): Either[AgentUpstream.Problem, CandidateSweep] = Left(
+  def sweepCandidates(
+      goal: Goal.Slug,
+      dryRun: AgentUpstream.SweepCandidatesDryRun
+  ): Either[AgentUpstream.Problem, CandidateSweep] = Left(
     AgentUpstream.Problem("the candidate search is not connected")
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
-  def candidates(goal: Goal.Slug, state: Candidates.State.Wire, limit: AgentUpstream.Limit): Either[AgentUpstream.Problem, List[Source.Candidate]] = Left(
+  def candidates(
+      goal: Goal.Slug,
+      state: Candidates.State.Wire,
+      limit: AgentUpstream.Limit
+  ): Either[AgentUpstream.Problem, List[Source.Candidate]] = Left(
     AgentUpstream.Problem("the candidate search is not connected")
   )
 
   /** Record a decision on candidates by id. */
-  def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire): Either[AgentUpstream.Problem, RowCount] = Left(
+  def markCandidates(
+      ids: List[Source.Candidate.Id],
+      state: Candidates.State.Wire
+  ): Either[AgentUpstream.Problem, RowCount] = Left(
     AgentUpstream.Problem("the candidate search is not connected")
   )
 
@@ -132,25 +154,37 @@ object AgentUpstream:
           limit.map(l => FollowupsRequest.Limit(l.value)),
           apply = FollowupsRequest.Apply(false)
         )
-      ).left.map(problem)
+      ).left
+        .map(problem)
     def discover(query: Search.Query, limit: Limit) =
-      a.discover(AcquireApi.Query(query.value), None, None, Some(AcquireApi.Limit(limit.value)), notInDb = false).left.map(problem)
+      a.discover(AcquireApi.Query(query.value), None, None, Some(AcquireApi.Limit(limit.value)), notInDb = false)
+        .left
+        .map(problem)
     override def ingestLegal(doi: Doi) =
       a.ingestLegal(Ingest.Request(Ingest.Request.Id(doi.value))).left.map(problem)
     override def ingestLegalInto(doi: Doi, into: Option[Citekey]) =
-      a.ingestLegal(Ingest.Request(Ingest.Request.Id(doi.value), citekey = into.map(c => com.histmersion.api.library.Citekey(c.value)))).left.map(problem)
+      a.ingestLegal(
+        Ingest
+          .Request(Ingest.Request.Id(doi.value), citekey = into.map(c => com.histmersion.api.library.Citekey(c.value)))
+      ).left
+        .map(problem)
     override def fetcherGeneration = a.fetcherGeneration
     override def sweepCandidates(goal: Goal.Slug, dryRun: SweepCandidatesDryRun) =
-      a.sweepCandidates(CandidateSweep.Request(CandidateSweep.Request.Goal(goal.value), CandidateSweep.Request.DryRun(dryRun.value))).left.map(problem)
+      a.sweepCandidates(
+        CandidateSweep.Request(CandidateSweep.Request.Goal(goal.value), CandidateSweep.Request.DryRun(dryRun.value))
+      ).left
+        .map(problem)
     override def candidates(goal: Goal.Slug, state: Candidates.State.Wire, limit: Limit) =
       a.candidates(
         Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
         Some(state),
         Some(AcquireApi.Limit(limit.value)),
         None
-      ).map(_.candidates).left.map(problem)
+      ).map(_.candidates)
+        .left
+        .map(problem)
     override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
-      a.markCandidates(CandidateMark(ids,Source.Candidate.State(state.value)))
+      a.markCandidates(CandidateMark(ids, Source.Candidate.State(state.value)))
         .map(m => RowCount(m.updated.value))
         .left
         .map(problem)

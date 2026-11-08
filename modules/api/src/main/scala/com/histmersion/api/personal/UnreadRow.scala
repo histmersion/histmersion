@@ -22,7 +22,8 @@ final case class UnreadRow(
     periodStart: Option[Year] = None,
     periodEnd: Option[Year] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object UnreadRow:
   type Status = Status.T

@@ -20,7 +20,8 @@ object GoalsExport:
     val head = List(Header, Notice, summary(goals), "---")
     val known = goals.map(_.slug).toSet
     val body =
-      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, ((depth)), known, itemStatus))
+      if views.isEmpty then List("_No goals._")
+      else tree(views).map((v, depth) => block(v, ((depth)), known, itemStatus))
     ((head ++ body).mkString("\n\n") + "\n")
 
   private[api] def summary(goals: List[Goal]): String =
@@ -48,7 +49,12 @@ object GoalsExport:
     val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
     placed ++ strays
 
-  private def block(v: GoalView, depth: Int, known: Set[Goal.Slug], itemStatus: Map[Goal.Plans.GoalLink.QueueNumber, ItemStatus.Wire]): String =
+  private def block(
+      v: GoalView,
+      depth: Int,
+      known: Set[Goal.Slug],
+      itemStatus: Map[Goal.Plans.GoalLink.QueueNumber, ItemStatus.Wire]
+  ): String =
     val g = v.goal
     val heading = s"${"#" * math.min((depth) + 2, 6)} ${oneLine(g.title.value)}"
     val facts = List(
@@ -69,7 +75,10 @@ object GoalsExport:
       .toList
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
 
-  private def linkSections(links: List[GoalLink], itemStatus: Map[Goal.Plans.GoalLink.QueueNumber, ItemStatus.Wire]): List[String] =
+  private def linkSections(
+      links: List[GoalLink],
+      itemStatus: Map[Goal.Plans.GoalLink.QueueNumber, ItemStatus.Wire]
+  ): List[String] =
     def section(
         kind: Goal.LinkKind,
         label: String,
@@ -119,7 +128,7 @@ object GoalsExport:
       case None => (s"`#${l.ref}` (not found)${noted(l)}")
 
   private def scheduleLine(s: GoalSchedule): String =
-    val state = if ((s.enabled) == GoalSchedule.Enabled(true)) then "on" else "off"
+    val state = if (s.enabled) == GoalSchedule.Enabled(true) then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b.value)} USD")
     (s"${s.kind.wire} · `${s.cron}` · $state$budget")
 

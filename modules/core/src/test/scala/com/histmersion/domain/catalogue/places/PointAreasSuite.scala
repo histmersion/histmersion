@@ -28,7 +28,14 @@ class PointAreasSuite extends munit.FunSuite:
     assertEquals(Dating.of(startUnknown = false, lowerInf = true, upperInf = false), Dating.Dated)
 
   test("a holder says how many of its findings it is the only place of, and evidence keeps a place"):
-    val l = Listed(Listed.Id("wikidata_q17167"), Listed.Label("Roman Republic"), Listed.Source("wikidata"), Listed.Kind("polity"), Dating.Dated, findings = Listed.Findings(27))
+    val l = Listed(
+      Listed.Id("wikidata_q17167"),
+      Listed.Label("Roman Republic"),
+      Listed.Source("wikidata"),
+      Listed.Kind("polity"),
+      Dating.Dated,
+      findings = Listed.Findings(27)
+    )
     assertEquals(l.detail, "Roman Republic (wikidata polity, dated): 27 findings, each also at another place")
     assertEquals(
       l.modify(_.alone).setTo(Listed.Alone(3)).detail,
@@ -43,18 +50,59 @@ class PointAreasSuite extends munit.FunSuite:
       l.modify(_.findings).setTo(Listed.Findings(1)).modify(_.alone).setTo(Listed.Alone(1)).detail,
       "Roman Republic (wikidata polity, dated): 1 finding, at no other place"
     )
-    assert(l.modify(_.pinned).setTo(Listed.Pinned(1)).detail.value.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
+    assert(
+      l.modify(_.pinned)
+        .setTo(Listed.Pinned(1))
+        .detail
+        .value
+        .contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)")
+    )
 
   test("report: the true count, the groups and every holder always, the sample fills up to the cap"):
-    val groups = List(Group(Group.Source("wikidata"), Group.Kind("region"), Dating.Undated, Group.Places(3)), Group(Group.Source("geonames"), Group.Kind("region"), Dating.Undated, Group.Places(5)))
+    val groups = List(
+      Group(Group.Source("wikidata"), Group.Kind("region"), Dating.Undated, Group.Places(3)),
+      Group(Group.Source("geonames"), Group.Kind("region"), Dating.Undated, Group.Places(5))
+    )
     val holders = List(
-      Listed(Listed.Id("wikidata_q2"), Listed.Label("B"), Listed.Source("wikidata"), Listed.Kind("region"), Dating.Undated, findings = Listed.Findings(1)),
-      Listed(Listed.Id("wikidata_q1"), Listed.Label("A"), Listed.Source("wikidata"), Listed.Kind("region"), Dating.Undated, findings = Listed.Findings(9))
+      Listed(
+        Listed.Id("wikidata_q2"),
+        Listed.Label("B"),
+        Listed.Source("wikidata"),
+        Listed.Kind("region"),
+        Dating.Undated,
+        findings = Listed.Findings(1)
+      ),
+      Listed(
+        Listed.Id("wikidata_q1"),
+        Listed.Label("A"),
+        Listed.Source("wikidata"),
+        Listed.Kind("region"),
+        Dating.Undated,
+        findings = Listed.Findings(9)
+      )
     )
     val sample = List(
-      Listed(Listed.Id("geonames_1"), Listed.Label("C"), Listed.Source("geonames"), Listed.Kind("region"), Dating.Undated),
-      Listed(Listed.Id("wikidata_q1"), Listed.Label("A"), Listed.Source("wikidata"), Listed.Kind("region"), Dating.Undated),
-      Listed(Listed.Id("geonames_2"), Listed.Label("D"), Listed.Source("geonames"), Listed.Kind("region"), Dating.Undated)
+      Listed(
+        Listed.Id("geonames_1"),
+        Listed.Label("C"),
+        Listed.Source("geonames"),
+        Listed.Kind("region"),
+        Dating.Undated
+      ),
+      Listed(
+        Listed.Id("wikidata_q1"),
+        Listed.Label("A"),
+        Listed.Source("wikidata"),
+        Listed.Kind("region"),
+        Dating.Undated
+      ),
+      Listed(
+        Listed.Id("geonames_2"),
+        Listed.Label("D"),
+        Listed.Source("geonames"),
+        Listed.Kind("region"),
+        Dating.Undated
+      )
     )
     val r = PointAreas.report(rule, groups, holders, sample, maxItems = PointAreas.ReportMaxItems(5))
     assertEquals(r.count, 8)
@@ -64,12 +112,28 @@ class PointAreasSuite extends munit.FunSuite:
     )
     assertEquals(r.items.head.detail, "5 places")
     // a cap below the must-show lines still shows them all
-    assertEquals(PointAreas.report(rule, groups, holders, sample, maxItems = PointAreas.ReportMaxItems(1)).items.size, 4)
+    assertEquals(
+      PointAreas.report(rule, groups, holders, sample, maxItems = PointAreas.ReportMaxItems(1)).items.size,
+      4
+    )
     assertEquals(PointAreas.report(rule, Nil, Nil, Nil, PointAreas.ReportMaxItems(50)).count, 0)
 
   test("the fix line: removed, the findings matched again, what is left"):
-    assertEquals(PointAreas.fixed(PointAreas.FixedRemoved(10), PointAreas.FixedRemaining(0), PointAreas.FixedFindings(0), PointAreas.FixedSources(0)), "place-imported-point-area: 10 point-only imported area(s) removed")
     assertEquals(
-      PointAreas.fixed(PointAreas.FixedRemoved(10), PointAreas.FixedRemaining(5), PointAreas.FixedFindings(3), PointAreas.FixedSources(2)),
+      PointAreas.fixed(
+        PointAreas.FixedRemoved(10),
+        PointAreas.FixedRemaining(0),
+        PointAreas.FixedFindings(0),
+        PointAreas.FixedSources(0)
+      ),
+      "place-imported-point-area: 10 point-only imported area(s) removed"
+    )
+    assertEquals(
+      PointAreas.fixed(
+        PointAreas.FixedRemoved(10),
+        PointAreas.FixedRemaining(5),
+        PointAreas.FixedFindings(3),
+        PointAreas.FixedSources(2)
+      ),
       "place-imported-point-area: 10 point-only imported area(s) removed, 3 findings of 2 sources matched to places again, 5 still to remove"
     )

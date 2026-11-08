@@ -25,7 +25,12 @@ enum BaseMap(
   case Physical extends BaseMap(BaseMap.Wire("physical"), BaseMap.Label("Physical"), Some(VectorStyle.Physical), None)
   case Standard extends BaseMap(BaseMap.Wire("standard"), BaseMap.Label("Standard (online)"), None, None)
   case Muted
-      extends BaseMap(BaseMap.Wire("muted"), BaseMap.Label("Muted (online)"), None, Some(BaseMap.Url("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png")))
+      extends BaseMap(
+        BaseMap.Wire("muted"),
+        BaseMap.Label("Muted (online)"),
+        None,
+        Some(BaseMap.Url("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"))
+      )
   case Dark extends BaseMap(BaseMap.Wire("dark"), BaseMap.Label("Dark (online)"), None, None)
 
   def online: Boolean = vector.isEmpty
@@ -38,7 +43,6 @@ object BaseMap:
   object Label extends Newtype[String, Pure]
   type Url = Url.T
   object Url extends Newtype[String, Pure]
-
 
   def fromWire(s: Wire): Option[BaseMap] =
     val w = s.value.trim.toLowerCase

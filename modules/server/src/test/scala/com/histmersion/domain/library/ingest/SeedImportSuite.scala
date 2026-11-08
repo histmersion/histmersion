@@ -34,7 +34,11 @@ class SeedImportSuite extends DbSuite:
   private lazy val ds =
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
-  private lazy val sources = SourceService(Transactor(ds), SourceReferrers(Nil), () => SourceSettings(SourceSettings.ChunkChars(4000), SourceSettings.ToleranceKm(25.0)))
+  private lazy val sources = SourceService(
+    Transactor(ds),
+    SourceReferrers(Nil),
+    () => SourceSettings(SourceSettings.ChunkChars(4000), SourceSettings.ToleranceKm(25.0))
+  )
   private lazy val seed = SeedImport(sources, (_, figures) => RowCount(figures.size))
 
   private def run(dir: java.nio.file.Path, force: SeedImport.RunForce = SeedImport.RunForce(false)) =
@@ -52,7 +56,11 @@ class SeedImportSuite extends DbSuite:
     assertEquals(first.skipped, Nil)
 
     // an agent enriches the row → updated_at now newer than the file's mtime
-    assert(sources.patch(ckS, Source.Patch(tags = Some(ListPatch(add = List(ListPatch.Add("enriched"))))), Caller.Local).isRight)
+    assert(
+      sources
+        .patch(ckS, Source.Patch(tags = Some(ListPatch(add = List(ListPatch.Add("enriched"))))), Caller.Local)
+        .isRight
+    )
 
     // 2nd seed: the file is older than the row → skipped, enrichment preserved
     val second = run(dir)
@@ -75,10 +83,30 @@ class SeedImportSuite extends DbSuite:
     assertEquals(r.failed, List("zz_seed_bad.md: no frontmatter"))
 
   test("isStale: only a STRICTLY newer row blocks the file"):
-    assert(SeedImport.isStale(Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)), Citekey.assume("a"), SeedNote.ModifiedMillis(99L)))
-    assert(!SeedImport.isStale(Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)), Citekey.assume("a"), SeedNote.ModifiedMillis(100L)))
-    assert(!SeedImport.isStale(Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)), Citekey.assume("a"), SeedNote.ModifiedMillis(101L)))
-    assert(!SeedImport.isStale(Map.empty, Citekey.assume("a"), SeedNote.ModifiedMillis(1L))) // unknown citekey: always import
+    assert(
+      SeedImport.isStale(
+        Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)),
+        Citekey.assume("a"),
+        SeedNote.ModifiedMillis(99L)
+      )
+    )
+    assert(
+      !SeedImport.isStale(
+        Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)),
+        Citekey.assume("a"),
+        SeedNote.ModifiedMillis(100L)
+      )
+    )
+    assert(
+      !SeedImport.isStale(
+        Map(Citekey.assume("a") -> CitekeyMillis.Millis(100L)),
+        Citekey.assume("a"),
+        SeedNote.ModifiedMillis(101L)
+      )
+    )
+    assert(
+      !SeedImport.isStale(Map.empty, Citekey.assume("a"), SeedNote.ModifiedMillis(1L))
+    ) // unknown citekey: always import
 
   test("export then re-import (force) leaves identical frontmatter — the §1.9a round trip"):
     val ck = Citekey("zz_seed_roundtrip")

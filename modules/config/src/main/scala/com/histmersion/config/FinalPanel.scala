@@ -15,6 +15,5 @@ object FinalPanel:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-
   def parse(s: AgentReviewConfig.FinalPanel): Option[FinalPanel] =
     values.find(_.wire.value == Option(s).map(_.value).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT))

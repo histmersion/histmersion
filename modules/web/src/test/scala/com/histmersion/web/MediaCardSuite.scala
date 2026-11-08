@@ -45,21 +45,41 @@ class MediaCardSuite extends munit.FunSuite:
 
   private val mycenae = PlaceDetail(
     Place
-      .Summary(Place.Id("pleiades_570491"), Place.Summary.Label("Mycenae"), Place.Summary.Kind(Place.Kind.Site), Some(Year(-1600L)), Some(Year(-1100L)), None, Place.Summary.Names("Mycenae")),
+      .Summary(
+        Place.Id("pleiades_570491"),
+        Place.Summary.Label("Mycenae"),
+        Place.Summary.Kind(Place.Kind.Site),
+        Some(Year(-1600L)),
+        Some(Year(-1100L)),
+        None,
+        Place.Summary.Names("Mycenae")
+      ),
     geometry = Some(Place.Geometry("""{"type":"Point","coordinates":[22.75,37.73]}""")),
     parents = Nil,
     children = Nil,
     findings = Place.Counts.Findings(3),
     asOf = None,
-    links = List(Place.Link(Place.Id("pleiades_570491"), Place.Link.Scheme("commons"), Place.Link.ExternalId("Mycenae"), Place.Link.Relation("see_also"))),
-    media = List(thumb, thumb.modify(_.uid).setTo(MediaItem.Uid("x")).modify(_.role).setTo(MediaThumb.Role(MediaRole.LocatorMap)))
+    links = List(
+      Place.Link(
+        Place.Id("pleiades_570491"),
+        Place.Link.Scheme("commons"),
+        Place.Link.ExternalId("Mycenae"),
+        Place.Link.Relation("see_also")
+      )
+    ),
+    media = List(
+      thumb,
+      thumb.modify(_.uid).setTo(MediaItem.Uid("x")).modify(_.role).setTo(MediaThumb.Role(MediaRole.LocatorMap))
+    )
   )
 
   test("a place card shows its first picture; its Commons category is a link"):
     val c = Preview.card(mycenae)
     assertEquals(c.media, Some(thumb))
     assert(
-      c.links.map((label, href) => label.value -> href.value).contains("Commons category Mycenae" -> "https://commons.wikimedia.org/wiki/Category:Mycenae"),
+      c.links
+        .map((label, href) => label.value -> href.value)
+        .contains("Commons category Mycenae" -> "https://commons.wikimedia.org/wiki/Category:Mycenae"),
       c.links.toString
     )
     assertEquals(Preview.card(mycenae.modify(_.media).setTo(Nil)).media, None)
@@ -81,7 +101,12 @@ class MediaCardSuite extends munit.FunSuite:
       None,
       None
     )
-    val cover = MediaThumb(MediaItem.Uid("u1"), MediaThumb.Role(MediaRole.Cover),MediaThumb.Url("/media/u1/thumb"), MediaItem.Credit("Cover: the local Calibre library"))
+    val cover = MediaThumb(
+      MediaItem.Uid("u1"),
+      MediaThumb.Role(MediaRole.Cover),
+      MediaThumb.Url("/media/u1/thumb"),
+      MediaItem.Credit("Cover: the local Calibre library")
+    )
     assertEquals(
       Preview.card(Source.WithFindings(src, Nil, illustration = Some(cover))).media,
       Some(cover)
@@ -106,7 +131,11 @@ class MediaCardSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      Preview.creditLine(thumb.modify(_.license).setTo(Some(MediaItem.License("public-domain"))).modify(_.licenseUrl).setTo(None))._2,
+      Preview
+        .creditLine(
+          thumb.modify(_.license).setTo(Some(MediaItem.License("public-domain"))).modify(_.licenseUrl).setTo(None)
+        )
+        ._2,
       Some("public-domain" -> "https://commons.wikimedia.org/wiki/File:Lions-Gate-Mycenae.jpg")
     )
     assertEquals(Preview.creditLine(thumb.modify(_.license).setTo(None))._2, None)
@@ -121,7 +150,10 @@ class MediaCardSuite extends munit.FunSuite:
       Preview.targetOf(None, None, None, Some(Pages.EventId("fall_of_troy")), None),
       Some(Preview.Target.Event(Preview.Target.Event.Id("fall_of_troy")))
     )
-    assertEquals(Preview.targetOf(Some(Citekey("a2020_b")), None, None, Some(Pages.EventId("e")), None), Some(Preview.Target.Source(Preview.Target.Source.Citekey("a2020_b"))))
+    assertEquals(
+      Preview.targetOf(Some(Citekey("a2020_b")), None, None, Some(Pages.EventId("e")), None),
+      Some(Preview.Target.Source(Preview.Target.Source.Citekey("a2020_b")))
+    )
     assertEquals(Preview.targetOf(None, None, None, Some(Pages.EventId(" ")), None), None)
 
   test("an event card: label, kind and years, its parent, its description, its Wikidata page and picture"):
@@ -134,7 +166,15 @@ class MediaCardSuite extends munit.FunSuite:
         EventSummary.Historicity("attested"),
         description = Some(EventSummary.Description("Burnt level."))
       ),
-      parent = Some(EventSummary(Event.Id("collapse"), EventSummary.Label("Late Bronze Age collapse"), EventSummary.Kind("cultural_shift"), TimeSpan(), EventSummary.Historicity("attested"))),
+      parent = Some(
+        EventSummary(
+          Event.Id("collapse"),
+          EventSummary.Label("Late Bronze Age collapse"),
+          EventSummary.Kind("cultural_shift"),
+          TimeSpan(),
+          EventSummary.Historicity("attested")
+        )
+      ),
       wikidata = Some(EventEntry.Wikidata("Q123")),
       media = List(thumb)
     )
@@ -148,15 +188,32 @@ class MediaCardSuite extends munit.FunSuite:
     assertEquals(c.media, Some(thumb))
 
   test("the media filters: all, then each value with its count; a chosen value no longer counted is kept"):
-    val counts = List(MediaCount(MediaCount.Key(MediaProvider.Commons), MediaCount.N(4)), MediaCount(MediaCount.Key(MediaProvider.Source), MediaCount.N(9)))
+    val counts = List(
+      MediaCount(MediaCount.Key(MediaProvider.Commons), MediaCount.N(4)),
+      MediaCount(MediaCount.Key(MediaProvider.Source), MediaCount.N(9))
+    )
     assertEquals(
-      MediaFilters.options(counts, None, k => MediaFilters.ChoiceLabel(MediaProvider.title(MediaProvider.Id(k.value)).value)),
+      MediaFilters
+        .options(counts, None, k => MediaFilters.ChoiceLabel(MediaProvider.title(MediaProvider.Id(k.value)).value)),
       List("" -> "all", MediaProvider.Commons -> "Wikimedia Commons (4)", MediaProvider.Source -> "source figures (9)")
     )
-    assertEquals(MediaFilters.options(Nil, Some(MediaCount.Key("CC0-1.0")), k => MediaFilters.ChoiceLabel(k.value)),List("" -> "all", "CC0-1.0" -> "CC0-1.0"))
+    assertEquals(
+      MediaFilters.options(Nil, Some(MediaCount.Key("CC0-1.0")), k => MediaFilters.ChoiceLabel(k.value)),
+      List("" -> "all", "CC0-1.0" -> "CC0-1.0")
+    )
 
   test("the media layer's popup: a figure names its source; a provider's picture shows thumbnail, credit, licence"):
-    val fig = MediaGeoHit(Some(Citekey("cline2014_year")), Bundle.Asset.FileName("fig1.png"), Some(MediaItem.Kind("figure")), Latitude(37.0), Longitude(22.0), None, None, None, MediaItem.Uid("u1"))
+    val fig = MediaGeoHit(
+      Some(Citekey("cline2014_year")),
+      Bundle.Asset.FileName("fig1.png"),
+      Some(MediaItem.Kind("figure")),
+      Latitude(37.0),
+      Longitude(22.0),
+      None,
+      None,
+      None,
+      MediaItem.Uid("u1")
+    )
     // the source is the app's source link (its card on hover), not a bare bold citekey
     val f = MediaPopup.html(fig, MediaPopup.PeriodText("1200 BCE"), MediaPopup.Caption(""))
     assert(
@@ -197,7 +254,9 @@ class MediaCardSuite extends munit.FunSuite:
     assert(!h.value.contains("data-full"), h.value)
     assert(
       h.value.startsWith(
-        s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(Glyphs.Name("image"))}Lions-Gate-Mycenae.jpg</div>"""
+        s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(
+            Glyphs.Name("image")
+          )}Lions-Gate-Mycenae.jpg</div>"""
       ),
       "a picture's popup leads with the picture icon: " + h.value
     )

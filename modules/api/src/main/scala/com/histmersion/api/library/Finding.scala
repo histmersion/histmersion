@@ -59,7 +59,7 @@ object Finding:
       significance: Option[Significance] = None
   )
   object Input:
-    export com.histmersion.api.library.Confidence.{Wire as Confidence}
+    export com.histmersion.api.library.Confidence.Wire as Confidence
 
     given Schema[Input] = KindlingsSchema
       .derived[Input]
@@ -94,14 +94,14 @@ object Finding:
       why: List[Match.Why],
       places: List[Match.Places] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Match:
     type Why = Why.T
     object Why extends Newtype[String, Pure]
     type Places = Places.T
     object Places extends Newtype[String, Pure]
-
 
   final case class Row(
       claim: Claim,
@@ -116,5 +116,5 @@ object Finding:
       significance: Option[Significance] = None,
       uid: Option[java.util.UUID] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
-
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

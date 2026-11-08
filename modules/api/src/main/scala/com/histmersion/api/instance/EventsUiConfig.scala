@@ -13,7 +13,8 @@ final case class EventsUiConfig(
     mapLimit: EventsUiConfig.MapLimit,
     outlineToleranceDeg: EventsUiConfig.OutlineToleranceDeg
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object EventsUiConfig:
   type LocalFadeSeconds = LocalFadeSeconds.T

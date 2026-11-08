@@ -53,7 +53,14 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   /** A firing proposes the goal's next articles. */
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[ManagerKindDefinition.FirePhrase] =
     m.goal.toList.map { g =>
-      val (_, isNew) = c.upsert(ManagerLight.Id(m.id.value), ManagerContext.ItemKind(ProposeArticles), ManagerContext.ItemTarget(g.value), ItemOrigin.Cron, ManagerContext.Priority(0), reopen = ManagerContext.UpsertReopen(true))
+      val (_, isNew) = c.upsert(
+        ManagerLight.Id(m.id.value),
+        ManagerContext.ItemKind(ProposeArticles),
+        ManagerContext.ItemTarget(g.value),
+        ItemOrigin.Cron,
+        ManagerContext.Priority(0),
+        reopen = ManagerContext.UpsertReopen(true)
+      )
       ManagerKindDefinition.FirePhrase(s"$ProposeArticles ${if isNew then "added" else "due"}")
     }
 
@@ -74,7 +81,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             c.approvalsOf(run, Approval.Kind.ArticlePublish)
               .lastOption
               .filter(a =>
-                a.state == ApprovalState.Rejected.wire && a.note.exists(_.value.startsWith(AutopilotPolicy.NotePrefix.value))
+                a.state == ApprovalState.Rejected.wire && a.note
+                  .exists(_.value.startsWith(AutopilotPolicy.NotePrefix.value))
               ) match
               case Some(a) =>
                 StepFacts.Redo(
@@ -124,7 +132,12 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         )
         val review = ManagerLight.Id(ReviewId)
         val _ = c.ensure(Kind.Review, review, None)
-        c.chainReview(review, Slug.assume(item.target.value), ManagerContext.ChainReviewWhy(s"compiled by ${m.id}"), out)
+        c.chainReview(
+          review,
+          Slug.assume(item.target.value),
+          ManagerContext.ChainReviewWhy(s"compiled by ${m.id}"),
+          out
+        )
         c.event(
           ManagerLight.Id(m.id.value),
           Some(ManagerContext.ItemId(item.id.value)),
@@ -145,7 +158,11 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         then c.autopilotSoon()
       case _ => ()
 
-  def target(m: ManagerInfo, itemKind: ManagerContext.ItemKind, raw: ManagerItem.Target): Either[Api.Error, ManagerContext.ItemTarget] =
+  def target(
+      m: ManagerInfo,
+      itemKind: ManagerContext.ItemKind,
+      raw: ManagerItem.Target
+  ): Either[Api.Error, ManagerContext.ItemTarget] =
     itemKind.value match
       case ProposeArticles | PlanGoalItem =>
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
@@ -158,11 +175,15 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             Either.cond(
               m.goal.forall(_ == s),
               ManagerContext.ItemTarget(s.value),
-              Api.Error(Api.Error.Message(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s"))
+              Api.Error(
+                Api.Error.Message(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s")
+              )
             )
           )
       case ArticleCompile =>
-        Left(Api.Error(Api.Error.Message(s"'$ArticleCompile' items come from an approved article plan (propose-articles)")))
+        Left(
+          Api.Error(Api.Error.Message(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+        )
       case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))
 
   /** The autopilot's checks of the approvals its items wait for: an article plan (each article's slug free and its
@@ -197,7 +218,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 PlannedFacts(
                   PlannedFacts.Slug(p.slug.value),
                   PlannedFacts.SlugFree(free),
-                  PlannedFacts.Hits(site.articles.filterReach(p.filter, Nil, ArticlesControllers.FilterReachCap(0))._1.value)
+                  PlannedFacts.Hits(
+                    site.articles.filterReach(p.filter, Nil, ArticlesControllers.FilterReachCap(0))._1.value
+                  )
                 )
               }
               val today = c
@@ -255,12 +278,17 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
     item.kind.value match
       case ProposeArticles =>
         goalOf match
-          case None    => c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
+          case None =>
+            c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
           case Some(g) =>
             c.start(
               m,
               item,
-              RunRequest(RunRequest.Pipeline(Pipeline.ProposeArticles.wire.value), RunRequest.Target(g.slug.value), budgetUsd = budget),
+              RunRequest(
+                RunRequest.Pipeline(Pipeline.ProposeArticles.wire.value),
+                RunRequest.Target(g.slug.value),
+                budgetUsd = budget
+              ),
               _.modify(_.minSources)
                 .setTo(m.config.minSources.map(v => RunParams.MinSources(v.value)))
                 .modify(_.maxArticles)
@@ -271,9 +299,15 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             )
       case ArticleCompile =>
         item.state.spec match
-          case None => c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("no approved article to compile"))
+          case None =>
+            c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("no approved article to compile"))
           case Some(_) if c.slugExists(Slug.assume(item.target.value)) =>
-            c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("an article with this slug was created meanwhile"))
+            c.settleNow(
+              m,
+              item,
+              ItemStatus.Cancelled,
+              ManagerContext.SettleNowWhy("an article with this slug was created meanwhile")
+            )
           case Some(sp) =>
             c.start(
               m,
@@ -296,25 +330,38 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             )
       case PlanGoalItem =>
         goalOf match
-          case None    => c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
+          case None =>
+            c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy("the goal no longer exists"))
           case Some(g) =>
             // sub-goals only above the depth limit (a goal there gets queries and works, no children)
             val depth = AutopilotPolicy.depth(
               Slug.assume(g.slug.value),
-              s => c.parentOf(com.histmersion.domain.automation.Goal.Slug.assume(s.value)).map(p => Slug.assume(p.value))
+              s =>
+                c.parentOf(com.histmersion.domain.automation.Goal.Slug.assume(s.value)).map(p => Slug.assume(p.value))
             )
             val leaf = depth.value >= c.cfg.approvals.auto.maxGoalDepth.value
             c.start(
               m,
               item,
-              RunRequest(RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), RunRequest.Target(g.slug.value), budgetUsd = budget),
+              RunRequest(
+                RunRequest.Pipeline(Pipeline.PlanGoal.wire.value),
+                RunRequest.Target(g.slug.value),
+                budgetUsd = budget
+              ),
               p => if leaf then p.modify(_.subGoals).setTo(Some(RunParams.SubGoals(0))) else p,
               item.state,
-              ManagerContext.StartWhat(s"plan-goal (depth $depth${if leaf then ": queries and works, no sub-goals" else ""})"),
+              ManagerContext.StartWhat(
+                s"plan-goal (depth $depth${if leaf then ": queries and works, no sub-goals" else ""})"
+              ),
               out
             )
       case other =>
-        c.settleNow(m, item, ItemStatus.Cancelled, ManagerContext.SettleNowWhy(s"'$other' items are not driven by a ${m.kind} manager"))
+        c.settleNow(
+          m,
+          item,
+          ItemStatus.Cancelled,
+          ManagerContext.SettleNowWhy(s"'$other' items are not driven by a ${m.kind} manager")
+        )
 
 object SeedManagerKind:
   /** The seeding defaults a seed manager's plan is held to. */

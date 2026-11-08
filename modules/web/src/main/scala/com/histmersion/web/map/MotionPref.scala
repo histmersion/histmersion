@@ -41,7 +41,9 @@ object MotionPref:
       then
         Try(dom.window.matchMedia(Query)).toOption.filter(_ != null).foreach { mq =>
           systemNow = SystemReduced(mq.matches)
-          val listener: js.Function1[js.Dynamic, Unit] = e => { systemNow = SystemReduced(e.matches.asInstanceOf[Boolean]); changed() }
+          val listener: js.Function1[js.Dynamic, Unit] = e => {
+            systemNow = SystemReduced(e.matches.asInstanceOf[Boolean]); changed()
+          }
           val d = mq.asInstanceOf[js.Dynamic]
           // Safari before 14 knows only the older addListener
           if js.typeOf(d.addEventListener) == "function" then d.addEventListener("change", listener)

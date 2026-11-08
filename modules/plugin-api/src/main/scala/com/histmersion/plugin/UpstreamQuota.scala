@@ -27,7 +27,10 @@ trait UpstreamQuota:
   def take(purpose: UpstreamQuota.TakePurpose): Either[UpstreamQuota.TakeResultPart1, Unit]
 
   /** What the upstream answered the call taken last: its status and headers (names in lower case). */
-  def observe(status: UpstreamQuota.ObserveStatus, headers: Map[UpstreamQuota.ObserveHeadersPart1, UpstreamQuota.ObserveHeadersPart2]): Unit
+  def observe(
+      status: UpstreamQuota.ObserveStatus,
+      headers: Map[UpstreamQuota.ObserveHeadersPart1, UpstreamQuota.ObserveHeadersPart2]
+  ): Unit
 
   /** The time the upstream asked not to be called before, as the budget keeps it (ISO-8601, `2026-10-26T18:52:11Z`),
     * once an answer asked to wait; `None` while it may be called.

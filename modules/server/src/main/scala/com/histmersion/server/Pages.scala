@@ -36,7 +36,8 @@ object Pages:
 
   private def readable(r: Source.Ref): String = HtmlRender.readable(r).value
 
-  private def articleRef(a: Article.Ref, label: String): String = HtmlRender.articleRef(a, HtmlRender.Label(label)).value
+  private def articleRef(a: Article.Ref, label: String): String =
+    HtmlRender.articleRef(a, HtmlRender.Label(label)).value
 
   private def dangling(label: String): String = HtmlRender.dangling(HtmlRender.Label(label)).value
 
@@ -50,7 +51,11 @@ object Pages:
   /** Markdown with every `[[wikilink]]` replaced by its typed anchor (raw inline HTML, which flexmark passes through).
     * `number` appends the citation number to a source reference.
     */
-  def linkProse(md: FullText.Shown.Markdown, links: WikiLinks.Occurrence.Target => Option[LinkTarget], number: Citekey => Option[Int] = _ => None): HtmlRender.Html =
+  def linkProse(
+      md: FullText.Shown.Markdown,
+      links: WikiLinks.Occurrence.Target => Option[LinkTarget],
+      number: Citekey => Option[Int] = _ => None
+  ): HtmlRender.Html =
     html(
       Article.Links
         .rewriteLinks(WikiLinks.Body(md.value)) { (t, explicit, written) =>
@@ -74,7 +79,10 @@ object Pages:
   private val NotUsed = """(?im)^#{1,6}\s*not used\b.*$""".r
 
   /** Citation numbers by first appearance in `md` (the argument part of an article). */
-  def numbering(md: FullText.Shown.Markdown, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Map[Citekey, Int] =
+  def numbering(
+      md: FullText.Shown.Markdown,
+      links: WikiLinks.Occurrence.Target => Option[LinkTarget]
+  ): Map[Citekey, Int] =
     Article.Links
       .targets(WikiLinks.Body(md.value))
       .flatMap(t => links(t).collect { case r: Source.Ref => r.citekey })
@@ -105,7 +113,9 @@ object Pages:
       }
       val fixable = issues.count(_.fix.nonEmpty)
       val how =
-        slug.fold(s"histmersion lint --source &lt;citekey&gt; --fix")(s => s"histmersion article lint ${esc(s.value)} --fix")
+        slug.fold(s"histmersion lint --source &lt;citekey&gt; --fix")(s =>
+          s"histmersion article lint ${esc(s.value)} --fix"
+        )
       val tip =
         if fixable == 0 then ""
         else
@@ -193,7 +203,10 @@ object Pages:
   def citations(cites: List[Citation], citedBy: List[Citation]): HtmlRender.Html =
     def block(anchor: Anchor, title: String, cs: List[Citation]) =
       if cs.isEmpty then ""
-      else s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs.map(c => citation(c).value).mkString}</ul>"""
+      else
+        s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs
+            .map(c => citation(c).value)
+            .mkString}</ul>"""
     html(
       block(Anchor("cites"), "Cites", cites) +
         block(Anchor("cited-by"), "Cited by", citedBy)
@@ -206,7 +219,9 @@ object Pages:
     case Citation.ToSource(r, kind) =>
       html(
         s"""<li>${kindLabel(kind)}${sourceRef(r, readable(r))} <i>${esc(r.title.value)}</i> """ +
-          s"""${HtmlRender.statusBadge(r.status).value} <span class="ident">${HtmlRender.identifier(r).value}</span></li>"""
+          s"""${HtmlRender.statusBadge(r.status).value} <span class="ident">${HtmlRender
+              .identifier(r)
+              .value}</span></li>"""
       )
     case Citation.ToArticle(a, kind) =>
       html(
@@ -274,7 +289,9 @@ object Pages:
     val meaning =
       Goal.Stages.meaning(Goal.Stage(status)).fold("")(m => s""" title="${esc(s"$status: ${m.value}")}"""")
     html(
-      s"""<a class="goal-ref" href="/research/goals/${esc(HtmlAtoms.segment(g.slug.value))}" title="${esc(g.slug.value)}">""" +
+      s"""<a class="goal-ref" href="/research/goals/${esc(HtmlAtoms.segment(g.slug.value))}" title="${esc(
+          g.slug.value
+        )}">""" +
         s"""<span class="job-state goal-status state-${esc(status)}"$meaning>${esc(
             Wording.capitalize(status)
           )}</span> """ +
@@ -292,7 +309,9 @@ object Pages:
     else
       s""" <span class="muted">· ${if r.goals.size == 1 then "goal" else "goals"}:</span> """ +
         r.goals.map(g => goalBadgeLink(g).value).mkString(""" <span class="muted">·</span> """)
-    html(s"""<p class="article-review-line"><span class="muted">review:</span> ${reviewBadge(r.badge).value}$goals</p>""")
+    html(
+      s"""<p class="article-review-line"><span class="muted">review:</span> ${reviewBadge(r.badge).value}$goals</p>"""
+    )
 
   /** Every finding the review panel raised, run by run and round by round, with what became of it; collapsed, its
     * summary saying how many there were and how many are open.
@@ -307,7 +326,8 @@ object Pages:
         s"Review history: ${Plural.count(Plural.CountN(all.size.toLong), Plural.CountSingular("finding"))} over ${Plural.count(Plural.CountN(runs.toLong), Plural.CountSingular("run"))}" +
           (if open > 0 then s", $open still open" else ", none open")
       val rounds = r.rounds.map { rd =>
-        val when = rd.startedAt.fold("")(t => s""" <span class="muted">· run started ${esc(readableUtc(t.value))}</span>""")
+        val when =
+          rd.startedAt.fold("")(t => s""" <span class="muted">· run started ${esc(readableUtc(t.value))}</span>""")
         val items = rd.findings.map { f =>
           val facts =
             List(Article.ReviewView.reviewerName(f.reviewer), f.kind.value, f.where.value)
@@ -317,7 +337,9 @@ object Pages:
           s"""<li class="review-finding outcome-${esc(f.outcome.value)}"><span class="review-sev sev-${esc(
               f.severity.value
             )}">${esc(f.severity.value)}</span> """ +
-            s"""<b>${esc(f.id.value)}</b> <span class="muted">${facts.mkString(" · ")}</span> — ${esc(f.problem.value)}""" +
+            s"""<b>${esc(f.id.value)}</b> <span class="muted">${facts.mkString(" · ")}</span> — ${esc(
+                f.problem.value
+              )}""" +
             s"""<div class="review-outcome">${esc(Article.ReviewView.outcomeLine(f))}</div></li>"""
         }
         s"""<h3>Run ${rd.runNumber}, round ${rd.round}$when</h3><ul class="review-findings">${items.mkString}</ul>"""
@@ -408,8 +430,7 @@ object Pages:
       val items = rows.map { b =>
         val label = b.title.map(_.value).filter(_.trim.nonEmpty).getOrElse(display(b.id.value))
         val link =
-          if b.kind.value == Article.Links.TargetSource then
-            HtmlAtoms.sourceLink(Citekey(b.id.value), None, label)
+          if b.kind.value == Article.Links.TargetSource then HtmlAtoms.sourceLink(Citekey(b.id.value), None, label)
           else HtmlAtoms.articleLink(ReviewGoal.Slug(b.id.value), label)
         s"<li>$link</li>"
       }

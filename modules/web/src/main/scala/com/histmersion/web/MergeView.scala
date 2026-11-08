@@ -69,7 +69,6 @@ object MergeView:
 
   /** How the issue list is grouped, in the order it is shown. */
 
-
   enum Group(val title: Group.Title) derives CanEqual:
     case Open extends Group(Group.Title("to decide"))
     case Decided extends Group(Group.Title("decided"))
@@ -123,13 +122,21 @@ object MergeView:
     val rest = r.resolve.filterNot(_.issue.value == issue.value)
     r.modify(_.resolve)
       .setTo(
-        (rest ++ decision.map(d => MergeResolution(MergeResolution.Issue(issue.value), MergeResolution.Decision(d.wire.value), text.filter(_ => d.kind == MergeDecision.Kind.File))))
+        (rest ++ decision.map(d =>
+          MergeResolution(
+            MergeResolution.Issue(issue.value),
+            MergeResolution.Decision(d.wire.value),
+            text.filter(_ => d.kind == MergeDecision.Kind.File)
+          )
+        ))
           .sortBy(_.issue)
       )
 
   /** The decision a person made for an issue (not a default, a policy or a remembered one). */
   def chosen(r: MergeResolutions, issue: MergeIssue.Id): Option[MergeDecision] =
-    r.resolve.find(_.issue.value == issue.value).flatMap(x => MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption)
+    r.resolve
+      .find(_.issue.value == issue.value)
+      .flatMap(x => MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption)
 
   /** What a decision kind means, in words. */
   def describe(k: MergeDecision.Kind): Description = k match
@@ -177,35 +184,50 @@ object MergeView:
       Some(d.map(_.kind) match
         case Some(MergeDecision.Kind.KeepLeft)  => Right(ResultText(f.left.map(_.value).getOrElse("—")))
         case Some(MergeDecision.Kind.KeepRight) => Right(ResultText(f.right.map(_.value).getOrElse("—")))
-        case Some(MergeDecision.Kind.Concat)    => Right(ResultText(List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString("\n\n")))
-        case Some(MergeDecision.Kind.Hull)      => Right(ResultText("the span covering both"))
-        case Some(MergeDecision.Kind.Map)       => Right(ResultText(d.flatMap(_.argument).map(_.value).getOrElse("—")))
-        case Some(MergeDecision.Kind.Both) => Right(ResultText("two records: " + List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString(" and ")))
+        case Some(MergeDecision.Kind.Concat)    =>
+          Right(ResultText(List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString("\n\n")))
+        case Some(MergeDecision.Kind.Hull) => Right(ResultText("the span covering both"))
+        case Some(MergeDecision.Kind.Map)  => Right(ResultText(d.flatMap(_.argument).map(_.value).getOrElse("—")))
+        case Some(MergeDecision.Kind.Both) =>
+          Right(ResultText("two records: " + List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString(" and ")))
         case Some(MergeDecision.Kind.RenameRight) =>
-          Right(ResultText(s"${f.left.map(_.value).getOrElse("")} here, ${d.flatMap(_.argument).map(_.value).getOrElse("")} for the bundle's"))
+          Right(
+            ResultText(
+              s"${f.left.map(_.value).getOrElse("")} here, ${d.flatMap(_.argument).map(_.value).getOrElse("")} for the bundle's"
+            )
+          )
         case Some(MergeDecision.Kind.RenameLeft) =>
-          Right(ResultText(s"${d.flatMap(_.argument).map(_.value).getOrElse("")} here, ${f.right.map(_.value).getOrElse("")} for the bundle's"))
+          Right(
+            ResultText(
+              s"${d.flatMap(_.argument).map(_.value).getOrElse("")} here, ${f.right.map(_.value).getOrElse("")} for the bundle's"
+            )
+          )
         case Some(other) => Right(ResultText(MergeDecision.Kind.wireOf(other).value))
         case None        => Left(ResultText("to decide")))
 
   /** The rows of a field table worth a person's eye: the ones that differ come first. */
   def rows(fs: List[IssueField]): List[(IssueField, Boolean)] =
-    val (diff, same) = fs.filter(f => f.left.isDefined || f.right.isDefined).partition(f => f.left.map(_.value) != f.right.map(_.value))
+    val (diff, same) =
+      fs.filter(f => f.left.isDefined || f.right.isDefined).partition(f => f.left.map(_.value) != f.right.map(_.value))
     diff.map(_ -> true) ++ same.map(_ -> false)
 
   /** The text the article editor starts from: the agreed regions as they are, each conflict with git-style markers
     * around this collection's and the bundle's lines (and the common version's).
     */
   def markedText(t: IssueText): MarkedText =
-    MarkedText(t.hunks
-      .flatMap { h =>
-        if !h.conflict.value then h.left.map(_.value)
-        else
-          (("<<<<<<< here" :: h.left.map(_.value)) ++ (if h.base.nonEmpty then "||||||| common version" :: h.base.map(_.value) else Nil) ++
-            ("=======" :: h.right.map(_.value)) :+ ">>>>>>> bundle"
-        )
-      }
-      .mkString("\n"))
+    MarkedText(
+      t.hunks
+        .flatMap { h =>
+          if !h.conflict.value then h.left.map(_.value)
+          else
+            (("<<<<<<< here" :: h.left.map(_.value)) ++ (if h.base.nonEmpty then
+                                                           "||||||| common version" :: h.base.map(_.value)
+                                                         else Nil) ++
+              ("=======" :: h.right.map(_.value)) :+ ">>>>>>> bundle"
+          )
+        }
+        .mkString("\n")
+    )
 
   /** Conflict markers still in an edited text: it is not merged yet. */
   def hasMarkers(text: String): Boolean =
@@ -352,7 +374,11 @@ object MergeView:
           r => {
             val next = res.now().overriddenBy(r)
             res.set(next)
-            message.set(Some(s"${Plural.count(Plural.CountN(r.resolve.size.toLong), Plural.CountSingular("decision"))} read from ${f.name}"))
+            message.set(
+              Some(
+                s"${Plural.count(Plural.CountN(r.resolve.size.toLong), Plural.CountSingular("decision"))} read from ${f.name}"
+              )
+            )
             bundle.foreach(sha =>
               ApiClient.putMergeSession(sha, next).onComplete(_.fold(fail("keeping the decisions"), _ => replan()))
             )
@@ -364,7 +390,9 @@ object MergeView:
     for sha <- bundle; p <- plan.now() do
       confirm.set(false)
       failure.set(None)
-      ApiClient.mergeApply(MergeApplyRequest(MergeApplyRequest.Bundle(sha.value), p.planHash, res.now())).onComplete(_.fold(fail("the merge"), follow))
+      ApiClient
+        .mergeApply(MergeApplyRequest(MergeApplyRequest.Bundle(sha.value), p.planHash, res.now()))
+        .onComplete(_.fold(fail("the merge"), follow))
 
   /** Follow an apply job (its backup comes first) until it is done. */
   private def follow(j: MergeApplyJob): Unit =
@@ -635,7 +663,8 @@ object MergeView:
       h5(who),
       s.fold(span(cls := "muted", "nothing")) { x =>
         div(
-          if who == "here" && entity == Bundle.Kind.Source then SourceLink(Citekey(x.label.value)) else code(x.label.value),
+          if who == "here" && entity == Bundle.Kind.Source then SourceLink(Citekey(x.label.value))
+          else code(x.label.value),
           x.lines.map(l => div(cls := "muted", l.value))
         )
       }
@@ -673,7 +702,9 @@ object MergeView:
         if !h.conflict.value then
           htmlTag("details")(
             cls := "merge-agreed",
-            htmlTag("summary")(s"${Plural.count(Plural.CountN(h.left.size.toLong), Plural.CountSingular("line"))} the same on both sides"),
+            htmlTag("summary")(
+              s"${Plural.count(Plural.CountN(h.left.size.toLong), Plural.CountSingular("line"))} the same on both sides"
+            ),
             lines(h.left.map(_.value))
           )
         else
@@ -706,7 +737,11 @@ object MergeView:
                 if hasMarkers(d) then "resolve every <<<<<<< … >>>>>>> region first" else "decide file: with this text"
               ),
               onClick --> (_ =>
-                set(i.id, Some(MergeDecision.withArg(MergeDecision.Kind.File, fileName(i))), Some(MergeResolution.Text(draft.now())))
+                set(
+                  i.id,
+                  Some(MergeDecision.withArg(MergeDecision.Kind.File, fileName(i))),
+                  Some(MergeResolution.Text(draft.now()))
+                )
               )
             )
         ),
@@ -721,7 +756,9 @@ object MergeView:
     val spans = x.leftSpan.toList ++ x.rightSpan.toList
     div(
       cls := "merge-place",
-      Option.when(x.leftGeometry.isDefined || x.rightGeometry.isDefined)(miniMap(x.leftGeometry.map(_.value), x.rightGeometry.map(_.value))),
+      Option.when(x.leftGeometry.isDefined || x.rightGeometry.isDefined)(
+        miniMap(x.leftGeometry.map(_.value), x.rightGeometry.map(_.value))
+      ),
       div(
         cls := "merge-legend",
         span(cls := "merge-swatch merge-left"),
@@ -758,7 +795,8 @@ object MergeView:
       cls := "merge-map",
       onMountUnmountCallback(
         mount = ctx =>
-          val m = Engines.surface(ctx.thisNode.ref, MapSurface.MaxZoom(tiles.fold(12.0)(_._2.value.toDouble)), _ => None)
+          val m =
+            Engines.surface(ctx.thisNode.ref, MapSurface.MaxZoom(tiles.fold(12.0)(_._2.value.toDouble)), _ => None)
           m.setBaseMap(BaseMaps.current)
           val geoms = List("left" -> left, "right" -> right).collect { case (who, Some(g)) =>
             val geo = js.JSON.parse(g)
@@ -775,8 +813,14 @@ object MergeView:
             GeoBounds.ofGeometry(geo)
           }.flatten
           geoms.reduceOption(_.extend(_)) match
-            case Some(b) => m.fitBounds(b, MapSurface.FitBoundsPadding(24), MapSurface.MaxZoom(9.0), animate = MapSurface.FitBoundsAnimate(false))
-            case None    =>
+            case Some(b) =>
+              m.fitBounds(
+                b,
+                MapSurface.FitBoundsPadding(24),
+                MapSurface.MaxZoom(9.0),
+                animate = MapSurface.FitBoundsAnimate(false)
+              )
+            case None =>
               val (at, zoom) = MapStart.initial(startView, None)
               m.setView(at, MapSurface.Zoom(math.max(1.0, zoom.value - 1)))
           map = Some(m)
@@ -824,7 +868,9 @@ object MergeView:
             nameAttr := name,
             checked := i.decision.exists(_.kind == k),
             onChange --> (_ =>
-              Option(arg.now().trim).filter(_.nonEmpty).foreach(a => set(i.id, Some(MergeDecision.withArg(k, MergeDecision.Argument(a)))))
+              Option(arg.now().trim)
+                .filter(_.nonEmpty)
+                .foreach(a => set(i.id, Some(MergeDecision.withArg(k, MergeDecision.Argument(a)))))
             )
           ),
           describe(k).value
@@ -841,7 +887,9 @@ object MergeView:
           cls := "btn",
           "set",
           onClick --> (_ =>
-            Option(arg.now().trim).filter(_.nonEmpty).foreach(a => set(i.id, Some(MergeDecision.withArg(k, MergeDecision.Argument(a)))))
+            Option(arg.now().trim)
+              .filter(_.nonEmpty)
+              .foreach(a => set(i.id, Some(MergeDecision.withArg(k, MergeDecision.Argument(a)))))
           )
         )
       )
@@ -942,7 +990,12 @@ object MergeView:
   private def appliedReport(r: MergeApplyResult): HtmlElement =
     val t = r.tally
     if !r.applied.value then
-      div(cls := "form-error", role := "alert", p_("Not merged: nothing was written."), ul(r.problems.map(x => li(x.value))))
+      div(
+        cls := "form-error",
+        role := "alert",
+        p_("Not merged: nothing was written."),
+        ul(r.problems.map(x => li(x.value)))
+      )
     else if r.mergeId.isEmpty then p_(cls := "form-ok", "Nothing to merge: the bundle is merged already.")
     else
       div(
@@ -963,8 +1016,11 @@ object MergeView:
           ),
           Option.when(r.reviews.nonEmpty)(li(s"queued for review: ${r.reviews.mkString(", ")}")),
           r.replanChanges.map(n =>
-            li(if n.value == 0 then "planned again: nothing left to do"
-            else s"planned again: ${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("change"))} left — report it")
+            li(
+              if n.value == 0 then "planned again: nothing left to do"
+              else
+                s"planned again: ${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("change"))} left — report it"
+            )
           )
         )
       )

@@ -10,7 +10,10 @@ import com.histmersion.config.given
 class HighlightSuite extends munit.FunSuite:
 
   test("terms: bare words, quoted phrases, longest first"):
-    assertEquals(Highlight.terms(Highlight.Term("""collapse "sea peoples" bronze""")), List("sea peoples", "collapse", "bronze"))
+    assertEquals(
+      Highlight.terms(Highlight.Term("""collapse "sea peoples" bronze""")),
+      List("sea peoples", "collapse", "bronze")
+    )
 
   test("terms: -excluded terms and the boolean operators are dropped"):
     assertEquals(Highlight.terms(Highlight.Term("""sea -egypt or bronze""")), List("bronze", "sea"))
@@ -32,12 +35,14 @@ class HighlightSuite extends munit.FunSuite:
     assert(html.value.contains("""<mark id="hl1">Egyptian</mark>"""), html)
 
   test("attributes and tag names are never touched"):
-    val (html, n) = Highlight(Highlight.ApplyHtml("""<a href="/source/egypt" class="egypt">Egypt</a>"""), Highlight.ApplyQ("egypt"))
+    val (html, n) =
+      Highlight(Highlight.ApplyHtml("""<a href="/source/egypt" class="egypt">Egypt</a>"""), Highlight.ApplyQ("egypt"))
     assertEquals(n, 1)
     assertEquals(html, """<a href="/source/egypt" class="egypt"><mark id="hl1">Egypt</mark></a>""")
 
   test("phrases match across whitespace and newlines, and win over their own words"):
-    val (html, n) = Highlight(Highlight.ApplyHtml("<p>the sea\n  peoples came</p>"), Highlight.ApplyQ(""""sea peoples""""))
+    val (html, n) =
+      Highlight(Highlight.ApplyHtml("<p>the sea\n  peoples came</p>"), Highlight.ApplyQ(""""sea peoples""""))
     assertEquals(n, 1)
     assert(html.value.contains("<mark id=\"hl1\">sea\n  peoples</mark>"), html)
 

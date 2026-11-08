@@ -43,7 +43,6 @@ private[config] object ConfigLayers:
   type Problem = ConfigProblem
   val Problem: ConfigProblem.type = ConfigProblem
 
-
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
   /** The env-override layer: `histmersion.<key> = <value of its variable>` for every key of `reference` whose `${?VAR}`

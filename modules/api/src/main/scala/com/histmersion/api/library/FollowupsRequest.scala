@@ -13,7 +13,8 @@ final case class FollowupsRequest(
     limit: Option[FollowupsRequest.Limit] = None,
     apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object FollowupsRequest:
   type Id = Id.T

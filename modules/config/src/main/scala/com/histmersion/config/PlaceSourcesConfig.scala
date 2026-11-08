@@ -26,7 +26,13 @@ final case class PlaceSourcesConfig(
 ) derives ConfigReader:
   /** `point-area-kinds` as a set ([[Gazetteer.dropsPointArea]]); empty keeps every record. */
   def pointAreaKindSet: Set[PlaceSourcesConfig.PointAreaKind] =
-    Option(pointAreaKinds.value).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct.map(k => PlaceSourcesConfig.PointAreaKind(k.toLowerCase(java.util.Locale.ROOT))).toSet
+    Option(pointAreaKinds.value).toList
+      .flatMap(_.split(",").toList)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .distinct
+      .map(k => PlaceSourcesConfig.PointAreaKind(k.toLowerCase(java.util.Locale.ROOT)))
+      .toSet
 
 object PlaceSourcesConfig:
   type PointAreaKind = PointAreaKind.T

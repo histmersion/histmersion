@@ -25,7 +25,9 @@ class BundleControllersSuite extends munit.FunSuite:
       BundleControllers.since(Some(BundleScope.Since.At("2026-10-03T09:12:00.123456Z"))),
       Right(Some("2026-10-03T09:12:00.123456Z"))
     )
-    assert(BundleControllers.since(Some(BundleScope.Since.At("yesterday"))).left.exists(_.message.value.contains("ISO-8601")))
+    assert(
+      BundleControllers.since(Some(BundleScope.Since.At("yesterday"))).left.exists(_.message.value.contains("ISO-8601"))
+    )
     assert(BundleControllers.since(Some(BundleScope.Since.At("2026-10-03"))).isLeft)
 
   test("the download is named after the instance and the moment it is as of"):
@@ -39,11 +41,18 @@ class BundleControllersSuite extends munit.FunSuite:
       Some(Bundle.Manifest.AsOf("2026-10-03T09:12:00.123456Z")),
       Nil,
       Bundle.Blobs(Bundle.Blobs.Count(0), ByteCount(0)),
-      Bundle.Reference(Bundle.Reference.Places(0), Bundle.Reference.PlacesDigest(""), Bundle.Reference.Periods(0), Bundle.Reference.PeriodsDigest(""))
+      Bundle.Reference(
+        Bundle.Reference.Places(0),
+        Bundle.Reference.PlacesDigest(""),
+        Bundle.Reference.Periods(0),
+        Bundle.Reference.PeriodsDigest("")
+      )
     )
     assertEquals(BundleControllers.disposition(m), """attachment; filename="histmersion-my-work-20261003091200.hmx"""")
     assertEquals(
-      BundleControllers.disposition(m.modify(_.instance).setTo(m.instance.modify(_.label).setTo(None)).modify(_.asOf).setTo(None)),
+      BundleControllers.disposition(
+        m.modify(_.instance).setTo(m.instance.modify(_.label).setTo(None)).modify(_.asOf).setTo(None)
+      ),
       """attachment; filename="histmersion-01910000-empty.hmx""""
     )
 

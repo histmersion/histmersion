@@ -12,13 +12,24 @@ trait RangeHttp:
   def text(url: RangeHttp.Url): Either[RangeHttp.Problem, RangeHttp.ResponseText]
 
   /** Bytes `[offset, offset + length)` of `url`, in memory (headers and directories). */
-  def bytes(url: RangeHttp.Url, offset: ByteOffset, length: ByteCount): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)]
+  def bytes(
+      url: RangeHttp.Url,
+      offset: ByteOffset,
+      length: ByteCount
+  ): Either[RangeHttp.Problem, (RangeHttp.ResponseBytes, RemoteFile)]
 
   /** The same, streamed into `to` (tile data, megabytes at a time); the caller commits it or discards it. */
-  def download(url: RangeHttp.Url, offset: ByteOffset, length: ByteCount, to: Reservation): Either[RangeHttp.Problem, RemoteFile]
+  def download(
+      url: RangeHttp.Url,
+      offset: ByteOffset,
+      length: ByteCount,
+      to: Reservation
+  ): Either[RangeHttp.Problem, RemoteFile]
 
   /** A whole small file (one map tile): `None` when the server has none (404, or 403 from a bucket). */
-  def file(url: RangeHttp.Url): Either[RangeHttp.Problem, Option[RangeHttp.ResponseBytes]] = Left(RangeHttp.Problem(s"${url.value}: whole files are not read by this client"))
+  def file(url: RangeHttp.Url): Either[RangeHttp.Problem, Option[RangeHttp.ResponseBytes]] = Left(
+    RangeHttp.Problem(s"${url.value}: whole files are not read by this client")
+  )
 
 object RangeHttp:
   type ContentRangeHeader = ContentRangeHeader.T
@@ -36,7 +47,6 @@ object RangeHttp:
 
   /** Pure: `Content-Range: bytes 0-99/12345` → `(0, 99, Some(12345))`. */
 
-
   def contentRange(v: ContentRangeHeader): Option[(ByteOffset, ByteOffset, Option[ByteCount])] =
     val R = """(?i)\s*bytes\s+(\d+)-(\d+)/(\d+|\*)\s*""".r
     val header: String = v.value
@@ -51,11 +61,21 @@ object RangeHttp:
   /** Pure: is this answer the range asked for? A 200 (the server ignored the range) is refused — reading a 100 GB
     * planet file whole is exactly what this must never do.
     */
-  def check(url: Url, code: StatusCode, range: Option[ContentRangeHeader], offset: ByteOffset, length: ByteCount): Either[Problem, ByteCount] =
+  def check(
+      url: Url,
+      code: StatusCode,
+      range: Option[ContentRangeHeader],
+      offset: ByteOffset,
+      length: ByteCount
+  ): Either[Problem, ByteCount] =
     val want: Long = offset.value
     val count: Long = length.value
     if code.value == 200 then
-      Left(Problem(s"${url.value} ignores range requests (answered 200 to a range) — refused rather than download the whole file"))
+      Left(
+        Problem(
+          s"${url.value} ignores range requests (answered 200 to a range) — refused rather than download the whole file"
+        )
+      )
     else if code.value != 206 then Left(Problem(s"${url.value}: HTTP ${code.value}"))
     else
       range.flatMap(contentRange) match

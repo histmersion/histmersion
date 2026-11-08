@@ -69,7 +69,10 @@ class PersonalControllersSuite extends munit.FunSuite:
       )
     )
     assertEquals(p.map(b => (b.name, b.target.id)), Right(("the crisis years", None)))
-    assert(c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey("x")), Some(Bookmark.Label("x" * 201)))).isLeft)
+    assert(
+      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey("x")), Some(Bookmark.Label("x" * 201))))
+        .isLeft
+    )
 
   test("a note goes on an item or a point, never a view; it needs text"):
     val c = fixture()
@@ -106,7 +109,10 @@ class PersonalControllersSuite extends munit.FunSuite:
       Left(Some(Write.CodePrecondition))
     )
     assertEquals(c.note(me, Note.Id("not-an-id")).left.map(_.code), Left(None))
-    assertEquals(c.note(me, Note.Id("00000000-0000-0000-0000-000000000000")).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(
+      c.note(me, Note.Id("00000000-0000-0000-0000-000000000000")).left.map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
     assertEquals(
       c.removeBookmark(me, Bookmark.Id("00000000-0000-0000-0000-000000000000")).left.map(_.code),
       Left(Some(Write.CodeNotFound))
@@ -117,10 +123,17 @@ class PersonalControllersSuite extends munit.FunSuite:
     val clock = Ticking()
     val c = fixture(clock = clock)
     List("a", "b", "c").foreach { k =>
-      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey(s"zz_$k")), title = Some(Title(s"Zz $k")))); clock.tick()
+      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey(s"zz_$k")), title = Some(Title(s"Zz $k"))));
+      clock.tick()
     }
-    assertEquals(c.listBookmarks(me, Some(ItemKind.Wire("sources")), None, Some(Paging.Limit(2))).map(_.map(_.title)), Right(List("Zz c", "Zz b")))
-    assertEquals(c.listBookmarks(me, None, Some(PersonalApi.Search("zz B")), None).map(_.map(_.title)), Right(List("Zz b")))
+    assertEquals(
+      c.listBookmarks(me, Some(ItemKind.Wire("sources")), None, Some(Paging.Limit(2))).map(_.map(_.title)),
+      Right(List("Zz c", "Zz b"))
+    )
+    assertEquals(
+      c.listBookmarks(me, None, Some(PersonalApi.Search("zz B")), None).map(_.map(_.title)),
+      Right(List("Zz b"))
+    )
     assert(c.listBookmarks(me, Some(ItemKind.Wire("nonsense")), None, None).isLeft)
     assert(c.listNotes(me, Some(ItemKind.Wire("view")), None, None, None).isLeft, "a view holds no notes")
 
@@ -128,7 +141,8 @@ class PersonalControllersSuite extends munit.FunSuite:
     val c = fixture()
     assert(c.setRead(me, ReadMark.Set(ItemKind.Place, ItemKey("p"), read = ReadMark.Read(true))).isLeft)
     assertEquals(
-      c.setRead(me, ReadMark.Set(ItemKind.Source, ItemKey("zz"), read = ReadMark.Read(true), Some(Title("Zz")))).map(m => (m.read, m.title)),
+      c.setRead(me, ReadMark.Set(ItemKind.Source, ItemKey("zz"), read = ReadMark.Read(true), Some(Title("Zz"))))
+        .map(m => (m.read, m.title)),
       Right((true, "Zz"))
     )
     assertEquals(c.readMarks(me, None, Some(Activity.Show.Wire("opened")), None).map(_.size), Right(0))
@@ -150,6 +164,8 @@ class PersonalControllersSuite extends munit.FunSuite:
   test("writes wait while a restore holds the maintenance lock"):
     val m = WriteGate()
     val c = fixture(m)
-    val refused = m.exclusively(WriteGate.OperationName("restore"))(Right(c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey("zz"))))))
+    val refused = m.exclusively(WriteGate.OperationName("restore"))(
+      Right(c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey("zz")))))
+    )
     assert(refused.toOption.get.isLeft)
     assertEquals(c.listBookmarks(me, None, None, None).map(_.size), Right(0))

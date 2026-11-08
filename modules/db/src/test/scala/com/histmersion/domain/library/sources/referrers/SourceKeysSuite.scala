@@ -35,4 +35,7 @@ class SourceKeysSuite extends munit.FunSuite:
     assertEquals(rename.target(Citekey("cline2014_1177")), None)
     assertEquals(rename.needle, "beckman2011")
     assertEquals(rename.findingPrefix, s"$Ck#")
-    assertEquals(rename.inText(SourceKeys.Text(s"fall_of_troy|$Ck|${Ck}_v2")), s"fall_of_troy|beckman2012_ahhiyawa|${Ck}_v2")
+    assertEquals(
+      rename.inText(SourceKeys.Text(s"fall_of_troy|$Ck|${Ck}_v2")),
+      s"fall_of_troy|beckman2012_ahhiyawa|${Ck}_v2"
+    )

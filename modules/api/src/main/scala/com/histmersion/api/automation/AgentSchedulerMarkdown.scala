@@ -16,15 +16,20 @@ object AgentSchedulerMarkdown:
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
 
   def minutes(m: Waiting.WaitedMinutes): String =
-    if (m).value < 60 then (s"$m min") else (s"${(m).value / 60} h" + (if (m).value % 60 != 0 then s" ${(m).value % 60} min" else ""))
+    if (m).value < 60 then (s"$m min")
+    else (s"${(m).value / 60} h" + (if (m).value % 60 != 0 then s" ${(m).value % 60} min" else ""))
 
   def status(s: SchedulerStatus): String =
-    val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == SchedulerStatus.StrategyFrom("person") then " (set by a person)"
+    val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == SchedulerStatus.StrategyFrom("person") then
+                                                  " (set by a person)"
                                                 else " (agents.scheduler.strategy)")
     val facts = List(
       Some(
         s.at.fold("- no pass yet")(t =>
-          s"- ${if ((s.dry) == SchedulerStatus.Dry(true)) then "what a pass would do now (nothing started)" else s"last pass $t"}"
+          s"- ${
+              if (s.dry) == SchedulerStatus.Dry(true) then "what a pass would do now (nothing started)"
+              else s"last pass $t"
+            }"
         )
       ),
       s.stop.map(x => s"- **nothing starts: $x**"),
@@ -54,7 +59,8 @@ object AgentSchedulerMarkdown:
       (if s.waiting.isEmpty then "_Nothing waits._"
        else
          s.waiting.map(waiting).mkString("\n") +
-           (if (s.waitingTotal).value > s.waiting.size then s"\n\n…and ${(s.waitingTotal).value - s.waiting.size} more" else ""))
+           (if (s.waitingTotal).value > s.waiting.size then s"\n\n…and ${(s.waitingTotal).value - s.waiting.size} more"
+            else ""))
     val strategies = "\n\n## Strategies\n\n" + s.strategies
       .map(x => s"- `${x.name}`${if x.name.value == s.strategy.value then " (in effect)" else ""}: ${x.describe}")
       .mkString("\n")

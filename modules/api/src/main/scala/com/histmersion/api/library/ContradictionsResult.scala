@@ -9,7 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ContradictionsResult(rows: List[ContradictionRow], total: ContradictionsResult.Total)
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ContradictionsResult:
   type Total = Total.T

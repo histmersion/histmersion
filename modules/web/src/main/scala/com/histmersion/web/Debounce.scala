@@ -13,7 +13,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 final class Debounce[A](
     quietMs: Debounce.QuietMs,
     f: A => Unit,
-    later: (Debounce.Delay, () => Unit) => Debounce.TimerId = (ms, g) => Debounce.TimerId(dom.window.setTimeout(() => g(), ms.value)),
+    later: (Debounce.Delay, () => Unit) => Debounce.TimerId = (ms, g) =>
+      Debounce.TimerId(dom.window.setTimeout(() => g(), ms.value)),
     cancel: Debounce.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 ):
   // `var`s: the one pending run and its timer
@@ -37,4 +38,3 @@ object Debounce:
   object Delay extends Newtype[Double, Pure]
   type TimerId = TimerId.T
   object TimerId extends Newtype[Int, Pure]
-

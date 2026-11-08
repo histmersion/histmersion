@@ -31,11 +31,21 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
 
   stest("a watch keeps its watermark when a read fails, and is listed by kind, subject and index") { s =>
     s.goal("zq-goal")
-    val w = CandidateWatch(CandidateWatch.Goal("zq-goal"), CandidateWatch.Kind("query"), CandidateWatch.Subject("zq tin"), CandidateWatch.Index("openalex"))
+    val w = CandidateWatch(
+      CandidateWatch.Goal("zq-goal"),
+      CandidateWatch.Kind("query"),
+      CandidateWatch.Subject("zq tin"),
+      CandidateWatch.Index("openalex")
+    )
     s.candidates.recordWatch(w, Some(CandidateWatch.Watermark("2026-10-01")), None, CandidateWatch.LastFound(3))
     s.candidates.recordWatch(w, None, Some(CandidateWatch.LastError("HTTP 503")), CandidateWatch.LastFound(0))
     s.candidates.recordWatch(
-      CandidateWatch(CandidateWatch.Goal("zq-goal"), CandidateWatch.Kind("citing"), CandidateWatch.Subject("10.5555/zq.x"), CandidateWatch.Index("openalex")),
+      CandidateWatch(
+        CandidateWatch.Goal("zq-goal"),
+        CandidateWatch.Kind("citing"),
+        CandidateWatch.Subject("10.5555/zq.x"),
+        CandidateWatch.Index("openalex")
+      ),
       Some(CandidateWatch.Watermark("2026-10-02")),
       None,
       CandidateWatch.LastFound(1)
@@ -55,29 +65,81 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
   stest("a candidate found again keeps its state, gathers its watches; pages, counts and marks") { s =>
     s.goal("zq-goal")
     s.goal("zq-two")
-    assert(s.candidates.upsert(candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("openalex query"))))
-    assert(s.candidates.upsert(candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.b"), Source.Candidate.FoundBy("crossref query"))))
-    assert(s.candidates.upsert(candidate(Source.Candidate.Goal("zq-two"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("openalex query"))))
-    assert(!s.candidates.upsert(candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("crossref query"))))
+    assert(
+      s.candidates.upsert(
+        candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("openalex query"))
+      )
+    )
+    assert(
+      s.candidates.upsert(
+        candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.b"), Source.Candidate.FoundBy("crossref query"))
+      )
+    )
+    assert(
+      s.candidates.upsert(
+        candidate(Source.Candidate.Goal("zq-two"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("openalex query"))
+      )
+    )
+    assert(
+      !s.candidates.upsert(
+        candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("crossref query"))
+      )
+    )
     assertEquals(s.candidates.dois(Goal.Slug("zq-goal")), Set("10.5555/zq.a", "10.5555/zq.b"))
-    val page = s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("new"), CandidateService.ListLimit(10), Offset(0))
+    val page = s.candidates.list(
+      Some(Goal.Slug("zq-goal")),
+      Source.Candidate.State("new"),
+      CandidateService.ListLimit(10),
+      Offset(0)
+    )
     assertEquals(page.map(_.doi), List("10.5555/zq.a", "10.5555/zq.b"))
     assertEquals(page.head.foundBy.sorted, List("crossref query", "openalex query"))
-    assertEquals(s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("new"), CandidateService.ListLimit(1), Offset(1)).map(_.doi), List("10.5555/zq.b"))
-    assertEquals(s.candidates.list(None, Source.Candidate.State("new"), CandidateService.ListLimit(10), Offset(0)).size, 3)
+    assertEquals(
+      s.candidates
+        .list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("new"), CandidateService.ListLimit(1), Offset(1))
+        .map(_.doi),
+      List("10.5555/zq.b")
+    )
+    assertEquals(
+      s.candidates.list(None, Source.Candidate.State("new"), CandidateService.ListLimit(10), Offset(0)).size,
+      3
+    )
     assertEquals(s.candidates.mark(List(page.head.id), Source.Candidate.State("seen")), 1)
     assertEquals(s.candidates.mark(Nil, Source.Candidate.State("seen")), 0)
-    assertEquals(s.candidates.markDois(Goal.Slug("zq-goal"), List(com.histmersion.domain.library.Doi("10.5555/zq.b")), Source.Candidate.State("dismissed")), 1)
+    assertEquals(
+      s.candidates.markDois(
+        Goal.Slug("zq-goal"),
+        List(com.histmersion.domain.library.Doi("10.5555/zq.b")),
+        Source.Candidate.State("dismissed")
+      ),
+      1
+    )
     assertEquals(
       s.candidates.counts(Some(Goal.Slug("zq-goal"))),
-      List(CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(1)), CandidateCount(Source.Candidate.State("dismissed"), CandidateCount.Count(1)))
+      List(
+        CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(1)),
+        CandidateCount(Source.Candidate.State("dismissed"), CandidateCount.Count(1))
+      )
     )
     assertEquals(
       s.candidates.counts(None),
-      List(CandidateCount(Source.Candidate.State("new"), CandidateCount.Count(1)), CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(1)), CandidateCount(Source.Candidate.State("dismissed"), CandidateCount.Count(1)))
+      List(
+        CandidateCount(Source.Candidate.State("new"), CandidateCount.Count(1)),
+        CandidateCount(Source.Candidate.State("seen"), CandidateCount.Count(1)),
+        CandidateCount(Source.Candidate.State("dismissed"), CandidateCount.Count(1))
+      )
     )
-    assert(!s.candidates.upsert(candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("europepmc query"))))
-    assertEquals(s.candidates.list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("seen"), CandidateService.ListLimit(10), Offset(0)).map(_.doi), List("10.5555/zq.a"))
+    assert(
+      !s.candidates.upsert(
+        candidate(Source.Candidate.Goal("zq-goal"), Doi("10.5555/zq.a"), Source.Candidate.FoundBy("europepmc query"))
+      )
+    )
+    assertEquals(
+      s.candidates
+        .list(Some(Goal.Slug("zq-goal")), Source.Candidate.State("seen"), CandidateService.ListLimit(10), Offset(0))
+        .map(_.doi),
+      List("10.5555/zq.a")
+    )
   }
 
 class CandidateServiceInMemorySuite extends CandidateServiceContract with AcquisitionStoreSuite.InMemory

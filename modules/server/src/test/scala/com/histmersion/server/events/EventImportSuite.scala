@@ -110,7 +110,8 @@ class EventImportSuite extends DbSuite:
   private lazy val loaded: LoadedConfig =
     AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
   private lazy val cfg = loaded.config
-  private lazy val plugins = ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+  private lazy val plugins =
+    ServerPlugins.load(loaded, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
   private lazy val ds =
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
@@ -136,8 +137,17 @@ class EventImportSuite extends DbSuite:
   private val Hekla = BEventRow.Id("gvp_12724")
   private val Thera = BEventRow.Id("gvp_13879")
 
-  private def run(h: CatalogueWiring, provider: CatalogRecord.Provider, dry: EventImportRequest.DryRun): EventImportReport =
-    h.eventImporter.runImport(provider, EventImportRequest(EventImportRequest.Provider(provider.value), dryRun = dry), None, _ => ())
+  private def run(
+      h: CatalogueWiring,
+      provider: CatalogRecord.Provider,
+      dry: EventImportRequest.DryRun
+  ): EventImportReport =
+    h.eventImporter.runImport(
+      provider,
+      EventImportRequest(EventImportRequest.Provider(provider.value), dryRun = dry),
+      None,
+      _ => ()
+    )
 
   test("a dry run reads and counts, and stores nothing"):
     val f = http
@@ -159,7 +169,17 @@ class EventImportSuite extends DbSuite:
     assertEquals((r.records, f.requests.size), (0, 0), "every window was read: nothing is asked again")
     // #6561: a wider region (here: a lower VEI floor) judged differently — every window is read again
     val wider =
-      cfg.modify(_.events).setTo(cfg.events.modify(_.gvp).setTo(cfg.events.gvp.modify(_.regionMinVei).setTo(EventsGvpConfig.RegionMinVei(cfg.events.gvp.regionMinVei.value + 1))))
+      cfg
+        .modify(_.events)
+        .setTo(
+          cfg.events
+            .modify(_.gvp)
+            .setTo(
+              cfg.events.gvp
+                .modify(_.regionMinVei)
+                .setTo(EventsGvpConfig.RegionMinVei(cfg.events.gvp.regionMinVei.value + 1))
+            )
+        )
     val f2 = http
     val r2 = run(CatalogueWiring(deps(wider), f2), Gvp, dry = Wet)
     assert(f2.requests.nonEmpty && r2.records.value > 0, s"thresholds changed: the windows are due again ($r2)")
@@ -193,15 +213,33 @@ class EventImportSuite extends DbSuite:
       None,
       ocrMarkdown = Some(body),
       findings = List(
-        Finding(Finding.Id(s"$ck#0"), ck, Finding.Claim("a claim"), None, Some(GeoPoint(lon, Latitude(47.53))), Some(Period(Year(-55), Year(-50))), None, Nil, None)
+        Finding(
+          Finding.Id(s"$ck#0"),
+          ck,
+          Finding.Claim("a claim"),
+          None,
+          Some(GeoPoint(lon, Latitude(47.53))),
+          Some(Period(Year(-55), Year(-50))),
+          None,
+          Nil,
+          None
+        )
       )
     )
     SourceFixtures.upsert(
       ds,
-      src(Citekey("zqei_named2020"), Source.OcrMarkdown("# Gaul\n\nCaesar's victory at the Siege of Alesia ended the war."), Longitude(4.5)),
+      src(
+        Citekey("zqei_named2020"),
+        Source.OcrMarkdown("# Gaul\n\nCaesar's victory at the Siege of Alesia ended the war."),
+        Longitude(4.5)
+      ),
       chunk
     )
-    SourceFixtures.upsert(ds, src(Citekey("zqei_near2020"), Source.OcrMarkdown("# Gaul\n\nA hillfort was excavated nearby."), Longitude(4.6)), chunk)
+    SourceFixtures.upsert(
+      ds,
+      src(Citekey("zqei_near2020"), Source.OcrMarkdown("# Gaul\n\nA hillfort was excavated nearby."), Longitude(4.6)),
+      chunk
+    )
     val h = CatalogueWiring(deps(cfg), http)
     val links = h.eventLinks.links(Event.Id("wikidata_q131386")).toOption.get
     assertEquals(links.candidates.map(_.citekey).take(2), List("zqei_named2020", "zqei_near2020"))
@@ -210,14 +248,20 @@ class EventImportSuite extends DbSuite:
       .applyLinks(
         Caller.Local,
         Event.Id("wikidata_q131386"),
-        EventLinksRequest(confirm = List(EventLinksRequest.Confirm("zqei_named2020"), EventLinksRequest.Confirm("zqei_near2020")))
+        EventLinksRequest(confirm =
+          List(EventLinksRequest.Confirm("zqei_named2020"), EventLinksRequest.Confirm("zqei_near2020"))
+        )
       )
       .toOption
       .get
     assertEquals(r.attested.map(a => (a.citekey, a.quote)), List(("zqei_named2020", Some("Siege of Alesia"))))
     val a = r.attested.head
     val body = SourceFixtures.bodyText(ds, com.histmersion.domain.library.Citekey("zqei_named2020"))
-    assertEquals(body.value.substring(a.charStart.get.value, a.charEnd.get.value), "Siege of Alesia", "the offsets point at the quote")
+    assertEquals(
+      body.value.substring(a.charStart.get.value, a.charEnd.get.value),
+      "Siege of Alesia",
+      "the offsets point at the quote"
+    )
     assert(r.refused.exists(_.value.startsWith("zqei_near2020: no passage")), r.refused.toString)
     assertEquals(EventFixtures.get(ds, BEventRow.Id("wikidata_q131386")).map(_.event.tier), Some(EventTier.Attested))
     val _ = connect(ds)(sql"DELETE FROM attestations WHERE citekey LIKE 'zqei%'".update.run())
@@ -259,7 +303,10 @@ class EventImportSuite extends DbSuite:
                       ('zqei_sites2020#0', 'wikidata_q9100001'), ('zqei_sites2020#0', 'wikidata_q9100002')""".update
         .run()
     val h = CatalogueWiring(deps(cfg), http)
-    assertEquals(h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = SiteTypes.Request.DryRun(true)), _ => ()).pending, 2)
+    assertEquals(
+      h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = SiteTypes.Request.DryRun(true)), _ => ()).pending,
+      2
+    )
     val r = h.siteTypes.runSiteTypes(SiteTypes.Request(), _ => ())
     assertEquals((r.asked, r.pending), (2, 0))
     val types = connect(ds)(
@@ -291,7 +338,16 @@ class EventImportSuite extends DbSuite:
   test("GVP ± 2500: held inside the present, the year, ± and method kept; --refresh reads again and refreshes"):
     val f = heklaHttp
     val h = CatalogueWiring(deps(cfg), f, () => DeepTime.SignedYear(2026L))
-    val r = h.eventImporter.runImport(CatalogRecord.Provider("gvp"), EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true)), None, _ => ())
+    val r = h.eventImporter.runImport(
+      CatalogRecord.Provider("gvp"),
+      EventImportRequest(
+        EventImportRequest.Provider("gvp"),
+        dryRun = EventImportRequest.DryRun(false),
+        refresh = EventImportRequest.Refresh(true)
+      ),
+      None,
+      _ => ()
+    )
     assert(f.requests.nonEmpty && r.created.value == 1, r.toString)
     val e = event(Hekla)
     assertEquals(e.timeSpan, TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026))))
@@ -303,7 +359,16 @@ class EventImportSuite extends DbSuite:
     // a refresh refreshes the event (from its own record), not only the catalogue row
     connect(ds)(sql"UPDATE events SET not_after = 9999 WHERE id = 'gvp_12724'".update.run())
     val again =
-      h.eventImporter.runImport(CatalogRecord.Provider("gvp"), EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false), refresh = EventImportRequest.Refresh(true)), None, _ => ())
+      h.eventImporter.runImport(
+        CatalogRecord.Provider("gvp"),
+        EventImportRequest(
+          EventImportRequest.Provider("gvp"),
+          dryRun = EventImportRequest.DryRun(false),
+          refresh = EventImportRequest.Refresh(true)
+        ),
+        None,
+        _ => ()
+      )
     assertEquals((again.created, again.updated), (0, 1))
     assertEquals(event(Hekla).timeSpan.notAfter, Some(2026L))
 
@@ -317,7 +382,15 @@ class EventImportSuite extends DbSuite:
                     WHERE provider = 'gvp' AND provider_id = '12724'""".update.run()
       val _ = sql"""UPDATE events SET not_after = 2750, central = NULL, plus_minus = NULL, dating_method = NULL
                     WHERE id = 'gvp_12724'""".update.run()
-    assert(EventFixtures.patch(ds, BEventRow.Id("gvp_12724"), EventPatch(label = Some(EventSummary.Label("Hekla, a prehistoric tephra (zqei)")))).isRight)
+    assert(
+      EventFixtures
+        .patch(
+          ds,
+          BEventRow.Id("gvp_12724"),
+          EventPatch(label = Some(EventSummary.Label("Hekla, a prehistoric tephra (zqei)")))
+        )
+        .isRight
+    )
     val offline = FakeMediaHttp(url => Left(s"no network in a re-derivation: $url"))
     val h = CatalogueWiring(deps(cfg), offline, () => DeepTime.SignedYear(2026L))
     val dry = h.eventImporter.runRederive(Some(CatalogRecord.Provider("gvp")), dryRun = true, _ => ())
@@ -329,7 +402,7 @@ class EventImportSuite extends DbSuite:
     assert(EventRederiveReport.summary(r).contains("re-derived"), EventRederiveReport.summary(r))
     val e = event(Hekla)
     assertEquals(e.timeSpan, TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026))))
-    assertEquals((e.central, e.plusMinus, e.datingMethod),(Some(250L), Some(2500L), Some("Tephrochronology")))
+    assertEquals((e.central, e.plusMinus, e.datingMethod), (Some(250L), Some(2500L), Some("Tephrochronology")))
     assertEquals(e.description, Some("Confirmed Eruption at Hekla; VEI 5"))
     assertEquals(e.label, "Hekla, a prehistoric tephra (zqei)", "the person's label survives")
     // Thera (± 14, from its raw record) is precise and unchanged
@@ -346,4 +419,7 @@ class EventImportSuite extends DbSuite:
       PageSize(100),
       GeoTolerance(0.01)
     )
-    assert(!geo.events.exists(_.id == com.histmersion.api.catalogue.Event.Id("gvp_12724")) && geo.imprecise.value >= 1, geo.toString)
+    assert(
+      !geo.events.exists(_.id == com.histmersion.api.catalogue.Event.Id("gvp_12724")) && geo.imprecise.value >= 1,
+      geo.toString
+    )

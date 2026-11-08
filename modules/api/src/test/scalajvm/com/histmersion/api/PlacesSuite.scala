@@ -127,7 +127,10 @@ class PlacesSuite extends munit.FunSuite:
       val parsed = Lpf.parse(doc).fold(e => fail(e.value), identity)
       assertEquals(Lpf.parse(Lpf.render(parsed).value), Right(parsed))
       // and idempotent: rendering the reparse gives byte-identical text
-      assertEquals(Lpf.render(Lpf.parse(Lpf.render(parsed).value).fold(e => fail(e.value), identity)), Lpf.render(parsed))
+      assertEquals(
+        Lpf.render(Lpf.parse(Lpf.render(parsed).value).fold(e => fail(e.value), identity)),
+        Lpf.render(parsed)
+      )
     }
 
   // ── the dialect the hand-traced polygons under db/places/polities use ───────────────────────
@@ -175,7 +178,12 @@ class PlacesSuite extends munit.FunSuite:
       p.relations,
       List(
         Place
-          .Relation(Place.Relation.ChildId("anatolia"), Place.Relation.ParentId("continent_asia"), Place.Relation.Kind(Place.Relation.PartOf), None)
+          .Relation(
+            Place.Relation.ChildId("anatolia"),
+            Place.Relation.ParentId("continent_asia"),
+            Place.Relation.Kind(Place.Relation.PartOf),
+            None
+          )
       )
     )
     assertEquals(p.names.map(_.name), List("Anatolia", "Asia Minor"))
@@ -239,7 +247,17 @@ class PlacesSuite extends munit.FunSuite:
     val md = PlacesMarkdown.places(
       Vector(
         Place
-          .Hit(turkey.id, turkey.label, turkey.kind, None, None, turkey.source, turkey.names, Some(Place.Hit.MatchedName("Türkiye")), Place.Hit.Findings(122)),
+          .Hit(
+            turkey.id,
+            turkey.label,
+            turkey.kind,
+            None,
+            None,
+            turkey.source,
+            turkey.names,
+            Some(Place.Hit.MatchedName("Türkiye")),
+            Place.Hit.Findings(122)
+          ),
         Place.Hit(
           hatti.id,
           hatti.label,
@@ -264,9 +282,28 @@ class PlacesSuite extends munit.FunSuite:
   test("the hierarchy renders as an indented list, one level of indent per depth"):
     val md = PlacesMarkdown.placeTree(
       Vector(
-        Place.TreeRow(Place.Id("continent_asia"), Place.TreeRow.Label("Asia"), Place.TreeRow.Kind(Place.Kind.Region), Place.TreeRow.Depth(0), Place.TreeRow.Findings(400)),
-        Place.TreeRow(Place.Id("ne_country_tur"), Place.TreeRow.Label("Turkey"), Place.TreeRow.Kind(Place.Kind.Region), Place.TreeRow.Depth(1), Place.TreeRow.Findings(122)),
-        Place.TreeRow(Place.Id("hatti_lba"), Place.TreeRow.Label("Hatti"), Place.TreeRow.Kind(Place.Kind.Polity), Place.TreeRow.Depth(2), Place.TreeRow.Findings(44), contested = Place.TreeRow.Contested(true))
+        Place.TreeRow(
+          Place.Id("continent_asia"),
+          Place.TreeRow.Label("Asia"),
+          Place.TreeRow.Kind(Place.Kind.Region),
+          Place.TreeRow.Depth(0),
+          Place.TreeRow.Findings(400)
+        ),
+        Place.TreeRow(
+          Place.Id("ne_country_tur"),
+          Place.TreeRow.Label("Turkey"),
+          Place.TreeRow.Kind(Place.Kind.Region),
+          Place.TreeRow.Depth(1),
+          Place.TreeRow.Findings(122)
+        ),
+        Place.TreeRow(
+          Place.Id("hatti_lba"),
+          Place.TreeRow.Label("Hatti"),
+          Place.TreeRow.Kind(Place.Kind.Polity),
+          Place.TreeRow.Depth(2),
+          Place.TreeRow.Findings(44),
+          contested = Place.TreeRow.Contested(true)
+        )
       )
     )
     assertEquals(md.linesIterator.map(_.takeWhile(_ == ' ').length).toList, List(0, 2, 4))
@@ -279,7 +316,15 @@ class PlacesSuite extends munit.FunSuite:
         disputed,
         Some(Place.Geometry("""{"type":"Polygon","coordinates":[]}""")),
         List(
-          Place.Summary(Place.Id("levant"), Place.Summary.Label("Levant"), Place.Summary.Kind(Place.Kind.Region), None, None, None, Place.Summary.Names("Levant"))
+          Place.Summary(
+            Place.Id("levant"),
+            Place.Summary.Label("Levant"),
+            Place.Summary.Kind(Place.Kind.Region),
+            None,
+            None,
+            None,
+            Place.Summary.Names("Levant")
+          )
         ),
         List(turkey),
         Place.Counts.Findings(5),
@@ -288,7 +333,14 @@ class PlacesSuite extends munit.FunSuite:
       ),
       Vector(
         Place
-          .TreeRow(Place.Id("israel_united_monarchy_ia1"), disputed.label, Place.TreeRow.Kind(Place.Kind.Polity), Place.TreeRow.Depth(0), Place.TreeRow.Findings(5), Place.TreeRow.Contested(true))
+          .TreeRow(
+            Place.Id("israel_united_monarchy_ia1"),
+            disputed.label,
+            Place.TreeRow.Kind(Place.Kind.Polity),
+            Place.TreeRow.Depth(0),
+            Place.TreeRow.Findings(5),
+            Place.TreeRow.Contested(true)
+          )
       )
     )
     assert(md.startsWith("# Israel (united monarchy, as narrated) (contested)\n"), md.take(80))
@@ -319,10 +371,25 @@ class PlacesSuite extends munit.FunSuite:
             Some(Citekey("bryce2005_kingdom"))
           ),
           Place
-            .Footprint(Place.Footprint.Id(2), Place.Id("hatti_lba"), Place.Footprint.Role("core"), Some(Period(Year(-1400), Year(-1200))), Some(Place.Footprint.Certainty("approximate")))
+            .Footprint(
+              Place.Footprint.Id(2),
+              Place.Id("hatti_lba"),
+              Place.Footprint.Role("core"),
+              Some(Period(Year(-1400), Year(-1200))),
+              Some(Place.Footprint.Certainty("approximate"))
+            )
         ),
-        links = List(Place.Link(Place.Id("hatti_lba"), Place.Link.Scheme("pleiades"), Place.Link.ExternalId("550595"), Place.Link.Relation("close_match"))),
-        types = List(Place.Type(Place.Id("hatti_lba"), Place.Type.TypeLabel("polity"), Some(Period(Year(-1400), Year(-1180))))),
+        links = List(
+          Place.Link(
+            Place.Id("hatti_lba"),
+            Place.Link.Scheme("pleiades"),
+            Place.Link.ExternalId("550595"),
+            Place.Link.Relation("close_match")
+          )
+        ),
+        types = List(
+          Place.Type(Place.Id("hatti_lba"), Place.Type.TypeLabel("polity"), Some(Period(Year(-1400), Year(-1180))))
+        ),
         hasBoundary = Place.Entry.HasBoundary(true)
       )
     )
@@ -339,7 +406,9 @@ class PlacesSuite extends munit.FunSuite:
         Nil,
         Place.Counts.Findings(0),
         None,
-        descriptions = List(Place.Description(Place.Description.Text("former country"), Place.Name.Lang("en"), Place.Source("wikidata")))
+        descriptions = List(
+          Place.Description(Place.Description.Text("former country"), Place.Name.Lang("en"), Place.Source("wikidata"))
+        )
       )
     )
     assert(point.contains(s"**Shape:** ${Place.Shape.NoBoundaryNote}"), point)
@@ -349,22 +418,46 @@ class PlacesSuite extends munit.FunSuite:
 
   test("the places facet prints the gazetteer id so a chip can filter by it"):
     assertEquals(
-      SearchMarkdown.facets(Facet.FieldText("places"), Vector(Facet(Facet.Value("Anatolia"), Facet.Count(110), Some(Facet.Id("anatolia"))), Facet(Facet.Value("Aegean"), Facet.Count(112)))),
+      SearchMarkdown.facets(
+        Facet.FieldText("places"),
+        Vector(
+          Facet(Facet.Value("Anatolia"), Facet.Count(110), Some(Facet.Id("anatolia"))),
+          Facet(Facet.Value("Aegean"), Facet.Count(112))
+        )
+      ),
       "### places (2)\n\n- Anatolia (110) · `anatolia`\n- Aegean (112)"
     )
 
   test("import and rebuild report what they did"):
     assertEquals(
-      PlacesMarkdown.placeImport(Place.ImportResult(Place.ImportResult.Places(3), Place.ImportResult.Names(7), Place.ImportResult.Relations(2))),
+      PlacesMarkdown.placeImport(
+        Place.ImportResult(Place.ImportResult.Places(3), Place.ImportResult.Names(7), Place.ImportResult.Relations(2))
+      ),
       "imported 3 place(s), 7 name(s), 2 relation(s)"
     )
     assert(
       PlacesMarkdown
-        .placeImport(Place.ImportResult(Place.ImportResult.Places(1), Place.ImportResult.Names(1), Place.ImportResult.Relations(0), List(Place.ImportResult.Failed("x: no such parent 'y'"))))
+        .placeImport(
+          Place.ImportResult(
+            Place.ImportResult.Places(1),
+            Place.ImportResult.Names(1),
+            Place.ImportResult.Relations(0),
+            List(Place.ImportResult.Failed("x: no such parent 'y'"))
+          )
+        )
         .contains("no such parent")
     )
     assert(
       PlacesMarkdown
-        .placeRebuild(Place.RebuildResult(Place.RebuildResult.Links(9199), Place.RebuildResult.ByGeometry(9199), Place.RebuildResult.ByName(0), Place.RebuildResult.Located(938), Place.RebuildResult.Unlocated(26), Place.RebuildResult.Places(16779)))
+        .placeRebuild(
+          Place.RebuildResult(
+            Place.RebuildResult.Links(9199),
+            Place.RebuildResult.ByGeometry(9199),
+            Place.RebuildResult.ByName(0),
+            Place.RebuildResult.Located(938),
+            Place.RebuildResult.Unlocated(26),
+            Place.RebuildResult.Places(16779)
+          )
+        )
         .contains("938 finding(s) located, 26 unlocated")
     )

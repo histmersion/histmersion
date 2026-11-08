@@ -30,4 +30,5 @@ final case class MediaGeoHit(
     licenseUrl: Option[MediaItem.LicenseUrl] = None,
     author: Option[MediaItem.Author] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

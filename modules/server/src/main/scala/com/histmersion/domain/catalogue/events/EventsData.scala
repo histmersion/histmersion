@@ -32,4 +32,3 @@ object EventsData:
         CorrectionRepo.conflictsIn().map((id, detail) => LintItem(Citekey(id.value), detail)),
         Lint.ItemLimit(maxItems.value)
       )
-

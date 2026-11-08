@@ -158,11 +158,10 @@ object CoreQuota:
       export Block.Why
 
     object OverBudget:
-      export CoreQuota.{Spent, Cap}
+      export CoreQuota.{Cap, Spent}
 
     object Paced:
       export Grant.WaitMs
-
 
   /** A call may go out after `waitMs`; `state` already counts it. */
   final case class Grant(state: State, waitMs: Grant.WaitMs)
@@ -179,7 +178,14 @@ object CoreQuota:
   /** `s` on `now`'s day: a new day starts with no tokens spent; a block and the recent slots stay. */
   def onDay(s: State, now: Instant): State =
     val today = day(now)
-    if s.day == today then s else s.modify(_.day).setTo(today).modify(_.lookupTokens).setTo(State.LookupTokens(0)).modify(_.searchTokens).setTo(State.SearchTokens(0))
+    if s.day == today then s
+    else
+      s.modify(_.day)
+        .setTo(today)
+        .modify(_.lookupTokens)
+        .setTo(State.LookupTokens(0))
+        .modify(_.searchTokens)
+        .setTo(State.SearchTokens(0))
 
   /** May a call for `purpose` go out at `now`? Counts it when it may (the reservation is made before the call is sent,
     * so callers on several threads never overspend together).
@@ -190,12 +196,18 @@ object CoreQuota:
     s.block.filter(_.until.isAfter(now)) match
       case Some(b) => Left(Refusal.Blocked(b.until, b.why))
       case None    =>
-        if s.spent.value + cost.value > limits.dailyTokens.value then Left(Refusal.OverBudget(purpose, s.spent, limits.dailyCap))
+        if s.spent.value + cost.value > limits.dailyTokens.value then
+          Left(Refusal.OverBudget(purpose, s.spent, limits.dailyCap))
         else if purpose == Purpose.Search && s.searchTokens.value + cost.value > limits.searchDailyTokens.value then
           Left(Refusal.OverBudget(purpose, s.spentOn(Purpose.Search), limits.searchCap))
         else
           // CORE's own reported window wins when it is smaller than ours (a new key may get less than its tier)
-          val perMinute = s.window.flatMap(_.limit).map(l => (l.value: Int)).filter(_ > 0).fold(limits.perMinute.value: Int)(_ min limits.perMinute.value).max(1)
+          val perMinute = s.window
+            .flatMap(_.limit)
+            .map(l => (l.value: Int))
+            .filter(_ > 0)
+            .fold(limits.perMinute.value: Int)(_ min limits.perMinute.value)
+            .max(1)
           val inWindow = s.recent.filter(t => t.toEpochMilli > now.toEpochMilli - Minute).sortBy(_.toEpochMilli)
           val slot =
             if inWindow.size < perMinute then now
@@ -208,7 +220,11 @@ object CoreQuota:
               case Purpose.Search => s.modify(_.searchTokens).using(t => State.SearchTokens(t.value + cost.value))
             Right(
               Grant(
-                spent.modify(_.block).setTo(None).modify(_.recent).setTo((inWindow :+ slot).sortBy(_.toEpochMilli).takeRight(perMinute)),
+                spent
+                  .modify(_.block)
+                  .setTo(None)
+                  .modify(_.recent)
+                  .setTo((inWindow :+ slot).sortBy(_.toEpochMilli).takeRight(perMinute)),
                 Grant.WaitMs(waitMs)
               )
             )
@@ -219,8 +235,13 @@ object CoreQuota:
     */
   def observe(s: State, limits: Limits, code: StatusCode, headers: Map[HeaderName, HeaderValue], now: Instant): State =
     def int(name: HeaderName) = headers.get(name).flatMap(_.value.trim.toIntOption)
-    val window = Window(int(HeaderName("x-ratelimit-limit")).map(Window.Limit(_)), int(HeaderName("x-ratelimit-remaining")).map(Window.Remaining(_)), now)
-    val retry = retryAt(headers.get(HeaderName("x-ratelimit-retry-after")), now).orElse(retryAt(headers.get(HeaderName("retry-after")), now))
+    val window = Window(
+      int(HeaderName("x-ratelimit-limit")).map(Window.Limit(_)),
+      int(HeaderName("x-ratelimit-remaining")).map(Window.Remaining(_)),
+      now
+    )
+    val retry = retryAt(headers.get(HeaderName("x-ratelimit-retry-after")), now)
+      .orElse(retryAt(headers.get(HeaderName("retry-after")), now))
     val pause = now.plusSeconds(limits.exhaustedPauseSeconds.value.toLong.max(1L))
     val until = retry.filter(_.isAfter(now)).getOrElse(pause)
     val why =

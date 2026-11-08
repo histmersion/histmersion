@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 object SearchMarkdown:
 
   /** `ts_headline` marks hits with `**` already. */
-  export Histogram.{Unit as TreeUnit}
+  export Histogram.Unit as TreeUnit
 
   private def yearLabel(v: Long): String = fmtYear(Year(v))
 
@@ -32,7 +32,11 @@ object SearchMarkdown:
     else
       val body = hits.map { h =>
         val reg = h.regions.map(r => Label.display(Label.Text(r.value))).mkString(", ")
-        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire.value, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(
+          year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))),
+          h.status.wire.value,
+          reg
+        ).filter(_.nonEmpty).mkString(" · ")
         val per = YearFmt.period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val summary = h.summary.map(s => s"\n  ${s.value.trim.take(240)}").getOrElse("")
@@ -46,7 +50,11 @@ object SearchMarkdown:
       val body = result.hits.map { hit =>
         val h = hit.source
         val reg = h.regions.map(r => Label.display(Label.Text(r.value))).mkString(", ")
-        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire.value, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(
+          year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))),
+          h.status.wire.value,
+          reg
+        ).filter(_.nonEmpty).mkString(" · ")
         val per = YearFmt.period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val why = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
@@ -73,7 +81,11 @@ object SearchMarkdown:
       val body = result.hits.map { hit =>
         val h = hit.source
         val per = YearFmt.period(h.periodStart, h.periodEnd)
-        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire.value, per).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(
+          year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))),
+          h.status.wire.value,
+          per
+        ).filter(_.nonEmpty).mkString(" · ")
         val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }
@@ -143,10 +155,15 @@ object SearchMarkdown:
       val col = if starts then "sources" else unit
       ((List(head, "", s"| period | $col | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n"))
 
-  final case class CollapsedBucket(start: CollapsedBucket.Start, end: CollapsedBucket.End, count: CollapsedBucket.Count, merged: CollapsedBucket.Merged)
+  final case class CollapsedBucket(
+      start: CollapsedBucket.Start,
+      end: CollapsedBucket.End,
+      count: CollapsedBucket.Count,
+      merged: CollapsedBucket.Merged
+  )
 
   object CollapsedBucket:
-    export TimeBucket.{Start, End, Count}
+    export TimeBucket.{Count, End, Start}
     type Merged = Merged.T
     object Merged extends Newtype[Int, Pure]
 

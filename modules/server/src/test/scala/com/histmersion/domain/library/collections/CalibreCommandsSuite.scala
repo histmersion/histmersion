@@ -80,36 +80,89 @@ class CalibreCommandsSuite extends DbSuite:
           sql"UPDATE sources SET sha256 = $sha WHERE citekey = ${s.citekey}".update.run(): Unit
     put(
       source("zzcal_linked", "Bronze Age tin and its trade", List("Stocker, Sharon R."), Some(2019))
-        .modify(_.doi).setTo(Some(Doi("10.1/zzcal.1"))).modify(_.topics).setTo(List(Source.Topics("tin"), Source.Topics("trade"))).modify(_.provenance).setTo(Some(Source.Provenance("unpaywall"))).modify(_.calibreId).setTo(Some(Source.CalibreId("1"))).modify(_.summary).setTo(Some(Source.Summary("Tin routes."))
-        ),
+        .modify(_.doi)
+        .setTo(Some(Doi("10.1/zzcal.1")))
+        .modify(_.topics)
+        .setTo(List(Source.Topics("tin"), Source.Topics("trade")))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("unpaywall")))
+        .modify(_.calibreId)
+        .setTo(Some(Source.CalibreId("1")))
+        .modify(_.summary)
+        .setTo(Some(Source.Summary("Tin routes."))),
       stored = true
     )
     put(
-      source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956)).modify(_.calibreId).setTo(Some(Source.CalibreId("2")))
+      source("zzcal_shared_a", "The Linear B tablets", List("Michael Ventris"), Some(1956))
+        .modify(_.calibreId)
+        .setTo(Some(Source.CalibreId("2")))
     )
     put(
-      source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956)).modify(_.calibreId).setTo(Some(Source.CalibreId("2")))
+      source("zzcal_shared_b", "Linear B, the tablets", List("John Chadwick"), Some(1956))
+        .modify(_.calibreId)
+        .setTo(Some(Source.CalibreId("2")))
     )
-    put(source("zzcal_missing", "A lost book", List("Lost Author"), Some(1990)).modify(_.calibreId).setTo(Some(Source.CalibreId("99"))))
-    put(source("zzcal_drift", "The original title", List("Original Author"), Some(2005)).modify(_.calibreId).setTo(Some(Source.CalibreId("3"))))
-    put(source("zzcal_junk", "Real title", List("Real Author"), Some(2011)).modify(_.calibreId).setTo(Some(Source.CalibreId("4"))))
-    put(source("zzcal_relink", "A Kindle-only book", List("Kay Format"), Some(2020)).modify(_.calibreId).setTo(Some(Source.CalibreId("7"))))
+    put(
+      source("zzcal_missing", "A lost book", List("Lost Author"), Some(1990))
+        .modify(_.calibreId)
+        .setTo(Some(Source.CalibreId("99")))
+    )
+    put(
+      source("zzcal_drift", "The original title", List("Original Author"), Some(2005))
+        .modify(_.calibreId)
+        .setTo(Some(Source.CalibreId("3")))
+    )
+    put(
+      source("zzcal_junk", "Real title", List("Real Author"), Some(2011))
+        .modify(_.calibreId)
+        .setTo(Some(Source.CalibreId("4")))
+    )
+    put(
+      source("zzcal_relink", "A Kindle-only book", List("Kay Format"), Some(2020))
+        .modify(_.calibreId)
+        .setTo(Some(Source.CalibreId("7")))
+    )
     put(
       source("zzcal_stored", "Stored paper", List("Ann Store"), Some(2010))
-        .modify(_.topics).setTo(List(Source.Topics("metal"))).modify(_.provenance).setTo(Some(Source.Provenance("unpaywall"))).modify(_.doi).setTo(Some(Doi("10.1/zzcal.stored"))),
+        .modify(_.topics)
+        .setTo(List(Source.Topics("metal")))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("unpaywall")))
+        .modify(_.doi)
+        .setTo(Some(Doi("10.1/zzcal.stored"))),
       stored = true
     )
-    put(source("zzcal_unknown", "Unknown", List("Ann Other"), Some(2012)).modify(_.provenance).setTo(Some(Source.Provenance("oa"))), stored = true)
-    put(source("zzcal_nofile", "Metadata only", List("No File"), Some(2013)).modify(_.provenance).setTo(Some(Source.Provenance("openalex"))))
-    put(source("zzcal_calprov", "From Calibre", List("Cal Prov"), Some(2014)).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))))
     put(
-      source("zzcal_pushme", "Pushed by hand", List("Push Me"), Some(2015)).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))),
+      source("zzcal_unknown", "Unknown", List("Ann Other"), Some(2012))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("oa"))),
       stored = true
     )
-    put(source("zzcal_nolink", "Not linked", List("No Link"), Some(2016)).modify(_.provenance).setTo(Some(Source.Provenance("calibre"))))
+    put(
+      source("zzcal_nofile", "Metadata only", List("No File"), Some(2013))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("openalex")))
+    )
+    put(
+      source("zzcal_calprov", "From Calibre", List("Cal Prov"), Some(2014))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("calibre")))
+    )
+    put(
+      source("zzcal_pushme", "Pushed by hand", List("Push Me"), Some(2015))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("calibre"))),
+      stored = true
+    )
+    put(
+      source("zzcal_nolink", "Not linked", List("No Link"), Some(2016))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("calibre")))
+    )
     put(
       source("zzcal2001_collision", "Collision of keys", List("Jane Zzcal"), Some(2001))
-        .modify(_.provenance).setTo(Some(Source.Provenance("calibre")))
+        .modify(_.provenance)
+        .setTo(Some(Source.Provenance("calibre")))
     )
 
   /** One step of the scenario: a CLI command (with the host-side originals directory or not), or a change made through
@@ -208,13 +261,23 @@ class CalibreCommandsSuite extends DbSuite:
     val home = Files.createDirectories(runDir.resolve("home"))
     val cliConf = Files.writeString(runDir.resolve("cli.conf"), "")
     val ds = scratch("run")
-    val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_run_test"))).modify(_.server).setTo(base.server.modify(_.publicUrl).setTo(ServerConfig.PublicUrl("http://histmersion.test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString))
-    )
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_run_test")))
+      .modify(_.server)
+      .setTo(base.server.modify(_.publicUrl).setTo(ServerConfig.PublicUrl("http://histmersion.test")))
+      .modify(_.converter)
+      .setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString)))
     seed(ds, spool, cfg.limits.chunkChars)
     val transcript = supervised {
       val b = Composition
-        .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = CalibreCommandsSuite.plugins(lib))
+        .server(
+          cfg,
+          ServerConfig.Host("127.0.0.1"),
+          ServerConfig.Port(0),
+          OfflineConverter(),
+          plugins = CalibreCommandsSuite.plugins(lib)
+        )
         .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
@@ -285,9 +348,11 @@ class CalibreCommandsSuite extends DbSuite:
     val home = Files.createDirectories(runDir.resolve("home"))
     val cliConf = Files.writeString(runDir.resolve("cli.conf"), "")
     val ds = scratch("fallback")
-    val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_fallback_test"))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString))
-    )
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(scratch.urlOf("calibre_cmds_fallback_test")))
+      .modify(_.converter)
+      .setTo(base.converter.modify(_.spoolDir).setTo(ConverterConfig.SpoolDir(spool.toString)))
     seed(ds, spool, cfg.limits.chunkChars)
     val commands = List(
       List("search", "Bronze", "--json"),
@@ -302,7 +367,9 @@ class CalibreCommandsSuite extends DbSuite:
         tools: Map[String, String]
     ): List[(Int, String, String)] =
       supervised {
-        val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = plugins).start()
+        val b = Composition
+          .server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0), OfflineConverter(), plugins = plugins)
+          .start()
         val url = s"http://127.0.0.1:${b.port}"
         try
           commands.map { args =>

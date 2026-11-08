@@ -10,13 +10,17 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.
   */
-final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollection.WriteBack, shell: Shell)(using files: LocalFiles) extends SourceCollection:
+final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollection.WriteBack, shell: Shell)(using
+    files: LocalFiles
+) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
   val title: SourceCollection.TitleResult = SourceCollection.TitleResult("Calibre")
   override val description: SourceCollection.DescriptionResult =
-    SourceCollection.DescriptionResult(s"The Calibre library at ${library.library.value}: read with calibredb (sqlite3 while the GUI holds it)" +
-      (if (writeBack).value then ", written back with calibredb" else ", read-only"))
+    SourceCollection.DescriptionResult(
+      s"The Calibre library at ${library.library.value}: read with calibredb (sqlite3 while the GUI holds it)" +
+        (if (writeBack).value then ", written back with calibredb" else ", read-only")
+    )
 
   override def capabilities: Set[CollectionCapability] =
     if (writeBack).value then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
@@ -33,8 +37,9 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
   def search(query: CollectionQuery): Either[SourceCollection.SearchResultPart1, List[CollectionItem]] =
     (query.text match
-      case Some(text) => calibre.search(text, query.limit.fold(CalibreCollection.SearchLimit)(l => Calibre.SearchLimit(l.value)))
-      case None       => query.limit.fold(calibre.all())(l => calibre.all(Calibre.AllLimit(l.value)))
+      case Some(text) =>
+        calibre.search(text, query.limit.fold(CalibreCollection.SearchLimit)(l => Calibre.SearchLimit(l.value)))
+      case None => query.limit.fold(calibre.all())(l => calibre.all(Calibre.AllLimit(l.value)))
     ).map(_.map(CalibreCollection.item)).left.map(e => SourceCollection.SearchResultPart1(e.value))
 
   def item(id: CollectionId): Either[SourceCollection.ItemResultPart1, Option[CollectionItem]] =
@@ -51,7 +56,10 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .left
       .map(e => SourceCollection.AdmitsResultPart1(s"Calibre id ${item.id.value} has ${e.value}"))
 
-  def file(item: CollectionItem, format: Option[SourceCollection.FileFormat]): Either[SourceCollection.FileResultPart1, CollectionFile] =
+  def file(
+      item: CollectionItem,
+      format: Option[SourceCollection.FileFormat]
+  ): Either[SourceCollection.FileResultPart1, CollectionFile] =
     CalibreCollection
       .book(item)
       .pick(format.map(f => CollectionFile.Format(f.value)))
@@ -66,7 +74,14 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
   def original(item: CollectionItem, file: CollectionFile): Either[SourceCollection.OriginalResultPart1, FetchedFile] =
     CalibreCollection
       .read(file.name)
-      .map(bytes => FetchedFile(FetchedFile.Source("calibre"), Some(FetchedFile.Url(file.name.value)), bytes, CalibreCollection.extension(file.name)))
+      .map(bytes =>
+        FetchedFile(
+          FetchedFile.Source("calibre"),
+          Some(FetchedFile.Url(file.name.value)),
+          bytes,
+          CalibreCollection.extension(file.name)
+        )
+      )
       .left
       .map(e => SourceCollection.OriginalResultPart1(e.value))
 
@@ -77,18 +92,34 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
         val name = CollectionFile.Name(path)
         CalibreCollection
           .read(name)
-          .map(b => Some(FetchedFile(FetchedFile.Source("calibre"), Some(FetchedFile.Url(path)), b, CalibreCollection.extension(name))))
+          .map(b =>
+            Some(
+              FetchedFile(
+                FetchedFile.Source("calibre"),
+                Some(FetchedFile.Url(path)),
+                b,
+                CalibreCollection.extension(name)
+              )
+            )
+          )
           .left
           .map(e => SourceCollection.CoverResultPart1(e.value))
 
-  override def add(metadata: CollectionMetadata, file: FetchedFile): Either[SourceCollection.AddResultPart1, CollectionId] =
+  override def add(
+      metadata: CollectionMetadata,
+      file: FetchedFile
+  ): Either[SourceCollection.AddResultPart1, CollectionId] =
     CalibreCollection
       .staged(LocalFiles.StagedName(metadata.key.value), file)(p => calibre.add(p, CalibreCollection.push(metadata)))
       .map(id => CollectionId(id.value.toString))
       .left
       .map(e => SourceCollection.AddResultPart1(e.value))
 
-  override def replace(id: CollectionId, key: SourceCollection.ReplaceKey, file: FetchedFile): Either[SourceCollection.ReplaceResultPart1, SourceCollection.ReplaceResultPart2] =
+  override def replace(
+      id: CollectionId,
+      key: SourceCollection.ReplaceKey,
+      file: FetchedFile
+  ): Either[SourceCollection.ReplaceResultPart1, SourceCollection.ReplaceResultPart2] =
     CalibreCollection
       .number(id)
       .flatMap(n => CalibreCollection.staged(LocalFiles.StagedName(key.value), file)(p => calibre.replaceFormat(n, p)))
@@ -96,7 +127,10 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .left
       .map(e => SourceCollection.ReplaceResultPart1(e.value))
 
-  override def update(id: CollectionId, metadata: CollectionMetadata): Either[SourceCollection.UpdateResultPart1, List[CollectionChange]] =
+  override def update(
+      id: CollectionId,
+      metadata: CollectionMetadata
+  ): Either[SourceCollection.UpdateResultPart1, List[CollectionChange]] =
     CalibreCollection
       .number(id)
       .flatMap(calibre.update(_, CalibreCollection.push(metadata)))
@@ -104,10 +138,17 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .left
       .map(e => SourceCollection.UpdateResultPart1(e.value))
 
-  override def updateAll(links: List[CollectionLink], apply: SourceCollection.UpdateAllApply): Either[SourceCollection.UpdateAllResultPart1, List[CollectionUpdateEntry]] =
+  override def updateAll(
+      links: List[CollectionLink],
+      apply: SourceCollection.UpdateAllApply
+  ): Either[SourceCollection.UpdateAllResultPart1, List[CollectionUpdateEntry]] =
     val linked = links.flatMap(l =>
       l.id.value.trim.toIntOption.map(n =>
-        LinkedRecord(LinkedRecord.Citekey(l.metadata.key.value), LinkedRecord.CalibreId(n), CalibreCollection.push(l.metadata))
+        LinkedRecord(
+          LinkedRecord.Citekey(l.metadata.key.value),
+          LinkedRecord.CalibreId(n),
+          CalibreCollection.push(l.metadata)
+        )
       )
     )
     calibre
@@ -116,14 +157,21 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .left
       .map(e => SourceCollection.UpdateAllResultPart1(e.value))
 
-  override def set(id: CollectionId, fields: List[(SourceCollection.SetFieldsPart1, SourceCollection.SetFieldsPart2)]): Either[SourceCollection.SetResultPart1, Unit] =
+  override def set(
+      id: CollectionId,
+      fields: List[(SourceCollection.SetFieldsPart1, SourceCollection.SetFieldsPart2)]
+  ): Either[SourceCollection.SetResultPart1, Unit] =
     CalibreCollection
       .number(id)
-      .flatMap(calibre.set(_, fields.map((name, value) => (Calibre.Field.Name(name.value), Calibre.Field.Value(value.value)))))
+      .flatMap(
+        calibre.set(_, fields.map((name, value) => (Calibre.Field.Name(name.value), Calibre.Field.Value(value.value))))
+      )
       .left
       .map(e => SourceCollection.SetResultPart1(e.value))
 
-  override def audit(records: List[CollectionRecord]): Either[SourceCollection.AuditResultPart1, List[CollectionFinding]] =
+  override def audit(
+      records: List[CollectionRecord]
+  ): Either[SourceCollection.AuditResultPart1, List[CollectionFinding]] =
     val recs = records.flatMap(r =>
       r.id.value.trim.toIntOption.map(n =>
         AuditRecord(
@@ -161,7 +209,8 @@ object CalibreCollection:
       publisher = b.publisher.map(p => CollectionItem.Publisher(p.value)),
       description = b.comments.map(c => CollectionItem.Description(c.value)),
       tags = b.tags.map(t => CollectionItem.Tags(t.value)),
-      identifiers = b.identifiers.map((k, v) => CollectionItem.IdentifiersKey(k.value) -> CollectionItem.IdentifiersValue(v.value)),
+      identifiers =
+        b.identifiers.map((k, v) => CollectionItem.IdentifiersKey(k.value) -> CollectionItem.IdentifiersValue(v.value)),
       files = b.formats.map(f => CollectionFile(CollectionFile.Name(f.value))),
       cover = b.cover.map(c => CollectionItem.Cover(c.value))
     )
@@ -176,7 +225,8 @@ object CalibreCollection:
       publisher = i.publisher.map(p => Calibre.Book.Publisher(p.value)),
       tags = i.tags.map(t => Calibre.Book.Tags(t.value)),
       comments = i.description.map(c => Calibre.Book.Comments(c.value)),
-      identifiers = i.identifiers.map((k, v) => Calibre.Book.IdentifiersKey(k.value) -> Calibre.Book.IdentifiersValue(v.value)),
+      identifiers =
+        i.identifiers.map((k, v) => Calibre.Book.IdentifiersKey(k.value) -> Calibre.Book.IdentifiersValue(v.value)),
       formats = i.files.map(f => Calibre.Book.Formats(f.name.value)),
       cover = i.cover.map(c => Calibre.Book.Cover(c.value))
     )
@@ -194,19 +244,29 @@ object CalibreCollection:
     )
 
   def change(c: Calibre.Change): CollectionChange =
-    CollectionChange(CollectionChange.Field(c.field.name.value), CollectionChange.From(c.from.value), CollectionChange.To(c.to.value))
+    CollectionChange(
+      CollectionChange.Field(c.field.name.value),
+      CollectionChange.From(c.from.value),
+      CollectionChange.To(c.to.value)
+    )
 
   def entry(e: UpdateEntry): CollectionUpdateEntry =
     def all(cs: List[Calibre.Change]) = cs.map(change)
     val outcome = e.outcome match
       case UpdateOutcome.Change(cs)         => CollectionUpdateOutcome.Change(all(cs))
       case UpdateOutcome.Applied(cs)        => CollectionUpdateOutcome.Applied(all(cs))
-      case UpdateOutcome.Failed(cs, reason) => CollectionUpdateOutcome.Failed(all(cs), CollectionUpdateOutcome.Failed.Reason(reason.value))
-      case UpdateOutcome.UpToDate           => CollectionUpdateOutcome.UpToDate
-      case UpdateOutcome.Shared             => CollectionUpdateOutcome.Shared
-      case UpdateOutcome.Missing            => CollectionUpdateOutcome.Missing
-      case UpdateOutcome.Refused(reason)    => CollectionUpdateOutcome.Refused(CollectionUpdateOutcome.Refused.Reason(reason.value))
-    CollectionUpdateEntry(CollectionId(e.calibreId.value.toString), e.citekeys.map(k => CollectionUpdateEntry.Keys(k.value)), outcome)
+      case UpdateOutcome.Failed(cs, reason) =>
+        CollectionUpdateOutcome.Failed(all(cs), CollectionUpdateOutcome.Failed.Reason(reason.value))
+      case UpdateOutcome.UpToDate        => CollectionUpdateOutcome.UpToDate
+      case UpdateOutcome.Shared          => CollectionUpdateOutcome.Shared
+      case UpdateOutcome.Missing         => CollectionUpdateOutcome.Missing
+      case UpdateOutcome.Refused(reason) =>
+        CollectionUpdateOutcome.Refused(CollectionUpdateOutcome.Refused.Reason(reason.value))
+    CollectionUpdateEntry(
+      CollectionId(e.calibreId.value.toString),
+      e.citekeys.map(k => CollectionUpdateEntry.Keys(k.value)),
+      outcome
+    )
 
   def finding(f: AuditFinding): CollectionFinding =
     CollectionFinding(
@@ -231,16 +291,21 @@ object CalibreCollection:
     FetchedFile.Extension(name.value.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT))
 
   def read(name: CollectionFile.Name)(using files: LocalFiles): Either[Calibre.Problem, FetchedFile.Bytes] =
-    Try(FetchedFile.Bytes(files.read(Path.of(name.value)).value)).toEither.left.map(e => Calibre.Problem(s"cannot read ${name.value} (${e.getMessage})"))
+    Try(FetchedFile.Bytes(files.read(Path.of(name.value)).value)).toEither.left.map(e =>
+      Calibre.Problem(s"cannot read ${name.value} (${e.getMessage})")
+    )
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.
     */
-  def staged[A](name: LocalFiles.StagedName, file: FetchedFile)(f: Path => Either[Calibre.Problem, A])(using files: LocalFiles): Either[Calibre.Problem, A] =
+  def staged[A](name: LocalFiles.StagedName, file: FetchedFile)(
+      f: Path => Either[Calibre.Problem, A]
+  )(using files: LocalFiles): Either[Calibre.Problem, A] =
     files
-      .staged(LocalFiles.StagedName(s"${name.value}.${file.extension.value}"), LocalFiles.StagedBytes(file.bytes.value))(p =>
-        f(p).left.map(e => LocalFiles.StagedUseResultPart1(e.value))
-      )
+      .staged(
+        LocalFiles.StagedName(s"${name.value}.${file.extension.value}"),
+        LocalFiles.StagedBytes(file.bytes.value)
+      )(p => f(p).left.map(e => LocalFiles.StagedUseResultPart1(e.value)))
       .left
       .map(e => Calibre.Problem(e.value))
 
@@ -249,8 +314,10 @@ object CalibreCollection:
     val db = dir.resolve("metadata.db")
     if !files.isDirectory(dir).value && !files.exists(db).value then
       Left(
-        Calibre.Problem(s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
-          "holds metadata.db (a server in a container needs that folder mounted)")
+        Calibre.Problem(
+          s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
+            "holds metadata.db (a server in a container needs that folder mounted)"
+        )
       )
     else
       (Try { files.readPrefix(db, LocalFiles.ReadPrefixLength(16)); () }.toEither.left
@@ -263,4 +330,6 @@ object CalibreCollection:
               "and Folders) for the server's binary, granted in System Settings → Privacy & Security; a server in a " +
               "container needs the library mounted"
         }
-        .map(_ => ())).left.map(Calibre.Problem(_))
+        .map(_ => ()))
+        .left
+        .map(Calibre.Problem(_))

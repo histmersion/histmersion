@@ -16,8 +16,15 @@ object DoiIngest:
   /** The request for `typed`, or what is wrong with it. */
   def request(typed: String): Either[ErrorLine.Problem, Ingest.Request] =
     val t = typed.trim.replaceFirst(DoiLink, "").replaceFirst("(?i)^doi:\\s*", "")
-    if t.isEmpty then Left(ErrorLine.Problem("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234)."))
-    else if t.matches(Doi) then Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = Ingest.Request.LegalOnly(true)))
+    if t.isEmpty then
+      Left(ErrorLine.Problem("Type a DOI (e.g. 10.1017/S0003598X00000001) or an arXiv id (e.g. arxiv:2101.01234)."))
+    else if t.matches(Doi) then
+      Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = Ingest.Request.LegalOnly(true)))
     else if t.matches(Arxiv) then
-      Right(Ingest.Request(id = Ingest.Request.Id(if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t"), legalOnly = Ingest.Request.LegalOnly(true)))
+      Right(
+        Ingest.Request(
+          id = Ingest.Request.Id(if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t"),
+          legalOnly = Ingest.Request.LegalOnly(true)
+        )
+      )
     else Left(ErrorLine.Problem(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id."))

@@ -29,16 +29,43 @@ class PolitenessSuite extends munit.FunSuite:
     )
 
   test("a 200 is taken; a 404 gives up at once"):
-    assertEquals(Politeness.decide(answer(200), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now), Step.Accept)
-    assertEquals(Politeness.decide(answer(404), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now), Step.GiveUp(HttpPolicy.Step.GiveUp.Why("HTTP 404")))
+    assertEquals(
+      Politeness
+        .decide(answer(200), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
+      Step.Accept
+    )
+    assertEquals(
+      Politeness
+        .decide(answer(404), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
+      Step.GiveUp(HttpPolicy.Step.GiveUp.Why("HTTP 404"))
+    )
 
   test("429 and 503 wait for Retry-After (seconds or a date), else back off 1, 2, 4 … s"):
-    assertEquals(Politeness.decide(answer(429, Map("retry-after" -> "7")), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now), Step.Wait(HttpPolicy.Step.Wait.Ms(7000), HttpPolicy.Step.Wait.Why("HTTP 429")))
     assertEquals(
-      Politeness.decide(answer(503, Map("retry-after" -> "Sat, 10 Oct 2026 12:00:03 GMT")), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
+      Politeness.decide(
+        answer(429, Map("retry-after" -> "7")),
+        HttpPolicy.Attempt(0),
+        HttpPolicy.MaxRetries(5),
+        HttpPolicy.MaxRetryAfterSeconds(60),
+        now
+      ),
+      Step.Wait(HttpPolicy.Step.Wait.Ms(7000), HttpPolicy.Step.Wait.Why("HTTP 429"))
+    )
+    assertEquals(
+      Politeness.decide(
+        answer(503, Map("retry-after" -> "Sat, 10 Oct 2026 12:00:03 GMT")),
+        HttpPolicy.Attempt(0),
+        HttpPolicy.MaxRetries(5),
+        HttpPolicy.MaxRetryAfterSeconds(60),
+        now
+      ),
       Step.Wait(HttpPolicy.Step.Wait.Ms(3000), HttpPolicy.Step.Wait.Why("HTTP 503"))
     )
-    assertEquals(Politeness.decide(answer(503), HttpPolicy.Attempt(2), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now), Step.Wait(HttpPolicy.Step.Wait.Ms(4000), HttpPolicy.Step.Wait.Why("HTTP 503")))
+    assertEquals(
+      Politeness
+        .decide(answer(503), HttpPolicy.Attempt(2), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
+      Step.Wait(HttpPolicy.Step.Wait.Ms(4000), HttpPolicy.Step.Wait.Why("HTTP 503"))
+    )
 
   test("maxlag: the MediaWiki-API-Error header (HTTP 200) or the error code in the body"):
     val lagged = answer(
@@ -47,17 +74,33 @@ class PolitenessSuite extends munit.FunSuite:
       """{"error":{"code":"maxlag","info":"Waiting for wdqs1013: 11 seconds lagged."}}"""
     )
     assert(Politeness.isMaxlag(lagged))
-    assertEquals(Politeness.decide(lagged, HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now), Step.Wait(HttpPolicy.Step.Wait.Ms(5000), HttpPolicy.Step.Wait.Why("maxlag")))
+    assertEquals(
+      Politeness
+        .decide(lagged, HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
+      Step.Wait(HttpPolicy.Step.Wait.Ms(5000), HttpPolicy.Step.Wait.Why("maxlag"))
+    )
     assert(Politeness.isMaxlag(answer(200, body = """{"error":{"code":"maxlag"}}""")))
     assert(!Politeness.isMaxlag(answer(200, body = """{"entities":{}}""")))
 
   test("gives up after max-retries, and when asked to wait longer than max-retry-after-seconds"):
     assertEquals(
-      Politeness.decide(answer(429, Map("retry-after" -> "1")), HttpPolicy.Attempt(5), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
+      Politeness.decide(
+        answer(429, Map("retry-after" -> "1")),
+        HttpPolicy.Attempt(5),
+        HttpPolicy.MaxRetries(5),
+        HttpPolicy.MaxRetryAfterSeconds(60),
+        now
+      ),
       Step.GiveUp(HttpPolicy.Step.GiveUp.Why("HTTP 429 after 5 retries"))
     )
     assertEquals(
-      Politeness.decide(answer(429, Map("retry-after" -> "3600")), HttpPolicy.Attempt(0), HttpPolicy.MaxRetries(5), HttpPolicy.MaxRetryAfterSeconds(60), now),
+      Politeness.decide(
+        answer(429, Map("retry-after" -> "3600")),
+        HttpPolicy.Attempt(0),
+        HttpPolicy.MaxRetries(5),
+        HttpPolicy.MaxRetryAfterSeconds(60),
+        now
+      ),
       Step.GiveUp(HttpPolicy.Step.GiveUp.Why("HTTP 429: asked to wait 3600 s"))
     )
 
@@ -76,8 +119,12 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("requests to one host are spaced by request-interval-ms; another host is not held up"):
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}"))
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(500)))
-    p.get(HttpTransport.Url("https://a.example/1")); p.get(HttpTransport.Url("https://a.example/2")); p.get(HttpTransport.Url("https://b.example/1"))
+    val (p, slept) = FakeMediaHttp.polite(
+      http,
+      FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(500))
+    )
+    p.get(HttpTransport.Url("https://a.example/1")); p.get(HttpTransport.Url("https://a.example/2"));
+    p.get(HttpTransport.Url("https://b.example/1"))
     assertEquals(slept.toList, List(500L))
     assertEquals(p.requests, 3)
 
@@ -94,7 +141,10 @@ class PolitenessSuite extends munit.FunSuite:
       else FakeMediaHttp.json("""{"entities":{}}""")
     }
     val (p, slept) = FakeMediaHttp.polite(http)
-    assertEquals(p.json(HttpTransport.Url("https://www.wikidata.org/w/api.php")).map(_.noSpaces), Right("""{"entities":{}}"""))
+    assertEquals(
+      p.json(HttpTransport.Url("https://www.wikidata.org/w/api.php")).map(_.noSpaces),
+      Right("""{"entities":{}}""")
+    )
     assertEquals(slept.toList, List(5000L))
     assertEquals(http.requests.size, 2)
 
@@ -111,7 +161,13 @@ class PolitenessSuite extends munit.FunSuite:
   test("a file's type is the answer's Content-Type, else the fallback"):
     val http = FakeMediaHttp {
       case u if u.endsWith(".png") =>
-        Right(HttpAnswer(HttpAnswer.Code(200), Map(CoreQuota.HeaderName("content-type") -> CoreQuota.HeaderValue("image/png; charset=binary")), HttpAnswer.Body(Array[Byte](1))))
+        Right(
+          HttpAnswer(
+            HttpAnswer.Code(200),
+            Map(CoreQuota.HeaderName("content-type") -> CoreQuota.HeaderValue("image/png; charset=binary")),
+            HttpAnswer.Body(Array[Byte](1))
+          )
+        )
       case _ => Right(HttpAnswer(HttpAnswer.Code(200), Map.empty, HttpAnswer.Body(Array[Byte](2))))
     }
     val (p, _) = FakeMediaHttp.polite(http)
@@ -130,7 +186,11 @@ class PolitenessSuite extends munit.FunSuite:
       val code = answers.head; answers = answers.tail
       FakeMediaHttp.json("{}", code = code)
     }
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(250)), List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L)))
+    val (p, slept) = FakeMediaHttp.polite(
+      http,
+      FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(250)),
+      List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L))
+    )
     assert(p.get(metUrl(1)).isRight)
     assert(p.get(metUrl(2)).isRight, "the third answer, after two waits")
     assert(p.get(metUrl(3)).isRight)
@@ -141,7 +201,11 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("when the backoff steps run out the 403 stands, saying how long it waited; without steps it is final at once"):
     val always = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
-    val (p, slept) = FakeMediaHttp.polite(always, FakeMediaHttp.cfg, List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L)))
+    val (p, slept) = FakeMediaHttp.polite(
+      always,
+      FakeMediaHttp.cfg,
+      List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L))
+    )
     assertEquals(p.get(metUrl(1)).left.toOption, Some(s"$metHost: HTTP 403 (still, after waiting 360 s)"))
     assertEquals((always.requests.size, slept.toList), (3, List(60000L, 300000L)))
     val once = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
@@ -151,7 +215,11 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("the slow-down stops at 16 times the pace; another host keeps its own"):
     val http = FakeMediaHttp(u => FakeMediaHttp.json("{}", code = if u.contains(metHost.value) then 403 else 200))
-    val (p, _) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(100)), List.fill(6)(Polite.RefusalBackoffMs(1L)))
+    val (p, _) = FakeMediaHttp.polite(
+      http,
+      FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(100)),
+      List.fill(6)(Polite.RefusalBackoffMs(1L))
+    )
     assert(p.get(metUrl(1)).isLeft)
     assertEquals(p.intervalMs(metHost), 1600L)
     assertEquals(p.intervalMs(Polite.Host("images.metmuseum.org")), 100L)

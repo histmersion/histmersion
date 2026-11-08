@@ -9,7 +9,8 @@ import com.histmersion.api.Sha256
 
 final case class PluginJar(file: PluginJar.File, sha256: Sha256, plugins: List[PluginDescription] = Nil)
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object PluginJar:
-  export com.histmersion.api.automation.ProviderKind.Plugin.{FilePath as File}
+  export com.histmersion.api.automation.ProviderKind.Plugin.FilePath as File

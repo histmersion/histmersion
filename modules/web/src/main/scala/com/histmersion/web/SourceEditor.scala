@@ -27,7 +27,6 @@ object SourceEditor:
 
   /** The form as typed. Years are text so `1300 BCE` can be typed and shown as such. */
 
-
   final case class Draft(
       title: String,
       authors: List[String],
@@ -129,7 +128,14 @@ object SourceEditor:
     val problems = errs.result()
     if problems.nonEmpty then Left(problems)
     else
-      val meta = MetadataPatch(title = (title).map(com.histmersion.api.library.Title.apply), authors = (authors).map(_.map(AuthorName.apply)), year = (yr).map(n => com.histmersion.api.catalogue.Year(n.toLong)), venue = (venue).map(Source.Venue.apply), doi = (doi).map(com.histmersion.api.library.Doi.apply), status = status)
+      val meta = MetadataPatch(
+        title = (title).map(com.histmersion.api.library.Title.apply),
+        authors = (authors).map(_.map(AuthorName.apply)),
+        year = (yr).map(n => com.histmersion.api.catalogue.Year(n.toLong)),
+        venue = (venue).map(Source.Venue.apply),
+        doi = (doi).map(com.histmersion.api.library.Doi.apply),
+        status = status
+      )
       val patch = Source.Patch(
         metadata = Option.when(meta != MetadataPatch())(meta),
         summary = summary.map(Source.Summary(_)),
@@ -253,8 +259,8 @@ object SourceEditor:
           label = ChipInput.Config.Label(Facet.Field.label(facet).value),
           placeholder = ChipInput.Config.Placeholder(hint),
           debounceMs = ChipInput.Config.DebounceMs(150),
-          getSuggestions = prefix =>
-            ApiClient.facets(Api.Facets.Field(Facet.Field.label(facet).value), Some(prefix), Filter()),
+          getSuggestions =
+            prefix => ApiClient.facets(Api.Facets.Field(Facet.Field.label(facet).value), Some(prefix), Filter()),
           onChange = vs => zoomed.set(vs)
         ),
         zoomed.signal
@@ -302,7 +308,9 @@ object SourceEditor:
               cls := "field",
               controlled(
                 value <-- draft.signal.map(_.fold("")(_.status.wire.value)),
-                onChange.mapToValue --> (v => edit(_.modify(_.status).setTo(Source.Status.fromString(Source.Status.Wire(v)))))
+                onChange.mapToValue --> (v =>
+                  edit(_.modify(_.status).setTo(Source.Status.fromString(Source.Status.Wire(v))))
+                )
               ),
               Source.Status.values.toList.map(s => option(value := s.wire.value, Wording.status(s)))
             )

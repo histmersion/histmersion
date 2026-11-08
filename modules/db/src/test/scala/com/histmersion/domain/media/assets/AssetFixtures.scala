@@ -79,7 +79,8 @@ object AssetFixtures:
       firstTarget: (Target.TargetType, Target.Id)
   ): (MediaItemRow.Uid, Boolean) =
     transact(ds)(MediaRepo.save(a, firstTarget))
-  def refreshRights(ds: DataSource, uid: MediaItemRow.Uid, r: Rights): Unit = transact(ds)(MediaRepo.refreshRights(uid, r))
+  def refreshRights(ds: DataSource, uid: MediaItemRow.Uid, r: Rights): Unit =
+    transact(ds)(MediaRepo.refreshRights(uid, r))
   def setThumb(
       ds: DataSource,
       uid: MediaItemRow.Uid,
@@ -129,7 +130,12 @@ object AssetFixtures:
   ): List[MediaThumb] =
     connect(ds)(MediaRepo.placeThumbsIn(placeId, sameSiteKm, limit))
   def sourceThumb(ds: DataSource, citekey: Citekey): Option[MediaThumb] =
-    thumbs(ds, Target.TargetType(PictureTarget.Source.wire.value), Target.Id(citekey.value), MediaRepo.Limit(1)).headOption
+    thumbs(
+      ds,
+      Target.TargetType(PictureTarget.Source.wire.value),
+      Target.Id(citekey.value),
+      MediaRepo.Limit(1)
+    ).headOption
   def list(ds: DataSource, q: Api.MediaQuery, limit: MediaRepo.Limit): MediaList = connect(ds)(MediaRepo.list(q, limit))
   def show(ds: DataSource, uid: MediaItemRow.Uid): Option[MediaItem] = connect(ds)(MediaRepo.show(uid))
   def thumb(ds: DataSource, uid: MediaItemRow.Uid): Option[(ProviderAsset.ThumbMime, ProviderAsset.Thumb)] =
@@ -137,8 +143,10 @@ object AssetFixtures:
   def file(ds: DataSource, uid: MediaItemRow.Uid): Option[(AssetBytesRow.Mime, AssetBytesRow.Bytes)] =
     connect(ds)(MediaRepo.file(uid))
   def facets(ds: DataSource): MediaFacets = connect(ds)(MediaRepo.facets)
-  def geo(ds: DataSource, q: Api.MediaGeoQuery, limit: MediaRepo.Limit): List[MediaGeoHit] = connect(ds)(MediaRepo.geo(q, limit))
-  def geoOf(ds: DataSource, uids: List[MediaItemRow.Uid]): Map[MediaItemRow.Uid, MediaGeoHit] = connect(ds)(MediaRepo.geoOf(uids))
+  def geo(ds: DataSource, q: Api.MediaGeoQuery, limit: MediaRepo.Limit): List[MediaGeoHit] =
+    connect(ds)(MediaRepo.geo(q, limit))
+  def geoOf(ds: DataSource, uids: List[MediaItemRow.Uid]): Map[MediaItemRow.Uid, MediaGeoHit] =
+    connect(ds)(MediaRepo.geoOf(uids))
   def figures(ds: DataSource, citekey: Citekey): List[SourceFigure] =
     connect(ds)(MediaRepo.sourceFigures(citekey))
   def tileCandidates(

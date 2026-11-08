@@ -85,7 +85,9 @@ private[articles] object ArticleCheckRepo:
   def storedCitekey(using run: CheckRun)(using DbCon): Citekey => Boolean = ck => run(StoredCitekeys).contains(ck.value)
 
   /** One rule's report, on the run's connection; `format` is the formatting check. */
-  def report(r: Rule, format: FormatChecker, maxItems: ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
+  def report(r: Rule, format: FormatChecker, maxItems: ReportMaxItems)(using
+      run: CheckRun
+  )(using DbCon): LintRuleReport =
     val rule: String = r.name.value
     val items = rule match
       case ArticleFiller           => Article.Lint.articleFiller(run(ArticleRows))
@@ -94,7 +96,9 @@ private[articles] object ArticleCheckRepo:
         val p = pairingCorpusIn()
         Article.Lint.articleCritiquePairing(run(ArticleRows), p.resolve, p.edges, p.work)
       case ArticleThinSummary =>
-        Article.Lint.articleThinSummary(pairs(articleSummariesSql).map((slug, summary) => (Article.Slug(slug), Article.SummaryText(summary))))
+        Article.Lint.articleThinSummary(
+          pairs(articleSummariesSql).map((slug, summary) => (Article.Slug(slug), Article.SummaryText(summary)))
+        )
       case ArticleFormat =>
         Lint.formatItems(
           triples(articleTextsSql).flatMap((slug, body, summary) =>

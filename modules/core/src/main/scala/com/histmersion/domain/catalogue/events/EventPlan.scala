@@ -34,7 +34,9 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   private val SameEvent: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
     def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
-      PlanMerge.InfoResult(s"event $label: the same dating and place on both sides — one event, datings and participants unioned")
+      PlanMerge.InfoResult(
+        s"event $label: the same dating and place on both sides — one event, datings and participants unioned"
+      )
 
   /** Under another id here, with the same label, dates and place: one event. */
   private val AcrossIds: PlanMerge = new PlanMerge:
@@ -95,8 +97,10 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
     ) {
       val eid = decision.argument.map(_.value).getOrElse("")
       val idsHere = in.local.events.map(_.id).toSet ++ in.foreign.events.map(_.id)
-      if !SlugShape.matches(eid) then Left(MergePlan.ResolutionErrors(s"'$eid' is not an event id (lower-case letters, digits, _ . -)"))
-      else if idsHere(Bundle.Event.Id(eid)) then Left(MergePlan.ResolutionErrors(s"'$eid' is already an event id here or in the bundle"))
+      if !SlugShape.matches(eid) then
+        Left(MergePlan.ResolutionErrors(s"'$eid' is not an event id (lower-case letters, digits, _ . -)"))
+      else if idsHere(Bundle.Event.Id(eid)) then
+        Left(MergePlan.ResolutionErrors(s"'$eid' is already an event id here or in the bundle"))
       else Right(())
     }
 
@@ -122,14 +126,20 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       )
 
   // gazetteer places: an event written must point at a place that is here or coming
-  override def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[MergePlan.Problems] =
+  override def problems(
+      finalEs: BundleEntities,
+      live: UUID => Boolean,
+      writes: UUID => Boolean
+  ): List[MergePlan.Problems] =
     val placesComing = finalEs.places.filter(p => live(p.uid)).map(_.id).toSet ++ in.local.places.map(_.id)
     finalEs.events
       .filter(e => writes(e.uid))
       .flatMap(e => e.placeId.map(e.id -> _))
       .filterNot((_, p) => in.places(MergePlanner.Input.Places(p.value)) || placesComing(p))
       .map((e, p) =>
-        MergePlan.Problems(s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first")
+        MergePlan.Problems(
+          s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first"
+        )
       )
 
 object EventPlan:
@@ -161,7 +171,10 @@ object EventPlan:
       case (None, None, None, None)       => true
       case _                              => false
     val label = Fingerprint.of(Fingerprint.OfS(l.label.value)).value
-    label.nonEmpty && label == Fingerprint.of(Fingerprint.OfS(r.label.value)).value && MergeFold.overlap(outer(l), outer(r)) && place
+    label.nonEmpty && label == Fingerprint.of(Fingerprint.OfS(r.label.value)).value && MergeFold.overlap(
+      outer(l),
+      outer(r)
+    ) && place
 
   /** One event out of two: `winner`'s fields, the datings (per citekey), participants and outgoing edges of both — the
     * winner's where both have one.

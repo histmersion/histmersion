@@ -8,9 +8,14 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.ByteCount
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class BackupsUsage(count: BackupsUsage.Count, bytes: ByteCount, newest: Option[BackupsUsage.Newest], keep: BackupsUsage.Keep)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class BackupsUsage(
+    count: BackupsUsage.Count,
+    bytes: ByteCount,
+    newest: Option[BackupsUsage.Newest],
+    keep: BackupsUsage.Keep
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object BackupsUsage:
   type Count = Count.T

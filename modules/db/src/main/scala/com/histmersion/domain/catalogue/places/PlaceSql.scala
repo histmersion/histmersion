@@ -25,13 +25,13 @@ object PlaceSql:
   object ImportedListValue extends Newtype[String, Pure]
   type ModernSqlAlias = String
   type DefaultModernFrom = DefaultModernFromValue
-  export com.histmersion.domain.DeepTime.{SignedYear as DefaultModernFromValue}
+  export com.histmersion.domain.DeepTime.SignedYear as DefaultModernFromValue
   type UndatedSqlAlias = String
   type TimelessSqlAlias = String
   type TimeBasisSqlAlias = String
-  export com.histmersion.domain.DeepTime.{SignedYear as TimeWindowCteModernFrom}
+  export com.histmersion.domain.DeepTime.SignedYear as TimeWindowCteModernFrom
   type InTimeSqlAlias = String
-  export Place.Kind.{Wire as InTimeSqlKind}
+  export Place.Kind.Wire as InTimeSqlKind
   type InWindowSqlAlias = String
 
   def importedSql(alias: String): String =
@@ -154,7 +154,11 @@ object PlaceSql:
     * keeps nearly everything and finds the candidates by what does narrow them: the trigram index of a search, the
     * (kind, period) GiSTs of a map layer (V076).
     */
-  def inTimeSql(alias: InTimeSqlAlias, asOf: Option[DeepTime.SignedYear], kind: Option[PlaceSql.InTimeSqlKind] = None): String =
+  def inTimeSql(
+      alias: InTimeSqlAlias,
+      asOf: Option[DeepTime.SignedYear],
+      kind: Option[PlaceSql.InTimeSqlKind] = None
+  ): String =
     inWindowSql(alias, asOf.map(y => (y, y)), kind)
 
   /** [[inTimeSql]] over the inclusive window `lo..hi` ([[windowCte]]): shown at ANY year of it. With `modernFrom` the

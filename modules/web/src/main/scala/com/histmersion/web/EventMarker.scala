@@ -33,18 +33,21 @@ object EventMarker:
 
   /** Pure: an event in words — its name, kind and years, size, place and tier (its accessible name). */
   def describe(e: EventGeo): Description =
-    Description(List(
-      Some(e.label.value),
-      Some(EventPlayback.note(e).value),
-      e.dating.map(_.value),
-      EventPrecision.label(EventSummary.Precision(e.precision.value)),
-      e.size.map(_.value),
-      e.placeLabel.map(_.value),
-      Some(if e.tier.value == EventTier.Catalogue then "catalogue only" else "attested")
-    ).flatten.mkString(" · "))
+    Description(
+      List(
+        Some(e.label.value),
+        Some(EventPlayback.note(e).value),
+        e.dating.map(_.value),
+        EventPrecision.label(EventSummary.Precision(e.precision.value)),
+        e.size.map(_.value),
+        e.placeLabel.map(_.value),
+        Some(if e.tier.value == EventTier.Catalogue then "catalogue only" else "attested")
+      ).flatten.mkString(" · ")
+    )
 
   /** Pure: the tier's class name — anything but `catalogue` is drawn attested. */
-  def tierClass(tier: Api.EventQuery.Tier): TierClass = if tier.value == EventTier.Catalogue then TierClass("catalogue") else TierClass("attested")
+  def tierClass(tier: Api.EventQuery.Tier): TierClass =
+    if tier.value == EventTier.Catalogue then TierClass("catalogue") else TierClass("attested")
 
   /** Pure: where an event sits on the period ramp of the span shown (0 = its start, 1 = its end): the middle of its
     * outer span.

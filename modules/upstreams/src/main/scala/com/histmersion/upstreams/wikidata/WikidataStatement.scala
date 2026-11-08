@@ -2,7 +2,12 @@ package com.histmersion
 package upstreams.wikidata
 
 import io.github.iltotore.iron.constraint.any.Pure
-final case class WikidataStatement(property: WikidataStatement.Property, file: WikidataStatement.File, preferred: WikidataStatement.Preferred, order: WikidataStatement.Order)
+final case class WikidataStatement(
+    property: WikidataStatement.Property,
+    file: WikidataStatement.File,
+    preferred: WikidataStatement.Preferred,
+    order: WikidataStatement.Order
+)
 
 object WikidataStatement:
   /** Pure: the statements of one property to use, best first — the preferred ones when there are any (Wikidata's own

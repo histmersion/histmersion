@@ -19,7 +19,11 @@ trait SiteTypeService:
   /** (place id, Wikidata item, the class the import kept) of the next `limit` sites to refine: never asked, or
     * (`refresh`) asked before `before` (epoch ms), by id.
     */
-  def sitesToType(limit: PageSize, refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])]
+  def sitesToType(
+      limit: PageSize,
+      refresh: SiteTypeService.Refresh,
+      before: Option[DeepTime.SignedYear]
+  ): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])]
 
   def countSitesToType(refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): RowCount
 
@@ -33,14 +37,19 @@ object SiteTypeService:
   def apply(db: Transactor): SiteTypeService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends SiteTypeService:
-    def sitesToType(limit: PageSize, refresh: Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
+    def sitesToType(
+        limit: PageSize,
+        refresh: Refresh,
+        before: Option[DeepTime.SignedYear]
+    ): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
       db.read(SiteTypeRepo.sitesToType(PlaceRepo.Limit(limit.value), SiteTypeRepo.Refresh(refresh.value), before))
-        .map((id, item, cls) => (id, WikidataItem.Id(item.value), cls.map(c => CatalogRecord.Wikidata.ImportClass(c.value))))
+        .map((id, item, cls) =>
+          (id, WikidataItem.Id(item.value), cls.map(c => CatalogRecord.Wikidata.ImportClass(c.value)))
+        )
     def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
       db.read(SiteTypeRepo.countSitesToType(SiteTypeRepo.Refresh(refresh.value), before))
     def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit =
       db.transact(SiteTypeRepo.setSiteTypes(types.map((id, t) => id -> t.map(x => PlaceRepo.SiteType(x.value)))))
-
 
   /** The same rules over the shared in-memory state; `now` is the time a site is asked at (epoch ms). */
   final class InMemory(state: AtomicReference[CatalogueState], now: () => HeldSite.CheckedAt) extends SiteTypeService:
@@ -53,15 +62,25 @@ object SiteTypeService:
         case _                => s.checkedAt.isEmpty
       WikidataSite.matches(s.id.value) && s.onMap.value && asked
 
-    def sitesToType(limit: PageSize, refresh: Refresh, before: Option[DeepTime.SignedYear]): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
+    def sitesToType(
+        limit: PageSize,
+        refresh: Refresh,
+        before: Option[DeepTime.SignedYear]
+    ): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
       state.get.sites
         .filter(toType(refresh, before))
         .sortBy(_.id.value)
         .take(limit.value)
         .flatMap(s =>
-          DPlace.Id.option(s.id.value).map(id =>
-            (id, WikidataItem.Id(s.id.value.drop(9).toUpperCase), s.importClass.map(c => CatalogRecord.Wikidata.ImportClass(c.value)))
-          )
+          DPlace.Id
+            .option(s.id.value)
+            .map(id =>
+              (
+                id,
+                WikidataItem.Id(s.id.value.drop(9).toUpperCase),
+                s.importClass.map(c => CatalogRecord.Wikidata.ImportClass(c.value))
+              )
+            )
         )
         .toList
 
@@ -75,9 +94,11 @@ object SiteTypeService:
         _.modify(_.sites)
           .using(
             _.map(s =>
-              typed.get(s.id).fold(s)(t =>
-                s.modify(_.siteType).setTo(t.map(x => HeldSite.SiteType(x.value))).modify(_.checkedAt).setTo(Some(at))
-              )
+              typed
+                .get(s.id)
+                .fold(s)(t =>
+                  s.modify(_.siteType).setTo(t.map(x => HeldSite.SiteType(x.value))).modify(_.checkedAt).setTo(Some(at))
+                )
             )
           )
       )

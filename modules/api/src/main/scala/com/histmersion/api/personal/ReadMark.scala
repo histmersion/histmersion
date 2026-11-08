@@ -17,10 +17,10 @@ final case class ReadMark(
     readAt: Option[ReadMark.ReadAt] = None,
     openedAt: Option[ReadMark.OpenedAt] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ReadMark:
-
 
   export com.histmersion.api.library.Title
   type Read = Read.T
@@ -32,4 +32,5 @@ object ReadMark:
 
   final case class Set(kind: ItemKind, id: ItemKey, read: Read, title: Option[com.histmersion.api.library.Title] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema

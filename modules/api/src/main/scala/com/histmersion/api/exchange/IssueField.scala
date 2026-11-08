@@ -9,7 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class IssueField(field: IssueField.Field, left: Option[IssueField.Left], right: Option[IssueField.Right])
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object IssueField:
   type Field = Field.T

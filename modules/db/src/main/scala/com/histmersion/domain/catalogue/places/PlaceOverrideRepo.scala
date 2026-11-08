@@ -28,7 +28,6 @@ private[places] object PlaceOverrideRepo:
   type RemovalReason = RemovalReason.T
   object RemovalReason extends Newtype[String, Pure]
 
-
   final private case class Row(
       label: Row.Label,
       kind: Row.Kind,
@@ -74,54 +73,56 @@ private[places] object PlaceOverrideRepo:
       edit: Place.OverrideEdit,
       toleranceKm: FindingPlacement.Implementation.ToleranceKm
   )(using DbCon): Either[Api.Error, Place.OverrideChanged] =
-    rowOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { before =>
-      val had = linked(id)
-      val done: Either[Api.Error, Unit] = edit match
-        case Place.OverrideEdit.Reset =>
-          // the override goes first: while it exists the trigger would put it back
-          // (a point override's source geometry is put back as it was; `point IS NULL` = the geometry stays)
-          val gone = sql"""DELETE FROM place_overrides WHERE place_id = $id
+    rowOf(id)
+      .toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .flatMap { before =>
+        val had = linked(id)
+        val done: Either[Api.Error, Unit] = edit match
+          case Place.OverrideEdit.Reset =>
+            // the override goes first: while it exists the trigger would put it back
+            // (a point override's source geometry is put back as it was; `point IS NULL` = the geometry stays)
+            val gone = sql"""DELETE FROM place_overrides WHERE place_id = $id
                            RETURNING source_kind, source_period::text, source_start_unknown,
                                      point IS NOT NULL, ST_AsText(source_geom)"""
-            .query[(String, String, Boolean, Boolean, Option[String])]
-            .run()
-            .headOption
-          gone match
-            case None =>
-              Left(
-                Api.Error(
-                  Api.Error.Message(s"'${before.label}' [${id.value}] has no kind, period or point set by hand"),
-                  Some(Api.Error.Code(Write.CodeNotFound))
+              .query[(String, String, Boolean, Boolean, Option[String])]
+              .run()
+              .headOption
+            gone match
+              case None =>
+                Left(
+                  Api.Error(
+                    Api.Error.Message(s"'${before.label}' [${id.value}] has no kind, period or point set by hand"),
+                    Some(Api.Error.Code(Write.CodeNotFound))
+                  )
                 )
-              )
-            case Some((k, p, su, hadPoint, srcGeom)) =>
-              val _ = sql"""UPDATE places SET kind = $k, period = $p::int8range, start_unknown = $su,
+              case Some((k, p, su, hadPoint, srcGeom)) =>
+                val _ = sql"""UPDATE places SET kind = $k, period = $p::int8range, start_unknown = $su,
                               geom = CASE WHEN $hadPoint THEN ST_GeomFromText($srcGeom::text, 4326) ELSE geom END
                             WHERE id = $id""".update.run()
-              Right(())
-        case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.value =>
-          Left(
-            Api.Error(
-              Api.Error.Message(
-                s"'${before.label}' [${id.value}] has a shape, not a point — a point set by hand moves only a place " +
-                  "known by a point"
-              ),
-              Some(Api.Error.Code(Write.CodeInvalid))
+                Right(())
+          case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.value =>
+            Left(
+              Api.Error(
+                Api.Error.Message(
+                  s"'${before.label}' [${id.value}] has a shape, not a point — a point set by hand moves only a place " +
+                    "known by a point"
+                ),
+                Some(Api.Error.Code(Write.CodeInvalid))
+              )
             )
-          )
-        case Place.OverrideEdit.Put(kind, period, reason, point) =>
-          // a side not given keeps what the override had (open, the first time)
-          val hasPeriod = period.isDefined
-          val range = period.map((lo, hi) =>
-            RangeSql.bounds(lo.map(y => DeepTime.SignedYear(y.value)), hi.map(y => DeepTime.SignedYear(y.value)))
-          )
-          val hasLo = period.flatMap(_._1).isDefined
-          val hasHi = period.flatMap(_._2).isDefined
-          val lon = point.map(_.lon)
-          val lat = point.map(_.lat)
-          // a new override remembers what the place says now (the source's); a changed one keeps that —
-          // and the source's geometry is remembered the first time a point is set
-          val _ = sql"""INSERT INTO place_overrides (place_id, kind, period, reason, source_kind, source_period,
+          case Place.OverrideEdit.Put(kind, period, reason, point) =>
+            // a side not given keeps what the override had (open, the first time)
+            val hasPeriod = period.isDefined
+            val range = period.map((lo, hi) =>
+              RangeSql.bounds(lo.map(y => DeepTime.SignedYear(y.value)), hi.map(y => DeepTime.SignedYear(y.value)))
+            )
+            val hasLo = period.flatMap(_._1).isDefined
+            val hasHi = period.flatMap(_._2).isDefined
+            val lon = point.map(_.lon)
+            val lat = point.map(_.lat)
+            // a new override remembers what the place says now (the source's); a changed one keeps that —
+            // and the source's geometry is remembered the first time a point is set
+            val _ = sql"""INSERT INTO place_overrides (place_id, kind, period, reason, source_kind, source_period,
                                                      source_start_unknown, point, source_geom)
                         SELECT p.id, $kind::text,
                                $range::int8range,
@@ -141,45 +142,47 @@ private[places] object PlaceOverrideRepo:
                           source_geom = CASE WHEN place_overrides.point IS NULL THEN EXCLUDED.source_geom
                                              ELSE place_overrides.source_geom END,
                           updated_at = now()""".update.run()
-          // a point set by hand replaces a point only: a shape a source gave since then stays
-          val _ = sql"""UPDATE places p SET kind = coalesce(o.kind, p.kind), period = coalesce(o.period, p.period),
+            // a point set by hand replaces a point only: a shape a source gave since then stays
+            val _ = sql"""UPDATE places p SET kind = coalesce(o.kind, p.kind), period = coalesce(o.period, p.period),
                           start_unknown = CASE WHEN o.period IS NULL THEN p.start_unknown ELSE false END,
                           geom = CASE WHEN o.point IS NOT NULL AND (p.geom IS NULL OR GeometryType(p.geom) = 'POINT')
                                       THEN o.point ELSE p.geom END
                         FROM place_overrides o WHERE o.place_id = p.id AND p.id = $id""".update.run()
-          Right(())
-      done.map { _ =>
-        val _ = FindingPlaceRepo.materialisePlaces(List(id), toleranceKm)
-        val after = rowOf(id).getOrElse(before)
-        val now = linked(id)
-        val lost = sql"""SELECT count(*)::int FROM unnest($had::text[]) AS f(id)
+            Right(())
+        done.map { _ =>
+          val _ = FindingPlaceRepo.materialisePlaces(List(id), toleranceKm)
+          val after = rowOf(id).getOrElse(before)
+          val now = linked(id)
+          val lost = sql"""SELECT count(*)::int FROM unnest($had::text[]) AS f(id)
                           WHERE NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)"""
-          .query[Int]
-          .run()
-          .head
-        def period(start: Option[Row.Start], end: Option[Row.End]) =
-          Place.Overrides.periodText(
-            start.map(s => Year(s.value)),
-            end.map(e => Year(e.value))
-          ).value
-        Place.OverrideChanged(
-          Place.Id(id.value),
-          Place.OverrideChanged.Label(before.label.value),
-          Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
-          Place.OverrideChanged.KindBefore(before.kind.value),
-          Place.OverrideChanged.KindAfter(after.kind.value),
-          Place.OverrideChanged.PeriodBefore(period(before.start, before.end)),
-          Place.OverrideChanged.PeriodAfter(period(after.start, after.end)),
-          Place.OverrideChanged.FindingsBefore(had.size),
-          Place.OverrideChanged.FindingsAfter(now.size),
-          Place.OverrideChanged.Unlocated(lost),
-          before.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
-          before.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
-          after.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
-          after.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value))
-        )
+            .query[Int]
+            .run()
+            .head
+          def period(start: Option[Row.Start], end: Option[Row.End]) =
+            Place.Overrides
+              .periodText(
+                start.map(s => Year(s.value)),
+                end.map(e => Year(e.value))
+              )
+              .value
+          Place.OverrideChanged(
+            Place.Id(id.value),
+            Place.OverrideChanged.Label(before.label.value),
+            Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
+            Place.OverrideChanged.KindBefore(before.kind.value),
+            Place.OverrideChanged.KindAfter(after.kind.value),
+            Place.OverrideChanged.PeriodBefore(period(before.start, before.end)),
+            Place.OverrideChanged.PeriodAfter(period(after.start, after.end)),
+            Place.OverrideChanged.FindingsBefore(had.size),
+            Place.OverrideChanged.FindingsAfter(now.size),
+            Place.OverrideChanged.Unlocated(lost),
+            before.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+            before.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
+            after.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+            after.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value))
+          )
+        }
       }
-    }
 
   private def labelOf(id: BPlaceRow.Id)(using DbCon): Option[BPlaceRow.Label] =
     sql"SELECT label FROM places WHERE id = $id".query[BPlaceRow.Label].run().headOption
@@ -192,57 +195,89 @@ private[places] object PlaceOverrideRepo:
     * asset links move, `from` is deleted and stays an old id of `into`, which no seed import re-creates) and match
     * `into`'s findings again.
     */
-  def merge(from: BPlaceRow.Id, into: BPlaceRow.Id, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using DbCon): Either[Api.Error, Place.Gone] =
+  def merge(from: BPlaceRow.Id, into: BPlaceRow.Id, toleranceKm: FindingPlacement.Implementation.ToleranceKm)(using
+      DbCon
+  ): Either[Api.Error, Place.Gone] =
     (labelOf(from), labelOf(into)) match
-      case (None, _)            => Left(Api.Error(Api.Error.Message(s"No place '${from.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
-      case (_, None)            => Left(Api.Error(Api.Error.Message(s"No place '${into.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
-      case _ if from == into    => Left(Api.Error(Api.Error.Message("a place cannot be merged into itself"), Some(Api.Error.Code(Write.CodeInvalid))))
+      case (None, _) =>
+        Left(Api.Error(Api.Error.Message(s"No place '${from.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      case (_, None) =>
+        Left(Api.Error(Api.Error.Message(s"No place '${into.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      case _ if from == into =>
+        Left(
+          Api.Error(Api.Error.Message("a place cannot be merged into itself"), Some(Api.Error.Code(Write.CodeInvalid)))
+        )
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
-        val _ = PlaceReviewRepo.mergeIn(com.histmersion.domain.catalogue.Place.Id.assume(from.value), com.histmersion.domain.catalogue.Place.Id.assume(into.value))
+        val _ = PlaceReviewRepo.mergeIn(
+          com.histmersion.domain.catalogue.Place.Id.assume(from.value),
+          com.histmersion.domain.catalogue.Place.Id.assume(into.value)
+        )
         val _ = FindingPlaceRepo.materialisePlaces(List(into), toleranceKm)
-        Right(Place.Gone(Place.Id(from.value), Place.Gone.Label(fl.value), Some(Place.Gone.Into(into.value)), Some(Place.Gone.IntoLabel(il.value)), Place.Gone.FindingsBefore(had.size), Place.Gone.FindingsAfter(linked(into).size), Place.Gone.Unlocated(stillLocated(had).value)))
+        Right(
+          Place.Gone(
+            Place.Id(from.value),
+            Place.Gone.Label(fl.value),
+            Some(Place.Gone.Into(into.value)),
+            Some(Place.Gone.IntoLabel(il.value)),
+            Place.Gone.FindingsBefore(had.size),
+            Place.Gone.FindingsAfter(linked(into).size),
+            Place.Gone.Unlocated(stillLocated(had).value)
+          )
+        )
 
   /** Remove place `id` when nothing refers to it — no event, attestation, asset link, child place, name added by hand,
     * nor a finding it is the ONLY place of — and remember the removal, so no seed import brings it back
     * (`place_removals`, V080).
     */
   def remove(id: BPlaceRow.Id, reason: Option[RemovalReason])(using DbCon): Either[Api.Error, Place.Gone] =
-    labelOf(id).toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))).flatMap { label =>
-      def n(q: Frag) = q.query[Int].run().head
-      val refs = List(
-        "event(s)" -> n(sql"SELECT count(*)::int FROM events WHERE place_id = $id"),
-        "attestation(s)" -> n(
-          sql"SELECT count(*)::int FROM attestations WHERE target_type = 'place' AND target_id = $id"
-        ),
-        "asset link(s)" -> n(
-          sql"SELECT count(*)::int FROM asset_links WHERE target_type = 'place' AND target_id = $id"
-        ),
-        "child place(s)" -> n(sql"SELECT count(*)::int FROM place_relations WHERE parent_id = $id"),
-        "name(s) added by hand" -> n(sql"SELECT count(*)::int FROM place_names WHERE place_id = $id AND manual"),
-        "finding(s) it is the only place of" -> n(
-          sql"""SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = $id
+    labelOf(id)
+      .toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .flatMap { label =>
+        def n(q: Frag) = q.query[Int].run().head
+        val refs = List(
+          "event(s)" -> n(sql"SELECT count(*)::int FROM events WHERE place_id = $id"),
+          "attestation(s)" -> n(
+            sql"SELECT count(*)::int FROM attestations WHERE target_type = 'place' AND target_id = $id"
+          ),
+          "asset link(s)" -> n(
+            sql"SELECT count(*)::int FROM asset_links WHERE target_type = 'place' AND target_id = $id"
+          ),
+          "child place(s)" -> n(sql"SELECT count(*)::int FROM place_relations WHERE parent_id = $id"),
+          "name(s) added by hand" -> n(sql"SELECT count(*)::int FROM place_names WHERE place_id = $id AND manual"),
+          "finding(s) it is the only place of" -> n(
+            sql"""SELECT count(*)::int FROM finding_places fp WHERE fp.place_id = $id
               AND NOT EXISTS (SELECT 1 FROM finding_places o WHERE o.finding_id = fp.finding_id AND o.place_id <> $id)"""
-        )
-      ).filter(_._2 > 0)
-      if refs.nonEmpty then
-        Left(
-          Api.Error(
-            Api.Error.Message(
-              s"'${label.value}' [${id.value}] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
-                "merge it into the place it is the same as instead, or move those first"
-            ),
-            Some(Api.Error.Code(Write.CodeInvalid))
           )
-        )
-      else
-        val had = linked(id)
-        val _ = sql"""INSERT INTO place_removals (id, label, reason) VALUES ($id, $label, $reason::text)
+        ).filter(_._2 > 0)
+        if refs.nonEmpty then
+          Left(
+            Api.Error(
+              Api.Error.Message(
+                s"'${label.value}' [${id.value}] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
+                  "merge it into the place it is the same as instead, or move those first"
+              ),
+              Some(Api.Error.Code(Write.CodeInvalid))
+            )
+          )
+        else
+          val had = linked(id)
+          val _ = sql"""INSERT INTO place_removals (id, label, reason) VALUES ($id, $label, $reason::text)
                       ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, reason = EXCLUDED.reason,
                         removed_at = now()""".update.run()
-        val _ = sql"DELETE FROM places WHERE id = $id".update.run()
-        Right(Place.Gone(Place.Id(id.value), Place.Gone.Label(label.value), None, None, Place.Gone.FindingsBefore(had.size), Place.Gone.FindingsAfter(0), Place.Gone.Unlocated(stillLocated(had).value)))
-    }
+          val _ = sql"DELETE FROM places WHERE id = $id".update.run()
+          Right(
+            Place.Gone(
+              Place.Id(id.value),
+              Place.Gone.Label(label.value),
+              None,
+              None,
+              Place.Gone.FindingsBefore(had.size),
+              Place.Gone.FindingsAfter(0),
+              Place.Gone.Unlocated(stillLocated(had).value)
+            )
+          )
+      }
 
   /** The overrides, by place id; `id` narrows to one place. */
   def list(id: Option[BPlaceRow.Id])(using DbCon): List[Place.Override] =

@@ -9,7 +9,7 @@ import com.histmersion.api.Dataset
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
-import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodService, PeriodSources, PeriodsControllers}
+import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodsControllers, PeriodService, PeriodSources}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.JobRepo
@@ -54,8 +54,15 @@ class BootstrapSuite extends DbSuite:
     Files.writeString(d.resolve("periods/periodo-seed.json"), seedText)
     d
 
-  private def bootstrap(dir: Path, net: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))) =
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(InitConfig.DataDir(dir.toString)))
+  private def bootstrap(
+      dir: Path,
+      net: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))
+  ) =
+    val cfg = base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.init)
+      .setTo(base.init.modify(_.dataDir).setTo(InitConfig.DataDir(dir.toString)))
     Bootstrap(Deps(cfg, ds), net)
 
   /** The periods as the server's controllers reach them, over `b`'s service and imports. */
@@ -63,7 +70,8 @@ class BootstrapSuite extends DbSuite:
     private def ctl: PeriodsControllers = PeriodsControllers(b.periods, b.periodImports, WriteGate())
     def seedPeriods(replace: PeriodImports.Replace = PeriodImports.Replace(false)) = ctl.seed(Caller.Local, replace)
     def period(id: HistoricalPeriod.Id) = ctl.period(id)
-    def fetchPeriods(source: PeriodSources.PeriodoUrl, collections: List[PeriodSources.Collections]) = ctl.fetch(Caller.Local, source, collections)
+    def fetchPeriods(source: PeriodSources.PeriodoUrl, collections: List[PeriodSources.Collections]) =
+      ctl.fetch(Caller.Local, source, collections)
 
   private lazy val periods = PeriodService(Transactor(ds))
 
@@ -83,7 +91,8 @@ class BootstrapSuite extends DbSuite:
     assertEquals(r.skippedCount, 2)
     assertEquals(periods.get(HistoricalPeriod.Id("p0m64tdp282")), None)
     val b = bootstrap(dataDir())
-    val lm = b.period(HistoricalPeriod.Id("p0ds9qjh4dh")).fold(e => fail(e.message.value), identity) // Late Minoan (BSA)
+    val lm =
+      b.period(HistoricalPeriod.Id("p0ds9qjh4dh")).fold(e => fail(e.message.value), identity) // Late Minoan (BSA)
     assertEquals(lm.period.period, Period(Year(-1700), Year(-1050)))
     assertEquals(lm.parent.map(_.label), Some("Bronze Age Minoan"))
     assert(lm.children.map(_.label).contains("Late Minoan I"), lm.children.toString)
@@ -97,7 +106,10 @@ class BootstrapSuite extends DbSuite:
       ("Bronze Age", Some("Greece"), Some(PresetRegion.Aegean))
     )
     // ROAD's Eurasia-wide Bronze Age is still a period, but not a preset
-    assertEquals(periods.get(HistoricalPeriod.Id("p0s2rwkwbsz")).map(p => (p.label, p.preset)), Some(("Bronze Age", None)))
+    assertEquals(
+      periods.get(HistoricalPeriod.Id("p0s2rwkwbsz")).map(p => (p.label, p.preset)),
+      Some(("Bronze Age", None))
+    )
 
   test("a second seed is idempotent"):
     val before = periods.count()
@@ -119,7 +131,10 @@ class BootstrapSuite extends DbSuite:
     val bsa = periods.get(HistoricalPeriod.Id("p0ds9qjq7b2")).get
     assertEquals((bsa.parentId, bsa.preset), (None, Some(PresetRegion.Aegean)))
     assertEquals(periods.get(HistoricalPeriod.Id("p0s2rwkwbsz")).flatMap(_.preset), None)
-    assertEquals(periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)).map(_.value: Int), PeriodO.parse(seedText).toOption.get.version.map(_.value: Int))
+    assertEquals(
+      periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)).map(_.value: Int),
+      PeriodO.parse(seedText).toOption.get.version.map(_.value: Int)
+    )
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false)
 
   test("a period fetch never takes a seed preset off the menu"):
@@ -135,7 +150,9 @@ class BootstrapSuite extends DbSuite:
   test("periods fetch periodo: the named collection only, under one authority node; re-runnable"):
     var asked = List.empty[HttpDownload.Url] // a test double is the one place a var is the simplest thing
     val b = bootstrap(dataDir(), url => { asked = asked :+ url; Right(HttpDownload.Text(dump)) })
-    val r = b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).fold(e => fail(e.message.value), identity)
+    val r = b
+      .fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth")))
+      .fold(e => fail(e.message.value), identity)
     assertEquals(asked.map(_.value: String), List(base.periods.periodoUrl.value: String))
     assertEquals(r.periods, 4) // 3 periods + the authority node
     assertEquals(r.roots, 1)
@@ -147,15 +164,29 @@ class BootstrapSuite extends DbSuite:
     assertEquals(periods.get(HistoricalPeriod.Id("zzqauthlba")).flatMap(_.parentId), Some("zzqauthbronze"))
     // somebody moves a period; a re-fetch leaves it where it is
     transact(ds)(sql"UPDATE periods SET parent_id = NULL WHERE id = 'zzqauthiron'".update.run())
-    b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).fold(e => fail(e.message.value), identity)
+    b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth")))
+      .fold(e => fail(e.message.value), identity)
     assertEquals(periods.get(HistoricalPeriod.Id("zzqauthiron")).flatMap(_.parentId), None)
 
   test("periods fetch: an unknown source, a missing collection and a dead network are errors"):
     val b = bootstrap(dataDir())
-    assert(b.fetchPeriods(PeriodSources.PeriodoUrl("chronontology"), Nil).left.exists(_.message.value.contains("unknown period source")))
-    assert(b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqnope"))).left.exists(_.message.value.contains("zzqnope")))
+    assert(
+      b.fetchPeriods(PeriodSources.PeriodoUrl("chronontology"), Nil)
+        .left
+        .exists(_.message.value.contains("unknown period source"))
+    )
+    assert(
+      b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqnope")))
+        .left
+        .exists(_.message.value.contains("zzqnope"))
+    )
     val dead = bootstrap(dataDir(), _ => Left(HttpDownload.Problem("HTTP 503")))
-    assert(dead.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).left.exists(_.message.value.contains("503")))
+    assert(
+      dead
+        .fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth")))
+        .left
+        .exists(_.message.value.contains("503"))
+    )
 
   test("init runs as a job: every step is attempted, a missing gazetteer seed is reported"):
     val b = bootstrap(dataDir())
@@ -171,7 +202,10 @@ class BootstrapSuite extends DbSuite:
     assert(end.progress.exists(_.value.contains("period presets:")), end.toString) // the periods still went in
     assert(Transactor(ds).read(JobRepo.list(None, PageSize(50))).exists(_.id == job.id), "`histmersion jobs` lists it")
     // #770: the job says what it imports from the start; #771: and which period definitions it left out
-    assertEquals(job.detail.flatMap(InitPlan.Detail.of), Some(InitPlan(gazetteer = InitPlan.Gazetteer(true), periodPresets = InitPlan.PeriodPresets(true))))
+    assertEquals(
+      job.detail.flatMap(InitPlan.Detail.of),
+      Some(InitPlan(gazetteer = InitPlan.Gazetteer(true), periodPresets = InitPlan.PeriodPresets(true)))
+    )
     assertEquals(end.detail.flatMap(InitPlan.Detail.of), job.detail.flatMap(InitPlan.Detail.of))
     assertEquals(end.detail.map(SkippedPeriod.SkippedCount.of), Some(2))
     assertEquals(end.detail.toList.flatMap(SkippedPeriod.Skipped.of(_).map(_.id)), List("p0m64tdgpvd", "p0m64tdp282"))

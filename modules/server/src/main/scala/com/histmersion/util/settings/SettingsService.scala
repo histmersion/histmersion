@@ -127,7 +127,9 @@ object SettingsService:
         case None    => Right(ConfigFileState(None, FileVersion.Missing, ConfigFactory.empty, here))
         case Some(t) =>
           try Right(ConfigFileState(Some(t), FileVersion.of(Some(t)), parse(t), here))
-          catch case e: org.ekrich.config.ConfigException => Left(SettingError.Unreadable(SettingError.Unreadable.Why(e.getMessage)))
+          catch
+            case e: org.ekrich.config.ConfigException =>
+              Left(SettingError.Unreadable(SettingError.Unreadable.Why(e.getMessage)))
 
     private def parse(t: ConfigFileState.Text): Config =
       ConfigFactory.parseString(
@@ -174,10 +176,14 @@ object SettingsService:
                       Left(SettingError.Invalid(SettingError.Invalid.Why(e.getMessage)))
                   )
                 _ <- ConfigTextEdit.verify(parsed, here, edited, ConfigTextEdit.intended(edits))
-                _ <- AppConfig.loadWithUserText(env, edited.text.value).left.map(e => SettingError.Invalid(SettingError.Invalid.Why(e.value)))
+                _ <- AppConfig
+                  .loadWithUserText(env, edited.text.value)
+                  .left
+                  .map(e => SettingError.Invalid(SettingError.Invalid.Why(e.value)))
               yield text.set(Some(edited.text))
         yield
-          if edited.changed.isEmpty then WriteOutcome.of(SettingsFile.Shown(path.value), schema, env, current.version, edited, None, notes)
+          if edited.changed.isEmpty then
+            WriteOutcome.of(SettingsFile.Shown(path.value), schema, env, current.version, edited, None, notes)
           else
             WriteOutcome.of(
               SettingsFile.Shown(path.value),

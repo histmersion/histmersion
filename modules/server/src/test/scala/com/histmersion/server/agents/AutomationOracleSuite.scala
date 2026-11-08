@@ -26,7 +26,6 @@ import com.histmersion.domain.automation.Pipeline
 class AutomationOracleSuite extends munit.FunSuite:
   private given CanEqual[Path, Path] = CanEqual.derived
 
-
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
@@ -78,7 +77,8 @@ class AutomationOracleSuite extends munit.FunSuite:
 
   test("workflows.txt: every workflow the engine runs, its roles and the tools its agents may use"):
     val defs = Generated.defs()
-    val agents = defs.agents.sortBy(_.name.value).map(a => s"agent ${a.name}\ttools=${a.tools.map(_.value).mkString(",")}")
+    val agents =
+      defs.agents.sortBy(_.name.value).map(a => s"agent ${a.name}\ttools=${a.tools.map(_.value).mkString(",")}")
     val pipelines = Pipeline.values.toList.map { p =>
       s"workflow ${p.wire}\tv${p.version}\t${p.targetKind.wire}\troles=${p.roles.map(_.wire).mkString(",")}\n  ${p.describe}"
     }

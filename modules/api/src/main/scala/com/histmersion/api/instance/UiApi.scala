@@ -9,7 +9,6 @@ import com.histmersion.api.Api
 
 object UiApi:
 
-
   import UiNotices.{Counters, SeenMark}
 
   lazy val counters: PublicEndpoint[Unit, Api.Error, Counters, Any] =
@@ -20,12 +19,17 @@ object UiApi:
       .in("api" / "ui" / "seen" / path[String]("board"))
       .in(jsonBody[SeenMark])
       .errorOut(seenErrors)
-      .out(jsonBody[Counters])).mapIn[(UiNotices.Board.Wire, SeenMark)]((refactorDecoded: (String, SeenMark)) => (UiNotices.Board.Wire((refactorDecoded)._1), (refactorDecoded)._2))((refactorEncoded: (UiNotices.Board.Wire, SeenMark)) => (((refactorEncoded)._1).value, (refactorEncoded)._2))
+      .out(jsonBody[Counters]))
+      .mapIn[(UiNotices.Board.Wire, SeenMark)]((refactorDecoded: (String, SeenMark)) =>
+        (UiNotices.Board.Wire((refactorDecoded)._1), (refactorDecoded)._2)
+      )((refactorEncoded: (UiNotices.Board.Wire, SeenMark)) => (((refactorEncoded)._1).value, (refactorEncoded)._2))
 
   private def seenErrors =
     oneOf[Api.Error](
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        (Api.Error.hasCode(Api.Error.Code(Backup.CodeMaintenance))).andThen(refactorResult2 => ((refactorResult2) == (true)))
+        (Api.Error
+          .hasCode(Api.Error.Code(Backup.CodeMaintenance)))
+          .andThen(refactorResult2 => ((refactorResult2) == (true)))
       ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )

@@ -17,7 +17,8 @@ final case class EventList(
     offset: Offset = Offset(0),
     next: Option[Offset] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, RowCount(events.size))
 object EventList:
   type Limit = Limit.T
@@ -25,6 +26,10 @@ object EventList:
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
 
-
   def of(total: Total, rows: List[EventSummary], offset: UnreadPage.Offset): EventList =
-    EventList(RowCount((total).value), rows, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next)
+    EventList(
+      RowCount((total).value),
+      rows,
+      Offset((offset).value),
+      OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
+    )

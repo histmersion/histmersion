@@ -170,14 +170,18 @@ final class Bootstrap(
               .applySeed(replace = PeriodImports.Replace(false))
               .map(withSkipped)
               .map(r =>
-                s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}, ${Plural.count(Plural.Count(r.presets.value.toLong), Plural.CountSingular("preset"))}" + skippedNote(r)
+                s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}, ${Plural.count(Plural.Count(r.presets.value.toLong), Plural.CountSingular("preset"))}" + skippedNote(
+                  r
+                )
               )
               .left
               .map(_.value)
           )
         )
       ).flatten ++ p.fetch.map(s =>
-        s"${if p.check.value then "dry run of" else "fetch"} $s" -> (() => fetchSource(s.value, withSkipped, p.check.value, note))
+        s"${if p.check.value then "dry run of" else "fetch"} $s" -> (() =>
+          fetchSource(s.value, withSkipped, p.check.value, note)
+        )
       )
     val results = steps.map { (name, step) =>
       if maintenance.active then name -> Left("a restore started; skipped")
@@ -230,7 +234,9 @@ final class Bootstrap(
           .left
           .map(_.value)
           .map(periods)
-          .map(r => s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}${skippedNote(r)}")
+          .map(r =>
+            s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}${skippedNote(r)}"
+          )
       case NaturalEarthLand.name =>
         gazetteerImports
           .land(dryRun = GazetteerControllers.DryRun(false))

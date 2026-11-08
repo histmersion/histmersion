@@ -63,8 +63,10 @@ object CitationService:
     * article is stored, so a parked edge's target is unresolved.
     */
   final class InMemory(state: AtomicReference[LibraryState]) extends CitationService:
-    private def wire(kind: com.histmersion.api.library.Edge.Kind) = com.histmersion.api.library.Edge.Kind.wireOf(kind).value
-    private def stored(st: LibraryState, ck: com.histmersion.api.library.Citekey) = st.sources.get(LibraryState.SourcesKey(ck.value)).map(_.source)
+    private def wire(kind: com.histmersion.api.library.Edge.Kind) =
+      com.histmersion.api.library.Edge.Kind.wireOf(kind).value
+    private def stored(st: LibraryState, ck: com.histmersion.api.library.Citekey) =
+      st.sources.get(LibraryState.SourcesKey(ck.value)).map(_.source)
 
     def neighbors(citekey: Citekey, kinds: List[Edge.Kind.Wire]): List[NeighborRow] =
       val st = state.get
@@ -72,13 +74,17 @@ object CitationService:
       def wanted(kind: com.histmersion.api.library.Edge.Kind) = kinds.isEmpty || kinds.exists(_.value == wire(kind))
       def source(ck: com.histmersion.api.library.Citekey) = stored(st, ck)
       val out = st.edges.toList.filter(e => e.src == self && wanted(e.kind)).flatMap { e =>
-        source(e.dst).map(s => NeighborRow(NeighborRow.Direction("out"), e.kind, e.dst, Some(s.title), Some(s.status), NeighborTarget.Source))
+        source(e.dst).map(s =>
+          NeighborRow(NeighborRow.Direction("out"), e.kind, e.dst, Some(s.title), Some(s.status), NeighborTarget.Source)
+        )
       }
       val parked = st.parked.toList
         .filter(e => e.src == self && wanted(e.kind))
         .map(e => NeighborRow(NeighborRow.Direction("out"), e.kind, e.dst, None, None, NeighborTarget.Unresolved))
       val in = st.edges.toList.filter(e => e.dst == self && wanted(e.kind)).flatMap { e =>
-        source(e.src).map(s => NeighborRow(NeighborRow.Direction("in"), e.kind, e.src, Some(s.title), Some(s.status), NeighborTarget.Source))
+        source(e.src).map(s =>
+          NeighborRow(NeighborRow.Direction("in"), e.kind, e.src, Some(s.title), Some(s.status), NeighborTarget.Source)
+        )
       }
       (out ++ parked ++ in).sortBy(r => (r.direction.value, wire(r.kind), r.citekey.value))
 
@@ -112,18 +118,32 @@ object CitationService:
         root,
         Source.Graph.DepthCount(maxDepth),
         nodes.toList,
-        links.toList.filter(l => ids(l.source) && ids(l.target)).sortBy(l => (l.source.value, l.target.value, wire(l.kind)))
+        links.toList
+          .filter(l => ids(l.source) && ids(l.target))
+          .sortBy(l => (l.source.value, l.target.value, wire(l.kind)))
       )
 
     def contradictions(citekey: Option[Citekey], since: Option[Since]): ContradictionsResult =
       val st = state.get
-      def row(ck: com.histmersion.api.library.Citekey, direction: ContradictionRow.Direction.Wire, kind: com.histmersion.api.library.Edge.Kind, other: com.histmersion.api.library.Citekey): Option[ContradictionRow] =
+      def row(
+          ck: com.histmersion.api.library.Citekey,
+          direction: ContradictionRow.Direction.Wire,
+          kind: com.histmersion.api.library.Edge.Kind,
+          other: com.histmersion.api.library.Citekey
+      ): Option[ContradictionRow] =
         for s <- stored(st, ck)
         yield
           val o = stored(st, other)
           ContradictionRow(
-            ck, s.title, s.year, s.status, Some(direction), Some(kind),
-            o.map(_.citekey), o.map(_.title), o.flatMap(_.year),
+            ck,
+            s.title,
+            s.year,
+            s.status,
+            Some(direction),
+            Some(kind),
+            o.map(_.citekey),
+            o.map(_.title),
+            o.flatMap(_.year),
             Some(o.fold(Source.Status.Unassessed)(_.status))
           )
       val disagreeing = st.edges.toList.filter(e => Disagreeing(e.kind))
@@ -144,7 +164,8 @@ object CitationService:
             .filter(r => since.forall(y => r.otherYear.forall(_.value >= y.value)))
             .sortBy(r => (r.citekey.value, r.direction.map(_.value), r.kind.map(wire), r.otherCitekey.map(_.value)))
           val touched = disagreeing.flatMap(e => List(e.src, e.dst)).toSet
-          val byStatus = st.sources.values.toList.map(_.source)
+          val byStatus = st.sources.values.toList
+            .map(_.source)
             .filter(s => DisagreeingStatuses(s.status) && !touched(s.citekey))
             .sortBy(_.citekey.value)
             .map(s => ContradictionRow(s.citekey, s.title, s.year, s.status, None, None, None, None, None, None))

@@ -11,10 +11,13 @@ import com.raquo.laminar.api.L.*
   */
 object RowActions:
 
-
   def apply(ref: ItemRef, href: ItemRef.Href, byline: String = ""): Modifier[HtmlElement] =
     List(
       cls("has-actions") := true,
       ContextMenu.on(ContextMenu.OnTitle(s"Actions: ${ref.title}"), () => ItemMenu.entries(ref, byline)),
-      div(cls := "row-actions", ItemActions.bookmarkButton(ref, compact = ItemActions.BookmarkButtonCompact(true)), NewTabLink(NewTabLink.Href(href.value), NewTabLink.Label(ref.title.value)))
+      div(
+        cls := "row-actions",
+        ItemActions.bookmarkButton(ref, compact = ItemActions.BookmarkButtonCompact(true)),
+        NewTabLink(NewTabLink.Href(href.value), NewTabLink.Label(ref.title.value))
+      )
     )

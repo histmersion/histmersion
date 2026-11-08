@@ -27,10 +27,9 @@ object PlaceHover:
   object PlaceKind extends Newtype[String, Pure]
   type PointerType = PointerType.T
   object PointerType extends Newtype[String, Pure]
-  export ShapeHit.{Set as ShapeSetName}
+  export ShapeHit.Set as ShapeSetName
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
-
 
   private var lastX: Preview.ScreenPixels = Preview.ScreenPixels(0)
   private var lastY: Preview.ScreenPixels = Preview.ScreenPixels(0)
@@ -41,10 +40,16 @@ object PlaceHover:
   private var hoveredShape: Option[ShapeHit] = None
 
   private val intent =
-    HoverIntent[Preview.Target](HoverIntent.DelayMs(Layout.hoverDelayMs.value), t => if hovered.contains(t) then Preview.showAt(t, lastX, lastY))
+    HoverIntent[Preview.Target](
+      HoverIntent.DelayMs(Layout.hoverDelayMs.value),
+      t => if hovered.contains(t) then Preview.showAt(t, lastX, lastY)
+    )
 
   /** A set of shapes whose shapes are places: `place(id)` is the place a shape stands for. */
-  final case class Places(place: PlaceId => Option[(PlaceId, UiLabels.Text, PlaceKind)], asOf: () => Option[Years.Astronomical])
+  final case class Places(
+      place: PlaceId => Option[(PlaceId, UiLabels.Text, PlaceKind)],
+      asOf: () => Option[Years.Astronomical]
+  )
 
   private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[ShapeHit.Set, Places]
 
@@ -166,7 +171,13 @@ object PlaceHover:
   /** A place drawn as a MARKER (a point-only region's name, a chosen place's point): its card on hover, a click (or
     * Enter) chooses it. `asOf` is the year the card reads the hierarchy at.
     */
-  def bind(m: DomMarker, id: PlaceHover.PlaceId, label: UiLabels.Text, kind: PlaceKind, asOf: () => Option[Years.Astronomical]): Unit =
+  def bind(
+      m: DomMarker,
+      id: PlaceHover.PlaceId,
+      label: UiLabels.Text,
+      kind: PlaceKind,
+      asOf: () => Option[Years.Astronomical]
+  ): Unit =
     def target = Preview.Target.Place(id, asOf())
     def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
     m.handlers = new MarkerHandlers:
@@ -191,7 +202,13 @@ object PlaceHover:
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
     * it to the shape under it.
     */
-  def bindName(m: DomMarker, id: PlaceHover.PlaceId, label: UiLabels.Text, kind: PlaceKind, asOf: () => Option[Years.Astronomical]): Unit =
+  def bindName(
+      m: DomMarker,
+      id: PlaceHover.PlaceId,
+      label: UiLabels.Text,
+      kind: PlaceKind,
+      asOf: () => Option[Years.Astronomical]
+  ): Unit =
     def target = Preview.Target.Place(id, asOf())
     val el = Option(m.el.firstElementChild).getOrElse(m.el)
     m.handlers = new MarkerHandlers:
@@ -200,7 +217,13 @@ object PlaceHover:
       override def key(e: dom.KeyboardEvent): Unit =
         if PinRules.activates(PinRules.KeyName(e.key)) then
           e.preventDefault()
-          settle(target, PlacesInput.toggleFromMap(id, label, kind), anchorOn(el), Some(el), keyboard = Preview.KeyboardDriven(true))
+          settle(
+            target,
+            PlacesInput.toggleFromMap(id, label, kind),
+            anchorOn(el),
+            Some(el),
+            keyboard = Preview.KeyboardDriven(true)
+          )
     button(el, s"${label.value} — show only this place and pin its card")
 
   private def button(el: dom.Element, label: String): Unit =
@@ -270,7 +293,13 @@ object PlaceHover:
     * the point clicked, or on the focused element with the focus moving in; activating the chosen place again lets it
     * go and closes the card.
     */
-  def activatePlace(id: PlaceHover.PlaceId, label: UiLabels.Text, kind: PlaceKind, asOf: () => Option[Years.Astronomical], how: Activation): Unit =
+  def activatePlace(
+      id: PlaceHover.PlaceId,
+      label: UiLabels.Text,
+      kind: PlaceKind,
+      asOf: () => Option[Years.Astronomical],
+      how: Activation
+  ): Unit =
     val t = Preview.Target.Place(id, asOf())
     val on = PlacesInput.toggleFromMap(id, label, kind)
     val anchor = (how.keyboard.value, how.element, how.latlng) match

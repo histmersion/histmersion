@@ -10,7 +10,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * saying how to read on: `resultMaxChars` for any result, `bodyChars` the body slice a `get_source section=body`
   * without `chars` reads, `queryMaxRows` the rows of a `query`.
   */
-final case class AgentToolsConfig(resultMaxChars: AgentToolsConfig.ResultMaxChars, bodyChars: AgentToolsConfig.BodyChars, queryMaxRows: AgentToolsConfig.QueryMaxRows) derives ConfigReader
+final case class AgentToolsConfig(
+    resultMaxChars: AgentToolsConfig.ResultMaxChars,
+    bodyChars: AgentToolsConfig.BodyChars,
+    queryMaxRows: AgentToolsConfig.QueryMaxRows
+) derives ConfigReader
 object AgentToolsConfig:
   /** No cap (0 = off): what a tool returns is what the handler returned. */
   type ResultMaxChars = ResultMaxChars.T

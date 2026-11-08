@@ -13,7 +13,10 @@ class ControlsSuite extends munit.FunSuite:
   // ── playback speed ─────────────────────────────────────────────────────────────────────────────
 
   test("the speed menu offers the speeds there are, slowest first, and reads them back"):
-    assertEquals(TimelinePlayback.Speeds.map(TimelinePlayback.speedLabel).map(_.value), List("0.25×", "0.5×", "1×", "2×", "4×"))
+    assertEquals(
+      TimelinePlayback.Speeds.map(TimelinePlayback.speedLabel).map(_.value),
+      List("0.25×", "0.5×", "1×", "2×", "4×")
+    )
     assertEquals(TimelinePlayback.Speeds.map(_.value), TimelinePlayback.Speeds.map(_.value).sorted)
     TimelinePlayback.Speeds.foreach(s =>
       assertEquals(TimelinePlayback.parseSpeed(TimelinePlayback.speedLabel(s)), Some(s))
@@ -41,11 +44,41 @@ class ControlsSuite extends munit.FunSuite:
     )
 
   private val presets = List(
-    preset(HistoricalPeriod.Id("p1"), HistoricalPeriod.Label("Bronze Age"), Period(Year(-3600), Year(-2800)), PresetRegion.LevantMesopotamia, HistoricalPeriod.Region("Levant")),
-    preset(HistoricalPeriod.Id("p2"), HistoricalPeriod.Label("Bronze Age"), Period(Year(-1700), Year(-900)), PresetRegion.Scandinavia, HistoricalPeriod.Region("Denmark")),
-    preset(HistoricalPeriod.Id("p3"), HistoricalPeriod.Label("Neolithic"), Period(Year(-3900), Year(-3100)), PresetRegion.Scandinavia, HistoricalPeriod.Region("Denmark")),
-    preset(HistoricalPeriod.Id("p4"), HistoricalPeriod.Label("Bronze Age"), Period(Year(-3200), Year(-2400)), PresetRegion.Aegean, HistoricalPeriod.Region("Greece")),
-    HistoricalPeriod(HistoricalPeriod.Id("p5"), HistoricalPeriod.Label("Bronze Age"), Some(HistoricalPeriod.Authority("PeriodO p5 · ROAD")), Period(Year(-3300), Year(-1500)), Some(HistoricalPeriod.Region("Eurasia")))
+    preset(
+      HistoricalPeriod.Id("p1"),
+      HistoricalPeriod.Label("Bronze Age"),
+      Period(Year(-3600), Year(-2800)),
+      PresetRegion.LevantMesopotamia,
+      HistoricalPeriod.Region("Levant")
+    ),
+    preset(
+      HistoricalPeriod.Id("p2"),
+      HistoricalPeriod.Label("Bronze Age"),
+      Period(Year(-1700), Year(-900)),
+      PresetRegion.Scandinavia,
+      HistoricalPeriod.Region("Denmark")
+    ),
+    preset(
+      HistoricalPeriod.Id("p3"),
+      HistoricalPeriod.Label("Neolithic"),
+      Period(Year(-3900), Year(-3100)),
+      PresetRegion.Scandinavia,
+      HistoricalPeriod.Region("Denmark")
+    ),
+    preset(
+      HistoricalPeriod.Id("p4"),
+      HistoricalPeriod.Label("Bronze Age"),
+      Period(Year(-3200), Year(-2400)),
+      PresetRegion.Aegean,
+      HistoricalPeriod.Region("Greece")
+    ),
+    HistoricalPeriod(
+      HistoricalPeriod.Id("p5"),
+      HistoricalPeriod.Label("Bronze Age"),
+      Some(HistoricalPeriod.Authority("PeriodO p5 · ROAD")),
+      Period(Year(-3300), Year(-1500)),
+      Some(HistoricalPeriod.Region("Eurasia"))
+    )
   )
 
   test("presets are grouped by region, each region oldest first; a period without a heading is not offered"):

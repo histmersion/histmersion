@@ -25,7 +25,15 @@ class EnvironmentSuite extends munit.FunSuite:
 
   test("the environment of a load holds what the load read"):
     val loaded = Environment.of(ConfigFactory.parseMap(Map("HOME" -> "/home/ada", "N" -> "3").asJava))
-    assertEquals(loaded, Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/ada"), Environment.VariablesKey("N") -> Environment.VariablesValue("3"))))
+    assertEquals(
+      loaded,
+      Environment(
+        Map(
+          Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/ada"),
+          Environment.VariablesKey("N") -> Environment.VariablesValue("3")
+        )
+      )
+    )
 
   test("the paths of one environment are the pure resolver's"):
     val paths = UserPaths(env, UserPaths.OsName("Linux"))

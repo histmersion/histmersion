@@ -10,15 +10,16 @@ import com.histmersion.api.jobs.JobKinds
 
 object AgentScheduler:
 
-
-  final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe("")) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = StrategyLine.Describe(""))
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object StrategyLine:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
     type Describe = Describe.T
     object Describe extends Newtype[String, Pure]
-
 
   final case class Started(
       item: Started.Item,
@@ -29,7 +30,8 @@ object AgentScheduler:
       goal: Option[Goal.Slug] = None,
       why: Started.Why = Started.Why("")
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Started:
     type Item = Item.T
@@ -45,7 +47,6 @@ object AgentScheduler:
     type Why = Why.T
     object Why extends Newtype[String, Pure]
 
-
   final case class Waiting(
       item: Waiting.Item,
       manager: Waiting.Manager,
@@ -60,7 +61,8 @@ object AgentScheduler:
       behind: List[Waiting.Behind] = Nil,
       position: Waiting.Position = Waiting.Position(0)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Waiting:
     type Item = Item.T
@@ -86,8 +88,10 @@ object AgentScheduler:
     type Position = Position.T
     object Position extends Newtype[Int, Pure]
 
-
-  final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = PoolUse.Used(0), cap: PoolUse.Cap = PoolUse.Cap(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = PoolUse.Used(0), cap: PoolUse.Cap = PoolUse.Cap(0))
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object PoolUse:
     type Pool = Pool.T
@@ -97,7 +101,6 @@ object AgentScheduler:
     type Cap = Cap.T
     object Cap extends Newtype[Int, Pure]
 
-
   final case class TypeLine(
       jobType: TypeLine.JobType,
       label: TypeLine.Label = TypeLine.Label(""),
@@ -106,7 +109,8 @@ object AgentScheduler:
       recent: TypeLine.Recent = TypeLine.Recent(0),
       waiting: TypeLine.Waiting = TypeLine.Waiting(0)
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object TypeLine:
     type JobType = JobKinds.Wire
@@ -121,7 +125,6 @@ object AgentScheduler:
     object Recent extends Newtype[Int, Pure]
     type Waiting = Waiting.T
     object Waiting extends Newtype[Int, Pure]
-
 
   final case class SchedulerStatus(
       strategy: SchedulerStatus.Strategy,
@@ -141,7 +144,8 @@ object AgentScheduler:
       settings: List[SchedulerStatus.Settings] = Nil,
       changes: List[SchedulerStatus.Changes] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object SchedulerStatus:
     type Strategy = Strategy.T
@@ -167,17 +171,16 @@ object AgentScheduler:
     type Changes = Changes.T
     object Changes extends Newtype[String, Pure]
 
-
   final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object SchedulerSet:
     type Strategy = Strategy.T
     object Strategy extends Newtype[String, Pure]
     type By = By.T
     object By extends Newtype[String, Pure]
-
 
   final case class WhyInfo(
       item: WhyInfo.Item,
@@ -192,7 +195,8 @@ object AgentScheduler:
       run: Option[WhyInfo.Run] = None,
       approval: Option[WhyInfo.Approval] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object WhyInfo:
     type Item = Item.T
@@ -218,7 +222,6 @@ object AgentScheduler:
     type Approval = Approval.T
     object Approval extends Newtype[Long, Pure]
 
-
   object Code:
     val Person = "person"
     val Held = "held"
@@ -234,9 +237,13 @@ object AgentScheduler:
     { val refactorTuple3 = "manager-cap" -> "Manager is full"; (Waiting.Code(refactorTuple3._1), (refactorTuple3._2)) },
     { val refactorTuple4 = "blocked" -> "Blocked"; (Waiting.Code(refactorTuple4._1), (refactorTuple4._2)) },
     { val refactorTuple5 = "busy" -> "Busy"; (Waiting.Code(refactorTuple5._1), (refactorTuple5._2)) },
-    { val refactorTuple6 = "budget" -> "Spending cap reached"; (Waiting.Code(refactorTuple6._1), (refactorTuple6._2)) },
-    { val refactorTuple7 = "drain" -> "Finishing current work, then pausing"; (Waiting.Code(refactorTuple7._1), (refactorTuple7._2)) },
-    { val refactorTuple21 = Code.Person -> "Needs your decision"; (Waiting.Code(refactorTuple21._1), (refactorTuple21._2)) },
+    { val refactorTuple6 = "budget" -> "Spending cap reached"; (Waiting.Code(refactorTuple6._1), (refactorTuple6._2)) }, {
+      val refactorTuple7 = "drain" -> "Finishing current work, then pausing";
+      (Waiting.Code(refactorTuple7._1), (refactorTuple7._2))
+    }, {
+      val refactorTuple21 = Code.Person -> "Needs your decision";
+      (Waiting.Code(refactorTuple21._1), (refactorTuple21._2))
+    },
     { val refactorTuple22 = Code.Held -> "Held by a person"; (Waiting.Code(refactorTuple22._1), (refactorTuple22._2)) },
     { val refactorTuple23 = Code.NotDue -> "Not due yet"; (Waiting.Code(refactorTuple23._1), (refactorTuple23._2)) },
     { val refactorTuple11 = Code.Running -> "Running"; (Waiting.Code(refactorTuple11._1), (refactorTuple11._2)) },

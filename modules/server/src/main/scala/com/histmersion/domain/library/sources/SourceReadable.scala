@@ -29,9 +29,15 @@ final class SourceReadable(db: Transactor) extends Readable:
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
       val rows =
-        (Sql.raw(Sql.Text("SELECT i.citekey, i.title, i.authors, i.year, i.status, lower(i.period), upper(i.period) - 1")) ++
+        (Sql.raw(
+          Sql.Text("SELECT i.citekey, i.title, i.authors, i.year, i.status, lower(i.period), upper(i.period) - 1")
+        ) ++
           notRead(read) ++
-          Sql.of(Sql.Text(" ORDER BY lower(i.title), i.citekey LIMIT ? OFFSET ?"), Param.I(Param.I.V(size.value)), Param.I(Param.I.V(from.value)))).frag
+          Sql.of(
+            Sql.Text(" ORDER BY lower(i.title), i.citekey LIMIT ? OFFSET ?"),
+            Param.I(Param.I.V(size.value)),
+            Param.I(Param.I.V(from.value))
+          )).frag
           .query[(String, String, List[String], Option[Int], Option[String], Option[Long], Option[Long])]
           .run()
           .toList
@@ -50,7 +56,6 @@ final class SourceReadable(db: Transactor) extends Readable:
         ),
         UnreadItems.Total(total)
       )
-
 
 object SourceReadable:
   type RowStart = RowStart.T
@@ -72,7 +77,9 @@ object SourceReadable:
       title,
       authors.map(a => AuthorName(a.value)),
       year,
-      status.flatMap(w => summon[WireEnumValues[Source.Status]].fromWire(WireEnumValues.Wire(w.value))).map(s => UnreadItem.Status(s.wire.value)),
+      status
+        .flatMap(w => summon[WireEnumValues[Source.Status]].fromWire(WireEnumValues.Wire(w.value)))
+        .map(s => UnreadItem.Status(s.wire.value)),
       start.map(y => Year(y.value.toInt)),
       end.map(y => Year(y.value.toInt))
     )

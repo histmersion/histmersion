@@ -30,7 +30,8 @@ object AgentRuntime:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-  def parse(s: Wire): Option[AgentRuntime] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
+  def parse(s: Wire): Option[AgentRuntime] =
+    values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 
   /** The runtimes the generator writes a tree for (the API reads the definitions in process). */
   val Generated: List[AgentRuntime] = List(ClaudeCode, Codex, Opencode)

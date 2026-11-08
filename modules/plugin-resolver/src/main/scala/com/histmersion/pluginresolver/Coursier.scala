@@ -28,15 +28,16 @@ final class Coursier(repositories: List[RepositoryUrl], cache: Option[Path]):
       .withDependencies(roots.map(c => coursierapi.Dependency.of(module(c.key), c.version.value))*)
       .withResolutionParams(params)
       .withCache(cache.foldLeft(Cache.create().withLogger(Logger.nop()))((c, dir) => c.withLocation(dir.toFile)))
-    Try(fetch.fetchResult()).toEither.left.map(e => Resolver.Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))).flatMap {
-      result =>
+    Try(fetch.fetchResult()).toEither.left
+      .map(e => Resolver.Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))
+      .flatMap { result =>
         val jars = result.getArtifacts.asScala.toList.map(e => e.getKey.getUrl -> e.getValue.toPath)
         traverse(result.getDependencies.asScala.toList) { d =>
           ModuleCoordinates
             .parse(ModuleCoordinates.Text(s"${d.getModule.getOrganization}:${d.getModule.getName}:${d.getVersion}"))
             .map(c => c -> jars.collectFirst { case (url, file) if url.endsWith((Coursier.jarPath(c)).value) => file })
         }.map(_.distinctBy(_._1))
-    }
+      }
 
   private def module(k: ModuleKey): Module = Module.of(k.group.value, k.artifact.value)
 

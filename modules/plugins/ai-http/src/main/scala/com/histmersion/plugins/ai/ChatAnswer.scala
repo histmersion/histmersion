@@ -18,8 +18,16 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[ChatAnswer.Problem, AiTurn] =
-    if (status).value / 100 != 2 then Left(ChatAnswer.Problem((ChatAnswer.errorMessage(ChatAnswer.Status((status).value), ChatAnswer.Body((body).value))).value))
-    else decode((body).value)(using ChatAnswer.response).left.map((refactorCallback => ChatAnswer.Problem(refactorCallback.getMessage)))
+    if (status).value / 100 != 2 then
+      Left(
+        ChatAnswer.Problem(
+          (ChatAnswer.errorMessage(ChatAnswer.Status((status).value), ChatAnswer.Body((body).value))).value
+        )
+      )
+    else
+      decode((body).value)(using ChatAnswer.response).left.map(
+        (refactorCallback => ChatAnswer.Problem(refactorCallback.getMessage))
+      )
 
 object ChatAnswer:
   type FinishReason = FinishReason.T
@@ -104,12 +112,13 @@ object ChatAnswer:
     yield (AiTool.Call.Input(args), name.map(AiTool.Call.Tool(_)))
   }
 
-  private val toolCall: Decoder[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))] = Decoder.instance { c =>
-    for
-      id <- c.downField("id").as[Option[String]]
-      f <- c.downField("function").as(using function)
-    yield (id.map(AiTool.Call.Id(_)), f)
-  }
+  private val toolCall: Decoder[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))] =
+    Decoder.instance { c =>
+      for
+        id <- c.downField("id").as[Option[String]]
+        f <- c.downField("function").as(using function)
+      yield (id.map(AiTool.Call.Id(_)), f)
+    }
 
   private val audio: Decoder[Unit] = product { c =>
     for
@@ -125,7 +134,10 @@ object ChatAnswer:
     for
       content <- orDefault(c.downField("content"), "")
       _ <- c.downField("refusal").as[Option[String]]
-      calls <- orDefault(c.downField("tool_calls"), Seq.empty[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))])
+      calls <- orDefault(
+        c.downField("tool_calls"),
+        Seq.empty[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))]
+      )
       _ <- c.downField("role").as[String]
       _ <- c.downField("function_call").as(using Decoder.decodeOption(using function))
       _ <- c.downField("audio").as(using Decoder.decodeOption(using audio))
@@ -193,11 +205,11 @@ object ChatAnswer:
         first.map(_._1).getOrElse(AiTurn.Text("")),
         first.map(_._2).getOrElse(Nil),
         first.map(_._3) match
-          case None                                                                 => AiStop.EndTurn
-          case Some(reason) if reason.value == "stop"                               => AiStop.EndTurn
+          case None                                                                             => AiStop.EndTurn
+          case Some(reason) if reason.value == "stop"                                           => AiStop.EndTurn
           case Some(reason) if reason.value == "tool_calls" || reason.value == "function_calls" => AiStop.ToolUse
-          case Some(reason) if reason.value == "length"                             => AiStop.MaxTokens
-          case Some(_)                                                              => AiStop.Other
+          case Some(reason) if reason.value == "length"                                         => AiStop.MaxTokens
+          case Some(_)                                                                          => AiStop.Other
         ,
         Some(u),
         Some(AiTurn.ServedBy(model))

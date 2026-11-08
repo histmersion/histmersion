@@ -14,7 +14,10 @@ class SafePathSuite extends munit.FunSuite:
   private val base = Some(SafePath.Base("/srv/corpus"))
 
   test("a path inside the corpus resolves"):
-    assertEquals(SafePath.confine(base, SafePath.Candidate("/srv/corpus/sources")).map(_.toString), Right("/srv/corpus/sources"))
+    assertEquals(
+      SafePath.confine(base, SafePath.Candidate("/srv/corpus/sources")).map(_.toString),
+      Right("/srv/corpus/sources")
+    )
 
   test("a RELATIVE path is resolved against the corpus, not the process's cwd"):
     assertEquals(SafePath.confine(base, SafePath.Candidate("sources")).map(_.toString), Right("/srv/corpus/sources"))

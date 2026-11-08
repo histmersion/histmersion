@@ -28,4 +28,9 @@ object AssetMergeRules extends MergeRules:
       in: MergePlanner.Input,
       settings: MergeSettings
   )(using DbCon): MergePlanner.Input =
-    in.modify(_.labels.assets).setTo(AssetBundleRepo.namesHere(localized.assets.map(_.sourceUid)).map((key, uid) => (key._1, Bundle.Asset.Name(key._2.value)) -> uid))
+    in.modify(_.labels.assets)
+      .setTo(
+        AssetBundleRepo
+          .namesHere(localized.assets.map(_.sourceUid))
+          .map((key, uid) => (key._1, Bundle.Asset.Name(key._2.value)) -> uid)
+      )

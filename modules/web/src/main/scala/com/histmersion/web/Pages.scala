@@ -53,13 +53,19 @@ object Pages:
   private def page(ui: UiConfig, r: Route, search: UrlQuery): HtmlElement = r match
     case Route.Explore     => div()
     case Route.Library(s)  => libraryPage(ui, s)
-    case Route.Settings(s) => layout(UiLabels.Text("Settings sections"), settingsSide(s), Some(s.label), settings(ui, s))
-    case Route.Setup       => SetupPage.element(ui)
-    case Route.Place(id)   => single(placePage(id))
-    case Route.Event(id)   => single(eventPage(id))
+    case Route.Settings(s) =>
+      layout(UiLabels.Text("Settings sections"), settingsSide(s), Some(s.label), settings(ui, s))
+    case Route.Setup                        => SetupPage.element(ui)
+    case Route.Place(id)                    => single(placePage(id))
+    case Route.Event(id)                    => single(eventPage(id))
     case Route.Source(_) | Route.Article(_) => single(p(cls := "muted", "Loading…"))
     case _                                  =>
-      layout(UiLabels.Text("Research sections"), researchSide(ui, r), None, research(ui, r, ActivityView.param(search, ActivityView.ParamName("goal")).map(g => Goal.Slug(g.value))))
+      layout(
+        UiLabels.Text("Research sections"),
+        researchSide(ui, r),
+        None,
+        research(ui, r, ActivityView.param(search, ActivityView.ParamName("goal")).map(g => Goal.Slug(g.value)))
+      )
 
   // ── the frame ───────────────────────────────────────────────────────────────────────────────────
 
@@ -112,7 +118,10 @@ object Pages:
             )
           )
         ),
-      child.maybe <-- c.map(Notices.spoken).distinct.map(s => Option.when(s.value.nonEmpty)(span(cls := "sr-only", s", ${s.value}")))
+      child.maybe <-- c
+        .map(Notices.spoken)
+        .distinct
+        .map(s => Option.when(s.value.nonEmpty)(span(cls := "sr-only", s", ${s.value}")))
     )
 
   // ── Library ─────────────────────────────────────────────────────────────────────────────────────
@@ -174,7 +183,8 @@ object Pages:
     case Route.Job(id)     => item(r, jobPage(id))
     case _                 => notFound
 
-  private def section(heading: UiLabels.Text, body: HtmlElement): HtmlElement = div(h1(cls := "page-title", heading.value), body)
+  private def section(heading: UiLabels.Text, body: HtmlElement): HtmlElement =
+    div(h1(cls := "page-title", heading.value), body)
 
   private def agentsOff(text: UiLabels.Text): HtmlElement =
     p(cls := "muted", text.value, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
@@ -240,7 +250,9 @@ object Pages:
   private def jobPage(id: JobId): HtmlElement =
     val job = Var(Option.empty[Either[String, JobInfo]])
     div(
-      onMountCallback(_ => ApiClient.job(JobInfo.Id(id.value)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
+      onMountCallback(_ =>
+        ApiClient.job(JobInfo.Id(id.value)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))
+      ),
       child <-- job.signal.map {
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
@@ -267,7 +279,10 @@ object Pages:
     ActivityView.actions(e) match
       case Nil => div()
       case _   =>
-        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(Route.Job.Id(j.id.value)), push = Router.Push(false))))
+        ul(
+          cls := "activity-list job-controls",
+          ActivityView.row(e, () => Router.go(Route.Job(Route.Job.Id(j.id.value)), push = Router.Push(false)))
+        )
 
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
 

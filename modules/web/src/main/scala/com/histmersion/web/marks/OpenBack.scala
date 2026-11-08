@@ -25,8 +25,13 @@ object OpenBack:
         Router.go(Route.Library(section), search = LibraryAddress.search(key))
       case ItemKind.Goal  => key.foreach(k => Router.go(Route.Goal(Route.Goal.Slug(k.value))))
       case ItemKind.Place =>
-        key.foreach { k => Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(k.value), None)) }
-      case ItemKind.Event   => key.foreach { k => Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Event(Preview.Target.Event.Id(k.value))) }
+        key.foreach { k =>
+          Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(k.value), None))
+        }
+      case ItemKind.Event =>
+        key.foreach { k =>
+          Router.go(Route.Explore); ResultsPanel.show(Preview.Target.Event(Preview.Target.Event.Id(k.value)))
+        }
       case ItemKind.Picture =>
         key.foreach { k =>
           val _ = dom.window.open(ItemRef.page(t).value, "_blank", "noopener")

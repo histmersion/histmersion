@@ -37,8 +37,12 @@ object MediaRoutes:
     List(
       Api.assets.serverLogicSuccess[Identity](ck => Citekey.option(ck.value).map(assets.figures).getOrElse(Nil)),
       Api.putAssets.serverLogic[Identity]((ck, in) => assets.putFiguresAsked(ApiCitekey(ck.value), in)),
-      Api.assetDetail.serverLogic[Identity]((ck, name) => citekey(ck.value)(k => assets.detail(k, AssetService.AssetName(name.value)))),
-      Api.patchAsset.serverLogic[Identity]((ck, name, p) => citekey(ck.value)(k => assets.patch(k, AssetService.AssetName(name.value), p))),
+      Api.assetDetail.serverLogic[Identity]((ck, name) =>
+        citekey(ck.value)(k => assets.detail(k, AssetService.AssetName(name.value)))
+      ),
+      Api.patchAsset.serverLogic[Identity]((ck, name, p) =>
+        citekey(ck.value)(k => assets.patch(k, AssetService.AssetName(name.value), p))
+      ),
       Api.asset.serverLogic[Identity]((ck, name) =>
         citekey(ck.value)(k => assets.figure(k, AssetService.AssetName(name.value)))
           .map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
@@ -48,7 +52,7 @@ object MediaRoutes:
       Api.assetLinks.serverLogicSuccess[Identity]((ck, a, tt, ti) =>
         ck.map(k => Citekey.option(k.value)) match
           case Some(None) => AssetLink.List.of(ApiRowCount(0), Nil, UnreadPage.Offset(0))
-          case keys =>
+          case keys       =>
             links.list(
               keys.flatten,
               a.map(x => AssetService.AssetUid(x.value)),
@@ -70,9 +74,13 @@ object MediaRoutes:
       Api.mediaList.serverLogicSuccess[Identity](q => assets.list(q)),
       Api.mediaShow.serverLogic[Identity](uid => assets.show(AssetService.AssetUid(uid.value))),
       Api.mediaThumb.serverLogic[Identity](uid =>
-        assets.thumb(AssetService.AssetUid(uid.value)).map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
+        assets
+          .thumb(AssetService.AssetUid(uid.value))
+          .map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
       ),
       Api.mediaFile.serverLogic[Identity](uid =>
-        assets.file(AssetService.AssetUid(uid.value)).map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
+        assets
+          .file(AssetService.AssetUid(uid.value))
+          .map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
       )
     )

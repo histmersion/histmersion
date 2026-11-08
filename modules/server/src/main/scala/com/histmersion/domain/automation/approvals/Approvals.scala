@@ -15,7 +15,6 @@ import com.histmersion.api.automation.{AgentsApi, Goal, ListFilters, Managers}
 import com.histmersion.api.library.{Facet, Filter}
 import com.histmersion.domain.automation.Approval as DomainApproval
 
-
 import com.histmersion.api.Api
 import com.histmersion.server.ListQueries
 import com.histmersion.domain.automation.Approval
@@ -31,13 +30,15 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[ApprovalEffects.Problem, String] = _ => Left(ApprovalEffects.Problem("no managers to apply it"))
+    applyHint: Managers.HintProposal => Either[ApprovalEffects.Problem, String] = _ =>
+      Left(ApprovalEffects.Problem("no managers to apply it"))
 ):
 
-
-
-
-  def list(state: Option[ApprovalQuery.State], limit: Option[ApprovalQuery.Limit], page: ApprovalQuery.Limit): Either[Api.Error, List[ApprovalInfo]] =
+  def list(
+      state: Option[ApprovalQuery.State],
+      limit: Option[ApprovalQuery.Limit],
+      page: ApprovalQuery.Limit
+  ): Either[Api.Error, List[ApprovalInfo]] =
     filter(state).map(st => store.approvals(st, page))
 
   /** One page of the approvals ([[Paging]]) that match `f` ([[ListFilters.ApprovalFilter]]: no state = the open ones),
@@ -64,9 +65,7 @@ final class Approvals(
           counts.map((s, n) => (Paging.Page.CountState(s.value), Paging.Count(n.value))),
           q.state.map(s => Paging.Page.CountState(s.wire.value)).toList,
           Option.when(more)(Filter.Last(rows.last.id.toString)),
-          facets.map((name, vs) =>
-            (Facet.Name(name), vs.map((v, n) => (Facet.Value(v), Facet.Count(n.value))))
-          )
+          facets.map((name, vs) => (Facet.Name(name), vs.map((v, n) => (Facet.Value(v), Facet.Count(n.value)))))
         )
       )
 
@@ -91,7 +90,11 @@ final class Approvals(
     * for one already decided. A BLOCKING approval (a goal's plan, an article to publish) is only decided here: the run
     * waiting on it applies it when it resumes (the caller wakes it).
     */
-  def decide(id: Approval.Id, decision: Approval.Outcome, note: Option[Approval.Note]): Either[Api.Error, ApprovalInfo] =
+  def decide(
+      id: Approval.Id,
+      decision: Approval.Outcome,
+      note: Option[Approval.Note]
+  ): Either[Api.Error, ApprovalInfo] =
     val clean = note.map(_.value.trim).filter(_.nonEmpty).map(n => DomainApproval.Note(n.take(2000)))
     for
       d <- Decision
@@ -111,7 +114,7 @@ final class Approvals(
       out <- a.approvalKind match
         case Some(k) if k.blocking.value => decideBlocking(a, d, clean)
         case Some(k) if k.aboutSubject   => decideSubject(a, k, d, clean)
-        case _                         => decideSource(id, d, clean)
+        case _                           => decideSource(id, d, clean)
     yield out
 
   /** A proposal about an article or a goal that no run waits for (managers, phase 2): an inferred coverage filter is
@@ -136,13 +139,14 @@ final class Approvals(
         )
       )
       _ = (d, k) match
-        case (Decision.Reject, _)                        => store.settle(id, ApprovalState.Rejected, DomainApproval.Outcome("rejected"))
+        case (Decision.Reject, _) => store.settle(id, ApprovalState.Rejected, DomainApproval.Outcome("rejected"))
         case (Decision.Approve, ApprovalKind.HintEffect) =>
-          a.hintEffect.toRight(ApprovalEffects.Problem("the approval carries no readable action")).flatMap(applyHint) match
+          a.hintEffect
+            .toRight(ApprovalEffects.Problem("the approval carries no readable action"))
+            .flatMap(applyHint) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w".take(1000)))
             case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
-        case (Decision.Approve, k)
-            if effects.subjectKinds(k.transformInto[Approval.Kind]) =>
+        case (Decision.Approve, k) if effects.subjectKinds(k.transformInto[Approval.Kind]) =>
           effects.applySubject(a) match
             case Right(w) => store.settle(id, ApprovalState.Approved, DomainApproval.Outcome(s"applied: $w"))
             case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
@@ -163,7 +167,11 @@ final class Approvals(
         .toRight(Api.Error(Api.Error.Message(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out
 
-  private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[Approval.Note]): Either[Api.Error, ApprovalInfo] =
+  private def decideBlocking(
+      a: ApprovalInfo,
+      d: Decision,
+      note: Option[Approval.Note]
+  ): Either[Api.Error, ApprovalInfo] =
     val (to, result) = d match
       case Decision.Approve => (ApprovalState.Approved, "approved — the run that proposed it continues and applies it")
       case Decision.Reject  => (ApprovalState.Rejected, "rejected — the run finishes without applying it")
@@ -182,7 +190,11 @@ final class Approvals(
         .toRight(Api.Error(Api.Error.Message(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out
 
-  private def decideSource(id: Approval.Id, d: Decision, clean: Option[Approval.Note]): Either[Api.Error, ApprovalInfo] =
+  private def decideSource(
+      id: Approval.Id,
+      d: Decision,
+      clean: Option[Approval.Note]
+  ): Either[Api.Error, ApprovalInfo] =
     for
       apply <- store
         .payload(id)
@@ -209,5 +221,3 @@ final class Approvals(
         .approval(id)
         .toRight(Api.Error(Api.Error.Message(s"No approval $id"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out
-
-

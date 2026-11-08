@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.places
 
-
 import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
@@ -33,7 +32,6 @@ import com.histmersion.api.catalogue.Place
   */
 private[places] object GazetteerRepo:
 
-
   private val Json0 = io.circe.Printer.noSpaces
 
   /** A seed place's own identifiers as `place_links` (V071): Pleiades ids (a `pleiades_…` id and its `pleiades_uri`),
@@ -46,7 +44,7 @@ private[places] object GazetteerRepo:
     if ids.isEmpty then RowCount(0)
     else
       RowCount(
-      sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
+        sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
             SELECT id, scheme, ext, rel FROM (
               SELECT id, 'pleiades' AS scheme, substring(properties->>'pleiades_uri' FROM '/places/([0-9]+)') AS ext,
                      'exact_match' AS rel FROM places WHERE id = ANY($ids::text[]) AND import_source IS NULL
@@ -105,7 +103,11 @@ private[places] object GazetteerRepo:
   // ── placement (pure) ───────────────────────────────────────────────────────────────────────────
 
   /** A stored place a lookup returned, with who wrote it. */
-  final case class Stored(id: Place.Id, importSource: Option[Place.Match.ImportSource], importRef: Option[GazRecord.Ref]):
+  final case class Stored(
+      id: Place.Id,
+      importSource: Option[Place.Match.ImportSource],
+      importRef: Option[GazRecord.Ref]
+  ):
     def toMatch: Place.Match = Place.Match(id, importSource)
 
   /** Where one record's names go. */
@@ -143,7 +145,8 @@ private[places] object GazetteerRepo:
   def session(
       source: Gazetteer.SourceInfo.Key,
       version: Gazetteer.LoadCounts.Version,
-      windowYears: Gazetteer.ValidityWindowYears = Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
+      windowYears: Gazetteer.ValidityWindowYears =
+        Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
       pointAreaKinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
   )(using con: DbCon): Session =
     val _ = sql"CREATE TEMP TABLE IF NOT EXISTS gaz_seen (ref text PRIMARY KEY)".update.run()
@@ -171,7 +174,8 @@ private[places] object GazetteerRepo:
           pointAreaKinds.toList.sorted.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
         )
 
-    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.Place.Id]): RowCount = PointAreaRepo.deletePlacesIn(ids)
+    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.Place.Id]): RowCount =
+      PointAreaRepo.deletePlacesIn(ids)
 
     def sweep(): Gazetteer.LoadCounts =
       val names = sql"""DELETE FROM place_names n WHERE n.import_source = $source
@@ -224,7 +228,10 @@ private[places] object GazetteerRepo:
           linked((s, e)) = Place.Match(id, src, Place.Match.Native(native)) :: linked.getOrElse((s, e), Nil)
         }
         val byId = scala.collection.mutable.Map.from(stored.map(s => s.id -> s))
-        val own = stored.filter(_.importSource.contains(Place.Match.ImportSource(source.value))).flatMap(s => s.importRef.map(_ -> s)).toMap
+        val own = stored
+          .filter(_.importSource.contains(Place.Match.ImportSource(source.value)))
+          .flatMap(s => s.importRef.map(_ -> s))
+          .toMap
         // a record that would make (or keep) a place of its own but is an area known only by a point is
         // DROPPED: no place, no names, no links, no descriptions — the place an earlier import made for
         // it (DOOMED: no record of the batch joins it, before or after) and every row it wrote anywhere
@@ -262,7 +269,8 @@ private[places] object GazetteerRepo:
                 Place.Match(pl.placeId, Some(Place.Match.ImportSource(source.value)), Place.Match.Native(native)) ::
                   linked.getOrElse((l.id.scheme.wire.value, l.id.id.value), Nil)
             )
-            if pl.isInstanceOf[Placement.Create] then byId(pl.placeId) = Stored(pl.placeId, Some(Place.Match.ImportSource(source.value)), Some(r.ref))
+            if pl.isInstanceOf[Placement.Create] then
+              byId(pl.placeId) = Stored(pl.placeId, Some(Place.Match.ImportSource(source.value)), Some(r.ref))
             Right((r, pl, stale))
         }
         val placed = decided.collect { case Right(x) => x }
@@ -490,4 +498,3 @@ private[places] object GazetteerRepo:
                          IS DISTINCT FROM (EXCLUDED.item_class, EXCLUDED.item_geom, EXCLUDED.item_period))
               RETURNING (xmax = 0)""".query[Boolean].run()
       (RowCount(out.count(identity)), RowCount(removed), RowCount(out.count(!_)))
-

@@ -39,10 +39,13 @@ object ReservedNames:
       "si",
       "smithsonian-open-access"
     ).map(Name(_)) ++
-      MediaProvider.all.map(id => Name(id.value)) ++ Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades).map(Name(_))
+      MediaProvider.all.map(id => Name(id.value)) ++ Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades).map(
+        Name(_)
+      )
 
   /** The built-in event catalogues and their aliases. */
-  val eventCatalogues: Set[Name] = CatalogProvider.all.map(id => Name(id.value)).toSet ++ Set("smithsonian", "volcano", "ncei", "wd").map(Name(_))
+  val eventCatalogues: Set[Name] =
+    CatalogProvider.all.map(id => Name(id.value)).toSet ++ Set("smithsonian", "volcano", "ncei", "wd").map(Name(_))
 
   /** The first-party plugins: Histmersion's own, in every image. A plugin is first-party when its id is one of these
     * and it was loaded from the image's own class path, not from the plugin set a relink added; a reserved name of a

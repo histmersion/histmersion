@@ -17,7 +17,7 @@ import com.histmersion.api.media.MediaTarget
 
 object AssetLinksCmd:
 
-  private def search (using console: Console) = Opts.subcommand("search", "Find asset links") {
+  private def search(using console: Console) = Opts.subcommand("search", "Find asset links") {
     (
       Opts.option[String]("citekey", "Filter by citekey").orNone,
       Opts.option[String]("asset", "Filter by asset name").orNone,
@@ -34,7 +34,7 @@ object AssetLinksCmd:
       }
   }
 
-  private def addCmd (using console: Console) = Opts.subcommand("add", "Create an asset link") {
+  private def addCmd(using console: Console) = Opts.subcommand("add", "Create an asset link") {
     (
       Opts.option[String]("citekey", "Source citekey"),
       Opts.option[String]("asset", "Asset file name"),
@@ -55,18 +55,17 @@ object AssetLinksCmd:
             xywh.map(AssetLink.Xywh(_)),
             notes.map(AssetLink.Notes(_))
           )
-        )
-          .map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
+        ).map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
       }
   }
 
-  private def rmCmd (using console: Console) = Opts.subcommand("rm", "Delete an asset link by id") {
+  private def rmCmd(using console: Console) = Opts.subcommand("rm", "Delete an asset link by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
       c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))
     }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("asset-links", "Semantic links between assets and entities: search, add, rm") {
       search orElse addCmd orElse rmCmd
     }

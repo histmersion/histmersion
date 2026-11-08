@@ -16,8 +16,6 @@ import scala.util.Try
 object ConfigTextEdit:
   private given CanEqual[ConfigObject, ConfigObject] = CanEqual.derived
 
-
-
   def apply(
       text: ConfigFileState.Text,
       current: Config,
@@ -31,7 +29,10 @@ object ConfigTextEdit:
         unchanged: List[SettingKey]
     ): Either[SettingError, EditedText] =
       rest match
-        case Nil          => Right(EditedText(ConfigFileState.Text(endsLikeAFile(text.value, doc.render)), changed.reverse, unchanged.reverse))
+        case Nil =>
+          Right(
+            EditedText(ConfigFileState.Text(endsLikeAFile(text.value, doc.render)), changed.reverse, unchanged.reverse)
+          )
         case edit :: tail =>
           (written(current, edit.key, here), edit) match
             case (Written.Substituted(_), _) => Left(SettingError.Substitution(edit.key))
@@ -98,7 +99,9 @@ object ConfigTextEdit:
         case None        => d
         case Some(block) =>
           val empty =
-            scala.util.Try(ConfigFactory.parseString(d.render).getObject(block.hoconPath.value).isEmpty).getOrElse(false)
+            scala.util
+              .Try(ConfigFactory.parseString(d.render).getObject(block.hoconPath.value).isEmpty)
+              .getOrElse(false)
           val pruned = if empty then d.withoutPath(block.hoconPath.value) else d
           if !empty || comments(pruned.render) < comments(d.render) then d
           else loop(pruned, block.parent)
@@ -119,10 +122,12 @@ object ConfigTextEdit:
 
   /** What each key is to hold after `edits` (`None`: taken out); the last change of a key wins. */
   def intended(edits: List[SettingEdit]): Map[SettingKey, Option[SettingValue]] =
-    edits.map[(SettingKey, Option[SettingValue])] {
-      case SettingEdit.Set(k, v) => k -> Some(v)
-      case SettingEdit.Unset(k)  => k -> None
-    }.toMap
+    edits
+      .map[(SettingKey, Option[SettingValue])] {
+        case SettingEdit.Set(k, v) => k -> Some(v)
+        case SettingEdit.Unset(k)  => k -> None
+      }
+      .toMap
 
   /** The new file, read back (with its includes, unresolved; `here` its own origins), says what each change wrote — an
     * include after it, or a second line for the same key, would otherwise win over it.
@@ -140,7 +145,8 @@ object ConfigTextEdit:
           case (Written.Elsewhere(f), _)   => Left(SettingError.FromInclude(key, f))
           case (Written.Here(v), Some(w)) if SettingValue.fromConfig(v).exists(SettingValue.same(_, w)) => Right(())
           case (Written.Nowhere, None)                                                                  => Right(())
-          case _ => Left(SettingError.Invalid(SettingError.Invalid.Why(s"${key.relative} did not read back as it was written")))
+          case _                                                                                        =>
+            Left(SettingError.Invalid(SettingError.Invalid.Why(s"${key.relative} did not read back as it was written")))
       }
       .find(_.isLeft)
       .getOrElse(Right(()))

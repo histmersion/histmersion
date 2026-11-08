@@ -23,7 +23,12 @@ import com.histmersion.domain.media.imports.ImportService
   */
 class CommonsDepictionsSuite extends munit.FunSuite:
 
-  private val kadesh = Target(Target.TargetType("event"), Target.Id("battle_of_kadesh"), Target.Qid("Q203729"), Target.Label("Battle of Kadesh"))
+  private val kadesh = Target(
+    Target.TargetType("event"),
+    Target.Id("battle_of_kadesh"),
+    Target.Qid("Q203729"),
+    Target.Label("Battle of Kadesh")
+  )
 
   /** Commons' imageinfo answers every title asked with a CC BY-SA file (the No-author one refused). */
   private def info(titles: List[String], width: String): String =
@@ -70,7 +75,12 @@ class CommonsDepictionsSuite extends munit.FunSuite:
     val http = provider()
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
+    val r = OwnImport(
+      MediaImporter.ImporterName("depicts"),
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")),
+      polite,
+      cfg
+    ).run(
       List(kadesh),
       dryRun = MediaImporter.DryRun(true),
       refresh = ImportService.Refresh(false),
@@ -90,7 +100,12 @@ class CommonsDepictionsSuite extends munit.FunSuite:
   test("real run: stored as Commons pictures, linked as depictions, checked under the depictions' name"):
     val (polite, _) = FakeMediaHttp.polite(provider(), cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
+    val r = OwnImport(
+      MediaImporter.ImporterName("depicts"),
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")),
+      polite,
+      cfg
+    ).run(
       List(kadesh),
       dryRun = MediaImporter.DryRun(false),
       refresh = ImportService.Refresh(false),
@@ -110,12 +125,18 @@ class CommonsDepictionsSuite extends munit.FunSuite:
 
   test("a failed search leaves the event unrecorded, so it is asked again"):
     val http = FakeMediaHttp { url =>
-      if url.contains("list=search") then Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
+      if url.contains("list=search") then
+        Right(HttpAnswer(HttpAnswer.Code(404), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))
       else provider().get(HttpTransport.Url(url), Map.empty).left.map(_.value)
     }
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
     val store = CollStore(Map.empty, Map.empty)
-    val r = OwnImport(MediaImporter.ImporterName("depicts"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")), polite, cfg).run(
+    val r = OwnImport(
+      MediaImporter.ImporterName("depicts"),
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("depicts")),
+      polite,
+      cfg
+    ).run(
       List(kadesh),
       dryRun = MediaImporter.DryRun(false),
       refresh = ImportService.Refresh(false),

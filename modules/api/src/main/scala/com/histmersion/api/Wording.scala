@@ -23,7 +23,6 @@ object Wording:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
 
-
   type ManagerId = Id
   val ManagerId: Id.type = Id
   type PluginId = Id
@@ -31,15 +30,22 @@ object Wording:
 
   def humanize(id: Id): String =
     val words =
-      (id).value.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
+      (id).value.trim
+        .replace(':', '\u0000')
+        .replaceAll("[_-]+", " ")
+        .replace("\u0000", ": ")
+        .replaceAll("\\s+", " ")
+        .trim
     ((capitalize((words))))
 
-  def capitalize(s: String): String = if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).substring(1))
+  def capitalize(s: String): String =
+    if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).substring(1))
 
   def value(s: String): String = Label.display(Label.Text(s)).value
 
   def heading(s: String): String =
-    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(Id((s))))) else capitalize(Label.display(Label.Text((s).trim)).value)
+    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(Id((s)))))
+    else capitalize(Label.display(Label.Text((s).trim)).value)
 
   def status(s: Source.Status): String = s match
     case Source.Status.Foundational => ("Foundational")
@@ -51,7 +57,9 @@ object Wording:
     case Source.Status.Unassessed   => ("Not assessed")
 
   def statusOf(wire: Api.GoalQuery.Status): String =
-    Source.Status.values.find(_.wire == Source.Status.Wire((wire).value.trim.toLowerCase)).fold(humanize(Id((wire).value)))(status)
+    Source.Status.values
+      .find(_.wire == Source.Status.Wire((wire).value.trim.toLowerCase))
+      .fold(humanize(Id((wire).value)))(status)
 
   def pipeline(p: Pipeline): String = p match
     case Pipeline.EnrichSource     => ("Enrich a source")
@@ -104,26 +112,40 @@ object Wording:
 
   val schedulerJobTypes: Map[JobKinds.Wire, String] = Map(
     { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (JobKinds.Wire(refactorTuple23._1), (refactorTuple23._2)) },
-    { val refactorTuple2 = "propose" -> "Propose articles"; (JobKinds.Wire(refactorTuple2._1), (refactorTuple2._2)) },
-    { val refactorTuple25 = "sweep" -> "Look for copies to fetch"; (JobKinds.Wire(refactorTuple25._1), (refactorTuple25._2)) },
-    { val refactorTuple26 = "currency" -> "Check sources are current"; (JobKinds.Wire(refactorTuple26._1), (refactorTuple26._2)) },
+    { val refactorTuple2 = "propose" -> "Propose articles"; (JobKinds.Wire(refactorTuple2._1), (refactorTuple2._2)) }, {
+      val refactorTuple25 = "sweep" -> "Look for copies to fetch";
+      (JobKinds.Wire(refactorTuple25._1), (refactorTuple25._2))
+    }, {
+      val refactorTuple26 = "currency" -> "Check sources are current";
+      (JobKinds.Wire(refactorTuple26._1), (refactorTuple26._2))
+    },
     { val refactorTuple5 = "enrich" -> "Enrich a source"; (JobKinds.Wire(refactorTuple5._1), (refactorTuple5._2)) },
-    { val refactorTuple6 = "compile" -> "Write an article"; (JobKinds.Wire(refactorTuple6._1), (refactorTuple6._2)) },
-    { val refactorTuple29 = "extend" -> "Extend an article"; (JobKinds.Wire(refactorTuple29._1), (refactorTuple29._2)) },
-    { val refactorTuple8 = "filter" -> "Work out an article's filter"; (JobKinds.Wire(refactorTuple8._1), (refactorTuple8._2)) },
+    { val refactorTuple6 = "compile" -> "Write an article"; (JobKinds.Wire(refactorTuple6._1), (refactorTuple6._2)) }, {
+      val refactorTuple29 = "extend" -> "Extend an article"; (JobKinds.Wire(refactorTuple29._1), (refactorTuple29._2))
+    }, {
+      val refactorTuple8 = "filter" -> "Work out an article's filter";
+      (JobKinds.Wire(refactorTuple8._1), (refactorTuple8._2))
+    },
     { val refactorTuple9 = "review" -> "Review an article"; (JobKinds.Wire(refactorTuple9._1), (refactorTuple9._2)) }
   )
 
   val strategies: Map[AgentScheduler.StrategyLine.Name, String] = Map(
-    { val refactorTuple10 = "type-balanced" -> "Balance the kinds of work"; (AgentScheduler.StrategyLine.Name(refactorTuple10._1), (refactorTuple10._2)) },
-    { val refactorTuple11 = "goal-first" -> "One goal at a time"; (AgentScheduler.StrategyLine.Name(refactorTuple11._1), (refactorTuple11._2)) },
-    { val refactorTuple12 = "default" -> "The configured strategy"; (AgentScheduler.StrategyLine.Name(refactorTuple12._1), (refactorTuple12._2)) }
+    {
+      val refactorTuple10 = "type-balanced" -> "Balance the kinds of work";
+      (AgentScheduler.StrategyLine.Name(refactorTuple10._1), (refactorTuple10._2))
+    }, {
+      val refactorTuple11 = "goal-first" -> "One goal at a time";
+      (AgentScheduler.StrategyLine.Name(refactorTuple11._1), (refactorTuple11._2))
+    }, {
+      val refactorTuple12 = "default" -> "The configured strategy";
+      (AgentScheduler.StrategyLine.Name(refactorTuple12._1), (refactorTuple12._2))
+    }
   )
 
   def pool(id: AgentScheduler.PoolUse.Pool): String = (id).value.trim.toLowerCase match
     case "claude-plan"  => ("Claude plan")
     case "chatgpt-plan" => ("ChatGPT plan")
-    case other          => ((humanize(Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
+    case other => ((humanize(Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
 
   def allowanceWindow(kind: PlanQuota.WindowStatus.Kind): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
@@ -149,16 +171,19 @@ object Wording:
     else ("Agents: paused")
 
   def decisions(open: Decisions.Open): Option[String] =
-    Option.when((open).value > 0)(if open == Decisions.Open(1) then ("1 needs your decision") else (s"$open need your decision"))
+    Option.when((open).value > 0)(if open == Decisions.Open(1) then ("1 needs your decision")
+    else (s"$open need your decision"))
 
-  def decisionsShort(open: Decisions.Open): String = if open == Decisions.Open(1) then ("1 needs you") else (s"$open need you")
+  def decisionsShort(open: Decisions.Open): String =
+    if open == Decisions.Open(1) then ("1 needs you") else (s"$open need you")
 
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
   def jobKind(k: JobInfo.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(Id(k.value)))(_.name.value)
 
-  def jobKindOf(wire: JobKinds.Wire): String = RegisteredJobKinds.all.parse(wire).fold(humanize(Id(wire.value)))(_.name.value)
+  def jobKindOf(wire: JobKinds.Wire): String =
+    RegisteredJobKinds.all.parse(wire).fold(humanize(Id(wire.value)))(_.name.value)
 
   def jobState(s: JobState): String = s match
     case JobState.Queued    => ("Queued")
@@ -173,19 +198,39 @@ object Wording:
     pluginNames
       .get(ProviderKind.Plugin.Id((id).value))
       .orElse(families.collectFirst {
-        case (prefix, family) if (id).value.startsWith(prefix) => s"$family: ${humanize(Id((id).value.stripPrefix(prefix)))}"
+        case (prefix, family) if (id).value.startsWith(prefix) =>
+          s"$family: ${humanize(Id((id).value.stripPrefix(prefix)))}"
       })
       .getOrElse(humanize(id))
 
   private val pluginNames: Map[ProviderKind.Plugin.Id, String] = Map(
-    { val refactorTuple35 = "archive-org" -> "Internet Archive"; (ProviderKind.Plugin.Id(refactorTuple35._1), (refactorTuple35._2)) },
-    { val refactorTuple14 = "oa-unpaywall" -> "Open access: Unpaywall"; (ProviderKind.Plugin.Id(refactorTuple14._1), (refactorTuple14._2)) },
-    { val refactorTuple15 = "oa-core" -> "Open access: CORE"; (ProviderKind.Plugin.Id(refactorTuple15._1), (refactorTuple15._2)) },
-    { val refactorTuple38 = "oa-openalex" -> "Open access: OpenAlex"; (ProviderKind.Plugin.Id(refactorTuple38._1), (refactorTuple38._2)) },
-    { val refactorTuple17 = "oa-landing" -> "Open access: publishers' own pages"; (ProviderKind.Plugin.Id(refactorTuple17._1), (refactorTuple17._2)) },
-    { val refactorTuple18 = "pmc" -> "PubMed Central"; (ProviderKind.Plugin.Id(refactorTuple18._1), (refactorTuple18._2)) },
-    { val refactorTuple41 = "arxiv" -> "arXiv"; (ProviderKind.Plugin.Id(refactorTuple41._1), (refactorTuple41._2)) },
-    { val refactorTuple42 = "keepassxc" -> "KeePassXC"; (ProviderKind.Plugin.Id(refactorTuple42._1), (refactorTuple42._2)) },
-    { val refactorTuple43 = "1password" -> "1Password"; (ProviderKind.Plugin.Id(refactorTuple43._1), (refactorTuple43._2)) },
-    { val refactorTuple44 = "bitwarden" -> "Bitwarden"; (ProviderKind.Plugin.Id(refactorTuple44._1), (refactorTuple44._2)) }
+    {
+      val refactorTuple35 = "archive-org" -> "Internet Archive";
+      (ProviderKind.Plugin.Id(refactorTuple35._1), (refactorTuple35._2))
+    }, {
+      val refactorTuple14 = "oa-unpaywall" -> "Open access: Unpaywall";
+      (ProviderKind.Plugin.Id(refactorTuple14._1), (refactorTuple14._2))
+    }, {
+      val refactorTuple15 = "oa-core" -> "Open access: CORE";
+      (ProviderKind.Plugin.Id(refactorTuple15._1), (refactorTuple15._2))
+    }, {
+      val refactorTuple38 = "oa-openalex" -> "Open access: OpenAlex";
+      (ProviderKind.Plugin.Id(refactorTuple38._1), (refactorTuple38._2))
+    }, {
+      val refactorTuple17 = "oa-landing" -> "Open access: publishers' own pages";
+      (ProviderKind.Plugin.Id(refactorTuple17._1), (refactorTuple17._2))
+    }, {
+      val refactorTuple18 = "pmc" -> "PubMed Central";
+      (ProviderKind.Plugin.Id(refactorTuple18._1), (refactorTuple18._2))
+    },
+    { val refactorTuple41 = "arxiv" -> "arXiv"; (ProviderKind.Plugin.Id(refactorTuple41._1), (refactorTuple41._2)) }, {
+      val refactorTuple42 = "keepassxc" -> "KeePassXC";
+      (ProviderKind.Plugin.Id(refactorTuple42._1), (refactorTuple42._2))
+    }, {
+      val refactorTuple43 = "1password" -> "1Password";
+      (ProviderKind.Plugin.Id(refactorTuple43._1), (refactorTuple43._2))
+    }, {
+      val refactorTuple44 = "bitwarden" -> "Bitwarden";
+      (ProviderKind.Plugin.Id(refactorTuple44._1), (refactorTuple44._2))
+    }
   )

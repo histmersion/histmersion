@@ -27,7 +27,6 @@ object AgentProposals:
     * code's business (`refs`), never a model's.
     */
 
-
   val EdgeKinds: List[Edge.Kind] =
     List(Edge.Kind.Challenges, Edge.Kind.Refutes, Edge.Kind.Updates, Edge.Kind.SupersededBy)
 
@@ -44,7 +43,8 @@ object AgentProposals:
       evidence: Proposal.Evidence = Proposal.Evidence(""),
       quote: Option[Proposal.Quote] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
     def describe: Description = kind match
       case Approval.Kind.StatusChange => Description(s"[[$citekey]] status → ${status.fold("?")(_.wire)}")
@@ -69,8 +69,6 @@ object AgentProposals:
     type Quote = Quote.T
     object Quote extends Newtype[String, Pure]
 
-
-
   /** What becomes of a proposal. */
   enum Route derives CanEqual:
     /** Applied by code now: the fill rule, or a kind configured `auto`. */
@@ -94,7 +92,8 @@ object AgentProposals:
   def route(p: Proposal, current: Option[Source.Status], statusMode: Approval.Mode, edgeMode: Approval.Mode): Route =
     p.kind match
       case Approval.Kind.StatusChange =>
-        if p.status.isEmpty || p.status == current then Route.Skip(Route.Skip.Reason(s"already ${current.fold("?")(_.wire)}"))
+        if p.status.isEmpty || p.status == current then
+          Route.Skip(Route.Skip.Reason(s"already ${current.fold("?")(_.wire)}"))
         else if current.contains(Source.Status.Unassessed) &&
           p.status.exists(s => s == Source.Status.Current || s == Source.Status.Foundational)
         then Route.Apply
@@ -122,7 +121,8 @@ object AgentProposals:
     type Citekey = Citekey.T
     object Citekey extends Newtype[String, Pure]
     type Status = com.histmersion.domain.library.Source.Status.Wire
-    val Status: com.histmersion.domain.library.Source.Status.Wire.type = com.histmersion.domain.library.Source.Status.Wire
+    val Status: com.histmersion.domain.library.Source.Status.Wire.type =
+      com.histmersion.domain.library.Source.Status.Wire
     type EdgeKind = Edge.Kind.Wire
     val EdgeKind: Edge.Kind.Wire.type = Edge.Kind.Wire
     type Target = Target.T
@@ -169,7 +169,11 @@ object AgentProposals:
       else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)
       else Left(Problem(s"$label: the quote is not in the record of ${keys.mkString(" or ")}"))
     for
-      ck <- com.histmersion.domain.library.Citekey.parse(raw).toOption.filter(isCitekey).toRight(Problem(s"$label: '$raw' is not a citekey"))
+      ck <- com.histmersion.domain.library.Citekey
+        .parse(raw)
+        .toOption
+        .filter(isCitekey)
+        .toRight(Problem(s"$label: '$raw' is not a citekey"))
       _ <- Either.cond(a.evidence.value.trim.nonEmpty, (), Problem(s"$label: no evidence given"))
       p <- a.kind.value.trim.toLowerCase match
         case "status" =>
@@ -179,9 +183,19 @@ object AgentProposals:
               .flatMap(AgentVerify.status)
               .left
               .map(m => Problem(s"$label: $m"))
-            _ <- Either.cond(st != Source.Status.Unassessed, (), Problem(s"$label: unassessed is not a change to propose"))
+            _ <- Either.cond(
+              st != Source.Status.Unassessed,
+              (),
+              Problem(s"$label: unassessed is not a change to propose")
+            )
             q <- quoted(List(ck))
-          yield Proposal(Approval.Kind.StatusChange, ck, status = Some(st), evidence = Proposal.Evidence(a.evidence.value.trim), quote = Some(q))
+          yield Proposal(
+            Approval.Kind.StatusChange,
+            ck,
+            status = Some(st),
+            evidence = Proposal.Evidence(a.evidence.value.trim),
+            quote = Some(q)
+          )
         case "edge" =>
           for
             k <- a.edgeKind

@@ -42,7 +42,10 @@ object PluginAuthoring:
       .filter(_.nonEmpty)
       .map(h => Path.of(h, ".m2", "repository"))
       .toRight(
-        Cli.Error(Cli.Error.Message("HOME is unset: there is no local Maven repository (~/.m2/repository)"), exitCode = ExitCode.Usage)
+        Cli.Error(
+          Cli.Error.Message("HOME is unset: there is no local Maven repository (~/.m2/repository)"),
+          exitCode = ExitCode.Usage
+        )
       )
 
   /** Copy the install's Maven repository into the local one, so that a build naming `m2Local` finds the plugin API, the
@@ -68,7 +71,12 @@ object PluginAuthoring:
         }
         .toEither
         .left
-        .map(e => Cli.Error(Cli.Error.Message(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}"), exitCode = ExitCode.Refused))
+        .map(e =>
+          Cli.Error(
+            Cli.Error.Message(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}"),
+            exitCode = ExitCode.Refused
+          )
+        )
     }
 
   /** The repository a new project resolves the plugin API, platform and testkit from: the one named with `--repo` (a
@@ -101,7 +109,10 @@ object PluginAuthoring:
       try s.findAny().isPresent
       finally s.close()
     })
-    if occupied then Left(Cli.Error(Cli.Error.Message(s"$dir exists and is not empty — choose another --dir"), exitCode = ExitCode.Usage))
+    if occupied then
+      Left(
+        Cli.Error(Cli.Error.Message(s"$dir exists and is not empty — choose another --dir"), exitCode = ExitCode.Usage)
+      )
     else
       Right(files.map { f =>
         val target = dir.resolve(f.path.value)

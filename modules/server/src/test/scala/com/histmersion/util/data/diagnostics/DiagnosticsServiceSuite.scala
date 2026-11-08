@@ -15,7 +15,14 @@ class DiagnosticsServiceSuite extends munit.FunSuite:
 
   private val service = DiagnosticsService.InMemory(
     Deps.data,
-    Map(DataOwner("library") -> DataFigures(List(DataCount(DataCount.Noun("sources"), DataCount.Count(4)), DataCount(DataCount.Noun("findings"), DataCount.Count(5))))),
+    Map(
+      DataOwner("library") -> DataFigures(
+        List(
+          DataCount(DataCount.Noun("sources"), DataCount.Count(4)),
+          DataCount(DataCount.Noun("findings"), DataCount.Count(5))
+        )
+      )
+    ),
     (DiagnosticsService.DatabaseName("histmersion_test"), bytes(1000)),
     List(
       TableName("sources") -> bytes(300),
@@ -25,8 +32,17 @@ class DiagnosticsServiceSuite extends munit.FunSuite:
   )
 
   test("the largest tables are the registered ones, largest first, at most n"):
-    assertEquals(service.largestTables(DiagnosticsService.TableLimit(5)), List(TableSize(TableSize.Name("sources"), com.histmersion.api.ByteCount(300)), TableSize(TableSize.Name("places"), com.histmersion.api.ByteCount(100))))
-    assertEquals(service.largestTables(DiagnosticsService.TableLimit(1)), List(TableSize(TableSize.Name("sources"), com.histmersion.api.ByteCount(300))))
+    assertEquals(
+      service.largestTables(DiagnosticsService.TableLimit(5)),
+      List(
+        TableSize(TableSize.Name("sources"), com.histmersion.api.ByteCount(300)),
+        TableSize(TableSize.Name("places"), com.histmersion.api.ByteCount(100))
+      )
+    )
+    assertEquals(
+      service.largestTables(DiagnosticsService.TableLimit(1)),
+      List(TableSize(TableSize.Name("sources"), com.histmersion.api.ByteCount(300)))
+    )
     assertEquals(service.largestTables(DiagnosticsService.TableLimit(0)), Nil)
 
   test("each owner's tables summed, every owner in the registry's order"):

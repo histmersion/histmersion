@@ -31,10 +31,9 @@ object PlacesCmd:
     * exist.
     */
 
-
-  private def cfg (using console: Console) = Settings.app.places
-  private def defaultBatch(using console: Console) : Paging.Limit = Paging.Limit(cfg.importBatch.value)
-  private def seedDir(using console: Console) : PlacesConfig.SeedDir = cfg.seedDir
+  private def cfg(using console: Console) = Settings.app.places
+  private def defaultBatch(using console: Console): Paging.Limit = Paging.Limit(cfg.importBatch.value)
+  private def seedDir(using console: Console): PlacesConfig.SeedDir = cfg.seedDir
 
   private val asOfOpt =
     Opts
@@ -42,32 +41,35 @@ object PlacesCmd:
       .orNone
       .map(_.map(Api.AggregateQuery.AsOf(_)))
 
-  private def show(rows: List[Place.Hit], asOf: Option[Api.AggregateQuery.AsOf])(using console: Console) : Unit =
+  private def show(rows: List[Place.Hit], asOf: Option[Api.AggregateQuery.AsOf])(using console: Console): Unit =
     Cli.out.println(PlacesMarkdown.places(rows.toVector, asOf.map(a => Year(a.value))))
 
-  private def search (using console: Console) = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
-    (Opts.argument[String]("query").orNone, asOfOpt, Opts.option[Int]("limit", "Max results").orNone)
-      .mapN { (q, asOf, limit) => (c: Client) =>
-        c.places(q.map(_.trim).filter(_.nonEmpty).map(Api.Search.Text(_)), asOf, limit.map(Paging.Limit(_))).map(show(_, asOf))
-      }
-  }
+  private def search(using console: Console) =
+    Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
+      (Opts.argument[String]("query").orNone, asOfOpt, Opts.option[Int]("limit", "Max results").orNone)
+        .mapN { (q, asOf, limit) => (c: Client) =>
+          c.places(q.map(_.trim).filter(_.nonEmpty).map(Api.Search.Text(_)), asOf, limit.map(Paging.Limit(_)))
+            .map(show(_, asOf))
+        }
+    }
 
-  private def showCmd (using console: Console) = Opts.subcommand("show", "One place: geometry, validity, parents and the subtree") {
-    (
-      Opts.argument[String]("id"),
-      asOfOpt,
-      Opts.option[Int]("depth", "How deep the subtree goes").orNone,
-      Opts.flag("no-tree", "Skip the hierarchy walk").orFalse
-    )
-      .mapN { (id, asOf, depth, noTree) => (c: Client) =>
-        for
-          d <- c.place(Place.Id(id), asOf)
-          tree <- if noTree then Right(Nil) else c.placeTree(Place.Id(id), asOf, depth.map(Place.Depth(_)))
-        yield Cli.out.println(PlacesMarkdown.place(d, tree.toVector))
-      }
-  }
+  private def showCmd(using console: Console) =
+    Opts.subcommand("show", "One place: geometry, validity, parents and the subtree") {
+      (
+        Opts.argument[String]("id"),
+        asOfOpt,
+        Opts.option[Int]("depth", "How deep the subtree goes").orNone,
+        Opts.flag("no-tree", "Skip the hierarchy walk").orFalse
+      )
+        .mapN { (id, asOf, depth, noTree) => (c: Client) =>
+          for
+            d <- c.place(Place.Id(id), asOf)
+            tree <- if noTree then Right(Nil) else c.placeTree(Place.Id(id), asOf, depth.map(Place.Depth(_)))
+          yield Cli.out.println(PlacesMarkdown.place(d, tree.toVector))
+        }
+    }
 
-  private def children (using console: Console) = Opts.subcommand("children", "What one place contains, as of a year") {
+  private def children(using console: Console) = Opts.subcommand("children", "What one place contains, as of a year") {
     (Opts.argument[String]("id"), asOfOpt).mapN { (id, asOf) => (c: Client) =>
       c.placeChildren(Place.Id(id), asOf).map { rows =>
         if rows.isEmpty then Cli.out.println("_No children._")
@@ -77,14 +79,17 @@ object PlacesCmd:
   }
 
   /** Read one LPF / GeoJSON file and upsert it, `batch` features per request. */
-  private[cli] def importFile(using console: Console)(
+  private[cli] def importFile(using
+      console: Console
+  )(
       c: Client,
       file: Path,
       kind: Option[Place.KindValue],
       batch: Paging.Limit,
       dataset: Dataset = Dataset.Local
-  ) : Either[Cli.Error, Place.ImportResult] =
-    if !Files.isRegularFile(file) then Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+  ): Either[Cli.Error, Place.ImportResult] =
+    if !Files.isRegularFile(file) then
+      Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.KindValue(Place.Kind.Region))) match
         case Left(e)      => Left(Cli.Error(Cli.Error.Message(s"$file: $e"), exitCode = ExitCode.Usage))
@@ -93,20 +98,30 @@ object PlacesCmd:
           val total = groups.size
           groups.zipWithIndex
             .foldLeft[Either[Cli.Error, Place.ImportResult]](
-              Right(Place.ImportResult(Place.ImportResult.Places(0), Place.ImportResult.Names(0), Place.ImportResult.Relations(0), Nil))
+              Right(
+                Place.ImportResult(
+                  Place.ImportResult.Places(0),
+                  Place.ImportResult.Names(0),
+                  Place.ImportResult.Relations(0),
+                  Nil
+                )
+              )
             ) { case (acc, (g, i)) =>
               acc.flatMap { sum =>
                 if total > 1 then
                   Cli.err.print(s"\r${file.getFileName}: batch ${i + 1}/$total (${sum.places} place(s))")
-                c.importPlaces(kind.map(k => Api.ExternalPlaces.Source(k.value)), Api.ExternalPlaces.Format(Lpf.render(g).value), dataset)
-                  .map(r =>
-                    Place.ImportResult(
-                      Place.ImportResult.Places(sum.places.value + r.places.value),
-                      Place.ImportResult.Names(sum.names.value + r.names.value),
-                      Place.ImportResult.Relations(sum.relations.value + r.relations.value),
-                      (sum.failed ++ r.failed).take(20)
-                    )
+                c.importPlaces(
+                  kind.map(k => Api.ExternalPlaces.Source(k.value)),
+                  Api.ExternalPlaces.Format(Lpf.render(g).value),
+                  dataset
+                ).map(r =>
+                  Place.ImportResult(
+                    Place.ImportResult.Places(sum.places.value + r.places.value),
+                    Place.ImportResult.Names(sum.names.value + r.names.value),
+                    Place.ImportResult.Relations(sum.relations.value + r.relations.value),
+                    (sum.failed ++ r.failed).take(20)
                   )
+                )
               }
             }
             .map { r =>
@@ -124,20 +139,27 @@ object PlacesCmd:
       .mapValidated(s => Dataset.parse(Dataset.Wire(s)).toValidNel(s"--dataset $s: expected local or seed"))
       .withDefault(Dataset.Local)
 
-  private def importCmd (using console: Console) = Opts.subcommand("import", "Upsert a Linked Places / GeoJSON file into the gazetteer") {
-    (
-      Opts.argument[String]("file.json"),
-      Opts
-        .option[String]("kind", s"Fallback kind for features that declare none: ${Place.Kind.all.mkString("|")}")
-        .orNone,
-      Opts.option[Int]("batch", "Features per request").orNone,
-      datasetOpt
-    )
-      .mapN { (file, kind, batch, dataset) => (c: Client) =>
-        importFile(c, Path.of(file), kind.map(Place.KindValue(_)), batch.map(Paging.Limit(_)).getOrElse(defaultBatch), dataset)
-          .map(r => Cli.out.println(PlacesMarkdown.placeImport(r)))
-      }
-  }
+  private def importCmd(using console: Console) =
+    Opts.subcommand("import", "Upsert a Linked Places / GeoJSON file into the gazetteer") {
+      (
+        Opts.argument[String]("file.json"),
+        Opts
+          .option[String]("kind", s"Fallback kind for features that declare none: ${Place.Kind.all.mkString("|")}")
+          .orNone,
+        Opts.option[Int]("batch", "Features per request").orNone,
+        datasetOpt
+      )
+        .mapN { (file, kind, batch, dataset) => (c: Client) =>
+          importFile(
+            c,
+            Path.of(file),
+            kind.map(Place.KindValue(_)),
+            batch.map(Paging.Limit(_)).getOrElse(defaultBatch),
+            dataset
+          )
+            .map(r => Cli.out.println(PlacesMarkdown.placeImport(r)))
+        }
+    }
 
   /** The seed set in import order — [[PlaceSeed.files]], shared with the server's first-run import. */
   private[cli] def seedFiles(dir: Path): List[(Path, Option[Place.KindValue])] =
@@ -149,7 +171,13 @@ object PlacesCmd:
     try
       import scala.jdk.CollectionConverters.*
       st.iterator.asScala.toList
-        .map(p => PlaceSeed.Entry(PlaceSeed.Entry.Name(p.getFileName.toString), PlaceSeed.Entry.Directory(java.nio.file.Files.isDirectory(p)), p))
+        .map(p =>
+          PlaceSeed.Entry(
+            PlaceSeed.Entry.Name(p.getFileName.toString),
+            PlaceSeed.Entry.Directory(java.nio.file.Files.isDirectory(p)),
+            p
+          )
+        )
         .filter(e => e.directory.value || java.nio.file.Files.isRegularFile(e.at))
     finally st.close()
 
@@ -176,7 +204,7 @@ object PlacesCmd:
     * Earth's continents), and by the end of pass 1 every place exists. That is why nothing here depends on a clever
     * file-name ordering.
     */
-  private def seed (using console: Console) =
+  private def seed(using console: Console) =
     Opts.subcommand("seed", "Import every gazetteer file under db/places (Natural Earth, Pleiades, traced polities)") {
       (
         Opts.option[String]("dir", "Directory of LPF/GeoJSON files (default: config places.seedDir)").orNone,
@@ -189,7 +217,11 @@ object PlacesCmd:
             .toOption
             .flatMap(Option(_))
             .map(Path.of(_))
-          val (d, tried) = resolveSeedDir(dir.filter(_.nonEmpty).map(PlacesConfig.SeedDir(_)).getOrElse(seedDir), Path.of("").toAbsolutePath, exe)
+          val (d, tried) = resolveSeedDir(
+            dir.filter(_.nonEmpty).map(PlacesConfig.SeedDir(_)).getOrElse(seedDir),
+            Path.of("").toAbsolutePath,
+            exe
+          )
           val n = batch.map(Paging.Limit(_)).getOrElse(defaultBatch)
           if !Files.isDirectory(d) then
             Left(
@@ -201,19 +233,25 @@ object PlacesCmd:
           else
             val files = seedFiles(d)
             if files.isEmpty then
-              Left(Cli.Error(Cli.Error.Message(s"no JSON files under $d — run db/places/fetch.sh first"), exitCode = ExitCode.Usage))
+              Left(
+                Cli.Error(
+                  Cli.Error.Message(s"no JSON files under $d — run db/places/fetch.sh first"),
+                  exitCode = ExitCode.Usage
+                )
+              )
             else
               def pass(
                   fs: List[(Path, Option[Place.KindValue])],
                   label: String
-              )(using console: Console) : Either[Cli.Error, List[(Path, Option[Place.KindValue])]] =
-                fs.foldLeft[Either[Cli.Error, List[(Path, Option[Place.KindValue])]]](Right(Nil)) { case (acc, (f, kind)) =>
-                  acc.flatMap { retry =>
-                    importFile(c, f, kind, n, Dataset.Seed).map { r =>
-                      Cli.out.println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
-                      if r.failed.isEmpty then retry else retry :+ (f -> kind)
+              )(using console: Console): Either[Cli.Error, List[(Path, Option[Place.KindValue])]] =
+                fs.foldLeft[Either[Cli.Error, List[(Path, Option[Place.KindValue])]]](Right(Nil)) {
+                  case (acc, (f, kind)) =>
+                    acc.flatMap { retry =>
+                      importFile(c, f, kind, n, Dataset.Seed).map { r =>
+                        Cli.out.println(s"$label${d.relativize(f)}: ${PlacesMarkdown.placeImport(r)}")
+                        if r.failed.isEmpty then retry else retry :+ (f -> kind)
+                      }
                     }
-                  }
                 }
               for
                 retry <- pass(files, "")
@@ -227,18 +265,21 @@ object PlacesCmd:
         }
     }
 
-  private def rebuild (using console: Console) = Opts.subcommand("rebuild", "Re-materialise which findings fall in which places") {
-    Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r))))
-  }
+  private def rebuild(using console: Console) =
+    Opts.subcommand("rebuild", "Re-materialise which findings fall in which places") {
+      Opts.unit.map(_ => (c: Client) => c.rebuildPlaces.map(r => Cli.out.println(PlacesMarkdown.placeRebuild(r))))
+    }
 
   private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
 
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
-  private def started(c: Client, id: SpatialHierarchyResult.Job.Id, noWait: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
+  private def started(c: Client, id: SpatialHierarchyResult.Job.Id, noWait: Boolean)(using
+      console: Console
+  ): Either[Cli.Error, Unit] =
     Cli.out.println(s"job `$id` started (`histmersion jobs $id` follows it)")
     if noWait then Right(()) else IngestCmd.pollJob(c, id, 0)
 
-  private def buildHierarchy (using console: Console) = Opts.subcommand(
+  private def buildHierarchy(using console: Console) = Opts.subcommand(
     "build-hierarchy",
     "Compute parent-child edges from spatial containment (point inside polygon). Idempotent."
   ) {
@@ -259,7 +300,7 @@ object PlacesCmd:
     )
   }
 
-  private def fetch (using console: Console) = Opts.subcommand(
+  private def fetch(using console: Console) = Opts.subcommand(
     "fetch",
     "Download and import an external gazetteer (cliopatria, awmc, chronontology) or the coastline (land). Re-runnable and idempotent."
   ) {
@@ -268,21 +309,24 @@ object PlacesCmd:
         c.fetchExternalPlaces(Api.ExternalPlaces.Source(source), Cli.DryRun(dryRun)).flatMap { r =>
           r.job match
             case Some(id) => started(c, SpatialHierarchyResult.Job.Id(id.value), nw)
-            case None     => Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
+            case None     =>
+              Right(Cli.out.println(s"${if dryRun then "[dry run] " else ""}${PlacesMarkdown.placeImport(r)}"))
         }
       }
   }
 
   // ── the external sources (#1064) ───────────────────────────────────────────────────────────────
 
-  private def sources (using console: Console) = Opts.subcommand(
+  private def sources(using console: Console) = Opts.subcommand(
     "sources",
     "The external gazetteer sources: the pinned GeoNames and Wikidata extracts, the LPF files in the drop folder, and what was imported"
   ) {
-    Opts.unit.map(_ => (c: Client) => c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows))))
+    Opts.unit.map(_ =>
+      (c: Client) => c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows)))
+    )
   }
 
-  private def load (using console: Console) = Opts.subcommand(
+  private def load(using console: Console) = Opts.subcommand(
     "load",
     "Import an external source — geonames, wikidata, tgn (Getty) or lpf (the drop folder) — joined to the gazetteer by shared ids; a dry run unless --apply"
   ) {
@@ -308,7 +352,7 @@ object PlacesCmd:
   private val langOpt =
     Opts.option[String]("lang", "Language tag of the name: en, grc, la, pl … (omit when unknown)").orNone
 
-  private def nameAdd (using console: Console) = Opts.subcommand(
+  private def nameAdd(using console: Console) = Opts.subcommand(
     "add",
     "Give a place a further name (kept by every re-seed): `places name add pleiades_678430 'Lake Kinneret' --lang en`"
   ) {
@@ -318,16 +362,18 @@ object PlacesCmd:
     }
   }
 
-  private def nameRemove (using console: Console) =
+  private def nameRemove(using console: Console) =
     Opts.subcommand("rm", "Remove a name added by hand (a name the seed gives cannot be removed)") {
       (Opts.argument[String]("place-id"), Opts.argument[String]("name"), langOpt).mapN {
         (id, name, lang) => (c: Client) =>
-          c.removePlaceName(Place.Id(id), Place.NameRemove(Place.NameRemove.Name(name), lang.map(Place.NameRemove.Lang(_))))
-            .map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
+          c.removePlaceName(
+            Place.Id(id),
+            Place.NameRemove(Place.NameRemove.Name(name), lang.map(Place.NameRemove.Lang(_)))
+          ).map(r => Cli.out.println(PlacesMarkdown.placeNameChanged(r)))
       }
     }
 
-  private def nameList (using console: Console) = Opts.subcommand(
+  private def nameList(using console: Console) = Opts.subcommand(
     "list",
     "The names added by hand; --csv prints them as db/places/supplement/names.csv lines, to promote into the seed"
   ) {
@@ -344,11 +390,12 @@ object PlacesCmd:
       }
   }
 
-  private def name (using console: Console) = Opts.subcommand("name", "Names added by hand to gazetteer places: add, rm, list") {
-    nameAdd orElse nameRemove orElse nameList
-  }
+  private def name(using console: Console) =
+    Opts.subcommand("name", "Names added by hand to gazetteer places: add, rm, list") {
+      nameAdd orElse nameRemove orElse nameList
+    }
 
-  private def add (using console: Console) = Opts.subcommand(
+  private def add(using console: Console) = Opts.subcommand(
     "add",
     "Add a point place of this collection's own (never touched by a re-seed); --source says where the point comes from"
   ) {
@@ -383,14 +430,13 @@ object PlacesCmd:
             from.map(Year(_)),
             to.map(Year(_))
           )
-        )
-          .map(p => Cli.out.println(PlacesMarkdown.placeAdded(p)))
+        ).map(p => Cli.out.println(PlacesMarkdown.placeAdded(p)))
       }
   }
 
   // ── a person's kind, period and point for a place (V080, V081) ───────────────────────────────────
 
-  private def set (using console: Console) = Opts.subcommand(
+  private def set(using console: Console) = Opts.subcommand(
     "set",
     "Set what a place IS over what its source says — kind, period and/or point; kept by every re-seed, its findings matched again: " +
       "`places set pleiades_886355306 --kind region --reason 'one of the 14 Augustan regiones'`"
@@ -409,9 +455,7 @@ object PlacesCmd:
           "point",
           "Its corrected point, latitude,longitude (a place known by a point only; --reason must name the gazetteer value)"
         )
-        .mapValidated(p =>
-          Place.Overrides.parsePoint(Place.Overrides.PointText(p)).left.map(_.value).toValidatedNel
-        )
+        .mapValidated(p => Place.Overrides.parsePoint(Place.Overrides.PointText(p)).left.map(_.value).toValidatedNel)
         .orNone,
       Opts.option[String]("reason", "Why: the evidence the decision rests on").orNone,
       Opts.flag("reset", "Drop the override: the kind, period and point its source states come back").orFalse
@@ -433,7 +477,7 @@ object PlacesCmd:
       }
   }
 
-  private def merge (using console: Console) = Opts.subcommand(
+  private def merge(using console: Console) = Opts.subcommand(
     "merge",
     "Merge a place into the one it is the same as — findings, links, children and references move; its id resolves there, and no re-seed brings it back"
   ) {
@@ -448,7 +492,7 @@ object PlacesCmd:
       }
   }
 
-  private def rm (using console: Console) = Opts.subcommand(
+  private def rm(using console: Console) = Opts.subcommand(
     "rm",
     "Remove a place nothing refers to (refused while an event, attestation, child, hand-added name or a finding with no other place does); no re-seed brings it back"
   ) {
@@ -459,7 +503,7 @@ object PlacesCmd:
       }
   }
 
-  private def overrides (using console: Console) = Opts.subcommand(
+  private def overrides(using console: Console) = Opts.subcommand(
     "overrides",
     "The kinds, periods and points set by hand (`places set`), with what each source says"
   ) {
@@ -469,7 +513,7 @@ object PlacesCmd:
   }
 
   /** `places site-types` (#1449): refine what the Wikidata sites on the map are from their items. */
-  private def siteTypes (using console: Console) = Opts.subcommand(
+  private def siteTypes(using console: Console) = Opts.subcommand(
     "site-types",
     "Refine the type (settlement, fortification, burial…) of the Wikidata sites on the map from their items' " +
       "classes, as a server job; Pleiades and GeoNames sites are typed from their own fields already"
@@ -481,16 +525,17 @@ object PlacesCmd:
       Opts.flag("no-wait", "Print the job id and return").orFalse
     )
       .mapN { (dry, limit, refresh, noWait) => (c: Client) =>
-        c.call(EventsApi.refineSiteTypes)(SiteTypes.Request(
+        c.call(EventsApi.refineSiteTypes)(
+          SiteTypes.Request(
             SiteTypes.Request.DryRun(dry),
             limit.map(SiteTypes.Request.Limit(_)),
             SiteTypes.Request.Refresh(refresh)
-          ))
-          .flatMap(EventsCmd.follow(c, _, Cli.NoWait(noWait)))
+          )
+        ).flatMap(EventsCmd.follow(c, _, Cli.NoWait(noWait)))
       }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "places",
       "The gazetteer: search, show, rename, name, set, merge, rm, add, import, load external sources and materialise places"

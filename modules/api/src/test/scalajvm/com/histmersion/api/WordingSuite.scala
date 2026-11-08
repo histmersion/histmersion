@@ -101,19 +101,48 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.strategies(AgentScheduler.StrategyLine.Name("goal-first")), "One goal at a time")
     assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("claude-plan")), "Claude plan")
     assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("chatgpt-plan")), "ChatGPT plan")
-    assertEquals(Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On(true), draining = AgentMode.Step.Drain.On(false)), "Agents: working")
+    assertEquals(
+      Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On(true), draining = AgentMode.Step.Drain.On(false)),
+      "Agents: working"
+    )
     assertEquals(
       Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On(true), draining = AgentMode.Step.Drain.On(true)),
       "Agents: finishing current work, then pausing"
     )
     assertEquals(Wording.Drain, "Finish current work, then pause")
-    val glance = UiNotices.AgentsGlance(running = UiNotices.AgentsGlance.Running(3), queued = UiNotices.AgentsGlance.Queued(12), on = UiNotices.AgentsGlance.On(true))
+    val glance = UiNotices.AgentsGlance(
+      running = UiNotices.AgentsGlance.Running(3),
+      queued = UiNotices.AgentsGlance.Queued(12),
+      on = UiNotices.AgentsGlance.On(true)
+    )
     assertEquals(glance.wording, "Agents working · 3 runs")
     assertEquals((glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(1))).wording, "Agents working · 1 run")
-    assertEquals((glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(0))).wording, "Agents working · 12 waiting")
-    assertEquals((glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(0)).modify(_.queued).setTo(UiNotices.AgentsGlance.Queued(0))).wording, "Agents on · nothing to do")
-    assertEquals((glance.modify(_.draining).setTo(UiNotices.AgentsGlance.Draining(true))).wording, "Agents finishing current work · 3 runs")
-    assertEquals((glance.modify(_.draining).setTo(UiNotices.AgentsGlance.Draining(true)).modify(_.running).setTo(UiNotices.AgentsGlance.Running(0))).wording, "Agents paused")
+    assertEquals(
+      (glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(0))).wording,
+      "Agents working · 12 waiting"
+    )
+    assertEquals(
+      (glance
+        .modify(_.running)
+        .setTo(UiNotices.AgentsGlance.Running(0))
+        .modify(_.queued)
+        .setTo(UiNotices.AgentsGlance.Queued(0)))
+        .wording,
+      "Agents on · nothing to do"
+    )
+    assertEquals(
+      (glance.modify(_.draining).setTo(UiNotices.AgentsGlance.Draining(true))).wording,
+      "Agents finishing current work · 3 runs"
+    )
+    assertEquals(
+      (glance
+        .modify(_.draining)
+        .setTo(UiNotices.AgentsGlance.Draining(true))
+        .modify(_.running)
+        .setTo(UiNotices.AgentsGlance.Running(0)))
+        .wording,
+      "Agents paused"
+    )
     assertEquals((glance.modify(_.on).setTo(UiNotices.AgentsGlance.On(false))).wording, "Agents paused")
     assertEquals(Wording.decisions(Wording.Decisions.Open(0)), None)
     assertEquals(Wording.decisions(Wording.Decisions.Open(1)), Some("1 needs your decision"))

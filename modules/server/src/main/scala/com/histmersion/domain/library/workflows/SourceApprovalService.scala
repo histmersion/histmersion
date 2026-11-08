@@ -1,10 +1,10 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, ApprovalInfo}
-import com.histmersion.domain.library.{Source, Edge}
+import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState}
+import com.histmersion.domain.library.{Edge, Source}
 import com.histmersion.domain.automation.AutomationState
-import com.histmersion.domain.automation.agents.{ApprovalService, ApprovalRecord}
+import com.histmersion.domain.automation.agents.{ApprovalRecord, ApprovalService}
 import com.histmersion.util.database.Transactor
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
@@ -36,9 +36,11 @@ trait SourceApprovalService:
   ): Boolean
 
 object SourceApprovalService:
-  def apply(db: Transactor, approvals: ApprovalService, clock: Clock): SourceApprovalService = Implementation(db, approvals, clock)
+  def apply(db: Transactor, approvals: ApprovalService, clock: Clock): SourceApprovalService =
+    Implementation(db, approvals, clock)
 
-  private final class Implementation(db: Transactor, approvals: ApprovalService, clock: Clock) extends SourceApprovalService:
+  final private class Implementation(db: Transactor, approvals: ApprovalService, clock: Clock)
+      extends SourceApprovalService:
     private def now: Instant = Instant.now(clock)
     def record(
         jobId: Option[Job.Id],
@@ -53,7 +55,21 @@ object SourceApprovalService:
         result: Option[ApprovalRecord.Result]
     ): Option[ApprovalInfo] =
       db.transact(
-        SourceApprovalRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload.value, state, result.map(_.value), now).flatMap(id => approvals.approvalIn(Approval.Id(id.value)))
+        SourceApprovalRepo
+          .record(
+            jobId,
+            kind,
+            citekey,
+            status,
+            current,
+            edgeKind,
+            target,
+            payload.value,
+            state,
+            result.map(_.value),
+            now
+          )
+          .flatMap(id => approvals.approvalIn(Approval.Id(id.value)))
       )
 
     def proposedBefore(
@@ -64,7 +80,8 @@ object SourceApprovalService:
         target: Option[Citekey]
     ): Boolean = db.read(SourceApprovalRepo.proposedBefore(kind, citekey, status, edgeKind, target))
 
-  final class InMemory(state: AtomicReference[AutomationState], approvals: ApprovalService, clock: Clock) extends SourceApprovalService:
+  final class InMemory(state: AtomicReference[AutomationState], approvals: ApprovalService, clock: Clock)
+      extends SourceApprovalService:
     private def now: Instant = Instant.now(clock)
     private def rows: Vector[ApprovalRecord] = state.get.approvals
     private val Open = ApprovalRecord.State(ApprovalState.Open.wire.value)
@@ -86,30 +103,34 @@ object SourceApprovalService:
         edgeKind.map(k => ApprovalRecord.EdgeKind(Edge.Kind.wireOf(k).value))
       )
       def same(r: ApprovalRecord) =
-        state == ApprovalState.Open && r.state == Open && r.kind.value == kind.wire.value && r.citekey.contains(citekey) &&
+        state == ApprovalState.Open && r.state == Open && r.kind.value == kind.wire.value && r.citekey.contains(
+          citekey
+        ) &&
           r.status.fold("")(_.value) == st.fold("")(_.value) && r.edgeKind.fold("")(_.value) == ek.fold("")(_.value) &&
           r.target.fold("")(_.value) == target.fold("")(_.value)
       val at = now
-      AutomationState.insertApproval(this.state)(same)(id =>
-        ApprovalRecord(
-          ApprovalRecord.Id(id.value),
-          jobId,
-          None,
-          ApprovalRecord.Kind(kind.wire.value),
-          Some(citekey),
-          st,
-          current.map(c => ApprovalRecord.Current(c.wire.value)),
-          ek,
-          target.map(t => ApprovalRecord.Target(t.value)),
-          None,
-          ApprovalRecord.Proposal(payload.value),
-          ApprovalRecord.State(state.wire.value),
-          None,
-          result,
-          at,
-          decidedAt(state)
+      AutomationState
+        .insertApproval(this.state)(same)(id =>
+          ApprovalRecord(
+            ApprovalRecord.Id(id.value),
+            jobId,
+            None,
+            ApprovalRecord.Kind(kind.wire.value),
+            Some(citekey),
+            st,
+            current.map(c => ApprovalRecord.Current(c.wire.value)),
+            ek,
+            target.map(t => ApprovalRecord.Target(t.value)),
+            None,
+            ApprovalRecord.Proposal(payload.value),
+            ApprovalRecord.State(state.wire.value),
+            None,
+            result,
+            at,
+            decidedAt(state)
+          )
         )
-      ).flatMap(approvals.approval)
+        .flatMap(approvals.approval)
 
     def proposedBefore(
         kind: ApprovalKind,

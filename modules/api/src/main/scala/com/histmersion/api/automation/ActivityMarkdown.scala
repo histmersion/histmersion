@@ -8,24 +8,34 @@ import com.histmersion.api.Paging
 
 object ActivityMarkdown:
 
-  export Entry.{At as MinuteAt}
+  export Entry.At as MinuteAt
 
   def minute(at: ActivityMarkdown.MinuteAt): String = ((at).value.take(16).replace('T', ' '))
 
   def headline(e: Entry): String = e.entryKind match
     case Some(EntryKind.Run) =>
-      val what = Agents.Pipeline.parse(Pipeline.Wire(e.what.value)).fold(Wording.humanize(Wording.Id(e.what.value)))(Wording.pipeline)
+      val what = Agents.Pipeline
+        .parse(Pipeline.Wire(e.what.value))
+        .fold(Wording.humanize(Wording.Id(e.what.value)))(Wording.pipeline)
       what + e.target.map(_.value).filter(_.nonEmpty).fold("")(t => s" — $t")
     case Some(EntryKind.Job) =>
-      Wording.jobKindOf(JobKinds.Wire(e.what.value)) + e.citekey.map(_.value).orElse(e.target.map(_.value)).filter(_.nonEmpty).fold("")(t => s" — $t")
+      Wording.jobKindOf(JobKinds.Wire(e.what.value)) + e.citekey
+        .map(_.value)
+        .orElse(e.target.map(_.value))
+        .filter(_.nonEmpty)
+        .fold("")(t => s" — $t")
     case Some(EntryKind.Decision) =>
-      val outcome = Agents.ApprovalState.parse(Approval.State.Wire(e.state.value)).fold(e.state.value)(Wording.approvalState).toLowerCase
+      val outcome = Agents.ApprovalState
+        .parse(Approval.State.Wire(e.state.value))
+        .fold(e.state.value)(Wording.approvalState)
+        .toLowerCase
       s"${Agents.ApprovalKind.parse(Approval.Kind.Wire(e.what.value)).fold(Wording.humanize(Wording.Id(e.what.value)))(Wording.approvalKind)} ($outcome)" +
         Option(e.text.value).filter(_.nonEmpty).fold("")(t => s" — $t")
     case Some(EntryKind.Log) | None => e.text.value
 
   def stateOf(e: Entry): String = e.entryKind match
-    case Some(EntryKind.Run) => Agents.RunState.parse(Run.State.Wire(e.state.value)).fold(e.state.value)(Wording.runState)
+    case Some(EntryKind.Run) =>
+      Agents.RunState.parse(Run.State.Wire(e.state.value)).fold(e.state.value)(Wording.runState)
     case Some(EntryKind.Job) => JobState.parse(JobState.Wire(e.state.value)).fold(e.state.value)(Wording.jobState)
     case _                   => ("")
 

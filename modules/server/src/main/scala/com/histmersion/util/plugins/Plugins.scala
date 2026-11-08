@@ -87,7 +87,10 @@ object Plugins:
       fallback = FirstPartySettings.fallback(_, host),
       firstParty = firstParty(set)
     )
-    g.modify(_.report.set).setTo(set).modify(_.report.warnings).using(_ ++ setError.map(e => PluginsReport.Warnings(e.value)))
+    g.modify(_.report.set)
+      .setTo(set)
+      .modify(_.report.warnings)
+      .using(_ ++ setError.map(e => PluginsReport.Warnings(e.value)))
 
   /** The resolved `histmersion` tree a load read; a load made by hand (a test's) has none, and reads `reference.conf`
     * with its environment instead.
@@ -103,7 +106,9 @@ object Plugins:
     * path — not a plugin of the set a relink added under that id.
     */
   def firstParty(set: Option[PluginSet])(id: Plugin.Info.Id): Boolean =
-    ReservedNames.firstPartyPlugins(ReservedNames.Name(id.value)) && !set.exists(_.jars.exists(_.plugins.exists(_.id.value == id.value)))
+    ReservedNames.firstPartyPlugins(ReservedNames.Name(id.value)) && !set.exists(
+      _.jars.exists(_.plugins.exists(_.id.value == id.value))
+    )
 
   /** The keys each plugin's defaults resource declares (`enabled` aside): where a former plugin's key goes. */
   def defaultKeys(plugins: List[Plugin]): com.histmersion.util.plugins.Plugin.Id => Set[SettingsService.ConfigPath] =
@@ -127,13 +132,20 @@ object Plugins:
     * `events.<catalogue>.*`, the landing step oa-unpaywall's contact; never a media collection or an AI provider, which
     * read theirs at each use), any other plugin the keys that shape the client it is lent.
     */
-  def carried(previous: Generation, changed: List[ConfigReload.ChangedKey]): Map[Plugin.Info.Id, (PluginStatus, Registries)] =
+  def carried(
+      previous: Generation,
+      changed: List[ConfigReload.ChangedKey]
+  ): Map[Plugin.Info.Id, (PluginStatus, Registries)] =
     val relevant = changed.filter(k => Keys.exists(HotPlan.keyMatches(k, _)))
     // a former plugin's key (oa-index) concerns its successors
     val ids =
       relevant
         .map(pluginId)
-        .flatMap(_.fold(List(Option.empty[Plugin.Info.Id]))(id => LegacyPlugins.expand(id).map(i => Some(Plugin.Info.Id(i.value)))))
+        .flatMap(
+          _.fold(List(Option.empty[Plugin.Info.Id]))(id =>
+            LegacyPlugins.expand(id).map(i => Some(Plugin.Info.Id(i.value)))
+          )
+        )
     val vaults = previous.contributions.collect { case (id, r) if r.secretVaults.nonEmpty => id }.toSet
     val whole = relevant.exists(k => HotPlan.keyMatches(k, ConfigReload.Key(PluginHost.Root)))
     if ids.flatten.exists(vaults) || (whole && ids.contains(None)) then Map.empty
@@ -161,7 +173,7 @@ object Plugins:
     scala.util.Try(ConfigUtil.splitPath(key.value).asScala.toList).toOption match
       case Some("histmersion" :: "plugins" :: id :: _) if id != PluginHost.OrderKey =>
         com.histmersion.util.plugins.Plugin.Id.option(id)
-      case _                                                                        => None
+      case _ => None
 
   /** CORE's key as the generation's `oa-core` plugin resolved it (its `api-key` secret reference, else `hostKey`,
     * `acquire.core.api-key`): the new-source search's `core` index asks with it too. `None` when the plugin is off.
@@ -202,7 +214,14 @@ object Plugins:
       all,
       user,
       env,
-      services(() => new Plugin.Http { def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) }, env),
+      services(
+        () =>
+          new Plugin.Http {
+            def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+              Left(Plugin.Http.GetResultPart1("offline"))
+          },
+        env
+      ),
       errors,
       carried,
       fallback = FirstPartySettings.fallback(_, host),

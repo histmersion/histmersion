@@ -21,12 +21,14 @@ object Doi extends Newtype[String, Match["10\\.[0-9]+/\\S+"]]:
       .trim
     Core
       .findFirstIn(s)
-      .flatMap(
-        d => Doi.option(d.stripSuffix(".")
-          .stripSuffix(",")
-          .stripSuffix(";")
-          .stripSuffix(")")
-          .stripSuffix("}")
-          .stripSuffix("|")
-          .toLowerCase)
+      .flatMap(d =>
+        Doi.option(
+          d.stripSuffix(".")
+            .stripSuffix(",")
+            .stripSuffix(";")
+            .stripSuffix(")")
+            .stripSuffix("}")
+            .stripSuffix("|")
+            .toLowerCase
+        )
       )

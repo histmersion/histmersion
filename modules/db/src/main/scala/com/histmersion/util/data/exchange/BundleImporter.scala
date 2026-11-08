@@ -42,8 +42,6 @@ object BundleImporter:
   type IssueName = IssueName.T
   object IssueName extends Newtype[String, Pure]
 
-
-
   def run(
       ds: DataSource,
       bundle: ByteSource,
@@ -67,7 +65,11 @@ object BundleImporter:
           )
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
-  private def failed(m: Bundle.Manifest, opts: ImportOptions, problems: List[ImportAbort.Problem]): Bundle.ImportResult =
+  private def failed(
+      m: Bundle.Manifest,
+      opts: ImportOptions,
+      problems: List[ImportAbort.Problem]
+  ): Bundle.ImportResult =
     Bundle.ImportResult(
       m.bundleId,
       m.instance,
@@ -136,7 +138,9 @@ object BundleImporter:
     val counts = counted(decided)
     val needed = neededBlobs(es, writes)
     val shown =
-      holding ++ plan.issues.filter(i => i.decision.isDefined && planned.needsApply.exists(_.value.startsWith(i.id.value)))
+      holding ++ plan.issues.filter(i =>
+        i.decision.isDefined && planned.needsApply.exists(_.value.startsWith(i.id.value))
+      )
     def result(applied: Bundle.ImportResult.Applied, mergeId: Option[UUID]) =
       Bundle.ImportResult(
         m.bundleId,
@@ -232,7 +236,10 @@ object BundleImporter:
         case Left(e)        => failures += ImportAbort.Problem(e.value)
         case Right(None)    => ()
         case Right(Some(e)) =>
-          Bundle.blobSha(e.name.value).flatMap(a => Sha256.option(a.value)).flatMap(sha => needed.get(sha).map(sha -> _)) match
+          Bundle
+            .blobSha(e.name.value)
+            .flatMap(a => Sha256.option(a.value))
+            .flatMap(sha => needed.get(sha).map(sha -> _)) match
             case None              => ()
             case Some((sha, uses)) =>
               val sinks = uses.flatMap(kinds.sink(_, sha, w, files))
@@ -305,7 +312,15 @@ object BundleImporter:
           )
         catch
           case a: ImportAbort =>
-            Right(MergeApplyResult(m.bundleId, m.instance, applied = MergeApplyResult.Applied(false), MergeApplyResult.PlanHash(planHash.value), problems = a.problems.map(p => MergeApplyResult.Problems(p.value))))
+            Right(
+              MergeApplyResult(
+                m.bundleId,
+                m.instance,
+                applied = MergeApplyResult.Applied(false),
+                MergeApplyResult.PlanHash(planHash.value),
+                problems = a.problems.map(p => MergeApplyResult.Problems(p.value))
+              )
+            )
 
   private def applyIn(
       bundle: ByteSource,
@@ -352,11 +367,20 @@ object BundleImporter:
       notes = planned.notes.map(n => MergeApplyResult.Notes(n.value))
     )
     if problems.nonEmpty then base
-    else if plan.changes.value == 0 then base.modify(_.applied).setTo(MergeApplyResult.Applied(true)).modify(_.replanChanges).setTo(Some(MergeApplyResult.ReplanChanges(0))).modify(_.tally).setTo(MergeTally())
+    else if plan.changes.value == 0 then
+      base
+        .modify(_.applied)
+        .setTo(MergeApplyResult.Applied(true))
+        .modify(_.replanChanges)
+        .setTo(Some(MergeApplyResult.ReplanChanges(0)))
+        .modify(_.tally)
+        .setTo(MergeTally())
     else
       backup() match
         case Left(e) =>
-          base.modify(_.problems).setTo(List(MergeApplyResult.Problems(s"the backup before the merge failed, nothing was written: $e")))
+          base
+            .modify(_.problems)
+            .setTo(List(MergeApplyResult.Problems(s"the backup before the merge failed, nothing was written: $e")))
         case Right(dump) =>
           writeAll(bundle, input, planned, opts, files, kinds)
           val ap = planned.apply
@@ -364,7 +388,13 @@ object BundleImporter:
           MergeRepo.tombstone(ap.tombstones)
           val folded = planned.rows.filter(r => r.decision == Decision.FastForward && ap.touch(r.uid))
           folded.groupBy(_.kind).foreach((k, rs) => MergeRepo.touch(kinds.tableOf(k), rs.map(_.uid).distinct))
-          val report = base.modify(_.applied).setTo(MergeApplyResult.Applied(true)).modify(_.backup).setTo(Some(MergeApplyResult.Backup(dump))).modify(_.problems).setTo(Nil)
+          val report = base
+            .modify(_.applied)
+            .setTo(MergeApplyResult.Applied(true))
+            .modify(_.backup)
+            .setTo(Some(MergeApplyResult.Backup(dump)))
+            .modify(_.problems)
+            .setTo(Nil)
           val mergeId = MergeRepo
             .record(
               m,
@@ -373,7 +403,13 @@ object BundleImporter:
               planned.rows,
               report.asJson,
               RowCount(report.changed.value + plan.changes.value),
-              Some((MergeRow.AppliedAt(plan.planHash.value), MergeRow.Backup(dump), MergeRow.FromLabel(Jsonb.write(resolutions).value)))
+              Some(
+                (
+                  MergeRow.AppliedAt(plan.planHash.value),
+                  MergeRow.Backup(dump),
+                  MergeRow.FromLabel(Jsonb.write(resolutions).value)
+                )
+              )
             )
             .getOrElse(throw ImportAbort(List(ImportAbort.Problem("the merge wrote nothing"))))
           MergeRepo.redirect(ap.folds, mergeId)
@@ -388,6 +424,12 @@ object BundleImporter:
           )
           // the same bundle, planned again over what was just written: nothing should be left to do
           val (_, again) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
-          report.modify(
-            _.mergeId).setTo(Some(mergeId)).modify(_.reviews).setTo(reviews.map(s => MergeApplyResult.Reviews(s.value))).modify(_.logEntry).setTo(Some(MergeApplyResult.LogEntry(logEntry.value))).modify(_.replanChanges).setTo(Some(MergeApplyResult.ReplanChanges(again.plan.changes.value))
-          )
+          report
+            .modify(_.mergeId)
+            .setTo(Some(mergeId))
+            .modify(_.reviews)
+            .setTo(reviews.map(s => MergeApplyResult.Reviews(s.value)))
+            .modify(_.logEntry)
+            .setTo(Some(MergeApplyResult.LogEntry(logEntry.value)))
+            .modify(_.replanChanges)
+            .setTo(Some(MergeApplyResult.ReplanChanges(again.plan.changes.value)))

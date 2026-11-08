@@ -9,9 +9,10 @@ import com.histmersion.api.library.RepairAcquire
 
 object MediaMarkdown:
 
-  export com.histmersion.api.library.RepairAcquire.RepairRequest.{DryRun as MediaSamplesDryRun}
+  export com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun as MediaSamplesDryRun
 
-  private def providerTitle(p: MediaItem.Provider): MediaProvider.Info.Title = MediaProvider.title(MediaProvider.Id(p.value))
+  private def providerTitle(p: MediaItem.Provider): MediaProvider.Info.Title =
+    MediaProvider.title(MediaProvider.Id(p.value))
 
   def assetDetail(ck: Citekey, a: AssetDetail): String =
     val loc = (a.lat, a.lon) match
@@ -34,35 +35,43 @@ object MediaMarkdown:
 
   private[api] def countsLine(cs: List[MediaCount]): String =
     if cs.isEmpty then ("none")
-    else (cs.map(c => s"${c.key} ${c.n}${if ((c.allowed) == MediaCount.Allowed(true)) then "" else " (not allowed)"}").mkString(" · "))
+    else
+      (cs
+        .map(c => s"${c.key} ${c.n}${if (c.allowed) == MediaCount.Allowed(true) then "" else " (not allowed)"}")
+        .mkString(" · ")
+    )
 
   def mediaProviders(ps: List[MediaProvider.Info]): String =
     if ps.isEmpty then ("No media provider is registered (every media plugin is switched off).")
     else
       ps.map { p =>
-        val origin = if ((p.builtin) == MediaProvider.Info.Builtin(true)) then s"built in, plugin `${p.plugin}`" else s"plugin `${p.plugin}`"
+        val origin = if (p.builtin) == MediaProvider.Info.Builtin(true) then s"built in, plugin `${p.plugin}`"
+        else s"plugin `${p.plugin}`"
         val terms = if p.licences.value.trim.isEmpty then "" else s" · licences: ${p.licences}"
         s"- **`${p.name}`** — ${p.title} (${p.over}; $origin$terms)" +
           (if p.description.value.trim.isEmpty then "" else s"\n  ${p.description.value.trim}")
       }.mkString("## Media providers\n\n", "\n", "\n\n`histmersion media import <name>` runs one.")
 
   def mediaImportReport(r: MediaImportReport): String =
-    val mode = if ((r.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) then "dry run — nothing stored" else "stored"
+    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_"
     else
       r.byLicence
-        .map(c => s"| `${c.key}` | ${c.n} | ${if ((c.allowed) == MediaCount.Allowed(true)) then "yes" else "**no**"} |")
+        .map(c => s"| `${c.key}` | ${c.n} | ${if (c.allowed) == MediaCount.Allowed(true) then "yes" else "**no**"} |")
         .mkString("| licence | files | allowed |\n|---|---|---|\n", "\n", "")
     val rejected = if r.rejected.isEmpty then ""
     else "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
-    val done = if ((r.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) then ""
+    val done = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then ""
     else
       s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(Plural.Count(r.categories.value.toLong), Plural.Noun.Singular("category"), Plural.Noun.Plural("categories"))}"
     val revoked = if r.revoked.isEmpty then ""
     else "\n\n**Licence no longer allowed (kept — review):**\n" + r.revoked.map(x => s"- $x").mkString("\n")
     val failed = if r.failed.isEmpty then "" else "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
-    val pending = s"\n\n**Not asked yet:** ${Plural.count(Plural.Count(r.pending.value.toLong), Plural.CountSingular("place/event"), Plural.CountPlural("places/events"))}" +
-      (if r.batches.value > 0 then s" · ${Plural.count(Plural.Count(r.batches.value.toLong), Plural.CountSingular("batch"), Plural.CountPlural("batches"))} run" else "")
+    val pending =
+      s"\n\n**Not asked yet:** ${Plural.count(Plural.Count(r.pending.value.toLong), Plural.CountSingular("place/event"), Plural.CountPlural("places/events"))}" +
+        (if r.batches.value > 0 then
+           s" · ${Plural.count(Plural.Count(r.batches.value.toLong), Plural.CountSingular("batch"), Plural.CountPlural("batches"))} run"
+         else "")
     // assembled line by line, not with stripMargin: the table's rows start with `|` themselves
     List(
       s"# Media import · ${providerTitle(r.provider)} ($mode)",
@@ -89,11 +98,12 @@ object MediaMarkdown:
       (s"\n\n**${if (dryRun).value then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
         xs.map(x =>
           s"- ${x.targetType} `${x.targetId}` (${x.targetLabel}) ← ${x.title} [`${x.key}`](${x.url}) · `${x.license}` — ${x.basis}"
-        ).mkString("\n"))
+        ).mkString("\n")
+    )
 
   def mediaCoversReport(r: MediaCoversReport): String =
-    val mode = if ((r.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) then "dry run — nothing stored" else "stored"
-    val verb = if ((r.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) then "would link" else "linked"
+    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "dry run — nothing stored" else "stored"
+    val verb = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "would link" else "linked"
     val lines = if r.lines.isEmpty then ""
     else
       "\n\n" + r.lines
@@ -110,14 +120,22 @@ object MediaMarkdown:
     val origin = m.citekey
       .map(c => s"[[$c]] / `${m.name}`")
       .getOrElse(s"${m.provider.map(providerTitle).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
-    val lic = m.license.fold(if m.provider.exists(p => MediaProvider.covers(MediaProvider.Id(p.value))) then "a cover (no reuse licence; shown locally)"
+    val lic = m.license.fold(if m.provider.exists(p => MediaProvider.covers(MediaProvider.Id(p.value))) then
+      "a cover (no reuse licence; shown locally)"
     else "**no licence**")(l => s"`$l`")
     val targets = if m.targets.isEmpty then ""
     else " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
     (s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets")
 
   def mediaList(l: MediaList): String =
-    OffsetPage.markdown(l.page, Plural.noun(Plural.Count(l.total.value.toLong), Plural.Noun.Singular("picture")).value, ("_No pictures._"), l.items)(mediaItemLine).value
+    OffsetPage
+      .markdown(
+        l.page,
+        Plural.noun(Plural.Count(l.total.value.toLong), Plural.Noun.Singular("picture")).value,
+        ("_No pictures._"),
+        l.items
+      )(mediaItemLine)
+      .value
 
   def mediaItem(m: MediaItem): String =
     val origin = m.citekey
@@ -135,7 +153,9 @@ object MediaMarkdown:
       m.retrievedAt.map(t => s"**Retrieved:** $t"),
       Some(
         s"**File:** ${m.mime} · ${Plural
-            .count(Plural.Count(m.bytes.value), Plural.Noun.Singular("byte"))}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"
+            .count(Plural.Count(m.bytes.value), Plural.Noun.Singular("byte"))}${(m.width, m.height) match {
+            case (Some(w), Some(h)) => s" · $w×$h"; case _ => ""
+          }} · `${m.fileUrl}`"
       ),
       m.thumbUrl.map(u => s"**Thumbnail:** `$u`"),
       m.kind.map(k => s"**Kind:** $k")
@@ -158,8 +178,10 @@ object MediaMarkdown:
       s"**Licences:** ${countsLine(f.licences)}"
 
   def figureLicenceFill(f: FigureLicenceFill): String =
-    val what = if ((f.applied) == FigureLicenceFill.Applied(true)) then s"${Plural.count(Plural.Count(f.updated.value.toLong), Plural.CountSingular("figure"))} given their source's licence"
-    else s"${Plural.count(Plural.Count(f.candidates.value.toLong), Plural.CountSingular("figure"))} would take their source's licence (dry run; `--apply` writes it)"
+    val what = if (f.applied) == FigureLicenceFill.Applied(true) then
+      s"${Plural.count(Plural.Count(f.updated.value.toLong), Plural.CountSingular("figure"))} given their source's licence"
+    else
+      s"${Plural.count(Plural.Count(f.candidates.value.toLong), Plural.CountSingular("figure"))} would take their source's licence (dry run; `--apply` writes it)"
     val by = if f.bySource.isEmpty then "" else "\n\n" + f.bySource.map(c => s"- [[${c.key}]]: ${c.n}").mkString("\n")
     (s"# Figure licences\n\n$what$by")
 

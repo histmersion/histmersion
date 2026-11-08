@@ -19,5 +19,5 @@ object PageWidth:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
 
-
-  def fromWire(s: Wire): PageWidth = values.find(_.wire.value == Option(s).fold("")(_.value.trim.toLowerCase)).getOrElse(Reading)
+  def fromWire(s: Wire): PageWidth =
+    values.find(_.wire.value == Option(s).fold("")(_.value.trim.toLowerCase)).getOrElse(Reading)

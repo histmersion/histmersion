@@ -16,4 +16,9 @@ import com.histmersion.pluginhost.PluginMedia
   *   lacks, no image); `None`: it would be considered for a place — the server's match rules (names on the map, dates)
   *   decide the rest
   */
-final case class MediaVerdict(key: MediaRecord.Key, item: Option[MediaItem], licence: Option[com.histmersion.domain.Licence.Id], refused: Option[PluginMedia.Refusal])
+final case class MediaVerdict(
+    key: MediaRecord.Key,
+    item: Option[MediaItem],
+    licence: Option[com.histmersion.domain.Licence.Id],
+    refused: Option[PluginMedia.Refusal]
+)

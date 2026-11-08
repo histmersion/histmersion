@@ -92,7 +92,10 @@ object PluginMedia:
             )
           )
     val stated: Either[Problem, MediaRights] =
-      Option(it.rights).getOrElse(Left(MediaItem.RightsPart1("no rights statement"))).left.map(why => Problem(why.value))
+      Option(it.rights)
+        .getOrElse(Left(MediaItem.RightsPart1("no rights statement")))
+        .left
+        .map(why => Problem(why.value))
     MediaRecord(
       MediaRecord.Key(key),
       MediaRecord.Title(it.title.value.trim),
@@ -105,7 +108,9 @@ object PluginMedia:
         .flatMap(_ => stated.flatMap(rights))
         .left
         .map(why => MediaRecord.RightsPart1(why.value)),
-      it.geography.map((field, value) => MediaRecord.GeographyPart1(field.value) -> MediaRecord.GeographyPart2(value.value)),
+      it.geography.map((field, value) =>
+        MediaRecord.GeographyPart1(field.value) -> MediaRecord.GeographyPart2(value.value)
+      ),
       period.toOption.flatten,
       it.ids.map((scheme, id) => ExternalIds.Scheme(scheme.value) -> ExternalIds.ExternalId(id.value)),
       it.withheld.map(w => MediaRecord.Withheld(w.value)),

@@ -56,7 +56,10 @@ class IngestSuite extends munit.FunSuite:
     cases.foreach(c => assertEquals(AssetLinks.fromFigures(AssetLinks.Body(s"![a]($c)")), "![a](assets/x.png)", c))
 
   test("fromFigures maps the name through safeName, so link and stored asset agree"):
-    assertEquals(AssetLinks.fromFigures(AssetLinks.Body("![](figures/a b&c.png)".replace(" ", "%20"))), "![](assets/a-b-c.png)")
+    assertEquals(
+      AssetLinks.fromFigures(AssetLinks.Body("![](figures/a b&c.png)".replace(" ", "%20"))),
+      "![](assets/a-b-c.png)"
+    )
 
   test("fromFigures leaves assets/, remote and non-image links alone, and is idempotent"):
     val in = AssetLinks.Body("![a](assets/x.png) ![b](https://e.org/figures/y.png) [c](figures/x.png)")
@@ -88,7 +91,9 @@ class IngestSuite extends munit.FunSuite:
   test("collapsePictureText leaves a body without the markers untouched, and is idempotent"):
     assertEquals(AssetLinks.collapsePictureText(md), md)
     val once =
-      AssetLinks.collapsePictureText(AssetLinks.Body("**----- Start of picture text -----**<br>x**----- End of picture text -----**"))
+      AssetLinks.collapsePictureText(
+        AssetLinks.Body("**----- Start of picture text -----**<br>x**----- End of picture text -----**")
+      )
     assertEquals(AssetLinks.collapsePictureText(once), once)
 
   test("normalizeBody does both, and stays idempotent"):
@@ -147,7 +152,10 @@ class IngestSuite extends munit.FunSuite:
     assert(out.contains("![remote](https://example.org/x.png)"), out)
 
   test("toWeb percent-encodes a citekey and name that need it"):
-    assertEquals(AssetLinks.url(AssetLinks.UrlCitekey("a b"), AssetLinks.UrlName("c d.png")), "/source/a%20b/assets/c%20d.png")
+    assertEquals(
+      AssetLinks.url(AssetLinks.UrlCitekey("a b"), AssetLinks.UrlName("c d.png")),
+      "/source/a%20b/assets/c%20d.png"
+    )
 
   // ── assets/… → absolute (MCP) ────────────────────────────────────────────────────────────────
   test("toAbsolute prefixes the public URL and tolerates a trailing slash"):
@@ -157,7 +165,14 @@ class IngestSuite extends munit.FunSuite:
     assert(a.contains("![Figure 1](http://host:9/source/ck/assets/fig-1.png)"), a)
 
   test("toAbsolute with a blank public URL degrades to the served path"):
-    assertEquals(AssetLinks.toAbsolute(AssetLinks.ToAbsoluteMd("![a](assets/x.png)"), AssetLinks.ToAbsoluteCitekey("ck"), AssetLinks.Url("  ")), "![a](/source/ck/assets/x.png)")
+    assertEquals(
+      AssetLinks.toAbsolute(
+        AssetLinks.ToAbsoluteMd("![a](assets/x.png)"),
+        AssetLinks.ToAbsoluteCitekey("ck"),
+        AssetLinks.Url("  ")
+      ),
+      "![a](/source/ck/assets/x.png)"
+    )
 
   test("rewriting is idempotent — a rewritten body does not move again"):
     val once = AssetLinks.toWeb(md, AssetLinks.ToWebCitekey("ck"))
@@ -227,7 +242,11 @@ class IngestSuite extends munit.FunSuite:
   test("ImageSize gives up rather than guessing"):
     assertEquals(ImageSize.of(ImageSize.Bytes(Array.empty[Byte])), None)
     assertEquals(ImageSize.of(ImageSize.Bytes("not an image at all".getBytes("UTF-8"))), None)
-    assertEquals(ImageSize.of(ImageSize.Bytes(png(ImageSize.Width(1), ImageSize.Height(1)).value.take(20))), None, "a truncated PNG has no readable IHDR")
+    assertEquals(
+      ImageSize.of(ImageSize.Bytes(png(ImageSize.Width(1), ImageSize.Height(1)).value.take(20))),
+      None,
+      "a truncated PNG has no readable IHDR"
+    )
     // an SOI with no frame header must terminate rather than loop
     assertEquals(ImageSize.of(ImageSize.Bytes(Array[Byte](0xff.toByte, 0xd8.toByte, 0, 0))), None)
 
@@ -261,7 +280,12 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(JobState.next(Queued, Paused), None)
 
   test("JobInfo exposes the state its status names"):
-    val j = JobInfo(SpatialHierarchyResult.Job.Id("i"), JobKinds.Wire(Ingest.KindIngest), JobInfo.Status("running"), (Some("ck")).map(Citekey.apply))
+    val j = JobInfo(
+      SpatialHierarchyResult.Job.Id("i"),
+      JobKinds.Wire(Ingest.KindIngest),
+      JobInfo.Status("running"),
+      (Some("ck")).map(Citekey.apply)
+    )
     assert(!j.isTerminal && !j.succeeded)
     assert(j.modify(_.status).setTo(JobInfo.Status("done")).succeeded)
     // an unparseable status must not read as success
@@ -286,12 +310,20 @@ class IngestSuite extends munit.FunSuite:
     assert(out.contains("012345678"), out)
 
   test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):
-    val j = JobInfo(SpatialHierarchyResult.Job.Id("abc"), JobKinds.Wire(Ingest.KindIngest), JobInfo.Status("running"), (Some("ck")).map(Citekey.apply), acquireItem = Some(Queue.QueueItem.Id(42)))
+    val j = JobInfo(
+      SpatialHierarchyResult.Job.Id("abc"),
+      JobKinds.Wire(Ingest.KindIngest),
+      JobInfo.Status("running"),
+      (Some("ck")).map(Citekey.apply),
+      acquireItem = Some(Queue.QueueItem.Id(42))
+    )
     assert(
       IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),
       IngestMarkdown.job(j)
     )
-    assert(IngestMarkdown.job(j.modify(_.status).setTo(JobInfo.Status("failed"))).contains("42 (left open: the job failed)"))
+    assert(
+      IngestMarkdown.job(j.modify(_.status).setTo(JobInfo.Status("failed"))).contains("42 (left open: the job failed)")
+    )
     assert(IngestMarkdown.job(j.modify(_.status).setTo(JobInfo.Status("done"))).contains("**acquisition item:** 42\n"))
     assert(!IngestMarkdown.job(j.modify(_.acquireItem).setTo(None)).contains("acquisition item"))
 
@@ -300,7 +332,19 @@ class IngestSuite extends munit.FunSuite:
     assert(IngestMarkdown.assets(Citekey("ck"), Vector.empty).contains("No assets stored"))
 
   test("asset Markdown carries the URL each figure is served at"):
-    val out = IngestMarkdown.assets(Citekey("ck"), Vector(AssetInfo(AssetInfo.Name("f.png"), AssetInfo.Mime("image/png"), ByteCount(120), Sha256("sha"), Some(ImageSize.Width(4)), Some(ImageSize.Height(2)))))
+    val out = IngestMarkdown.assets(
+      Citekey("ck"),
+      Vector(
+        AssetInfo(
+          AssetInfo.Name("f.png"),
+          AssetInfo.Mime("image/png"),
+          ByteCount(120),
+          Sha256("sha"),
+          Some(ImageSize.Width(4)),
+          Some(ImageSize.Height(2))
+        )
+      )
+    )
     assert(out.contains("/source/ck/assets/f.png"), out)
     assert(out.contains("4×2"), out)
 
@@ -325,7 +369,14 @@ class IngestSuite extends munit.FunSuite:
           .Detail(Some(plan))
           .set(
             SkippedPeriod.Skipped,
-            List(SkippedPeriod(SkippedPeriod.Id("p0x1"), SkippedPeriod.Label("Old Kingdom"), Period.Skip.OutOfRange, SkippedPeriod.Detail("-2701 → 2150 lies outside")))
+            List(
+              SkippedPeriod(
+                SkippedPeriod.Id("p0x1"),
+                SkippedPeriod.Label("Old Kingdom"),
+                Period.Skip.OutOfRange,
+                SkippedPeriod.Detail("-2701 → 2150 lies outside")
+              )
+            )
           )
           .set(SkippedPeriod.SkippedCount, Period.ImportResult.SkippedCount(1))
       )
@@ -338,4 +389,14 @@ class IngestSuite extends munit.FunSuite:
     assert(table.startsWith("### 1 job\n"), table)
     assert(table.contains("| j1 | init | bundled gazetteer, fetch periodo | done |"), table)
     assertEquals(InitPlan.describe(InitPlan()), "nothing to import")
-    assertEquals(JobDetail.subject(JobInfo(SpatialHierarchyResult.Job.Id("j2"), JobKinds.Wire(Ingest.KindIngest), JobInfo.Status("done"), (Some("ck_x")).map(Citekey.apply))), Some("ck_x"))
+    assertEquals(
+      JobDetail.subject(
+        JobInfo(
+          SpatialHierarchyResult.Job.Id("j2"),
+          JobKinds.Wire(Ingest.KindIngest),
+          JobInfo.Status("done"),
+          (Some("ck_x")).map(Citekey.apply)
+        )
+      ),
+      Some("ck_x")
+    )

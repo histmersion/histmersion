@@ -10,10 +10,13 @@ import com.histmersion.upstreams.wikidata.{WikidataClasses, WikidataItem}
 extension (c: EventsWikidataConfig)
   /** The configured classes and their kinds (canonical), the most specific first. */
   def classList: List[(WikidataItem.Id, EventSummary.Kind)] =
-    WikidataClasses.parse(WikidataClasses.WikidataText(c.classes.value)).map((q, k) => q -> EventTaxonomy.canonical(EventSummary.Kind(k.value)))
+    WikidataClasses
+      .parse(WikidataClasses.WikidataText(c.classes.value))
+      .map((q, k) => q -> EventTaxonomy.canonical(EventSummary.Kind(k.value)))
 extension (c: EventsConfig)
   def regionBox: Option[BBox] = BBox.parse(BBox.Text(c.region.value))
-  def tolerance: CatalogMerge.Tolerance = CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(c.mergeKm.value), CatalogMerge.Tolerance.Years(c.mergeYears.value))
+  def tolerance: CatalogMerge.Tolerance =
+    CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(c.mergeKm.value), CatalogMerge.Tolerance.Years(c.mergeYears.value))
 extension (c: EventsLinksConfig)
   def weights: EventMatcher.Weights =
     EventMatcher.Weights(

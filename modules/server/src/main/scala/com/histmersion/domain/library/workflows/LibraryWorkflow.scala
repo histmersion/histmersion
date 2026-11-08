@@ -26,13 +26,26 @@ final class LibraryWorkflow(
 ) extends WorkflowDefinition:
   private val pipeline: Pipeline = impl.pipeline
   val id: WorkflowId = WorkflowId.applyUnsafe(pipeline.wire.value)
-  def version: com.histmersion.domain.automation.Pipeline.Version = com.histmersion.domain.automation.Pipeline.Version(pipeline.version.value)
-  def target: TargetKind = io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.TargetKind, TargetKind].transform(pipeline.targetKind)
-  def roles: List[AgentRole] = io.scalaland.chimney.Transformer.derive[List[com.histmersion.api.automation.AgentRole], List[AgentRole]].transform(pipeline.roles)
+  def version: com.histmersion.domain.automation.Pipeline.Version =
+    com.histmersion.domain.automation.Pipeline.Version(pipeline.version.value)
+  def target: TargetKind = io.scalaland.chimney.Transformer
+    .derive[com.histmersion.api.automation.TargetKind, TargetKind]
+    .transform(pipeline.targetKind)
+  def roles: List[AgentRole] = io.scalaland.chimney.Transformer
+    .derive[List[com.histmersion.api.automation.AgentRole], List[AgentRole]]
+    .transform(pipeline.roles)
   def describe: WorkflowDefinition.DescribeResult = WorkflowDefinition.DescribeResult(pipeline.describe.value)
 
   def allowedTools(role: AgentRole): Set[ToolName] =
-    agents.flatMap(a => definitions.agent(a).toOption).filter(_.role == io.scalaland.chimney.Transformer.derive[AgentRole, com.histmersion.api.automation.AgentRole].transform(role)).flatMap(_.tools).toSet
+    agents
+      .flatMap(a => definitions.agent(a).toOption)
+      .filter(
+        _.role == io.scalaland.chimney.Transformer
+          .derive[AgentRole, com.histmersion.api.automation.AgentRole]
+          .transform(role)
+      )
+      .flatMap(_.tools)
+      .toSet
 
   def run(run: RunCtx): Either[Halt, WorkflowDefinition.RunResultPart2] =
     impl.run(run).map(r => WorkflowDefinition.RunResultPart2(r.value))

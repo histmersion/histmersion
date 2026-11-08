@@ -46,12 +46,19 @@ final class CliRuntime(
 
   /** A token for one step attempt, alive a little longer than the CLI may run. */
   def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: CliProcess.RunTimeoutSeconds): Option[RunGrant] =
-    agent.map(a => tokens.issue(a, call.scope, RunTokens.TtlMillis((math.max(1, timeoutSeconds.value).toLong + 60L) * 1000L)))
+    agent.map(a =>
+      tokens.issue(a, call.scope, RunTokens.TtlMillis((math.max(1, timeoutSeconds.value).toLong + 60L) * 1000L))
+    )
 
 object CliRuntime:
   /** `roster`: the agent tools the engine's toolbox holds and the contributed roles (what a definition may list and
     * take).
     */
 
-  def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment)(using stores: Stores, resources: Resources, clock: java.time.Clock, jvmHome: JvmHome): CliRuntime =
+  def apply(app: AppConfig, roster: AgentRoster, paths: UserPaths = AgentTrees.NoEnvironment)(using
+      stores: Stores,
+      resources: Resources,
+      clock: java.time.Clock,
+      jvmHome: JvmHome
+  ): CliRuntime =
     new CliRuntime(app, AgentDefinitions(new Prompts(Prompts.OverrideDir(app.agents.promptsDir.value)), roster), paths)

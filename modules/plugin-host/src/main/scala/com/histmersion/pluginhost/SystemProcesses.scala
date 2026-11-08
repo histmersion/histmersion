@@ -21,24 +21,26 @@ final class SystemProcesses extends Processes:
     val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
     val pb = new ProcessBuilder(argv.map(_.value).asJava)
     env.foreach((k, v) => pb.environment().put(k.value, v.value))
-    Try(pb.start()).toEither.left.map(e => Processes.RunResultPart1(s"$tool could not be started: ${e.getMessage}")).flatMap { proc =>
-      val out = drain(proc.getInputStream)
-      val err = drain(proc.getErrorStream)
-      // a tool that exits without reading its input closes the pipe: that is its answer, not ours to report
-      try
-        val in = proc.getOutputStream
-        try stdin.foreach(s => in.write(s.value.getBytes(UTF_8)))
-        finally in.close()
-      catch case _: IOException => ()
-      val finished = proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS)
-      if !finished then
-        proc.descendants().forEach { p =>
-          val _ = p.destroyForcibly()
-        }
-        val _ = proc.destroyForcibly()
-        Left(Processes.RunResultPart1(s"$tool did not answer within ${timeout.toSeconds} s"))
-      else Right(Result(Result.Exit(proc.exitValue), Result.Out(out()), Result.Err(err())))
-    }
+    Try(pb.start()).toEither.left
+      .map(e => Processes.RunResultPart1(s"$tool could not be started: ${e.getMessage}"))
+      .flatMap { proc =>
+        val out = drain(proc.getInputStream)
+        val err = drain(proc.getErrorStream)
+        // a tool that exits without reading its input closes the pipe: that is its answer, not ours to report
+        try
+          val in = proc.getOutputStream
+          try stdin.foreach(s => in.write(s.value.getBytes(UTF_8)))
+          finally in.close()
+        catch case _: IOException => ()
+        val finished = proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS)
+        if !finished then
+          proc.descendants().forEach { p =>
+            val _ = p.destroyForcibly()
+          }
+          val _ = proc.destroyForcibly()
+          Left(Processes.RunResultPart1(s"$tool did not answer within ${timeout.toSeconds} s"))
+        else Right(Result(Result.Exit(proc.exitValue), Result.Out(out()), Result.Err(err())))
+      }
 
   final class Session private (proc: Process, tool: String) extends Processes.Session:
     private val lock = new Object
@@ -46,7 +48,7 @@ final class SystemProcesses extends Processes:
     private val outBytes = new java.io.ByteArrayOutputStream()
     private val errBytes = new java.io.ByteArrayOutputStream()
     private val in = proc.getOutputStream
-  
+
     private def pump(from: InputStream, into: java.io.ByteArrayOutputStream): Unit =
       val buf = new Array[Byte](4096)
       try
@@ -56,28 +58,34 @@ final class SystemProcesses extends Processes:
           n = from.read(buf)
       catch case _: IOException => ()
       finally lock.synchronized(lock.notifyAll())
-  
+
     private[SystemProcesses] def startReaders(): Unit =
       val _ = Thread.ofVirtual().start(() => pump(proc.getInputStream, outBytes))
       val _ = Thread.ofVirtual().start(() => pump(proc.getErrorStream, errBytes))
-  
+
     /** Everything the tool printed to stdout / stderr so far. */
     def out: Processes.Session.OutResult = Processes.Session.OutResult(lock.synchronized(outBytes.toString(UTF_8)))
     def err: Processes.Session.ErrResult = Processes.Session.ErrResult(lock.synchronized(errBytes.toString(UTF_8)))
     def alive: Processes.Session.AliveResult = Processes.Session.AliveResult(proc.isAlive)
-  
+
     /** Write one line to the tool's stdin. */
     def send(line: Processes.Session.SendLine): Either[Processes.Session.SendResultPart1, Unit] =
       try { in.write((line.value + "\n").getBytes(UTF_8)); in.flush(); Right(()) }
       catch case e: IOException => Left(Processes.Session.SendResultPart1(s"$tool stopped reading its input"))
-  
+
     /** Wait until `ready` holds for stdout, the tool has exited, or `timeout` passed; true = `ready`. */
-    def awaitOut(timeout: FiniteDuration)(ready: Processes.Session.AwaitOutReadyArg1 => Processes.Session.AwaitOutReadyResult): Processes.Session.AwaitOutResult =
-      Processes.Session.AwaitOutResult(await(timeout, () => ready(Processes.Session.AwaitOutReadyArg1(out.value)).value))
-  
+    def awaitOut(timeout: FiniteDuration)(
+        ready: Processes.Session.AwaitOutReadyArg1 => Processes.Session.AwaitOutReadyResult
+    ): Processes.Session.AwaitOutResult =
+      Processes.Session.AwaitOutResult(
+        await(timeout, () => ready(Processes.Session.AwaitOutReadyArg1(out.value)).value)
+      )
+
     /** Wait until stderr has grown past `length` characters, the tool has exited, or `timeout` passed. */
-    def awaitErr(length: Processes.Session.AwaitErrLength, timeout: FiniteDuration): Unit = { val _ = await(timeout, () => err.value.length > length.value) }
-  
+    def awaitErr(length: Processes.Session.AwaitErrLength, timeout: FiniteDuration): Unit = {
+      val _ = await(timeout, () => err.value.length > length.value)
+    }
+
     private def await(timeout: FiniteDuration, ready: () => Boolean): Boolean =
       val deadline = System.nanoTime + timeout.toNanos
       lock.synchronized {
@@ -88,7 +96,7 @@ final class SystemProcesses extends Processes:
           left = deadline - System.nanoTime
         ready()
       }
-  
+
     /** Close the tool's stdin and wait for it to exit within `timeout` (killed otherwise); its exit code. */
     def close(timeout: FiniteDuration): Option[Processes.Session.CloseResult] =
       try in.close()
@@ -100,21 +108,26 @@ final class SystemProcesses extends Processes:
         }
         val _ = proc.destroyForcibly()
         None
-  
+
     /** The exit code once the tool has exited within `timeout`. */
     def exit(timeout: FiniteDuration): Option[Processes.Session.ExitResult] =
       Option.when(proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS))(Processes.Session.ExitResult(proc.exitValue))
 
   object Session:
-    def start(argv: List[Processes.StartArgv], env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]): Either[Processes.StartResultPart1, Session] =
+    def start(
+        argv: List[Processes.StartArgv],
+        env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]
+    ): Either[Processes.StartResultPart1, Session] =
       val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")
       val pb = new ProcessBuilder(argv.map(_.value).asJava)
       env.foreach((k, v) => pb.environment().put(k.value, v.value))
-      Try(pb.start()).toEither.left.map(e => Processes.StartResultPart1(s"$tool could not be started: ${e.getMessage}")).map { proc =>
-        val s = new Session(proc, tool)
-        s.startReaders()
-        s
-      }
+      Try(pb.start()).toEither.left
+        .map(e => Processes.StartResultPart1(s"$tool could not be started: ${e.getMessage}"))
+        .map { proc =>
+          val s = new Session(proc, tool)
+          s.startReaders()
+          s
+        }
 
   private def drain(in: InputStream): () => String =
     val box = new CompletableFuture[String]()
@@ -124,7 +137,10 @@ final class SystemProcesses extends Processes:
     }
     () => Try(box.get(5, TimeUnit.SECONDS)).getOrElse("")
 
-  def start(argv: List[Processes.StartArgv], env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]): Either[Processes.StartResultPart1, Processes.Session] = Session.start(argv, env)
+  def start(
+      argv: List[Processes.StartArgv],
+      env: Map[Processes.StartEnvPart1, Processes.StartEnvPart2]
+  ): Either[Processes.StartResultPart1, Processes.Session] = Session.start(argv, env)
 
   def capture(argv: List[Processes.CaptureArgv]): Either[Processes.CaptureResultPart1, Result] =
     val tool = argv.headOption.map(a => Path.of(a.value).getFileName.toString).getOrElse("?")

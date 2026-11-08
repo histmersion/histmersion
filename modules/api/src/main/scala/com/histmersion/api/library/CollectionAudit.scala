@@ -12,10 +12,10 @@ final case class CollectionAudit(
     findings: List[CollectionAudit.Row],
     checked: CollectionAudit.Checked
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionAudit:
-
 
   /** One linked item that disagrees with its record: the sources linked to it, the issues (`codes` and their `labels`),
     * the record it was judged against, the item (none when it is missing), and the citekey whose record an update would
@@ -33,7 +33,8 @@ object CollectionAudit:
       entry: Option[CollectionRecordView],
       fix: Option[Row.Fix]
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Row:
     type Id = Id.T

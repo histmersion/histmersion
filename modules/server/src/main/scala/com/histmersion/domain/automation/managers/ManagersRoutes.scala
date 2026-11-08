@@ -36,21 +36,24 @@ object ManagersRoutes:
       ManagersApi.update.serverLogic[Identity]((id, in) => m.update(light(id), in)),
       ManagersApi.delete.serverLogic[Identity](id => m.delete(light(id))),
       ManagersApi.items.serverLogic[Identity]((id, status, offset, limit) =>
-          m.items(
-            light(id),
-            status.map(_.transformInto[ItemStatus.Wire]),
-            offset.flatMap(o => Offset.option(o.value)),
-            pageSize(limit.map(_.value))
-          )),
+        m.items(
+          light(id),
+          status.map(_.transformInto[ItemStatus.Wire]),
+          offset.flatMap(o => Offset.option(o.value)),
+          pageSize(limit.map(_.value))
+        )
+      ),
       ManagersApi.addItem.serverLogic[Identity]((id, in) => m.addItem(light(id), in)),
       ManagersApi.patchItem.serverLogic[Identity]((id, item, in) => m.patchItem(light(id), item, in)),
       ManagersApi.hints.serverLogic[Identity]((id, all) => m.hints(light(id), all.contains(true))),
       ManagersApi.addHint.serverLogic[Identity]((id, in) => m.addHint(light(id), in)),
       ManagersApi.removeHint.serverLogic[Identity]((id, h) => m.deleteHint(light(id), h)),
       ManagersApi.events.serverLogic[Identity]((id, before, limit) =>
-          m.events(light(id), before.map(b => ManagerRepo.EventCursor(b.value)), pageSize(limit.map(_.value)))),
+        m.events(light(id), before.map(b => ManagerRepo.EventCursor(b.value)), pageSize(limit.map(_.value)))
+      ),
       ManagersApi.action.serverLogic[Identity]((id, action, runs) =>
-          m.action(light(id), ManagersControllers.Action(action.value), runs.map(ManagerInfo.PauseRuns(_)))),
+        m.action(light(id), ManagersControllers.Action(action.value), runs.map(ManagerInfo.PauseRuns(_)))
+      ),
       ManagersApi.enqueue.serverLogic[Identity](in => m.enqueue(in))
     ) ++ switches ++ acquisition ++ List(
       ManagersApi.focus.serverLogicSuccess[Identity](_ => m.focus),
@@ -61,5 +64,7 @@ object ManagersRoutes:
       ManagersApi.digest.serverLogicSuccess[Identity](_ => m.digest),
       ManagersApi.decideAll.serverLogic[Identity](in => m.decideAll(in))
     ) ++ draining ++ List(
-      ManagersApi.stalls.serverLogicSuccess[Identity](days => m.stalls(days.map(d => AgentAutopilotConfig.StallDays(d.value))))
+      ManagersApi.stalls.serverLogicSuccess[Identity](days =>
+        m.stalls(days.map(d => AgentAutopilotConfig.StallDays(d.value)))
+      )
     )

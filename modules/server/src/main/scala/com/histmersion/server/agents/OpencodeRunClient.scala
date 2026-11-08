@@ -44,7 +44,9 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
             env => Opencode.environment(xdg, conf, grant.map(_.token), env),
             user,
             timeout,
-            CliProcess.RunHint("install opencode or set agents.providers.opencode.command (HISTMERSION_AGENTS_OPENCODE_COMMAND)")
+            CliProcess.RunHint(
+              "install opencode or set agents.providers.opencode.command (HISTMERSION_AGENTS_OPENCODE_COMMAND)"
+            )
           )
           val o = Opencode.parse(r.lines)
           out.set(Some(o))
@@ -58,8 +60,10 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
         }
         val o = out.get().getOrElse(throw IllegalStateException("opencode: no outcome"))
         o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Message(e.value))) match
-          case Some(m) => throw new ModelLimitReached(model, None, ModelLimitReached.Message(s"opencode run: $m".take(300)))
-          case None    => CliOutcomes.result(
+          case Some(m) =>
+            throw new ModelLimitReached(model, None, ModelLimitReached.Message(s"opencode run: $m".take(300)))
+          case None =>
+            CliOutcomes.result(
               o,
               call.user,
               call.schema,

@@ -16,7 +16,7 @@ object Settings:
 
   lazy val loaded: Either[ConfigProblem, LoadedConfig] = AppConfig.loadWithUserFile()
 
-   lazy val app: AppConfig = loaded match
+  lazy val app: AppConfig = loaded match
     case Right(l)  => l.config
     case Left(err) =>
       scribe.warn(s"warning: $err — going on with the defaults and the environment")

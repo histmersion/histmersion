@@ -80,17 +80,37 @@ class EventOuterSpanSuite extends DbSuite:
     }
 
   test("an event with only a start is in the views of its start, not of every later period"):
-    put(BEventRow.Id("zqos_case_open"),TimeSpan(notBefore = Some(Year(-1200))))
-    put(BEventRow.Id("zqos_case_closed"),TimeSpan(Some(Year(-1210)), None, None, Some(Year(-1190))))
+    put(BEventRow.Id("zqos_case_open"), TimeSpan(notBefore = Some(Year(-1200))))
+    put(BEventRow.Id("zqos_case_closed"), TimeSpan(Some(Year(-1210)), None, None, Some(Year(-1190))))
     def geoIds(p: Period) =
       EventFixtures
-        .geo(ds, Filter(period = Some(p)), PlaceScope.empty, Some(EventSelection.Text("Zqos zqos_case_")), None, None, None, PageSize(100), EventFixtures.GeoTolerance(0.01))
+        .geo(
+          ds,
+          Filter(period = Some(p)),
+          PlaceScope.empty,
+          Some(EventSelection.Text("Zqos zqos_case_")),
+          None,
+          None,
+          None,
+          PageSize(100),
+          EventFixtures.GeoTolerance(0.01)
+        )
         .events
         .map(_.id)
         .toSet
     def listIds(p: Period) =
       EventFixtures
-        .list(ds, Filter(period = Some(p)), PlaceScope.empty, Some(EventSelection.Text("Zqos zqos_case_")), None, None, None, PageSize(100), Offset(0))
+        .list(
+          ds,
+          Filter(period = Some(p)),
+          PlaceScope.empty,
+          Some(EventSelection.Text("Zqos zqos_case_")),
+          None,
+          None,
+          None,
+          PageSize(100),
+          Offset(0)
+        )
         .events
         .map(_.id)
         .toSet

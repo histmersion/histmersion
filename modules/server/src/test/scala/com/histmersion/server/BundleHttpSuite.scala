@@ -57,9 +57,13 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(work.toString))
-    )
+    base
+      .modify(_.db)
+      .setTo(base.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.auth)
+      .setTo(base.auth.modify(_.apiKey).setTo(AuthConfig.ApiKey(Key)))
+      .modify(_.bundles)
+      .setTo(base.bundles.modify(_.dir).setTo(BundlesConfig.Dir(work.toString)))
 
   private def withServer(body: String => Unit): Unit =
     Migrate.run(testPool(cfg.db))
@@ -228,7 +232,10 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       val yaml = "bundle: 0192f6c4-0000-7000-8000-000000000000\nresolve:\n  S-1234abcd: keep-right\n"
       val parsed = post(s"$url/api/merge/resolutions", yaml.getBytes("UTF-8"))
       assertEquals(parsed.statusCode, 200, parsed.body)
-      assertEquals(decode[MergeResolutions](parsed.body).resolve, List(MergeResolution(MergeResolution.Issue("S-1234abcd"), MergeResolution.Decision("keep-right"))))
+      assertEquals(
+        decode[MergeResolutions](parsed.body).resolve,
+        List(MergeResolution(MergeResolution.Issue("S-1234abcd"), MergeResolution.Decision("keep-right")))
+      )
       val bad = post(s"$url/api/merge/resolutions", "resolve: [1, 2]\nwhat: x\n".getBytes("UTF-8"))
       assertEquals(bad.statusCode, 400, bad.body)
       assert(bad.body.contains("unknown key 'what'") && bad.body.contains("resolve:"), bad.body)
@@ -322,7 +329,9 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
       } finally c.close()
     exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
     exec(s"CREATE DATABASE $name")
-    val own = cfg.modify(_.db).setTo(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1"))))
+    val own = cfg
+      .modify(_.db)
+      .setTo(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1"))))
     def serve(body: String => Unit): Unit =
       supervised {
         val b = Composition.server(own, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
@@ -346,7 +355,10 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         assertEquals(done.statusCode, 200, String(done.body, "UTF-8"))
         val d = decode[MergeApplyJob](String(done.body, "UTF-8"))
         assertEquals((d.state, d.planHash), (MergeJobState.Done, "0badc0de"))
-        assert(d.result.exists(r => !r.applied.value && r.problems.exists(_.value.contains("not 0badc0de"))), d.toString)
+        assert(
+          d.result.exists(r => !r.applied.value && r.problems.exists(_.value.contains("not 0badc0de"))),
+          d.toString
+        )
         val i = decode[MergeApplyJob](String(get(s"$url/api/merge/apply/$cut").body, "UTF-8"))
         assertEquals((i.state, i.bundle, i.planHash), (MergeJobState.Interrupted, "c" * 64, "feedbeef"))
         assert(i.error.exists(_.value.contains("never half applied")), i.toString)
@@ -356,7 +368,9 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         // the jobs list shows it, by what it is
         val jobs = decode[List[JobInfo]](String(get(s"$url/api/jobs").body, "UTF-8"))
         assert(
-          jobs.exists(j => j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)),
+          jobs.exists(j =>
+            j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)
+          ),
           jobs.toString
         )
       }

@@ -34,13 +34,22 @@ object Vaults:
   def entryAndField(ref: Secret.Vault.ResolveRef, dflt: Field): (KeePassXcSession.Entry, Field) =
     ref.value.lastIndexOf('#') match
       case -1 => (KeePassXcSession.Entry(ref.value.trim), dflt)
-      case i  => (KeePassXcSession.Entry(ref.value.take(i).trim), Option(ref.value.drop(i + 1).trim).filter(_.nonEmpty).fold(dflt)(f => Field(f)))
+      case i  =>
+        (
+          KeePassXcSession.Entry(ref.value.take(i).trim),
+          Option(ref.value.drop(i + 1).trim).filter(_.nonEmpty).fold(dflt)(f => Field(f))
+        )
 
   /** A Secret given in a vault's own settings (its unlock password, its session), resolved through the host; `None`
     * when the setting is `null`.
     */
-  private[vaults] def optional(s: Option[Secret], ctx: Plugin.Context): Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]] =
-    s.fold[Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]]](Right(None))(secret => ctx.secret(secret).map(Some(_)))
+  private[vaults] def optional(
+      s: Option[Secret],
+      ctx: Plugin.Context
+  ): Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]] =
+    s.fold[Either[Plugin.Context.SecretResultPart1, Option[Plugin.Context.SecretResultPart2]]](Right(None))(secret =>
+      ctx.secret(secret).map(Some(_))
+    )
 
   /** Pure: `~/x` against HOME. */
   private[vaults] def expand(p: Path, home: Option[Plugin.Context.EnvResult]): Path =
@@ -56,12 +65,15 @@ object Vaults:
     r.left.map(e => Secret.Vault.ResolveResultPart1(e.toString)).flatMap { res =>
       if res.exit.value == 0 then
         val v = Subprocess.value(Subprocess.ValueOut(res.out.value)).value
-        if v.isEmpty then Left(Secret.Vault.ResolveResultPart1(s"$vault: '$ref' has an empty value")) else Right(Secret.Vault.ResolveResultPart2(v))
+        if v.isEmpty then Left(Secret.Vault.ResolveResultPart1(s"$vault: '$ref' has an empty value"))
+        else Right(Secret.Vault.ResolveResultPart2(v))
       else
         val low = res.err.value.toLowerCase(java.util.Locale.ROOT)
         Left(
           Secret.Vault.ResolveResultPart1(
-            classify(low).getOrElse(s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Subprocess.Problem(res.err.value))})")
+            classify(low).getOrElse(
+              s"$vault: could not read '$ref' (exit ${res.exit}: ${Subprocess.problem(Subprocess.Problem(res.err.value))})"
+            )
           )
         )
     }

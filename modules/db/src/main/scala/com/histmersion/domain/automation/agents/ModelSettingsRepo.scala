@@ -38,7 +38,11 @@ private[agents] object ModelSettingsRepo:
   /** A saved allowance: target, limits, reserve %. Limits that no longer decode are a `Left` the caller reports and
     * treats as BLOCKING — never silently as unlimited.
     */
-  final case class Saved(target: Saved.Target, limits: Either[Saved.Problem, List[LimitSpec]], reservePct: Saved.ReservePct)
+  final case class Saved(
+      target: Saved.Target,
+      limits: Either[Saved.Problem, List[LimitSpec]],
+      reservePct: Saved.ReservePct
+  )
 
   object Saved:
     type Target = Target.T
@@ -56,7 +60,10 @@ private[agents] object ModelSettingsRepo:
       .map { (t, json, r) =>
         Saved(
           Saved.Target(t),
-          Jsonb.decode[List[LimitSpec]](Jsonb.JsonText(json)).left.map(e => Saved.Problem(s"saved limits of $t do not decode: $e")),
+          Jsonb
+            .decode[List[LimitSpec]](Jsonb.JsonText(json))
+            .left
+            .map(e => Saved.Problem(s"saved limits of $t do not decode: $e")),
           Saved.ReservePct(r)
         )
       }
@@ -75,7 +82,9 @@ private[agents] object ModelSettingsRepo:
     * that finished in the last `seconds`: when (epoch ms), tokens (input + output), USD. A failed attempt counts — it
     * was paid for.
     */
-  def spends(models: List[Agents.ModelRef.Wire], prefixes: List[String], seconds: WindowSeconds)(using DbCon): Vector[Spend] =
+  def spends(models: List[Agents.ModelRef.Wire], prefixes: List[String], seconds: WindowSeconds)(using
+      DbCon
+  ): Vector[Spend] =
     if models.isEmpty && prefixes.isEmpty then Vector.empty
     else
       val likes = prefixes.map(_.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%")
@@ -83,4 +92,7 @@ private[agents] object ModelSettingsRepo:
             FROM agent_steps
             WHERE kind = 'llm' AND finished_at > now() - make_interval(secs => ${seconds.value.toDouble})
               AND (model = ANY($models::text[]) OR model LIKE ANY($likes::text[]))
-            ORDER BY finished_at""".query[(Long, Long, BigDecimal)].run().map((at, t, c) => Spend(Spend.At(at), Spend.Tokens(t), c))
+            ORDER BY finished_at"""
+        .query[(Long, Long, BigDecimal)]
+        .run()
+        .map((at, t, c) => Spend(Spend.At(at), Spend.Tokens(t), c))

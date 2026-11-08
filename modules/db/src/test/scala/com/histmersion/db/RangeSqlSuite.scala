@@ -29,7 +29,10 @@ class RangeSqlSuite extends DbSuite:
 
   // ── pure ───────────────────────────────────────────────────────────────────────────────────────
   test("literal: closed, open on either side, none"):
-    assertEquals(RangeSql.literal(Some(DeepTime.SignedYear(-1200)), Some(DeepTime.SignedYear(-1000))), Some("[-1200,-999)"))
+    assertEquals(
+      RangeSql.literal(Some(DeepTime.SignedYear(-1200)), Some(DeepTime.SignedYear(-1000))),
+      Some("[-1200,-999)")
+    )
     assertEquals(RangeSql.literal(Some(DeepTime.SignedYear(-1200)), None), Some("[-1200,)"))
     assertEquals(RangeSql.literal(None, Some(DeepTime.SignedYear(-1000))), Some("(,-999)"))
     assertEquals(RangeSql.literal(None, None), None)
@@ -40,7 +43,10 @@ class RangeSqlSuite extends DbSuite:
     assertEquals(RangeSql.always(Some(Period(Year(-1200), Year(-1000)))), "[-1200,-999)")
     assertEquals(RangeSql.literal(Some(Period(Year(5), Year(5)))), Some("[5,6)"))
     assertEquals(RangeSql.literal(Option.empty[Period]), None)
-    assertEquals(RangeSql.literalOf(DeepTime.span(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1000L))), Some("[-1200,-999)"))
+    assertEquals(
+      RangeSql.literalOf(DeepTime.span(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1000L))),
+      Some("[-1200,-999)")
+    )
     assertEquals(RangeSql.literalOf(None), None)
 
   test("the SQL spellings: inclusive reads, a range of inclusive bounds, an inclusive overlap"):
@@ -53,20 +59,37 @@ class RangeSqlSuite extends DbSuite:
 
   test("merge: a bound given alone replaces that bound and keeps the other"):
     val stored = (Some(DeepTime.SignedYear(-1200L)), Some(DeepTime.SignedYear(-1000L)))
-    assertEquals(RangeSql.merge(stored, Some(DeepTime.SignedYear(-1300)), None, "x"), Some(Right((Some(-1300L), Some(-1000L)))))
-    assertEquals(RangeSql.merge(stored, None, Some(DeepTime.SignedYear(-900)), "x"), Some(Right((Some(-1200L), Some(-900L)))))
+    assertEquals(
+      RangeSql.merge(stored, Some(DeepTime.SignedYear(-1300)), None, "x"),
+      Some(Right((Some(-1300L), Some(-1000L))))
+    )
+    assertEquals(
+      RangeSql.merge(stored, None, Some(DeepTime.SignedYear(-900)), "x"),
+      Some(Right((Some(-1200L), Some(-900L))))
+    )
     assertEquals(RangeSql.merge(stored, None, None, "x"), None, "nothing named, nothing to write")
-    assertEquals(RangeSql.merge((None, None), Some(DeepTime.SignedYear(-50)), None, "x"), Some(Right((Some(-50L), None))))
+    assertEquals(
+      RangeSql.merge((None, None), Some(DeepTime.SignedYear(-50)), None, "x"),
+      Some(Right((Some(-50L), None)))
+    )
 
   test("merge: a result that starts after it ends is refused, naming both years"):
-    val r = RangeSql.merge((Some(DeepTime.SignedYear(-1200L)), Some(DeepTime.SignedYear(-1000L))), Some(DeepTime.SignedYear(-900)), None, "goal 'g'")
+    val r = RangeSql.merge(
+      (Some(DeepTime.SignedYear(-1200L)), Some(DeepTime.SignedYear(-1000L))),
+      Some(DeepTime.SignedYear(-900)),
+      None,
+      "goal 'g'"
+    )
     assert(
       r.exists(_.left.exists(e => e.message.value.contains("900 BCE") && e.code.contains(Write.CodeInvalid))),
       r.toString
     )
 
   test("period: closed only when both bounds are known"):
-    assertEquals(RangeSql.period(Some(DeepTime.SignedYear(-5)), Some(DeepTime.SignedYear(5))), Some(Period(Year(-5), Year(5))))
+    assertEquals(
+      RangeSql.period(Some(DeepTime.SignedYear(-5)), Some(DeepTime.SignedYear(5))),
+      Some(Period(Year(-5), Year(5)))
+    )
     assertEquals(RangeSql.period(Some(DeepTime.SignedYear(-5)), None), None)
 
   // ── on a test database ────────────────────────────────────────────────────────────────────────
@@ -83,38 +106,77 @@ class RangeSqlSuite extends DbSuite:
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
     assertEquals(
       transact(ds)(
-        GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"), Goal.Put(Goal.Title("Period goal"), periodStart = Some(Year(-1200)), periodEnd = Some(Year(-1000))))
+        GoalRepo.put(
+          com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+          Goal.Put(Goal.Title("Period goal"), periodStart = Some(Year(-1200)), periodEnd = Some(Year(-1000)))
+        )
       ),
       Right(())
     )
     assertEquals(
-      Transactor(ds).transact(GoalRepo.patchIn(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"), Goal.Patch(periodStart = Some(Year(-1300))))),
+      Transactor(ds).transact(
+        GoalRepo.patchIn(
+          com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+          Goal.Patch(periodStart = Some(Year(-1300)))
+        )
+      ),
       Right(())
     )
     val g = connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"))).get
     assertEquals((g.periodStart, g.periodEnd), (Some(-1300L), Some(-1000L)))
     assertEquals(
-      Transactor(ds).transact(GoalRepo.patchIn(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"), Goal.Patch(periodEnd = Some(Year(-1100))))),
+      Transactor(ds).transact(
+        GoalRepo.patchIn(
+          com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+          Goal.Patch(periodEnd = Some(Year(-1100)))
+        )
+      ),
       Right(())
     )
     val g2 = connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"))).get
     assertEquals((g2.periodStart, g2.periodEnd), (Some(-1300L), Some(-1100L)))
     // inverted: refused, stored period unchanged
-    assert(Transactor(ds).transact(GoalRepo.patchIn(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"), Goal.Patch(periodStart = Some(Year(-1000))))).isLeft)
+    assert(
+      Transactor(ds)
+        .transact(
+          GoalRepo.patchIn(
+            com.histmersion.domain.automation.Goal.Slug("zz_period_goal"),
+            Goal.Patch(periodStart = Some(Year(-1000)))
+          )
+        )
+        .isLeft
+    )
     assertEquals(
-      connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"))).map(x => (x.periodStart, x.periodEnd)),
+      connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_goal"))).map(x =>
+        (x.periodStart, x.periodEnd)
+      ),
       Some((Some(-1300L), Some(-1100L)))
     )
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_goal'".update.run())
 
   dbTest("a goal put with one bound stores an open period; an inverted one is refused"):
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_open'".update.run())
-    assertEquals(transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_period_open"), Goal.Put(Goal.Title("Open"), periodStart = Some(Year(-3300))))), Right(()))
     assertEquals(
-      connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_open"))).map(x => (x.periodStart, x.periodEnd)),
+      transact(ds)(
+        GoalRepo.put(
+          com.histmersion.domain.automation.Goal.Slug("zz_period_open"),
+          Goal.Put(Goal.Title("Open"), periodStart = Some(Year(-3300)))
+        )
+      ),
+      Right(())
+    )
+    assertEquals(
+      connect(ds)(GoalRepo.get(com.histmersion.domain.automation.Goal.Slug("zz_period_open"))).map(x =>
+        (x.periodStart, x.periodEnd)
+      ),
       Some((Some(-3300L), None))
     )
     assert(
-      transact(ds)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_period_open"), Goal.Put(Goal.Title("Open"), periodStart = Some(Year(5)), periodEnd = Some(Year(-5))))).isLeft
+      transact(ds)(
+        GoalRepo.put(
+          com.histmersion.domain.automation.Goal.Slug("zz_period_open"),
+          Goal.Put(Goal.Title("Open"), periodStart = Some(Year(5)), periodEnd = Some(Year(-5)))
+        )
+      ).isLeft
     )
     connect(ds)(sql"DELETE FROM goals WHERE slug = 'zz_period_open'".update.run())

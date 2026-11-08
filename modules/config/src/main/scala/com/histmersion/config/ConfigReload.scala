@@ -37,7 +37,9 @@ object ConfigReload:
   val RestartOnly: List[(Key, Reason)] = List(
     Key("histmersion.server.host") -> Reason("the listener is bound once"),
     Key("histmersion.server.port") -> Reason("the listener is bound once"),
-    Key("histmersion.server.request-timeout-seconds") -> Reason("the listener's request timeout is set when it is bound"),
+    Key("histmersion.server.request-timeout-seconds") -> Reason(
+      "the listener's request timeout is set when it is bound"
+    ),
     Key("histmersion.server.shutdown-grace-seconds") -> Reason("the listener's shutdown grace is set when it is bound"),
     Key("histmersion.runtime") -> Reason("the bundled PostgreSQL and converter are started once"),
     Key("histmersion.agents.enabled") -> Reason("the agent pool is started (or not) at startup"),
@@ -50,7 +52,9 @@ object ConfigReload:
 
   /** Every leaf setting (a value or a list; `null` leaves none) with its value rendered. */
   def leaves(c: org.ekrich.config.Config): Map[ChangedKey, Rendered] =
-    c.entrySet.asScala.iterator.map(e => ChangedKey(e.getKey) -> Rendered(e.getValue.render(ConfigRenderOptions.concise))).toMap
+    c.entrySet.asScala.iterator
+      .map(e => ChangedKey(e.getKey) -> Rendered(e.getValue.render(ConfigRenderOptions.concise)))
+      .toMap
 
   /** The settings that differ — set in one and not the other, or set to another value — sorted. */
   def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[ChangedKey] =
@@ -73,7 +77,11 @@ object ConfigReload:
       if running.hasPath(k.value) then c.withValue(k.value, running.getValue(k.value)) else c.withoutPath(k.value)
     }
 
-  final case class Config(watch: Config.Watch, watchDebounceMs: Config.WatchDebounceMs, drainSeconds: Config.DrainSeconds) derives ConfigReader
+  final case class Config(
+      watch: Config.Watch,
+      watchDebounceMs: Config.WatchDebounceMs,
+      drainSeconds: Config.DrainSeconds
+  ) derives ConfigReader
 
   object Config:
     type Watch = Watch.T

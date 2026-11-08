@@ -55,7 +55,8 @@ trait EngineSite:
   def aiProviders: () => ListMap[Plugin.Id, AiProvider]
 
   /** How many sources a goal gathers before its articles are planned (`agents.seed.min-sources`). */
-  def sourcesToPlan: AgentsControllers.SourcesCount = AgentsControllers.SourcesCount(config.libraryAgents.seed.minSources.value)
+  def sourcesToPlan: AgentsControllers.SourcesCount =
+    AgentsControllers.SourcesCount(config.libraryAgents.seed.minSources.value)
 
   /** The most panel rounds a run or a manager may ask a review for (`agents.review.rounds-cap`). */
   def roundsCap: AgentsControllers.RoundsCap = AgentsControllers.RoundsCap(config.researchAgents.review.roundsCap.value)
@@ -71,4 +72,3 @@ trait EngineSite:
 
   /** What engine `a` asks of the rest of the server. */
   def host(a: AgentsControllers): AutomationHost
-

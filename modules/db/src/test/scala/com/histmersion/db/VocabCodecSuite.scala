@@ -55,9 +55,39 @@ class VocabCodecSuite extends DbSuite:
         calibreId = None,
         ocrMarkdown = None,
         findings = List(
-          Finding(Finding.Id(s"$ck#0"), com.histmersion.api.library.Citekey(ck.value), Finding.Claim("stated low"), None, None, None, None, Nil, Some(Confidence.Low)),
-          Finding(Finding.Id(s"$ck#1"), com.histmersion.api.library.Citekey(ck.value), Finding.Claim("garbled"), None, None, None, None, Nil, Some(Confidence.Medium)),
-          Finding(Finding.Id(s"$ck#2"), com.histmersion.api.library.Citekey(ck.value), Finding.Claim("not stated"), None, None, None, None, Nil, None)
+          Finding(
+            Finding.Id(s"$ck#0"),
+            com.histmersion.api.library.Citekey(ck.value),
+            Finding.Claim("stated low"),
+            None,
+            None,
+            None,
+            None,
+            Nil,
+            Some(Confidence.Low)
+          ),
+          Finding(
+            Finding.Id(s"$ck#1"),
+            com.histmersion.api.library.Citekey(ck.value),
+            Finding.Claim("garbled"),
+            None,
+            None,
+            None,
+            None,
+            Nil,
+            Some(Confidence.Medium)
+          ),
+          Finding(
+            Finding.Id(s"$ck#2"),
+            com.histmersion.api.library.Citekey(ck.value),
+            Finding.Claim("not stated"),
+            None,
+            None,
+            None,
+            None,
+            Nil,
+            None
+          )
         )
       ),
       cfg.limits.chunkChars,

@@ -37,6 +37,7 @@ object Geocode:
   object KindHint:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
+
     /** Lenient: it parses a model's free answer, and an unrecognised word is no hint. */
 
     def parse(s: Wire): KindHint =
@@ -107,8 +108,11 @@ object Geocode:
       type Places = Places.T
       object Places extends Newtype[Int, Pure]
 
-
-  final case class Attempt(name: Attempt.Name, within: Option[Attempt.Within] = None, approx: Option[Approximation] = None):
+  final case class Attempt(
+      name: Attempt.Name,
+      within: Option[Attempt.Within] = None,
+      approx: Option[Approximation] = None
+  ):
     def key: Key = Geocode.key(name.value)
 
   object Attempt:
@@ -164,7 +168,9 @@ object Geocode:
       (Approximation.Qualifier.Dropped(dropped.mkString(" ")), Attempt.Name(rest.mkString(" ")))
     )
 
-  def compassBox(dropped: Approximation.Qualifier.Dropped): Option[(Compass.Fraction, Compass.Fraction, Compass.Fraction, Compass.Fraction)] =
+  def compassBox(
+      dropped: Approximation.Qualifier.Dropped
+  ): Option[(Compass.Fraction, Compass.Fraction, Compass.Fraction, Compass.Fraction)] =
     val words = dropped.value.split("[\\s\\-]+").map(w => key(w).value).filter(_.nonEmpty).toList
     val dirs = words.flatMap(w => Boxes.get(w.stripSuffix("ern")).orElse(Boxes.get(w)))
     dirs match
@@ -194,18 +200,29 @@ object Geocode:
     val n = (name).value.trim
     if (key((n))).value.isEmpty then Nil
     else
-      val asides = Asides.findAllMatchIn(n).map(_.group(1).trim).filter(a => (key((a))).value.nonEmpty).map(a => Attempt(Attempt.Name(a))).toList
+      val asides = Asides
+        .findAllMatchIn(n)
+        .map(_.group(1).trim)
+        .filter(a => (key((a))).value.nonEmpty)
+        .map(a => Attempt(Attempt.Name(a)))
+        .toList
       val comma = n.lastIndexOf(',') match
         case i if i > 0 && (key((n.take(i)))).value.nonEmpty && (key((n.drop(i + 1)))).value.nonEmpty =>
           Some((n.take(i).trim, n.drop(i + 1).trim))
         case _ => None
       val head = comma.fold(n)(_._1)
       val qualified =
-        stripQualifier(Attempt.Name(head)).map((q, base) => Attempt(base, comma.map(c => Attempt.Within(c._2)), Some(Approximation.Qualifier(q))))
+        stripQualifier(Attempt.Name(head)).map((q, base) =>
+          Attempt(base, comma.map(c => Attempt.Within(c._2)), Some(Approximation.Qualifier(q)))
+        )
       val all = List(Attempt(Attempt.Name(n))) ++ asides ++
         comma.map((a, in) => Attempt(Attempt.Name(a), Some(Attempt.Within(in)))).toList ++
         qualified.toList ++
-        comma.map((a, in) => Attempt(Attempt.Name(in), None, Some(Approximation.OnlyWithin(Approximation.OnlyWithin.Missing(a))))).toList
+        comma
+          .map((a, in) =>
+            Attempt(Attempt.Name(in), None, Some(Approximation.OnlyWithin(Approximation.OnlyWithin.Missing(a))))
+          )
+          .toList
       all.distinctBy(a => (a.key, a.within.map(w => key(w.value))))
 
   final case class Candidate(
@@ -225,11 +242,12 @@ object Geocode:
   ):
     def undated: Boolean = (from.isEmpty && to.isEmpty)
 
-    def span: Candidate.Span = Candidate.Span((for a <- from; b <- to yield (b).value - (a).value).getOrElse((Candidate.Span(Long.MaxValue / 4)).value))
+    def span: Candidate.Span = Candidate.Span((for a <- from; b <- to
+    yield (b).value - (a).value).getOrElse((Candidate.Span(Long.MaxValue / 4)).value))
     def overlaps(p: Period): Boolean = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
     def gap(p: Period): Candidate.Gap =
-      if (overlaps(p)) then Candidate.Gap(0L)
+      if overlaps(p) then Candidate.Gap(0L)
       else
         to.filter(_ < p.start)
           .map(t => Candidate.Gap(p.start.value - t.value))
@@ -256,9 +274,11 @@ object Geocode:
   private def broad(kind: Candidate.Kind) =
     kind.value == Place.Kind.Region || kind.value == Place.Kind.Polity
 
-  def tierOf(importSource: Option[Place.Match.ImportSource]): Gazetteer.Rank = Gazetteer.rank(Place.Match(Place.Id(""), importSource))
+  def tierOf(importSource: Option[Place.Match.ImportSource]): Gazetteer.Rank =
+    Gazetteer.rank(Place.Match(Place.Id(""), importSource))
 
-  def isPlaceholder(c: Candidate, placeholderMin: Placeholder.Min): Boolean = c.dimension.value == 0 && c.shared.value >= placeholderMin.value
+  def isPlaceholder(c: Candidate, placeholderMin: Placeholder.Min): Boolean =
+    c.dimension.value == 0 && c.shared.value >= placeholderMin.value
 
   private def kindRank(kind: Candidate.Kind, hint: KindHint): KindRank = hint match
     case KindHint.Site =>
@@ -272,10 +292,12 @@ object Geocode:
     case _ => if broad(kind) then KindRank(0) else if kind.value == Place.Kind.Feature then KindRank(1) else KindRank(2)
 
   private def timeRank(c: Candidate, at: Option[Period]): (TimeRank.Class, Candidate.Gap) = at match
-    case None    => if ((c.undated) == (true)) then (TimeRank.Class(0), Candidate.Gap(0L)) else (TimeRank.Class(1), Candidate.Gap(-(c.span).value))
+    case None =>
+      if (c.undated) == (true) then (TimeRank.Class(0), Candidate.Gap(0L))
+      else (TimeRank.Class(1), Candidate.Gap(-(c.span).value))
     case Some(p) =>
-      if ((c.undated) == (true)) then (TimeRank.Class(1), Candidate.Gap(0L))
-      else if ((c.overlaps(p)) == (true)) then (TimeRank.Class(0), Candidate.Gap(0L))
+      if (c.undated) == (true) then (TimeRank.Class(1), Candidate.Gap(0L))
+      else if (c.overlaps(p)) == (true) then (TimeRank.Class(0), Candidate.Gap(0L))
       else (TimeRank.Class(2), c.gap(p))
 
   def rank(cs: List[Candidate], hint: KindHint, at: Option[Period], placeholderMin: Placeholder.Min): List[Candidate] =
@@ -283,7 +305,7 @@ object Geocode:
       val (t, gap) = timeRank(c, at)
       (
         if ((isPlaceholder(c, placeholderMin)) == (true)) || ((c.gridCell) == Candidate.GridCell(true)) then 1 else 0,
-        if ((c.byLabel) == Candidate.ByLabel(true)) then 0 else 1,
+        if (c.byLabel) == Candidate.ByLabel(true) then 0 else 1,
         c.tier.value: Int,
         kindRank(c.kind, hint).value: Int,
         if broad(c.kind) && c.dimension.value == 0 then 1 else 0,
@@ -313,7 +335,12 @@ object Geocode:
     type Asked = Asked.T
     object Asked extends Newtype[String, Pure]
 
-  def choose(asked: Resolution.Asked, attempt: Attempt, ranked: List[Candidate], placeholderMin: Placeholder.Min): Option[Resolution] =
+  def choose(
+      asked: Resolution.Asked,
+      attempt: Attempt,
+      ranked: List[Candidate],
+      placeholderMin: Placeholder.Min
+  ): Option[Resolution] =
     ranked.headOption.map { c =>
       val rough = Option.when(((isPlaceholder(c, placeholderMin)) == (true)))(Approximation.Rough(c.shared))
       val grid = Option.when(((c.gridCell) == Candidate.GridCell(true)) && rough.isEmpty)(Approximation.GridSquare)
@@ -353,7 +380,7 @@ object Geocode:
         to.lat.value,
         to.lon.value,
         km.value,
-        if ((to.isApproximate) == (true)) then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
+        if (to.isApproximate) == (true) then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
       )
 
   object Move:
@@ -364,7 +391,7 @@ object Geocode:
     object Asked extends Newtype[String, Pure]
     type Region = Region.T
     object Region extends Newtype[String, Pure]
-    export com.histmersion.api.catalogue.{Longitude as FromLon, Latitude as FromLat}
+    export com.histmersion.api.catalogue.{Latitude as FromLat, Longitude as FromLon}
 
   def worthMoving(m: Move, minKm: Move.MinKm): Boolean = (m.km).value > minKm.value
 
@@ -378,7 +405,7 @@ object Geocode:
         to.label.value + " [" + to.placeId.value + "]",
         to.lat.value,
         to.lon.value,
-        if ((to.isApproximate) == (true)) then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
+        if (to.isApproximate) == (true) then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
       )
 
   object Placement:

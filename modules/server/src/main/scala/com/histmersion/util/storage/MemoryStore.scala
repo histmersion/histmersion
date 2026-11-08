@@ -152,7 +152,6 @@ object MemoryStore:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
 
-
   private val ticks = java.util.concurrent.atomic.AtomicLong()
 
   final case class Entry(bytes: ByteSource.Content, modified: Instant):
@@ -167,7 +166,9 @@ object MemoryStore:
     def bytes(): ByteSource.Content = ByteSource.Content(entry.bytes.value.clone())
     def text(): Blob.Text = Blob.Text(String(entry.bytes.value, UTF_8))
     def sha256(): Sha256 =
-      Sha256.applyUnsafe(MessageDigest.getInstance("SHA-256").digest(entry.bytes.value).map(b => f"${b & 0xff}%02x").mkString)
+      Sha256.applyUnsafe(
+        MessageDigest.getInstance("SHA-256").digest(entry.bytes.value).map(b => f"${b & 0xff}%02x").mkString
+      )
     def readAt(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content = reader().read(offset, length)
     def mapped(): ByteBuffer = ByteBuffer.wrap(entry.bytes.value).asReadOnlyBuffer()
     def reader(): RandomReader = new RandomReader:
@@ -187,13 +188,14 @@ object MemoryStore:
 
   object MemoryBlob:
 
-
     type Where = Blob.Location
     val Where: Blob.Location.type = Blob.Location
 
-
-  final class MemoryReservation(val key: Store.Key, val where: MemoryReservation.Where, commitTo: (Store.Key, ByteSource.Content) => Stored)
-      extends Reservation:
+  final class MemoryReservation(
+      val key: Store.Key,
+      val where: MemoryReservation.Where,
+      commitTo: (Store.Key, ByteSource.Content) => Stored
+  ) extends Reservation:
     private val written = AtomicReference(Array.emptyByteArray)
     @volatile private var done = false
 
@@ -224,4 +226,3 @@ object MemoryStore:
 
     type Where = Blob.Location
     val Where: Blob.Location.type = Blob.Location
-

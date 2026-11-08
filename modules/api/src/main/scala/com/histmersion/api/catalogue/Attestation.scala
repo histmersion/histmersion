@@ -31,10 +31,10 @@ final case class Attestation(
     ctsUrn: Option[Attestation.CtsUrn] = None,
     note: Option[Attestation.Note] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object Attestation:
-
 
   type Id = Id.T
   object Id extends Newtype[Long, Pure]
@@ -69,13 +69,12 @@ object Attestation:
       id: Id,
       deleted: Deleted.Value
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Deleted:
     type Value = Value.T
     object Value extends Newtype[Boolean, Pure]
-
-
 
   final case class List(
       total: RowCount,
@@ -83,14 +82,19 @@ object Attestation:
       offset: Offset = Offset(0),
       next: Option[Offset] = None
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema:
+        KindlingsSchema,
+        com.histmersion.api.json.Schema:
     def page: OffsetPage = OffsetPage(total, offset, RowCount(attestations.size))
 
   object List:
 
-
     def of(total: RowCount, rows: scala.List[Attestation], offset: UnreadPage.Offset): List =
-      List(RowCount((total).value), rows, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next)
+      List(
+        RowCount((total).value),
+        rows,
+        Offset((offset).value),
+        OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
+      )
 
   final case class Patch(
       quote: Option[Quote] = None,
@@ -104,10 +108,10 @@ object Attestation:
       xywh: Option[Xywh] = None,
       ctsUrn: Option[CtsUrn] = None,
       note: Option[Note] = None
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Patch:
-
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
@@ -126,9 +130,9 @@ object Attestation:
       xywh: Option[Xywh] = None,
       ctsUrn: Option[CtsUrn] = None,
       note: Option[Note] = None
-  ) derives KindlingsSchema, com.histmersion.api.json.Schema
+  ) derives KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Put:
-
 
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])

@@ -33,7 +33,13 @@ object MapLibreEngine extends MapEngine:
           .orElse(Option(dom.document.createElement("canvas").asInstanceOf[dom.HTMLCanvasElement].getContext("webgl")))
           .map(_.asInstanceOf[js.Dynamic])
         gl match
-          case None    => Capabilities(webgl = Capabilities.Webgl(false), software = Capabilities.Software(true), renderer = Capabilities.Renderer(""), webgl2 = Capabilities.Webgl2(false))
+          case None =>
+            Capabilities(
+              webgl = Capabilities.Webgl(false),
+              software = Capabilities.Software(true),
+              renderer = Capabilities.Renderer(""),
+              webgl2 = Capabilities.Webgl2(false)
+            )
           case Some(g) =>
             // RENDERER names the GPU in Firefox (which warns that the debug extension is going away); Chromium
             // answers a generic name there and the GPU only through the extension
@@ -42,7 +48,8 @@ object MapLibreEngine extends MapEngine:
               if !Capabilities.genericRenderer(plain) then plain
               else
                 val ext = g.getExtension("WEBGL_debug_renderer_info")
-                if ext != null && !js.isUndefined(ext) then Capabilities.Renderer(g.getParameter(ext.UNMASKED_RENDERER_WEBGL).toString)
+                if ext != null && !js.isUndefined(ext) then
+                  Capabilities.Renderer(g.getParameter(ext.UNMASKED_RENDERER_WEBGL).toString)
                 else plain
             // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
             Capabilities(
@@ -52,7 +59,14 @@ object MapLibreEngine extends MapEngine:
               webgl2 = Capabilities.Webgl2(gl2.isDefined)
             )
       }
-      .getOrElse(Capabilities(webgl = Capabilities.Webgl(false), software = Capabilities.Software(true), renderer = Capabilities.Renderer(""), webgl2 = Capabilities.Webgl2(false)))
+      .getOrElse(
+        Capabilities(
+          webgl = Capabilities.Webgl(false),
+          software = Capabilities.Software(true),
+          renderer = Capabilities.Renderer(""),
+          webgl2 = Capabilities.Webgl2(false)
+        )
+      )
 
   /** MapLibre GL JS 6 draws every map — vector and raster — with WebGL 2 only. */
   override def unsupported(c: Capabilities): Option[MapEngine.Problem] = Capabilities.withoutWebgl2(c)

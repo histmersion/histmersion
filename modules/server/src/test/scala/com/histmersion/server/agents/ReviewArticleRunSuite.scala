@@ -145,7 +145,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   )
 
   private val Revised =
-    Article.Body(Body.value.replace("Tin reached the Aegean by sea", "Tin, the scarce half of bronze, reached the Aegean by sea"))
+    Article.Body(
+      Body.value.replace("Tin reached the Aegean by sea", "Tin, the scarce half of bronze, reached the Aegean by sea")
+    )
 
   /** An edit as JSON. */
   private def edit(op: String, anchor: String, text: String = null) =
@@ -177,11 +179,28 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
 
   private lazy val baseCfg =
     val b = AppConfig.load()
-    b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(AgentsConfig.Enabled(true)).modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles.modify(_.reviewer).setTo(AgentRolesConfig.Reviewer(Model.wire.value)).modify(_.coldReader).setTo(AgentRolesConfig.ColdReader(Model.wire.value)).modify(_.skeptic).setTo(AgentRolesConfig.Skeptic(Model.wire.value)).modify(_.fixer).setTo(AgentRolesConfig.Fixer(Model.wire.value))
+    b.modify(_.db)
+      .setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
+      .modify(_.agents)
+      .setTo(
+        b.agents
+          .modify(_.enabled)
+          .setTo(AgentsConfig.Enabled(true))
+          .modify(_.prices)
+          .setTo(AgentsConfig.Prices("scripted=1/2"))
+          .modify(_.roles)
+          .setTo(
+            b.agents.roles
+              .modify(_.reviewer)
+              .setTo(AgentRolesConfig.Reviewer(Model.wire.value))
+              .modify(_.coldReader)
+              .setTo(AgentRolesConfig.ColdReader(Model.wire.value))
+              .modify(_.skeptic)
+              .setTo(AgentRolesConfig.Skeptic(Model.wire.value))
+              .modify(_.fixer)
+              .setTo(AgentRolesConfig.Fixer(Model.wire.value))
+          )
       )
-    )
 
   private lazy val ds = testPool(baseCfg.db)
   protected def transcriptDs: javax.sql.DataSource = ds
@@ -296,12 +315,18 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
           Source.Put(
             title = com.histmersion.api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(Year.apply),
-            body = Some(Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia."))
+            body = Some(
+              Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+            )
           )
         )
         .isRight
     )
-    assert(h.research.articles.put(Slug, Article.Put(Article.Title("Tin in the Bronze Age"), Article.Kind.Wire("concept"), Body)).isRight)
+    assert(
+      h.research.articles
+        .put(Slug, Article.Put(Article.Title("Tin in the Bronze Age"), Article.Kind.Wire("concept"), Body))
+        .isRight
+    )
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.message.value), identity)
@@ -321,7 +346,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(run.status, "done", run.error)
     assertEquals(run.targetKind, "article")
 
-    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(4000)))
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(4000)))
     assertEquals(
       steps.map(_.name),
       List(
@@ -338,7 +363,10 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     val merged =
-      io.circe.parser.decode[ReviewArticle.Merged](steps.find(_.name.value == "merge-1").get.output.get.value).toOption.get
+      io.circe.parser
+        .decode[ReviewArticle.Merged](steps.find(_.name.value == "merge-1").get.output.get.value)
+        .toOption
+        .get
     assertEquals(merged.verdict, ReviewArticle.Verdict.Minor)
     assertEquals(merged.findings.map(_.id), List("S1"))
 
@@ -359,10 +387,23 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assert(!first.systemPrompt.exists(_.contains("Tin reached the Aegean")))
 
     // the edge was verified against the target's record and waits for a person
-    val open = TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), ApprovalQuery.Limit(50)).filter(_.citekey == ApiCk)
-    assertEquals(open.map(x => (x.kind, x.edgeKind, x.target.map(_.value: String))), List(("edge", Some("refutes"), Some(Ck2))))
-    assertEquals(h.library.citations.neighbors(Ck, List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))), Nil, "nothing is applied before approval")
-    val log = h.workListView.list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value))
+    val open =
+      TestRuns.approvals(ds).approvals(Some(ApprovalState.Open), ApprovalQuery.Limit(50)).filter(_.citekey == ApiCk)
+    assertEquals(
+      open.map(x => (x.kind, x.edgeKind, x.target.map(_.value: String))),
+      List(("edge", Some("refutes"), Some(Ck2)))
+    )
+    assertEquals(
+      h.library.citations.neighbors(Ck, List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))),
+      Nil,
+      "nothing is applied before approval"
+    )
+    val log = h.workListView
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
     assertEquals(
       log.map(_.text),
       List(
@@ -396,14 +437,25 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     c.add("fixer", Seq(text(fixer)))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
-    assertEquals(run.params, RunParams(fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    assertEquals(
+      run.params,
+      RunParams(fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2)))
+    )
 
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
     val versions = h.research.articles.versions(Slug).toOption.get
     assert(versions.nonEmpty, "the previous text is kept, so the run can be undone")
-    val names = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(10))).map(_.name)
+    val names = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(10))).map(_.name)
     assertEquals(
       names,
       List(
@@ -434,14 +486,25 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         "record"
       )
     )
-    val tasks = h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.value.contains(Slug.value))
+    val tasks = h.workListView
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
     assertEquals(tasks.size, 1, tasks)
     assert(
       tasks.head.text.value
         .contains("S1 (Disagreements): the date has no support in the record [raised again after a rejection]"),
       tasks.head.text
     )
-    val log = h.workListView.list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value)).map(_.text)
+    val log = h.workListView
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
+      .map(_.text)
     assert(
       log.exists(l =>
         l.value.contains("round 3 → MAJOR") && l.value.contains("fixer applied 1 / rejected 1") &&
@@ -469,7 +532,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     assertEquals((c.served("rules"), c.served("cold"), c.served("skeptic")), (3, 2, 2))
     // the step output records exactly what changed, edit by edit
-    val fixStep = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(40000)))
+    val fixStep = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(40000)))
       .find(_.name.value == "fixer-1")
       .flatMap(_.output)
       .flatMap(o => io.circe.parser.decode[ReviewArticle.Fix](o.value).toOption)
@@ -500,7 +563,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val addUncited = edit("insertAfter", s"Where the tin was mined is open [[$Ck]].", "\n\n" + uncited)
     c.add("fixer", Seq(text(fixerAnswer(List(gloss, addUncited)))), Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("fixer"), 2)
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
@@ -538,7 +609,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       edit("replace", "Tin came to the Aegean by sea", "Tin, the scarce half of bronze, came to the Aegean by sea")
     c.add("fixer", Seq(text(fixerAnswer(List(bad)))), Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("fixer"), 2)
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
@@ -579,16 +658,32 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val dated = edit("replace", "The date of the wreck is argued", "The cargo dates to about 1320 BCE")
     c.add("fixer", Seq(text(fixerAnswer(List(dated), applied = List("S1")))))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     val prompt = userPrompt(c.requests.get("fixer").peek().head)
     assert(prompt.contains(s"""S1 [skeptic, major, date]"""), prompt)
     assert(prompt.contains(s"""\n  evidence: [[$Ck]] @75: "Its cargo dates to about 1320 BCE.""""), prompt)
     assert(!prompt.contains("Cornish"), "a quote that is not in the record never reaches the fixer")
-    assert(run.warnings.exists(w => w.value.contains("S1 evidence dropped") && w.value.contains("not in the record")), run.warnings)
+    assert(
+      run.warnings.exists(w => w.value.contains("S1 evidence dropped") && w.value.contains("not in the record")),
+      run.warnings
+    )
     val merged = io.circe.parser
       .decode[ReviewArticle.Merged](
-        connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(40000))).find(_.name.value == "merge-1").get.output.get.value
+        connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(40000)))
+          .find(_.name.value == "merge-1")
+          .get
+          .output
+          .get
+          .value
       )
       .toOption
       .get
@@ -620,7 +715,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .check(Slug, io.circe.parser.decode[Article.Edits.ArticleCheckRequest](args).toOption.get)
         .toOption
         .get
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
     val first = c.requests.get("fixer").asScala.toList.head
@@ -632,7 +735,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(reported, direct.problems)
     assertEquals(raised, direct.problems, "the tool and the validation are one function")
     assert(
-      direct.problems.exists(_.value.contains("no [[citekey]]")) && direct.problems.exists(_.value.startsWith("edit 3 (delete")) &&
+      direct.problems.exists(_.value.contains("no [[citekey]]")) && direct.problems.exists(
+        _.value.startsWith("edit 3 (delete")
+      ) &&
         direct.problems.exists(p => p.value.startsWith("edit 4 (insertAfter") && p.value.contains("zzagent_ghost")),
       direct.problems
     )
@@ -642,7 +747,10 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val c = PanelClient(Model)
     val (_, h) = handlers(c); seed(h)
     val draft = h.research.articles
-      .check(com.histmersion.domain.research.Slug("zzagent_new"), Article.Edits.ArticleCheckRequest(body = Some(Article.Body(s"New [[zzagent_ghost]].\n\nUncited."))))
+      .check(
+        com.histmersion.domain.research.Slug("zzagent_new"),
+        Article.Edits.ArticleCheckRequest(body = Some(Article.Body(s"New [[zzagent_ghost]].\n\nUncited.")))
+      )
       .toOption
       .get
     assert(
@@ -656,7 +764,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       h.research.articles
         .check(
           com.histmersion.domain.research.Slug("zzagent_new"),
-          Article.Edits.ArticleCheckRequest(edits = List(Article.Edits.EditAnswer(Article.Edits.Op.Delete, Article.Edits.EditAnswer.Anchor("x"))))
+          Article.Edits.ArticleCheckRequest(edits =
+            List(Article.Edits.EditAnswer(Article.Edits.Op.Delete, Article.Edits.EditAnswer.Anchor("x")))
+          )
         )
         .isLeft
     )
@@ -665,14 +775,24 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       .check(
         Slug,
         Article.Edits.ArticleCheckRequest(
-          List(Article.Edits.EditAnswer(Article.Edits.Op.Replace, Article.Edits.EditAnswer.Anchor("Tin reached"), Some(Article.Edits.NewText("Tin, a metal, reached"))))
+          List(
+            Article.Edits.EditAnswer(
+              Article.Edits.Op.Replace,
+              Article.Edits.EditAnswer.Anchor("Tin reached"),
+              Some(Article.Edits.NewText("Tin, a metal, reached"))
+            )
+          )
         )
       )
       .toOption
       .get
     assertEquals((clean.problems, clean.fatal, clean.edits.map(_.applied)), (Nil, false, List(true)))
     assert(Article.Edits.markdown(clean).value.contains("No problems"), Article.Edits.markdown(clean))
-    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Body.value.trim, "a check writes nothing")
+    assertEquals(
+      h.research.articles.get(Slug).toOption.get.article.body.value.trim,
+      Body.value.trim,
+      "a check writes nothing"
+    )
 
   test(
     "fix (#958): coverage drift is a mechanical finding; the fixer answers it with a reason and deletes the hand-written list"
@@ -692,17 +812,27 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     // the two sources under a topic of their own, the article's filter
     List(Ck, Ck2).foreach(ck =>
-      assert(h.library.sources.patch(ck, Source.Patch(topics = Some(List(Source.Topics("zzagent_review_tin"))))).isRight)
+      assert(
+        h.library.sources.patch(ck, Source.Patch(topics = Some(List(Source.Topics("zzagent_review_tin"))))).isRight
+      )
     )
     assert(
       h.research.articles
         .patch(Slug, Article.Patch(filter = Some(Article.Filter(topics = List(Filter.Topics("zzagent_review_tin"))))))
         .isRight
     )
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
 
-    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(40000)))
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(40000)))
     val mech1 = io.circe.parser
       .decode[List[ReviewArticle.Finding]](steps.find(_.name.value == "mechanical-1").get.output.get.value)
       .toOption
@@ -767,7 +897,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val theirs = Article.Body(Body.value.replace("by sea", "by sea and by land"))
     c.before =
       w => if w == "fixer" then assert(h.research.articles.patch(Slug, Article.Patch(body = Some(theirs))).isRight)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     assertEquals(
       h.research.articles.get(Slug).toOption.get.article.body.value.trim,
@@ -775,11 +913,20 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       "a stale fix never overwrites"
     )
     assert(run.warnings.exists(_.value.contains("changed while the fixer worked")), run.warnings)
-    val patched = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(4000)))
+    val patched = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(4000)))
       .find(_.name.value == "patch-1")
       .flatMap(_.output)
       .flatMap(o => io.circe.parser.decode[ReviewArticle.Patched](o.value).toOption)
-    assertEquals(patched, Some(ReviewArticle.Patched(written = ReviewArticle.Patched.Written(false), None, conflict = ReviewArticle.Patched.Conflict(true))))
+    assertEquals(
+      patched,
+      Some(
+        ReviewArticle.Patched(
+          written = ReviewArticle.Patched.Written(false),
+          None,
+          conflict = ReviewArticle.Patched.Conflict(true)
+        )
+      )
+    )
     // round 2 reviewed the other writer's text
     val round2 = c.requests
       .get("rules")
@@ -813,11 +960,31 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   test("refused up front: an unknown article, a role with no model, too many rounds"):
     val c = PanelClient(Model)
     val (a, h) = handlers(c); seed(h)
-    assert(a.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), Agents.RunRequest.Target("zzagent_nope"))).isLeft)
-    assert(a.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, rounds = Some(Agents.RunRequest.Rounds(99)))).left.exists(_.message.value.contains("rounds")))
-    val noSkeptic = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.skeptic).setTo(AgentRolesConfig.Skeptic(""))))
+    assert(
+      a.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), Agents.RunRequest.Target("zzagent_nope")))
+        .isLeft
+    )
+    assert(
+      a.startRun(
+        RunRequest(
+          Agents.RunRequest.Pipeline("review-article"),
+          SlugTarget,
+          rounds = Some(Agents.RunRequest.Rounds(99))
+        )
+      ).left
+        .exists(_.message.value.contains("rounds"))
+    )
+    val noSkeptic = baseCfg
+      .modify(_.agents)
+      .setTo(
+        baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.skeptic).setTo(AgentRolesConfig.Skeptic("")))
+      )
     val (b, _) = handlers(c, noSkeptic)
-    assert(b.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget)).left.exists(_.message.value.contains("skeptic")))
+    assert(
+      b.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
+        .left
+        .exists(_.message.value.contains("skeptic"))
+    )
 
   // ── the review ledger (docs/research-review-convergence.md §6) ───────────────────────────────────
 
@@ -865,10 +1032,18 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(3))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(3))
+      )
+    )
     assertEquals(run.status, "done", run.error)
 
-    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100000)))
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000)))
     assertEquals(
       steps.map(_.name).distinct,
       List(
@@ -958,11 +1133,20 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         ("S2", ReviewLedger.Status.WontFix, Some(("fixer", 2)))
       )
     )
-    assertEquals(led.entry(ReviewArticle.Finding.Id("S1")).flatMap(_.closed).map(_.quote), Some("The cargo dates to about 1320 BCE"))
+    assertEquals(
+      led.entry(ReviewArticle.Finding.Id("S1")).flatMap(_.closed).map(_.quote),
+      Some("The cargo dates to about 1320 BCE")
+    )
     assertEquals(led.entry(ReviewArticle.Finding.Id("S2")).map(_.finding.severity), Some(ReviewArticle.Severity.Minor))
     assertEquals(led.lessons.map(l => (l.text, l.source)), List((lesson, ReviewLedger.LessonSource.Recheck)))
     assert(h.research.articles.get(Slug).toOption.get.article.body.value.contains("The cargo dates to about 1320 BCE"))
-    val log = h.workListView.list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value)).map(_.text)
+    val log = h.workListView
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
+      .map(_.text)
     assert(
       log.exists(l =>
         l.value.contains("round 4 → PASS") && l.value.contains("confirmed by a full panel") &&
@@ -970,7 +1154,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       ),
       log
     )
-    assertEquals(h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.value.contains(Slug.value)), Nil)
+    assertEquals(
+      h.workListView
+        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+        .toOption
+        .get
+        .items
+        .filter(_.text.value.contains(Slug.value)),
+      Nil
+    )
 
   test("fix: the confirming panel is skipped while a MAJOR is open (final-panel = clear), and runs with always"):
     def go(mode: String): (RunInfo, PanelClient) =
@@ -998,25 +1190,48 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
       c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
       c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
-      val cfg = baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.finalPanel).setTo(AgentReviewConfig.FinalPanel(mode)))
-      )
+      val cfg = baseCfg
+        .modify(_.researchAgents)
+        .setTo(
+          baseCfg.researchAgents
+            .modify(_.review)
+            .setTo(baseCfg.researchAgents.review.modify(_.finalPanel).setTo(AgentReviewConfig.FinalPanel(mode)))
+        )
       val (a, h) = handlers(c, cfg); seed(h)
-      (start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2)))), c)
+      (
+        start(
+          a,
+          RunRequest(
+            Agents.RunRequest.Pipeline("review-article"),
+            SlugTarget,
+            fix = Some(Agents.RunRequest.Fix(true)),
+            rounds = Some(Agents.RunRequest.Rounds(2))
+          )
+        ),
+        c
+      )
     val (clear, c1) = go("clear")
     assertEquals(clear.status, "done", clear.error)
     assertEquals((c1.served("rules"), c1.served("cold"), c1.served("skeptic")), (2, 1, 1))
-    assert(!connect(ds)(AgentRepo.steps(ApiIds.job(clear.id),AgentRepo.OutputChars(100))).exists(_.name.value == "rules-3"))
+    assert(
+      !connect(ds)(AgentRepo.steps(ApiIds.job(clear.id), AgentRepo.OutputChars(100))).exists(_.name.value == "rules-3")
+    )
     val (always, c2) = go("always")
     assertEquals(always.status, "done", always.error)
     assertEquals((c2.served("rules"), c2.served("cold"), c2.served("skeptic")), (3, 2, 2))
-    assert(connect(ds)(AgentRepo.steps(ApiIds.job(always.id),AgentRepo.OutputChars(100))).exists(_.name.value == "merge-3"))
+    assert(
+      connect(ds)(AgentRepo.steps(ApiIds.job(always.id), AgentRepo.OutputChars(100))).exists(_.name.value == "merge-3")
+    )
 
   test(
     "#934: one backlog item per article listing its open MAJORs — rewritten by the next run, closed when none is open"
   ):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val legacy = h.workLists
-      .add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text(s"review-article [[$Slug]]: MAJOR open — R9 major (x): an old finding")))
+      .add(
+        WorkListControllers.ListName("tasks"),
+        QueueAdd(Queue.QueueItem.Text(s"review-article [[$Slug]]: MAJOR open — R9 major (x): an old finding"))
+      )
       .toOption
       .get
     def runWith(rulesAnswers: Seq[AgentResponse]*): RunInfo =
@@ -1028,7 +1243,12 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       val r = start(a2, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
       assertEquals(r.status, "done", r.error)
       r
-    def items = h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value))
+    def items = h.workListView
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
 
     // run 1: two MAJORs → ONE item; the per-finding item of an older run is superseded
     val r1 = runWith(
@@ -1072,7 +1292,8 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       s"review-article [[$Slug]]: 1 open MAJOR — R2 (Open questions): the mines are not named " +
         s"(agent run ${r2.id.value.take(8)})"
     )
-    val steps2 = connect(ds)(AgentRepo.steps(ApiIds.job(r2.id),AgentRepo.OutputChars(100000))).filter(_.name.value == "rules-1")
+    val steps2 =
+      connect(ds)(AgentRepo.steps(ApiIds.job(r2.id), AgentRepo.OutputChars(100000))).filter(_.name.value == "rules-1")
     assertEquals(steps2.size, 2, "the answer without checks was sent back")
     assert(
       steps2.head.error.exists(e =>
@@ -1087,7 +1308,11 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         .patch(
           Slug,
           Article.Patch(body =
-            Some(Article.Body(Revised.value.replace("Where the tin was mined is open", s"The tin was mined in Central Asia [[$Ck2]]")))
+            Some(
+              Article.Body(
+                Revised.value.replace("Where the tin was mined is open", s"The tin was mined in Central Asia [[$Ck2]]")
+              )
+            )
           )
         )
         .isRight
@@ -1109,7 +1334,10 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     val closed = items.find(_.id == item.id).get
-    assertEquals((closed.status, closed.reason), ("done", Some(s"no MAJOR open after agent run ${r3.id.value.take(8)}")))
+    assertEquals(
+      (closed.status, closed.reason),
+      ("done", Some(s"no MAJOR open after agent run ${r3.id.value.take(8)}"))
+    )
     val led = ledgerOf(h).get
     assertEquals(led.task, None)
     assertEquals(
@@ -1126,11 +1354,17 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val mine =
       h.workLists
-        .add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text(s"review-article $Slug: 1 open MAJOR — R4 (Intro): an old finding")))
+        .add(
+          WorkListControllers.ListName("tasks"),
+          QueueAdd(Queue.QueueItem.Text(s"review-article $Slug: 1 open MAJOR — R4 (Intro): an old finding"))
+        )
         .toOption
         .get
     val twice = h.workLists
-      .add(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text(s"review-article [[$Slug]]: 3 open MAJORs — a, b, c (agent run deadbeef)")))
+      .add(
+        WorkListControllers.ListName("tasks"),
+        QueueAdd(Queue.QueueItem.Text(s"review-article [[$Slug]]: 3 open MAJORs — a, b, c (agent run deadbeef)"))
+      )
       .toOption
       .get
     val c = PanelClient(Model)
@@ -1143,10 +1377,17 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (a2, _) = handlers(c)
     val r = start(a2, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
     assertEquals(r.status, "done", r.error)
-    val items = h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value))
+    val items = h.workListView
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
     assertEquals(items.filter(_.status.value == "open").map(_.id), List(mine.id), "the existing item, rewritten")
     assert(
-      items.find(_.id == mine.id).exists(_.text.value.startsWith(s"review-article [[$Slug]]: 1 open MAJOR — R1 (Intro)"))
+      items
+        .find(_.id == mine.id)
+        .exists(_.text.value.startsWith(s"review-article [[$Slug]]: 1 open MAJOR — R1 (Intro)"))
     )
     assertEquals(
       items.find(_.id == twice.id).map(i => (i.status, i.reason)),
@@ -1169,7 +1410,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       ReviewArticle.Finding.Fix("define each on first use, and add a Glossary")
     )
     ReviewLedgerFixtures
-      .put(ds, ReviewLedger.Ledger(LedgerSlug, List(ReviewLedger.Entry(legacy, ReviewLedger.Entry.Run.assume("old"), ReviewLedger.Entry.Round(1)))))
+      .put(
+        ds,
+        ReviewLedger.Ledger(
+          LedgerSlug,
+          List(ReviewLedger.Entry(legacy, ReviewLedger.Entry.Run.assume("old"), ReviewLedger.Entry.Round(1)))
+        )
+      )
     val c = PanelClient(Model)
     c.add("rules", looked(rules("PASS")))
     // the reader still counts 12 and, as its instructions may say, calls that MAJOR
@@ -1192,7 +1439,14 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("cold"), 1, "the count's MAJOR verdict is corrected, not sent back")
     val merged = io.circe.parser
-      .decode[ReviewArticle.Merged](connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(4000))).find(_.name.value == "merge-1").get.output.get.value)
+      .decode[ReviewArticle.Merged](
+        connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(4000)))
+          .find(_.name.value == "merge-1")
+          .get
+          .output
+          .get
+          .value
+      )
       .toOption
       .get
     assertEquals(merged.verdict, ReviewArticle.Verdict.Minor)
@@ -1209,7 +1463,14 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     assertEquals(led.task, None)
-    assert(!h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true)).toOption.get.items.exists(_.text.value.contains(Slug.value)))
+    assert(
+      !h.workListView
+        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+        .toOption
+        .get
+        .items
+        .exists(_.text.value.contains(Slug.value))
+    )
 
   test("the ledger is the article's: it follows a rename and goes with the article"):
     val (_, h) = handlers(PanelClient(Model)); seed(h)
@@ -1249,7 +1510,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   private val HaikuOverride = ModelOverride.Model(Haiku.wire.value)
   private val ScriptedOverride = ModelOverride.Model(Model.wire.value)
   private val HaikuRequest = RunRequest.Model(Haiku.wire.value)
-  private lazy val evalCfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2; haiku-sim=3/4")))
+  private lazy val evalCfg = baseCfg
+    .modify(_.agents)
+    .setTo(baseCfg.agents.modify(_.prices).setTo(AgentsConfig.Prices("scripted=1/2; haiku-sim=3/4")))
 
   private def handlersWith(f: LlmClient.Factory, cfg: AppConfig = evalCfg): (AgentsControllers, ServerWiring) =
     val deps = Deps(cfg, ds)
@@ -1273,13 +1536,22 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val before = CorpusSnapshot.of(ds)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(3)), dryRun = Some(Agents.RunRequest.DryRun(true))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(3)),
+        dryRun = Some(Agents.RunRequest.DryRun(true))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     assert(run.dryRun.value)
     assertEquals(CorpusSnapshot.of(ds), before, "no patch, no approval, no log or tasks line")
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Body.value.trim)
 
-    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100000)))
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000)))
     assertEquals(
       steps.map(_.name),
       List(
@@ -1324,7 +1596,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val patch = steps.find(_.name.value == "patch-1").get
     assertEquals(
       patch.output.flatMap(o => io.circe.parser.decode[ReviewArticle.Patched](o.value).toOption),
-      Some(ReviewArticle.Patched(written = ReviewArticle.Patched.Written(false), None, conflict = ReviewArticle.Patched.Conflict(false)))
+      Some(
+        ReviewArticle.Patched(
+          written = ReviewArticle.Patched.Written(false),
+          None,
+          conflict = ReviewArticle.Patched.Conflict(false)
+        )
+      )
     )
     assertEquals(
       patch.wouldWrite.map(_.what),
@@ -1360,13 +1638,26 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     c.add("cold", Seq(text(coldPass)), Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))), Seq(text(skeptic("PASS", Nil))))
     val (a, h) = handlersWith((_, ref) => Right(c.as(ref))); seed(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, modelFor = List(ModelOverride(Agents.ModelOverride.Role("skeptic"), HaikuOverride))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        modelFor = List(ModelOverride(Agents.ModelOverride.Role("skeptic"), HaikuOverride))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     def used = c.modelsUsed.asScala.view.mapValues(_.asScala.toList).toMap
     assertEquals(used, Map("rules" -> List(Model.wire), "cold" -> List(Model.wire), "skeptic" -> List(Haiku.wire)))
     assertEquals(
-      connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100))).filter(_.kind.value == "llm").map(s => s.name -> s.model.map(_.value: String)),
-      List("rules-1" -> Some(Model.wire.value: String), "cold-reader-1" -> Some(Model.wire.value: String), "skeptic-1" -> Some(Haiku.wire.value: String))
+      connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100)))
+        .filter(_.kind.value == "llm")
+        .map(s => s.name -> s.model.map(_.value: String)),
+      List(
+        "rules-1" -> Some(Model.wire.value: String),
+        "cold-reader-1" -> Some(Model.wire.value: String),
+        "skeptic-1" -> Some(Haiku.wire.value: String)
+      )
     )
     assert(AgentsMarkdown.runLine(run).contains(s"skeptic=${Haiku.wire}"), AgentsMarkdown.runLine(run))
     // --model moves every role; --model-for still wins for its own
@@ -1390,8 +1681,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     // a role the pipeline does not use is refused
     assert(
-      a.startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, modelFor = List(ModelOverride(Agents.ModelOverride.Role("writer"), HaikuOverride))))
-        .left
+      a.startRun(
+        RunRequest(
+          Agents.RunRequest.Pipeline("review-article"),
+          SlugTarget,
+          modelFor = List(ModelOverride(Agents.ModelOverride.Role("writer"), HaikuOverride))
+        )
+      ).left
         .exists(_.message.value.contains("review-article uses no writer role"))
     )
 
@@ -1409,10 +1705,22 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       Seq(text(skeptic("MINOR", List(finding("minor", "Open questions", "a source is missing")))))
     )
     val (a, h) = handlersWith((_, ref) => Right(c.as(ref))); seed(h)
-    val r1 = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, dryRun = Some(Agents.RunRequest.DryRun(true))))
+    val r1 = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        dryRun = Some(Agents.RunRequest.DryRun(true))
+      )
+    )
     val r2 = start(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, dryRun = Some(Agents.RunRequest.DryRun(true)), modelFor = List(ModelOverride(Agents.ModelOverride.Role("reviewer"), HaikuOverride)))
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        dryRun = Some(Agents.RunRequest.DryRun(true)),
+        modelFor = List(ModelOverride(Agents.ModelOverride.Role("reviewer"), HaikuOverride))
+      )
     )
     assertEquals((r1.status, r2.status), ("done", "done"))
     val cmp = a.compare(List(ApiIds.run(r1.id), ApiIds.run(r2.id))).fold(e => fail(e.message.value), identity)
@@ -1422,7 +1730,11 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(cmp.review.map(r => (r.verdict, r.rounds)), List((Some("MAJOR"), 1), (Some("MAJOR"), 1)))
     def panel(i: Int) =
-      cmp.review(i).reviewers.filter(_.reviewer.value != "mechanical").map(x => (x.reviewer, x.verdict, x.majors, x.minors))
+      cmp
+        .review(i)
+        .reviewers
+        .filter(_.reviewer.value != "mechanical")
+        .map(x => (x.reviewer, x.verdict, x.majors, x.minors))
     assertEquals(
       panel(0),
       List(("rules", Some("MAJOR"), 1, 0), ("cold-reader", Some("PASS"), 0, 0), ("skeptic", Some("MAJOR"), 1, 0))
@@ -1433,7 +1745,10 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(
       cmp.review.map(_.kinds),
-      List(List(RunCompare.KindCount(RunCompare.KindCount.Kind("date"), RunCompare.KindCount.Count(2))), List(RunCompare.KindCount(RunCompare.KindCount.Kind("date"), RunCompare.KindCount.Count(2))))
+      List(
+        List(RunCompare.KindCount(RunCompare.KindCount.Kind("date"), RunCompare.KindCount.Count(2))),
+        List(RunCompare.KindCount(RunCompare.KindCount.Kind("date"), RunCompare.KindCount.Count(2)))
+      )
     )
     assertEquals(
       cmp.review.map(_.majors),
@@ -1442,7 +1757,19 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         List("R1 major (Intro): tin is not defined at all")
       )
     )
-    assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap(RunCompare.MajorOverlap.A(r1.id.value), RunCompare.MajorOverlap.B(r2.id.value), RunCompare.MajorOverlap.AMajors(2), RunCompare.MajorOverlap.BMajors(1), RunCompare.MajorOverlap.Shared(1), List(RunCompare.MajorOverlap.Pairs("R1 ↔ R1")))))
+    assertEquals(
+      cmp.overlaps,
+      List(
+        RunCompare.MajorOverlap(
+          RunCompare.MajorOverlap.A(r1.id.value),
+          RunCompare.MajorOverlap.B(r2.id.value),
+          RunCompare.MajorOverlap.AMajors(2),
+          RunCompare.MajorOverlap.BMajors(1),
+          RunCompare.MajorOverlap.Shared(1),
+          List(RunCompare.MajorOverlap.Pairs("R1 ↔ R1"))
+        )
+      )
+    )
     // the comparison in the record: the runs, each step's models and attempts, the review's outputs and the shared
     // majors (a step's seconds are the wall clock's and stay out)
     note(
@@ -1478,10 +1805,14 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
     assertEquals(run.status, "done", run.error)
-    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100000))).filter(_.name.value == "rules-1")
+    val steps =
+      connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000))).filter(_.name.value == "rules-1")
     assertEquals(steps.map(_.status), List("failed", "done"))
     assert(steps.head.error.exists(_.value.contains("spot-checks: 0 of the 1 required are verified")), steps.head.error)
-    assert(steps.head.error.exists(_.value.contains("no get_source or passages call for it in this step")), steps.head.error)
+    assert(
+      steps.head.error.exists(_.value.contains("no get_source or passages call for it in this step")),
+      steps.head.error
+    )
     // the retry is told what was missing
     assert(retryPoints(userPrompt(c.requests.get("rules").asScala.toList(1).head)).exists(_.startsWith("spot-checks:")))
     val report = io.circe.parser.decode[ReviewArticle.Report](steps(1).output.get.value).toOption.get
@@ -1489,7 +1820,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
 
   test("#1840: on the last attempt an answer without verified spot-checks is kept, with a warning on the run"):
     val c = PanelClient(Model)
-    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.step).setTo(baseCfg.agents.step.modify(_.maxRetries).setTo(AgentStepConfig.MaxRetries(0))))
+    val cfg = baseCfg
+      .modify(_.agents)
+      .setTo(
+        baseCfg.agents
+          .modify(_.step)
+          .setTo(baseCfg.agents.step.modify(_.maxRetries).setTo(AgentStepConfig.MaxRetries(0)))
+      )
     c.add("rules", Seq(text(rules("PASS"))))
     c.add("cold", Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("PASS", Nil))))
@@ -1552,9 +1889,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       h.library.sources
         .patch(
           Ck3,
-          Source.Patch(edges =
-            Some(EdgesPatch(add = List(Edge.Input(ApiCk, Edge.Kind.Challenges))))
-          )
+          Source.Patch(edges = Some(EdgesPatch(add = List(Edge.Input(ApiCk, Edge.Kind.Challenges)))))
         )
         .isRight
     )
@@ -1563,8 +1898,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     * answer carries one (the spot-checks are not what these tests are about).
     */
   private lazy val oneSpot =
-    baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.spotChecks).setTo(AgentReviewConfig.SpotChecks(1)))
-    )
+    baseCfg
+      .modify(_.researchAgents)
+      .setTo(
+        baseCfg.researchAgents
+          .modify(_.review)
+          .setTo(baseCfg.researchAgents.review.modify(_.spotChecks).setTo(AgentReviewConfig.SpotChecks(1)))
+      )
 
   private def states(h: ServerWiring): List[(CritiqueRef.Wire, CritiqueState.Wire)] =
     h.research.articles
@@ -1601,7 +1941,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     c.add("fixer", Seq(text(fixerAnswer(List(citing), applied = List("S1")))))
     val (a, h) = handlers(c, oneSpot); seed(h); critics(h)
     assertEquals(states(h), List(s"$Ck3>$Ck" -> "open", s"$Ck2>$Ck" -> "open"))
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
 
     // the skeptic's brief carries the checklist; the fixer reads the finding's pair
@@ -1622,7 +1970,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(states(h), List(s"$Ck3>$Ck" -> "reasoned", s"$Ck2>$Ck" -> "addressed"))
     val stored = ArticleFixtures.critiques(ds, Slug)
     assertEquals(
-      stored.map(r => (r.src.value: String, r.dst.value: String, r.by.exists(_.value.startsWith("skeptic (agent run")))),
+      stored.map(r =>
+        (r.src.value: String, r.dst.value: String, r.by.exists(_.value.startsWith("skeptic (agent run")))
+      ),
       List((Ck3, Ck, true))
     )
     val ledger = ledgerOf(h).get
@@ -1631,7 +1981,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       List(("S1", ReviewLedger.Status.Fixed, Some(s"$Ck2>$Ck")))
     )
     assertEquals(ledger.openMajors, Nil)
-    val log = h.workListView.list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value)).map(_.text)
+    val log = h.workListView
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
+      .map(_.text)
     assert(
       log.exists(l =>
         l.value.contains("round 3 → PASS") && l.value.contains("critiques 2 pairs — 1 addressed, 1 reasoned, 0 open")
@@ -1677,7 +2033,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     val (a, h) = handlers(c); seed(h); critics(h)
     val token = h.research.articles.get(Slug).toOption.get.article.updatedAt
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     val retry = retryPoints(userPrompt(c.requests.get("skeptic").asScala.toList(1).head))
     assert(
@@ -1716,7 +2080,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     c.add("cold", Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(critique("major", Some(s"$Ck2>$Ck"))), List(proposal)))))
     val (a, h) = handlers(c, oneSpot); seed(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     // recorded minor: no MAJOR is open, so the fixer never runs
     assertEquals(c.served("fixer"), 0)
@@ -1761,9 +2133,21 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
 
   private def logOf(h: ServerWiring) =
-    h.workListView.list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.value.contains(Slug.value)).map(_.text)
+    h.workListView
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
+      .map(_.text)
   private def tasksOf(h: ServerWiring) =
-    h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.value.contains(Slug.value)).map(_.text)
+    h.workListView
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+      .toOption
+      .get
+      .items
+      .filter(_.text.value.contains(Slug.value))
+      .map(_.text)
   private val coCite = edit(
     "replace",
     s"Tin reached the Aegean by sea [[$Ck]].",
@@ -1787,7 +2171,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     c.add("fixer", Seq(text(fixerAnswer(List(coCite), applied = List("S1")))))
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     // the final pass was told it verifies
     assert(userPrompt(c.requests.get("skeptic").asScala.toList(2).head).contains("This is the run's FINAL pass"))
@@ -1796,18 +2188,24 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       led.entries.map(e => (e.id.value: String, e.status, e.deferred.map(_.value: String))),
       List(("S1", ReviewLedger.Status.Fixed, None), ("S2", ReviewLedger.Status.Open, Some(run.id.value: String)))
     )
-    val merge3 = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100000))).find(_.name.value == "merge-3").get
+    val merge3 = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000)))
+      .find(_.name.value == "merge-3")
+      .get
     assert(merge3.output.exists(_.value.replace(" ", "").contains("\"deferred\":[\"S2\"]")), merge3.output)
     assert(
       logOf(h).exists(l =>
-        l.value.contains("round 3 → MINOR") && l.value.contains("1 new MAJOR of the final pass deferred to the next run")
+        l.value.contains("round 3 → MINOR") && l.value.contains(
+          "1 new MAJOR of the final pass deferred to the next run"
+        )
       ),
       logOf(h)
     )
     assert(run.warnings.exists(_.value.contains("1 new MAJOR deferred to the next run — S2")), run.warnings)
     // logged and visible: the article's backlog item names it, the ledger still has it open MAJOR (the next run's work)
     assert(
-      tasksOf(h).exists(t => t.value.contains("1 open MAJOR") && t.value.contains("S2") && t.value.contains("deferred to the next run")),
+      tasksOf(h).exists(t =>
+        t.value.contains("1 open MAJOR") && t.value.contains("S2") && t.value.contains("deferred to the next run")
+      ),
       tasksOf(h)
     )
     assertEquals(led.openMajors.map(_.id), List("S2"))
@@ -1837,11 +2235,22 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     c2.add("fixer", Seq(text(fixerAnswer(List(dated), applied = List("S2")))))
     val (a2, _) = handlers(c2, oneSpot)
-    val run2 = start(a2, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run2 = start(
+      a2,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run2.status, "done", run2.error)
     assert(userPrompt(c2.requests.get("fixer").peek().head).contains("- S2 [skeptic, major, date]"))
     assertEquals(ledgerOf(h).get.openMajors, Nil)
-    assert(logOf(h).exists(l => l.value.contains(run2.id.value.take(8)) && l.value.contains("round 3 → PASS")), logOf(h))
+    assert(
+      logOf(h).exists(l => l.value.contains(run2.id.value.take(8)) && l.value.contains("round 3 → PASS")),
+      logOf(h)
+    )
     assertEquals(tasksOf(h), Nil)
 
   test(
@@ -1859,19 +2268,29 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     // the fixer answers nothing: the critique is written, only the citation of the work it answers is missing
     c.add("fixer", Seq(text(fixerAnswer(Nil, applied = Nil))))
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val body = Article.Body(h.research.articles
-      .get(Slug)
-      .toOption
-      .get
-      .article
-      .body
-      .value
-      .replace(
-        s"Tin reached the Aegean by sea [[$Ck]].",
-        s"Tin reached the Aegean by sea [[$Ck]].\n\nAn isotope study answers Tinley's sea route [[$Ck2]]."
-      ))
+    val body = Article.Body(
+      h.research.articles
+        .get(Slug)
+        .toOption
+        .get
+        .article
+        .body
+        .value
+        .replace(
+          s"Tin reached the Aegean by sea [[$Ck]].",
+          s"Tin reached the Aegean by sea [[$Ck]].\n\nAn isotope study answers Tinley's sea route [[$Ck2]]."
+        )
+    )
     assert(h.research.articles.patch(Slug, Article.Patch(body = Some(body))).isRight)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(2))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     assert(
       h.research.articles
@@ -1888,7 +2307,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       ledgerOf(h).get.entries.map(e => (e.id, e.status, e.closed.map(_.by))),
       List(("S1", ReviewLedger.Status.Fixed, Some("skeptic")))
     )
-    val patch = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(100000))).find(_.name.value == "fixer-1").get
+    val patch = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000)))
+      .find(_.name.value == "fixer-1")
+      .get
     assert(patch.output.exists(_.value.replace(" ", "").contains("\"repaired\":[\"S1\"]")), patch.output)
     assertEquals(states(h), List(s"$Ck2>$Ck" -> "addressed"))
     assert(logOf(h).exists(_.value.contains("round 3 → PASS")), logOf(h))
@@ -1911,7 +2332,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     c.add("fixer", (1 to 3).map(_ => Seq(text(fixerAnswer(List(apart), applied = List("S1")))))*)
     c.add("fixer", Seq(text(fixerAnswer(List(coCite), applied = List("S1")))))
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(3))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(3))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     val fixerCalls = c.requests.get("fixer").asScala.toList
     val retry = retryPoints(userPrompt(fixerCalls(1).head))
@@ -1933,7 +2362,10 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       second
     )
     // pass 2 had nothing claimed to re-check; pass 3 verified the second fix; the confirmation passed
-    assert(!connect(ds)(AgentRepo.steps(ApiIds.job(run.id),AgentRepo.OutputChars(200))).exists(_.name.value == "skeptic-check-2"))
+    assert(
+      !connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(200)))
+        .exists(_.name.value == "skeptic-check-2")
+    )
     val e = ledgerOf(h).get.entry(ReviewArticle.Finding.Id("S1")).get
     assertEquals((e.status, e.notFixedCount), (ReviewLedger.Status.Fixed, 1))
     assert(logOf(h).exists(_.value.contains("round 4 → PASS")), logOf(h))
@@ -1971,7 +2403,15 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       Seq(text(fixerAnswer(List(gloss2), applied = List("R1"))))
     )
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(3))))
+    val run = start(
+      a,
+      RunRequest(
+        Agents.RunRequest.Pipeline("review-article"),
+        SlugTarget,
+        fix = Some(Agents.RunRequest.Fix(true)),
+        rounds = Some(Agents.RunRequest.Rounds(3))
+      )
+    )
     assertEquals(run.status, "done", run.error)
     val retry = retryPoints(userPrompt(c.requests.get("fixer").asScala.toList(2).head))
     assert(

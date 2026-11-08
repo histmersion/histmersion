@@ -108,7 +108,9 @@ object Clustering:
       lat(k) += arr(i)._2.lat.value
       lon(k) += arr(i)._2.lon.value
       i += 1
-    Vector.tabulate(count)(k => (keys(k).toVector, LatLon(LatLon.Lat(lat(k) / keys(k).length), LatLon.Lon(lon(k) / keys(k).length))))
+    Vector.tabulate(count)(k =>
+      (keys(k).toVector, LatLon(LatLon.Lat(lat(k) / keys(k).length), LatLon.Lon(lon(k) / keys(k).length)))
+    )
 
   /** Is `at` on `s`'s screen, or within `margin` px of it (the copy of the world nearest the view)? */
   def inView(s: MapSurface, at: LatLon, margin: InViewMargin): Boolean =
@@ -121,7 +123,10 @@ object Clustering:
   /** What a cluster layer draws of `groups` on `s`: the points drawn alone and the bubbles (their points), those in
     * view and a margin of a quarter of the view. Pure but for the projection.
     */
-  def drawn(groups: Vector[(Vector[GroupKey], LatLon)], s: MapSurface): (Set[GroupKey], Map[GroupLabel, Vector[GroupKey]]) =
+  def drawn(
+      groups: Vector[(Vector[GroupKey], LatLon)],
+      s: MapSurface
+  ): (Set[GroupKey], Map[GroupLabel, Vector[GroupKey]]) =
     val (w, h) = s.size
     val margin = InViewMargin(0.25 * math.max(w.value, h.value))
     val shown = groups.filter((_, at) => inView(s, at, margin))

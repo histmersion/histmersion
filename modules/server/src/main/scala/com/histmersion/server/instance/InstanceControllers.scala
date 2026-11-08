@@ -185,7 +185,8 @@ final class InstanceControllers(
     * agents, what they are doing (the top bar's status).
     */
   def uiCounters: UiNotices.Counters =
-    val marks = seen.marks(UserId.Local).map((b, at) => UiNotices.Board.Wire(b.value) -> UiNotices.Counter.Seen(at.iso.value))
+    val marks =
+      seen.marks(UserId.Local).map((b, at) => UiNotices.Board.Wire(b.value) -> UiNotices.Counter.Seen(at.iso.value))
     val counters = Transactor(deps.ds).read(UiRepo.counters(marks))
     if cfg.agents.enabled.value then counters.modify(_.agents).setTo(Some(Transactor(deps.ds).read(UiRepo.agents)))
     else counters
@@ -206,7 +207,9 @@ final class InstanceControllers(
         at <- mark.at.map(_.value.trim).filter(_.nonEmpty) match
           case None    => Right(None)
           case Some(s) =>
-            Try(Instant.parse(s)).toOption.map(Some(_)).toRight(Api.Error(Api.Error.Message(s"'at' is not an ISO-8601 instant: $s")))
+            Try(Instant.parse(s)).toOption
+              .map(Some(_))
+              .toRight(Api.Error(Api.Error.Message(s"'at' is not an ISO-8601 instant: $s")))
       yield
         val _ = seen.mark(UserId.Local, SeenBoard(b.wire.value), at)
         uiCounters
@@ -230,5 +233,6 @@ final class InstanceControllers(
   def baseMapSource: BaseMapSource.Wire =
     val setting = BaseMapSource.Wire(cfg.ui.baseMapSource.value)
     setting.value.trim.toLowerCase(java.util.Locale.ROOT) match
-      case BaseMapSource.Local | BaseMapSource.Online => BaseMapSource.Wire(setting.value.trim.toLowerCase(java.util.Locale.ROOT))
+      case BaseMapSource.Local | BaseMapSource.Online =>
+        BaseMapSource.Wire(setting.value.trim.toLowerCase(java.util.Locale.ROOT))
       case _ => BaseMapSource.resolve(setting, basemap.status)

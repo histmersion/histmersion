@@ -33,7 +33,6 @@ object FilterInference:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
-
   final case class FilterAnswer(
       rationale: FilterAnswer.Rationale,
       query: Option[Article.Filter.Query] = None,
@@ -81,7 +80,8 @@ object FilterInference:
       case Right(None)    => Left(List(Problem("the filter selects nothing: give a query, topics or tags")))
       case Right(Some(f)) =>
         val rationale = Option(a.rationale).forall(_.value.trim.isEmpty)
-        if rationale then Left(List(Problem("the rationale is empty — say why these sources are the article's"))) else Right(f)
+        if rationale then Left(List(Problem("the rationale is empty — say why these sources are the article's")))
+        else Right(f)
 
   /** Judge filter `f` of article `slug` by what it returns: `total` sources, of which the article's `cited` sources it
     * returns `citedIn`; `sample` = a few it returns the article does not cite. Left = the problems a retry should fix;

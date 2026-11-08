@@ -11,8 +11,24 @@ abstract class FigureServiceContract extends MediaStoreSuite:
 
   stest("no source records a licence: nothing counted, nothing written") { s =>
     s.source("zqfg2001_x")
-    assertEquals(s.figures.fillLicences(apply = FigureService.Apply(false)), FigureLicenceFill(FigureLicenceFill.Candidates(0), FigureLicenceFill.Updated(0), FigureLicenceFill.Applied(false), Nil))
-    assertEquals(s.figures.fillLicences(apply = FigureService.Apply(true)), FigureLicenceFill(FigureLicenceFill.Candidates(0), FigureLicenceFill.Updated(0), FigureLicenceFill.Applied(true), Nil))
+    assertEquals(
+      s.figures.fillLicences(apply = FigureService.Apply(false)),
+      FigureLicenceFill(
+        FigureLicenceFill.Candidates(0),
+        FigureLicenceFill.Updated(0),
+        FigureLicenceFill.Applied(false),
+        Nil
+      )
+    )
+    assertEquals(
+      s.figures.fillLicences(apply = FigureService.Apply(true)),
+      FigureLicenceFill(
+        FigureLicenceFill.Candidates(0),
+        FigureLicenceFill.Updated(0),
+        FigureLicenceFill.Applied(true),
+        Nil
+      )
+    )
   }
 
 class FigureServiceInMemorySuite extends FigureServiceContract with MediaStoreSuite.InMemory

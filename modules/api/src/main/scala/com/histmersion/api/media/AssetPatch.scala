@@ -19,9 +19,9 @@ final case class AssetPatch(
     lon: Option[Longitude] = None,
     periodStart: Option[Year] = None,
     periodEnd: Option[Year] = None
-) derives KindlingsSchema, com.histmersion.api.json.Schema
+) derives KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object AssetPatch:
-
 
   given Codec.AsObject[AssetPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[AssetPatch])

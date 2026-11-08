@@ -21,7 +21,8 @@ object SettingsPages:
     case SettingsSection.Agents  => Some(Lead("Research agents that read, enrich and write for you — optional."))
     case SettingsSection.Keys    =>
       Some(Lead("Keys and passwords: whether each is set, and where it is kept. Never the key itself."))
-    case SettingsSection.Calibre => Some(Lead("The Calibre library that keeps your originals, and the server's folders."))
+    case SettingsSection.Calibre =>
+      Some(Lead("The Calibre library that keeps your originals, and the server's folders."))
     case SettingsSection.Backups => Some(Lead("Copies of the database, kept on this computer."))
     case SettingsSection.Plugins => Some(Lead("What the plugins add, each on or off."))
     case _                       => None

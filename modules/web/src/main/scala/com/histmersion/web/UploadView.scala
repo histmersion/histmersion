@@ -132,9 +132,18 @@ object UploadView:
       else mine
     val authors =
       if d.authors.isEmpty || prev.exists(_.authors == d.authors) then from.authors else d.authors
-    d.modify(
-      _.citekey).setTo(Draft.Citekey(keep(_.citekey.value))).modify(_.title).setTo(Draft.Title(keep(_.title.value))).modify(_.authors).setTo(authors).modify(_.year).setTo(Draft.Year(keep(_.year.value))).modify(_.doi).setTo(Draft.Doi(keep(_.doi.value))).modify(_.forItem).setTo(Some(item)
-    )
+    d.modify(_.citekey)
+      .setTo(Draft.Citekey(keep(_.citekey.value)))
+      .modify(_.title)
+      .setTo(Draft.Title(keep(_.title.value)))
+      .modify(_.authors)
+      .setTo(authors)
+      .modify(_.year)
+      .setTo(Draft.Year(keep(_.year.value)))
+      .modify(_.doi)
+      .setTo(Draft.Doi(keep(_.doi.value)))
+      .modify(_.forItem)
+      .setTo(Some(item))
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
   def itemLabel(item: Queue.QueueItem, max: Int = 110): UiLabels.Text =
@@ -174,7 +183,9 @@ object UploadView:
   /** What is typed in the picker, until it names an item. */
   private val pickText = Var("")
   private val authors =
-    draft.zoomLazy(_.authors.map(a => Chip.Choice(a.value)))((d, a) => d.modify(_.authors).setTo(a.map(c => Draft.Authors(c.value))))
+    draft.zoomLazy(_.authors.map(a => Chip.Choice(a.value)))((d, a) =>
+      d.modify(_.authors).setTo(a.map(c => Draft.Authors(c.value)))
+    )
 
   /** Open the window with this form filled in — from an acquisition item's "Upload…". A file chosen for an earlier form
     * is dropped: it belonged to that one.
@@ -192,9 +203,12 @@ object UploadView:
     accepted.set(None)
     errors.update(_.filterNot(_._1 == Field.File))
     draft.update(d =>
-      d.modify(
-        _.fileName).setTo(Some(Draft.FileName(f.name))).modify(_.citekey).setTo(if d.citekey.value.trim.isEmpty then Draft.Citekey(suggestCitekey(Draft.FileName(f.name)).map(_.value).getOrElse("")) else d.citekey
-      )
+      d.modify(_.fileName)
+        .setTo(Some(Draft.FileName(f.name)))
+        .modify(_.citekey)
+        .setTo(if d.citekey.value.trim.isEmpty then
+          Draft.Citekey(suggestCitekey(Draft.FileName(f.name)).map(_.value).getOrElse(""))
+        else d.citekey)
     )
 
   private def submit(): Unit =
@@ -346,7 +360,12 @@ object UploadView:
         "e.g. anthony2007_horse",
         Some(Field.Citekey)
       ),
-      textField("title", _.title.value, (d, v) => d.modify(_.title).setTo(Draft.Title(v)), "optional — read from the document otherwise"),
+      textField(
+        "title",
+        _.title.value,
+        (d, v) => d.modify(_.title).setTo(Draft.Title(v)),
+        "optional — read from the document otherwise"
+      ),
       div(
         cls := "form-field",
         label("authors"),

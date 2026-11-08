@@ -61,7 +61,15 @@ class PlaceTimeSuite extends DbSuite with Bounded:
       props: Option[Place.Properties] = None
   ) =
     Place.Input(
-      Place(id, Place.Label(s"Zqtv ${id.value.stripPrefix("zqtv_")}"), kind, pt(i), period, Some(Place.Source("fixture")), props),
+      Place(
+        id,
+        Place.Label(s"Zqtv ${id.value.stripPrefix("zqtv_")}"),
+        kind,
+        pt(i),
+        period,
+        Some(Place.Source("fixture")),
+        props
+      ),
       List(Place.Name(Place.Name.Value(s"Zqtv ${id.value.stripPrefix("zqtv_")}"))),
       List(Place.Relation(Place.Relation.ChildId(id.value), Place.Relation.ParentId("zqtv_root")))
     )
@@ -78,7 +86,13 @@ class PlaceTimeSuite extends DbSuite with Bounded:
     place(Place.Id("zqtv_undfind"), Place.KindValue(Place.Kind.Site), 4, None),
     place(Place.Id("zqtv_evt"), Place.KindValue(Place.Kind.Site), 5, None),
     place(Place.Id("zqtv_river"), Place.KindValue(Place.Kind.Feature), 6, Some(Period(Year(-30), Year(2100)))),
-    place(Place.Id("zqtv_city"), Place.KindValue(Place.Kind.Site), 7, None, Some(Place.Properties("""{"modern":true}"""))),
+    place(
+      Place.Id("zqtv_city"),
+      Place.KindValue(Place.Kind.Site),
+      7,
+      None,
+      Some(Place.Properties("""{"modern":true}"""))
+    ),
     place(Place.Id("zqtv_su"), Place.KindValue(Place.Kind.Site), 8, Some(Period(Year(1469), Year(1769))))
   )
 
@@ -94,7 +108,17 @@ class PlaceTimeSuite extends DbSuite with Bounded:
       // an unknown start (V074): the stored period is the window the time filters use
       connect(ds)(sql"UPDATE places SET start_unknown = true WHERE id = 'zqtv_su'".update.run())
       def f(i: Int, at: Int, p: Option[Period]) =
-        Finding(Finding.Id(s"zqtv_src#$i"), Citekey("zqtv_src"), Finding.Claim(s"claim $i"), None, Some(GeoPoint(Longitude(100.0 + at), Lat)), p, None, Nil, None)
+        Finding(
+          Finding.Id(s"zqtv_src#$i"),
+          Citekey("zqtv_src"),
+          Finding.Claim(s"claim $i"),
+          None,
+          Some(GeoPoint(Longitude(100.0 + at), Lat)),
+          p,
+          None,
+          Nil,
+          None
+        )
       SourceFixtures.upsert(
         ds,
         Source(
@@ -141,11 +165,17 @@ class PlaceTimeSuite extends DbSuite with Bounded:
       .map(_.group(1))
       .toSet
   private def found(asOf: Option[Long]): Set[String] =
-    PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zqtv")), year(asOf), PlaceFixtures.Limit(100)).map(_.id.value).toSet
+    PlaceFixtures
+      .search(ds, Some(PlaceFixtures.SearchText("Zqtv")), year(asOf), PlaceFixtures.Limit(100))
+      .map(_.id.value)
+      .toSet
   private def kids(asOf: Option[Long]): Set[String] =
     PlaceFixtures.children(ds, PlaceId("zqtv_root"), year(asOf), PlaceFixtures.Limit(100)).map(_.id.value).toSet
   private def tree(asOf: Option[Long]): Set[String] =
-    PlaceFixtures.hierarchy(ds, year(asOf), Some(PlaceId("zqtv_root")), PlaceFixtures.Depth(3), PlaceFixtures.Limit(100)).map(_.id.value).toSet
+    PlaceFixtures
+      .hierarchy(ds, year(asOf), Some(PlaceId("zqtv_root")), PlaceFixtures.Depth(3), PlaceFixtures.Limit(100))
+      .map(_.id.value)
+      .toSet
 
   private val All: Set[String] = fixtures.map(_.place.id.value).toSet
 
@@ -186,7 +216,16 @@ class PlaceTimeSuite extends DbSuite with Bounded:
     assert(found(Some(1500L)).contains("zqtv_su"))
     assert(!found(Some(1400L)).contains("zqtv_su"), "before the window of its unknown start")
     assertEquals(
-      PlaceFixtures.search(ds, Some(PlaceFixtures.SearchText("Zqtv city")), Some(DeepTime.SignedYear(1499L)), PlaceFixtures.Limit(10), modernFrom = DeepTime.SignedYear(1400L)).map(_.id).toList,
+      PlaceFixtures
+        .search(
+          ds,
+          Some(PlaceFixtures.SearchText("Zqtv city")),
+          Some(DeepTime.SignedYear(1499L)),
+          PlaceFixtures.Limit(10),
+          modernFrom = DeepTime.SignedYear(1400L)
+        )
+        .map(_.id)
+        .toList,
       List("zqtv_city"),
       "the cutoff is the caller's (configured) value"
     )
@@ -198,13 +237,17 @@ class PlaceTimeSuite extends DbSuite with Bounded:
     assertEquals(onMap("site", None), All -- Set("zqtv_root", "zqtv_river", "zqtv_city"))
 
   test("the map feed says on what ground: findings for the undated site, dated for the rest"):
-    val json = PlaceFixtures.geoJson(ds, Some(KindWire("site")), Some(DeepTime.SignedYear(-2500L)), PlaceFixtures.Limit(100000)).value
+    val json = PlaceFixtures
+      .geoJson(ds, Some(KindWire("site")), Some(DeepTime.SignedYear(-2500L)), PlaceFixtures.Limit(100000))
+      .value
     def basisOf(id: String) = s"\"id\":\"$id\"[^}]*\"basis\":\"([a-z]+)\"".r.findFirstMatchIn(json).map(_.group(1))
     assertEquals(basisOf("zqtv_evid"), Some("findings"))
     assertEquals(basisOf("zqtv_dated"), Some("dated"))
 
   test("among points, dated places outrank the rest under the limit"):
-    val json = PlaceFixtures.geoJson(ds, Some(KindWire("site")), Some(DeepTime.SignedYear(1600L)), PlaceFixtures.Limit(100000)).value
+    val json = PlaceFixtures
+      .geoJson(ds, Some(KindWire("site")), Some(DeepTime.SignedYear(1600L)), PlaceFixtures.Limit(100000))
+      .value
     val order = Ours.findAllMatchIn(json).map(_.group(1)).toList
     assertEquals(order, List("zqtv_su", "zqtv_city"))
 
@@ -216,7 +259,11 @@ class PlaceTimeSuite extends DbSuite with Bounded:
     for id <- All do
       val (kind, modern, undated, geom) = attrs(id)
       val d = PlaceFixtures.get(ds, PlaceId.applyUnsafe(id), Some(DeepTime.SignedYear(-2500L))).get
-      assertEquals(d.timeBasis, Place.TimeBasis.of(Place.TimeBasis.OfKind(kind), modern, imported = false, undated, geom), id)
+      assertEquals(
+        d.timeBasis,
+        Place.TimeBasis.of(Place.TimeBasis.OfKind(kind), modern, imported = false, undated, geom),
+        id
+      )
     assert(PlaceFixtures.get(ds, PlaceId("zqtv_evid"), Some(DeepTime.SignedYear(-2500L))).get.datedByFindings)
     assert(!PlaceFixtures.get(ds, PlaceId("zqtv_evid"), None).get.datedByFindings)
     assertEquals(

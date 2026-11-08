@@ -29,12 +29,23 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   def covers(req: MediaCoversRequest): Either[Api.Error, MediaCoversReport] =
     if req.dryRun.value then Right(pictures.run(req))
     else if req.citekey.forall(_.value.trim.isEmpty) then
-      Left(Api.Error(Api.Error.Message("a run over every source is a job: POST /api/media/covers/job"), Some(Api.Error.Code(Write.CodeInvalid))))
-    else jobs.guarded(WriteGate.OperationName("media_covers"))(jobs.exclusive(BackgroundJob.Work("media covers"))(Right(pictures.run(req))))
+      Left(
+        Api.Error(
+          Api.Error.Message("a run over every source is a job: POST /api/media/covers/job"),
+          Some(Api.Error.Code(Write.CodeInvalid))
+        )
+      )
+    else
+      jobs.guarded(WriteGate.OperationName("media_covers"))(
+        jobs.exclusive(BackgroundJob.Work("media covers"))(Right(pictures.run(req)))
+      )
 
   def coversJob(req: MediaCoversRequest): Either[Api.Error, JobInfo] =
     val what =
-      List(Option.when(req.covers.value)("Open Library covers"), Option.when(req.illustrations.value)("illustrations")).flatten
+      List(
+        Option.when(req.covers.value)("Open Library covers"),
+        Option.when(req.illustrations.value)("illustrations")
+      ).flatten
         .mkString(" and ") + req.citekey.fold(" of every source")(c => s" of $c") +
         (if req.refresh.value then " (refresh)" else "")
     jobs.start(CoversControllers.CoversJobKind, JobKinds.Subject(what)) { progress =>

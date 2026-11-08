@@ -55,14 +55,14 @@ final class BasemapService(
   /** The unfinished download of a layer: its range requests, kept until it is assembled. */
   def work(l: Basemap.Layer): Store.Key = Store.Key.applyUnsafe(s".${l.wire}.part")
 
-  private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message.value))
+  private def done(written: Either[Store.Error, ?]): Unit =
+    written.left.foreach(e => throw IOException(e.message.value))
 
   private def attribution(l: Basemap.Layer): BasemapFetch.Attribution = BasemapFetch.Attribution(l match
     case Basemap.Layer.Vector     => cfg.vector.attribution.value
     case Basemap.Layer.Terrain    => cfg.terrain.attribution.value
     case Basemap.Layer.Labels     => cfg.labels.attribution.value
-    case Basemap.Layer.Bathymetry => cfg.bathymetry.attribution.value
-  )
+    case Basemap.Layer.Bathymetry => cfg.bathymetry.attribution.value)
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
@@ -114,9 +114,13 @@ final class BasemapService(
     reader(l) match
       case Left(e) =>
         val now = files.stat(p)
-        base.modify(
-          _.present).setTo(Basemap.LayerInfo.Present(now.exists(_.isFile))).modify(_.bytes).setTo(com.histmersion.api.ByteCount(now.fold(0L)(_.size.value))).modify(_.error).setTo(Some(Basemap.LayerInfo.Error(e.value))
-        )
+        base
+          .modify(_.present)
+          .setTo(Basemap.LayerInfo.Present(now.exists(_.isFile)))
+          .modify(_.bytes)
+          .setTo(com.histmersion.api.ByteCount(now.fold(0L)(_.size.value)))
+          .modify(_.error)
+          .setTo(Some(Basemap.LayerInfo.Error(e.value)))
       case Right(None)    => base
       case Right(Some(f)) =>
         val h = f.header
@@ -323,7 +327,12 @@ final class BasemapService(
     )
 
   /** A relief tile deeper than the extract (or outside it): a focus region's, else the on-demand one. */
-  private def deeperRelief(z: PmTiles.Zoom, x: PmTiles.TileColumn, y: PmTiles.TileRow, extractMax: BasemapFetch.Plan.MaxZoom): Either[BasemapService.Problem, Option[PmTiles.TileBytes]] =
+  private def deeperRelief(
+      z: PmTiles.Zoom,
+      x: PmTiles.TileColumn,
+      y: PmTiles.TileRow,
+      extractMax: BasemapFetch.Plan.MaxZoom
+  ): Either[BasemapService.Problem, Option[PmTiles.TileBytes]] =
     val focused = focusFiles.iterator
       .flatMap(f => readerAt(f._2).toOption.flatten)
       .filter(f => z >= f.header.minZoom && z <= f.header.maxZoom)
@@ -337,7 +346,12 @@ final class BasemapService(
     * that exists — a focus region's, else the extract's — cut and resampled in metres ([[TerrainResample]]) as a
     * terrarium PNG; `None` where no ancestor exists (outside every region).
     */
-  private def fromAncestor(z: PmTiles.Zoom, x: PmTiles.TileColumn, y: PmTiles.TileRow, extract: PmTiles.File): Option[PmTiles.TileBytes] =
+  private def fromAncestor(
+      z: PmTiles.Zoom,
+      x: PmTiles.TileColumn,
+      y: PmTiles.TileRow,
+      extract: PmTiles.File
+  ): Option[PmTiles.TileBytes] =
     val key = s"${stamp(this.key(Basemap.Layer.Terrain)).getOrElse("")}$focusStamp|${z.value}/${x.value}/${y.value}"
     Option(resampled.get(key)).orElse {
       val focus = focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(f._2 -> _))
@@ -345,7 +359,9 @@ final class BasemapService(
         focus.iterator
           .filter((_, f) => az >= f.header.minZoom.value && az <= f.header.maxZoom.value)
           .flatMap((p, f) =>
-            f.tile(PmTiles.Zoom(az), PmTiles.TileColumn(ax), PmTiles.TileRow(ay)).toOption.flatten
+            f.tile(PmTiles.Zoom(az), PmTiles.TileColumn(ax), PmTiles.TileRow(ay))
+              .toOption
+              .flatten
               .map(b => (s"${f.where}|${stamp(p).getOrElse("")}|$az/$ax/$ay", b))
           )
           .nextOption()
@@ -353,7 +369,10 @@ final class BasemapService(
             Option
               .when(az <= extract.header.maxZoom.value)(())
               .flatMap(_ =>
-                extract.tile(PmTiles.Zoom(az), PmTiles.TileColumn(ax), PmTiles.TileRow(ay)).toOption.flatten
+                extract
+                  .tile(PmTiles.Zoom(az), PmTiles.TileColumn(ax), PmTiles.TileRow(ay))
+                  .toOption
+                  .flatten
                   .map(b => (s"extract|$az/$ax/$ay", b))
               )
           )
@@ -417,12 +436,27 @@ final class BasemapService(
       y: Basemap.Tile.Row,
       subset: Option[Basemap.Subset.Spec] = None,
       keys: Option[BasemapService.TileKeys] = None
-  ): Either[Api.Error, (BasemapApi.Tile.Bytes, BasemapApi.Tile.ContentType, Option[BasemapApi.Tile.Etag], BasemapApi.Tile.Encoding, StatusCode)] =
+  ): Either[
+    Api.Error,
+    (
+        BasemapApi.Tile.Bytes,
+        BasemapApi.Tile.ContentType,
+        Option[BasemapApi.Tile.Etag],
+        BasemapApi.Tile.Encoding,
+        StatusCode
+    )
+  ] =
     val cache = s"public, max-age=${cfg.tileCacheSeconds.value}"
     val pz = PmTiles.Zoom(z.value)
     val px = PmTiles.TileColumn(x.value)
     val py = PmTiles.TileRow(y.value)
-    def reply(bytes: PmTiles.TileBytes, contentType: String, encoding: Option[String], cacheControl: String, status: StatusCode) =
+    def reply(
+        bytes: PmTiles.TileBytes,
+        contentType: String,
+        encoding: Option[String],
+        cacheControl: String,
+        status: StatusCode
+    ) =
       (
         BasemapApi.Tile.Bytes(bytes.value),
         BasemapApi.Tile.ContentType(contentType),
@@ -475,7 +509,11 @@ final class BasemapService(
       // none of them has it: cut from the nearest ancestor (offline, the on-demand relief failing: not kept
       // by the browser, so the provider's own tile replaces it once it can be read)
       fallback = Option
-        .when(found.isEmpty && deeper.isDefined && pz.value <= deepestRelief(BasemapFetch.Plan.MaxZoom(f.header.maxZoom.value)))(
+        .when(
+          found.isEmpty && deeper.isDefined && pz.value <= deepestRelief(
+            BasemapFetch.Plan.MaxZoom(f.header.maxZoom.value)
+          )
+        )(
           fromAncestor(pz, px, py, f)
         )
         .flatten
@@ -493,7 +531,7 @@ final class BasemapService(
           )
         case (None, _) if deeper.exists(_.isLeft) =>
           Right(reply(PmTiles.TileBytes(Array.emptyByteArray), mime, None, "no-store", StatusCode.NoContent))
-        case (None, _)       =>
+        case (None, _) =>
           Right(reply(PmTiles.TileBytes(Array.emptyByteArray), mime, None, cache, StatusCode.NoContent))
         case (Some(b), None) =>
           // a tile read on demand is stored as its provider sends it (a vector one gzipped)
@@ -603,11 +641,20 @@ final class BasemapService(
     val asked = q.bbox.map(_.value.trim).filter(_.nonEmpty)
     for
       ls <- Basemap.Layer.parseMany(Basemap.Layer.Wires(q.layer.value)).left.map(e => BasemapService.Problem(e.value))
-      b <- Basemap.validBBox(Basemap.Focus.Bbox(asked.getOrElse(cfg.bbox.value))).left.map(e => BasemapService.Problem(e.value))
+      b <- Basemap
+        .validBBox(Basemap.Focus.Bbox(asked.getOrElse(cfg.bbox.value)))
+        .left
+        .map(e => BasemapService.Problem(e.value))
       onlyTerrain = ls == List(Basemap.Layer.Terrain)
       // the relief alone: --max-zoom is its depth too
       tzAsked = q.terrainMaxZoom.map(_.value).orElse(q.maxZoom.map(_.value).filter(_ => onlyTerrain))
-      focus <- BasemapService.focusOf(q.focus, asked.map(_ => b), onlyTerrain, tzAsked.map(BasemapFetch.Plan.MaxZoom(_)), cfg.terrain)
+      focus <- BasemapService.focusOf(
+        q.focus,
+        asked.map(_ => b),
+        onlyTerrain,
+        tzAsked.map(BasemapFetch.Plan.MaxZoom(_)),
+        cfg.terrain
+      )
       vz <- zoom(q.maxZoom.map(_.value).getOrElse(cfg.vector.maxZoom.value), "--max-zoom")
       tz <- zoom(
         tzAsked.getOrElse(if focus.isDefined then cfg.terrain.onDemand.maxZoom.value else cfg.terrain.maxZoom.value),
@@ -620,7 +667,10 @@ final class BasemapService(
           s"a focus region holds the zooms deeper than the extract's (${cfg.terrain.maxZoom.value}): ask for more than that"
         )
       )
-      _ <- Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).left.map(e => BasemapService.Problem(e.value))
+      _ <- Basemap
+        .parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value))
+        .left
+        .map(e => BasemapService.Problem(e.value))
     yield Ask(
       if focus.isDefined then List(Basemap.Layer.Terrain) else ls,
       focus.fold(b)(_._2),
@@ -655,8 +705,7 @@ final class BasemapService(
           BasemapJobs.Target("a base-map fetch"),
           Some(BasemapJobs.Reason(BasemapApi.Busy))
         )(note =>
-          run(a, n => note(BasemapJobs.Target(n.value)))
-            .left
+          run(a, n => note(BasemapJobs.Target(n.value))).left
             .map(e => BasemapJobs.Problem(e.value))
             .map(BasemapJobs.Description(_))
         )
@@ -669,9 +718,14 @@ final class BasemapService(
       case None            => layers(a, note)
 
   /** A focus region's relief: zooms deeper than the extract, into `terrain-focus/<name>.pmtiles`. */
-  private def focusFetch(a: Ask, name: Basemap.Focus.Name, note: BasemapFetch.Note => Unit): Either[BasemapService.Problem, String] =
+  private def focusFetch(
+      a: Ask,
+      name: Basemap.Focus.Name,
+      note: BasemapFetch.Note => Unit
+  ): Either[BasemapService.Problem, String] =
     val h = http()
-    val src = BasemapFetch.Source(RangeHttp.Url(cfg.terrain.url.value), BasemapFetch.Source.Label(cfg.terrain.url.value))
+    val src =
+      BasemapFetch.Source(RangeHttp.Url(cfg.terrain.url.value), BasemapFetch.Source.Label(cfg.terrain.url.value))
     val extra = BasemapFetch.Note(s"focus ${name.value} from ${cfg.terrain.maxZoom.value + 1}")
     for
       plan <- BasemapFetch.plan(
@@ -719,14 +773,18 @@ final class BasemapService(
   /** The source of a layer: the vector build named by the config ("latest": the newest in the provider's list — unless
     * an unfinished download of an earlier one is there to finish), or the terrain URL.
     */
-  private def source(l: Basemap.Layer, a: Ask, extra: BasemapFetch.Note): Either[BasemapService.Problem, BasemapFetch.Source] = l match
+  private def source(
+      l: Basemap.Layer,
+      a: Ask,
+      extra: BasemapFetch.Note
+  ): Either[BasemapService.Problem, BasemapFetch.Source] = l match
     case Basemap.Layer.Terrain =>
       Right(BasemapFetch.Source(RangeHttp.Url(cfg.terrain.url.value), BasemapFetch.Source.Label(cfg.terrain.url.value)))
-    case Basemap.Layer.Labels  =>
+    case Basemap.Layer.Labels =>
       Left(BasemapService.Problem("the physical names are not read with range requests")) // `labels` fetches them
     case Basemap.Layer.Bathymetry =>
       Left(BasemapService.Problem("the sea floor is not read with range requests")) // `bathymetry` fetches it
-    case Basemap.Layer.Vector     =>
+    case Basemap.Layer.Vector =>
       val pinned = cfg.vector.build.value.trim
       resumable(l, a, extra) match
         case Some(src) if pinned.equalsIgnoreCase("latest") || src.label.value == pinned => Right(src)
@@ -762,7 +820,10 @@ final class BasemapService(
         val same =
           c.get[Int]("maxZoom").toOption.contains(zoomOf(l, a).value) &&
             c.get[String]("extra").toOption.contains(extra.value) &&
-            c.get[String]("bbox").toOption.flatMap(s => BBox.parse(BBox.Text(s))).exists(b => BasemapService.near(b, a.bbox))
+            c.get[String]("bbox")
+              .toOption
+              .flatMap(s => BBox.parse(BBox.Text(s)))
+              .exists(b => BasemapService.near(b, a.bbox))
         for
           url <- c.get[String]("url").toOption if same
           label <- c.get[String]("label").toOption.orElse(Some(url))
@@ -790,7 +851,11 @@ final class BasemapService(
       case _ => ranged(a, l, note)
 
   /** A PMTiles layer (vector, terrain): planned, checked against the free disk, downloaded, assembled. */
-  private def ranged(a: Ask, l: Basemap.Layer, note: BasemapFetch.Note => Unit): Either[BasemapService.Problem, String] =
+  private def ranged(
+      a: Ask,
+      l: Basemap.Layer,
+      note: BasemapFetch.Note => Unit
+  ): Either[BasemapService.Problem, String] =
     val rules =
       if a.keepAll then Nil
       else Basemap.parseDrop(Basemap.DropRule.Spec(cfg.vector.drop.value)).toOption.getOrElse(Nil)
@@ -907,24 +972,25 @@ final class BasemapService(
         done(work.makeDirectory())
         val h = http()
         val coords = tiles.map(_._2)
-        val got = coords.zipWithIndex.foldLeft[Either[BasemapService.Problem, Int]](Right(0)) { case (acc, ((z, x, y), i)) =>
-          acc.flatMap { n =>
-            val f = Store.Key.applyUnsafe(s"$z-$x-$y.png")
-            val none = Store.Key.applyUnsafe(s"$z-$x-$y.none")
-            if work.isFile(f) || work.isFile(none) then Right(n)
-            else
-              if n > 0 then pace.sleep(BasemapFetch.Pace.GapMs(bc.requestGapMs.value.toLong))
-              if Thread.interrupted() then throw InterruptedException()
-              if i % 50 == 0 then note(BasemapFetch.Note(s"downloading ${i + 1} of ${ids.length} tiles"))
-              h.file(
-                RangeHttp.Url(
-                  bc.url.value.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)
-                )
-              ).map {
-                case Some(b) => done(work.write(f, ByteSource.Content(b.value))); n + 1
-                case None    => done(work.write(none, ByteSource.Content(Array.emptyByteArray))); n + 1
-              }
-          }
+        val got = coords.zipWithIndex.foldLeft[Either[BasemapService.Problem, Int]](Right(0)) {
+          case (acc, ((z, x, y), i)) =>
+            acc.flatMap { n =>
+              val f = Store.Key.applyUnsafe(s"$z-$x-$y.png")
+              val none = Store.Key.applyUnsafe(s"$z-$x-$y.none")
+              if work.isFile(f) || work.isFile(none) then Right(n)
+              else
+                if n > 0 then pace.sleep(BasemapFetch.Pace.GapMs(bc.requestGapMs.value.toLong))
+                if Thread.interrupted() then throw InterruptedException()
+                if i % 50 == 0 then note(BasemapFetch.Note(s"downloading ${i + 1} of ${ids.length} tiles"))
+                h.file(
+                  RangeHttp.Url(
+                    bc.url.value.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)
+                  )
+                ).map {
+                  case Some(b) => done(work.write(f, ByteSource.Content(b.value))); n + 1
+                  case None    => done(work.write(none, ByteSource.Content(Array.emptyByteArray))); n + 1
+                }
+            }
         }
         got.map { _ =>
           note(BasemapFetch.Note("writing bathymetry.pmtiles"))
@@ -961,7 +1027,8 @@ final class BasemapService(
     */
   private def gebco(a: Ask, note: BasemapFetch.Note => Unit): Either[BasemapService.Problem, String] =
     val bc = cfg.bathymetry
-    val sea = GebcoSeaFloor(bc.gebco, bc.url, http(), ByteCount.applyUnsafe(cfg.maxRequestMb.value.toLong * 1024 * 1024))
+    val sea =
+      GebcoSeaFloor(bc.gebco, bc.url, http(), ByteCount.applyUnsafe(cfg.maxRequestMb.value.toLong * 1024 * 1024))
     note(BasemapFetch.Note("reading the GEBCO GeoTIFFs' headers"))
     sea.plan(a.bbox, PmTiles.Zoom(bc.gebco.maxZoom.value)).flatMap { plan =>
       if a.dryRun then Right(sea.describe(plan).value)
@@ -1028,17 +1095,21 @@ final class BasemapService(
         )
       else
         val h = http()
-        val read = files.foldLeft[Either[BasemapService.Problem, List[BasemapLabels.Label]]](Right(Nil)) { case (acc, (f, url)) =>
-          acc.flatMap { got =>
-            note(BasemapFetch.Note(s"reading ${f.value}"))
-            if got.nonEmpty then pace.sleep(pace.gapMs)
-            h.text(RangeHttp.Url(url))
-              .flatMap(t =>
-                io.circe.parser.parse(t.value).left.map(e => BasemapService.Problem(s"$url is not JSON: ${e.getMessage}"))
-              )
-              .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
-              .map(got ++ _)
-          }
+        val read = files.foldLeft[Either[BasemapService.Problem, List[BasemapLabels.Label]]](Right(Nil)) {
+          case (acc, (f, url)) =>
+            acc.flatMap { got =>
+              note(BasemapFetch.Note(s"reading ${f.value}"))
+              if got.nonEmpty then pace.sleep(pace.gapMs)
+              h.text(RangeHttp.Url(url))
+                .flatMap(t =>
+                  io.circe.parser
+                    .parse(t.value)
+                    .left
+                    .map(e => BasemapService.Problem(s"$url is not JSON: ${e.getMessage}"))
+                )
+                .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
+                .map(got ++ _)
+            }
         }
         read.map { all =>
           val kept = all.filter(BasemapLabels.within(_, a.bbox))
@@ -1119,7 +1190,11 @@ object BasemapService:
   /** The sea floor's credit line: the extract's own (GEBCO or ETOPO1), and ETOPO1's as well when the sea outside the
     * extract is read from it on demand and the extract is another's.
     */
-  def seaCredit(extract: Option[BasemapFetch.Attribution], etopo1: BasemapFetch.Attribution, onDemand: Boolean): BasemapFetch.Attribution =
+  def seaCredit(
+      extract: Option[BasemapFetch.Attribution],
+      etopo1: BasemapFetch.Attribution,
+      onDemand: Boolean
+  ): BasemapFetch.Attribution =
     extract.filter(_.value.trim.nonEmpty) match
       case Some(e) if e != etopo1 && onDemand => BasemapFetch.Attribution(s"${e.value}; outside it, ${etopo1.value}")
       case Some(e)                            => e
@@ -1198,7 +1273,12 @@ object BasemapService:
     case _          => xs.init.mkString(", ") + " and " + xs.last
 
   /** The names archive's metadata: its layers, credit, and where and when it came from. Pure. */
-  def labelsMetadata(lc: BasemapLabelsConfig, b: BBox, names: NameCount, fetchedAt: BasemapFetch.FetchedAt): io.circe.Json =
+  def labelsMetadata(
+      lc: BasemapLabelsConfig,
+      b: BBox,
+      names: NameCount,
+      fetchedAt: BasemapFetch.FetchedAt
+  ): io.circe.Json =
     import io.circe.Json
     val build = "/(v\\d+\\.\\d+(\\.\\d+)?)/".r
       .findFirstMatchIn(lc.url.value)
@@ -1248,21 +1328,25 @@ object BasemapService:
 
   /** The provider's builds, oldest first: `[{key, size}, …]` → `(key, size)`. Pure. */
   def builds(json: JsonText): Either[Problem, List[(BuildName, Long)]] =
-    io.circe.parser.parse(json.value).left.map(e => Problem(s"the list of builds is not JSON: ${e.getMessage}")).flatMap { j =>
-      j.asArray
-        .toRight(Problem("the list of builds is not a JSON array"))
-        .map(
-          _.toList
-            .flatMap { b =>
-              b.hcursor
-                .get[String]("key")
-                .toOption
-                .filter(_.endsWith(".pmtiles"))
-                .map(k => (BuildName(k), b.hcursor.get[Long]("size").getOrElse(-1L)))
-            }
-            .sortBy(_._1.value)
-        )
-    }
+    io.circe.parser
+      .parse(json.value)
+      .left
+      .map(e => Problem(s"the list of builds is not JSON: ${e.getMessage}"))
+      .flatMap { j =>
+        j.asArray
+          .toRight(Problem("the list of builds is not a JSON array"))
+          .map(
+            _.toList
+              .flatMap { b =>
+                b.hcursor
+                  .get[String]("key")
+                  .toOption
+                  .filter(_.endsWith(".pmtiles"))
+                  .map(k => (BuildName(k), b.hcursor.get[Long]("size").getOrElse(-1L)))
+              }
+              .sortBy(_._1.value)
+          )
+      }
 
   /** A stored vector tile cut to `rules` (layer → geometries and kinds; none = all) and, given `props`, to those
     * properties; gzip-compressed; empty when nothing is left. Pure.
@@ -1274,7 +1358,8 @@ object BasemapService:
       props: Option[Set[Mvt.Rule.Props]] = None
   ): Either[Problem, PmTiles.TileBytes] =
     val raw =
-      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(PmTiles.CompressedBytes(stored.value))
+      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then
+        PmTiles.gunzip(PmTiles.CompressedBytes(stored.value))
       else Right(PmTiles.PlainBytes(stored.value))
     raw
       .flatMap(
@@ -1313,10 +1398,12 @@ object BasemapService:
       rules: Map[Mvt.LayerName, Mvt.Rule]
   ): Either[Problem, Option[PmTiles.TileBytes]] =
     val raw =
-      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(PmTiles.CompressedBytes(stored.value))
+      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then
+        PmTiles.gunzip(PmTiles.CompressedBytes(stored.value))
       else Right(PmTiles.PlainBytes(stored.value))
     raw.flatMap(Mvt.filter(_, rules, others = Mvt.Others(true))).map { t =>
-      Option.when(t.value.nonEmpty)(PmTiles.TileBytes(if c == PmTiles.Compression.Gzip then PmTiles.gzip(t).value else t.value))
+      Option.when(t.value.nonEmpty)(PmTiles.TileBytes(if c == PmTiles.Compression.Gzip then PmTiles.gzip(t).value
+      else t.value))
     }
 
   /** One line for a planned layer: requests and bytes. Pure. */

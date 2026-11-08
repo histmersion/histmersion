@@ -43,7 +43,8 @@ object DotCluster:
 
   final case class Contents(members: List[Member]):
     def total: Total = Total(members.map(_.n.value).sum)
-    def counts: Map[DotKind, KindCount] = members.groupMapReduce[DotKind, Int](_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
+    def counts: Map[DotKind, KindCount] =
+      members.groupMapReduce[DotKind, Int](_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
     def findings: List[GeoHit] = members.flatMap(_.findings)
     def entries: List[DotEntry] = members.flatMap(_.entry)
 
@@ -62,14 +63,22 @@ object DotCluster:
     /** How many of what it holds have no known date. */
     def undated: Undated = Undated(members.map(_.undated.value).sum)
 
-
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed order, those it has
     * none of left out.
     */
   def summary(counts: Map[DotKind, KindCount]): Summary =
-    Summary(DotKind.values.toList
-      .flatMap(k => counts.get(k).filter(_.value > 0).map(n => Plural.count(Plural.CountN(n.value), Plural.CountSingular(k.one.value), Plural.CountPlural(k.many.value))))
-      .mkString(" · "))
+    Summary(
+      DotKind.values.toList
+        .flatMap(k =>
+          counts
+            .get(k)
+            .filter(_.value > 0)
+            .map(n =>
+              Plural.count(Plural.CountN(n.value), Plural.CountSingular(k.one.value), Plural.CountPlural(k.many.value))
+            )
+        )
+        .mkString(" · ")
+    )
 
   /** Pure: the same, then how many of them have no known date — "12 sites, 5 with no known date". */
   def summary(counts: Map[DotKind, KindCount], undated: Undated): Summary =
@@ -143,8 +152,10 @@ object DotCluster:
         ring("hd-bubble-line", 0.5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
         "</svg>"
     val classes = List("hd-dot hd-cluster", form.cls.value, extraClass.value).filter(_.nonEmpty).mkString(" ")
-    BubbleHtml(s"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d.value / 2)}px;--ring:${Ring}px;""" +
-      s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>""")
+    BubbleHtml(
+      s"""<span class="$classes" style="--d:${d}px;--fs:${math.min(12, d.value / 2)}px;--ring:${Ring}px;""" +
+        s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>"""
+    )
 
   /** Pure: the middle of a dated span, for the ramp. */
   def mid(start: Option[Period.Start], end: Option[Period.End]): Option[Mid] =
@@ -166,13 +177,22 @@ object DotCluster:
   /** A card pinned under a list row (`row`): the row is its owner, so the click that pinned it does not count as a
     * click outside it.
     */
-  def pinUnder(t: Preview.Target, row: dom.Element, keyboard: Preview.KeyboardDriven = Preview.KeyboardDriven(false)): Unit =
+  def pinUnder(
+      t: Preview.Target,
+      row: dom.Element,
+      keyboard: Preview.KeyboardDriven = Preview.KeyboardDriven(false)
+  ): Unit =
     Preview.pin(
       t,
       () =>
         Option.when(row.isConnected) {
           val r = row.getBoundingClientRect()
-          Preview.Anchor.Under(Preview.Anchor.Under.Left(r.left), Preview.Anchor.Under.Top(r.top), Preview.Anchor.Under.Bottom(r.bottom), Preview.Anchor.Under.Width(r.width))
+          Preview.Anchor.Under(
+            Preview.Anchor.Under.Left(r.left),
+            Preview.Anchor.Under.Top(r.top),
+            Preview.Anchor.Under.Bottom(r.bottom),
+            Preview.Anchor.Under.Width(r.width)
+          )
         },
       owner = Some(row),
       keyboard = keyboard

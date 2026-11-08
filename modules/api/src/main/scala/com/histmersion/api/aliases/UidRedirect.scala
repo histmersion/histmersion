@@ -11,7 +11,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UidRedirect(aliasUid: UUID, uid: UUID, kind: UidRedirect.Kind, mergeId: Option[UUID])
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object UidRedirect:
   type Kind = Kind.T

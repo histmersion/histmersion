@@ -85,7 +85,14 @@ object BuiltinMedia:
       Entry.Provider(MediaProvider.Commons),
       c => Licences(c.depicts.licences.value)
     ),
-    Entry(Plugin.Id("media-met"), Entry.Name("met"), Entry.Title("Met objects"), Entry.Check(MediaProvider.Met), Entry.Provider(MediaProvider.Met), c => Licences(c.met.licences.value)),
+    Entry(
+      Plugin.Id("media-met"),
+      Entry.Name("met"),
+      Entry.Title("Met objects"),
+      Entry.Check(MediaProvider.Met),
+      Entry.Provider(MediaProvider.Met),
+      c => Licences(c.met.licences.value)
+    ),
     Entry(
       Plugin.Id("media-cleveland"),
       Entry.Name("cleveland"),
@@ -146,7 +153,10 @@ object BuiltinMedia:
 
   /** The collections that need a key of the user's own, OFF by default: what each needs. */
   val keyed: Map[EntryKey, KeyedNeed] =
-    Map(EntryKey("smithsonian") -> KeyedNeed("an api.data.gov key"), EntryKey("europeana") -> KeyedNeed("a Europeana personal API key"))
+    Map(
+      EntryKey("smithsonian") -> KeyedNeed("an api.data.gov key"),
+      EntryKey("europeana") -> KeyedNeed("a Europeana personal API key")
+    )
 
   /** The plugin ids of the first-party collections. */
   val pluginIds: Set[Plugin.Id] = entries.map(_.plugin).toSet
@@ -177,7 +187,9 @@ object BuiltinMedia:
   /** Names a plugin's collection may not take: the built-in imports, their aliases, and every provider the host stores
     * pictures under (a plugin's pictures would be taken for theirs).
     */
-  val reserved: Set[ReservedName] = entries.map(e => ReservedName(e.name.value)).toSet ++ aliases.keySet.map(a => ReservedName(a.value)) ++ MediaProvider.all.map(p => ReservedName(p.value)) ++
+  val reserved: Set[ReservedName] = entries.map(e => ReservedName(e.name.value)).toSet ++ aliases.keySet.map(a =>
+    ReservedName(a.value)
+  ) ++ MediaProvider.all.map(p => ReservedName(p.value)) ++
     Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades).map(ReservedName(_))
 
   /** Pure: the name an import request means — an alias resolved, blank = `wikidata`, else as given (lower case): the
@@ -198,10 +210,13 @@ object BuiltinMedia:
   def checkOf(name: CheckOfName): CheckName = entry(name).fold(CheckName(name.value))(e => CheckName(e.check.value))
 
   /** The provider a collection's pictures are stored under: a first-party one's own, else its name. */
-  def providerOf(name: ProviderOfName): Provider = entry(name).fold(Provider(name.value))(e => Provider(e.provider.value))
+  def providerOf(name: ProviderOfName): Provider =
+    entry(name).fold(Provider(name.value))(e => Provider(e.provider.value))
 
   /** The allowlist a collection is judged by: a first-party one's own `media.<provider>.licences`, a plugin's
     * `media.collections` (its `per-collection` entry, else the default).
     */
   def licencesFor(name: LicencesForName, cfg: MediaConfig): Licences =
-    entry(name).fold(Licences(cfg.collections.licencesFor(MediaPluginCollectionsConfig.PerCollectionKey(name.value)).value))(_.licences(cfg))
+    entry(name).fold(
+      Licences(cfg.collections.licencesFor(MediaPluginCollectionsConfig.PerCollectionKey(name.value)).value)
+    )(_.licences(cfg))

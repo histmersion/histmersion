@@ -75,7 +75,11 @@ object SpiValues:
   // ── from a plugin ───────────────────────────────────────────────────────────────────────────
 
   def yearOf(y: Year): Either[Problem, com.histmersion.Year] =
-    Year.either(y.value).map(ok => com.histmersion.Year(ok.value)).left.map(_ => Problem(s"year ${y.value} is not a year"))
+    Year
+      .either(y.value)
+      .map(ok => com.histmersion.Year(ok.value))
+      .left
+      .map(_ => Problem(s"year ${y.value} is not a year"))
 
   /** A plugin's period, its ends in either order (a period a plugin could not have built that way is still one span of
     * years).

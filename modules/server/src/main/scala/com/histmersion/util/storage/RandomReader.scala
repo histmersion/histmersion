@@ -17,5 +17,3 @@ trait RandomReader extends AutoCloseable:
 
   /** Up to `length` bytes from `offset`, fewer when the file ends first. */
   def readUpTo(offset: ByteOffset, length: PmTiles.ByteLength): ByteSource.Content
-
-

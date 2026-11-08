@@ -53,13 +53,29 @@ class ArchiveTrafficSuite extends DbSuite:
   private val ContentType = CoreQuota.HeaderName("content-type")
 
   private def json(s: String): Either[HttpTransport.Problem, HttpAnswer] =
-    Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/json")), HttpAnswer.Body(s.getBytes(UTF_8))))
+    Right(
+      HttpAnswer(
+        HttpAnswer.Code(200),
+        Map(ContentType -> CoreQuota.HeaderValue("application/json")),
+        HttpAnswer.Body(s.getBytes(UTF_8))
+      )
+    )
   private val notFound: Either[HttpTransport.Problem, HttpAnswer] =
-    Right(HttpAnswer(HttpAnswer.Code(404), Map(ContentType -> CoreQuota.HeaderValue("text/plain")), HttpAnswer.Body("not found".getBytes(UTF_8))))
+    Right(
+      HttpAnswer(
+        HttpAnswer.Code(404),
+        Map(ContentType -> CoreQuota.HeaderValue("text/plain")),
+        HttpAnswer.Body("not found".getBytes(UTF_8))
+      )
+    )
 
-  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]]) extends HttpTransport:
+  final private class Wire(routes: PartialFunction[String, Either[HttpTransport.Problem, HttpAnswer]])
+      extends HttpTransport:
     val out = StringBuilder()
-    def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+    def get(
+        url: HttpTransport.Url,
+        headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+    ): Either[HttpTransport.Problem, HttpAnswer] =
       val answer = routes.applyOrElse(url.value, (_: String) => notFound)
       out ++= s"GET $url\n"
       headers.toList.sortBy(_._1.value.toLowerCase(java.util.Locale.ROOT)).foreach((k, v) => out ++= s"  $k: $v\n")
@@ -90,10 +106,20 @@ class ArchiveTrafficSuite extends DbSuite:
         )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.epub") =>
         Right(
-          HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/epub+zip")), HttpAnswer.Body(("PK epub " + ("e" * 20480)).getBytes(UTF_8)))
+          HttpAnswer(
+            HttpAnswer.Code(200),
+            Map(ContentType -> CoreQuota.HeaderValue("application/epub+zip")),
+            HttpAnswer.Body(("PK epub " + ("e" * 20480)).getBytes(UTF_8))
+          )
         )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.pdf") =>
-        Right(HttpAnswer(HttpAnswer.Code(200), Map(ContentType -> CoreQuota.HeaderValue("application/pdf")), HttpAnswer.Body(("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8))))
+        Right(
+          HttpAnswer(
+            HttpAnswer.Code(200),
+            Map(ContentType -> CoreQuota.HeaderValue("application/pdf")),
+            HttpAnswer.Body(("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8))
+          )
+        )
     }
 
   private val Text =
@@ -107,11 +133,17 @@ class ArchiveTrafficSuite extends DbSuite:
         .fold(e => fail(e.value), identity)
     val ds = scratch("run")
     val spool = Files.createTempDirectory("histmersion-archive-spool-")
-    val app = loaded.config.modify(
-      _.db).setTo(loaded.config.db.modify(_.url).setTo(scratch.urlOf("archive_traffic_run_test"))).modify(_.acquire).setTo(loaded.config.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(spool.toString))
-    )
+    val app = loaded.config
+      .modify(_.db)
+      .setTo(loaded.config.db.modify(_.url).setTo(scratch.urlOf("archive_traffic_run_test")))
+      .modify(_.acquire)
+      .setTo(loaded.config.acquire.modify(_.spoolDir).setTo(AcquireConfig.SpoolDir(spool.toString)))
     val wire = Wire(routes(app.acquire))
-    val g: Generation = ServerPlugins.load(loaded, transport = _ => wire, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
+    val g: Generation = ServerPlugins.load(
+      loaded,
+      transport = _ => wire,
+      core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
+    )
     val surface = ArchiveTrafficSuite.surface(app, ds, g, wire)
     val sb = StringBuilder()
     def step(name: String)(answer: => String): Unit =
@@ -121,7 +153,9 @@ class ArchiveTrafficSuite extends DbSuite:
     def show[A: io.circe.Encoder](r: Either[Api.Error, A]): String =
       r.fold(e => s"refused: ${e.message}", _.asJson.spaces2)
     step("archive search bronze")(show(surface.search(Search.Query("bronze"), None)))
-    step("archive search bronze --rows 2")(show(surface.search(Search.Query("bronze"), Some(CollectionsService.Limit(2)))))
+    step("archive search bronze --rows 2")(
+      show(surface.search(Search.Query("bronze"), Some(CollectionsService.Limit(2))))
+    )
     step("archive search (blank)")(show(surface.search(Search.Query("  "), None)))
     step("archive info zqbook")(show(surface.info(ArchiveId("zqbook"))))
     step("archive info https://archive.org/details/zqbook/page/2")(
@@ -131,7 +165,15 @@ class ArchiveTrafficSuite extends DbSuite:
     step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqlent")))))
     step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqnofile")))))
     step("archive import zqbook --format pdf --citekey zqarch_book")(
-      show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqbook"), Some(Citekey("zqarch_book")), Some(ArchiveImportRequest.Format("pdf")))))
+      show(
+        surface.importItem(
+          ArchiveImportRequest(
+            ArchiveImportRequest.Id("zqbook"),
+            Some(Citekey("zqarch_book")),
+            Some(ArchiveImportRequest.Format("pdf"))
+          )
+        )
+      )
     )
     step("archive import zqbook")(show(surface.importItem(ArchiveImportRequest(ArchiveImportRequest.Id("zqbook")))))
     sb ++= "## stored\n"
@@ -166,7 +208,12 @@ object ArchiveTrafficSuite:
         plugins = g.registered.flatMap(i => Plugin.Id.option(i.value))
       )
     val none = new DiscoveryClient:
-      def search(query: Search.Query, since: Option[Year], sort: Option[DiscoveryClient.SearchSort], limit: DiscoveryClient.SearchLimit) = Left(DiscoveryClient.Problem("not used"))
+      def search(
+          query: Search.Query,
+          since: Option[Year],
+          sort: Option[DiscoveryClient.SearchSort],
+          limit: DiscoveryClient.SearchLimit
+      ) = Left(DiscoveryClient.Problem("not used"))
       def meta(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
       def references(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
       def updates(doi: Doi) = Left(DiscoveryClient.Problem("not used"))
@@ -174,7 +221,10 @@ object ArchiveTrafficSuite:
     val h = AcquisitionTesting.controllers(
       deps,
       none,
-      new CitationsClient { def citing(w: WorkRef, s: Option[Year], l: CitationsClient.CitingLimit) = Left(CitationsClient.Problem("not used")) },
+      new CitationsClient {
+        def citing(w: WorkRef, s: Option[Year], l: CitationsClient.CitingLimit) =
+          Left(CitationsClient.Problem("not used"))
+      },
       chain,
       new WikiClient { def refs(url: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used")) },
       new RetractionWatchClient { def csv() = Left(RetractionWatchClient.Problem("not used")) },

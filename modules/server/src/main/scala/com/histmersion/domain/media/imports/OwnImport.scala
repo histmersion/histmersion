@@ -75,7 +75,9 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       case Right(rights) =>
         val stated = scala.util.Try(SpiValues.licenceOf(rights.licence)).toOption.map(_.value).getOrElse("").trim
         val read = Licence.ofStatement(Licence.Statement(stated))
-        val key: Option[String] = Some(if read.id.value.isEmpty then Licence.Family.Unknown.wire.value else read.id.value)
+        val key: Option[String] = Some(
+          if read.id.value.isEmpty then Licence.Family.Unknown.wire.value else read.id.value
+        )
         item.withheld match
           case Some(why) => Verdict(key, Left(why.value))
           case None      =>
@@ -96,7 +98,12 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
                   )
                 )
 
-  def run(targets: List[Target], dryRun: MediaImporter.DryRun, refresh: ImportService.Refresh, store: MediaStore): MediaImportReport =
+  def run(
+      targets: List[Target],
+      dryRun: MediaImporter.DryRun,
+      refresh: ImportService.Refresh,
+      store: MediaStore
+  ): MediaImportReport =
     val places = targets.filter(_.targetType == ImportRepo.Place)
     val events = targets.filter(_.targetType == ImportRepo.Event)
     val carried =
@@ -108,7 +115,11 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
         MediaPlace.Label(t.label.value),
         Wikidata.Id.option(t.qid.value).flatMap(SpiValues.wikidata),
         ids = col.placesCarrying.toList.flatMap(s =>
-          Place.Id.option(t.id.value).flatMap(carried.get).getOrElse(Nil).map(e => MediaPlace.IdsPart1(s.value) -> MediaPlace.IdsPart2(e.value))
+          Place.Id
+            .option(t.id.value)
+            .flatMap(carried.get)
+            .getOrElse(Nil)
+            .map(e => MediaPlace.IdsPart1(s.value) -> MediaPlace.IdsPart2(e.value))
         )
       )
     )
@@ -231,8 +242,8 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
             case Right((bytes, mime, thumb)) =>
               val use = firstUse(key)
               val sized = ImageSize.of(ImageSize.Bytes(bytes))
-              val (width, height) = item.rendition.fold(sized.map(_._1.value) -> sized.map(_._2.value))(
-                r => r.width.map(_.value) -> r.height.map(_.value)
+              val (width, height) = item.rendition.fold(sized.map(_._1.value) -> sized.map(_._2.value))(r =>
+                r.width.map(_.value) -> r.height.map(_.value)
               )
               val target = byId(use.target)
               val a = ProviderAsset(

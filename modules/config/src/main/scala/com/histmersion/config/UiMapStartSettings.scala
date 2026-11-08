@@ -8,8 +8,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Where the map opens (`ui.map-start`): `mode` "last" (where the browser left it; here the first time) or "place"
   * (always here).
   */
-final case class UiMapStartSettings(mode: UiMapStartSettings.Mode, lat: UiMapStartSettings.Lat, lon: UiMapStartSettings.Lon, zoom: UiMapStartSettings.Zoom, label: UiMapStartSettings.Label)
-    derives ConfigReader
+final case class UiMapStartSettings(
+    mode: UiMapStartSettings.Mode,
+    lat: UiMapStartSettings.Lat,
+    lon: UiMapStartSettings.Lon,
+    zoom: UiMapStartSettings.Zoom,
+    label: UiMapStartSettings.Label
+) derives ConfigReader
 
 object UiMapStartSettings:
   type Mode = Mode.T

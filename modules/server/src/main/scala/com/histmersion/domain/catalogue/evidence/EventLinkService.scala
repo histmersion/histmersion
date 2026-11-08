@@ -47,8 +47,8 @@ object EventLinkService:
     def setStatus(id: Event.Id, citekey: Citekey, status: Event.LinkStatus.Wire): Boolean =
       db.transact(EventLinkRepo.setStatus(BEventRow.Id(id.value), citekey, BCandidateRow.Status(status.value)))
     def isChecked(id: Event.Id): Boolean = db.read(EventLinkRepo.isChecked(BEventRow.Id(id.value)))
-    def eventsToCheck(all: Boolean, limit: PageSize): List[Event.Id] = db.read(EventLinkRepo.eventsToCheck(all, limit)).map(i => Event.Id.assume(i.value))
-
+    def eventsToCheck(all: Boolean, limit: PageSize): List[Event.Id] =
+      db.read(EventLinkRepo.eventsToCheck(all, limit)).map(i => Event.Id.assume(i.value))
 
   /** The same rules over the shared in-memory state; `title` names a source by its citekey (the library's), `None` for
     * one that is gone.

@@ -19,8 +19,8 @@ import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
 import com.histmersion.util.console.Console
 
-/** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`). The server
-  * judges the new key and answers why it refuses one.
+/** `histmersion rename <old> <new>` — give a source a new citekey (`POST /api/sources/{old}/rename`). The server judges
+  * the new key and answers why it refuses one.
   */
 object RenameCmd:
   final case class Args(oldCitekey: Citekey, newCitekey: Citekey, json: Cli.JsonOutput)
@@ -30,7 +30,7 @@ object RenameCmd:
       Args(Citekey(old.trim), Citekey(new_.trim), json)
     )
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "rename",
       s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKinds.SourceRecords)}"

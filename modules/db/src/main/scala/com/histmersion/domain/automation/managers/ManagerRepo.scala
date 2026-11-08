@@ -34,11 +34,20 @@ object ManagerRepo:
   object ProgressText extends Newtype[String, Pure]
   type RestaleReason = RestaleReason.T
   object RestaleReason extends Newtype[String, Pure]
-  export ManagerInfo.{TokensToday as SpendCount}
+  export ManagerInfo.TokensToday as SpendCount
 
-  export com.histmersion.domain.automation.Goal.{Slug as ArticleFacetsResultPart2}
-  export ManagerInfo.{Id as CountEventsByInResultPart1}
-  export ManagerEvent.{Kind as CountEventsByInKind, Kind as EventInKind, Text as EventInText, Kind as EventKind, Text as EventText, Kind as CountEventsKind, Kind as CountEventsAllKind, Kind as LastEventOfKind}
+  export com.histmersion.domain.automation.Goal.Slug as ArticleFacetsResultPart2
+  export ManagerInfo.Id as CountEventsByInResultPart1
+  export ManagerEvent.{
+    Kind as CountEventsAllKind,
+    Kind as CountEventsByInKind,
+    Kind as CountEventsKind,
+    Kind as EventInKind,
+    Kind as EventKind,
+    Kind as LastEventOfKind,
+    Text as EventInText,
+    Text as EventText
+  }
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
@@ -190,7 +199,12 @@ object ManagerRepo:
   )(using DbCon): Boolean =
     setConfigIn(id, config, cron, next)
 
-  def setConfigIn(id: ManagerRow.Id, config: ManagerConfig, cron: Option[ManagerRow.Cron], next: Option[java.time.Instant])(using
+  def setConfigIn(
+      id: ManagerRow.Id,
+      config: ManagerConfig,
+      cron: Option[ManagerRow.Cron],
+      next: Option[java.time.Instant]
+  )(using
       DbCon
   ): Boolean =
     val n = next.map(_.toString)
@@ -266,19 +280,18 @@ object ManagerRepo:
   def lastProgress()(using DbCon): Map[ManagerRow.Goal, ProgressText] =
     val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
     of(
-        s"""SELECT goal, to_char(max(at) AT TIME ZONE 'UTC', $ts) FROM (
+      s"""SELECT goal, to_char(max(at) AT TIME ZONE 'UTC', $ts) FROM (
                  SELECT m.goal_slug AS goal, max(e.at) AS at FROM manager_events e JOIN agent_managers m ON m.id = e.manager_id
                  WHERE m.goal_slug IS NOT NULL AND e.kind IN (?, ?, ?, ?, ?) GROUP BY m.goal_slug
                  UNION ALL
                  SELECT goal_slug, max(created_at) FROM goal_links WHERE kind = 'source' GROUP BY goal_slug) t
                GROUP BY goal""",
-        str(Feed.Started),
-        str(Feed.Settled),
-        str(Feed.Evaluated),
-        str(Feed.Ingested),
-        str(Feed.Swept)
-      )
-      .frag
+      str(Feed.Started),
+      str(Feed.Settled),
+      str(Feed.Evaluated),
+      str(Feed.Ingested),
+      str(Feed.Swept)
+    ).frag
       .query[(ManagerRow.Goal, ProgressText)]
       .run()
       .toMap
@@ -482,7 +495,9 @@ object ManagerRepo:
 
   /** Active items whose run is terminal and not evaluated yet (or whose run is gone): the evaluation queue.
     */
-  def toEvaluate(managerId: ManagerRow.Id)(using DbCon): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Agents.RunInfo.Error])])] =
+  def toEvaluate(managerId: ManagerRow.Id)(using
+      DbCon
+  ): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Agents.RunInfo.Error])])] =
     val rows =
       (itemSelect ++ of(" WHERE manager_id = ? AND status = 'active' ORDER BY id", str(managerId.value))).frag
         .query[ItemRow]
@@ -500,7 +515,10 @@ object ManagerRepo:
       )
       run match
         case None => List(i -> None) // its run was deleted
-        case Some((st, err)) if RunState.parse(com.histmersion.api.automation.Run.State.Wire(st.value)).exists(_.isTerminal) && !i.evaluatedRun.contains(i.runId.get) =>
+        case Some((st, err))
+            if RunState
+              .parse(com.histmersion.api.automation.Run.State.Wire(st.value))
+              .exists(_.isTerminal) && !i.evaluatedRun.contains(i.runId.get) =>
           List(i -> Some((st, err)))
         case _ => Nil
     }
@@ -576,7 +594,9 @@ object ManagerRepo:
     )
 
   /** Settle an item that is not active (skip: stopped by a person; a manager's stop: cancelled). */
-  def settle(itemId: ItemRow.Id, status: ItemStatus, outcome: ItemRow.Outcome, from: List[ItemStatus])(using DbCon): Boolean =
+  def settle(itemId: ItemRow.Id, status: ItemStatus, outcome: ItemRow.Outcome, from: List[ItemStatus])(using
+      DbCon
+  ): Boolean =
     val fs = from.map(_.wire)
     sql"""UPDATE manager_items SET status = ${status.wire}, outcome = $outcome, hold = NULL, updated_at = now()
           WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
@@ -630,7 +650,13 @@ object ManagerRepo:
   /** Articles with open MAJORs in their review ledger and no item of this manager yet, the most open MAJORs first;
     * `tags` (all of) and `goal` (linked to it) narrow them.
     */
-  def openMajorArticles(managerId: ManagerRow.Id, kind: ItemRow.Kind, tags: List[EnrichSource.Tag], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: PageSize)(using
+  def openMajorArticles(
+      managerId: ManagerRow.Id,
+      kind: ItemRow.Kind,
+      tags: List[EnrichSource.Tag],
+      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      limit: PageSize
+  )(using
       DbCon
   ): List[(Slug, RowCount)] =
     sql"""SELECT a.slug, m.n FROM articles a
@@ -647,7 +673,13 @@ object ManagerRepo:
           ORDER BY m.n DESC, a.slug LIMIT ${math.max(1, limit.value)}""".query[(Slug, RowCount)].run().toList
 
   /** Articles never reviewed (no ledger, no review-article run) and with no item of this manager. */
-  def unreviewedArticles(managerId: ManagerRow.Id, kind: ItemRow.Kind, tags: List[EnrichSource.Tag], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: PageSize)(using
+  def unreviewedArticles(
+      managerId: ManagerRow.Id,
+      kind: ItemRow.Kind,
+      tags: List[EnrichSource.Tag],
+      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      limit: PageSize
+  )(using
       DbCon
   ): List[Slug] =
     sql"""SELECT a.slug FROM articles a
@@ -666,32 +698,37 @@ object ManagerRepo:
     * of it drives (by the ledger's `updated_at`) — oldest first, `tags`/`goal` narrowing as in the selection. (slug,
     * converged at, filter hits then, the done item if any).
     */
-  def staleCandidates(managerId: ManagerRow.Id, kind: ItemRow.Kind, tags: List[EnrichSource.Tag], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: PageSize)(using
+  def staleCandidates(
+      managerId: ManagerRow.Id,
+      kind: ItemRow.Kind,
+      tags: List[EnrichSource.Tag],
+      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      limit: PageSize
+  )(using
       DbCon
   ): List[(Slug, ProgressText, Option[ItemState.FilterHits], Option[ItemRow.Id])] =
     val lim = math.max(1, limit.value)
     val g = goal.map(_.value.trim).getOrElse("")
     val done = of(
-        s"""SELECT i.target, ${at("i.updated_at")}, (i.state->>'filterHits')::int, i.id FROM manager_items i
+      s"""SELECT i.target, ${at("i.updated_at")}, (i.state->>'filterHits')::int, i.id FROM manager_items i
           JOIN articles a ON a.slug = i.target
           WHERE i.manager_id = ? AND i.kind = ? AND i.status = 'done' AND a.tags @> ?::text[]
             AND (? = '' OR EXISTS (SELECT 1 FROM goal_links g WHERE g.goal_slug = ?
                                    AND g.kind = 'article' AND g.ref = a.slug))
           ORDER BY i.updated_at, i.id LIMIT ?""",
-        str(managerId.value),
-        str(kind.value),
-        strs(tags.map(_.value)),
-        str(g),
-        str(g),
-        int(lim)
-      )
-      .frag
+      str(managerId.value),
+      str(kind.value),
+      strs(tags.map(_.value)),
+      str(g),
+      str(g),
+      int(lim)
+    ).frag
       .query[(Slug, ProgressText, Option[ItemState.FilterHits], ItemRow.Id)]
       .run()
       .toList
       .map((s, t, n, id) => (s, t, n, Some(id)))
     val ledgers = of(
-        s"""SELECT l.slug, ${at("l.updated_at")} FROM review_ledgers l JOIN articles a ON a.slug = l.slug
+      s"""SELECT l.slug, ${at("l.updated_at")} FROM review_ledgers l JOIN articles a ON a.slug = l.slug
           WHERE a.kind <> 'index' AND a.tags @> ?::text[]
             AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
                             WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
@@ -699,14 +736,13 @@ object ManagerRepo:
                                    AND g.kind = 'article' AND g.ref = a.slug))
             AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.kind = ? AND i.target = a.slug)
           ORDER BY l.updated_at, l.slug LIMIT ?""",
-        strs(tags.map(_.value)),
-        str(g),
-        str(g),
-        str(managerId.value),
-        str(kind.value),
-        int(lim)
-      )
-      .frag
+      strs(tags.map(_.value)),
+      str(g),
+      str(g),
+      str(managerId.value),
+      str(kind.value),
+      int(lim)
+    ).frag
       .query[(Slug, ProgressText)]
       .run()
       .toList
@@ -717,12 +753,17 @@ object ManagerRepo:
     * when their last extension item settled (None: never extended) — the ones never extended first, then the longest
     * ago; `tags`/`goal` narrow as in the selection.
     */
-  def extendCandidates(managerId: ManagerRow.Id, tags: List[EnrichSource.Tag], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: PageSize)(using
+  def extendCandidates(
+      managerId: ManagerRow.Id,
+      tags: List[EnrichSource.Tag],
+      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      limit: PageSize
+  )(using
       DbCon
   ): List[(Slug, Option[ProgressText])] =
     val g = goal.map(_.value.trim).getOrElse("")
     of(
-        s"""SELECT a.slug, ${at("x.updated_at")} FROM articles a
+      s"""SELECT a.slug, ${at("x.updated_at")} FROM articles a
           LEFT JOIN manager_items x ON x.manager_id = ? AND x.kind = ? AND x.target = a.slug
           WHERE a.coverage_filter IS NOT NULL AND a.kind <> 'index' AND a.tags @> ?::text[]
             AND (? = '' OR EXISTS (SELECT 1 FROM goal_links gl WHERE gl.goal_slug = ?
@@ -730,15 +771,14 @@ object ManagerRepo:
             AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = ? AND i.target = a.slug
                             AND i.status IN ('pending', 'held', 'active'))
           ORDER BY x.updated_at NULLS FIRST, a.slug LIMIT ?""",
-        str(managerId.value),
-        str(ArticleExtend),
-        strs(tags.map(_.value)),
-        str(g),
-        str(g),
-        str(managerId.value),
-        int(math.max(1, limit.value))
-      )
-      .frag
+      str(managerId.value),
+      str(ArticleExtend),
+      strs(tags.map(_.value)),
+      str(g),
+      str(g),
+      str(managerId.value),
+      int(math.max(1, limit.value))
+    ).frag
       .query[(Slug, Option[ProgressText])]
       .run()
       .toList
@@ -747,12 +787,11 @@ object ManagerRepo:
 
   def light()(using DbCon): List[ManagerLight] =
     of(
-        s"""SELECT m.id, m.kind, m.goal_slug, m.state, m.cron, m.config::text, m.status_note,
+      s"""SELECT m.id, m.kind, m.goal_slug, m.state, m.cron, m.config::text, m.status_note,
                       EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = m.id AND i.kind = ?)
                FROM agent_managers m ORDER BY m.id""",
-        str(PlanGoalItem)
-      )
-      .frag
+      str(PlanGoalItem)
+    ).frag
       .query[ManagerLight]
       .run()
       .toList
@@ -764,18 +803,17 @@ object ManagerRepo:
   def pace(since: java.time.Instant)(using DbCon): Map[ManagerRow.Id, (RowCount, RowCount, Option[ProgressText])] =
     val t = since.toString
     of(
-        s"""SELECT m.id,
+      s"""SELECT m.id,
                       (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
                          AND i.status IN ('pending', 'held', 'active')),
                       (SELECT count(*)::int FROM manager_items i WHERE i.manager_id = m.id AND i.kind <> ?
                          AND i.status IN ('done', 'stopped', 'failed') AND i.updated_at >= ?::timestamptz),
                       (SELECT ${at("max(e.at)")} FROM manager_events e WHERE e.manager_id = m.id)
                FROM agent_managers m""",
-        str(OaIngest),
-        str(OaIngest),
-        str(t)
-      )
-      .frag
+      str(OaIngest),
+      str(OaIngest),
+      str(t)
+    ).frag
       .query[(ManagerRow.Id, RowCount, RowCount, Option[ProgressText])]
       .run()
       .toList
@@ -793,13 +831,12 @@ object ManagerRepo:
   )(using DbCon): RowCount =
 
     of(
-        "SELECT count(*)::int FROM manager_items WHERE manager_id = ? AND kind = ANY(?::text[]) AND status = ANY(?::text[])" +
-          (if focusHeld then "" else " AND NOT (status = 'held' AND hold->>'focus' IS NOT NULL)"),
-        str(managerId.value),
-        strs(kinds.map(_.value)),
-        strs(statuses.map(_.value))
-      )
-      .frag
+      "SELECT count(*)::int FROM manager_items WHERE manager_id = ? AND kind = ANY(?::text[]) AND status = ANY(?::text[])" +
+        (if focusHeld then "" else " AND NOT (status = 'held' AND hold->>'focus' IS NOT NULL)"),
+      str(managerId.value),
+      strs(kinds.map(_.value)),
+      strs(statuses.map(_.value))
+    ).frag
       .query[RowCount]
       .run()
       .head
@@ -811,9 +848,13 @@ object ManagerRepo:
 
   /** An article's tags and the goals it is linked to (what a hint's effect matches). */
   def articleFacets(slug: Slug)(using DbCon): (List[EnrichSource.Tag], List[ManagerRepo.ArticleFacetsResultPart2]) =
-    val tags = sql"SELECT tags FROM articles WHERE slug = $slug".query[List[EnrichSource.Tag]].run().headOption.getOrElse(Nil)
+    val tags =
+      sql"SELECT tags FROM articles WHERE slug = $slug".query[List[EnrichSource.Tag]].run().headOption.getOrElse(Nil)
     val goals =
-      sql"SELECT goal_slug FROM goal_links WHERE kind = 'article' AND ref = $slug".query[com.histmersion.domain.automation.Goal.Slug].run().toList
+      sql"SELECT goal_slug FROM goal_links WHERE kind = 'article' AND ref = $slug"
+        .query[com.histmersion.domain.automation.Goal.Slug]
+        .run()
+        .toList
     (tags, goals)
 
   /** Is there a source with this citekey or DOI (a hold waiting for it is released)? */
@@ -857,7 +898,9 @@ object ManagerRepo:
       .map((m, p, h) => m -> (p, h))
       .toMap
 
-  def countEventsByIn(kind: ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using DbCon): Map[ManagerRepo.CountEventsByInResultPart1, RowCount] =
+  def countEventsByIn(kind: ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using
+      DbCon
+  ): Map[ManagerRepo.CountEventsByInResultPart1, RowCount] =
     val at = since.toString
     sql"""SELECT manager_id, count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz
           GROUP BY manager_id""".query[(CountEventsByInResultPart1, RowCount)].run().toMap
@@ -867,7 +910,12 @@ object ManagerRepo:
     sql"""UPDATE manager_items SET state = $state::jsonb, updated_at = now()
           WHERE id = $itemId AND status = ANY($fs::text[])""".update.run() > 0
 
-  def backlogRetryIn(itemId: ItemRow.Id, failures: ItemRow.Failures, notBefore: java.time.Instant, outcome: ItemRow.Outcome)(using
+  def backlogRetryIn(
+      itemId: ItemRow.Id,
+      failures: ItemRow.Failures,
+      notBefore: java.time.Instant,
+      outcome: ItemRow.Outcome
+  )(using
       DbCon
   ): Boolean =
     val nb = notBefore.toString
@@ -925,7 +973,13 @@ object ManagerRepo:
   private val eventSelect =
     raw(s"SELECT id, manager_id, item_id, run_id, ${at("at")}, kind, text FROM manager_events")
 
-  def eventIn(managerId: ManagerRow.Id, itemId: Option[ItemRow.Id], runId: Option[Agents.RunInfo.Id], kind: ManagerRepo.EventInKind, text: ManagerRepo.EventInText)(using
+  def eventIn(
+      managerId: ManagerRow.Id,
+      itemId: Option[ItemRow.Id],
+      runId: Option[Agents.RunInfo.Id],
+      kind: ManagerRepo.EventInKind,
+      text: ManagerRepo.EventInText
+  )(using
       DbCon
   ): Unit =
     val _ = sql"""INSERT INTO manager_events (manager_id, item_id, run_id, kind, text)
@@ -946,10 +1000,13 @@ object ManagerRepo:
       before.fold(Sql.empty)(b => of(" AND id < ?", lng(b.value))) ++
       of(" ORDER BY id DESC LIMIT ?", int(math.max(1, limit.value)))).frag.query[ManagerEvent].run().toList
 
-  def lastEvent(managerId: ManagerRow.Id)(using DbCon): Option[ManagerEvent] = events(managerId, None, PageSize(1)).headOption
+  def lastEvent(managerId: ManagerRow.Id)(using DbCon): Option[ManagerEvent] =
+    events(managerId, None, PageSize(1)).headOption
 
   /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
-  def countEvents(managerId: ManagerRow.Id, kind: ManagerRepo.CountEventsKind, since: java.time.Instant)(using DbCon): RowCount =
+  def countEvents(managerId: ManagerRow.Id, kind: ManagerRepo.CountEventsKind, since: java.time.Instant)(using
+      DbCon
+  ): RowCount =
     val at = since.toString
     (sql"""SELECT count(*)::int FROM manager_events WHERE manager_id = $managerId AND kind = $kind
                       AND at >= $at::timestamptz""".query[RowCount].run().head)

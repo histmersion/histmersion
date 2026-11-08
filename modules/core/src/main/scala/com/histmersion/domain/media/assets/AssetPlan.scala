@@ -20,7 +20,6 @@ import java.util.UUID
 final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
   private given CanEqual[UUID, UUID] = CanEqual.derived
 
-
   private val assetSource = in.foreign.assets.map(a => a.uid -> a.sourceUid).toMap
   private val linkAsset = in.foreign.assetLinks.map(l => l.uid -> l.assetUid).toMap
   private val assetLine =
@@ -67,7 +66,8 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
     // the links of a folded figure that this collection's figure already has are one
     in.foreign.assetLinks.foreach { k =>
       folds.foldedTo(k.assetUid).foreach { here =>
-        val target = k.targetUid.map(u => folds.foldedTo(u).getOrElse(folds.toLocal(u)).toString).getOrElse(k.targetId.value)
+        val target =
+          k.targetUid.map(u => folds.foldedTo(u).getOrElse(folds.toLocal(u)).toString).getOrElse(k.targetId.value)
         in.local.assetLinks
           .find(x =>
             x.assetUid == here && x.relation == k.relation &&
@@ -121,7 +121,11 @@ object AssetPlan extends PlanRules:
   /** An asset name not taken in the survivor: `<stem>-<label>.<ext>` (then `-2`, `-3`…). `~` of the design is not
     * link-safe in Markdown, so a hyphen.
     */
-  def freeName(name: Bundle.Asset.Name, label: MergePlanner.Row.Label, taken: Set[Bundle.Asset.Name]): Bundle.Asset.Name =
+  def freeName(
+      name: Bundle.Asset.Name,
+      label: MergePlanner.Row.Label,
+      taken: Set[Bundle.Asset.Name]
+  ): Bundle.Asset.Name =
     val raw = name.value
     val dot = raw.lastIndexOf('.')
     val (stem, ext) = if dot > 0 then (raw.take(dot), raw.drop(dot)) else (raw, "")

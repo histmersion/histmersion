@@ -23,8 +23,17 @@ object Diagnostics:
       CacheName("places.geo") -> MapView.geoCacheStats,
       CacheName("ident") -> IdentLink.cacheStats,
       CacheName("places.labels") -> PlacesInput.cacheStats
-    ) ++ Preview.cacheStats.map((n, s) => CacheName(n.value) -> s) ++ MapLabels.stats.map((n, s) => CacheName(n.value) -> s) ++
-      List(CacheName("findings.kept") -> BoundedCache.Stats(App.keptFindings, BoundedCache.Stats.MaxEntries(0), BoundedCache.Stats.Weight(0L), BoundedCache.Stats.MaxWeight(0L)))
+    ) ++ Preview.cacheStats.map((n, s) => CacheName(n.value) -> s) ++ MapLabels.stats.map((n, s) =>
+      CacheName(n.value) -> s
+    ) ++
+      List(
+        CacheName("findings.kept") -> BoundedCache.Stats(
+          App.keptFindings,
+          BoundedCache.Stats.MaxEntries(0),
+          BoundedCache.Stats.Weight(0L),
+          BoundedCache.Stats.MaxWeight(0L)
+        )
+      )
 
   /** Pure: the figures as a plain object (one per cache: entries, maxEntries, weight, maxWeight). */
   def toJs(cs: List[(CacheName, BoundedCache.Stats)]): js.Object =

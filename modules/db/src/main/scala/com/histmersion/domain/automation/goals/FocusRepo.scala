@@ -17,7 +17,6 @@ object FocusRepo:
   type JoinWhy = JoinWhy.T
   object JoinWhy extends Newtype[String, Pure]
 
-
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
   private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
@@ -149,7 +148,11 @@ object FocusRepo:
     sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
           WHERE m.kind = 'seed' AND m.goal_slug IS NOT NULL AND i.kind = 'article-compile'
             AND i.status IN ('pending', 'held', 'active')
-          GROUP BY m.goal_slug""".query[(String, Int)].run().map((goal, n) => Goal.Slug.assume(goal) -> RowCount(n)).toMap
+          GROUP BY m.goal_slug"""
+      .query[(String, Int)]
+      .run()
+      .map((goal, n) => Goal.Slug.assume(goal) -> RowCount(n))
+      .toMap
 
   /** Per goal: the outcome of its LAST settled model-using item when that one stopped or failed (a goal whose newest
     * settled item is done has no stop to report).
@@ -161,7 +164,11 @@ object FocusRepo:
             WHERE m.goal_slug IS NOT NULL AND i.kind NOT IN ('oa-ingest', 'currency-check')
               AND i.status IN ('done', 'stopped', 'failed')
             ORDER BY m.goal_slug, i.updated_at DESC, i.id DESC) t
-          WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().map((goal, why) => Goal.Slug.assume(goal) -> GoalRow.LeftWhy(why)).toMap
+          WHERE status IN ('stopped', 'failed')"""
+      .query[(String, String)]
+      .run()
+      .map((goal, why) => Goal.Slug.assume(goal) -> GoalRow.LeftWhy(why))
+      .toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
   def openGoalPlans(using DbCon): RowCount =
@@ -180,7 +187,9 @@ object FocusRepo:
       .toMap
 
   /** The goals linked to each of `refs` by a link of `kind` (source: a citekey, article: a slug). */
-  def goalsOf(kind: Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref])(using DbCon): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[Goal.Slug]] =
+  def goalsOf(kind: Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref])(using
+      DbCon
+  ): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[Goal.Slug]] =
     if refs.isEmpty then Map.empty
     else
       val texts: List[String] = refs.map(_.value)
@@ -188,12 +197,18 @@ object FocusRepo:
         .query[(String, String)]
         .run()
         .toList
-        .groupMap(row => com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(row._1))(row => Goal.Slug.assume(row._2))
+        .groupMap(row => com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(row._1))(row =>
+          Goal.Slug.assume(row._2)
+        )
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
   def recentTargets(managerId: WorkRow.ManagerId, n: PageSize)(using DbCon): List[WorkRow.Target] =
     sql"""SELECT target_id FROM jobs WHERE kind = 'agent' AND manager_id = $managerId AND target_id IS NOT NULL
-          ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n.value)}""".query[String].run().toList.map(WorkRow.Target(_))
+          ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n.value)}"""
+      .query[String]
+      .run()
+      .toList
+      .map(WorkRow.Target(_))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────────
 

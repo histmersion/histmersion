@@ -14,7 +14,8 @@ final case class CollectionUpdatedOne(
     changed: List[CollectionUpdatedOne.Changed],
     title: Title
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionUpdatedOne:
   type Id = Id.T

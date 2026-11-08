@@ -12,8 +12,6 @@ object ConfidenceStyle:
   type Saturation = Saturation.T
   object Saturation extends Newtype[Double, Pure]
 
-
-
   def saturation(c: Confidence): Saturation = c match
     case Confidence.High      => Saturation(1.0)
     case Confidence.Medium    => Saturation(0.7)
@@ -46,9 +44,10 @@ object ConfidenceStyle:
   private val Ring = IconPart(IconPart.D("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z"), filled = IconPart.Filled(false))
 
   def iconParts(c: Confidence): List[IconPart] = c match
-    case Confidence.High      => List(IconPart(IconPart.D("M5 0.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9z"), filled = IconPart.Filled(true)))
-    case Confidence.Medium    => List(Ring, IconPart(IconPart.D("M5 5V1A4 4 0 1 1 1 5Z"), filled = IconPart.Filled(true)))
-    case Confidence.Low       => List(Ring, IconPart(IconPart.D("M5 1A4 4 0 0 1 5 9Z"), filled = IconPart.Filled(true)))
+    case Confidence.High =>
+      List(IconPart(IconPart.D("M5 0.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9z"), filled = IconPart.Filled(true)))
+    case Confidence.Medium => List(Ring, IconPart(IconPart.D("M5 5V1A4 4 0 1 1 1 5Z"), filled = IconPart.Filled(true)))
+    case Confidence.Low    => List(Ring, IconPart(IconPart.D("M5 1A4 4 0 0 1 5 9Z"), filled = IconPart.Filled(true)))
     case Confidence.Contested => List(Ring)
 
   val IconViewBox = "0 0 10 10"
@@ -56,7 +55,7 @@ object ConfidenceStyle:
   def icon(c: Confidence): String =
     val parts = iconParts(c)
       .map(p =>
-        if ((p.filled) == IconPart.Filled(true)) then s"""<path d="${p.d}" fill="currentColor"/>"""
+        if (p.filled) == IconPart.Filled(true) then s"""<path d="${p.d}" fill="currentColor"/>"""
         else s"""<path d="${p.d}" fill="none" stroke="currentColor"/>"""
       )
       .mkString

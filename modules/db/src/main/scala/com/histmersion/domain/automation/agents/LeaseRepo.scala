@@ -20,7 +20,6 @@ object LeaseRepo:
   type TtlSeconds = TtlSeconds.T
   object TtlSeconds extends Newtype[Int, Pure]
 
-
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** Claim (or renew) lease `name` for `owner` for `ttlSeconds`: it is taken when free, expired, or already ours.
@@ -40,7 +39,9 @@ object LeaseRepo:
   def holder(name: LeaseName)(using DbCon): Option[(LeaseOwner, LeaseExpiry, Boolean)] =
     Sql
       .of(
-        Sql.Text(s"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = ?"),
+        Sql.Text(
+          s"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = ?"
+        ),
         Param.S(Param.S.V(name.value))
       )
       .frag

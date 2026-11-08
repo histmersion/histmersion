@@ -17,7 +17,11 @@ trait ConverterClient:
   /** Convert one document. `Left` carries a message that names the converter URL, because "the OCR job failed" without
     * saying where it tried to go is useless in a log.
     */
-  def convert(file: Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality): Either[ConverterClient.Problem, ConvertedDoc]
+  def convert(
+      file: Blob,
+      filename: ConverterClient.Filename,
+      quality: ConverterClient.HighQuality
+  ): Either[ConverterClient.Problem, ConvertedDoc]
 
   /** Sidecar liveness for `/api/health`. */
   def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary]
@@ -25,7 +29,11 @@ trait ConverterClient:
   /** A thumbnail of an image, no side longer than `maxPx` (the sidecar's Pillow — the native server has no working
     * image codec of its own). A converter that cannot make one says so; the picture is then shown from its own bytes.
     */
-  def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+  def thumbnail(
+      bytes: ConverterClient.DocumentBytes,
+      filename: ConverterClient.Filename,
+      maxPx: Pixels
+  ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
     Left(ConverterClient.Problem("this converter makes no thumbnails"))
 
 object ConverterClient:
@@ -41,7 +49,6 @@ object ConverterClient:
   object Problem extends Newtype[String, Pure]
 
   /** A thumbnail the sidecar made. */
-
 
   final case class Thumb(bytes: Thumb.Bytes, mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
 

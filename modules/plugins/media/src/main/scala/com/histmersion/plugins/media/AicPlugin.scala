@@ -7,6 +7,7 @@ import com.histmersion.plugin.Registry
 final class AicPlugin extends MediaPlugin("media-aic"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
-    ctx.mediaCollections.add(Registry.AddId("aic"), ArtInstituteCollection(c.media.aic, c.media.thumbPx))
+    ctx.mediaCollections
+      .add(Registry.AddId("aic"), ArtInstituteCollection(c.media.aic, c.media.thumbPx))
       .left
       .map(e => Plugin.RegisterResultPart1(e.value))

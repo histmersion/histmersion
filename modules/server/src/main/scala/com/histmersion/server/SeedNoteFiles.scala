@@ -21,12 +21,19 @@ final class SeedNoteFiles(dir: Path, confineTo: Option[SafePath.Base])(using Tex
   // eventually exhausts the process's file descriptors.
   def notes: List[SeedFolder.NotesResult] =
     scala.util.Using.resource(Files.list(dir)) { s =>
-      s.iterator.asScala.map(_.getFileName.toString).filter(_.endsWith(".md")).toList.sorted.map(SeedFolder.NotesResult(_))
+      s.iterator.asScala
+        .map(_.getFileName.toString)
+        .filter(_.endsWith(".md"))
+        .toList
+        .sorted
+        .map(SeedFolder.NotesResult(_))
     }
 
   def read(name: SeedFolder.Name): Option[SeedNote] =
     val f = dir.resolve(name.value)
-    SourceNote.parseFile(f, confineTo).map(s => SeedNote(s, SeedNote.ModifiedMillis(Files.getLastModifiedTime(f).toMillis)))
+    SourceNote
+      .parseFile(f, confineTo)
+      .map(s => SeedNote(s, SeedNote.ModifiedMillis(Files.getLastModifiedTime(f).toMillis)))
 
   def figures(name: SeedFolder.Name, citekey: Citekey, maxBytes: SeedFolder.MaxBytes): List[NewFigure] =
     val note = dir.resolve(name.value)
@@ -47,7 +54,12 @@ object SeedNoteFiles:
     else
       val files = scala.util.Using.resource(Files.list(dir))(_.iterator.asScala.filter(Files.isRegularFile(_)).toList)
       Figures.of(
-        files.flatMap(f => scala.util.Try(Files.readAllBytes(f)).toOption.map(b => Figures.FileName(f.getFileName.toString) -> NewFigure.Bytes(b))),
+        files.flatMap(f =>
+          scala.util
+            .Try(Files.readAllBytes(f))
+            .toOption
+            .map(b => Figures.FileName(f.getFileName.toString) -> NewFigure.Bytes(b))
+        ),
         maxBytes
       )
 

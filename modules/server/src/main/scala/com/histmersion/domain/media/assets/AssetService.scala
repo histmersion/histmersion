@@ -76,11 +76,20 @@ trait AssetService:
   def known(provider: AssetService.Provider, keys: List[AssetService.ProviderKey]): Map[AssetService.ProviderKey, Known]
 
   /** A provider's picture stored, or its bytes and rights replaced; its uid and whether it is new. */
-  def save(a: ProviderAsset, firstTarget: (AssetService.TargetType, AssetService.TargetId)): (AssetService.AssetUid, Boolean)
+  def save(
+      a: ProviderAsset,
+      firstTarget: (AssetService.TargetType, AssetService.TargetId)
+  ): (AssetService.AssetUid, Boolean)
 
   def refreshRights(uid: AssetService.AssetUid, r: Rights): Unit
 
-  def setThumb(uid: AssetService.AssetUid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[ProviderAsset.ThumbWidth], height: Option[ProviderAsset.ThumbHeight]): Unit
+  def setThumb(
+      uid: AssetService.AssetUid,
+      bytes: ProviderAsset.Thumb,
+      mime: ProviderAsset.ThumbMime,
+      width: Option[ProviderAsset.ThumbWidth],
+      height: Option[ProviderAsset.ThumbHeight]
+  ): Unit
 
   /** A picture shown on a place or event in a role; whether the link is new. */
   def link(
@@ -95,7 +104,12 @@ trait AssetService:
   ): Boolean
 
   /** `uid` made the source's picture in `role`, replacing the one it had in that role. */
-  def setSourcePicture(citekey: Citekey, uid: AssetService.AssetUid, role: MediaRole.Wire, property: Option[AssetService.LinkProperty]): Unit
+  def setSourcePicture(
+      citekey: Citekey,
+      uid: AssetService.AssetUid,
+      role: MediaRole.Wire,
+      property: Option[AssetService.LinkProperty]
+  ): Unit
 
   /** The source's picture in `role`: its uid and its provider key or figure name. */
   def sourcePicture(citekey: Citekey, role: MediaRole.Wire): Option[(AssetService.AssetUid, AssetService.PictureKey)]
@@ -114,12 +128,20 @@ trait AssetService:
   def geoOf(uids: List[AssetService.AssetUid]): Map[AssetService.AssetUid, MediaGeoHit]
 
   /** A place's, an event's or a source's pictures for its card, best first. */
-  def thumbs(targetType: AssetService.TargetType, targetId: AssetService.TargetId, limit: AssetService.Limit): List[MediaThumb]
+  def thumbs(
+      targetType: AssetService.TargetType,
+      targetId: AssetService.TargetId,
+      limit: AssetService.Limit
+  ): List[MediaThumb]
 
   /** A place's pictures for its card, through its equivalents (its old ids, its Wikidata items, a point of the same
     * name within `sameSiteKm`).
     */
-  def placeThumbs(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: AssetService.Limit): List[MediaThumb]
+  def placeThumbs(
+      placeId: Place.Id,
+      sameSiteKm: EventMatcher.NearFinding.Km,
+      limit: AssetService.Limit
+  ): List[MediaThumb]
 
 object AssetService:
   type AddedFigureCount = RowCount
@@ -164,20 +186,40 @@ object AssetService:
     def figure(citekey: Citekey, name: AssetName): Option[(Mime, Bytes)] =
       db.read(AssetRepo.read(citekey, name)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def figureCount(citekey: Citekey): FigureCount = db.read(AssetRepo.count(citekey))
-    def addFigures(citekey: Citekey, figures: List[NewFigure]): AddedFigureCount = db.transact(AssetRepo.add(citekey, figures))
+    def addFigures(citekey: Citekey, figures: List[NewFigure]): AddedFigureCount =
+      db.transact(AssetRepo.add(citekey, figures))
     def replaceFigures(citekey: Citekey, figures: List[NewFigure]): ReplacedFigureCount =
       db.transact(AssetRepo.replace(citekey, figures))
     def detail(citekey: Citekey, name: AssetName): Option[AssetDetail] = db.read(AssetRepo.detail(citekey, name))
     def patch(citekey: Citekey, name: AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
       db.transact(AssetRepo.patch(citekey, name, p))
-        .flatMap(_ => detail(citekey, name).toRight(Api.Error(Api.Error.Message(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))))
+        .flatMap(_ =>
+          detail(citekey, name).toRight(
+            Api.Error(Api.Error.Message(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))
+          )
+        )
     def sourceFigures(citekey: Citekey): List[SourceFigure] = db.read(MediaRepo.sourceFigures(citekey))
-    def known(provider: Provider, keys: List[ProviderKey]): Map[ProviderKey, Known] = db.read(MediaRepo.known(provider, keys))
+    def known(provider: Provider, keys: List[ProviderKey]): Map[ProviderKey, Known] =
+      db.read(MediaRepo.known(provider, keys))
     def save(a: ProviderAsset, firstTarget: (TargetType, TargetId)): (AssetUid, Boolean) =
       db.transact(MediaRepo.save(a, firstTarget))
     def refreshRights(uid: AssetUid, r: Rights): Unit = db.transact(MediaRepo.refreshRights(uid, r))
-    def setThumb(uid: AssetUid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[ProviderAsset.ThumbWidth], height: Option[ProviderAsset.ThumbHeight]): Unit =
-      db.transact(MediaRepo.setThumb(uid, bytes, mime, width.map(w => MediaThumbRow.Width(w.value)), height.map(h => MediaThumbRow.Height(h.value))))
+    def setThumb(
+        uid: AssetUid,
+        bytes: ProviderAsset.Thumb,
+        mime: ProviderAsset.ThumbMime,
+        width: Option[ProviderAsset.ThumbWidth],
+        height: Option[ProviderAsset.ThumbHeight]
+    ): Unit =
+      db.transact(
+        MediaRepo.setThumb(
+          uid,
+          bytes,
+          mime,
+          width.map(w => MediaThumbRow.Width(w.value)),
+          height.map(h => MediaThumbRow.Height(h.value))
+        )
+      )
     def link(
         uid: AssetUid,
         targetType: TargetType,
@@ -187,9 +229,22 @@ object AssetService:
         item: Option[LinkItem],
         rank: LinkRank,
         basis: Option[MediaMatch.Basis]
-    ): Boolean = db.transact(MediaRepo.link(uid, targetType, targetId, role, property.map(p => MediaRepo.LinkProperty(p.value)), item.map(i => MediaRepo.LinkItem(i.value)), MediaRepo.LinkRank(rank.value), basis))
+    ): Boolean = db.transact(
+      MediaRepo.link(
+        uid,
+        targetType,
+        targetId,
+        role,
+        property.map(p => MediaRepo.LinkProperty(p.value)),
+        item.map(i => MediaRepo.LinkItem(i.value)),
+        MediaRepo.LinkRank(rank.value),
+        basis
+      )
+    )
     def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty]): Unit =
-      db.transact(MediaRepo.setSourcePicture(citekey, uid, role, property.map(p => MediaRepo.SetSourcePictureProperty(p.value))))
+      db.transact(
+        MediaRepo.setSourcePicture(citekey, uid, role, property.map(p => MediaRepo.SetSourcePictureProperty(p.value)))
+      )
     def sourcePicture(citekey: Citekey, role: MediaRole.Wire): Option[(AssetUid, PictureKey)] =
       db.read(MediaRepo.sourcePicture(citekey, role)).map((uid, key) => (uid, PictureKey(key.value)))
     def list(q: Api.MediaQuery, limit: Limit): MediaList = db.read(MediaRepo.list(q, MediaRepo.Limit(limit.value)))
@@ -199,7 +254,8 @@ object AssetService:
     def file(uid: AssetUid): Option[(Mime, Bytes)] =
       db.read(MediaRepo.file(uid)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def facets: MediaFacets = db.read(MediaRepo.facets)
-    def geo(q: Api.MediaGeoQuery, limit: Limit): List[MediaGeoHit] = db.read(MediaRepo.geo(q, MediaRepo.Limit(limit.value)))
+    def geo(q: Api.MediaGeoQuery, limit: Limit): List[MediaGeoHit] =
+      db.read(MediaRepo.geo(q, MediaRepo.Limit(limit.value)))
     // no connection for a tile with no pictures
     def geoOf(uids: List[AssetUid]): Map[AssetUid, MediaGeoHit] =
       if uids.isEmpty then Map.empty else db.read(MediaRepo.geoOf(uids))
@@ -264,7 +320,8 @@ object AssetService:
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
         val taken = s.assets.filter(_.citekey.contains(citekey)).map(_.name).toSet
-        s.modify(_.assets).using(_ ++ incoming.filterNot(f => taken(AssetName(f.name.value))).map(newFigure(citekey, _)))
+        s.modify(_.assets)
+          .using(_ ++ incoming.filterNot(f => taken(AssetName(f.name.value))).map(newFigure(citekey, _)))
       }
       RowCount(incoming.size)
 
@@ -272,26 +329,39 @@ object AssetService:
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
         val mine = s.assets.filter(_.citekey.contains(citekey)).sortBy(_.name.value)
-        val plan = Reconciled.of(mine.map(a => NewFigure.Name(a.name.value) -> a.sha256).toList, incoming.map(f => f.name -> f.sha256))
+        val plan = Reconciled.of(
+          mine.map(a => NewFigure.Name(a.name.value) -> a.sha256).toList,
+          incoming.map(f => f.name -> f.sha256)
+        )
         val gone = plan.deletes.map(_.value).toSet
         val renamed = plan.renames.map((from, to) => from.value -> to).toMap
         val goneUids = mine.filter(a => gone(a.name.value)).map(_.uid).toSet
         val kept = s.assets
           .filterNot(a => goneUids(a.uid))
           .map(a =>
-            if a.citekey.contains(citekey) then renamed.get(a.name.value).fold(a)(n => a.modify(_.name).setTo(AssetName(n.value))) else a
+            if a.citekey.contains(citekey) then
+              renamed.get(a.name.value).fold(a)(n => a.modify(_.name).setTo(AssetName(n.value)))
+            else a
           )
         val links = s.assetLinks
           .filterNot(l => l.citekey.value == citekey.value && gone(l.assetName.value))
           .map(l =>
-            if l.citekey.value == citekey.value then renamed.get(l.assetName.value).fold(l)(n => l.modify(_.assetName).setTo(Bundle.Asset.FileName(n.value))) else l
+            if l.citekey.value == citekey.value then
+              renamed.get(l.assetName.value).fold(l)(n => l.modify(_.assetName).setTo(Bundle.Asset.FileName(n.value)))
+            else l
           )
         val written = incoming.foldLeft(kept) { (as, f) =>
           as.indexWhere(a => a.citekey.contains(citekey) && a.name.value == f.name.value) match
             case -1 => as :+ newFigure(citekey, f)
             case i  =>
               val a = as(i)
-              if (a.mime.value, a.sha256, a.width.map(_.value), a.height.map(_.value)) == (f.mime.value, f.sha256, f.width.map(_.value), f.height.map(_.value)) then as
+              if (a.mime.value, a.sha256, a.width.map(_.value), a.height.map(_.value)) == (
+                  f.mime.value,
+                  f.sha256,
+                  f.width.map(_.value),
+                  f.height.map(_.value)
+                )
+              then as
               else
                 as.updated(
                   i,
@@ -393,7 +463,9 @@ object AssetService:
       val t = now
       val license = Option(a.license.value).filter(_.nonEmpty).map(HeldAsset.License(_))
       val kind = a.kind.map(k => HeldAsset.Kind(k.value))
-      held.find(x => x.provider.exists(_.value == a.provider.value) && x.providerKey.exists(_.value == a.key.value)) match
+      held.find(x =>
+        x.provider.exists(_.value == a.provider.value) && x.providerKey.exists(_.value == a.key.value)
+      ) match
         case Some(x) =>
           change(x.uid)(
             _.modify(_.name)
@@ -478,7 +550,13 @@ object AssetService:
           .setTo(Some(t))
       )
 
-    def setThumb(uid: AssetUid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[ProviderAsset.ThumbWidth], height: Option[ProviderAsset.ThumbHeight]): Unit =
+    def setThumb(
+        uid: AssetUid,
+        bytes: ProviderAsset.Thumb,
+        mime: ProviderAsset.ThumbMime,
+        width: Option[ProviderAsset.ThumbWidth],
+        height: Option[ProviderAsset.ThumbHeight]
+    ): Unit =
       change(uid)(
         _.modify(_.thumb)
           .setTo(Some(bytes))
@@ -521,14 +599,25 @@ object AssetService:
     private def onSource(m: HeldMediaLink, target: PictureTarget): Boolean = m.targetType.value == target.wire.value
 
     def setSourcePicture(citekey: Citekey, uid: AssetUid, role: MediaRole.Wire, property: Option[LinkProperty]): Unit =
-      def mine(m: HeldMediaLink) = onSource(m, PictureTarget.Source) && m.targetId.value == citekey.value && m.role == role
+      def mine(m: HeldMediaLink) =
+        onSource(m, PictureTarget.Source) && m.targetId.value == citekey.value && m.role == role
       val linked = property.map(p => LinkProperty(p.value))
       val _ = state.updateAndGet { s =>
         val others = s.mediaLinks.filterNot(m => mine(m) && m.assetUid != uid)
         val updated =
           if others.exists(m => mine(m) && m.assetUid == uid) then
             others.map(m => if mine(m) && m.assetUid == uid then m.modify(_.property).setTo(linked) else m)
-          else others :+ HeldMediaLink(uid, TargetType(PictureTarget.Source.wire.value), TargetId(citekey.value), role, linked, None, LinkRank(0), None)
+          else
+            others :+ HeldMediaLink(
+              uid,
+              TargetType(PictureTarget.Source.wire.value),
+              TargetId(citekey.value),
+              role,
+              linked,
+              None,
+              LinkRank(0),
+              None
+            )
         s.modify(_.mediaLinks).setTo(updated)
       }
 
@@ -597,10 +686,17 @@ object AssetService:
       val text = clean(q.q.map(_.value)).map(_.toLowerCase)
       val offset = q.offset.map(_.value).getOrElse(0).max(0)
       def matches(a: HeldAsset) =
-        text.forall(t => List(Some(a.name.value), a.credit.map(_.value), a.providerKey.map(_.value)).flatten.exists(_.toLowerCase.contains(t)))
+        text.forall(t =>
+          List(Some(a.name.value), a.credit.map(_.value), a.providerKey.map(_.value)).flatten
+            .exists(_.toLowerCase.contains(t))
+        )
       val all = held
         .filter(a =>
-          ofProvider(a, provider) && underLicence(a, license) && shownOn(a, PictureTarget.Place, clean(q.place.map(_.value))) &&
+          ofProvider(a, provider) && underLicence(a, license) && shownOn(
+            a,
+            PictureTarget.Place,
+            clean(q.place.map(_.value))
+          ) &&
             shownOn(a, PictureTarget.Event, clean(q.event.map(_.value))) && matches(a)
         )
         .sortBy(a =>

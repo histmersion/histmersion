@@ -21,27 +21,32 @@ import com.histmersion.util.console.Console
   */
 object PeriodsCmd:
 
-  private def search (using console: Console) = Opts.subcommand("search", "Find named periods by label, region or time span") {
-    (
-      Opts.argument[String]("query").orNone,
-      Opts.option[String]("region", "Exact region (case-insensitive), e.g. Crete").orNone,
-      Opts.option[Long]("from", "Signed year the period must reach (BCE negative)").orNone,
-      Opts.option[Long]("to", "Signed year the period must start by").orNone
-    )
-      .mapN { (q, region, from, to) => (c: Client) =>
-        c.periods(q.map(_.trim).filter(_.nonEmpty).map(PeriodsApi.Source(_)), region.map(PeriodsApi.Collection(_)), from.map(Api.PlacesGeoQuery.From(_)), to.map(Api.PlacesGeoQuery.To(_)))
-          .map(ps => Cli.out.println(PeriodsMarkdown.list(ps.toVector)))
-      }
-  }
+  private def search(using console: Console) =
+    Opts.subcommand("search", "Find named periods by label, region or time span") {
+      (
+        Opts.argument[String]("query").orNone,
+        Opts.option[String]("region", "Exact region (case-insensitive), e.g. Crete").orNone,
+        Opts.option[Long]("from", "Signed year the period must reach (BCE negative)").orNone,
+        Opts.option[Long]("to", "Signed year the period must start by").orNone
+      )
+        .mapN { (q, region, from, to) => (c: Client) =>
+          c.periods(
+            q.map(_.trim).filter(_.nonEmpty).map(PeriodsApi.Source(_)),
+            region.map(PeriodsApi.Collection(_)),
+            from.map(Api.PlacesGeoQuery.From(_)),
+            to.map(Api.PlacesGeoQuery.To(_))
+          ).map(ps => Cli.out.println(PeriodsMarkdown.list(ps.toVector)))
+        }
+    }
 
-  private def showCmd (using console: Console) =
+  private def showCmd(using console: Console) =
     Opts.subcommand("show", "One period: its span, authority, what it is part of and its divisions") {
       Opts.argument[String]("id").map { id => (c: Client) =>
         c.period(Period.Id(id)).map(d => Cli.out.println(PeriodsMarkdown.detail(d)))
       }
     }
 
-  private def seed (using console: Console) =
+  private def seed(using console: Console) =
     Opts.subcommand("seed", "Import the period presets bundled with the server (a curated PeriodO subset); idempotent") {
       (
         Opts.option[String]("file", "Send this PeriodO dataset instead (e.g. db/periods/periodo-seed.json)").orNone,
@@ -56,14 +61,20 @@ object PeriodsCmd:
           val r = file.map(Path.of(_)) match
             case None               => c.seedPeriods(Api.Overwrite(replace))
             case Some(_) if replace =>
-              Left(Cli.Error(Cli.Error.Message("--replace applies to the bundled seed, not to --file"), exitCode = ExitCode.Usage))
-            case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
-            case Some(f)                            => c.importPeriods(Nil, PeriodsApi.Name(Files.readString(f)), Dataset.Seed)
+              Left(
+                Cli.Error(
+                  Cli.Error.Message("--replace applies to the bundled seed, not to --file"),
+                  exitCode = ExitCode.Usage
+                )
+              )
+            case Some(f) if !Files.isRegularFile(f) =>
+              Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
+            case Some(f) => c.importPeriods(Nil, PeriodsApi.Name(Files.readString(f)), Dataset.Seed)
           r.map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
         }
     }
 
-  private def importCmd (using console: Console) = Opts.subcommand(
+  private def importCmd(using console: Console) = Opts.subcommand(
     "import",
     "Upsert a PeriodO dataset of your own (a dump or a subset); its periods are this collection's and travel in a bundle"
   ) {
@@ -74,12 +85,15 @@ object PeriodsCmd:
     )
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
-        if !Files.isRegularFile(f) then Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
-        else c.importPeriods(cols.map(PeriodsApi.Source(_)), PeriodsApi.Name(Files.readString(f)), dataset).map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
+        if !Files.isRegularFile(f) then
+          Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+        else
+          c.importPeriods(cols.map(PeriodsApi.Source(_)), PeriodsApi.Name(Files.readString(f)), dataset)
+            .map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
       }
   }
 
-  private def fetch (using console: Console) = Opts.subcommand(
+  private def fetch(using console: Console) = Opts.subcommand(
     "fetch",
     "Download PeriodO and import collections, each under one node; re-runnable and idempotent"
   ) {
@@ -93,17 +107,18 @@ object PeriodsCmd:
         .orEmpty
     )
       .mapN { (source, cols) => (c: Client) =>
-        c.fetchPeriods(PeriodsApi.Source(source), cols.map(PeriodsApi.Collection(_))).map(r => Cli.out.println(PeriodsMarkdown.imported(r)))
+        c.fetchPeriods(PeriodsApi.Source(source), cols.map(PeriodsApi.Collection(_)))
+          .map(r => Cli.out.println(PeriodsMarkdown.imported(r)))
       }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("periods", "Named periods (the timeline presets): search, show, seed and fetch from PeriodO") {
       search orElse showCmd orElse seed orElse importCmd orElse fetch
     }
 
   /** `histmersion init` — what a server does by itself on its first start, on demand. */
-  def init(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def init(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "init",
       "Import the bundled gazetteer and period presets (a server job); --fetch adds the network sources"

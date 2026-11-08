@@ -28,4 +28,3 @@ trait ResearchSite:
 
   /** A goal by its slug, a renamed goal's old slug answering as the goal it was renamed to. */
   def goal(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal]
-

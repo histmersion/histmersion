@@ -15,11 +15,30 @@ class AttestationSourceReferrerSuite extends munit.FunSuite:
   test("attestations of its findings, of edges FROM it and of its datings go; of edges TO it they stay"):
     assert(AttestationSourceReferrer.goes(BAttestationFullRow.TargetType("finding"), target(s"$Ck#3"), source))
     assert(!AttestationSourceReferrer.goes(BAttestationFullRow.TargetType("finding"), target(s"${Ck}x#3"), source))
-    assert(AttestationSourceReferrer.goes(BAttestationFullRow.TargetType("edge"), target(s"$Ck|cline2014_1177|challenges"), source))
     assert(
-      !AttestationSourceReferrer.goes(BAttestationFullRow.TargetType("edge"), target(s"cline2014_1177|$Ck|challenges"), source),
+      AttestationSourceReferrer.goes(
+        BAttestationFullRow.TargetType("edge"),
+        target(s"$Ck|cline2014_1177|challenges"),
+        source
+      )
+    )
+    assert(
+      !AttestationSourceReferrer
+        .goes(BAttestationFullRow.TargetType("edge"), target(s"cline2014_1177|$Ck|challenges"), source),
       "an incoming edge is parked, not deleted"
     )
-    assert(AttestationSourceReferrer.goes(BAttestationFullRow.TargetType("event_dating"), target(s"fall_of_troy|$Ck"), source))
-    assert(!AttestationSourceReferrer.goes(BAttestationFullRow.TargetType("event_dating"), target(s"fall_of_troy|${Ck}_v2"), source))
+    assert(
+      AttestationSourceReferrer.goes(
+        BAttestationFullRow.TargetType("event_dating"),
+        target(s"fall_of_troy|$Ck"),
+        source
+      )
+    )
+    assert(
+      !AttestationSourceReferrer.goes(
+        BAttestationFullRow.TargetType("event_dating"),
+        target(s"fall_of_troy|${Ck}_v2"),
+        source
+      )
+    )
     assert(!AttestationSourceReferrer.goes(BAttestationFullRow.TargetType("place"), target(Ck.value), source))

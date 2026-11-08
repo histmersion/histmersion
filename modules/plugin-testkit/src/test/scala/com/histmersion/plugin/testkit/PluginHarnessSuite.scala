@@ -87,7 +87,10 @@ class PluginHarnessSuite extends munit.FunSuite:
     def why(id: Plugin.Info.Id, config: String = ""): String =
       PluginHarness.load(id, config, env = Map.empty).swap.map(_.value).getOrElse(fail("loaded"))
     assert(why(Plugin.Info.Id("nope")).contains("found: kit-"), why(Plugin.Info.Id("nope")))
-    assert(why(Plugin.Info.Id("kit-nodefaults")).contains("META-INF/histmersion/plugins/kit-nodefaults.conf"), why(Plugin.Info.Id("kit-nodefaults")))
+    assert(
+      why(Plugin.Info.Id("kit-nodefaults")).contains("META-INF/histmersion/plugins/kit-nodefaults.conf"),
+      why(Plugin.Info.Id("kit-nodefaults"))
+    )
     assert(why(Plugin.Info.Id("kit-broken")).contains("broken on purpose"), why(Plugin.Info.Id("kit-broken")))
     assert(
       why(KitFetcher, "base-urll = \"x\"").contains("histmersion.plugins.kit-fetcher.base-urll: unknown setting")
@@ -119,7 +122,10 @@ class PluginHarnessSuite extends munit.FunSuite:
       secrets = Map(Secret.Ref.ParseText("env:KIT_KEY") -> Secret.Vault.ResolveResultPart2("k-5678"))
     )
     val ai = ScriptedAiHttp(Right(AiHttp.Response(AiHttp.Response.Status(200), AiHttp.Response.Body("hello"))))
-    assertEquals(viaEnv.aiTurn(Registries.AiProvidersKey("kit-ai"), request, ai).turn, Some(Right(AiTurn(AiTurn.Text("hello")))))
+    assertEquals(
+      viaEnv.aiTurn(Registries.AiProvidersKey("kit-ai"), request, ai).turn,
+      Some(Right(AiTurn(AiTurn.Text("hello"))))
+    )
     assertEquals(ai.requests.map(_.headers(CoreQuota.HeaderName("x-api-key"))), List("***"))
     val missing = PluginHarness.load(KitAi, "api-key = \"keepassxc:Models/key\"", env = Map.empty)
     assert(missing.left.exists(_.value.contains("no secret vault 'keepassxc'")), missing.toString)
@@ -132,9 +138,15 @@ class PluginHarnessSuite extends munit.FunSuite:
       "base-url = \"https://books.example\"",
       HttpMode.Stub(
         Map(
-          HttpTransport.Url("https://books.example/10.1/ok.pdf") -> StubAnswer.ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf")),
-          HttpTransport.Url("https://books.example/10.1/tiny.pdf") -> StubAnswer.ok(HttpAnswer.Body("%PDF-1.7".getBytes(UTF_8))),
-          HttpTransport.Url("https://books.example/10.1/cf.pdf") -> StubAnswer(HttpAnswer.Code(403), HttpAnswer.Body(JustAMoment.getBytes(UTF_8)))
+          HttpTransport.Url("https://books.example/10.1/ok.pdf") -> StubAnswer
+            .ok(HttpAnswer.Body(Pdf), CoreQuota.HeaderValue("application/pdf")),
+          HttpTransport.Url("https://books.example/10.1/tiny.pdf") -> StubAnswer.ok(
+            HttpAnswer.Body("%PDF-1.7".getBytes(UTF_8))
+          ),
+          HttpTransport.Url("https://books.example/10.1/cf.pdf") -> StubAnswer(
+            HttpAnswer.Code(403),
+            HttpAnswer.Body(JustAMoment.getBytes(UTF_8))
+          )
         )
       )
     )
@@ -146,12 +158,18 @@ class PluginHarnessSuite extends munit.FunSuite:
       case other => fail(s"expected a saved copy, got $other")
     assertEquals(found.licence, Some("CC-BY-4.0"))
     assertEquals(found.requests, List("GET https://books.example/10.1/ok.pdf"))
-    assertEquals(h.fetch(WorkKey(doi = Some(Doi("10.1/tiny")))).outcome, FetchOutcome.Miss(FetchOutcome.Miss.Why("kit-fetcher: not a PDF")))
+    assertEquals(
+      h.fetch(WorkKey(doi = Some(Doi("10.1/tiny")))).outcome,
+      FetchOutcome.Miss(FetchOutcome.Miss.Why("kit-fetcher: not a PDF"))
+    )
     h.fetch(WorkKey(doi = Some(Doi("10.1/cf")))).outcome match
       case FetchOutcome.Refused(why) => assert(why.value.contains("bot-protection challenge"), why)
       case other                     => fail(s"expected a refusal, got $other")
     assert(h.fetch(WorkKey(doi = Some(Doi("10.1/none")))).outcome.toString.contains("HTTP 404"))
-    assertEquals(h.fetch(WorkKey(title = Some(WorkKey.Title("No DOI")))).answers, List(FetcherAnswer(FetchChain.Answer.Fetcher("kit-fetcher"), false, FetchChain.Answer.Why("no DOI"))))
+    assertEquals(
+      h.fetch(WorkKey(title = Some(WorkKey.Title("No DOI")))).answers,
+      List(FetcherAnswer(FetchChain.Answer.Fetcher("kit-fetcher"), false, FetchChain.Answer.Why("no DOI")))
+    )
   }
 
   test("live: the server's User-Agent goes out"):
@@ -231,7 +249,10 @@ class PluginHarnessSuite extends munit.FunSuite:
         )
       )
     )
-    val r = h.searchMedia(Registries.MediaCollectionsKey("kit-media"), MediaPlace(MediaPlace.Id("pleiades_550595"), MediaPlace.Label("Troy")))
+    val r = h.searchMedia(
+      Registries.MediaCollectionsKey("kit-media"),
+      MediaPlace(MediaPlace.Id("pleiades_550595"), MediaPlace.Label("Troy"))
+    )
     assertEquals(r.kept.map(v => v.key -> v.licence), List("a" -> Some("CC-BY-4.0")))
     assertEquals(
       r.verdicts.map(v => v.key -> v.refused.isDefined),
@@ -239,7 +260,8 @@ class PluginHarnessSuite extends munit.FunSuite:
     )
     assertEquals(r.verdicts(2).refused, Some("no image"))
     assertEquals(
-      h.searchMedia(Registries.MediaCollectionsKey("other"), MediaPlace(MediaPlace.Id("x"), MediaPlace.Label("y"))).failure,
+      h.searchMedia(Registries.MediaCollectionsKey("other"), MediaPlace(MediaPlace.Id("x"), MediaPlace.Label("y")))
+        .failure,
       Some("the plugin registered no media collection 'other'")
     )
 
@@ -280,7 +302,10 @@ class PluginHarnessSuite extends munit.FunSuite:
 
   test("AI: the provider's check first, then one call through the scripted transport"):
     val none = loaded(KitAi)
-    assertEquals(none.aiTurn(Registries.AiProvidersKey("kit-ai"), request), AiReport(Left(PluginAi.Problem("no api-key configured")), None, Nil))
+    assertEquals(
+      none.aiTurn(Registries.AiProvidersKey("kit-ai"), request),
+      AiReport(Left(PluginAi.Problem("no api-key configured")), None, Nil)
+    )
     val keyed = loaded(KitAi, "api-key = \"value:k-0000\"")
     assert(keyed.warnings.exists(_.value.contains("value:***")), keyed.warnings.toString)
     val down = keyed.aiTurn(Registries.AiProvidersKey("kit-ai"), request, ScriptedAiHttp())
@@ -289,4 +314,8 @@ class PluginHarnessSuite extends munit.FunSuite:
   test("a secret vault resolves as the server asks it"):
     val h = loaded(KitVault, "entries = [\"portal=s3cret\"]")
     assertEquals(h.resolveSecret(Secret.Ref.Vault.Value("kit-vault"), Secret.Ref.Vault.Ref("portal")), Right("s3cret"))
-    assert(h.resolveSecret(Secret.Ref.Vault.Value("kit-vault"), Secret.Ref.Vault.Ref("other")).left.exists(_.value.contains("no entry 'other'")))
+    assert(
+      h.resolveSecret(Secret.Ref.Vault.Value("kit-vault"), Secret.Ref.Vault.Ref("other"))
+        .left
+        .exists(_.value.contains("no entry 'other'"))
+    )

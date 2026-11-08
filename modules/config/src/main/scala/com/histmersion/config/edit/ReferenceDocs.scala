@@ -17,12 +17,15 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
     if i < 0 || i >= lines.size then ""
     else
       val indent = indentOf(lines(i).value)
-      val trailing = (i :: envLines(i, leaf)).flatMap(j => trailingComment(lines(j).value).toList ++ continuations(j, indent))
+      val trailing =
+        (i :: envLines(i, leaf)).flatMap(j => trailingComment(lines(j).value).toList ++ continuations(j, indent))
       clean(leading(i, indent) ++ trailing)
 
   /** The environment variable the key `leaf` at `line` names on the lines right under it. */
   def envVar(line: Int, leaf: String): Option[SettingField.EnvVar] =
-    envLines(line - 1, leaf).flatMap(j => EnvLine.findFirstMatchIn(content(lines(j).value)).map(m => SettingField.EnvVar(m.group(2)))).headOption
+    envLines(line - 1, leaf)
+      .flatMap(j => EnvLine.findFirstMatchIn(content(lines(j).value)).map(m => SettingField.EnvVar(m.group(2))))
+      .headOption
 
   /** The `leaf = ${?VAR}` lines directly under line `i`. */
   private def envLines(i: Int, leaf: String): List[Int] =
@@ -31,7 +34,10 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
       else
         EnvLine.findFirstMatchIn(content(lines(j).value)) match
           case Some(m) if m.group(1) == leaf => loop(j + 1, j :: acc)
-          case _ if isCommentOnly(lines(j).value) && commentColumn(lines(j).value) > indentOf(lines(i).value) + ContinuationIndent =>
+          case _
+              if isCommentOnly(lines(j).value) && commentColumn(lines(j).value) > indentOf(
+                lines(i).value
+              ) + ContinuationIndent =>
             loop(j + 1, acc)
           case _ => acc.reverse
     loop(i + 1, Nil)
@@ -46,8 +52,10 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
   /** The comment-only lines under line `i`, indented past the key: the end-of-line comment goes on there. */
   private def continuations(i: Int, indent: Int): List[String] =
     @tailrec def loop(j: Int, acc: List[String]): List[String] =
-      if j >= lines.size || !isCommentOnly(lines(j).value) || commentColumn(lines(j).value) <= indent + ContinuationIndent then
-        acc.reverse
+      if j >= lines.size || !isCommentOnly(lines(j).value) || commentColumn(
+          lines(j).value
+        ) <= indent + ContinuationIndent
+      then acc.reverse
       else loop(j + 1, commentText(lines(j).value) :: acc)
     loop(i + 1, Nil)
 

@@ -39,7 +39,10 @@ final case class ClaudeCodeConfig(
 ) derives ConfigReader:
   /** [[env]] as changes to an environment, sorted by name: `Some(value)` sets, `None` removes. */
   def envChanges: List[(ClaudeCodeConfig.EnvKey, Option[ClaudeCodeConfig.EnvValue])] =
-    env.toList.map((k, v) => ClaudeCodeConfig.EnvKey(k.value.trim) -> v.filter(_.value.trim.nonEmpty)).filter(_._1.value.nonEmpty).sortBy(_._1.value)
+    env.toList
+      .map((k, v) => ClaudeCodeConfig.EnvKey(k.value.trim) -> v.filter(_.value.trim.nonEmpty))
+      .filter(_._1.value.nonEmpty)
+      .sortBy(_._1.value)
 
 object ClaudeCodeConfig:
   type Command = Command.T

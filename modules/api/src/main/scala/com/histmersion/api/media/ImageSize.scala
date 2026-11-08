@@ -10,7 +10,6 @@ object ImageSize:
   type Width = Width.T
   object Width extends Newtype[Int, Pure]
 
-
   def of(bytes: Bytes): Option[(Width, Height)] =
     if png(bytes) then pngSize(bytes)
     else if gif(bytes) then gifSize(bytes)

@@ -46,7 +46,16 @@ class ArticleReviewHttpSuite extends DbSuite:
   private val RunB = "zzrev-run-b"
 
   private def finding(id: Finding.Id, r: Reviewer, s: Severity, problem: Finding.Problem) =
-    Finding(id, r, s, Finding.Kind("undefined-term"), Finding.Where("Background"), Finding.Quote(""), problem, Finding.Fix(""))
+    Finding(
+      id,
+      r,
+      s,
+      Finding.Kind("undefined-term"),
+      Finding.Where("Background"),
+      Finding.Quote(""),
+      problem,
+      Finding.Fix("")
+    )
 
   private val ledger = Ledger(
     Ledger.Slug.applyUnsafe(Running),
@@ -56,7 +65,14 @@ class ArticleReviewHttpSuite extends DbSuite:
         Entry.Run.assume(RunA),
         Entry.Round(1),
         Status.Rejected,
-        closed = Some(Closure(Closure.By("fixer"), Closure.Round(1), Closure.Run.assume(RunA), Closure.Note("the record supports the sentence")))
+        closed = Some(
+          Closure(
+            Closure.By("fixer"),
+            Closure.Round(1),
+            Closure.Run.assume(RunA),
+            Closure.Note("the record supports the sentence")
+          )
+        )
       ),
       Entry(
         finding(Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor, Finding.Problem("term not defined")),
@@ -65,7 +81,11 @@ class ArticleReviewHttpSuite extends DbSuite:
         Status.Fixed,
         closed = Some(Closure(Closure.By("cold-reader"), Closure.Round(2), Closure.Run.assume(RunA)))
       ),
-      Entry(finding(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Problem("a critique is missing")), Entry.Run.assume(RunB), Entry.Round(1))
+      Entry(
+        finding(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Problem("a critique is missing")),
+        Entry.Run.assume(RunB),
+        Entry.Round(1)
+      )
     )
   )
 
@@ -136,7 +156,10 @@ class ArticleReviewHttpSuite extends DbSuite:
         )
         assertEquals(r.rounds.head.startedAt, Some("2026-10-01T10:00:00Z"))
         assertEquals(r.rounds.head.findings.head.note, "the record supports the sentence")
-        assertEquals(r.goals, List(ReviewGoal(ReviewGoal.Slug(Goal), ReviewGoal.Title("Zz review goal"), ReviewGoal.Status("compiled"))))
+        assertEquals(
+          r.goals,
+          List(ReviewGoal(ReviewGoal.Slug(Goal), ReviewGoal.Title("Zz review goal"), ReviewGoal.Status("compiled")))
+        )
         assertEquals(r.approvals.map(_.kind), List("article-filter"))
         assertEquals(get(s"$url/api/articles/zzrev-nothing/review")._1, 404)
         val fresh = io.circe.parser.decode[Article.ReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get

@@ -24,5 +24,6 @@ given ConfigReader[Long] = lenient("long", ConfigReader.longReader, _.toLongOpti
 given ConfigReader[Double] = lenient("double", ConfigReader.doubleReader, _.toDoubleOption)
 given ConfigReader[Boolean] = lenient("boolean", ConfigReader.booleanReader, _.toBooleanOption)
 
-given ConfigReader[SeaFloorSource] = ConfigReader.stringReader.emap(s => SeaFloorSource.parse(SeaFloorSource.Wire(s)).left.map(_.value))
+given ConfigReader[SeaFloorSource] =
+  ConfigReader.stringReader.emap(s => SeaFloorSource.parse(SeaFloorSource.Wire(s)).left.map(_.value))
 given ConfigReader[Year] = summon[ConfigReader[Int]].emap(Year.either)

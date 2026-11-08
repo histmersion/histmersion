@@ -24,22 +24,41 @@ import com.histmersion.api.catalogue.Place
 class FilterSuite extends munit.FunSuite:
 
   test("Filter.of trims, splits comma lists and drops blanks"):
-    val f = Filter.of(q = Some(Filter.Q("  collapse ")), tags = List(Filter.Tags("sea-peoples, steppe"), Filter.Tags(" "), Filter.Tags("bronze-age")))
+    val f = Filter.of(
+      q = Some(Filter.Q("  collapse ")),
+      tags = List(Filter.Tags("sea-peoples, steppe"), Filter.Tags(" "), Filter.Tags("bronze-age"))
+    )
     assertEquals(f.q, Some("collapse"))
     assertEquals(f.tags, List("sea-peoples", "steppe", "bronze-age"))
     assertEquals(Filter.of(q = Some(Filter.Q("   "))).q, None)
 
   test("Filter.of builds closed periods from half-open bounds"):
-    assertEquals(Filter.of(from = Some(Year(-1300)), to = Some(Year(-1100))).period, Some(Period(Year(-1300), Year(-1100))))
+    assertEquals(
+      Filter.of(from = Some(Year(-1300)), to = Some(Year(-1100))).period,
+      Some(Period(Year(-1300), Year(-1100)))
+    )
     assertEquals(Filter.of(from = Some(Year(-1300))).period, Some(Period(Year(-1300), Filter.Latest)))
     assertEquals(Filter.of(to = Some(Year(-1100))).period, Some(Period(Filter.Earliest, Year(-1100))))
     assertEquals(Filter.of().period, None)
-    assertEquals(Filter.of(from = Some(Year(-1100)), to = Some(Year(-1300))).period, Some(Period(Year(-1300), Year(-1100))))
+    assertEquals(
+      Filter.of(from = Some(Year(-1100)), to = Some(Year(-1300))).period,
+      Some(Period(Year(-1300), Year(-1100)))
+    )
 
   test("a bbox needs all four corners"):
-    assertEquals(Filter.of(minLon = Some(Longitude(1)), minLat = Some(Latitude(2)), maxLon = Some(Longitude(3))).bbox, None)
     assertEquals(
-      Filter.of(minLon = Some(Longitude(1)), minLat = Some(Latitude(2)), maxLon = Some(Longitude(3)), maxLat = Some(Latitude(4))).bbox,
+      Filter.of(minLon = Some(Longitude(1)), minLat = Some(Latitude(2)), maxLon = Some(Longitude(3))).bbox,
+      None
+    )
+    assertEquals(
+      Filter
+        .of(
+          minLon = Some(Longitude(1)),
+          minLat = Some(Latitude(2)),
+          maxLon = Some(Longitude(3)),
+          maxLat = Some(Latitude(4))
+        )
+        .bbox,
       Some(BBox(Longitude(1), Latitude(2), Longitude(3), Latitude(4)))
     )
 
@@ -63,7 +82,10 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Facet.Field.all, List("tags", "authors", "places", "topics", "status", "provenance"))
 
   test("BBox.parse reads the CLI spelling"):
-    assertEquals(BBox.parse(BBox.Text("25,30, 45 ,42")), Some(BBox(Longitude(25), Latitude(30), Longitude(45), Latitude(42))))
+    assertEquals(
+      BBox.parse(BBox.Text("25,30, 45 ,42")),
+      Some(BBox(Longitude(25), Latitude(30), Longitude(45), Latitude(42)))
+    )
     assertEquals(BBox.parse(BBox.Text("25,30,45")), None)
     assertEquals(BBox.parse(BBox.Text("a,b,c,d")), None)
 
@@ -119,7 +141,10 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Filter.of(title = Some(Filter.Title("   "))).title, None)
     assert(!Filter(title = Some(Filter.Title("troy"))).isEmpty)
     assert(Filter(title = Some(Filter.Title("troy")), sort = Sort.Year, limit = Filter.Limit(2)).sourceSet.isEmpty)
-    assertEquals(Filter(status = List(Filter.Status("current")), title = Some(Filter.Title("t"))).sourceSet, Filter(status = List(Filter.Status("current"))))
+    assertEquals(
+      Filter(status = List(Filter.Status("current")), title = Some(Filter.Title("t"))).sourceSet,
+      Filter(status = List(Filter.Status("current")))
+    )
 
   // ── Markdown: every hit must show the evidence ─────────────────────────────────────────────
   private val hit = Hit(
@@ -165,13 +190,18 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(SearchMarkdown.searchResults(SearchResult(RowCount(0), Nil)), "_No matching sources._")
 
   test("a hit with no matched findings renders without a matches: list"):
-    val md = SearchMarkdown.searchResults(SearchResult(RowCount(1), List(hit.modify(_.matched).setTo(Nil).modify(_.why).setTo(Nil))))
+    val md = SearchMarkdown.searchResults(
+      SearchResult(RowCount(1), List(hit.modify(_.matched).setTo(Nil).modify(_.why).setTo(Nil)))
+    )
     assert(!md.contains("matches:"), md)
     assert(!md.contains("why:"), md)
 
   test("facets render value (count)"):
     assertEquals(
-      SearchMarkdown.facets(Facet.FieldText("tags"), Vector(Facet(Facet.Value("sea-peoples"), Facet.Count(12)), Facet(Facet.Value("steppe"), Facet.Count(3)))),
+      SearchMarkdown.facets(
+        Facet.FieldText("tags"),
+        Vector(Facet(Facet.Value("sea-peoples"), Facet.Count(12)), Facet(Facet.Value("steppe"), Facet.Count(3)))
+      ),
       "### tags (2)\n\n- sea-peoples (12)\n- steppe (3)"
     )
     assertEquals(SearchMarkdown.facets(Facet.FieldText("tags"), Vector.empty), "_No tags in the current filter._")
@@ -185,12 +215,18 @@ class FilterSuite extends munit.FunSuite:
 
   test("FindingsQuery folds the legacy `region` parameter in as one more place"):
     val f = Filter(places = List(Filter.Places("Levant")), tags = List(Filter.Tags("sea-peoples")))
-    assertEquals(Api.FindingsQuery(f, Some(Api.FindingsQuery.Region(" Anatolia "))).toFilter.places, List("Levant", "Anatolia"))
+    assertEquals(
+      Api.FindingsQuery(f, Some(Api.FindingsQuery.Region(" Anatolia "))).toFilter.places,
+      List("Levant", "Anatolia")
+    )
     assertEquals(Api.FindingsQuery(f, None).toFilter, f)
     assertEquals(Api.FindingsQuery(f, Some(Api.FindingsQuery.Region("  "))).toFilter, f)
     assertEquals(Api.FindingsQuery.of(f).toFilter, f)
     // a bare `?region=…` is exactly the old behaviour: one place name
-    assertEquals(Api.FindingsQuery(Filter(), Some(Api.FindingsQuery.Region("Anatolia"))).toFilter.places, List("Anatolia"))
+    assertEquals(
+      Api.FindingsQuery(Filter(), Some(Api.FindingsQuery.Region("Anatolia"))).toFilter.places,
+      List("Anatolia")
+    )
 
   test("AggregateQuery.time defaults `by` to time and keeps the filter as given"):
     val f = Filter(tags = List(Filter.Tags("steppe")), period = Some(Period(Year(-3300), Year(-2600))))
@@ -203,8 +239,14 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Api.AggregateQuery.time(f).depth, None)
     // `.tree` always asks for one; depth 0 means "the server's configured ui.tree-depth"
     assertEquals(Api.AggregateQuery.tree(Api.AggregateQuery.By("time"), f).depth, Some(0))
-    assertEquals(Api.AggregateQuery.tree(Api.AggregateQuery.By("time,region"), f, depth = Some(Api.AggregateQuery.Depth(3))).depth, Some(3))
-    assertEquals(Api.AggregateQuery.tree(Api.AggregateQuery.By("region"), f, asOf = Some(Api.AggregateQuery.AsOf(-1400L))).asOf, Some(-1400L))
+    assertEquals(
+      Api.AggregateQuery.tree(Api.AggregateQuery.By("time,region"), f, depth = Some(Api.AggregateQuery.Depth(3))).depth,
+      Some(3)
+    )
+    assertEquals(
+      Api.AggregateQuery.tree(Api.AggregateQuery.By("region"), f, asOf = Some(Api.AggregateQuery.AsOf(-1400L))).asOf,
+      Some(-1400L)
+    )
 
   // ── half-open ranges must never build an INVERTED period ─────────────────────────────────────
 

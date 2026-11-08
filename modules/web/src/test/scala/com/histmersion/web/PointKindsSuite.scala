@@ -69,7 +69,17 @@ class PointKindsSuite extends munit.FunSuite:
     Longitude(32),
     EventGeo.Anchor("event")
   )
-  private val picture = MediaGeoHit(None, Bundle.Asset.FileName("zz.jpg"), Some(MediaItem.Kind("photo")), Latitude(37.0), Longitude(22.0), Some(Year(-1500L)), Some(Year(-1400L)), None, MediaItem.Uid("u1"))
+  private val picture = MediaGeoHit(
+    None,
+    Bundle.Asset.FileName("zz.jpg"),
+    Some(MediaItem.Kind("photo")),
+    Latitude(37.0),
+    Longitude(22.0),
+    Some(Year(-1500L)),
+    Some(Year(-1400L)),
+    None,
+    MediaItem.Uid("u1")
+  )
 
   private val samples: List[Sample[?]] = List(
     Sample(
@@ -96,9 +106,13 @@ class PointKindsSuite extends munit.FunSuite:
 
   test("an unknown type is its kind's shape with the exclamation mark, never a bare dot"):
     samples.foreach { case Sample(k, _, u) =>
-      u.foreach(a => assert(k.inner(a) == Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot}: ${k.inner(a)}"))
+      u.foreach(a =>
+        assert(k.inner(a) == Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot}: ${k.inner(a)}")
+      )
     }
-    samples.foreach { case Sample(k, a, _) => assert(k.inner(a) != Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot} known") }
+    samples.foreach { case Sample(k, a, _) =>
+      assert(k.inner(a) != Glyphs.badge(Glyphs.BadgeName(CardIcons.Unknown)).value, s"${k.dot} known")
+    }
 
   test("the colour lives in --c alone: a span change re-colours in place, it never re-draws"):
     samples.foreach { case Sample(k, a, _) =>
@@ -112,7 +126,9 @@ class PointKindsSuite extends munit.FunSuite:
       val l = PointMarker.ariaLabel(k, a)
       assert(l.value.endsWith(s" — ${k.action(a).value}") && k.label(a).value.nonEmpty, s"${k.dot}: ${l.value}")
     }
-    assert(!PointMarker.ariaLabel(PointKinds.Findings, samples.head.known.asInstanceOf[Spot]).value.contains("zz2020_x"))
+    assert(
+      !PointMarker.ariaLabel(PointKinds.Findings, samples.head.known.asInstanceOf[Spot]).value.contains("zz2020_x")
+    )
 
   test("what a bubble counts: one per point, a findings' point by its findings; every row but a finding's has an icon"):
     samples.foreach { case Sample(k, a, _) =>
@@ -121,7 +137,11 @@ class PointKindsSuite extends munit.FunSuite:
       assertEquals(m.n, 1)
       assert(m.mids.nonEmpty, s"${k.dot} is dated")
       if k.dot == DotKind.Finding then assertEquals(m.findings.size, 1)
-      else assert(m.entry.exists(e => e.kind == k.dot && Glyphs.svg(Glyphs.Name(e.icon.value)).value.nonEmpty),s"${k.dot}: ${m.entry}")
+      else
+        assert(
+          m.entry.exists(e => e.kind == k.dot && Glyphs.svg(Glyphs.Name(e.icon.value)).value.nonEmpty),
+          s"${k.dot}: ${m.entry}"
+        )
     }
     val two = Spot(Latitude(1), Longitude(2), List(finding, finding.modify(_.citekey).setTo(Citekey("zz2021_y"))))
     assertEquals(PointKinds.Findings.member(two).n, 2)
@@ -130,8 +150,14 @@ class PointKindsSuite extends munit.FunSuite:
     assertEquals(PointKinds.Findings.target(two, None), None)
 
   test("the card a hover shows: the source, the place at the map's year, the event, a figure's source"):
-    assertEquals(PointKinds.Findings.target(Spot(Latitude(1), Longitude(2), List(finding)), None), Some(Preview.Target.Source(Preview.Target.Source.Citekey("zz2020_x"))))
-    assertEquals(PointKinds.Sites.target(site, Some(Years.Astronomical(-1300L))), Some(Preview.Target.Place(Preview.Target.Place.Id("zz_fort"), Some(Years.Astronomical(-1300L)))))
+    assertEquals(
+      PointKinds.Findings.target(Spot(Latitude(1), Longitude(2), List(finding)), None),
+      Some(Preview.Target.Source(Preview.Target.Source.Citekey("zz2020_x")))
+    )
+    assertEquals(
+      PointKinds.Sites.target(site, Some(Years.Astronomical(-1300L))),
+      Some(Preview.Target.Place(Preview.Target.Place.Id("zz_fort"), Some(Years.Astronomical(-1300L))))
+    )
     assertEquals(PointKinds.Events.target(event, None), Some(Preview.Target.Event(Preview.Target.Event.Id("zz_b"))))
     assertEquals(PointKinds.Media.target(picture, None), None)
     assertEquals(
@@ -152,6 +178,12 @@ class PointKindsSuite extends munit.FunSuite:
 
   test("findings at one point are one point; the spots keep their order"):
     val a = finding.modify(_.lat).setTo(Some(Latitude(1))).modify(_.lon).setTo(Some(Longitude(2)))
-    val b = finding.modify(_.citekey).setTo(Citekey("b")).modify(_.lat).setTo(Some(Latitude(3))).modify(_.lon).setTo(Some(Longitude(4)))
+    val b = finding
+      .modify(_.citekey)
+      .setTo(Citekey("b"))
+      .modify(_.lat)
+      .setTo(Some(Latitude(3)))
+      .modify(_.lon)
+      .setTo(Some(Longitude(4)))
     val spots = Spot.of(List(a, b, a.modify(_.citekey).setTo(Citekey("c")), finding.modify(_.lat).setTo(None)))
     assertEquals(spots.map(s => (s.lat, s.lon, s.items.size)), List((1.0, 2.0, 2), (3.0, 4.0, 1)))

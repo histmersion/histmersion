@@ -22,15 +22,26 @@ import com.histmersion.domain.library.Citekey
 class EnrichSourceSuite extends munit.FunSuite:
 
   /** No guard fires: every place resolves, no phrase, a gap no source reaches (#1424 has its own suite). */
-  private val open = FindingGuards(EnrichSource.FindingGuards.MinPlacedShare(0.0), EnrichSource.FindingGuards.CenturyGapYears(1000000L), Nil, (_, _, _) => true)
+  private val open = FindingGuards(
+    EnrichSource.FindingGuards.MinPlacedShare(0.0),
+    EnrichSource.FindingGuards.CenturyGapYears(1000000L),
+    Nil,
+    (_, _, _) => true
+  )
 
   private val window = Window(
     EnrichSource.Window.Index(1),
     Some(EnrichSource.Window.Heading("Results")),
-    EnrichSource.Window.Text("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
+    EnrichSource.Window.Text(
+      "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+    )
   )
 
-  private def finding(quote: AgentProposals.Proposal.Quote, conf: Confidence.Wire = Confidence.Wire("high"), start: Option[StatedYear] = None) =
+  private def finding(
+      quote: AgentProposals.Proposal.Quote,
+      conf: Confidence.Wire = Confidence.Wire("high"),
+      start: Option[StatedYear] = None
+  ) =
     FindingProposal(
       EnrichSource.FindingProposal.Claim("The ship carried copper and tin."),
       quote,
@@ -64,30 +75,65 @@ class EnrichSourceSuite extends munit.FunSuite:
       List(EnrichSource.Topic("trade")),
       List(EnrichSource.Region("Anatolia")),
       List(EnrichSource.Tag("Bronze Age"), EnrichSource.Tag("tin trade")),
-      Some(StatedPeriod(StatedYear(AgentVerify.ToSignedYearValue(1600), AgentVerify.YearUnit.Wire("BCE")), StatedYear(AgentVerify.ToSignedYearValue(1200), AgentVerify.YearUnit.Wire("BCE")))),
+      Some(
+        StatedPeriod(
+          StatedYear(AgentVerify.ToSignedYearValue(1600), AgentVerify.YearUnit.Wire("BCE")),
+          StatedYear(AgentVerify.ToSignedYearValue(1200), AgentVerify.YearUnit.Wire("BCE"))
+        )
+      ),
       com.histmersion.domain.library.Source.Status.Wire("current"),
       EnrichSource.Classification.StatusEvidence("widely cited")
     )
-    val (v, ws) = checkClassification(c, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(false)).toOption.get
+    val (v, ws) = checkClassification(
+      c,
+      EnrichSource.CheckClassificationMaxAbsYear(3000000),
+      last = EnrichSource.Last(false)
+    ).toOption.get
     assertEquals(v.period, Some(Period(Year(-1600), Year(-1200))))
     assertEquals(v.status, Source.Status.Current)
     assertEquals(v.tags, List("bronze_age", "tin_trade"))
     assertEquals(ws, Nil)
 
   test("classification: a bad status is rejected; a raw-BP period is retried, then dropped on the last attempt"):
-    val bad = Classification(EnrichSource.Classification.Summary("S"), Nil, Nil, Nil, None, com.histmersion.domain.library.Source.Status.Wire("debunk"), EnrichSource.Classification.StatusEvidence(""))
-    assert(checkClassification(bad, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(true)).isLeft)
+    val bad = Classification(
+      EnrichSource.Classification.Summary("S"),
+      Nil,
+      Nil,
+      Nil,
+      None,
+      com.histmersion.domain.library.Source.Status.Wire("debunk"),
+      EnrichSource.Classification.StatusEvidence("")
+    )
+    assert(
+      checkClassification(
+        bad,
+        EnrichSource.CheckClassificationMaxAbsYear(3000000),
+        last = EnrichSource.Last(true)
+      ).isLeft
+    )
     val bp = Classification(
       EnrichSource.Classification.Summary("S"),
       Nil,
       Nil,
       Nil,
-      Some(StatedPeriod(StatedYear(AgentVerify.ToSignedYearValue(3270), AgentVerify.YearUnit.Wire("BP")), StatedYear(AgentVerify.ToSignedYearValue(3200), AgentVerify.YearUnit.Wire("BP")))),
+      Some(
+        StatedPeriod(
+          StatedYear(AgentVerify.ToSignedYearValue(3270), AgentVerify.YearUnit.Wire("BP")),
+          StatedYear(AgentVerify.ToSignedYearValue(3200), AgentVerify.YearUnit.Wire("BP"))
+        )
+      ),
       com.histmersion.domain.library.Source.Status.Wire("unassessed"),
       EnrichSource.Classification.StatusEvidence("")
     )
-    assert(checkClassification(bp, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(false)).left.exists(_.exists(_.value.contains("uncalibrated"))))
-    val (v, ws) = checkClassification(bp, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(true)).toOption.get
+    assert(
+      checkClassification(bp, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(false)).left
+        .exists(_.exists(_.value.contains("uncalibrated")))
+    )
+    val (v, ws) = checkClassification(
+      bp,
+      EnrichSource.CheckClassificationMaxAbsYear(3000000),
+      last = EnrichSource.Last(true)
+    ).toOption.get
     assertEquals(v.period, None)
     assert(ws.exists(_.value.contains("period dropped")))
 
@@ -98,9 +144,27 @@ class EnrichSourceSuite extends munit.FunSuite:
         finding(AgentProposals.Proposal.Quote("The ship was built from Lebanese cedar in a Phoenician yard."))
       )
     )
-    val first = checkFindings(f, window, MinRatio(0.9), EnrichSource.CheckFindingsMaxAbsYear(3000000), None, Set.empty, open, last = EnrichSource.Last(false))
+    val first = checkFindings(
+      f,
+      window,
+      MinRatio(0.9),
+      EnrichSource.CheckFindingsMaxAbsYear(3000000),
+      None,
+      Set.empty,
+      open,
+      last = EnrichSource.Last(false)
+    )
     assert(first.left.exists(ps => ps.size == 1 && ps.head.value.contains("quote is not in the text")), first)
-    val (kept, warnings) = checkFindings(f, window, MinRatio(0.9), EnrichSource.CheckFindingsMaxAbsYear(3000000), None, Set.empty, open, last = EnrichSource.Last(true)).toOption.get
+    val (kept, warnings) = checkFindings(
+      f,
+      window,
+      MinRatio(0.9),
+      EnrichSource.CheckFindingsMaxAbsYear(3000000),
+      None,
+      Set.empty,
+      open,
+      last = EnrichSource.Last(true)
+    ).toOption.get
     assertEquals(kept.findings.size, 1)
     assertEquals(kept.findings.head.ratio, 1.0)
     assert(warnings.exists(_.value.startsWith("dropped finding 2")))
@@ -109,12 +173,36 @@ class EnrichSourceSuite extends munit.FunSuite:
 
   test("findings: years converted, confidence checked, existing claims and repeated quotes skipped"):
     val q = AgentProposals.Proposal.Quote("Its cargo dates to about 1320 BCE.")
-    val f = Findings(List(finding(q, start = Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE")))), finding(q), finding(q, conf = Confidence.Wire("sure"))))
+    val f = Findings(
+      List(
+        finding(q, start = Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE")))),
+        finding(q),
+        finding(q, conf = Confidence.Wire("sure"))
+      )
+    )
     assert(
-      checkFindings(f, window, MinRatio(0.9), EnrichSource.CheckFindingsMaxAbsYear(3000000), None, Set.empty, open, last = EnrichSource.Last(false)).left
+      checkFindings(
+        f,
+        window,
+        MinRatio(0.9),
+        EnrichSource.CheckFindingsMaxAbsYear(3000000),
+        None,
+        Set.empty,
+        open,
+        last = EnrichSource.Last(false)
+      ).left
         .exists(_.exists(_.value.contains("confidence")))
     )
-    val (kept, _) = checkFindings(f, window, MinRatio(0.9), EnrichSource.CheckFindingsMaxAbsYear(3000000), None, Set.empty, open, last = EnrichSource.Last(true)).toOption.get
+    val (kept, _) = checkFindings(
+      f,
+      window,
+      MinRatio(0.9),
+      EnrichSource.CheckFindingsMaxAbsYear(3000000),
+      None,
+      Set.empty,
+      open,
+      last = EnrichSource.Last(true)
+    ).toOption.get
     assertEquals(kept.findings.map(_.start), List(Some(-1320L))) // the repeat is gone, the bad one dropped
     assertEquals(kept.findings.head.tags, List("bronze_age"))
     val (none, _) = checkFindings(
@@ -130,9 +218,25 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(none.findings, Nil)
 
   test("findings outside the source's own period are kept with a warning"):
-    val f = Findings(List(finding(AgentProposals.Proposal.Quote("Its cargo dates to about 1320 BCE."), start = Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE"))))))
+    val f = Findings(
+      List(
+        finding(
+          AgentProposals.Proposal.Quote("Its cargo dates to about 1320 BCE."),
+          start = Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE")))
+        )
+      )
+    )
     val (kept, ws) =
-      checkFindings(f, window, MinRatio(0.9), EnrichSource.CheckFindingsMaxAbsYear(3000000), Some(Period(Year(-3000), Year(-2000))), Set.empty, open, last = EnrichSource.Last(false)).toOption.get
+      checkFindings(
+        f,
+        window,
+        MinRatio(0.9),
+        EnrichSource.CheckFindingsMaxAbsYear(3000000),
+        Some(Period(Year(-3000), Year(-2000))),
+        Set.empty,
+        open,
+        last = EnrichSource.Last(false)
+      ).toOption.get
     assertEquals(kept.findings.size, 1)
     assert(ws.exists(_.value.contains("outside")), ws)
 
@@ -199,7 +303,12 @@ class EnrichSourceSuite extends munit.FunSuite:
   )
 
   test("patch: fills only what is empty, merges lists, carries the read's updatedAt"):
-    val (p, fields, proposal) = patch(loaded, classified, List(Finding.Input(Finding.Claim("c"))), Some(EnrichSource.PatchNotes("Notes [[zz2020_x]].")))
+    val (p, fields, proposal) = patch(
+      loaded,
+      classified,
+      List(Finding.Input(Finding.Claim("c"))),
+      Some(EnrichSource.PatchNotes("Notes [[zz2020_x]]."))
+    )
     assertEquals(p.summary, Some("Summary."))
     assertEquals(p.notes, None) // the source already has notes
     assertEquals(p.topics, Some(List("trade", "metallurgy")))
@@ -215,7 +324,16 @@ class EnrichSourceSuite extends munit.FunSuite:
 
   test("patch: a status other than current/foundational is proposed to a person, not written"):
     val (p, _, proposal) =
-      patch(loaded, classified.modify(_.status).setTo(Source.Status.Debunked).modify(_.statusEvidence).setTo(EnrichSource.Classified.StatusEvidence("refuted by X")), Nil, None)
+      patch(
+        loaded,
+        classified
+          .modify(_.status)
+          .setTo(Source.Status.Debunked)
+          .modify(_.statusEvidence)
+          .setTo(EnrichSource.Classified.StatusEvidence("refuted by X")),
+        Nil,
+        None
+      )
     assertEquals(p.metadata, None)
     assertEquals(proposal, Some("debunked: refuted by X"))
     val (p2, _, prop2) = patch(loaded.modify(_.status).setTo(Source.Status.Wire("contested")), classified, Nil, None)
@@ -223,8 +341,18 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(prop2, Some("current: cited"))
 
   test("metadata: the record against the upstream one — title, year, first author, the citekey's year"):
-    val w = WorkRef(title = (Some("Bronze Age Tin: a Review")).map(com.histmersion.api.library.Title.apply), year = (Some(2017)).map(Year.apply), authors = (List("A. Bernard Knapp")).map(com.histmersion.api.library.AuthorName.apply))
-    val diffs = compareMetadata(Citekey("knapp2016_tin"), Title("Bronze age tin — a review"), List(AuthorName("Knapp, A. Bernard")), Some(com.histmersion.Year(2016)), w)
+    val w = WorkRef(
+      title = (Some("Bronze Age Tin: a Review")).map(com.histmersion.api.library.Title.apply),
+      year = (Some(2017)).map(Year.apply),
+      authors = (List("A. Bernard Knapp")).map(com.histmersion.api.library.AuthorName.apply)
+    )
+    val diffs = compareMetadata(
+      Citekey("knapp2016_tin"),
+      Title("Bronze age tin — a review"),
+      List(AuthorName("Knapp, A. Bernard")),
+      Some(com.histmersion.Year(2016)),
+      w
+    )
     assertEquals(diffs.size, 2, diffs)
     assert(diffs.exists(_.value.contains("year 2016 differs from the upstream record's 2017")), diffs)
     assert(diffs.exists(_.value.startsWith("citekey year:")), diffs)
@@ -239,16 +367,30 @@ class EnrichSourceSuite extends munit.FunSuite:
       Nil
     )
     val other =
-      compareMetadata(Citekey("knapp2016_tin"), Title("Another title"), List(AuthorName("Smith, J.")), Some(com.histmersion.Year(2016)), w.modify(_.year).setTo(Some(Year(2016))))
+      compareMetadata(
+        Citekey("knapp2016_tin"),
+        Title("Another title"),
+        List(AuthorName("Smith, J.")),
+        Some(com.histmersion.Year(2016)),
+        w.modify(_.year).setTo(Some(Year(2016)))
+      )
     assert(other.exists(_.value.startsWith("title differs")), other)
     assert(other.exists(_.value.contains("A. Bernard Knapp is not among")), other)
     assert(
-      compareMetadata(Citekey("x2016_y"), Title("T"), Nil, None, WorkRef(year = (Some(2016)).map(Year.apply))).exists(_.value.contains("no year recorded"))
+      compareMetadata(Citekey("x2016_y"), Title("T"), Nil, None, WorkRef(year = (Some(2016)).map(Year.apply)))
+        .exists(_.value.contains("no year recorded"))
     )
 
   test("close lint: no findings, no period, still unassessed"):
     assertEquals(
-      closeLint(EnrichSource.FindingCount(0), hasPeriod = EnrichSource.Loaded.HasPeriod(false), Source.Status.Unassessed).map(_.value.takeWhile(_ != ':')),
+      closeLint(
+        EnrichSource.FindingCount(0),
+        hasPeriod = EnrichSource.Loaded.HasPeriod(false),
+        Source.Status.Unassessed
+      ).map(_.value.takeWhile(_ != ':')),
       List(Lint.NoFindings, Lint.NoPeriod, Lint.UnassessedStatus)
     )
-    assertEquals(closeLint(EnrichSource.FindingCount(3), hasPeriod = EnrichSource.Loaded.HasPeriod(true), Source.Status.Current), Nil)
+    assertEquals(
+      closeLint(EnrichSource.FindingCount(3), hasPeriod = EnrichSource.Loaded.HasPeriod(true), Source.Status.Current),
+      Nil
+    )

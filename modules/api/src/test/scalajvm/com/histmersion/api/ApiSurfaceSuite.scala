@@ -62,14 +62,21 @@ class ApiSurfaceSuite extends munit.FunSuite:
   test("the docs' endpoint index is Api.all (`just api-docs` regenerates it)"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
     val readme = Files.readString(root.resolve(Api.Index.Page))
-    assertEquals(Api.Index.current(Api.Index.Readme(readme)).map(_.value), Some(Api.Index.markdown(Api.all).value), "run `just api-docs`")
+    assertEquals(
+      Api.Index.current(Api.Index.Readme(readme)).map(_.value),
+      Some(Api.Index.markdown(Api.all).value),
+      "run `just api-docs`"
+    )
 
   test("the index lists each path once, with its methods in a fixed order"):
     val md = Api.Index.markdown(List(Api.getSource, Api.putSource, Api.health))
     assert(md.value.startsWith("3 endpoints on 2 paths:"), md)
     assert(md.value.contains("| `GET` · `PUT` | `/api/sources/{citekey}` |"), md)
     assertEquals(
-      Api.Index.splice(Api.Index.Readme("a\n" + Api.Index.Begin + "\nold\n" + Api.Index.End + "\nb"), Api.Index.MarkdownResult("new")),
+      Api.Index.splice(
+        Api.Index.Readme("a\n" + Api.Index.Begin + "\nold\n" + Api.Index.End + "\nb"),
+        Api.Index.MarkdownResult("new")
+      ),
       Right("a\n" + Api.Index.Begin + "\nnew\n" + Api.Index.End + "\nb")
     )
     assert(Api.Index.splice(Api.Index.Readme("no markers"), Api.Index.MarkdownResult("x")).isLeft)

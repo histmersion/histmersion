@@ -20,4 +20,5 @@ final case class CitedSource(
     authors: List[AuthorName] = (Nil).map(AuthorName.apply),
     doi: Option[Doi] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

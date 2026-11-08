@@ -14,7 +14,8 @@ final case class Health(
     converter: Option[Health.Converter] = None,
     warnings: List[Health.Warnings] = Nil
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object Health:
   type Status = Status.T

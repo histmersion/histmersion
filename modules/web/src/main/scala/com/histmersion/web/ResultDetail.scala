@@ -55,8 +55,11 @@ object ResultDetail:
           .fetch(t)
           .onComplete(r => card.set(Some(r.toEither.left.map(e => Option(e.getMessage).getOrElse(e.toString)))))
         t match
-          case Preview.Target.Place(id, asOf) => ApiClient.place(Place.Id(id.value), asOf.map(a => Api.AggregateQuery.AsOf(a.value))).foreach(d => record.set(Some(d.record)))
-          case _                              => ()
+          case Preview.Target.Place(id, asOf) =>
+            ApiClient
+              .place(Place.Id(id.value), asOf.map(a => Api.AggregateQuery.AsOf(a.value)))
+              .foreach(d => record.set(Some(d.record)))
+          case _ => ()
       },
       div(
         cls := "detail-bar",
@@ -136,6 +139,9 @@ object ResultDetail:
         )
       ),
       Option.when(r.registers.nonEmpty)(
-        div(h3(cls := "place-record-title", "Listed in"), ul(r.registers.map(g => li(s"${g.name}: ", code(g.id.value)))))
+        div(
+          h3(cls := "place-record-title", "Listed in"),
+          ul(r.registers.map(g => li(s"${g.name}: ", code(g.id.value))))
+        )
       )
     )

@@ -12,8 +12,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   * (comma-separated, matched as whole words, ignoring case) points at a table instead of standing alone. Each is sent
   * back while attempts remain and kept with a warning on the last one ([[EnrichSource.FindingGuards]]).
   */
-final case class AgentEnrichGuardsConfig(minPlacedShare: AgentEnrichGuardsConfig.MinPlacedShare, centuryGapYears: AgentEnrichGuardsConfig.CenturyGapYears, pointerPhrases: AgentEnrichGuardsConfig.PointerPhrases)
-    derives ConfigReader:
+final case class AgentEnrichGuardsConfig(
+    minPlacedShare: AgentEnrichGuardsConfig.MinPlacedShare,
+    centuryGapYears: AgentEnrichGuardsConfig.CenturyGapYears,
+    pointerPhrases: AgentEnrichGuardsConfig.PointerPhrases
+) derives ConfigReader:
   def phrases: List[AgentEnrichGuardsConfig.PointerPhrase] =
     Option(pointerPhrases).toList
       .flatMap(_.value.split(",").toList)

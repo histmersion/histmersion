@@ -7,9 +7,14 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class ManualPlaceName(placeId: Place.Id, label: ManualPlaceName.Label, name: ManualPlaceName.Name, lang: ManualPlaceName.Lang)
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class ManualPlaceName(
+    placeId: Place.Id,
+    label: ManualPlaceName.Label,
+    name: ManualPlaceName.Name,
+    lang: ManualPlaceName.Lang
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object ManualPlaceName:
   type Label = Label.T

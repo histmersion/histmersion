@@ -6,7 +6,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Refining Wikidata sites' types from their items' classes (`events.site-types`). */
-final case class SiteTypesConfig(batch: SiteTypesConfig.Batch, superclassDepth: SiteTypesConfig.SuperclassDepth) derives ConfigReader
+final case class SiteTypesConfig(batch: SiteTypesConfig.Batch, superclassDepth: SiteTypesConfig.SuperclassDepth)
+    derives ConfigReader
 
 object SiteTypesConfig:
   type Batch = Batch.T

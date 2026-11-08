@@ -69,9 +69,7 @@ final class Engine(
   def offered(run: RunInfo, agent: AgentDef): List[ToolName] =
     workflows
       .parse(run.pipeline.value)
-      .fold(Nil)(w =>
-        agent.tools.filter(w.allowedTools(agent.role.transformInto[AgentRole]))
-      )
+      .fold(Nil)(w => agent.tools.filter(w.allowedTools(agent.role.transformInto[AgentRole])))
 
   /** When the trace was last pruned (epoch ms; 0 = not yet in this process). */
   private val lastPrune = java.util.concurrent.atomic.AtomicLong(0L)
@@ -79,14 +77,22 @@ final class Engine(
   /** Delete traced messages older than `agents.trace.keep-messages-days`, at most once every `prune-every-minutes` (or
     * now with `force`). Returns how many went. Never fails a run: a failed prune is logged and tried again next time.
     */
-  def pruneTrace(force: Engine.PruneTraceForce = Engine.PruneTraceForce(false), now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())): RowCount =
+  def pruneTrace(
+      force: Engine.PruneTraceForce = Engine.PruneTraceForce(false),
+      now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())
+  ): RowCount =
     val every = math.max(1, cfg.trace.pruneEveryMinutes.value).toLong * 60000L
     val last = lastPrune.get()
-    if cfg.trace.keepMessagesDays.value <= 0 || (!force.value && now.value - last < every) || !lastPrune.compareAndSet(last, now.value) then RowCount(0)
+    if cfg.trace.keepMessagesDays.value <= 0 || (!force.value && now.value - last < every) || !lastPrune.compareAndSet(
+        last,
+        now.value
+      )
+    then RowCount(0)
     else
       try
         val n = RowCount(agents.runs.pruneMessages(RunService.RetentionDays(cfg.trace.keepMessagesDays.value)).value)
-        if n.value > 0 then scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
+        if n.value > 0 then
+          scribe.info(s"agent trace: pruned $n message(s) older than ${cfg.trace.keepMessagesDays} day(s)")
         n
       catch
         case e: Exception =>
@@ -151,32 +157,42 @@ final class Engine(
     */
   def checkStalls(now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())): List[Run.Id] =
     val limit = cfg.watchdog.stallMinutesFor(cfg.providers).value.toLong * 60000L
-    running.asScala.toList.filter((_, c) => c.stalled.isEmpty && !c.cancel && now.value - c.lastBeat.value > limit).map { (id, c) =>
-      val mins = (now.value - c.lastBeat.value) / 60000L
-      val mark = s"${Engine.StallMark} ${c.seq}"
-      val prior = agents.runs.get(id).toList.flatMap(_.warnings).count(_.value.startsWith(mark + " "))
-      val n = prior + 1
-      agents.jobRuns.warn(
-        jobKind,
-        id,
-        JobRepo.WarningText(s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500))
-      )
-      c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls.value) then
-        Halt.Fail(Halt.Fail.Message(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)"))
-      else
-        Halt.Pause(
-          PauseReason.Stalled,
-          Halt.Pause.Detail(s"no sign of life for $mins min at step ${c.seq} (stall $n of ${cfg.watchdog.maxStalls})"),
-          Some(java.time.Instant.ofEpochMilli(now.value).plusSeconds(math.max(0, cfg.watchdog.resumeMinutes.value).toLong * 60L))
-        ))
-      scribe.warn(s"agent run $id stalled at step ${c.seq} (no sign of life for $mins min); killing its processes")
-      c.procs.asScala.toList.foreach(p =>
-        try CliProcess.kill(p)
-        catch case _: Exception => ()
-      )
-      c.thread.interrupt()
-      id
-    }
+    running.asScala.toList
+      .filter((_, c) => c.stalled.isEmpty && !c.cancel && now.value - c.lastBeat.value > limit)
+      .map { (id, c) =>
+        val mins = (now.value - c.lastBeat.value) / 60000L
+        val mark = s"${Engine.StallMark} ${c.seq}"
+        val prior = agents.runs.get(id).toList.flatMap(_.warnings).count(_.value.startsWith(mark + " "))
+        val n = prior + 1
+        agents.jobRuns.warn(
+          jobKind,
+          id,
+          JobRepo.WarningText(s"$mark (${n}x): no sign of life for $mins min; its processes were killed".take(500))
+        )
+        c.stalled = Some(if n >= math.max(1, cfg.watchdog.maxStalls.value) then
+          Halt.Fail(
+            Halt.Fail
+              .Message(s"stalled $n times at step ${c.seq} (no sign of life for $mins min each time; agents.watchdog)")
+          )
+        else
+          Halt.Pause(
+            PauseReason.Stalled,
+            Halt.Pause
+              .Detail(s"no sign of life for $mins min at step ${c.seq} (stall $n of ${cfg.watchdog.maxStalls})"),
+            Some(
+              java.time.Instant
+                .ofEpochMilli(now.value)
+                .plusSeconds(math.max(0, cfg.watchdog.resumeMinutes.value).toLong * 60L)
+            )
+          ))
+        scribe.warn(s"agent run $id stalled at step ${c.seq} (no sign of life for $mins min); killing its processes")
+        c.procs.asScala.toList.foreach(p =>
+          try CliProcess.kill(p)
+          catch case _: Exception => ()
+        )
+        c.thread.interrupt()
+        id
+      }
 
   /** The scope thread; a `var` because the pool starts after construction (no side effects in initialisers) and stops
     * in tests.
@@ -218,7 +234,9 @@ final class Engine(
     )
     val queued = queuedAll.filterNot(inQueue)
     // a run nobody is watching goes on by itself after a restart; a person's waits for them
-    val at = java.time.Instant.now(agents.clock).plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
+    val at = java.time.Instant
+      .now(agents.clock)
+      .plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
     paused.foreach { (id, origin) =>
       if origin.flatMap(o => Origin.parse(Origin.Wire(o.value))).exists(_.unattended) then
         val _ = agents.jobRuns.resumeAt(jobKind, id, rowStatus(RunState.Paused), at)
@@ -261,8 +279,10 @@ final class Engine(
     * paused; nothing is read for a server with no such run. Returns the ids.
     */
   def resumeFreed(now: java.time.Instant): List[Run.Id] =
-    agents.jobRuns.pausedWith(jobKind, rowStatus(RunState.Paused), JobRuns.Prefix(s"${PauseReason.PlanQuota.wire}:"), now).toList.flatMap {
-      (id, pipeline, model, error) =>
+    agents.jobRuns
+      .pausedWith(jobKind, rowStatus(RunState.Paused), JobRuns.Prefix(s"${PauseReason.PlanQuota.wire}:"), now)
+      .toList
+      .flatMap { (id, pipeline, model, error) =>
         val roles = ModelPicker
           .pausedRole(ModelPicker.Problem(error.value))
           .map(List(_))
@@ -271,7 +291,9 @@ final class Engine(
         // the run's own model for the role: its --model-for, else its --model
         val run = agents.runs.get(id)
         def modelOf(r: Role) =
-          run.fold(model.map(m => AgentsControllers.ModelName(m.value)))(_.modelFor(r).map(m => AgentsControllers.ModelName(m.value)))
+          run.fold(model.map(m => AgentsControllers.ModelName(m.value)))(
+            _.modelFor(r).map(m => AgentsControllers.ModelName(m.value))
+          )
         val free = roles.find(r =>
           agents.picker
             .pick(
@@ -292,7 +314,7 @@ final class Engine(
             id
           }
         }
-    }
+      }
 
   /** Set by [[stop]] before the pool is interrupted. A worker clears its thread's interrupt after each run (a cancel
     * aimed at one run must not leak into the next), which also swallowed the pool's own shutdown interrupt when it
@@ -325,7 +347,17 @@ final class Engine(
     RunState
       .next(from, to)
       .flatMap(target =>
-        Option.when(agents.jobRuns.move(jobKind, id, rowStatus(from), rowStatus(target), error.map(e => JobRow.Error(e.value)), progress.map(JobRow.Progress(_)), resumeAt))(target)
+        Option.when(
+          agents.jobRuns.move(
+            jobKind,
+            id,
+            rowStatus(from),
+            rowStatus(target),
+            error.map(e => JobRow.Error(e.value)),
+            progress.map(JobRow.Progress(_)),
+            resumeAt
+          )
+        )(target)
       )
 
   def submit(id: Run.Id): Unit = queue.put(Queued(id, agents.pins.carry(execute(id))))
@@ -367,23 +399,32 @@ final class Engine(
           val outcome: Either[Halt, String] =
             try
               pipe match
-                case None                    => Left(Halt.Fail(Halt.Fail.Message(s"no pipeline '${run.pipeline}' in this build")))
+                case None => Left(Halt.Fail(Halt.Fail.Message(s"no pipeline '${run.pipeline}' in this build")))
                 case Some(_) if !sameVersion =>
-                  Left(Halt.Fail(Halt.Fail.Message("the pipeline's version changed since this run started; start a new run")))
+                  Left(
+                    Halt.Fail(
+                      Halt.Fail.Message("the pipeline's version changed since this run started; start a new run")
+                    )
+                  )
                 case Some(p) =>
                   val hooks = CliProcess.Hooks(
                     pr => { val _ = ctl.procs.add(pr) },
                     pr => { val _ = ctl.procs.remove(pr) },
                     () => beat(id)
                   )
-                  CliProcess.withHooks(hooks)(p.run(RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this)).map(_.value))
+                  CliProcess.withHooks(hooks)(
+                    p.run(RunCtx(run.modify(_.status).setTo(RunInfo.Status(RunState.Running.wire.value)), this))
+                      .map(_.value)
+                  )
             catch
               case _: InterruptedException if ctl.cancel            => Left(Halt.Cancel)
               case _: InterruptedException if ctl.stalled.isDefined => Left(ctl.stalled.get)
               case e: InterruptedException                          =>
                 // the pool stopping under a run nobody watches: it goes on after the restart by itself
                 val at = Option.when(run.origin.flatMap(Origin.parse).exists(_.unattended))(
-                  java.time.Instant.now(agents.clock).plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
+                  java.time.Instant
+                    .now(agents.clock)
+                    .plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
                 )
                 Left(Halt.Pause(PauseReason.Interrupted, Halt.Pause.Detail("interrupted"), at))
               case e: Exception =>
@@ -413,7 +454,9 @@ final class Engine(
               val waiting =
                 transition(id, RunState.Running, RunState.WaitingApproval, progress = Some(why.value.take(500)))
               // decided in the instant between opening it and this transition: go straight back to the queue
-              if waiting.isDefined && agents.approvalStore.approval(Approval.Id(approval.value)).exists(_.state != ApprovalState.Open.wire)
+              if waiting.isDefined && agents.approvalStore
+                  .approval(Approval.Id(approval.value))
+                  .exists(_.state != ApprovalState.Open.wire)
               then
                 val _ = wake(id)
               waiting
@@ -480,7 +523,9 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Halt.Pause.Detail(s"the run spent ${AgentsMarkdown.usd(r.costUsd.value)} of its ${AgentsMarkdown.usd(r.budgetUsd.value)} USD")
+              Halt.Pause.Detail(
+                s"the run spent ${AgentsMarkdown.usd(r.costUsd.value)} of its ${AgentsMarkdown.usd(r.budgetUsd.value)} USD"
+              )
             )
           )
         else if r.usage.budgeted(weight).value >= r.budgetTokens.value then
@@ -504,7 +549,9 @@ final class Engine(
           Left(
             Halt.Pause(
               PauseReason.Budget,
-              Halt.Pause.Detail(s"this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})")
+              Halt.Pause.Detail(
+                s"this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})"
+              )
             )
           )
         else Right(())
@@ -524,7 +571,8 @@ final class Engine(
 
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 
-  private def conflict(m: Engine.Problem) = Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(AgentsApi.CodeConflict)))
+  private def conflict(m: Engine.Problem) =
+    Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
   def pause(id: Run.Id): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
@@ -544,12 +592,21 @@ final class Engine(
         case _ => Left(conflict(Engine.Problem(s"run $id is ${r.status}; only a queued or running run can be paused")))
     }
 
-  def resume(id: Run.Id, budgetUsd: Option[AgentsControllers.BudgetUsd], budgetTokens: Option[AgentsControllers.BudgetTokens]): Either[Api.Error, RunInfo] =
+  def resume(
+      id: Run.Id,
+      budgetUsd: Option[AgentsControllers.BudgetUsd],
+      budgetTokens: Option[AgentsControllers.BudgetTokens]
+  ): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
       if !RunState.parse(RunState.Wire(r.status.value)).contains(RunState.Paused) then
         Left(conflict(Engine.Problem(s"run $id is ${r.status}; only a paused run can be resumed")))
       else
-        agents.jobRuns.budget(jobKind, id, budgetUsd.map(b => BigDecimal(b.value)), budgetTokens.map(t => JobRepo.TokenBudget(t.value)))
+        agents.jobRuns.budget(
+          jobKind,
+          id,
+          budgetUsd.map(b => BigDecimal(b.value)),
+          budgetTokens.map(t => JobRepo.TokenBudget(t.value))
+        )
         transition(id, RunState.Paused, RunState.Queued)
           .toRight(conflict(Engine.Problem(s"run $id moved on; look again")))
           .flatMap { _ => submit(id); get(id) }
@@ -565,14 +622,19 @@ final class Engine(
           transition(id, s, RunState.Cancelled, error = Some(Engine.Problem("cancelled")))
             .toRight(conflict(Engine.Problem(s"run $id moved on; look again")))
             .flatMap { _ =>
-              val _ = agents.approvalStore.closeForRun(Job.Id.assume(id.value), AgentRepo.CloseReason("rejected: the run was cancelled"))
+              val _ = agents.approvalStore.closeForRun(
+                Job.Id.assume(id.value),
+                AgentRepo.CloseReason("rejected: the run was cancelled")
+              )
               get(id)
             }
         case _ => Left(conflict(Engine.Problem(s"run $id is ${r.status}; it has already finished")))
     }
 
   private def get(id: Run.Id): Either[Api.Error, RunInfo] =
-    agents.runs.get(id).toRight(Api.Error(Api.Error.Message(s"No agent run '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    agents.runs
+      .get(id)
+      .toRight(Api.Error(Api.Error.Message(s"No agent run '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   private def withRun[A](id: Run.Id)(f: RunInfo => Either[Api.Error, A]): Either[Api.Error, A] = get(id).flatMap(f)
 
@@ -590,6 +652,7 @@ object Engine:
   object Problem extends Newtype[String, Pure]
   type Stall = Stall.T
   object Stall extends Newtype[String, Pure]
+
   /** How long a run waits for a slot before it beats again (waiting behind other runs is not a stall). */
 
   type PruneTraceForce = PruneTraceForce.T
@@ -612,7 +675,8 @@ object Engine:
   /** [[stepTurns]], unless the pipeline sized this one call itself (`review-article`'s fixer gets more turns the more
     * findings it has to settle).
     */
-  def stepTurns(agent: AgentDef, overridden: Option[AgentDef.MaxTurns]): AgentDef.MaxTurns = overridden.fold(stepTurns(agent))(t => AgentDef.MaxTurns(math.max(1, t.value)))
+  def stepTurns(agent: AgentDef, overridden: Option[AgentDef.MaxTurns]): AgentDef.MaxTurns =
+    overridden.fold(stepTurns(agent))(t => AgentDef.MaxTurns(math.max(1, t.value)))
 
   /** The note of a blocking approval a dry run did not open (it goes on as if approved). */
   val DryRunApproval = "dry run: not recorded; treated as approved"
@@ -621,7 +685,8 @@ object Engine:
     * own cap (the fixer's and the writer's).
     */
   def capKey(overridden: CapKeyOverridden): CapKey =
-    if overridden.value then CapKey("the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)")
+    if overridden.value then
+      CapKey("the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)")
     else CapKey("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)")
 
   private val OutputCap = "exceeded the (\\d+) output token maximum".r
@@ -636,10 +701,20 @@ object Engine:
       case FinishReason.Error(m) => List(m)
       case _                     => Nil
     ) ++ res.finalAnswer.left.toOption.map(_.rawAnswer).toList
-    texts.iterator.flatMap(t => OutputCap.findFirstMatchIn(t)).flatMap(_.group(1).toIntOption).map(OutputCapLimit(_)).nextOption()
+    texts.iterator
+      .flatMap(t => OutputCap.findFirstMatchIn(t))
+      .flatMap(_.group(1).toIntOption)
+      .map(OutputCapLimit(_))
+      .nextOption()
 
   /** What the run says when [[outputCapHit]]: the cap, the model, the key to raise. */
-  def outputCapMessage(name: String, cap: OutputCapLimit, sent: Count, model: AgentsControllers.ModelName, key: String): String =
+  def outputCapMessage(
+      name: String,
+      cap: OutputCapLimit,
+      sent: Count,
+      model: AgentsControllers.ModelName,
+      key: String
+  ): String =
     s"$name: $model's answer exceeded the $cap output-token cap (the step sent $sent) — raise $key " +
       "(a thinking model's reasoning counts toward it), restart the server, then resume the run"
 
@@ -667,7 +742,9 @@ object Engine:
     def why(cause: Throwable): Problem = cause match
       case d: io.circe.DecodingFailure =>
         val path = io.circe.CursorOp.opsToPath(d.history)
-        Problem(s"the answer does not match the schema at ${if path.isEmpty then "the top level" else path}: ${d.message}")
+        Problem(
+          s"the answer does not match the schema at ${if path.isEmpty then "the top level" else path}: ${d.message}"
+        )
       case p: io.circe.ParsingFailure => Problem(s"the answer is not valid JSON: ${p.message}")
       case e => Problem(s"the answer could not be decoded: ${Option(e.getMessage).getOrElse(e.getClass.getSimpleName)}")
     f match
@@ -675,4 +752,6 @@ object Engine:
       // sttp-ai's own loop re-asks after an undecodable answer and, out of turns, keeps the last error
       case AgentIncomplete(raw, fin, Some(cause)) => Problem(s"${why(cause)} (${LlmClient.finish(fin)})${excerpt(raw)}")
       case other                                  =>
-        Problem(s"the answer is not the JSON the schema asks for (${LlmClient.finish(finish)})${excerpt(other.rawAnswer)}")
+        Problem(
+          s"the answer is not the JSON the schema asks for (${LlmClient.finish(finish)})${excerpt(other.rawAnswer)}"
+        )

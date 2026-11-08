@@ -154,7 +154,17 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
       val _ =
         sql"""INSERT INTO place_relations (child_id, parent_id, kind) VALUES ($Site, $GnArea, 'part_of')""".update.run()
     def f(n: Int, at: GeoPoint, name: Finding.Region = Finding.Region("somewhere")) =
-      Finding(Finding.Id(s"zzpa_src#$n"), Citekey("zzpa_src"), Finding.Claim(s"claim $n"), Some(name), Some(at), None, None, Nil, None)
+      Finding(
+        Finding.Id(s"zzpa_src#$n"),
+        Citekey("zzpa_src"),
+        Finding.Claim(s"claim $n"),
+        Some(name),
+        Some(at),
+        None,
+        None,
+        Nil,
+        None
+      )
     SourceFixtures.upsert(
       ds,
       Source(
@@ -189,14 +199,24 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
                     VALUES ('zzpa_src', 'place', $Pinned, 'here')""".update.run()
 
   private def at(n: Int): Set[String] =
-    PlaceFixtures.placesOf(ds, Finding.Id(s"zzpa_src#$n")).map(_.id.value).filter(id => Mine.contains(id) || id == Site).toSet
+    PlaceFixtures
+      .placesOf(ds, Finding.Id(s"zzpa_src#$n"))
+      .map(_.id.value)
+      .filter(id => Mine.contains(id) || id == Site)
+      .toSet
   private def exists(id: String): Boolean =
     connect(ds)(sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty)
-  private val kinds = Gazetteer.DefaultPointAreaKinds.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
+  private val kinds =
+    Gazetteer.DefaultPointAreaKinds.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
   private val rule = Lint.rule(Lint.Rule.Name(Lint.PlaceImportedPointArea)).get
   private lazy val geometry = PlaceGeometry(Transactor(ds))(using new SystemTimer)
   private def settings(batch: PointAreaRepo.Settings.Batch, budgetMs: PointAreaRepo.Settings.BudgetMs) =
-    PointAreaRepo.Settings(kinds.map(k => PointAreaRepo.Settings.Kinds(k.value)), batch, budgetMs, PointAreaRepo.Settings.ToleranceKm(cfg.places.pointToleranceKm.value))
+    PointAreaRepo.Settings(
+      kinds.map(k => PointAreaRepo.Settings.Kinds(k.value)),
+      batch,
+      budgetMs,
+      PointAreaRepo.Settings.ToleranceKm(cfg.places.pointToleranceKm.value)
+    )
 
   test("the listing: counts by source, kind and dating; every holder, with what it alone holds; evidence keeps one"):
     seed()
@@ -208,7 +228,10 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
       "'Zzpa Thrace' resolves to the imported label, which takes no finding by name"
     )
     assertEquals(at(4), Set.empty[String], "'Eastern Zzpa Thracia' too, by its first reading")
-    val holders = connect(ds)(PointAreaRepo.holdersIn(kinds)).filter(l => Mine.contains(l.id.value)).map(l => (l.id.value: String) -> l).toMap
+    val holders = connect(ds)(PointAreaRepo.holdersIn(kinds))
+      .filter(l => Mine.contains(l.id.value))
+      .map(l => (l.id.value: String) -> l)
+      .toMap
     assertEquals(holders.keySet, Set(Region, Polity, Pinned, Curated))
     assertEquals((holders(Region).findings, holders(Region).alone), (1, 0))
     assertEquals((holders(Polity).findings, holders(Polity).alone, holders(Polity).dating), (1, 1, Dating.Dated))
@@ -216,11 +239,19 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
     assertEquals(holders(Curated).pinned, 1, "a place override is a person's decision: listed, kept")
     val groups = connect(ds)(PointAreaRepo.groupsIn(kinds))
     assert(
-      groups.exists(g => g.source == PointAreas.Group.Source("geonames") && g.kind == PointAreas.Group.Kind("region") && g.dating == Dating.Undated && g.places.value >= 1),
+      groups.exists(g =>
+        g.source == PointAreas.Group.Source("geonames") && g.kind == PointAreas.Group.Kind(
+          "region"
+        ) && g.dating == Dating.Undated && g.places.value >= 1
+      ),
       groups.toString
     )
     assert(
-      groups.exists(g => g.source == PointAreas.Group.Source("wikidata") && g.kind == PointAreas.Group.Kind("polity") && g.dating == Dating.Dated && g.places.value >= 1),
+      groups.exists(g =>
+        g.source == PointAreas.Group.Source("wikidata") && g.kind == PointAreas.Group.Kind(
+          "polity"
+        ) && g.dating == Dating.Dated && g.places.value >= 1
+      ),
       groups.toString
     )
     val r = connect(ds)(PointAreaRepo.reportIn(rule, kinds, PointAreas.ReportMaxItems(50)))
@@ -233,7 +264,11 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
       !r.items.exists(i => i.citekey == Citekey(Shaped) || i.citekey == Citekey(GnSite) || i.citekey == Citekey(Site)),
       "a shape, a site and the seed are no point areas"
     )
-    assertEquals(connect(ds)(PointAreaRepo.reportIn(rule, Nil, PointAreas.ReportMaxItems(50))).count, 0, "no kinds, no rule")
+    assertEquals(
+      connect(ds)(PointAreaRepo.reportIn(rule, Nil, PointAreas.ReportMaxItems(50))).count,
+      0,
+      "no kinds, no rule"
+    )
     assert(Mine.forall(exists), "a listing writes nothing")
 
   test(
@@ -241,10 +276,14 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
   ):
     seed()
     // a zero budget still makes progress: one batch per call
-    val one = geometry.removePointAreas(settings(batch = PointAreaRepo.Settings.Batch(1), budgetMs = PointAreaRepo.Settings.BudgetMs(0)))
+    val one = geometry.removePointAreas(
+      settings(batch = PointAreaRepo.Settings.Batch(1), budgetMs = PointAreaRepo.Settings.BudgetMs(0))
+    )
     assertEquals(one.removed, 1)
     assert(one.remaining.value >= 3, one.toString)
-    val rest = geometry.removePointAreas(settings(batch = PointAreaRepo.Settings.Batch(2), budgetMs = PointAreaRepo.Settings.BudgetMs(60000)))
+    val rest = geometry.removePointAreas(
+      settings(batch = PointAreaRepo.Settings.Batch(2), budgetMs = PointAreaRepo.Settings.BudgetMs(60000))
+    )
     assertEquals(rest.remaining, 0)
     assert(!exists(Region) && !exists(Polity) && !exists(GnArea))
     assert(exists(Pinned) && exists(Shaped) && exists(GnSite) && exists(Site) && exists(Thracia) && !exists(Thrace))
@@ -261,7 +300,10 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
       Set(Thracia),
       "…and a name whose first reading named the removed place falls through to the seed's"
     )
-    assert(one.findings.value + rest.findings.value >= 2 && one.sources.value + rest.sources.value >= 1, (one, rest).toString)
+    assert(
+      one.findings.value + rest.findings.value >= 2 && one.sources.value + rest.sources.value >= 1,
+      (one, rest).toString
+    )
     val left = connect(ds)(
       sql"""SELECT (SELECT count(*) FROM place_names WHERE place_id = $GnArea)
                                       + (SELECT count(*) FROM place_links WHERE place_id = $GnArea)
@@ -282,13 +324,30 @@ class PointAreaRepoSuite extends DbSuite with com.histmersion.db.Bounded:
     val _ = PlaceFixtures.rebuildFindingPlaces(ds, cfg.places.pointToleranceKm)
     assertEquals((1 to 4).map(at).toList, fixed)
     assertEquals(
-      geometry.removePointAreas(settings(batch = PointAreaRepo.Settings.Batch(10), budgetMs = PointAreaRepo.Settings.BudgetMs(1000))),
-      PointAreaRepo.Removal(PointAreaRepo.Removal.Removed(0), PointAreaRepo.Removal.Remaining(0), PointAreaRepo.Removal.Findings(0), PointAreaRepo.Removal.Sources(0)),
+      geometry.removePointAreas(
+        settings(batch = PointAreaRepo.Settings.Batch(10), budgetMs = PointAreaRepo.Settings.BudgetMs(1000))
+      ),
+      PointAreaRepo.Removal(
+        PointAreaRepo.Removal.Removed(0),
+        PointAreaRepo.Removal.Remaining(0),
+        PointAreaRepo.Removal.Findings(0),
+        PointAreaRepo.Removal.Sources(0)
+      ),
       "nothing left to do"
     )
 
   test("the importer's prune passes over a place a person curated (place_overrides), as over evidence"):
     seed()
     val ids = connect(ds)(PointAreaRepo.ofSourceIn(PointAreas.Group.Source("wikidata"), kinds)).toSet
-    assert(ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Region)) && ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Polity)), ids.toString)
-    assert(!ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Curated)) && !ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Pinned)), ids.toString)
+    assert(
+      ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Region)) && ids.contains(
+        com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Polity)
+      ),
+      ids.toString
+    )
+    assert(
+      !ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Curated)) && !ids.contains(
+        com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Pinned)
+      ),
+      ids.toString
+    )

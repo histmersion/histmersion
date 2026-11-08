@@ -12,7 +12,8 @@ final case class CollectionCover(
     line: CollectionCover.Line,
     warning: CollectionCover.Warning = CollectionCover.Warning(false)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CollectionCover:
   type Line = Line.T

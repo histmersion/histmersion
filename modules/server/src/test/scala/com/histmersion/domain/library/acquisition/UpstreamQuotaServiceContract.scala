@@ -19,11 +19,26 @@ abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
       CoreQuota.State.LookupTokens(5),
       CoreQuota.State.SearchTokens(2),
       Some(CoreQuota.Block(Instant.parse("2026-10-26T19:00:00Z"), CoreQuota.Block.Why("HTTP 429"))),
-      Some(CoreQuota.Window(Some(CoreQuota.Window.Limit(25)), Some(CoreQuota.Window.Remaining(3)), Instant.parse("2026-10-26T18:50:00Z")))
+      Some(
+        CoreQuota.Window(
+          Some(CoreQuota.Window.Limit(25)),
+          Some(CoreQuota.Window.Remaining(3)),
+          Instant.parse("2026-10-26T18:50:00Z")
+        )
+      )
     )
-    s.quotas.save(UpstreamQuotaService.Upstream("zq"), st.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z"))))
+    s.quotas.save(
+      UpstreamQuotaService.Upstream("zq"),
+      st.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z")))
+    )
     assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("zq")), Some(st))
-    val next = CoreQuota.State(LocalDate.of(2026, 10, 27), CoreQuota.State.LookupTokens(0), CoreQuota.State.SearchTokens(0), None, None)
+    val next = CoreQuota.State(
+      LocalDate.of(2026, 10, 27),
+      CoreQuota.State.LookupTokens(0),
+      CoreQuota.State.SearchTokens(0),
+      None,
+      None
+    )
     s.quotas.save(UpstreamQuotaService.Upstream("zq"), next)
     assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("zq")), Some(next))
     assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("other")), None)

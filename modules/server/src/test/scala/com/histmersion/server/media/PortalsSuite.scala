@@ -41,11 +41,25 @@ final class PortalStore(
 ) extends MediaStore:
   val saved = scala.collection.mutable.LinkedHashMap.empty[ProviderAsset.Key, (AssetService.AssetUid, ProviderAsset)]
   val links = scala.collection.mutable.ListBuffer
-    .empty[(AssetService.AssetUid, ImportService.TargetId, AssetService.LinkRole, String, Option[AssetService.LinkProperty], Option[AssetService.LinkItem], Option[AssetService.LinkBasis])]
-  val checks = scala.collection.mutable.LinkedHashMap.empty[(ImportService.Provider, ImportService.TargetId), ImportService.FoundCount]
+    .empty[
+      (
+          AssetService.AssetUid,
+          ImportService.TargetId,
+          AssetService.LinkRole,
+          String,
+          Option[AssetService.LinkProperty],
+          Option[AssetService.LinkItem],
+          Option[AssetService.LinkBasis]
+      )
+    ]
+  val checks = scala.collection.mutable.LinkedHashMap
+    .empty[(ImportService.Provider, ImportService.TargetId), ImportService.FoundCount]
   def known(provider: ImportService.Provider, keys: List[AssetService.ProviderKey]) =
     val wanted = keys.map(_.value).toSet
-    saved.collect { case (k, (uid, a)) if wanted(k.value) => AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value))) }.toMap
+    saved.collect {
+      case (k, (uid, a)) if wanted(k.value) =>
+        AssetService.ProviderKey(k.value) -> Known(Known.Uid(uid.value), Some(Known.License(a.license.value)))
+    }.toMap
   def save(a: ProviderAsset, first: (ImportService.TargetType, ImportService.TargetId)) =
     val existing = saved.get(a.key).map(_._1)
     val uid = existing.getOrElse(AssetService.AssetUid(f"00000000-0000-0000-0000-${saved.size + 1}%012d"))
@@ -74,13 +88,19 @@ final class PortalStore(
   ) =
     links += ((uid, ti, role, s"$rank", p, q, basis)); true
   def commonsCategory(placeId: Place.Id, category: ImportService.CommonsCategory, qid: Wikidata.Id) = false
-  def checked(provider: ImportService.Provider, tt: ImportService.TargetType, ti: ImportService.TargetId, found: ImportService.FoundCount, qid: Option[Wikidata.Id]) = checks((provider, ti)) =
-    found
+  def checked(
+      provider: ImportService.Provider,
+      tt: ImportService.TargetType,
+      ti: ImportService.TargetId,
+      found: ImportService.FoundCount,
+      qid: Option[Wikidata.Id]
+  ) = checks((provider, ti)) = found
   override def placeFacts(ids: List[Place.Id]) = facts.view.filterKeys(ids.toSet).toMap
   override def mapPlacesNamed(keys: List[ImportService.PlaceKey]) = named.view.filterKeys(keys.toSet).toMap
   override def placeExternalIds(ids: List[Place.Id]) =
     ids.flatMap(id => ExternalIds.ofPlaceId(id).map(x => id -> Set(x))).toMap
-  override def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)]) = byId.view.filterKeys(ids.toSet).toMap
+  override def mapPlacesWithIds(ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)]) =
+    byId.view.filterKeys(ids.toSet).toMap
   override def pleiadesIds(ids: List[Place.Id]) = pleiades.view.filterKeys(ids.toSet).toMap
 
 /** The keyless portals (#1446) end to end against FAKE providers (trimmed real answers of 2026-10-17) and an in-memory
@@ -105,21 +125,52 @@ class PortalsSuite extends munit.FunSuite:
     ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
       ConverterClient.Problem("not used")
     )
-    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
-    override def thumbnail(bytes: ConverterClient.DocumentBytes, filename: ConverterClient.Filename, maxPx: Pixels): Either[ConverterClient.Problem, ConverterClient.Thumb] =
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(
+      ConverterClient.HealthSummary("ok")
+    )
+    override def thumbnail(
+        bytes: ConverterClient.DocumentBytes,
+        filename: ConverterClient.Filename,
+        maxPx: Pixels
+    ): Either[ConverterClient.Problem, ConverterClient.Thumb] =
       calls += filename
-      Right(ConverterClient.Thumb(ConverterClient.Thumb.Bytes(jpeg), ConverterClient.Thumb.Mime("image/jpeg"), ConverterClient.Thumb.Width(330), ConverterClient.Thumb.Height(250)))
+      Right(
+        ConverterClient.Thumb(
+          ConverterClient.Thumb.Bytes(jpeg),
+          ConverterClient.Thumb.Mime("image/jpeg"),
+          ConverterClient.Thumb.Width(330),
+          ConverterClient.Thumb.Height(250)
+        )
+      )
 
   // ── Open Context ─────────────────────────────────────────────────────────────────────────────
 
   private val petra =
-    PlaceFacts(PlaceFacts.Id("pleiades_697725"), PlaceFacts.Label("Petra"), Set(PlaceFacts.Keys("petra")), Some((DeepTime.SignedYear(-300L), DeepTime.SignedYear(100L))), Some(Target.Qid("Q5788")), Some(Latitude(30.33)), Some(Longitude(35.44)))
+    PlaceFacts(
+      PlaceFacts.Id("pleiades_697725"),
+      PlaceFacts.Label("Petra"),
+      Set(PlaceFacts.Keys("petra")),
+      Some((DeepTime.SignedYear(-300L), DeepTime.SignedYear(100L))),
+      Some(Target.Qid("Q5788")),
+      Some(Latitude(30.33)),
+      Some(Longitude(35.44))
+    )
   private val jordan =
-    PlaceFacts(PlaceFacts.Id("geonames_248816"), PlaceFacts.Label("Jordan"), Set(PlaceFacts.Keys("jordan")), Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(2000L))), Some(Target.Qid("Q810")), Some(Latitude(31.0)), Some(Longitude(36.0)))
+    PlaceFacts(
+      PlaceFacts.Id("geonames_248816"),
+      PlaceFacts.Label("Jordan"),
+      Set(PlaceFacts.Keys("jordan")),
+      Some((DeepTime.SignedYear(-3000L), DeepTime.SignedYear(2000L))),
+      Some(Target.Qid("Q810")),
+      Some(Latitude(31.0)),
+      Some(Longitude(36.0))
+    )
   private val facts = List(petra, jordan).map(f => Place.Id.assume(f.id.value) -> f).toMap
-  private val named = Map(ImportService.PlaceKey("jordan") -> List(jordan), ImportService.PlaceKey("petra") -> List(petra))
+  private val named =
+    Map(ImportService.PlaceKey("jordan") -> List(jordan), ImportService.PlaceKey("petra") -> List(petra))
   private val byId = Map((ExternalIds.Scheme("pleiades"), ExternalIds.ExternalId("697725")) -> List(petra))
-  private def target(f: PlaceFacts) = Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
+  private def target(f: PlaceFacts) =
+    Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
   private val DryOn = CollectionImport.DryRun(true)
   private val DryOff = CollectionImport.DryRun(false)
@@ -147,8 +198,16 @@ class PortalsSuite extends munit.FunSuite:
       conv: ThumbConverter = ThumbConverter()
   ): MediaImportReport =
     val col = FakeMediaHttp.builtin(BuiltinMedia.EntryName("opencontext"))
-    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(col.conf.requestIntervalMs.value)))
-    CollectionImport(col, polite, cfg, conv).run(List(target(t)), dryRun, refresh = CollectionImport.Refresh(false), store)
+    val (polite, _) = FakeMediaHttp.polite(
+      http,
+      cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(col.conf.requestIntervalMs.value))
+    )
+    CollectionImport(col, polite, cfg, conv).run(
+      List(target(t)),
+      dryRun,
+      refresh = CollectionImport.Refresh(false),
+      store
+    )
 
   test(
     "Open Context dry run: tied by the record's own Pleiades id and its dates; human remains and other dates refused; one request"
@@ -188,10 +247,34 @@ class PortalsSuite extends munit.FunSuite:
       Some(Latitude(37.33)),
       Some(Longitude(36.87))
     )
-    val placeI = PlaceFacts(PlaceFacts.Id("wikidata_q103776406"), PlaceFacts.Label("I"), Set(PlaceFacts.Keys("i")), None, Some(Target.Qid("Q103776406")), Some(Latitude(50.0)), Some(Longitude(10.0)))
+    val placeI = PlaceFacts(
+      PlaceFacts.Id("wikidata_q103776406"),
+      PlaceFacts.Label("I"),
+      Set(PlaceFacts.Keys("i")),
+      None,
+      Some(Target.Qid("Q103776406")),
+      Some(Latitude(50.0)),
+      Some(Longitude(10.0))
+    )
     val kahr =
-      PlaceFacts(PlaceFacts.Id("ne_city_1159127453"), PlaceFacts.Label("Kahramanmaraş"), Set(PlaceFacts.Keys("kahramanmaras")), None, None, Some(Latitude(37.58)), Some(Longitude(36.93)))
-    val turkey = PlaceFacts(PlaceFacts.Id("ne_country_tur"), PlaceFacts.Label("Turkey"), Set(PlaceFacts.Keys("turkey")), None, Some(Target.Qid("Q43")), Some(Latitude(39.0)), Some(Longitude(35.0)))
+      PlaceFacts(
+        PlaceFacts.Id("ne_city_1159127453"),
+        PlaceFacts.Label("Kahramanmaraş"),
+        Set(PlaceFacts.Keys("kahramanmaras")),
+        None,
+        None,
+        Some(Latitude(37.58)),
+        Some(Longitude(36.93))
+      )
+    val turkey = PlaceFacts(
+      PlaceFacts.Id("ne_country_tur"),
+      PlaceFacts.Label("Turkey"),
+      Set(PlaceFacts.Keys("turkey")),
+      None,
+      Some(Target.Qid("Q43")),
+      Some(Latitude(39.0)),
+      Some(Longitude(35.0))
+    )
     val store = PortalStore(
       Map(Place.Id.assume(dom.id.value) -> dom),
       Map(
@@ -275,7 +358,8 @@ class PortalsSuite extends munit.FunSuite:
 
   // ── Pleiades ─────────────────────────────────────────────────────────────────────────────────
 
-  private val zygouries = Target(Target.TargetType("place"), Target.Id("pleiades_757208100"), Target.Qid(""), Target.Label("Zygouries"))
+  private val zygouries =
+    Target(Target.TargetType("place"), Target.Id("pleiades_757208100"), Target.Qid(""), Target.Label("Zygouries"))
 
   private def param(url: String, name: String): Option[String] =
     url.split("[?&]").toList.map(_.split("=", 2)).collectFirst {
@@ -310,10 +394,19 @@ class PortalsSuite extends munit.FunSuite:
 
   private def runPl(http: FakeMediaHttp, dryRun: MediaImporter.DryRun, store: PortalStore): MediaImportReport =
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
-    OwnImport(MediaImporter.ImporterName("pleiades"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("pleiades")), polite, cfg)
+    OwnImport(
+      MediaImporter.ImporterName("pleiades"),
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("pleiades")),
+      polite,
+      cfg
+    )
       .run(List(zygouries), dryRun, refresh = ImportService.Refresh(false), store)
 
-  private def plStore() = PortalStore(Map.empty, Map.empty, pleiades = Map(Place.Id("pleiades_757208100") -> List(ExternalIds.ExternalId("757208100"))))
+  private def plStore() = PortalStore(
+    Map.empty,
+    Map.empty,
+    pleiades = Map(Place.Id("pleiades_757208100") -> List(ExternalIds.ExternalId("757208100")))
+  )
 
   test(
     "Pleiades dry run: the Commons file the record links, licence read from Commons; Flickr, a category, another site counted"
@@ -375,8 +468,16 @@ class PortalsSuite extends munit.FunSuite:
   test("Pleiades: a record that does not answer leaves the place not asked (the next run asks again)"):
     val store = plStore()
     val c = cfg.modify(_.maxRetries).setTo(MediaConfig.MaxRetries(0))
-    val (polite, _) = FakeMediaHttp.polite(pleiades(Right(HttpAnswer(HttpAnswer.Code(503), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))), c)
-    val r = OwnImport(MediaImporter.ImporterName("pleiades"), FakeMediaHttp.collection(Registries.MediaCollectionsKey("pleiades")), polite, c)
+    val (polite, _) = FakeMediaHttp.polite(
+      pleiades(Right(HttpAnswer(HttpAnswer.Code(503), Map.empty, HttpAnswer.Body(Array.emptyByteArray)))),
+      c
+    )
+    val r = OwnImport(
+      MediaImporter.ImporterName("pleiades"),
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("pleiades")),
+      polite,
+      c
+    )
       .run(List(zygouries), dryRun = MediaImporter.DryRun(false), refresh = ImportService.Refresh(false), store)
     assert(r.failed.exists(_.value.contains("Pleiades place 757208100")), r.failed.toString)
     assert(store.checks.isEmpty)

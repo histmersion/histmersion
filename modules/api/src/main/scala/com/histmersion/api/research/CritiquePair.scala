@@ -15,7 +15,8 @@ final case class CritiquePair(
     reason: Option[CritiquePair.Reason] = None,
     reasonBy: Option[CritiquePair.ReasonBy] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def ref: CritiqueRef = CritiqueRef(src.citekey, dst.citekey)
   def open: Boolean = (state == CritiqueState.Open)
 
@@ -32,4 +33,4 @@ object CritiquePair:
   type Kinds = Kinds.T
   object Kinds extends Newtype[String, Pure]
   export CritiqueReason.Reason
-  export com.histmersion.api.automation.Activity.{Actor as ReasonBy}
+  export com.histmersion.api.automation.Activity.Actor as ReasonBy

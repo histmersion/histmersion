@@ -9,7 +9,8 @@ final case class Environment(variables: Map[Environment.VariablesKey, Environmen
   def get(name: Environment.VariablesKey): Option[Environment.VariablesValue] = variables.get(name)
 
   /** A non-blank value, trimmed. */
-  def nonBlank(name: Environment.VariablesKey): Option[Environment.VariablesValue] = get(name).map(v => Environment.VariablesValue(v.value.trim)).filter(_.value.nonEmpty)
+  def nonBlank(name: Environment.VariablesKey): Option[Environment.VariablesValue] =
+    get(name).map(v => Environment.VariablesValue(v.value.trim)).filter(_.value.nonEmpty)
 
   def lookup: Environment.VariablesKey => Option[Environment.VariablesValue] = get
 
@@ -25,4 +26,10 @@ object Environment:
   /** The environment as the settings were loaded with it ([[LoadedConfig.env]]). */
   def of(env: Config): Environment =
     val read = AppConfig.lookup(env)
-    Environment(env.root.keySet.toArray(Array.empty[String]).toList.flatMap(k => read(k).map(v => VariablesKey(k) -> VariablesValue(v))).toMap)
+    Environment(
+      env.root.keySet
+        .toArray(Array.empty[String])
+        .toList
+        .flatMap(k => read(k).map(v => VariablesKey(k) -> VariablesValue(v)))
+        .toMap
+    )

@@ -59,8 +59,13 @@ abstract class JobRunsContract(name: String) extends DbSuite:
     assertEquals(r.pipelineVersion(id), Some(3))
     assertEquals(r.count(Kind, (RunRow.Status("queued"), RunRow.Status("running"))), 1)
     assert(!r.move(Kind, id, RunRow.Status("running"), RunRow.Status("done"), None, None, None), "not running")
-    assert(!r.move(Job.Kind("other"), id, RunRow.Status("queued"), RunRow.Status("running"), None, None, None), "another kind")
-    assert(r.move(Kind, id, RunRow.Status("queued"), RunRow.Status("running"), None, Some(JobRow.Progress("step 1")), None))
+    assert(
+      !r.move(Job.Kind("other"), id, RunRow.Status("queued"), RunRow.Status("running"), None, None, None),
+      "another kind"
+    )
+    assert(
+      r.move(Kind, id, RunRow.Status("queued"), RunRow.Status("running"), None, Some(JobRow.Progress("step 1")), None)
+    )
     assertEquals(row(r, id), ("running", None, Some("step 1"), Some("person")))
     r.progress(Kind, id, JobRow.Progress("step 2"))
     r.warn(Kind, id, JobRepo.WarningText("a warning"))
@@ -78,7 +83,14 @@ abstract class JobRunsContract(name: String) extends DbSuite:
     val _ = r.create(run(RunRow.Target("zzjobs_b5"), kind = RunRow.Kind("other")))
     assert(r.move(Kind, a, RunRow.Status("queued"), RunRow.Status("running"), None, None, None))
     assert(r.move(Kind, kept, RunRow.Status("queued"), RunRow.Status("running"), None, None, None))
-    val (paused, queued) = r.reconcile(Kind, RunRow.Status("running"), RunRow.Status("paused"), JobRow.Error("interrupted"), RunRow.Status("queued"), List(kept))
+    val (paused, queued) = r.reconcile(
+      Kind,
+      RunRow.Status("running"),
+      RunRow.Status("paused"),
+      JobRow.Error("interrupted"),
+      RunRow.Status("queued"),
+      List(kept)
+    )
     assertEquals(paused, Vector(a -> Some("manager")))
     assertEquals(queued, Vector(b, c))
     assertEquals(row(r, a)._1 -> row(r, a)._2, "paused" -> Some("interrupted"))
@@ -89,13 +101,51 @@ abstract class JobRunsContract(name: String) extends DbSuite:
     val soon = r.create(run(RunRow.Target("zzjobs_c1")))
     val later = r.create(run(RunRow.Target("zzjobs_c2")))
     val held = r.create(run(RunRow.Target("zzjobs_c3")))
-    List(soon, later, held).foreach(id => assert(r.move(Kind, id, RunRow.Status("queued"), RunRow.Status("running"), None, None, None)))
-    assert(r.move(Kind, soon, RunRow.Status("running"), RunRow.Status("paused"), Some(JobRow.Error("allowance: x")), None, Some(now.minusSeconds(60))))
-    assert(r.move(Kind, later, RunRow.Status("running"), RunRow.Status("paused"), Some(JobRow.Error("allowance: y")), None, Some(now.plusSeconds(3600))))
-    assert(r.move(Kind, held, RunRow.Status("running"), RunRow.Status("paused"), Some(JobRow.Error("plan-quota: z")), None, None))
+    List(soon, later, held).foreach(id =>
+      assert(r.move(Kind, id, RunRow.Status("queued"), RunRow.Status("running"), None, None, None))
+    )
+    assert(
+      r.move(
+        Kind,
+        soon,
+        RunRow.Status("running"),
+        RunRow.Status("paused"),
+        Some(JobRow.Error("allowance: x")),
+        None,
+        Some(now.minusSeconds(60))
+      )
+    )
+    assert(
+      r.move(
+        Kind,
+        later,
+        RunRow.Status("running"),
+        RunRow.Status("paused"),
+        Some(JobRow.Error("allowance: y")),
+        None,
+        Some(now.plusSeconds(3600))
+      )
+    )
+    assert(
+      r.move(
+        Kind,
+        held,
+        RunRow.Status("running"),
+        RunRow.Status("paused"),
+        Some(JobRow.Error("plan-quota: z")),
+        None,
+        None
+      )
+    )
     assertEquals(r.due(Kind, RunRow.Status("paused"), now), Vector(soon))
-    assertEquals(r.pausedWith(Kind, RunRow.Status("paused"), JobRuns.Prefix("plan-quota:"), now).map(_._1), Vector(held))
-    assertEquals(r.pausedWith(Kind, RunRow.Status("paused"), JobRuns.Prefix("allowance:"), now).map(_._1), Vector(later))
+    assertEquals(
+      r.pausedWith(Kind, RunRow.Status("paused"), JobRuns.Prefix("plan-quota:"), now).map(_._1),
+      Vector(held)
+    )
+    assertEquals(
+      r.pausedWith(Kind, RunRow.Status("paused"), JobRuns.Prefix("allowance:"), now).map(_._1),
+      Vector(later)
+    )
     assert(r.resumeAt(Kind, later, RunRow.Status("paused"), now.minusSeconds(1)))
     assertEquals(r.due(Kind, RunRow.Status("paused"), now).toSet, Set(soon, later))
     assert(!r.resumeAt(Kind, soon, RunRow.Status("queued"), now), "not in that state")

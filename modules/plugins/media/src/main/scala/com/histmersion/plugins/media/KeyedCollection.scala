@@ -26,7 +26,8 @@ abstract class KeyedCollection(
     settings: KeyedCollection.Settings
 ) extends MediaCollection:
   override def perPlace: MediaCollection.PerPlaceResult = MediaCollection.PerPlaceResult(conf.perPlace.value)
-  override def requestIntervalMs: MediaCollection.RequestIntervalMsResult = MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
+  override def requestIntervalMs: MediaCollection.RequestIntervalMsResult =
+    MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
   override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMsResult] =
     conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMsResult(ms.value))
   override def latestYear: Option[Year] = conf.latestYear.map(y => Year(y.value))
@@ -55,7 +56,9 @@ abstract class KeyedCollection(
   /** Pure: an HTTP 401/403 of a key-gated API named as a refused key, with the setting to check. */
   protected def explain(e: KeyedCollection.Problem): KeyedCollection.Explanation =
     if e.value.contains("HTTP 401") || e.value.contains("HTTP 403") then
-      KeyedCollection.Explanation(s"${e.value} — the API key was refused (check histmersion.plugins.${plugin.value}.api-key)")
+      KeyedCollection.Explanation(
+        s"${e.value} — the API key was refused (check histmersion.plugins.${plugin.value}.api-key)"
+      )
     else KeyedCollection.Explanation(e.value)
 
 object KeyedCollection:
@@ -71,4 +74,3 @@ object KeyedCollection:
   object Needs extends Newtype[String, Pure]
   type Settings = Settings.T
   object Settings extends Newtype[String, Pure]
-

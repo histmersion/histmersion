@@ -47,7 +47,8 @@ final class SourcesControllers(
     clock: Clock
 )(using timer: Timer):
 
-  /** A citekey as a client sent it, or the 400 that refuses it: the one place a request's citekey becomes a domain one. */
+  /** A citekey as a client sent it, or the 400 that refuses it: the one place a request's citekey becomes a domain one.
+    */
   def parseCitekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     Citekey.parse(ck.value).left.map(p => Write.invalid(Api.Error.Message(p.value)))
 
@@ -63,14 +64,20 @@ final class SourcesControllers(
     AssetLinks.toAbsolute(AssetLinks.Body(md), apiCk(citekey), AssetLinks.Url(cfg().server.publicUrl.value)).value
 
   private def issuesOf(summary: Option[Source.Summary], notes: Option[Source.Notes]): List[FormatIssue] =
-    formatting.issues(summary.map(s => com.histmersion.domain.library.Source.Summary(s.value)), notes.map(n => SourceNote.Text(n.value)))
+    formatting.issues(
+      summary.map(s => com.histmersion.domain.library.Source.Summary(s.value)),
+      notes.map(n => SourceNote.Text(n.value))
+    )
 
   /** THE citekey resolution (V027): the citekey a source has NOW, when `id` is an old one it was renamed from;
     * otherwise `id` unchanged (and a later lookup reports it unknown).
     */
   def canonical(id: Citekey): Citekey = currentOf(id).getOrElse(id)
 
-  def get(citekey: Citekey, body: SourcesControllers.GetBody = SourcesControllers.GetBody(true)): Either[Api.Error, Source.WithFindings] =
+  def get(
+      citekey: Citekey,
+      body: SourcesControllers.GetBody = SourcesControllers.GetBody(true)
+  ): Either[Api.Error, Source.WithFindings] =
     val ck = canonical(citekey)
     sources
       .get(ck)
@@ -97,7 +104,11 @@ final class SourcesControllers(
   /** Create or REPLACE everything under one citekey. An OLD citekey follows the alias (#1799): the put replaces the
     * source it was renamed to — it never creates a second source under the old name, which the alias would then shadow.
     */
-  def put(citekey: Citekey, in: Source.Put, strict: SourcesControllers.PutStrict = SourcesControllers.PutStrict(false)): Either[Api.Error, Source.WithFindings] =
+  def put(
+      citekey: Citekey,
+      in: Source.Put,
+      strict: SourcesControllers.PutStrict = SourcesControllers.PutStrict(false)
+  ): Either[Api.Error, Source.WithFindings] =
     maintenance.guard(WriteGate.OperationName("put_source")):
       val ck = current(AliasKinds.SourceRecords, citekey)
       Source.Write
@@ -110,7 +121,11 @@ final class SourcesControllers(
         }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
-  def patch(citekey: Citekey, p: Source.Patch, strict: SourcesControllers.PatchStrict = SourcesControllers.PatchStrict(false)): Either[Api.Error, Source.WithFindings] =
+  def patch(
+      citekey: Citekey,
+      p: Source.Patch,
+      strict: SourcesControllers.PatchStrict = SourcesControllers.PatchStrict(false)
+  ): Either[Api.Error, Source.WithFindings] =
     maintenance.guard(WriteGate.OperationName("patch_source")):
       // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
       strictGate(strict.value, issuesOf(p.summary, p.notes))
@@ -129,7 +144,13 @@ final class SourcesControllers(
         .flatMap { now =>
           sources.rename(from, now, Caller.Local).flatMap { counts =>
             get(now, body = SourcesControllers.GetBody(false)).map(sw =>
-              Source.Renamed(apiCk(from), apiCk(now), sw.source, counts, sources.calibreId(now).map(c => Source.CalibreId(c.value)))
+              Source.Renamed(
+                apiCk(from),
+                apiCk(now),
+                sw.source,
+                counts,
+                sources.calibreId(now).map(c => Source.CalibreId(c.value))
+              )
             )
           }
         }
@@ -140,18 +161,30 @@ final class SourcesControllers(
     */
   def delete(citekey: Citekey, req: Source.DeleteRequest): Either[Api.Error, Source.Deletion] =
     val ck = current(AliasKinds.SourceRecords, citekey)
-    if !req.apply.value then sources.deletion(ck).map(p => p.deletion.modify(_.files).setTo(originals.find(p).map(f => Source.Deletion.Files(f.value))))
+    if !req.apply.value then
+      sources
+        .deletion(ck)
+        .map(p => p.deletion.modify(_.files).setTo(originals.find(p).map(f => Source.Deletion.Files(f.value))))
     else
       maintenance.guard(WriteGate.OperationName("delete_source")):
         val today = LocalDate.now(clock.withZone(ZoneOffset.UTC)).toString
         // the files are named inside the transaction (they are in its log line) and go only after it committed
         sources
-          .delete(ck, SourceReferrers.Day(today), p => originals.find(p).map(f => Source.Deletion.Files(f.value)), Caller.Local)
+          .delete(
+            ck,
+            SourceReferrers.Day(today),
+            p => originals.find(p).map(f => Source.Deletion.Files(f.value)),
+            Caller.Local
+          )
           .map { p =>
             scribe.info(Source.Delete.logText(p.deletion).value)
-            p.deletion.modify(_.filesFailed).setTo(
-              originals.remove(p.deletion.files.map(f => SourceOriginals.RemoveFiles(f.value))).map(r => Source.Deletion.FilesFailed(r.value))
-            )
+            p.deletion
+              .modify(_.filesFailed)
+              .setTo(
+                originals
+                  .remove(p.deletion.files.map(f => SourceOriginals.RemoveFiles(f.value)))
+                  .map(r => Source.Deletion.FilesFailed(r.value))
+              )
           }
 
   /** An IMPORT of a note must not land under an OLD citekey — the one exception to following the alias: a note named by
@@ -168,18 +201,33 @@ final class SourcesControllers(
     * Applies the seed's "stored row is newer than the file" guard whenever the client sends the file's mtime.
     */
   def importNote(req: NoteImport): Either[Api.Error, SeedResult] = maintenance.guard(WriteGate.OperationName("import")):
-    SourceNote.parseNote(SourceNote.Text(req.text.value), req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))) match
+    SourceNote.parseNote(
+      SourceNote.Text(req.text.value),
+      req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))
+    ) match
       case None         => Left(Api.Error(Api.Error.Message("no YAML frontmatter in the note")))
       case Some(parsed) =>
         val raw = parsed.citekey
-        if raw.value.isEmpty then Left(Api.Error(Api.Error.Message("note has no citekey (none in the frontmatter, none supplied)")))
+        if raw.value.isEmpty then
+          Left(Api.Error(Api.Error.Message("note has no citekey (none in the frontmatter, none supplied)")))
         else
           Citekey.parse(raw.value) match
             case Left(problem) => Left(Write.invalid(Api.Error.Message(problem.value)))
-            case Right(ck) =>
-              if sources.aliasOf(ck).isDefined then notAnAlias(ck).map(_ => SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), Nil))
-              else if !req.force.value && req.mtime.exists(m => SeedImport.isStale(sources.updatedAtMillis, ck, SeedNote.ModifiedMillis(m.value)))
-              then Right(SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), List(SeedResult.Skipped(raw.value))))
+            case Right(ck)     =>
+              if sources.aliasOf(ck).isDefined then
+                notAnAlias(ck).map(_ => SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), Nil))
+              else if !req.force.value && req.mtime.exists(m =>
+                  SeedImport.isStale(sources.updatedAtMillis, ck, SeedNote.ModifiedMillis(m.value))
+                )
+              then
+                Right(
+                  SeedResult(
+                    SeedResult.Imported(0),
+                    Nil,
+                    SeedResult.EdgesResolved(0),
+                    List(SeedResult.Skipped(raw.value))
+                  )
+                )
               else
                 // `body` is the converted paper text the client read from `md_path`; NUL bytes occur in some
                 // OCR output and Postgres `text` rejects them.
@@ -194,12 +242,20 @@ final class SourcesControllers(
                     .modify(_.ocrMarkdown)
                     .using(
                       _.map(m =>
-                        Source.OcrMarkdown(AssetLinks.normalizeBody(AssetLinks.Body(m.value), AssetLinks.Title(withBody.title.value)).value)
+                        Source.OcrMarkdown(
+                          AssetLinks
+                            .normalizeBody(AssetLinks.Body(m.value), AssetLinks.Title(withBody.title.value))
+                            .value
+                        )
                       )
                     )
                 val _ = sources.put(normalised, Caller.Local)
-                if req.assets.isEmpty then Right(SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
-                else figures.putFigures(ck, req.assets).map(_ => SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
+                if req.assets.isEmpty then
+                  Right(SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
+                else
+                  figures
+                    .putFigures(ck, req.assets)
+                    .map(_ => SeedResult(SeedResult.Imported(1), Nil, SeedResult.EdgesResolved(0), Nil))
 
   // ── formatting: what in the agent-written Markdown will not display as meant ─────────────────
 
@@ -231,9 +287,13 @@ final class SourcesControllers(
       val ck = canonical(citekey)
       sources.load(ck).toRight(notFound(citekey)).flatMap { s =>
         val (summary, fs) =
-          s.summary.map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
+          s.summary
+            .map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Summary))
+            .fold((None, Nil))((t, f) => (Some(t), f))
         val (notes, fn) =
-          s.notes.map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Notes)).fold((None, Nil))((t, f) => (Some(t), f))
+          s.notes
+            .map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Notes))
+            .fold((None, Nil))((t, f) => (Some(t), f))
         val done = fs.map(f => "summary: " + f.value) ++ fn.map(f => "notes: " + f.value)
         val write =
           if done.isEmpty then Right(())
@@ -358,7 +418,12 @@ final class SourcesControllers(
       }
 
   /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */
-  private def bodySlice(citekey: Citekey, heading: Option[SourceService.Heading], offset: Option[Offset], chars: Option[SourcesControllers.Chars]): String =
+  private def bodySlice(
+      citekey: Citekey,
+      heading: Option[SourceService.Heading],
+      offset: Option[Offset],
+      chars: Option[SourcesControllers.Chars]
+  ): String =
     val raw = (heading match
       case Some(h) => sources.bodyUnderHeading(citekey, h)
       case None    => sources.bodyText(citekey)

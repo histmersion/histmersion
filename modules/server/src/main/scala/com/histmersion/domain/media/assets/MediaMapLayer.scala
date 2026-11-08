@@ -24,7 +24,9 @@ final class MediaMapLayer(assets: AssetService) extends MapLayer:
     )
 
   def features(keys: List[MapTiles.TileKey]): Map[MapTiles.TileKey, TileCell => TilePoint] =
-    assets.geoOf(keys.map(k => AssetService.AssetUid(k.value))).map((uid, h) => MapTiles.TileKey(uid.value) -> feature(h))
+    assets
+      .geoOf(keys.map(k => AssetService.AssetUid(k.value)))
+      .map((uid, h) => MapTiles.TileKey(uid.value) -> feature(h))
 
   private[assets] def feature(h: MediaGeoHit)(c: TileCell): TilePoint =
     TilePoint(
@@ -32,14 +34,21 @@ final class MediaMapLayer(assets: AssetService) extends MapLayer:
       c.y,
       F.text(P.Key, c.key.value) ++ F.text(P.Uid, h.uid.value) ++ F.text(P.Citekey, h.citekey.map(_.value)) ++ F
         .text(P.AssetName, h.assetName.value) ++
-        F.text(P.Kind, h.kind.map(_.value)) ++ F.whole(P.PeriodStart, h.periodStart.map(y => TileValue.Whole.Value(y.value))) ++ F.whole(P.PeriodEnd, h.periodEnd.map(y => TileValue.Whole.Value(y.value))) ++ F.text(
+        F.text(P.Kind, h.kind.map(_.value)) ++ F.whole(
+          P.PeriodStart,
+          h.periodStart.map(y => TileValue.Whole.Value(y.value))
+        ) ++ F.whole(P.PeriodEnd, h.periodEnd.map(y => TileValue.Whole.Value(y.value))) ++ F.text(
           P.Caption,
           h.caption.map(_.value)
         ) ++
-        F.text(P.Provider, h.provider.map(_.value)) ++ F.text(P.License, h.license.map(_.value)) ++ F.text(P.Credit, h.credit.map(_.value)) ++ F.text(
+        F.text(P.Provider, h.provider.map(_.value)) ++ F.text(P.License, h.license.map(_.value)) ++ F
+          .text(P.Credit, h.credit.map(_.value)) ++ F.text(
           P.ThumbUrl,
           h.thumbUrl.map(_.value)
         ) ++
         // its full size is this server's own `/media/{uid}/file`, which the map makes from the uid (not sent per picture)
-        F.text(P.SourceUrl, h.sourceUrl.map(_.value)) ++ F.text(P.LicenseUrl, h.licenseUrl.map(_.value)) ++ F.text(P.Author, h.author.map(_.value))
+        F.text(P.SourceUrl, h.sourceUrl.map(_.value)) ++ F.text(P.LicenseUrl, h.licenseUrl.map(_.value)) ++ F.text(
+          P.Author,
+          h.author.map(_.value)
+        )
     )

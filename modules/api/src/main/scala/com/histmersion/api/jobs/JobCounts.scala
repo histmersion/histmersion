@@ -16,7 +16,8 @@ final case class JobCounts(
     paused: JobCounts.Paused = JobCounts.Paused(0),
     cancelled: JobCounts.Cancelled = JobCounts.Cancelled(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema:
+      KindlingsSchema,
+      com.histmersion.api.json.Schema:
   def of(s: JobState): JobCounts.Count = s match
     case JobState.Queued    => JobCounts.Count((queued).value)
     case JobState.Running   => JobCounts.Count((running).value)
@@ -27,9 +28,6 @@ final case class JobCounts(
 object JobCounts:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
-
-
-
 
   type Queued = Queued.T
   object Queued extends Newtype[Int, Pure]
@@ -58,11 +56,17 @@ object JobCounts:
         case Nil            => JobCounts(queued, running, done, failed, paused, cancelled)
         case (s, n) :: tail =>
           JobState.parse(s) match
-            case Some(JobState.Queued)    => loop(tail, Queued((queued).value + (n).value), running, done, failed, paused, cancelled)
-            case Some(JobState.Running)   => loop(tail, queued, Running((running).value + (n).value), done, failed, paused, cancelled)
-            case Some(JobState.Done)      => loop(tail, queued, running, Done((done).value + (n).value), failed, paused, cancelled)
-            case Some(JobState.Failed)    => loop(tail, queued, running, done, Failed((failed).value + (n).value), paused, cancelled)
-            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, Paused((paused).value + (n).value), cancelled)
-            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, Cancelled((cancelled).value + (n).value))
-            case None                     => loop(tail, queued, running, done, failed, paused, cancelled)
+            case Some(JobState.Queued) =>
+              loop(tail, Queued((queued).value + (n).value), running, done, failed, paused, cancelled)
+            case Some(JobState.Running) =>
+              loop(tail, queued, Running((running).value + (n).value), done, failed, paused, cancelled)
+            case Some(JobState.Done) =>
+              loop(tail, queued, running, Done((done).value + (n).value), failed, paused, cancelled)
+            case Some(JobState.Failed) =>
+              loop(tail, queued, running, done, Failed((failed).value + (n).value), paused, cancelled)
+            case Some(JobState.Paused) =>
+              loop(tail, queued, running, done, failed, Paused((paused).value + (n).value), cancelled)
+            case Some(JobState.Cancelled) =>
+              loop(tail, queued, running, done, failed, paused, Cancelled((cancelled).value + (n).value))
+            case None => loop(tail, queued, running, done, failed, paused, cancelled)
     loop(rows, Queued(0), Running(0), Done(0), Failed(0), Paused(0), Cancelled(0))

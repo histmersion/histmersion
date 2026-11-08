@@ -32,7 +32,5 @@ object ReviewStateService:
       if slugs.isEmpty then Map.empty else db.read(ArticleReviewRepo.facts(slugs))
     def runStarts(runs: List[Run.Id]): Map[Run.Id, ArticleReviewStatus.RunStart] =
       if runs.isEmpty then Map.empty
-      else
-        db.read(ArticleReviewRepo.runStarts(runs)).map((id, at) => id -> ReviewRound.StartedAt(at))
+      else db.read(ArticleReviewRepo.runStarts(runs)).map((id, at) => id -> ReviewRound.StartedAt(at))
     def goals(slug: Slug): List[ReviewGoal] = db.read(ArticleReviewRepo.goals(slug))
-

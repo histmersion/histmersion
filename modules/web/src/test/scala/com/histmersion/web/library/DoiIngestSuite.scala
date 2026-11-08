@@ -11,13 +11,28 @@ class DoiIngestSuite extends munit.FunSuite:
       "doi:10.1017/S0003598X00000001",
       "http://dx.doi.org/10.1017/S0003598X00000001"
     ).foreach { t =>
-      assertEquals(DoiIngest.request(t), Right(Ingest.Request(Ingest.Request.Id("10.1017/S0003598X00000001"), legalOnly = Ingest.Request.LegalOnly(true))), t)
+      assertEquals(
+        DoiIngest.request(t),
+        Right(
+          Ingest.Request(Ingest.Request.Id("10.1017/S0003598X00000001"), legalOnly = Ingest.Request.LegalOnly(true))
+        ),
+        t
+      )
     }
 
   test("an arXiv id, bare or prefixed, asks the legal chain only"):
-    assertEquals(DoiIngest.request("2101.01234"), Right(Ingest.Request(Ingest.Request.Id("arxiv:2101.01234"), legalOnly = Ingest.Request.LegalOnly(true))))
-    assertEquals(DoiIngest.request("arXiv:2101.01234v2"), Right(Ingest.Request(Ingest.Request.Id("arXiv:2101.01234v2"), legalOnly = Ingest.Request.LegalOnly(true))))
-    assertEquals(DoiIngest.request("hep-th/9901001"), Right(Ingest.Request(Ingest.Request.Id("arxiv:hep-th/9901001"), legalOnly = Ingest.Request.LegalOnly(true))))
+    assertEquals(
+      DoiIngest.request("2101.01234"),
+      Right(Ingest.Request(Ingest.Request.Id("arxiv:2101.01234"), legalOnly = Ingest.Request.LegalOnly(true)))
+    )
+    assertEquals(
+      DoiIngest.request("arXiv:2101.01234v2"),
+      Right(Ingest.Request(Ingest.Request.Id("arXiv:2101.01234v2"), legalOnly = Ingest.Request.LegalOnly(true)))
+    )
+    assertEquals(
+      DoiIngest.request("hep-th/9901001"),
+      Right(Ingest.Request(Ingest.Request.Id("arxiv:hep-th/9901001"), legalOnly = Ingest.Request.LegalOnly(true)))
+    )
 
   test("every request the form can send is legal-only"):
     List("10.1/x", "10.12345/abc.def", "2101.01234")

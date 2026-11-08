@@ -42,7 +42,6 @@ private[assets] object AssetRepo:
     * hand-made links.
     */
 
-
   def replace(citekey: Citekey, assets: List[NewFigure])(using DbCon): RowCount =
     val incoming = NewFigure.dedupe(assets)
     val existing = sql"SELECT name, sha256 FROM assets WHERE citekey = $citekey ORDER BY name"
@@ -78,7 +77,9 @@ private[assets] object AssetRepo:
     * and it used to say `DO UPDATE`, i.e. the exact opposite: the seed importer's figures overwrote the (better) ones a
     * conversion had produced. For [[replace]] the clause is what updates a kept row in place.
     */
-  private def insert(citekey: Citekey, assets: List[NewFigure], replaceExisting: ReplaceExisting)(using DbCon): RowCount =
+  private def insert(citekey: Citekey, assets: List[NewFigure], replaceExisting: ReplaceExisting)(using
+      DbCon
+  ): RowCount =
     assets.foreach { a =>
       val sha = a.sha256
       if replaceExisting.value then
@@ -121,7 +122,12 @@ private[assets] object AssetRepo:
       .map(r => (r.mime, r.bytes))
 
   def count(citekey: Citekey)(using DbCon): RowCount =
-    sql"SELECT count(*) FROM assets WHERE citekey = $citekey".query[Int].run().headOption.map(RowCount(_)).getOrElse(RowCount(0))
+    sql"SELECT count(*) FROM assets WHERE citekey = $citekey"
+      .query[Int]
+      .run()
+      .headOption
+      .map(RowCount(_))
+      .getOrElse(RowCount(0))
 
   def exists(citekey: Citekey, name: AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
@@ -157,7 +163,13 @@ private[assets] object AssetRepo:
     * alone replacing that bound ([[RangeSql.merge]]). The figure must exist.
     */
   def patch(citekey: Citekey, name: AssetInfoRow.Name, p: AssetPatch)(using DbCon): Either[Api.Error, Unit] =
-    if !exists(citekey, name) then Left(Api.Error(Api.Error.Message(s"No asset '${citekey.value}/${name.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    if !exists(citekey, name) then
+      Left(
+        Api.Error(
+          Api.Error.Message(s"No asset '${citekey.value}/${name.value}'"),
+          Some(Api.Error.Code(Write.CodeNotFound))
+        )
+      )
     else
       p.kind.foreach(v => sql"UPDATE assets SET kind = $v WHERE citekey = $citekey AND name = $name".update.run())
       p.caption.foreach(v => sql"UPDATE assets SET caption = $v WHERE citekey = $citekey AND name = $name".update.run())
@@ -176,14 +188,16 @@ private[assets] object AssetRepo:
         stored._1.map(DeepTime.SignedYear(_)),
         stored._2.map(DeepTime.SignedYear(_))
       )
-      RangeSql.merge(
-        storedBounds,
-        p.periodStart.map(y => DeepTime.SignedYear(y.value)),
-        p.periodEnd.map(y => DeepTime.SignedYear(y.value)),
-        s"asset '${citekey.value}/${name.value}'"
-      ).getOrElse(Right(storedBounds)).map {
-        (s, e) =>
+      RangeSql
+        .merge(
+          storedBounds,
+          p.periodStart.map(y => DeepTime.SignedYear(y.value)),
+          p.periodEnd.map(y => DeepTime.SignedYear(y.value)),
+          s"asset '${citekey.value}/${name.value}'"
+        )
+        .getOrElse(Right(storedBounds))
+        .map { (s, e) =>
           if (s, e) != storedBounds then
             val range = RangeSql.literal(s, e)
             sql"UPDATE assets SET period = $range::int8range WHERE citekey = $citekey AND name = $name".update.run()
-      }
+        }

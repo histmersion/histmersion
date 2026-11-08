@@ -45,14 +45,21 @@ final class OnDemandTiles(
     case OnDemandTiles.Source.Template(u) => RangeHttp.Url(u().value)
 
   val cache: DiskLru =
-    DiskLru(store.sub(OnDemandTiles.Tiles), () => DiskLru.MaxBytes((cfg().cacheGb.value * 1e9).toLong), ext)(using clock)
+    DiskLru(store.sub(OnDemandTiles.Tiles), () => DiskLru.MaxBytes((cfg().cacheGb.value * 1e9).toLong), ext)(using
+      clock
+    )
   private val remoteFiles = store.sub(OnDemandTiles.Remote)
 
   private def done(written: Either[Store.Error, ?]): Unit =
     written.left.foreach(e => throw IOException(e.message.value))
 
   /** What the planet file is: its header and root, the leaves read, its size and ETag. */
-  final private case class Remote(url: RangeHttp.Url, header: PmTiles.Header, root: Vector[PmTiles.Entry], file: RemoteFile)
+  final private case class Remote(
+      url: RangeHttp.Url,
+      header: PmTiles.Header,
+      root: Vector[PmTiles.Entry],
+      file: RemoteFile
+  )
 
   // the open remote description (re-read when the file changes) and when requests may start again; under the lock
   @volatile private var remote: Option[Remote] = None
@@ -132,11 +139,11 @@ final class OnDemandTiles(
             case None                     =>
               val _ = remoteFiles.deleteTree(Store.Key.Root)
               leaves.clear()
-              request(http().bytes(u, ByteOffset.applyUnsafe(0L), ByteCount.applyUnsafe(PmTiles.RootBytes.toLong))).map {
-                (b, f) =>
+              request(http().bytes(u, ByteOffset.applyUnsafe(0L), ByteCount.applyUnsafe(PmTiles.RootBytes.toLong)))
+                .map { (b, f) =>
                   done(remoteFiles.write(OnDemandTiles.Head, ByteSource.Content(b.value)))
                   (b.value, f)
-              }
+                }
           for
             hf <- head
             (b, f) = hf
@@ -178,17 +185,18 @@ final class OnDemandTiles(
   private def leaf(r: Remote, e: PmTiles.Entry): Either[OnDemandTiles.Problem, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset.value)).map(Right(_)).getOrElse {
       val f = Store.Key.applyUnsafe(s"leaf-${e.offset.value}-${e.length.value}.bin")
-      val raw: Either[OnDemandTiles.Problem, Array[Byte]] = remoteFiles.get(f).filter(_.size.value == e.length.value) match
-        case Some(kept) => Right(kept.bytes().value)
-        case None       =>
-          PmTiles.range(r.header.leafOffset, e).flatMap { (at, n) =>
-            request(http().bytes(r.url, at, n)).flatMap { (b, got) =>
-              if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
-              else
-                done(remoteFiles.write(f, ByteSource.Content(b.value)))
-                Right(b.value)
+      val raw: Either[OnDemandTiles.Problem, Array[Byte]] =
+        remoteFiles.get(f).filter(_.size.value == e.length.value) match
+          case Some(kept) => Right(kept.bytes().value)
+          case None       =>
+            PmTiles.range(r.header.leafOffset, e).flatMap { (at, n) =>
+              request(http().bytes(r.url, at, n)).flatMap { (b, got) =>
+                if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
+                else
+                  done(remoteFiles.write(f, ByteSource.Content(b.value)))
+                  Right(b.value)
+              }
             }
-          }
       raw
         .flatMap(b => PmTiles.decompress(PmTiles.CompressedBytes(b), r.header.internalCompression))
         .flatMap(PmTiles.decodeDirectory)
@@ -226,7 +234,10 @@ final class OnDemandTiles(
         request(
           http().file(
             RangeHttp.Url(
-              u().value.replace("{z}", z.value.toString).replace("{x}", x.value.toString).replace("{y}", y.value.toString)
+              u().value
+                .replace("{z}", z.value.toString)
+                .replace("{x}", x.value.toString)
+                .replace("{y}", y.value.toString)
             )
           )
         ).map(_.map(b => PmTiles.TileBytes(b.value)))
@@ -269,7 +280,7 @@ final class OnDemandTiles(
     else
       val key = DiskLru.Key(s"${z.value}/${x.value}/${y.value}")
       cache.get(key) match
-        case Some(hit)                            => Right(hit.map(b => PmTiles.TileBytes(b.value)))
+        case Some(hit)                          => Right(hit.map(b => PmTiles.TileBytes(b.value)))
         case None if offlineUntil > now().value =>
           Left(OnDemandTiles.Problem("the provider was unreachable a moment ago; not asked again yet"))
         case None =>

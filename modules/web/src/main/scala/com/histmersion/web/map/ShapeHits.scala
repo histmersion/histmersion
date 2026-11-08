@@ -14,7 +14,6 @@ object ShapeHits:
     * lines contain nothing. Pure.
     */
 
-
   def contains(g: js.Dynamic, lat: Geo.Latitude, lon: Geo.Longitude): Boolean =
     if js.isUndefined(g) || g == null then false
     else

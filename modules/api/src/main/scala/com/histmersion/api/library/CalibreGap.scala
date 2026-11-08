@@ -23,7 +23,8 @@ final case class CalibreGap(
     /** None where the server does not say (an older server, the push metadata): the push then tries. */
     storedOriginal: Option[CalibreGap.StoredOriginal] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object CalibreGap:
   export com.histmersion.api.library.Title

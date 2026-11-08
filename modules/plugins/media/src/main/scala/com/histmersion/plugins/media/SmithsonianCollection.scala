@@ -9,7 +9,13 @@ import com.histmersion.plugin.*
   * made after `max-year` is refused.
   */
 final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key])
-    extends KeyedCollection(conf, KeyedCollection.Plugin("media-smithsonian"), key, KeyedCollection.Needs("an api.data.gov key"), KeyedCollection.Settings("media.smithsonian")):
+    extends KeyedCollection(
+      conf,
+      KeyedCollection.Plugin("media-smithsonian"),
+      key,
+      KeyedCollection.Needs("an api.data.gov key"),
+      KeyedCollection.Settings("media.smithsonian")
+    ):
   val title = MediaCollection.TitleResult("Smithsonian Open Access objects")
   override val description = described(
     "Smithsonian Open Access objects whose image is itself CC0 (usage.access), tied to a place on the map " +
@@ -19,7 +25,10 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
   )
   private val units = CollectionSettings.items(conf.excludeProviders).map(i => Smithsonian.Unit(i.value))
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
+  def search(
+      place: MediaPlace,
+      http: Plugin.Http
+  ): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(
         Smithsonian.searchUrl(conf.apiUrl, place.label, conf.candidates, units),
@@ -29,4 +38,3 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
       .left
       .map(e => MediaCollection.SearchResultPart1(explain(KeyedCollection.Problem(e)).value))
       .map(_.map(_.left.map(e => MediaCollection.SearchResultPart2Part1(e.value))))
-

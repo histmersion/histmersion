@@ -23,7 +23,12 @@ trait CandidateService:
 
   /** A watch read: its new watermark (none on a failed read, which keeps the old one), what it found, or why it failed.
     */
-  def recordWatch(watch: CandidateWatch, watermark: Option[CandidateWatch.Watermark], error: Option[CandidateWatch.LastError], found: CandidateWatch.LastFound): Unit
+  def recordWatch(
+      watch: CandidateWatch,
+      watermark: Option[CandidateWatch.Watermark],
+      error: Option[CandidateWatch.LastError],
+      found: CandidateWatch.LastFound
+  ): Unit
 
   /** Store a candidate: a new one (`true`), or one found again. */
   def upsert(candidate: Source.Candidate): Boolean
@@ -32,7 +37,12 @@ trait CandidateService:
   def dois(goal: Goal.Slug): Set[Doi]
 
   /** A page of the candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[Goal.Slug], state: Source.Candidate.State, limit: CandidateService.ListLimit, offset: Offset): List[Source.Candidate]
+  def list(
+      goal: Option[Goal.Slug],
+      state: Source.Candidate.State,
+      limit: CandidateService.ListLimit,
+      offset: Offset
+  ): List[Source.Candidate]
 
   /** How many candidates there are in each state, in the states' order. */
   def counts(goal: Option[Goal.Slug]): List[CandidateCount]
@@ -51,11 +61,21 @@ object CandidateService:
 
   final private class Implementation(db: Transactor) extends CandidateService:
     def watches(goal: Goal.Slug): List[CandidateWatch] = db.read(CandidateRepo.watches(goal))
-    def recordWatch(watch: CandidateWatch, watermark: Option[CandidateWatch.Watermark], error: Option[CandidateWatch.LastError], found: CandidateWatch.LastFound): Unit =
+    def recordWatch(
+        watch: CandidateWatch,
+        watermark: Option[CandidateWatch.Watermark],
+        error: Option[CandidateWatch.LastError],
+        found: CandidateWatch.LastFound
+    ): Unit =
       db.transact(CandidateRepo.recordWatch(watch, watermark, error, found))
     def upsert(candidate: Source.Candidate): Boolean = db.transact(CandidateRepo.upsert(candidate))
     def dois(goal: Goal.Slug): Set[Doi] = db.read(CandidateRepo.dois(goal))
-    def list(goal: Option[Goal.Slug], state: Source.Candidate.State, limit: ListLimit, offset: Offset): List[Source.Candidate] =
+    def list(
+        goal: Option[Goal.Slug],
+        state: Source.Candidate.State,
+        limit: ListLimit,
+        offset: Offset
+    ): List[Source.Candidate] =
       db.read(CandidateRepo.list(goal, state, CandidateRepo.Limit(limit.value), offset))
     def counts(goal: Option[Goal.Slug]): List[CandidateCount] = db.read(CandidateRepo.counts(goal))
     def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State): RowCount =
@@ -67,12 +87,22 @@ object CandidateService:
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends CandidateService:
     private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
     private def now: String = Stamp.format(clock.instant())
-    private val Order = List(Candidates.State.New, Candidates.State.Seen, Candidates.State.Queued).map(s => Source.Candidate.State(s.wire.value))
+    private val Order = List(Candidates.State.New, Candidates.State.Seen, Candidates.State.Queued).map(s =>
+      Source.Candidate.State(s.wire.value)
+    )
 
     def watches(goal: Goal.Slug): List[CandidateWatch] =
-      state.get.watches.values.filter(_.goal.value == goal.value).toList.sortBy(w => (w.kind.value, w.subject.value, w.index.value))
+      state.get.watches.values
+        .filter(_.goal.value == goal.value)
+        .toList
+        .sortBy(w => (w.kind.value, w.subject.value, w.index.value))
 
-    def recordWatch(watch: CandidateWatch, watermark: Option[CandidateWatch.Watermark], error: Option[CandidateWatch.LastError], found: CandidateWatch.LastFound): Unit =
+    def recordWatch(
+        watch: CandidateWatch,
+        watermark: Option[CandidateWatch.Watermark],
+        error: Option[CandidateWatch.LastError],
+        found: CandidateWatch.LastFound
+    ): Unit =
       val key = (
         AcquisitionState.WatchesKeyPart1(watch.goal.value),
         AcquisitionState.WatchesKeyPart2(watch.kind.value),
@@ -139,9 +169,15 @@ object CandidateService:
       }
       created
 
-    def dois(goal: Goal.Slug): Set[Doi] = state.get.candidates.filter(_.goal.value == goal.value).map(c => Doi.assume(c.doi.value)).toSet
+    def dois(goal: Goal.Slug): Set[Doi] =
+      state.get.candidates.filter(_.goal.value == goal.value).map(c => Doi.assume(c.doi.value)).toSet
 
-    def list(goal: Option[Goal.Slug], st: Source.Candidate.State, limit: ListLimit, offset: Offset): List[Source.Candidate] =
+    def list(
+        goal: Option[Goal.Slug],
+        st: Source.Candidate.State,
+        limit: ListLimit,
+        offset: Offset
+    ): List[Source.Candidate] =
       state.get.candidates
         .filter(c => goal.forall(_.value == c.goal.value) && c.state == st)
         .sortBy[Long](_.id.value)
@@ -163,7 +199,9 @@ object CandidateService:
       }
       RowCount(n)
 
-    def mark(ids: List[Source.Candidate.Id], st: Source.Candidate.State): RowCount = if ids.isEmpty then RowCount(0) else marked(c => ids.contains(c.id), st)
+    def mark(ids: List[Source.Candidate.Id], st: Source.Candidate.State): RowCount =
+      if ids.isEmpty then RowCount(0) else marked(c => ids.contains(c.id), st)
 
     def markDois(goal: Goal.Slug, dois: List[Doi], st: Source.Candidate.State): RowCount =
-      if dois.isEmpty then RowCount(0) else marked(c => c.goal.value == goal.value && dois.exists(_.value == c.doi.value), st)
+      if dois.isEmpty then RowCount(0)
+      else marked(c => c.goal.value == goal.value && dois.exists(_.value == c.doi.value), st)

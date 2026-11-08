@@ -15,7 +15,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * no value named a known place and every one of them falls back to the wave-1 name ILIKE, exactly as before the
   * gazetteer existed.
   */
-final case class PlaceScope(byValue: Map[PlaceScope.Value, List[Place.Id]], labels: Map[PlaceScope.Value, PlaceRepo.Label] = Map.empty):
+final case class PlaceScope(
+    byValue: Map[PlaceScope.Value, List[Place.Id]],
+    labels: Map[PlaceScope.Value, PlaceRepo.Label] = Map.empty
+):
   /** The place ids one filter value stands for — itself plus its descendants as of the filter's period. `None` when the
     * value is not a place id.
     */

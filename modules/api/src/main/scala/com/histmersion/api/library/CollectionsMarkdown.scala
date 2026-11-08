@@ -10,8 +10,6 @@ object CollectionsMarkdown:
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
 
-
-
   def collections(cs: List[CollectionInfo]): String =
     if cs.isEmpty then ("_No source collection is registered._")
     else (cs.map(collection).mkString("\n\n"))
@@ -19,7 +17,9 @@ object CollectionsMarkdown:
   def collection(c: CollectionInfo): String =
     (s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
       s"- can: ${c.capabilities.mkString(", ")}\n" +
-      s"- reachable: ${if ((c.reachable) == CollectionInfo.Reachable(true)) then "yes" else s"no — ${c.problem.getOrElse("unknown")}"}")
+      s"- reachable: ${
+          if (c.reachable) == CollectionInfo.Reachable(true) then "yes" else s"no — ${c.problem.getOrElse("unknown")}"
+        }")
 
   private def who(authors: List[AuthorName]): String =
     (authors.take(3).mkString(", ") + (if authors.sizeIs > 3 then " et al." else ""))
@@ -122,13 +122,14 @@ object CollectionsMarkdown:
         s"- ${r.id}: linked from ${r.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
       case r if r.state == CollectionUpdateRow.State("missing") =>
         s"- ${r.id}: no such Calibre entry (${r.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
-      case r if r.state == CollectionUpdateRow.State("refused") => s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.getOrElse("")}"
+      case r if r.state == CollectionUpdateRow.State("refused") =>
+        s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.getOrElse("")}"
     }
     val upToDate = rows.count(_.state == CollectionUpdateRow.State("up-to-date"))
     val head =
       if changing.isEmpty then s"_No linked Calibre entry needs updating ($upToDate up to date)._"
       else
-        val verb = if (applied) then "updated" else "would change"
+        val verb = if applied then "updated" else "would change"
         (List(
           s"### ${changing.size} Calibre ${Plural.noun(Plural.Count((changing.size).toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} $verb · $upToDate up to date",
           "",
@@ -163,7 +164,9 @@ object CollectionsMarkdown:
     ((List(s"Imported Calibre id ${i.id} as `${i.citekey}` — ${i.title}") ++
       i.relinkedFrom.map(prev => s"Re-linked `${i.citekey}` from Calibre id $prev to ${i.id}") ++
       List(s"File (left in place, never modified): ${i.file}") ++
-      i.cover.map(c => if ((c.warning) == CollectionCover.Warning(true)) then s"warning: cover not stored — ${c.line}" else c.line) ++
+      i.cover.map(c =>
+        if (c.warning) == CollectionCover.Warning(true) then s"warning: cover not stored — ${c.line}" else c.line
+      ) ++
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
       i.jobError.map(e => s"not converted: $e")).mkString("\n"))
 

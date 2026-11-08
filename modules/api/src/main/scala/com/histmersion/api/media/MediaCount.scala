@@ -7,12 +7,14 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class MediaCount(key: MediaCount.Key, n: MediaCount.N, allowed: MediaCount.Allowed = MediaCount.Allowed(true))
-    derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+final case class MediaCount(
+    key: MediaCount.Key,
+    n: MediaCount.N,
+    allowed: MediaCount.Allowed = MediaCount.Allowed(true)
+) derives KindlingsCodecAsObject,
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object MediaCount:
-
-
 
   type Key = Key.T
   object Key extends Newtype[String, Pure]

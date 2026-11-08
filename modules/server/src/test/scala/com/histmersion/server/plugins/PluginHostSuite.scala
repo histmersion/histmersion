@@ -37,7 +37,8 @@ final case class EchoConfig(greeting: String, maxItems: Int, mirrors: List[Strin
 /** Records what it was given; registers nothing. */
 final class EchoPlugin(
     seen: scala.collection.mutable.Buffer[String] = scala.collection.mutable.Buffer.empty,
-    override val info: Plugin.Info = Plugin.Info(Plugin.Info.Id("echo"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
+    override val info: Plugin.Info =
+      Plugin.Info(Plugin.Info.Id("echo"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
 ) extends Plugin:
   type Config = EchoConfig
   override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/echo.conf")
@@ -87,7 +88,9 @@ final class BatchVaultPlugin(
         Registry.AddId(c.vault),
         new Secret.Vault:
           val name = Secret.Vault.NameResult(c.vault)
-          def resolve(ref: Secret.Vault.ResolveRef) = { singles.incrementAndGet(); Right(Secret.Vault.ResolveResultPart2(s"one($ref)")) }
+          def resolve(ref: Secret.Vault.ResolveRef) = {
+            singles.incrementAndGet(); Right(Secret.Vault.ResolveResultPart2(s"one($ref)"))
+          }
           override def resolveAll(refs: List[Secret.Vault.ResolveAllRefs]) =
             batches += refs.map(_.value)
             refs
@@ -104,7 +107,10 @@ final class BatchVaultPlugin(
 final case class ConsumerConfig(token: Secret, extra: List[Secret]) derives ConfigReader
 
 /** Needs secrets; records the values it got (the test asserts on them, nothing else ever sees them). */
-final class ConsumerPlugin(got: scala.collection.mutable.Buffer[String], id: Plugin.Info.Id = Plugin.Info.Id("consumer")) extends Plugin:
+final class ConsumerPlugin(
+    got: scala.collection.mutable.Buffer[String],
+    id: Plugin.Info.Id = Plugin.Info.Id("consumer")
+) extends Plugin:
   type Config = ConsumerConfig
   val info = Plugin.Info(id, Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
   override def defaultsResource = Plugin.DefaultsResourceResult("META-INF/histmersion/plugins/consumer.conf")
@@ -132,7 +138,11 @@ class PluginHostSuite extends munit.FunSuite:
   final private class Logs:
     val lines = scala.collection.mutable.Buffer.empty[String]
     val services = HostServices(
-      () => new Plugin.Http { def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("offline")) },
+      () =>
+        new Plugin.Http {
+          def get(u: Plugin.Http.GetUrl, h: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+            Left(Plugin.Http.GetResultPart1("offline"))
+        },
       ConfigFactory.empty,
       (id, warn, m) => lines += s"${if warn.value then "W" else "I"} $id: $m",
       files = new DiskLocalFiles,
@@ -153,7 +163,8 @@ class PluginHostSuite extends munit.FunSuite:
   test("block: env overrides the defaults declare > the user's keys > the defaults; env keys are not kept"):
     val user = conf("histmersion.plugins.x { a = 2, b = 3 }")
     val defs = conf("a = 1\nb = 1\nb = ${?X_B}\nc = 1\nc = ${?X_C}")
-    val b = PluginHost.block(user, defs, env("X_B" -> "7", "X_C" -> "8", "HOME" -> "/h"), Plugin.Info.Id("x")).toOption.get
+    val b =
+      PluginHost.block(user, defs, env("X_B" -> "7", "X_C" -> "8", "HOME" -> "/h"), Plugin.Info.Id("x")).toOption.get
     assertEquals((b.getInt("a"), b.getInt("b"), b.getInt("c")), (2, 7, 8), "the env beats the file (b)")
     assertEquals(b.root.keySet.asScala.toSet, Set("a", "b", "c"))
 
@@ -177,9 +188,21 @@ class PluginHostSuite extends munit.FunSuite:
 
   test("check refuses a foreign SPI version, a duplicate id, a non-kebab id and the reserved key"):
     val ok = Plugin.Info(Plugin.Info.Id("a"), Plugin.Info.Version("1"), Plugin.Info.SpiVersion(1))
-    assertEquals(PluginHost.check(List(ok, ok.modify(_.id).setTo(Plugin.Info.Id("1password"))), Plugin.Info.SpiVersion(1)), Map.empty)
+    assertEquals(
+      PluginHost.check(List(ok, ok.modify(_.id).setTo(Plugin.Info.Id("1password"))), Plugin.Info.SpiVersion(1)),
+      Map.empty
+    )
     val errs =
-      PluginHost.check(List(ok, ok, ok.modify(_.id).setTo(Plugin.Info.Id("B_x")), ok.modify(_.id).setTo(Plugin.Info.Id("c")).modify(_.spiVersion).setTo(Plugin.Info.SpiVersion(2)), ok.modify(_.id).setTo(Plugin.Info.Id("order"))), Plugin.Info.SpiVersion(1))
+      PluginHost.check(
+        List(
+          ok,
+          ok,
+          ok.modify(_.id).setTo(Plugin.Info.Id("B_x")),
+          ok.modify(_.id).setTo(Plugin.Info.Id("c")).modify(_.spiVersion).setTo(Plugin.Info.SpiVersion(2)),
+          ok.modify(_.id).setTo(Plugin.Info.Id("order"))
+        ),
+        Plugin.Info.SpiVersion(1)
+      )
     assertEquals(errs.keySet, Set("a", "B_x", "c", "order"))
     assert(errs(Plugin.Info.Id("a")).value.contains("claimed by 2 plugins"))
     assert(errs(Plugin.Info.Id("c")).value.contains("built for SPI 2, this host speaks 1"))
@@ -187,8 +210,14 @@ class PluginHostSuite extends munit.FunSuite:
     assert(errs(Plugin.Info.Id("order")).value.contains("not a plugin id"))
 
   test("order: histmersion.plugins.order first, as listed, then the rest by id; unknown entries warned"):
-    assertEquals(PluginHost.order(List(Plugin.Info.Id("c"), Plugin.Info.Id("a"), Plugin.Info.Id("b")), Nil), (List("a", "b", "c"), Nil))
-    val (o, w) = PluginHost.order(List(Plugin.Info.Id("c"), Plugin.Info.Id("a"), Plugin.Info.Id("b")), List(Plugin.Info.Id("c"), Plugin.Info.Id("zz"), Plugin.Info.Id("c")))
+    assertEquals(
+      PluginHost.order(List(Plugin.Info.Id("c"), Plugin.Info.Id("a"), Plugin.Info.Id("b")), Nil),
+      (List("a", "b", "c"), Nil)
+    )
+    val (o, w) = PluginHost.order(
+      List(Plugin.Info.Id("c"), Plugin.Info.Id("a"), Plugin.Info.Id("b")),
+      List(Plugin.Info.Id("c"), Plugin.Info.Id("zz"), Plugin.Info.Id("c"))
+    )
     assertEquals(o, List("c", "a", "b"))
     assertEquals(w, List("histmersion.plugins.order names 'zz', which is no plugin in this binary"))
     assertEquals(
@@ -206,7 +235,10 @@ class PluginHostSuite extends munit.FunSuite:
   test("digest is order-independent and changes with any jar"):
     val a = List(PluginJar.File("a.jar") -> Sha256("11"), PluginJar.File("b.jar") -> Sha256("22"))
     assertEquals(PluginHost.digest(a), PluginHost.digest(a.reverse))
-    assertNotEquals(PluginHost.digest(a), PluginHost.digest(List(PluginJar.File("a.jar") -> Sha256("11"), PluginJar.File("b.jar") -> Sha256("23"))))
+    assertNotEquals(
+      PluginHost.digest(a),
+      PluginHost.digest(List(PluginJar.File("a.jar") -> Sha256("11"), PluginJar.File("b.jar") -> Sha256("23")))
+    )
     assertNotEquals(PluginHost.digest(a), PluginHost.digest(a.take(1)))
     assertEquals(PluginHost.digest(Nil).value.length, 64)
 
@@ -289,11 +321,16 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(nested.map(_.key), List("map", "tokens"))
     assert(!nested.toString.contains("abc") && !nested.toString.contains("xyz"), nested)
     assert(nested.exists(_.value.value.contains("env:B")), nested)
-    assertEquals(PluginHost.settings(conf("account = \"\"")), List(PluginSetting(PluginSetting.Key("account"), PluginSetting.Value("\"\""))))
+    assertEquals(
+      PluginHost.settings(conf("account = \"\"")),
+      List(PluginSetting(PluginSetting.Key("account"), PluginSetting.Value("\"\"")))
+    )
 
   test("resolve: value: is the literal, env: the variable, a vault its answer; errors name the reference only"):
     val vault = new Secret.Vault {
-      val name = Secret.Vault.NameResult("kp"); def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Right(Secret.Vault.ResolveResultPart2("vx")) else Left(Secret.Vault.ResolveResultPart1("locked"))
+      val name = Secret.Vault.NameResult("kp");
+      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Right(Secret.Vault.ResolveResultPart2("vx"))
+      else Left(Secret.Vault.ResolveResultPart1("locked"))
     }
     val e = env("TOKEN" -> "t0k")
     assertEquals(PluginHost.resolve(Secret.Ref.Value(Secret.Ref.Value.Literal("lit")), e, Map.empty), Right("lit"))
@@ -302,11 +339,29 @@ class PluginHostSuite extends munit.FunSuite:
       PluginHost.resolve(Secret.Ref.Env(Secret.Ref.Env.Name("NOPE")), e, Map.empty),
       Left("secret env:NOPE: environment variable NOPE is not set")
     )
-    assertEquals(PluginHost.resolve(Secret.Ref.Vault(Secret.Ref.Vault.Value("kp"), Secret.Ref.Vault.Ref("x")), e, Map(Secret.Ref.Vault.Value("kp") -> vault)), Right("vx"))
-    assertEquals(PluginHost.resolve(Secret.Ref.Vault(Secret.Ref.Vault.Value("kp"), Secret.Ref.Vault.Ref("y")), e, Map(Secret.Ref.Vault.Value("kp") -> vault)), Left("secret kp:y: locked"))
+    assertEquals(
+      PluginHost.resolve(
+        Secret.Ref.Vault(Secret.Ref.Vault.Value("kp"), Secret.Ref.Vault.Ref("x")),
+        e,
+        Map(Secret.Ref.Vault.Value("kp") -> vault)
+      ),
+      Right("vx")
+    )
+    assertEquals(
+      PluginHost.resolve(
+        Secret.Ref.Vault(Secret.Ref.Vault.Value("kp"), Secret.Ref.Vault.Ref("y")),
+        e,
+        Map(Secret.Ref.Vault.Value("kp") -> vault)
+      ),
+      Left("secret kp:y: locked")
+    )
     assert(
       PluginHost
-        .resolve(Secret.Ref.Vault(Secret.Ref.Vault.Value("op"), Secret.Ref.Vault.Ref("y")), e, Map(Secret.Ref.Vault.Value("kp") -> vault))
+        .resolve(
+          Secret.Ref.Vault(Secret.Ref.Vault.Value("op"), Secret.Ref.Vault.Ref("y")),
+          e,
+          Map(Secret.Ref.Vault.Value("kp") -> vault)
+        )
         .left
         .exists(_.value.contains("no secret vault 'op'"))
     )
@@ -317,7 +372,12 @@ class PluginHostSuite extends munit.FunSuite:
     val (g, _) = build(List(EchoPlugin()), "")
     val st = statusOf(g, "echo")
     assertEquals((st.state.value: String, st.enabled), (PluginState.Disabled.wire.value: String, false))
-    assert(st.settings.contains(PluginSetting(PluginSetting.Key("greeting"), PluginSetting.Value("hello from the defaults"))), st.settings)
+    assert(
+      st.settings.contains(
+        PluginSetting(PluginSetting.Key("greeting"), PluginSetting.Value("hello from the defaults"))
+      ),
+      st.settings
+    )
     assert(g.report.ok)
 
   test("an enabled plugin gets its typed config: the user's file over its defaults, an env override over both"):
@@ -443,7 +503,9 @@ class PluginHostSuite extends munit.FunSuite:
     val st = statusOf(g, "needs-lib")
     assertEquals(st.state.value: String, PluginState.Failed.wire.value: String)
     assert(
-      st.error.exists(e => e.value.contains("class org.example.xml.Elem is missing") && e.value.contains("histmersion plugin add")),
+      st.error.exists(e =>
+        e.value.contains("class org.example.xml.Elem is missing") && e.value.contains("histmersion plugin add")
+      ),
       st.error
     )
     assertEquals(statusOf(g, "echo").state.value: String, PluginState.Registered.wire.value: String)
@@ -467,7 +529,13 @@ class PluginHostSuite extends munit.FunSuite:
       Some("histmersion.plugins.other: secret-vault 'fake' is already registered")
     )
     val late =
-      escaped.head.secretVaults.add(Registry.AddId("late"), new Secret.Vault { val name = Secret.Vault.NameResult("late"); def resolve(r: Secret.Vault.ResolveRef) = Right(Secret.Vault.ResolveResultPart2("")) })
+      escaped.head.secretVaults.add(
+        Registry.AddId("late"),
+        new Secret.Vault {
+          val name = Secret.Vault.NameResult("late");
+          def resolve(r: Secret.Vault.ResolveRef) = Right(Secret.Vault.ResolveResultPart2(""))
+        }
+      )
     assert(late.left.exists(_.value.contains("registration is over")), late)
     val (g2, _) = build(List(MakerPlugin()), """histmersion.plugins.maker { enabled = true, vault = env }""")
     assert(statusOf(g2, "maker").error.exists(_.value.contains("reserved secret scheme")), statusOf(g2, "maker"))
@@ -485,7 +553,10 @@ class PluginHostSuite extends munit.FunSuite:
 
   test("refused plugins (foreign SPI, duplicate ids) are reported and never registered; config warnings collected"):
     val seen = scala.collection.mutable.Buffer.empty[String]
-    val old = EchoPlugin(seen, Plugin.Info(Plugin.Info.Id("echo"), Plugin.Info.Version("0.0.1"), Plugin.Info.SpiVersion(Spi.Version + 1)))
+    val old = EchoPlugin(
+      seen,
+      Plugin.Info(Plugin.Info.Id("echo"), Plugin.Info.Version("0.0.1"), Plugin.Info.SpiVersion(Spi.Version + 1))
+    )
     val (g, logs) = build(
       List(old, MakerPlugin(), MakerPlugin()),
       """histmersion.plugins { order = [ghost], echo.enabled = true, maker.enabled = true, helo.enabled = true }"""
@@ -511,7 +582,11 @@ class PluginHostSuite extends munit.FunSuite:
     val singles = AtomicInteger()
     val (got1, got2) = (scala.collection.mutable.Buffer.empty[String], scala.collection.mutable.Buffer.empty[String])
     val (g, _) = build(
-      List(BatchVaultPlugin(batches, singles), ConsumerPlugin(got1, Plugin.Info.Id("c1")), ConsumerPlugin(got2, Plugin.Info.Id("c2"))),
+      List(
+        BatchVaultPlugin(batches, singles),
+        ConsumerPlugin(got1, Plugin.Info.Id("c1")),
+        ConsumerPlugin(got2, Plugin.Info.Id("c2"))
+      ),
       """histmersion.plugins {
         |  batcher { enabled = true, vault = "fake" }
         |  c1 { enabled = true, token = "fake:a", extra = ["fake:b", "env:E"] }
@@ -554,19 +629,27 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(batches.size, 1)
     val throwing = new Secret.Vault:
       val name = Secret.Vault.NameResult("t")
-      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "b" then throw new IllegalStateException("kaput") else Right(Secret.Vault.ResolveResultPart2(s"one($r)"))
+      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "b" then throw new IllegalStateException("kaput")
+      else Right(Secret.Vault.ResolveResultPart2(s"one($r)"))
       override def resolveAll(refs: List[Secret.Vault.ResolveAllRefs]) = throw new IllegalStateException("kaput")
     assertEquals(
-      PluginHost.resolveAll(Secret.Ref.Vault.Value("t"), List(Secret.Ref.Vault.Ref("a"), Secret.Ref.Vault.Ref("b")), throwing),
+      PluginHost
+        .resolveAll(Secret.Ref.Vault.Value("t"), List(Secret.Ref.Vault.Ref("a"), Secret.Ref.Vault.Ref("b")), throwing),
       Map("a" -> Right("one(a)"), "b" -> Left("secret t:b: vault 't' failed: IllegalStateException"))
     )
 
   test("a vault without resolveAll (an SPI-2 plugin compiled before it) is asked one reference at a time"):
     val default = new Secret.Vault {
-      val name = Secret.Vault.NameResult("d"); def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Left(Secret.Vault.ResolveResultPart1("locked")) else Right(Secret.Vault.ResolveResultPart2(s"v($r)"))
+      val name = Secret.Vault.NameResult("d");
+      def resolve(r: Secret.Vault.ResolveRef) = if r.value == "x" then Left(Secret.Vault.ResolveResultPart1("locked"))
+      else Right(Secret.Vault.ResolveResultPart2(s"v($r)"))
     }
     assertEquals(
-      PluginHost.resolveAll(Secret.Ref.Vault.Value("d"), List(Secret.Ref.Vault.Ref("a"), Secret.Ref.Vault.Ref("x"), Secret.Ref.Vault.Ref("a")), default),
+      PluginHost.resolveAll(
+        Secret.Ref.Vault.Value("d"),
+        List(Secret.Ref.Vault.Ref("a"), Secret.Ref.Vault.Ref("x"), Secret.Ref.Vault.Ref("a")),
+        default
+      ),
       Map("a" -> Right("v(a)"), "x" -> Left("secret d:x: locked"))
     )
 
@@ -578,7 +661,11 @@ class PluginHostSuite extends munit.FunSuite:
     val (g1, _) = build(plugins, user)
     val (g2, _) = build(plugins, user)
     assertEquals(calls.get, 2, "the secret is resolved again for the second generation (no process-wide cache)")
-    assert(g1.registries.secretVaults(Registries.SecretVaultsKey("fake")) ne g2.registries.secretVaults(Registries.SecretVaultsKey("fake")))
+    assert(
+      g1.registries.secretVaults(Registries.SecretVaultsKey("fake")) ne g2.registries.secretVaults(
+        Registries.SecretVaultsKey("fake")
+      )
+    )
     val (off, _) = build(plugins, "")
     assertEquals(off.registries.secretVaults.size, 0)
 
@@ -592,7 +679,10 @@ class PluginHostSuite extends munit.FunSuite:
     val (found, errs) = PluginHost.discover(getClass.getClassLoader)
     assertEquals(errs, Nil)
     assertEquals(vaults(found).map(_.info.id.value).sorted, List("1password", "bitwarden", "keepassxc"))
-    assert(found.map(_.info.id).forall(id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))), found.map(_.info.id).toString)
+    assert(
+      found.map(_.info.id).forall(id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))),
+      found.map(_.info.id).toString
+    )
     val (g, _) = build(vaults(found), "")
     assertEquals(
       g.report.plugins.map(p => p.id -> p.state),
@@ -611,7 +701,11 @@ class PluginHostSuite extends munit.FunSuite:
       statusOf(g, "1password").error,
       Some("histmersion.plugins.1password: /nonexistent/op is not an executable file")
     )
-    assert(statusOf(g, "bitwarden").settings.contains(PluginSetting(PluginSetting.Key("timeout-seconds"), PluginSetting.Value("5"))))
+    assert(
+      statusOf(g, "bitwarden").settings.contains(
+        PluginSetting(PluginSetting.Key("timeout-seconds"), PluginSetting.Value("5"))
+      )
+    )
 
   test("end to end: bitwarden's session comes from the keepassxc vault (a fake keepassxc-cli on a temp PATH)"):
     val d = Files.createTempDirectory("histmersion-fake-bin")
@@ -644,10 +738,17 @@ class PluginHostSuite extends munit.FunSuite:
       List("keepassxc", "bitwarden"),
       "bitwarden (sorted first) waited for keepassxc"
     )
-    assertEquals(g.registries.secretVaults(Registries.SecretVaultsKey("keepassxc")).resolve(Secret.Vault.ResolveRef("x")), Right("session-from-x"))
+    assertEquals(
+      g.registries.secretVaults(Registries.SecretVaultsKey("keepassxc")).resolve(Secret.Vault.ResolveRef("x")),
+      Right("session-from-x")
+    )
     val shown = g.report.toString + logs.lines.mkString
     assert(!shown.contains("session-from") && !shown.contains("kp-master"), shown)
-    assert(statusOf(g, "bitwarden").settings.contains(PluginSetting(PluginSetting.Key("session"), PluginSetting.Value("keepassxc:Histmersion/bw#password"))))
+    assert(
+      statusOf(g, "bitwarden").settings.contains(
+        PluginSetting(PluginSetting.Key("session"), PluginSetting.Value("keepassxc:Histmersion/bw#password"))
+      )
+    )
 
   test("end to end: four keepassxc references of three plugins are read in ONE keepassxc-cli open"):
     val d = Files.createTempDirectory("histmersion-fake-bin")
@@ -730,7 +831,10 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.acquire.chain"))), Map.empty)
     assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.plugins"))), Map.empty)
     // keys no plugin reads do not count
-    assertEquals(Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.limits.search"))).keySet, Set("echo", "maker"))
+    assertEquals(
+      Plugins.carried(g1, List(ConfigReload.ChangedKey("histmersion.limits.search"))).keySet,
+      Set("echo", "maker")
+    )
 
   test(
     "reload: a plugin holding a secret is never carried (a rotated password needs only a reload); a failed one is retried"
@@ -745,7 +849,10 @@ class PluginHostSuite extends munit.FunSuite:
 
   test("pluginId: the plugin a key belongs to, quoted ids too; None for order and the block"):
     assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins.pmc.enabled")), Some("pmc"))
-    assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins.\"1password\".enabled")), Some("1password"))
+    assertEquals(
+      Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins.\"1password\".enabled")),
+      Some("1password")
+    )
     assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins.order")), None)
     assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.plugins")), None)
     assertEquals(Plugins.pluginId(ConfigReload.ChangedKey("histmersion.acquire.chain")), None)

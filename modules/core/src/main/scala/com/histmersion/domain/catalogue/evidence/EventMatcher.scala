@@ -61,7 +61,8 @@ object EventMatcher:
     * kind word ("Battle", "Siege"), longest first (a longer name is the stronger match).
     */
   def searchNames(names: List[String], minChars: Weights.MinNameChars): List[String] =
-    val generic = (EventTaxonomy.kinds.map(_.label.value) ++ EventTaxonomy.kinds.map(_.kind.value)).map(_.toLowerCase).toSet
+    val generic =
+      (EventTaxonomy.kinds.map(_.label.value) ++ EventTaxonomy.kinds.map(_.kind.value)).map(_.toLowerCase).toSet
     names
       .map(_.trim.replaceAll("\\s+", " "))
       .filter(n => n.length >= minChars.value && !generic(n.toLowerCase))

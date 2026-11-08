@@ -83,12 +83,12 @@ object EnrichSource:
 
   final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[StatedPeriod.Name] = None)
       derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object StatedPeriod:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
-
 
   final case class Classification(
       summary: Classification.Summary,
@@ -150,20 +150,25 @@ object EnrichSource:
       )
       .modify(_.confidence)(_.description("high | medium | low | contested — how firmly the SOURCE states it"))
 
-  final case class Findings(findings: List[FindingProposal] = Nil) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Findings(findings: List[FindingProposal] = Nil)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
-
-  final case class Notes(notes: Notes.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Notes(notes: Notes.Value)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Notes:
     type Value = Value.T
     object Value extends Newtype[String, Pure]
 
-
   // ── checkpointed intermediate values ───────────────────────────────────────────────────────────
 
   /** One stretch of the body sent to the findings step; `heading` is the nearest heading above it. */
-  final case class Window(index: Window.Index, heading: Option[Window.Heading], text: Window.Text) derives KindlingsCodecAsObject
+  final case class Window(index: Window.Index, heading: Option[Window.Heading], text: Window.Text)
+      derives KindlingsCodecAsObject
 
   object Window:
     type Index = Index.T
@@ -306,8 +311,11 @@ object EnrichSource:
     type StatusEvidence = StatusEvidence.T
     object StatusEvidence extends Newtype[String, Pure]
 
-  final case class Patched(findingsAdded: Patched.FindingsAdded, fieldsSet: List[Patched.FieldsSet], statusProposal: Option[Patched.StatusProposal])
-      derives KindlingsCodecAsObject
+  final case class Patched(
+      findingsAdded: Patched.FindingsAdded,
+      fieldsSet: List[Patched.FieldsSet],
+      statusProposal: Option[Patched.StatusProposal]
+  ) derives KindlingsCodecAsObject
 
   object Patched:
     type FindingsAdded = FindingsAdded.T
@@ -320,8 +328,11 @@ object EnrichSource:
   /** The `metadata` step: the record against OpenAlex/Crossref. `checked = false` with a `note` when it could not be
     * (no DOI, upstream off or down); the differences are run warnings, never writes.
     */
-  final case class MetaChecked(checked: MetaChecked.Checked, differences: List[MetaChecked.Differences], note: MetaChecked.Note = MetaChecked.Note(""))
-      derives KindlingsCodecAsObject
+  final case class MetaChecked(
+      checked: MetaChecked.Checked,
+      differences: List[MetaChecked.Differences],
+      note: MetaChecked.Note = MetaChecked.Note("")
+  ) derives KindlingsCodecAsObject
 
   object MetaChecked:
     type Checked = Checked.T
@@ -332,7 +343,11 @@ object EnrichSource:
     object Note extends Newtype[String, Pure]
 
   /** What `refs` / `assess` did (or why they were skipped). */
-  final case class Upstreamed(ran: Upstreamed.Ran, summary: Upstreamed.Summary, retracted: Upstreamed.Retracted = Upstreamed.Retracted(false)) derives KindlingsCodecAsObject
+  final case class Upstreamed(
+      ran: Upstreamed.Ran,
+      summary: Upstreamed.Summary,
+      retracted: Upstreamed.Retracted = Upstreamed.Retracted(false)
+  ) derives KindlingsCodecAsObject
 
   object Upstreamed:
     type Ran = Ran.T
@@ -345,8 +360,11 @@ object EnrichSource:
   /** The `status` step: whether the classify step's status proposal was applied, recorded for a person (`approval` id),
     * or needed nothing.
     */
-  final case class StatusRouted(applied: Option[StatusRouted.Applied], approval: Option[StatusRouted.Approval], note: StatusRouted.Note)
-      derives KindlingsCodecAsObject
+  final case class StatusRouted(
+      applied: Option[StatusRouted.Applied],
+      approval: Option[StatusRouted.Approval],
+      note: StatusRouted.Note
+  ) derives KindlingsCodecAsObject
 
   object StatusRouted:
     type Applied = Applied.T
@@ -357,7 +375,8 @@ object EnrichSource:
     object Note extends Newtype[String, Pure]
 
   /** The `close` step: the per-source lint, the acquisition item and the log line. */
-  final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire]) derives KindlingsCodecAsObject
+  final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire])
+      derives KindlingsCodecAsObject
 
   object Closed:
     type Line = Line.T
@@ -404,13 +423,19 @@ object EnrichSource:
       if all.size <= n then all
       else if n == 1 then List(all.head)
       else (0 until n).map(i => all(math.round(i.toDouble * (all.size - 1) / (n - 1)).toInt)).distinct.toList
-    picked.zipWithIndex.map { case ((h, t), i) => Window(Window.Index(i + 1), h.map(Window.Heading(_)), Window.Text(t)) }
+    picked.zipWithIndex.map { case ((h, t), i) =>
+      Window(Window.Index(i + 1), h.map(Window.Heading(_)), Window.Text(t))
+    }
 
   /** Turn a stated period into signed years, or say why not. A point (no end) is `start..start`. */
   def convert(p: StatedPeriod, maxAbsYear: MaxAbsYear, within: Option[Period]): Either[Problem, Period] =
     for
-      su <- YearUnit.parse(p.start.unit).toRight(AgentVerify.Problem(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)"))
-      eu <- YearUnit.parse(p.end.unit).toRight(AgentVerify.Problem(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)"))
+      su <- YearUnit
+        .parse(p.start.unit)
+        .toRight(AgentVerify.Problem(s"unknown unit '${p.start.unit}' (BCE, CE, calBP or BP)"))
+      eu <- YearUnit
+        .parse(p.end.unit)
+        .toRight(AgentVerify.Problem(s"unknown unit '${p.end.unit}' (BCE, CE, calBP or BP)"))
       s <- toSignedYear(p.start.value, su)
       e <- toSignedYear(p.end.value, eu)
       _ <- periodProblems(PeriodStart(s.value), PeriodEnd(e.value), maxAbsYear, within) match
@@ -437,7 +462,9 @@ object EnrichSource:
     )
     val problems = status.left.toOption.toList ++
       summary.fold(List(AgentVerify.Problem("the summary is empty")))(_ => Nil) ++
-      period.flatMap(_.left.toOption).map(m => AgentVerify.Problem(s"period: $m")).toList ++ noEvidence.map(AgentVerify.Problem(_)).toList
+      period.flatMap(_.left.toOption).map(m => AgentVerify.Problem(s"period: $m")).toList ++ noEvidence
+        .map(AgentVerify.Problem(_))
+        .toList
     val fatal = status.isLeft || summary.isEmpty
     if problems.isEmpty || (last.value && !fatal) then
       val clean = (l: List[String]) => l.map(_.trim).filter(_.nonEmpty).distinct
@@ -453,7 +480,8 @@ object EnrichSource:
             status.toOption.get,
             Classified.StatusEvidence(evidence)
           ),
-          (period.flatMap(_.left.toOption).map(m => s"period dropped: $m").toList ++ noEvidence.toList).map(Description(_))
+          (period.flatMap(_.left.toOption).map(m => s"period dropped: $m").toList ++ noEvidence.toList)
+            .map(Description(_))
         )
       )
     else Left(problems)
@@ -526,7 +554,8 @@ object EnrichSource:
       .flatMap(m => OrdinalWords.get(m.group(1).toLowerCase(java.util.Locale.ROOT)))
       .toList
     val digits =
-      if CenturyMention.findFirstIn(text.value).isDefined then OrdinalDigits.findAllMatchIn(text.value).map(_.group(1).toInt).toList
+      if CenturyMention.findFirstIn(text.value).isDefined then
+        OrdinalDigits.findAllMatchIn(text.value).map(_.group(1).toInt).toList
       else Nil
     (digits ++ words).filter(_ > 0).distinct.map(Century(_))
 
@@ -554,7 +583,13 @@ object EnrichSource:
     * `gap` years after it. A year the text states with its era ("79 CE") is valid. The problem names the century as
     * years, e.g. "'11th century' is the years 1001–1100 (BCE negative)".
     */
-  def centuryAsYear(start: Year, end: Year, text: CenturyAsYearText, within: Option[Period], gap: FindingGuards.CenturyGapYears): Option[Description] =
+  def centuryAsYear(
+      start: Year,
+      end: Year,
+      text: CenturyAsYearText,
+      within: Option[Period],
+      gap: FindingGuards.CenturyGapYears
+  ): Option[Description] =
     val centuries = centuriesMentioned(text)
     def inMentioned(y: Year) = centuries.exists { c =>
       val a = math.abs(y.value)
@@ -565,7 +600,11 @@ object EnrichSource:
       ((mentionsCentury(text) && !inMentioned(y)) || within.exists(p => p.start.value - math.abs(y.value) >= gap.value))
     }
     suspicious.headOption.map { y =>
-      val c = centuries.find(_.value == math.abs(y.value)).orElse(centuries.headOption).map(_.value.toLong).getOrElse(math.abs(y.value))
+      val c = centuries
+        .find(_.value == math.abs(y.value))
+        .orElse(centuries.headOption)
+        .map(_.value.toLong)
+        .getOrElse(math.abs(y.value))
       Description(
         s"the year $y looks like a century stored as a year: '${ordinal(c)} century' is the years " +
           s"${(c - 1) * 100 + 1}–${c * 100} (BCE negative); a year below 100 needs the text to state it (e.g. '79 CE')"
@@ -573,7 +612,10 @@ object EnrichSource:
     }
 
   /** The first of `phrases` (lowercase) the claim contains as whole words, if any. */
-  def pointerPhrase(claim: FindingProposal.Claim, phrases: List[FindingGuards.PointerPhrases]): Option[FindingGuards.PointerPhrases] =
+  def pointerPhrase(
+      claim: FindingProposal.Claim,
+      phrases: List[FindingGuards.PointerPhrases]
+  ): Option[FindingGuards.PointerPhrases] =
     val lower = claim.value.toLowerCase(java.util.Locale.ROOT)
     phrases.find(p =>
       s"(?<![\\p{L}\\p{N}])${java.util.regex.Pattern.quote(p.value)}(?![\\p{L}\\p{N}])".r.findFirstIn(lower).isDefined
@@ -582,7 +624,10 @@ object EnrichSource:
   /** The placement guard: of the proposals that name a place, how many resolve; a problem when fewer than `minShare`
     * do, listing the names that did not.
     */
-  def placementProblem(named: List[(Count, FindingProposal.Place, Boolean)], minShare: FindingGuards.MinPlacedShare): Option[Problem] =
+  def placementProblem(
+      named: List[(Count, FindingProposal.Place, Boolean)],
+      minShare: FindingGuards.MinPlacedShare
+  ): Option[Problem] =
     val total = named.size
     val resolved = named.count(_._3)
     Option.when(total > 0 && minShare.value > 0 && resolved.toDouble < minShare.value * total) {
@@ -633,9 +678,7 @@ object EnrichSource:
       // the guards' problems: sent back like the others, but never a reason to drop the finding
       val said = List(Some(p.claim.value), Some(p.quote.value), p.periodName.map(_.value)).flatten.mkString("\n")
       val century =
-        per.toOption.flatten.flatMap(pd =>
-          centuryAsYear(pd.start, pd.end, Text(said), within, guards.centuryGapYears)
-        )
+        per.toOption.flatten.flatMap(pd => centuryAsYear(pd.start, pd.end, Text(said), within, guards.centuryGapYears))
       val pointer = pointerPhrase(p.claim, guards.pointerPhrases).map(ph =>
         s"'$ph' only makes sense next to the table: a finding must stand alone on the map: name the date/event instead of pointing at the table"
       )
@@ -728,7 +771,9 @@ object EnrichSource:
       topics = merge(l.topics, c.topics).map(_.map(t => Source.Topics(t.value))),
       regions = merge(l.regions, c.regions).map(_.map(r => Source.Regions(r.value))),
       period = c.period.filter(_ => !l.hasPeriod.value).map(p => Period.Input(p.start, p.end)),
-      tags = Some(c.tags.filterNot(l.tags.contains)).filter(_.nonEmpty).map(t => ListPatch(add = t.map(x => ListPatch.Add(x.value)))),
+      tags = Some(c.tags.filterNot(l.tags.contains))
+        .filter(_.nonEmpty)
+        .map(t => ListPatch(add = t.map(x => ListPatch.Add(x.value)))),
       findings = Option.when(findings.nonEmpty)(FindingsPatch(add = findings)),
       ifUpdatedAt = l.updatedAt
     )

@@ -25,14 +25,16 @@ import com.histmersion.api.Paging
 
 object MediaCmd:
 
-  private def detail (using console: Console) = Opts.subcommand("detail", "Show asset metadata including spatial/temporal") {
-    (Opts.argument[String]("citekey"), Opts.argument[String]("name"))
-      .mapN { (ck, name) => (c: Client) =>
-        c.assetDetail(Citekey(ck), Bundle.Asset.Variant(name)).map(d => Cli.out.println(MediaMarkdown.assetDetail(Citekey(ck), d)))
-      }
-  }
+  private def detail(using console: Console) =
+    Opts.subcommand("detail", "Show asset metadata including spatial/temporal") {
+      (Opts.argument[String]("citekey"), Opts.argument[String]("name"))
+        .mapN { (ck, name) => (c: Client) =>
+          c.assetDetail(Citekey(ck), Bundle.Asset.Variant(name))
+            .map(d => Cli.out.println(MediaMarkdown.assetDetail(Citekey(ck), d)))
+        }
+    }
 
-  private def patch (using console: Console) = Opts.subcommand("patch", "Update asset metadata") {
+  private def patch(using console: Console) = Opts.subcommand("patch", "Update asset metadata") {
     (
       Opts.argument[String]("citekey"),
       Opts.argument[String]("name"),
@@ -57,8 +59,7 @@ object MediaCmd:
             ps.map(Year(_)),
             pe.map(Year(_))
           )
-        )
-          .map(d => Cli.out.println(MediaMarkdown.assetDetail(Citekey(ck), d)))
+        ).map(d => Cli.out.println(MediaMarkdown.assetDetail(Citekey(ck), d)))
       }
   }
 
@@ -67,7 +68,7 @@ object MediaCmd:
   /** `media import <provider>`: the same flags and the same job for every provider — the built-in ones and any a plugin
     * of the server registered (`media providers` lists them; the server decides).
     */
-  private def importCmd (using console: Console) = Opts.subcommand(
+  private def importCmd(using console: Console) = Opts.subcommand(
     "import",
     "Bring in pictures from an outside provider (legally reusable only): wikidata (the default), depicts, met, " +
       "cleveland, aic, loc, pleiades, opencontext, smithsonian and europeana (off by default: a key of your own), or a " +
@@ -113,7 +114,7 @@ object MediaCmd:
   }
 
   /** `media providers`: what `media import` can run on this server — its plugins' registered collections. */
-  private def providersCmd (using console: Console) = Opts.subcommand(
+  private def providersCmd(using console: Console) = Opts.subcommand(
     "providers",
     "The providers `media import` can run on this server: the built-in ones and any a plugin registered, " +
       "with what each asks about, the plugin that provides it and the licences it may store"
@@ -121,7 +122,7 @@ object MediaCmd:
     Opts.unit.map(_ => (c: Client) => c.mediaProviders.map(ps => Cli.out.println(MediaMarkdown.mediaProviders(ps))))
   }
 
-  private def listCmd (using console: Console) =
+  private def listCmd(using console: Console) =
     Opts.subcommand("list", "Stored pictures — source figures and providers' — with licence and credit") {
       (
         Opts.option[String]("provider", s"${MediaProvider.all.mkString("|")}").orNone,
@@ -136,7 +137,8 @@ object MediaCmd:
         .mapN { (provider, licence, place, event, q, limit, offset, facets) => (c: Client) =>
           if facets then c.mediaFacets.map(f => Cli.out.println(MediaMarkdown.mediaFacets(f)))
           else
-            c.mediaList(Api.MediaQuery(
+            c.mediaList(
+              Api.MediaQuery(
                 provider.map(Api.MediaQuery.Provider(_)),
                 licence.map(Api.MediaQuery.License(_)),
                 place.map(Api.MediaQuery.Place(_)),
@@ -144,18 +146,19 @@ object MediaCmd:
                 q.map(Api.MediaQuery.Q(_)),
                 limit.map(Api.MediaQuery.Limit(_)),
                 offset.map(Api.MediaQuery.Offset(_))
-              ))
-              .map(l => Cli.out.println(MediaMarkdown.mediaList(l)))
+              )
+            ).map(l => Cli.out.println(MediaMarkdown.mediaList(l)))
         }
     }
 
-  private def showCmd (using console: Console) = Opts.subcommand("show", "One picture: origin, licence, credit, and what it shows") {
-    Opts.argument[String]("uid").map { uid => (c: Client) =>
-      c.mediaShow(Bundle.Asset.Uid(uid.stripPrefix("media:"))).map(m => Cli.out.println(MediaMarkdown.mediaItem(m)))
+  private def showCmd(using console: Console) =
+    Opts.subcommand("show", "One picture: origin, licence, credit, and what it shows") {
+      Opts.argument[String]("uid").map { uid => (c: Client) =>
+        c.mediaShow(Bundle.Asset.Uid(uid.stripPrefix("media:"))).map(m => Cli.out.println(MediaMarkdown.mediaItem(m)))
+      }
     }
-  }
 
-  private def fillCmd (using console: Console) = Opts.subcommand(
+  private def fillCmd(using console: Console) = Opts.subcommand(
     "fill-licences",
     "Give a source's figures the licence the source records (only figures with none); counts unless --apply"
   ) {
@@ -167,7 +170,7 @@ object MediaCmd:
   /** `histmersion media covers` — the sources' pictures: Calibre covers (read here, host-side), Open Library covers and
     * the papers' illustrations (the server).
     */
-  private def coversCmd (using console: Console) = Opts.subcommand(
+  private def coversCmd(using console: Console) = Opts.subcommand(
     "covers",
     "Pictures for the sources' hover cards: a book's cover from the local Calibre library (read-only), else " +
       "Open Library's by ISBN/OCLC; a paper's illustration chosen among its own figures. --dry-run says what " +
@@ -189,14 +192,15 @@ object MediaCmd:
           // 1. the Calibre library, here on the host (the server may not see it)
           cal <-
             if noCalibre then Right((MediaCoversReport(RepairAcquire.RepairRequest.DryRun(dry)), Nil))
-            else MediaCovers.calibreStep(
-              c,
-              Calibre(Settings.app.cli.calibre),
-              only.map(Citekey(_)),
-              MediaImportRequest.Refresh(refresh),
-              RepairAcquire.RepairRequest.DryRun(dry),
-              limit.map(Paging.Limit(_))
-            )
+            else
+              MediaCovers.calibreStep(
+                c,
+                Calibre(Settings.app.cli.calibre),
+                only.map(Citekey(_)),
+                MediaImportRequest.Refresh(refresh),
+                RepairAcquire.RepairRequest.DryRun(dry),
+                limit.map(Paging.Limit(_))
+              )
           (calReport, asks) = cal
           // 2. Calibre knew an ISBN but kept no cover: Open Library, by that ISBN, one source at a time
           olReports <-
@@ -226,7 +230,8 @@ object MediaCmd:
           )
           _ <-
             if !req.covers.value && !req.illustrations.value then Right(())
-            else if dry || only.isDefined then c.mediaCovers(req).map(r => Cli.out.println(MediaMarkdown.mediaCoversReport(r)))
+            else if dry || only.isDefined then
+              c.mediaCovers(req).map(r => Cli.out.println(MediaMarkdown.mediaCoversReport(r)))
             else
               c.mediaCoversJob(req).flatMap { j =>
                 Cli.out.println(
@@ -238,7 +243,7 @@ object MediaCmd:
       }
   }
 
-  def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  def command(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
       "media",
       "Pictures: import from providers, covers and illustrations of sources, list, show, fill-licences; a figure's detail, patch"

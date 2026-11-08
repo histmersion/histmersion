@@ -4,7 +4,8 @@ package web.setup
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The first-run setup's seven steps, in order. */
-enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = SetupStep.Optional(false)) derives CanEqual:
+enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = SetupStep.Optional(false))
+    derives CanEqual:
   case Welcome extends SetupStep(SetupStep.Label("Welcome"))
   case Papers extends SetupStep(SetupStep.Label("Finding open papers"))
   case Maps extends SetupStep(SetupStep.Label("Maps"))
@@ -24,4 +25,3 @@ object SetupStep:
   object Label extends Newtype[String, Pure]
   type Optional = Optional.T
   object Optional extends Newtype[Boolean, Pure]
-

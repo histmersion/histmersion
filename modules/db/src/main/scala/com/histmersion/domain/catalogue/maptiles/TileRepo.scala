@@ -155,7 +155,10 @@ private[maptiles] object TileRepo:
 
   /** Every item of `candidates` in tile `c`, each alone. */
   def items(candidates: Sql, c: TileCoord)(using DbCon): List[TileCell] =
-    cellsSql(candidates, c, TileGrid.MaxPoints(Int.MaxValue), TileGrid.CellUnits(TileCoord.Extent.value)).frag.query[TileCell].run().toList
+    cellsSql(candidates, c, TileGrid.MaxPoints(Int.MaxValue), TileGrid.CellUnits(TileCoord.Extent.value)).frag
+      .query[TileCell]
+      .run()
+      .toList
 
   /** The items of `candidates` in tile `c` counted by the grid's squares ([[gridCellsSql]]). */
   def gridCells(candidates: Sql, c: TileCoord, grid: TileGrid)(using DbCon): List[GridCell] =
@@ -192,7 +195,9 @@ private[maptiles] object TileRepo:
       )
     ) ++ envelope ++
       Sql.of(Sql.Text(" AND p.label !~* ?"), Param.S(Param.S.V(PlaceSql.UninformativeLabel))) ++
-      Sql.raw(Sql.Text(s" AND ${PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Wire(Place.Kind.Site)), Some(modernFrom))}")) ++
+      Sql.raw(
+        Sql.Text(s" AND ${PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Wire(Place.Kind.Site)), Some(modernFrom))}")
+      ) ++
       siteType
         .map(_.value.trim.toLowerCase)
         .filter(_.nonEmpty)
@@ -239,7 +244,12 @@ private[maptiles] object TileRepo:
   /** The sites tile `c` shows for `window` as candidates of [[items]] and [[gridCells]], an undated one the span shows
     * by its findings marked (it is among the undated sites too).
     */
-  def datedSites(c: TileCoord, window: (DeepTime.SignedYear, DeepTime.SignedYear), siteType: Option[SiteType], modernFrom: DeepTime.SignedYear): Sql =
+  def datedSites(
+      c: TileCoord,
+      window: (DeepTime.SignedYear, DeepTime.SignedYear),
+      siteType: Option[SiteType],
+      modernFrom: DeepTime.SignedYear
+  ): Sql =
     siteCandidates(window, siteType, modernFrom, envelope(c), markUndated = true)
 
   /** An events tile's cells, with the events of no known date `undatedWhere` selects

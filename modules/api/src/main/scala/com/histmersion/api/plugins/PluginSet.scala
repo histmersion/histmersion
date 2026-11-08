@@ -20,11 +20,11 @@ final case class PluginSet(
     linkedAt: Option[PluginSet.LinkedAt] = None,
     dependencies: Option[List[PluginFile]] = None
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 object PluginSet:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
-
 
   type DescribeResult = Description
   val DescribeResult: Description.type = Description
@@ -48,5 +48,7 @@ object PluginSet:
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
       Description(s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest.value).take(12)}…)")
     case Some(set) =>
-      Description(s"${(set.digest).value.take(12)}… · ${Plural.count(Plural.CountN((set.jars.size).toLong), Plural.CountSingular("jar"))} (${set.mode}): " +
-        set.jars.map(j => j.file).mkString(", "))
+      Description(
+        s"${(set.digest).value.take(12)}… · ${Plural.count(Plural.CountN((set.jars.size).toLong), Plural.CountSingular("jar"))} (${set.mode}): " +
+          set.jars.map(j => j.file).mkString(", ")
+      )

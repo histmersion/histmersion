@@ -22,7 +22,6 @@ private[evidence] object EvidenceBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-
   def attestations(scope: BundleScope)(using DbCon): Vector[Bundle.Attestation] =
     (Sql.raw(Sql.Text(s"""SELECT t.uid, t.origin, s.uid, t.target_type, t.target_id,
                        ${targetUid("t.target_type", "t.target_id")}, t.quote, t.prefix, t.suffix,
@@ -150,10 +149,12 @@ private[evidence] object EvidenceBundleRepo:
         .run()
         .toMap
       w.es.eventChecks.foreach { k =>
-        eventIds(k.eventUid).filter(id => newer(here.get(id.value).map(Bundle.UpdatedAt(_)), Some(Bundle.UpdatedAt(k.checkedAt.value)))).foreach { id =>
-          sql"""INSERT INTO event_link_checks (event_id, checked_at) VALUES ($id, ${k.checkedAt}::timestamptz)
+        eventIds(k.eventUid)
+          .filter(id => newer(here.get(id.value).map(Bundle.UpdatedAt(_)), Some(Bundle.UpdatedAt(k.checkedAt.value))))
+          .foreach { id =>
+            sql"""INSERT INTO event_link_checks (event_id, checked_at) VALUES ($id, ${k.checkedAt}::timestamptz)
                 ON CONFLICT (event_id) DO UPDATE SET checked_at = EXCLUDED.checked_at""".update.run()
-        }
+          }
       }
 
   /** This collection's own attestations a merge moved into the body it kept, or dropped: written as this collection's

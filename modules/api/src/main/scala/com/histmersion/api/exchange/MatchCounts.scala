@@ -17,7 +17,8 @@ final case class MatchCounts(
     unmatched: MatchCounts.Unmatched = MatchCounts.Unmatched(0),
     deletedHere: MatchCounts.DeletedHere = MatchCounts.DeletedHere(0)
 ) derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema
 
 object MatchCounts:
   type Sources = Sources.T

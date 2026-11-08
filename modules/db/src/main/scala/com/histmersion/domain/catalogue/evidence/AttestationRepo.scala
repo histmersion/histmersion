@@ -17,7 +17,6 @@ private[evidence] object AttestationRepo:
   type AttestationId = AttestationId.T
   object AttestationId extends Newtype[Long, Pure]
 
-
   private given DbCodec[Attestation] = DbCodec.derived
 
   private val cols =
@@ -25,7 +24,13 @@ private[evidence] object AttestationRepo:
       "a.quote, a.prefix, a.suffix, a.char_start, a.char_end, a.chunk_ord, " +
       "a.page, a.canvas, a.xywh, a.cts_urn, a.note"
 
-  def list(citekey: Option[Citekey], targetType: Option[BAttestationFullRow.TargetType], targetId: Option[BAttestationFullRow.TargetId], limit: PageSize, offset: Offset)(using
+  def list(
+      citekey: Option[Citekey],
+      targetType: Option[BAttestationFullRow.TargetType],
+      targetId: Option[BAttestationFullRow.TargetId],
+      limit: PageSize,
+      offset: Offset
+  )(using
       DbCon
   ): Attestation.List =
     val ck = citekey.map(_.value.trim).filter(_.nonEmpty)
@@ -64,7 +69,8 @@ private[evidence] object AttestationRepo:
                    RETURNING id""".query[Long].run().head
     get(AttestationId(id)).get
 
-  def exists(id: AttestationId)(using DbCon): Boolean = sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
+  def exists(id: AttestationId)(using DbCon): Boolean =
+    sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
 
   def update(id: AttestationId, p: Attestation.Patch)(using DbCon): Unit =
     p.quote.foreach(v => sql"UPDATE attestations SET quote = $v WHERE id = $id".update.run())

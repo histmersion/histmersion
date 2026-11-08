@@ -76,7 +76,9 @@ final class VacuumJobs(
           val name = table.value
           val before = transactor.read(VacuumRepo.state(name))
           val started = System.nanoTime()
-          scala.util.Try(transactor.autocommit(VacuumRepo.vacuum(name, VacuumRepo.Analyze(plan.analyze.value)))).toEither match
+          scala.util
+            .Try(transactor.autocommit(VacuumRepo.vacuum(name, VacuumRepo.Analyze(plan.analyze.value))))
+            .toEither match
             case Left(e)  => outcome(Some(s"$table: ${e.getMessage}"))
             case Right(_) =>
               val after = transactor.read(VacuumRepo.state(name))

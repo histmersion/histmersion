@@ -28,11 +28,19 @@ final case class Note(
   def matches(words: SearchWords): Boolean =
     words.matches(text.value, title.value, target.itemRef.fold("")(_.key.value))
 
-  def wire: WireNote = WireNote(id, target.wire, text, com.histmersion.api.library.Title(title.value), WireNote.CreatedAt(createdAt.iso.value), WireNote.UpdatedAt(updatedAt.iso.value))
+  def wire: WireNote = WireNote(
+    id,
+    target.wire,
+    text,
+    com.histmersion.api.library.Title(title.value),
+    WireNote.CreatedAt(createdAt.iso.value),
+    WireNote.UpdatedAt(updatedAt.iso.value)
+  )
 
 object Note:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
+
   /** The id a client sent, checked here, once: a note's id is a lower-case UUID. */
 
   def idOf(raw: WireNote.Id): Either[Problem, WireNote.Id] =
@@ -53,7 +61,6 @@ object Note:
     */
   final case class Item(key: ItemKey, uids: Set[ItemUid]):
     def holds(note: StoredNote): Boolean = note.target.itemRef.exists(r => r.key == key || r.uid.exists(uids))
-
 
   /** A live note as the table answers it. */
   final private[notes] case class Row(

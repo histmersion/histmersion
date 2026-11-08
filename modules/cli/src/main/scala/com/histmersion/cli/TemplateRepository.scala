@@ -17,4 +17,3 @@ enum TemplateRepository derives CanEqual:
   def directive: String = this match
     case MavenLocal   => "m2Local"
     case Remote(repo) => repo.value
-

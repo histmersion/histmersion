@@ -38,7 +38,8 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
       )
 
   /** `work` behind the maintenance guard (`what` names the write). */
-  def guarded[A](what: WriteGate.OperationName)(work: => Either[Api.Error, A]): Either[Api.Error, A] = maintenance.guard(what)(work)
+  def guarded[A](what: WriteGate.OperationName)(work: => Either[Api.Error, A]): Either[Api.Error, A] =
+    maintenance.guard(what)(work)
 
   /** Whether a maintenance run holds the lock: a job stops between its batches. */
   def held: Boolean = maintenance.active

@@ -13,7 +13,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class HostServices(
     http: () => Plugin.Http,
     env: Config,
-    log: (HostServices.LogArg1, HostServices.LogArg2, HostServices.LogArg3) => Unit, // (plugin id, is a warning, message)
+    log: (
+        HostServices.LogArg1,
+        HostServices.LogArg2,
+        HostServices.LogArg3
+    ) => Unit, // (plugin id, is a warning, message)
     quota: HostServices.QuotaArg1 => UpstreamQuota = _ => UpstreamQuota.Unlimited,
     files: LocalFiles = LocalFiles.Unavailable,
     processes: Processes = Processes.Unavailable

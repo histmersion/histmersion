@@ -10,7 +10,9 @@ import com.histmersion.plugin.testkit.HttpMode
 class ChronOntologySuite extends munit.FunSuite:
 
   private val fixture =
-    DownloadedGazetteer.Text(scala.io.Source.fromResource("gazetteers/chronontology.json")(using scala.io.Codec.UTF8).mkString)
+    DownloadedGazetteer.Text(
+      scala.io.Source.fromResource("gazetteers/chronontology.json")(using scala.io.Codec.UTF8).mkString
+    )
 
   private def period(a: Int, b: Int): Option[Period] = Period.from(Year(a), Year(b)).toOption
 

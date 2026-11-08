@@ -12,7 +12,11 @@ import com.histmersion.api.Api
 
 class SettingsControllersSuite extends munit.FunSuite:
 
-  final private class Fixture(text: Option[ConfigFileState.Text], restartable: Boolean = false, env: Map[String, String] = Map.empty):
+  final private class Fixture(
+      text: Option[ConfigFileState.Text],
+      restartable: Boolean = false,
+      env: Map[String, String] = Map.empty
+  ):
     val file = AtomicReference(text)
     val reloads = AtomicInteger(0)
     val settings =
@@ -21,7 +25,10 @@ class SettingsControllersSuite extends munit.FunSuite:
     val c = SettingsControllers(
       settings,
       restarts,
-      () => { reloads.incrementAndGet(); ReloadReport(published = ReloadReport.Published(true), generation = ReloadReport.Generation(2)) }
+      () => {
+        reloads.incrementAndGet();
+        ReloadReport(published = ReloadReport.Published(true), generation = ReloadReport.Generation(2))
+      }
     )
 
   private val Commented = ConfigFileState.Text("# mine\nhistmersion {\n  backups.keep = 3   # three\n}\n")
@@ -43,8 +50,14 @@ class SettingsControllersSuite extends munit.FunSuite:
     assertEquals(p.field(ConfigEdit.Field.Key("ui.tree-depth")).flatMap(_.effective), Some("\"3\""))
     assertEquals(p.field(ConfigEdit.Field.Key("lint.max-items")).map(_.source), Some("default"))
     assert(p.sections.map(_.id).contains(ConfigEdit.Section.Id("backups")))
-    assert(p.sections.find(_.id == ConfigEdit.Section.Id("config")).exists(_.doc.value.nonEmpty), "a section carries reference.conf's words")
-    assertEquals(f.c.page(Some(SettingsService.ConfigPath("backups"))).map(_.sections.map(_.id)), Right(List("backups")))
+    assert(
+      p.sections.find(_.id == ConfigEdit.Section.Id("config")).exists(_.doc.value.nonEmpty),
+      "a section carries reference.conf's words"
+    )
+    assertEquals(
+      f.c.page(Some(SettingsService.ConfigPath("backups"))).map(_.sections.map(_.id)),
+      Right(List("backups"))
+    )
     assert(f.c.page(Some(SettingsService.ConfigPath("not a key!"))).isLeft)
 
   test("a credential's value never crosses: not what the file writes, not what applies, not the default"):
@@ -54,7 +67,16 @@ class SettingsControllersSuite extends munit.FunSuite:
     )
     val p = f.c.page(None).fold(e => fail(e.message.value), identity)
     val europeana = p.field(ConfigEdit.Field.Key("plugins.media-europeana.api-key")).get
-    assertEquals(europeana.credential, Some(ConfigEdit.Credential(ConfigEdit.Credential.Rule("reference"), ConfigEdit.Credential.Form("value"), Some(ConfigEdit.Credential.Shown("value:***")))))
+    assertEquals(
+      europeana.credential,
+      Some(
+        ConfigEdit.Credential(
+          ConfigEdit.Credential.Rule("reference"),
+          ConfigEdit.Credential.Form("value"),
+          Some(ConfigEdit.Credential.Shown("value:***"))
+        )
+      )
+    )
     assertEquals((europeana.value, europeana.effective, europeana.default), (None, None, None))
     val auth = p.field(ConfigEdit.Field.Key("auth.api-key")).get
     assertEquals(auth.credential.map(_.form), Some("plain"))
@@ -84,7 +106,12 @@ class SettingsControllersSuite extends munit.FunSuite:
     assert(cred.message.value.contains("HISTMERSION_API_KEY") && !cred.message.value.contains("s3cret"), cred.message)
     val before = f.c.page(None).toOption.get.version
     f.file.set(Some(ConfigFileState.Text(Commented.value + "# edited by hand\n")))
-    val stale = f.c.write(ConfigEdit.Write(List(ConfigEdit.Change(ConfigEdit.Change.Key("backups.keep"), Some(ConfigEdit.Change.Value("4")))), version = Some(ConfigEdit.Write.Version(before.value))))
+    val stale = f.c.write(
+      ConfigEdit.Write(
+        List(ConfigEdit.Change(ConfigEdit.Change.Key("backups.keep"), Some(ConfigEdit.Change.Value("4")))),
+        version = Some(ConfigEdit.Write.Version(before.value))
+      )
+    )
     assertEquals(stale.left.toOption.flatMap(_.code), Some(ConfigEdit.CodeChanged))
     assertEquals(f.reloads.get, 0)
     assert(write(f).isLeft, "no change at all")
@@ -94,7 +121,13 @@ class SettingsControllersSuite extends munit.FunSuite:
     assert(write(f, K("plugins.oa-core.api-key") -> Some(V("value:x"))).isLeft)
     val w = f.c
       .write(
-        ConfigEdit.Write(List(ConfigEdit.Change(ConfigEdit.Change.Key("plugins.oa-core.api-key"), Some(ConfigEdit.Change.Value("value:x")))), literalConsent = ConfigEdit.Write.LiteralConsent(true))
+        ConfigEdit.Write(
+          List(
+            ConfigEdit
+              .Change(ConfigEdit.Change.Key("plugins.oa-core.api-key"), Some(ConfigEdit.Change.Value("value:x")))
+          ),
+          literalConsent = ConfigEdit.Write.LiteralConsent(true)
+        )
       )
       .fold(e => fail(e.message.value), identity)
     assert(w.warnings.exists(_.value.contains("anyone who can read")), s"${w.warnings}")

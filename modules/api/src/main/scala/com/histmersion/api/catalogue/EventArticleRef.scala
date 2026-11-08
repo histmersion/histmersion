@@ -10,4 +10,5 @@ import com.histmersion.api.library.Citekey
 
 final case class EventArticleRef(slug: Article.Slug, title: Article.Title, citekey: Citekey)
     derives KindlingsCodecAsObject,
-      KindlingsSchema, com.histmersion.api.json.Schema
+      KindlingsSchema,
+      com.histmersion.api.json.Schema

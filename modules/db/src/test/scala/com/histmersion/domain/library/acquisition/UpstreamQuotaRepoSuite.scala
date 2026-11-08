@@ -43,9 +43,17 @@ class UpstreamQuotaRepoSuite extends DbSuite:
       CoreQuota.State.LookupTokens(12),
       CoreQuota.State.SearchTokens(34),
       Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), CoreQuota.Block.Why("HTTP 429"))),
-      Some(CoreQuota.Window(Some(CoreQuota.Window.Limit(25)), Some(CoreQuota.Window.Remaining(0)), Instant.parse("2026-10-26T18:50:00Z")))
+      Some(
+        CoreQuota.Window(
+          Some(CoreQuota.Window.Limit(25)),
+          Some(CoreQuota.Window.Remaining(0)),
+          Instant.parse("2026-10-26T18:50:00Z")
+        )
+      )
     )
-    transact(ds)(UpstreamQuotaRepo.save(UpKind, s.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z")))))
+    transact(ds)(
+      UpstreamQuotaRepo.save(UpKind, s.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z"))))
+    )
     // the recent call slots are not kept
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), Some(s))
     val next = CoreQuota.State.fresh(LocalDate.of(2026, 10, 27)).copy(lookupTokens = CoreQuota.State.LookupTokens(1))

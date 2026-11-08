@@ -26,8 +26,10 @@ object Citekey extends Newtype[String, CitekeyRule]:
     else if s.contains("..") then Left(Problem(s"invalid citekey '$raw' — it may not contain '..'"))
     else
       either(s).left.map(_ =>
-        Problem(s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
-          "'_', '.' or '-' (2-121 characters), e.g. anthony2007_horse")
+        Problem(
+          s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
+            "'_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+        )
       )
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */

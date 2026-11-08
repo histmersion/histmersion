@@ -18,5 +18,7 @@ object ArticleReferable:
       RecordTable.Key("t.slug"),
       RecordTable.Title("t.title"),
       Some(RecordTable.Uid("t.uid")),
-      Some(AliasColumns(AliasColumns.Table("article_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("slug")))
+      Some(
+        AliasColumns(AliasColumns.Table("article_aliases"), AliasColumns.Alias("alias"), AliasColumns.Target("slug"))
+      )
     )

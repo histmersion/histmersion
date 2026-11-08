@@ -28,4 +28,5 @@ object McpOut:
   def error(e: Api.Error): ToolResult[NoStructuredOutput] = ToolResult.text(refusal(e))
 
   /** A handler's answer as the tool's answer. */
-  def of[A](r: Either[Api.Error, A])(md: A => Markdown): ToolResult[NoStructuredOutput] = ToolResult.text(markdown(r)(md))
+  def of[A](r: Either[Api.Error, A])(md: A => Markdown): ToolResult[NoStructuredOutput] =
+    ToolResult.text(markdown(r)(md))

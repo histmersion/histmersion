@@ -34,8 +34,10 @@ import com.histmersion.api.UiLabels
   * row holds is shown at once; the rest when the item is read.
   */
 object ReadingPane:
-  private val sourceReads = BoundedCache[String, Future[SourceReading]](BoundedCache.MaxEntries(Layout.libraryPage.value))
-  private val articleReads = BoundedCache[String, Future[Article.View]](BoundedCache.MaxEntries(Layout.libraryPage.value))
+  private val sourceReads =
+    BoundedCache[String, Future[SourceReading]](BoundedCache.MaxEntries(Layout.libraryPage.value))
+  private val articleReads =
+    BoundedCache[String, Future[Article.View]](BoundedCache.MaxEntries(Layout.libraryPage.value))
 
   /** A failed read is forgotten, so choosing the item again tries again. */
   private def cached[A](cache: BoundedCache[String, Future[A]], key: String)(read: => Future[A]): Future[A] =
@@ -72,7 +74,9 @@ object ReadingPane:
             else "Choose a source to read it here."),
             p("↑ and ↓ move through the list; Enter opens the whole page.")
           )
-        case Some(k) => if section == LibrarySection.Articles then articlePane(Article.Slug(k.value)) else sourcePane(Citekey(k.value))
+        case Some(k) =>
+          if section == LibrarySection.Articles then articlePane(Article.Slug(k.value))
+          else sourcePane(Citekey(k.value))
       }
     )
 
@@ -157,14 +161,18 @@ object ReadingPane:
         .now()
         .flatMap(_.toOption)
         .flatMap(r => bounds(r.source.findings))
-        .foreach(b => TheMap.surface.fitBounds(b, MapSurface.FitBoundsPadding(40), MapSurface.MaxZoom(Layout.fitMaxZoom.value)))
+        .foreach(b =>
+          TheMap.surface.fitBounds(b, MapSurface.FitBoundsPadding(40), MapSurface.MaxZoom(Layout.fitMaxZoom.value))
+        )
     val ref0 = ItemRef.source(ck, row.map(_.title).getOrElse(Title(ck.value)))
     // the item's own title once its record is read (the row is not on the page when the address chose it)
     val ref = reading.signal
       .map(_.flatMap(_.toOption).fold(ref0)(r => ItemRef.source(ck, r.source.source.title)))
       .distinct
     val byline = row.fold("")(h =>
-      List(TableRow.authors(h.authors.map(_.value)), h.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+      List(TableRow.authors(h.authors.map(_.value)), h.year.map(_.value.toInt).fold("")(_.toString))
+        .filter(_.nonEmpty)
+        .mkString(", ")
     )
     div(
       cls := "reading-item",
@@ -224,7 +232,9 @@ object ReadingPane:
             Option.when(YearFmt.period(f.periodStart, f.periodEnd).nonEmpty)(
               span(cls := "lib-period", s" ${YearFmt.period(f.periodStart, f.periodEnd)}")
             ),
-            f.regionName.filter(_.value.trim.nonEmpty).map(r => span(cls := "muted", s" · ${Fmt.display(UiLabels.Text(r.value))}"))
+            f.regionName
+              .filter(_.value.trim.nonEmpty)
+              .map(r => span(cls := "muted", s" · ${Fmt.display(UiLabels.Text(r.value))}"))
           )
         }),
         Option.when(all.size > Layout.readingFindings.value)(
@@ -315,7 +325,9 @@ object ReadingPane:
     reading
       .now()
       .flatMap(_.toOption)
-      .fold(ref0)(r => ItemRef.source(ref0.target.itemKey.map(k => Citekey(k.value)).getOrElse(Citekey("")), r.source.source.title))
+      .fold(ref0)(r =>
+        ItemRef.source(ref0.target.itemKey.map(k => Citekey(k.value)).getOrElse(Citekey("")), r.source.source.title)
+      )
 
   private def message(e: Throwable): ErrorLine.Problem =
     ErrorLine.Problem(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))

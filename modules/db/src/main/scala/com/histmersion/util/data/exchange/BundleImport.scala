@@ -140,7 +140,11 @@ object BundleImport:
           val t = tombs(d.uid)
           if d.decision == Decision.Delete then
             val table = kinds.tableOf(t.kind).value
-            Sql.of(Sql.Text(s"DELETE FROM $table WHERE uid = ?::uuid"), Param.S(Param.S.V(t.uid.toString))).frag.update.run()
+            Sql
+              .of(Sql.Text(s"DELETE FROM $table WHERE uid = ?::uuid"), Param.S(Param.S.V(t.uid.toString)))
+              .frag
+              .update
+              .run()
           sql"""INSERT INTO tombstones (uid, kind, origin, deleted_at)
                 VALUES (${t.uid}, ${t.kind.wire}, ${t.origin}, ${t.deletedAt}::timestamptz)
                 ON CONFLICT (uid) DO UPDATE SET deleted_at = EXCLUDED.deleted_at""".update.run()
@@ -159,7 +163,8 @@ object BundleImport:
       lines.filter(a => writes(uid(a))).foreach { a =>
         localLabel.get(uid(a)).filter(old => !old.equals(label(a))).foreach { old =>
           importing(MergeRepo.Importing(false))
-          rename(old, label(a)).left.foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"$what $old → ${label(a)}: ${e.message}"))))
+          rename(old, label(a)).left
+            .foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"$what $old → ${label(a)}: ${e.message}"))))
           importing(MergeRepo.Importing(true))
         }
       }
@@ -169,4 +174,3 @@ object BundleImport:
     object TargetId extends Newtype[String, Pure]
     type TargetType = TargetType.T
     object TargetType extends Newtype[String, Pure]
-

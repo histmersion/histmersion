@@ -18,7 +18,12 @@ class SettingsReaderSuite extends munit.FunSuite:
     Files.writeString(f, text)
     val e = ConfigFactory.parseMap(env.asJava)
     val parsed = AppConfig.parseUserFile(f).fold(m => fail(m.value), _.getOrElse(fail("no file")))
-    val state = ConfigFileState(Some(ConfigFileState.Text(text)), FileVersion.of(Some(ConfigFileState.Text(text))), parsed, AppConfig.writtenIn(f))
+    val state = ConfigFileState(
+      Some(ConfigFileState.Text(text)),
+      FileVersion.of(Some(ConfigFileState.Text(text))),
+      parsed,
+      AppConfig.writtenIn(f)
+    )
     val merged = AppConfig.loadWithUserFile(e, Some(f)).fold(m => fail(m.value), _.merged)
     SettingsReader
       .read(ConfigSchema.reference, state, merged, e, prefix.map(key))
@@ -55,7 +60,10 @@ class SettingsReaderSuite extends munit.FunSuite:
 
   test("only the settings under a prefix"):
     val r = readings("", prefix = Some("backups"))
-    assert(r.keySet.forall(_.value.startsWith("backups.")) && r.contains(SettingKey.Relative("backups.keep")), s"${r.keySet}")
+    assert(
+      r.keySet.forall(_.value.startsWith("backups.")) && r.contains(SettingKey.Relative("backups.keep")),
+      s"${r.keySet}"
+    )
 
   test("loading a config file's text says what loading the file says"):
     assert(AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion.backups.keep = 3").isRight)

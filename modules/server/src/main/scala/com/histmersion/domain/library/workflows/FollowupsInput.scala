@@ -9,8 +9,11 @@ import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `followups` as an agent may call it: no `apply` — a model never writes edges. */
-final case class FollowupsInput(id: FollowupsInput.Id, since: Option[FollowupsInput.Since] = None, limit: Option[FollowupsInput.Limit] = None)
-    derives KindlingsCodecAsObject
+final case class FollowupsInput(
+    id: FollowupsInput.Id,
+    since: Option[FollowupsInput.Since] = None,
+    limit: Option[FollowupsInput.Limit] = None
+) derives KindlingsCodecAsObject
 object FollowupsInput:
   type Id = Id.T
   object Id extends Newtype[String, Pure]

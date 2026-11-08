@@ -28,12 +28,15 @@ object MediaMatch:
   /** Why a record is not tied to the place. */
   type Refusal = Refusal.T
   object Refusal extends Newtype[String, Pure]
+
   /** What ties a record to the place: the field and value (or the id) that name it, and the dates. */
   type Basis = Basis.T
   object Basis extends Newtype[String, Pure]
+
   /** A period as a person reads it (`1400–1200 BCE`). */
   type PeriodText = PeriodText.T
   object PeriodText extends Newtype[String, Pure]
+
   /** One signed year as a person reads it (`1500 CE`). */
   type YearText = YearText.T
   object YearText extends Newtype[String, Pure]
@@ -41,7 +44,12 @@ object MediaMatch:
   object GeographySpecific extends Newtype[Boolean, Pure]
 
   /** A place the import asks about: its id and label, the keys of every name it goes by, its period. */
-  final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
+  final case class PlaceInfo(
+      id: PlaceInfo.Id,
+      label: PlaceInfo.Label,
+      keys: Set[PlaceInfo.Keys],
+      period: Option[Period]
+  )
 
   object PlaceInfo:
     type Id = Id.T
@@ -60,7 +68,8 @@ object MediaMatch:
     Uncertain.exists(s.contains)
 
   /** Pure: the name key of a value (empty when it is uncertain or blank). */
-  def keyOf(v: MediaRecord.GeographyPart2): PlaceInfo.Keys = if uncertain(v) then PlaceInfo.Keys("") else PlaceInfo.Keys(Geocode.key(v.value).value)
+  def keyOf(v: MediaRecord.GeographyPart2): PlaceInfo.Keys =
+    if uncertain(v) then PlaceInfo.Keys("") else PlaceInfo.Keys(Geocode.key(v.value).value)
 
   /** Pure: do two periods overlap? */
   def overlaps(a: Period, b: Period): Boolean = a.start <= b.end && b.start <= a.end
@@ -86,8 +95,14 @@ object MediaMatch:
     * `specific` = museum rule (the most specific naming field decides); otherwise the map rule (any field naming the
     * target alone).
     */
-  def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: GeographySpecific): Either[Refusal, Basis] =
-    val named = rec.geography.flatMap((f, v) => Option(keyOf(v)).filter(_.value.nonEmpty).map(k => (f, v.value.trim, k)))
+  def geography(
+      rec: MediaRecord,
+      target: PlaceInfo,
+      resolve: Resolve,
+      specific: GeographySpecific
+  ): Either[Refusal, Basis] =
+    val named =
+      rec.geography.flatMap((f, v) => Option(keyOf(v)).filter(_.value.nonEmpty).map(k => (f, v.value.trim, k)))
     if named.isEmpty then Left(Refusal("no place on the record"))
     else if specific.value then
       named.iterator.map((f, v, k) => (f, v, resolve(k))).find(_._3.nonEmpty) match
@@ -99,7 +114,8 @@ object MediaMatch:
       named.find((_, _, k) => target.keys(k)) match
         case None            => Left(Refusal("its place is not this one"))
         case Some((f, v, k)) =>
-          if resolve(k) == Set(target.id) then Right(Basis(s"$f = $v")) else Left(Refusal("its place name is ambiguous on the map"))
+          if resolve(k) == Set(target.id) then Right(Basis(s"$f = $v"))
+          else Left(Refusal("its place name is ambiguous on the map"))
 
   /** Pure: the museum rule — geography, then the dates ([[dated]]); the basis names both. */
   def museum(
@@ -117,10 +133,10 @@ object MediaMatch:
     */
   def dated(basis: Basis, rec: MediaRecord, target: PlaceInfo, latest: Option[Year]): Either[Refusal, Basis] =
     (rec.period, target.period) match
-      case (None, _)                                                => Left(Refusal("no dates on the record"))
+      case (None, _)                                     => Left(Refusal("no dates on the record"))
       case (Some(r), _) if latest.exists(y => r.end > y) => Left(Refusal(s"made after ${year(latest.get)}"))
-      case (_, None)                                                => Left(Refusal("the place has no period to compare"))
-      case (Some(r), Some(p))                                       =>
+      case (_, None)                                     => Left(Refusal("the place has no period to compare"))
+      case (Some(r), Some(p))                            =>
         val window = latest
           .filter(y => y >= p.start && y < p.end)
           .flatMap(y => DeepTime.span(DeepTime.SignedYear(p.start.value.toLong), DeepTime.SignedYear(y.value.toLong)))
@@ -154,7 +170,8 @@ object MediaMatch:
       latest: Option[Year] = None
   ): Either[Refusal, Basis] =
     val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)
-    val idAlone = byId.find(_._2 == Set(target.id)).map((id, _) => Basis(s"${ExternalIds.show(id)} (the record's place id)"))
+    val idAlone =
+      byId.find(_._2 == Set(target.id)).map((id, _) => Basis(s"${ExternalIds.show(id)} (the record's place id)"))
     val finer = rec.geography
       .filter((f, _) => deeper(f))
       .flatMap((f, v) => Option(keyOf(v)).filter(_.value.nonEmpty).map(k => (f, v.value.trim, resolve(k))))
@@ -162,18 +179,21 @@ object MediaMatch:
     val geo = finer match
       case Some((f, v, ids)) if ids == Set(target.id)    => Right(Basis(s"$f = $v"))
       case Some((f, _, ids)) if !ids.contains(target.id) => Left(Refusal(s"its $f names another place on the map"))
-      case Some((f, _, _))                               => idAlone.toRight(Refusal(s"its $f name is ambiguous on the map"))
-      case None                                          =>
+      case Some((f, _, _)) => idAlone.toRight(Refusal(s"its $f name is ambiguous on the map"))
+      case None            =>
         idAlone match
           case Some(basis)                                   => Right(basis)
           case None if byId.exists(_._2.contains(target.id)) => Left(Refusal("its place id is ambiguous on the map"))
-          case None if byId.nonEmpty                         => Left(Refusal("its place id names another place on the map"))
-          case None                                          => geography(rec, target, resolve, specific = GeographySpecific(true))
+          case None if byId.nonEmpty => Left(Refusal("its place id names another place on the map"))
+          case None                  => geography(rec, target, resolve, specific = GeographySpecific(true))
     geo.flatMap(dated(_, rec, target, latest))
 
   /** Pure: the map rule — a location naming the target, a map made by `maxYear` (public domain). */
   def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: Year): Either[Refusal, Basis] =
     rec.period match
-      case None                                   => Left(Refusal("no date on the map"))
+      case None                       => Left(Refusal("no date on the map"))
       case Some(p) if p.end > maxYear => Left(Refusal(s"made after $maxYear"))
-      case Some(p) => geography(rec, target, resolve, specific = GeographySpecific(false)).map(geo => Basis(s"$geo; map of ${years(p)}"))
+      case Some(p)                    =>
+        geography(rec, target, resolve, specific = GeographySpecific(false)).map(geo =>
+          Basis(s"$geo; map of ${years(p)}")
+        )

@@ -42,7 +42,13 @@ class GoalsExportSuite extends munit.FunSuite:
   private def article(slug: GoalLink.Ref, title: GoalLink.Title) =
     GoalLink(LinkKind.Article, slug, None, Some(title), Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z"))
   private def item(id: GoalLink.QueueNumber, text: GoalLink.Title) =
-    GoalLink(LinkKind.QueueItem, GoalLink.Ref(id.value.toString), None, Some(text), Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z"))
+    GoalLink(
+      LinkKind.QueueItem,
+      GoalLink.Ref(id.value.toString),
+      None,
+      Some(text),
+      Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z")
+    )
 
   private val views: List[GoalView] = List(
     GoalView(
@@ -50,8 +56,11 @@ class GoalsExportSuite extends munit.FunSuite:
         Goal.Slug("bronze-age"),
         Goal.Title("The Bronze Age and earlier; the Late Bronze Age collapse"),
         Goal.StatusValue("compiled"),
-        notes =
-          Some(Goal.Notes("The Bronze Age and the periods before it; the Late Bronze Age collapse — causes, sequence, debates.")),
+        notes = Some(
+          Goal.Notes(
+            "The Bronze Age and the periods before it; the Late Bronze Age collapse — causes, sequence, debates."
+          )
+        ),
         tags = List(Goal.Tags("bronze_age"), Goal.Tags("bronze_age_collapse"))
       )
     ),
@@ -65,11 +74,23 @@ class GoalsExportSuite extends munit.FunSuite:
         period = Some((Year(-1300), Year(-1050)))
       ),
       links = List(
-        item(GoalLink.QueueNumber(522), GoalLink.Title("Dafna Langgut, Climate and Environment in the Southern Levant, 1300–300 BCE")),
+        item(
+          GoalLink.QueueNumber(522),
+          GoalLink.Title("Dafna Langgut, Climate and Environment in the Southern Levant, 1300–300 BCE")
+        ),
         article(GoalLink.Ref("sea_peoples"), GoalLink.Title("The Sea Peoples")),
-        item(GoalLink.QueueNumber(495), GoalLink.Title("Ingest 10.1007/s10963-021-09163-7 (hybrid OA) — Meyer & Knapp 2021")),
+        item(
+          GoalLink.QueueNumber(495),
+          GoalLink.Title("Ingest 10.1007/s10963-021-09163-7 (hybrid OA) — Meyer & Knapp 2021")
+        ),
         article(GoalLink.Ref("bronze_age_collapse"), GoalLink.Title("Late Bronze Age Collapse (~1200 BCE)")),
-        GoalLink(LinkKind.QueueItem, Goal.Plans.GoalLink.Ref("9999"), None, None, Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z")),
+        GoalLink(
+          LinkKind.QueueItem,
+          Goal.Plans.GoalLink.Ref("9999"),
+          None,
+          None,
+          Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z")
+        ),
         GoalLink(
           LinkKind.Source,
           Goal.Plans.GoalLink.Ref("cline2014_year"),
@@ -99,13 +120,30 @@ class GoalsExportSuite extends munit.FunSuite:
       ),
       links = List(article(GoalLink.Ref("ahhiyawa"), GoalLink.Title("Ahhiyawa")))
     ),
-    GoalView(goal(Goal.Slug("comparative-religion"), Goal.Title("Comparative religion and folklore"), Goal.StatusValue("compiled"))),
     GoalView(
-      goal(Goal.Slug("egyptian-religion"), Goal.Title("Egyptian religion"), Goal.StatusValue("reviewed"), Some(Goal.Slug("comparative-religion"))),
-      links = List(item(GoalLink.QueueNumber(601), GoalLink.Title("Acquire Assmann, The Search for God in Ancient Egypt")))
+      goal(
+        Goal.Slug("comparative-religion"),
+        Goal.Title("Comparative religion and folklore"),
+        Goal.StatusValue("compiled")
+      )
     ),
     GoalView(
-      goal(Goal.Slug("mystery-cults"), Goal.Title("Mystery cults and the ergot hypothesis"), Goal.StatusValue("reviewed"), Some(Goal.Slug("comparative-religion"))),
+      goal(
+        Goal.Slug("egyptian-religion"),
+        Goal.Title("Egyptian religion"),
+        Goal.StatusValue("reviewed"),
+        Some(Goal.Slug("comparative-religion"))
+      ),
+      links =
+        List(item(GoalLink.QueueNumber(601), GoalLink.Title("Acquire Assmann, The Search for God in Ancient Egypt")))
+    ),
+    GoalView(
+      goal(
+        Goal.Slug("mystery-cults"),
+        Goal.Title("Mystery cults and the ergot hypothesis"),
+        Goal.StatusValue("reviewed"),
+        Some(Goal.Slug("comparative-religion"))
+      ),
       plan = Some(
         Plan(
           Goal.Slug("mystery-cults"),
@@ -115,7 +153,9 @@ class GoalsExportSuite extends munit.FunSuite:
         )
       )
     ),
-    GoalView(goal(Goal.Slug("eleusis"), Goal.Title("Eleusis"), Goal.StatusValue("planned"), Some(Goal.Slug("mystery-cults")))),
+    GoalView(
+      goal(Goal.Slug("eleusis"), Goal.Title("Eleusis"), Goal.StatusValue("planned"), Some(Goal.Slug("mystery-cults")))
+    ),
     GoalView(goal(Goal.Slug("historiography"), Goal.Title("Historiography of the field"), Goal.StatusValue("seeding")))
   )
   private val status = Map(
@@ -236,21 +276,27 @@ class GoalsExportSuite extends munit.FunSuite:
 
   test("values that change on their own (updated_at, a schedule's next/last firing) are left out"):
     val ticked = views.map { v =>
-      v.modify(
-        _.goal).setTo(v.goal.modify(_.updatedAt).setTo(Some(Goal.UpdatedAt("2027-01-01 00:00:00+00")))).modify(_.schedules).setTo(v.schedules.map(
-          _.copy(
-            nextRunAt = Some(Goal.Plans.GoalSchedule.NextRunAt("2027-01-01T06:00:00Z")),
-            lastRunAt = Some(Goal.Plans.GoalSchedule.LastRunAt("2026-12-31T06:00:00Z")),
-            lastRun = Some(Goal.Plans.GoalSchedule.LastRun("run-xyz")),
-            lastNote = Some(Goal.Plans.GoalSchedule.LastNote("skipped: budget"))
+      v.modify(_.goal)
+        .setTo(v.goal.modify(_.updatedAt).setTo(Some(Goal.UpdatedAt("2027-01-01 00:00:00+00"))))
+        .modify(_.schedules)
+        .setTo(
+          v.schedules.map(
+            _.copy(
+              nextRunAt = Some(Goal.Plans.GoalSchedule.NextRunAt("2027-01-01T06:00:00Z")),
+              lastRunAt = Some(Goal.Plans.GoalSchedule.LastRunAt("2026-12-31T06:00:00Z")),
+              lastRun = Some(Goal.Plans.GoalSchedule.LastRun("run-xyz")),
+              lastNote = Some(Goal.Plans.GoalSchedule.LastNote("skipped: budget"))
+            )
           )
         )
-      )
     }
     assertEquals(GoalsExport.render(ticked, status), GoalsExport.render(views, status))
 
   test("a queue item's state comes from its own list; one that no longer exists keeps its id"):
-    val out = GoalsExport.render(views, status.updated(GoalLink.QueueNumber(522), ItemStatus.Wire("done")).removed(GoalLink.QueueNumber(495)))
+    val out = GoalsExport.render(
+      views,
+      status.updated(GoalLink.QueueNumber(522), ItemStatus.Wire("done")).removed(GoalLink.QueueNumber(495))
+    )
     assert(out.contains("- [x] `#522` Dafna Langgut"), out)
     assert(out.contains("- `#495` (not found)"), out)
 
@@ -269,12 +315,23 @@ class GoalsExportSuite extends munit.FunSuite:
     assert(out.contains("- [[gone2020]] — (not found) · why"), out)
 
   test("multi-line text stays on its list line"):
-    val v = List(GoalView(goal(Goal.Slug("g"), Goal.Title("G"), Goal.StatusValue("planned")), links = List(item(GoalLink.QueueNumber(1), GoalLink.Title("first line\n  continued")))))
-    assert(GoalsExport.render(v, Map(GoalLink.QueueNumber(1) -> ItemStatus.Wire("open"))).contains("- [ ] `#1` first line continued"))
+    val v = List(
+      GoalView(
+        goal(Goal.Slug("g"), Goal.Title("G"), Goal.StatusValue("planned")),
+        links = List(item(GoalLink.QueueNumber(1), GoalLink.Title("first line\n  continued")))
+      )
+    )
+    assert(
+      GoalsExport
+        .render(v, Map(GoalLink.QueueNumber(1) -> ItemStatus.Wire("open")))
+        .contains("- [ ] `#1` first line continued")
+    )
 
   test("a goal whose parent is missing, or that sits in a parent cycle, is still shown — at the top level"):
     val odd = List(
-      GoalView(goal(Goal.Slug("orphan"), Goal.Title("Orphan"), Goal.StatusValue("planned"), Some(Goal.Slug("deleted-parent")))),
+      GoalView(
+        goal(Goal.Slug("orphan"), Goal.Title("Orphan"), Goal.StatusValue("planned"), Some(Goal.Slug("deleted-parent")))
+      ),
       GoalView(goal(Goal.Slug("a"), Goal.Title("A"), Goal.StatusValue("planned"), Some(Goal.Slug("b")))),
       GoalView(goal(Goal.Slug("b"), Goal.Title("B"), Goal.StatusValue("planned"), Some(Goal.Slug("a"))))
     )
@@ -286,10 +343,23 @@ class GoalsExportSuite extends munit.FunSuite:
     assertEquals(GoalsExport.summary(odd.map(_.goal)), "3 goal(s): 1 top-level, 2 sub-goal(s) · planned 3")
 
   test("headings stop at ######: a deep tree does not produce invalid Markdown"):
-    val chain = (0 to 6).toList.map(i => GoalView(goal(Goal.Slug(s"g$i"), Goal.Title(s"G$i"), Goal.StatusValue("planned"), Option.when(i > 0)(Goal.Slug(s"g${i - 1}")))))
+    val chain = (0 to 6).toList.map(i =>
+      GoalView(
+        goal(
+          Goal.Slug(s"g$i"),
+          Goal.Title(s"G$i"),
+          Goal.StatusValue("planned"),
+          Option.when(i > 0)(Goal.Slug(s"g${i - 1}"))
+        )
+      )
+    )
     val out = GoalsExport.render(chain, Map.empty)
     assert(out.contains("\n###### G4\n") && out.contains("\n###### G6\n") && !out.contains("#######"), out)
 
   test("an unknown status still counts, after the lifecycle ones"):
-    val gs = List(goal(Goal.Slug("a"), Goal.Title("A"), Goal.StatusValue("done")), goal(Goal.Slug("b"), Goal.Title("B"), Goal.StatusValue("paused")), goal(Goal.Slug("c"), Goal.Title("C"), Goal.StatusValue("planned")))
+    val gs = List(
+      goal(Goal.Slug("a"), Goal.Title("A"), Goal.StatusValue("done")),
+      goal(Goal.Slug("b"), Goal.Title("B"), Goal.StatusValue("paused")),
+      goal(Goal.Slug("c"), Goal.Title("C"), Goal.StatusValue("planned"))
+    )
     assertEquals(GoalsExport.summary(gs), "3 goal(s): 3 top-level, 0 sub-goal(s) · planned 1 · done 1 · paused 1")

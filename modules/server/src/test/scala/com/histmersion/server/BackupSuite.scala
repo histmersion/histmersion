@@ -54,12 +54,17 @@ class BackupSuite extends munit.FunSuite:
 
   test("one server's restore does not freeze another server's writes (locks are per instance)"):
     val a, b = WriteGate()
-    assertEquals(a.exclusively(WriteGate.OperationName("restore"))(Right(b.guard(WriteGate.OperationName("seed"))(Right(42)))), Right(Right(42)))
+    assertEquals(
+      a.exclusively(WriteGate.OperationName("restore"))(Right(b.guard(WriteGate.OperationName("seed"))(Right(42)))),
+      Right(Right(42))
+    )
 
   test("a second concurrent restore is refused, and the lock is released afterwards"):
     val m = WriteGate()
     // the inner attempt cannot take the flag the outer one holds, so its Left is what comes back
-    val nested: Either[Api.Error, String] = m.exclusively(WriteGate.OperationName("restore"))(m.exclusively(WriteGate.OperationName("restore"))(Right("inner")))
+    val nested: Either[Api.Error, String] = m.exclusively(WriteGate.OperationName("restore"))(
+      m.exclusively(WriteGate.OperationName("restore"))(Right("inner"))
+    )
     assertEquals(nested, Left(Backup.maintenance("restore")))
     assertEquals(m.active, false)
     assertEquals(m.exclusively(WriteGate.OperationName("restore"))(Right("again")), Right("again"))
@@ -93,7 +98,10 @@ class BackupSuite extends munit.FunSuite:
     val svc = BackupFixtures.service(cfgWith(d))
     assertEquals(svc.archive(name).map(_.toPath), Right(d.toAbsolutePath.normalize.resolve(name.value)))
     // present on disk but never listed → refused
-    assertEquals(svc.resolve(PreparedBackup.File("histmersion-20260101T000000Z.dump")).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(
+      svc.resolve(PreparedBackup.File("histmersion-20260101T000000Z.dump")).left.map(_.code),
+      Left(Some(Write.CodeNotFound))
+    )
   }
 
   tmp.test("resolve refuses to escape the backups directory") { d =>
@@ -114,7 +122,11 @@ class BackupSuite extends munit.FunSuite:
 
   tmp.test("a missing pg_dump is a clear, actionable error rather than an exception") { d =>
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(d.resolve("nowhere").toString))))
+    val svc = BackupFixtures.service(
+      base
+        .modify(_.backups)
+        .setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(d.resolve("nowhere").toString)))
+    )
     val err = svc.create(Instant.now())
     assert(err.isLeft, err.toString)
     assert(err.left.exists(_.message.value.contains("pg_dump")), err.toString)
@@ -135,7 +147,17 @@ class BackupSuite extends munit.FunSuite:
 
     val base = cfgWith(d)
     val svc =
-      BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.timeoutSeconds).setTo(BackupsConfig.TimeoutSeconds(1))))
+      BackupFixtures.service(
+        base
+          .modify(_.backups)
+          .setTo(
+            base.backups
+              .modify(_.pgBinDir)
+              .setTo(BackupsConfig.PgBinDir(bin.toString))
+              .modify(_.timeoutSeconds)
+              .setTo(BackupsConfig.TimeoutSeconds(1))
+          )
+      )
 
     val started = System.nanoTime()
     val r = svc.create(Instant.now())
@@ -157,7 +179,9 @@ class BackupSuite extends munit.FunSuite:
     Files.writeString(fake, "#!/bin/sh\necho one\necho two >&2\nexit 3\n")
     val _ = fake.toFile.setExecutable(true)
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString))))
+    val svc = BackupFixtures.service(
+      base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)))
+    )
     val r = svc.create(Instant.now())
     assert(r.isLeft, r.toString)
     val msg = r.swap.toOption.get.message.value
@@ -182,7 +206,12 @@ class BackupSuite extends munit.FunSuite:
 
   private def jobs(d: Path, bin: Path, waitS: Int): BackupJobs =
     val base = cfgWith(d)
-    BackupJobs(BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)))), waitS)
+    BackupJobs(
+      BackupFixtures.service(
+        base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)))
+      ),
+      waitS
+    )
 
   private def cleanBin(bin: Path): Unit =
     Files.list(bin).forEach { p =>
@@ -201,7 +230,17 @@ class BackupSuite extends munit.FunSuite:
     old.foreach(n => Files.writeString(d.resolve(n), "old"))
     Files.writeString(d.resolve("my-own-copy.dump"), "the user's") // not ours: never pruned
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.keep).setTo(BackupsConfig.Keep(3))))
+    val svc = BackupFixtures.service(
+      base
+        .modify(_.backups)
+        .setTo(
+          base.backups
+            .modify(_.pgBinDir)
+            .setTo(BackupsConfig.PgBinDir(bin.toString))
+            .modify(_.keep)
+            .setTo(BackupsConfig.Keep(3))
+        )
+    )
     val r = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message.value), identity)
     assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
     val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"
@@ -218,7 +257,11 @@ class BackupSuite extends munit.FunSuite:
     (1 to 7).foreach(i => Files.writeString(d.resolve(f"histmersion-202601$i%02dT000000Z.dump"), "old"))
     val base = cfgWith(d)
     val r = BackupFixtures
-      .service(base.copy(backups = base.backups.copy(pgBinDir = BackupsConfig.PgBinDir(bin.toString), keep = BackupsConfig.Keep(0))))
+      .service(
+        base.copy(backups =
+          base.backups.copy(pgBinDir = BackupsConfig.PgBinDir(bin.toString), keep = BackupsConfig.Keep(0))
+        )
+      )
       .create(Instant.now())
       .fold(e => fail(e.message.value), identity)
     assertEquals(r.pruned, Nil)

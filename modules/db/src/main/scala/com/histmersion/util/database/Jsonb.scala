@@ -20,7 +20,8 @@ object Jsonb:
   object Problem extends Newtype[String, Pure]
 
   def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] =
-    DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))).getOrElse(fallback), a => Some(write(a, dropNulls).value))
+    DbCodec[Option[String]]
+      .biMap(_.flatMap(t => read[A](JsonText(t))).getOrElse(fallback), a => Some(write(a, dropNulls).value))
 
   def optional[A: {Encoder, Decoder}](dropNulls: DropNulls = DropNulls(false)): DbCodec[Option[A]] =
     DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))), _.map(a => write(a, dropNulls).value))

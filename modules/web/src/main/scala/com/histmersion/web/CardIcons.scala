@@ -64,7 +64,8 @@ object CardIcons:
       case _                                     => GenericPlace)
 
   /** Pure: a site's MARKER icon — its type's, the exclamation mark when the type is unknown. */
-  def siteMarker(siteType: Option[Place.Entry.SiteType]): Glyphs.Name = Glyphs.Name(siteType.flatMap(t => SiteTypes.icon(SiteTypes.IconId(t.value))).map(_.value).getOrElse(Unknown))
+  def siteMarker(siteType: Option[Place.Entry.SiteType]): Glyphs.Name =
+    Glyphs.Name(siteType.flatMap(t => SiteTypes.icon(SiteTypes.IconId(t.value))).map(_.value).getOrElse(Unknown))
 
   def event(kind: EventSummary.Kind): EventTaxonomy.Kind.Icon = EventTaxonomy.icon(kind)
 

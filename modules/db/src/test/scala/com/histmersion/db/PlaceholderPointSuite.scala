@@ -78,8 +78,22 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(
-        in(Place(Place.Id(Hellas), Place.Label("Zzph Hellas"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(150, -44, 154, -40))),
-        in(Place(Place.Id(Balkans), Place.Label("Zzph Balkans"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region), box(149, -46, 156, -39))),
+        in(
+          Place(
+            Place.Id(Hellas),
+            Place.Label("Zzph Hellas"),
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+            box(150, -44, 154, -40)
+          )
+        ),
+        in(
+          Place(
+            Place.Id(Balkans),
+            Place.Label("Zzph Balkans"),
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
+            box(149, -46, 156, -39)
+          )
+        ),
         in(
           Place(
             Place.Id(Pelop),
@@ -97,8 +111,22 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
             Some(Period(Year(-1600), Year(-1100)))
           )
         ),
-        in(Place(Place.Id(Tegea), Place.Label("Zzph Tegea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.52, -42.53))),
-        in(Place(Place.Id(Mantinea), Place.Label("Zzph Mantinea"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site), pt(152.45, -42.45)))
+        in(
+          Place(
+            Place.Id(Tegea),
+            Place.Label("Zzph Tegea"),
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            pt(152.52, -42.53)
+          )
+        ),
+        in(
+          Place(
+            Place.Id(Mantinea),
+            Place.Label("Zzph Mantinea"),
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+            pt(152.45, -42.45)
+          )
+        )
       )
     )
     val r = rep
@@ -116,7 +144,17 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
       )
     )
     def f(n: Int, region: Option[Finding.Region], at: Option[GeoPoint], period: Option[Period] = None) =
-      Finding(Finding.Id(s"zzph_src#$n"), Citekey("zzph_src"), Finding.Claim(s"claim $n"), region, at, period, None, Nil, None)
+      Finding(
+        Finding.Id(s"zzph_src#$n"),
+        Citekey("zzph_src"),
+        Finding.Claim(s"claim $n"),
+        region,
+        at,
+        period,
+        None,
+        Nil,
+        None
+      )
     SourceFixtures.upsert(
       ds,
       Source(
@@ -137,10 +175,19 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
         provenance = None,
         calibreId = None,
         findings = List(
-          f(0, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(Year(-1300), Year(-1200)))), // a model's "Greece" on round numbers
+          f(
+            0,
+            Some(Finding.Region("Zzph Hellas")),
+            Some(Grid),
+            Some(Period(Year(-1300), Year(-1200)))
+          ), // a model's "Greece" on round numbers
           f(1, None, Some(Grid), Some(Period(Year(-1300), Year(-1200)))), // the same point, no name
           f(2, Some(Finding.Region("Zzph Hellas")), Some(r)), // the geocoder's point for the name
-          f(3, Some(Finding.Region("Zzph Tegea")), Some(GeoPoint(Longitude(152.52), Latitude(-42.53)))), // a precise point
+          f(
+            3,
+            Some(Finding.Region("Zzph Tegea")),
+            Some(GeoPoint(Longitude(152.52), Latitude(-42.53)))
+          ), // a precise point
           f(4, Some(Finding.Region("Zzph Hellas")), Some(Grid), Some(Period(Year(-500), Year(-400))))
         )
       ), // after the Mykenai realm
@@ -215,7 +262,12 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
       ds,
       List(
         Place.Input(
-          Place(Place.Id("zzph_tribe"), Place.Label("Zzph Tribe"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.People), pt(153.31, -41.17)),
+          Place(
+            Place.Id("zzph_tribe"),
+            Place.Label("Zzph Tribe"),
+            Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.People),
+            pt(153.31, -41.17)
+          ),
           List(Place.Name(Place.Name.Value("Zzph Tribe")))
         )
       )

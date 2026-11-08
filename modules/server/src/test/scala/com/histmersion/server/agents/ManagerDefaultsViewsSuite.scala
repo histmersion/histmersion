@@ -95,7 +95,13 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
   test("a seeding plan's checks: its article cap and least sources"):
     assertEquals(
       SeedManagerKind
-        .plan(AgentSeedConfig(maxArticles = AgentSeedConfig.MaxArticles(6), minSources = AgentSeedConfig.MinSources(5), maxOverlap = AgentSeedConfig.MaxOverlap(0.5))),
+        .plan(
+          AgentSeedConfig(
+            maxArticles = AgentSeedConfig.MaxArticles(6),
+            minSources = AgentSeedConfig.MinSources(5),
+            maxOverlap = AgentSeedConfig.MaxOverlap(0.5)
+          )
+        ),
       SeedPlanDefaults(maxArticles = SeedPlanDefaults.MaxArticles(6), minSources = SeedPlanDefaults.MinSources(5))
     )
 

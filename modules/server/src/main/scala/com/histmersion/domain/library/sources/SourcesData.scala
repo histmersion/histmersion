@@ -20,7 +20,10 @@ import com.augustnagro.magnum.DbCon
 object SourcesData:
   def figures(using DbCon): List[DataCount] =
     val (sources, findings) = SourceRepo.counts()
-    List(DataCount(DataCount.Noun("sources"), DataCount.Count(sources.value)), DataCount(DataCount.Noun("findings"), DataCount.Count(findings.value)))
+    List(
+      DataCount(DataCount.Noun("sources"), DataCount.Count(sources.value)),
+      DataCount(DataCount.Noun("findings"), DataCount.Count(findings.value))
+    )
 
   /** The rebuild of every source's full-text chunks from its OCR'd body: at most `limit` sources after `after` (and at
     * most `limits.reindex-chars` characters) per slice.
@@ -50,7 +53,8 @@ object SourcesData:
         Lint.ItemLimit(maxItems.value)
       )
 
-  private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(n => Check(owner, Rule.Name(n), None))
+  private def listed(owner: DataOwner, names: String*): List[CheckRule] =
+    names.toList.map(n => Check(owner, Rule.Name(n), None))
 
   private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: Int)(
       run: CheckContext => LintFixResult

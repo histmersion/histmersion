@@ -12,8 +12,7 @@ object Stalls:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
 
-
-  export StallReport.{Days as ReportDays, At as ReportAt}
+  export StallReport.{At as ReportAt, Days as ReportDays}
 
   final case class Stall(
       slug: Stall.Slug,
@@ -25,11 +24,12 @@ object Stalls:
       why: Stall.Why = Stall.Why(""),
       action: Stall.Action = Stall.Action("")
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object Stall:
     export com.histmersion.api.research.ReviewGoal.Slug
-    export Facts.{Title, Status, LastProgress, IdleDays}
+    export Facts.{IdleDays, LastProgress, Status, Title}
     type Code = Code.T
     object Code extends Newtype[String, Pure]
     type Why = Why.T
@@ -37,14 +37,15 @@ object Stalls:
     type Action = Action.T
     object Action extends Newtype[String, Pure]
 
-
-  final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count)
+      derives KindlingsCodecAsObject,
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object ReasonCount:
     export Stall.Code
     type Count = Count.T
     object Count extends Newtype[Int, Pure]
-
 
   final case class StallReport(
       days: StallReport.Days,
@@ -53,7 +54,8 @@ object Stalls:
       stalled: List[Stall] = Nil,
       byReason: List[ReasonCount] = Nil
   ) derives KindlingsCodecAsObject,
-        KindlingsSchema, com.histmersion.api.json.Schema
+        KindlingsSchema,
+        com.histmersion.api.json.Schema
 
   object StallReport:
     type Days = Days.T
@@ -62,7 +64,6 @@ object Stalls:
     object At extends Newtype[String, Pure]
     type Goals = Goals.T
     object Goals extends Newtype[Int, Pure]
-
 
   object Code:
     val Drain = "drain"
@@ -78,7 +79,11 @@ object Stalls:
     val Running = "running"
     val Idle = "idle"
 
-  final case class SchedWait(code: SchedWait.Code, why: SchedWait.Why, position: SchedWait.Position = SchedWait.Position(0))
+  final case class SchedWait(
+      code: SchedWait.Code,
+      why: SchedWait.Why,
+      position: SchedWait.Position = SchedWait.Position(0)
+  )
 
   object SchedWait:
     export Stall.{Code, Why}
@@ -139,20 +144,30 @@ object Stalls:
   def classify(f: Facts): (Stall.Code, Stall.Why, Stall.Action) =
     val g = f.slug
     def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
-    if ((f.draining) == Facts.Draining(true)) then
-      (Stall.Code(Code.Drain), Stall.Why("the agents are draining: nothing new starts"), Stall.Action("histmersion agent autopilot undrain"))
+    if (f.draining) == Facts.Draining(true) then
+      (
+        Stall.Code(Code.Drain),
+        Stall.Why("the agents are draining: nothing new starts"),
+        Stall.Action("histmersion agent autopilot undrain")
+      )
     else if f.approvals.nonEmpty then
       val kinds =
         f.approvals.groupMapReduce(_._2)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$k $n").mkString(", ")
       (
         Stall.Code(Code.Person),
-        Stall.Why(s"waits for a person: ${Plural.count(Plural.CountN((f.approvals.size).toLong), Plural.CountSingular("open approval"))} ($kinds; oldest #${f.approvals.map(_._1).min})"),
-        Stall.Action(s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)")
+        Stall.Why(
+          s"waits for a person: ${Plural.count(Plural.CountN((f.approvals.size).toLong), Plural.CountSingular("open approval"))} ($kinds; oldest #${f.approvals.map(_._1).min})"
+        ),
+        Stall.Action(
+          s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)"
+        )
       )
     else if (f.personHeld).value > 0 then
       (
         Stall.Code(Code.Held),
-        Stall.Why(s"${Plural.count(Plural.CountN(f.personHeld.value.toLong), Plural.CountSingular("item"))} held by a person"),
+        Stall.Why(
+          s"${Plural.count(Plural.CountN(f.personHeld.value.toLong), Plural.CountSingular("item"))} held by a person"
+        ),
         Stall.Action(s"histmersion agent manager seed:$g items --status held, then release")
       )
     else if f.paused.nonEmpty then
@@ -162,7 +177,8 @@ object Stalls:
         Stall.Action(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
-      waitOf(w => w.code == Stall.Code("blocked") && w.why.value.startsWith("budget")).orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("budget"))))) match
+      waitOf(w => w.code == Stall.Code("blocked") && w.why.value.startsWith("budget"))
+        .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("budget"))))) match
         case Some(w) =>
           (
             Stall.Code(Code.Budget),
@@ -170,12 +186,15 @@ object Stalls:
             Stall.Action("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
-          waitOf(w => w.code == Stall.Code("blocked") && w.why.value.startsWith("starved")).orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("pool"))))) match
+          waitOf(w => w.code == Stall.Code("blocked") && w.why.value.startsWith("starved"))
+            .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("pool"))))) match
             case Some(w) =>
               (
                 Stall.Code(Code.Quota),
                 w.why,
-                Stall.Action("histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models")
+                Stall.Action(
+                  "histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models"
+                )
               )
             case None =>
               waitOf(w => (w.code == Stall.Code("capacity"))) match
@@ -183,7 +202,9 @@ object Stalls:
                   (
                     Stall.Code(Code.Queue),
                     Stall.Why(s"waits in the scheduler's queue (#${w.position}): ${w.why}"),
-                    Stall.Action(s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs")
+                    Stall.Action(
+                      s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs"
+                    )
                   )
                 case None =>
                   waitOf((refactorCallback => (refactorCallback.code == Stall.Code("blocked")))) match
@@ -194,7 +215,13 @@ object Stalls:
                         Stall.Action(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
                       )
                     case None if (f.running).value > 0 =>
-                      (Stall.Code(Code.Running), Stall.Why(s"${Plural.count(Plural.CountN(f.running.value.toLong), Plural.CountSingular("run"))} in flight"), Stall.Action("nothing: wait for it"))
+                      (
+                        Stall.Code(Code.Running),
+                        Stall.Why(
+                          s"${Plural.count(Plural.CountN(f.running.value.toLong), Plural.CountSingular("run"))} in flight"
+                        ),
+                        Stall.Action("nothing: wait for it")
+                      )
                     case None =>
                       f.lastStop match
                         case Some(o) =>
@@ -207,7 +234,9 @@ object Stalls:
                           (
                             Stall.Code(Code.NoCandidates),
                             Stall.Why("its candidate sweep found nothing new and it has no source"),
-                            Stall.Action(s"give it a better query: histmersion goals link $g query \"<words>\" (or add a source)")
+                            Stall.Action(
+                              s"give it a better query: histmersion goals link $g query \"<words>\" (or add a source)"
+                            )
                           )
                         case None if f.open == Facts.Open(0) =>
                           (
@@ -218,7 +247,9 @@ object Stalls:
                         case None =>
                           (
                             Stall.Code(Code.Idle),
-                            Stall.Why(s"${Plural.count(Plural.CountN(f.open.value.toLong), Plural.CountSingular("item"))} open, none due yet (a cooldown or a backoff)"),
+                            Stall.Why(
+                              s"${Plural.count(Plural.CountN(f.open.value.toLong), Plural.CountSingular("item"))} open, none due yet (a cooldown or a backoff)"
+                            ),
                             Stall.Action(s"histmersion agent scheduler why <item>")
                           )
 
@@ -235,5 +266,9 @@ object Stalls:
       at,
       StallReport.Goals(facts.size),
       stalls,
-      stalls.groupMapReduce(_.code)(_ => 1)(_ + _).toList.sortBy((c, n) => (-n, c.value)).map((c, n) => ReasonCount(c, ReasonCount.Count(n)))
+      stalls
+        .groupMapReduce(_.code)(_ => 1)(_ + _)
+        .toList
+        .sortBy((c, n) => (-n, c.value))
+        .map((c, n) => ReasonCount(c, ReasonCount.Count(n)))
     )

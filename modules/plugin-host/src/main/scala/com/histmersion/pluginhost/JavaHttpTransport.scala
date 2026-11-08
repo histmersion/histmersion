@@ -13,8 +13,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   * percent-encoded). `timeoutSeconds` bounds the wait for an answer, `connectSeconds` (when given; else the same) the
   * connection.
   */
-final class JavaHttpTransport(timeoutSeconds: => HttpTransport.TimeoutSeconds, connectSeconds: Option[JavaHttpTransport.ConnectSeconds] = None)
-    extends HttpTransport: // by name: read per request
+final class JavaHttpTransport(
+    timeoutSeconds: => HttpTransport.TimeoutSeconds,
+    connectSeconds: Option[JavaHttpTransport.ConnectSeconds] = None
+) extends HttpTransport: // by name: read per request
   private val client = HttpClient
     .newBuilder()
     .followRedirects(HttpClient.Redirect.NORMAL)
@@ -22,10 +24,16 @@ final class JavaHttpTransport(timeoutSeconds: => HttpTransport.TimeoutSeconds, c
     .version(HttpClient.Version.HTTP_1_1)
     .build()
 
-  def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(
+      url: HttpTransport.Url,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+  ): Either[HttpTransport.Problem, HttpAnswer] =
     scala.util
       .Try {
-        val b = HttpRequest.newBuilder(URI.create(url.value)).GET().timeout(Duration.ofSeconds(timeoutSeconds.value.toLong.max(1)))
+        val b = HttpRequest
+          .newBuilder(URI.create(url.value))
+          .GET()
+          .timeout(Duration.ofSeconds(timeoutSeconds.value.toLong.max(1)))
         headers.foreach((k, v) => b.header(k.value, v.value))
         val resp = client.send(b.build(), HttpResponse.BodyHandlers.ofByteArray())
         val hs = resp
@@ -33,7 +41,9 @@ final class JavaHttpTransport(timeoutSeconds: => HttpTransport.TimeoutSeconds, c
           .map()
           .asScala
           .toMap
-          .flatMap((k, vs) => vs.asScala.headOption.map(v => CoreQuota.HeaderName(k.toLowerCase(Locale.ROOT)) -> CoreQuota.HeaderValue(v)))
+          .flatMap((k, vs) =>
+            vs.asScala.headOption.map(v => CoreQuota.HeaderName(k.toLowerCase(Locale.ROOT)) -> CoreQuota.HeaderValue(v))
+          )
         HttpAnswer(HttpAnswer.Code(resp.statusCode()), hs, HttpAnswer.Body(resp.body()))
       }
       .toEither

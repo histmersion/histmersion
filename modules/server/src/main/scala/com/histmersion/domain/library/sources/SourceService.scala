@@ -19,7 +19,16 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
-import com.histmersion.api.library.{CalibreGap, Citekey as ApiCitekey, DeleteCount, DeletePart, Edge, Rename, Source, TocEntry}
+import com.histmersion.api.library.{
+  CalibreGap,
+  Citekey as ApiCitekey,
+  DeleteCount,
+  DeletePart,
+  Edge,
+  Rename,
+  Source,
+  TocEntry
+}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Finding
 import com.histmersion.domain.library.Doi
@@ -152,7 +161,8 @@ object SourceService:
       db.read(SourceRepo.get(citekey)).map((s, fs) => (s, fs.toList))
     def load(citekey: Citekey): Option[Source] = db.read(SourceRepo.load(citekey))
     def refs(citekeys: List[Citekey]): List[Source.Ref] = db.read(SourceRepo.refs(citekeys))
-    def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey] = db.read(SourceRepo.resolveAliases(targets))
+    def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey] =
+      db.read(SourceRepo.resolveAliases(targets))
     def toc(citekey: Citekey): List[TocEntry] = db.read(SourceRepo.toc(citekey))
     def bodyText(citekey: Citekey): FullSourceRow.OcrMarkdown = db.read(SourceRepo.bodyText(citekey))
     def bodyUnderHeading(citekey: Citekey, heading: Heading): FullSourceRow.OcrMarkdown =
@@ -199,15 +209,20 @@ object SourceService:
     def setOriginal(citekey: Citekey, sha256: Sha256, caller: Caller): Unit =
       db.transact(SourceRepo.setSha256(citekey, sha256))
     def licence(citekey: Citekey): Option[Licence] =
-      db.read(SourceRepo.licenceOf(citekey)).map(l => Licence.Id(l.value.trim)).filter(_.value.nonEmpty).map(Licence.classify)
+      db.read(SourceRepo.licenceOf(citekey))
+        .map(l => Licence.Id(l.value.trim))
+        .filter(_.value.nonEmpty)
+        .map(Licence.classify)
     def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
       v.nonEmpty && db.transact(SourceRepo.recordLicence(citekey, Licence.Id(v)))
-    def calibreGaps(limit: Option[PageSize]): List[CalibreGap] = db.read(SourceRepo.calibreGaps(limit.map(l => SourceRepo.Limit.assume(l.value))))
+    def calibreGaps(limit: Option[PageSize]): List[CalibreGap] =
+      db.read(SourceRepo.calibreGaps(limit.map(l => SourceRepo.Limit.assume(l.value))))
     def calibrePushMeta(citekey: Citekey): Option[CalibreGap] = db.read(SourceRepo.calibrePushMeta(citekey))
     def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
       db.transact:
-        if SourceRepo.setCalibreId(citekey, calibreId).value == 0 then Left(Write.notFound(ApiCitekey(citekey.value))) else Right(())
+        if SourceRepo.setCalibreId(citekey, calibreId).value == 0 then Left(Write.notFound(ApiCitekey(citekey.value)))
+        else Right(())
 
   /** The sources the library holds in memory, as a database holding only the library's rows answers: no other domain
     * stores anything of a source, so a rename rewrites no other record and nothing refuses a delete; `clock` stands in
@@ -311,11 +326,23 @@ object SourceService:
         .flatMap(ck =>
           st.sources
             .get(sk(ck))
-            .map(x => Source.Ref(ApiCitekey(ck.value), x.source.doi, x.source.authors, x.source.year, x.source.title, x.source.status))
+            .map(x =>
+              Source.Ref(
+                ApiCitekey(ck.value),
+                x.source.doi,
+                x.source.authors,
+                x.source.year,
+                x.source.title,
+                x.source.status
+              )
+            )
         )
 
     /** The precedence of the database's resolution: the citekey itself, an old citekey, a short form. */
-    private def resolveIn(st: LibraryState, targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey] =
+    private def resolveIn(
+        st: LibraryState,
+        targets: List[WikiLinks.Occurrence.Target]
+    ): Map[WikiLinks.Occurrence.Target, Citekey] =
       targets
         .map(_.value.trim.toLowerCase)
         .filter(_.nonEmpty)
@@ -334,7 +361,8 @@ object SourceService:
         }
         .toMap
 
-    def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey] = resolveIn(state.get, targets)
+    def resolveLinks(targets: List[WikiLinks.Occurrence.Target]): Map[WikiLinks.Occurrence.Target, Citekey] =
+      resolveIn(state.get, targets)
 
     private def chunksOf(citekey: Citekey): List[Chunk] = state.get.sources.get(sk(citekey)).fold(Nil)(_.chunks)
 
@@ -344,7 +372,11 @@ object SourceService:
         .groupBy(_.heading.get)
         .toList
         .map((h, cs) =>
-          TocEntry(TocEntry.Heading(h.value), TocEntry.Ord(cs.map(_.ord.value).min), TocEntry.Chars(cs.map(_.body.value.length).sum))
+          TocEntry(
+            TocEntry.Heading(h.value),
+            TocEntry.Ord(cs.map(_.ord.value).min),
+            TocEntry.Chars(cs.map(_.body.value.length).sum)
+          )
         )
         .sortBy[Int](_.ord.value)
 
@@ -366,7 +398,10 @@ object SourceService:
     def bodyChunks(citekey: Citekey): List[Chunk] =
       chunksOf(citekey) match
         case Nil =>
-          Option(markdown(citekey)).filter(_.value.nonEmpty).map(md => Chunk(Chunk.Ord(0), None, Chunk.Body(md.value))).toList
+          Option(markdown(citekey))
+            .filter(_.value.nonEmpty)
+            .map(md => Chunk(Chunk.Ord(0), None, Chunk.Body(md.value)))
+            .toList
         case cs => cs.sortBy[Int](_.ord.value)
 
     def markdown(citekey: Citekey): FullSourceRow.OcrMarkdown =
@@ -452,7 +487,10 @@ object SourceService:
                 answer = Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
                 st
               case Right(_) =>
-                Source.Write.applyPatch(existing, Source.Write.srcAliased(patch, apiKey(requested), apiKey(citekey))) match
+                Source.Write.applyPatch(
+                  existing,
+                  Source.Write.srcAliased(patch, apiKey(requested), apiKey(citekey))
+                ) match
                   case Left(msg) =>
                     answer = Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
                     st
@@ -461,16 +499,20 @@ object SourceService:
       answer
 
     def rename(from: Citekey, to: Citekey, caller: Caller): Either[Api.Error, Rename.Counts] =
-      Citekeys.renameTo(from, Citekeys.RenameToNewRaw(to.value)).left.map(p => Write.invalid(Api.Error.Message(p.value))).flatMap { validated =>
-        val at = clock.instant()
-        var answer: Either[Api.Error, Rename.Counts] = Left(Write.notFound(apiKey(from)))
-        val _ = state.updateAndGet { st =>
-          renamedIn(st, from, validated, at) match
-            case Left(e)        => { answer = Left(e); st }
-            case Right((n, rc)) => { answer = Right(rc); n }
+      Citekeys
+        .renameTo(from, Citekeys.RenameToNewRaw(to.value))
+        .left
+        .map(p => Write.invalid(Api.Error.Message(p.value)))
+        .flatMap { validated =>
+          val at = clock.instant()
+          var answer: Either[Api.Error, Rename.Counts] = Left(Write.notFound(apiKey(from)))
+          val _ = state.updateAndGet { st =>
+            renamedIn(st, from, validated, at) match
+              case Left(e)        => { answer = Left(e); st }
+              case Right((n, rc)) => { answer = Right(rc); n }
+          }
+          answer
         }
-        answer
-      }
 
     private def renamedIn(
         st: LibraryState,
@@ -484,8 +526,7 @@ object SourceService:
           case Some(now) =>
             invalid(s"'${from.value}' is an old citekey of '${now.value}' — rename '${now.value}' instead")
           case None => Write.notFound(apiKey(from)))
-      else if st.sources.contains(sk(to)) then
-        Left(invalid(s"'${to.value}' is already the citekey of another source"))
+      else if st.sources.contains(sk(to)) then Left(invalid(s"'${to.value}' is already the citekey of another source"))
       else
         st.aliases.get(ak(to)) match
           case Some(other) if other.value != from.value =>
@@ -498,16 +539,17 @@ object SourceService:
                 Left(invalid(s"finding id '${id.value}' already exists — '${to.value}' would collide with it"))
               case None =>
                 val unaliased =
-                  if back.isDefined then st.modify(_.aliases).using(_ - ak(to)).modify(_.aliasTombstones).using(_ + tk(to))
+                  if back.isDefined then
+                    st.modify(_.aliases).using(_ - ak(to)).modify(_.aliasTombstones).using(_ + tk(to))
                   else st
                 Right(renamedNow(unaliased, from, to, at))
 
     private def renamedNow(st: LibraryState, from: Citekey, to: Citekey, at: Instant): (LibraryState, Rename.Counts) =
       val fromApi = apiKey(from)
       val toApi = apiKey(to)
-      val shorts = resolveIn(st, Rename.shortForms(fromApi).map(f => WikiLinks.Occurrence.Target(f.value)))
-        .collect { case (f, ck) if ck == from => f }
-        .toSet
+      val shorts = resolveIn(st, Rename.shortForms(fromApi).map(f => WikiLinks.Occurrence.Target(f.value))).collect {
+        case (f, ck) if ck == from => f
+      }.toSet
       val prefix = from.value + "#"
       val stored = st.sources(sk(from))
       val renumbered = stored.source.findings.count(_.id.value.startsWith(prefix))
@@ -522,7 +564,10 @@ object SourceService:
         .modify(_.updatedAt)
         .setTo(at)
       def follow(e: Edge): Edge =
-        e.modify(_.src).using(s => if s.value == from.value then toApi else s).modify(_.dst).using(d => if d.value == from.value then toApi else d)
+        e.modify(_.src)
+          .using(s => if s.value == from.value then toApi else s)
+          .modify(_.dst)
+          .using(d => if d.value == from.value then toApi else d)
       val keyed = st
         .modify(_.sources)
         .using(_ - sk(from) + (sk(to) -> moved))
@@ -532,7 +577,8 @@ object SourceService:
         .using(_.map(follow))
         .modify(_.parked)
         .using(_.map(e => e.modify(_.src).using(s => if s.value == from.value then toApi else s)))
-      val waiting = keyed.parked.map(_.dst).filter(d => d.value == to.value || to.value.startsWith(d.value + "_")).toList.distinct
+      val waiting =
+        keyed.parked.map(_.dst).filter(d => d.value == to.value || to.value.startsWith(d.value + "_")).toList.distinct
       val resolvedNow = resolveIn(keyed, waiting.map(d => WikiLinks.Occurrence.Target(d.value)))
       val promotable = waiting.filter(d => resolvedNow.get(WikiLinks.Occurrence.Target(d.value)).contains(to)).toSet
       val promoting = keyed.parked.filter(e => promotable(e.dst) && e.src.value != to.value)
@@ -548,7 +594,9 @@ object SourceService:
           val n = x.source.notes.map(note => WikiLinks.retarget(WikiLinks.Body(note.value), target))
           val s = x.source.summary.map(sum => WikiLinks.retarget(WikiLinks.Body(sum.value), target))
           val count = n.fold(0)(_._2.value) + s.fold(0)(_._2.value)
-          Option.when(count > 0)((ck, count, n.map(r => Source.Notes(r._1.value)), s.map(r => Source.Summary(r._1.value))))
+          Option.when(count > 0)(
+            (ck, count, n.map(r => Source.Notes(r._1.value)), s.map(r => Source.Summary(r._1.value)))
+          )
       }
       val rewritten = retargeted.map((ck, _, n, s) =>
         ck -> linked
@@ -589,7 +637,8 @@ object SourceService:
             case None => Write.notFound(apiKey(requested)))
         case Some(x) =>
           val ck = requested
-          val aliases = st.aliases.collect { case (a, c) if c.value == ck.value => held(a.value) }.toList.sortBy[String](_.value)
+          val aliases =
+            st.aliases.collect { case (a, c) if c.value == ck.value => held(a.value) }.toList.sortBy[String](_.value)
           val edgesIn = st.edges
             .filter(e => e.dst.value == ck.value && e.src.value != ck.value)
             .toList
@@ -660,7 +709,10 @@ object SourceService:
       val _ = state.updateAndGet { st =>
         val targets = resolveIn(st, st.parked.toList.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
         val moves = st.parked.toList.flatMap(e =>
-          targets.get(WikiLinks.Occurrence.Target(e.dst.value.trim.toLowerCase)).filter(_.value != e.src.value).map(e -> _)
+          targets
+            .get(WikiLinks.Occurrence.Target(e.dst.value.trim.toLowerCase))
+            .filter(_.value != e.src.value)
+            .map(e -> _)
         )
         moved = moves.size
         st.modify(_.edges)
@@ -708,7 +760,9 @@ object SourceService:
     def original(citekey: Citekey): Option[Sha256] = stored(citekey).flatMap(_.sha256)
 
     def holderOf(sha256: Sha256): Option[Citekey] =
-      state.get.sources.toList.sortBy[String](_._1.value).collectFirst { case (ck, x) if x.sha256.contains(sha256) => held(ck.value) }
+      state.get.sources.toList.sortBy[String](_._1.value).collectFirst {
+        case (ck, x) if x.sha256.contains(sha256) => held(ck.value)
+      }
 
     def originals(citekeys: List[Citekey]): Map[Citekey, Sha256] =
       citekeys.flatMap(ck => original(ck).map(ck -> _)).toMap
@@ -723,7 +777,11 @@ object SourceService:
       val _ = updated(citekey)(_.modify(_.sha256).setTo(Some(sha256)))
 
     def licence(citekey: Citekey): Option[Licence] =
-      stored(citekey).flatMap(_.licence).map(l => Licence.Id(l.value.trim)).filter(_.value.nonEmpty).map(Licence.classify)
+      stored(citekey)
+        .flatMap(_.licence)
+        .map(l => Licence.Id(l.value.trim))
+        .filter(_.value.nonEmpty)
+        .map(Licence.classify)
 
     def recordLicence(citekey: Citekey, licence: Licence.Id, caller: Caller): Boolean =
       val v = licence.value.trim
@@ -759,7 +817,10 @@ object SourceService:
 
     def setCalibreId(citekey: Citekey, calibreId: FullSourceRow.CalibreId, caller: Caller): Either[Api.Error, Unit] =
       if updated(citekey)(
-          _.modify(_.source.calibreId).setTo(Some(Source.CalibreId(calibreId.value))).modify(_.updatedAt).setTo(clock.instant())
+          _.modify(_.source.calibreId)
+            .setTo(Some(Source.CalibreId(calibreId.value)))
+            .modify(_.updatedAt)
+            .setTo(clock.instant())
         )
       then Right(())
       else Left(Write.notFound(apiKey(citekey)))

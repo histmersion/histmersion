@@ -32,7 +32,12 @@ private[places] object PointAreaRepo:
     * the point tolerance the re-match uses.
     */
 
-  final case class Settings(kinds: List[Settings.Kinds], batch: Settings.Batch, budgetMs: Settings.BudgetMs, toleranceKm: Settings.ToleranceKm)
+  final case class Settings(
+      kinds: List[Settings.Kinds],
+      batch: Settings.Batch,
+      budgetMs: Settings.BudgetMs,
+      toleranceKm: Settings.ToleranceKm
+  )
 
   object Settings:
     type Kinds = Kinds.T
@@ -45,7 +50,12 @@ private[places] object PointAreaRepo:
     object ToleranceKm extends Newtype[Double, Pure]
 
   /** What one [[remove]] call did. */
-  final case class Removal(removed: Removal.Removed, remaining: Removal.Remaining, findings: Removal.Findings, sources: Removal.Sources):
+  final case class Removal(
+      removed: Removal.Removed,
+      remaining: Removal.Remaining,
+      findings: Removal.Findings,
+      sources: Removal.Sources
+  ):
     /** The line `lint --fix` reports it with. */
     def line: PointAreas.FixedResult =
       PointAreas.fixed(
@@ -169,7 +179,9 @@ private[places] object PointAreaRepo:
           ORDER BY p.id LIMIT ${math.max(0, n.value)}""".query[Row].run().toList.map(_.listed)
 
   /** The rule's report. */
-  def reportIn(rule: Lint.Rule, kinds: List[Place.Kind.Wire], maxItems: PointAreas.ReportMaxItems)(using DbCon): Lint.LintRuleReport =
+  def reportIn(rule: Lint.Rule, kinds: List[Place.Kind.Wire], maxItems: PointAreas.ReportMaxItems)(using
+      DbCon
+  ): Lint.LintRuleReport =
     if kinds.isEmpty then Lint.LintRuleReport(rule.name, rule.description, Lint.LintRuleReport.Count(0), Nil)
     else PointAreas.report(rule, groupsIn(kinds), holdersIn(kinds), sampleIn(kinds, maxItems), maxItems)
 
@@ -292,8 +304,7 @@ private[places] object PointAreaRepo:
             .flatMap(k => named.getOrElse(NameKey(k), Set.empty))
       val n = deletePlacesIn(ids)
       val cks = held.map(_._2).toSet ++ byName
-      cks.toList
-        .sorted
+      cks.toList.sorted
         .foreach(ck =>
           FindingPlaceRepo.materialiseFor(ck, FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
         )

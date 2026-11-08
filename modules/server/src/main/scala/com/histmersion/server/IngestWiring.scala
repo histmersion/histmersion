@@ -55,4 +55,3 @@ final class IngestWiring(
   val jobs: QueuedIngest = QueuedIngest(controllers, sources, c => spool.get(c.key).map(Upload.stored))
 
   val seed: SeedImport = SeedImport(sources, figures.addFigures)
-

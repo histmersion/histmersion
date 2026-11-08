@@ -16,6 +16,7 @@ object Prompt:
   object Problem extends Newtype[String, Pure]
   type UserText = UserText.T
   object UserText extends Newtype[String, Pure]
+
   /** Untrusted text (an OCR'd body, an article under review) as DATA: fenced in tags the system prompt names, with any
     * copy of the closing tag inside it defused so the text cannot end its own fence.
     */

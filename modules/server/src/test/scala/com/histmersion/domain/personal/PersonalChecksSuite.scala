@@ -13,7 +13,9 @@ class PersonalChecksSuite extends munit.FunSuite:
 
   test("a bookmark's or a note's id is a lower-case UUID; any case is read, anything else refused"):
     assertEquals(
-      Bookmark.idOf(com.histmersion.api.personal.Bookmark.Id("0190F3C2-1111-7000-8000-000000000001")).map(_.value: String),
+      Bookmark
+        .idOf(com.histmersion.api.personal.Bookmark.Id("0190F3C2-1111-7000-8000-000000000001"))
+        .map(_.value: String),
       Right("0190f3c2-1111-7000-8000-000000000001")
     )
     assert(Note.idOf(com.histmersion.api.personal.Note.Id("not")).isLeft)

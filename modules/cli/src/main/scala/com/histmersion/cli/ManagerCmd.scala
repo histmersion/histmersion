@@ -30,7 +30,7 @@ import com.histmersion.api.automation.Stalls
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
   */
 object ManagerCmd:
-  def managers(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def managers(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "managers",
     "The process managers: each one's state, items, runs in flight, status line and last event"
   ) {
@@ -52,7 +52,7 @@ object ManagerCmd:
       "max-articles, sweeps, auto-ingest, auto-ingest-per-day, daily-usd (metered spend; 0 = none), auto-approve (its runs' " +
       "plans and drafts decided by code checks), extend-min-new"
 
-  private def create (using console: Console) = Opts.subcommand(
+  private def create(using console: Console) = Opts.subcommand(
     "new",
     "Create a manager: review (library-wide, id 'review'), enrich (library-wide, id 'enrich'), seed --goal g (id 'seed:g'; " +
       "starts by proposing the area's articles), watch --goal g (id 'watch:g'; an acquisition sweep and a currency check " +
@@ -73,13 +73,23 @@ object ManagerCmd:
     )
       .mapN { (kind, goal, kvs, cron, active, json) => (c: Client) =>
         config(kvs)
-          .flatMap(cfg => c.call(ManagersApi.create)(ManagerCreate(ManagerCreate.Kind(kind), goal.map(Goal.Slug(_)), cfg, Some(ManagerCreate.Paused(!active)), cron.map(ManagerCreate.Cron(_)))))
+          .flatMap(cfg =>
+            c.call(ManagersApi.create)(
+              ManagerCreate(
+                ManagerCreate.Kind(kind),
+                goal.map(Goal.Slug(_)),
+                cfg,
+                Some(ManagerCreate.Paused(!active)),
+                cron.map(ManagerCreate.Cron(_))
+              )
+            )
+          )
           .map(m => Output.emit(json, m)(ManagersMarkdown.line))
       }
   }
 
   /** `histmersion agent enqueue <review|extend|enrich|seed> <target>` — what the page buttons do. */
-  def enqueue(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def enqueue(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "enqueue",
     "Hand a target to its manager, as the page buttons do: review|extend <article>, enrich <citekey|article|goal> " +
       "(the unenriched sources it cites or links), seed <goal> (propose its next articles); a missing manager is created paused"
@@ -90,14 +100,16 @@ object ManagerCmd:
       Opts.option[Int]("priority", "Its priority (default 10: first)").orNone,
       Output.jsonFlag
     ).mapN { (kind, t, p, json) => (c: Client) =>
-      c.call(ManagersApi.enqueue)(EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
+      c.call(ManagersApi.enqueue)(
+        EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))
+      ).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
     }
   }
 
   /** `histmersion agent autopilot [status|on|off]` — the one switch (docs/research-process-managers.md "As built: the
     * autopilot").
     */
-  def autopilot(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def autopilot(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "autopilot",
     "The autopilot: status (default) — per research goal its stage, managers, sources, articles, open approvals, last " +
       "activity and pace, and the watchers' ingest backlog; on — every goal gets an active seeding manager and watcher and " +
@@ -118,22 +130,56 @@ object ManagerCmd:
       Opts.flag("dry-run", "repair-acquire: list what it would do, change nothing").orFalse,
       Output.jsonFlag
     ).mapN { (verb, rest, dry, json) => (c: Client) =>
-      def status(call: Either[Cli.Error, AutopilotStatus]) (using console: Console) =
+      def status(call: Either[Cli.Error, AutopilotStatus])(using console: Console) =
         call.map(s => Output.emit(json, s)(_.markdown))
       verb.trim.toLowerCase match
         case "mode" =>
           rest match
-            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(AgentMode.ModeSet.Mode(m), Some(AgentMode.ModeSet.By("cli")))))
-            case _ => Left(Cli.Error(Cli.Error.Message("autopilot mode takes one of: working, finish, pause"), exitCode = ExitCode.Usage))
+            case List(m) =>
+              status(
+                c.call(AutopilotApi.setMode)(
+                  AgentMode.ModeSet(AgentMode.ModeSet.Mode(m), Some(AgentMode.ModeSet.By("cli")))
+                )
+              )
+            case _ =>
+              Left(
+                Cli.Error(
+                  Cli.Error.Message("autopilot mode takes one of: working, finish, pause"),
+                  exitCode = ExitCode.Usage
+                )
+              )
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
-            Cli.Error(Cli.Error.Message(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})"), exitCode = ExitCode.Usage)
+            Cli.Error(
+              Cli.Error.Message(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})"),
+              exitCode = ExitCode.Usage
+            )
           )
-        case "status"  => status(c.call(AutopilotApi.autopilot)(()))
-        case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(true), Some(Autopilot.AutopilotSet.By("cli")))))
-        case "off"     => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(false), Some(Autopilot.AutopilotSet.By("cli")))))
-        case "drain"   => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("cli")))))
-        case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("cli")))))
+        case "status" => status(c.call(AutopilotApi.autopilot)(()))
+        case "on"     =>
+          status(
+            c.call(AutopilotApi.setAutopilot)(
+              Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(true), Some(Autopilot.AutopilotSet.By("cli")))
+            )
+          )
+        case "off" =>
+          status(
+            c.call(AutopilotApi.setAutopilot)(
+              Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(false), Some(Autopilot.AutopilotSet.By("cli")))
+            )
+          )
+        case "drain" =>
+          status(
+            c.call(AutopilotApi.drain)(
+              Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("cli")))
+            )
+          )
+        case "undrain" =>
+          status(
+            c.call(AutopilotApi.drain)(
+              Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("cli")))
+            )
+          )
         case "repair-acquire" =>
           c.call(AcquisitionWorkApi.repairAcquire)(
             RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(Activity.Actor("cli")))
@@ -148,7 +194,9 @@ object ManagerCmd:
         case other =>
           Left(
             Cli.Error(
-              Cli.Error.Message(s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)"),
+              Cli.Error.Message(
+                s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)"
+              ),
               exitCode = ExitCode.Usage
             )
           )
@@ -158,7 +206,7 @@ object ManagerCmd:
   /** `histmersion agent scheduler [status|queue|why <item>|strategy <name|default>]` — the central scheduler
     * (docs/research-goal-advancement.md "As built").
     */
-  def scheduler(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def scheduler(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "scheduler",
     "The central scheduler that admits the managers' work across every job type: status (default) — the strategy, " +
       "the runs at once and plan pools, the job types' shares, what the last pass started and the queue with why each " +
@@ -175,7 +223,8 @@ object ManagerCmd:
       def usage(m: String) = Left(Cli.Error(Cli.Error.Message(m), exitCode = ExitCode.Usage))
       (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
         case ("status", Nil) =>
-          c.call(ManagersApi.scheduler)(limit.map(Scheduler.Limit(_))).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
+          c.call(ManagersApi.scheduler)(limit.map(Scheduler.Limit(_)))
+            .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
         case ("queue", Nil) =>
           c.call(ManagersApi.scheduler)(limit.orElse(Some(200)).map(Scheduler.Limit(_)))
             .map(s =>
@@ -187,10 +236,13 @@ object ManagerCmd:
               )
             )
         case ("why", List(item)) =>
-          c.call(ManagersApi.schedulerWhy)(ManagerInfo.Id(item)).map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
+          c.call(ManagersApi.schedulerWhy)(ManagerInfo.Id(item))
+            .map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
         case ("strategy", List(name)) =>
-          c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(AgentScheduler.SchedulerSet.By("cli"))))
-            .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
+          c.call(ManagersApi.setScheduler)(
+            AgentScheduler
+              .SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(AgentScheduler.SchedulerSet.By("cli")))
+          ).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
         case ("why", _)      => usage("scheduler why takes one item: its id, or the target of an open item")
         case ("strategy", _) => usage("scheduler strategy takes one name: type-balanced, goal-first or default")
         case (v, _) if Set("status", "queue")(v) => usage(s"scheduler $v takes no further arguments")
@@ -199,7 +251,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent stalls [--days n]` — the goals with no progress, why, and what unblocks them. */
-  def stalls(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def stalls(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "stalls",
     "The unfinished research goals with no progress in N days (default agents.autopilot.stall-days), each with the " +
       "one reason it stands still — draining, waiting for a person, held, paused, a budget, quota, the scheduler's " +
@@ -212,7 +264,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent digest` — everything waiting for a person, by kind (#3762 proposal 3). */
-  def digest(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def digest(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "digest",
     "Everything waiting for a person in one view: the open approvals by kind (how many, the oldest, who decides them " +
       "now, the subjects with the most, the ids) and the manager items held for a person; once a day it is also " +
@@ -224,7 +276,7 @@ object ManagerCmd:
   }
 
   /** `histmersion agent decide-all <approve|reject> --kind k | --subject s | --id n…` — a group at once. */
-  def decideAll(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def decideAll(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "decide-all",
     "Approve or reject every OPEN approval that matches at once — of a kind, about a subject, or the ids given (they " +
       "narrow together; one is needed), the oldest first, each through the same decision a single one takes"
@@ -239,7 +291,8 @@ object ManagerCmd:
       Opts.flag("dry-run", "List what it would decide; decide nothing").orFalse,
       Output.jsonFlag
     ).mapN { (d, kind, subject, ids, note, limit, dry, json) => (c: Client) =>
-      c.call(ManagersApi.decideAll)(ApprovalDigest.BulkDecide(
+      c.call(ManagersApi.decideAll)(
+        ApprovalDigest.BulkDecide(
           ApprovalDigest.BulkDecide.Decision(d),
           kind.map(ApprovalDigest.BulkDecide.Kind(_)),
           subject.map(ApprovalDigest.BulkDecide.Subject(_)),
@@ -247,8 +300,9 @@ object ManagerCmd:
           note.map(ApprovalDigest.BulkDecide.Note(_)),
           ApprovalDigest.BulkDecide.DryRun(dry),
           limit.map(ApprovalDigest.BulkDecide.Limit(_)),
-          Some(ApprovalDigest.BulkDecide.By("cli"))))
-        .map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
+          Some(ApprovalDigest.BulkDecide.By("cli"))
+        )
+      ).map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
     }
   }
 
@@ -266,13 +320,25 @@ object ManagerCmd:
         Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action(v), Some(Goal.Slug(g)), by = by)))
       case List("priority", g, n) =>
         num(n).map(p =>
-          Some(Autopilot.FocusSet(Autopilot.FocusSet.Action("priority"), Some(Goal.Slug(g)), Some(Autopilot.FocusSet.Value(p)), by))
+          Some(
+            Autopilot.FocusSet(
+              Autopilot.FocusSet.Action("priority"),
+              Some(Goal.Slug(g)),
+              Some(Autopilot.FocusSet.Value(p)),
+              by
+            )
+          )
         )
       case List("max", "default") => Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action("max"), by = by)))
       case List("max", n)         =>
         num(n).flatMap(m =>
           if m < 0 then usage("focus max takes 0 (no cap) or more, or `default`")
-          else Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action("max"), value = Some(Autopilot.FocusSet.Value(m)), by = by)))
+          else
+            Right(
+              Some(
+                Autopilot.FocusSet(Autopilot.FocusSet.Action("max"), value = Some(Autopilot.FocusSet.Value(m)), by = by)
+              )
+            )
         )
       case other =>
         usage(
@@ -285,10 +351,10 @@ object ManagerCmd:
 
   private val target = Opts.argument[String]("target")
 
-  private def itemPatch(c: Client, id: ManagerInfo.Id, t: ManagerItem.Ref, p: ItemPatch) (using console: Console) =
+  private def itemPatch(c: Client, id: ManagerInfo.Id, t: ManagerItem.Ref, p: ItemPatch)(using console: Console) =
     c.call(ManagersApi.patchItem)((id, t, p)).map(i => Cli.out.println(ManagersMarkdown.item(i)))
 
-  private def verbs(using console: Console) : Opts[(Client, String) => Either[Cli.Error, Unit]] =
+  private def verbs(using console: Console): Opts[(Client, String) => Either[Cli.Error, Unit]] =
     verb("status", "The manager: items in flight with their runs, hints, newest events")(
       Output.jsonFlag.map(json =>
         (c, id) => c.call(ManagersApi.get)(ManagerInfo.Id(id)).map(d => Output.emit(json, d)(ManagersMarkdown.detail))
@@ -303,7 +369,9 @@ object ManagerCmd:
           Opts.option[Int]("limit", "How many").orNone,
           Output.jsonFlag
         ).mapN { (st, off, lim, json) => (c, id) =>
-          c.call(ManagersApi.items)((ManagerInfo.Id(id), st.map(ItemStatus.Wire(_)), off.map(ItemPage.Limit(_)), lim.map(UnreadPage.Offset(_)))).map(p => Output.emit(json, p)(ManagersMarkdown.items))
+          c.call(ManagersApi.items)(
+            (ManagerInfo.Id(id), st.map(ItemStatus.Wire(_)), off.map(ItemPage.Limit(_)), lim.map(UnreadPage.Offset(_)))
+          ).map(p => Output.emit(json, p)(ManagersMarkdown.items))
         }
       ) orElse
       verb("events", "Its events, newest first")(
@@ -311,7 +379,8 @@ object ManagerCmd:
           Opts.option[Long]("before", "Only events older than this id").orNone,
           Opts.option[Int]("limit", "How many").orNone
         ).mapN { (b, lim) => (c, id) =>
-          c.call(ManagersApi.events)((ManagerInfo.Id(id), b.map(EventPage.Before(_)), lim.map(EventPage.Limit(_)))).map(p => Cli.out.println(ManagersMarkdown.events(p)))
+          c.call(ManagersApi.events)((ManagerInfo.Id(id), b.map(EventPage.Before(_)), lim.map(EventPage.Limit(_))))
+            .map(p => Cli.out.println(ManagersMarkdown.events(p)))
         }
       ) orElse
       verb("pause", "Start no new runs (its runs in flight go on, unless --runs)")(
@@ -319,17 +388,23 @@ object ManagerCmd:
           .flag("runs", "Pause its runs in flight too")
           .orFalse
           .map(r =>
-            (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("pause"), Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+            (c, id) =>
+              c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("pause"), Some(r)))
+                .map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("resume", "Start runs again (and resume the runs a pause --runs paused)")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("resume"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) =>
+            c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("resume"), None))
+              .map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb("stop", "Cancel its runs in flight and its open items")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("stop"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) =>
+            c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("stop"), None))
+              .map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb(
@@ -368,7 +443,12 @@ object ManagerCmd:
       )(
         (Opts.argument[String]("kind"), target, Opts.option[Int]("priority", "Its priority (default 10: first)").orNone)
           .mapN { (kind, t, p) => (c, id) =>
-            c.call(ManagersApi.addItem)((ManagerInfo.Id(id), EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_))))).map(i => Cli.out.println(ManagersMarkdown.item(i)))
+            c.call(ManagersApi.addItem)(
+              (
+                ManagerInfo.Id(id),
+                EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))
+              )
+            ).map(i => Cli.out.println(ManagersMarkdown.item(i)))
           }
       ) orElse
       verb("hold", "Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released")(
@@ -392,18 +472,36 @@ object ManagerCmd:
         }
       ) orElse
       verb("release", "Release a held item")(
-        target.map(t => (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("release"))))
+        target.map(t =>
+          (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("release")))
+        )
       ) orElse
       verb("skip", "Stop an item as skipped (its run, if any, is cancelled)")(
         (target, Opts.option[String]("reason", "Why").orNone)
-          .mapN((t, r) => (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("skip"), reason = r.map(ItemPatch.Reason(_)))))
+          .mapN((t, r) =>
+            (c, id) =>
+              itemPatch(
+                c,
+                ManagerInfo.Id(id),
+                ManagerItem.Ref(t),
+                ItemPatch(ItemPatch.Action("skip"), reason = r.map(ItemPatch.Reason(_)))
+              )
+          )
       ) orElse
       verb("reopen", "Bring a settled item back (its runs counted from zero)")(
-        target.map(t => (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("reopen"))))
+        target.map(t =>
+          (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("reopen")))
+        )
       ) orElse
       verb("priority", "Set an item's priority (higher first)")(
         (target, Opts.argument[Int]("priority")).mapN((t, p) =>
-          (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("priority"), priority = Some(ItemPatch.Priority(p))))
+          (c, id) =>
+            itemPatch(
+              c,
+              ManagerInfo.Id(id),
+              ManagerItem.Ref(t),
+              ItemPatch(ItemPatch.Action("priority"), priority = Some(ItemPatch.Priority(p)))
+            )
         )
       ) orElse
       verb(
@@ -431,14 +529,16 @@ object ManagerCmd:
           )
       )
 
-  def manager(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
+  def manager(using console: Console): Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "manager",
     "One process manager: new, or <id> status|items|events|pause|resume|stop|hint|enqueue|hold|release|skip|reopen|priority|cron|config"
   ) {
     create orElse (
       Opts.argument[String]("id"),
       verbs.orElse(
-        Opts((c: Client, id: String) => c.call(ManagersApi.get)(ManagerInfo.Id(id)).map(d => Cli.out.println(ManagersMarkdown.detail(d))))
+        Opts((c: Client, id: String) =>
+          c.call(ManagersApi.get)(ManagerInfo.Id(id)).map(d => Cli.out.println(ManagersMarkdown.detail(d)))
+        )
       )
     ).mapN((id, f) => (c: Client) => f(c, id))
   }

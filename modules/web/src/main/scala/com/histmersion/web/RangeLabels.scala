@@ -36,14 +36,23 @@ object RangeLabels:
     case Joined(label: Label)
 
   /** The placement for a selection from `x0` to `x1` (px, `x0 ≤ x1`) in a bar `barW` wide. */
-  def place(fromText: UiLabels.Text, toText: UiLabels.Text, x0: ScreenPixels, x1: ScreenPixels, barW: ElementSize): Placement =
+  def place(
+      fromText: UiLabels.Text,
+      toText: UiLabels.Text,
+      x0: ScreenPixels,
+      x1: ScreenPixels,
+      barW: ElementSize
+  ): Placement =
     val wf: Double = width(fromText).value
     val wt: Double = width(toText).value
     val a0: Double = x0.value
     val a1: Double = x1.value
     val bw: Double = barW.value
     if a0 + Pad + wf + Gap <= a1 - Pad - wt then
-      Placement.Inside(Label(fromText, ScreenPixels(a0 + Pad), ElementSize(wf)), Label(toText, ScreenPixels(a1 - Pad - wt), ElementSize(wt)))
+      Placement.Inside(
+        Label(fromText, ScreenPixels(a0 + Pad), ElementSize(wf)),
+        Label(toText, ScreenPixels(a1 - Pad - wt), ElementSize(wt))
+      )
     else
       // outside the handles, each pushed back into the bar at its end — and the other one pushed on
       // past it (still on its own side) when that end pushed them together
@@ -54,7 +63,10 @@ object RangeLabels:
         else if fromX0 == 0.0 then (fromX0, fromX0 + wf + Gap)
         else (toX0 - Gap - wf, toX0)
       if fromX >= 0.0 && toX + wt <= bw && fromX + wf + Gap <= toX then
-        Placement.Outside(Label(fromText, ScreenPixels(fromX), ElementSize(wf)), Label(toText, ScreenPixels(toX), ElementSize(wt)))
+        Placement.Outside(
+          Label(fromText, ScreenPixels(fromX), ElementSize(wf)),
+          Label(toText, ScreenPixels(toX), ElementSize(wt))
+        )
       else
         val text = UiLabels.Text(s"$fromText – $toText")
         val w: Double = width(text).value

@@ -74,7 +74,11 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
     granted.map(waitMs => if waitMs.value > 0 then sleep(waitMs))
 
   /** What CORE answered a call taken: a 429 and its rate-limit headers (names in lower case) block or pace it. */
-  def observe(limits: CoreQuota.Limits, code: CoreQuota.StatusCode, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Unit =
+  def observe(
+      limits: CoreQuota.Limits,
+      code: CoreQuota.StatusCode,
+      headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
+  ): Unit =
     lock.synchronized {
       val next = CoreQuota.observe(current.get, limits, code, headers, clock())
       current.set(next)

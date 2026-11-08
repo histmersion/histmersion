@@ -36,7 +36,11 @@ object MediaFilters:
   /** Pure: a menu's options — "all", then each value with its count, the one chosen kept even when the counts no longer
     * list it.
     */
-  def options(counts: List[MediaCount], chosen: Option[MediaCount.Key], label: MediaCount.Key => ChoiceLabel): List[(MediaCount.Key, ChoiceLabel)] =
+  def options(
+      counts: List[MediaCount],
+      chosen: Option[MediaCount.Key],
+      label: MediaCount.Key => ChoiceLabel
+  ): List[(MediaCount.Key, ChoiceLabel)] =
     val listed = counts.map(c => c.key -> ChoiceLabel(s"${label(c.key)} (${c.n})"))
     val kept = chosen.filterNot(c => counts.exists(_.key == c)).map(c => c -> label(c)).toList
     (MediaCount.Key("") -> ChoiceLabel("all")) :: (listed ++ kept)
