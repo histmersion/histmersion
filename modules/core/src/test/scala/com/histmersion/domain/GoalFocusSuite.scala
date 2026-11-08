@@ -667,7 +667,7 @@ class GoalFocusSuite extends munit.FunSuite:
           FocusGoal.Slug("a"),
           status = FocusGoal.Status("seeding"),
           stage = FocusGoal.Stage("reviewing"),
-          why = Problem("reviewing: 1 of 2"),
+          why = api.Problem("reviewing: 1 of 2"),
           doing = Some(FocusGoal.Doing("running article-review x")),
           open = FocusGoal.Open(3),
           doneLast7 = FocusGoal.DoneLast7(7),
@@ -677,20 +677,20 @@ class GoalFocusSuite extends munit.FunSuite:
           FocusGoal.Slug("b"),
           status = FocusGoal.Status("seeding"),
           stage = FocusGoal.Stage("gathering"),
-          why = Problem("pinned by a person"),
+          why = api.Problem("pinned by a person"),
           pinned = FocusGoal.Pinned(true)
         )
       ),
       queue =
-        List(FocusGoal(FocusGoal.Slug("c"), stage = FocusGoal.Stage("ready"), why = Problem("ready: 5 sources"))),
+        List(FocusGoal(FocusGoal.Slug("c"), stage = FocusGoal.Stage("ready"), why = api.Problem("ready: 5 sources"))),
       queued = FocusInfo.Queued(4),
       waiting = List(
         FocusWaiting(
           FocusWaiting.Slug("d"),
           FocusWaiting.Code("person"),
-          Problem("waits for a person: approval #1")
+          api.Problem("waits for a person: approval #1")
         ),
-        FocusWaiting(FocusWaiting.Slug("e"), FocusWaiting.Code("person"), Problem("x"))
+        FocusWaiting(FocusWaiting.Slug("e"), FocusWaiting.Code("person"), api.Problem("x"))
       ),
       held = FocusInfo.Held(12)
     )

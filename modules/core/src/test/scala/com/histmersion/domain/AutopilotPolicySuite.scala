@@ -206,8 +206,8 @@ class AutopilotPolicySuite extends munit.FunSuite:
     )
 
   test("the note marks the decision as the autopilot's; a left one carries none"):
-    assertEquals(note(Verdict.Approve(AutopilotPolicy.Verdict.Approve.Reason("r"))), Some("autopilot: approved — r"))
-    assertEquals(note(Verdict.Reject(AutopilotPolicy.Verdict.Reject.Reason("r"))), Some("autopilot: rejected — r"))
+    assertEquals(note(Verdict.Approve(Problem("r"))), Some("autopilot: approved — r"))
+    assertEquals(note(Verdict.Reject(Problem("r"))), Some("autopilot: rejected — r"))
     assertEquals(note(Verdict.Leave(Problem("r"))), None)
 
   test("depth: the parents above a goal; a cycle stops"):

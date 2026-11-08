@@ -309,10 +309,10 @@ object CheckpointGolden:
         CritiqueReason(
           Citekey("doe2001_tin"),
           Citekey("smith1987_tin"),
-          Problem("Not about the route."),
+          api.Problem("Not about the route."),
           Some(Activity.Actor("skeptic (agent run 1234abcd)"))
         ),
-        CritiqueReason(Citekey("roe1990_tin"), Citekey("smith1987_tin"), Problem("Not material."))
+        CritiqueReason(Citekey("roe1990_tin"), Citekey("smith1987_tin"), api.Problem("Not material."))
       )
     ) ::
       Verdict.values.toList.map(v => Report(Reviewer.ColdReader, v, Nil))

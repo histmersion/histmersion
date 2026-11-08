@@ -328,7 +328,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
       .remove(
         ds,
         com.histmersion.domain.catalogue.Place.Id("zzpo_road"),
-        Some(PlaceFixtures.RemovalReason("withdrawn by Pleiades, no replacement"))
+        Some(Problem("withdrawn by Pleiades, no replacement"))
       )
       .toOption
       .get

@@ -196,7 +196,7 @@ class CandidatesSuite extends munit.FunSuite:
             CandidateWatch.Kind("query"),
             CandidateWatch.Subject("x"),
             CandidateWatch.Index("arxiv"),
-            lastError = Some(Problem("timeout"))
+            lastError = Some(api.Problem("timeout"))
           )
         ),
         CandidateSweep.Found(3),

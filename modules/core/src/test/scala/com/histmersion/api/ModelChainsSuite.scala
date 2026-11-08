@@ -249,7 +249,7 @@ class ModelChainsSuite extends munit.FunSuite:
               ModelChains.ChainEntry.Model("claude-code:sonnet"),
               ready = ModelChains.ChainEntry.Ready(true),
               usable = ModelChains.ChainEntry.Usable(false),
-              Some(Problem("below its allowance")),
+              Some(api.Problem("below its allowance")),
               Some(ModelChains.LimitStatus.FreesAt("2026-10-05T14:00:00Z"))
             ),
             ChainEntry(
@@ -303,7 +303,7 @@ class ModelChainsSuite extends munit.FunSuite:
               ModelChains.RoleChain.Source("config"),
               Nil,
               None,
-              Some(Problem("no model"))
+              Some(api.Problem("no model"))
             )
           )
         )
