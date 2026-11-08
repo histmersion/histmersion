@@ -1,9 +1,11 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.domain.HttpPolicy
 
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
+import com.histmersion.domain.CoreQuota
 
 /** What to do with a media or catalogue answer: [[HttpPolicy]], the one outbound policy, plus MediaWiki's `maxlag`
   * refusal (a 200 that means "slow down"). Pure.
@@ -18,20 +20,20 @@ object Politeness:
     * 200 with a `MediaWiki-API-Error: maxlag` header and `error.code = maxlag`.
     */
   def isMaxlag(a: HttpAnswer): Boolean =
-    a.header(com.histmersion.domain.CoreQuota.HeaderName("mediawiki-api-error")).exists(_.value.trim.equalsIgnoreCase("maxlag")) ||
+    a.header(CoreQuota.HeaderName("mediawiki-api-error")).exists(_.value.trim.equalsIgnoreCase("maxlag")) ||
       (a.body.value.length < 4096 && a.text.value.contains("\"code\":\"maxlag\""))
 
   /** Pure: the next step after the `attempt`-th answer (0-based) — [[HttpPolicy.decide]]. */
-  def decide(a: HttpAnswer, attempt: com.histmersion.domain.HttpPolicy.Attempt, maxRetries: com.histmersion.domain.HttpPolicy.MaxRetries, maxRetryAfterSeconds: com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds, now: Instant): Step =
+  def decide(a: HttpAnswer, attempt: HttpPolicy.Attempt, maxRetries: HttpPolicy.MaxRetries, maxRetryAfterSeconds: HttpPolicy.MaxRetryAfterSeconds, now: Instant): Step =
     HttpPolicy.decide(
       HttpPolicy.StatusCode(a.code.value),
-      a.header(com.histmersion.domain.CoreQuota.HeaderName("retry-after")).map(v => HttpPolicy.RetryAfter(v.value)),
+      a.header(CoreQuota.HeaderName("retry-after")).map(v => HttpPolicy.RetryAfter(v.value)),
       attempt,
       maxRetries,
       maxRetryAfterSeconds,
       now,
-      Option.when(isMaxlag(a))(com.histmersion.domain.HttpPolicy.SlowDown("maxlag"))
+      Option.when(isMaxlag(a))(HttpPolicy.SlowDown("maxlag"))
     )
 
   /** Pure: a Retry-After value as milliseconds from `now` — [[HttpPolicy.retryAfterMs]]. */
-  def retryAfterMs(v: Option[com.histmersion.domain.HttpPolicy.RetryAfter], now: Instant): Option[com.histmersion.domain.HttpPolicy.Step.Wait.Ms] = HttpPolicy.retryAfterMs(v, now)
+  def retryAfterMs(v: Option[HttpPolicy.RetryAfter], now: Instant): Option[HttpPolicy.Step.Wait.Ms] = HttpPolicy.retryAfterMs(v, now)

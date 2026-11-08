@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import sttp.client4.*
 import sttp.client4.httpclient.HttpClientSyncBackend
@@ -6,6 +7,9 @@ import sttp.model.Uri
 
 import java.util.Locale
 import scala.concurrent.duration.*
+import com.histmersion.domain.CoreQuota
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The acquisition transport: java.net.http through sttp, which follows redirects. `tls` is the trust `acquire.tls`
   * configured ([[OutboundTls.configure]]); `None` keeps the client's default, the JDK's roots.
@@ -28,7 +32,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
     )
   }
 
-  def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
     val req = basicRequest
       .get(Uri.unsafeParse(url.value))
       .headers(headers.map((k, v) => k.value -> v.value))
@@ -42,7 +46,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
       .map(resp =>
         HttpAnswer(
           HttpAnswer.Code(resp.code.code),
-          resp.headers.reverse.map(h => com.histmersion.domain.CoreQuota.HeaderName(h.name.toLowerCase(Locale.ROOT)) -> com.histmersion.domain.CoreQuota.HeaderValue(h.value)).toMap,
+          resp.headers.reverse.map(h => CoreQuota.HeaderName(h.name.toLowerCase(Locale.ROOT)) -> CoreQuota.HeaderValue(h.value)).toMap,
           HttpAnswer.Body(resp.body)
         )
       )
@@ -50,7 +54,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
 object SttpTransport:
   /** The same request, pinned to HTTP/1.1 (see the backend above). */
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimeoutSeconds extends RefinedType[Int, Pure]
 
   val http11: java.net.http.HttpRequest => java.net.http.HttpRequest = r =>
     java.net.http.HttpRequest.newBuilder(r, (_, _) => true).version(java.net.http.HttpClient.Version.HTTP_1_1).build()

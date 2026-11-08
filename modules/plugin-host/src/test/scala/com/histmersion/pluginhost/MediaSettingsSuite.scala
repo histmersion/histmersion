@@ -1,10 +1,12 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.Licence
 import com.histmersion.domain.Licence.Family.*
+import com.histmersion.plugin.LicenceReader
 
 class MediaSettingsSuite extends munit.FunSuite:
 
@@ -18,18 +20,18 @@ class MediaSettingsSuite extends munit.FunSuite:
 
   test("the licence reading a plugin is lent is the host's own"):
     assertEquals(
-      HostLicences.readName(com.histmersion.plugin.LicenceReader.ReadNameName("CC BY-SA 3.0 de")),
+      HostLicences.readName(LicenceReader.ReadNameName("CC BY-SA 3.0 de")),
       com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-SA-3.0-DE"), family(CcBySa.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(true))
     )
-    assertEquals(HostLicences.readName(com.histmersion.plugin.LicenceReader.ReadNameName("cc0")), com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC0-1.0"), family(Cc0.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(false)))
+    assertEquals(HostLicences.readName(LicenceReader.ReadNameName("cc0")), com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC0-1.0"), family(Cc0.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(false)))
     assertEquals(
-      HostLicences.readUrl(com.histmersion.plugin.LicenceReader.ReadUrlUrl("https://creativecommons.org/licenses/by/4.0/")),
+      HostLicences.readUrl(LicenceReader.ReadUrlUrl("https://creativecommons.org/licenses/by/4.0/")),
       com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0"), family(CcBy.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(true))
     )
-    assertEquals(HostLicences.readUrl(com.histmersion.plugin.LicenceReader.ReadUrlUrl("http://rightsstatements.org/vocab/NoC-NC/1.0/")).family, Unknown.wire)
+    assertEquals(HostLicences.readUrl(LicenceReader.ReadUrlUrl("http://rightsstatements.org/vocab/NoC-NC/1.0/")).family, Unknown.wire)
     assertEquals(
-      HostLicences.readFirst(List(com.histmersion.plugin.LicenceReader.ReadFirstStatements("nonsense"), com.histmersion.plugin.LicenceReader.ReadFirstStatements("CC BY 4.0"))),
+      HostLicences.readFirst(List(LicenceReader.ReadFirstStatements("nonsense"), LicenceReader.ReadFirstStatements("CC BY 4.0"))),
       com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0"), family(CcBy.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(true))
     )
     assertEquals(HostLicences.readFirst(Nil), com.histmersion.plugin.Licence.Read(com.histmersion.plugin.Licence.Read.Id(""), family(Unknown.wire),com.histmersion.plugin.Licence.Read.NeedsAttribution(false)))
-    assertEquals(HostLicences.readFirst(List(com.histmersion.plugin.LicenceReader.ReadFirstStatements(" "), com.histmersion.plugin.LicenceReader.ReadFirstStatements("odd"))).id, "odd")
+    assertEquals(HostLicences.readFirst(List(LicenceReader.ReadFirstStatements(" "), LicenceReader.ReadFirstStatements("odd"))).id, "odd")

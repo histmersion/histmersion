@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Processes.Result

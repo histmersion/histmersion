@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import hearth.kindlings.optics.syntax.*
 
@@ -10,6 +11,15 @@ import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
 import com.histmersion.domain.catalogue.Historicity
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.DeepTime
+import com.histmersion.plugin.Latitude
+import com.histmersion.plugin.Longitude
+import com.histmersion.domain.catalogue.places.Wikidata
+import com.histmersion.domain.CoreQuota
+import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.api.catalogue.EventEntry
 
 /** A plugin's catalogue as the host reads it: the query it is asked, its polite HTTP, and its records checked and
   * turned into the host's [[CatalogRecord]]s. Pure but for [[http]].
@@ -17,23 +27,23 @@ import com.histmersion.domain.catalogue.Historicity
 object PluginEvents:
   export MediaConfig.{RequestIntervalMs as IntervalMs}
   type PartName = PartName.T
-  object PartName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PartName extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Provider = CatalogRecord.Provider
   val Provider: CatalogRecord.Provider.type = CatalogRecord.Provider
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
   export Polite.{IntervalMs as SleepMs}
 
   /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a dating stored under
     * a floor is already held at it, so a looser limit changes nothing).
     */
-  type RereadProvider = _root_.com.histmersion.pluginhost.PluginEvents.Provider
-  val RereadProvider: _root_.com.histmersion.pluginhost.PluginEvents.Provider.type = _root_.com.histmersion.pluginhost.PluginEvents.Provider
+  type RereadProvider = Provider
+  val RereadProvider: Provider.type = Provider
 
-  def limits(catalogue: Option[EventCatalogue], present: com.histmersion.domain.DeepTime.SignedYear): CatalogDating.Limits =
+  def limits(catalogue: Option[EventCatalogue], present: DeepTime.SignedYear): CatalogDating.Limits =
     CatalogDating.Limits(
       CatalogDating.HistoricalYear(present.value),
       catalogue
@@ -79,16 +89,16 @@ object PluginEvents:
     */
   def event(r: CatalogRecord): Option[CatalogueEvent] =
     def opt[A, B](a: Option[A])(f: A => Option[B]): Option[Option[B]] = a.fold(Some(None))(v => f(v).map(Some(_)))
-    def year(y: Long) = SpiValues.year(com.histmersion.domain.DeepTime.SignedYear(y))
+    def year(y: Long) = SpiValues.year(DeepTime.SignedYear(y))
     for
       notBefore <- opt(r.timeSpan.notBefore)(y => year(y.value))
       beginBy <- opt(r.timeSpan.beginBy)(y => year(y.value))
       endFrom <- opt(r.timeSpan.endFrom)(y => year(y.value))
       notAfter <- opt(r.timeSpan.notAfter)(y => year(y.value))
       central <- opt(r.central)(y => year(y.value))
-      lat <- opt(r.lat)(l => SpiValues.latitude(com.histmersion.plugin.Latitude(l.value)))
-      lon <- opt(r.lon)(l => SpiValues.longitude(com.histmersion.plugin.Longitude(l.value)))
-      wikidata <- opt(r.wikidata)(q => com.histmersion.domain.catalogue.places.Wikidata.Id.option(q.value).flatMap(SpiValues.wikidata))
+      lat <- opt(r.lat)(l => SpiValues.latitude(Latitude(l.value)))
+      lon <- opt(r.lon)(l => SpiValues.longitude(Longitude(l.value)))
+      wikidata <- opt(r.wikidata)(q => Wikidata.Id.option(q.value).flatMap(SpiValues.wikidata))
     yield CatalogueEvent(
       CatalogueEvent.Id(r.providerId.value),
       CatalogueEvent.Url(r.url.value),
@@ -117,7 +127,7 @@ object PluginEvents:
   /** A stored record read again by its catalogue, without the network: the catalogue's own reading of it as the host
     * stores a record ([[record]]), or `None` when the catalogue does not re-read (or not this record).
     */
-  def reread(catalogue: EventCatalogue, provider: com.histmersion.pluginhost.PluginEvents.RereadProvider, r: CatalogRecord): Option[CatalogRecord] =
+  def reread(catalogue: EventCatalogue, provider: RereadProvider, r: CatalogRecord): Option[CatalogRecord] =
     event(r)
       .flatMap(e => guard(Right(catalogue.reread(e))).toOption.flatten)
       .flatMap(record(provider, _).toOption.map(_.record))
@@ -125,17 +135,17 @@ object PluginEvents:
   /** The query a plugin catalogue is asked: the import's years (held at what a `Year` holds) and its area (left out
     * when a corner is off the globe: the host applies the area itself anyway).
     */
-  def query(from: Option[com.histmersion.domain.DeepTime.SignedYear], to: com.histmersion.domain.DeepTime.SignedYear, area: Option[BBox]): CatalogueQuery =
+  def query(from: Option[DeepTime.SignedYear], to: DeepTime.SignedYear, area: Option[BBox]): CatalogueQuery =
     CatalogueQuery(
       from.map(SpiValues.yearBound),
       SpiValues.yearBound(to),
       area.flatMap(b =>
         for
           a <- SpiValues.area(
-            com.histmersion.plugin.Longitude(b.minLon.value),
-            com.histmersion.plugin.Latitude(b.minLat.value),
-            com.histmersion.plugin.Longitude(b.maxLon.value),
-            com.histmersion.plugin.Latitude(b.maxLat.value)
+            Longitude(b.minLon.value),
+            Latitude(b.minLat.value),
+            Longitude(b.maxLon.value),
+            Latitude(b.maxLat.value)
           )
         yield a
       )
@@ -147,7 +157,7 @@ object PluginEvents:
   def polite(
       http: HttpTransport,
       media: MediaConfig,
-      intervalMs: com.histmersion.pluginhost.PluginEvents.IntervalMs,
+      intervalMs: PluginEvents.IntervalMs,
       sleep: Polite.IntervalMs => Unit = ms => Thread.sleep(ms.value),
       log: HostLog = HostLog.scribe
   ): Polite =
@@ -167,14 +177,14 @@ object PluginEvents:
     */
   def readPart(
       cat: EventCatalogue,
-      first: com.histmersion.pluginhost.PluginEvents.PartName,
+      first: PartName,
       query: CatalogueQuery,
       http: Plugin.Http,
-      done: com.histmersion.pluginhost.PluginEvents.PartName => Boolean,
+      done: PartName => Boolean,
       full: => Boolean
-  )(each: (com.histmersion.pluginhost.PluginEvents.PartName, Either[com.histmersion.pluginhost.PluginEvents.Problem, CataloguePage]) => Unit): Unit =
+  )(each: (PartName, Either[Problem, CataloguePage]) => Unit): Unit =
     @annotation.tailrec
-    def from(part: Option[com.histmersion.pluginhost.PluginEvents.PartName]): Unit = part match
+    def from(part: Option[PartName]): Unit = part match
       case Some(p) if !full =>
         val got = guard(cat.read(EventCatalogue.ReadPart(p.value), query, http))
         each(p, got)
@@ -187,7 +197,7 @@ object PluginEvents:
       polite
         .get(
           HttpTransport.Url(url.value),
-          headers.map((k, v) => com.histmersion.domain.CoreQuota.HeaderName(k.value) -> com.histmersion.domain.CoreQuota.HeaderValue(v.value))
+          headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
         )
         .left
         .map(e => Plugin.Http.GetResultPart1(e.value))
@@ -198,7 +208,7 @@ object PluginEvents:
     catch case NonFatal(_) => None
 
   /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[?, A]): Either[com.histmersion.pluginhost.PluginEvents.Problem, A] =
+  def guard[A](a: => Either[?, A]): Either[Problem, A] =
     try Option(a).getOrElse(Left(Problem("the plugin answered nothing"))).left.map(e => Problem(s"$e"))
     catch
       case e: InterruptedException => throw e
@@ -210,7 +220,7 @@ object PluginEvents:
     * off the globe (or half a position) and a Wikidata id that is no item are left out of the record, each with a
     * warning. Its kind is the host's spelling of it ([[EventTaxonomy.refine]]).
     */
-  def record(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.Problem, Kept[CatalogRecord]] =
+  def record(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[Problem, Kept[CatalogRecord]] =
     try checked(provider, e)
     catch
       case NonFatal(x) =>
@@ -221,10 +231,10 @@ object PluginEvents:
           )
         )
 
-  private def checked(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.Problem, Kept[CatalogRecord]] =
+  private def checked(provider: CatalogRecord.Provider, e: CatalogueEvent): Either[Problem, Kept[CatalogRecord]] =
     val id = Option(e.id).map(_.value).getOrElse("").trim
     val label = Option(e.label).map(_.value).getOrElse("").trim
-    def stated[A, B](a: Option[A])(f: A => Either[SpiValues.Problem, B]): Either[com.histmersion.pluginhost.PluginEvents.Problem, Option[B]] =
+    def stated[A, B](a: Option[A])(f: A => Either[SpiValues.Problem, B]): Either[Problem, Option[B]] =
       SpiValues.optional(a)(f).left.map(why => Problem(s"$id: catalogue '${provider.value}': ${why.value}"))
     def left(why: String) = Kept.Warnings(s"$id: catalogue '${provider.value}': $why, left out")
     val (lat0, latWhy) = SpiValues.kept(e.lat)(SpiValues.latitudeOf)
@@ -254,7 +264,7 @@ object PluginEvents:
           CatalogRecord.Url(Option(e.url).map(_.value).getOrElse("").trim),
           CatalogRecord.Label(label),
           CatalogRecord.Kind(
-            EventTaxonomy.refine(com.histmersion.api.catalogue.EventSummary.Kind(e.kind.value), com.histmersion.api.catalogue.EventSummary.Label(label)).value
+            EventTaxonomy.refine(EventSummary.Kind(e.kind.value), EventSummary.Label(label)).value
           ),
           TimeSpan(long(notBefore), long(beginBy), long(endFrom), long(notAfter)),
           lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
@@ -263,7 +273,7 @@ object PluginEvents:
           e.vei.map(v => CatalogRecord.Vei(v.value)),
           e.magnitude.map(m => CatalogRecord.Magnitude(m.value)),
           e.deaths.map(d => CatalogRecord.Deaths(d.value)),
-          wikidata.map(w => com.histmersion.api.catalogue.EventEntry.Wikidata(w.value)),
+          wikidata.map(w => EventEntry.Wikidata(w.value)),
           e.names.map(_.value.trim).filter(n => n.nonEmpty && n != label).distinct.map(CatalogRecord.Names(_)),
           e.description.map(_.value.trim).filter(_.nonEmpty).map(CatalogRecord.Description(_)),
           e.group.map(_.value.trim).filter(_.nonEmpty).map(CatalogRecord.Group(_)),

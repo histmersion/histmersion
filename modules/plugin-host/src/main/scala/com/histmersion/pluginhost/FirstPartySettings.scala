@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.config.{ConfigReload, HotPlan}
 import com.histmersion.plugin.Plugin

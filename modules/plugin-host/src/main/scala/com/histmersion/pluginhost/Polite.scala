@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.MediaConfig
@@ -8,6 +9,9 @@ import io.circe.Json
 import java.net.URI
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
+import com.histmersion.domain.CoreQuota
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A polite client of one run: requests go one at a time, at least `request-interval-ms` apart per host; every request
   * carries the configured User-Agent (the project and its repository — no e-mail, no personal data); slow-down answers
@@ -35,15 +39,15 @@ final class Polite(
   private var count = 0
 
   /** The interval between two requests to `h` now, ms: the configured one, times its slow-down. */
-  def intervalMs(h: com.histmersion.pluginhost.Polite.Host): com.histmersion.pluginhost.Polite.IntervalMs = Polite.IntervalMs(cfg.requestIntervalMs.value.toLong * slowdown.getOrElse(h, 1))
+  def intervalMs(h: Polite.Host): Polite.IntervalMs = Polite.IntervalMs(cfg.requestIntervalMs.value.toLong * slowdown.getOrElse(h, 1))
 
   /** Requests sent so far (retries included). */
-  def requests: com.histmersion.pluginhost.Polite.RequestCount = Polite.RequestCount(count)
+  def requests: Polite.RequestCount = Polite.RequestCount(count)
 
-  private def host(url: com.histmersion.pluginhost.HttpTransport.Url): com.histmersion.pluginhost.Polite.Host =
+  private def host(url: HttpTransport.Url): Polite.Host =
     Polite.Host(scala.util.Try(URI.create(url.value).getHost).toOption.flatMap(Option(_)).getOrElse(url.value))
 
-  private def pace(h: com.histmersion.pluginhost.Polite.Host): Unit =
+  private def pace(h: Polite.Host): Unit =
     last.get(h).foreach { t =>
       val wait = t.value + intervalMs(h).value - clock().value
       if wait > 0 then sleep(Polite.IntervalMs(wait))
@@ -53,13 +57,13 @@ final class Polite(
   /** One GET, paced and retried. `headers` are sent as given, except the User-Agent: always the configured one (a
     * plugin's request too).
     */
-  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, HttpAnswer] =
     val h = host(url)
     val sent =
       headers.filterNot(_._1.value.equalsIgnoreCase("User-Agent")) +
-        (com.histmersion.domain.CoreQuota.HeaderName("User-Agent") ->
-          com.histmersion.domain.CoreQuota.HeaderValue(HttpPolicy.userAgent(HttpPolicy.UserAgent(cfg.userAgent.value)).value))
-    def attempt(n: com.histmersion.domain.HttpPolicy.Attempt, refusals: Int): Either[HttpTransport.Problem, HttpAnswer] =
+        (CoreQuota.HeaderName("User-Agent") ->
+          CoreQuota.HeaderValue(HttpPolicy.userAgent(HttpPolicy.UserAgent(cfg.userAgent.value)).value))
+    def attempt(n: HttpPolicy.Attempt, refusals: Int): Either[HttpTransport.Problem, HttpAnswer] =
       pace(h)
       count += 1
       http.get(url, sent).flatMap { a =>
@@ -92,23 +96,23 @@ final class Polite(
             else ""
             Left(HttpTransport.Problem(s"${h.value}: ${why.value}$waited"))
       }
-    attempt(com.histmersion.domain.HttpPolicy.Attempt(0), 0)
+    attempt(HttpPolicy.Attempt(0), 0)
 
   /** One GET answered as JSON. `headers` as for [[get]] — a key-gated API's key travels in one, never in the URL (which
     * an error line or a log may show).
     */
-  def json(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, Json] =
+  def json(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, Json] =
     get(url, headers).flatMap(a =>
       io.circe.parser.parse(a.text.value).left.map(e => HttpTransport.Problem(s"${host(url).value}: unparseable JSON (${e.getMessage})"))
     )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
-  def file(url: com.histmersion.pluginhost.HttpTransport.Url, fallbackMime: com.histmersion.pluginhost.Polite.Mime): Either[HttpTransport.Problem, (HttpAnswer.Body, com.histmersion.pluginhost.Polite.Mime)] =
+  def file(url: HttpTransport.Url, fallbackMime: Polite.Mime): Either[HttpTransport.Problem, (HttpAnswer.Body, Polite.Mime)] =
     get(url).map(a =>
       (
         a.body,
         Polite.Mime(
-          a.header(com.histmersion.domain.CoreQuota.HeaderName("content-type"))
+          a.header(CoreQuota.HeaderName("content-type"))
             .map(_.value.split(";").head.trim)
             .filter(_.nonEmpty)
             .getOrElse(fallbackMime.value)
@@ -118,17 +122,17 @@ final class Polite(
 
 object Polite:
   type Host = Host.T
-  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Host extends RefinedType[String, Pure]
   type IntervalMs = IntervalMs.T
-  object IntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IntervalMs extends RefinedType[Long, Pure]
   type EpochMs = EpochMs.T
-  object EpochMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EpochMs extends RefinedType[Long, Pure]
   type Mime = Mime.T
-  object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mime extends RefinedType[String, Pure]
   type RequestCount = RequestCount.T
-  object RequestCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RequestCount extends RefinedType[Int, Pure]
   type RefusalBackoffMs = RefusalBackoffMs.T
-  object RefusalBackoffMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefusalBackoffMs extends RefinedType[Long, Pure]
 
   /** A host is never asked more than this many times slower than its configured pace. */
   val MaxSlowdown = 16

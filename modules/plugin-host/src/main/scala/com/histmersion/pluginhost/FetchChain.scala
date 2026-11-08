@@ -1,10 +1,15 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.plugin.{Access, Fetch, FetchedFile, SourceFetcher, WorkKey}
 
 import scala.collection.immutable.ListMap
 import scala.util.control.NonFatal
 import com.histmersion.plugin.Plugin
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.library.ArxivId
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): the [[SourceFetcher]]s the plugins registered, run
   * as ONE chain until one finds a copy. The fetchers know how to ask their upstream; everything around them is decided
@@ -31,13 +36,13 @@ final class FetchChain(
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
   def plan: List[(FetchChain.Step.Id, Access)] = steps.map(s => s.id -> s.fetcher.access)
 
-  def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId]): Either[OaFetcher.Problem, FetchedFile] =
+  def fetch(doi: Option[Doi], arxiv: Option[ArxivId]): Either[OaFetcher.Problem, FetchedFile] =
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(false))
 
-  override def fetchLegal(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId]): Either[OaFetcher.Problem, FetchedFile] =
+  override def fetchLegal(doi: Option[Doi], arxiv: Option[ArxivId]): Either[OaFetcher.Problem, FetchedFile] =
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(true))
 
-  private def workOf(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId]): WorkKey =
+  private def workOf(doi: Option[Doi], arxiv: Option[ArxivId]): WorkKey =
     WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv.map(a => WorkKey.Arxiv(a.value)))
 
   override def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[OaFetcher.Problem, FetchedFile] =
@@ -71,8 +76,8 @@ final class FetchChain(
             s"${FetchChain.describe(work).value} only because acquire.allow-unauthorised = true"
         )
       )
-    val ctx = new com.histmersion.plugin.Fetch.Context:
-      def memo[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A = shared.get(key)(compute)
+    val ctx = new Fetch.Context:
+      def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = shared.get(key)(compute)
       val log: Plugin.Log = new Plugin.Log:
         def info(message: Plugin.Log.InfoMessage) = FetchChain.this.log.info(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
         def warn(message: Plugin.Log.WarnMessage) = FetchChain.this.log.warn(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
@@ -87,7 +92,7 @@ final class FetchChain(
             s"acquire: ${s.id.value}: ${f.url.map(_.value).getOrElse("its copy")} is ${f.bytes.value.length} bytes that are not a PDF — no copy"
           )
         )
-        Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("not a PDF"))
+        Fetch.Miss(Fetch.Miss.Why("not a PDF"))
       case Fetch.Refused(why) =>
         log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${FetchChain.describe(work).value}: ${why.value}"))
         answer
@@ -98,14 +103,14 @@ final class FetchChain(
 
 object FetchChain:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type LegalOnly = LegalOnly.T
-  object LegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LegalOnly extends RefinedType[Boolean, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   type AllowUnauthorised = AllowUnauthorised.T
-  object AllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AllowUnauthorised extends RefinedType[Boolean, Pure]
 
   /** What every failed fetch says (the ingest step and the acquisition list read it). */
   val NoCopy = "no legal open-access PDF found"
@@ -115,28 +120,28 @@ object FetchChain:
 
   object Step:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
 
   /** What one fetcher that ran answered, when it had no copy. */
   final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Answer.Why):
     /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
-    def line: com.histmersion.pluginhost.FetchChain.Answer.Line = Answer.Line(s"${fetcher.value}: ${kind.label.value} — ${why.value}")
+    def line: Answer.Line = Answer.Line(s"${fetcher.value}: ${kind.label.value} — ${why.value}")
   object Answer:
     type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Line extends RefinedType[String, Pure]
 
     type Fetcher = Fetcher.T
-    object Fetcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Fetcher extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
     enum Kind(val label: Kind.Label):
-      case Miss extends Kind(com.histmersion.pluginhost.FetchChain.Answer.Kind.Label("no copy"))
-      case Refused extends Kind(com.histmersion.pluginhost.FetchChain.Answer.Kind.Label("refused"))
+      case Miss extends Kind(Kind.Label("no copy"))
+      case Refused extends Kind(Kind.Label("refused"))
 
     object Kind:
       type Label = Label.T
-      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Label extends RefinedType[String, Pure]
 
   /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no copy, the answer of
     * each fetcher that ran, in chain order; the fetcher that found the copy.
@@ -145,7 +150,7 @@ object FetchChain:
 
   object Outcome:
     type FoundBy = FoundBy.T
-    object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FoundBy extends RefinedType[String, Pure]
 
   /** A chain over these fetchers, in this order. `registered` answers [[Fetch.Context.registered]]: the plugins of the
     * generation the fetch runs in.
@@ -192,7 +197,7 @@ object FetchChain:
   /** Pure: the run order — the ids `acquire.chain` names that are registered, as listed, then the other registered ids
     * in registration order; with a note naming the listed ids nothing registered (a disabled plugin's, or a typo).
     */
-  def order(registered: List[com.histmersion.util.plugins.Plugin.Id], chain: List[com.histmersion.util.plugins.Plugin.Id]): (List[com.histmersion.util.plugins.Plugin.Id], List[com.histmersion.pluginhost.FetchChain.Problem]) =
+  def order(registered: List[com.histmersion.util.plugins.Plugin.Id], chain: List[com.histmersion.util.plugins.Plugin.Id]): (List[com.histmersion.util.plugins.Plugin.Id], List[Problem]) =
     val listed = chain.distinct
     val notes = listed.filterNot(registered.contains) match
       case Nil     => Nil
@@ -219,7 +224,7 @@ object FetchChain:
     b.value.length > 1024 && new String(b.value.take(1024), "ISO-8859-1").contains("%PDF")
 
   /** Pure: the work as a log line names it. */
-  def describe(w: WorkKey): com.histmersion.pluginhost.FetchChain.Description =
+  def describe(w: WorkKey): Description =
     List(
       "doi" -> w.doi.map(_.value),
       "arxiv" -> w.arxiv.map(_.value),
@@ -236,8 +241,8 @@ object FetchChain:
     */
   final class Memo:
     // a var-free mutable map, owned by one fetch and dropped with it
-    private val values = scala.collection.mutable.HashMap.empty[com.histmersion.plugin.Fetch.Context.MemoKey, Any]
-    def get[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A =
+    private val values = scala.collection.mutable.HashMap.empty[Fetch.Context.MemoKey, Any]
+    def get[A](key: Fetch.Context.MemoKey)(compute: => A): A =
       values.get(key) match
         case Some(v) => v.asInstanceOf[A]
         case None    =>

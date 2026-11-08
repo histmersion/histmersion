@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,6 +8,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{Config, ConfigFactory}
 
 import com.histmersion.plugin.Plugin.Config.given
+import com.histmersion.domain.CoreQuota
+import com.histmersion.domain.HttpPolicy
 
 /** How the host backs the SPI members added within SPI 2: an answer with its status and headers sent once, the budget
   * of a metered upstream, the plugins a fetch is told of, the settings it supplies a first-party plugin from its own
@@ -49,20 +52,20 @@ class SpiBackingSuite extends munit.FunSuite:
   test("the acquisition client's fetch is sent once, with the policy's User-Agent, and answers as it came"):
     val sent = scala.collection.mutable.ListBuffer.empty[(String, Map[String, String])]
     val wire = new HttpTransport:
-      def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue]) =
+      def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         sent += url.value -> headers.map((k, v) => k.value -> v.value)
         Right(
           HttpAnswer(
-            com.histmersion.pluginhost.HttpAnswer.Code(429),
-            Map(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-remaining") -> com.histmersion.domain.CoreQuota.HeaderValue("0")),
+            HttpAnswer.Code(429),
+            Map(CoreQuota.HeaderName("x-ratelimit-remaining") -> CoreQuota.HeaderValue("0")),
             HttpAnswer.Body("slow down".getBytes("UTF-8"))
           )
         )
-    val policy = PolicyHttp(com.histmersion.domain.HttpPolicy.UserAgent("histmersion/0.1"), wire, sleep = _ => fail("a fetch never waits"))
+    val policy = PolicyHttp(HttpPolicy.UserAgent("histmersion/0.1"), wire, sleep = _ => fail("a fetch never waits"))
     val r =
       policy.plugin
         .fetch(
-          com.histmersion.plugin.Plugin.Http.FetchUrl("https://core.example/v3/search"),
+          Plugin.Http.FetchUrl("https://core.example/v3/search"),
           Map(Plugin.Http.FetchHeadersPart1("Authorization") -> Plugin.Http.FetchHeadersPart2("Bearer k"))
         )
         .fold(e => fail(e.value), identity)
@@ -76,7 +79,7 @@ class SpiBackingSuite extends munit.FunSuite:
     )
     // `get` keeps asking a slow-down again, as before
     sent.clear()
-    val retried = PolicyHttp(com.histmersion.domain.HttpPolicy.UserAgent("histmersion/0.1"), wire, tries = com.histmersion.pluginhost.PolicyHttp.Tries(2), sleep = _ => ()).plugin.get(com.histmersion.plugin.Plugin.Http.GetUrl("https://core.example/x"))
+    val retried = PolicyHttp(HttpPolicy.UserAgent("histmersion/0.1"), wire, tries = PolicyHttp.Tries(2), sleep = _ => ()).plugin.get(Plugin.Http.GetUrl("https://core.example/x"))
     assert(retried.isLeft && sent.size == 2, sent.toString)
 
   // ── SPI-2: Plugin.Context.quota ──────────────────────────────────────────────────────────────
@@ -86,7 +89,7 @@ class SpiBackingSuite extends munit.FunSuite:
   /** A plugin that keeps the context's quota for `upstream`, as a fetcher does at registration. */
   final private class Metered(upstream: Plugin.Context.QuotaUpstream) extends Plugin:
     type Config = NoSettings
-    val info = Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-metered"), com.histmersion.plugin.Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
+    val info = Plugin.Info(Plugin.Info.Id("zq-metered"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     // the registration's quota, kept for the plugin's fetches
     var quota: Option[UpstreamQuota] = None
     def register(c: NoSettings, ctx: Plugin.Context) =
@@ -108,8 +111,8 @@ class SpiBackingSuite extends munit.FunSuite:
       quota = n => if n.value == "core" then core else UpstreamQuota.Unlimited
     )
     assert(g.report.ok, g.report.toString)
-    assertEquals(p.quota.map(_.take(com.histmersion.plugin.UpstreamQuota.TakePurpose("lookup"))), Some(Right(())))
-    assertEquals(p.quota.map(_.take(com.histmersion.plugin.UpstreamQuota.TakePurpose("lookup"))), Some(Left("spent")))
+    assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup"))), Some(Right(())))
+    assertEquals(p.quota.map(_.take(UpstreamQuota.TakePurpose("lookup"))), Some(Left("spent")))
     assertEquals(taken.toList, List("lookup", "lookup"))
     val other = Metered(Plugin.Context.QuotaUpstream("elsewhere"))
     build(
@@ -127,12 +130,12 @@ class SpiBackingSuite extends munit.FunSuite:
       val access = Access.Open
       def fetch(work: WorkKey, ctx: Fetch.Context) =
         List("oa-unpaywall", "oa-openalex").foreach(id => asked += id -> ctx.registered(Fetch.Context.RegisteredPluginId(id)).value)
-        Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("nothing"))
+        Fetch.Miss(Fetch.Miss.Why("nothing"))
     val (chain, _) =
       FetchChain.of(
         scala.collection.immutable.ListMap(com.histmersion.util.plugins.Plugin.Id("peer") -> peerAware),
         Nil,
-        com.histmersion.pluginhost.FetchChain.AllowUnauthorised(false),
+        FetchChain.AllowUnauthorised(false),
         plugins = Set(com.histmersion.util.plugins.Plugin.Id("oa-unpaywall"))
       )
     chain.fetchWorkExplained(WorkKey(archive = Some(WorkKey.Archive("x"))), legalOnly = FetchChain.LegalOnly(true))
@@ -159,10 +162,10 @@ class SpiBackingSuite extends munit.FunSuite:
   /** A first-party plugin that reads a host key (`acquire.endpoint.url`) and has a setting of its own. */
   final private class FirstParty extends Plugin:
     type Config = Supplied
-    val info = Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-first"), com.histmersion.plugin.Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
+    val info = Plugin.Info(Plugin.Info.Id("zq-first"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     // what the plugin was given at registration
     var received: Option[Supplied] = None
-    override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-first-defaults.conf")
+    override def defaultsResource = Plugin.DefaultsResourceResult("zq-first-defaults.conf")
     def register(c: Supplied, ctx: Plugin.Context) = { received = Some(c); Right(()) }
 
   private val supplied: Plugin.Info.Id => Config = id =>
@@ -208,17 +211,17 @@ class SpiBackingSuite extends munit.FunSuite:
 
   final private class Volcanoes(id: Plugin.Info.Id) extends Plugin:
     type Config = NoSettings
-    val info = Plugin.Info(id, com.histmersion.plugin.Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
+    val info = Plugin.Info(id, Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     def register(c: NoSettings, ctx: Plugin.Context) =
-      ctx.eventCatalogues.add(com.histmersion.plugin.Registry.AddId("gvp"), Catalogue).left.map(e => Plugin.RegisterResultPart1(e.value))
+      ctx.eventCatalogues.add(Registry.AddId("gvp"), Catalogue).left.map(e => Plugin.RegisterResultPart1(e.value))
 
   private object Catalogue extends EventCatalogue:
-    def title = com.histmersion.plugin.EventCatalogue.TitleResult("Volcanoes")
+    def title = EventCatalogue.TitleResult("Volcanoes")
     def licence = Licence("CC0-1.0")
-    def citation = com.histmersion.plugin.EventCatalogue.CitationResult("Volcanoes")
-    def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://volcanoes.example")
+    def citation = EventCatalogue.CitationResult("Volcanoes")
+    def home = EventCatalogue.HomeResult("https://volcanoes.example")
     def parts(query: CatalogueQuery) = Nil
-    def read(part: com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
+    def read(part: EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
 
   test("a reserved catalogue name is kept for the first-party plugin; any other plugin is refused it"):
     val third = build(List(Volcanoes(Plugin.Info.Id("zq-volcanoes"))), "histmersion.plugins.zq-volcanoes.enabled = true")
@@ -241,8 +244,8 @@ class SpiBackingSuite extends munit.FunSuite:
 
   final private class KeyedPlugin extends Plugin:
     type Config = Keyed
-    val info = Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-keyed"), com.histmersion.plugin.Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
-    override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-keyed-defaults.conf")
+    val info = Plugin.Info(Plugin.Info.Id("zq-keyed"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
+    override def defaultsResource = Plugin.DefaultsResourceResult("zq-keyed-defaults.conf")
     def register(c: Keyed, ctx: Plugin.Context) =
       c.apiKey.fold[Either[Plugin.RegisterResultPart1, Unit]](Right(()))(s =>
         ctx.secret(s).left.map(e => Plugin.RegisterResultPart1(e.value)).map(_ => ())
@@ -255,8 +258,8 @@ class SpiBackingSuite extends munit.FunSuite:
       Map("ZQ_KEY" -> "k-secret")
     )
     assert(g.report.ok, g.report.toString)
-    assertEquals(g.secret(com.histmersion.plugin.Plugin.Info.Id("zq-keyed"), com.histmersion.pluginhost.PluginHost.ConfigPath("api-key")), Some("k-secret"))
-    assertEquals(g.secret(com.histmersion.plugin.Plugin.Info.Id("zq-keyed"), com.histmersion.pluginhost.PluginHost.ConfigPath("enabled")), None)
-    assertEquals(g.secret(com.histmersion.plugin.Plugin.Info.Id("zq-other"), com.histmersion.pluginhost.PluginHost.ConfigPath("api-key")), None)
+    assertEquals(g.secret(Plugin.Info.Id("zq-keyed"), PluginHost.ConfigPath("api-key")), Some("k-secret"))
+    assertEquals(g.secret(Plugin.Info.Id("zq-keyed"), PluginHost.ConfigPath("enabled")), None)
+    assertEquals(g.secret(Plugin.Info.Id("zq-other"), PluginHost.ConfigPath("api-key")), None)
     val none = build(List(KeyedPlugin()), "histmersion.plugins.zq-keyed.enabled = true")
-    assertEquals(none.secret(com.histmersion.plugin.Plugin.Info.Id("zq-keyed"), com.histmersion.pluginhost.PluginHost.ConfigPath("api-key")), None)
+    assertEquals(none.secret(Plugin.Info.Id("zq-keyed"), PluginHost.ConfigPath("api-key")), None)

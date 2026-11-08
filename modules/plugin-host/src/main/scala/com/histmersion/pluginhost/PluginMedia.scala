@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +13,8 @@ import com.histmersion.domain.media.imports.{LicencePolicy, MediaRecord}
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plugin's media collection as the host reads it: its polite HTTP, its answers guarded, each item turned into the
   * host's [[MediaRecord]] with its licence READ BY THE HOST, and the host's judgement of whether a record may be kept
@@ -19,11 +22,11 @@ import scala.util.control.NonFatal
   */
 object PluginMedia:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provider extends RefinedType[String, Pure]
   type Refusal = Refusal.T
-  object Refusal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Refusal extends RefinedType[String, Pure]
 
   /** A collection run's polite client: the collection's own pace, the media politeness otherwise. */
   def polite(

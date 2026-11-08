@@ -1,4 +1,5 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.api.OpenSide
 import com.histmersion.api.catalogue.{Period as ApiPeriod, Place}
@@ -7,22 +8,26 @@ import com.histmersion.config.PlacesConfig
 import com.histmersion.plugin.*
 
 import scala.util.control.NonFatal
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.domain.HttpPolicy
+import com.histmersion.domain.Attribution
 
 /** A plugin's gazetteer source as the host reads it: the client its download goes through, its answer guarded, and each
   * of its places checked and turned into the host's [[PlaceInput]]. Pure but for [[http]].
   */
 object PluginGazetteers:
   type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldName extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reason extends RefinedType[String, Pure]
   type Warning = Warning.T
-  object Warning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Warning extends RefinedType[String, Pure]
 
   /** The User-Agent of a gazetteer download (the outbound policy makes sure it names no person). */
-  val UserAgent: com.histmersion.domain.HttpPolicy.UserAgent = com.histmersion.domain.HttpPolicy.UserAgent(s"Histmersion/${Version.version} (gazetteer import)")
+  val UserAgent: HttpPolicy.UserAgent = HttpPolicy.UserAgent(s"Histmersion/${Version.version} (gazetteer import)")
 
   /** The wire of a gazetteer download: `java.net.http` over HTTP/1.1, redirects followed within a scheme, the answer
     * waited for `places.fetch-timeout-seconds` and the connection `places.fetch-connect-timeout-seconds`; the body read
@@ -39,23 +44,23 @@ object PluginGazetteers:
     PolicyHttp(UserAgent, transport, log = log).plugin
 
   /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[?, A]): Either[com.histmersion.pluginhost.PluginGazetteers.Problem, A] =
+  def guard[A](a: => Either[?, A]): Either[Problem, A] =
     PluginMedia.guard(a).left.map(e => Problem(e.value))
 
   /** Every place `source` answers, each checked and converted, in its order, and the ones refused with the reason.
     * `Left` when the source answered no dataset at all (its download failed, its body was not one).
     */
-  def places(source: GazetteerSource, http: Plugin.Http): Either[com.histmersion.pluginhost.PluginGazetteers.Problem, (List[Place.Input], List[com.histmersion.pluginhost.PluginGazetteers.Warning])] =
+  def places(source: GazetteerSource, http: Plugin.Http): Either[Problem, (List[Place.Input], List[Warning])] =
     guard(source.fetch(http)).map { got =>
       val credit = guard(Right(source.rights)).toOption.flatMap(r => Option(r).flatMap(r => Option(r.credit)))
-      val read = got.map(p => input(p, credit.map(c => com.histmersion.domain.Attribution.Credit(c.value)).getOrElse(com.histmersion.domain.Attribution.Credit(""))))
+      val read = got.map(p => input(p, credit.map(c => Attribution.Credit(c.value)).getOrElse(Attribution.Credit(""))))
       (read.collect { case Right(in) => in }, read.collect { case Left(why) => Warning(why.value) })
     }
 
   /** Pure: the host's place of a plugin's, or why it is refused — no id or kind, a shape or properties that are not
     * JSON, a period the host cannot read. Its source is its own, else the dataset's credit; nothing else is changed.
     */
-  def input(p: GazetteerPlace, credit: com.histmersion.domain.Attribution.Credit): Either[com.histmersion.pluginhost.PluginGazetteers.Problem, Place.Input] =
+  def input(p: GazetteerPlace, credit: Attribution.Credit): Either[Problem, Place.Input] =
     try
       if p == null then Left(Problem("a place that is null"))
       else
@@ -75,7 +80,7 @@ object PluginGazetteers:
             val source = Option(p.source).flatten.map(_.value).orElse(Option(credit).map(_.value.trim).filter(_.nonEmpty))
             Place.Input(
               Place(
-                com.histmersion.api.catalogue.Place.Id(id),
+                Place.Id(id),
                 Place.Label(label.value),
                 Place.KindValue(p.kind.value),
                 geometry.map(Place.Geometry(_)),

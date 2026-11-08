@@ -1,9 +1,12 @@
-package com.histmersion.pluginhost
+package com.histmersion
+package pluginhost
 
 import com.histmersion.plugin.*
 import org.ekrich.config.Config
 
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the host lends every plugin of a generation: the HTTP client (built on first use), the log, the environment
   * read at startup, and the budgets of the metered upstreams (by name; an upstream with none is unlimited).
@@ -20,12 +23,12 @@ final case class HostServices(
 object HostServices:
   /** The budgets of the metered upstreams the host lends plugins, by upstream name. */
   type LogArg1 = LogArg1.T
-  object LogArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogArg1 extends RefinedType[String, Pure]
   type LogArg2 = LogArg2.T
-  object LogArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogArg2 extends RefinedType[Boolean, Pure]
   type LogArg3 = LogArg3.T
-  object LogArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LogArg3 extends RefinedType[String, Pure]
   type QuotaArg1 = QuotaArg1.T
-  object QuotaArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object QuotaArg1 extends RefinedType[String, Pure]
 
   type Quotas = String => UpstreamQuota
