@@ -162,8 +162,7 @@ object ReviewArticle:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
     type Rank = Rank.T
-    object Rank extends Newtype[Int, Pure]:
-      extension (r: T) def >(o: T): Boolean = r.value > o.value
+    object Rank extends Newtype[Int, Pure]
 
 
     def parse(s: Wire): Option[Verdict] = values.find(_.wire.value == s.value.trim.toUpperCase)

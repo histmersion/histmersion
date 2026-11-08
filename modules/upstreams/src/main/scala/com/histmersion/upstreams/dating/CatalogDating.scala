@@ -12,7 +12,6 @@ object CatalogDating:
   type HistoricalYear = HistoricalYear.T
   object HistoricalYear extends Newtype[Long, Pure]:
     extension (y: T)
-      def <=(o: T): Boolean = y.value <= o.value
       def min(o: T): T = apply(y.value.min(o.value))
       def max(o: T): T = apply(y.value.max(o.value))
   type XsdYearText = XsdYearText.T
