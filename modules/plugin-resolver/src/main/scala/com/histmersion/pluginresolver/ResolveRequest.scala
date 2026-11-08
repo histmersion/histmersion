@@ -1,7 +1,10 @@
-package com.histmersion.pluginresolver
+package com.histmersion
+package pluginresolver
 
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one `resolve` run is asked.
   *
@@ -31,4 +34,4 @@ final case class ResolveRequest(
 
 object ResolveRequest:
   type Check = Check.T
-  object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Check extends RefinedType[Boolean, Pure]

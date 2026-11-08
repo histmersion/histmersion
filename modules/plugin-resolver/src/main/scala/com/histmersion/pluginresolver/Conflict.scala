@@ -1,4 +1,5 @@
-package com.histmersion.pluginresolver
+package com.histmersion
+package pluginresolver
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
@@ -7,13 +8,13 @@ import io.github.iltotore.iron.constraint.all.*
   * and the server's would win, so the plugin cannot be linked.
   */
 final case class Conflict(plugin: Conflict.Plugin, key: ModuleKey, wanted: ModuleVersion, shipped: ModuleVersion):
-  def message: com.histmersion.pluginresolver.Conflict.MessageResult =
-    _root_.com.histmersion.pluginresolver.Resolver.Problem(s"$plugin needs $key ${wanted.value}, but this Histmersion ships ${shipped.value} — " +
+  def message: Conflict.MessageResult =
+    Resolver.Problem(s"$plugin needs $key ${wanted.value}, but this Histmersion ships ${shipped.value} — " +
       s"build the plugin against ${shipped.value} (the histmersion-plugin-platform POM), or install a Histmersion that ships ${wanted.value}")
 
 object Conflict:
-  type MessageResult = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val MessageResult: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
+  type MessageResult = Resolver.Problem
+  val MessageResult: Resolver.Problem.type = Resolver.Problem
 
-  type Plugin = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val Plugin: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type Plugin = Resolver.FileName
+  val Plugin: Resolver.FileName.type = Resolver.FileName

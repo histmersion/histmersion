@@ -1,4 +1,5 @@
-package com.histmersion.pluginresolver
+package com.histmersion
+package pluginresolver
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -10,18 +11,18 @@ import scala.jdk.CollectionConverters.*
   * `repositories` the repositories they were resolved from.
   */
 object LibDirectory:
-  export com.histmersion.pluginresolver.Resolver.{Problem as StoredRepositoriesResultPart1, FileName as WriteInputsPart1, Sha256 as WriteInputsPart2, Sha256 as Sha256Result}
+  export Resolver.{Problem as StoredRepositoriesResultPart1, FileName as WriteInputsPart1, Sha256 as WriteInputsPart2, Sha256 as Sha256Result}
 
   val Classpath = "classpath"
   val Inputs = "inputs"
   val Repositories = "repositories"
 
-  def storedRepositories(lib: Path): Either[com.histmersion.pluginresolver.LibDirectory.StoredRepositoriesResultPart1, List[RepositoryUrl]] =
+  def storedRepositories(lib: Path): Either[LibDirectory.StoredRepositoriesResultPart1, List[RepositoryUrl]] =
     val f = lib.resolve(Repositories)
     if !Files.isRegularFile(f) then Right(Nil)
     else
       traverse(Files.readAllLines(f, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty))(r =>
-        RepositoryUrl.either(r).left.map(e => _root_.com.histmersion.pluginresolver.Resolver.Problem(s"$f: '$r': $e"))
+        RepositoryUrl.either(r).left.map(e => Resolver.Problem(s"$f: '$r': $e"))
       )
 
   /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.
@@ -29,12 +30,12 @@ object LibDirectory:
   def write(
       lib: Path,
       deps: List[Dependency],
-      inputs: List[(com.histmersion.pluginresolver.LibDirectory.WriteInputsPart1, com.histmersion.pluginresolver.LibDirectory.WriteInputsPart2)],
+      inputs: List[(LibDirectory.WriteInputsPart1, LibDirectory.WriteInputsPart2)],
       repositories: List[RepositoryUrl]
   ): Unit =
     Files.createDirectories(lib)
     val wanted = deps.map(_.libName).toSet
-    jarsIn(lib).filterNot(p => wanted(_root_.com.histmersion.pluginresolver.Dependency.LibNameResult(p.getFileName.toString))).foreach(Files.delete)
+    jarsIn(lib).filterNot(p => wanted(Dependency.LibNameResult(p.getFileName.toString))).foreach(Files.delete)
     deps.foreach { d =>
       val target = lib.resolve((d.libName).value)
       if !Files.isRegularFile(target) || sha256(target) != sha256(d.file) then
@@ -52,11 +53,11 @@ object LibDirectory:
     try s.iterator().asScala.filter(p => Files.isRegularFile(p) && p.getFileName.toString.endsWith(".jar")).toList
     finally s.close()
 
-  def sha256(p: Path): com.histmersion.pluginresolver.LibDirectory.Sha256Result =
+  def sha256(p: Path): LibDirectory.Sha256Result =
     val md = MessageDigest.getInstance("SHA-256")
     val in = Files.newInputStream(p)
     try
       val buf = new Array[Byte](1 << 16)
       Iterator.continually(in.read(buf)).takeWhile(_ >= 0).foreach(n => md.update(buf, 0, n))
     finally in.close()
-    _root_.com.histmersion.pluginresolver.LibDirectory.Sha256Result(md.digest().map(b => f"$b%02x").mkString)
+    LibDirectory.Sha256Result(md.digest().map(b => f"$b%02x").mkString)
