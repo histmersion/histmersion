@@ -15,8 +15,7 @@ object MediaCount:
 
 
   type Key = Key.T
-  object Key extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object Key extends Newtype[String, Pure]
   type N = N.T
   object N extends Newtype[Int, Pure]
   type Allowed = Allowed.T

@@ -102,4 +102,4 @@ object Aggregate:
     case (None, Some(b))    => Some((b, b))
     case (None, None)       => None
 
-  private def order(a: Year, b: Year): (Year, Year) = if a.value <= b.value then (a, b) else (b, a)
+  private def order(a: Year, b: Year): (Year, Year) = if a <= b then (a, b) else (b, a)

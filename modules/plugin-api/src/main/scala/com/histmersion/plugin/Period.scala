@@ -19,7 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * [[Period.from]] (the start must not be after the end) or [[Period.point]].
   */
 final case class Period private (start: Year, end: Year):
-  def isPoint: Period.IsPointResult = Period.IsPointResult(start.value == end.value)
+  def isPoint: Period.IsPointResult = Period.IsPointResult(start == end)
 
 object Period:
   /** The period from `start` to `end`, or why there is none (it would end before it starts). */
@@ -30,7 +30,7 @@ object Period:
 
   def from(start: Year, end: Year): Either[FromResultPart1, Period] =
     Either.cond(
-      start.value <= end.value,
+      start <= end,
       new Period(start, end),
       FromResultPart1(s"the period ends (${end.value}) before it starts (${start.value})")
     )

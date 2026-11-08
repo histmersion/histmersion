@@ -11,7 +11,6 @@ final case class MatchSpan(start: MatchSpan.Start, end: MatchSpan.End) derives K
 
 object MatchSpan:
   type Start = Start.T
-  object Start extends Newtype[Int, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
+  object Start extends Newtype[Int, Pure]
   type End = End.T
   object End extends Newtype[Int, Pure]

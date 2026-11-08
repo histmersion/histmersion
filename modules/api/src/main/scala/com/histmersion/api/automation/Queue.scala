@@ -52,8 +52,7 @@ object Queue:
 
   object QueueItem:
     type Id = Id.T
-    object Id extends Newtype[Int, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
+    object Id extends Newtype[Int, Pure]
     export Kind.{Label as List}
     type Text = Text.T
     object Text extends Newtype[String, Pure]
@@ -64,8 +63,7 @@ object Queue:
     type Reason = Reason.T
     object Reason extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object CreatedAt extends Newtype[String, Pure]
     type DoneAt = DoneAt.T
     object DoneAt extends Newtype[String, Pure]
     type CreatedBy = CreatedBy.T

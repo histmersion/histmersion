@@ -128,11 +128,9 @@ object Basemap:
 
   object Read:
     type Geoms = Geoms.T
-    object Geoms extends Newtype[Int, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
+    object Geoms extends Newtype[Int, Pure]
     type Kinds = Kinds.T
-    object Kinds extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object Kinds extends Newtype[String, Pure]
 
   private val KindName = "[A-Za-z0-9_:.-]+".r
 
@@ -256,8 +254,7 @@ object Basemap:
     export BBox.{Text as Bbox}
     export LayerInfo.MinZoom
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends Newtype[Int, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
+    object MaxZoom extends Newtype[Int, Pure]
     export LayerInfo.{Tiles, FetchedAt}
 
 
@@ -280,8 +277,7 @@ object Basemap:
     type Wires = Wires.T
     object Wires extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object Wire extends Newtype[String, Pure]
     type Title = Title.T
     object Title extends Newtype[String, Pure]
 
@@ -345,8 +341,7 @@ object Basemap:
     type Kept = Kept.T
     object Kept extends Newtype[String, Pure]
     type Dropped = Dropped.T
-    object Dropped extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object Dropped extends Newtype[String, Pure]
     type Error = Error.T
     object Error extends Newtype[String, Pure]
 

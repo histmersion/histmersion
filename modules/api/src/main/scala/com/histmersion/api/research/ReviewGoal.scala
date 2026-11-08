@@ -11,8 +11,7 @@ final case class ReviewGoal(slug: ReviewGoal.Slug, title: ReviewGoal.Title, stat
 
 object ReviewGoal:
   type Slug = Slug.T
-  object Slug extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object Slug extends Newtype[String, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   export com.histmersion.api.automation.Goal.{StatusValue as Status}

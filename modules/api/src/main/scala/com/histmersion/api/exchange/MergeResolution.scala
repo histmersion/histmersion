@@ -16,8 +16,7 @@ final case class MergeResolution(
 
 object MergeResolution:
   type Issue = Issue.T
-  object Issue extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object Issue extends Newtype[String, Pure]
   export MergeDecision.Kind.{Wire as Decision}
   type Text = Text.T
   object Text extends Newtype[String, Pure]

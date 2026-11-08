@@ -114,8 +114,7 @@ object Stalls:
     type IdleDays = IdleDays.T
     object IdleDays extends Newtype[Int, Pure]
     type ApprovalId = ApprovalId.T
-    object ApprovalId extends Newtype[Long, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    object ApprovalId extends Newtype[Long, Pure]
     type ApprovalKind = ApprovalKind.T
     object ApprovalKind extends Newtype[String, Pure]
     type PersonHeld = PersonHeld.T

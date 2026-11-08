@@ -971,11 +971,9 @@ object Place:
     type ChildId = ChildId.T
     object ChildId extends Newtype[String, Pure]
     type ParentId = ParentId.T
-    object ParentId extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object ParentId extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object Kind extends Newtype[String, Pure]
 
     val PartOf = "part_of"
     val PartOfAdmin = "part_of_admin"

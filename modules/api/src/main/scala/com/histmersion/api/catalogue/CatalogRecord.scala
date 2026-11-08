@@ -51,8 +51,7 @@ object CatalogRecord:
   val EventIdProvider: Provider.type = Provider
   export EventCatalogueRef.{ProviderId as EventIdProviderId}
   type OwnerKeysPart2 = OwnerKeysPart2.T
-  object OwnerKeysPart2 extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object OwnerKeysPart2 extends Newtype[String, Pure]
 
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
