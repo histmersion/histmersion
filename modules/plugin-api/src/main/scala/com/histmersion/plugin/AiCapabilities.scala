@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a provider can do. A provider without `tools` is offered no tools (a step that needs them should not chain its
   * models); without `structuredOutput` the schema still travels in the request.
@@ -12,29 +16,29 @@ package com.histmersion.plugin
   *   off, it adds them
   */
 final case class AiCapabilities(
-    tools: AiCapabilities.Tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true),
-    structuredOutput: AiCapabilities.StructuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(false),
-    iterationMarkers: AiCapabilities.IterationMarkers = _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(false),
-    verbatimFailures: AiCapabilities.VerbatimFailures = _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(false)
+    tools: AiCapabilities.Tools = AiCapabilities.Tools(true),
+    structuredOutput: AiCapabilities.StructuredOutput = AiCapabilities.StructuredOutput(false),
+    iterationMarkers: AiCapabilities.IterationMarkers = AiCapabilities.IterationMarkers(false),
+    verbatimFailures: AiCapabilities.VerbatimFailures = AiCapabilities.VerbatimFailures(false)
 ):
   /** The constructor of a provider compiled before the loop's notes and verbatim failures existed. */
-  def this(tools: Boolean, structuredOutput: Boolean) = this(_root_.com.histmersion.plugin.AiCapabilities.Tools(tools), _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(structuredOutput), _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(false), _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(false))
+  def this(tools: Boolean, structuredOutput: Boolean) = this(AiCapabilities.Tools(tools), AiCapabilities.StructuredOutput(structuredOutput), AiCapabilities.IterationMarkers(false), AiCapabilities.VerbatimFailures(false))
 
 object AiCapabilities:
   /** The capabilities as a provider compiled before the loop's notes and verbatim failures wrote them. */
-  type ApplyTools = _root_.com.histmersion.plugin.AiCapabilities.Tools
-  val ApplyTools: _root_.com.histmersion.plugin.AiCapabilities.Tools.type = _root_.com.histmersion.plugin.AiCapabilities.Tools
-  type ApplyStructuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput
-  val ApplyStructuredOutput: _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput.type = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput
+  type ApplyTools = Tools
+  val ApplyTools: Tools.type = Tools
+  type ApplyStructuredOutput = StructuredOutput
+  val ApplyStructuredOutput: StructuredOutput.type = StructuredOutput
 
   type Tools = Tools.T
-  object Tools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tools extends RefinedType[Boolean, Pure]
   type StructuredOutput = StructuredOutput.T
-  object StructuredOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StructuredOutput extends RefinedType[Boolean, Pure]
   type IterationMarkers = IterationMarkers.T
-  object IterationMarkers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IterationMarkers extends RefinedType[Boolean, Pure]
   type VerbatimFailures = VerbatimFailures.T
-  object VerbatimFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VerbatimFailures extends RefinedType[Boolean, Pure]
 
-  def apply(tools: com.histmersion.plugin.AiCapabilities.ApplyTools, structuredOutput: com.histmersion.plugin.AiCapabilities.ApplyStructuredOutput): AiCapabilities =
-    new AiCapabilities(tools, structuredOutput, _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(false), _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(false))
+  def apply(tools: ApplyTools, structuredOutput: ApplyStructuredOutput): AiCapabilities =
+    new AiCapabilities(tools, structuredOutput, IterationMarkers(false), VerbatimFailures(false))

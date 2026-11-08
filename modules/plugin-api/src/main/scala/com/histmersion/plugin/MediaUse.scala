@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One picture a collection found for one of its targets ([[MediaMatchRule.Own]]): the host ties the item to that
   * target as it is, matching no name.
@@ -30,10 +34,10 @@ final case class MediaUse(
 
 object MediaUse:
   type Rank = Rank.T
-  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Rank extends RefinedType[Int, Pure]
   type Statement = Statement.T
-  object Statement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Statement extends RefinedType[String, Pure]
   type Basis = Basis.T
-  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Basis extends RefinedType[String, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]

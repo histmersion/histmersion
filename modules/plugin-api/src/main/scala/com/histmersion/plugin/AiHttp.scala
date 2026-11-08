@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The host's client for model calls: HTTP/1.1, the host's User-Agent, a timeout per call, nothing it sends or receives
   * ever logged (a key travels in a header). Failures to connect are `Left`; an HTTP error status is a response (the
@@ -6,55 +10,55 @@ package com.histmersion.plugin
   */
 trait AiHttp:
   def post(
-      url: com.histmersion.plugin.AiHttp.PostUrl,
-      headers: Map[com.histmersion.plugin.AiHttp.PostHeadersPart1, com.histmersion.plugin.AiHttp.PostHeadersPart2],
-      body: com.histmersion.plugin.AiHttp.PostBody,
-      timeoutSeconds: com.histmersion.plugin.AiHttp.PostTimeoutSeconds
-  ): Either[com.histmersion.plugin.AiHttp.PostResultPart1, com.histmersion.plugin.AiHttp.Response]
+      url: AiHttp.PostUrl,
+      headers: Map[AiHttp.PostHeadersPart1, AiHttp.PostHeadersPart2],
+      body: AiHttp.PostBody,
+      timeoutSeconds: AiHttp.PostTimeoutSeconds
+  ): Either[AiHttp.PostResultPart1, AiHttp.Response]
   def get(
-      url: com.histmersion.plugin.AiHttp.GetUrl,
-      headers: Map[com.histmersion.plugin.AiHttp.GetHeadersPart1, com.histmersion.plugin.AiHttp.GetHeadersPart2],
-      timeoutSeconds: com.histmersion.plugin.AiHttp.GetTimeoutSeconds
-  ): Either[com.histmersion.plugin.AiHttp.GetResultPart1, com.histmersion.plugin.AiHttp.Response]
+      url: AiHttp.GetUrl,
+      headers: Map[AiHttp.GetHeadersPart1, AiHttp.GetHeadersPart2],
+      timeoutSeconds: AiHttp.GetTimeoutSeconds
+  ): Either[AiHttp.GetResultPart1, AiHttp.Response]
 
 object AiHttp:
   /** A client that sends nothing (a test, `--self-check`). */
   type PostResultPart1 = PostResultPart1.T
-  object PostResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PostResultPart1 extends RefinedType[String, Pure]
   type PostUrl = PostUrl.T
-  object PostUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PostUrl extends RefinedType[String, Pure]
   type PostHeadersPart1 = PostHeadersPart1.T
-  object PostHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PostHeadersPart1 extends RefinedType[String, Pure]
   type PostHeadersPart2 = PostHeadersPart2.T
-  object PostHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PostHeadersPart2 extends RefinedType[String, Pure]
   type PostBody = PostBody.T
-  object PostBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PostBody extends RefinedType[String, Pure]
   type PostTimeoutSeconds = PostTimeoutSeconds.T
-  object PostTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PostTimeoutSeconds extends RefinedType[Int, Pure]
   type GetResultPart1 = GetResultPart1.T
-  object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GetResultPart1 extends RefinedType[String, Pure]
   type GetUrl = GetUrl.T
-  object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GetUrl extends RefinedType[String, Pure]
   type GetHeadersPart1 = GetHeadersPart1.T
-  object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GetHeadersPart1 extends RefinedType[String, Pure]
   type GetHeadersPart2 = GetHeadersPart2.T
-  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GetHeadersPart2 extends RefinedType[String, Pure]
   type GetTimeoutSeconds = GetTimeoutSeconds.T
-  object GetTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GetTimeoutSeconds extends RefinedType[Int, Pure]
 
   val Offline: AiHttp = new AiHttp:
-    def post(url: com.histmersion.plugin.AiHttp.PostUrl, headers: Map[com.histmersion.plugin.AiHttp.PostHeadersPart1, com.histmersion.plugin.AiHttp.PostHeadersPart2], body: com.histmersion.plugin.AiHttp.PostBody, timeoutSeconds: com.histmersion.plugin.AiHttp.PostTimeoutSeconds) = Left(_root_.com.histmersion.plugin.AiHttp.PostResultPart1("offline"))
-    def get(url: com.histmersion.plugin.AiHttp.GetUrl, headers: Map[com.histmersion.plugin.AiHttp.GetHeadersPart1, com.histmersion.plugin.AiHttp.GetHeadersPart2], timeoutSeconds: com.histmersion.plugin.AiHttp.GetTimeoutSeconds) = Left(_root_.com.histmersion.plugin.AiHttp.GetResultPart1("offline"))
+    def post(url: PostUrl, headers: Map[PostHeadersPart1, PostHeadersPart2], body: PostBody, timeoutSeconds: PostTimeoutSeconds) = Left(PostResultPart1("offline"))
+    def get(url: GetUrl, headers: Map[GetHeadersPart1, GetHeadersPart2], timeoutSeconds: GetTimeoutSeconds) = Left(GetResultPart1("offline"))
 
   /** One HTTP answer. */
   final case class Response(status: Response.Status, body: Response.Body, headers: Map[Response.HeadersKey, Response.HeadersValue] = Map.empty)
 
   object Response:
     type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Status extends RefinedType[Int, Pure]
     type Body = Body.T
-    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Body extends RefinedType[String, Pure]
     type HeadersKey = HeadersKey.T
-    object HeadersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HeadersKey extends RefinedType[String, Pure]
     type HeadersValue = HeadersValue.T
-    object HeadersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HeadersValue extends RefinedType[String, Pure]

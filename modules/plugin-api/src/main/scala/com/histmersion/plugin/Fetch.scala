@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One fetcher's answer for one work. */
 enum Fetch:
@@ -18,18 +22,18 @@ object Fetch:
   /** What the host lends a fetcher for ONE fetch of one work. */
   object Miss:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
   object Refused:
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
   trait Context:
     /** A value computed at most once per fetch of this work and shared by every fetcher of the chain — an index record
       * two steps both read. `compute` runs on the first call for `key`; later calls return that value. Name keys
       * `<plugin id>:<what>:<identifier>`: the value is stored untyped, so a key reused with another type fails.
       */
-    def memo[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A
+    def memo[A](key: Context.MemoKey)(compute: => A): A
 
     /** The host's log, with the fetcher's id on every line. */
     def log: Plugin.Log
@@ -38,12 +42,12 @@ object Fetch:
       * another plugin's behalf, what that plugin's upstream holds asks it only while that plugin is on. `false` from a
       * host that does not say.
       */
-    def registered(pluginId: com.histmersion.plugin.Fetch.Context.RegisteredPluginId): com.histmersion.plugin.Fetch.Context.RegisteredResult = _root_.com.histmersion.plugin.Fetch.Context.RegisteredResult(false)
+    def registered(pluginId: Context.RegisteredPluginId): Context.RegisteredResult = Context.RegisteredResult(false)
 
   object Context:
     type MemoKey = MemoKey.T
-    object MemoKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MemoKey extends RefinedType[String, Pure]
     type RegisteredResult = RegisteredResult.T
-    object RegisteredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RegisteredResult extends RefinedType[Boolean, Pure]
     type RegisteredPluginId = RegisteredPluginId.T
-    object RegisteredPluginId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RegisteredPluginId extends RefinedType[String, Pure]

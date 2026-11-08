@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One edge of the place hierarchy, with its own validity: a time-slice of a polity is part of the polity, a city part
   * of a province while it was.
@@ -18,7 +22,7 @@ package com.histmersion.plugin
 final case class GazetteerRelation(
     childId: GazetteerRelation.ChildId,
     parentId: GazetteerRelation.ParentId,
-    kind: GazetteerRelation.Kind = _root_.com.histmersion.plugin.GazetteerRelation.Kind(GazetteerRelation.PartOf),
+    kind: GazetteerRelation.Kind = GazetteerRelation.Kind(GazetteerRelation.PartOf),
     period: Option[Period] = None,
     open: Option[GazetteerOpenSide] = None
 )
@@ -26,10 +30,10 @@ final case class GazetteerRelation(
 object GazetteerRelation:
   /** The plain hierarchy edge: the child lies within the parent. */
   type ChildId = ChildId.T
-  object ChildId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ChildId extends RefinedType[String, Pure]
   type ParentId = ParentId.T
-  object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ParentId extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
 
   val PartOf = "part_of"

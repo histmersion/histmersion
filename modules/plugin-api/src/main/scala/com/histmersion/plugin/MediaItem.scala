@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One record of a collection: an object, a map, a photograph.
   *
@@ -61,73 +65,73 @@ final case class MediaItem(
       period: Option[Period],
       ids: List[(String, String)],
       withheld: Option[String]
-  ) = this(_root_.com.histmersion.plugin.MediaItem.Key(key), _root_.com.histmersion.plugin.MediaItem.Title(title), _root_.com.histmersion.plugin.MediaItem.PageUrl(pageUrl), (imageUrl).map(refactorValue => _root_.com.histmersion.plugin.MediaItem.ImageUrl(refactorValue)), (rights).left.map(refactorError => _root_.com.histmersion.plugin.MediaItem.RightsPart1(refactorError)), (thumbUrl).map(refactorValue3 => _root_.com.histmersion.plugin.MediaItem.ThumbUrl(refactorValue3)), (originalUrl).map(refactorValue4 => _root_.com.histmersion.plugin.MediaItem.OriginalUrl(refactorValue4)), (geography).map(refactorValue5 => { val refactorTuple = refactorValue5; (_root_.com.histmersion.plugin.MediaItem.GeographyPart1(refactorTuple._1), _root_.com.histmersion.plugin.MediaItem.GeographyPart2(refactorTuple._2)) }), period, (ids).map(refactorValue6 => { val refactorTuple2 = refactorValue6; (_root_.com.histmersion.plugin.MediaItem.IdsPart1(refactorTuple2._1), _root_.com.histmersion.plugin.MediaItem.IdsPart2(refactorTuple2._2)) }), (withheld).map(refactorValue7 => _root_.com.histmersion.plugin.MediaItem.Withheld(refactorValue7)), None, None)
+  ) = this(MediaItem.Key(key), MediaItem.Title(title), MediaItem.PageUrl(pageUrl), (imageUrl).map(refactorValue => MediaItem.ImageUrl(refactorValue)), (rights).left.map(refactorError => MediaItem.RightsPart1(refactorError)), (thumbUrl).map(refactorValue3 => MediaItem.ThumbUrl(refactorValue3)), (originalUrl).map(refactorValue4 => MediaItem.OriginalUrl(refactorValue4)), (geography).map(refactorValue5 => { val refactorTuple = refactorValue5; (MediaItem.GeographyPart1(refactorTuple._1), MediaItem.GeographyPart2(refactorTuple._2)) }), period, (ids).map(refactorValue6 => { val refactorTuple2 = refactorValue6; (MediaItem.IdsPart1(refactorTuple2._1), MediaItem.IdsPart2(refactorTuple2._2)) }), (withheld).map(refactorValue7 => MediaItem.Withheld(refactorValue7)), None, None)
 
 object MediaItem:
   /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */
-  type ApplyKey = _root_.com.histmersion.plugin.MediaItem.Key
-  val ApplyKey: _root_.com.histmersion.plugin.MediaItem.Key.type = _root_.com.histmersion.plugin.MediaItem.Key
-  type ApplyTitle = _root_.com.histmersion.plugin.MediaItem.Title
-  val ApplyTitle: _root_.com.histmersion.plugin.MediaItem.Title.type = _root_.com.histmersion.plugin.MediaItem.Title
-  type ApplyPageUrl = _root_.com.histmersion.plugin.MediaItem.PageUrl
-  val ApplyPageUrl: _root_.com.histmersion.plugin.MediaItem.PageUrl.type = _root_.com.histmersion.plugin.MediaItem.PageUrl
-  type ApplyImageUrl = _root_.com.histmersion.plugin.MediaItem.ImageUrl
-  val ApplyImageUrl: _root_.com.histmersion.plugin.MediaItem.ImageUrl.type = _root_.com.histmersion.plugin.MediaItem.ImageUrl
-  type ApplyRightsPart1 = _root_.com.histmersion.plugin.MediaItem.RightsPart1
-  val ApplyRightsPart1: _root_.com.histmersion.plugin.MediaItem.RightsPart1.type = _root_.com.histmersion.plugin.MediaItem.RightsPart1
-  type ApplyThumbUrl = _root_.com.histmersion.plugin.MediaItem.ThumbUrl
-  val ApplyThumbUrl: _root_.com.histmersion.plugin.MediaItem.ThumbUrl.type = _root_.com.histmersion.plugin.MediaItem.ThumbUrl
-  type ApplyOriginalUrl = _root_.com.histmersion.plugin.MediaItem.OriginalUrl
-  val ApplyOriginalUrl: _root_.com.histmersion.plugin.MediaItem.OriginalUrl.type = _root_.com.histmersion.plugin.MediaItem.OriginalUrl
-  type ApplyGeographyPart1 = _root_.com.histmersion.plugin.MediaItem.GeographyPart1
-  val ApplyGeographyPart1: _root_.com.histmersion.plugin.MediaItem.GeographyPart1.type = _root_.com.histmersion.plugin.MediaItem.GeographyPart1
-  type ApplyGeographyPart2 = _root_.com.histmersion.plugin.MediaItem.GeographyPart2
-  val ApplyGeographyPart2: _root_.com.histmersion.plugin.MediaItem.GeographyPart2.type = _root_.com.histmersion.plugin.MediaItem.GeographyPart2
-  type ApplyIdsPart1 = _root_.com.histmersion.plugin.MediaItem.IdsPart1
-  val ApplyIdsPart1: _root_.com.histmersion.plugin.MediaItem.IdsPart1.type = _root_.com.histmersion.plugin.MediaItem.IdsPart1
-  type ApplyIdsPart2 = _root_.com.histmersion.plugin.MediaItem.IdsPart2
-  val ApplyIdsPart2: _root_.com.histmersion.plugin.MediaItem.IdsPart2.type = _root_.com.histmersion.plugin.MediaItem.IdsPart2
-  type ApplyWithheld = _root_.com.histmersion.plugin.MediaItem.Withheld
-  val ApplyWithheld: _root_.com.histmersion.plugin.MediaItem.Withheld.type = _root_.com.histmersion.plugin.MediaItem.Withheld
+  type ApplyKey = Key
+  val ApplyKey: Key.type = Key
+  type ApplyTitle = Title
+  val ApplyTitle: Title.type = Title
+  type ApplyPageUrl = PageUrl
+  val ApplyPageUrl: PageUrl.type = PageUrl
+  type ApplyImageUrl = ImageUrl
+  val ApplyImageUrl: ImageUrl.type = ImageUrl
+  type ApplyRightsPart1 = RightsPart1
+  val ApplyRightsPart1: RightsPart1.type = RightsPart1
+  type ApplyThumbUrl = ThumbUrl
+  val ApplyThumbUrl: ThumbUrl.type = ThumbUrl
+  type ApplyOriginalUrl = OriginalUrl
+  val ApplyOriginalUrl: OriginalUrl.type = OriginalUrl
+  type ApplyGeographyPart1 = GeographyPart1
+  val ApplyGeographyPart1: GeographyPart1.type = GeographyPart1
+  type ApplyGeographyPart2 = GeographyPart2
+  val ApplyGeographyPart2: GeographyPart2.type = GeographyPart2
+  type ApplyIdsPart1 = IdsPart1
+  val ApplyIdsPart1: IdsPart1.type = IdsPart1
+  type ApplyIdsPart2 = IdsPart2
+  val ApplyIdsPart2: IdsPart2.type = IdsPart2
+  type ApplyWithheld = Withheld
+  val ApplyWithheld: Withheld.type = Withheld
 
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type PageUrl = PageUrl.T
-  object PageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PageUrl extends RefinedType[String, Pure]
   type ImageUrl = ImageUrl.T
-  object ImageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImageUrl extends RefinedType[String, Pure]
   type RightsPart1 = RightsPart1.T
-  object RightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RightsPart1 extends RefinedType[String, Pure]
   type ThumbUrl = ThumbUrl.T
-  object ThumbUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ThumbUrl extends RefinedType[String, Pure]
   type OriginalUrl = OriginalUrl.T
-  object OriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OriginalUrl extends RefinedType[String, Pure]
   type GeographyPart1 = GeographyPart1.T
-  object GeographyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeographyPart1 extends RefinedType[String, Pure]
   type GeographyPart2 = GeographyPart2.T
-  object GeographyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeographyPart2 extends RefinedType[String, Pure]
   type IdsPart1 = IdsPart1.T
-  object IdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IdsPart1 extends RefinedType[String, Pure]
   type IdsPart2 = IdsPart2.T
-  object IdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IdsPart2 extends RefinedType[String, Pure]
   type Withheld = Withheld.T
-  object Withheld extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Withheld extends RefinedType[String, Pure]
   type Role = Role.T
-  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Role extends RefinedType[String, Pure]
 
   def apply(
-      key: com.histmersion.plugin.MediaItem.ApplyKey,
-      title: com.histmersion.plugin.MediaItem.ApplyTitle,
-      pageUrl: com.histmersion.plugin.MediaItem.ApplyPageUrl,
-      imageUrl: Option[com.histmersion.plugin.MediaItem.ApplyImageUrl],
-      rights: Either[com.histmersion.plugin.MediaItem.ApplyRightsPart1, MediaRights],
-      thumbUrl: Option[com.histmersion.plugin.MediaItem.ApplyThumbUrl],
-      originalUrl: Option[com.histmersion.plugin.MediaItem.ApplyOriginalUrl],
-      geography: List[(com.histmersion.plugin.MediaItem.ApplyGeographyPart1, com.histmersion.plugin.MediaItem.ApplyGeographyPart2)],
+      key: ApplyKey,
+      title: ApplyTitle,
+      pageUrl: ApplyPageUrl,
+      imageUrl: Option[ApplyImageUrl],
+      rights: Either[ApplyRightsPart1, MediaRights],
+      thumbUrl: Option[ApplyThumbUrl],
+      originalUrl: Option[ApplyOriginalUrl],
+      geography: List[(ApplyGeographyPart1, ApplyGeographyPart2)],
       period: Option[Period],
-      ids: List[(com.histmersion.plugin.MediaItem.ApplyIdsPart1, com.histmersion.plugin.MediaItem.ApplyIdsPart2)],
-      withheld: Option[com.histmersion.plugin.MediaItem.ApplyWithheld]
+      ids: List[(ApplyIdsPart1, ApplyIdsPart2)],
+      withheld: Option[ApplyWithheld]
   ): MediaItem =
     new MediaItem(key, title, pageUrl, imageUrl, rights, thumbUrl, originalUrl, geography, period, ids, withheld)

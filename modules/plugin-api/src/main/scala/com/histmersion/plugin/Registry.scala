@@ -1,22 +1,25 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
 
 import scala.compiletime.deferred
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One extension point. `add` refuses an id already taken in this registry. */
 trait Registry[A]:
-  def add(id: com.histmersion.plugin.Registry.AddId, a: A): Either[com.histmersion.plugin.Registry.AddResultPart1, Unit]
+  def add(id: Registry.AddId, a: A): Either[Registry.AddResultPart1, Unit]
 
 object Registry:
   /** A registry that takes nothing, saying why. */
-  type RefusingAddId = _root_.com.histmersion.plugin.Registry.AddId
-  val RefusingAddId: _root_.com.histmersion.plugin.Registry.AddId.type = _root_.com.histmersion.plugin.Registry.AddId
+  type RefusingAddId = AddId
+  val RefusingAddId: AddId.type = AddId
 
   type AddResultPart1 = AddResultPart1.T
-  object AddResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AddResultPart1 extends RefinedType[String, Pure]
   type AddId = AddId.T
-  object AddId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AddId extends RefinedType[String, Pure]
   type RefusingWhy = RefusingWhy.T
-  object RefusingWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RefusingWhy extends RefinedType[String, Pure]
 
-  def refusing[A](why: com.histmersion.plugin.Registry.RefusingWhy): Registry[A] = new Registry[A]:
-    def add(id: _root_.com.histmersion.plugin.Registry.AddId, a: A): Either[_root_.com.histmersion.plugin.Registry.AddResultPart1, Unit] = Left(_root_.com.histmersion.plugin.Registry.AddResultPart1(s"'$id': $why"))
+  def refusing[A](why: RefusingWhy): Registry[A] = new Registry[A]:
+    def add(id: AddId, a: A): Either[AddResultPart1, Unit] = Left(AddResultPart1(s"'$id': $why"))

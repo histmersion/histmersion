@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A call that did not answer. */
 enum AiFailure:
@@ -13,9 +17,9 @@ enum AiFailure:
 object AiFailure:
   object Error:
     type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Message extends RefinedType[String, Pure]
   object LimitReached:
     type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Message extends RefinedType[String, Pure]
     type UntilEpochMs = UntilEpochMs.T
-    object UntilEpochMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UntilEpochMs extends RefinedType[Long, Pure]

@@ -1,33 +1,37 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Tokens of one call. `input` counts ALL prompt tokens, cached ones included; `cacheRead` and `cacheWrite` are parts
   * of it. `reasoning` is the part of `output` the model spent thinking, where the provider says.
   */
-final case class AiUsage(input: AiUsage.Input, output: AiUsage.Output, cacheRead: AiUsage.CacheRead = _root_.com.histmersion.plugin.AiUsage.CacheRead((0).toLong), cacheWrite: AiUsage.CacheWrite = _root_.com.histmersion.plugin.AiUsage.CacheWrite((0).toLong), reasoning: AiUsage.Reasoning = _root_.com.histmersion.plugin.AiUsage.Reasoning((0).toLong)):
+final case class AiUsage(input: AiUsage.Input, output: AiUsage.Output, cacheRead: AiUsage.CacheRead = AiUsage.CacheRead((0).toLong), cacheWrite: AiUsage.CacheWrite = AiUsage.CacheWrite((0).toLong), reasoning: AiUsage.Reasoning = AiUsage.Reasoning((0).toLong)):
   /** The constructor of a provider compiled before reasoning tokens were counted. */
-  def this(input: Long, output: Long, cacheRead: Long, cacheWrite: Long) = this(_root_.com.histmersion.plugin.AiUsage.Input(input), _root_.com.histmersion.plugin.AiUsage.Output(output), _root_.com.histmersion.plugin.AiUsage.CacheRead(cacheRead), _root_.com.histmersion.plugin.AiUsage.CacheWrite(cacheWrite), _root_.com.histmersion.plugin.AiUsage.Reasoning((0).toLong))
+  def this(input: Long, output: Long, cacheRead: Long, cacheWrite: Long) = this(AiUsage.Input(input), AiUsage.Output(output), AiUsage.CacheRead(cacheRead), AiUsage.CacheWrite(cacheWrite), AiUsage.Reasoning((0).toLong))
 
 object AiUsage:
   /** The usage as a provider compiled before reasoning tokens were counted wrote it. */
-  type ApplyInput = _root_.com.histmersion.plugin.AiUsage.Input
-  val ApplyInput: _root_.com.histmersion.plugin.AiUsage.Input.type = _root_.com.histmersion.plugin.AiUsage.Input
-  type ApplyOutput = _root_.com.histmersion.plugin.AiUsage.Output
-  val ApplyOutput: _root_.com.histmersion.plugin.AiUsage.Output.type = _root_.com.histmersion.plugin.AiUsage.Output
-  type ApplyCacheRead = _root_.com.histmersion.plugin.AiUsage.CacheRead
-  val ApplyCacheRead: _root_.com.histmersion.plugin.AiUsage.CacheRead.type = _root_.com.histmersion.plugin.AiUsage.CacheRead
-  type ApplyCacheWrite = _root_.com.histmersion.plugin.AiUsage.CacheWrite
-  val ApplyCacheWrite: _root_.com.histmersion.plugin.AiUsage.CacheWrite.type = _root_.com.histmersion.plugin.AiUsage.CacheWrite
+  type ApplyInput = Input
+  val ApplyInput: Input.type = Input
+  type ApplyOutput = Output
+  val ApplyOutput: Output.type = Output
+  type ApplyCacheRead = CacheRead
+  val ApplyCacheRead: CacheRead.type = CacheRead
+  type ApplyCacheWrite = CacheWrite
+  val ApplyCacheWrite: CacheWrite.type = CacheWrite
 
   type Input = Input.T
-  object Input extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Input extends RefinedType[Long, Pure]
   type Output = Output.T
-  object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Output extends RefinedType[Long, Pure]
   type CacheRead = CacheRead.T
-  object CacheRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CacheRead extends RefinedType[Long, Pure]
   type CacheWrite = CacheWrite.T
-  object CacheWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CacheWrite extends RefinedType[Long, Pure]
   type Reasoning = Reasoning.T
-  object Reasoning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reasoning extends RefinedType[Long, Pure]
 
-  def apply(input: com.histmersion.plugin.AiUsage.ApplyInput, output: com.histmersion.plugin.AiUsage.ApplyOutput, cacheRead: com.histmersion.plugin.AiUsage.ApplyCacheRead, cacheWrite: com.histmersion.plugin.AiUsage.ApplyCacheWrite): AiUsage =
-    new AiUsage(input, output, cacheRead, cacheWrite, _root_.com.histmersion.plugin.AiUsage.Reasoning((0).toLong))
+  def apply(input: ApplyInput, output: ApplyOutput, cacheRead: ApplyCacheRead, cacheWrite: ApplyCacheWrite): AiUsage =
+    new AiUsage(input, output, cacheRead, cacheWrite, Reasoning((0).toLong))

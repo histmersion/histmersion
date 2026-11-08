@@ -1,4 +1,8 @@
-package com.histmersion.plugin
+package com.histmersion
+package plugin
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What one call answered: text (the final answer is JSON matching the answer schema), the tools the model called (the
   * host runs them and calls again), why it stopped, its usage, and the model that actually served it, when the provider
@@ -41,9 +45,9 @@ object AiTurn:
     *   what the answer is, when the step's schema says (a provider's structured-output field for it)
     */
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type ServedBy = ServedBy.T
-  object ServedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ServedBy extends RefinedType[String, Pure]
 
   final case class Request(
       model: Request.Model,
@@ -67,48 +71,48 @@ object AiTurn:
         maxTokens: Int,
         iteration: Int,
         maxIterations: Int
-    ) = this(_root_.com.histmersion.plugin.AiTurn.Request.Model(model), _root_.com.histmersion.plugin.AiTurn.Request.System(system), messages, tools, (answerSchema).map(refactorValue => _root_.com.histmersion.plugin.AiTurn.Request.AnswerSchema(refactorValue)), _root_.com.histmersion.plugin.AiTurn.Request.MaxTokens(maxTokens), _root_.com.histmersion.plugin.AiTurn.Request.Iteration(iteration), _root_.com.histmersion.plugin.AiTurn.Request.MaxIterations(maxIterations), None, None)
+    ) = this(Request.Model(model), Request.System(system), messages, tools, (answerSchema).map(refactorValue => Request.AnswerSchema(refactorValue)), Request.MaxTokens(maxTokens), Request.Iteration(iteration), Request.MaxIterations(maxIterations), None, None)
 
   object Request:
     /** The request as a host or a test compiled before the rendered schema and its description were passed wrote it. */
-    type ApplyModel = _root_.com.histmersion.plugin.AiTurn.Request.Model
-    val ApplyModel: _root_.com.histmersion.plugin.AiTurn.Request.Model.type = _root_.com.histmersion.plugin.AiTurn.Request.Model
-    type ApplySystem = _root_.com.histmersion.plugin.AiTurn.Request.System
-    val ApplySystem: _root_.com.histmersion.plugin.AiTurn.Request.System.type = _root_.com.histmersion.plugin.AiTurn.Request.System
-    type ApplyAnswerSchema = _root_.com.histmersion.plugin.AiTurn.Request.AnswerSchema
-    val ApplyAnswerSchema: _root_.com.histmersion.plugin.AiTurn.Request.AnswerSchema.type = _root_.com.histmersion.plugin.AiTurn.Request.AnswerSchema
-    type ApplyMaxTokens = _root_.com.histmersion.plugin.AiTurn.Request.MaxTokens
-    val ApplyMaxTokens: _root_.com.histmersion.plugin.AiTurn.Request.MaxTokens.type = _root_.com.histmersion.plugin.AiTurn.Request.MaxTokens
-    type ApplyIteration = _root_.com.histmersion.plugin.AiTurn.Request.Iteration
-    val ApplyIteration: _root_.com.histmersion.plugin.AiTurn.Request.Iteration.type = _root_.com.histmersion.plugin.AiTurn.Request.Iteration
-    type ApplyMaxIterations = _root_.com.histmersion.plugin.AiTurn.Request.MaxIterations
-    val ApplyMaxIterations: _root_.com.histmersion.plugin.AiTurn.Request.MaxIterations.type = _root_.com.histmersion.plugin.AiTurn.Request.MaxIterations
+    type ApplyModel = Model
+    val ApplyModel: Model.type = Model
+    type ApplySystem = System
+    val ApplySystem: System.type = System
+    type ApplyAnswerSchema = AnswerSchema
+    val ApplyAnswerSchema: AnswerSchema.type = AnswerSchema
+    type ApplyMaxTokens = MaxTokens
+    val ApplyMaxTokens: MaxTokens.type = MaxTokens
+    type ApplyIteration = Iteration
+    val ApplyIteration: Iteration.type = Iteration
+    type ApplyMaxIterations = MaxIterations
+    val ApplyMaxIterations: MaxIterations.type = MaxIterations
 
     type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Model extends RefinedType[String, Pure]
     type System = System.T
-    object System extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object System extends RefinedType[String, Pure]
     type AnswerSchema = AnswerSchema.T
-    object AnswerSchema extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AnswerSchema extends RefinedType[String, Pure]
     type MaxTokens = MaxTokens.T
-    object MaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxTokens extends RefinedType[Int, Pure]
     type Iteration = Iteration.T
-    object Iteration extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Iteration extends RefinedType[Int, Pure]
     type MaxIterations = MaxIterations.T
-    object MaxIterations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxIterations extends RefinedType[Int, Pure]
     type AnswerSchemaRendered = AnswerSchemaRendered.T
-    object AnswerSchemaRendered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AnswerSchemaRendered extends RefinedType[String, Pure]
     type AnswerDescription = AnswerDescription.T
-    object AnswerDescription extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AnswerDescription extends RefinedType[String, Pure]
 
     def apply(
-        model: com.histmersion.plugin.AiTurn.Request.ApplyModel,
-        system: com.histmersion.plugin.AiTurn.Request.ApplySystem,
+        model: ApplyModel,
+        system: ApplySystem,
         messages: List[AiMessage],
         tools: List[AiTool],
-        answerSchema: Option[com.histmersion.plugin.AiTurn.Request.ApplyAnswerSchema],
-        maxTokens: com.histmersion.plugin.AiTurn.Request.ApplyMaxTokens,
-        iteration: com.histmersion.plugin.AiTurn.Request.ApplyIteration,
-        maxIterations: com.histmersion.plugin.AiTurn.Request.ApplyMaxIterations
+        answerSchema: Option[ApplyAnswerSchema],
+        maxTokens: ApplyMaxTokens,
+        iteration: ApplyIteration,
+        maxIterations: ApplyMaxIterations
     ): Request =
       new Request(model, system, messages, tools, answerSchema, maxTokens, iteration, maxIterations, None, None)
