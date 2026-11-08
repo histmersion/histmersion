@@ -178,8 +178,21 @@ def dbTestGroups(
   }
 )
 
+// The base trait of every newtype's companion (CanEqual and the base type's Ordering, lifted once), on Iron alone
+lazy val newtype = projectMatrix
+  .in(file("modules/newtype"))
+  .settings(
+    name := "histmersion-newtype",
+    description := "The base trait of every Histmersion newtype: an Iron RefinedType with CanEqual and a lifted Ordering"
+  )
+  .settings(commonDeps)
+  .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
+  .jvmPlatform(scalaVersions = Seq(scala3))
+  .jsPlatform(scalaVersions = Seq(scala3))
+
 lazy val values = projectMatrix
   .in(file("modules/values"))
+  .dependsOn(newtype)
   .settings(
     name := "histmersion-values",
     description := "The model's newtypes and vocabularies the server-side modules share, on Iron alone (JVM)"
@@ -190,6 +203,7 @@ lazy val values = projectMatrix
 
 lazy val api = projectMatrix
   .in(file("modules/api"))
+  .dependsOn(newtype)
   .settings(
     name := "histmersion-api",
     description := "The wire contract: records, Tapir endpoints, circe codecs and schemas, Markdown (JVM and Scala.js)"
@@ -270,6 +284,7 @@ lazy val core = projectMatrix
 
 lazy val pluginApi = project
   .in(file("modules/plugin-api"))
+  .dependsOn(newtype.jvm(scala3))
   // sconfig, kindlings-sconfig-derivation and iron only (all in the plugin platform): no Histmersion class on a plugin's class path
   .settings(
     name := "histmersion-plugin-api",
@@ -509,6 +524,7 @@ lazy val pluginHelloDeps = project
 
 lazy val console = project
   .in(file("modules/console"))
+  .dependsOn(newtype.jvm(scala3))
   .settings(commonDeps)
   .settings(name := "histmersion-console", publish / skip := true)
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
@@ -556,7 +572,7 @@ lazy val chimneyIron = project
 
 lazy val chimneyIronTests = project
   .in(file("modules/chimney-iron-tests"))
-  .dependsOn(chimneyIron % Provided)
+  .dependsOn(chimneyIron % Provided, newtype.jvm(scala3))
   .settings(
     name := "histmersion-chimney-iron-tests",
     description := "chimney-iron used as a layer uses it, as a Provided dependency",
@@ -800,6 +816,13 @@ lazy val server = project
         conv.toPath((values.jvm(scala3) / Compile / packageBin).value).toFile,
         conv.toPath((values.jvm(scala3) / Compile / packageSrc).value).toFile
       )
+      // the newtypes' base trait, which plugin-api's POM names
+      module(
+        (newtype.jvm(scala3) / projectID).value,
+        conv.toPath((newtype.jvm(scala3) / makePom).value).toFile,
+        conv.toPath((newtype.jvm(scala3) / Compile / packageBin).value).toFile,
+        conv.toPath((newtype.jvm(scala3) / Compile / packageSrc).value).toFile
+      )
       val platformName = s"histmersion-plugin-platform_${scalaBinaryVersion.value}"
       val pom = PluginRepo.platformPom(
         pluginApiId.organization,
@@ -987,7 +1010,7 @@ lazy val web = project
 lazy val root = project
   .in(file("."))
   .aggregate(
-    (values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
+    (newtype.projectRefs ++ values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
       pluginsEvents.projectRefs ++ pluginsMedia.projectRefs ++
       pluginsGazetteers.projectRefs ++ pluginsAiHttp.projectRefs ++ pluginsCalibre.projectRefs)*
   )
