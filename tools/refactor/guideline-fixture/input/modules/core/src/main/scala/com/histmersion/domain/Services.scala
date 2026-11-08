@@ -20,7 +20,7 @@ object Sources:
   def check(raw: String): Option[Citekey] = Citekey.option(raw) // assert: GuidelineInventory
   def slug(raw: String): Either[String, Slug] = Slug.either(raw) // assert: GuidelineInventory.G44
   def keys(raws: List[String]): List[Citekey] = raws.flatMap(Citekey.option) // assert: GuidelineInventory
-  def fixed: Citekey = Citekey("fixed") // assert: GuidelineInventory.G44
+  def fixed: Citekey = Citekey("fixed")
   def bridge(s: Slug): Citekey = Citekey(s.value) // assert: GuidelineInventory
   def loud(c: Citekey): String = Text.shout(c.value, 2) + Text.whisper("x") // assert: GuidelineInventory
   def bound(c: Citekey): String = SourceRows.bind(c.value) // assert: GuidelineInventory

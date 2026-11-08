@@ -10,8 +10,6 @@ G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.sca
 G3misplaced	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	27	Sources.same2(c: Citekey)
 G3misplaced	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	8	SourceRows.toParam(c: Citekey)
 G3misplaced	db	modules/db/src/main/scala/com/histmersion/db/SourceRows.scala	11	SourceRows.q(st: Status)
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	21	construct:Wire.apply;literal
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	22	construct:Wire.apply;literal
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Policy.scala	26	value:Wire
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	10	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	value:Citekey
@@ -19,7 +17,6 @@ G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	11	va
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	20	construct:Citekey.option;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	21	construct:Slug.either;expr
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	22	construct:Citekey.option;function-reference
-G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	23	construct:Citekey.apply;literal
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	24	value:Slug;bridge->Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	25	value:Citekey
 G44	core	modules/core/src/main/scala/com/histmersion/domain/Services.scala	26	value:Citekey
@@ -67,3 +64,21 @@ G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	ot
 G47fqn	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	other-package:com.histmersion.domain.Citekey.type
 G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	_root_.com
 G47root	web	modules/web/src/main/scala/com/histmersion/web/UploadView.scala	12	_root_.com
+G3misplaced	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	8	Queries.appended(s: Sql)
+G3misplaced	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	9	Queries.wrapped(s: Sql)
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	13	construct:Citekey.applyUnsafe;expr
+G44	core	modules/core/src/main/scala/com/histmersion/domain/Literals.scala	14	construct:Year.apply;expr
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	construct:Text.apply;expr
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	construct:Text.applyUnsafe;expr
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	17	value:Text
+G44	db	modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	18	value:Text
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	operator:raw
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	6	text:Text
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	7	operator:of
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	7	text:RawText
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	8	operator:++
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	9	operator:wrap
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	10	operator:raw
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	10	text:Text
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	operator:raw
+G58raw	db	modules/db/src/main/scala/com/histmersion/util/database/Queries.scala	11	text:Text.applyUnsafe
