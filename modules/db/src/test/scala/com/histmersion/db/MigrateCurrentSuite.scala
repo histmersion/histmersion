@@ -12,6 +12,8 @@ import com.histmersion.config.DbConfig
   * otherwise.
   */
 class MigrateCurrentSuite extends DbSuite with Bounded:
+  private given CanEqual[Thread, Thread] = CanEqual.derived
+
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 

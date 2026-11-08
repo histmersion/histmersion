@@ -40,6 +40,8 @@ import com.histmersion.util.ocr.Chunker
   * and stored original as their blobs arrive.
   */
 private[sources] object SourceBundleRepo:
+  private given CanEqual[UUID, UUID] = CanEqual.derived
+
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 

@@ -17,6 +17,8 @@ import com.histmersion.api.checks.Lint
   * the caller's transaction.
   */
 private[events] object CorrectionRepo:
+  private given CanEqual[Json, Json] = CanEqual.derived
+
   private val Cols =
     "c.id, c.target_kind, c.target_id, c.field, c.value::text, c.upstream_value::text, c.status, c.upstream, " +
       "c.upstream_now::text, c.created_at::text, c.checked_at::text"

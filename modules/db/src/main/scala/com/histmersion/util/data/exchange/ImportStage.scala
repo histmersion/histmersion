@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 /** The stages of an import, in the order they run. */
-enum ImportStage:
+enum ImportStage derives CanEqual:
   /** The rows of the lines, before the blobs are read: they are written with the bundle's own clocks. */
   case Rows
 
