@@ -16,7 +16,7 @@ import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, S
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
-import com.histmersion.domain.automation.{Goal as DomainGoal, ItemStatus as DomainItemStatus, Manager as DomainManager}
+import com.histmersion.domain.automation.{Approval as DomainApproval, Goal as DomainGoal, ItemStatus as DomainItemStatus, Manager as DomainManager}
 import com.histmersion.domain.research.Slug as ResearchSlug
 import com.histmersion.RowCount
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
@@ -519,7 +519,7 @@ final class AutopilotService(
         else com.histmersion.api.automation.Autopilot.ApprovalRule.Mode("person"),
         ApprovalRule.Cap(cap)
       ) match
-        case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == Agents.ApprovalMode.Auto =>
+        case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == DomainApproval.Mode.Auto =>
           r.modify(_.mode).setTo(ApprovalRule.Mode("auto (in the run, unchecked)"))
         case r => r
     val st = EngineStatus(

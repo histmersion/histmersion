@@ -35,5 +35,5 @@ object JsonFields:
   /** A year as the SPI states it; `None` beyond what a `Year` holds. */
   def year(y: com.histmersion.plugins.events.JsonFields.Year): Option[com.histmersion.plugin.Year] = Option.when(y.value.isValidInt)(com.histmersion.plugin.Year(y.value.toInt))
 
-  def latitude(l: Option[com.histmersion.plugins.events.JsonFields.Decimal]): Option[Latitude] = l.flatMap(d => Latitude.option(d.value))
-  def longitude(l: Option[com.histmersion.plugins.events.JsonFields.Decimal]): Option[Longitude] = l.flatMap(d => Longitude.option(d.value))
+  def latitude(l: Option[com.histmersion.plugins.events.JsonFields.Decimal]): Option[Latitude] = l.filter(d => d.value >= -90.0 && d.value <= 90.0).map(d => Latitude(d.value))
+  def longitude(l: Option[com.histmersion.plugins.events.JsonFields.Decimal]): Option[Longitude] = l.filter(d => d.value >= -180.0 && d.value <= 180.0).map(d => Longitude(d.value))

@@ -158,11 +158,11 @@ object JobsView:
   private def listing = list.listing
 
   /** The job this page just started — marked in the list until the window closes. */
-  private val started = Var(Option.empty[String])
+  private val started = Var(Option.empty[com.histmersion.api.SpatialHierarchyResult.Job.Id])
 
   /** A job this page started (an upload): show it, and poll quickly again. */
   def track(jobId: com.histmersion.api.SpatialHierarchyResult.Job.Id): Unit =
-    started.set(Some(jobId.value))
+    started.set(Some(jobId))
     list.refresh(changed = com.histmersion.web.Poll.DataChanged(true))
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────

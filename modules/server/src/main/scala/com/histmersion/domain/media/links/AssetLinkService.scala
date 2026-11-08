@@ -89,7 +89,7 @@ object AssetLinkService:
       AssetLink.List.of(com.histmersion.api.RowCount(rows.size), rows, com.histmersion.api.personal.UnreadPage.Offset(0))
 
     def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
-      if !state.get.assets.exists(a => a.citekey.contains(in.citekey) && a.name == in.assetName) then Left(noFigure(in))
+      if !state.get.assets.exists(a => a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value) then Left(noFigure(in))
       else
         val after = state.updateAndGet { s =>
           val id = MediaState.LastAssetLinkId(s.lastAssetLinkId.value + 1)

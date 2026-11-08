@@ -150,7 +150,7 @@ final class OaBacklog(
       .map((k, v) => ManagerLight.Id(k.value) -> v.value)
     agents.managerStore
       .light()
-      .filter(m => m.kind == Kind.Watch.wire && m.state == State.Active.wire && m.config.autoIngest.contains(true))
+      .filter(m => m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true)))
       .map(m =>
         m.id -> IngestBacklog.Lane.LeftToday(
           watchDefaults.ingestAllowance(m.config, WatchManagerDefaults.IngestedToday(today.getOrElse(m.id, 0))).value
@@ -166,8 +166,8 @@ final class OaBacklog(
     val draining = agents.managerStore
       .light()
       .filter(m =>
-        m.kind == Kind.Watch.wire && m.state == State.Active.wire &&
-          m.config.autoIngest.contains(true)
+        m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value &&
+          m.config.autoIngest.contains(ManagerConfig.AutoIngest(true))
       )
       .map(_.id)
       .toSet
@@ -457,7 +457,7 @@ final class OaBacklog(
         RepairFacts.IsOa(rs.exists(_.isOa.value)),
         RepairFacts.Watcher(first.managerId.value),
         RepairFacts.WatcherExists(w.isDefined),
-        RepairFacts.WatcherAutoIngest(w.exists(m => m.state != State.Stopped.wire && m.config.autoIngest.contains(true))),
+        RepairFacts.WatcherAutoIngest(w.exists(m => m.state.value != State.Stopped.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true)))),
         site.sourceStore.citekeyOfDoi(first.doi)
       )
       def row(action: String, detail: String, backlogItem: Option[ManagerItem.Id] = None) =

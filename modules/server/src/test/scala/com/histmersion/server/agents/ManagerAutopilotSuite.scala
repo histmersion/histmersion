@@ -394,7 +394,7 @@ class ManagerAutopilotSuite extends com.histmersion.db.DbSuite with RunTranscrip
       Right(AgentScheduler.Code.Person)
     )
     assert(
-      a.focus.info().waiting.exists(w => w.slug.value == Goal.value && w.code == GoalFocus.Code.Person),
+      a.focus.info().waiting.exists(w => w.slug.value == Goal.value && w.code.value == GoalFocus.Code.Person.value),
       a.focus.info().waiting
     )
     assert(!a.approvalsList(Some(ApprovalQuery.State("all")), None).toOption.get.exists(_.note.exists(_.value.startsWith("autopilot:"))))

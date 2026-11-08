@@ -26,7 +26,7 @@ object TilesApi:
       undated: Option[TileQuery.Undated] = None,
       ifNoneMatch: Option[TileQuery.IfNoneMatch] = None
   ):
-    def withUndated: Boolean = (undated.contains(true))
+    def withUndated: Boolean = (undated.contains(TileQuery.Undated(true)))
 
   object TileQuery:
 

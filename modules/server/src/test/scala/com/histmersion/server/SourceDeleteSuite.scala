@@ -288,7 +288,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
       h.library.sources
         .delete(com.histmersion.domain.library.Citekey("zzdel1999_nothing"), Source.DeleteRequest())
         .left
-        .exists(_.code.contains(Write.CodeNotFound))
+        .exists(_.code.exists(_.value == Write.CodeNotFound))
     )
     assert(SourceFixtures.load(ds, DelCk).isDefined)
 

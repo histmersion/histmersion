@@ -141,7 +141,7 @@ object WikidataCatalogue:
                 lon = JsonFields.longitude(pos.map(_._2)),
                 historicity = CatalogueEvent.Historicity(hist),
                 deaths = rs.flatMap(binding(_, "deaths")).flatMap(d => d.toDoubleOption.map(_.toLong)).maxOption.map(n => CatalogueEvent.Deaths(n)),
-                wikidata = WikidataId.option(qid),
+                wikidata = Option.when(qid.matches("Q[1-9][0-9]*"))(WikidataId(qid)),
                 description = first("itemDescription").map(t => CatalogueEvent.Description(t)),
                 raw = Some(CatalogueEvent.Raw(Json.arr(rs.flatMap(_.focus)*).noSpaces))
               )

@@ -247,3 +247,9 @@ The sample plugins (plugin-fixtures/hello, hello-ai) show what a plugin author n
 - BundleHttpSuite "review draft" is not idempotent against a reused test database (leaves a merge_sessions row).
 - Storage.Advice.shrink returns Storage.Hint where Entry.shrink is Entry.Shrink: one concept, unify in api and server.
 - Universal apply fails on non-case classes in several modules ("object X does not take parameters"): worked around with `new` at call sites (DomMarker, PointSet, Dot, Client, DirSize.Budget, SourceProposals, PeriodImports, Prompts). Find the cause (compiler option or companion shape) before the style pass.
+
+## Silent-bug pass (inventory step 1), found by the new checks, not by tests
+
+Real bugs fixed (always false after the rewrite): AutopilotService:522 domain vs api Approval.Mode (auto-unchecked rule never applied); ManagerSupervisor.stepOutput enum vs wire (step output always empty); EnrichSourcePipeline status api vs domain Source.Status; LibraryTools:500 and ReviewArticlePipeline:944 Option[Code].contains(String); plus test comparisons. Lost checks restored: events plugin JsonFields lat/lon ranges, WikidataCatalogue Q-id pattern. Same-concept comparisons made type-equal: Period.Skip.fromWire, RunParams.fixes, TilesApi.withUndated, WatchManagerDefaults.ingestAllowance, OaBacklog/WatchManagerKind autoIngest, ServerAutomationHost fix, JobsView started.
+Pre-existing on master, decide: MergeApplyJob.of `error.contains(JobState.Interrupted)` is true only when the error text is exactly "interrupted"; compare with the code that writes the error.
+Tests need a regression test for each of the three serious bugs (they passed while broken).

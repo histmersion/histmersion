@@ -175,7 +175,7 @@ final class CompileArticlePipeline(
       SourceFact(
         com.histmersion.domain.library.Citekey.assume(x.source.citekey.value),
         Title(x.source.title.value),
-        x.source.year.flatMap(y => com.histmersion.Year.option(y.value.toInt)),
+        x.source.year.map(y => com.histmersion.Year(y.value.toInt)),
         x.source.status
       )
     )

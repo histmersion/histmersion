@@ -54,7 +54,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
   test("an unknown kind is invalid, a missing source not found; a held lock refuses every write"):
     val c = controllers()
     val bad = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zznew1990_x"), com.histmersion.api.catalogue.Attestation.TargetType("planet"), com.histmersion.api.catalogue.Attestation.TargetId("x")))
-    assert(bad.left.exists(e => e.message.value.startsWith("unknown target type 'planet'") && e.code.contains("invalid")))
+    assert(bad.left.exists(e => e.message.value.startsWith("unknown target type 'planet'") && e.code.exists(_.value == "invalid")))
     val none = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zzgone1900_y"), com.histmersion.api.catalogue.Attestation.TargetType("place"), com.histmersion.api.catalogue.Attestation.TargetId("zz_hill")))
     assertEquals(none.left.map(_.message), Left("No source 'zzgone1900_y'"))
     assert(c.delete(Caller.Local, com.histmersion.api.catalogue.Attestation.Id(5)).left.exists(_.message.value == "No attestation 5"))

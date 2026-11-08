@@ -508,7 +508,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     assert(gate.started.await(30, java.util.concurrent.TimeUnit.SECONDS))
     val second = a.acquireRecheck.run(RecheckRequest(all = com.histmersion.api.library.Acquire.Checks.RecheckRequest.All(true)))
     assert(
-      second.left.exists(e => e.message.value.contains(s"job ${job.id}") && e.code.contains(AgentsApi.CodeConflict)),
+      second.left.exists(e => e.message.value.contains(s"job ${job.id}") && e.code.exists(_.value == AgentsApi.CodeConflict)),
       second.toString
     )
     assert(
