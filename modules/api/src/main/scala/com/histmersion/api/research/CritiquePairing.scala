@@ -197,7 +197,7 @@ object CritiquePairing:
     }
 
   def resolver(citekeys: Set[Citekey], aliases: Map[Citekey, Citekey]): Mention.Key => Option[Citekey] =
-    val sorted = citekeys.toVector.sortBy(_.value)
+    val sorted = citekeys.toVector.sorted
     t =>
       val k = (t).value.trim.toLowerCase(java.util.Locale.ROOT)
       if citekeys(Citekey(k)) then Some(Citekey(k))

@@ -61,7 +61,7 @@ object Target:
 
   def check(t: Target, allowed: Set[ItemKind], what: String): Either[Problem, Target] =
     val years = (t.from, t.to) match
-      case (Some(a), Some(b)) if a.value > b.value =>
+      case (Some(a), Some(b)) if a > b =>
         Left(Problem(s"the period ends (${YearFmt(b)}) before it starts (${YearFmt(a)})"))
       case _ => Right(())
     if !allowed.contains(t.kind) then

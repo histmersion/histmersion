@@ -357,7 +357,7 @@ object Place:
         )
         period <- (in.periodStart, in.periodEnd) match
           case (None, None)                 => Right(None)
-          case (Some(a), Some(b)) if a.value <= b.value => Right(Some(Period(a, b)))
+          case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
           case (Some(a), None)              => Right(Some(Period(a, a)))
           case (None, Some(b))              => Right(Some(Period(b, b)))
           case (Some(a), Some(b))           => Left(invalid(s"the period starts ($a) after it ends ($b)"))
@@ -843,7 +843,7 @@ object Place:
             )
           )
           _ <- period match
-            case Some((Some(a), Some(b))) if a.value > b.value => Left(invalid(s"the period starts ($a) after it ends ($b)"))
+            case Some((Some(a), Some(b))) if a > b => Left(invalid(s"the period starts ($a) after it ends ($b)"))
             case _                                 => Right(())
           _ <- Either.cond(
             reason.forall(_.length <= MaxReason),

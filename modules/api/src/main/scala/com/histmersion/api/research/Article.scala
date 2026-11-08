@@ -152,10 +152,10 @@ object Article:
           com.histmersion.api.research.Coverage
             .Drift(DriftKind.Unplaced, notUsed.filter(_.reason.isEmpty).map(_.source.citekey)),
           com.histmersion.api.research.Coverage
-            .Drift(DriftKind.ReasonForCited, reasons.keys.toList.filter(citedSet).sortBy(_.value)),
+            .Drift(DriftKind.ReasonForCited, reasons.keys.toList.filter(citedSet).sorted),
           com.histmersion.api.research.Coverage.Drift(
             DriftKind.ReasonOutside,
-            if capped then Nil else reasons.keys.toList.filterNot(ck => readSet(ck) || citedSet(ck)).sortBy(_.value)
+            if capped then Nil else reasons.keys.toList.filterNot(ck => readSet(ck) || citedSet(ck)).sorted
           )
         )
         .filter(_.citekeys.nonEmpty)
@@ -672,7 +672,7 @@ object Article:
         Left(
           Problem(s"unknown status ${unknown.map(s => s"'$s'").mkString(", ")} — one of ${Source.Status.values.map(_.wire).mkString(", ")}")
         )
-      else if tidy.from.zip(tidy.to).exists((a, b) => a.value > b.value) then
+      else if tidy.from.zip(tidy.to).exists((a, b) => a > b) then
         Left(Problem(s"the filter's from (${tidy.from.get}) is after its to (${tidy.to.get})"))
       else if tidy.isEmpty && tidy.extraQueries.nonEmpty then
         Left(Problem("extraQueries without a filter: give the query, topics or tags the article is compiled from"))

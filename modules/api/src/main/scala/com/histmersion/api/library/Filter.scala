@@ -83,7 +83,7 @@ object Filter:
   def periodOf(from: Option[Year], to: Option[Year]): Option[Period] =
     (from.map(clamp), to.map(clamp)) match
       case (None, None)       => None
-      case (Some(a), Some(b)) => Some(if a.value <= b.value then Period(a, b) else Period(b, a))
+      case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
       case (Some(a), None)    => Some(Period(a, Latest))
       case (None, Some(b))    => Some(Period(Earliest, b))
 

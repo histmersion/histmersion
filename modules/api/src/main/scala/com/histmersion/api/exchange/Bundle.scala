@@ -608,7 +608,7 @@ object Bundle:
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
     def newer(here: Option[UpdatedAt], there: Option[UpdatedAt]): Boolean = (here, there) match
       case (None, Some(_))    => (true)
-      case (Some(h), Some(t)) => ((t).value > (h).value)
+      case (Some(h), Some(t)) => ((t) > (h))
       case _                  => (false)
 
   final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: ByteCount, sha256: Sha256)

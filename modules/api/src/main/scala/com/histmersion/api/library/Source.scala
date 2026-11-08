@@ -774,11 +774,11 @@ object Source:
 
     /** Postgres rejects an inverted int8range. */
     private[api] def periodOf(start: Option[Year], end: Option[Year], what: String): Either[Problem, Option[Period]] =
-      def sane(v: Year) = v.value >= Filter.Earliest.value && v.value <= Filter.Latest.value
+      def sane(v: Year) = v >= Filter.Earliest && v <= Filter.Latest
       (start, end) match
         case (Some(a), _) if !sane(a)             => Left(outOfRange(what, "period_start", a))
         case (_, Some(b)) if !sane(b)             => Left(outOfRange(what, "period_end", b))
-        case (Some(a), Some(b)) if a.value <= b.value => Right(Some(Period(a, b)))
+        case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
         case (Some(a), Some(b))                   => Left(Problem(s"$what: period_start ($a) must not be after period_end ($b)"))
         case (None, None)                         => Right(None)
         case _                                    => Left(Problem(s"$what: give both period_start and period_end, or neither"))

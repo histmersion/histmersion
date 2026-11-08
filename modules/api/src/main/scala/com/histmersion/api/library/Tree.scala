@@ -85,10 +85,10 @@ object Tree:
   def coversAsOf(p: Option[Period], asOf: Option[Year]): Boolean = (p, asOf) match
     case (None, _)                     => (true)
     case (_, None)                     => (true)
-    case (Some(Period(a, b)), Some(y)) => y.value >= a.value && y.value <= b.value
+    case (Some(Period(a, b)), Some(y)) => y >= a && y <= b
 
   private def overlaps(row: TreeRow, from: Year, to: Year): Boolean =
-    Aggregate.span(row.toPeriodRow).exists((a, b) => a.value <= to.value && b.value >= from.value)
+    Aggregate.span(row.toPeriodRow).exists((a, b) => a <= to && b >= from)
 
   def midpoint(start: Year, end: Year): Year = Year((start).value + Math.floorDiv((end).value - (start).value, 2L))
 
@@ -118,7 +118,7 @@ object Tree:
           if depth.value <= 1 then (Nil, Bucket.Overlap(0))
           else
             nest(mine, bStart, bEnd) match
-              case (Nil, _) if finer.value < size.value =>
+              case (Nil, _) if finer < size =>
                 (splitWorthShowing(count, timeLevel(mine, bStart, bEnd, finer, Depth(depth.value - 1), samples, nest)), Bucket.Overlap(0))
               case (Nil, _) => (Nil, Bucket.Overlap(0))
               case (ks, o)  => (ks, o)

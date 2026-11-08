@@ -272,7 +272,7 @@ object Lint:
         while i < n && a.charAt(i) == b.charAt(i) do i += 1
         i
       val scored = citekeys.iterator
-        .filter(ck => (ck).value != (target).value)
+        .filter(ck => (ck) != (target))
         .flatMap { ck =>
           val c = (ck).value.toLowerCase
           val p = commonPrefix(c, t)
@@ -294,7 +294,7 @@ object Lint:
       .filter((_, group) => group.map(_._1).distinct.sizeIs > 1)
       .sortBy((key, _) => key)
       .flatMap { (key, group) =>
-        val cks = group.map(_._1).distinct.sortBy(_.value)
+        val cks = group.map(_._1).distinct.sorted
         cks.map(ck => LintItem(ck, LintItem.Detail(s"$label $key — also on ${cks.filterNot(_ == ck).mkString(", ")}")))
       }
 

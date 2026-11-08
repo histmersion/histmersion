@@ -31,8 +31,8 @@ object EventPrecision:
   def of(uncertainty: Option[Uncertainty]): EventSummary.Precision =
     uncertainty match
       case None                            => EventSummary.Precision(Undated)
-      case Some(u) if (u).value <= (PreciseUpTo).value     => EventSummary.Precision(Precise)
-      case Some(u) if (u).value <= (ApproximateUpTo).value => EventSummary.Precision(Approximate)
+      case Some(u) if (u) <= (PreciseUpTo)     => EventSummary.Precision(Precise)
+      case Some(u) if (u) <= (ApproximateUpTo) => EventSummary.Precision(Approximate)
       case _                               => EventSummary.Precision(Imprecise)
 
   def of(ts: TimeSpan, plusMinus: Option[EventSummary.PlusMinus]): EventSummary.Precision = of(uncertainty(ts, plusMinus))

@@ -94,7 +94,7 @@ object UiNotices:
   def counter(board: Board, count: Option[Counter.Count], latest: Option[Counter.Latest], seen: Option[Counter.Seen]): Counter =
     Counter(board.wire, count.filter(_ => ((board.counted) == Board.Counted(true))), latest, seen, Counter.Fresh(fresh(latest, seen)))
 
-  def advance(held: Option[Counter.Seen], at: SeenMark.At): Counter.Seen = held.filter((_).value > (at).value).getOrElse(at)
+  def advance(held: Option[Counter.Seen], at: SeenMark.At): Counter.Seen = held.filter((_) > (at)).getOrElse(at)
 
   def badge(count: Option[Counter.Count]): Option[String] =
     count.filter((_).value > 0).map(n => if (n).value > 99 then ("99+") else (n.toString))
