@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `ui.debounce`: the quiet periods before the page acts on typing and state changes; `previewMs` is the one before a
@@ -13,10 +12,10 @@ final case class UiDebounceSettings(suggestMs: UiDebounceSettings.SuggestMs, sea
 
 object UiDebounceSettings:
   type SuggestMs = SuggestMs.T
-  object SuggestMs extends RefinedType[Int, Pure]
+  object SuggestMs extends Newtype[Int, Pure]
   type SearchMs = SearchMs.T
-  object SearchMs extends RefinedType[Int, Pure]
+  object SearchMs extends Newtype[Int, Pure]
   type ReloadMs = ReloadMs.T
-  object ReloadMs extends RefinedType[Int, Pure]
+  object ReloadMs extends Newtype[Int, Pure]
   type PreviewMs = PreviewMs.T
-  object PreviewMs extends RefinedType[Int, Pure]
+  object PreviewMs extends Newtype[Int, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The findings step's guards against the failure kinds a smaller extractor showed (#1424): an answer whose places
@@ -27,11 +26,11 @@ final case class AgentEnrichGuardsConfig(minPlacedShare: AgentEnrichGuardsConfig
 
 object AgentEnrichGuardsConfig:
   type PointerPhrase = PointerPhrase.T
-  object PointerPhrase extends RefinedType[String, Pure]
+  object PointerPhrase extends Newtype[String, Pure]
 
   type MinPlacedShare = MinPlacedShare.T
-  object MinPlacedShare extends RefinedType[Double, Pure]
+  object MinPlacedShare extends Newtype[Double, Pure]
   type CenturyGapYears = CenturyGapYears.T
-  object CenturyGapYears extends RefinedType[Int, Pure]
+  object CenturyGapYears extends Newtype[Int, Pure]
   type PointerPhrases = PointerPhrases.T
-  object PointerPhrases extends RefinedType[String, Pure]
+  object PointerPhrases extends Newtype[String, Pure]

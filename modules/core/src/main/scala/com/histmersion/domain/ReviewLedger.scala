@@ -16,7 +16,6 @@ import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.WireEnumValues
 import com.histmersion.domain.research.workflows.ReviewComparison
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 
@@ -31,15 +30,15 @@ import com.histmersion.domain.library.Citekey
   */
 object ReviewLedger:
   type ClosedLimit = ClosedLimit.T
-  object ClosedLimit extends RefinedType[Int, Pure]
+  object ClosedLimit extends Newtype[Int, Pure]
   type PassageMargin = PassageMargin.T
-  object PassageMargin extends RefinedType[Int, Pure]
+  object PassageMargin extends Newtype[Int, Pure]
   type StubbornLimit = StubbornLimit.T
-  object StubbornLimit extends RefinedType[Int, Pure]
+  object StubbornLimit extends Newtype[Int, Pure]
   type TaskText = TaskText.T
-  object TaskText extends RefinedType[String, Pure]
+  object TaskText extends Newtype[String, Pure]
   type TaskTextLimit = TaskTextLimit.T
-  object TaskTextLimit extends RefinedType[Int, Pure]
+  object TaskTextLimit extends Newtype[Int, Pure]
 
 
   export com.histmersion.domain.automation.Run.{Id as ApplyChecksRun}
@@ -112,7 +111,7 @@ object ReviewLedger:
     type Run = com.histmersion.domain.automation.Run.Id
     val Run: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
     type Quote = ReviewArticle.Evidence.Quote
     val Quote: ReviewArticle.Evidence.Quote.type = ReviewArticle.Evidence.Quote
 
@@ -150,13 +149,13 @@ object ReviewLedger:
     type Round = Closure.Round
     val Round: Closure.Round.type = Closure.Round
     type Claimed = Claimed.T
-    object Claimed extends RefinedType[Boolean, Pure]
+    object Claimed extends Newtype[Boolean, Pure]
     type NotFixed = NotFixed.T
-    object NotFixed extends RefinedType[String, Pure]
+    object NotFixed extends Newtype[String, Pure]
     type Reopened = Reopened.T
-    object Reopened extends RefinedType[Int, Pure]
+    object Reopened extends Newtype[Int, Pure]
     type NotFixedCount = NotFixedCount.T
-    object NotFixedCount extends RefinedType[Int, Pure]
+    object NotFixedCount extends Newtype[Int, Pure]
     type Deferred = com.histmersion.domain.automation.Run.Id
     val Deferred: com.histmersion.domain.automation.Run.Id.type = com.histmersion.domain.automation.Run.Id
 
@@ -190,7 +189,7 @@ object ReviewLedger:
     type Slug = com.histmersion.domain.research.Slug
     val Slug: com.histmersion.domain.research.Slug.type = com.histmersion.domain.research.Slug
     type Task = Task.T
-    object Task extends RefinedType[Int, Pure]
+    object Task extends Newtype[Int, Pure]
 
   /** At most this many lessons are kept (the newest). */
   val MaxLessons = 15
@@ -526,9 +525,9 @@ object ReviewLedger:
 
   object Passage:
     type Heading = Heading.T
-    object Heading extends RefinedType[String, Pure]
+    object Heading extends Newtype[String, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
   final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives KindlingsCodecAsObject:
     def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
@@ -545,7 +544,7 @@ object ReviewLedger:
   object Edited:
 
     type Removed = Removed.T
-    object Removed extends RefinedType[String, Pure]
+    object Removed extends Newtype[String, Pure]
 
   private def paragraphs(body: ReviewArticle.Fix.Body): Vector[String] =
     body.value.replace("\r\n", "\n").split("\n[ \t]*\n").map(_.trim).filter(_.nonEmpty).toVector
@@ -623,7 +622,7 @@ object ReviewLedger:
     type Id = Finding.Id
     val Id: Finding.Id.type = Finding.Id
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has closed as fixed —
     * checked by code, before any reviewer reads it:

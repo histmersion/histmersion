@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which certificate authorities an acquisition request trusts beyond the JDK's own (#1568). Both are opt-in and ADD
@@ -29,6 +28,6 @@ final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsC
 object TlsConfig:
 
   type SystemTrust = SystemTrust.T
-  object SystemTrust extends RefinedType[Boolean, Pure]
+  object SystemTrust extends Newtype[Boolean, Pure]
   type ExtraCaFile = ExtraCaFile.T
-  object ExtraCaFile extends RefinedType[String, Pure]
+  object ExtraCaFile extends Newtype[String, Pure]

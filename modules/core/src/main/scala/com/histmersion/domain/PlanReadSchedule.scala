@@ -2,14 +2,13 @@ package com.histmersion
 package domain
 
 import java.time.{Duration, Instant}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object PlanReadSchedule:
   type AutopilotOn = AutopilotOn.T
-  object AutopilotOn extends RefinedType[Boolean, Pure]
+  object AutopilotOn extends Newtype[Boolean, Pure]
   type Wanted = Wanted.T
-  object Wanted extends RefinedType[Boolean, Pure]
+  object Wanted extends Newtype[Boolean, Pure]
   /** Whether the schedule takes a fresh reading of a pool now: its schedule is on, the autopilot is on, queued work
     * wants the pool, and neither its newest reading (whoever took it) nor the last attempt to take one is younger than
     * the interval.

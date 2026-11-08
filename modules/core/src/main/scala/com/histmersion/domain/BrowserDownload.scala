@@ -35,31 +35,31 @@ final case class BrowserDownload(
 
 object BrowserDownload:
   type Citation = Citation.T
-  object Citation extends RefinedType[String, Pure]
+  object Citation extends Newtype[String, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   /** An open-access location of a work, as the work lists it. */
   type Location = Location.T
-  object Location extends RefinedType[String, Pure]
+  object Location extends Newtype[String, Pure]
   /** The host of a location, as the configuration names it. */
   type Host = Host.T
-  object Host extends RefinedType[String, Pure]
+  object Host extends Newtype[String, Pure]
 
   type LandingUrl = LandingUrl.T
-  object LandingUrl extends RefinedType[String, Match["(?i)https?://\\S+"]]
+  object LandingUrl extends Newtype[String, Match["(?i)https?://\\S+"]]
 
   type PublisherHost = PublisherHost.T
-  object PublisherHost extends RefinedType[String, Not[Blank]]
+  object PublisherHost extends Newtype[String, Not[Blank]]
 
   type OaStatus = OaStatus.T
-  object OaStatus extends RefinedType[String, Match["gold|diamond"]]
+  object OaStatus extends Newtype[String, Match["gold|diamond"]]
 
   type Licence = Licence.T
-  object Licence extends RefinedType[String, Not[Blank]]
+  object Licence extends Newtype[String, Not[Blank]]
 
   /** The work as the acquisition item cites it: `Author et al. (2019). Title.` */
   type CitationText = CitationText.T
-  object CitationText extends RefinedType[String, Not[Blank]]
+  object CitationText extends Newtype[String, Not[Blank]]
 
   /** The work as a browser download, when it is gold (or diamond) open access, has a DOI, and one of its open-access
     * locations is on a host that refuses scripts — `refusingHost(url)`, the host of a location when it is one of

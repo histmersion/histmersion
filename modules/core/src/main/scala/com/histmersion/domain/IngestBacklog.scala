@@ -6,7 +6,6 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 
 import java.time.Instant
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
@@ -19,21 +18,21 @@ import com.histmersion.domain.library.Doi
   */
 object IngestBacklog:
   type DaysToDrain = DaysToDrain.T
-  object DaysToDrain extends RefinedType[Int, Pure]
+  object DaysToDrain extends Newtype[Int, Pure]
   type DrainHorizon = DrainHorizon.T
-  object DrainHorizon extends RefinedType[Int, Pure]
+  object DrainHorizon extends Newtype[Int, Pure]
   type DrainLimit = DrainLimit.T
-  object DrainLimit extends RefinedType[Int, Pure]
+  object DrainLimit extends Newtype[Int, Pure]
   type OwnAllowance = OwnAllowance.T
-  object OwnAllowance extends RefinedType[Int, Pure]
+  object OwnAllowance extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type SharedAllowance = SharedAllowance.T
-  object SharedAllowance extends RefinedType[Int, Pure]
+  object SharedAllowance extends Newtype[Int, Pure]
   type SweepAllowance = SweepAllowance.T
-  object SweepAllowance extends RefinedType[Int, Pure]
+  object SweepAllowance extends Newtype[Int, Pure]
   type TotalBacklog = TotalBacklog.T
-  object TotalBacklog extends RefinedType[Int, Pure]
+  object TotalBacklog extends Newtype[Int, Pure]
 
   /** How the legal chain says a work has no legal file (`AcquisitionControllers.ingestLegal`): such a work goes to the
     * acquisition list at once; any other failure is tried again later.
@@ -61,11 +60,11 @@ object IngestBacklog:
 
   object Entry:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type ManagerId = ManagerId.T
-    object ManagerId extends RefinedType[String, Pure]
+    object ManagerId extends Newtype[String, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
 
   /** The backlog items to ingest now, in order: the due ones (`notBefore` passed), highest priority first, then the
     * oldest; each within what is left of its watcher's own allowance today (`ownLeft`; a watcher missing there —
@@ -98,13 +97,13 @@ object IngestBacklog:
   object Placement:
     object JoinAcquire:
       type Item = Item.T
-      object Item extends RefinedType[Int, Pure]
+      object Item extends Newtype[Int, Pure]
     object JoinBacklog:
       type Item = Item.T
-      object Item extends RefinedType[Long, Pure]
+      object Item extends Newtype[Long, Pure]
     object SettledBefore:
       type Item = Item.T
-      object Item extends RefinedType[Long, Pure]
+      object Item extends Newtype[Long, Pure]
 
   def place(
       inCorpus: Option[Citekey],
@@ -128,10 +127,10 @@ object IngestBacklog:
 
   object Failure:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     object Retry:
       type Failures = Failures.T
-      object Failures extends RefinedType[Int, Pure]
+      object Failures extends Newtype[Int, Pure]
 
   def onFailure(
       message: Problem,
@@ -163,11 +162,11 @@ object IngestBacklog:
 
   object Lane:
     type Backlog = Backlog.T
-    object Backlog extends RefinedType[Int, Pure]
+    object Backlog extends Newtype[Int, Pure]
     type PerDay = PerDay.T
-    object PerDay extends RefinedType[Int, Pure]
+    object PerDay extends Newtype[Int, Pure]
     type LeftToday = LeftToday.T
-    object LeftToday extends RefinedType[Int, Pure]
+    object LeftToday extends Newtype[Int, Pure]
 
   /** How many more UTC days the backlogs take to drain at the current allowance: 0 = today, None = never (no cap leaves
     * room). Day by day: each lane takes up to what its own cap leaves (today: `leftToday`, then `perDay`), the largest
@@ -221,15 +220,15 @@ object IngestBacklog:
 
   object RepairFacts:
     type Item = Item.T
-    object Item extends RefinedType[Int, Pure]
+    object Item extends Newtype[Int, Pure]
     type IsOa = IsOa.T
-    object IsOa extends RefinedType[Boolean, Pure]
+    object IsOa extends Newtype[Boolean, Pure]
     type Watcher = Watcher.T
-    object Watcher extends RefinedType[String, Pure]
+    object Watcher extends Newtype[String, Pure]
     type WatcherExists = WatcherExists.T
-    object WatcherExists extends RefinedType[Boolean, Pure]
+    object WatcherExists extends Newtype[Boolean, Pure]
     type WatcherAutoIngest = WatcherAutoIngest.T
-    object WatcherAutoIngest extends RefinedType[Boolean, Pure]
+    object WatcherAutoIngest extends Newtype[Boolean, Pure]
 
   enum RepairAction:
     /** Into the watcher's ingest backlog; the acquisition item leaves the list. */
@@ -244,7 +243,7 @@ object IngestBacklog:
   object RepairAction:
     object Keep:
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
 
   def repairAction(f: RepairFacts): RepairAction =
     if !f.isOa.value then RepairAction.Keep(RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))

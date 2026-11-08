@@ -7,7 +7,6 @@ import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.{EventLinkCandidate, EventPassage, EventTaxonomy}
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Attestation
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Title
@@ -31,19 +30,19 @@ object EventMatcher:
 
   object Weights:
     type Km = Km.T
-    object Km extends RefinedType[Double, Pure]
+    object Km extends Newtype[Double, Pure]
     type Years = Years.T
-    object Years extends RefinedType[Long, Pure]
+    object Years extends Newtype[Long, Pure]
     type Name = Name.T
-    object Name extends RefinedType[Double, Pure]
+    object Name extends Newtype[Double, Pure]
     type Finding = Finding.T
-    object Finding extends RefinedType[Double, Pure]
+    object Finding extends Newtype[Double, Pure]
     type MinScore = MinScore.T
-    object MinScore extends RefinedType[Double, Pure]
+    object MinScore extends Newtype[Double, Pure]
     type MinNameChars = MinNameChars.T
-    object MinNameChars extends RefinedType[Int, Pure]
+    object MinNameChars extends Newtype[Int, Pure]
     type MaxCandidates = MaxCandidates.T
-    object MaxCandidates extends RefinedType[Int, Pure]
+    object MaxCandidates extends Newtype[Int, Pure]
 
   /** One finding near the event: its id, source, distance and the years between its period and the event's span (0 when
     * they overlap).
@@ -52,11 +51,11 @@ object EventMatcher:
 
   object NearFinding:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Km = Km.T
-    object Km extends RefinedType[Double, Pure]
+    object Km extends Newtype[Double, Pure]
     type YearGap = YearGap.T
-    object YearGap extends RefinedType[Long, Pure]
+    object YearGap extends Newtype[Long, Pure]
 
   /** Pure: the names worth searching a body for — distinct ignoring case, at least `minChars` long and more than a bare
     * kind word ("Battle", "Siege"), longest first (a longer name is the stronger match).
@@ -70,7 +69,7 @@ object EventMatcher:
       .sortBy(n => (-n.length, n))
 
   type FindingWeight = FindingWeight.T
-  object FindingWeight extends RefinedType[Double, Pure]
+  object FindingWeight extends Newtype[Double, Pure]
 
   /** Pure: how much one finding says — 1 at the event's place and time, falling linearly to 0 at `km` away and at
     * `years` apart.

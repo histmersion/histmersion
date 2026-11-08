@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `ui.events`: the events on the map in playback — how long a local and a regional event fade (seconds of playback),
@@ -18,10 +17,10 @@ final case class UiEventsSettings(
 
 object UiEventsSettings:
   type LocalFadeSeconds = LocalFadeSeconds.T
-  object LocalFadeSeconds extends RefinedType[Double, Pure]
+  object LocalFadeSeconds extends Newtype[Double, Pure]
   type RegionalFadeSeconds = RegionalFadeSeconds.T
-  object RegionalFadeSeconds extends RefinedType[Double, Pure]
+  object RegionalFadeSeconds extends Newtype[Double, Pure]
   type MapLimit = MapLimit.T
-  object MapLimit extends RefinedType[Int, Pure]
+  object MapLimit extends Newtype[Int, Pure]
   type OutlineToleranceDeg = OutlineToleranceDeg.T
-  object OutlineToleranceDeg extends RefinedType[Double, Pure]
+  object OutlineToleranceDeg extends Newtype[Double, Pure]

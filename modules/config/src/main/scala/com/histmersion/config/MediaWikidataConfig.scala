@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaWikidataConfig(
@@ -16,12 +15,12 @@ final case class MediaWikidataConfig(
 
 object MediaWikidataConfig:
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends RefinedType[String, Pure]
+  object ApiUrl extends Newtype[String, Pure]
   type Batch = Batch.T
-  object Batch extends RefinedType[Int, Pure]
+  object Batch extends Newtype[Int, Pure]
   type Maxlag = Maxlag.T
-  object Maxlag extends RefinedType[Int, Pure]
+  object Maxlag extends Newtype[Int, Pure]
   type PlaceProperties = PlaceProperties.T
-  object PlaceProperties extends RefinedType[String, Pure]
+  object PlaceProperties extends Newtype[String, Pure]
   type EventProperties = EventProperties.T
-  object EventProperties extends RefinedType[String, Pure]
+  object EventProperties extends Newtype[String, Pure]

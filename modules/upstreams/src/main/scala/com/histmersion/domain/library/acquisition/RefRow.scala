@@ -4,7 +4,6 @@ package domain.library.acquisition
 import com.histmersion.plugin.Year
 import com.histmersion.plugin.Doi
 import com.histmersion.plugin.WorkKey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class RefRow(
     title: Option[RefRow.Title] = None,
@@ -18,6 +17,6 @@ object RefRow:
   type Title = WorkKey.Title
   val Title: WorkKey.Title.type = WorkKey.Title
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Raw = Raw.T
-  object Raw extends RefinedType[String, Pure]
+  object Raw extends Newtype[String, Pure]

@@ -5,7 +5,6 @@ import scala.annotation.tailrec
 
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The user config file's part in a load: where it was looked for, whether it was there, and the keys of it that are no
@@ -23,9 +22,9 @@ final case class UserConfigFile(path: Option[Path], loaded: UserConfigFile.Loade
 
 object UserConfigFile:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type Loaded = Loaded.T
-  object Loaded extends RefinedType[Boolean, Pure]
+  object Loaded extends Newtype[Boolean, Pure]
   type UnknownKeys = UnknownKeys.T
-  object UnknownKeys extends RefinedType[String, Pure]
+  object UnknownKeys extends Newtype[String, Pure]

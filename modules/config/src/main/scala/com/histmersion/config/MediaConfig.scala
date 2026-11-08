@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Media from outside providers (#1446): the polite-client settings, the stored sizes and, per provider, its API and
@@ -45,29 +44,29 @@ final case class MediaConfig(
 
 object MediaConfig:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
 
   type UserAgent = UserAgent.T
-  object UserAgent extends RefinedType[String, Pure]
+  object UserAgent extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type MaxRetries = MaxRetries.T
-  object MaxRetries extends RefinedType[Int, Pure]
+  object MaxRetries extends Newtype[Int, Pure]
   type MaxRetryAfterSeconds = MaxRetryAfterSeconds.T
-  object MaxRetryAfterSeconds extends RefinedType[Int, Pure]
+  object MaxRetryAfterSeconds extends Newtype[Int, Pure]
   type DisplayPx = DisplayPx.T
-  object DisplayPx extends RefinedType[Int, Pure]
+  object DisplayPx extends Newtype[Int, Pure]
   type ThumbPx = ThumbPx.T
-  object ThumbPx extends RefinedType[Int, Pure]
+  object ThumbPx extends Newtype[Int, Pure]
   type MaxBytes = MaxBytes.T
-  object MaxBytes extends RefinedType[Long, Pure]
+  object MaxBytes extends Newtype[Long, Pure]
   type PerProperty = PerProperty.T
-  object PerProperty extends RefinedType[Int, Pure]
+  object PerProperty extends Newtype[Int, Pure]
   type ImportBatch = ImportBatch.T
-  object ImportBatch extends RefinedType[Int, Pure]
+  object ImportBatch extends Newtype[Int, Pure]
   type SameSiteKm = SameSiteKm.T
-  object SameSiteKm extends RefinedType[Double, Pure]
+  object SameSiteKm extends Newtype[Double, Pure]
   type Samples = Samples.T
-  object Samples extends RefinedType[Int, Pure]
+  object Samples extends Newtype[Int, Pure]

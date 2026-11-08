@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.string.Match
   */
 type ItemKind = ItemKind.T
 
-object ItemKind extends RefinedType[String, Match["[a-z][a-z-]*"]]
+object ItemKind extends Newtype[String, Match["[a-z][a-z-]*"]]

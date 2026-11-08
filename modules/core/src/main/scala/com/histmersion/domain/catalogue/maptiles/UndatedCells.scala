@@ -2,7 +2,6 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import scala.annotation.tailrec
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A crowded sites tile with the sites of no known date in it: the dated sites the span shows and the undated ones,
@@ -11,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object UndatedCells:
   type Total = Total.T
-  object Total extends RefinedType[Long, Pure]
+  object Total extends Newtype[Long, Pure]
 
   /** The cells of tile `z`/`x`/`y` (`perSide` squares a side) from the `dated` and the `undated` counts: a square of
     * one site is that site, any other its count, with how many of it have no known date.

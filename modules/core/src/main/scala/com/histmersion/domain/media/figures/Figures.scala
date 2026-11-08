@@ -3,7 +3,6 @@ package domain.media.figures
 
 import com.histmersion.api.media.{AssetLinks, ImageSize}
 import com.histmersion.domain.media.assets.NewFigure
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.Bundle
 
@@ -18,11 +17,11 @@ import com.histmersion.api.exchange.Bundle
 object Figures:
 
   type NoteText = NoteText.T
-  object NoteText extends RefinedType[String, Pure]
+  object NoteText extends Newtype[String, Pure]
   type MdPath = MdPath.T
-  object MdPath extends RefinedType[String, Pure]
+  object MdPath extends Newtype[String, Pure]
   type FileName = FileName.T
-  object FileName extends RefinedType[String, Pure]
+  object FileName extends Newtype[String, Pure]
 
   private val MdPathLine = """(?m)^md_path:\s*"?([^"\n\r]+)"?\s*$""".r
 

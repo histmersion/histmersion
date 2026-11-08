@@ -11,15 +11,15 @@ import java.text.Normalizer
   */
 type Fingerprint = Fingerprint.T
 
-object Fingerprint extends RefinedType[String, Pure]:
+object Fingerprint extends Newtype[String, Pure]:
 
   /** Typographic quotes, folded to the ASCII apostrophe. */
   type FoldResult = FoldResult.T
-  object FoldResult extends RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FoldResult extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldS = FoldS.T
-  object FoldS extends RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FoldS extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TokensResult = TokensResult.T
-  object TokensResult extends RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TokensResult extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TokensS = FoldS
   val TokensS: FoldS.type = FoldS
   type OfS = FoldS

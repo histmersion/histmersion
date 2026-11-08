@@ -2,13 +2,12 @@ package com.histmersion
 package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 type CommaList = CommaList.T
-object CommaList extends RefinedType[String, Pure]:
+object CommaList extends Newtype[String, Pure]:
   type Entry = Entry.T
-  object Entry extends RefinedType[String, Pure]
+  object Entry extends Newtype[String, Pure]
 
   given ConfigReader[CommaList] = summon[ConfigReader[String]].emap(CommaList.either)
 

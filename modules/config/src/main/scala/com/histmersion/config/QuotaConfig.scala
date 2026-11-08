@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is unknown; a window with
@@ -22,12 +21,12 @@ final case class QuotaConfig(
 
 object QuotaConfig:
   type StaleMinutes = StaleMinutes.T
-  object StaleMinutes extends RefinedType[Int, Pure]
+  object StaleMinutes extends Newtype[Int, Pure]
   type DefaultFloor = DefaultFloor.T
-  object DefaultFloor extends RefinedType[Int, Pure]
+  object DefaultFloor extends Newtype[Int, Pure]
   type Margin = Margin.T
-  object Margin extends RefinedType[Int, Pure]
+  object Margin extends Newtype[Int, Pure]
   type PollSeconds = PollSeconds.T
-  object PollSeconds extends RefinedType[Int, Pure]
+  object PollSeconds extends Newtype[Int, Pure]
   type Fallthrough = Fallthrough.T
-  object Fallthrough extends RefinedType[String, Pure]
+  object Fallthrough extends Newtype[String, Pure]

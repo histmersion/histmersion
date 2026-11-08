@@ -8,7 +8,6 @@ import com.histmersion.api.catalogue.Geocode
 import com.histmersion.Period
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a point-only seed region IS, from what its sources say (`lint --rule place-kind`, 2026-10-09). Pleiades files a
@@ -76,11 +75,11 @@ object PlaceReview:
 
   object LinkedItem:
     type Ref = Ref.T
-    object Ref extends RefinedType[String, Pure]
+    object Ref extends Newtype[String, Pure]
     type ItemClass = ItemClass.T
-    object ItemClass extends RefinedType[String, Pure]
+    object ItemClass extends Newtype[String, Pure]
     type ClassLabel = ClassLabel.T
-    object ClassLabel extends RefinedType[String, Pure]
+    object ClassLabel extends Newtype[String, Pure]
 
   /** What is known about one point-only seed place. `featureTypes`/`timePeriods` are Pleiades'; `start`/`end` the
     * stored period (`None` = open on that side).
@@ -99,16 +98,16 @@ object PlaceReview:
 
   object Evidence:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type FeatureTypes = FeatureTypes.T
-    object FeatureTypes extends RefinedType[String, Pure]:
+    object FeatureTypes extends Newtype[String, Pure]:
       given Ordering[T] = Ordering.by[T, String](_.value)
     type TimePeriods = TimePeriods.T
-    object TimePeriods extends RefinedType[String, Pure]
+    object TimePeriods extends Newtype[String, Pure]
     type Descriptions = Descriptions.T
-    object Descriptions extends RefinedType[String, Pure]
+    object Descriptions extends Newtype[String, Pure]
 
   /** A seed place a withdrawn duplicate could be merged into. */
   final case class Candidate(id: Evidence.Id, label: Evidence.Label, kind: Place.Kind.Wire)
@@ -157,11 +156,11 @@ object PlaceReview:
 
   object Proposal:
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type EvidenceLine = EvidenceLine.T
-    object EvidenceLine extends RefinedType[String, Pure]
+    object EvidenceLine extends Newtype[String, Pure]
     type Line = Line.T
-    object Line extends RefinedType[String, Pure]
+    object Line extends Newtype[String, Pure]
 
   /** The duplicate's name, when the title says "Withdrawn (duplicate): X". */
   def duplicateOf(label: Evidence.Label): Option[Evidence.Label] = label.value.trim match

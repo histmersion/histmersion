@@ -6,7 +6,6 @@ import org.ekrich.config.{Config, ConfigFactory, ConfigRenderOptions}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The config side of an in-place reload (docs/research-plugins.md §3.5), pure: which settings differ between the
@@ -15,14 +14,14 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object ConfigReload:
   type ChangedKey = ChangedKey.T
-  object ChangedKey extends RefinedType[String, Pure]
+  object ChangedKey extends Newtype[String, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
 
   type Rendered = Rendered.T
-  object Rendered extends RefinedType[String, Pure]
+  object Rendered extends Newtype[String, Pure]
 
   val Root = "histmersion"
 
@@ -78,8 +77,8 @@ object ConfigReload:
 
   object Config:
     type Watch = Watch.T
-    object Watch extends RefinedType[Boolean, Pure]
+    object Watch extends Newtype[Boolean, Pure]
     type WatchDebounceMs = WatchDebounceMs.T
-    object WatchDebounceMs extends RefinedType[Int, Pure]
+    object WatchDebounceMs extends Newtype[Int, Pure]
     type DrainSeconds = DrainSeconds.T
-    object DrainSeconds extends RefinedType[Int, Pure]
+    object DrainSeconds extends Newtype[Int, Pure]

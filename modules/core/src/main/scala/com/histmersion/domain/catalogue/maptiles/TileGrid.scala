@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How a layer's items become a tile's features ([[com.histmersion.api.catalogue.TileLayer]]): below `maxZoom` a tile
@@ -16,16 +15,16 @@ object TileGrid:
   /** A tile is 512 CSS pixels a side where MapLibre draws it at its own zoom. */
   type TilePx = TilePxValue
   type TilePxValue = TilePxValue.T
-  object TilePxValue extends RefinedType[Int, Pure]
+  object TilePxValue extends Newtype[Int, Pure]
 
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Int, Pure]
+  object MaxZoom extends Newtype[Int, Pure]
   type MaxPoints = MaxPoints.T
-  object MaxPoints extends RefinedType[Int, Pure]
+  object MaxPoints extends Newtype[Int, Pure]
   type CellPx = CellPx.T
-  object CellPx extends RefinedType[Int, Pure]
+  object CellPx extends Newtype[Int, Pure]
   type CellUnits = CellUnits.T
-  object CellUnits extends RefinedType[Int, Pure]
+  object CellUnits extends Newtype[Int, Pure]
 
   val TilePx: TilePx = TilePxValue(512)
 

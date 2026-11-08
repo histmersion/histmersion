@@ -6,7 +6,6 @@ import io.circe.Decoder
 import io.circe.parser.decode
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -16,18 +15,18 @@ import com.histmersion.api.catalogue.Year
   */
 object CompareRuns:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Similarity = Similarity.T
-  object Similarity extends RefinedType[Double, Pure]
+  object Similarity extends Newtype[Double, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   // ── what is compared: the recorded runs ──────────────────────────────────────────────────────
 
   /** Tokens, as a provider reports them; `input` includes the cached ones. */
 
   type Seconds = Seconds.T
-  object Seconds extends RefinedType[Long, Pure]
+  object Seconds extends Newtype[Long, Pure]
   export Step.{Name as OutputName}
 
   final case class Tokens(input: Tokens.Input = Tokens.Input(0), output: Tokens.Output = Tokens.Output(0), cacheRead: Tokens.CacheRead = Tokens.CacheRead(0), cacheWrite: Tokens.CacheWrite = Tokens.CacheWrite(0)):
@@ -41,13 +40,13 @@ object CompareRuns:
 
   object Tokens:
     type Input = Input.T
-    object Input extends RefinedType[Long, Pure]
+    object Input extends Newtype[Long, Pure]
     type Output = Output.T
-    object Output extends RefinedType[Long, Pure]
+    object Output extends Newtype[Long, Pure]
     type CacheRead = CacheRead.T
-    object CacheRead extends RefinedType[Long, Pure]
+    object CacheRead extends Newtype[Long, Pure]
     type CacheWrite = CacheWrite.T
-    object CacheWrite extends RefinedType[Long, Pure]
+    object CacheWrite extends Newtype[Long, Pure]
 
     val Zero: Tokens = Tokens()
 
@@ -56,9 +55,9 @@ object CompareRuns:
 
   object ModelChoice:
     type Role = Role.T
-    object Role extends RefinedType[String, Pure]
+    object Role extends Newtype[String, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
 
   /** A run as compared: what it ran on, its state, and the models it was given. */
   final case class RunHead(
@@ -73,18 +72,18 @@ object CompareRuns:
 
   object RunHead:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]:
+    object Id extends Newtype[String, Pure]:
       extension (id: Id) def short: String = id.value.take(8)
     type Pipeline = Pipeline.T
-    object Pipeline extends RefinedType[String, Pure]
+    object Pipeline extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Status = com.histmersion.domain.automation.Run.State.Wire
     val Status: com.histmersion.domain.automation.Run.State.Wire.type = com.histmersion.domain.automation.Run.State.Wire
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
 
   /** One attempt of one step, with its full recorded output. `firstCallTokens` and `turns` are None where nothing was
     * recorded (a provider that cannot tell, or a run recorded before they were kept).
@@ -106,27 +105,27 @@ object CompareRuns:
 
   object Step:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Status = com.histmersion.domain.automation.Step.Status.Wire
     val Status: com.histmersion.domain.automation.Step.Status.Wire.type = com.histmersion.domain.automation.Step.Status.Wire
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type ActualModel = ActualModel.T
-    object ActualModel extends RefinedType[String, Pure]
+    object ActualModel extends Newtype[String, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends RefinedType[Double, Pure]
+    object CostUsd extends Newtype[Double, Pure]
     type StartedAt = StartedAt.T
-    object StartedAt extends RefinedType[String, Pure]
+    object StartedAt extends Newtype[String, Pure]
     type FinishedAt = FinishedAt.T
-    object FinishedAt extends RefinedType[String, Pure]
+    object FinishedAt extends Newtype[String, Pure]
     type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends RefinedType[Long, Pure]
+    object FirstCallTokens extends Newtype[Long, Pure]
     type Turns = Turns.T
-    object Turns extends RefinedType[Int, Pure]
+    object Turns extends Newtype[Int, Pure]
     type Output = Output.T
-    object Output extends RefinedType[String, Pure]
+    object Output extends Newtype[String, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
 
   final case class Run(run: RunHead, steps: List[Step])
 
@@ -160,9 +159,9 @@ object CompareRuns:
     type Seconds = CompareRuns.Seconds
     val Seconds: CompareRuns.Seconds.type = CompareRuns.Seconds
     type Attempts = Attempts.T
-    object Attempts extends RefinedType[Int, Pure]
+    object Attempts extends Newtype[Int, Pure]
     type Failures = Failures.T
-    object Failures extends RefinedType[Int, Pure]
+    object Failures extends Newtype[Int, Pure]
 
   /** One step of one run, every attempt summed. `billing` names how each configured model is paid for. */
   final case class StepSide(
@@ -184,7 +183,7 @@ object CompareRuns:
     type Actual = Step.ActualModel
     val Actual: Step.ActualModel.type = Step.ActualModel
     type Billing = Billing.T
-    object Billing extends RefinedType[String, Pure]
+    object Billing extends Newtype[String, Pure]
     type CostUsd = Step.CostUsd
     val CostUsd: Step.CostUsd.type = Step.CostUsd
     type Seconds = CompareRuns.Seconds
@@ -222,43 +221,43 @@ object CompareRuns:
 
   object EnrichSide:
     type Findings = Findings.T
-    object Findings extends RefinedType[Int, Pure]
+    object Findings extends Newtype[Int, Pure]
     type QuotesChecked = QuotesChecked.T
-    object QuotesChecked extends RefinedType[Int, Pure]
+    object QuotesChecked extends Newtype[Int, Pure]
     type QuotesPassed = QuotesPassed.T
-    object QuotesPassed extends RefinedType[Int, Pure]
+    object QuotesPassed extends Newtype[Int, Pure]
     type PlacesAsked = PlacesAsked.T
-    object PlacesAsked extends RefinedType[Int, Pure]
+    object PlacesAsked extends Newtype[Int, Pure]
     type PlacesResolved = PlacesResolved.T
-    object PlacesResolved extends RefinedType[Int, Pure]
+    object PlacesResolved extends Newtype[Int, Pure]
     type DatedFindings = DatedFindings.T
-    object DatedFindings extends RefinedType[Int, Pure]
+    object DatedFindings extends Newtype[Int, Pure]
     type SummaryChars = SummaryChars.T
-    object SummaryChars extends RefinedType[Int, Pure]
+    object SummaryChars extends Newtype[Int, Pure]
     type NotesChars = NotesChars.T
-    object NotesChars extends RefinedType[Int, Pure]
+    object NotesChars extends Newtype[Int, Pure]
     type UniqueClaims = UniqueClaims.T
-    object UniqueClaims extends RefinedType[String, Pure]
+    object UniqueClaims extends Newtype[String, Pure]
 
   final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
 
   object ReviewerSide:
     type Reviewer = Reviewer.T
-    object Reviewer extends RefinedType[String, Pure]
+    object Reviewer extends Newtype[String, Pure]
     type Verdict = Verdict.T
-    object Verdict extends RefinedType[String, Pure]
+    object Verdict extends Newtype[String, Pure]
     type Majors = Majors.T
-    object Majors extends RefinedType[Int, Pure]
+    object Majors extends Newtype[Int, Pure]
     type Minors = Minors.T
-    object Minors extends RefinedType[Int, Pure]
+    object Minors extends Newtype[Int, Pure]
 
   final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
 
   object KindCount:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
 
   /** review-article's outputs: the last round's verdict, the rounds, round 1 per reviewer and by kind. */
   final case class ReviewSide(
@@ -271,28 +270,28 @@ object CompareRuns:
 
   object ReviewSide:
     type Verdict = Verdict.T
-    object Verdict extends RefinedType[String, Pure]
+    object Verdict extends Newtype[String, Pure]
     type Rounds = Rounds.T
-    object Rounds extends RefinedType[Int, Pure]
+    object Rounds extends Newtype[Int, Pure]
     type Majors = Majors.T
-    object Majors extends RefinedType[String, Pure]
+    object Majors extends Newtype[String, Pure]
 
   /** Round 1's major findings two runs share; `pairs` shows each match as `<a's id> ↔ <b's id>`. */
   final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List[MajorOverlap.Pairs])
 
   object MajorOverlap:
     type A = A.T
-    object A extends RefinedType[String, Pure]
+    object A extends Newtype[String, Pure]
     type B = B.T
-    object B extends RefinedType[String, Pure]
+    object B extends Newtype[String, Pure]
     type AMajors = AMajors.T
-    object AMajors extends RefinedType[Int, Pure]
+    object AMajors extends Newtype[Int, Pure]
     type BMajors = BMajors.T
-    object BMajors extends RefinedType[Int, Pure]
+    object BMajors extends Newtype[Int, Pure]
     type Shared = Shared.T
-    object Shared extends RefinedType[Int, Pure]
+    object Shared extends Newtype[Int, Pure]
     type Pairs = Pairs.T
-    object Pairs extends RefinedType[String, Pure]
+    object Pairs extends Newtype[String, Pure]
 
   final case class Comparison(
       pipeline: Comparison.Pipeline,
@@ -311,7 +310,7 @@ object CompareRuns:
     type Target = RunHead.Target
     val Target: RunHead.Target.type = RunHead.Target
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
 
   // ── comparing ────────────────────────────────────────────────────────────────────────────────
 

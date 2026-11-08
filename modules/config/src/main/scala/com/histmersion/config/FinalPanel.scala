@@ -1,7 +1,6 @@
 package com.histmersion
 package config
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** When a fixing `review-article` run ends with a full panel: only when the re-checks left no MAJOR open (`clear`, the
@@ -14,7 +13,7 @@ enum FinalPanel(val wire: FinalPanel.Wire):
 
 object FinalPanel:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: AgentReviewConfig.FinalPanel): Option[FinalPanel] =

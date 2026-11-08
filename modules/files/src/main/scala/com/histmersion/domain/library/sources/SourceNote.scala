@@ -15,7 +15,6 @@ import com.histmersion.util.storage.SafePath
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.library.{Edge, Finding, Source}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.storage.TextFiles
 import com.histmersion.api.library.Citekey
@@ -34,7 +33,7 @@ import com.histmersion.api.catalogue.Latitude
   */
 object SourceNote:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   def note(s: Source): Text =
     Text(frontmatterOf(s).note(s.notes.map(n => Frontmatter.NoteBody(n.value.trim)).filter(_.value.nonEmpty)).value)

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `review-article`: at most `maxRounds` panel rounds per run (a run may ask for fewer, never more than `roundsCap`),
@@ -36,26 +35,26 @@ final case class AgentReviewConfig(
 
 object AgentReviewConfig:
   type MaxRounds = MaxRounds.T
-  object MaxRounds extends RefinedType[Int, Pure]
+  object MaxRounds extends Newtype[Int, Pure]
   type RoundsCap = RoundsCap.T
-  object RoundsCap extends RefinedType[Int, Pure]
+  object RoundsCap extends Newtype[Int, Pure]
   type ArticleChars = ArticleChars.T
-  object ArticleChars extends RefinedType[Int, Pure]
+  object ArticleChars extends Newtype[Int, Pure]
   type FixerMaxTokens = FixerMaxTokens.T
-  object FixerMaxTokens extends RefinedType[Int, Pure]
+  object FixerMaxTokens extends Newtype[Int, Pure]
   type FixerTurnsPerFinding = FixerTurnsPerFinding.T
-  object FixerTurnsPerFinding extends RefinedType[Int, Pure]
+  object FixerTurnsPerFinding extends Newtype[Int, Pure]
   type FixerTurnsCap = FixerTurnsCap.T
-  object FixerTurnsCap extends RefinedType[Int, Pure]
+  object FixerTurnsCap extends Newtype[Int, Pure]
   type RecheckTurns = RecheckTurns.T
-  object RecheckTurns extends RefinedType[Int, Pure]
+  object RecheckTurns extends Newtype[Int, Pure]
   type LedgerClosedLines = LedgerClosedLines.T
-  object LedgerClosedLines extends RefinedType[Int, Pure]
+  object LedgerClosedLines extends Newtype[Int, Pure]
   type FinalPanel = FinalPanel.T
-  object FinalPanel extends RefinedType[String, Pure]
+  object FinalPanel extends Newtype[String, Pure]
   type SpotChecks = SpotChecks.T
-  object SpotChecks extends RefinedType[Int, Pure]
+  object SpotChecks extends Newtype[Int, Pure]
   type CritiquePairs = CritiquePairs.T
-  object CritiquePairs extends RefinedType[Int, Pure]
+  object CritiquePairs extends Newtype[Int, Pure]
   type CritiqueReasoned = CritiqueReasoned.T
-  object CritiqueReasoned extends RefinedType[Int, Pure]
+  object CritiqueReasoned extends Newtype[Int, Pure]

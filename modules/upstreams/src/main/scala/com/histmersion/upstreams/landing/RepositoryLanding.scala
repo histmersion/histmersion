@@ -1,7 +1,6 @@
 package com.histmersion
 package upstreams.landing
 import io.circe.{ACursor, Json}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Repository LANDING PAGES (#1580): an open-access location whose URL is an HTML record page rather than the PDF — a
@@ -25,27 +24,27 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object RepositoryLanding:
   type Host = Host.T
-  object Host extends RefinedType[String, Pure]
+  object Host extends Newtype[String, Pure]
   type HostLabel = HostLabel.T
-  object HostLabel extends RefinedType[String, Pure]
+  object HostLabel extends Newtype[String, Pure]
   type HostWord = HostWord.T
-  object HostWord extends RefinedType[String, Pure]
+  object HostWord extends Newtype[String, Pure]
   type HostPattern = HostPattern.T
-  object HostPattern extends RefinedType[String, Pure]
+  object HostPattern extends Newtype[String, Pure]
   type Href = Href.T
-  object Href extends RefinedType[String, Pure]
+  object Href extends Newtype[String, Pure]
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type MetaContent = MetaContent.T
-  object MetaContent extends RefinedType[String, Pure]
+  object MetaContent extends Newtype[String, Pure]
   type MetaName = MetaName.T
-  object MetaName extends RefinedType[String, Pure]
+  object MetaName extends Newtype[String, Pure]
   type PageBytes = PageBytes.T
-  object PageBytes extends RefinedType[Array[Byte], Pure]
+  object PageBytes extends Newtype[Array[Byte], Pure]
   type ZenodoLocator = ZenodoLocator.T
-  object ZenodoLocator extends RefinedType[String, Pure]
+  object ZenodoLocator extends Newtype[String, Pure]
   type ZenodoRecordId = ZenodoRecordId.T
-  object ZenodoRecordId extends RefinedType[String, Pure]
+  object ZenodoRecordId extends Newtype[String, Pure]
 
   /** A landing page to resolve; `repository` = an OA index (OpenAlex `source.type`, Unpaywall `host_type`) says the
     * location is a repository, `publisher` = it says a journal's or a publisher's (such a page is never read, unless it
@@ -54,7 +53,7 @@ object RepositoryLanding:
     */
 
   type PublisherSourceType = PublisherSourceType.T
-  object PublisherSourceType extends RefinedType[String, Pure]
+  object PublisherSourceType extends Newtype[String, Pure]
   type OnHostUrl = HostUrl
   val OnHostUrl: HostUrl.type = HostUrl
   type HostUrl = Candidate.Url
@@ -77,13 +76,13 @@ object RepositoryLanding:
 
   object Candidate:
     type Url = Url.T
-    object Url extends RefinedType[String, Pure]
+    object Url extends Newtype[String, Pure]
     type Repository = Repository.T
-    object Repository extends RefinedType[Boolean, Pure]
+    object Repository extends Newtype[Boolean, Pure]
     type Publisher = Publisher.T
-    object Publisher extends RefinedType[Boolean, Pure]
+    object Publisher extends Newtype[Boolean, Pure]
     type Open = Open.T
-    object Open extends RefinedType[Boolean, Pure]
+    object Open extends Newtype[Boolean, Pure]
 
   /** OpenAlex `source.type`s that are a publisher's, not a repository's. */
   val PublisherSourceTypes: Set[PublisherSourceType] = Set(PublisherSourceType("journal"), PublisherSourceType("conference"), PublisherSourceType("ebook platform"), PublisherSourceType("book series"))
@@ -93,9 +92,9 @@ object RepositoryLanding:
 
   object ZenodoFile:
     type Url = Url.T
-    object Url extends RefinedType[String, Pure]
+    object Url extends Newtype[String, Pure]
     type Md5 = Md5.T
-    object Md5 extends RefinedType[String, Pure]
+    object Md5 extends Newtype[String, Pure]
 
   /** The hosts and platforms the decision reads (`acquire.landing.*`, comma-separated in config). A host entry matches
     * the host itself or any subdomain of it.
@@ -142,9 +141,9 @@ object RepositoryLanding:
   object Rules:
 
     type Generators = Generators.T
-    object Generators extends RefinedType[String, Pure]
+    object Generators extends Newtype[String, Pure]
     type DenyGenerators = DenyGenerators.T
-    object DenyGenerators extends RefinedType[String, Pure]
+    object DenyGenerators extends Newtype[String, Pure]
 
   /** Pure: is the host label `label` the word `w` — the word itself, the word then a digit or a hyphen (`opus4`,
     * `pure-portal`), or, for a word ending in `-`, any label it starts (`uni-` → `uni-koeln`)? Never a longer word

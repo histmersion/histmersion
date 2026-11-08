@@ -1,7 +1,6 @@
 package com.histmersion
 package config.edit
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Why a change to the config file was refused, in words a person acts on. The file is never written when one of these
@@ -72,7 +71,7 @@ enum SettingError:
 
 object SettingError:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   object CredentialInFile:
     export SettingField.EnvVar
 

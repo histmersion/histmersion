@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Step role → its model CHAIN, `provider:model > provider:model > …` (one model is a chain of one;
@@ -23,18 +22,18 @@ final case class AgentRolesConfig(
 
 object AgentRolesConfig:
   type Probe = Probe.T
-  object Probe extends RefinedType[String, Pure]
+  object Probe extends Newtype[String, Pure]
   type Extractor = Extractor.T
-  object Extractor extends RefinedType[String, Pure]
+  object Extractor extends Newtype[String, Pure]
   type Reviewer = Reviewer.T
-  object Reviewer extends RefinedType[String, Pure]
+  object Reviewer extends Newtype[String, Pure]
   type ColdReader = ColdReader.T
-  object ColdReader extends RefinedType[String, Pure]
+  object ColdReader extends Newtype[String, Pure]
   type Skeptic = Skeptic.T
-  object Skeptic extends RefinedType[String, Pure]
+  object Skeptic extends Newtype[String, Pure]
   type Fixer = Fixer.T
-  object Fixer extends RefinedType[String, Pure]
+  object Fixer extends Newtype[String, Pure]
   type Planner = Planner.T
-  object Planner extends RefinedType[String, Pure]
+  object Planner extends Newtype[String, Pure]
   type Writer = Writer.T
-  object Writer extends RefinedType[String, Pure]
+  object Writer extends Newtype[String, Pure]

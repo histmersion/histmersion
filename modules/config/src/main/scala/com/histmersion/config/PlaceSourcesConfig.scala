@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The gazetteer's external sources (#1064): where the pinned GeoNames / Wikidata extracts and the LPF drop folder are
@@ -31,25 +30,25 @@ final case class PlaceSourcesConfig(
 
 object PlaceSourcesConfig:
   type PointAreaKind = PointAreaKind.T
-  object PointAreaKind extends RefinedType[String, Pure]
+  object PointAreaKind extends Newtype[String, Pure]
 
   type Dir = Dir.T
-  object Dir extends RefinedType[String, Pure]
+  object Dir extends Newtype[String, Pure]
   type LpfDir = LpfDir.T
-  object LpfDir extends RefinedType[String, Pure]
+  object LpfDir extends Newtype[String, Pure]
   type Manifest = Manifest.T
-  object Manifest extends RefinedType[String, Pure]
+  object Manifest extends Newtype[String, Pure]
   type Batch = Batch.T
-  object Batch extends RefinedType[Int, Pure]
+  object Batch extends Newtype[Int, Pure]
   type MaxLpfMb = MaxLpfMb.T
-  object MaxLpfMb extends RefinedType[Int, Pure]
+  object MaxLpfMb extends Newtype[Int, Pure]
   type DownloadTimeoutSeconds = DownloadTimeoutSeconds.T
-  object DownloadTimeoutSeconds extends RefinedType[Int, Pure]
+  object DownloadTimeoutSeconds extends Newtype[Int, Pure]
   type OpenStartWindowYears = OpenStartWindowYears.T
-  object OpenStartWindowYears extends RefinedType[Int, Pure]
+  object OpenStartWindowYears extends Newtype[Int, Pure]
   type PointAreaKinds = PointAreaKinds.T
-  object PointAreaKinds extends RefinedType[String, Pure]
+  object PointAreaKinds extends Newtype[String, Pure]
   type PointAreaFixBatch = PointAreaFixBatch.T
-  object PointAreaFixBatch extends RefinedType[Int, Pure]
+  object PointAreaFixBatch extends Newtype[Int, Pure]
   type PointAreaFixSeconds = PointAreaFixSeconds.T
-  object PointAreaFixSeconds extends RefinedType[Int, Pure]
+  object PointAreaFixSeconds extends Newtype[Int, Pure]

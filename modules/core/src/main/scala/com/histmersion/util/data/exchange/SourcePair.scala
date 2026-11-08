@@ -1,7 +1,6 @@
 package com.histmersion
 package util.data.exchange
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A source of the bundle (`right`) and one here (`left`) that the sources' rules found to be, or perhaps to be, one
@@ -18,8 +17,8 @@ final case class SourcePair(
 
 object SourcePair:
   type Gate = Gate.T
-  object Gate extends RefinedType[String, Pure]
+  object Gate extends Newtype[String, Pure]
   type ByKey = ByKey.T
-  object ByKey extends RefinedType[Boolean, Pure]
+  object ByKey extends Newtype[Boolean, Pure]
   type Basis = Basis.T
-  object Basis extends RefinedType[String, Pure]
+  object Basis extends Newtype[String, Pure]

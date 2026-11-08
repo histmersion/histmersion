@@ -4,7 +4,6 @@ package domain.library.acquisition
 import com.histmersion.plugin.Doi
 import com.histmersion.plugin.Year
 import com.histmersion.plugin.WorkKey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Licence
 final case class WorkRef(
@@ -29,30 +28,30 @@ final case class WorkRef(
 
 object WorkRef:
   type OpenalexId = OpenalexId.T
-  object OpenalexId extends RefinedType[String, Pure]
+  object OpenalexId extends Newtype[String, Pure]
   type ArxivId = com.histmersion.upstreams.ArxivId
   val ArxivId: com.histmersion.upstreams.ArxivId.type = com.histmersion.upstreams.ArxivId
   type Title = WorkKey.Title
   val Title: WorkKey.Title.type = WorkKey.Title
   type Venue = Venue.T
-  object Venue extends RefinedType[String, Pure]
+  object Venue extends Newtype[String, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends RefinedType[Int, Pure]
+  object CitedByCount extends Newtype[Int, Pure]
   type IsOa = IsOa.T
-  object IsOa extends RefinedType[Boolean, Pure]
+  object IsOa extends Newtype[Boolean, Pure]
   type OaStatus = OaStatus.T
-  object OaStatus extends RefinedType[String, Pure]
+  object OaStatus extends Newtype[String, Pure]
   type OaUrl = OaUrl.T
-  object OaUrl extends RefinedType[String, Pure]
+  object OaUrl extends Newtype[String, Pure]
   type IsRetracted = IsRetracted.T
-  object IsRetracted extends RefinedType[Boolean, Pure]
+  object IsRetracted extends Newtype[Boolean, Pure]
   type WorkType = WorkType.T
-  object WorkType extends RefinedType[String, Pure]
+  object WorkType extends Newtype[String, Pure]
   type AbstractText = AbstractText.T
-  object AbstractText extends RefinedType[String, Pure]
+  object AbstractText extends Newtype[String, Pure]
   type ReferencedWorks = ReferencedWorks.T
-  object ReferencedWorks extends RefinedType[String, Pure]
+  object ReferencedWorks extends Newtype[String, Pure]
   type OaLocations = OaLocations.T
-  object OaLocations extends RefinedType[String, Pure]
+  object OaLocations extends Newtype[String, Pure]
   type OaLicence = Licence
   val OaLicence: Licence.type = Licence

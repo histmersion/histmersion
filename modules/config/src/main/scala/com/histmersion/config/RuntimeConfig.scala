@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The native bundle: when `enabled`, the server itself runs the bundled PostgreSQL and OCR converter as child
@@ -22,12 +21,12 @@ final case class RuntimeConfig(
 
 object RuntimeConfig:
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type Home = Home.T
-  object Home extends RefinedType[String, Pure]
+  object Home extends Newtype[String, Pure]
   type DataDir = DataDir.T
-  object DataDir extends RefinedType[String, Pure]
+  object DataDir extends Newtype[String, Pure]
   type PgPort = PgPort.T
-  object PgPort extends RefinedType[Int, Pure]
+  object PgPort extends Newtype[Int, Pure]
   type ConverterPort = ConverterPort.T
-  object ConverterPort extends RefinedType[Int, Pure]
+  object ConverterPort extends Newtype[Int, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `ui.map-tiles`: the map's point layers as vector tiles — the deepest tile cut (MapLibre's zoom), the most items a
@@ -21,14 +20,14 @@ final case class UiMapTilesSettings(
 
 object UiMapTilesSettings:
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Int, Pure]
+  object MaxZoom extends Newtype[Int, Pure]
   type MaxPoints = MaxPoints.T
-  object MaxPoints extends RefinedType[Int, Pure]
+  object MaxPoints extends Newtype[Int, Pure]
   type CellPx = CellPx.T
-  object CellPx extends RefinedType[Int, Pure]
+  object CellPx extends Newtype[Int, Pure]
   type CacheMb = CacheMb.T
-  object CacheMb extends RefinedType[Int, Pure]
+  object CacheMb extends Newtype[Int, Pure]
   type PlaybackBucketSeconds = PlaybackBucketSeconds.T
-  object PlaybackBucketSeconds extends RefinedType[Double, Pure]
+  object PlaybackBucketSeconds extends Newtype[Double, Pure]
   type UndatedKeptZoom = UndatedKeptZoom.T
-  object UndatedKeptZoom extends RefinedType[Int, Pure]
+  object UndatedKeptZoom extends Newtype[Int, Pure]

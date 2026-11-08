@@ -7,7 +7,6 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.util.text.ComparedText
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
@@ -20,27 +19,27 @@ import com.histmersion.domain.research.Slug
   */
 object AgentVerify:
   type MaxAbsYear = MaxAbsYear.T
-  object MaxAbsYear extends RefinedType[Long, Pure]
+  object MaxAbsYear extends Newtype[Long, Pure]
   type MinRatio = MinRatio.T
-  object MinRatio extends RefinedType[Double, Pure]
+  object MinRatio extends Newtype[Double, Pure]
   type NormalisedText = NormalisedText.T
-  object NormalisedText extends RefinedType[String, Pure]
+  object NormalisedText extends Newtype[String, Pure]
   type PeriodEnd = PeriodEnd.T
-  object PeriodEnd extends RefinedType[Long, Pure]
+  object PeriodEnd extends Newtype[Long, Pure]
   type PeriodStart = PeriodStart.T
-  object PeriodStart extends RefinedType[Long, Pure]
+  object PeriodStart extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Ratio = Ratio.T
-  object Ratio extends RefinedType[Double, Pure]
+  object Ratio extends Newtype[Double, Pure]
   type SignedYear = SignedYear.T
-  object SignedYear extends RefinedType[Long, Pure]
+  object SignedYear extends Newtype[Long, Pure]
   type SourceBody = SourceBody.T
-  object SourceBody extends RefinedType[String, Pure]
+  object SourceBody extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
   type Wikilink = Wikilink.T
-  object Wikilink extends RefinedType[String, Pure]
+  object Wikilink extends Newtype[String, Pure]
 
   /** A tool call an LLM step made, as the engine records it ([[com.histmersion.domain.automation.agents.ToolUse]]). */
   type SimilarWordA = String
@@ -48,7 +47,7 @@ object AgentVerify:
   type LinkProblemsText = Text
   val LinkProblemsText: Text.type = Text
   type ToSignedYearValue = ToSignedYearValue.T
-  object ToSignedYearValue extends RefinedType[Long, Pure]
+  object ToSignedYearValue extends Newtype[Long, Pure]
 
   export com.histmersion.domain.automation.agents.ToolUse
 
@@ -192,7 +191,7 @@ object AgentVerify:
 
   object YearUnit:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[YearUnit] =

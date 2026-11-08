@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The GEBCO grid as a sea-floor source: `url`, one GeoTIFF of the grid's tiling (`tileDegrees` square) with `{north}`,
@@ -14,10 +13,10 @@ final case class BasemapGebcoConfig(url: BasemapGebcoConfig.Url, tileDegrees: Ba
 
 object BasemapGebcoConfig:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type TileDegrees = TileDegrees.T
-  object TileDegrees extends RefinedType[Int, Pure]
+  object TileDegrees extends Newtype[Int, Pure]
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Int, Pure]
+  object MaxZoom extends Newtype[Int, Pure]
   type Attribution = Attribution.T
-  object Attribution extends RefinedType[String, Pure]
+  object Attribution extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The crons and the goal sweeps. Since phase 3 a goal's schedules are its watcher (`watch:<goal>`) and every manager's
@@ -51,41 +50,41 @@ object AgentSchedulerConfig:
     * plans and sweeps next, extensions, filters and currency checks last — never 0.
     */
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type MinIntervalMinutes = MinIntervalMinutes.T
-  object MinIntervalMinutes extends RefinedType[Int, Pure]
+  object MinIntervalMinutes extends Newtype[Int, Pure]
   type CurrencySources = CurrencySources.T
-  object CurrencySources extends RefinedType[Int, Pure]
+  object CurrencySources extends Newtype[Int, Pure]
   type FollowupsPerSource = FollowupsPerSource.T
-  object FollowupsPerSource extends RefinedType[Int, Pure]
+  object FollowupsPerSource extends Newtype[Int, Pure]
   type DiscoverPerQuery = DiscoverPerQuery.T
-  object DiscoverPerQuery extends RefinedType[Int, Pure]
+  object DiscoverPerQuery extends Newtype[Int, Pure]
   type SweepCandidates = SweepCandidates.T
-  object SweepCandidates extends RefinedType[Int, Pure]
+  object SweepCandidates extends Newtype[Int, Pure]
   type Strategy = Strategy.T
-  object Strategy extends RefinedType[String, Pure]
+  object Strategy extends Newtype[String, Pure]
   type AgingHours = AgingHours.T
-  object AgingHours extends RefinedType[Int, Pure]
+  object AgingHours extends Newtype[Int, Pure]
   type MaxWaitHours = MaxWaitHours.T
-  object MaxWaitHours extends RefinedType[Int, Pure]
+  object MaxWaitHours extends Newtype[Int, Pure]
   type MinShare = MinShare.T
-  object MinShare extends RefinedType[Double, Pure]
+  object MinShare extends Newtype[Double, Pure]
   type TypeWeights = TypeWeights.T
-  object TypeWeights extends RefinedType[String, Pure]
+  object TypeWeights extends Newtype[String, Pure]
   type TypePriorities = TypePriorities.T
-  object TypePriorities extends RefinedType[String, Pure]
+  object TypePriorities extends Newtype[String, Pure]
   type PoolOvercommit = PoolOvercommit.T
-  object PoolOvercommit extends RefinedType[Int, Pure]
+  object PoolOvercommit extends Newtype[Int, Pure]
   type GatheringSlots = GatheringSlots.T
-  object GatheringSlots extends RefinedType[Int, Pure]
+  object GatheringSlots extends Newtype[Int, Pure]
   type ShareWindow = ShareWindow.T
-  object ShareWindow extends RefinedType[Int, Pure]
+  object ShareWindow extends Newtype[Int, Pure]
   type SeedGoalsPerTick = SeedGoalsPerTick.T
-  object SeedGoalsPerTick extends RefinedType[Int, Pure]
+  object SeedGoalsPerTick extends Newtype[Int, Pure]
   type SeedEveryHours = SeedEveryHours.T
-  object SeedEveryHours extends RefinedType[Int, Pure]
+  object SeedEveryHours extends Newtype[Int, Pure]
   type SeedIngestPerGoal = SeedIngestPerGoal.T
-  object SeedIngestPerGoal extends RefinedType[Int, Pure]
+  object SeedIngestPerGoal extends Newtype[Int, Pure]
 
   val DefaultWeights: TypeWeights = TypeWeights("review=3, compile=3, enrich=3, propose=2, goal-plan=2, sweep=2, extend=1, filter=1, currency=1")
 

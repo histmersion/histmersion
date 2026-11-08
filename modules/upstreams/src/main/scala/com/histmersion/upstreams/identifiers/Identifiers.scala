@@ -1,15 +1,14 @@
 package com.histmersion
 package upstreams.identifiers
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Doi
 import com.histmersion.upstreams.ArxivId
 object Identifiers:
   type ArxivText = ArxivText.T
-  object ArxivText extends RefinedType[String, Pure]
+  object ArxivText extends Newtype[String, Pure]
   type DoiText = DoiText.T
-  object DoiText extends RefinedType[String, Pure]
+  object DoiText extends Newtype[String, Pure]
 
 
   private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r

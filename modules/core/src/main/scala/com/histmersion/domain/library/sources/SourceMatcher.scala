@@ -16,7 +16,6 @@ import com.histmersion.util.text.{Fingerprint, MinHash}
 
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 
@@ -36,23 +35,23 @@ object SourceMatcher:
 
   /** A number written out in the evidence text: a weight or a similarity. */
   type Figure = Figure.T
-  object Figure extends RefinedType[Double, Pure]
+  object Figure extends Newtype[Double, Pure]
 
   /** How many decimals a figure is written with. */
   type Decimals = Decimals.T
-  object Decimals extends RefinedType[Int, Pure]
+  object Decimals extends Newtype[Int, Pure]
 
   /** A figure as it is written out. */
   type Written = Written.T
-  object Written extends RefinedType[String, Pure]
+  object Written extends Newtype[String, Pure]
 
   /** A blocking key: the pairs that share one are compared. */
   type BlockingKey = BlockingKey.T
-  object BlockingKey extends RefinedType[String, Pure]
+  object BlockingKey extends Newtype[String, Pure]
 
   /** The letters of a citekey before its year. */
   type Stem = Stem.T
-  object Stem extends RefinedType[String, Pure]
+  object Stem extends Newtype[String, Pure]
 
   /** A source with the old citekeys (aliases) that still name it. */
   final case class Side(source: Bundle.Source, aliases: Set[Citekey]):
@@ -63,7 +62,7 @@ object SourceMatcher:
   object Side:
     /** A citekey a source is known by: its own, or an old one. */
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]:
+    object Label extends Newtype[String, Pure]:
       given Ordering[Label] = Ordering.by(_.value)
 
   /** The evidence about one pair. `parts` is the score's waterfall, in the order it was added up. */
@@ -83,29 +82,29 @@ object SourceMatcher:
   object Evidence:
     /** The sum of the weights of the parts. */
     type Score = Score.T
-    object Score extends RefinedType[Double, Pure]
+    object Score extends Newtype[Double, Pure]
 
     /** One line of the score's explanation. */
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
     /** The name of a strong key (`DOI`, `ISBN`). */
     type Strong = Strong.T
-    object Strong extends RefinedType[String, Pure]
+    object Strong extends Newtype[String, Pure]
     type DoiConflict = DoiConflict.T
-    object DoiConflict extends RefinedType[Boolean, Pure]
+    object DoiConflict extends Newtype[Boolean, Pure]
     type YearGap = YearGap.T
-    object YearGap extends RefinedType[Boolean, Pure]
+    object YearGap extends Newtype[Boolean, Pure]
     type TitleDiffers = TitleDiffers.T
-    object TitleDiffers extends RefinedType[Boolean, Pure]
+    object TitleDiffers extends Newtype[Boolean, Pure]
 
     /** What a comparison found, in words. */
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
     /** What a comparison adds to the score. */
     type Weight = Weight.T
-    object Weight extends RefinedType[Double, Pure]
+    object Weight extends Newtype[Double, Pure]
 
   /** `x` with `places` decimals, a dot whatever the JVM's locale. */
   def fixed(x: Figure, places: Decimals): Written = Written(s"%.${places}f".formatLocal(java.util.Locale.ROOT, x.value))
@@ -267,7 +266,7 @@ object SourceMatcher:
 
   object Pair:
     type Flags = Flags.T
-    object Flags extends RefinedType[String, Pure]
+    object Flags extends Newtype[String, Pure]
 
   final case class Matching(pairs: List[Pair], unmatched: List[Side])
 

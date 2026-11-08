@@ -4,7 +4,6 @@ import io.circe.Json
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
 
@@ -13,11 +12,11 @@ import com.histmersion.upstreams.landing.RepositoryLanding
   */
 object WikidataEntities:
   type Api = Api.T
-  object Api extends RefinedType[String, Pure]
+  object Api extends Newtype[String, Pure]
   type Maxlag = Maxlag.T
-  object Maxlag extends RefinedType[Int, Pure]
+  object Maxlag extends Newtype[Int, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The Commons category property. */
   val CommonsCategory = "P373"

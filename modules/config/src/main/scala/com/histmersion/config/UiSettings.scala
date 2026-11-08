@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `ui` block. The page reads it through `/api/config`, where the server adds what is no setting of this block:
@@ -36,36 +35,36 @@ final case class UiSettings(
 
 object UiSettings:
   type Tiles = Tiles.T
-  object Tiles extends RefinedType[String, Pure]
+  object Tiles extends Newtype[String, Pure]
   type TilesMaxZoom = TilesMaxZoom.T
-  object TilesMaxZoom extends RefinedType[Int, Pure]
+  object TilesMaxZoom extends Newtype[Int, Pure]
   type MarkerRadius = MarkerRadius.T
-  object MarkerRadius extends RefinedType[Int, Pure]
+  object MarkerRadius extends Newtype[Int, Pure]
   type ViewportDebounceMs = ViewportDebounceMs.T
-  object ViewportDebounceMs extends RefinedType[Int, Pure]
+  object ViewportDebounceMs extends Newtype[Int, Pure]
   type PageSize = com.histmersion.PageSize
   val PageSize: com.histmersion.PageSize.type = com.histmersion.PageSize
   type FacetSuggestions = FacetSuggestions.T
-  object FacetSuggestions extends RefinedType[Int, Pure]
+  object FacetSuggestions extends Newtype[Int, Pure]
   type TreeDepth = TreeDepth.T
-  object TreeDepth extends RefinedType[Int, Pure]
+  object TreeDepth extends Newtype[Int, Pure]
   type TreeSamples = TreeSamples.T
-  object TreeSamples extends RefinedType[Int, Pure]
+  object TreeSamples extends Newtype[Int, Pure]
   type MaxBuckets = MaxBuckets.T
-  object MaxBuckets extends RefinedType[Int, Pure]
+  object MaxBuckets extends Newtype[Int, Pure]
   type NarrowMaxWidthPx = NarrowMaxWidthPx.T
-  object NarrowMaxWidthPx extends RefinedType[Int, Pure]
+  object NarrowMaxWidthPx extends Newtype[Int, Pure]
   type NarrowMaxHeightPx = NarrowMaxHeightPx.T
-  object NarrowMaxHeightPx extends RefinedType[Int, Pure]
+  object NarrowMaxHeightPx extends Newtype[Int, Pure]
   type TabletMaxWidthPx = TabletMaxWidthPx.T
-  object TabletMaxWidthPx extends RefinedType[Int, Pure]
+  object TabletMaxWidthPx extends Newtype[Int, Pure]
   type CountersPollSeconds = CountersPollSeconds.T
-  object CountersPollSeconds extends RefinedType[Int, Pure]
+  object CountersPollSeconds extends Newtype[Int, Pure]
   type JobPollMs = JobPollMs.T
-  object JobPollMs extends RefinedType[Int, Pure]
+  object JobPollMs extends Newtype[Int, Pure]
   type TilesTone = TilesTone.T
-  object TilesTone extends RefinedType[String, Pure]
+  object TilesTone extends Newtype[String, Pure]
   type DocsUrl = DocsUrl.T
-  object DocsUrl extends RefinedType[String, Pure]
+  object DocsUrl extends Newtype[String, Pure]
   type BaseMapSource = BaseMapSource.T
-  object BaseMapSource extends RefinedType[String, Pure]
+  object BaseMapSource extends Newtype[String, Pure]

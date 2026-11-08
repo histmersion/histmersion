@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the map opens (`ui.map-start`): `mode` "last" (where the browser left it; here the first time) or "place"
@@ -14,12 +13,12 @@ final case class UiMapStartSettings(mode: UiMapStartSettings.Mode, lat: UiMapSta
 
 object UiMapStartSettings:
   type Mode = Mode.T
-  object Mode extends RefinedType[String, Pure]
+  object Mode extends Newtype[String, Pure]
   type Lat = Latitude
   val Lat: Latitude.type = Latitude
   type Lon = Longitude
   val Lon: Longitude.type = Longitude
   type Zoom = Zoom.T
-  object Zoom extends RefinedType[Double, Pure]
+  object Zoom extends Newtype[Double, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]

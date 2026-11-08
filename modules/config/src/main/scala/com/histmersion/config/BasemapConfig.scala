@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reloading the config in place (docs/research-plugins.md §3.5): `histmersion config reload`, or — with `watch` — by
@@ -37,24 +36,24 @@ final case class BasemapConfig(
 
 object BasemapConfig:
   type Dir = Dir.T
-  object Dir extends RefinedType[String, Pure]
+  object Dir extends Newtype[String, Pure]
   type Bbox = Bbox.T
-  object Bbox extends RefinedType[String, Pure]
+  object Bbox extends Newtype[String, Pure]
   type MinFreeGb = MinFreeGb.T
-  object MinFreeGb extends RefinedType[Double, Pure]
+  object MinFreeGb extends Newtype[Double, Pure]
   type RequestGapMs = RequestGapMs.T
-  object RequestGapMs extends RefinedType[Int, Pure]
+  object RequestGapMs extends Newtype[Int, Pure]
   type MaxRequestMb = MaxRequestMb.T
-  object MaxRequestMb extends RefinedType[Int, Pure]
+  object MaxRequestMb extends Newtype[Int, Pure]
   type Overfetch = Overfetch.T
-  object Overfetch extends RefinedType[Double, Pure]
+  object Overfetch extends Newtype[Double, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type Retries = Retries.T
-  object Retries extends RefinedType[Int, Pure]
+  object Retries extends Newtype[Int, Pure]
   type TileCacheSeconds = TileCacheSeconds.T
-  object TileCacheSeconds extends RefinedType[Int, Pure]
+  object TileCacheSeconds extends Newtype[Int, Pure]
   type MapMaxZoom = MapMaxZoom.T
-  object MapMaxZoom extends RefinedType[Int, Pure]
+  object MapMaxZoom extends Newtype[Int, Pure]
   type SetupAreas = SetupAreas.T
-  object SetupAreas extends RefinedType[String, Pure]
+  object SetupAreas extends Newtype[String, Pure]

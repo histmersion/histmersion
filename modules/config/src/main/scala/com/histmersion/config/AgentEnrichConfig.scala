@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `enrich-source`: the body is sent as at most `maxWindows` windows of `windowChars` characters (by heading where the
@@ -21,10 +20,10 @@ final case class AgentEnrichConfig(
 
 object AgentEnrichConfig:
   type WindowChars = WindowChars.T
-  object WindowChars extends RefinedType[Int, Pure]
+  object WindowChars extends Newtype[Int, Pure]
   type MaxWindows = MaxWindows.T
-  object MaxWindows extends RefinedType[Int, Pure]
+  object MaxWindows extends Newtype[Int, Pure]
   type HeadChars = HeadChars.T
-  object HeadChars extends RefinedType[Int, Pure]
+  object HeadChars extends Newtype[Int, Pure]
   type Upstream = Upstream.T
-  object Upstream extends RefinedType[Boolean, Pure]
+  object Upstream extends Newtype[Boolean, Pure]

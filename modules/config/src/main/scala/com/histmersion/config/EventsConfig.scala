@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Events from catalogues (#1449): `events` in reference.conf. The HTTP politeness (User-Agent, retries, Retry-After
@@ -29,18 +28,18 @@ final case class EventsConfig(
 
 object EventsConfig:
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type MinYear = MinYear.T
-  object MinYear extends RefinedType[Long, Pure]
+  object MinYear extends Newtype[Long, Pure]
   type MaxYear = MaxYear.T
-  object MaxYear extends RefinedType[Long, Pure]
+  object MaxYear extends Newtype[Long, Pure]
   type Region = Region.T
-  object Region extends RefinedType[String, Pure]
+  object Region extends Newtype[String, Pure]
   type MergeKm = MergeKm.T
-  object MergeKm extends RefinedType[Double, Pure]
+  object MergeKm extends Newtype[Double, Pure]
   type MergeYears = MergeYears.T
-  object MergeYears extends RefinedType[Long, Pure]
+  object MergeYears extends Newtype[Long, Pure]
   type DefaultLimit = DefaultLimit.T
-  object DefaultLimit extends RefinedType[Int, Pure]
+  object DefaultLimit extends Newtype[Int, Pure]
   type RederiveBatch = RederiveBatch.T
-  object RederiveBatch extends RefinedType[Int, Pure]
+  object RederiveBatch extends Newtype[Int, Pure]

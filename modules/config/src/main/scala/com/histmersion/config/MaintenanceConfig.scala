@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion maintenance vacuum` (#1445): the tables it vacuums when none is named. */
@@ -13,7 +12,7 @@ final case class MaintenanceConfig(vacuumTables: MaintenanceConfig.VacuumTables)
 
 object MaintenanceConfig:
   type Table = Table.T
-  object Table extends RefinedType[String, Pure]
+  object Table extends Newtype[String, Pure]
 
   type VacuumTables = VacuumTables.T
-  object VacuumTables extends RefinedType[String, Pure]
+  object VacuumTables extends Newtype[String, Pure]

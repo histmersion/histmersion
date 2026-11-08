@@ -2,7 +2,6 @@ package com.histmersion
 package config.edit
 
 import org.ekrich.config.{ConfigValue, ConfigValueType}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What kind of value a setting holds, as its default in reference.conf has it. */
@@ -20,9 +19,9 @@ enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe)
 
 object SettingKind:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Describe = Describe.T
-  object Describe extends RefinedType[String, Pure]
+  object Describe extends Newtype[String, Pure]
 
 
   def of(v: ConfigValue): SettingKind = v.valueType match

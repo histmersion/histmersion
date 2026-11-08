@@ -1,13 +1,12 @@
 package com.histmersion
 package upstreams.jats
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object Jats:
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
   type Xml = Xml.T
-  object Xml extends RefinedType[String, Pure]
+  object Xml extends Newtype[String, Pure]
 
   // ── the tree ────────────────────────────────────────────────────────────────────────────────
   sealed trait Node
@@ -19,7 +18,7 @@ object Jats:
 
   object Elem:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
   final case class Text(s: String) extends Node
 
   /** The document starts — after an XML declaration, comments and a DOCTYPE — with `<article>`. */

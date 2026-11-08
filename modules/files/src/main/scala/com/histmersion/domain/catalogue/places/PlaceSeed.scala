@@ -7,7 +7,6 @@ package domain.catalogue.places
   * listing and reading are the caller's (a path on the host, a store in the server).
   */
 import com.histmersion.domain.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object PlaceSeed:
 
@@ -18,10 +17,10 @@ object PlaceSeed:
 
   object Entry:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]:
+    object Name extends Newtype[String, Pure]:
       given Ordering[T] = Ordering.by[T, String](_.value)
     type Directory = Directory.T
-    object Directory extends RefinedType[Boolean, Pure]
+    object Directory extends Newtype[Boolean, Pure]
 
   /** Every JSON/GeoJSON file of a seed directory, in import order: the top-level files by name first (Natural Earth
     * defines the `continent_*` ids everything else hangs off), then each subdirectory by name. The fallback `kind` for

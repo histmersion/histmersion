@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library.acquisition
 
 import com.histmersion.domain.library.{ArxivId, Doi as DoiValue}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An identifier a person gives for a work: a DOI, an arXiv id, or the citekey of a source in the corpus. */
@@ -18,13 +17,13 @@ object Ident:
 
   object Citekey:
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
 
   /** An identifier as a person wrote it. */
   type Written = Written.T
-  object Written extends RefinedType[String, Pure]
+  object Written extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   private val ArxivNew = """^(?:arxiv:)?(\d{4}\.\d{4,5})(?:v\d+)?$""".r
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsLeadsConfig(
@@ -17,14 +16,14 @@ final case class EventsLeadsConfig(
 
 object EventsLeadsConfig:
   type Km = Km.T
-  object Km extends RefinedType[Double, Pure]
+  object Km extends Newtype[Double, Pure]
   type Years = Years.T
-  object Years extends RefinedType[Long, Pure]
+  object Years extends Newtype[Long, Pure]
   type ArticleKm = ArticleKm.T
-  object ArticleKm extends RefinedType[Double, Pure]
+  object ArticleKm extends Newtype[Double, Pure]
   type LargeVei = LargeVei.T
-  object LargeVei extends RefinedType[Int, Pure]
+  object LargeVei extends Newtype[Int, Pure]
   type LargeMagnitude = LargeMagnitude.T
-  object LargeMagnitude extends RefinedType[Double, Pure]
+  object LargeMagnitude extends Newtype[Double, Pure]
   type ArticleLimit = ArticleLimit.T
-  object ArticleLimit extends RefinedType[Int, Pure]
+  object ArticleLimit extends Newtype[Int, Pure]

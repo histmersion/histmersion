@@ -1,7 +1,6 @@
 package com.histmersion
 package config
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The graph logic of a config reload, pure: which nodes a set of changed keys touches, what has to be rebuilt with
@@ -10,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object HotPlan:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** Does a changed key concern a node that declares `key`? The same key, a key under it, or a block above it (a whole
     * block replaced by a value, or removed).

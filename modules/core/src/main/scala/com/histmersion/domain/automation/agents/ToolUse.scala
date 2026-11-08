@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation.agents
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A tool call an LLM step made, as its runtime reported it (sttp-ai's loop, Claude Code's stream-json, Codex's
@@ -12,6 +11,6 @@ final case class ToolUse(tool: ToolUse.Tool, input: ToolUse.Input)
 
 object ToolUse:
   type Tool = Tool.T
-  object Tool extends RefinedType[String, Pure]
+  object Tool extends Newtype[String, Pure]
   type Input = Input.T
-  object Input extends RefinedType[String, Pure]
+  object Input extends Newtype[String, Pure]

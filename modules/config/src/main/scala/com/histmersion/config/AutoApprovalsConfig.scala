@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The caps and the thresholds of the checked auto approvals ([[AgentApprovalsConfig.checked]]): at most
@@ -30,20 +29,20 @@ final case class AutoApprovalsConfig(
 
 object AutoApprovalsConfig:
   type ArticlesPerGoalPerDay = ArticlesPerGoalPerDay.T
-  object ArticlesPerGoalPerDay extends RefinedType[Int, Pure]
+  object ArticlesPerGoalPerDay extends Newtype[Int, Pure]
   type PublishPerDay = PublishPerDay.T
-  object PublishPerDay extends RefinedType[Int, Pure]
+  object PublishPerDay extends Newtype[Int, Pure]
   type GoalPlansPerDay = GoalPlansPerDay.T
-  object GoalPlansPerDay extends RefinedType[Int, Pure]
+  object GoalPlansPerDay extends Newtype[Int, Pure]
   type PublishMinSources = PublishMinSources.T
-  object PublishMinSources extends RefinedType[Int, Pure]
+  object PublishMinSources extends Newtype[Int, Pure]
   type MaxGoalDepth = MaxGoalDepth.T
-  object MaxGoalDepth extends RefinedType[Int, Pure]
+  object MaxGoalDepth extends Newtype[Int, Pure]
   type GoalPlansBacklogShare = GoalPlansBacklogShare.T
-  object GoalPlansBacklogShare extends RefinedType[Double, Pure]
+  object GoalPlansBacklogShare extends Newtype[Double, Pure]
   type GoalPlansCeiling = GoalPlansCeiling.T
-  object GoalPlansCeiling extends RefinedType[Int, Pure]
+  object GoalPlansCeiling extends Newtype[Int, Pure]
   type PublishBacklogShare = PublishBacklogShare.T
-  object PublishBacklogShare extends RefinedType[Double, Pure]
+  object PublishBacklogShare extends Newtype[Double, Pure]
   type PublishCeiling = PublishCeiling.T
-  object PublishCeiling extends RefinedType[Int, Pure]
+  object PublishCeiling extends Newtype[Int, Pure]

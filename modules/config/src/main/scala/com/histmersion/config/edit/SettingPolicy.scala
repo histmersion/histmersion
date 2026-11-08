@@ -1,7 +1,6 @@
 package com.histmersion
 package config.edit
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Whether a change may be written at all, against the schema: the key is a setting, the value is of its kind, a
@@ -10,9 +9,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object SettingPolicy:
   type LiteralConsent = LiteralConsent.T
-  object LiteralConsent extends RefinedType[Boolean, Pure]
+  object LiteralConsent extends Newtype[Boolean, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
 
   /** [[check]] of every edit, the first refusal ending it; the warnings of all of them. */
 

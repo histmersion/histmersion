@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One tile of the XYZ grid MapLibre asks for (Web Mercator; a tile's side is [[TileCoord.Extent]] units of the vector
@@ -27,23 +26,23 @@ final case class TileCoord private (z: TileCoord.Z, x: TileCoord.X, y: TileCoord
 
 object TileCoord:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type TilesPerSide = TilesPerSide.T
-  object TilesPerSide extends RefinedType[Long, Pure]
+  object TilesPerSide extends Newtype[Long, Pure]
   /** The units a tile's side is divided into (the vector tile format's usual extent). */
   type Extent = ExtentValue
   type ExtentValue = ExtentValue.T
-  object ExtentValue extends RefinedType[Int, Pure]
+  object ExtentValue extends Newtype[Int, Pure]
   type MaxLat = MaxLatValue
   type MaxLatValue = MaxLatValue.T
-  object MaxLatValue extends RefinedType[Double, Pure]
+  object MaxLatValue extends Newtype[Double, Pure]
 
   type Z = Z.T
-  object Z extends RefinedType[Int, Pure]
+  object Z extends Newtype[Int, Pure]
   type X = X.T
-  object X extends RefinedType[Long, Pure]
+  object X extends Newtype[Long, Pure]
   type Y = Y.T
-  object Y extends RefinedType[Long, Pure]
+  object Y extends Newtype[Long, Pure]
 
   val Extent: Extent = ExtentValue(4096)
 

@@ -4,7 +4,6 @@ package domain.library.sources
 import scala.annotation.tailrec
 import com.histmersion.util.text.Fingerprint
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
@@ -18,39 +17,39 @@ object MergeText:
 
   /** A name, title or venue as written, before it is folded for comparison. */
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   /** A text in lower case with its diacritics removed (`Güterbock` → `guterbock`). */
   type Folded = Folded.T
-  object Folded extends RefinedType[String, Pure]
+  object Folded extends Newtype[String, Pure]
 
   /** One folded alphanumeric word. */
   type Token = Token.T
-  object Token extends RefinedType[String, Pure]
+  object Token extends Newtype[String, Pure]
 
   /** A text as its folded words joined by single spaces. */
   type Words = Words.T
-  object Words extends RefinedType[String, Pure]
+  object Words extends Newtype[String, Pure]
 
   /** The blocking key of a title: its first three significant words, sorted. */
   type TitleKey = TitleKey.T
-  object TitleKey extends RefinedType[String, Pure]
+  object TitleKey extends Newtype[String, Pure]
 
   /** A surname as one word (`lopezruiz`), or its last word. */
   type SurnameKey = SurnameKey.T
-  object SurnameKey extends RefinedType[String, Pure]
+  object SurnameKey extends Newtype[String, Pure]
 
   /** How alike two texts are, in [0, 1]. */
   type Similarity = Similarity.T
-  object Similarity extends RefinedType[Double, Pure]
+  object Similarity extends Newtype[Double, Pure]
 
   /** A DOI as a source writes it: bare, `doi:`-prefixed or as a resolver URL. */
   type WrittenDoi = WrittenDoi.T
-  object WrittenDoi extends RefinedType[String, Pure]
+  object WrittenDoi extends Newtype[String, Pure]
 
   /** A DOI as a key: no resolver prefix, no `doi:`, lower case. */
   type DoiKey = DoiKey.T
-  object DoiKey extends RefinedType[String, Pure]
+  object DoiKey extends Newtype[String, Pure]
 
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
 
@@ -146,7 +145,7 @@ object MergeText:
 
   object Person:
     type SurnameKnown = SurnameKnown.T
-    object SurnameKnown extends RefinedType[Boolean, Pure]
+    object SurnameKnown extends Newtype[Boolean, Pure]
 
   /** Words that belong to a surname when they come before it (`van`, `de la`). */
   private val particles: Set[String] =

@@ -2,7 +2,6 @@ package com.histmersion
 package config.edit
 
 import org.ekrich.config.{Config, ConfigOrigin}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The config file as read: its text (`None`: not there yet), its version, and its settings as parsed with its
@@ -27,4 +26,4 @@ final case class ConfigFileState(
 object ConfigFileState:
 
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]

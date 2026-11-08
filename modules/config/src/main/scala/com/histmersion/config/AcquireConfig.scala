@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Configuration for the acquisition & assessment toolset (plan §5.2, stream 2.6).
@@ -62,17 +61,17 @@ final case class AcquireConfig(
 
 object AcquireConfig:
   type ChainId = ChainId.T
-  object ChainId extends RefinedType[String, Pure]
+  object ChainId extends Newtype[String, Pure]
 
   type ContactEmail = ContactEmail.T
-  object ContactEmail extends RefinedType[String, Pure]
+  object ContactEmail extends Newtype[String, Pure]
   type PublicUserAgent = PublicUserAgent.T
-  object PublicUserAgent extends RefinedType[String, Pure]
+  object PublicUserAgent extends Newtype[String, Pure]
   type AllowUnauthorised = AllowUnauthorised.T
-  object AllowUnauthorised extends RefinedType[Boolean, Pure]
+  object AllowUnauthorised extends Newtype[Boolean, Pure]
   type UserAgent = UserAgent.T
-  object UserAgent extends RefinedType[String, Pure]
+  object UserAgent extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type SpoolDir = SpoolDir.T
-  object SpoolDir extends RefinedType[String, Pure]
+  object SpoolDir extends Newtype[String, Pure]

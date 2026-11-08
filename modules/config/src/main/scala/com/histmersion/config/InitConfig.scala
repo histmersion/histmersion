@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** First-run data (#720). With `auto`, a starting server imports the bundled gazetteer (`<dataDir>/places`) and period
@@ -16,11 +15,11 @@ final case class InitConfig(auto: InitConfig.Auto, dataDir: InitConfig.DataDir, 
 
 object InitConfig:
   type FetchSource = FetchSource.T
-  object FetchSource extends RefinedType[String, Pure]
+  object FetchSource extends Newtype[String, Pure]
 
   type Auto = Auto.T
-  object Auto extends RefinedType[Boolean, Pure]
+  object Auto extends Newtype[Boolean, Pure]
   type DataDir = DataDir.T
-  object DataDir extends RefinedType[String, Pure]
+  object DataDir extends Newtype[String, Pure]
   type FetchSources = FetchSources.T
-  object FetchSources extends RefinedType[String, Pure]
+  object FetchSources extends Newtype[String, Pure]

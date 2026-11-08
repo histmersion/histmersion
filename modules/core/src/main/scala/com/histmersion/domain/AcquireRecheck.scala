@@ -7,7 +7,6 @@ import com.histmersion.api.jobs.JobState
 
 import java.nio.charset.StandardCharsets
 import java.time.{Instant, LocalDate, ZoneOffset}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
@@ -21,21 +20,21 @@ import com.histmersion.domain.library.Doi
   */
 object AcquireRecheck:
   type Allowance = Allowance.T
-  object Allowance extends RefinedType[Int, Pure]
+  object Allowance extends Newtype[Int, Pure]
   type CheckedToday = CheckedToday.T
-  object CheckedToday extends RefinedType[Int, Pure]
+  object CheckedToday extends Newtype[Int, Pure]
   type Detail = Detail.T
-  object Detail extends RefinedType[String, Pure]
+  object Detail extends Newtype[String, Pure]
   type GenerationPart = GenerationPart.T
-  object GenerationPart extends RefinedType[String, Pure]
+  object GenerationPart extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type ProgressLine = ProgressLine.T
-  object ProgressLine extends RefinedType[String, Pure]
+  object ProgressLine extends Newtype[String, Pure]
   type Reason = Reason.T
-  object Reason extends RefinedType[String, Pure]
+  object Reason extends Newtype[String, Pure]
   type ReplyText = ReplyText.T
-  object ReplyText extends RefinedType[String, Pure]
+  object ReplyText extends Newtype[String, Pure]
 
   /** `acquire.recheck.*` as the rules read them: on or off, how many days an item's check holds, at most how many items
     * a day and a pass, the minutes between passes, the share (percent) of the shared daily legal ingest allowance the
@@ -58,19 +57,19 @@ object AcquireRecheck:
 
   object Settings:
     type Enabled = Enabled.T
-    object Enabled extends RefinedType[Boolean, Pure]
+    object Enabled extends Newtype[Boolean, Pure]
     type EveryDays = EveryDays.T
-    object EveryDays extends RefinedType[Int, Pure]
+    object EveryDays extends Newtype[Int, Pure]
     type PerDay = PerDay.T
-    object PerDay extends RefinedType[Int, Pure]
+    object PerDay extends Newtype[Int, Pure]
     type PerPass = PerPass.T
-    object PerPass extends RefinedType[Int, Pure]
+    object PerPass extends Newtype[Int, Pure]
     type PassMinutes = PassMinutes.T
-    object PassMinutes extends RefinedType[Int, Pure]
+    object PassMinutes extends Newtype[Int, Pure]
     type SharePercent = SharePercent.T
-    object SharePercent extends RefinedType[Int, Pure]
+    object SharePercent extends Newtype[Int, Pure]
     type RetryHours = RetryHours.T
-    object RetryHours extends RefinedType[Int, Pure]
+    object RetryHours extends Newtype[Int, Pure]
 
   /** An item's last check: when, under which fetcher generation ([[generation]]), and whether it got no answer
     * ([[Outcome.Failed]]: a rate limit, an upstream down).
@@ -79,9 +78,9 @@ object AcquireRecheck:
 
   object LastCheck:
     type Generation = Generation.T
-    object Generation extends RefinedType[String, Pure]
+    object Generation extends Newtype[String, Pure]
     type Failed = Failed.T
-    object Failed extends RefinedType[Boolean, Pure]
+    object Failed extends Newtype[Boolean, Pure]
 
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
@@ -104,7 +103,7 @@ object AcquireRecheck:
 
   object Held:
     type HasOriginal = HasOriginal.T
-    object HasOriginal extends RefinedType[Boolean, Pure]
+    object HasOriginal extends Newtype[Boolean, Pure]
 
   /** What a pass does with one open item. */
   enum Action:
@@ -142,7 +141,7 @@ object AcquireRecheck:
 
   object Outcome:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
@@ -188,13 +187,13 @@ object AcquireRecheck:
 
   object Shared:
     type Left = Left.T
-    object Left extends RefinedType[Int, Pure]
+    object Left extends Newtype[Int, Pure]
     type Cap = Cap.T
-    object Cap extends RefinedType[Int, Pure]
+    object Cap extends Newtype[Int, Pure]
     type BacklogPending = BacklogPending.T
-    object BacklogPending extends RefinedType[Int, Pure]
+    object BacklogPending extends Newtype[Int, Pure]
     type FetchedToday = FetchedToday.T
-    object FetchedToday extends RefinedType[Int, Pure]
+    object FetchedToday extends Newtype[Int, Pure]
 
   /** How many items this pass may try: within the day's cap (after `checkedToday`) and the pass's; and, under a shared
     * allowance, within what the watchers' backlog leaves of it (the backlog and the watchers' new finds come first) and
@@ -230,7 +229,7 @@ object AcquireRecheck:
 
   object Candidate:
     type Item = Item.T
-    object Item extends RefinedType[Int, Pure]:
+    object Item extends Newtype[Int, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
 
   /** The order items are tried in: the never-checked first, then the oldest check, then the item id. */
@@ -246,9 +245,9 @@ object AcquireRecheck:
 
   object JobPlan:
     type All = All.T
-    object All extends RefinedType[Boolean, Pure]
+    object All extends Newtype[Boolean, Pure]
     type UpTo = UpTo.T
-    object UpTo extends RefinedType[Int, Pure]
+    object UpTo extends Newtype[Int, Pure]
 
   /** Was this item checked by a job that started at `since` (or since then by anything else)? */
   def checkedSince(last: Option[LastCheck], since: Instant): Boolean = last.exists(l => !l.at.isBefore(since))
@@ -296,17 +295,17 @@ object AcquireRecheck:
   object Tally:
 
     type Total = Total.T
-    object Total extends RefinedType[Int, Pure]
+    object Total extends Newtype[Int, Pure]
     type Tried = Tried.T
-    object Tried extends RefinedType[Int, Pure]
+    object Tried extends Newtype[Int, Pure]
     type Closed = Closed.T
-    object Closed extends RefinedType[Int, Pure]
+    object Closed extends Newtype[Int, Pure]
     type Fetched = Fetched.T
-    object Fetched extends RefinedType[Int, Pure]
+    object Fetched extends Newtype[Int, Pure]
     type NoCopy = NoCopy.T
-    object NoCopy extends RefinedType[Int, Pure]
+    object NoCopy extends Newtype[Int, Pure]
     type Failed = Failed.T
-    object Failed extends RefinedType[Int, Pure]
+    object Failed extends Newtype[Int, Pure]
 
   /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
   def progressLine(t: Tally): ProgressLine =

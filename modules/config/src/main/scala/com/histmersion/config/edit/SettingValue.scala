@@ -12,7 +12,6 @@ import org.ekrich.config.{
 }
 
 import scala.jdk.CollectionConverters.*
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One value to write into the config file. */
@@ -42,20 +41,20 @@ enum SettingValue:
 
 object SettingValue:
   type Hocon = Hocon.T
-  object Hocon extends RefinedType[String, Pure]
+  object Hocon extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   object Text:
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
 
   object Flag:
     type Value = Value.T
-    object Value extends RefinedType[Boolean, Pure]
+    object Value extends Newtype[Boolean, Pure]
 
   type Typed = Typed.T
-  object Typed extends RefinedType[String, Pure]
+  object Typed extends Newtype[String, Pure]
 
   private val Truthy = Set("true", "yes", "on")
   private val Falsy = Set("false", "no", "off")

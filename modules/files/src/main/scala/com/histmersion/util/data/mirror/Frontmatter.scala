@@ -2,7 +2,6 @@ package com.histmersion
 package util.data.mirror
 
 import org.yaml.snakeyaml.{DumperOptions, Yaml}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A Markdown mirror note's YAML frontmatter: its keys in the order they are written (a value is a plain or Java value
@@ -29,11 +28,11 @@ final case class Frontmatter(fields: List[(Frontmatter.Key, Any)]):
 
 object Frontmatter:
   type Block = Block.T
-  object Block extends RefinedType[String, Pure]
+  object Block extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type NoteBody = NoteBody.T
-  object NoteBody extends RefinedType[String, Pure]
+  object NoteBody extends Newtype[String, Pure]
 
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]

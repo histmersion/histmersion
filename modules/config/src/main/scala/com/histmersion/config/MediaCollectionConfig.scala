@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`, `.pleiades`, `.open-context`, `.smithsonian`,
@@ -44,31 +43,31 @@ final case class MediaCollectionConfig(
 
 object MediaCollectionConfig:
   type RefusalBackoffMs = RefusalBackoffMs.T
-  object RefusalBackoffMs extends RefinedType[Long, Pure]
+  object RefusalBackoffMs extends Newtype[Long, Pure]
 
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type ApiUrl = ApiUrl.T
-  object ApiUrl extends RefinedType[String, Pure]
+  object ApiUrl extends Newtype[String, Pure]
   type ImageUrl = ImageUrl.T
-  object ImageUrl extends RefinedType[String, Pure]
+  object ImageUrl extends Newtype[String, Pure]
   type Candidates = Candidates.T
-  object Candidates extends RefinedType[Int, Pure]
+  object Candidates extends Newtype[Int, Pure]
   type PerPlace = PerPlace.T
-  object PerPlace extends RefinedType[Int, Pure]
+  object PerPlace extends Newtype[Int, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type DisplayPx = DisplayPx.T
-  object DisplayPx extends RefinedType[Int, Pure]
+  object DisplayPx extends Newtype[Int, Pure]
   type MaxYear = MaxYear.T
-  object MaxYear extends RefinedType[Int, Pure]
+  object MaxYear extends Newtype[Int, Pure]
   type Licences = Licences.T
-  object Licences extends RefinedType[String, Pure]
+  object Licences extends Newtype[String, Pure]
   type RefusalBackoffSeconds = RefusalBackoffSeconds.T
-  object RefusalBackoffSeconds extends RefinedType[String, Pure]
+  object RefusalBackoffSeconds extends Newtype[String, Pure]
   type ExcludeProviders = ExcludeProviders.T
-  object ExcludeProviders extends RefinedType[String, Pure]
+  object ExcludeProviders extends Newtype[String, Pure]
   type ExcludeDataProviders = ExcludeDataProviders.T
-  object ExcludeDataProviders extends RefinedType[String, Pure]
+  object ExcludeDataProviders extends Newtype[String, Pure]
   type ExcludeTypes = ExcludeTypes.T
-  object ExcludeTypes extends RefinedType[String, Pure]
+  object ExcludeTypes extends Newtype[String, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.media.covers
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
 
@@ -18,12 +17,12 @@ object CoverChoice:
   object Pick:
     object Calibre:
       type Path = Path.T
-      object Path extends RefinedType[String, Pure]
+      object Path extends Newtype[String, Pure]
     object OpenLibrary:
       type Kind = Kind.T
-      object Kind extends RefinedType[String, Pure]
+      object Kind extends Newtype[String, Pure]
       type Id = Id.T
-      object Id extends RefinedType[String, Pure]
+      object Id extends Newtype[String, Pure]
 
   def choose(
       calibreCover: Option[Pick.Calibre.Path],

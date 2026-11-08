@@ -2,7 +2,6 @@ package com.histmersion
 package domain
 
 import com.histmersion.api.automation.Managers.{ManagerConfig, Sweep}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A research area's watcher when it saves no settings of its own (`agents.managers.watch`): its runs at once and the
@@ -31,11 +30,11 @@ final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, aut
 
 object WatchManagerDefaults:
   type IngestAllowance = IngestAllowance.T
-  object IngestAllowance extends RefinedType[Int, Pure]
+  object IngestAllowance extends Newtype[Int, Pure]
   type IngestedToday = IngestedToday.T
-  object IngestedToday extends RefinedType[Int, Pure]
+  object IngestedToday extends Newtype[Int, Pure]
 
   type MaxRuns = MaxRuns.T
-  object MaxRuns extends RefinedType[Int, Pure]
+  object MaxRuns extends Newtype[Int, Pure]
   type AutoIngestPerDay = AutoIngestPerDay.T
-  object AutoIngestPerDay extends RefinedType[Int, Pure]
+  object AutoIngestPerDay extends Newtype[Int, Pure]

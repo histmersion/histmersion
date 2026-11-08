@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Embedded research agents (docs/research-embedded-agents.md §5.3). OFF by default: with `enabled = false` the server
@@ -24,10 +23,10 @@ final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKe
 
 object AgentProviderConfig:
   type BaseUrl = BaseUrl.T
-  object BaseUrl extends RefinedType[String, Pure]
+  object BaseUrl extends Newtype[String, Pure]
   type ApiKey = ApiKey.T
-  object ApiKey extends RefinedType[String, Pure]
+  object ApiKey extends Newtype[String, Pure]
   type StrictTools = StrictTools.T
-  object StrictTools extends RefinedType[Boolean, Pure]
+  object StrictTools extends Newtype[Boolean, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]

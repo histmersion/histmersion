@@ -3,7 +3,6 @@ package domain.catalogue.events
 
 import com.histmersion.api.{TimeSpan, Years}
 import com.histmersion.api.catalogue.{CatalogRecord, EventGeo, EventTaxonomy, Geocode}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Year
@@ -26,9 +25,9 @@ object CatalogMerge:
 
   object Tolerance:
     type Km = Km.T
-    object Km extends RefinedType[Double, Pure]
+    object Km extends Newtype[Double, Pure]
     type Years = Years.T
-    object Years extends RefinedType[Long, Pure]
+    object Years extends Newtype[Long, Pure]
 
   /** Where one record goes: into a stored event (`existing`), or into the NEW event `id` (several records of one thing
     * share it). `why` says what matched.
@@ -40,7 +39,7 @@ object CatalogMerge:
 
   object Placement:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   private def outer(ts: TimeSpan): Option[(Year, Year)] = ts.outer
 
@@ -81,11 +80,11 @@ object CatalogMerge:
   final case class Fit(score: Fit.Score, years: Fit.Years, km: Fit.Km, id: Fit.Id)
   object Fit:
     type Score = Score.T
-    object Score extends RefinedType[Double, Pure]
+    object Score extends Newtype[Double, Pure]
     type Years = Years.T
-    object Years extends RefinedType[Double, Pure]
+    object Years extends Newtype[Double, Pure]
     type Km = Km.T
-    object Km extends RefinedType[Double, Pure]
+    object Km extends Newtype[Double, Pure]
     type Id = Event.Id
     val Id: Event.Id.type = Event.Id
 

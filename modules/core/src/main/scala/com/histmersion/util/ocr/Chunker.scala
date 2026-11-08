@@ -1,7 +1,6 @@
 package com.histmersion
 package util.ocr
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Splits a Markdown body into FTS chunks — pure, no I/O, no config lookups.
@@ -23,9 +22,9 @@ object Chunker:
 
 
   type ChunkMarkdown = ChunkMarkdown.T
-  object ChunkMarkdown extends RefinedType[String, Pure]
+  object ChunkMarkdown extends Newtype[String, Pure]
   type ChunkMaxChars = ChunkMaxChars.T
-  object ChunkMaxChars extends RefinedType[Int, Pure]
+  object ChunkMaxChars extends Newtype[Int, Pure]
 
   private val Heading = """^(#{1,6})\s+(.*?)\s*#*\s*$""".r
 

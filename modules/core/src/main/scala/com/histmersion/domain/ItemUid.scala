@@ -9,4 +9,4 @@ import java.util.UUID
 /** A record's stable identity across renames, merges and databases, whatever its kind. */
 type ItemUid = ItemUid.T
 
-object ItemUid extends RefinedType[UUID, Pure]
+object ItemUid extends Newtype[UUID, Pure]

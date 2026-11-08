@@ -1,7 +1,6 @@
 package com.histmersion
 package util.ocr
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One indexable slice of a source body. `heading` is the breadcrumb of the Markdown headings the slice sits under
@@ -11,8 +10,8 @@ final case class Chunk(ord: Chunk.Ord, heading: Option[Chunk.Heading], body: Chu
 
 object Chunk:
   type Ord = Ord.T
-  object Ord extends RefinedType[Int, Pure]
+  object Ord extends Newtype[Int, Pure]
   type Heading = Heading.T
-  object Heading extends RefinedType[String, Pure]
+  object Heading extends Newtype[String, Pure]
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]

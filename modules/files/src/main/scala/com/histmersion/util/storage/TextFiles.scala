@@ -2,7 +2,6 @@ package com.histmersion
 package util.storage
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 trait TextFiles:
@@ -11,4 +10,4 @@ trait TextFiles:
 
 object TextFiles:
   type ReadResult = ReadResult.T
-  object ReadResult extends RefinedType[String, Pure]
+  object ReadResult extends Newtype[String, Pure]

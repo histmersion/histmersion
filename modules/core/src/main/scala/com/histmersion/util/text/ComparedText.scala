@@ -2,7 +2,6 @@ package com.histmersion
 package util.text
 
 import java.text.Normalizer
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The form two texts are compared in when one should be found in the other — an OCR'd body and a model's quote, two
@@ -12,9 +11,9 @@ import io.github.iltotore.iron.constraint.any.Pure
 object ComparedText:
 
   type NormaliseResult = NormaliseResult.T
-  object NormaliseResult extends RefinedType[String, Pure]
+  object NormaliseResult extends Newtype[String, Pure]
   type NormaliseS = NormaliseS.T
-  object NormaliseS extends RefinedType[String, Pure]
+  object NormaliseS extends Newtype[String, Pure]
 
   private val ligatures = List(
     "ﬀ" -> "ff",

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `opencode` provider: `opencode run --agent <role> --format json` on the generated config. `chatgptLogin`: its
@@ -14,8 +13,8 @@ final case class OpencodeConfig(command: OpencodeConfig.Command, timeoutSeconds:
 
 object OpencodeConfig:
   type Command = Command.T
-  object Command extends RefinedType[String, Pure]
+  object Command extends Newtype[String, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type ChatgptLogin = ChatgptLogin.T
-  object ChatgptLogin extends RefinedType[Boolean, Pure]
+  object ChatgptLogin extends Newtype[Boolean, Pure]

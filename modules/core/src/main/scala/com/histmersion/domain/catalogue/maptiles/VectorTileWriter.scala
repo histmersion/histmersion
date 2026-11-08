@@ -3,7 +3,6 @@ package domain.catalogue.maptiles
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Writes Mapbox vector tiles (version 2, https://github.com/mapbox/vector-tile-spec) of point layers. Each key and
@@ -12,11 +11,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 object VectorTileWriter:
 
   type VectorTile = VectorTile.T
-  object VectorTile extends RefinedType[Array[Byte], Pure]
+  object VectorTile extends Newtype[Array[Byte], Pure]
   type LayerMessage = LayerMessage.T
-  object LayerMessage extends RefinedType[Array[Byte], Pure]
+  object LayerMessage extends Newtype[Array[Byte], Pure]
   type LayerName = LayerName.T
-  object LayerName extends RefinedType[String, Pure]
+  object LayerName extends Newtype[String, Pure]
 
   /** A tile of the `layers` given (name → its points); an empty layer is left out. */
   def tile(layers: Seq[(LayerName, Seq[TilePoint])]): VectorTile =

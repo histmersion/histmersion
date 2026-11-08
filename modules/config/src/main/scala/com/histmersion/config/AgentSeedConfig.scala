@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `propose-articles`: at most `maxArticles` per plan; each one's filter returns at least `minSources` sources and
@@ -13,8 +12,8 @@ final case class AgentSeedConfig(maxArticles: AgentSeedConfig.MaxArticles, minSo
 
 object AgentSeedConfig:
   type MaxArticles = MaxArticles.T
-  object MaxArticles extends RefinedType[Int, Pure]
+  object MaxArticles extends Newtype[Int, Pure]
   type MinSources = MinSources.T
-  object MinSources extends RefinedType[Int, Pure]
+  object MinSources extends Newtype[Int, Pure]
   type MaxOverlap = MaxOverlap.T
-  object MaxOverlap extends RefinedType[Double, Pure]
+  object MaxOverlap extends Newtype[Double, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReviewManagerDefaults(
@@ -20,24 +19,24 @@ final case class ReviewManagerDefaults(
 
 object ReviewManagerDefaults:
   type MaxRuns = MaxRuns.T
-  object MaxRuns extends RefinedType[Int, Pure]
+  object MaxRuns extends Newtype[Int, Pure]
   type Rounds = Rounds.T
-  object Rounds extends RefinedType[Int, Pure]
+  object Rounds extends Newtype[Int, Pure]
   type MaxRunsPerArticle = MaxRunsPerArticle.T
-  object MaxRunsPerArticle extends RefinedType[Int, Pure]
+  object MaxRunsPerArticle extends Newtype[Int, Pure]
   type NoProgressRuns = NoProgressRuns.T
-  object NoProgressRuns extends RefinedType[Int, Pure]
+  object NoProgressRuns extends Newtype[Int, Pure]
   type ReopenLimit = ReopenLimit.T
-  object ReopenLimit extends RefinedType[Int, Pure]
+  object ReopenLimit extends Newtype[Int, Pure]
   type CooldownMinutes = CooldownMinutes.T
-  object CooldownMinutes extends RefinedType[Int, Pure]
+  object CooldownMinutes extends Newtype[Int, Pure]
   type LowWater = LowWater.T
-  object LowWater extends RefinedType[Int, Pure]
+  object LowWater extends Newtype[Int, Pure]
   type RefillBatch = RefillBatch.T
-  object RefillBatch extends RefinedType[Int, Pure]
+  object RefillBatch extends Newtype[Int, Pure]
   type StaleAfterDays = StaleAfterDays.T
-  object StaleAfterDays extends RefinedType[Int, Pure]
+  object StaleAfterDays extends Newtype[Int, Pure]
   type InferFilter = InferFilter.T
-  object InferFilter extends RefinedType[Boolean, Pure]
+  object InferFilter extends Newtype[Boolean, Pure]
   type ExtendMinNew = ExtendMinNew.T
-  object ExtendMinNew extends RefinedType[Int, Pure]
+  object ExtendMinNew extends Newtype[Int, Pure]

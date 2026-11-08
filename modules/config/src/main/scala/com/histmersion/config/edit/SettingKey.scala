@@ -7,7 +7,6 @@ import org.ekrich.config.ConfigUtil
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The full path of one setting in the config file, `histmersion.<block>.<key>`: segments of letters, digits, `_` and
@@ -17,18 +16,18 @@ type SettingKeyRule = Match["histmersion(\\.[A-Za-z0-9_][A-Za-z0-9_-]*)+"]
 
 type SettingKey = SettingKey.T
 
-object SettingKey extends RefinedType[String, SettingKeyRule]:
+object SettingKey extends Newtype[String, SettingKeyRule]:
   type HoconPath = HoconPath.T
-  object HoconPath extends RefinedType[String, Pure]
+  object HoconPath extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Relative = Relative.T
-  object Relative extends RefinedType[String, Pure]
+  object Relative extends Newtype[String, Pure]
   type Segment = Segment.T
-  object Segment extends RefinedType[String, Pure]
+  object Segment extends Newtype[String, Pure]
 
   type ParseRaw = ParseRaw.T
-  object ParseRaw extends RefinedType[String, Pure]
+  object ParseRaw extends Newtype[String, Pure]
 
   val Root = "histmersion"
 

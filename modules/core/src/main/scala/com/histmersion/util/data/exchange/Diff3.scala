@@ -1,7 +1,6 @@
 package com.histmersion
 package util.data.exchange
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed on both sides
@@ -16,11 +15,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Diff3:
 
   type MergeBase = MergeBase.T
-  object MergeBase extends RefinedType[String, Pure]
+  object MergeBase extends Newtype[String, Pure]
   type MergeLeft = MergeLeft.T
-  object MergeLeft extends RefinedType[String, Pure]
+  object MergeLeft extends Newtype[String, Pure]
   type MergeRight = MergeRight.T
-  object MergeRight extends RefinedType[String, Pure]
+  object MergeRight extends Newtype[String, Pure]
 
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
   enum Hunk:
@@ -30,14 +29,14 @@ object Diff3:
   object Hunk:
     object Agreed:
       type Lines = Lines.T
-      object Lines extends RefinedType[String, Pure]
+      object Lines extends Newtype[String, Pure]
     object Conflict:
       type Base = Base.T
-      object Base extends RefinedType[String, Pure]
+      object Base extends Newtype[String, Pure]
       type Left = Left.T
-      object Left extends RefinedType[String, Pure]
+      object Left extends Newtype[String, Pure]
       type Right = Right.T
-      object Right extends RefinedType[String, Pure]
+      object Right extends Newtype[String, Pure]
 
   final case class Result(hunks: List[Hunk]):
     def conflicts: Result.ConflictCount = Result.ConflictCount(hunks.count(_.isInstanceOf[Hunk.Conflict]))
@@ -62,15 +61,15 @@ object Diff3:
 
   object Result:
     type ConflictCount = ConflictCount.T
-    object ConflictCount extends RefinedType[Int, Pure]
+    object ConflictCount extends Newtype[Int, Pure]
     type MergedText = MergedText.T
-    object MergedText extends RefinedType[String, Pure]
+    object MergedText extends Newtype[String, Pure]
     type MarkedText = MarkedText.T
-    object MarkedText extends RefinedType[String, Pure]
+    object MarkedText extends Newtype[String, Pure]
     type MarkedLeftName = MarkedLeftName.T
-    object MarkedLeftName extends RefinedType[String, Pure]
+    object MarkedLeftName extends Newtype[String, Pure]
     type MarkedRightName = MarkedRightName.T
-    object MarkedRightName extends RefinedType[String, Pure]
+    object MarkedRightName extends Newtype[String, Pure]
 
   /** Lines of a text; a final newline is not an extra empty line. */
   private def lines(s: String): Vector[String] = s.split("\n", -1).toVector

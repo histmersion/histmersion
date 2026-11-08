@@ -5,7 +5,6 @@ import com.histmersion.api.Plural
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewRound, ReviewState}
 import com.histmersion.domain.ReviewLedger.{Entry, Ledger}
 import com.histmersion.domain.automation.ItemStatus
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Run
 
@@ -15,12 +14,12 @@ import com.histmersion.domain.automation.Run
   */
 object ArticleReviewStatus:
   type OutcomeSuffix = OutcomeSuffix.T
-  object OutcomeSuffix extends RefinedType[String, Pure]
+  object OutcomeSuffix extends Newtype[String, Pure]
   type Progress = Progress.T
-  object Progress extends RefinedType[String, Pure]
+  object Progress extends Newtype[String, Pure]
   export ReviewRound.{StartedAt as RunStart}
   type StatusLine = StatusLine.T
-  object StatusLine extends RefinedType[String, Pure]
+  object StatusLine extends Newtype[String, Pure]
 
   /** The review manager's `article-review` item for the article: its status, its last outcome line and how many runs it
     * started.
@@ -29,9 +28,9 @@ object ArticleReviewStatus:
 
   object ItemFacts:
     type Outcome = Outcome.T
-    object Outcome extends RefinedType[String, Pure]
+    object Outcome extends Newtype[String, Pure]
     type Attempts = Attempts.T
-    object Attempts extends RefinedType[Int, Pure]
+    object Attempts extends Newtype[Int, Pure]
 
   /** The ledger's findings counted: the open MAJOR and minor ones, all of them, and the runs that raised or closed one.
     */

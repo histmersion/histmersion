@@ -5,15 +5,14 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.given
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Citekey shape for a rename. */
 object Citekeys:
   type ValidCk = ValidCk.T
-  object ValidCk extends RefinedType[String, Pure]
+  object ValidCk extends Newtype[String, Pure]
   type RenameToNewRaw = RenameToNewRaw.T
-  object RenameToNewRaw extends RefinedType[String, Pure]
+  object RenameToNewRaw extends Newtype[String, Pure]
 
   private val Shape = "^[a-z][a-z0-9_]*$".r
   def valid(ck: ValidCk): Boolean = Shape.matches(ck.value)

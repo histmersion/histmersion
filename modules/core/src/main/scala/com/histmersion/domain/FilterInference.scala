@@ -11,7 +11,6 @@ import sttp.tapir.Schema
 
 import com.histmersion.api.research.Article.Plans.FilterProposal
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
@@ -26,13 +25,13 @@ import com.histmersion.domain.automation.Run
   */
 object FilterInference:
   type Last = Last.T
-  object Last extends RefinedType[Boolean, Pure]
+  object Last extends Newtype[Boolean, Pure]
   type LogLine = LogLine.T
-  object LogLine extends RefinedType[String, Pure]
+  object LogLine extends Newtype[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends RefinedType[String, Pure]
+  object Outcome extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
 
   final case class FilterAnswer(
@@ -44,7 +43,7 @@ object FilterInference:
   ) derives KindlingsCodecAsObject
   object FilterAnswer:
     type Rationale = Rationale.T
-    object Rationale extends RefinedType[String, Pure]
+    object Rationale extends Newtype[String, Pure]
 
     given Schema[FilterAnswer] = KindlingsSchema
       .derived[FilterAnswer]
@@ -64,11 +63,11 @@ object FilterInference:
 
   object Limits:
     type MinHits = MinHits.T
-    object MinHits extends RefinedType[Int, Pure]
+    object MinHits extends Newtype[Int, Pure]
     type MaxHits = MaxHits.T
-    object MaxHits extends RefinedType[Int, Pure]
+    object MaxHits extends Newtype[Int, Pure]
     type MinCitedShare = MinCitedShare.T
-    object MinCitedShare extends RefinedType[Double, Pure]
+    object MinCitedShare extends Newtype[Double, Pure]
 
   /** What the pipeline checkpoints: the proposal that passed, or None with why nothing did. */
   final case class Inferred(proposal: Option[FilterProposal], problems: List[Problem] = Nil)

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Highlighting of search terms inside already-rendered HTML — pure, no parser, no dependencies.
@@ -14,11 +13,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object Highlight:
   type Html = Html.T
-  object Html extends RefinedType[String, Pure]
+  object Html extends Newtype[String, Pure]
   type MarkCount = MarkCount.T
-  object MarkCount extends RefinedType[Int, Pure]
+  object MarkCount extends Newtype[Int, Pure]
   type Term = Term.T
-  object Term extends RefinedType[String, Pure]
+  object Term extends Newtype[String, Pure]
 
   /** Terms worth highlighting, from a `websearch_to_tsquery` style query: `"quoted phrases"` stay phrases, `-excluded`
     * terms and the `or`/`and` operators are dropped. Longest first, so a phrase wins over its own words.

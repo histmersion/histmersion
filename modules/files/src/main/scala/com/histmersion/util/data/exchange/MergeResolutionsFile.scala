@@ -10,7 +10,6 @@ import org.yaml.snakeyaml.constructor.SafeConstructor
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The resolution file of `merge plan --resolutions` (docs/research-merge-import.md §6.3): read it, and write the
@@ -32,7 +31,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object MergeResolutionsFile:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   private def yaml = Yaml(SafeConstructor(LoaderOptions()))
 

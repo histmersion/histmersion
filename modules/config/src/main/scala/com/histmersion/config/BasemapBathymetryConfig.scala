@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The sea floor: terrarium tiles at `url` (`{z}/{x}/{y}`), zooms 0…`maxZoom` of the region, one GET a tile,
@@ -26,8 +25,8 @@ final case class BasemapBathymetryConfig(
 object BasemapBathymetryConfig:
 
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type RequestGapMs = RequestGapMs.T
-  object RequestGapMs extends RefinedType[Int, Pure]
+  object RequestGapMs extends Newtype[Int, Pure]
   type Attribution = Attribution.T
-  object Attribution extends RefinedType[String, Pure]
+  object Attribution extends Newtype[String, Pure]

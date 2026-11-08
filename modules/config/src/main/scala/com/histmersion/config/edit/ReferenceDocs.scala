@@ -2,7 +2,6 @@ package com.histmersion
 package config.edit
 
 import scala.annotation.tailrec
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What reference.conf says about a setting, read from its text: the comment lines just above the key, the comment at
@@ -54,10 +53,10 @@ final class ReferenceDocs(lines: IndexedSeq[ReferenceDocs.Line]):
 
 object ReferenceDocs:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
   type Line = Line.T
-  object Line extends RefinedType[String, Pure]
+  object Line extends Newtype[String, Pure]
 
   def apply(text: Text): ReferenceDocs = new ReferenceDocs(text.value.split("\n", -1).toIndexedSeq.map(Line(_)))
 

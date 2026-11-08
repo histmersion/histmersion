@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One plan pool: a floor (% that must stay LEFT) per window kind (`five_hour=25, seven_day=25`; Codex windows by
@@ -18,6 +17,6 @@ final case class PlanPoolConfig(
 
 object PlanPoolConfig:
   type Floors = Floors.T
-  object Floors extends RefinedType[String, Pure]
+  object Floors extends Newtype[String, Pure]
   type MaxCallsInFlight = MaxCallsInFlight.T
-  object MaxCallsInFlight extends RefinedType[Int, Pure]
+  object MaxCallsInFlight extends Newtype[Int, Pure]

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A tile feature's property value, as the vector tile format types it. */
@@ -14,13 +13,13 @@ enum TileValue:
 object TileValue:
   object Text:
     type Value = Value.T
-    object Value extends RefinedType[String, Pure]
+    object Value extends Newtype[String, Pure]
   object Whole:
     type Value = Value.T
-    object Value extends RefinedType[Long, Pure]
+    object Value extends Newtype[Long, Pure]
   object Real:
     type Value = Value.T
-    object Value extends RefinedType[Double, Pure]
+    object Value extends Newtype[Double, Pure]
   object Flag:
     type Value = Value.T
-    object Value extends RefinedType[Boolean, Pure]
+    object Value extends Newtype[Boolean, Pure]

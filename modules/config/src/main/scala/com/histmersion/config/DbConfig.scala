@@ -3,15 +3,14 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class DbConfig(url: DbConfig.Url, user: DbConfig.User, password: DbConfig.Password, pool: DbPoolConfig) derives ConfigReader
 
 object DbConfig:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type User = User.T
-  object User extends RefinedType[String, Pure]
+  object User extends Newtype[String, Pure]
   type Password = Password.T
-  object Password extends RefinedType[String, Pure]
+  object Password extends Newtype[String, Pure]

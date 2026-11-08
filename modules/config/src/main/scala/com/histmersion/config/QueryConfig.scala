@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `histmersion query` (plan §5.2 stream 2.8): the read-only SQL escape hatch's safety rails. `timeoutMs` becomes
@@ -19,12 +18,12 @@ final case class QueryConfig(user: QueryConfig.User, password: QueryConfig.Passw
 
 object QueryConfig:
   type User = User.T
-  object User extends RefinedType[String, Pure]
+  object User extends Newtype[String, Pure]
   type Password = Password.T
-  object Password extends RefinedType[String, Pure]
+  object Password extends Newtype[String, Pure]
   type TimeoutMs = TimeoutMs.T
-  object TimeoutMs extends RefinedType[Int, Pure]
+  object TimeoutMs extends Newtype[Int, Pure]
   type MaxRows = MaxRows.T
-  object MaxRows extends RefinedType[Int, Pure]
+  object MaxRows extends Newtype[Int, Pure]
   type MaxCellChars = MaxCellChars.T
-  object MaxCellChars extends RefinedType[Int, Pure]
+  object MaxCellChars extends Newtype[Int, Pure]

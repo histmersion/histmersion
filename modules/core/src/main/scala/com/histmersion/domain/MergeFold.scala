@@ -13,7 +13,6 @@ import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.exchange.Bundle
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How two records that are one are folded into one (docs/research-merge-import.md §5.4, milestones M4–M5): goals,
@@ -26,11 +25,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object MergeFold:
   type ArticleBody = ArticleBody.T
-  object ArticleBody extends RefinedType[String, Pure]
+  object ArticleBody extends Newtype[String, Pure]
   type ConflictCount = ConflictCount.T
-  object ConflictCount extends RefinedType[Int, Pure]
+  object ConflictCount extends Newtype[Int, Pure]
   type QueueKey = QueueKey.T
-  object QueueKey extends RefinedType[String, Pure]
+  object QueueKey extends Newtype[String, Pure]
 
   // ── small rules ─────────────────────────────────────────────────────────────────────────────
 

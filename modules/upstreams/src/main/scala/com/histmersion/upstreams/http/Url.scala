@@ -1,7 +1,6 @@
 package com.histmersion
 package upstreams.http
 import sttp.model.Uri
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
 
@@ -10,7 +9,7 @@ import com.histmersion.upstreams.landing.RepositoryLanding
   */
 object Url:
   type UrlPath = UrlPath.T
-  object UrlPath extends RefinedType[String, Pure]
+  object UrlPath extends Newtype[String, Pure]
 
   def apply(base: RepositoryLanding.Candidate.Url, path: UrlPath = UrlPath(""), params: (String, String)*): RepositoryLanding.Candidate.Url =
     val u = Uri.unsafeParse((base).value + path)

@@ -14,7 +14,7 @@ type FileVersionRule = Match["none|[0-9a-f]{64}"]
 
 type FileVersion = FileVersion.T
 
-object FileVersion extends RefinedType[String, FileVersionRule]:
+object FileVersion extends Newtype[String, FileVersionRule]:
 
   val Missing: FileVersion = applyUnsafe("none")
 

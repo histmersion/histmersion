@@ -12,7 +12,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Changes an agent run PROPOSES to the corpus rather than makes — a source's status, a typed disagreement edge — and
@@ -21,7 +20,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object AgentProposals:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
   export AgentVerify.Problem
 
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
@@ -66,9 +65,9 @@ object AgentProposals:
   object Proposal:
 
     type Evidence = Evidence.T
-    object Evidence extends RefinedType[String, Pure]
+    object Evidence extends Newtype[String, Pure]
     type Quote = Quote.T
-    object Quote extends RefinedType[String, Pure]
+    object Quote extends Newtype[String, Pure]
 
 
 
@@ -86,7 +85,7 @@ object AgentProposals:
   object Route:
     object Skip:
       type Reason = Reason.T
-      object Reason extends RefinedType[String, Pure]
+      object Reason extends Newtype[String, Pure]
 
   /** A status is APPLIED without a person only when it fills an `unassessed` source with `current` or `foundational` —
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows
@@ -119,19 +118,19 @@ object AgentProposals:
   ) derives KindlingsCodecAsObject
   object ProposalAnswer:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Citekey = Citekey.T
-    object Citekey extends RefinedType[String, Pure]
+    object Citekey extends Newtype[String, Pure]
     type Status = com.histmersion.domain.library.Source.Status.Wire
     val Status: com.histmersion.domain.library.Source.Status.Wire.type = com.histmersion.domain.library.Source.Status.Wire
     type EdgeKind = Edge.Kind.Wire
     val EdgeKind: Edge.Kind.Wire.type = Edge.Kind.Wire
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Evidence = Evidence.T
-    object Evidence extends RefinedType[String, Pure]
+    object Evidence extends Newtype[String, Pure]
     type Quote = Quote.T
-    object Quote extends RefinedType[String, Pure]
+    object Quote extends Newtype[String, Pure]
 
     given Schema[ProposalAnswer] = KindlingsSchema
       .derived[ProposalAnswer]

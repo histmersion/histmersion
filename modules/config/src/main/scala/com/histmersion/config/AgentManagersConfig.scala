@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The process managers' supervisor (docs/research-process-managers.md §3). */
@@ -25,16 +24,16 @@ final case class AgentManagersConfig(
 
 object AgentManagersConfig:
   type Enabled = Enabled.T
-  object Enabled extends RefinedType[Boolean, Pure]
+  object Enabled extends Newtype[Boolean, Pure]
   type TickSeconds = TickSeconds.T
-  object TickSeconds extends RefinedType[Int, Pure]
+  object TickSeconds extends Newtype[Int, Pure]
   type KeepEventsDays = KeepEventsDays.T
-  object KeepEventsDays extends RefinedType[Int, Pure]
+  object KeepEventsDays extends Newtype[Int, Pure]
   type BackoffMinutes = BackoffMinutes.T
-  object BackoffMinutes extends RefinedType[Int, Pure]
+  object BackoffMinutes extends Newtype[Int, Pure]
   type MaxBackoffMinutes = MaxBackoffMinutes.T
-  object MaxBackoffMinutes extends RefinedType[Int, Pure]
+  object MaxBackoffMinutes extends Newtype[Int, Pure]
   type MaxFailures = MaxFailures.T
-  object MaxFailures extends RefinedType[Int, Pure]
+  object MaxFailures extends Newtype[Int, Pure]
   type DailyUsd = DailyUsd.T
-  object DailyUsd extends RefinedType[Double, Pure]
+  object DailyUsd extends Newtype[Double, Pure]

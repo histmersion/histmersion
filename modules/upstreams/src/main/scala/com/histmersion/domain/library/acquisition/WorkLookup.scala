@@ -7,7 +7,6 @@ import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.plugin.Plugin
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.ArxivId
 
@@ -17,12 +16,12 @@ import com.histmersion.upstreams.ArxivId
   */
 object WorkLookup:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** The OpenAlex `select` list — asking for only these fields keeps a search page small. */
   type WorkFields = WorkFieldsValue
   type WorkFieldsValue = WorkFieldsValue.T
-  object WorkFieldsValue extends RefinedType[String, Pure]
+  object WorkFieldsValue extends Newtype[String, Pure]
 
   val WorkFields: WorkFields =
     WorkFieldsValue("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +

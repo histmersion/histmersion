@@ -1,7 +1,6 @@
 package com.histmersion
 package domain
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.media.DataCredit
 
@@ -25,7 +24,7 @@ object Attribution:
   type Author = AuthorName
   val Author: AuthorName.type = AuthorName
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]
 
   val Cc0Url: Licence.Url = Licence.Url("https://creativecommons.org/publicdomain/zero/1.0/")
   val PdmUrl: Licence.Url = Licence.Url("https://creativecommons.org/publicdomain/mark/1.0/")

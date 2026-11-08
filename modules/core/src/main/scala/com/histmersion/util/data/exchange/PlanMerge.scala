@@ -2,7 +2,6 @@ package com.histmersion
 package util.data.exchange
 
 import java.util.UUID
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A record of the bundle that a kind's rules found to be one with a record here before anything is decided — an event
@@ -19,8 +18,8 @@ trait PlanMerge:
 
 object PlanMerge:
   type InfoResult = InfoResult.T
-  object InfoResult extends RefinedType[String, Pure]
+  object InfoResult extends Newtype[String, Pure]
   type InfoLabel = InfoLabel.T
-  object InfoLabel extends RefinedType[String, Pure]
+  object InfoLabel extends Newtype[String, Pure]
   type InfoBundleLabel = InfoBundleLabel.T
-  object InfoBundleLabel extends RefinedType[String, Pure]
+  object InfoBundleLabel extends Newtype[String, Pure]

@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `floorYear`: the earliest year a GVP dating may reach (the list is of HOLOCENE eruptions: a ± that runs before it is
@@ -21,16 +20,16 @@ final case class EventsGvpConfig(
 
 object EventsGvpConfig:
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type PageSize = PageSize.T
-  object PageSize extends RefinedType[Int, Pure]
+  object PageSize extends Newtype[Int, Pure]
   type WindowYears = WindowYears.T
-  object WindowYears extends RefinedType[Long, Pure]
+  object WindowYears extends Newtype[Long, Pure]
   type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends RefinedType[Int, Pure]
+  object RequestIntervalMs extends Newtype[Int, Pure]
   type RegionMinVei = RegionMinVei.T
-  object RegionMinVei extends RefinedType[Int, Pure]
+  object RegionMinVei extends Newtype[Int, Pure]
   type OutsideMinVei = OutsideMinVei.T
-  object OutsideMinVei extends RefinedType[Int, Pure]
+  object OutsideMinVei extends Newtype[Int, Pure]
   type FloorYear = FloorYear.T
-  object FloorYear extends RefinedType[Long, Pure]
+  object FloorYear extends Newtype[Long, Pure]

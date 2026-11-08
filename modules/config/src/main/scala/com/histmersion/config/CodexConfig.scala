@@ -3,7 +3,6 @@ package config
 
 import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The `codex` provider: the person's own `codex` CLI (`codex exec --json`), on the ChatGPT plan login of a
@@ -42,24 +41,24 @@ final case class CodexConfig(
 object CodexConfig:
 
   type Command = Command.T
-  object Command extends RefinedType[String, Pure]
+  object Command extends Newtype[String, Pure]
   type Home = Home.T
-  object Home extends RefinedType[String, Pure]
+  object Home extends Newtype[String, Pure]
   type UseApiKey = UseApiKey.T
-  object UseApiKey extends RefinedType[Boolean, Pure]
+  object UseApiKey extends Newtype[Boolean, Pure]
   type TimeoutSeconds = TimeoutSeconds.T
-  object TimeoutSeconds extends RefinedType[Int, Pure]
+  object TimeoutSeconds extends Newtype[Int, Pure]
   type AppServer = AppServer.T
-  object AppServer extends RefinedType[Boolean, Pure]
+  object AppServer extends Newtype[Boolean, Pure]
   type ToolOutputTokens = ToolOutputTokens.T
-  object ToolOutputTokens extends RefinedType[Int, Pure]
+  object ToolOutputTokens extends Newtype[Int, Pure]
   type BaseInstructions = BaseInstructions.T
-  object BaseInstructions extends RefinedType[String, Pure]
+  object BaseInstructions extends Newtype[String, Pure]
   type KeepSessionsDays = KeepSessionsDays.T
-  object KeepSessionsDays extends RefinedType[Int, Pure]
+  object KeepSessionsDays extends Newtype[Int, Pure]
   type Vacuum = Vacuum.T
-  object Vacuum extends RefinedType[Boolean, Pure]
+  object Vacuum extends Newtype[Boolean, Pure]
   type RetentionEveryHours = RetentionEveryHours.T
-  object RetentionEveryHours extends RefinedType[Int, Pure]
+  object RetentionEveryHours extends Newtype[Int, Pure]
   type Sqlite = Sqlite.T
-  object Sqlite extends RefinedType[String, Pure]
+  object Sqlite extends Newtype[String, Pure]

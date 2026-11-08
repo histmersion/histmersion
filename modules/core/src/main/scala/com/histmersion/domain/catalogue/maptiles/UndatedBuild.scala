@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.catalogue.maptiles
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the kept counts of the undated sites were built from: the version of the writes to undated sites they include,
@@ -16,8 +15,8 @@ final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBui
 object UndatedBuild:
 
   type Version = Version.T
-  object Version extends RefinedType[Long, Pure]
+  object Version extends Newtype[Long, Pure]
   type PerSide = PerSide.T
-  object PerSide extends RefinedType[Int, Pure]
+  object PerSide extends Newtype[Int, Pure]
   type MaxZoom = MaxZoom.T
-  object MaxZoom extends RefinedType[Int, Pure]
+  object MaxZoom extends Newtype[Int, Pure]

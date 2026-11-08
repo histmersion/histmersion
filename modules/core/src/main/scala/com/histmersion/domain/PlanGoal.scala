@@ -12,7 +12,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.automation.Goal.Plans.{Plan, PlannedGoal, PlannedWork}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.research.Slug
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Citekey
@@ -25,23 +24,23 @@ import com.histmersion.domain.automation.Run
   */
 object PlanGoal:
   type AcquireText = AcquireText.T
-  object AcquireText extends RefinedType[String, Pure]
+  object AcquireText extends Newtype[String, Pure]
   type Approved = Approved.T
-  object Approved extends RefinedType[Boolean, Pure]
+  object Approved extends Newtype[Boolean, Pure]
   type CreatedCount = CreatedCount.T
-  object CreatedCount extends RefinedType[Int, Pure]
+  object CreatedCount extends Newtype[Int, Pure]
   type LastRound = LastRound.T
-  object LastRound extends RefinedType[Boolean, Pure]
+  object LastRound extends Newtype[Boolean, Pure]
   type LinkedCount = LinkedCount.T
-  object LinkedCount extends RefinedType[Int, Pure]
+  object LinkedCount extends Newtype[Int, Pure]
   type LogLine = LogLine.T
-  object LogLine extends RefinedType[String, Pure]
+  object LogLine extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type QueuedCount = QueuedCount.T
-  object QueuedCount extends RefinedType[Int, Pure]
+  object QueuedCount extends Newtype[Int, Pure]
 
   // ── the model's answer ──────────────────────────────────────────────────────────────────────────
 
@@ -50,13 +49,13 @@ object PlanGoal:
       derives KindlingsCodecAsObject
   object SubGoalAnswer:
     type Slug = Slug.T
-    object Slug extends RefinedType[String, Pure]
+    object Slug extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
     type Tags = Tags.T
-    object Tags extends RefinedType[String, Pure]
+    object Tags extends Newtype[String, Pure]
 
     given Schema[SubGoalAnswer] = KindlingsSchema
       .derived[SubGoalAnswer]
@@ -69,9 +68,9 @@ object PlanGoal:
   final case class WorkAnswer(doi: WorkAnswer.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
   object WorkAnswer:
     type Doi = Doi.T
-    object Doi extends RefinedType[String, Pure]
+    object Doi extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
     given Schema[WorkAnswer] = KindlingsSchema
       .derived[WorkAnswer]
@@ -87,9 +86,9 @@ object PlanGoal:
   ) derives KindlingsCodecAsObject
   object PlanAnswer:
     type Rationale = Rationale.T
-    object Rationale extends RefinedType[String, Pure]
+    object Rationale extends Newtype[String, Pure]
     type Queries = Queries.T
-    object Queries extends RefinedType[String, Pure]
+    object Queries extends Newtype[String, Pure]
 
     given Schema[PlanAnswer] = KindlingsSchema
       .derived[PlanAnswer]
@@ -105,7 +104,7 @@ object PlanGoal:
 
   object ProposedWork:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   /** The planner's answer after the pure checks; its DOIs are not looked up yet. */
   final case class Proposed(
@@ -118,24 +117,24 @@ object PlanGoal:
 
   object Proposed:
     type Rationale = Rationale.T
-    object Rationale extends RefinedType[String, Pure]
+    object Rationale extends Newtype[String, Pure]
     type Queries = Queries.T
-    object Queries extends RefinedType[String, Pure]
+    object Queries extends Newtype[String, Pure]
     type Dropped = Dropped.T
-    object Dropped extends RefinedType[String, Pure]
+    object Dropped extends Newtype[String, Pure]
 
   /** The caps on a plan (config `agents.plan.*`). */
   final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
 
   object Caps:
     type SubGoals = SubGoals.T
-    object SubGoals extends RefinedType[Int, Pure]
+    object SubGoals extends Newtype[Int, Pure]
     type Queries = Queries.T
-    object Queries extends RefinedType[Int, Pure]
+    object Queries extends Newtype[Int, Pure]
     type Works = Works.T
-    object Works extends RefinedType[Int, Pure]
+    object Works extends Newtype[Int, Pure]
     type QueryChars = QueryChars.T
-    object QueryChars extends RefinedType[Int, Pure]
+    object QueryChars extends Newtype[Int, Pure]
 
   /** Check a plan answer. Problems a retry can fix (an invalid slug or DOI, an empty title, a cap exceeded, nothing
     * proposed) send it back; things a retry cannot change (a slug that is already a goal, a query the goal already has,
@@ -235,15 +234,15 @@ object PlanGoal:
 
   object Work:
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Authors = Authors.T
-    object Authors extends RefinedType[String, Pure]
+    object Authors extends Newtype[String, Pure]
     type InDb = InDb.T
-    object InDb extends RefinedType[Boolean, Pure]
+    object InDb extends Newtype[Boolean, Pure]
     type IsOa = IsOa.T
-    object IsOa extends RefinedType[Boolean, Pure]
+    object IsOa extends Newtype[Boolean, Pure]
     type IsRetracted = IsRetracted.T
-    object IsRetracted extends RefinedType[Boolean, Pure]
+    object IsRetracted extends Newtype[Boolean, Pure]
 
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
   type Lookup = Doi => Either[Problem, Work]

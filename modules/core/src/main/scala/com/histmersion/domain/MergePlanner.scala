@@ -51,7 +51,6 @@ import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.library.MatchOutcome
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.PlanMatches
 
@@ -90,7 +89,7 @@ import com.histmersion.api.exchange.PlanMatches
   */
 object MergePlanner:
   type IssueExtra = IssueExtra.T
-  object IssueExtra extends RefinedType[String, Pure]
+  object IssueExtra extends Newtype[String, Pure]
 
   /** One row of `merge_ledger`: the foreign rev merged, the local uid it maps to, the local rev left. */
 
@@ -175,13 +174,13 @@ object MergePlanner:
   object Input:
 
     type Compat = Compat.T
-    object Compat extends RefinedType[String, Pure]
+    object Compat extends Newtype[String, Pure]
     type ReadProblems = ReadProblems.T
-    object ReadProblems extends RefinedType[String, Pure]
+    object ReadProblems extends Newtype[String, Pure]
     type Places = Places.T
-    object Places extends RefinedType[String, Pure]
+    object Places extends Newtype[String, Pure]
     type AliasTombstonesValue = AliasTombstonesValue.T
-    object AliasTombstonesValue extends RefinedType[String, Pure]
+    object AliasTombstonesValue extends Newtype[String, Pure]
 
   /** A line's fate, for the importer: its uid in the bundle and here, its revs, the decision. */
   final case class Row(
@@ -198,9 +197,9 @@ object MergePlanner:
 
   object Row:
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Tombstone = Tombstone.T
-    object Tombstone extends RefinedType[Boolean, Pure]
+    object Tombstone extends Newtype[Boolean, Pure]
 
   /** A record of the bundle folded into one here: its uid becomes a redirect (`uid_aliases`). */
   final case class Fold(kind: Bundle.Kind, foreignUid: UUID, localUid: UUID)
@@ -212,7 +211,7 @@ object MergePlanner:
 
   object AttestationFix:
     type Drop = Drop.T
-    object Drop extends RefinedType[Boolean, Pure]
+    object Drop extends Newtype[Boolean, Pure]
 
   /** A version to record for an article here: the bundle's text, so the next merge finds it in this collection's
     * history (a common base).
@@ -265,9 +264,9 @@ object MergePlanner:
 
   object Result:
     type NeedsApply = NeedsApply.T
-    object NeedsApply extends RefinedType[String, Pure]
+    object NeedsApply extends Newtype[String, Pure]
     type Notes = Notes.T
-    object Notes extends RefinedType[String, Pure]
+    object Notes extends Newtype[String, Pure]
 
   // ── identity ────────────────────────────────────────────────────────────────────────────────
 

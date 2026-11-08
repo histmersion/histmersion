@@ -4,7 +4,6 @@ package domain.media.assets
 import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
 import scala.annotation.tailrec
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One figure of a source as the caller supplies it — decoded bytes, not base64 — to be stored with the source's
@@ -19,19 +18,19 @@ object NewFigure:
 
   /** Why a payload is unusable. */
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   type Bytes = Bytes.T
-  object Bytes extends RefinedType[Array[Byte], Pure]
+  object Bytes extends Newtype[Array[Byte], Pure]
 
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Mime = Mime.T
-  object Mime extends RefinedType[String, Pure]
+  object Mime extends Newtype[String, Pure]
   type Width = Width.T
-  object Width extends RefinedType[Int, Pure]
+  object Width extends Newtype[Int, Pure]
   type Height = Height.T
-  object Height extends RefinedType[Int, Pure]
+  object Height extends Newtype[Int, Pure]
 
   /** Decode a wire [[AssetInput]]; `Left` with a readable reason when the payload is unusable. */
   def of(in: AssetInput, maxBytes: ByteCount): Either[Problem, NewFigure] =
