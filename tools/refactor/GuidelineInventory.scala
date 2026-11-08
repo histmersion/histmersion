@@ -85,6 +85,7 @@ object GuidelineInventory {
     "silentInterp" -> "an enum value interpolated into s\"...\", sql\"...\" or another interpolator",
     "silentPure" -> "X.option/X.either on a newtype whose constraint is Pure (always succeeds)")
   val ironValue = "io/github/iltotore/iron/"
+  val newtypeBase = "com/histmersion/Newtype#"
   val primitives = Set("java/lang/String#", "scala/Predef.String#", "scala/Int#", "scala/Long#", "scala/Double#", "scala/Boolean#",
     "scala/Short#", "scala/Byte#", "scala/Char#", "scala/Float#")
   val plainDefTypes = Set("java/lang/String#", "scala/Predef.String#", "scala/Int#", "scala/Long#", "scala/Double#", "scala/Boolean#")
@@ -172,8 +173,9 @@ class GuidelineInventory(val policy: GuidelineInventory.Policy, boundaryKinds: M
     }
     def newtypeParents(obj: Symbol): Option[(String, Symbol, Symbol)] = info(obj).map(_.signature).collect {
       case cs: s.ClassSignature => cs.parents.collectFirst {
-        case r: s.TypeRef if (r.symbol == ironValue + "RefinedType#" || r.symbol == ironValue + "RefinedSubtype#") && r.typeArguments.size == 2 =>
-          (if (r.symbol.endsWith("RefinedType#")) "RefinedType" else "RefinedSubtype", typeSymbol(dealias(r.typeArguments(0))), typeSymbol(dealias(r.typeArguments(1))))
+        // com.histmersion.Newtype (step 3a) is a RefinedType
+        case r: s.TypeRef if (r.symbol == ironValue + "RefinedType#" || r.symbol == ironValue + "RefinedSubtype#" || r.symbol == newtypeBase) && r.typeArguments.size == 2 =>
+          (if (r.symbol.endsWith("RefinedSubtype#")) "RefinedSubtype" else "RefinedType", typeSymbol(dealias(r.typeArguments(0))), typeSymbol(dealias(r.typeArguments(1))))
       }
     }.flatten
     def isNewtypeObject(sym: Symbol): Boolean = !sym.isNone && sym.value.endsWith(".") && newtypeParents(sym).nonEmpty
