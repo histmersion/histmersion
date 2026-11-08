@@ -13,7 +13,7 @@ import sttp.tapir.server.ServerEndpoint
   * would read `events/import` as an event id.
   */
 object EventImportsRoutes:
-  private def invalid(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid)))
 
   def apply(imports: EventImportsControllers): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local

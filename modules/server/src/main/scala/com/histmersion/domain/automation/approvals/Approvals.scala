@@ -55,7 +55,7 @@ final class Approvals(
       page <- store
         .approvalPage(q, limit, before, upTo)
         .left
-        .map(m => Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(Write.CodeNotFound))))
+        .map(m => Api.Error(Problem(m.value), Some(Api.Error.Code(Write.CodeNotFound))))
     yield
       val (rows, more) = page
       val (counts, facets) = store.approvalFacets(q)
@@ -80,7 +80,7 @@ final class Approvals(
           .map(Some(_))
           .toRight(
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"
               )
             )
@@ -99,15 +99,15 @@ final class Approvals(
     for
       d <- Decision
         .parse(Decision.Wire(decision.value))
-        .toRight(Api.Error(Api.Error.Message(s"unknown decision '$decision' (approve or reject)")))
+        .toRight(Api.Error(Problem(s"unknown decision '$decision' (approve or reject)")))
       a <- store
         .approval(id)
-        .toRight(Api.Error(Api.Error.Message(s"No approval $id"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(Api.Error(Problem(s"No approval $id"), Some(Api.Error.Code(Write.CodeNotFound))))
       _ <- Either.cond(
         a.state == ApprovalState.Open.wire,
         (),
         Api.Error(
-          Api.Error.Message(s"approval $id is already ${a.state}"),
+          Problem(s"approval $id is already ${a.state}"),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
@@ -134,7 +134,7 @@ final class Approvals(
         store.decide(id, to, note, None),
         (),
         Api.Error(
-          Api.Error.Message(s"approval ${a.id} was decided meanwhile"),
+          Problem(s"approval ${a.id} was decided meanwhile"),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
@@ -164,7 +164,7 @@ final class Approvals(
           )
       out <- store
         .approval(id)
-        .toRight(Api.Error(Api.Error.Message(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(Api.Error(Problem(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out
 
   private def decideBlocking(
@@ -181,13 +181,13 @@ final class Approvals(
         store.decide(id, to, note, Some(result)),
         (),
         Api.Error(
-          Api.Error.Message(s"approval ${a.id} was decided meanwhile"),
+          Problem(s"approval ${a.id} was decided meanwhile"),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
       out <- store
         .approval(id)
-        .toRight(Api.Error(Api.Error.Message(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(Api.Error(Problem(s"No approval ${a.id}"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out
 
   private def decideSource(
@@ -199,7 +199,7 @@ final class Approvals(
       apply <- store
         .payload(id)
         .flatMap(p => effects.proposal(ApprovalEffects.Payload(p.value)))
-        .toRight(Api.Error(Api.Error.Message(s"approval $id carries no readable proposal")))
+        .toRight(Api.Error(Problem(s"approval $id carries no readable proposal")))
       // claim the decision FIRST (compare-and-set on `open`), so two people approving at once apply
       // the change once; then apply it and record what happened
       to = if d == Decision.Approve then ApprovalState.Approved else ApprovalState.Rejected
@@ -207,7 +207,7 @@ final class Approvals(
         store.decide(id, to, clean, None),
         (),
         Api.Error(
-          Api.Error.Message(s"approval $id was decided meanwhile"),
+          Problem(s"approval $id was decided meanwhile"),
           Some(Api.Error.Code(AgentsApi.CodeConflict))
         )
       )
@@ -219,5 +219,5 @@ final class Approvals(
             case Left(m)  => store.settle(id, ApprovalState.Failed, DomainApproval.Outcome(m.value.take(1000)))
       out <- store
         .approval(id)
-        .toRight(Api.Error(Api.Error.Message(s"No approval $id"), Some(Api.Error.Code(Write.CodeNotFound))))
+        .toRight(Api.Error(Problem(s"No approval $id"), Some(Api.Error.Code(Write.CodeNotFound))))
     yield out

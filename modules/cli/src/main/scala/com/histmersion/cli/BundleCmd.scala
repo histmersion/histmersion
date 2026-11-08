@@ -20,7 +20,7 @@ object BundleCmd:
   private def existing(file: String): Either[Cli.Error, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
-    else Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+    else Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
   private[cli] def manifestOf(p: Path): Either[Problem, Bundle.Manifest] =
@@ -56,7 +56,7 @@ object BundleCmd:
             e =>
               Left(
                 Cli.Error(
-                  Cli.Error.Message(s"the server sent something that is not a bundle: $e"),
+                  Problem(s"the server sent something that is not a bundle: $e"),
                   exitCode = ExitCode.Refused
                 )
               ),
@@ -73,7 +73,7 @@ object BundleCmd:
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.verify)
         if r.ok.value then Right(())
-        else Left(Cli.Error(Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
+        else Left(Cli.Error(Problem("the bundle did not verify"), exitCode = ExitCode.Refused))
       }
     }
   }
@@ -102,7 +102,7 @@ object BundleCmd:
       run.flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.importResult)
         if r.problems.isEmpty then Right(())
-        else Left(Cli.Error(Cli.Error.Message("the import was refused"), exitCode = ExitCode.Refused))
+        else Left(Cli.Error(Problem("the import was refused"), exitCode = ExitCode.Refused))
       }
     }
   }

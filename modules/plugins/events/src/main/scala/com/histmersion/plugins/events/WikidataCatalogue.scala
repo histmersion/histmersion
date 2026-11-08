@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.events
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.WikidataClasses
 import com.histmersion.upstreams.dating.CatalogDating
@@ -66,8 +67,6 @@ final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
       .map(n => n.copy(names = (stored.names ++ n.names).distinct.filterNot(_.value == n.label.value)))
 
 object WikidataCatalogue:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Query = Query.T
   object Query extends Newtype[String, Pure]
   type Wkt = Wkt.T

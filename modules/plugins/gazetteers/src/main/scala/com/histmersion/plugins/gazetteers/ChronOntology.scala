@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.gazetteers
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.{Json, JsonObject}
 

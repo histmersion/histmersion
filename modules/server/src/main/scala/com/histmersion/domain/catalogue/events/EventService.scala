@@ -91,7 +91,7 @@ object EventService:
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
   private def missing(id: Event.Id) =
-    Api.Error(Api.Error.Message(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
     def list(selection: EventSelection, limit: PageSize, offset: Offset): EventList =
@@ -455,14 +455,14 @@ object EventService:
       else if exists(newId) then
         Left(
           Api.Error(
-            Api.Error.Message(s"'$newId' is already the id of another event"),
+            Problem(s"'$newId' is already the id of another event"),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
       else if aliasOf.exists(_.value != oldId.value) then
         Left(
           Api.Error(
-            Api.Error.Message(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another"),
+            Problem(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another"),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )

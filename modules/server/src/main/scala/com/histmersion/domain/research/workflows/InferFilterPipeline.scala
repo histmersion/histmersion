@@ -70,7 +70,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               ResearchAnswers.filter
             )((a, last) =>
               check(slug, loaded, a, FilterInference.Last(last.value)).left
-                .map(_.map(p => RunCtx.Problem(p.value)))
+                .map(_.map(p => Problem(p.value)))
                 .map(Checked(_))
             )
             recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(record(ctx, slug, inferred))

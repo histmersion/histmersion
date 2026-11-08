@@ -22,7 +22,7 @@ import com.histmersion.util.storage.Store
     io.circe.parser
       .parse(text)
       .left
-      .map(e => BasemapLabels.Problem(e.getMessage))
+      .map(e => Problem(e.getMessage))
       .flatMap(BasemapLabels.parse(BasemapLabels.FileName(f.value), _))
       .fold(e => sys.error(e.value), identity)
   }

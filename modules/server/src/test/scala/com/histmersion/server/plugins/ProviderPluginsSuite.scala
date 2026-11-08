@@ -411,12 +411,12 @@ class ProviderPluginsSuite extends munit.FunSuite:
     val ctx = new Plugin.Context:
       def http = offline
       val log = new Plugin.Log {
-        def info(m: Plugin.Log.InfoMessage) = ()
-        def warn(m: Plugin.Log.WarnMessage) = ()
+        def info(m: Plugin.Log.Line) = ()
+        def warn(m: Plugin.Log.Line) = ()
       }
       def env(n: EnvVar.Name) = None
       def secret(s: Secret) = Left(Problem("none"))
-      def secretVaults = Registry.refusing(Registry.RefusingWhy("x"))
+      def secretVaults = Registry.refusing(Problem("x"))
     assert(ctx.mediaCollections.add(Registry.AddId("x"), Collection(MediaItem.Role("object"))).isLeft)
     assert(ctx.eventCatalogues.add(Registry.AddId("x"), Catalogue).isLeft)
     assertEquals(Spi.Version, 2)

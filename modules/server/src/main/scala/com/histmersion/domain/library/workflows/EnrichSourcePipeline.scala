@@ -70,7 +70,7 @@ final class EnrichSourcePipeline(
         LibraryAnswers.notes
       )((n, _) =>
         checkNotes(n, isCitekey, site.articleExists).left
-          .map(_.map(p => RunCtx.Problem(p.value)))
+          .map(_.map(p => Problem(p.value)))
           .map(d => Checked(d.value))
       )
       patched <- ctx.code[Patched](AgentRepo.StepRecord.Name("patch"))(
@@ -86,8 +86,8 @@ final class EnrichSourcePipeline(
 
   private def accepted[A](
       r: Either[List[EnrichSource.Problem], (A, List[EnrichSource.Description])]
-  ): Either[List[RunCtx.Problem], Checked[A]] =
-    r.left.map(_.map(p => RunCtx.Problem(p.value))).map((v, w) => Checked(v, w.map(d => Checked.Warnings(d.value))))
+  ): Either[List[Problem], Checked[A]] =
+    r.left.map(_.map(p => Problem(p.value))).map((v, w) => Checked(v, w.map(d => Checked.Warnings(d.value))))
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 

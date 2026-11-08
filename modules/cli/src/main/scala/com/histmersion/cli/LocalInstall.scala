@@ -58,7 +58,7 @@ object LocalInstall:
       env: UserPaths.Lookup,
       osName: UserPaths.OsName,
       exe: Option[Path]
-  ): Either[Cli.Error.Message, LocalInstall] =
+  ): Either[Problem, LocalInstall] =
     def kitAt(p: Path) = Files.isRegularFile(p.resolve("bin").resolve("histmersion-relink"))
     val home = env(Environment.VariablesKey("HOME")).map(_.value).getOrElse("")
     val configured = Option(cfg.installDir)
@@ -77,11 +77,11 @@ object LocalInstall:
     for
       d <- UserPaths
         .dataDir(dataDir, env, osName)
-        .toRight(Cli.Error.Message("no data directory (HOME is unset; set HISTMERSION_DATA_DIR)"))
+        .toRight(Problem("no data directory (HOME is unset; set HISTMERSION_DATA_DIR)"))
       _ <- Either.cond(
         kitAt(install),
         (),
-        Cli.Error.Message(
+        Problem(
           s"no Histmersion install with a relink kit at $install " +
             "(set cli.plugins.install-dir / HISTMERSION_INSTALL_DIR, or install a bundle built with the kit)"
         )

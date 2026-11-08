@@ -63,12 +63,12 @@ object PeriodsCmd:
             case Some(_) if replace =>
               Left(
                 Cli.Error(
-                  Cli.Error.Message("--replace applies to the bundled seed, not to --file"),
+                  Problem("--replace applies to the bundled seed, not to --file"),
                   exitCode = ExitCode.Usage
                 )
               )
             case Some(f) if !Files.isRegularFile(f) =>
-              Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
+              Left(Cli.Error(Problem(s"no such file: $f"), exitCode = ExitCode.Usage))
             case Some(f) => c.importPeriods(Nil, PeriodsApi.Name(Files.readString(f)), Dataset.Seed)
           r.map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
         }
@@ -86,7 +86,7 @@ object PeriodsCmd:
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
         if !Files.isRegularFile(f) then
-          Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+          Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
         else
           c.importPeriods(cols.map(PeriodsApi.Source(_)), PeriodsApi.Name(Files.readString(f)), dataset)
             .map(x => Cli.out.println(PeriodsMarkdown.imported(x)))

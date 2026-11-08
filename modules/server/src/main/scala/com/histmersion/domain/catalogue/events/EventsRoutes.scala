@@ -21,7 +21,7 @@ object EventsRoutes:
         Event.Id
           .option(id.value)
           .toRight(
-            Api.Error(Api.Error.Message(s"No event '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
+            Api.Error(Problem(s"No event '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
           )
           .flatMap(events.delete(me, _))
       )

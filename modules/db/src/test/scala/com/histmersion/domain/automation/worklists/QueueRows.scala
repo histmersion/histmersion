@@ -27,7 +27,7 @@ object QueueRows:
 
   private def repoId(id: QueueItem.Id): QueueRepo.QueueItemId = QueueRepo.QueueItemId(id.value)
   private def notFound(id: QueueItem.Id): Api.Error =
-    Api.Error(Api.Error.Message(s"No queue item #${id.value}"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No queue item #${id.value}"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def patch(ds: DataSource, id: QueueItem.Id, p: QueuePatch): Either[Api.Error, QueueItem] =
     transact(ds):

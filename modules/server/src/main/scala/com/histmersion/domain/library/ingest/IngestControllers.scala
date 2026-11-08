@@ -48,7 +48,7 @@ final class IngestControllers(
     maintenance.guard(WriteGate.OperationName("ingest"))(ingestNow(p, upload))
 
   private def error(message: String, code: Option[Api.Error.Code] = None): Api.Error =
-    Api.Error(Api.Error.Message(message), code)
+    Api.Error(Problem(message), code)
 
   private def invalid(p: Problem): Api.Error = Write.invalid(Problem(p.value))
 
@@ -236,7 +236,7 @@ final class IngestControllers(
               .Try(upload.bytes.read(in => Using.resource(r.output())(out => in.transferTo(out))))
               .toEither
               .left
-              .map(e => Store.Error.Failed(Store.Error.Failed.Reason(e.getMessage)))
+              .map(e => Store.Error.Failed(Problem(e.getMessage)))
               .flatMap(_ => r.commit())
           }
         }

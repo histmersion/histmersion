@@ -31,7 +31,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
     else
       Left(
         Api.Error(
-          Api.Error.Message(
+          Problem(
             s"a media run is already going (${busy.get.fold("?")(_.value)}) — see `histmersion jobs`; try again when it ends"
           )
         )

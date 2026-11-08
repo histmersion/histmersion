@@ -90,9 +90,9 @@ final class EventsControllers(
     val (limit, tolerance) = mapView()
     selection(q, q.filter).fold(EventGeo.List(Nil))(events.geo(_, limit, tolerance))
 
-  private def invalid(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid)))
 
-  private def notFound(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def notFound(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeNotFound)))
 
   /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
   private def validScale(scale: Option[EventSummary.Scale]): Either[Api.Error, Unit] =

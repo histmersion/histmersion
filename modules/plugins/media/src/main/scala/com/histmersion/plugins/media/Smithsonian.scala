@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.{ACursor, Json}
 
@@ -20,8 +21,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Smithsonian:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Unit = Unit.T
   object Unit extends Newtype[String, Pure]
 

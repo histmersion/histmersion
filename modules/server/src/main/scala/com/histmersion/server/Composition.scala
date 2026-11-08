@@ -293,7 +293,7 @@ object Composition:
             .Try(file.bytes())
             .toEither
             .left
-            .map(e => Api.Error(Api.Error.Message(s"cannot read the original of '$citekey': ${e.getMessage}")))
+            .map(e => Api.Error(Problem(s"cannot read the original of '$citekey': ${e.getMessage}")))
             .map(b => StoredOriginal(StoredOriginal.Bytes(b.value), StoredOriginal.Disposition(disposition.value)))
         }
       def queueItem(id: CollectionLibrary.QueueItemId) =

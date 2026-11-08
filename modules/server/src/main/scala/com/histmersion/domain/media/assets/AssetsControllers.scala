@@ -37,7 +37,7 @@ final class AssetsControllers(
   private val Uuid = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 
   private def notFound(uid: AssetService.AssetUid) =
-    Api.Error(Api.Error.Message(s"No picture '$uid'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No picture '$uid'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def canonical(citekey: Citekey): Citekey =
     sources.current(citekey).map(c => Citekey.assume(c.value)).getOrElse(citekey)
@@ -57,7 +57,7 @@ final class AssetsControllers(
       .figure(canonical(citekey), AssetService.AssetName(AssetLinks.safeName(name.value).value))
       .map((mime, bytes) => (bytes, mime))
       .toRight(
-        Api.Error(Api.Error.Message(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
+        Api.Error(Problem(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
       )
 
   /** Add figures to the source a client named: a name that is no citekey is refused (400). */
@@ -107,7 +107,7 @@ final class AssetsControllers(
         NewFigure
           .of(a, ByteCount.option(cfg().limits.assetBytes.value).getOrElse(ByteCount(0L)))
           .left
-          .map(p => Api.Error(Api.Error.Message(p.value)))
+          .map(p => Api.Error(Problem(p.value)))
           .map(xs :+ _)
       )
     }
@@ -115,7 +115,7 @@ final class AssetsControllers(
   def detail(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, AssetDetail] =
     assets
       .detail(citekey, name)
-      .toRight(Api.Error(Api.Error.Message(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(Problem(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   def patch(citekey: Citekey, name: AssetService.AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
     maintenance.guard(WriteGate.OperationName("patch_asset"))(assets.patch(citekey, name, p))

@@ -231,7 +231,7 @@ object GoalService:
       case com.histmersion.domain.automation.Goal.LinkKind.SearchQuery => 2
       case _                                                           => 3
     private def refused(message: String, code: String): Api.Error =
-      Api.Error(Api.Error.Message(message), Some(Api.Error.Code(code)))
+      Api.Error(Problem(message), Some(Api.Error.Code(code)))
 
     def get(slug: com.histmersion.domain.automation.Goal.Slug): Option[Goal] = goals.get(key(slug)).map(shown)
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug.value).map(shown)

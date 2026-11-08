@@ -74,7 +74,7 @@ private[places] object PlaceOverrideRepo:
       toleranceKm: FindingPlacement.Implementation.ToleranceKm
   )(using DbCon): Either[Api.Error, Place.OverrideChanged] =
     rowOf(id)
-      .toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(Problem(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       .flatMap { before =>
         val had = linked(id)
         val done: Either[Api.Error, Unit] = edit match
@@ -91,7 +91,7 @@ private[places] object PlaceOverrideRepo:
               case None =>
                 Left(
                   Api.Error(
-                    Api.Error.Message(s"'${before.label}' [${id.value}] has no kind, period or point set by hand"),
+                    Problem(s"'${before.label}' [${id.value}] has no kind, period or point set by hand"),
                     Some(Api.Error.Code(Write.CodeNotFound))
                   )
                 )
@@ -103,7 +103,7 @@ private[places] object PlaceOverrideRepo:
           case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.value =>
             Left(
               Api.Error(
-                Api.Error.Message(
+                Problem(
                   s"'${before.label}' [${id.value}] has a shape, not a point — a point set by hand moves only a place " +
                     "known by a point"
                 ),
@@ -200,12 +200,12 @@ private[places] object PlaceOverrideRepo:
   ): Either[Api.Error, Place.Gone] =
     (labelOf(from), labelOf(into)) match
       case (None, _) =>
-        Left(Api.Error(Api.Error.Message(s"No place '${from.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+        Left(Api.Error(Problem(s"No place '${from.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       case (_, None) =>
-        Left(Api.Error(Api.Error.Message(s"No place '${into.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+        Left(Api.Error(Problem(s"No place '${into.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       case _ if from == into =>
         Left(
-          Api.Error(Api.Error.Message("a place cannot be merged into itself"), Some(Api.Error.Code(Write.CodeInvalid)))
+          Api.Error(Problem("a place cannot be merged into itself"), Some(Api.Error.Code(Write.CodeInvalid)))
         )
       case (Some(fl), Some(il)) =>
         val had = (linked(from) ++ linked(into)).distinct
@@ -232,7 +232,7 @@ private[places] object PlaceOverrideRepo:
     */
   def remove(id: BPlaceRow.Id, reason: Option[RemovalReason])(using DbCon): Either[Api.Error, Place.Gone] =
     labelOf(id)
-      .toRight(Api.Error(Api.Error.Message(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(Problem(s"No place '${id.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
       .flatMap { label =>
         def n(q: Frag) = q.query[Int].run().head
         val refs = List(
@@ -253,7 +253,7 @@ private[places] object PlaceOverrideRepo:
         if refs.nonEmpty then
           Left(
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"'${label.value}' [${id.value}] is referred to by ${refs.map((w, c) => s"$c $w").mkString(", ")} — " +
                   "merge it into the place it is the same as instead, or move those first"
               ),

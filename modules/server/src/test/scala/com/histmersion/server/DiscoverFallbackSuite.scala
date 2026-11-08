@@ -41,11 +41,11 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   /** OpenAlex answers 503; Crossref answers the captured page. Records what was asked. */
   final private class OpenAlexDown extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       urls = urls :+ url
       if url.value.startsWith(cfg.crossref.url.value) then Right(crossrefPage)
-      else Left(Http.Problem(s"$url failed after 4 attempts: HTTP 503"))
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem("unused"))
+      else Left(Problem(s"$url failed after 4 attempts: HTTP 503"))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Problem("unused"))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
@@ -66,8 +66,8 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   test("both down: the error names both upstreams"):
     val dead = new Http:
       def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
-        Left(Http.Problem(s"$url: HTTP 503"))
-      def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem("unused"))
+        Left(Problem(s"$url: HTTP 503"))
+      def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Problem("unused"))
       def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
     val r = discovery(cfg, dead).search(Search.Query("x"), None, None, DiscoveryClient.SearchLimit(5))
@@ -94,12 +94,12 @@ class DiscoverFallbackSuite extends munit.FunSuite:
   /** OpenAlex answers 503 (rate-limited); Crossref and Unpaywall answer. */
   final private class OpenAlexBusy(c: AcquireConfig) extends Http:
     var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
       urls = urls :+ url
       if url.value.startsWith(c.crossref.url.value) then Right(crossrefWork)
       else if url.value.startsWith(c.unpaywall.url.value) then Right(unpaywallGold)
-      else Left(Http.Problem(s"$url failed after 4 attempts: HTTP 503"))
-    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem("unused"))
+      else Left(Problem(s"$url failed after 4 attempts: HTTP 503"))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Problem("unused"))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 

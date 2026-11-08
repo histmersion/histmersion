@@ -1,5 +1,6 @@
 package com.histmersion
 package upstreams.wikidata
+import com.histmersion.plugin.Problem
 import io.circe.Json
 
 import java.net.URLEncoder
@@ -15,8 +16,6 @@ object WikidataEntities:
   object Api extends Newtype[String, Pure]
   type Maxlag = Maxlag.T
   object Maxlag extends Newtype[Int, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The Commons category property. */
   val CommonsCategory = "P373"

@@ -15,8 +15,8 @@ object ModuleKey:
 
   /** `group:artifact`. */
 
-  def parse(raw: Text): Either[Resolver.Problem, ModuleKey] = (raw).value.trim.split(':').toList match
+  def parse(raw: Text): Either[Problem, ModuleKey] = (raw).value.trim.split(':').toList match
     case List(g, a) =>
       (for group <- GroupId.either(g); artifact <- ArtifactId.either(a)
-      yield ModuleKey(group, artifact)).left.map(refactorError => Resolver.Problem(refactorError))
-    case _ => Left(Resolver.Problem.notKey(raw))
+      yield ModuleKey(group, artifact)).left.map(refactorError => Problem(refactorError))
+    case _ => Left(Problem.notKey(raw))

@@ -41,7 +41,7 @@ object LlmClient:
       .build
 
   /** How the engine builds a client for a model (the seam a test fills with sttp-ai's scripted model). */
-  type Factory = (AgentsConfig, ModelRef) => Either[ModelPicker.Problem, LlmClient]
+  type Factory = (AgentsConfig, ModelRef) => Either[Problem, LlmClient]
 
   /** The server's factory, resolving the provider through `providers` — the AI-provider registry of the plugin
     * generation the calling thread is pinned to (docs/research-plugins.md §22): a command-line runtime (`claude-code`,
@@ -55,13 +55,13 @@ object LlmClient:
       http: AiHttp = HostAiHttp()
   ): Factory =
     (cfg, ref) =>
-      BuiltinAi.lookup(ref.provider, providers()).left.map(why => ModelPicker.Problem(s"${ref.wire}: $why")).flatMap {
+      BuiltinAi.lookup(ref.provider, providers()).left.map(why => Problem(s"${ref.wire}: $why")).flatMap {
         case _: HostAiProvider => host(rt)(cfg, ref)
         case p                 =>
           PluginAiClient
             .client(ref, p, http, PluginAiClient.Loopback(rt.loopback))
             .left
-            .map(e => ModelPicker.Problem(e.value))
+            .map(e => Problem(e.value))
       }
 
   /** The host's own providers: the command-line runtimes on `rt`. */
@@ -69,12 +69,12 @@ object LlmClient:
     (cfg, ref) =>
       ref.provider match
         case ProviderKind.ClaudeCode =>
-          ClaudeCode.client(cfg.providers.claudeCode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+          ClaudeCode.client(cfg.providers.claudeCode, rt, ref).left.map(p => Problem(p.value))
         case ProviderKind.Codex =>
-          Codex.client(cfg.providers.codex, rt, ref).left.map(p => ModelPicker.Problem(p.value))
+          Codex.client(cfg.providers.codex, rt, ref).left.map(p => Problem(p.value))
         case ProviderKind.Opencode =>
-          Opencode.client(cfg.providers.opencode, rt, ref).left.map(p => ModelPicker.Problem(p.value))
-        case k => Left(ModelPicker.Problem(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
+          Opencode.client(cfg.providers.opencode, rt, ref).left.map(p => Problem(p.value))
+        case k => Left(Problem(s"${ref.wire}: ${k.wire} is not one of the host's command-line providers"))
 
   /** sttp-ai's usage → ours. */
   def usage(u: TokenUsage): Agents.Usage =

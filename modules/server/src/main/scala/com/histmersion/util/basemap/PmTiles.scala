@@ -28,8 +28,6 @@ object PmTiles:
   object HeaderBytes extends Newtype[Array[Byte], Pure]
   type PlainBytes = PlainBytes.T
   object PlainBytes extends Newtype[Array[Byte], Pure]
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type TileBytes = TileBytes.T
   object TileBytes extends Newtype[Array[Byte], Pure]
   type TileColumn = TileColumn.T

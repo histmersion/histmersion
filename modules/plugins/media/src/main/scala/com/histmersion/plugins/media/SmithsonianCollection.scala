@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 
 /** `smithsonian`: the Smithsonian's Open Access API (an api.data.gov key, sent as a header): one search by the place's
@@ -36,5 +37,5 @@ final class SmithsonianCollection(conf: CollectionSettings, key: Option[KeyedCol
       )
       .flatMap(j => Smithsonian.records(j, units).left.map(_.value))
       .left
-      .map(e => Problem(explain(KeyedCollection.Problem(e)).value))
+      .map(e => Problem(explain(Problem(e)).value))
       .map(_.map(_.left.map(e => Problem(e.value))))

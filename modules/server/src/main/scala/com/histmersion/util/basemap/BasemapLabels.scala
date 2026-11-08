@@ -39,8 +39,6 @@ object BasemapLabels:
   object Margin extends Newtype[Double, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type Tolerance = Tolerance.T
   object Tolerance extends Newtype[Double, Pure]
   type WorldX = WorldX.T

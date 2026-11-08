@@ -325,7 +325,7 @@ private[events] object EventRepo:
     * flags a conflict when the catalogue changes to something else).
     */
   def patch(id: BEventRow.Id, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
-    if !exists(id) then Left(Api.Error(Api.Error.Message(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    if !exists(id) then Left(Api.Error(Problem(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else
       p.label.foreach(v => sql"UPDATE events SET label = $v WHERE id = $id".update.run())
       p.kind.foreach(v => sql"UPDATE events SET kind = $v WHERE id = $id".update.run())
@@ -388,18 +388,18 @@ private[events] object EventRepo:
   def rename(oldId: BEventRow.Id, newId: BEventRow.Id)(using DbCon): Either[Api.Error, Unit] =
     val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[BEventRow.Id].run().headOption
     if !exists(oldId) then
-      Left(Api.Error(Api.Error.Message(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      Left(Api.Error(Problem(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else if exists(newId) then
       Left(
         Api.Error(
-          Api.Error.Message(s"'$newId' is already the id of another event"),
+          Problem(s"'$newId' is already the id of another event"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          Api.Error.Message(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another"),
+          Problem(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )

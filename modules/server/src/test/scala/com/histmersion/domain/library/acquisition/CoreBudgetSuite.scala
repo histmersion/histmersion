@@ -116,7 +116,7 @@ class CoreBudgetSuite extends munit.FunSuite:
     private val m = scala.collection.mutable.Map.empty[Fetch.Context.MemoKey, Any] // one fetch's memo
     def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = m.getOrElseUpdate(key, compute).asInstanceOf[A]
     val log: Plugin.Log = new Plugin.Log {
-      def info(message: Plugin.Log.InfoMessage) = (); def warn(message: Plugin.Log.WarnMessage) = ()
+      def info(message: Plugin.Log.Line) = (); def warn(message: Plugin.Log.Line) = ()
     }
 
   private def generation(
@@ -171,7 +171,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       )
       val next = new SourceFetcher:
         val access = Access.Open
-        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Fetch.Miss.Why("nothing here either"))
+        def fetch(w: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem("nothing here either"))
       val chain = FetchChain(
         List(
           FetchChain.Step.Id("core") -> g.registries.sourceFetchers(Registries.SourceFetchersKey("core")),

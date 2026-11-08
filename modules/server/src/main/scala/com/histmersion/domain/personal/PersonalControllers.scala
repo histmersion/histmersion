@@ -45,9 +45,9 @@ final class PersonalControllers(
     clock: Clock
 ):
 
-  private def bad(why: String): Api.Error = Api.Error(Api.Error.Message(why))
+  private def bad(why: String): Api.Error = Api.Error(Problem(why))
   private def missing(what: String): Api.Error =
-    Api.Error(Api.Error.Message(s"No $what"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No $what"), Some(Api.Error.Code(Write.CodeNotFound)))
   private def now(): MarkTime = MarkTime.at(Instant.now(clock))
 
   private def person(caller: Caller): Either[Api.Error, UserId] =
@@ -169,7 +169,7 @@ final class PersonalControllers(
             case Note.EditRefused.Missing      => missing(s"note $id")
             case Note.EditRefused.Changed(was) =>
               Api.Error(
-                Api.Error.Message(s"the note changed since it was opened (now ${was.iso}); open it again"),
+                Problem(s"the note changed since it was opened (now ${was.iso}); open it again"),
                 Some(Api.Error.Code(Write.CodePrecondition))
               )
           }

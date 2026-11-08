@@ -61,7 +61,7 @@ object AssetFixtures:
     transact(ds)(AssetRepo.patch(citekey, name, p))
       .flatMap(_ =>
         detail(ds, citekey, name).toRight(
-          Api.Error(Api.Error.Message(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))
+          Api.Error(Problem(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))
         )
       )
 

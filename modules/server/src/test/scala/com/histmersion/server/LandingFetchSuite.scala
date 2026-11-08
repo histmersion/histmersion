@@ -25,15 +25,15 @@ class LandingFetchSuite extends munit.FunSuite:
   /** Answers by URL, records every request. */
   final private class FakeUpstream(routes: PartialFunction[String, Either[String, Array[Byte]]]) extends Http:
     var asked: List[String] = Nil // a test double: the simplest record of calls
-    private def answer(url: Http.Url): Either[Http.Problem, Array[Byte]] =
+    private def answer(url: Http.Url): Either[Problem, Array[Byte]] =
       asked = asked :+ url.value
-      routes.applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404")).left.map(Http.Problem(_))
+      routes.applyOrElse(url.value, (u: String) => Left(s"$u: HTTP 404")).left.map(Problem(_))
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(HttpAnswer.Body(_))
     def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
       answer(url).map(b => Http.Text(new String(b, "UTF-8")))
-    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
-      text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Http.Problem(e.getMessage)))
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Problem, Json] =
+      text(url, headers).flatMap(s => io.circe.parser.parse(s.value).left.map(e => Problem(e.getMessage)))
 
   private def cfg = AppConfig.load().acquire
 

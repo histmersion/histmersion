@@ -12,7 +12,7 @@ enum CollectionUpdateOutcome derives CanEqual:
   case Applied(changes: List[CollectionChange])
 
   /** Writing these fields failed, for `reason`. */
-  case Failed(changes: List[CollectionChange], reason: CollectionUpdateOutcome.Failed.Reason)
+  case Failed(changes: List[CollectionChange], reason: Problem)
 
   /** The item already says what the source says. */
   case UpToDate
@@ -24,12 +24,5 @@ enum CollectionUpdateOutcome derives CanEqual:
   case Missing
 
   /** The source's own metadata is refused (a blank or placeholder title or author), for `reason`. */
-  case Refused(reason: CollectionUpdateOutcome.Refused.Reason)
+  case Refused(reason: Problem)
 
-object CollectionUpdateOutcome:
-  object Failed:
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
-  object Refused:
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]

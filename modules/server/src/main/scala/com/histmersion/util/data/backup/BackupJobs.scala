@@ -48,7 +48,7 @@ final class BackupJobs(
                 .Try(p.run())
                 .toEither
                 .left
-                .map(e => Api.Error(Api.Error.Message(s"backup crashed: ${e.getMessage}")))
+                .map(e => Api.Error(Problem(s"backup crashed: ${e.getMessage}")))
                 .flatten
             )
           }

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.plugin.testkit.{PluginHarness, ScriptedAiHttp}
 import com.histmersion.pluginhost.Registries
@@ -135,7 +136,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
     assertEquals(http.requests.head.url, "https://api.openai.com/v1/chat/completions")
     assertEquals(
       r.turn,
-      Some(Left(AiFailure.Error(AiFailure.Error.Message("RuntimeException: OpenAI API error: Rate limit reached"))))
+      Some(Left(AiFailure.Error(Problem("RuntimeException: OpenAI API error: Rate limit reached"))))
     )
 
   test("a client that cannot connect is described as the providers always described it"):
@@ -146,7 +147,7 @@ class AiHttpPluginsKitSuite extends munit.FunSuite:
       Some(
         Left(
           AiFailure.Error(
-            AiFailure.Error.Message(
+            Problem(
               "ConnectException: Exception when sending request: POST https://api.anthropic.com/v1/messages"
             )
           )

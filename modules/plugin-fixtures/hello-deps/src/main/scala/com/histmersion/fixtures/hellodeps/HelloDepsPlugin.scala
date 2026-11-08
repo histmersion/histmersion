@@ -1,5 +1,6 @@
 package com.histmersion.fixtures.hellodeps
 
+import com.histmersion.plugin.Problem
 import com.histmersion.fixtures.hellolib.Shout
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -14,5 +15,5 @@ final class HelloDepsPlugin extends Plugin:
 
   def register(config: HelloDepsConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     val greeting = Shout(Shout.ApplyText(config.greeting.value))
-    ctx.log.info(Plugin.Log.InfoMessage(s"hello-deps: $greeting"))
+    ctx.log.info(Plugin.Log.Line(s"hello-deps: $greeting"))
     ctx.sourceFetchers.add(Registry.AddId("hello-deps"), HelloDepsFetcher(greeting))

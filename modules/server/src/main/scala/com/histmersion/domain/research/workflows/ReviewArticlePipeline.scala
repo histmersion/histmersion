@@ -154,8 +154,8 @@ final class ReviewArticlePipeline(
 
   private def apiBody(b: ReviewArticle.Fix.Body): Article.Body = Article.Body(b.value)
 
-  private def checked[O](r: Either[List[String], (O, List[String])]): Either[List[RunCtx.Problem], Checked[O]] =
-    r.left.map(_.map(RunCtx.Problem(_))).map((o, ws) => Checked(o, ws.map(Checked.Warnings(_))))
+  private def checked[O](r: Either[List[String], (O, List[String])]): Either[List[Problem], Checked[O]] =
+    r.left.map(_.map(Problem(_))).map((o, ws) => Checked(o, ws.map(Checked.Warnings(_))))
 
   /** After pass `r`: fix and verify while a MAJOR is open and passes remain, then (maybe) confirm. `start`: the run's
     * first snapshot — what the confirming panel's regressions are measured from.

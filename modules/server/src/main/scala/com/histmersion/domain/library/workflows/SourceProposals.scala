@@ -30,7 +30,7 @@ final class SourceProposals(
     approvals: SourceApprovalService,
     cfg: => AgentsConfig,
     status: Citekey => Option[Source.Status],
-    apply: Proposal => Either[SourceProposals.Outcome.Failed.Why, SourceProposals.Outcome.Applied.What]
+    apply: Proposal => Either[Problem, SourceProposals.Outcome.Applied.What]
 ):
   def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(
     p.kind,
@@ -80,10 +80,10 @@ final class SourceProposals(
       cfg.approvals.statusMode.transformInto[Approval.Mode],
       cfg.approvals.edgeMode.transformInto[Approval.Mode]
     ) match
-      case Route.Skip(why) => Outcome.Skipped(Outcome.Skipped.Why(s"${p.describe} ($why)"))
+      case Route.Skip(why) => Outcome.Skipped(Problem(s"${p.describe} ($why)"))
       case Route.Apply     =>
         apply(p) match
-          case Left(m)  => Outcome.Failed(Outcome.Failed.Why(s"${p.describe}: $m"))
+          case Left(m)  => Outcome.Failed(Problem(s"${p.describe}: $m"))
           case Right(w) =>
             val _ = record(
               runId,
@@ -111,8 +111,8 @@ object SourceProposals:
     case Applied(what: Outcome.Applied.What)
     case Recorded(id: Outcome.Recorded.Id, what: Outcome.Recorded.What)
     case AlreadyOpen(what: Outcome.AlreadyOpen.What)
-    case Skipped(why: Outcome.Skipped.Why)
-    case Failed(why: Outcome.Failed.Why)
+    case Skipped(why: Problem)
+    case Failed(why: Problem)
 
     /** A dry run's proposal: neither recorded nor applied (#992). */
     case NotProposed(what: Outcome.NotProposed.What)

@@ -157,7 +157,7 @@ object EventCardTools:
             case Some(raw) =>
               Event.Id
                 .option(raw)
-                .toRight(Api.Error(Api.Error.Message(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                .toRight(Api.Error(Problem(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
                 .flatMap(page.get) match
                 case Right(d) => ToolResult.text(d.markdown.value)
                 case Left(e)  => McpOut.error(e)
@@ -208,7 +208,7 @@ object EventCardTools:
               Event.Id
                 .option(in.id.value)
                 .toRight(
-                  Api.Error(Api.Error.Message(s"No event '${in.id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
+                  Api.Error(Problem(s"No event '${in.id.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
                 )
                 .flatMap(page.patch(Caller.Local, _, p)) match
                 case Right(d) =>

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -53,7 +54,7 @@ abstract class KeyedCollection(
   protected def apiKey: KeyedCollection.Key = key.getOrElse(KeyedCollection.Key(""))
 
   /** Pure: an HTTP 401/403 of a key-gated API named as a refused key, with the setting to check. */
-  protected def explain(e: KeyedCollection.Problem): KeyedCollection.Explanation =
+  protected def explain(e: Problem): KeyedCollection.Explanation =
     if e.value.contains("HTTP 401") || e.value.contains("HTTP 403") then
       KeyedCollection.Explanation(
         s"${e.value} — the API key was refused (check histmersion.plugins.${plugin.value}.api-key)"
@@ -63,8 +64,6 @@ abstract class KeyedCollection(
 object KeyedCollection:
   type Explanation = Explanation.T
   object Explanation extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Plugin = Plugin.T
   object Plugin extends Newtype[String, Pure]
   type Key = Key.T

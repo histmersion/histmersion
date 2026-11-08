@@ -621,13 +621,13 @@ class AcquireHandlerSuite extends DbSuite:
     def answering(a: Fetch): SourceFetcher = new SourceFetcher:
       val access = Access.Open
       def fetch(w: WorkKey, c: Fetch.Context) = a
-    val why = Fetch.Refused.Why(
+    val why = Problem(
       "an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
         "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
     )
     val chain = FetchChain(
       List(
-        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(Fetch.Miss.Why("no open-access location"))),
+        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(Problem("no open-access location"))),
         FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(why))
       )
     )
@@ -732,8 +732,8 @@ class AcquireHandlerSuite extends DbSuite:
       def fetch(w: WorkKey, c: Fetch.Context) = a
     val chain = FetchChain(
       List(
-        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(Fetch.Miss.Why("no open-access location"))),
-        FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(Fetch.Refused.Why("20.500.12657/23223: bot challenge")))
+        FetchChain.Step.Id("unpaywall") -> answering(Fetch.Miss(Problem("no open-access location"))),
+        FetchChain.Step.Id("oapen") -> answering(Fetch.Refused(Problem("20.500.12657/23223: bot challenge")))
       )
     )
     val r = handlers(oa = chain)
@@ -755,10 +755,10 @@ class AcquireHandlerSuite extends DbSuite:
     val asked = java.util.concurrent.atomic.AtomicInteger(0)
     val unauthorised = new SourceFetcher:
       val access = Access.Unauthorised
-      def fetch(w: WorkKey, c: Fetch.Context) = { asked.incrementAndGet(); Fetch.Miss(Fetch.Miss.Why("stub")) }
+      def fetch(w: WorkKey, c: Fetch.Context) = { asked.incrementAndGet(); Fetch.Miss(Problem("stub")) }
     val open = new SourceFetcher:
       val access = Access.Open
-      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Fetch.Miss.Why("no open-access location"))
+      def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(Problem("no open-access location"))
     val chain = FetchChain(
       List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised),
       allowUnauthorised = FetchChain.AllowUnauthorised(true)
@@ -970,7 +970,7 @@ class AcquireHandlerSuite extends DbSuite:
     val byIdentifier = new SourceFetcher:
       val access = Access.Open
       def fetch(work: WorkKey, ctx: Fetch.Context) =
-        work.archive.fold(Fetch.Miss(Fetch.Miss.Why("no identifier")))(_ =>
+        work.archive.fold(Fetch.Miss(Problem("no identifier")))(_ =>
           Fetch.Found(
             FetchedFile(
               com.histmersion.plugin.FetchedFile.Source("archive_org"),

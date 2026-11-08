@@ -17,12 +17,12 @@ object LibDirectory:
   val Inputs = "inputs"
   val Repositories = "repositories"
 
-  def storedRepositories(lib: Path): Either[Resolver.Problem, List[RepositoryUrl]] =
+  def storedRepositories(lib: Path): Either[Problem, List[RepositoryUrl]] =
     val f = lib.resolve(Repositories)
     if !Files.isRegularFile(f) then Right(Nil)
     else
       traverse(Files.readAllLines(f, UTF_8).asScala.toList.map(_.trim).filter(_.nonEmpty))(r =>
-        RepositoryUrl.either(r).left.map(e => Resolver.Problem(s"$f: '$r': $e"))
+        RepositoryUrl.either(r).left.map(e => Problem(s"$f: '$r': $e"))
       )
 
   /** Replace what `lib/` holds with `deps`: a jar already there with the same content is kept, every other jar removed.

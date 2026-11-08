@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.plugin.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.Path
@@ -74,7 +75,7 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre.guard(Calibre.Push.Title("Title"), Nil).isLeft)
     assert(Calibre.guard(Calibre.Push.Title("Title"), List(Calibre.Author("Unknown Author"))).isLeft)
     val both =
-      Calibre.guard(Calibre.Push.Title("unknown"), List(Calibre.Author("  "))).left.getOrElse(Calibre.Problem(""))
+      Calibre.guard(Calibre.Push.Title("unknown"), List(Calibre.Author("  "))).left.getOrElse(Problem(""))
     assert(both.value.contains("title") && both.value.contains("author"), both)
 
   test("blankness is case- and whitespace-insensitive"):
@@ -116,7 +117,7 @@ class CalibreSuite extends munit.FunSuite:
 
   /** A shell whose `calibredb list` answers with one book (the entry being updated). */
   private class LibraryShell(onShelf: String) extends RecordingShell():
-    override def run(cmd: List[Processes.RunArgv]): Either[Shell.Problem, Processes.Result.Out] =
+    override def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
       commands = commands :+ cmd
       if cmd.exists(_.value == "list") then Right(Processes.Result.Out(onShelf)) else Right(Processes.Result.Out(""))
 
@@ -438,9 +439,9 @@ class CalibreSuite extends munit.FunSuite:
 
   test("reading falls back to sqlite3 when calibredb refuses (the GUI case)"):
     val shell = new RecordingShell():
-      override def run(cmd: List[Processes.RunArgv]): Either[Shell.Problem, Processes.Result.Out] =
+      override def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
         commands = commands :+ cmd
-        if cmd.head.value.endsWith("calibredb") then Left(Calibre.Problem("Another calibre program is running"))
+        if cmd.head.value.endsWith("calibredb") then Left(Problem("Another calibre program is running"))
         else Right(fixture("calibre_sqlite.json"))
     val books = Calibre(cfg(), shell).search(CollectionQuery.Text("likelihood"))
     assertEquals(books.map(_.map(_.id)), Right(List(1691)))
@@ -507,7 +508,7 @@ class CalibreSuite extends munit.FunSuite:
   /** A [[Shell]] that records instead of executing. */
   private class RecordingShell(running: Boolean = false) extends Shell:
     var commands: List[List[Processes.RunArgv]] = Nil // a test double is the one place a var is the simplest thing
-    def run(cmd: List[Processes.RunArgv]): Either[Shell.Problem, Processes.Result.Out] =
+    def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
       commands = commands :+ cmd
       Right(Processes.Result.Out(""))
     def isRunning(processMatch: Shell.ProcessMatch): Boolean = running
@@ -520,9 +521,9 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.parseMachineJson(Processes.Result.Out("[]")), Right(Nil))
     // the GUI case: calibredb refuses, sqlite3 -json prints nothing at all for an empty result
     val shell = new RecordingShell():
-      override def run(cmd: List[Processes.RunArgv]): Either[Shell.Problem, Processes.Result.Out] =
+      override def run(cmd: List[Processes.RunArgv]): Either[Problem, Processes.Result.Out] =
         commands = commands :+ cmd
-        if cmd.head.value.endsWith("calibredb") then Left(Calibre.Problem("Another calibre program is running"))
+        if cmd.head.value.endsWith("calibredb") then Left(Problem("Another calibre program is running"))
         else Right(Processes.Result.Out(""))
     assertEquals(Calibre(cfg(), shell).search(CollectionQuery.Text("no such book")), Right(Nil))
 

@@ -479,7 +479,7 @@ class CalibreSuite extends munit.FunSuite:
     val shell = new RecordingShell():
       override def run(cmd: List[String]) =
         commands = commands :+ cmd
-        if cmd.head.endsWith("calibredb") then Left(Shell.Problem("Another calibre program is running"))
+        if cmd.head.endsWith("calibredb") then Left(Problem("Another calibre program is running"))
         else Right(scala.io.Source.fromResource("acquire/calibre_sqlite.json").mkString)
     val books = Calibre(cfg(), shell).search(Api.Search.Text("likelihood"))
     assertEquals(books.map(_.map(_.id)), Right(List(Calibre.Book.Id(1691))))
@@ -676,7 +676,7 @@ class CalibreSuite extends munit.FunSuite:
   /** A [[Shell]] that records instead of executing. */
   private class RecordingShell(running: Boolean = false) extends Shell:
     var commands: List[List[String]] = Nil // a test double is the one place a var is the simplest thing
-    def run(cmd: List[String]): Either[Shell.Problem, String] =
+    def run(cmd: List[String]): Either[Problem, String] =
       commands = commands :+ cmd
       Right("")
     def isRunning(processMatch: Shell.ProcessMatch): Boolean = running
@@ -691,7 +691,7 @@ class CalibreSuite extends munit.FunSuite:
     val shell = new RecordingShell():
       override def run(cmd: List[String]) =
         commands = commands :+ cmd
-        if cmd.head.endsWith("calibredb") then Left(Shell.Problem("Another calibre program is running")) else Right("")
+        if cmd.head.endsWith("calibredb") then Left(Problem("Another calibre program is running")) else Right("")
     assertEquals(Calibre(cfg(), shell).search(Api.Search.Text("no such book")), Right(Nil))
     assertEquals(Calibre.markdownSearch(Nil), "_No matching books in the Calibre library._")
 

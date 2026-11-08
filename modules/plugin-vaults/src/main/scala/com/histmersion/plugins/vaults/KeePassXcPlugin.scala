@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.vaults
 
+import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -74,7 +75,7 @@ final class KeePassXcPlugin extends Plugin:
     val t = Option(ykman).map((_).value.trim).getOrElse("")
     if t.isEmpty then
       ctx.log.info(
-        Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order")
+        Plugin.Log.Line("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order")
       )
       Right(None)
     else
@@ -82,7 +83,7 @@ final class KeePassXcPlugin extends Plugin:
         case Right(p)                    => Right(Some(p))
         case Left(_) if !t.contains('/') =>
           ctx.log.info(
-            Plugin.Log.InfoMessage(
+            Plugin.Log.Line(
               "the configured YubiKeys are tried in order, the one that opened the database last first " +
                 "(optional: with ykman on the PATH, only the connected ones are tried)"
             )

@@ -28,11 +28,11 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     assets.figure(citekey, safeName) match
       case None =>
         Left(
-          Api.Error(Api.Error.Message(s"No asset '$safeName' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
+          Api.Error(Problem(s"No asset '$safeName' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
         )
       case Some((_, bytes)) =>
         decodeImage(bytes) match
-          case None      => Left(Api.Error(Api.Error.Message(s"Asset '$safeName' is not a decodable image")))
+          case None      => Left(Api.Error(Problem(s"Asset '$safeName' is not a decodable image")))
           case Some(img) =>
             val id = s"${baseUrl()}/iiif/${enc(citekey.value)}/${enc(safeName.value)}"
             Right(Iiif.infoJson(Iiif.ImageId(id), ImageSize.Width(img.getWidth), ImageSize.Height(img.getHeight)))
@@ -52,8 +52,8 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     val safeName = AssetService.AssetName(AssetLinks.safeName(name.value).value)
     for
       format <- parseFilename(filename)
-      region <- Iiif.Region.parse(regionStr).left.map(p => Api.Error(Api.Error.Message(p.value)))
-      size <- Iiif.Size.parse(sizeStr).left.map(p => Api.Error(Api.Error.Message(p.value)))
+      region <- Iiif.Region.parse(regionStr).left.map(p => Api.Error(Problem(p.value)))
+      size <- Iiif.Size.parse(sizeStr).left.map(p => Api.Error(Problem(p.value)))
       _ <- validateRotation(rotationStr)
       result <- render(citekey, safeName, region, size, format)
     yield result
@@ -64,17 +64,17 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   private def parseFilename(filename: IiifControllers.Filename): Either[Api.Error, Iiif.Format] =
     filename.value match
       case s"default.$ext" =>
-        Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(Api.Error.Message(p.value)))
+        Iiif.parseFormat(ArchiveFile.Format.Wire(ext)).left.map(p => Api.Error(Problem(p.value)))
       case _ =>
         Left(
-          Api.Error(Api.Error.Message(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')"))
+          Api.Error(Problem(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')"))
         )
 
   /** Level 1 supports rotation `0` only. */
   private def validateRotation(s: Iiif.Rotation): Either[Api.Error, Unit] =
     s.value.trim match
       case "0" => Right(())
-      case _   => Left(Api.Error(Api.Error.Message(s"unsupported rotation: '$s' (only '0' is supported at Level 1)")))
+      case _   => Left(Api.Error(Problem(s"unsupported rotation: '$s' (only '0' is supported at Level 1)")))
 
   /** Load the asset, decode it, apply transforms, and encode to the output format. */
   private def render(
@@ -86,11 +86,11 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   ): Either[Api.Error, (AssetService.Bytes, AssetService.Mime)] =
     assets.figure(citekey, name) match
       case None =>
-        Left(Api.Error(Api.Error.Message(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound))))
+        Left(Api.Error(Problem(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound))))
       case Some((_, bytes)) =>
         decodeImage(bytes) match
           case None =>
-            Left(Api.Error(Api.Error.Message(s"Asset '$name' is not a decodable image")))
+            Left(Api.Error(Problem(s"Asset '$name' is not a decodable image")))
           case Some(img) =>
             applyRegion(img, region).flatMap(applySize(_, size)).flatMap(encode(_, format))
 
@@ -112,7 +112,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         val cw = math.max(1, math.min(w, imgW - cx))
         val ch = math.max(1, math.min(h, imgH - cy))
         if cx >= imgW || cy >= imgH then
-          Left(Api.Error(Api.Error.Message(s"region ($x,$y,$w,$h) is outside image bounds (${imgW}x$imgH)")))
+          Left(Api.Error(Problem(s"region ($x,$y,$w,$h) is outside image bounds (${imgW}x$imgH)")))
         else Right(img.getSubimage(cx, cy, cw, ch))
 
   /** Scale the image to the requested size. */
@@ -183,7 +183,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         rgb
       else img
     val written = ImageIO.write(toEncode, if format.value == "jpg" then "JPEG" else "PNG", out)
-    if !written then Left(Api.Error(Api.Error.Message(s"cannot encode image as $format")))
+    if !written then Left(Api.Error(Problem(s"cannot encode image as $format")))
     else Right((AssetService.Bytes(out.toByteArray), AssetService.Mime(Iiif.contentType(format).value)))
 
   private def enc(s: String): String =

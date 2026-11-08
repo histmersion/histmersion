@@ -359,8 +359,8 @@ class PluginTemplateSuite extends munit.FunSuite:
         PluginAuthoring
           .repository(
             Some("https://example.org/m2"),
-            Left(Cli.Error(Cli.Error.Message("no install"))),
-            Left(Cli.Error(Cli.Error.Message("no HOME")))
+            Left(Cli.Error(Problem("no install"))),
+            Left(Cli.Error(Problem("no HOME")))
           )
           .map(_._1),
         Right(TemplateRepository.Remote(PluginRepository.parse("https://example.org/m2", _ => false).toOption.get))

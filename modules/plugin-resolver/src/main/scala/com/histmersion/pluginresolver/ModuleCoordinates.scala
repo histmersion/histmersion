@@ -14,10 +14,10 @@ object ModuleCoordinates:
 
   /** `group:artifact:version`. */
 
-  def parse(raw: Text): Either[Resolver.Problem, ModuleCoordinates] = (raw).value.trim.split(':').toList match
+  def parse(raw: Text): Either[Problem, ModuleCoordinates] = (raw).value.trim.split(':').toList match
     case List(g, a, v) =>
       for
         key <- ModuleKey.parse(ModuleKey.Text(s"$g:$a"))
-        version <- ModuleVersion.either(v).left.map(e => Resolver.Problem(s"'$raw': version $e"))
+        version <- ModuleVersion.either(v).left.map(e => Problem(s"'$raw': version $e"))
       yield ModuleCoordinates(key, version)
-    case _ => Left(Resolver.Problem.notCoordinates(raw))
+    case _ => Left(Problem.notCoordinates(raw))

@@ -79,11 +79,11 @@ final class ApprovalDigestService(
     for
       d <- Decision
         .parse(Decision.Wire(b.decision.value))
-        .toRight(Api.Error(Api.Error.Message(s"unknown decision '${b.decision}' (approve or reject)")))
+        .toRight(Api.Error(Problem(s"unknown decision '${b.decision}' (approve or reject)")))
       _ <- Either.cond(
         b.kind.exists(_.value.trim.nonEmpty) || b.subject.exists(_.value.trim.nonEmpty) || b.ids.nonEmpty,
         (),
-        Api.Error(Api.Error.Message("give a kind, a subject or ids: a bulk decision never takes every open approval"))
+        Api.Error(Problem("give a kind, a subject or ids: a bulk decision never takes every open approval"))
       )
       _ <- b.kind
         .map(_.value.trim)
@@ -93,7 +93,7 @@ final class ApprovalDigestService(
             .parse(ApprovalKind.Wire(k))
             .toRight(
               Api.Error(
-                Api.Error.Message(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})")
+                Problem(s"unknown approval kind '$k' (${ApprovalKind.values.map(_.wire).mkString(", ")})")
               )
             )
             .map(_ => ())

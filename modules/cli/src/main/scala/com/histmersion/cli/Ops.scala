@@ -132,7 +132,7 @@ object Ops:
     */
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
     if !Files.isDirectory(dir) then
-      Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
+      Left(Cli.Error(Problem(s"not a directory: $dir"), exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
@@ -220,7 +220,7 @@ object Ops:
     */
   private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[Cli.Error, FormatReport] =
     if !java.nio.file.Files.isRegularFile(p) then
-      Left(Cli.Error(Cli.Error.Message(s"no such file: $p"), exitCode = ExitCode.Usage))
+      Left(Cli.Error(Problem(s"no such file: $p"), exitCode = ExitCode.Usage))
     else
       val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(FileFormat.Text(raw))
@@ -312,7 +312,7 @@ object Ops:
         Output.jsonFlag
       ).mapN { (args, topic, reason, all, dryRun, limit, item, noWait, json) => (c: Client) =>
         QueueArgs.parse(args, topic, reason, all, dryRun, limit, item, noWait) match
-          case Left(msg)  => Left(Cli.Error(Cli.Error.Message(msg), exitCode = ExitCode.Usage))
+          case Left(msg)  => Left(Cli.Error(Problem(msg), exitCode = ExitCode.Usage))
           case Right(cmd) => run(c, cmd, json)
       }
     }

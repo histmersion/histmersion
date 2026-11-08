@@ -35,7 +35,7 @@ import com.histmersion.api.automation.ModelChains
 final class ModelPicker(
     ds: DataSource,
     cfg: => AgentsConfig,
-    resolve: ModelRef => Either[ModelPicker.Problem, (LlmClient, Billing)],
+    resolve: ModelRef => Either[Problem, (LlmClient, Billing)],
     val pools: PlanPools,
     /** The names plugin AI providers are registered under now (the pinned generation's): what a chain or an allowance
       * may name besides the host's providers.
@@ -102,32 +102,32 @@ final class ModelPicker(
   // ── what is in effect ──────────────────────────────────────────────────────────────────────────
 
   /** A role's chain and where it comes from: saved, else `agents.roles.<role>`. */
-  def chain(role: Role): Either[ModelPicker.Problem, (List[ModelRef], SettingSource)] =
+  def chain(role: Role): Either[Problem, (List[ModelRef], SettingSource)] =
     Transactor(ds).read(ModelSettingsRepo.chains).get(ModelSettingsRepo.ChainRole(role.wire.value)) match
       case Some(ms) =>
         parseModels(ms.map(m => ModelRef.Model.Spec(m.value)), known())
           .map(_ -> SettingSource.Saved)
           .left
-          .map(m => ModelPicker.Problem(s"the saved chain of ${role.wire}: $m"))
+          .map(m => Problem(s"the saved chain of ${role.wire}: $m"))
       case None =>
         parseChain(Chain.Spec(cfg.role(role.transformInto[AgentRole])), known())
           .map(_ -> SettingSource.Config)
           .left
-          .map(m => ModelPicker.Problem(s"agents.roles.${role.wire}: $m"))
+          .map(m => Problem(s"agents.roles.${role.wire}: $m"))
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
   def chainFor(
       role: Role,
       overrideRef: Option[AgentsControllers.ModelName]
-  ): Either[ModelPicker.Problem, List[ModelRef]] =
+  ): Either[Problem, List[ModelRef]] =
     overrideRef.map(_.value.trim).filter(_.nonEmpty) match
-      case Some(ref) => parseChain(Chain.Spec(ref), known()).left.map(p => ModelPicker.Problem(p.value))
+      case Some(ref) => parseChain(Chain.Spec(ref), known()).left.map(p => Problem(p.value))
       case None      =>
         chain(role).map(_._1).flatMap { ms =>
           Either.cond(
             ms.nonEmpty,
             ms,
-            ModelPicker.Problem(
+            Problem(
               s"no model for the ${role.wire} role — set agents.roles.${role.wire} " +
                 s"(HISTMERSION_AGENTS_ROLE_${role.wire.value.toUpperCase.replace('-', '_')}) to provider:model[ > provider:model …], " +
                 s"save one with `histmersion agent models set ${role.wire} <provider:model>…`, or pass one"
@@ -498,8 +498,6 @@ final class ModelPicker(
     }
 
 object ModelPicker:
-  type Problem = PickFailure.Problem
-  val Problem: PickFailure.Problem.type = PickFailure.Problem
 
   /** Whether the plan pool a model draws on is usable for it, as its newest verdict says. */
   type PoolUsable = PoolUsable.T

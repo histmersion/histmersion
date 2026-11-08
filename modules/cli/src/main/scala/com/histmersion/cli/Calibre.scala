@@ -53,14 +53,14 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   def search(
       query: Api.Search.Text,
       limit: Paging.Limit = Paging.Limit(20)
-  ): Either[Calibre.Problem, List[Calibre.Book]] =
+  ): Either[Problem, List[Calibre.Book]] =
     viaCalibredb(Some(query), limit).orElse(viaSqlite(Some(query), None, limit))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
-  def all(limit: Paging.Limit = Paging.Limit(1000000)): Either[Calibre.Problem, List[Calibre.Book]] =
+  def all(limit: Paging.Limit = Paging.Limit(1000000)): Either[Problem, List[Calibre.Book]] =
     viaCalibredb(None, limit).orElse(viaSqlite(None, None, limit))
 
-  def byId(id: Calibre.Book.Id): Either[Calibre.Problem, Option[Calibre.Book]] =
+  def byId(id: Calibre.Book.Id): Either[Problem, Option[Calibre.Book]] =
     viaCalibredb(Some(Api.Search.Text(s"id:$id")), Paging.Limit(1))
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), Paging.Limit(1)).map(_.headOption))
@@ -68,7 +68,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   private def viaCalibredb(
       query: Option[Api.Search.Text],
       limit: Paging.Limit
-  ): Either[Calibre.Problem, List[Calibre.Book]] =
+  ): Either[Problem, List[Calibre.Book]] =
     val cmd = List(cfg.calibredb.value, "list") ++ libArgs ++
       List(
         "--for-machine",
@@ -83,7 +83,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       query: Option[Api.Search.Text],
       id: Option[Calibre.Book.Id],
       limit: Paging.Limit
-  ): Either[Calibre.Problem, List[Calibre.Book]] =
+  ): Either[Problem, List[Calibre.Book]] =
     val where = id match
       case Some(n) => s"b.id = ${n.value}"
       case None    =>
@@ -102,19 +102,19 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     * the whole reason this pipeline pushes metadata at all is that Calibre's own metadata sources key on ISBN and
     * cannot identify a journal article.
     */
-  def add(file: Path, meta: Calibre.Push): Either[Calibre.Problem, Calibre.Book.Id] =
+  def add(file: Path, meta: Calibre.Push): Either[Problem, Calibre.Book.Id] =
     for
       _ <- Calibre.guard(meta.title, meta.authors)
       _ <- Either.cond(
         !guiRunning,
         (),
-        Calibre.Problem("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+        Problem("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
       )
-      _ <- Either.cond(Files.isRegularFile(file), (), Calibre.Problem(s"no such file: $file"))
+      _ <- Either.cond(Files.isRegularFile(file), (), Problem(s"no such file: $file"))
       out <- shell.run(addCmd(file, meta))
       id <- Calibre
         .parseAddedId(out)
-        .toRight(Calibre.Problem(s"calibredb add did not report a new id: ${out.trim.take(200)}"))
+        .toRight(Problem(s"calibredb add did not report a new id: ${out.trim.take(200)}"))
       _ <- setMetadata(id, meta)
     yield id
 
@@ -126,11 +126,11 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   def update(
       id: Calibre.Book.Id,
       meta: Calibre.Push
-  ): Either[Calibre.Problem, List[Calibre.Change]] =
+  ): Either[Problem, List[Calibre.Change]] =
     for
       _ <- Calibre.guard(meta.title, Calibre.normaliseAuthors(meta.authors))
       _ <- Either.cond(!guiRunning, (), GuiRunning)
-      cur <- byId(id).flatMap(_.toRight(Calibre.Problem(s"there is no Calibre entry $id")))
+      cur <- byId(id).flatMap(_.toRight(Problem(s"there is no Calibre entry $id")))
       changes <- Calibre.updatePlan(meta, cur)
       _ <- write(id, changes)
     yield changes
@@ -142,7 +142,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   def updateAll(
       linked: List[LinkedRecord],
       apply: CollectionSync.Request.Apply
-  ): Either[Calibre.Problem, List[UpdateEntry]] =
+  ): Either[Problem, List[UpdateEntry]] =
     for
       _ <- Either.cond(!apply.value || !guiRunning, (), GuiRunning)
       books <- all()
@@ -153,7 +153,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
             .setTo(
               write(e.calibreId, cs)
                 .fold(
-                  p => UpdateOutcome.Failed(cs, UpdateOutcome.Failed.Reason(p.value)),
+                  p => UpdateOutcome.Failed(cs, Problem(p.value)),
                   _ => UpdateOutcome.Applied(cs)
                 )
             )
@@ -161,17 +161,17 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     }
 
   /** One `set_metadata` with the planned fields; nothing at all when there are none. */
-  private def write(id: Calibre.Book.Id, changes: List[Calibre.Change]): Either[Calibre.Problem, Unit] =
+  private def write(id: Calibre.Book.Id, changes: List[Calibre.Change]): Either[Problem, Unit] =
     if changes.isEmpty then Right(())
     else shell.run(Calibre.setMetadataCmd(cfg.calibredb.value, libArgs, id, changes)).map(_ => ())
 
   private val GuiRunning =
-    Calibre.Problem("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
+    Problem("the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)")
 
   /** Set named fields on an existing entry — the explicit, reviewed counterpart of [[update]] (`enrich-calibre` applies
     * approved fixes with it). Same guards as every other write.
     */
-  def set(id: Calibre.Book.Id, fields: List[CollectionFieldValue]): Either[Calibre.Problem, Unit] =
+  def set(id: Calibre.Book.Id, fields: List[CollectionFieldValue]): Either[Problem, Unit] =
     for
       cmd <- Calibre.setCmd(cfg.calibredb.value, libArgs, id, fields)
       _ <- Either.cond(
@@ -179,14 +179,14 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
         (),
         GuiRunning
       )
-      _ <- byId(id).flatMap(_.toRight(Calibre.Problem(s"there is no Calibre entry $id")))
+      _ <- byId(id).flatMap(_.toRight(Problem(s"there is no Calibre entry $id")))
       _ <- shell.run(cmd)
     yield ()
 
   /** Replace the file of an EXISTING entry (#652): `calibredb add_format`, which replaces the entry's format of the
     * same type. Unlike [[add]] it never creates an entry, so the link stays valid.
     */
-  def replaceFormat(id: Calibre.Book.Id, file: Path): Either[Calibre.Problem, Calibre.Book.Format] =
+  def replaceFormat(id: Calibre.Book.Id, file: Path): Either[Problem, Calibre.Book.Format] =
     for
       fmt <- Calibre.formatOf(file)
       _ <- Either.cond(
@@ -194,8 +194,8 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
         (),
         GuiRunning
       )
-      _ <- Either.cond(Files.isRegularFile(file), (), Calibre.Problem(s"no such file: $file"))
-      _ <- byId(id).flatMap(_.toRight(Calibre.Problem(s"there is no Calibre entry $id")))
+      _ <- Either.cond(Files.isRegularFile(file), (), Problem(s"no such file: $file"))
+      _ <- byId(id).flatMap(_.toRight(Problem(s"there is no Calibre entry $id")))
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb.value, libArgs, id, file))
     yield fmt
 
@@ -207,7 +207,7 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       (if meta.tags.isEmpty then Nil else List("--tags", meta.tags.mkString(",")))
 
   /** The fields `calibredb add` cannot set. Best-effort: a failure here leaves a usable entry. */
-  private def setMetadata(id: Calibre.Book.Id, meta: Calibre.Push): Either[Calibre.Problem, Unit] =
+  private def setMetadata(id: Calibre.Book.Id, meta: Calibre.Push): Either[Problem, Unit] =
     val fields = List(
       meta.publisher.map(p => "publisher:" + p.value),
       meta.year.map(y => s"pubdate:$y-01-01"),
@@ -217,12 +217,10 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     else
       val cmd = List(cfg.calibredb.value, "set_metadata") ++ libArgs ++ List(id.toString) ++
         fields.flatMap(f => List("--field", f))
-      shell.run(cmd).map(_ => ()).left.map(e => Calibre.Problem(s"added as $id but metadata was not set: $e"))
+      shell.run(cmd).map(_ => ()).left.map(e => Problem(s"added as $id but metadata was not set: $e"))
 
 /** The PURE half: parsing what the two readers print, the metadata guard, and SQL assembly. */
 object Calibre:
-  type Problem = Shell.Problem
-  val Problem: Shell.Problem.type = Shell.Problem
   type VolumeNumber = VolumeNumber.T
   object VolumeNumber extends Newtype[Int, Pure]
 
@@ -497,7 +495,7 @@ object Calibre:
             case None    => UpdateOutcome.Missing
             case Some(b) =>
               updatePlan(rs.head.meta, b).fold(
-                p => UpdateOutcome.Refused(UpdateOutcome.Refused.Reason(p.value)),
+                p => UpdateOutcome.Refused(Problem(p.value)),
                 cs => if cs.isEmpty then UpdateOutcome.UpToDate else UpdateOutcome.Change(cs)
               )
       UpdateEntry(id, keys.map(UpdateEntry.Citekeys(_)), outcome)

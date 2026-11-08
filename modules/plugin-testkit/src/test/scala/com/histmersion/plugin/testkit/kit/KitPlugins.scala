@@ -32,14 +32,14 @@ final class KitFetcherPlugin extends Plugin:
               val access = Access.Open
               def fetch(work: WorkKey, fc: Fetch.Context): Fetch =
                 work.doi match
-                  case None      => Fetch.Miss(Fetch.Miss.Why("no DOI"))
+                  case None      => Fetch.Miss(Problem("no DOI"))
                   case Some(doi) =>
                     val url = s"${c.baseUrl.stripSuffix("/")}/$doi.pdf" + key.fold("")(k => s"?key=$k")
                     ctx.http.get(Plugin.Http.Url(url)) match
-                      case Left(why) if why.value.contains("challenge") => Fetch.Refused(Fetch.Refused.Why(why.value))
-                      case Left(why)                                    => Fetch.Miss(Fetch.Miss.Why(why.value))
+                      case Left(why) if why.value.contains("challenge") => Fetch.Refused(Problem(why.value))
+                      case Left(why)                                    => Fetch.Miss(Problem(why.value))
                       case Right(bytes)                                 =>
-                        fc.log.info(Plugin.Log.InfoMessage(s"$doi: licence CC-BY-4.0"))
+                        fc.log.info(Plugin.Log.Line(s"$doi: licence CC-BY-4.0"))
                         Fetch.Found(
                           FetchedFile(
                             FetchedFile.Source("kit-fetcher"),
@@ -159,7 +159,7 @@ final class KitAiPlugin extends Plugin:
                     AiHttp.TimeoutSeconds(30)
                   )
                   .left
-                  .map(e => AiFailure.Error(AiFailure.Error.Message(e.value)))
+                  .map(e => AiFailure.Error(Problem(e.value)))
                   .map(resp => AiTurn(AiTurn.Text(resp.body.value)))
           )
           .left

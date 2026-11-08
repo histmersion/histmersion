@@ -62,7 +62,7 @@ object SettingsCmd:
         key match
           case Some(k) =>
             p.field(ConfigEdit.Field.Key(k))
-              .toRight(Cli.Error(Cli.Error.Message(s"There is no setting called $k."), ExitCode.Usage))
+              .toRight(Cli.Error(Problem(s"There is no setting called $k."), ExitCode.Usage))
               .map { f =>
                 Output.emit(json, f)(ConfigEditMarkdown.field)
               }
@@ -128,7 +128,7 @@ object SettingsCmd:
         .configFile(k => AppConfig.lookup(env)(k.value).map(Environment.VariablesValue(_)))
         .toRight(
           Cli.Error(
-            Cli.Error.Message(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})"),
+            Problem(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})"),
             ExitCode.Usage
           )
         )
@@ -137,7 +137,7 @@ object SettingsCmd:
     private def writer: Either[Cli.Error, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
-    private def failed(e: SettingError) = Cli.Error(Cli.Error.Message(e.message.value), ExitCode.Refused)
+    private def failed(e: SettingError) = Cli.Error(Problem(e.message.value), ExitCode.Refused)
 
     def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
@@ -145,7 +145,7 @@ object SettingsCmd:
         p <- prefix
           .fold(Right(None))(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).map(Some(_)))
           .left
-          .map(p => Cli.Error(Cli.Error.Message(p.value), ExitCode.Usage))
+          .map(p => Cli.Error(Problem(p.value), ExitCode.Usage))
         state <- f.read().left.map(failed)
       yield
         val loaded = AppConfig.loadWithUserFile(env, Some(f.path))

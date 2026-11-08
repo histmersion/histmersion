@@ -168,7 +168,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         val g = Option(raw.value.trim).filter(_.nonEmpty).orElse(m.goal.map(_.value)).getOrElse("")
         com.histmersion.domain.automation.Goal.Slug
           .option(g)
-          .toRight(Api.Error(Api.Error.Message(s"No goal '$g'")))
+          .toRight(Api.Error(Problem(s"No goal '$g'")))
           .flatMap(site.goal(_))
           .map(_.slug)
           .flatMap(s =>
@@ -176,15 +176,15 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               m.goal.forall(_ == s),
               ManagerContext.ItemTarget(s.value),
               Api.Error(
-                Api.Error.Message(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s")
+                Problem(s"manager ${m.id} plans the articles of ${m.goal.fold("?")(_.value)}, not of $s")
               )
             )
           )
       case ArticleCompile =>
         Left(
-          Api.Error(Api.Error.Message(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
+          Api.Error(Problem(s"'$ArticleCompile' items come from an approved article plan (propose-articles)"))
         )
-      case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(Problem(s"unknown item kind '$other'")))
 
   /** The autopilot's checks of the approvals its items wait for: an article plan (each article's slug free and its
     * filter reaching enough sources, within the area's daily cap) and an article to publish (its draft's filter, the

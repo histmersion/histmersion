@@ -65,9 +65,9 @@ final class ManagersControllers(
       .toList
       .filter(r => st.forall(_ == r.status.value))
 
-  private def error(message: String): Api.Error = Api.Error(Api.Error.Message(message))
-  private def notFound(what: String) = Api.Error(Api.Error.Message(what), Some(Api.Error.Code(Write.CodeNotFound)))
-  private def conflict(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(AgentsApi.CodeConflict)))
+  private def error(message: String): Api.Error = Api.Error(Problem(message))
+  private def notFound(what: String) = Api.Error(Problem(what), Some(Api.Error.Code(Write.CodeNotFound)))
+  private def conflict(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
   /** A run id read back from the database. */
   private def runIdOf(r: RunInfo.Id): DomainRun.Id = DomainRun.Id.assume(r.value)
@@ -190,11 +190,11 @@ final class ManagersControllers(
         Left(error("the review manager is library-wide: give no goal (narrow it with config includeGoal)"))
       case Some(Kind.Review)                   => make(Kind.Review, ManagerLight.Id(ReviewId), None)
       case Some(Kind.Enrich) if goal.isDefined =>
-        Left(Api.Error(Api.Error.Message("the enrich manager is library-wide: give no goal")))
+        Left(Api.Error(Problem("the enrich manager is library-wide: give no goal")))
       case Some(Kind.Enrich) => make(Kind.Enrich, ManagerLight.Id(EnrichId), None)
       case Some(Kind.Seed)   =>
         for
-          g <- goal.toRight(Api.Error(Api.Error.Message("a seeding manager is for one research area: give its goal")))
+          g <- goal.toRight(Api.Error(Problem("a seeding manager is for one research area: give its goal")))
           slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
           gl <- host.goal(slug)
           m <- make(Kind.Seed, seedId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id], Some(slug))
@@ -206,7 +206,7 @@ final class ManagersControllers(
         yield out
       case Some(Kind.Watch) =>
         for
-          g <- goal.toRight(Api.Error(Api.Error.Message("a watcher is for one research area: give its goal")))
+          g <- goal.toRight(Api.Error(Problem("a watcher is for one research area: give its goal")))
           slug <- DomainGoal.Slug.option(g).toRight(notFound(s"No goal '$g'"))
           gl <- host.goal(slug)
           m <- make(
@@ -271,7 +271,7 @@ final class ManagersControllers(
   /** A cron a person sets on a manager of kind `k`: the enrich manager has none (ingests feed it). */
   private def checkCron(k: Kind, text: ManagerLight.Cron, now: java.time.Instant): Either[Api.Error, Cron] =
     if k == Kind.Enrich then
-      Left(Api.Error(Api.Error.Message("the enrich manager has no cron: the ingests and the Enrich buttons feed it")))
+      Left(Api.Error(Problem("the enrich manager has no cron: the ingests and the Enrich buttons feed it")))
     else
       ManagerPolicy
         .checkCron(
@@ -579,7 +579,7 @@ final class ManagersControllers(
             .cond(transact(ds)(ManagerRepo.release(i.id)), (), conflict(s"item #${i.id} is ${i.status}, not held"))
             .map(_ => record(m.id, Some(i.id), None, Feed.Held, s"${i.target}: released by a person"))
         case "priority" =>
-          in.priority.toRight(Api.Error(Api.Error.Message("give `priority`"))).map { p =>
+          in.priority.toRight(Api.Error(Problem("give `priority`"))).map { p =>
             Transactor(ds).transact(ManagerRepo.setPriority(i.id, p.transformInto[ManagerItem.Priority]))
             record(m.id, Some(i.id), None, Feed.Hint, s"${i.target}: priority $p")
           }
@@ -718,12 +718,12 @@ final class ManagersControllers(
     else if a == HintEffect.Config then
       e.config
         .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
-        .toRight(Api.Error(Api.Error.Message("a config action names the settings it changes")))
+        .toRight(Api.Error(Problem("a config action names the settings it changes")))
         .flatMap(c => validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Action(a))))
     else if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty then
       Left(error("a structured hint names its targets, a tag, a topic or a goal (or is about one item)"))
     else if a == HintEffect.HoldAction && e.until.isEmpty && e.untilSource.isEmpty then
-      Left(Api.Error(Api.Error.Message("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)")))
+      Left(Api.Error(Problem("a hold hint needs `until` (a date) or `untilSource` (a DOI or citekey)")))
     else if e.until.exists(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u.value)).isEmpty) then
       Left(error(s"'${e.until.fold("")(_.value)}' is not a date (2026-11-01) or an instant"))
     else

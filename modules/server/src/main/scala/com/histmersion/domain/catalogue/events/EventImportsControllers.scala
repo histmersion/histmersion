@@ -33,7 +33,7 @@ final class EventImportsControllers(
     jobs: CatalogueJobs,
     page: (Option[PageSize], PageSize) => PageSize
 ):
-  private def invalid(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid)))
 
   def catalogues: List[CatalogProviderInfo] = imports.catalogues
 

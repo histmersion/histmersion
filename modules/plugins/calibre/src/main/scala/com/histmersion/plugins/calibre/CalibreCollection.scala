@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.calibre
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 
 import java.nio.file.Path
@@ -44,7 +45,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
   def item(id: CollectionId): Either[Problem, Option[CollectionItem]] =
     id.value.trim.toIntOption
-      .fold[Either[Calibre.Problem, Option[CollectionItem]]](Right(None))(n =>
+      .fold[Either[Problem, Option[CollectionItem]]](Right(None))(n =>
         calibre.byId(Calibre.Book.Id(n)).map(_.map(CalibreCollection.item))
       )
       .left
@@ -256,12 +257,12 @@ object CalibreCollection:
       case UpdateOutcome.Change(cs)         => CollectionUpdateOutcome.Change(all(cs))
       case UpdateOutcome.Applied(cs)        => CollectionUpdateOutcome.Applied(all(cs))
       case UpdateOutcome.Failed(cs, reason) =>
-        CollectionUpdateOutcome.Failed(all(cs), CollectionUpdateOutcome.Failed.Reason(reason.value))
+        CollectionUpdateOutcome.Failed(all(cs), Problem(reason.value))
       case UpdateOutcome.UpToDate        => CollectionUpdateOutcome.UpToDate
       case UpdateOutcome.Shared          => CollectionUpdateOutcome.Shared
       case UpdateOutcome.Missing         => CollectionUpdateOutcome.Missing
       case UpdateOutcome.Refused(reason) =>
-        CollectionUpdateOutcome.Refused(CollectionUpdateOutcome.Refused.Reason(reason.value))
+        CollectionUpdateOutcome.Refused(Problem(reason.value))
     CollectionUpdateEntry(
       CollectionId(e.calibreId.value.toString),
       e.citekeys.map(k => CollectionUpdateEntry.Keys(k.value)),
@@ -284,37 +285,37 @@ object CalibreCollection:
       CollectionFinding.Fixable(f.fixable)
     )
 
-  def number(id: CollectionId): Either[Calibre.Problem, Calibre.Book.Id] =
-    id.value.trim.toIntOption.map(Calibre.Book.Id(_)).toRight(Calibre.Problem(s"'${id.value}' is not a Calibre id"))
+  def number(id: CollectionId): Either[Problem, Calibre.Book.Id] =
+    id.value.trim.toIntOption.map(Calibre.Book.Id(_)).toRight(Problem(s"'${id.value}' is not a Calibre id"))
 
   def extension(name: CollectionFile.Name): FetchedFile.Extension =
     FetchedFile.Extension(name.value.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT))
 
-  def read(name: CollectionFile.Name)(using files: LocalFiles): Either[Calibre.Problem, FetchedFile.Bytes] =
+  def read(name: CollectionFile.Name)(using files: LocalFiles): Either[Problem, FetchedFile.Bytes] =
     Try(FetchedFile.Bytes(files.read(Path.of(name.value)).value)).toEither.left.map(e =>
-      Calibre.Problem(s"cannot read ${name.value} (${e.getMessage})")
+      Problem(s"cannot read ${name.value} (${e.getMessage})")
     )
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.
     */
   def staged[A](name: LocalFiles.StagedName, file: FetchedFile)(
-      f: Path => Either[Calibre.Problem, A]
-  )(using files: LocalFiles): Either[Calibre.Problem, A] =
+      f: Path => Either[Problem, A]
+  )(using files: LocalFiles): Either[Problem, A] =
     files
       .staged(
         LocalFiles.StagedName(s"${name.value}.${file.extension.value}"),
         LocalFiles.Content(file.bytes.value)
       )(p => f(p).left.map(e => Problem(e.value)))
       .left
-      .map(e => Calibre.Problem(e.value))
+      .map(e => Problem(e.value))
 
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
-  def reach(dir: Path)(using files: LocalFiles): Either[Calibre.Problem, Unit] =
+  def reach(dir: Path)(using files: LocalFiles): Either[Problem, Unit] =
     val db = dir.resolve("metadata.db")
     if !files.isDirectory(dir) && !files.exists(db) then
       Left(
-        Calibre.Problem(
+        Problem(
           s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
             "holds metadata.db (a server in a container needs that folder mounted)"
         )
@@ -332,4 +333,4 @@ object CalibreCollection:
         }
         .map(_ => ()))
         .left
-        .map(Calibre.Problem(_))
+        .map(Problem(_))

@@ -55,12 +55,12 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     itemKind.value match
       case SourceEnrich =>
         Citekey.option(raw.value.trim) match
-          case None     => Left(Api.Error(Api.Error.Message(s"No source '${raw.value.trim}'")))
+          case None     => Left(Api.Error(Problem(s"No source '${raw.value.trim}'")))
           case Some(ck) =>
             site.sources
               .get(ck, body = SourcesControllers.GetBody(false))
               .map(s => ManagerContext.ItemTarget(s.source.citekey.value))
-      case other => Left(Api.Error(Api.Error.Message(s"unknown item kind '$other'")))
+      case other => Left(Api.Error(Problem(s"unknown item kind '$other'")))
 
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
@@ -72,7 +72,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     val text = raw.value
     val asSource = Citekey
       .option(text)
-      .toRight(Api.Error(Api.Error.Message(s"No source '$text'")))
+      .toRight(Api.Error(Problem(s"No source '$text'")))
       .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)))
     asSource
       .map(s =>
@@ -81,12 +81,12 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       .orElse {
         val cited = Slug
           .option(text)
-          .toRight(Api.Error(Api.Error.Message(s"No article '$text'")))
+          .toRight(Api.Error(Problem(s"No article '$text'")))
           .flatMap(slug => site.articleSources(slug))
           .orElse(
             com.histmersion.domain.automation.Goal.Slug
               .option(text)
-              .toRight(Api.Error(Api.Error.Message(s"No goal '$text'")))
+              .toRight(Api.Error(Problem(s"No goal '$text'")))
               .flatMap(slug =>
                 a.host
                   .goal(slug)
@@ -101,7 +101,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
         cited.left
           .map(_ =>
             Api.Error(
-              Api.Error.Message(s"'$text' is no source, article or goal"),
+              Problem(s"'$text' is no source, article or goal"),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 
 /** `opencontext`: Open Context's excavation media. One search by the place's name answers the records with their

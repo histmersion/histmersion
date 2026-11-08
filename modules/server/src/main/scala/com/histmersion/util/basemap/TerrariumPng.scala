@@ -10,8 +10,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample.
   */
 object TerrariumPng:
-  type Problem = Vp8l.Problem
-  val Problem: Vp8l.Problem.type = Vp8l.Problem
+  type Problem = Problem
+  val Problem: Problem.type = Problem
   type TileSize = TileSize.T
   object TileSize extends Newtype[Int, Pure]
 

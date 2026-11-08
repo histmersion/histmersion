@@ -490,9 +490,9 @@ object PluginHost:
     override def processes: Processes = services.processes
     lazy val http: Plugin.Http = services.http()
     val log: Plugin.Log = new Plugin.Log:
-      def info(message: Plugin.Log.InfoMessage) =
+      def info(message: Plugin.Log.Line) =
         services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(false), HostServices.LogArg3(message.value))
-      def warn(message: Plugin.Log.WarnMessage) =
+      def warn(message: Plugin.Log.Line) =
         services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(message.value))
     def env(name: EnvVar.Name) =
       Option(services.env.root.get(name.value))

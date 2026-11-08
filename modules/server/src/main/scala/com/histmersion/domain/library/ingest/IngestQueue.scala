@@ -147,9 +147,9 @@ final class IngestQueue(
 
   /** A conversion's figures → storable ones, failing the whole batch on the first unusable payload. */
   private def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
-    ByteCount.either(cfg().limits.assetBytes.value).left.map(why => Api.Error(Api.Error.Message(why))).flatMap { max =>
+    ByteCount.either(cfg().limits.assetBytes.value).left.map(why => Api.Error(Problem(why))).flatMap { max =>
       in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
-        acc.flatMap(xs => NewFigure.of(a, max).left.map(p => Api.Error(Api.Error.Message(p.value))).map(xs :+ _))
+        acc.flatMap(xs => NewFigure.of(a, max).left.map(p => Api.Error(Problem(p.value))).map(xs :+ _))
       }
     }
 

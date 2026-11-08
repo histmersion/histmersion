@@ -1,5 +1,6 @@
 package com.histmersion
 package upstreams.archiveorg
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.FetchedFile
 import com.histmersion.domain.library.acquisition.Endpoint
 import com.histmersion.upstreams.http.Url
@@ -19,7 +20,7 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     val t = (s).value.trim
     ArchiveId((if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head)
 
-  def search(query: ArchiveOrg.SearchQuery, rows: PageSize): Either[ArchiveOrg.Problem, List[ArchiveItem]] =
+  def search(query: ArchiveOrg.SearchQuery, rows: PageSize): Either[Problem, List[ArchiveItem]] =
     http
       .json(
         Url(
@@ -33,21 +34,21 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
         ).value
       )
       .left
-      .map(ArchiveOrg.Problem(_))
+      .map(Problem(_))
       .map(AcquireParse.archiveSearch)
       // the search index returns only identifiers reliably; the item metadata (title, creator,
       // restriction) comes from /metadata, one call per hit
       .map(_.map(i => info(i.identifier).getOrElse(i)))
 
-  def info(id: ArchiveId): Either[ArchiveOrg.Problem, ArchiveItem] =
+  def info(id: ArchiveId): Either[Problem, ArchiveItem] =
     val ident = identifier(ArchiveOrg.IdentifierS((id).value))
     http
       .json(Url(Candidate.Url(archive.url.value), Url.UrlPath(s"/metadata/$ident")).value)
       .left
-      .map(ArchiveOrg.Problem(_))
+      .map(Problem(_))
       .map(AcquireParse.archiveItem(ident, _))
 
-  def download(id: ArchiveId, file: ArchiveOrg.DownloadFile): Either[ArchiveOrg.Problem, FetchedFile] =
+  def download(id: ArchiveId, file: ArchiveOrg.DownloadFile): Either[Problem, FetchedFile] =
     val ident = identifier(ArchiveOrg.IdentifierS((id).value))
     val url = Url(
       Candidate.Url(archive.url.value),
@@ -57,9 +58,9 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
           .replace("+", "%20")
       )
     )
-    http.get(Plugin.Http.Url(url.value)).left.map(e => ArchiveOrg.Problem(e.value)).flatMap { b =>
+    http.get(Plugin.Http.Url(url.value)).left.map(e => Problem(e.value)).flatMap { b =>
       if b.value.length < 10240 then
-        Left(ArchiveOrg.Problem(s"archive.org returned only ${b.value.length} bytes for $file"))
+        Left(Problem(s"archive.org returned only ${b.value.length} bytes for $file"))
       else
         Right(
           FetchedFile(
@@ -72,8 +73,6 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     }
 
 object ArchiveOrg:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type IdentifierS = IdentifierS.T
   object IdentifierS extends Newtype[String, Pure]
   type SearchQuery = SearchQuery.T

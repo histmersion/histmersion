@@ -124,7 +124,7 @@ final class Bootstrap(
         .parse(source)
         .toRight(
           Api.Error(
-            Api.Error.Message(s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})"),
+            Problem(s"unknown gazetteer source '$source' (available: ${GazetteerLoad.names.mkString(", ")})"),
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )

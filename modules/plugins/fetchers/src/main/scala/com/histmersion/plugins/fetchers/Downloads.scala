@@ -21,11 +21,11 @@ final class Downloads(http: Plugin.Http):
         Some(FetchedFile(source, Some(FetchedFile.Url(url.value)), b, FetchedFile.Extension("pdf")))
       case Right(b) =>
         log.info(
-          Plugin.Log.InfoMessage(s"$source: $url returned ${b.value.length} bytes that are not a PDF — skipping")
+          Plugin.Log.Line(s"$source: $url returned ${b.value.length} bytes that are not a PDF — skipping")
         )
         None
       case Left(e) =>
-        log.info(Plugin.Log.InfoMessage(s"$source fetch failed ($e)"))
+        log.info(Plugin.Log.Line(s"$source fetch failed ($e)"))
         None
 
 object Downloads:

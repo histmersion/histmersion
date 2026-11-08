@@ -8,7 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * installation.
   */
 trait Shell:
-  def run(cmd: List[String]): Either[Shell.Problem, String]
+  def run(cmd: List[String]): Either[Problem, String]
   def isRunning(processMatch: Shell.ProcessMatch): Boolean
 
 object Shell:

@@ -27,7 +27,7 @@ object ApiFailure:
   def of(status: Status, decoded: Option[Api.Error]): ApiFailure =
     ApiFailure(
       status,
-      decoded.getOrElse(Api.Error(Api.Error.Message(status.value match
+      decoded.getOrElse(Api.Error(Problem(status.value match
         case 401 | 403 => "the server refused the change: an API key is required"
         case 0         => "the server could not be reached"
         case s         => s"unexpected response from the server (HTTP $s)")))

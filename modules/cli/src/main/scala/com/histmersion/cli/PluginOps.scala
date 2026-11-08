@@ -30,7 +30,7 @@ final class PluginOps(using console: Console)(
 ):
 
   private def err(msg: String, code: Cli.Error.ExitCode = ExitCode.Refused) =
-    Cli.Error(Cli.Error.Message(msg), exitCode = code)
+    Cli.Error(Problem(msg), exitCode = code)
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
 
@@ -463,7 +463,7 @@ final class PluginOps(using console: Console)(
       case rc                  =>
         Left(
           Cli.Error(
-            Cli.Error.Message(
+            Problem(
               s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})"
             ),
             exitCode = if rc.value == 1 then ExitCode.Usage else ExitCode.Refused

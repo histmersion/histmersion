@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -29,7 +30,7 @@ final class ChatCompletionsProvider(
       verbatimFailures = AiCapabilities.VerbatimFailures(true)
     )
 
-  private def base: Either[BaseUrl.Problem, BaseUrl] =
+  private def base: Either[Problem, BaseUrl] =
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting(s"agents.providers.${name.value}.base-url"))
 
   override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
@@ -65,7 +66,7 @@ final class ChatCompletionsProvider(
       turn <- ChatAnswer(ChatAnswer.Status(answer.status.value), ChatAnswer.Body(answer.body.value)).turn.left
         .map(why => s"RuntimeException: OpenAI API error: ${why.value}")
     yield turn
-    sent.left.map(m => AiFailure.Error(AiFailure.Error.Message(m)))
+    sent.left.map(m => AiFailure.Error(Problem(m)))
 
 object ChatCompletionsProvider:
   type Name = Name.T

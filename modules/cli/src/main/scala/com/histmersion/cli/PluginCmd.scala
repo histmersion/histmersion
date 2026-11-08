@@ -35,7 +35,7 @@ object PluginCmd:
     if !PluginKit.isLoopback(c.serverUrl.value) then
       Left(
         Cli.Error(
-          Cli.Error.Message(
+          Problem(
             s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
               "run the command on the machine the server runs on"
           ),
@@ -69,7 +69,7 @@ object PluginCmd:
       val repos = repoArgs
         .traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.value))
         .left
-        .map(e => Cli.Error(Cli.Error.Message(e), exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(Problem(e), exitCode = ExitCode.Usage))
       repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
         ops
           .add(
@@ -201,7 +201,7 @@ object PluginCmd:
           Either.cond(
             Files.isRegularFile(src),
             Cli.out.println(src),
-            Cli.Error(Cli.Error.Message(s"no sources jar beside $jar"), exitCode = ExitCode.Refused)
+            Cli.Error(Problem(s"no sources jar beside $jar"), exitCode = ExitCode.Refused)
           )
       }
     }
@@ -231,7 +231,7 @@ object PluginCmd:
         kind <- PluginKind.parse(rawKind)
         pkg <- ScalaPackage.parse(rawPackage.getOrElse(id.packageName.value))
       yield (id, kind, pkg)
-      result.left.map(e => Cli.Error(Cli.Error.Message(e), exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
+      result.left.map(e => Cli.Error(Problem(e), exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
         val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
         for
           (repo, copied) <- PluginAuthoring.repository(

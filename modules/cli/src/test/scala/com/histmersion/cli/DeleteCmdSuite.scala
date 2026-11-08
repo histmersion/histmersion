@@ -101,7 +101,7 @@ class DeleteCmdSuite extends munit.FunSuite:
         Source.CalibreId("1885"),
         true,
         CalibreCliConfig.LibraryDir("/lib"),
-        _ => Left(Shell.Problem("sqlite3: locked\nmore"))
+        _ => Left(Problem("sqlite3: locked\nmore"))
       ),
       CalibreEntryCheck.Unchecked(Problem("sqlite3: locked"))
     )

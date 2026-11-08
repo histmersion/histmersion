@@ -16,7 +16,7 @@ final class LabelsControllers(labels: LabelService, filters: SearchFilters):
     Facet.Field
       .parse(field)
       .toRight(
-        Api.Error(Api.Error.Message(s"unknown facet field '$field' (one of: ${Facet.Field.all.mkString(", ")})"))
+        Api.Error(Problem(s"unknown facet field '$field' (one of: ${Facet.Field.all.mkString(", ")})"))
       )
       .map { ff =>
         val paged = filters.page(f)

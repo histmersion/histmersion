@@ -232,7 +232,7 @@ final class SourcePictures(
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
   def storeCover(p: SourceCoverParams, bytes: AssetService.Bytes): Either[Api.Error, MediaItem] =
-    val bad = (m: String) => Left(Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid))))
+    val bad = (m: String) => Left(Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid))))
     if p.provider.value != MediaProvider.Calibre then
       bad(s"a cover is uploaded from ${MediaProvider.Calibre} only (Open Library's come through `media covers`)")
     else if p.key.value.trim.isEmpty then bad("the cover's key (its Calibre id) is missing")
@@ -245,7 +245,7 @@ final class SourcePictures(
         case Some(mime) =>
           Citekey.option(p.citekey.value.trim).flatMap(sources.current) match
             case None =>
-              Left(Api.Error(Api.Error.Message(s"No source '${p.citekey}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+              Left(Api.Error(Problem(s"No source '${p.citekey}'"), Some(Api.Error.Code(Write.CodeNotFound))))
             case Some(current) =>
               val ck = Citekey.assume(current.value)
               val key = p.key.value.trim
@@ -283,7 +283,7 @@ final class SourcePictures(
                 MediaRole.Wire(MediaRole.Cover),
                 Some(AssetService.LinkProperty(MediaProvider.Calibre))
               )
-              assets.show(uid).toRight(Api.Error(Api.Error.Message(s"cover of '$ck' not stored")))
+              assets.show(uid).toRight(Api.Error(Problem(s"cover of '$ck' not stored")))
 
   // ── a run over the corpus ─────────────────────────────────────────────────────────────────────
 

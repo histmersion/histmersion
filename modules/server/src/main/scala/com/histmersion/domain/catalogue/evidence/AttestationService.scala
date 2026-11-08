@@ -41,7 +41,7 @@ object AttestationService:
   def apply(db: Transactor): AttestationService = Implementation(db)
 
   private def missing(id: Attestation.Id) =
-    Api.Error(Api.Error.Message(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   final private class Implementation(db: Transactor) extends AttestationService:
     def list(

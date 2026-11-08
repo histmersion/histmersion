@@ -1,5 +1,6 @@
 package com.histmersion.fixtures.helloai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
@@ -16,7 +17,7 @@ final class HelloAiPlugin extends Plugin:
       .fold[Either[Problem, Boolean]](Right(false))(t => ctx.secret(t).map(_.value.nonEmpty))
       .flatMap { hasToken =>
         ctx.log.info(
-          _root_.com.histmersion.plugin.Plugin.Log.InfoMessage(
+          _root_.com.histmersion.plugin.Plugin.Log.Line(
             s"hello-ai: ${config.replies.size} scripted repl(ies)${if hasToken then ", a token given" else ""}"
           )
         )

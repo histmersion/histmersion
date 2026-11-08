@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.circe.Json
 import io.github.iltotore.iron.constraint.any.Pure
@@ -44,8 +45,6 @@ final class MetCollection(conf: CollectionSettings)
 object MetCollection:
   type ObjectId = ObjectId.T
   object ObjectId extends Newtype[Long, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Year = Year.T
   object Year extends Newtype[Long, Pure]
 

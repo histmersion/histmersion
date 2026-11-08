@@ -105,7 +105,7 @@ class CalibrePushSuite extends munit.FunSuite:
   final private class Recording extends Shell:
     @volatile var commands: List[List[String]] = Nil // a test double: the simplest thing
     @volatile var added: List[(Path, String)] = Nil
-    def run(cmd: List[String]): Either[Shell.Problem, String] =
+    def run(cmd: List[String]): Either[Problem, String] =
       commands = commands :+ cmd
       if cmd.lift(1).contains("add") then
         val f = cmd

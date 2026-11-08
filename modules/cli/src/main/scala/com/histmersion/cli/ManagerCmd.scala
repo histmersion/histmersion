@@ -43,7 +43,7 @@ object ManagerCmd:
     ManagerConfig
       .parse(kvs.map(ManagerConfig.Spec(_)))
       .left
-      .map(m => Cli.Error(Cli.Error.Message(m.value), exitCode = ExitCode.Usage))
+      .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
 
   /** The settings `--config` and `config` take. */
   private val SettingKeys =
@@ -144,14 +144,14 @@ object ManagerCmd:
             case _ =>
               Left(
                 Cli.Error(
-                  Cli.Error.Message("autopilot mode takes one of: working, finish, pause"),
+                  Problem("autopilot mode takes one of: working, finish, pause"),
                   exitCode = ExitCode.Usage
                 )
               )
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
             Cli.Error(
-              Cli.Error.Message(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})"),
+              Problem(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})"),
               exitCode = ExitCode.Usage
             )
           )
@@ -194,7 +194,7 @@ object ManagerCmd:
         case other =>
           Left(
             Cli.Error(
-              Cli.Error.Message(
+              Problem(
                 s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)"
               ),
               exitCode = ExitCode.Usage
@@ -220,7 +220,7 @@ object ManagerCmd:
       Opts.option[Int]("limit", "How many waiting items to show (status: 50, queue: 200)").orNone,
       Output.jsonFlag
     ).mapN { (verb, rest, limit, json) => (c: Client) =>
-      def usage(m: String) = Left(Cli.Error(Cli.Error.Message(m), exitCode = ExitCode.Usage))
+      def usage(m: String) = Left(Cli.Error(Problem(m), exitCode = ExitCode.Usage))
       (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
         case ("status", Nil) =>
           c.call(ManagersApi.scheduler)(limit.map(Scheduler.Limit(_)))
@@ -310,9 +310,9 @@ object ManagerCmd:
     * it); a malformed one is a usage error before anything is sent.
     */
   def focusRequest(args: List[String]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
-    def usage(m: String) = Left(Cli.Error(Cli.Error.Message(m), exitCode = ExitCode.Usage))
+    def usage(m: String) = Left(Cli.Error(Problem(m), exitCode = ExitCode.Usage))
     def num(s: String) =
-      s.trim.toIntOption.toRight(Cli.Error(Cli.Error.Message(s"'$s' is not a whole number"), exitCode = ExitCode.Usage))
+      s.trim.toIntOption.toRight(Cli.Error(Problem(s"'$s' is not a whole number"), exitCode = ExitCode.Usage))
     def by = Some(Autopilot.FocusSet.By("cli"))
     args.map(_.trim) match
       case Nil | List("list")             => Right(None)

@@ -30,7 +30,7 @@ object AssetLinkFixtures:
       if !AssetLinkRepo.figureExists(Citekey.assume(in.citekey.value), AssetInfoRow.Name(in.assetName.value)) then
         Left(
           Api.Error(
-            Api.Error.Message(s"No asset '${in.citekey}/${in.assetName}'"),
+            Problem(s"No asset '${in.citekey}/${in.assetName}'"),
             Some(Api.Error.Code(Write.CodeNotFound))
           )
         )

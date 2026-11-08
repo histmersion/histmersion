@@ -45,13 +45,13 @@ final class MapTileService(
         .parse(q.layer)
         .toRight(
           Api.Error(
-            Api.Error.Message(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}")
+            Problem(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}")
           )
         )
       coord <- TileCoord
         .of(TileCoord.Z(q.z.value), TileCoord.X(q.x.value), TileCoord.Y(q.y.value), TileCoord.Z(s.maxZoom.value))
         .left
-        .map(why => Api.Error(Api.Error.Message(s"$why")))
+        .map(why => Api.Error(Problem(s"$why")))
     yield
       val versions = currentVersions()
       val k = key(layer, coord, q, versions)

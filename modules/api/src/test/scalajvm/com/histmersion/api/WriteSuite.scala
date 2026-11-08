@@ -564,8 +564,8 @@ class WriteSuite extends munit.FunSuite:
   test("ApiError.hasCode selects an error output by its code, and nothing else (#829)"):
     val notFound = Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))
     assert(
-      notFound.isDefinedAt(Api.Error(Api.Error.Message("no such source"), Some(Api.Error.Code(Write.CodeNotFound))))
+      notFound.isDefinedAt(Api.Error(Problem("no such source"), Some(Api.Error.Code(Write.CodeNotFound))))
     )
-    assert(!notFound.isDefinedAt(Api.Error(Api.Error.Message("stale"), Some(Api.Error.Code(Write.CodePrecondition)))))
-    assert(!notFound.isDefinedAt(Api.Error(Api.Error.Message("plain 400"))))
+    assert(!notFound.isDefinedAt(Api.Error(Problem("stale"), Some(Api.Error.Code(Write.CodePrecondition)))))
+    assert(!notFound.isDefinedAt(Api.Error(Problem("plain 400"))))
     assert(!notFound.isDefinedAt("not an ApiError"))

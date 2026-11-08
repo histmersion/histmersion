@@ -234,7 +234,7 @@ object ImportsControllers:
   val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(ImportJobKinds.MediaImport.kind.value)
 
   private[imports] def error(message: String, code: String): Api.Error =
-    Api.Error(Api.Error.Message(message), Some(Api.Error.Code(code)))
+    Api.Error(Problem(message), Some(Api.Error.Code(code)))
 
   private[imports] def seenKey(t: Target): SeenKey = SeenKey(s"${t.targetType}:${t.id}")
 

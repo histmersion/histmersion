@@ -284,7 +284,7 @@ final class Engine(
       .toList
       .flatMap { (id, pipeline, model, error) =>
         val roles = ModelPicker
-          .pausedRole(ModelPicker.Problem(error.value))
+          .pausedRole(Problem(error.value))
           .map(List(_))
           .getOrElse(Pipeline.parse(Pipeline.Wire(pipeline.value)).map(_.roles).getOrElse(Nil))
         val notes = List.newBuilder[String]
@@ -572,7 +572,7 @@ final class Engine(
   // ── control ────────────────────────────────────────────────────────────────────────────────────
 
   private def conflict(m: Engine.Problem) =
-    Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(AgentsApi.CodeConflict)))
+    Api.Error(Problem(m.value), Some(Api.Error.Code(AgentsApi.CodeConflict)))
 
   def pause(id: Run.Id): Either[Api.Error, RunInfo] =
     withRun(id) { r =>
@@ -634,7 +634,7 @@ final class Engine(
   private def get(id: Run.Id): Either[Api.Error, RunInfo] =
     agents.runs
       .get(id)
-      .toRight(Api.Error(Api.Error.Message(s"No agent run '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
+      .toRight(Api.Error(Problem(s"No agent run '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   private def withRun[A](id: Run.Id)(f: RunInfo => Either[Api.Error, A]): Either[Api.Error, A] = get(id).flatMap(f)
 

@@ -166,7 +166,7 @@ private[assets] object AssetRepo:
     if !exists(citekey, name) then
       Left(
         Api.Error(
-          Api.Error.Message(s"No asset '${citekey.value}/${name.value}'"),
+          Problem(s"No asset '${citekey.value}/${name.value}'"),
           Some(Api.Error.Code(Write.CodeNotFound))
         )
       )

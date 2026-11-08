@@ -352,7 +352,7 @@ class AcquisitionOracleSuite extends DbSuite:
             val access = Access.Unauthorised
             def fetch(w: WorkKey, c: Fetch.Context) =
               unauthorisedAsked.incrementAndGet()
-              Fetch.Miss(Fetch.Miss.Why("the zq fixture has no copy"))
+              Fetch.Miss(Problem("the zq fixture has no copy"))
         )
 
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
@@ -378,7 +378,7 @@ class AcquisitionOracleSuite extends DbSuite:
                     Some(Licence("CC BY 4.0"))
                   )
                 )
-              else Fetch.Miss(Fetch.Miss.Why("the zq shelf has only one work"))
+              else Fetch.Miss(Problem("the zq shelf has only one work"))
         )
         .left
         .map(e => Problem(e.value))

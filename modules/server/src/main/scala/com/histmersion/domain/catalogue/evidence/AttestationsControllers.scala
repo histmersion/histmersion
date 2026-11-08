@@ -35,10 +35,10 @@ final class AttestationsControllers(
     maintenance: WriteGate
 ):
 
-  private def invalid(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid)))
+  private def invalid(m: String) = Api.Error(Problem(m), Some(Api.Error.Code(Write.CodeInvalid)))
 
   private def notFound(id: Attestation.Id) =
-    Api.Error(Api.Error.Message(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No attestation $id"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private def refId(targetType: Attestation.TargetType, id: Attestation.TargetId): Attestation.TargetId =
     AliasKinds

@@ -99,7 +99,7 @@ object RangeSql:
         case (Some(a), Some(b)) if a > b =>
           Left(
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"$what: the period would start (${YearFmt(Year(a.value))}) after it ends (${YearFmt(Year(b.value))})"
               ),
               Some(Api.Error.Code(Write.CodeInvalid))

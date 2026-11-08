@@ -15,8 +15,6 @@ object Registry:
 
   type AddId = AddId.T
   object AddId extends Newtype[String, Pure]
-  type RefusingWhy = RefusingWhy.T
-  object RefusingWhy extends Newtype[String, Pure]
 
-  def refusing[A](why: RefusingWhy): Registry[A] = new Registry[A]:
+  def refusing[A](why: Problem): Registry[A] = new Registry[A]:
     def add(id: AddId, a: A): Either[Problem, Unit] = Left(Problem(s"'$id': $why"))

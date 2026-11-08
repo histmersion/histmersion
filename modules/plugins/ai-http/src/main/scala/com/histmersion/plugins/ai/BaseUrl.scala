@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import sttp.model.Uri
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -14,8 +15,6 @@ final case class BaseUrl(uri: Uri):
 object BaseUrl:
   type Endpoint = Endpoint.T
   object Endpoint extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Setting = Setting.T
   object Setting extends Newtype[String, Pure]
 

@@ -66,4 +66,4 @@ final class AssetLinksControllers(
   def delete(id: AssetLinkService.LinkId): Either[Api.Error, AssetLink.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_asset_link")):
       if links.delete(id) then Right(AssetLink.Deleted(AssetLink.Id(id.value), AssetLink.Deleted.Value(true)))
-      else Left(Api.Error(Api.Error.Message(s"No asset link #$id"), Some(Api.Error.Code(Write.CodeNotFound))))
+      else Left(Api.Error(Problem(s"No asset link #$id"), Some(Api.Error.Code(Write.CodeNotFound))))

@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -19,7 +20,7 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
       verbatimFailures = AiCapabilities.VerbatimFailures(true)
     )
 
-  private def base: Either[BaseUrl.Problem, BaseUrl] =
+  private def base: Either[Problem, BaseUrl] =
     BaseUrl.parse(settings.baseUrl, BaseUrl.Setting("agents.providers.anthropic.base-url"))
 
   override def check(model: AiProvider.CheckModel): Either[Problem, Unit] =
@@ -61,7 +62,7 @@ final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
         AnthropicAnswer.Body(answer.body.value)
       ).turn.left.map(why => s"RuntimeException: Claude API error: ${why.value}")
     yield turn
-    sent.left.map(m => AiFailure.Error(AiFailure.Error.Message(m)))
+    sent.left.map(m => AiFailure.Error(Problem(m)))
 
 object AnthropicProvider:
   type WithoutStructuredOutput = WithoutStructuredOutputValue
@@ -93,8 +94,8 @@ object AnthropicProvider:
   def structuredOutput(model: AiTurn.Request.Model): Boolean =
     (!WithoutStructuredOutput(WithoutStructuredOutputValue((model).value)))
 
-  def noStructuredOutput(model: AiTurn.Request.Model): AiFailure.Error.Message =
-    AiFailure.Error.Message(
+  def noStructuredOutput(model: AiTurn.Request.Model): Problem =
+    Problem(
       s"UnsupportedModelForStructuredOutputException: Model '${model.value}' does not support structured output. " +
         "Structured output is only supported by Claude 4.1+ models (e.g., claude-sonnet-4-5, claude-opus-4-1-20250805)."
     )

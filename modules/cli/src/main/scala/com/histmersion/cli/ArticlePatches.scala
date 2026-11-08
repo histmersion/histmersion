@@ -120,7 +120,7 @@ object ArticlePatches:
         !(f.clear.value && f.anyGiven),
         (),
         Cli.Error(
-          Cli.Error.Message("--clear-filter with --filter-* flags: give one or the other"),
+          Problem("--clear-filter with --filter-* flags: give one or the other"),
           exitCode = ExitCode.Usage
         )
       )
@@ -134,7 +134,7 @@ object ArticlePatches:
               )
             )
           case _ =>
-            Left(Cli.Error(Cli.Error.Message(s"--reason: '$r' is not <citekey>=<reason>"), exitCode = ExitCode.Usage))
+            Left(Cli.Error(Problem(s"--reason: '$r' is not <citekey>=<reason>"), exitCode = ExitCode.Usage))
       }
     yield
       val filter =
@@ -165,7 +165,7 @@ object ArticlePatches:
         CritiqueReason
           .parse(r)
           .left
-          .map(m => Cli.Error(Cli.Error.Message(s"--critique-reason: $m"), exitCode = ExitCode.Usage))
+          .map(m => Cli.Error(Problem(s"--critique-reason: $m"), exitCode = ExitCode.Usage))
       )
       .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 
@@ -175,14 +175,14 @@ object ArticlePatches:
       io.circe.parser
         .decode[Article.Patch](s.value)
         .left
-        .map(e => Cli.Error(Cli.Error.Message(s"--json: ${e.getMessage}"), exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(Problem(s"--json: ${e.getMessage}"), exitCode = ExitCode.Usage))
 
   private def read[A](file: Option[TextFile])(wrap: String => A): Either[Cli.Error, Option[A]] = file match
     case None    => Right(None)
     case Some(f) =>
       val p = java.nio.file.Path.of(f.value)
       if java.nio.file.Files.isRegularFile(p) then Right(Some(wrap(java.nio.file.Files.readString(p))))
-      else Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
+      else Left(Cli.Error(Problem(s"no such file: $f"), exitCode = ExitCode.Usage))
 
   private def periodOf(s: Option[FilterFlags.Period]): Either[Cli.Error, Option[Period.Input]] = s match
     case None    => Right(None)
@@ -192,8 +192,8 @@ object ArticlePatches:
           (a.toLongOption, b.toLongOption) match
             case (Some(x), Some(y)) =>
               Right(Some(Period.Input(Year(x), Year(y))))
-            case _ => Left(Cli.Error(Cli.Error.Message(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
-        case _ => Left(Cli.Error(Cli.Error.Message(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
+            case _ => Left(Cli.Error(Problem(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
+        case _ => Left(Cli.Error(Problem(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
 
   private def csv(s: Option[CsvText]): List[String] = s.map(csv1).getOrElse(Nil)
   private def csv1(s: CsvText): List[String] = s.value.split(",").toList.map(_.trim).filter(_.nonEmpty)

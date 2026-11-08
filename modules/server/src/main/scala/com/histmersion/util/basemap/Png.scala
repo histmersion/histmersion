@@ -15,8 +15,8 @@ object Png:
   val Pixels: Vp8l.Image.Pixels.type = Vp8l.Image.Pixels
   type PngBytes = PmTiles.TileBytes
   val PngBytes: PmTiles.TileBytes.type = PmTiles.TileBytes
-  type Problem = Vp8l.Problem
-  val Problem: Vp8l.Problem.type = Vp8l.Problem
+  type Problem = Problem
+  val Problem: Problem.type = Problem
   type Width = Vp8l.Image.Width
   val Width: Vp8l.Image.Width.type = Vp8l.Image.Width
 

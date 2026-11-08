@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.fetchers
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{Fetch, FetchedFile, SourceFetcher, UpstreamQuota, WorkKey}
 import com.histmersion.upstreams.http.json
 import com.histmersion.upstreams.parse.AcquireParse
@@ -72,7 +73,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi
         .map(d => OaRecords.Doi(d.value))
-        .fold[Fetch](Fetch.Miss(Fetch.Miss.Why("core needs a DOI")))(corePdf(ctx, _, key, quota))
+        .fold[Fetch](Fetch.Miss(Problem("core needs a DOI")))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi(ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))
 
@@ -106,7 +107,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
       quota: UpstreamQuota
   ): Fetch =
     key.fold[Fetch](
-      Fetch.Miss(Fetch.Miss.Why("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)"))
+      Fetch.Miss(Problem("core needs CORE's API key (plugins.oa-core.api-key or acquire.core.api-key)"))
     ) { key =>
       CoreApi(cfg.core, http, quota).searchWorks(
         CoreApi.SearchWorksKey(key.value),
@@ -114,17 +115,17 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         PageSize(1),
         OpenAccess.Lookup
       ) match
-        case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(Fetch.Miss.Why(skip.message.value))
+        case Left(skip @ CoreFailure.Skipped(_)) => Fetch.Miss(Problem(skip.message.value))
         case Left(CoreFailure.Failed(why))       =>
-          ctx.log.info(Plugin.Log.InfoMessage(s"CORE lookup failed ($why)"))
-          Fetch.Miss(Fetch.Miss.Why(s"core has no copy of $doi"))
+          ctx.log.info(Plugin.Log.Line(s"CORE lookup failed ($why)"))
+          Fetch.Miss(Problem(s"core has no copy of $doi"))
         case Right(json) =>
           AcquireParse
             .coreDownloadUrls(json)
             .iterator
             .flatMap(u => downloads.pdf(ctx.log, FetchedFile.Source("core"), Plugin.Http.Url(u.value)))
             .nextOption()
-            .fold(Fetch.Miss(Fetch.Miss.Why(s"core has no copy of $doi")))(Fetch.Found(_))
+            .fold(Fetch.Miss(Problem(s"core has no copy of $doi")))(Fetch.Found(_))
     }
 
   private def openalexOa(ctx: Fetch.Context, r: OaRecords): Option[FetchedFile] =
@@ -222,7 +223,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   ): Boolean =
     val no = !RepositoryLanding.oaPublisherPage(c, rules) &&
       (c.publisher.value || RepositoryLanding.host(c.url).exists(rules.denied))
-    if no then ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} is a publisher's page — not read"))
+    if no then ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} is a publisher's page — not read"))
     no
 
   /** One landing page, one step: a Zenodo record by its API; anything else is read, and a repository's page gives its
@@ -242,7 +243,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
         val source = FetchedFile.Source(if oaPub then "publisher" else "repository")
         http.get(Plugin.Http.Url(c.url.value)) match
           case Left(e) =>
-            ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} failed ($e)")); None
+            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} failed ($e)")); None
           case Right(b) if Downloads.looksLikePdf(FetchedFile.Bytes(b.value)) =>
             Some(
               FetchedFile(
@@ -253,7 +254,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
               )
             )
           case Right(b) if !RepositoryLanding.looksLikeHtml(RepositoryLanding.PageBytes(b.value)) =>
-            ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} is neither a PDF nor a page — skipping")); None
+            ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} is neither a PDF nor a page — skipping")); None
           case Right(b) =>
             val html = String(b.value, "UTF-8")
             val pdfs = RepositoryLanding.pdfsOf(
@@ -268,7 +269,7 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
               else if RepositoryLanding.isRepository(c.url, c.repository, RepositoryLanding.Html(html), rules) then
                 "names no citation_pdf_url"
               else "is not a repository's page"
-              ctx.log.info(Plugin.Log.InfoMessage(s"landing: ${c.url} $why — skipping"))
+              ctx.log.info(Plugin.Log.Line(s"landing: ${c.url} $why — skipping"))
             pdfs.iterator.map(u => downloads.pdf(ctx.log, source, Plugin.Http.Url(u.value))).collectFirst {
               case Some(f) => f
             }
@@ -277,17 +278,17 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
   private def zenodo(ctx: Fetch.Context, id: RepositoryLanding.ZenodoRecordId): Option[FetchedFile] =
     http.json(Url(RepositoryLanding.Candidate.Url(cfg.zenodo.url.value), Url.UrlPath(s"/api/records/$id")).value) match
       case Left(e) =>
-        ctx.log.info(Plugin.Log.InfoMessage(s"zenodo: record $id failed ($e)")); None
+        ctx.log.info(Plugin.Log.Line(s"zenodo: record $id failed ($e)")); None
       case Right(j) =>
         val files = RepositoryLanding.zenodoFiles(j)
-        if files.isEmpty then ctx.log.info(Plugin.Log.InfoMessage(s"zenodo: record $id has no open PDF"))
+        if files.isEmpty then ctx.log.info(Plugin.Log.Line(s"zenodo: record $id has no open PDF"))
         files.iterator
           .map { f =>
             downloads.pdf(ctx.log, FetchedFile.Source("zenodo"), Plugin.Http.Url(f.url.value)).filter { got =>
               val ok = f.md5.forall(m => Downloads.md5(got.bytes).forall(_.value == m.value))
               if !ok then
                 ctx.log.warn(
-                  Plugin.Log.WarnMessage(s"zenodo: ${f.url} does not match the MD5 its record gives — skipping")
+                  Plugin.Log.Line(s"zenodo: ${f.url} does not match the MD5 its record gives — skipping")
                 )
               ok
             }

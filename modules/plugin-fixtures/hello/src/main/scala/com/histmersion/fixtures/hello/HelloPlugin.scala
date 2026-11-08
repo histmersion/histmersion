@@ -1,5 +1,6 @@
 package com.histmersion.fixtures.hello
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
@@ -28,7 +29,7 @@ final class HelloPlugin extends Plugin:
       .map(e => Problem(s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}"))
       .flatMap { greeter =>
         ctx.log.info(
-          Plugin.Log.InfoMessage(
+          Plugin.Log.Line(
             s"hello: ${greeter.greet(Greeter.Who(config.greeting.value)).value} (${config.mirrors.size} mirror(s))"
           )
         )

@@ -121,10 +121,10 @@ private[articles] object ArticleRepo:
       case None           => Left(Articles.notFound(Article.Slug(slug.value)))
       case Some(existing) =>
         Articles.precondition(existing, p) match
-          case Left(msg) => Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
+          case Left(msg) => Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodePrecondition))))
           case Right(_)  =>
             Articles.applyPatch(existing, p) match
-              case Left(msg) => Left(Api.Error(Api.Error.Message(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
+              case Left(msg) => Left(Api.Error(Problem(msg.value), Some(Api.Error.Code(Write.CodeInvalid))))
               // the critique reasons (V091) sit beside the row: checked first, so a refused one
               // writes nothing; a patch of them alone leaves the article, its versions and its
               // token as they are (`by`: who set them, when a reason does not say)
@@ -232,14 +232,14 @@ private[articles] object ArticleRepo:
     else if exists(newSlug) then
       Left(
         Api.Error(
-          Api.Error.Message(s"'${newSlug.value}' is already the slug of another article"),
+          Problem(s"'${newSlug.value}' is already the slug of another article"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else if aliasOf.exists(_ != oldSlug) then
       Left(
         Api.Error(
-          Api.Error.Message(
+          Problem(
             s"'${newSlug.value}' is an old slug of '${aliasOf.get.value}' and still resolves to it — pick another"
           ),
           Some(Api.Error.Code(Write.CodeInvalid))

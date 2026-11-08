@@ -34,13 +34,13 @@ object PluginAi:
     val answer =
       try
         Option(provider.turn(request, http))
-          .getOrElse(Left(AiFailure.Error(AiFailure.Error.Message("the provider answered null"))))
+          .getOrElse(Left(AiFailure.Error(Problem("the provider answered null"))))
       catch
         case e: InterruptedException => throw e
         case NonFatal(e)             =>
           Left(
             AiFailure.Error(
-              AiFailure.Error.Message(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")
+              Problem(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")
             )
           )
-    answer.flatMap(t => Option(t).toRight(AiFailure.Error(AiFailure.Error.Message("the provider answered null"))))
+    answer.flatMap(t => Option(t).toRight(AiFailure.Error(Problem("the provider answered null"))))

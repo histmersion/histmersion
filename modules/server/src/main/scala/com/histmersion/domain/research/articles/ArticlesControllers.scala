@@ -74,7 +74,7 @@ final class ArticlesControllers(
 ):
 
   private def error(message: String, code: String): Api.Error =
-    Api.Error(Api.Error.Message(message), Some(Api.Error.Code(code)))
+    Api.Error(Problem(message), Some(Api.Error.Code(code)))
 
   private def notFound(slug: Slug): Api.Error = Articles.notFound(Article.Slug(slug.value))
 
@@ -271,7 +271,7 @@ final class ArticlesControllers(
     * rather than an empty history.
     */
   def reviewOf(slug: Slug): Either[Api.Error, Article.ReviewView] =
-    ledgers(slug).left.map(e => Api.Error(Api.Error.Message(e))).map { ledger =>
+    ledgers(slug).left.map(e => Api.Error(Problem(e))).map { ledger =>
       val (facts, updatedAt) =
         reviewState.facts(List(slug)).getOrElse(slug, (ArticleReviewStatus.Facts(), None))
       val starts =
@@ -661,7 +661,7 @@ final class ArticlesControllers(
     val fallbackSlug = Article.Slug(req.slug.map(_.value.trim).filter(_.nonEmpty).getOrElse(""))
     val fallbackKind = Article.Kind.Wire(req.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head))
     ArticleNote.parse(req.text.value, fallbackSlug, fallbackKind) match
-      case None         => Left(Api.Error(Api.Error.Message("no YAML frontmatter in the article note")))
+      case None         => Left(Api.Error(Problem("no YAML frontmatter in the article note")))
       case Some(parsed) =>
         Slug
           .parse(parsed.slug.value)

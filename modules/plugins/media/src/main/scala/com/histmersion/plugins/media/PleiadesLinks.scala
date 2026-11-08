@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.media
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{GazetteerPlace, Plugin}
 import io.circe.Json
 
@@ -13,8 +14,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * Commons category, or to a picture on any other site is counted with the reason it is not taken. Pure.
   */
 object PleiadesLinks:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 

@@ -109,7 +109,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
       pushedIds += req.citekey -> req.calibreId;
       Right(CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok(true)))
     override def original(citekey: com.histmersion.domain.library.Citekey) =
-      if citekey.value == "zz_none" then Left(Api.Error(Api.Error.Message(s"no original stored for '$citekey'")))
+      if citekey.value == "zz_none" then Left(Api.Error(Problem(s"no original stored for '$citekey'")))
       else
         Right(
           StoredOriginal(

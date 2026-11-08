@@ -20,7 +20,7 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
         QueryRepo.MaxCellChars(q.maxCellChars.value)
       )
       .left
-      .map(m => Api.Error(Api.Error.Message(m.value)))
+      .map(m => Api.Error(Problem(m.value)))
 
   def schemaTables: SchemaTables = SchemaTables(queries.tables)
 

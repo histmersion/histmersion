@@ -50,7 +50,7 @@ final class CalibreGapControllers(
       Citekey
         .parse(req.citekey.value)
         .left
-        .map(p => Api.Error(Api.Error.Message(p.value)))
+        .map(p => Api.Error(Problem(p.value)))
         .flatMap(ck =>
           sources
             .setCalibreId(ck, FullSourceRow.CalibreId(req.calibreId.value), Caller.Local)

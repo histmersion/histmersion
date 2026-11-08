@@ -16,7 +16,7 @@ final case class HostAiProvider(plugin: HostAiProvider.Plugin, kind: ProviderKin
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     Left(
       AiFailure.Error(
-        AiFailure.Error.Message(
+        Problem(
           s"${kind.wire} is Histmersion's own provider; it is run by the host, not through the SPI"
         )
       )

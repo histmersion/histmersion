@@ -320,7 +320,7 @@ object Place:
     private val LangShape = "^[a-z]{2,3}(-[a-z0-9]{2,8})*$".r
     private val IdShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
-    private def invalid(msg: String) = Api.Error(Api.Error.Message(msg), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(msg: String) = Api.Error(Problem(msg), Some(Api.Error.Code(Write.CodeInvalid)))
 
     def name(raw: Name.Value): Either[Api.Error, Name.Value] =
       val n = (raw).value.trim.replaceAll("\\s+", " ")
@@ -820,7 +820,7 @@ object Place:
 
     val MaxReason = 500
 
-    private def invalid(msg: String) = Api.Error(Api.Error.Message(msg), Some(Api.Error.Code(Write.CodeInvalid)))
+    private def invalid(msg: String) = Api.Error(Problem(msg), Some(Api.Error.Code(Write.CodeInvalid)))
 
     def edit(in: OverrideSet): Either[Api.Error, OverrideEdit] =
       val kind = in.kind.map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)

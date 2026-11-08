@@ -59,7 +59,7 @@ private[articles] object CritiqueRepo:
   private def check(reasons: List[CritiqueReason], by: By)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
-      case Some(m) => Left(Api.Error(Api.Error.Message(m.value), Some(Api.Error.Code(Write.CodeInvalid))))
+      case Some(m) => Left(Api.Error(Problem(m.value), Some(Api.Error.Code(Write.CodeInvalid))))
       case None    =>
         val rs = tidy.collect { case Right(r) => r }
         def stored(c: Citekey): Option[com.histmersion.domain.library.Citekey] =
@@ -72,14 +72,14 @@ private[articles] object CritiqueRepo:
               case (None, _) =>
                 Left(
                   Api.Error(
-                    Api.Error.Message(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey"),
+                    Problem(s"critique reason ${r.ref.wire}: '${r.src}' is not a citekey"),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
               case (_, None) =>
                 Left(
                   Api.Error(
-                    Api.Error.Message(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey"),
+                    Problem(s"critique reason ${r.ref.wire}: '${r.dst}' is not a citekey"),
                     Some(Api.Error.Code(Write.CodeInvalid))
                   )
                 )
@@ -95,7 +95,7 @@ private[articles] object CritiqueRepo:
                   case None =>
                     Left(
                       Api.Error(
-                        Api.Error.Message(
+                        Problem(
                           s"critique reason ${r.ref.wire}: no ${kinds.mkString("/")} edge joins [[$a]] and [[$b]] — " +
                             "a reason is for a recorded disagreement (add the edge first: histmersion patch <critic> --add-edge <kind>:<other>)"
                         ),

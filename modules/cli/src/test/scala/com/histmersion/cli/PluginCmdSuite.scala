@@ -375,7 +375,7 @@ class PluginCmdSuite extends munit.FunSuite:
       assertEquals(
         r.left.map(_.message),
         Left(
-          Cli.Error.Message(
+          Problem(
             "refused:\n  - p.jar needs io.circe:circe-core_3 0.14.20, but this Histmersion ships 0.14.17 — build against 0.14.17"
           )
         )

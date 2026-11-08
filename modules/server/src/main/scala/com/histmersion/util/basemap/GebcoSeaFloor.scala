@@ -36,7 +36,7 @@ final class GebcoSeaFloor(
     Plural.count(Plural.CountN(n), Plural.CountSingular(singular), Plural.CountPlural(plural))
 
   /** The GeoTIFFs of the grid's tiling that meet `bbox`, their headers read. */
-  def plan(bbox: BBox, maxZoom: PmTiles.Zoom): Either[GebcoSeaFloor.Problem, GebcoPlan] =
+  def plan(bbox: BBox, maxZoom: PmTiles.Zoom): Either[Problem, GebcoPlan] =
     val deg = cfg.tileDegrees.value
     val cells = for
       west <- (-180 until 180 by deg).toList
@@ -44,7 +44,7 @@ final class GebcoSeaFloor(
       if west < bbox.maxLon.value && west + deg > bbox.minLon.value && south < bbox.maxLat.value && south + deg > bbox.minLat.value
     yield (west, south)
     cells
-      .foldLeft[Either[GebcoSeaFloor.Problem, List[GebcoPart]]](Right(Nil)) { case (acc, (west, south)) =>
+      .foldLeft[Either[Problem, List[GebcoPart]]](Right(Nil)) { case (acc, (west, south)) =>
         acc.flatMap { done =>
           val url = GebcoSeaFloor.urlOf(
             cfg.url,
@@ -58,7 +58,7 @@ final class GebcoSeaFloor(
             grid <- GeoTiffGrid
               .parse(head, (o, l) => http.bytes(url, o, l).map(_._1))
               .left
-              .map(e => GebcoSeaFloor.Problem(s"$url: $e"))
+              .map(e => Problem(s"$url: $e"))
           yield grid.window(bbox).fold(done)(w => done :+ GebcoPart(name, url, grid, w, grid.runs(w, maxRequestBytes)))
         }
       }
@@ -92,10 +92,10 @@ final class GebcoSeaFloor(
       work: Store,
       gapMs: BasemapFetch.Pace.GapMs,
       note: GebcoSeaFloor.Note => Unit
-  ): Either[GebcoSeaFloor.Problem, Unit] =
+  ): Either[Problem, Unit] =
     work.makeDirectory().left.foreach(e => throw IOException(e.message.value))
     val all = p.parts.flatMap(part => part.runs.map(part -> _))
-    all.zipWithIndex.foldLeft[Either[GebcoSeaFloor.Problem, Unit]](Right(())) { case (acc, ((part, run), i)) =>
+    all.zipWithIndex.foldLeft[Either[Problem, Unit]](Right(())) { case (acc, ((part, run), i)) =>
       acc.flatMap { _ =>
         val f = part.key(run)
         if work.stat(f).exists(s => s.isFile && s.size.value == run.length.value) then Right(())
@@ -111,9 +111,9 @@ final class GebcoSeaFloor(
                 .cond(
                   rows.size.value == run.length.value,
                   (),
-                  GebcoSeaFloor.Problem(s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}")
+                  Problem(s"${part.url}: ${rows.size.value} bytes for a range of ${run.length}")
                 )
-                .flatMap(_ => rows.commit().left.map(e => GebcoSeaFloor.Problem(e.message.value)).map(_ => ()))
+                .flatMap(_ => rows.commit().left.map(e => Problem(e.message.value)).map(_ => ()))
             }
           }
       }
@@ -125,7 +125,7 @@ final class GebcoSeaFloor(
       work: Store,
       add: (GebcoSeaFloor.TileKey, PmTiles.TileBytes) => Unit,
       note: GebcoSeaFloor.Note => Unit
-  ): Either[GebcoSeaFloor.Problem, BasemapFetch.TileCount] =
+  ): Either[Problem, BasemapFetch.TileCount] =
     val samplers = p.parts.map(part => GebcoSeaFloor.Rows(part, part.runs.map(r => r -> map(work, part.key(r)))))
     var etopoFailures = 0 // ETOPO1 tiles that could not be read: their outside stays at sea level
     p.tiles.zipWithIndex.foreach { case ((id, (z, x, y)), i) =>
@@ -185,8 +185,6 @@ object GebcoSeaFloor:
   object PixelX extends Newtype[Int, Pure]
   type PixelY = PixelY.T
   object PixelY extends Newtype[Int, Pure]
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
   type Row = Row.T
   object Row extends Newtype[Int, Pure]
   type SampledElevation = SampledElevation.T

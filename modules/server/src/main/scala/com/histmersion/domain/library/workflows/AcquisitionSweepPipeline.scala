@@ -88,7 +88,7 @@ final class AcquisitionSweepPipeline(
               AcquisitionSweepRules
                 .checkRanking(r, found.candidates, AcquisitionSweepRules.LastAttempt(last.value))
                 .left
-                .map(_.map(p => RunCtx.Problem(p.value)))
+                .map(_.map(p => Problem(p.value)))
                 .map((ps, ws) => Checked(ps.map((c, why) => Picked(c, why)), ws.map(d => Checked.Warnings(d.value))))
             )
             // the stored candidates the ranking saw are SEEN, its picks QUEUED: a later sweep shows neither again
@@ -352,7 +352,7 @@ final class AcquisitionSweepPipeline(
       ko.map((p, why) =>
         Failed(
           p.candidate.doi,
-          Failed.Why(why.value.take(500)),
+          Problem(why.value.take(500)),
           IngestBacklog.isNoLegalCopy(Problem(why.value))
         )
       )
@@ -430,7 +430,7 @@ object AcquisitionSweepPipeline:
   final case class Ingested(doi: Doi, citekey: Citekey) derives KindlingsCodecAsObject
 
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
-  final case class Failed(doi: Doi, why: Failed.Why, noCopy: Boolean) derives KindlingsCodecAsObject
+  final case class Failed(doi: Doi, why: Problem, noCopy: Boolean) derives KindlingsCodecAsObject
 
   object Failed:
     type Why = Why.T

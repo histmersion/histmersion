@@ -76,13 +76,13 @@ final class McpTools(
   import McpTools.*
 
   private def refusedValue(what: String, raw: String, code: String): Api.Error =
-    Api.Error(Api.Error.Message(s"invalid $what '$raw'"), Some(Api.Error.Code(code)))
+    Api.Error(Problem(s"invalid $what '$raw'"), Some(Api.Error.Code(code)))
 
   private def invalidValue(what: String, raw: String): Api.Error =
     refusedValue(what, raw, Write.CodeInvalid)
 
   private def noSuchJob(raw: String): Api.Error =
-    Api.Error(Api.Error.Message(s"No job '$raw'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No job '$raw'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   private val ping =
     tool("ping")
@@ -112,7 +112,7 @@ final class McpTools(
         Citekey
           .parse(in.citekey)
           .left
-          .map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
+          .map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
           .flatMap(ck =>
             h.ingest.controllers.fromTool(
               ck,
@@ -272,7 +272,7 @@ final class McpTools(
               case None => page(ConfigEditMarkdown.page, in.prefix)
           case "set" | "unset" =>
             in.key.map(_.trim).filter(_.nonEmpty) match
-              case None    => McpOut.error(Api.Error(Api.Error.Message(s"`${in.action}` needs a `key`")))
+              case None    => McpOut.error(Api.Error(Problem(s"`${in.action}` needs a `key`")))
               case Some(k) =>
                 val value = if in.action.trim.equalsIgnoreCase("unset") then None else Some(in.value.getOrElse(""))
                 h.settings
@@ -291,7 +291,7 @@ final class McpTools(
           case "restart" => h.settings.restart().fold(McpOut.error, r => ToolResult.text(ConfigEditMarkdown.restart(r)))
           case other     =>
             McpOut.error(
-              Api.Error(Api.Error.Message(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
+              Api.Error(Problem(s"unknown action '$other' (one of: get, set, unset, reload, restart)"))
             )
       }
 

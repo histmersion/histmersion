@@ -24,7 +24,7 @@ final class GoalsControllers(
     maintenance: WriteGate
 ):
   private def notFound(slug: com.histmersion.domain.automation.Goal.Slug) =
-    Api.Error(Api.Error.Message(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No goal '${slug.value}'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def list(q: Api.GoalQuery): Goal.List = goals.page(
     q.status.map(s => com.histmersion.domain.automation.Goal.Status.Wire(s.value)),
@@ -67,7 +67,7 @@ final class GoalsControllers(
           .left
           .map(_ =>
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"'${valid.value}' is not a goal slug (lower-case letters, digits, '_', '.' and '-', at most 121 characters)"
               ),
               Some(Api.Error.Code(Write.CodeInvalid))

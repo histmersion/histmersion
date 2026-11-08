@@ -134,7 +134,7 @@ class EventsControllersSuite extends munit.FunSuite:
       EventPut(EventSummary.Label("Zz event"), EventSummary.Kind("battle"), span)
     )
     def bad(from: Event.Id) =
-      Left(Api.Error(Api.Error.Message(s"'$from' is already that event id"), Some(Api.Error.Code(Write.CodeInvalid))))
+      Left(Api.Error(Problem(s"'$from' is already that event id"), Some(Api.Error.Code(Write.CodeInvalid))))
     assertEquals(code(c.rename(Caller.Local, Event.Id("zz_old"), bad)), Some(Write.CodeInvalid))
     assertEquals(c.rename(Caller.Local, Event.Id("zz_old"), _ => Right(Event.Id("zz_new"))), Right(("zz_ev", "zz_new")))
     val gate = WriteGate()

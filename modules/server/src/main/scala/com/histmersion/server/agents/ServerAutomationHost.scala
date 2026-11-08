@@ -75,7 +75,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         )
       case TargetKind.Manager => None
 
-  private def refused(why: String): Api.Error = Api.Error(Api.Error.Message(why))
+  private def refused(why: String): Api.Error = Api.Error(Problem(why))
 
   def runOptions(
       p: Pipeline,
@@ -84,7 +84,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
       roundsCap: AutomationHost.RunOptionsRoundsCap
   ): Either[Api.Error, Unit] =
     val wrong = (what: String, owner: Pipeline) =>
-      Left(Api.Error(Api.Error.Message(s"$what is an option of ${owner.wire}, not of ${p.wire}")))
+      Left(Api.Error(Problem(s"$what is an option of ${owner.wire}, not of ${p.wire}")))
     val compileOpts =
       req.title.isDefined || req.kind.isDefined || req.query.isDefined || req.topics.nonEmpty || req.tags.nonEmpty
     p match
@@ -95,7 +95,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         wrong("an acquisition item", Pipeline.EnrichSource)
       case _ if p != Pipeline.CompileArticle && compileOpts => wrong("a title, kind or filter", Pipeline.CompileArticle)
       case _ if req.rounds.exists(n => n.value < 1 || n.value > roundsCap.value) =>
-        Left(Api.Error(Api.Error.Message(s"rounds must be between 1 and $roundsCap (agents.review.rounds-cap)")))
+        Left(Api.Error(Problem(s"rounds must be between 1 and $roundsCap (agents.review.rounds-cap)")))
       case Pipeline.CompileArticle =>
         val exists = Slug.parse(target.value).exists(h.research.articleStore.exists)
         val filter =
@@ -109,7 +109,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             exists || filter,
             (),
             Api.Error(
-              Api.Error.Message(
+              Problem(
                 s"'$target' is a new article: give a filter (query, topics or tags) " +
                   "for the sources to compile it from"
               )
@@ -118,7 +118,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
           _ <- Either.cond(
             exists || req.title.exists(_.value.trim.nonEmpty),
             (),
-            Api.Error(Api.Error.Message(s"'$target' is a new article: give its title"))
+            Api.Error(Problem(s"'$target' is a new article: give its title"))
           )
         yield ()
       case _ =>

@@ -113,10 +113,10 @@ class ToolsSuite extends munit.FunSuite:
   test("a failed response is classified by its status, with the server's message when there is one") {
     assert(ApiFailure.of(ApiFailure.Status(401), None).unauthorized)
     assert(ApiFailure.of(ApiFailure.Status(403), None).unauthorized)
-    assert(ApiFailure(ApiFailure.Status(412), Api.Error(Api.Error.Message("moved on"))).conflict)
-    assert(ApiFailure(ApiFailure.Status(409), Api.Error(Api.Error.Message("dup"))).duplicate)
+    assert(ApiFailure(ApiFailure.Status(412), Api.Error(Problem("moved on"))).conflict)
+    assert(ApiFailure(ApiFailure.Status(409), Api.Error(Problem("dup"))).duplicate)
     assertEquals(
-      ApiFailure.of(ApiFailure.Status(400), Some(Api.Error(Api.Error.Message("bad year")))).getMessage,
+      ApiFailure.of(ApiFailure.Status(400), Some(Api.Error(Problem("bad year")))).getMessage,
       "bad year"
     )
     assert(ApiFailure.of(ApiFailure.Status(0), None).getMessage.contains("could not be reached"))
@@ -377,17 +377,17 @@ class ToolsSuite extends munit.FunSuite:
       UploadView.fieldOf(
         ApiFailure(
           ApiFailure.Status(409),
-          Api.Error(Api.Error.Message("already stored as x"), Some(Api.Error.Code(Ingest.CodeConflict)))
+          Api.Error(Problem("already stored as x"), Some(Api.Error.Code(Ingest.CodeConflict)))
         )
       ),
       UploadView.Field.File
     )
     assertEquals(
-      UploadView.fieldOf(ApiFailure(ApiFailure.Status(400), Api.Error(Api.Error.Message("invalid citekey 'X'")))),
+      UploadView.fieldOf(ApiFailure(ApiFailure.Status(400), Api.Error(Problem("invalid citekey 'X'")))),
       UploadView.Field.Citekey
     )
     assertEquals(
-      UploadView.fieldOf(ApiFailure(ApiFailure.Status(400), Api.Error(Api.Error.Message("upload too large")))),
+      UploadView.fieldOf(ApiFailure(ApiFailure.Status(400), Api.Error(Problem("upload too large")))),
       UploadView.Field.Form
     )
   }

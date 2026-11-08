@@ -32,7 +32,7 @@ object ArticleTools:
 
   /** A slug a tool writes: one that is no slug is refused. */
   private def writeSlug(slug: Article.Slug): Either[Api.Error, Slug] =
-    Slug.parse(slug.value).left.map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
+    Slug.parse(slug.value).left.map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
 
   import com.histmersion.util.mcp.ToolInputs.given
 

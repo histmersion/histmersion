@@ -111,12 +111,12 @@ object AcquireCmd:
       case Left(e)                      => Left(e)
       case Right(r) if !r.running.value =>
         r.error match
-          case Some(msg) => Left(Cli.Error(Cli.Error.Message(s"the refresh failed: $msg"), exitCode = ExitCode.Refused))
+          case Some(msg) => Left(Cli.Error(Problem(s"the refresh failed: $msg"), exitCode = ExitCode.Refused))
           case None      => Right(r)
       case Right(_) if waited > 600 =>
         Left(
           Cli.Error(
-            Cli.Error.Message("the refresh is still running after 10 minutes — check the server log"),
+            Problem("the refresh is still running after 10 minutes — check the server log"),
             exitCode = ExitCode.Refused
           )
         )
@@ -249,7 +249,7 @@ object AcquireCmd:
           else if item.isDefined then
             Left(
               Cli.Error(
-                Cli.Error.Message(
+                Problem(
                   "--acquire-item applies to a file upload; for an identifier, tick the item off with " +
                     "`histmersion queue done <id>` once the source is in"
                 ),

@@ -29,7 +29,7 @@ object ArticleRoutes:
 
   /** A slug a write names: one that is no slug is refused. */
   private def write(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
-    Slug.parse(slug.value).left.map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
+    Slug.parse(slug.value).left.map(p => Api.Error(Problem(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
 
   def apply(articles: ArticlesControllers, pages: PageBuilder): List[ServerEndpoint[Any, Identity]] =
     val rest: List[ServerEndpoint[Any, Identity]] = List(

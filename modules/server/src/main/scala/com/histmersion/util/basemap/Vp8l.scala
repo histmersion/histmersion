@@ -16,8 +16,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Vp8l:
   type Bitstream = PmTiles.TileBytes
   val Bitstream: PmTiles.TileBytes.type = PmTiles.TileBytes
-  type Problem = RangeHttp.Problem
-  val Problem: RangeHttp.Problem.type = RangeHttp.Problem
 
   /** A decoded image: `pixels` row-major, each `0xAARRGGBB`. */
   final case class Image(width: Image.Width, height: Image.Height, pixels: Image.Pixels)

@@ -74,7 +74,7 @@ final class HintEffectPipeline(
             HintProposals.Last(last.value)
           )
           .left
-          .map(_.map(p => RunCtx.Problem(p.value)))
+          .map(_.map(p => Problem(p.value)))
           .map((e, ws) =>
             Checked(
               Proposed(e, Problem(Option(a.why).map(_.value.trim).getOrElse("")), ws),

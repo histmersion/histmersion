@@ -31,7 +31,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     else if req.citekey.forall(_.value.trim.isEmpty) then
       Left(
         Api.Error(
-          Api.Error.Message("a run over every source is a job: POST /api/media/covers/job"),
+          Problem("a run over every source is a job: POST /api/media/covers/job"),
           Some(Api.Error.Code(Write.CodeInvalid))
         )
       )

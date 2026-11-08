@@ -59,12 +59,12 @@ object DependencyResolver:
     case _ => console.errorLine(Usage); DependencyResolver.RunResult(1)
 
   /** Pure: the request the arguments make. */
-  def parse(args: List[DependencyResolver.ParseArgs]): Either[Resolver.Problem, ResolveRequest] =
+  def parse(args: List[DependencyResolver.ParseArgs]): Either[Problem, ResolveRequest] =
     @annotation.tailrec
     def loop(
         rest: List[DependencyResolver.ParseLoopRest],
         acc: ResolveRequest
-    ): Either[Resolver.Problem, ResolveRequest] = rest match
+    ): Either[Problem, ResolveRequest] = rest match
       case refactorPattern2 :: d :: t if (refactorPattern2.value == "--kit") =>
         loop(t, acc.copy(kit = Path.of((d).value)))
       case refactorPattern3 :: d :: t if (refactorPattern3.value == "--lib") =>
@@ -74,22 +74,22 @@ object DependencyResolver:
       case refactorPattern5 :: r :: t if (refactorPattern5.value == "--repo") =>
         RepositoryUrl.fromArgument(Resolver.Argument((r).value)) match
           case Right(url) => loop(t, acc.copy(repositories = acc.repositories :+ url))
-          case Left(e)    => Left(Resolver.Problem(s"--repo '$r': $e"))
+          case Left(e)    => Left(Problem(s"--repo '$r': $e"))
       case refactorPattern6 :: t if (refactorPattern6.value == "--check") =>
         loop(t, acc.copy(check = ResolveRequest.Check(true)))
       case flag :: _ if (flag).value.startsWith("--") =>
-        Left(Resolver.Problem.unknownOption(flag))
+        Left(Problem.unknownOption(flag))
       case jars => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
     loop(args, ResolveRequest(empty, empty, None, Nil, ResolveRequest.Check(false), Nil))
-      .filterOrElse(r => r.kit != empty && r.lib != empty, Resolver.Problem("--kit and --lib are required"))
+      .filterOrElse(r => r.kit != empty && r.lib != empty, Problem("--kit and --lib are required"))
 
   def resolve(r: ResolveRequest)(using console: Console): DependencyResolver.ResolveResult =
     val outcome = for
       server <- serverModules(r.kit)
       stored <- LibDirectory.storedRepositories(r.lib)
       missing = r.jars.filterNot(Files.isRegularFile(_))
-      _ <- Either.cond(missing.isEmpty, (), Resolver.Problem(s"no such plugin jar: ${missing.mkString(", ")}"))
+      _ <- Either.cond(missing.isEmpty, (), Problem(s"no such plugin jar: ${missing.mkString(", ")}"))
     yield (server, stored)
     outcome match
       case Left(e)                 => console.errorLine((e).value); DependencyResolver.ResolveResult(3)
@@ -130,7 +130,7 @@ object DependencyResolver:
       coursier
         .resolve(List(c), server.excluded)
         .left
-        .map(e => Resolver.Problem(s"${plugin.fileName}: $e"))
+        .map(e => Problem(s"${plugin.fileName}: $e"))
         .map(m => plugin.fileName -> m.map(_._1))
     }
     alone match
@@ -153,10 +153,10 @@ object DependencyResolver:
                 Resolution.report(deps, provided).foreach(console.writeLine)
                 Right(deps)
 
-  private def serverModules(kit: Path): Either[Resolver.Problem, ServerModules] =
+  private def serverModules(kit: Path): Either[Problem, ServerModules] =
     val modules = kit.resolve("modules")
     val excludes = kit.resolve("excludes")
-    if !Files.isRegularFile(modules) then Left(Resolver.Problem.noModuleList(modules))
+    if !Files.isRegularFile(modules) then Left(Problem.noModuleList(modules))
     else
       def lines(p: Path) = if Files.isRegularFile(p) then Files.readAllLines(p, UTF_8).asScala.toList else Nil
       ServerModules
@@ -165,7 +165,7 @@ object DependencyResolver:
           (lines(excludes)).map(refactorValue2 => Resolver.ManifestLine(refactorValue2))
         )
         .left
-        .map(e => Resolver.Problem(s"$modules: $e"))
+        .map(e => Problem(s"$modules: $e"))
 
   /** Every plugin jar and the POM beside it, as `lib/inputs` lists them. */
   private def inputs(

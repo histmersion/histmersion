@@ -89,10 +89,10 @@ object PlacesCmd:
       dataset: Dataset = Dataset.Local
   ): Either[Cli.Error, Place.ImportResult] =
     if !Files.isRegularFile(file) then
-      Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+      Left(Cli.Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
     else
       Lpf.parse(Files.readString(file), kind.getOrElse(Place.KindValue(Place.Kind.Region))) match
-        case Left(e)      => Left(Cli.Error(Cli.Error.Message(s"$file: $e"), exitCode = ExitCode.Usage))
+        case Left(e)      => Left(Cli.Error(Problem(s"$file: $e"), exitCode = ExitCode.Usage))
         case Right(items) =>
           val groups = items.grouped(batch.value.max(1)).toList
           val total = groups.size
@@ -226,7 +226,7 @@ object PlacesCmd:
           if !Files.isDirectory(d) then
             Left(
               Cli.Error(
-                Cli.Error.Message(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>"),
+                Problem(s"not a directory: ${tried.mkString(", ")} — pass --dir <path to db/places>"),
                 exitCode = ExitCode.Usage
               )
             )
@@ -235,7 +235,7 @@ object PlacesCmd:
             if files.isEmpty then
               Left(
                 Cli.Error(
-                  Cli.Error.Message(s"no JSON files under $d — run db/places/fetch.sh first"),
+                  Problem(s"no JSON files under $d — run db/places/fetch.sh first"),
                   exitCode = ExitCode.Usage
                 )
               )

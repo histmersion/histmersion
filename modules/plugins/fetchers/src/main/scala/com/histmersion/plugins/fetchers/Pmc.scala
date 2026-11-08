@@ -55,7 +55,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
       ) match
         case Right(j) => AcquireParse.europepmcHit(j, doi)
         case Left(e)  =>
-          ctx.log.info(Plugin.Log.InfoMessage(s"europepmc search failed ($e)"))
+          ctx.log.info(Plugin.Log.Line(s"europepmc search failed ($e)"))
           None
 
     lazy val record: Option[PmcRecord] =
@@ -71,14 +71,14 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
             pmcHeaders
           )
           .left
-          .map(e => ctx.log.info(Plugin.Log.InfoMessage(s"pmc dataset listing failed ($e)")))
+          .map(e => ctx.log.info(Plugin.Log.Line(s"pmc dataset listing failed ($e)")))
           .toOption
           .flatMap(x => AcquireParse.pmcLatestVersion(Jats.Xml(x), id))
           .flatMap(v =>
             http
               .json(s"${cfg.pmcDataset.url}/metadata/$id.$v.json", pmcHeaders)
               .left
-              .map(e => ctx.log.info(Plugin.Log.InfoMessage(s"pmc dataset record failed ($e)")))
+              .map(e => ctx.log.info(Plugin.Log.Line(s"pmc dataset record failed ($e)")))
               .toOption
           )
           .flatMap(AcquireParse.pmcRecord)
@@ -105,14 +105,14 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
       val url = s"${cfg.pmcDataset.url}/${o.key}"
       http.get(Plugin.Http.Url(url), pmcGetHeaders).map(body => FetchedFile.Bytes(body.value)) match
         case Left(e) =>
-          ctx.log.info(Plugin.Log.InfoMessage(s"pmc fetch failed ($e)")); None
+          ctx.log.info(Plugin.Log.Line(s"pmc fetch failed ($e)")); None
         case Right(b) if !ok(b) =>
           ctx.log.info(
-            Plugin.Log.InfoMessage(s"pmc: $url returned ${b.value.length} bytes that are not a $ext — skipping")
+            Plugin.Log.Line(s"pmc: $url returned ${b.value.length} bytes that are not a $ext — skipping")
           );
           None
         case Right(b) if o.md5.exists(m => Downloads.md5(b).exists(_.value != m.value)) =>
-          ctx.log.warn(Plugin.Log.WarnMessage(s"pmc: $url does not match the MD5 its record gives — skipping")); None
+          ctx.log.warn(Plugin.Log.Line(s"pmc: $url does not match the MD5 its record gives — skipping")); None
         case Right(b) => Some(FetchedFile(FetchedFile.Source("pmc"), Some(FetchedFile.Url(url)), b, ext))
 
   private def lookup(ctx: Fetch.Context, doi: Doi): PmcLookup =

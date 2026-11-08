@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.vaults
 
+import com.histmersion.plugin.Problem
 import scala.annotation.tailrec
 import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
@@ -147,7 +148,7 @@ final class KeePassXcVault(
               Problem(
                 classify(KeePassXcSession.Entry(""))(r.err.value.toLowerCase(java.util.Locale.ROOT))
                   .getOrElse(
-                    s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(YubiKey.Problem(r.err.value))})"
+                    s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(Problem(r.err.value))})"
                   )
               )
             )
@@ -197,7 +198,7 @@ final class KeePassXcVault(
               .segment(out, mark, o.prompt)
               .map(seg => (seg, KeePassXcSession.SegmentFrom(out.value.length)))
               .toRight(if s.alive then s"keepassxc-cli did not answer within ${timeout.toSeconds} s"
-              else s"keepassxc-cli stopped: ${YubiKey.problem(YubiKey.Problem(s.err.value.drop(errMark)))}")
+              else s"keepassxc-cli stopped: ${YubiKey.problem(Problem(s.err.value.drop(errMark)))}")
           }
           answered match
             case Left(broken) =>
@@ -219,7 +220,7 @@ final class KeePassXcVault(
                     Left(
                       Problem(
                         classify(entry)(err.toLowerCase(java.util.Locale.ROOT))
-                          .getOrElse(s"$name: could not read '$ref' (${Subprocess.problem(Subprocess.Problem(err))})")
+                          .getOrElse(s"$name: could not read '$ref' (${Subprocess.problem(Problem(err))})")
                       )
                     )
               read(tail, acc.updated(ref, result), next, None)
@@ -232,12 +233,12 @@ final class KeePassXcVault(
         case Right(r) if r.exit.value == 0 => Some(YubiKey.serials(YubiKey.SerialsOut(r.out.value)))
         case Right(r)                      =>
           log.info(
-            Plugin.Log.InfoMessage(
-              s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(Subprocess.Problem(r.err.value))}): trying the YubiKeys in order"
+            Plugin.Log.Line(
+              s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(Problem(r.err.value))}): trying the YubiKeys in order"
             )
           );
           None
-        case Left(why) => log.info(Plugin.Log.InfoMessage(s"$why: trying the YubiKeys in order")); None
+        case Left(why) => log.info(Plugin.Log.Line(s"$why: trying the YubiKeys in order")); None
     }
 
   /** Each planned key in turn until `attempt` opens the database with it (`Right(Right)`); a failure (`Right(Left)`:
@@ -270,7 +271,7 @@ final class KeePassXcVault(
         case Nil        => report(tried, " — plug in (or touch) one of them")
         case yk :: more =>
           log.info(
-            Plugin.Log.InfoMessage(
+            Plugin.Log.Line(
               s"opening $file with YubiKey ${yk.shown} $purpose — touch your YubiKey if it blinks " +
                 s"(waiting up to ${yubikeyTimeout.toSeconds} s)"
             )
@@ -283,9 +284,9 @@ final class KeePassXcVault(
               lastOpened.set(Some(yk))
               Right(a)
             case Right(Left(r)) =>
-              val msg = YubiKey.problem(YubiKey.Problem(r.err.value))
+              val msg = YubiKey.problem(Problem(r.err.value))
               YubiKey.failure(
-                YubiKey.Problem(r.err.value.toLowerCase(java.util.Locale.ROOT)),
+                Problem(r.err.value.toLowerCase(java.util.Locale.ROOT)),
                 YubiKey.Setting.Entries(entry.value)
               ) match
                 case YubiKey.Failure.Next(why) => go(more, tried :+ s"${yk.shown}: $why ($msg)")

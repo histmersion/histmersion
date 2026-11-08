@@ -90,9 +90,9 @@ final class FetchChain(
     val ctx = new Fetch.Context:
       def memo[A](key: Fetch.Context.MemoKey)(compute: => A): A = shared.get(key)(compute)
       val log: Plugin.Log = new Plugin.Log:
-        def info(message: Plugin.Log.InfoMessage) =
+        def info(message: Plugin.Log.Line) =
           FetchChain.this.log.info(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
-        def warn(message: Plugin.Log.WarnMessage) =
+        def warn(message: Plugin.Log.Line) =
           FetchChain.this.log.warn(HostLog.Line(s"acquire: ${s.id.value}: ${message.value}"))
       override def registered(pluginId: Fetch.Context.RegisteredPluginId): Boolean =
         FetchChain.this.registered(pluginId)
@@ -100,7 +100,7 @@ final class FetchChain(
       try s.fetcher.fetch(work, ctx)
       catch
         case NonFatal(e) =>
-          Fetch.Miss(Fetch.Miss.Why(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+          Fetch.Miss(Problem(s"${s.id.value} failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
     answer match
       case Fetch.Found(f) if f.extension.value.equalsIgnoreCase("pdf") && !FetchChain.looksLikePdf(f.bytes) =>
         log.info(
@@ -108,7 +108,7 @@ final class FetchChain(
             s"acquire: ${s.id.value}: ${f.url.map(_.value).getOrElse("its copy")} is ${f.bytes.value.length} bytes that are not a PDF — no copy"
           )
         )
-        Fetch.Miss(Fetch.Miss.Why("not a PDF"))
+        Fetch.Miss(Problem("not a PDF"))
       case Fetch.Refused(why) =>
         log.info(HostLog.Line(s"acquire: ${s.id.value} refused ${FetchChain.describe(work).value}: ${why.value}"))
         answer

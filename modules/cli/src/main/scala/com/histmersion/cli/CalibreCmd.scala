@@ -60,9 +60,9 @@ object CalibreCmd:
   object Unlinked extends Newtype[Boolean, Pure]
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
-  private def fail(msg: String): Cli.Error = Cli.Error(Cli.Error.Message(msg), exitCode = ExitCode.Refused)
+  private def fail(msg: String): Cli.Error = Cli.Error(Problem(msg), exitCode = ExitCode.Refused)
 
-  private def failProblem(p: Calibre.Problem): Cli.Error = fail(p.value)
+  private def failProblem(p: Problem): Cli.Error = fail(p.value)
 
   /** The server's `calibre` collection, when the server runs it (see the object's description). */
   private def server(c: Client): Option[CollectionsClient] =
@@ -235,7 +235,7 @@ object CalibreCmd:
         res.jobError match
           case Some(e) =>
             val code = if res.jobErrorCode.contains(CollectionsApi.Usage) then ExitCode.Usage else ExitCode.Refused
-            Left(Cli.Error(Cli.Error.Message(e.toString), exitCode = code))
+            Left(Cli.Error(Problem(e.toString), exitCode = code))
           case None =>
             res.job.fold(Right(())) { a =>
               Cli.out.println(
@@ -264,7 +264,7 @@ object CalibreCmd:
             Queue
               .fulfillable(i, l.items.find(_.id == i))
               .left
-              .map(e => Cli.Error(Cli.Error.Message(e.value), exitCode = ExitCode.Usage))
+              .map(e => Cli.Error(Problem(e.value), exitCode = ExitCode.Usage))
               .map(_ => ())
           )
       )
@@ -290,7 +290,7 @@ object CalibreCmd:
       target <- Calibre
         .importTarget(ck, id, ImportTarget.Explicit(citekey.isDefined), existing)
         .left
-        .map(m => Cli.Error(Cli.Error.Message(m.value), exitCode = ExitCode.Usage))
+        .map(m => Cli.Error(Problem(m.value), exitCode = ExitCode.Usage))
       res <- upsert(c, ck, book, target)
       _ =
         if json.value then Cli.out.println(Output.json(res))
@@ -518,7 +518,7 @@ object CalibreCmd:
         got <- c
           .original(ck, raw.toFile)
           .left
-          .map(e => if hint.isEmpty then e else e.modify(_.message).setTo(Cli.Error.Message(e.message.value + hint)))
+          .map(e => if hint.isEmpty then e else e.modify(_.message).setTo(Problem(e.message.value + hint)))
         ext <- Ingest
           .dispositionExtension(Ingest.Disposition(got._2.value))
           .toRight(fail(s"the server did not say what format '$ck' is"))
@@ -853,7 +853,7 @@ object CalibreCmd:
       else
         Left(
           Cli.Error(
-            Cli.Error.Message(
+            Problem(
               s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.citekey).mkString(", ")}" +
                 (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
             ),
@@ -900,7 +900,7 @@ object CalibreCmd:
         // exit 1 with ONE line: this is what the Stop/PostToolUse reminder hook reads
         Left(
           Cli.Error(
-            Cli.Error.Message(
+            Problem(
               s"${counted.size} source(s) are not in Calibre yet (${counted.take(3).map(_.gap.citekey).mkString(", ")}" +
                 (if counted.size > 3 then ", …" else "") + ") — run `histmersion calibre sync --apply`"
             ),

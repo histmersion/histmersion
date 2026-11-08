@@ -1,6 +1,7 @@
 package com.histmersion
 package plugins.ai
 
+import com.histmersion.plugin.Problem
 import com.histmersion.plugin.{AiHttp, Plugin}
 import io.github.iltotore.iron.constraint.any.Pure
 
@@ -11,14 +12,14 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class SendFailure(reported: SendFailure.Reported):
 
   /** The exception the host's client named. */
-  def exception: SendFailure.Problem = SendFailure.Problem((reported).value.takeWhile(_ != ':').trim)
+  def exception: Problem = Problem((reported).value.takeWhile(_ != ':').trim)
 
   /** The failure of `method` to `url`. */
-  def describe(method: SendFailure.Method, url: Plugin.Http.Url): SendFailure.Problem =
+  def describe(method: SendFailure.Method, url: Plugin.Http.Url): Problem =
     SendFailure
       .kind(exception)
-      .fold(SendFailure.Problem(reported.value))(k =>
-        SendFailure.Problem(s"${k.value}: Exception when sending request: ${method.value} ${url.value}")
+      .fold(Problem(reported.value))(k =>
+        Problem(s"${k.value}: Exception when sending request: ${method.value} ${url.value}")
       )
 
 object SendFailure:
@@ -26,8 +27,6 @@ object SendFailure:
   object Kind extends Newtype[String, Pure]
   type Method = Method.T
   object Method extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type Reported = Reported.T
   object Reported extends Newtype[String, Pure]

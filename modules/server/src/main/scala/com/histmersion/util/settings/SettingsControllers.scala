@@ -25,7 +25,7 @@ final class SettingsControllers(
           SettingKey.parse(SettingKey.ParseRaw(raw)).map(Some(_))
         )
         .left
-        .map(why => Api.Error(Api.Error.Message(why.value)))
+        .map(why => Api.Error(Problem(why.value)))
       snap <- settings
         .read(p, knownKeys().flatMap(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).toOption))
         .left
@@ -50,7 +50,7 @@ final class SettingsControllers(
             .either(v)
             .map(Some(_))
             .left
-            .map(_ => Api.Error(Api.Error.Message(s"'$v' is not a settings file's version")))
+            .map(_ => Api.Error(Problem(s"'$v' is not a settings file's version")))
         )
       outcome <- settings
         .write(edits, version, SettingPolicy.LiteralConsent(w.literalConsent.value))
@@ -64,7 +64,7 @@ final class SettingsControllers(
     restarts
       .restart()
       .fold(
-        why => Left(Api.Error(Api.Error.Message(why.value), Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
+        why => Left(Api.Error(Problem(why.value), Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
         msg =>
           Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), Problem(msg.value)))
       )

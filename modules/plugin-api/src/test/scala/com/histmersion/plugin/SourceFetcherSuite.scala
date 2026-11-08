@@ -19,10 +19,10 @@ class SourceFetcherSuite extends munit.FunSuite:
     assert(!(WorkKey(pmcid = Some(WorkKey.Pmcid("PMC6091220"))).isEmpty))
 
   test("a refusing registry takes nothing and says why, naming the id"):
-    val r = Registry.refusing[SourceFetcher](Registry.RefusingWhy("no chain here"))
+    val r = Registry.refusing[SourceFetcher](Problem("no chain here"))
     val f = new SourceFetcher:
       val access = Access.Open
-      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Fetch.Miss.Why("nothing"))
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Miss(Problem("nothing"))
     assertEquals(
       ((r.add(Registry.AddId("portal"), f)).left.map(refactorError => (refactorError).value): Either[String, Unit]),
       Left("'portal': no chain here")
@@ -37,15 +37,15 @@ class SourceFetcherSuite extends munit.FunSuite:
         ): Either[Problem, Plugin.HttpResponse.Body] = Left(Problem("offline"))
       }
       def log = new Plugin.Log {
-        def info(m: Plugin.Log.InfoMessage): Unit = (); def warn(m: Plugin.Log.WarnMessage): Unit = ()
+        def info(m: Plugin.Log.Line): Unit = (); def warn(m: Plugin.Log.Line): Unit = ()
       }
       def env(name: EnvVar.Name): Option[EnvVar.Value] = None
       def secret(s: Secret): Either[Problem, Secret.Resolved] =
         Left(Problem("none"))
-      def secretVaults = Registry.refusing(Registry.RefusingWhy("no vaults"))
+      def secretVaults = Registry.refusing(Problem("no vaults"))
     val f = new SourceFetcher:
       val access = Access.Subscription
-      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused(Fetch.Refused.Why("no entitlement"))
+      def fetch(work: WorkKey, ctx: Fetch.Context) = Fetch.Refused(Problem("no entitlement"))
     assert(ctx.sourceFetchers.add(Registry.AddId("portal"), f).left.exists((_).value.contains("no acquisition chain")))
 
   test("a FetchedFile's licence is optional"):

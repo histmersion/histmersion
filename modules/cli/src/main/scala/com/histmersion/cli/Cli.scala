@@ -197,7 +197,7 @@ object Cli:
     Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
       Opts.argument[String]("file.md").map { file => (c: Client) =>
         val p = Path.of(file)
-        if !Files.isRegularFile(p) then Left(Error(Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
+        if !Files.isRegularFile(p) then Left(Error(Problem(s"no such file: $file"), exitCode = ExitCode.Usage))
         // an explicit `put` is always deliberate → force past the "newer in DB" guard
         else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
       }
@@ -249,7 +249,7 @@ object Cli:
           if failed.nonEmpty then
             Left(
               Error(
-                Error.Message(s"${failed.size} of $total source(s) could not be exported"),
+                Problem(s"${failed.size} of $total source(s) could not be exported"),
                 exitCode = ExitCode.Refused
               )
             )
@@ -408,7 +408,7 @@ object Cli:
           Tree.parseBy(by) match
             case None =>
               Left(
-                Error(Error.Message(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})"), exitCode = ExitCode.Usage)
+                Error(Problem(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})"), exitCode = ExitCode.Usage)
               )
             case Some(axes) =>
               c.aggregate(
@@ -493,7 +493,7 @@ object Cli:
           if json.value then
             Left(
               Error(
-                Error.Message("--json prints the whole record; drop --section/--heading/--offset/--chars"),
+                Problem("--json prints the whole record; drop --section/--heading/--offset/--chars"),
                 exitCode = ExitCode.Usage
               )
             )
@@ -605,7 +605,7 @@ object Cli:
                   .left
                   .map(m =>
                     Error(
-                      Error.Message(s"server returned an odd file name: $m"),
+                      Problem(s"server returned an odd file name: $m"),
                       exitCode = ExitCode.Refused
                     )
                   )
@@ -636,7 +636,7 @@ object Cli:
       Opts.flag("yes", "Do not ask for confirmation").orFalse
     ).mapN { (file, force, yes) => (c: Client) =>
       if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
-      then Left(Error(Error.Message("aborted"), exitCode = ExitCode.Usage))
+      then Left(Error(Problem("aborted"), exitCode = ExitCode.Usage))
       else
         c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
           .map(r => out.println(Markdown.restored(r)))
@@ -778,7 +778,7 @@ object Cli:
           case Left(e) => err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
-  final case class Error(message: Error.Message, exitCode: ExitCode = ExitCode.Unreachable)
+  final case class Error(message: Problem, exitCode: ExitCode = ExitCode.Unreachable)
 
   object Error:
     type Message = Message.T

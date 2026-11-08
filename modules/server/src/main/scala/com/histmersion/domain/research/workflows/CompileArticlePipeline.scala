@@ -250,7 +250,7 @@ final class CompileArticlePipeline(
                   CompileArticle.Last(last.value)
                 )
                 .left
-                .map(_.map(p => RunCtx.Problem(p.value)))
+                .map(_.map(p => Problem(p.value)))
                 .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
             }
             .map(sofar :+ _)
@@ -328,7 +328,7 @@ final class CompileArticlePipeline(
             CompileArticle.Last(last.value)
           )
           .left
-          .map(_.map(p => RunCtx.Problem(p.value)))
+          .map(_.map(p => Problem(p.value)))
           .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.value))))
       }
     }
