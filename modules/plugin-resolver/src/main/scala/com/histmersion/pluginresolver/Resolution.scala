@@ -14,18 +14,7 @@ object Resolution:
   object ReportLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Orders two versions as Maven does: negative when the first is older. */
-  type ConflictsPlugin = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val ConflictsPlugin: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  type NeededByResultPart2 = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val NeededByResultPart2: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  type NeededByPerPluginPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val NeededByPerPluginPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  type DependenciesNeededPart2 = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val DependenciesNeededPart2: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  type InputsFileFilesPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val InputsFileFilesPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  type InputsFileFilesPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
-  val InputsFileFilesPart2: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  export com.histmersion.pluginresolver.Resolver.{FileName as ConflictsPlugin, FileName as NeededByResultPart2, FileName as NeededByPerPluginPart1, FileName as DependenciesNeededPart2, FileName as InputsFileFilesPart1, Sha256 as InputsFileFilesPart2}
 
   type VersionOrder = (ModuleVersion, ModuleVersion) => Int
 

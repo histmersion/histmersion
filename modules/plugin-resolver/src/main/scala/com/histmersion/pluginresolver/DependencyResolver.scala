@@ -25,35 +25,7 @@ import com.histmersion.util.console.Console
 
 object DependencyResolver:
 
-  type ParseLoopResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val ParseLoopResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  type ParseLoopRest = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  val ParseLoopRest: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
-
-  type ExitCodeResult = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  val ExitCodeResult: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  type ExitCodeArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  val ExitCodeArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  type RunResult = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  val RunResult: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  type RunArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  val RunArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  type ParseResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val ParseResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  type ParseArgs = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  val ParseArgs: _root_.com.histmersion.pluginresolver.Resolver.Argument.type = _root_.com.histmersion.pluginresolver.Resolver.Argument
-  type ResolveResult = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  val ResolveResult: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  type ResolveRootsResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  val ResolveRootsResultPart1: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  type ResolveSomeResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  val ResolveSomeResultPart1: _root_.com.histmersion.pluginresolver.Resolver.ExitCode.type = _root_.com.histmersion.pluginresolver.Resolver.ExitCode
-  type ServerModulesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val ServerModulesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  type InputsResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val InputsResultPart1: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  type InputsResultPart2 = _root_.com.histmersion.pluginresolver.Resolver.Sha256
-  val InputsResultPart2: _root_.com.histmersion.pluginresolver.Resolver.Sha256.type = _root_.com.histmersion.pluginresolver.Resolver.Sha256
+  export com.histmersion.pluginresolver.Resolver.{Problem as ParseLoopResultPart1, Argument as ParseLoopRest, ExitCode as ExitCodeResult, Argument as ExitCodeArgs, ExitCode as RunResult, Argument as RunArgs, Problem as ParseResultPart1, Argument as ParseArgs, ExitCode as ResolveResult, ExitCode as ResolveRootsResultPart1, ExitCode as ResolveSomeResultPart1, Problem as ServerModulesResultPart1, FileName as InputsResultPart1, Sha256 as InputsResultPart2}
 
   private val Usage =
     "usage: pluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"

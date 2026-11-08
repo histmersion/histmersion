@@ -22,18 +22,10 @@ object Pom:
   object ElementText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
-  type CoordinatesResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val CoordinatesResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  type CoordinatesXml = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
-  val CoordinatesXml: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
-  type OfResult = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
-  val OfResult: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
-  type EmbeddedResult = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
-  val EmbeddedResult: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
-  type ParseResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val ParseResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  type ParseXml = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
-  val ParseXml: _root_.com.histmersion.pluginresolver.PluginArtifact.Pom.type = _root_.com.histmersion.pluginresolver.PluginArtifact.Pom
+  export com.histmersion.pluginresolver.Resolver.{Problem as CoordinatesResultPart1}
+  export com.histmersion.pluginresolver.PluginArtifact.{Pom as CoordinatesXml, Pom as OfResult, Pom as EmbeddedResult}
+  export com.histmersion.pluginresolver.Resolver.{Problem as ParseResultPart1}
+  export com.histmersion.pluginresolver.PluginArtifact.{Pom as ParseXml}
   type TextName = _root_.com.histmersion.pluginresolver.Pom.ElementName
   val TextName: _root_.com.histmersion.pluginresolver.Pom.ElementName.type = _root_.com.histmersion.pluginresolver.Pom.ElementName
 

@@ -9,8 +9,7 @@ import java.nio.file.Path
 type RepositoryUrl = RepositoryUrl.T
 object RepositoryUrl extends RefinedType[String, Match["(https?|file):.+"]]:
   /** A URL as given, or a local directory as its `file:` URL. */
-  type FromArgumentResultPart1 = _root_.com.histmersion.pluginresolver.Resolver.Problem
-  val FromArgumentResultPart1: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
+  export com.histmersion.pluginresolver.Resolver.{Problem as FromArgumentResultPart1}
 
   def fromArgument(raw: com.histmersion.pluginresolver.Resolver.Argument): Either[com.histmersion.pluginresolver.RepositoryUrl.FromArgumentResultPart1, RepositoryUrl] =
     val trimmed = (raw).value.trim
