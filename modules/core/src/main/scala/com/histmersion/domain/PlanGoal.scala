@@ -158,7 +158,7 @@ object PlanGoal:
       .foldLeft(Vector.empty[PlannedGoal]) { (acc, g) =>
         Slug
           .parse(Option(g.slug).fold("")(_.value))
-          .flatMap(s => Goal.Slug.either(s.value).left.map(Slug.Problem(_))) match
+          .flatMap(s => Goal.Slug.either(s.value).left.map(Problem(_))) match
           case Left(m)                                                  => problems += s"sub-goal: $m"; acc
           case Right(s) if Option(g.title).forall(_.value.trim.isEmpty) =>
             problems += s"sub-goal '$s' has no title"; acc

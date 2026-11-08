@@ -20,12 +20,12 @@ object Citekeys:
   /** A source's new citekey, or why it cannot be one: an invalid key, the key it has, or a valid key that is not
     * link-shaped (`[[key]]` would resolve to an article, not the source).
     */
-  def renameTo(oldCk: Citekey, newRaw: RenameToNewRaw): Either[Citekey.Problem, Citekey] =
+  def renameTo(oldCk: Citekey, newRaw: RenameToNewRaw): Either[Problem, Citekey] =
     Citekey.parse(newRaw.value).flatMap { ck =>
-      if ck.value == oldCk.value.trim then Left(Citekey.Problem(s"'$ck' is already the citekey of that source"))
+      if ck.value == oldCk.value.trim then Left(Problem(s"'$ck' is already the citekey of that source"))
       else if !WikiLinks.isCitekeyShaped(ck.value) then
         Left(
-          Citekey.Problem(
+          Problem(
             s"'$ck' is a valid citekey but not a LINK-shaped one — `[[$ck]]` would resolve to an " +
               "article, not the source. Use lower-case letters, digits and '_' with a four-digit year or an " +
               "underscore (e.g. page1959_history)"

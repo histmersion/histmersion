@@ -3,8 +3,6 @@ package domain.catalogue
 
 import io.github.iltotore.iron.constraint.any.Pure
 object AttestationTarget:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 

@@ -9,8 +9,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 type Slug = Slug.T
 
 object Slug extends Newtype[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The slug a person or a model wrote, trimmed and lower-cased; why it is none, when it is none. */
 
