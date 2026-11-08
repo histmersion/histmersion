@@ -24,8 +24,7 @@ object CompareRuns:
 
   type Seconds = Seconds.T
   object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutputName = com.histmersion.domain.CompareRuns.Step.Name
-  val OutputName: _root_.com.histmersion.domain.CompareRuns.Step.Name.type = _root_.com.histmersion.domain.CompareRuns.Step.Name
+  export com.histmersion.domain.CompareRuns.Step.{Name as OutputName}
 
   final case class Tokens(input: Tokens.Input = com.histmersion.domain.CompareRuns.Tokens.Input(0), output: Tokens.Output = com.histmersion.domain.CompareRuns.Tokens.Output(0), cacheRead: Tokens.CacheRead = com.histmersion.domain.CompareRuns.Tokens.CacheRead(0), cacheWrite: Tokens.CacheWrite = com.histmersion.domain.CompareRuns.Tokens.CacheWrite(0)):
     def +(o: Tokens): Tokens =

@@ -73,17 +73,14 @@ object ReviewArticle:
   type ExplainSlots = ExplainSlotsValue
   type ExplainSlotsValue = ExplainSlotsValue.T
   object ExplainSlotsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MechanicalBody = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
-  val MechanicalBody: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
-  type MechanicalGenerated = _root_.com.histmersion.domain.ReviewArticle.BodyCorpus.Generated
-  val MechanicalGenerated: _root_.com.histmersion.domain.ReviewArticle.BodyCorpus.Generated.type = _root_.com.histmersion.domain.ReviewArticle.BodyCorpus.Generated
+  export com.histmersion.api.research.Article.{Body as MechanicalBody}
+  export com.histmersion.domain.ReviewArticle.BodyCorpus.{Generated as MechanicalGenerated}
   type VerdictOfLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
   val VerdictOfLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
   type CheckRulesLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
   val CheckRulesLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
   type SpotCheckTools = SpotCheckToolsValue
-  type SpotCheckToolsValue = com.histmersion.domain.ReviewArticle.SpotCheck.Tool
-  val SpotCheckToolsValue: _root_.com.histmersion.domain.ReviewArticle.SpotCheck.Tool.type = _root_.com.histmersion.domain.ReviewArticle.SpotCheck.Tool
+  export com.histmersion.domain.automation.agents.ToolUse.{Tool as SpotCheckToolsValue}
   type SpotVerdicts = SpotVerdictsValue
   type SpotVerdictsValue = SpotVerdictsValue.T
   object SpotVerdictsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -97,8 +94,7 @@ object ReviewArticle:
   val LabelledSentence: _root_.com.histmersion.domain.ReviewArticle.Sentence.type = _root_.com.histmersion.domain.ReviewArticle.Sentence
   type QualifiedClaimSentence = _root_.com.histmersion.domain.ReviewArticle.Sentence
   val QualifiedClaimSentence: _root_.com.histmersion.domain.ReviewArticle.Sentence.type = _root_.com.histmersion.domain.ReviewArticle.Sentence
-  type QualifiedClaimQuote = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
-  val QualifiedClaimQuote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
+  export com.histmersion.domain.ReviewArticle.Evidence.{Quote as QualifiedClaimQuote}
   type QualifiedClaimCriticised = _root_.com.histmersion.domain.ReviewArticle.Criticised
   val QualifiedClaimCriticised: _root_.com.histmersion.domain.ReviewArticle.Criticised.type = _root_.com.histmersion.domain.ReviewArticle.Criticised
   type CheckCritiquesLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
@@ -107,12 +103,10 @@ object ReviewArticle:
   val CheckNotMaterialLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
   type ChecksOfLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
   val ChecksOfLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
-  type CheckRecheckEdited = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
-  val CheckRecheckEdited: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
+  export com.histmersion.api.research.Article.{Body as CheckRecheckEdited}
   type CheckRecheckLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
   val CheckRecheckLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
-  type MergeRound = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
-  val MergeRound: _root_.com.histmersion.domain.ReviewArticle.Merged.Round.type = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
+  export com.histmersion.domain.ReviewArticle.Merged.{Round as MergeRound}
 
   enum Reviewer(val wire: Reviewer.Wire, val prefix: Reviewer.Prefix):
     case Mechanical extends Reviewer(com.histmersion.domain.ReviewArticle.Reviewer.Wire("mechanical"), com.histmersion.domain.ReviewArticle.Reviewer.Prefix("M"))

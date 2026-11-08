@@ -68,12 +68,10 @@ object AgentVerify:
 
   object QuoteMatch:
     object Fuzzy:
-      type Matched = com.histmersion.domain.AgentVerify.Ratio
-      val Matched: _root_.com.histmersion.domain.AgentVerify.Ratio.type = _root_.com.histmersion.domain.AgentVerify.Ratio
+      export com.histmersion.domain.AgentVerify.{Ratio as Matched}
 
     object Missing:
-      type Best = com.histmersion.domain.AgentVerify.Ratio
-      val Best: _root_.com.histmersion.domain.AgentVerify.Ratio.type = _root_.com.histmersion.domain.AgentVerify.Ratio
+      export com.histmersion.domain.AgentVerify.{Ratio as Best}
 
 
   /** The text an OCR'd body and a model's quote are compared in ([[ComparedText.normalise]]). */

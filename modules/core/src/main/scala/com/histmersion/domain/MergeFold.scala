@@ -209,13 +209,11 @@ object MergeFold:
 
   object ArticleOutcome:
     object Merged:
-      type Body = com.histmersion.domain.MergeFold.ArticleBody
-      val Body: _root_.com.histmersion.domain.MergeFold.ArticleBody.type = _root_.com.histmersion.domain.MergeFold.ArticleBody
+      export com.histmersion.domain.MergeFold.{ArticleBody as Body}
       type BaseSha = com.histmersion.Sha256
       val BaseSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
     object Conflict:
-      type Conflicts = com.histmersion.domain.MergeFold.ConflictCount
-      val Conflicts: _root_.com.histmersion.domain.MergeFold.ConflictCount.type = _root_.com.histmersion.domain.MergeFold.ConflictCount
+      export com.histmersion.domain.MergeFold.{ConflictCount as Conflicts}
       type BaseSha = com.histmersion.Sha256
       val BaseSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
 

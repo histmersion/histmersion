@@ -34,12 +34,7 @@ object EnrichSource:
   object MaxWindows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxAbsYear = AgentVerify.MaxAbsYear
   val MaxAbsYear: AgentVerify.MaxAbsYear.type = AgentVerify.MaxAbsYear
-  type MinRatio = AgentVerify.MinRatio
-  val MinRatio: AgentVerify.MinRatio.type = AgentVerify.MinRatio
-  type Problem = AgentVerify.Problem
-  val Problem: AgentVerify.Problem.type = AgentVerify.Problem
-  type SourceBody = AgentVerify.SourceBody
-  val SourceBody: AgentVerify.SourceBody.type = AgentVerify.SourceBody
+  export AgentVerify.{MinRatio, Problem, SourceBody}
   type Topic = Topic.T
   object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Region = Region.T
