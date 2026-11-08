@@ -13,8 +13,6 @@ object StrictJson:
   object FieldName extends Newtype[String, Pure]
   type FieldPath = FieldPath.T
   object FieldPath extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   def codec[A](derived: Codec.AsObject[A])(using s: Schema[A]): Codec.AsObject[A] =
     Codec.AsObject.from(decoder(derived), derived)

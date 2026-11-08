@@ -183,12 +183,12 @@ class PlaceEditsSuite extends munit.FunSuite:
       Place.Overrides.edit(
         Place.OverrideSet(
           kind = Some(Place.OverrideSet.Kind(" Region ")),
-          reason = Some(Place.OverrideSet.Reason("  one of   14 "))
+          reason = Some(Problem("  one of   14 "))
         )
       ),
       Right(
         Place.OverrideEdit
-          .Put(Some(Place.OverrideEdit.Put.Kind("region")), None, Some(Place.OverrideEdit.Put.Reason("one of 14")))
+          .Put(Some(Place.OverrideEdit.Put.Kind("region")), None, Some(Problem("one of 14")))
       )
     )
     assertEquals(
@@ -221,7 +221,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(refused(Place.OverrideSet()), Left(Some(Write.CodeInvalid)))
     assertEquals(
       refused(
-        Place.OverrideSet(kind = Some(Place.OverrideSet.Kind("  ")), reason = Some(Place.OverrideSet.Reason("why")))
+        Place.OverrideSet(kind = Some(Place.OverrideSet.Kind("  ")), reason = Some(Problem("why")))
       ),
       Left(Some(Write.CodeInvalid))
     )
@@ -241,7 +241,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       refused(
         Place.OverrideSet(
           kind = Some(Place.OverrideSet.Kind("region")),
-          reason = Some(Place.OverrideSet.Reason("x" * (Place.Overrides.MaxReason + 1)))
+          reason = Some(Problem("x" * (Place.Overrides.MaxReason + 1)))
         )
       ),
       Left(Some(Write.CodeInvalid))
@@ -306,7 +306,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Some(Year(-7)),
       None,
       periodSet = Place.Override.PeriodSet(true),
-      Some(Place.Override.Reason("one of the 14 regiones")),
+      Some(Problem("one of the 14 regiones")),
       Place.Override.SourceKind("site"),
       None,
       None,
@@ -327,7 +327,7 @@ class PlaceEditsSuite extends munit.FunSuite:
           .OverrideSet(
             pointLat = Some(Latitude(38.5)),
             pointLon = Some(Longitude(57.5)),
-            reason = Some(Place.OverrideSet.Reason("Pleiades reprPoint"))
+            reason = Some(Problem("Pleiades reprPoint"))
           )
       ),
       Right(
@@ -335,7 +335,7 @@ class PlaceEditsSuite extends munit.FunSuite:
           .Put(
             None,
             None,
-            Some(Place.OverrideEdit.Put.Reason("Pleiades reprPoint")),
+            Some(Problem("Pleiades reprPoint")),
             Some(GeoPoint(Longitude(57.5), Latitude(38.5)))
           )
       )
@@ -346,7 +346,7 @@ class PlaceEditsSuite extends munit.FunSuite:
           kind = Some(Place.OverrideSet.Kind("region")),
           pointLat = Some(Latitude(-16.1)),
           pointLon = Some(Longitude(31.4)),
-          reason = Some(Place.OverrideSet.Reason("Wikidata P625"))
+          reason = Some(Problem("Wikidata P625"))
         )
       ),
       Right(
@@ -354,7 +354,7 @@ class PlaceEditsSuite extends munit.FunSuite:
           .Put(
             Some(Place.OverrideEdit.Put.Kind("region")),
             None,
-            Some(Place.OverrideEdit.Put.Reason("Wikidata P625")),
+            Some(Problem("Wikidata P625")),
             Some(GeoPoint(Longitude(31.4), Latitude(-16.1)))
           )
       )
@@ -367,7 +367,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       "no reason: a point must name where it comes from"
     )
     assertEquals(
-      refused(Place.OverrideSet(pointLat = Some(Latitude(38.5)), reason = Some(Place.OverrideSet.Reason("x")))),
+      refused(Place.OverrideSet(pointLat = Some(Latitude(38.5)), reason = Some(Problem("x")))),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
@@ -375,7 +375,7 @@ class PlaceEditsSuite extends munit.FunSuite:
         Place.OverrideSet(
           pointLat = Some(Latitude(91)),
           pointLon = Some(Longitude(0)),
-          reason = Some(Place.OverrideSet.Reason("x"))
+          reason = Some(Problem("x"))
         )
       ),
       Left(Some(Write.CodeInvalid))
@@ -385,7 +385,7 @@ class PlaceEditsSuite extends munit.FunSuite:
         Place.OverrideSet(
           pointLat = Some(Latitude(0)),
           pointLon = Some(Longitude(-181)),
-          reason = Some(Place.OverrideSet.Reason("x"))
+          reason = Some(Problem("x"))
         )
       ),
       Left(Some(Write.CodeInvalid))
@@ -396,7 +396,7 @@ class PlaceEditsSuite extends munit.FunSuite:
           .OverrideSet(
             pointLat = Some(Latitude(Double.NaN)),
             pointLon = Some(Longitude(0)),
-            reason = Some(Place.OverrideSet.Reason("x"))
+            reason = Some(Problem("x"))
           )
       ),
       Left(Some(Write.CodeInvalid))
@@ -407,7 +407,7 @@ class PlaceEditsSuite extends munit.FunSuite:
           .OverrideSet(
             pointLat = Some(Latitude(1)),
             pointLon = Some(Longitude(1)),
-            reason = Some(Place.OverrideSet.Reason("x")),
+            reason = Some(Problem("x")),
             reset = Place.OverrideSet.Reset(true)
           )
       ),
@@ -420,7 +420,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Right(
         Place
           .OverrideSet(
-            reason = Some(Place.OverrideSet.Reason("r")),
+            reason = Some(Problem("r")),
             pointLat = Some(Latitude(38.5)),
             pointLon = Some(Longitude(57.5))
           )
@@ -484,7 +484,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       None,
       None,
       periodSet = Place.Override.PeriodSet(false),
-      Some(Place.Override.Reason("Pleiades reprPoint")),
+      Some(Problem("Pleiades reprPoint")),
       Place.Override.SourceKind("region"),
       Some(Year(-900)),
       Some(Year(300)),

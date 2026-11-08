@@ -1,5 +1,6 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -30,8 +31,6 @@ final case class EventGeo(
       KindlingsSchema,
       com.histmersion.api.json.Schema
 object EventGeo:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type Label = Label.T
   object Label extends Newtype[String, Pure]

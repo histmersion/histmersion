@@ -242,7 +242,7 @@ final class GoalFocusService(
       hs.hold.filter((id, goal, why) =>
         agents.managerStore.focusHold(
           ManagerItem.Id(id.value),
-          Hold(reason = Hold.Reason(why.value), focus = Some(Hold.Focus(goal.value)))
+          Hold(reason = Problem(why.value), focus = Some(Hold.Focus(goal.value)))
         )
       )
     val released =
@@ -359,7 +359,7 @@ final class GoalFocusService(
         FocusGoal.Title(r.titles.get(p.slug).fold("")(_.value)),
         FocusGoal.Status(f.fold("")(_.status.value)),
         FocusGoal.Stage(p.stage.wire.value),
-        FocusGoal.Why(p.why.value),
+        Problem(p.why.value),
         FocusGoal.Pinned(p.pinned.value),
         FocusGoal.Priority(f.fold(0)(_.priority.value)),
         p.since.map(s => FocusGoal.Since(s.value)),
@@ -395,7 +395,7 @@ final class GoalFocusService(
         FocusWaiting(
           FocusWaiting.Slug(s.value),
           FocusWaiting.Code(c.value),
-          FocusWaiting.Why(w.value),
+          Problem(w.value),
           FocusWaiting.Pinned(byGoal.get(s).exists(_.pinned.value))
         )
       ),

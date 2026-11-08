@@ -29,7 +29,7 @@ private[acquisition] object CandidateRepo:
       index: CandidateWatch.Index,
       watermark: Option[CandidateWatch.Watermark],
       lastRun: Option[CandidateWatch.LastRun],
-      lastError: Option[CandidateWatch.LastError],
+      lastError: Option[Problem],
       lastFound: CandidateWatch.LastFound
   ) derives DbCodec
 
@@ -49,7 +49,7 @@ private[acquisition] object CandidateRepo:
   def recordWatch(
       w: CandidateWatch,
       watermark: Option[CandidateWatch.Watermark],
-      error: Option[CandidateWatch.LastError],
+      error: Option[Problem],
       found: CandidateWatch.LastFound
   )(using DbCon): Unit =
     val _ =

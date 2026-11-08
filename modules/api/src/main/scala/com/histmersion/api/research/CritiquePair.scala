@@ -1,5 +1,6 @@
 package com.histmersion
 package api.research
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -12,7 +13,7 @@ final case class CritiquePair(
     kinds: List[CritiquePair.Kinds],
     dst: CritiqueSide,
     state: CritiqueState,
-    reason: Option[CritiquePair.Reason] = None,
+    reason: Option[Problem] = None,
     reasonBy: Option[CritiquePair.ReasonBy] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
@@ -32,5 +33,4 @@ object CritiquePair:
 
   type Kinds = Kinds.T
   object Kinds extends Newtype[String, Pure]
-  export CritiqueReason.Reason
   export com.histmersion.api.automation.Activity.Actor as ReasonBy

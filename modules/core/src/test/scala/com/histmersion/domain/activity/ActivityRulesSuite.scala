@@ -35,7 +35,7 @@ class ActivityRulesSuite extends munit.FunSuite:
       state = Entry.State("failed"),
       what = Entry.What("media-import"),
       job = Some(SpatialHierarchyResult.Job.Id("j1")),
-      error = Some(Entry.Error("HTTP 500"))
+      error = Some(Problem("HTTP 500"))
     ),
     Entry(
       Entry.Key("log:10"),

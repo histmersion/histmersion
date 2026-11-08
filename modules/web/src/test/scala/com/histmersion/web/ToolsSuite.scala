@@ -679,7 +679,7 @@ class ToolsSuite extends munit.FunSuite:
         Queue.QueueAdd(
           QueueItem.Text("x"),
           Some(QueueItem.Topic("Corpus hygiene")),
-          reason = Some(QueueItem.Reason("because"))
+          reason = Some(Problem("because"))
         )
       )
     )
@@ -758,7 +758,7 @@ class ToolsSuite extends munit.FunSuite:
       QueueView.fulfil(item, Preview.Target.Source.Citekey("lambert2013_babylonian")),
       QueueItem.Id(567) -> Queue.QueuePatch(
         status = Some(QueueItem.Status(Queue.Done)),
-        reason = Some(QueueItem.Reason("ingested as [[lambert2013_babylonian]]"))
+        reason = Some(Problem("ingested as [[lambert2013_babylonian]]"))
       )
     )
     // the reason renders the citekey as a source link

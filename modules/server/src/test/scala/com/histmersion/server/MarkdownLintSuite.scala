@@ -447,7 +447,7 @@ class MarkdownLintSuite extends munit.FunSuite:
       ),
       Set(Citekey("knapp2016_tin")),
       List(Citekey("knapp2016_tin"), Citekey("other2020_x")),
-      Map(Citekey("egypt2001_old") -> Coverage.Entry.Reason("About Egypt, not the Aegean")),
+      Map(Citekey("egypt2001_old") -> Problem("About Egypt, not the Aegean")),
       List(Coverage.Edge(Citekey("crit2022_x"), Coverage.Edge.Kind("superseded_by"), Citekey("knapp2016_tin"))),
       List(CoverageSearch(CoverageSearch.Query("synoikism"), CoverageSearch.Total(3), Nil))
     )

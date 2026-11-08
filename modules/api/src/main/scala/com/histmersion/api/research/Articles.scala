@@ -1,6 +1,8 @@
 package com.histmersion
 package api.research
 
+import com.histmersion.api.Problem
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Write
@@ -10,8 +12,6 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 object Articles:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   def heading(body: Article.Body): Option[Article.Heading] =
     ((body).value.linesIterator
@@ -65,7 +65,7 @@ object Articles:
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
   def notFound(slug: Article.Slug): Api.Error =
-    Api.Error(Api.Error.Problem(s"No article '$slug'"), Some(Api.Error.Code(Write.CodeNotFound)))
+    Api.Error(Problem(s"No article '$slug'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def kindOf(raw: Article.Kind.Wire): Either[Problem, Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase

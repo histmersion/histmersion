@@ -86,7 +86,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       Article.Title(slug.value),
       Article.Kind.Wire("concept"),
       Article.Filter(topics = List(topic)),
-      Article.Plans.ProposedArticle.Why("w")
+      Problem("w")
     )
     val plan = verify(
       Goal.Slug("goal"),

@@ -115,7 +115,7 @@ class MediaCmdSuite extends munit.FunSuite:
           .modify(_.status)
           .setTo(JobInfo.Status("failed"))
           .modify(_.error)
-          .setTo(Some(JobInfo.Error("interrupted")))
+          .setTo(Some(Problem("interrupted")))
       )
     ) { (url, _) =>
       val (r, _, _) = run(url, "media", "import", "wikidata")

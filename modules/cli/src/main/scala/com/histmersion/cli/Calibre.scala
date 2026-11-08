@@ -1128,8 +1128,8 @@ object Calibre:
       val Citekeys: CollectionUpdateRow.Citekeys.type = CollectionUpdateRow.Citekeys
       type State = CollectionUpdateRow.State
       val State: CollectionUpdateRow.State.type = CollectionUpdateRow.State
-      type Reason = CollectionUpdateRow.Reason
-      val Reason: CollectionUpdateRow.Reason.type = CollectionUpdateRow.Reason
+      type Reason = Problem
+      val Reason: Problem.type = Problem
 
       def of(e: UpdateEntry): UpdateRow =
         val (state, changes) = e.outcome match

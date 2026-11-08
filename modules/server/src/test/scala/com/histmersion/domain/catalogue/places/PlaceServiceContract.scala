@@ -331,7 +331,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
       Place.OverrideEdit.Put(
         Some(Place.OverrideEdit.Put.Kind("polity")),
         Some((Some(Year(-1500L)), Some(Year(-1100L)))),
-        Some(Place.OverrideEdit.Put.Reason("the survey"))
+        Some(Problem("the survey"))
       ),
       Tolerance
     )
@@ -429,14 +429,14 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
       Left(Some(Write.CodeNotFound))
     )
     assertEquals(
-      p.remove(com.histmersion.domain.catalogue.Place.Id("zzp_march"), Some(Place.Override.Reason("a child")))
+      p.remove(com.histmersion.domain.catalogue.Place.Id("zzp_march"), Some(Problem("a child")))
         .left
         .map(_.code),
       Left(Some(Write.CodeInvalid)),
       "it has a child"
     )
     assertEquals(
-      p.remove(com.histmersion.domain.catalogue.Place.Id("zzp_lost"), Some(Place.Override.Reason("a phantom")))
+      p.remove(com.histmersion.domain.catalogue.Place.Id("zzp_lost"), Some(Problem("a phantom")))
         .map(g => (g.placeId, g.into)),
       Right(("zzp_lost", None))
     )

@@ -67,7 +67,7 @@ object SettingPolicy:
               SecretForm
                 .reference(t.value)
                 .left
-                .map(why => SettingError.NotAReference(key, SettingError.NotAReference.Why(why)))
+                .map(why => SettingError.NotAReference(key, Problem(why)))
                 .flatMap {
                   case SecretForm.Literal if !literalConsent.value => Left(SettingError.LiteralNeedsConsent(key))
                   case SecretForm.Literal                          =>

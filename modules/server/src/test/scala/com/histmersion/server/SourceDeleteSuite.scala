@@ -227,8 +227,8 @@ class SourceDeleteSuite extends DbSuite:
         Nil,
         None,
         reasons = Map(
-          com.histmersion.api.library.Citekey(Del) -> Article.ReasonsValue("off topic"),
-          com.histmersion.api.library.Citekey(Other) -> Article.ReasonsValue("kept")
+          com.histmersion.api.library.Citekey(Del) -> Problem("off topic"),
+          com.histmersion.api.library.Citekey(Other) -> Problem("kept")
         )
       )
     )

@@ -178,7 +178,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       retractionWatch = List(
         RetractionNotice(
           Some(RetractionNotice.Nature("Retraction")),
-          Some(RetractionNotice.Reason("+Fabrication")),
+          Some(Problem("+Fabrication")),
           Some(RetractionNotice.Date("2021-12-15"))
         )
       ),

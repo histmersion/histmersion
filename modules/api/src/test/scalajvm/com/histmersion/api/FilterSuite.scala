@@ -170,10 +170,10 @@ class FilterSuite extends munit.FunSuite:
         Some(Year(-1185)),
         None,
         List(Finding.Tags("destruction")),
-        List(Finding.Match.Why("period"), Finding.Match.Why("bbox"))
+        List(Problem("period"), Problem("bbox"))
       )
     ),
-    List(Hit.Why("tag: sea-peoples"))
+    List(Problem("tag: sea-peoples"))
   )
 
   test("searchResults renders a matches: sub-list with claim, place, period and why"):

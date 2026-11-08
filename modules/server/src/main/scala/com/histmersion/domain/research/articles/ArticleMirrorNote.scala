@@ -18,5 +18,5 @@ final class ArticleMirrorNote(articles: ArticlesControllers) extends Mirror.Note
     Slug
       .parse(id.value)
       .left
-      .map(p => Write.invalid(Write.InvalidMessage(p.value)))
+      .map(p => Write.invalid(Problem(p.value)))
       .flatMap(slug => articles.articleNote(slug).map(t => Frontmatter.NoteBody(t.value)))

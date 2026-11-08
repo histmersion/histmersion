@@ -1,5 +1,6 @@
 package com.histmersion
 package api.research
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -13,17 +14,13 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class CritiqueReason(
     src: Citekey,
     dst: Citekey,
-    reason: CritiqueReason.Reason,
+    reason: Problem,
     by: Option[CritiqueReason.By] = None
 ) derives KindlingsCodecAsObject:
   def ref: CritiqueRef = CritiqueRef(src, dst)
 
 object CritiqueReason:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]
   export com.histmersion.api.automation.Activity.Actor as By
 
   given Schema[CritiqueReason] = KindlingsSchema
@@ -45,7 +42,7 @@ object CritiqueReason:
 
   val MaxChars: Int = Coverage.Reason.MaxChars
 
-  def parse(s: Reason): Either[Problem, CritiqueReason] =
+  def parse(s: Problem): Either[Problem, CritiqueReason] =
     val i = (s).value.indexOf('=')
     if i < 0 then Left(Problem(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
     else
@@ -53,7 +50,7 @@ object CritiqueReason:
         .parse(CritiqueRef.Wire((s).value.take(i)))
         .left
         .map(p => Problem(p.value))
-        .map(r => CritiqueReason(r.src, r.dst, Reason((s).value.drop(i + 1).trim)))
+        .map(r => CritiqueReason(r.src, r.dst, Problem((s).value.drop(i + 1).trim)))
 
   def tidy(r: CritiqueReason): Either[Problem, CritiqueReason] =
     val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
@@ -66,5 +63,5 @@ object CritiqueReason:
           .modify(_.dst)
           .setTo(Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT)))
           .modify(_.reason)
-          .setTo(Reason(text))
+          .setTo(Problem(text))
       )

@@ -124,7 +124,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     val r = applyAll(
       Body,
       es,
-      a => Option.when(a.text.exists(_.value.contains("ghost")))(EditResult.Problem("its text is refused: ghost"))
+      a => Option.when(a.text.exists(_.value.contains("ghost")))(Problem("its text is refused: ghost"))
     )
     assertEquals(r.body, BodyText.replace("Two dates", "Three dates"))
     assertEquals(r.problems, List("edit 1 (insertAfter \"by sea\"): its text is refused: ghost"))

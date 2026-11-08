@@ -22,11 +22,11 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
     try
       if !Files.exists(path) then
         Right(ConfigFileState(None, FileVersion.Missing, ConfigFactory.empty, AppConfig.writtenIn(path)))
-      else if !Files.isRegularFile(path) then Left(SettingError.NoFile(SettingError.NoFile.Why(s"$path is not a file")))
+      else if !Files.isRegularFile(path) then Left(SettingError.NoFile(Problem(s"$path is not a file")))
       else
         val text = ConfigFileState.Text(Files.readString(path, StandardCharsets.UTF_8))
         parse(path).map(c => ConfigFileState(Some(text), FileVersion.of(Some(text)), c, AppConfig.writtenIn(path)))
-    catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
+    catch case e: IOException => Left(SettingError.Io(Problem(e.getMessage)))
 
   def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
@@ -44,7 +44,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
             AppConfig
               .loadWithUserFile(env, Some(temp))
               .left
-              .map(m => SettingError.Problem(m.value.replace(temp.toString, path.toString)))
+              .map(m => Problem(m.value.replace(temp.toString, path.toString)))
         )
         for
           _ <- check(staged)
@@ -53,7 +53,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
         yield bak
       finally
         val _ = Files.deleteIfExists(temp)
-    catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
+    catch case e: IOException => Left(SettingError.Io(Problem(e.getMessage)))
 
   private def backup(existed: Boolean): Either[SettingError, Option[WriteOutcome.Backup]] =
     if !existed then Right(None)
@@ -78,5 +78,5 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
     AppConfig
       .parseUserFile(file)
       .left
-      .map(m => SettingError.Unreadable(SettingError.Unreadable.Why(m.value.replace(file.toString, path.toString))))
-      .flatMap(_.toRight(SettingError.Unreadable(SettingError.Unreadable.Why(s"$path: no such file"))))
+      .map(m => SettingError.Unreadable(Problem(m.value.replace(file.toString, path.toString))))
+      .flatMap(_.toRight(SettingError.Unreadable(Problem(s"$path: no such file"))))

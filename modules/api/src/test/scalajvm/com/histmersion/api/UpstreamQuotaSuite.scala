@@ -34,7 +34,7 @@ class UpstreamQuotaSuite extends munit.FunSuite:
       .modify(_.blockedUntil)
       .setTo(Some(UpstreamQuota.BlockedUntil("2026-10-26T18:52:11Z")))
       .modify(_.blockedWhy)
-      .setTo(Some(UpstreamQuota.BlockedWhy("HTTP 429")))
+      .setTo(Some(Problem("HTTP 429")))
     assert(UpstreamQuotaMarkdown.line(blocked).endsWith("· **not asked until 2026-10-26T18:52:11Z** (HTTP 429)"))
 
   test("about and the autopilot status carry the line; without a budget yet, neither does"):

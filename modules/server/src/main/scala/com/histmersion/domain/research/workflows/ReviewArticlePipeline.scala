@@ -411,7 +411,7 @@ final class ReviewArticlePipeline(
 
   /** The fixer's set-asides (of a finding, or of a pair alone), as the reasons its patch stores. */
   private def setAsideReasons(ctx: RunCtx, f: Fix): List[CritiqueReason] =
-    (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, CritiqueReason.Reason(a.reason.value))) ++ f.pairsAside)
+    (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, Problem(a.reason.value))) ++ f.pairsAside)
       .distinctBy(r => (r.src, r.dst))
       .map(_.modify(_.by).setTo(Some(by(ctx, "fixer"))))
 
@@ -1047,7 +1047,7 @@ final class ReviewArticlePipeline(
           val p =
             QueuePatch(
               status = Some(Queue.QueueItem.Status(Queue.Done)),
-              reason = Some(Queue.QueueItem.Reason(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
+              reason = Some(Problem(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}"))
             )
           val _ =
             ctx.write(s"tasks item #${item.id} done", p.asJson)(
@@ -1070,7 +1070,7 @@ final class ReviewArticlePipeline(
           s"superseded by #$id (one item per article)"
         )
         val p =
-          QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)), reason = Some(Queue.QueueItem.Reason(why)))
+          QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)), reason = Some(Problem(why)))
         val _ =
           ctx.write(s"tasks item #${item.id} done", p.asJson)(
             site.workLists.patch(QueueItemId(item.id.value), p).map(_ => ())

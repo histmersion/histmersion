@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -15,7 +16,7 @@ final case class CollectionUpdateRow(
     citekeys: List[CollectionUpdateRow.Citekeys],
     state: CollectionUpdateRow.State,
     changes: List[CollectionFieldChange],
-    reason: Option[CollectionUpdateRow.Reason]
+    reason: Option[Problem]
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
@@ -27,5 +28,3 @@ object CollectionUpdateRow:
   object Citekeys extends Newtype[String, Pure]
   type State = State.T
   object State extends Newtype[String, Pure]
-  type Reason = Reason.T
-  object Reason extends Newtype[String, Pure]

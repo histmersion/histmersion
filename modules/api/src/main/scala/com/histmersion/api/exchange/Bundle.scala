@@ -1,5 +1,6 @@
 package com.histmersion
 package api.exchange
+import com.histmersion.api.Problem
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -25,8 +26,6 @@ object Bundle:
   object ChangedCount extends Newtype[Int, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]
 
@@ -1008,7 +1007,7 @@ object Bundle:
       text: QueueItem.Text,
       topic: Option[QueueItem.Topic],
       status: QueueItem.Status,
-      reason: Option[QueueItem.Reason],
+      reason: Option[Problem],
       createdAt: QueueItem.CreatedAt,
       doneAt: Option[QueueItem.DoneAt],
       updatedAt: QueueItem.UpdatedAt,
@@ -1023,8 +1022,6 @@ object Bundle:
     object Topic extends Newtype[String, Pure]
     type Status = Status.T
     object Status extends Newtype[String, Pure]
-    type Reason = Reason.T
-    object Reason extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     type DoneAt = DoneAt.T

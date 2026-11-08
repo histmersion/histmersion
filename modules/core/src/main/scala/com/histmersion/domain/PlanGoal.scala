@@ -263,7 +263,7 @@ object PlanGoal:
           r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
           PlannedWork.InCorpus(r.inDb.value),
           PlannedWork.IsOa(r.isOa.value),
-          PlannedWork.Why(w.why.value)
+          Problem(w.why.value)
         )
     }
     val dropped = looked.collect {

@@ -34,7 +34,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       output: Option[StepInfo.Output] = None,
       model: Option[StepInfo.Model] = None,
       actual: Option[StepInfo.ActualModel] = None,
-      error: Option[StepInfo.Error] = None,
+      error: Option[Problem] = None,
       usage: Usage = Usage.Zero,
       cost: StepInfo.CostUsd = StepInfo.CostUsd(0),
       started: StepInfo.StartedAt = StepInfo.StartedAt("2026-10-08T10:00:00Z"),
@@ -101,7 +101,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       StepInfo.Status("failed"),
       model = Some(StepInfo.Model("anthropic:x")),
       actual = Some(StepInfo.ActualModel("x-2026")),
-      error = Some(StepInfo.Error("bad")),
+      error = Some(Problem("bad")),
       usage = Usage(Usage.Input(20), Usage.Output(4), Usage.CacheRead(5), Usage.CacheWrite(1)),
       cost = StepInfo.CostUsd(0.01),
       attempt = StepInfo.Attempt(2)
@@ -259,7 +259,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       StepInfo.Name("classify"),
       StepInfo.Status("failed"),
       model = Some(StepInfo.Model("claude-code:haiku")),
-      error = Some(StepInfo.Error("bad"))
+      error = Some(Problem("bad"))
     )
     val a2 = step(
       StepInfo.Seq(3),

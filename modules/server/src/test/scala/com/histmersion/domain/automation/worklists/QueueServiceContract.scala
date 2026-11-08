@@ -122,10 +122,10 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest("a blank topic or reason in a patch clears it; the rest of the row stays") { q =>
     val i = q.add(
       Kind.Tasks,
-      QueueAdd(QueueItem.Text("tidy up"), Some(QueueItem.Topic("Chores")), reason = Some(QueueItem.Reason("why not")))
+      QueueAdd(QueueItem.Text("tidy up"), Some(QueueItem.Topic("Chores")), reason = Some(Problem("why not")))
     )
     val p =
-      q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(QueueItem.Reason(" ")))).toOption.get
+      q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("")), reason = Some(Problem(" ")))).toOption.get
     assertEquals((p.topic, p.reason, p.text, p.status), (None, None, "tidy up", Open))
     val r = q.patch(id(i), QueuePatch(topic = Some(QueueItem.Topic("Chores > Later")))).toOption.get
     assertEquals(r.topic, Some("Chores > Later"))

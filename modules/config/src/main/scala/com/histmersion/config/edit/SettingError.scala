@@ -7,15 +7,15 @@ import io.github.iltotore.iron.constraint.any.Pure
   * is the answer.
   */
 enum SettingError derives CanEqual:
-  case BadKey(why: SettingKey.Problem)
+  case BadKey(why: Problem)
   case UnknownKey(key: SettingKey, closest: List[SettingKey])
   case NotAValue(key: SettingKey)
-  case BadValue(key: SettingKey, why: SettingValue.Problem)
+  case BadValue(key: SettingKey, why: Problem)
   case WrongKind(key: SettingKey, want: SettingKind, got: SettingKind)
 
   /** The credential itself would go into the file: its environment variable is the place. */
   case CredentialInFile(key: SettingKey, envVar: Option[SettingError.CredentialInFile.EnvVar])
-  case NotAReference(key: SettingKey, why: SettingError.NotAReference.Why)
+  case NotAReference(key: SettingKey, why: Problem)
 
   /** `value:` was asked for without the person saying they mean it. */
   case LiteralNeedsConsent(key: SettingKey)
@@ -29,17 +29,17 @@ enum SettingError derives CanEqual:
   case FromInclude(key: SettingKey, file: SettingError.FromInclude.File)
 
   /** The file as it stands does not read: it is not rewritten until it is fixed by hand. */
-  case Unreadable(why: SettingError.Unreadable.Why)
+  case Unreadable(why: Problem)
 
   /** The new file would not load. */
-  case Invalid(why: SettingError.Invalid.Why)
+  case Invalid(why: Problem)
 
   /** The file changed after it was read (an editor, another window). */
   case Changed
-  case NoFile(why: SettingError.NoFile.Why)
-  case Io(why: SettingError.Io.Why)
+  case NoFile(why: Problem)
+  case Io(why: Problem)
 
-  def message: SettingError.Problem = SettingError.Problem(text)
+  def message: Problem = Problem(text)
 
   private def text: String = this match
     case BadKey(why)            => why.value
@@ -70,25 +70,13 @@ enum SettingError derives CanEqual:
     case Io(why)      => s"The settings file could not be written: $why"
 
 object SettingError:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   object CredentialInFile:
     export SettingField.EnvVar
 
-  object NotAReference:
-    export SettingError.Problem as Why
 
   object FromInclude:
     export SettingsFile.Path as File
 
-  object Unreadable:
-    export SettingError.Problem as Why
 
-  object Invalid:
-    export SettingError.Problem as Why
 
-  object NoFile:
-    export SettingError.Problem as Why
 
-  object Io:
-    export SettingError.Problem as Why

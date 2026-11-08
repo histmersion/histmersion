@@ -329,7 +329,7 @@ class QueueSuite extends munit.FunSuite:
       QueueItem.Text("a book"),
       Some(QueueItem.Topic("Books")),
       QueueItem.Status(Open),
-      Some(QueueItem.Reason("for the review")),
+      Some(Problem("for the review")),
       None,
       None
     )
@@ -340,7 +340,7 @@ class QueueSuite extends munit.FunSuite:
     )
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  Papers ")))).topic, Some("Papers"))
     assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(QueueItem.Topic("  ")))).topic, None)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(QueueItem.Reason("")))).reason, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(Problem("")))).reason, None)
     assertEquals(Queue.applyPatch(cur, QueuePatch(status = Some(QueueItem.Status(" DONE ")))).status, Done)
     // an item edited in the web UI keeps its other fields
     val edited = Queue.applyPatch(cur, QueuePatch(text = Some(QueueItem.Text("x")), topic = Some(QueueItem.Topic(""))))
@@ -357,7 +357,7 @@ class QueueSuite extends munit.FunSuite:
       id: QueueItem.Id,
       list: QueueItem.List = QueueItem.List("acquire"),
       status: QueueItem.Status = QueueItem.Status(Open),
-      reason: Option[QueueItem.Reason] = None
+      reason: Option[Problem] = None
   ) =
     QueueItem(id, list, QueueItem.Text(s"item ${id.value}"), Some(QueueItem.Topic("linear_b")), status, reason)
 
@@ -366,21 +366,21 @@ class QueueSuite extends munit.FunSuite:
       Queue.fulfilledReason(None, Citekey("lambert2013_babylonian")),
       "ingested as [[lambert2013_babylonian]]"
     )
-    assertEquals(Queue.fulfilledReason(Some(QueueItem.Reason("  ")), Citekey("a2020_b")), "ingested as [[a2020_b]]")
+    assertEquals(Queue.fulfilledReason(Some(Problem("  ")), Citekey("a2020_b")), "ingested as [[a2020_b]]")
     assertEquals(
-      Queue.fulfilledReason(Some(QueueItem.Reason("Nagy 2001 argues against it")), Citekey("finkelberg2000_cypria")),
+      Queue.fulfilledReason(Some(Problem("Nagy 2001 argues against it")), Citekey("finkelberg2000_cypria")),
       "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]"
     )
     // recording the same source twice adds nothing
     assertEquals(
-      Queue.fulfilledReason(Some(QueueItem.Reason("ingested as [[a2020_b]]")), Citekey("a2020_b")),
+      Queue.fulfilledReason(Some(Problem("ingested as [[a2020_b]]")), Citekey("a2020_b")),
       "ingested as [[a2020_b]]"
     )
     assertEquals(
       Queue.fulfil(item(QueueItem.Id(567)), Citekey("lambert2013_babylonian")),
       QueuePatch(
         status = Some(QueueItem.Status(Done)),
-        reason = Some(QueueItem.Reason("ingested as [[lambert2013_babylonian]]"))
+        reason = Some(Problem("ingested as [[lambert2013_babylonian]]"))
       )
     )
 

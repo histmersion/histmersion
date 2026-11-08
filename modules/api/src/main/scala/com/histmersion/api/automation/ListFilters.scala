@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import com.histmersion.api.exchange.MergeIssue
 import sttp.tapir.*
 
@@ -24,8 +25,6 @@ object ListFilters:
   object FacetName extends Newtype[String, Pure]
   type OptionLabel = OptionLabel.T
   object OptionLabel extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Qualifier = Qualifier.T
   object Qualifier extends Newtype[String, Pure]
   type Term = Term.T

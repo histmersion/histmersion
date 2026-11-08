@@ -1,5 +1,6 @@
 package com.histmersion
 package api.jobs
+import com.histmersion.api.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.*
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -18,7 +19,7 @@ final case class JobInfo(
     status: JobInfo.Status,
     citekey: Option[Citekey] = None,
     progress: Option[JobInfo.Progress] = None,
-    error: Option[JobInfo.Error] = None,
+    error: Option[Problem] = None,
     sha256: Option[Sha256] = None,
     createdAt: JobInfo.CreatedAt = JobInfo.CreatedAt(""),
     updatedAt: JobInfo.UpdatedAt = JobInfo.UpdatedAt(""),
@@ -38,8 +39,6 @@ object JobInfo:
   export JobState.Wire as Status
   type Progress = Progress.T
   object Progress extends Newtype[String, Pure]
-  type Error = Error.T
-  object Error extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T
   object CreatedAt extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T

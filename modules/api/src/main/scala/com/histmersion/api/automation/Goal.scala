@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import com.histmersion.api.WireEnumValues
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -168,7 +169,7 @@ object Goal:
         citekey: Option[Citekey] = None,
         inCorpus: PlannedWork.InCorpus = PlannedWork.InCorpus(false),
         isOa: PlannedWork.IsOa = PlannedWork.IsOa(false),
-        why: PlannedWork.Why = PlannedWork.Why("")
+        why: Problem = Problem("")
     ) derives KindlingsCodecAsObject,
           KindlingsSchema,
           com.histmersion.api.json.Schema
@@ -178,8 +179,6 @@ object Goal:
       object InCorpus extends Newtype[Boolean, Pure]
       type IsOa = IsOa.T
       object IsOa extends Newtype[Boolean, Pure]
-      type Why = Why.T
-      object Why extends Newtype[String, Pure]
 
     final case class Plan(
         goal: Slug,

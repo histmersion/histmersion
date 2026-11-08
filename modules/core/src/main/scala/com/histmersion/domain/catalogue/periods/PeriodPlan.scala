@@ -85,7 +85,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
               Some(IssueSide(IssueSide.Label(o.id.value), o.uid, List(IssueSide.Lines(o.label.value)))),
               Some(IssueSide(IssueSide.Label(p.id.value), f, List(IssueSide.Lines(p.label.value)))),
               List(
-                MergeIssue.Why("keep-left keeps this collection's period; keep-right takes the bundle's label and span")
+                Problem("keep-left keeps this collection's period; keep-right takes the bundle's label and span")
               ),
               lr,
               detail = Some(

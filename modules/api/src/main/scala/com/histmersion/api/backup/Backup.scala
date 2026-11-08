@@ -1,5 +1,6 @@
 package com.histmersion
 package api.backup
+import com.histmersion.api.Problem
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
@@ -25,8 +26,6 @@ object Backup:
   object Name extends Newtype[String, Pure]
   type Outcome = Outcome.T
   object Outcome extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Retention = Retention.T
   object Retention extends Newtype[Int, Pure]
   type ToolOutput = ToolOutput.T
@@ -171,13 +170,13 @@ object Backup:
 
   def maintenance(op: String): Api.Error =
     Api.Error(
-      Api.Error.Problem(s"$op is unavailable: a restore is in progress on this server"),
+      Problem(s"$op is unavailable: a restore is in progress on this server"),
       Some(Api.Error.Code(CodeMaintenance))
     )
 
   def missing(file: Result.File): Api.Error =
     Api.Error(
-      Api.Error.Problem(s"no backup named '$file' in the backups directory"),
+      Problem(s"no backup named '$file' in the backups directory"),
       Some(Api.Error.Code(Write.CodeNotFound))
     )
 
@@ -236,7 +235,7 @@ object Backup:
       durationMs: Status.DurationMs,
       bytes: Option[ByteCount] = None,
       sha256: Option[Sha256] = None,
-      error: Option[Status.Error] = None,
+      error: Option[Problem] = None,
       pruned: List[Status.Pruned] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
@@ -248,13 +247,11 @@ object Backup:
   object Status:
 
     export Result.{DurationMs, File, File as FailedFile, File as RunningFile}
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
     export Result.Pruned
 
     def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status =
       Status(file, State.Running.wire, Result.DurationMs((elapsedMs).value))
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
-    def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, error: Error): Status =
-      Status(file, State.Failed.wire, Result.DurationMs((elapsedMs).value), error = Some(Error((error).value)))
+    def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, error: Problem): Status =
+      Status(file, State.Failed.wire, Result.DurationMs((elapsedMs).value), error = Some(Problem((error).value)))

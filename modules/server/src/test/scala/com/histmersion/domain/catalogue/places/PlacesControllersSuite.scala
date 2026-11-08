@@ -141,7 +141,7 @@ class PlacesControllersSuite extends munit.FunSuite:
       Place.Id("zzcl_hill"),
       com.histmersion.api.catalogue.Place.OverrideSet(
         kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")),
-        reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("dug"))
+        reason = Some(Problem("dug"))
       )
     )
     assertEquals(set.map(_.kindAfter), Right("region"))

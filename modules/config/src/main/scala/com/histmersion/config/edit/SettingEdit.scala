@@ -40,4 +40,4 @@ object SettingEdit:
           parse(k, v, schema) match
             case Left(e)  => Left(e)
             case Right(e) => loop(tail, e :: acc)
-    if changes.isEmpty then Left(SettingError.BadKey(SettingKey.Problem("no change was given"))) else loop(changes, Nil)
+    if changes.isEmpty then Left(SettingError.BadKey(Problem("no change was given"))) else loop(changes, Nil)

@@ -401,7 +401,7 @@ final class SchedulerService(
           Started.JobType(x.c.jobType.wire.value),
           Started.Target(x.c.target.value),
           x.c.goal.map(g => Goal.Slug(g.value)),
-          Started.Why(why.value)
+          Problem(why.value)
         )
       ),
       waits.take(shown).map(wire),
@@ -435,13 +435,13 @@ final class SchedulerService(
       Waiting.Priority(sc.effective.value),
       Waiting.WaitedMinutes(sc.waitedMinutes.value),
       Waiting.Code(w.code.value),
-      Waiting.Why(w.why.value),
+      Problem(w.why.value),
       w.behind.map(b => Waiting.Behind(b.value)),
       Waiting.Position(w.position.value)
     )
 
   private def say(base: WhyInfo, code: String, why: String): WhyInfo =
-    base.modify(_.code).setTo(WhyInfo.Code(code)).modify(_.why).setTo(WhyInfo.Why(why))
+    base.modify(_.code).setTo(WhyInfo.Code(code)).modify(_.why).setTo(Problem(why))
 
   /** Why one item (its id, or a target among the open items) is where it is. */
   def why(ref: ManagerItem.Ref, now: Instant = Instant.now(agents.clock)): Either[Api.Error, WhyInfo] =
@@ -506,7 +506,7 @@ final class SchedulerService(
                                 s"its manager ${m.id} is ${m.state}: it starts nothing"
                               )
                             case None =>
-                              base.modify(_.why).setTo(WhyInfo.Why("not looked at yet: the next pass decides it"))
+                              base.modify(_.why).setTo(Problem("not looked at yet: the next pass decides it"))
           case Some(ItemStatus.Held) =>
             i.hold match
               case Some(hd) if hd.untilApproval.isDefined =>

@@ -36,7 +36,7 @@ import com.histmersion.api.Api
 final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
   private def citekey(raw: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
-    Citekey.parse(raw.value).left.map(p => Write.invalid(Write.InvalidMessage(p.value)))
+    Citekey.parse(raw.value).left.map(p => Write.invalid(Problem(p.value)))
 
   def collections(caller: Caller): Either[Api.Error, List[CollectionInfo]] = Right(service.collections())
   def collection(caller: Caller, name: CollectionsService.CollectionName): Either[Api.Error, CollectionInfo] =

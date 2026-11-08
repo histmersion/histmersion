@@ -120,7 +120,7 @@ final class BasemapService(
           .modify(_.bytes)
           .setTo(com.histmersion.api.ByteCount(now.fold(0L)(_.size.value)))
           .modify(_.error)
-          .setTo(Some(Basemap.LayerInfo.Error(e.value)))
+          .setTo(Some(Problem(e.value)))
       case Right(None)    => base
       case Right(Some(f)) =>
         val h = f.header

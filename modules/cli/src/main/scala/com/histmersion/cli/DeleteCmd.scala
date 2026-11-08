@@ -54,16 +54,16 @@ object DeleteCmd:
       byId: Calibre.Book.Id => Either[Calibre.Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.value.trim.toIntOption match
-      case None => CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason(s"'$calibreId' is not a Calibre id"))
+      case None => CalibreEntryCheck.Unchecked(Problem(s"'$calibreId' is not a Calibre id"))
       case Some(_) if !libraryExists =>
-        CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason(s"no Calibre library at $library"))
+        CalibreEntryCheck.Unchecked(Problem(s"no Calibre library at $library"))
       case Some(id) =>
         byId(Calibre.Book.Id(id)) match
           case Right(Some(_)) => CalibreEntryCheck.Present
           case Right(None)    => CalibreEntryCheck.Missing
           case Left(e)        =>
             CalibreEntryCheck.Unchecked(
-              CalibreEntryCheck.Unchecked.Reason(e.value.linesIterator.nextOption().getOrElse(e.value).take(200))
+              Problem(e.value.linesIterator.nextOption().getOrElse(e.value).take(200))
             )
 
   def run(c: Client, a: Args)(using console: Console): Either[Cli.Error, Unit] =

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.research
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -17,8 +18,6 @@ final case class CritiqueRef(src: Citekey, dst: Citekey)
   def same(o: CritiqueRef): Boolean = ((src == o.src && dst == o.dst) || (src == o.dst && dst == o.src))
 
 object CritiqueRef:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 

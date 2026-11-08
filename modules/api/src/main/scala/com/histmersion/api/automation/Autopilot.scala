@@ -1,5 +1,6 @@
 package com.histmersion
 package api.automation
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -95,7 +96,7 @@ object Autopilot:
       title: FocusGoal.Title = Goal.Title(""),
       status: FocusGoal.Status = FocusGoal.Status(""),
       stage: FocusGoal.Stage = FocusGoal.Stage(""),
-      why: FocusGoal.Why = FocusGoal.Why(""),
+      why: Problem = Problem(""),
       pinned: FocusGoal.Pinned = FocusGoal.Pinned(false),
       priority: FocusGoal.Priority = FocusGoal.Priority(0),
       since: Option[FocusGoal.Since] = None,
@@ -114,8 +115,6 @@ object Autopilot:
     object Status extends Newtype[String, Pure]
     type Stage = Stage.T
     object Stage extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type Pinned = Pinned.T
     object Pinned extends Newtype[Boolean, Pure]
     type Priority = Priority.T
@@ -134,7 +133,7 @@ object Autopilot:
   final case class FocusWaiting(
       slug: FocusWaiting.Slug,
       code: FocusWaiting.Code,
-      why: FocusWaiting.Why = FocusWaiting.Why(""),
+      why: Problem = Problem(""),
       pinned: FocusWaiting.Pinned = FocusWaiting.Pinned(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
@@ -144,8 +143,6 @@ object Autopilot:
     export com.histmersion.api.research.ReviewGoal.Slug
     type Code = Code.T
     object Code extends Newtype[String, Pure]
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
     type Pinned = Pinned.T
     object Pinned extends Newtype[Boolean, Pure]
 

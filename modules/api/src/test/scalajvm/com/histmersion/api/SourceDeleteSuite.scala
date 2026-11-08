@@ -85,7 +85,7 @@ class SourceDeleteSuite extends munit.FunSuite:
     val un = Source.Delete
       .calibreLine(
         Some(Source.CalibreId("1885")),
-        Some(CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason("no Calibre library at /x")))
+        Some(CalibreEntryCheck.Unchecked(Problem("no Calibre library at /x")))
       )
       .value
     assert(un.contains("could not be checked: no Calibre library at /x") && !un.contains("is linked and"), un)

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -16,7 +17,7 @@ final case class CollectionInfo(
     description: CollectionInfo.Description,
     capabilities: List[CollectionInfo.Capabilities],
     reachable: CollectionInfo.Reachable,
-    problem: Option[CollectionInfo.Problem]
+    problem: Option[Problem]
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
@@ -30,5 +31,3 @@ object CollectionInfo:
   object Capabilities extends Newtype[String, Pure]
   type Reachable = Reachable.T
   object Reachable extends Newtype[Boolean, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]

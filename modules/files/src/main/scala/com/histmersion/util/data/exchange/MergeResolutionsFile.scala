@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
@@ -35,12 +36,12 @@ object MergeResolutionsFile:
 
   private def yaml = Yaml(SafeConstructor(LoaderOptions()))
 
-  def parse(text: Text): Either[List[MergeResolutions.Text.Problem], MergeResolutions] =
+  def parse(text: Text): Either[List[Problem], MergeResolutions] =
     scala.util
       .Try(Option(yaml.load[AnyRef](text.value)))
       .toEither
       .left
-      .map(e => List(MergeResolutions.Text.Problem(s"not YAML: ${e.getMessage}")))
+      .map(e => List(Problem(s"not YAML: ${e.getMessage}")))
       .flatMap {
         case None                         => Right(MergeResolutions())
         case Some(m: java.util.Map[?, ?]) =>
@@ -103,7 +104,7 @@ object MergeResolutionsFile:
             .sorted
             .foreach(k => errors += s"texts: $k has a text but no decision under resolve")
           val es = errors.result()
-          if es.nonEmpty then Left(es.map(MergeResolutions.Text.Problem(_)))
+          if es.nonEmpty then Left(es.map(Problem(_)))
           else
             Right(
               MergeResolutions(
@@ -112,11 +113,11 @@ object MergeResolutionsFile:
                 bundle
               )
             )
-        case Some(other) => Left(List(MergeResolutions.Text.Problem(s"expected a map at the top, found '$other'")))
+        case Some(other) => Left(List(Problem(s"expected a map at the top, found '$other'")))
       }
 
   /** `ID=decision` of a `--resolve` flag. */
-  def flag(s: MergeResolutions.Text.Flag): Either[MergeResolutions.Text.Problem, MergeResolution] =
+  def flag(s: MergeResolutions.Text.Flag): Either[Problem, MergeResolution] =
     MergeResolutions.Text.flag(s)
 
   /** The template (written by [[MergeResolutionsText]], shared with the web review screen). */

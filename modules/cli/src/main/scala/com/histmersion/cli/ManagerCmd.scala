@@ -466,7 +466,7 @@ object ManagerCmd:
               ItemPatch.Action("hold"),
               until = u.map(ItemPatch.Until(_)),
               untilSource = s.map(ItemPatch.UntilSource(_)),
-              reason = r.map(ItemPatch.Reason(_))
+              reason = r.map(Problem(_))
             )
           )
         }
@@ -484,7 +484,7 @@ object ManagerCmd:
                 c,
                 ManagerInfo.Id(id),
                 ManagerItem.Ref(t),
-                ItemPatch(ItemPatch.Action("skip"), reason = r.map(ItemPatch.Reason(_)))
+                ItemPatch(ItemPatch.Action("skip"), reason = r.map(Problem(_)))
               )
           )
       ) orElse

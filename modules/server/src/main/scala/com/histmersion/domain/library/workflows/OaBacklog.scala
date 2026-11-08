@@ -523,7 +523,7 @@ final class OaBacklog(
             first.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
             first.venue.map(v => Source.Venue(v.value)),
             apiGoals,
-            first.why.fold(OaWork.Why(""))(w => OaWork.Why(w.value)),
+            first.why.fold(Problem(""))(w => Problem(w.value)),
             Some(OaWork.FoundBy(first.job.value)),
             Some(OaWork.AcquireText(first.text.value))
           )

@@ -16,7 +16,7 @@ import com.histmersion.domain.Caller
   */
 abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
 
-  private def row(doi: Doi, reason: RetractionNotice.Reason, date: RetractionNotice.Date) =
+  private def row(doi: Doi, reason: Problem, date: RetractionNotice.Date) =
     Acquire.RetractionRow(doi, Some(reason), Some(date), Some(RetractionNotice.Nature("Retraction")))
 
   stest("the mirror is replaced whole; a DOI listed twice keeps its last row") { s =>
@@ -24,9 +24,9 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
     assertEquals(
       s.assessments.replaceRetractionWatch(
         List(
-          row(Doi("10.5555/zq.a"), RetractionNotice.Reason("first"), RetractionNotice.Date("1/2/2019 0:00")),
-          row(Doi("10.5555/zq.b"), RetractionNotice.Reason("other"), RetractionNotice.Date("2019-03-04")),
-          row(Doi("10.5555/zq.a"), RetractionNotice.Reason("again"), RetractionNotice.Date("12/15/2021 0:00"))
+          row(Doi("10.5555/zq.a"), Problem("first"), RetractionNotice.Date("1/2/2019 0:00")),
+          row(Doi("10.5555/zq.b"), Problem("other"), RetractionNotice.Date("2019-03-04")),
+          row(Doi("10.5555/zq.a"), Problem("again"), RetractionNotice.Date("12/15/2021 0:00"))
         )
       ),
       2
@@ -37,14 +37,14 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       List(
         RetractionNotice(
           Some(RetractionNotice.Nature("Retraction")),
-          Some(RetractionNotice.Reason("again")),
+          Some(Problem("again")),
           Some(RetractionNotice.Date("2021-12-15"))
         )
       )
     )
     assertEquals(
       s.assessments.replaceRetractionWatch(
-        List(row(Doi("10.5555/zq.c"), RetractionNotice.Reason("c"), RetractionNotice.Date("1/1/2020 0:00")))
+        List(row(Doi("10.5555/zq.c"), Problem("c"), RetractionNotice.Date("1/1/2020 0:00")))
       ),
       1
     )

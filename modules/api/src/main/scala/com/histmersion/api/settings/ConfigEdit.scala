@@ -1,5 +1,6 @@
 package com.histmersion
 package api.settings
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -151,14 +152,12 @@ object ConfigEdit:
     type Reload = Reload.T
     object Reload extends Newtype[Boolean, Pure]
 
-  final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why)
+  final case class RestartNote(key: RestartNote.Key, why: Problem)
       derives KindlingsCodecAsObject,
         KindlingsSchema
 
   object RestartNote:
     export Field.Key
-    type Why = Why.T
-    object Why extends Newtype[String, Pure]
 
   final case class Written(
       file: Written.File,
@@ -193,7 +192,7 @@ object ConfigEdit:
     type Restartable = Restartable.T
     object Restartable extends Newtype[Boolean, Pure]
 
-  final case class Restart(accepted: Restart.Accepted, message: Restart.Message)
+  final case class Restart(accepted: Restart.Accepted, message: Problem)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -201,8 +200,6 @@ object ConfigEdit:
   object Restart:
     type Accepted = Accepted.T
     object Accepted extends Newtype[Boolean, Pure]
-    type Message = Message.T
-    object Message extends Newtype[String, Pure]
 
   val CodeChanged = "settings_changed"
 

@@ -190,7 +190,7 @@ object CollectionsService:
       com.histmersion.domain.library.Citekey
         .parse(raw.value)
         .left
-        .map(p => Write.invalid(Write.InvalidMessage(p.value)))
+        .map(p => Write.invalid(Problem(p.value)))
 
     private def lookup(name: CollectionName): Either[Api.Error, HostCollection] =
       registry()
@@ -220,7 +220,7 @@ object CollectionsService:
           .filter(c.can)
           .map(k => CollectionInfo.Capabilities(k.toString.toLowerCase(java.util.Locale.ROOT))),
         CollectionInfo.Reachable(reach.isRight),
-        reach.left.toOption.map(p => CollectionInfo.Problem(p.value))
+        reach.left.toOption.map(p => Problem(p.value))
       )
 
     def collections(): List[CollectionInfo] =
@@ -331,7 +331,7 @@ object CollectionsService:
           record,
           cover,
           conversion.flatMap(_.toOption),
-          conversion.flatMap(_.left.toOption.map(e => CollectionImported.JobError(e.message.value))),
+          conversion.flatMap(_.left.toOption.map(e => Problem(e.message.value))),
           conversion.flatMap(_.left.toOption.flatMap(_.code).map(code => CollectionImported.JobErrorCode(code.value)))
         )
 
@@ -594,11 +594,11 @@ object CollectionsService:
         case CollectionUpdateOutcome.Change(cs)         => ("would-change", changes(cs), None)
         case CollectionUpdateOutcome.Applied(cs)        => ("updated", changes(cs), None)
         case CollectionUpdateOutcome.Failed(cs, reason) =>
-          ("failed", changes(cs), Some(CollectionUpdateRow.Reason(reason.value)))
+          ("failed", changes(cs), Some(Problem(reason.value)))
         case CollectionUpdateOutcome.UpToDate        => ("up-to-date", Nil, None)
         case CollectionUpdateOutcome.Shared          => ("shared", Nil, None)
         case CollectionUpdateOutcome.Missing         => ("missing", Nil, None)
-        case CollectionUpdateOutcome.Refused(reason) => ("refused", Nil, Some(CollectionUpdateRow.Reason(reason.value)))
+        case CollectionUpdateOutcome.Refused(reason) => ("refused", Nil, Some(Problem(reason.value)))
       CollectionUpdateRow(
         CollectionUpdateRow.Id(e.id.value),
         e.keys.map(k => CollectionUpdateRow.Citekeys(k.value)),
@@ -684,7 +684,7 @@ object CollectionsService:
               checked(r.citekey)
                 .flatMap(pushOne(c, _))
                 .fold(
-                  e => CollectionSync.Push(r.citekey, None, Some(CollectionSync.Push.Error(e.message.value))),
+                  e => CollectionSync.Push(r.citekey, None, Some(Problem(e.message.value))),
                   (id, _) => CollectionSync.Push(r.citekey, Some(CollectionSync.Push.Id(id.value)), None)
                 )
             }

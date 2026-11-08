@@ -21,7 +21,7 @@ object PluginSetResource:
   private val EntryTime = 315532800000L // 1980-01-01, the earliest a zip entry can carry
 
   /** The set on `loader`'s class path; `Right(None)` when there is none, `Left` when it does not parse. */
-  def load(loader: ClassLoader): Either[PluginKit.Problem, Option[PluginSet]] =
+  def load(loader: ClassLoader): Either[Problem, Option[PluginSet]] =
     Option(loader.getResourceAsStream(PluginSet.Resource)) match
       case None     => Right(None)
       case Some(in) =>

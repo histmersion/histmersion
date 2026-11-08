@@ -1,7 +1,7 @@
 package com.histmersion
 package util.settings
 
-import com.histmersion.config.{AppConfig, ConfigProblem, LoadedConfig, SetupConfig}
+import com.histmersion.config.{AppConfig, Problem, LoadedConfig, SetupConfig}
 import com.histmersion.config.edit.*
 import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSyntax}
 
@@ -39,7 +39,7 @@ object SettingsService:
     Implementation(loaded, file, ConfigSchema.reference)
 
   private def noFile = SettingError.NoFile(
-    SettingError.NoFile.Why(
+    Problem(
       "This server was started without a settings file, so Settings cannot change anything. " +
         "Set HISTMERSION_CONFIG to the file to use and start it again."
     )
@@ -49,7 +49,7 @@ object SettingsService:
   private[settings] def snapshot(
       schema: ConfigSchema,
       state: ConfigFileState,
-      loaded: Either[ConfigProblem, LoadedConfig],
+      loaded: Either[Problem, LoadedConfig],
       env: Config,
       prefix: Option[SettingKey],
       completed: SetupConfig.Completed,
@@ -129,7 +129,7 @@ object SettingsService:
           try Right(ConfigFileState(Some(t), FileVersion.of(Some(t)), parse(t), here))
           catch
             case e: org.ekrich.config.ConfigException =>
-              Left(SettingError.Unreadable(SettingError.Unreadable.Why(e.getMessage)))
+              Left(SettingError.Unreadable(Problem(e.getMessage)))
 
     private def parse(t: ConfigFileState.Text): Config =
       ConfigFactory.parseString(
@@ -173,13 +173,13 @@ object SettingsService:
                   (try Right(parse(edited.text))
                   catch
                     case e: org.ekrich.config.ConfigException =>
-                      Left(SettingError.Invalid(SettingError.Invalid.Why(e.getMessage)))
+                      Left(SettingError.Invalid(Problem(e.getMessage)))
                   )
                 _ <- ConfigTextEdit.verify(parsed, here, edited, ConfigTextEdit.intended(edits))
                 _ <- AppConfig
                   .loadWithUserText(env, edited.text.value)
                   .left
-                  .map(e => SettingError.Invalid(SettingError.Invalid.Why(e.value)))
+                  .map(e => SettingError.Invalid(Problem(e.value)))
               yield text.set(Some(edited.text))
         yield
           if edited.changed.isEmpty then

@@ -1,6 +1,7 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.Problem
 import com.histmersion.api.given
 
 import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}
@@ -20,8 +21,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * zstd (which the design named) would need a JNI library; gzip is in the JDK.
   */
 object BundleTar:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   val Block = 512
   val MaxName = 100

@@ -363,7 +363,7 @@ final class ManagerSupervisor(
           out += TickLine(s"${item.target}: done")
           kind.afterDone(this, m, item, Some(run), out)
       case Next.Wait(approval, note) =>
-        val hold = Hold(reason = Hold.Reason(note.value), untilApproval = Some(Hold.UntilApproval(approval.value)))
+        val hold = Hold(reason = Problem(note.value), untilApproval = Some(Hold.UntilApproval(approval.value)))
         if Transactor(ds).transact(
             ManagerRepo.evaluated(
               item.id,
@@ -490,7 +490,7 @@ final class ManagerSupervisor(
         val id = seedId(Goal.Ref(goal.value))
         val _ = ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(DomainGoal.Slug.assume(goal.value)))
         val added = plan.articles.count { p =>
-          val spec = ArticleSpec(p.title, p.kind, p.filter, p.why.transformInto[ArticleSpec.Why])
+          val spec = ArticleSpec(p.title, p.kind, p.filter, p.why.transformInto[Problem])
           agents.managerStore
             .upsert(
               id,

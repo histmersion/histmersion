@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -25,7 +26,7 @@ object CollectionSync:
   final case class Push(
       citekey: Citekey,
       id: Option[Push.Id],
-      error: Option[Push.Error]
+      error: Option[Problem]
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -33,8 +34,6 @@ object CollectionSync:
   object Push:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
-    type Error = Error.T
-    object Error extends Newtype[String, Pure]
 
   /** Push every counted gap into a collection (a dry run unless `apply`), considering at most `limit` gaps. */
   final case class Request(

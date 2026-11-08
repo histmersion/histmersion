@@ -1,5 +1,6 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.api.Problem
 import hearth.kindlings.optics.syntax.*
 
 import io.circe.{Json, JsonObject}
@@ -27,8 +28,6 @@ object Gazetteer:
   object PlaceRef extends Newtype[String, Pure]
   type PointAreaKinds = PointAreaKinds.T
   object PointAreaKinds extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Rank = Rank.T
   object Rank extends Newtype[Int, Pure]
 

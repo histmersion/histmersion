@@ -50,7 +50,7 @@ final class IngestControllers(
   private def error(message: String, code: Option[Api.Error.Code] = None): Api.Error =
     Api.Error(Api.Error.Message(message), code)
 
-  private def invalid(p: Problem): Api.Error = Write.invalid(Write.InvalidMessage(p.value))
+  private def invalid(p: Problem): Api.Error = Write.invalid(Problem(p.value))
 
   private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.

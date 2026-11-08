@@ -11,8 +11,6 @@ enum ScheduledRefresh derives CanEqual:
   case Every(interval: RefreshIntervalMinutes)
 
 object ScheduledRefresh:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** The configured minutes: 0 = off. */
 

@@ -110,7 +110,7 @@ object JobRecords:
                   .modify(_.progress)
                   .setTo(progress.map(p => JobInfo.Progress(p.value)))
                   .modify(_.error)
-                  .setTo(error.map(e => JobInfo.Error(e.value)))
+                  .setTo(error.map(e => Problem(e.value)))
                   .modify(_.updatedAt)
                   .setTo(JobInfo.UpdatedAt(now))
               )

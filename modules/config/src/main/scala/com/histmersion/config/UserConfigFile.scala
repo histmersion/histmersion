@@ -16,18 +16,16 @@ final case class UserConfigFile(
     unknownKeys: List[UserConfigFile.UnknownKeys] = Nil
 ):
   /** One line per ignored key, for the log. */
-  def warnings: List[UserConfigFile.Problem] =
+  def warnings: List[Problem] =
     val where = path.fold("the config file")(_.toString)
     unknownKeys.map { k =>
       val hint =
         if k.value == "histmersion" || k.value.startsWith("histmersion.") then ""
         else " (settings go under histmersion { … })"
-      UserConfigFile.Problem(s"$where: unknown setting '${k.value}' is ignored$hint")
+      Problem(s"$where: unknown setting '${k.value}' is ignored$hint")
     }
 
 object UserConfigFile:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   type Loaded = Loaded.T
   object Loaded extends Newtype[Boolean, Pure]

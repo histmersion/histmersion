@@ -67,10 +67,10 @@ object BundleExport:
       val written =
         for
           _ <- tar.bytes(BundleTar.Entry.Name(Bundle.ManifestPath), BundleFormat.manifestBytes(manifest))
-          _ <- payloads.foldLeft[Either[BundleTar.Problem, Unit]](Right(()))((acc, pb) =>
+          _ <- payloads.foldLeft[Either[Problem, Unit]](Right(()))((acc, pb) =>
             acc.flatMap(_ => tar.bytes(BundleTar.Entry.Name(pb._1.value), pb._2.value))
           )
-          _ <- shas.foldLeft[Either[BundleTar.Problem, Unit]](Right(())) { (acc, sha) =>
+          _ <- shas.foldLeft[Either[Problem, Unit]](Right(())) { (acc, sha) =>
             acc.flatMap { _ =>
               val b = blobs(sha)
               tar.entry(BundleTar.Entry.Name(Bundle.blobPath(com.histmersion.api.Sha256(sha.value))), b.size)(b.copy)

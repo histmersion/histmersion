@@ -375,7 +375,7 @@ final class CompileArticlePipeline(
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
           val stale =
-            s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(Coverage.Entry.Reason("")))
+            s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(Problem("")))
           val patch = Article.Patch(
             append = Some(Article.Patch.Append(d.text.value)),
             section = d.section.map(x => Article.Patch.Section(x.value)),

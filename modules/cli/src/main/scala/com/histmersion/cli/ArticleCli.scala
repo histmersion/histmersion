@@ -418,7 +418,7 @@ object ArticleCli:
       .orEmpty
       .map(_.map(ArticlePatches.ReasonText(_)))
 
-  private val critiqueReasonFlags: Opts[List[CritiqueReason.Reason]] =
+  private val critiqueReasonFlags: Opts[List[Problem]] =
     Opts
       .options[String](
         "critique-reason",
@@ -426,7 +426,7 @@ object ArticleCli:
           "(the critic first); <src>><dst>= removes it (repeatable)"
       )
       .orEmpty
-      .map(_.map(CritiqueReason.Reason(_)))
+      .map(_.map(Problem(_)))
 
   /** `article coverage <slug>` (#958) — the article's recorded filter against the live corpus. */
   private def coverage(using console: Console) = Opts.subcommand(

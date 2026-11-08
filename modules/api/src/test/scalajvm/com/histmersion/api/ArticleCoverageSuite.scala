@@ -35,11 +35,11 @@ class ArticleCoverageSuite extends munit.FunSuite:
   private val cited =
     List(Citekey("walker1995_theseus"), Citekey("gantz1993_earlymyth"), Citekey("middleton2020_collapse"))
   private val reasons = Map(
-    Citekey("graves2017_greek") -> Coverage.Entry.Reason("retells the myths with no dated finding on their origin"),
-    Citekey("bremmer2008_religion") -> Coverage.Entry.Reason("a handbook; nothing on synoikism"),
-    Citekey("graf1993_mythology") -> Coverage.Entry.Reason("a handbook; nothing on synoikism"),
-    Citekey("gantz1993_earlymyth") -> Coverage.Entry.Reason("stale: it is cited now"),
-    Citekey("zz2000_gone") -> Coverage.Entry.Reason("the filter no longer returns it")
+    Citekey("graves2017_greek") -> Problem("retells the myths with no dated finding on their origin"),
+    Citekey("bremmer2008_religion") -> Problem("a handbook; nothing on synoikism"),
+    Citekey("graf1993_mythology") -> Problem("a handbook; nothing on synoikism"),
+    Citekey("gantz1993_earlymyth") -> Problem("stale: it is cited now"),
+    Citekey("zz2000_gone") -> Problem("the filter no longer returns it")
   )
   private val edges = List(
     Coverage.Edge(Citekey("simpson1970_catalogue"), Coverage.Edge.Kind("challenges"), Citekey("gantz1993_earlymyth")),
@@ -57,7 +57,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
   private def cov(
       total: Article.Coverage.ComputeTotal = Article.Coverage.ComputeTotal(6),
       hs: List[Coverage.Source] = hits,
-      rs: Map[Citekey, Coverage.Entry.Reason] = reasons
+      rs: Map[Citekey, Problem] = reasons
   ) =
     Article.Coverage.compute(
       Article.Coverage.ComputeSlug("theseus_origins"),
@@ -137,7 +137,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
     assertEquals(Article.Coverage.unplacedAfter(c, Set(Citekey("nilsson1927_minoan")), reasons), Nil)
     assertEquals(
       Article.Coverage
-        .unplacedAfter(c, Set.empty, reasons + (Citekey("nilsson1927_minoan") -> Coverage.Entry.Reason("superseded"))),
+        .unplacedAfter(c, Set.empty, reasons + (Citekey("nilsson1927_minoan") -> Problem("superseded"))),
       Nil
     )
 
@@ -347,22 +347,22 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("reasons: set, replaced, removed by an empty one, folded onto one line; a non-citekey or an essay refused"):
     val m = Coverage.Reason
       .merge(
-        Map(Citekey("a2019_tin") -> Coverage.Entry.Reason("old")),
+        Map(Citekey("a2019_tin") -> Problem("old")),
         List(
-          Coverage.Reason(Citekey("[[A2019_tin]]"), Coverage.Entry.Reason("new\n  reason")),
-          Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason("about Egypt"))
+          Coverage.Reason(Citekey("[[A2019_tin]]"), Problem("new\n  reason")),
+          Coverage.Reason(Citekey("b2020_iso"), Problem("about Egypt"))
         )
       )
       .toOption
       .get
     assertEquals(m, Map("a2019_tin" -> "new reason", "b2020_iso" -> "about Egypt"))
     assertEquals(
-      Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason(" ")))),
+      Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("b2020_iso"), Problem(" ")))),
       Right(Map("a2019_tin" -> "new reason"))
     )
-    assert(Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("Not A Key"), Coverage.Entry.Reason("x")))).isLeft)
+    assert(Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("Not A Key"), Problem("x")))).isLeft)
     assert(
-      Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("a2019_tin"), Coverage.Entry.Reason("x" * 501)))).isLeft
+      Coverage.Reason.merge(m, List(Coverage.Reason(Citekey("a2019_tin"), Problem("x" * 501)))).isLeft
     )
     assertEquals(Coverage.Reason.list(m).map(_.citekey), List("a2019_tin", "b2020_iso"))
 
@@ -384,7 +384,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
           Article.Kind.Wire("concept"),
           Article.Body("Body [[a2019_tin]]."),
           filter = Some(Article.Filter(tags = List(Filter.Tags("tin")))),
-          reasons = List(Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason("about Egypt")))
+          reasons = List(Coverage.Reason(Citekey("b2020_iso"), Problem("about Egypt")))
         )
       )
       .toOption
@@ -406,8 +406,8 @@ class ArticleCoverageSuite extends munit.FunSuite:
         put,
         Article.Patch(reasons =
           List(
-            Coverage.Reason(Citekey("c2001_old"), Coverage.Entry.Reason("older")),
-            Coverage.Reason(Citekey("b2020_iso"), Coverage.Entry.Reason(""))
+            Coverage.Reason(Citekey("c2001_old"), Problem("older")),
+            Coverage.Reason(Citekey("b2020_iso"), Problem(""))
           )
         )
       )
@@ -422,7 +422,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
     )
     assertEquals(
       Article.Put.of(more).reasons,
-      List(Coverage.Reason(Citekey("c2001_old"), Coverage.Entry.Reason("older")))
+      List(Coverage.Reason(Citekey("c2001_old"), Problem("older")))
     )
 
   test("an exported note sent back as a body: the generated block never enters the store"):

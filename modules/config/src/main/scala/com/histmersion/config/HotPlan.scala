@@ -8,8 +8,6 @@ import io.github.iltotore.iron.constraint.any.Pure
   * swaps the values; this decides what and in which order.
   */
 object HotPlan:
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** Does a changed key concern a node that declares `key`? The same key, a key under it, or a block above it (a whole
     * block replaced by a value, or removed).

@@ -70,7 +70,7 @@ object SettingsViews:
       ConfigEdit.Written.Version(o.version.value),
       ConfigEdit.Written.Created(o.created.value),
       o.restart.map((k, why) =>
-        ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))
+        ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), Problem(why.value))
       ),
       o.warnings.map(w => ConfigEdit.Written.Warnings(w.value)),
       reload,

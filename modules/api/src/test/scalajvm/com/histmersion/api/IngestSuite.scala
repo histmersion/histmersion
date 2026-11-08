@@ -299,7 +299,7 @@ class IngestSuite extends munit.FunSuite:
       JobInfo.Status("failed"),
       (Some("ck")).map(Citekey.apply),
       None,
-      Some(JobInfo.Error("converter down")),
+      Some(Problem("converter down")),
       (Some("0123456789abcdef")).map(Sha256.apply),
       JobInfo.CreatedAt("t0"),
       JobInfo.UpdatedAt("t1")

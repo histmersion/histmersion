@@ -34,7 +34,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Some(Period(Year(-1600), Year(-1400))),
       None,
       Some(Article.Filter(tags = List(Filter.Tags("zr-oracle")))),
-      Map(Citekey("zrdelta2010_survey") -> Coverage.Entry.Reason("Region-wide."))
+      Map(Citekey("zrdelta2010_survey") -> Problem("Region-wide."))
     )
 
   private val Walls = Slug("zr_walls")
@@ -135,7 +135,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
       Article.Patch(
         title = Some(Article.Title("x")),
         critiqueReasons =
-          List(CritiqueReason(Citekey("zra"), Citekey("zrb"), CritiqueReason.Reason("Not about the walls.")))
+          List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("Not about the walls.")))
       ),
       Me
     )
@@ -143,7 +143,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     val long = s.articles.patch(
       Walls,
       Article.Patch(critiqueReasons =
-        List(CritiqueReason(Citekey("zra"), Citekey("zrb"), CritiqueReason.Reason("w" * 501)))
+        List(CritiqueReason(Citekey("zra"), Citekey("zrb"), Problem("w" * 501)))
       ),
       Me
     )

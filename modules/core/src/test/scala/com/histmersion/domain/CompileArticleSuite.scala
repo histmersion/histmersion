@@ -118,7 +118,7 @@ class CompileArticleSuite extends munit.FunSuite:
   private val extracted = List(
     Extracted(Citekey("a2019_tin"), List(claim(Citekey("a2019_tin")), claim(Citekey("a2019_tin"))), None),
     Extracted(Citekey("b2024_iso"), List(claim(Citekey("b2024_iso"))), None),
-    Extracted(Citekey("c2001_old"), Nil, Some(Coverage.Entry.Reason("about Egypt")))
+    Extracted(Citekey("c2001_old"), Nil, Some(Problem("about Egypt")))
   )
   private val ev = evidence(
     Goal.Plans.ArticleDraft.Filter("search {topics:[tin]}"),
@@ -139,7 +139,7 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     assertEquals(ev.disputed, List("b2024_iso"))
     assertEquals(ev.claims, Map("a2019_tin" -> 2, "b2024_iso" -> 1, "c2001_old" -> 0))
-    assertEquals(ev.notUsed, List(NotUsed(Citekey("c2001_old"), Coverage.Entry.Reason("about Egypt"))))
+    assertEquals(ev.notUsed, List(NotUsed(Citekey("c2001_old"), Problem("about Egypt"))))
     assertEquals(ev.used, List("a2019_tin", "b2024_iso"))
     val text = evidenceText(ev, extracted)
     assert(
@@ -187,7 +187,7 @@ class CompileArticleSuite extends munit.FunSuite:
     // the extraction's reason is what the article stores for the source it leaves out
     assertEquals(
       d.reasons,
-      List(Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("about Egypt")))
+      List(Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Problem("about Egypt")))
     )
 
   test("self-check (#958): a hand-written Not used section or Method note is sent back"):
@@ -242,7 +242,7 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(ps, List("[[b2024_iso]] has claims in the table but is neither cited nor given a reason"))
     val why = Coverage.Reason(
       com.histmersion.api.library.Citekey("b2024_iso"),
-      Coverage.Entry.Reason("Its isotopes speak to a later period.")
+      Problem("Its isotopes speak to a later period.")
     )
     val (d, _) = checkDraft(
       draft(Article.Body(noIso), reasons = List(why)),
@@ -261,16 +261,16 @@ class CompileArticleSuite extends munit.FunSuite:
       List(
         Coverage.Reason(
           com.histmersion.api.library.Citekey("b2024_iso"),
-          Coverage.Entry.Reason("Its isotopes speak to a later period.")
+          Problem("Its isotopes speak to a later period.")
         ),
-        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("about Egypt"))
+        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Problem("about Egypt"))
       ).sortBy(_.citekey.value)
     )
     // the writer's reason wins over the extraction's; a reason for a cited source or one outside the table is a problem
     val bad = List(
-      Coverage.Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), Coverage.Entry.Reason("not needed")),
-      Coverage.Reason(com.histmersion.api.library.Citekey("zz1999_nope"), Coverage.Entry.Reason("never read")),
-      Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("covers Egypt only"))
+      Coverage.Reason(com.histmersion.api.library.Citekey("[[a2019_tin]]"), Problem("not needed")),
+      Coverage.Reason(com.histmersion.api.library.Citekey("zz1999_nope"), Problem("never read")),
+      Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Problem("covers Egypt only"))
     )
     val ps2 = checkDraft(
       draft(Article.Body(goodBody), reasons = bad),
@@ -306,7 +306,7 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(
       d2.reasons,
       List(
-        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Coverage.Entry.Reason("covers Egypt only"))
+        Coverage.Reason(com.histmersion.api.library.Citekey("c2001_old"), Problem("covers Egypt only"))
       )
     )
 

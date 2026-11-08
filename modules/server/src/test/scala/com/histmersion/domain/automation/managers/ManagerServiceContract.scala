@@ -120,7 +120,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       m(s).itemFor(ManagerInfo.Id("review"), ManagerItem.Kind("article-review"), ManagerItem.Target("zz-b")).map(_.id),
       Some(b)
     )
-    assert(m(s).hold(a, Hold(reason = Hold.Reason("a person"))))
+    assert(m(s).hold(a, Hold(reason = Problem("a person"))))
     assertEquals(m(s).forPerson(), 1)
     assert(m(s).release(a))
     assert(!m(s).release(a), "not held any more")
@@ -267,10 +267,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
         )
         ._1
     )
-    assert(m(s).focusHold(ids(0), Hold(reason = Hold.Reason("focus"), focus = Some(Hold.Focus("zz")))))
-    assert(m(s).focusHold(ids(1), Hold(reason = Hold.Reason("focus"), focus = Some(Hold.Focus("zz")))))
-    assert(!m(s).focusHold(ids(1), Hold(reason = Hold.Reason("again"), focus = Some(Hold.Focus("zz")))), "not pending")
-    assert(m(s).hold(ids(2), Hold(reason = Hold.Reason("a person"))))
+    assert(m(s).focusHold(ids(0), Hold(reason = Problem("focus"), focus = Some(Hold.Focus("zz")))))
+    assert(m(s).focusHold(ids(1), Hold(reason = Problem("focus"), focus = Some(Hold.Focus("zz")))))
+    assert(!m(s).focusHold(ids(1), Hold(reason = Problem("again"), focus = Some(Hold.Focus("zz")))), "not pending")
+    assert(m(s).hold(ids(2), Hold(reason = Problem("a person"))))
     assertEquals(m(s).focusHeldCount(), 2)
     assertEquals(m(s).forPerson(), 1, "the focus's holds wait for nobody")
     assertEquals(
@@ -420,7 +420,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
             reopen = false
           )
           ._1,
-        Hold(reason = Hold.Reason("p"))
+        Hold(reason = Problem("p"))
       )
     )
     assertEquals(m(s).personHeldByGoal(), Map("zz-g" -> 1))

@@ -1,5 +1,6 @@
 package com.histmersion
 package api.checks
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -23,8 +24,6 @@ object Lint:
   object ItemLimit extends Newtype[Int, Pure]
   type Paragraph = Paragraph.T
   object Paragraph extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type ProseBody = ProseBody.T
   object ProseBody extends Newtype[String, Pure]
   type SentenceCount = SentenceCount.T

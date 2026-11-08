@@ -19,8 +19,6 @@ type SettingKey = SettingKey.T
 object SettingKey extends Newtype[String, SettingKeyRule]:
   type HoconPath = HoconPath.T
   object HoconPath extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
   type Relative = Relative.T
   object Relative extends Newtype[String, Pure]
   type Segment = Segment.T

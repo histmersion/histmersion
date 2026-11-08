@@ -42,5 +42,5 @@ object SettingsFile:
   final case class Staged(
       parsed: Either[SettingError, Config],
       own: ConfigOrigin => Boolean,
-      load: Config => Either[SettingError.Problem, LoadedConfig]
+      load: Config => Either[Problem, LoadedConfig]
   )

@@ -223,7 +223,7 @@ object RunService:
         RunInfo.Target(r.row.target.value),
         RunInfo.Status(r.row.status.value),
         r.progress.map(p => RunInfo.Progress(p.value)),
-        r.error.map(e => RunInfo.Error(e.value)),
+        r.error.map(e => Problem(e.value)),
         r.row.model.map(m => RunInfo.Model(m.value)),
         Usage(
           Usage.Input(ss.map(_.usage.input.value).sum),
@@ -410,7 +410,7 @@ object RunService:
           r.promptHash.map(h => StepInfo.PromptHash(h.value)),
           r.usage,
           StepInfo.CostUsd(r.costUsd.toDouble),
-          r.error.map(e => StepInfo.Error(e.value)),
+          r.error.map(e => Problem(e.value)),
           r.output.map(o => StepInfo.Output(o.value.take(outputChars.value))),
           StepInfo.StartedAt(text(r.startedAt)),
           StepInfo.FinishedAt(text(s.finishedAt)),

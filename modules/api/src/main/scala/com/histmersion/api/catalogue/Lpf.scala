@@ -1,5 +1,6 @@
 package com.histmersion
 package api.catalogue
+import com.histmersion.api.Problem
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
@@ -29,8 +30,6 @@ object Lpf:
     object Wire extends Newtype[String, Pure]
   type Document = Document.T
   object Document extends Newtype[String, Pure]
-  type Problem = Problem.T
-  object Problem extends Newtype[String, Pure]
 
   /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2). ISO 8601 / astronomical year
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.

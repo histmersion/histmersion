@@ -104,7 +104,7 @@ object PlanArticles:
       title: Article.Title,
       kind: Article.Kind.Wire,
       filter: Article.Filter,
-      why: ProposedArticle.Why
+      why: Problem
   )
 
   /** The share of `mine` that `theirs` holds already (0 when `mine` is empty). */
@@ -150,7 +150,7 @@ object PlanArticles:
                       Article.Title(x.title.value.trim),
                       k,
                       f,
-                      ProposedArticle.Why(Option(x.why).map(_.value.trim).getOrElse(""))
+                      Problem(Option(x.why).map(_.value.trim).getOrElse(""))
                     )
       }
       .toList

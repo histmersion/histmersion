@@ -1,5 +1,6 @@
 package com.histmersion
 package api.library
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -14,7 +15,7 @@ final case class CandidateWatch(
     index: CandidateWatch.Index,
     watermark: Option[CandidateWatch.Watermark] = None,
     lastRun: Option[CandidateWatch.LastRun] = None,
-    lastError: Option[CandidateWatch.LastError] = None,
+    lastError: Option[Problem] = None,
     lastFound: CandidateWatch.LastFound = CandidateWatch.LastFound(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
@@ -30,7 +31,5 @@ object CandidateWatch:
   object Watermark extends Newtype[String, Pure]
   type LastRun = LastRun.T
   object LastRun extends Newtype[String, Pure]
-  type LastError = LastError.T
-  object LastError extends Newtype[String, Pure]
   type LastFound = LastFound.T
   object LastFound extends Newtype[Int, Pure]

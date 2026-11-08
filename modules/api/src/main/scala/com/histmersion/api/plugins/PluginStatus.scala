@@ -1,5 +1,6 @@
 package com.histmersion
 package api.plugins
+import com.histmersion.api.Problem
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -16,7 +17,7 @@ final case class PluginStatus(
     provides: List[PluginStatus.Provides] = Nil,
     settings: List[PluginSetting] = Nil,
     warnings: List[PluginStatus.Warnings] = Nil,
-    error: Option[PluginStatus.Error] = None
+    error: Option[Problem] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema,
       com.histmersion.api.json.Schema
@@ -30,4 +31,3 @@ object PluginStatus:
   export PluginDescription.Provides
   type Warnings = Warnings.T
   object Warnings extends Newtype[String, Pure]
-  export PluginDescription.Error

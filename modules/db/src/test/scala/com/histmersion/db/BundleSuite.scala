@@ -446,7 +446,7 @@ class BundleSuite extends DbSuite with Bounded:
       QueueAdd(
         Queue.QueueItem.Text("read alpha"),
         Some(Queue.QueueItem.Topic("Hittites")),
-        reason = Some(Queue.QueueItem.Reason("why"))
+        reason = Some(Problem("why"))
       )
     )
     val _ = QueueRows.add(

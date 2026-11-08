@@ -35,7 +35,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       src: Citekey,
       dst: Citekey,
       state: CritiqueState = CritiqueState.Open,
-      reason: Option[CritiquePair.Reason] = None
+      reason: Option[Problem] = None
   ) =
     CritiquePair(
       side(src, cited = CritiqueSide.Cited(false)),
@@ -53,7 +53,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       Citekey("jones2001_myth"),
       Citekey("frazer1922_golden"),
       CritiqueState.Reasoned,
-      Some(CritiquePair.Reason("cited for the calendar only"))
+      Some(Problem("cited for the calendar only"))
     )
   private val pairs = List(open1, open2, done, aside)
 
@@ -423,7 +423,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
           CritiqueReason(
             Citekey("brown1999_rites"),
             Citekey("frazer1922_golden"),
-            CritiqueReason.Reason("It is cited for the seasons only.")
+            Problem("It is cited for the seasons only.")
           )
         ),
         Nil,
@@ -630,7 +630,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         CritiqueReason(
           Citekey("brown1999_rites"),
           Citekey("frazer1922_golden"),
-          CritiqueReason.Reason("No finding names it.")
+          Problem("No finding names it.")
         )
       )
     )

@@ -2698,8 +2698,6 @@ object Api:
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Error:
-    type Problem = Problem.T
-    object Problem extends Newtype[String, Pure]
 
     /** Tapir hands the matcher an `Any`, and under `-source:future` a constructor pattern on `Any` warns (it is not
       * `Matchable`), so the value is checked with a type test.
@@ -2743,9 +2741,9 @@ object Api:
 
     val Page = "docs/user-guide/reference/rest-api.md"
 
-    def splice(readme: Readme, index: MarkdownResult): Either[Error.Problem, Readme] =
+    def splice(readme: Readme, index: MarkdownResult): Either[Problem, Readme] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
-      if b < 0 || e < b then Left(Error.Problem(s"$Page has no $Begin … $End block"))
+      if b < 0 || e < b then Left(Problem(s"$Page has no $Begin … $End block"))
       else
         Right(
           Readme(
