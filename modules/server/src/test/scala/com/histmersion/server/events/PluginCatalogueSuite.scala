@@ -67,7 +67,7 @@ class PluginCatalogueSuite extends DbSuite:
       Plugin.Info(Plugin.Info.Id("zq-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqCatalogueConfig, ctx: Plugin.Context) =
-      ctx.eventCatalogues.add(CatalogueAdd, ZqQuakes).left.map(e => Problem(e.value))
+      ctx.eventCatalogues.add(CatalogueAdd, ZqQuakes)
 
   // `var`: whether the API answers part p2 (it fails on the first import)
   @volatile private var p2Up = false
@@ -266,7 +266,7 @@ class PluginCatalogueSuite extends DbSuite:
       Plugin.Info(Plugin.Info.Id("zq-floods-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqCatalogueConfig, ctx: Plugin.Context) =
-      ctx.eventCatalogues.add(FloodsAdd, ZqFloods).left.map(e => Problem(e.value))
+      ctx.eventCatalogues.add(FloodsAdd, ZqFloods)
 
   private def floodsGeneration: Generation =
     PluginHost.build(

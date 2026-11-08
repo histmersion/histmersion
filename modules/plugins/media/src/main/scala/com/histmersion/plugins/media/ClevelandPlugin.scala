@@ -11,5 +11,3 @@ final class ClevelandPlugin extends MediaPlugin("media-cleveland"):
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("cleveland"), ClevelandCollection(c.media.cleveland))
-      .left
-      .map(e => Problem(e.value))

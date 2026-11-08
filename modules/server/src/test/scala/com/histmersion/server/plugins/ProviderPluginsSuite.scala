@@ -79,8 +79,8 @@ class ProviderPluginsSuite extends munit.FunSuite:
     override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: PortalConfig, ctx: Plugin.Context) =
       for
-        _ <- ctx.mediaCollections.add(collection, Collection(role)).left.map(e => Problem(e.value))
-        _ <- ctx.eventCatalogues.add(catalogue, Catalogue).left.map(e => Problem(e.value))
+        _ <- ctx.mediaCollections.add(collection, Collection(role))
+        _ <- ctx.eventCatalogues.add(catalogue, Catalogue)
       yield ()
 
   final private class Collection(val role: MediaItem.Role) extends MediaCollection:

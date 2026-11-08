@@ -354,8 +354,6 @@ class AcquisitionOracleSuite extends DbSuite:
               unauthorisedAsked.incrementAndGet()
               Fetch.Miss(Fetch.Miss.Why("the zq fixture has no copy"))
         )
-        .left
-        .map(e => Problem(e.value))
 
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
   final private class ZqShelfPlugin extends Plugin:

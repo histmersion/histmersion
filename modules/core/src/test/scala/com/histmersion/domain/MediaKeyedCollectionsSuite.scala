@@ -35,8 +35,8 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
         None,
         None,
         None,
-        Left(MediaRecord.RightsPart1("unused")),
-        List(MediaRecord.GeographyPart1("x") -> MediaRecord.GeographyPart2("Orkney")),
+        Left(Problem("unused")),
+        List(MediaRecord.Geography.Field("x") -> MediaRecord.Geography.Value("Orkney")),
         period
       )
     assertEquals(

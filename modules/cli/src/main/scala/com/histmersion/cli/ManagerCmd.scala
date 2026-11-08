@@ -389,21 +389,21 @@ object ManagerCmd:
           .orFalse
           .map(r =>
             (c, id) =>
-              c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("pause"), Some(r)))
+              c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.Action("pause"), Some(r)))
                 .map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("resume", "Start runs again (and resume the runs a pause --runs paused)")(
         Opts.unit.map(_ =>
           (c, id) =>
-            c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("resume"), None))
+            c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.Action("resume"), None))
               .map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb("stop", "Cancel its runs in flight and its open items")(
         Opts.unit.map(_ =>
           (c, id) =>
-            c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.ActionPart1Part2("stop"), None))
+            c.call(ManagersApi.action)((ManagerInfo.Id(id), ManagersApi.Action("stop"), None))
               .map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse

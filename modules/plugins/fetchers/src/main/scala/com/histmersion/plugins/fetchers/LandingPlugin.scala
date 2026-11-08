@@ -12,5 +12,3 @@ final class LandingPlugin extends FetcherPlugin("oa-landing"):
   def register(c: LandingConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.sourceFetchers
       .add(Registry.AddId("landing"), OpenAccess(c.acquire, () => ctx.http, ctx.log).landing(c.unpaywallEmail))
-      .left
-      .map(e => Problem(e.value))

@@ -11,5 +11,3 @@ final class PleiadesPlugin extends MediaPlugin("media-pleiades"):
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("pleiades"), PleiadesPictures(c.media, ctx.licences))
-      .left
-      .map(e => Problem(e.value))

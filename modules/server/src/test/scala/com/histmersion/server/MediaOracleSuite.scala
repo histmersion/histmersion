@@ -933,7 +933,7 @@ class MediaOracleSuite extends DbSuite:
   private object OwnCollection extends MediaCollection:
     val title = MediaCollection.Title("Zq own pictures")
     override val description = MediaCollection.Description("A fixture's collection of its targets' own pictures")
-    val role = MediaItem.Role(MediaCollection.Image)
+    val role = MediaCollection.Image
     override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
     override val matchRule = MediaMatchRule.Own
     override val asks = Set(MediaTarget.Places, MediaTarget.Events)
@@ -1012,7 +1012,7 @@ class MediaOracleSuite extends DbSuite:
 
   private object Searched extends MediaCollection:
     val title = MediaCollection.Title("Zq searched objects")
-    val role = MediaItem.Role(MediaCollection.Object)
+    val role = MediaCollection.Object
     override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
     def search(place: MediaPlace, http: Plugin.Http) =
       http

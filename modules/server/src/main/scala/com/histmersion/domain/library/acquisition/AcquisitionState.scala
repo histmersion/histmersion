@@ -13,15 +13,10 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 final case class AcquisitionState(
     retractions: Map[AcquisitionState.RetractionsKey, Acquire.RetractionRow],
-    assessments: Map[AcquisitionState.AssessmentsKey, (AssessmentRecord, AcquisitionState.AssessmentsValuePart2)],
+    assessments: Map[AcquisitionState.AssessmentsKey, (AssessmentRecord, AssessmentService.CheckedAt)],
     candidates: List[Source.Candidate],
     watches: Map[
-      (
-          AcquisitionState.WatchesKeyPart1,
-          AcquisitionState.WatchesKeyPart2,
-          AcquisitionState.WatchesKeyPart3,
-          AcquisitionState.WatchesKeyPart4
-      ),
+      (CandidateWatch.Goal, CandidateWatch.Kind, CandidateWatch.Subject, CandidateWatch.Index),
       CandidateWatch
     ],
     quotas: Map[AcquisitionState.QuotasKey, CoreQuota.State],
@@ -33,16 +28,6 @@ object AcquisitionState:
   object RetractionsKey extends Newtype[String, Pure]
   type AssessmentsKey = AssessmentsKey.T
   object AssessmentsKey extends Newtype[String, Pure]
-  type AssessmentsValuePart2 = AssessmentsValuePart2.T
-  object AssessmentsValuePart2 extends Newtype[String, Pure]
-  type WatchesKeyPart1 = WatchesKeyPart1.T
-  object WatchesKeyPart1 extends Newtype[String, Pure]
-  type WatchesKeyPart2 = WatchesKeyPart2.T
-  object WatchesKeyPart2 extends Newtype[String, Pure]
-  type WatchesKeyPart3 = WatchesKeyPart3.T
-  object WatchesKeyPart3 extends Newtype[String, Pure]
-  type WatchesKeyPart4 = WatchesKeyPart4.T
-  object WatchesKeyPart4 extends Newtype[String, Pure]
   type QuotasKey = QuotasKey.T
   object QuotasKey extends Newtype[String, Pure]
   type ChecksKey = ChecksKey.T

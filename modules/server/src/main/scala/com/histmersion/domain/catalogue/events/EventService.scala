@@ -501,7 +501,7 @@ object EventService:
               )
             )
             .modify(_.catalogueRecords)
-            .using(_.map((e, r) => (CatalogueState.CatalogueRecordsPart1(ren(Event.Id.assume(e.value)).value), r)))
+            .using(_.map((e, r) => (ren(e), r)))
             .modify(_.eventAliases)
             .using(as =>
               (as - CatalogueState.EventAliasesKey(newId.value)).map((a, t) =>

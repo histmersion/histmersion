@@ -47,5 +47,5 @@ final class LibraryWorkflow(
       .flatMap(_.tools)
       .toSet
 
-  def run(run: RunCtx): Either[Halt, WorkflowDefinition.RunResultPart2] =
-    impl.run(run).map(r => WorkflowDefinition.RunResultPart2(r.value))
+  def run(run: RunCtx): Either[Halt, WorkflowDefinition.Summary] =
+    impl.run(run).map(r => WorkflowDefinition.Summary(r.value))

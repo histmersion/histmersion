@@ -28,7 +28,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       None,
       None,
       Right(Attribution.cc0(None, Attribution.Cc0Credit("t"))),
-      geo.map((k, v) => (MediaRecord.GeographyPart1(k), MediaRecord.GeographyPart2(v))),
+      geo.map((k, v) => (MediaRecord.Geography.Field(k), MediaRecord.Geography.Value(v))),
       period
     )
 

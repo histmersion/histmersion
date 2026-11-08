@@ -228,7 +228,7 @@ class SpiBackingSuite extends munit.FunSuite:
     type Config = NoSettings
     val info = Plugin.Info(id, Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     def register(c: NoSettings, ctx: Plugin.Context) =
-      ctx.eventCatalogues.add(Registry.AddId("gvp"), Catalogue).left.map(e => Problem(e.value))
+      ctx.eventCatalogues.add(Registry.AddId("gvp"), Catalogue)
 
   private object Catalogue extends EventCatalogue:
     def title = EventCatalogue.Title("Volcanoes")
@@ -264,7 +264,7 @@ class SpiBackingSuite extends munit.FunSuite:
       Plugin.Info(Plugin.Info.Id("zq-keyed"), Plugin.Info.Version("1.0.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = Plugin.DefaultsResource("zq-keyed-defaults.conf")
     def register(c: Keyed, ctx: Plugin.Context) =
-      c.apiKey.fold[Either[Problem, Unit]](Right(()))(s => ctx.secret(s).left.map(e => Problem(e.value)).map(_ => ()))
+      c.apiKey.fold[Either[Problem, Unit]](Right(()))(s => ctx.secret(s).map(_ => ()))
 
   test("a generation gives the host a plugin's secret by its setting, as it resolved it — never another's"):
     val g = build(

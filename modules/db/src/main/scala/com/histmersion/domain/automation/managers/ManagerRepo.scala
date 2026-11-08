@@ -15,6 +15,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.EnrichSource
 import com.histmersion.domain.research.Slug
+import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.CodexRetention
@@ -36,8 +37,6 @@ object ManagerRepo:
   object RestaleReason extends Newtype[String, Pure]
   export ManagerInfo.TokensToday as SpendCount
 
-  export com.histmersion.domain.automation.Goal.Slug as ArticleFacetsResultPart2
-  export ManagerInfo.Id as CountEventsByInResultPart1
   export ManagerEvent.{
     Kind as CountEventsAllKind,
     Kind as CountEventsByInKind,
@@ -297,23 +296,23 @@ object ManagerRepo:
       .toMap
 
   /** Per goal: its items a person holds (held, not for an approval and not by the focus). */
-  def personHeldByGoal()(using DbCon): Map[com.histmersion.domain.automation.Goal.Slug, RowCount] =
+  def personHeldByGoal()(using DbCon): Map[Goal.Slug, RowCount] =
     sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
           WHERE m.goal_slug IS NOT NULL AND i.status = 'held' AND i.hold->>'focus' IS NULL AND i.hold->>'untilApproval' IS NULL
-          GROUP BY m.goal_slug""".query[(com.histmersion.domain.automation.Goal.Slug, RowCount)].run().toMap
+          GROUP BY m.goal_slug""".query[(Goal.Slug, RowCount)].run().toMap
 
   /** Per goal: its items whose run is queued or running. */
-  def runningByGoal()(using DbCon): Map[com.histmersion.domain.automation.Goal.Slug, RowCount] =
+  def runningByGoal()(using DbCon): Map[Goal.Slug, RowCount] =
     sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
           JOIN jobs j ON j.id = i.run_id
           WHERE m.goal_slug IS NOT NULL AND i.status = 'active' AND j.status IN ('queued', 'running')
-          GROUP BY m.goal_slug""".query[(com.histmersion.domain.automation.Goal.Slug, RowCount)].run().toMap
+          GROUP BY m.goal_slug""".query[(Goal.Slug, RowCount)].run().toMap
 
   /** Per goal: the outcome of its watcher's acquisition sweep when it is settled. */
-  def sweepOutcomes()(using DbCon): Map[com.histmersion.domain.automation.Goal.Slug, ItemRow.Outcome] =
+  def sweepOutcomes()(using DbCon): Map[Goal.Slug, ItemRow.Outcome] =
     sql"""SELECT m.goal_slug, coalesce(i.outcome, '') FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
           WHERE m.goal_slug IS NOT NULL AND i.kind = $AcquisitionSweep AND i.status IN ('done', 'stopped', 'failed')"""
-      .query[(com.histmersion.domain.automation.Goal.Slug, ManagerItem.Outcome)]
+      .query[(Goal.Slug, ManagerItem.Outcome)]
       .run()
       .toMap
 
@@ -654,7 +653,7 @@ object ManagerRepo:
       managerId: ManagerRow.Id,
       kind: ItemRow.Kind,
       tags: List[EnrichSource.Tag],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      goal: Option[Goal.Slug],
       limit: PageSize
   )(using
       DbCon
@@ -677,7 +676,7 @@ object ManagerRepo:
       managerId: ManagerRow.Id,
       kind: ItemRow.Kind,
       tags: List[EnrichSource.Tag],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      goal: Option[Goal.Slug],
       limit: PageSize
   )(using
       DbCon
@@ -702,7 +701,7 @@ object ManagerRepo:
       managerId: ManagerRow.Id,
       kind: ItemRow.Kind,
       tags: List[EnrichSource.Tag],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      goal: Option[Goal.Slug],
       limit: PageSize
   )(using
       DbCon
@@ -756,7 +755,7 @@ object ManagerRepo:
   def extendCandidates(
       managerId: ManagerRow.Id,
       tags: List[EnrichSource.Tag],
-      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      goal: Option[Goal.Slug],
       limit: PageSize
   )(using
       DbCon
@@ -847,12 +846,14 @@ object ManagerRepo:
                       AND status IN ('pending', 'held', 'active') LIMIT 1""".query[Int].run().nonEmpty)
 
   /** An article's tags and the goals it is linked to (what a hint's effect matches). */
-  def articleFacets(slug: Slug)(using DbCon): (List[EnrichSource.Tag], List[ManagerRepo.ArticleFacetsResultPart2]) =
+  def articleFacets(slug: Slug)(using
+      DbCon
+  ): (List[EnrichSource.Tag], List[Goal.Slug]) =
     val tags =
       sql"SELECT tags FROM articles WHERE slug = $slug".query[List[EnrichSource.Tag]].run().headOption.getOrElse(Nil)
     val goals =
       sql"SELECT goal_slug FROM goal_links WHERE kind = 'article' AND ref = $slug"
-        .query[com.histmersion.domain.automation.Goal.Slug]
+        .query[Goal.Slug]
         .run()
         .toList
     (tags, goals)
@@ -900,10 +901,10 @@ object ManagerRepo:
 
   def countEventsByIn(kind: ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using
       DbCon
-  ): Map[ManagerRepo.CountEventsByInResultPart1, RowCount] =
+  ): Map[ManagerInfo.Id, RowCount] =
     val at = since.toString
     sql"""SELECT manager_id, count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz
-          GROUP BY manager_id""".query[(CountEventsByInResultPart1, RowCount)].run().toMap
+          GROUP BY manager_id""".query[(ManagerInfo.Id, RowCount)].run().toMap
 
   def setItemStateIn(itemId: ItemRow.Id, state: ItemState, from: List[ItemStatus])(using DbCon): Boolean =
     val fs = from.map(_.wire)

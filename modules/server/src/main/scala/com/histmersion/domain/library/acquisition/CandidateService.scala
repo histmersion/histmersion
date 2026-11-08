@@ -103,12 +103,7 @@ object CandidateService:
         error: Option[CandidateWatch.LastError],
         found: CandidateWatch.LastFound
     ): Unit =
-      val key = (
-        AcquisitionState.WatchesKeyPart1(watch.goal.value),
-        AcquisitionState.WatchesKeyPart2(watch.kind.value),
-        AcquisitionState.WatchesKeyPart3(watch.subject.value),
-        AcquisitionState.WatchesKeyPart4(watch.index.value)
-      )
+      val key = (watch.goal, watch.kind, watch.subject, watch.index)
       val at = now
       val _ = state.updateAndGet(
         _.modify(_.watches).using { ws =>

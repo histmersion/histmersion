@@ -16,9 +16,7 @@ object Resolution:
   object ReportLine extends Newtype[String, Pure]
 
   /** Orders two versions as Maven does: negative when the first is older. */
-  export Resolver.{
-    FileName as ConflictsPlugin
-  }
+  export Resolver.FileName as ConflictsPlugin
 
   type VersionOrder = (ModuleVersion, ModuleVersion) => Int
 

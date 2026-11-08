@@ -229,7 +229,7 @@ class PortalParsersSuite extends munit.FunSuite:
         ExternalIds.ExternalId("310858")
       ) -> Set(MediaMatch.PlaceInfo.Id("ne_city_1159127453"))
     ).withDefaultValue(Set.empty)
-  private val deeper = Set(MediaRecord.GeographyPart1(OpenContext.Context.value))
+  private val deeper = Set(MediaRecord.Geography.Field(OpenContext.Context.value))
 
   test("a context naming the site ties the record although its ids name only its province (#2571)"):
     val recs = domuztepeRecords
@@ -251,7 +251,7 @@ class PortalParsersSuite extends munit.FunSuite:
     )
     // the unit "I" kept as a context field (as before #2571) refused it: the map's "I" is another place
     val before = recs.head.copy(geography =
-      (MediaRecord.GeographyPart1("context") -> MediaRecord.GeographyPart2("I")) :: recs.head.geography
+      (MediaRecord.Geography.Field("context") -> MediaRecord.Geography.Value("I")) :: recs.head.geography
     )
     assertEquals(
       MediaMatch.withIds(before, domuztepe, domIds, domNames, deeper),

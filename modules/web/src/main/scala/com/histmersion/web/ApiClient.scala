@@ -523,7 +523,7 @@ object ApiClient:
   /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
   def managerAction(
       id: Managers.ManagerInfo.Id,
-      action: ManagersApi.ActionPart1Part2,
+      action: ManagersApi.Action,
       runs: Boolean = false
   ): Future[Managers.ManagerInfo] =
     call(ManagersApi.action)((id, action, Option.when(runs)(true)))

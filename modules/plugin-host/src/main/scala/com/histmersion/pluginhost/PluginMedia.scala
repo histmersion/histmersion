@@ -107,9 +107,9 @@ object PluginMedia:
         .map(why => Problem(s"$key: $why"))
         .flatMap(_ => stated.flatMap(rights))
         .left
-        .map(why => MediaRecord.RightsPart1(why.value)),
+        .map(why => domain.Problem(why.value)),
       it.geography.map((field, value) =>
-        MediaRecord.GeographyPart1(field.value) -> MediaRecord.GeographyPart2(value.value)
+        MediaRecord.Geography.Field(field.value) -> MediaRecord.Geography.Value(value.value)
       ),
       period.toOption.flatten,
       it.ids.map((scheme, id) => ExternalIds.Scheme(scheme.value) -> ExternalIds.ExternalId(id.value)),

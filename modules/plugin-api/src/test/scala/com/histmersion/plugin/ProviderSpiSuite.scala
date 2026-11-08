@@ -13,7 +13,7 @@ class ProviderSpiSuite extends munit.FunSuite:
 
   private object Portal extends MediaCollection:
     val title = MediaCollection.Title("Portal objects")
-    val role = MediaItem.Role(MediaCollection.Object)
+    val role = MediaCollection.Object
     def search(place: MediaPlace, http: Plugin.Http) =
       Right(
         List(

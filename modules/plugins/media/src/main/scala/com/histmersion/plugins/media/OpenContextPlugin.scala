@@ -11,5 +11,3 @@ final class OpenContextPlugin extends MediaPlugin("media-opencontext"):
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("opencontext"), OpenContextCollection(c.media.openContext, ctx.licences))
-      .left
-      .map(e => Problem(e.value))

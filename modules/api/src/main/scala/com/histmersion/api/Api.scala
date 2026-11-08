@@ -187,11 +187,6 @@ object Api:
 
   /** `region` is still sent by older links and clients; it is one more place name. */
 
-  export Source.{Export as ExportSourcePart3, View as SourceViewPart3}
-  export Article.Export as ExportArticlePart3
-  export SpatialHierarchyResult.Job.{Id as JobControlPart1Part1, Id as JobPart1}
-  export com.histmersion.api.Jobs.Filter as JobsPart1Part4
-
   final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
     def toFilter: Filter =
       region

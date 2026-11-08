@@ -19,4 +19,4 @@ object ModuleKey:
     case List(g, a) =>
       (for group <- GroupId.either(g); artifact <- ArtifactId.either(a)
       yield ModuleKey(group, artifact)).left.map(refactorError => Resolver.Problem(refactorError))
-    case _ => Left(Resolver.Problem(s"not group:artifact: '$raw'"))
+    case _ => Left(Resolver.Problem.notKey(raw))

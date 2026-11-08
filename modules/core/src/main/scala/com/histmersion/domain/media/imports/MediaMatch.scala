@@ -63,12 +63,12 @@ object MediaMatch:
     List("?", "probably", "possibly", "perhaps", "said to be", "attributed", "likely", "uncertain")
 
   /** Pure: is a place value marked as uncertain? */
-  def uncertain(v: MediaRecord.GeographyPart2): Boolean =
+  def uncertain(v: MediaRecord.Geography.Value): Boolean =
     val s = v.value.toLowerCase(Locale.ROOT)
     Uncertain.exists(s.contains)
 
   /** Pure: the name key of a value (empty when it is uncertain or blank). */
-  def keyOf(v: MediaRecord.GeographyPart2): PlaceInfo.Keys =
+  def keyOf(v: MediaRecord.Geography.Value): PlaceInfo.Keys =
     if uncertain(v) then PlaceInfo.Keys("") else PlaceInfo.Keys(Geocode.key(v.value).value)
 
   /** Pure: do two periods overlap? */
@@ -166,7 +166,7 @@ object MediaMatch:
       target: PlaceInfo,
       resolveId: ResolveId,
       resolve: Resolve,
-      deeper: Set[MediaRecord.GeographyPart1],
+      deeper: Set[MediaRecord.Geography.Field],
       latest: Option[Year] = None
   ): Either[Refusal, Basis] =
     val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)

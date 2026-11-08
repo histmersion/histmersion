@@ -23,7 +23,7 @@ final case class CatalogueState(
     eventAliases: Map[CatalogueState.EventAliasesKey, CatalogueState.EventAliasesValue] = Map.empty,
     corrections: Vector[Correction] = Vector.empty,
     lastCorrectionId: CatalogueState.LastCorrectionId = CatalogueState.LastCorrectionId(0L),
-    catalogueRecords: Vector[(CatalogueState.CatalogueRecordsPart1, CatalogRecord)] = Vector.empty,
+    catalogueRecords: Vector[(Event.Id, CatalogRecord)] = Vector.empty,
     importParts: Map[
       CatalogueState.ImportPartsKey,
       Map[CatalogueState.ImportPartsValueKey, CatalogueState.ImportPartsValueValue]
@@ -50,8 +50,6 @@ object CatalogueState:
   object EventAliasesValue extends Newtype[String, Pure]
   type LastCorrectionId = LastCorrectionId.T
   object LastCorrectionId extends Newtype[Long, Pure]
-  type CatalogueRecordsPart1 = CatalogueRecordsPart1.T
-  object CatalogueRecordsPart1 extends Newtype[String, Pure]
   type ImportPartsKey = ImportPartsKey.T
   object ImportPartsKey extends Newtype[String, Pure]
   type ImportPartsValueKey = ImportPartsValueKey.T

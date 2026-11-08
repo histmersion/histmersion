@@ -11,5 +11,3 @@ final class LocPlugin extends MediaPlugin("media-loc"):
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("loc"), LocCollection(c.media.loc, c.media.thumbPx))
-      .left
-      .map(e => Problem(e.value))

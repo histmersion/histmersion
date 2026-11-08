@@ -1,6 +1,7 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.Years
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
@@ -14,7 +15,7 @@ final class Dot(
     val key: Dot.Key,
     val layer: PointLayer[?],
     var item: Any,
-    var span: (Dot.SpanPart1, Dot.SpanPart2),
+    var span: (Years.Astronomical, Years.Astronomical),
     var member: Member
 ):
   def at: LatLon = layer.at(this)
@@ -22,7 +23,3 @@ final class Dot(
 object Dot:
   type Key = Key.T
   object Key extends Newtype[String, Pure]
-  type SpanPart1 = SpanPart1.T
-  object SpanPart1 extends Newtype[Long, Pure]
-  type SpanPart2 = SpanPart2.T
-  object SpanPart2 extends Newtype[Long, Pure]

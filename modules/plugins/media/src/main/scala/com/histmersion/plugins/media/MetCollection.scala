@@ -20,7 +20,7 @@ final class MetCollection(conf: CollectionSettings)
   val title = MediaCollection.Title("Met objects")
   override val description =
     MediaCollection.Description("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
-  val role = MediaItem.Role(MediaCollection.Object)
+  val role = MediaCollection.Object
 
   def search(
       place: MediaPlace,

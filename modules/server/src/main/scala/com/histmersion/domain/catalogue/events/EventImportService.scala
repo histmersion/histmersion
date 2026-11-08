@@ -210,7 +210,7 @@ object EventImportService:
 
     private def upsertRecord(s: CatalogueState, eventId: Event.Id, r: CatalogRecord): CatalogueState =
       s.modify(_.catalogueRecords)
-        .using(rs => rs.filterNot(_._2.key == r.key) :+ (CatalogueState.CatalogueRecordsPart1(eventId.value) -> r))
+        .using(rs => rs.filterNot(_._2.key == r.key) :+ (eventId -> r))
 
     /** One event's placed records written: the state after, whether the event was created, and what became of its
       * corrections when it was refreshed.

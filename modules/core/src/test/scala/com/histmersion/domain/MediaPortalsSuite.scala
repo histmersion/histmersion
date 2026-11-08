@@ -64,7 +64,7 @@ class MediaPortalsSuite extends munit.FunSuite:
   )
   private def rec(
       ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)],
-      geo: List[(MediaRecord.GeographyPart1, MediaRecord.GeographyPart2)],
+      geo: List[(MediaRecord.Geography.Field, MediaRecord.Geography.Value)],
       period: Option[Period] = DeepTime.span(DeepTime.SignedYear(-200L), DeepTime.SignedYear(360L))
   ) =
     MediaRecord(
@@ -74,13 +74,13 @@ class MediaPortalsSuite extends munit.FunSuite:
       Some(MediaRecord.ImageUrl("i")),
       None,
       None,
-      Left(MediaRecord.RightsPart1("x")),
+      Left(Problem("x")),
       geo,
       period,
       ids
     )
   private def gp(field: String, value: String) =
-    (MediaRecord.GeographyPart1(field), MediaRecord.GeographyPart2(value))
+    (MediaRecord.Geography.Field(field), MediaRecord.Geography.Value(value))
   private def ext(scheme: String, id: String) = (ExternalIds.Scheme(scheme), ExternalIds.ExternalId(id))
   private val idsOnMap: MediaMatch.ResolveId = Map(
     ext("pleiades", "697725") -> Set(MediaMatch.PlaceInfo.Id("pleiades_697725")),
@@ -101,7 +101,7 @@ class MediaPortalsSuite extends munit.FunSuite:
         petra,
         idsOnMap,
         namesOnMap,
-        Set(MediaRecord.GeographyPart1("context"))
+        Set(MediaRecord.Geography.Field("context"))
       ),
       Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE")
     )
@@ -112,7 +112,7 @@ class MediaPortalsSuite extends munit.FunSuite:
         petra,
         idsOnMap,
         namesOnMap,
-        Set(MediaRecord.GeographyPart1("context"))
+        Set(MediaRecord.Geography.Field("context"))
       ),
       Left("its context names another place on the map")
     )
@@ -122,7 +122,7 @@ class MediaPortalsSuite extends munit.FunSuite:
         petra,
         idsOnMap,
         namesOnMap,
-        Set(MediaRecord.GeographyPart1("context"))
+        Set(MediaRecord.Geography.Field("context"))
       ),
       Left("its dates do not overlap the place's")
     )
@@ -143,7 +143,7 @@ class MediaPortalsSuite extends munit.FunSuite:
         jordan,
         idsOnMap,
         namesOnMap,
-        Set(MediaRecord.GeographyPart1("context"))
+        Set(MediaRecord.Geography.Field("context"))
       ),
       Left("its place id names another place on the map")
     )
@@ -153,7 +153,7 @@ class MediaPortalsSuite extends munit.FunSuite:
         petra,
         idsOnMap,
         namesOnMap,
-        Set(MediaRecord.GeographyPart1("context"))
+        Set(MediaRecord.Geography.Field("context"))
       ),
       Left("its place id is ambiguous on the map")
     )
@@ -168,12 +168,12 @@ class MediaPortalsSuite extends munit.FunSuite:
         petra,
         idsOnMap,
         withPetra,
-        Set(MediaRecord.GeographyPart1("context"))
+        Set(MediaRecord.Geography.Field("context"))
       ),
       Right("context = Petra; 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(
-      MediaMatch.withIds(rec(Nil, geo, None), petra, idsOnMap, withPetra, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(Nil, geo, None), petra, idsOnMap, withPetra, Set(MediaRecord.Geography.Field("context"))),
       Left("no dates on the record")
     )
 
@@ -190,11 +190,11 @@ class MediaPortalsSuite extends munit.FunSuite:
         petra,
         idsOnMap,
         twoNames,
-        Set(MediaRecord.GeographyPart1("context"))
+        Set(MediaRecord.Geography.Field("context"))
       ),
       Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(
-      MediaMatch.withIds(rec(Nil, geo), petra, idsOnMap, twoNames, Set(MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(Nil, geo), petra, idsOnMap, twoNames, Set(MediaRecord.Geography.Field("context"))),
       Left("its context name is ambiguous on the map")
     )

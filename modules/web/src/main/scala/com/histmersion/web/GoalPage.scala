@@ -165,7 +165,7 @@ object GoalPage:
             .map(m =>
               ApiClient.managerAction(
                 m.id,
-                if resume then ManagersApi.ActionPart1Part2("resume") else ManagersApi.ActionPart1Part2("pause")
+                if resume then ManagersApi.Action("resume") else ManagersApi.Action("pause")
               )
             )
         )

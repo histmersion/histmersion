@@ -11,5 +11,3 @@ final class AicPlugin extends MediaPlugin("media-aic"):
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("aic"), ArtInstituteCollection(c.media.aic, c.media.thumbPx))
-      .left
-      .map(e => Problem(e.value))

@@ -13,9 +13,7 @@ final class HelloAiPlugin extends Plugin:
 
   def register(config: HelloAiConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     config.token
-      .fold[Either[Problem, Boolean]](Right(false))(t =>
-        ctx.secret(t).left.map(e => Problem(e.value)).map(_.value.nonEmpty)
-      )
+      .fold[Either[Problem, Boolean]](Right(false))(t => ctx.secret(t).map(_.value.nonEmpty))
       .flatMap { hasToken =>
         ctx.log.info(
           _root_.com.histmersion.plugin.Plugin.Log.InfoMessage(
@@ -24,6 +22,4 @@ final class HelloAiPlugin extends Plugin:
         )
         ctx.aiProviders
           .add(Registry.AddId(config.name.value), HelloAiProvider(config.replies, HelloAiProvider.HasToken(hasToken)))
-          .left
-          .map(e => Problem(e.value))
       }

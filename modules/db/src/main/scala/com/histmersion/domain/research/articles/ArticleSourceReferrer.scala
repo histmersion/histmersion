@@ -35,7 +35,7 @@ final class ArticleSourceReferrer extends SourceReferrer:
               .flatMap(rename.target)
               .map(c => Article.Link.Target(c.value))
         )
-        .map((slug, n) => (RenamedReferences.TextsPart1(slug.value), RenamedReferences.TextsPart2(n.value)))
+        .map((slug, n) => (RenamedReferences.Text.Owner(slug.value), RenamedReferences.Text.Links(n.value)))
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =

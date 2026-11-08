@@ -20,4 +20,4 @@ object ModuleCoordinates:
         key <- ModuleKey.parse(ModuleKey.Text(s"$g:$a"))
         version <- ModuleVersion.either(v).left.map(e => Resolver.Problem(s"'$raw': version $e"))
       yield ModuleCoordinates(key, version)
-    case _ => Left(Resolver.Problem(s"not group:artifact:version: '$raw'"))
+    case _ => Left(Resolver.Problem.notCoordinates(raw))

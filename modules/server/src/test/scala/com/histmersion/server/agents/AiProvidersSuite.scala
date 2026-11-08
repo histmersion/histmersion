@@ -116,7 +116,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val info = Plugin.Info(id, Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: Config, ctx: Plugin.Context) =
-      ctx.aiProviders.add(name, provider).left.map(m => Problem(m.value))
+      ctx.aiProviders.add(name, provider)
 
   private def on(id: String = "zq-ai") = s"histmersion.plugins.$id.enabled = true"
 

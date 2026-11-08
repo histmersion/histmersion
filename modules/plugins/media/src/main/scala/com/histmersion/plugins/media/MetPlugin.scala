@@ -11,5 +11,3 @@ final class MetPlugin extends MediaPlugin("media-met"):
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("met"), MetCollection(c.media.met))
-      .left
-      .map(e => Problem(e.value))

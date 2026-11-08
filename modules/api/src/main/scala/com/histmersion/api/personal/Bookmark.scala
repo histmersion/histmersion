@@ -51,7 +51,6 @@ object Bookmark:
   type Label = Label.T
 
   object Label extends Newtype[String, Pure]:
-    export Bookmark.Problem as TidyResultPart1
 
     val MaxChars = 200
 

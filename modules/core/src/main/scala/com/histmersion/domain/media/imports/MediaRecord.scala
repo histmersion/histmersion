@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.media.imports
 
-import com.histmersion.domain.Attribution
+import com.histmersion.domain.{Attribution, Problem}
 import com.histmersion.Period
 import com.histmersion.domain.catalogue.places.ExternalIds
 import io.github.iltotore.iron.constraint.any.Pure
@@ -41,8 +41,8 @@ final case class MediaRecord(
     imageUrl: Option[MediaRecord.ImageUrl],
     thumbUrl: Option[MediaRecord.ThumbUrl],
     originalUrl: Option[MediaRecord.OriginalUrl],
-    rights: Either[MediaRecord.RightsPart1, Attribution],
-    geography: List[(MediaRecord.GeographyPart1, MediaRecord.GeographyPart2)],
+    rights: Either[Problem, Attribution],
+    geography: List[(MediaRecord.Geography.Field, MediaRecord.Geography.Value)],
     period: Option[Period],
     ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)] = Nil,
     withheld: Option[MediaRecord.Withheld] = None,
@@ -62,12 +62,12 @@ object MediaRecord:
   object ThumbUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
   object OriginalUrl extends Newtype[String, Pure]
-  type RightsPart1 = RightsPart1.T
-  object RightsPart1 extends Newtype[String, Pure]
-  type GeographyPart1 = GeographyPart1.T
-  object GeographyPart1 extends Newtype[String, Pure]
-  type GeographyPart2 = GeographyPart2.T
-  object GeographyPart2 extends Newtype[String, Pure]
+  object Geography:
+    type Field = Field.T
+    object Field extends Newtype[String, Pure]
+    type Value = Value.T
+    object Value extends Newtype[String, Pure]
+
   type Withheld = Withheld.T
   object Withheld extends Newtype[String, Pure]
   type Role = Role.T

@@ -66,7 +66,7 @@ final class KitMediaPlugin extends Plugin:
         Registry.AddId("kit-media"),
         new MediaCollection:
           val title = MediaCollection.Title("Kit pictures")
-          val role = MediaItem.Role(MediaCollection.Image)
+          val role = MediaCollection.Image
           override def requestIntervalMs = MediaCollection.RequestIntervalMs(0)
           def search(place: MediaPlace, http: Plugin.Http) =
             http
@@ -185,8 +185,6 @@ final class KitVaultPlugin extends Plugin:
               .collectFirst { case Array(r, v) if r == ref.value => Secret.Resolved(v) }
               .toRight(Problem(s"no entry '$ref'"))
       )
-      .left
-      .map(e => Problem(e.value))
 
 /** A plugin whose `register` refuses. */
 final class KitBrokenPlugin extends Plugin:

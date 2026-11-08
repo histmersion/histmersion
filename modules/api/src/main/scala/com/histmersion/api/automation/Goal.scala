@@ -359,7 +359,7 @@ object Goal:
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
   object Stages:
-    export Goal.{Stage as AllPart1, Stage as MeaningStatus, StageMeaning as AllPart2, StageMeaning as MeaningResult}
+    export Goal.{Stage as MeaningStatus, StageMeaning as MeaningResult}
 
     val all: scala.List[(Stage, StageMeaning)] = scala.List(
       {

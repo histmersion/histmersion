@@ -40,7 +40,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def runTarget(
       p: Pipeline,
       raw: AutomationHost.RunTargetRaw
-  ): Option[Either[Api.Error, AutomationHost.RunTargetResultPart2]] =
+  ): Option[Either[Api.Error, AutomationHost.CanonicalKey]] =
     p.targetKind match
       case TargetKind.Source =>
         Some(
@@ -49,11 +49,11 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             .left
             .map(p => refused(p.value))
             .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
-            .map(w => AutomationHost.RunTargetResultPart2(w.source.citekey.value))
+            .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
         )
       case TargetKind.Article if p == Pipeline.CompileArticle =>
         Some(
-          Slug.parse(raw.value).map(sl => AutomationHost.RunTargetResultPart2(sl.value)).left.map(p => refused(p.value))
+          Slug.parse(raw.value).map(sl => AutomationHost.CanonicalKey(sl.value)).left.map(p => refused(p.value))
         )
       case TargetKind.Article =>
         Some(
@@ -62,7 +62,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             .left
             .map(p => refused(p.value))
             .flatMap(sl => h.research.articles.get(sl))
-            .map(v => AutomationHost.RunTargetResultPart2(v.article.slug.value))
+            .map(v => AutomationHost.CanonicalKey(v.article.slug.value))
         )
       case TargetKind.Goal =>
         Some(
@@ -71,7 +71,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             .left
             .map(refused)
             .flatMap(gs => h.goals.get(gs))
-            .map(g => AutomationHost.RunTargetResultPart2(g.slug.value))
+            .map(g => AutomationHost.CanonicalKey(g.slug.value))
         )
       case TargetKind.Manager => None
 
@@ -129,21 +129,21 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def runRoles(p: Pipeline): List[Role] =
     (p.roles ++ (if p == Pipeline.CompileArticle then Pipeline.ReviewArticle.roles else Nil)).distinct
 
-  def linkRef(kind: LinkKind, raw: AutomationHost.LinkRefRaw): Either[Api.Error, AutomationHost.LinkRefResultPart2] =
+  def linkRef(kind: LinkKind, raw: AutomationHost.LinkRefRaw): Either[Api.Error, AutomationHost.CanonicalKey] =
     if kind == LinkKind.Article then
       Slug
         .parse(raw.value)
         .left
         .map(p => refused(p.value))
         .flatMap(sl => h.research.articles.get(sl))
-        .map(v => AutomationHost.LinkRefResultPart2(v.article.slug.value))
+        .map(v => AutomationHost.CanonicalKey(v.article.slug.value))
     else
       Citekey
         .parse(raw.value)
         .left
         .map(p => refused(p.value))
         .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)))
-        .map(w => AutomationHost.LinkRefResultPart2(w.source.citekey.value))
+        .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
 
   def probeSubject(citekey: Citekey): Either[Api.Error, ProbeAnswer] =
     h.library.sources

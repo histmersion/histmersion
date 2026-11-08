@@ -10,8 +10,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
 
 object ManagersApi:
-  type ActionPart1Part2 = ActionPart1Part2.T
-  object ActionPart1Part2 extends Newtype[String, Pure]
+  type Action = Action.T
+  object Action extends Newtype[String, Pure]
 
   import Managers.*
 
@@ -181,19 +181,18 @@ object ManagersApi:
         )
       )
 
-  lazy val action: PublicEndpoint[(ManagerInfo.Id, ActionPart1Part2, Option[Boolean]), Api.Error, ManagerInfo, Any] =
+  lazy val action: PublicEndpoint[(ManagerInfo.Id, Action, Option[Boolean]), Api.Error, ManagerInfo, Any] =
     (one.post
       .in(path[String]("action"))
       .in(query[Option[Boolean]]("runs"))
       .out(jsonBody[ManagerInfo]))
-      .mapIn[(ManagerInfo.Id, ActionPart1Part2, Option[Boolean])](
-        (refactorDecoded11: (String, String, Option[Boolean])) =>
-          (
-            ManagerInfo.Id((refactorDecoded11)._1),
-            ActionPart1Part2((refactorDecoded11)._2),
-            ((refactorDecoded11)._3).map(refactorElement13 => (refactorElement13))
-          )
-      )((refactorEncoded11: (ManagerInfo.Id, ActionPart1Part2, Option[Boolean])) =>
+      .mapIn[(ManagerInfo.Id, Action, Option[Boolean])]((refactorDecoded11: (String, String, Option[Boolean])) =>
+        (
+          ManagerInfo.Id((refactorDecoded11)._1),
+          Action((refactorDecoded11)._2),
+          ((refactorDecoded11)._3).map(refactorElement13 => (refactorElement13))
+        )
+      )((refactorEncoded11: (ManagerInfo.Id, Action, Option[Boolean])) =>
         (
           ((refactorEncoded11)._1).value,
           ((refactorEncoded11)._2).value,

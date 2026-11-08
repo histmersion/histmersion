@@ -22,7 +22,7 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
         "'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their " +
         "locations name"
     )
-  val role = MediaItem.Role(MediaCollection.Map)
+  val role = MediaCollection.Map
   override def matchRule = MediaMatchRule.Map(Year(conf.maxYear.value))
 
   private def explain(e: String): String =

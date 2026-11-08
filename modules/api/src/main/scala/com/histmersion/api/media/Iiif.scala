@@ -30,8 +30,6 @@ object Iiif:
   type SizeText = SizeText.T
   object SizeText extends Newtype[String, Pure]
 
-  export com.histmersion.api.library.ArchiveFile.Format.Problem as ParseFormatResultPart1
-
   val ApiContext = "http://iiif.io/api/image/3/context.json"
   val Protocol = "http://iiif.io/api/image"
   val Profile = "level1"
@@ -54,9 +52,6 @@ object Iiif:
       object W extends Newtype[Int, Pure]
       type H = H.T
       object H extends Newtype[Int, Pure]
-
-    type ParseResultPart1 = Problem
-    val ParseResultPart1: Problem.type = Problem
 
     def parse(s: Wire): Either[Problem, Region] = (s).value.trim.toLowerCase match
       case "full" | "square" => Right(Full)
@@ -104,9 +99,6 @@ object Iiif:
       object W extends Newtype[Int, Pure]
       type H = H.T
       object H extends Newtype[Int, Pure]
-
-    type ParseResultPart1 = Problem
-    val ParseResultPart1: Problem.type = Problem
 
     def parse(s: Wire): Either[Problem, Size] =
       val t = (s).value.trim

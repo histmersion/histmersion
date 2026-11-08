@@ -39,7 +39,7 @@ trait AutomationHost:
   def runTarget(
       p: Pipeline,
       raw: AutomationHost.RunTargetRaw
-  ): Option[Either[Api.Error, AutomationHost.RunTargetResultPart2]]
+  ): Option[Either[Api.Error, AutomationHost.CanonicalKey]]
 
   /** The options pipeline `p` understands, checked before a run is queued (`roundsCap`: the review's round cap). */
   def runOptions(
@@ -53,7 +53,7 @@ trait AutomationHost:
   def runRoles(p: Pipeline): List[Role]
 
   /** A source or an article a goal links, as its canonical key (a citekey, a slug). */
-  def linkRef(kind: LinkKind, raw: AutomationHost.LinkRefRaw): Either[Api.Error, AutomationHost.LinkRefResultPart2]
+  def linkRef(kind: LinkKind, raw: AutomationHost.LinkRefRaw): Either[Api.Error, AutomationHost.CanonicalKey]
 
   /** What the probe asks a model about one source, and the answer it must give: (citekey, title, year). */
   def probeSubject(citekey: Citekey): Either[Api.Error, ProbeAnswer]
@@ -84,14 +84,12 @@ trait AutomationHost:
   def lintFix(): Either[Api.Error, LintFixResult]
 
 object AutomationHost:
-  type RunTargetResultPart2 = RunTargetResultPart2.T
-  object RunTargetResultPart2 extends Newtype[String, Pure]
+  type CanonicalKey = CanonicalKey.T
+  object CanonicalKey extends Newtype[String, Pure]
   type RunTargetRaw = RunTargetRaw.T
   object RunTargetRaw extends Newtype[String, Pure]
   type RunOptionsRoundsCap = RunOptionsRoundsCap.T
   object RunOptionsRoundsCap extends Newtype[Int, Pure]
-  type LinkRefResultPart2 = LinkRefResultPart2.T
-  object LinkRefResultPart2 extends Newtype[String, Pure]
   type LinkRefRaw = LinkRefRaw.T
   object LinkRefRaw extends Newtype[String, Pure]
   type VocabularyResult = VocabularyResult.T

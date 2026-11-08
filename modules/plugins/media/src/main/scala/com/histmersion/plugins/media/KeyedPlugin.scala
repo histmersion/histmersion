@@ -37,8 +37,6 @@ abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends M
       .flatMap(key =>
         ctx.mediaCollections
           .add(Registry.AddId(name.value), collection(c, key, ctx))
-          .left
-          .map(e => Problem(e.value))
       )
 
 object KeyedPlugin:

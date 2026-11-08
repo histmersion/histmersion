@@ -67,7 +67,7 @@ final class MakerPlugin(
         else if ref.value == "boom" then throw new IllegalStateException("kaput")
         else Right(Secret.Resolved(s"v($ref)"))
     for
-      _ <- ctx.secretVaults.add(Registry.AddId(c.vault), vault).left.map(e => Problem(e.value))
+      _ <- ctx.secretVaults.add(Registry.AddId(c.vault), vault)
       _ <- if c.fail.isEmpty then Right(()) else Left(Problem(c.fail))
     yield ()
 
