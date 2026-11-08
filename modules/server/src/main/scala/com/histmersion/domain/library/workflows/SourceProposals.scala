@@ -90,7 +90,7 @@ object SourceProposals:
   object OutcomeWhy extends Newtype[String, Pure]
 
   /** What became of one proposal, for the run's log and warnings. */
-  enum Outcome:
+  enum Outcome derives CanEqual:
     case Applied(what: Outcome.Applied.What)
     case Recorded(id: Outcome.Recorded.Id, what: Outcome.Recorded.What)
     case AlreadyOpen(what: Outcome.AlreadyOpen.What)

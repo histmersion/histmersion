@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** The steps of the engine's pipelines, each run as one agent definition. A test holds every one of them to a
   * definition that parses.
   */
-enum StepAgent(val wire: StepAgent.Wire):
+enum StepAgent(val wire: StepAgent.Wire) derives CanEqual:
   case Probe extends StepAgent(StepAgent.Wire("probe"))
   case EnrichClassify extends StepAgent(StepAgent.Wire("enrich-classify"))
   case EnrichFindings extends StepAgent(StepAgent.Wire("enrich-findings"))

@@ -19,7 +19,7 @@ final case class JobRunState(
     updated: JobRunState.Updated,
     createdAt: Instant,
     updatedAt: Instant
-)
+) derives CanEqual
 
 object JobRunState:
   type Id = Id.T

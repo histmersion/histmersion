@@ -53,6 +53,8 @@ import com.histmersion.pluginhost.SystemProcesses
 @main def pluginTool(args: String*): Unit = sys.exit(RelinkPlugins.exitCode(args.toList.map(RelinkPlugins.Argument(_)))(using Console.system).value)
 
 object RelinkPlugins:
+  private given CanEqual[Path, Path] = CanEqual.derived
+
   type Argument = Argument.T
   object Argument extends Newtype[String, Pure]
   type ClassName = ClassName.T

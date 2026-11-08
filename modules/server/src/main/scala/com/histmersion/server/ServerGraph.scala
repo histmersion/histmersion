@@ -307,6 +307,7 @@ object ServerGraph:
       )
       def ours(k: java.nio.file.WatchKey): Boolean =
         import scala.jdk.CollectionConverters.*
+        given CanEqual[java.nio.file.WatchEvent.Kind[?], java.nio.file.WatchEvent.Kind[?]] = CanEqual.derived
         val hit = k
           .pollEvents()
           .asScala

@@ -5,7 +5,7 @@ package util.storage
   * directories out from today's settings, so no install changes. The pictures, their thumbnails and the figures are
   * rows of the database, not files, and have no location.
   */
-enum Location:
+enum Location derives CanEqual:
   /** The originals stored at ingest, content-addressed (`converter.spool-dir`). */
   case IngestOriginals
 

@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** What a role may change: nothing; a typed answer code writes (`propose` — every embedded step); or directly (an
   * interactive role).
   */
-enum Writes(val wire: Writes.Wire):
+enum Writes(val wire: Writes.Wire) derives CanEqual:
   case None extends Writes(Writes.Wire("none"))
   case Propose extends Writes(Writes.Wire("propose"))
   case Direct extends Writes(Writes.Wire("direct"))

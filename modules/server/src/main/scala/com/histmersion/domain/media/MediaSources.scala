@@ -24,7 +24,7 @@ object MediaSources:
   type Key = Key.T
   object Key extends Newtype[String, io.github.iltotore.iron.Pure]
 
-  enum Error:
+  enum Error derives CanEqual:
     case Invalid(message: Error.Invalid.Message)
     case NotFound
 

@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   * parts of the writing guide (its phases, its self-check) that a reviewer or a fixer does not act on. Every turn of a
   * step re-sends its prompt, so what a role does not act on is left out of it (docs/research-agent-runtimes.md §4).
   */
-enum Audience(val wire: Audience.Wire):
+enum Audience(val wire: Audience.Wire) derives CanEqual:
   case Interactive extends Audience(Audience.Wire("interactive"))
   case Headless extends Audience(Audience.Wire("headless"))
   case Writer extends Audience(Audience.Wire("writer"))

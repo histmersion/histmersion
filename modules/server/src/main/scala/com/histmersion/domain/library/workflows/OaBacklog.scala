@@ -278,7 +278,7 @@ final class OaBacklog(
         val _ = site.workLists.add(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text(line.take(1000))))
         List(line)
 
-  private enum Drained:
+  private enum Drained derives CanEqual:
     case Ingested(citekey: Citekey)
     case Queued(item: Queue.QueueItem.Id)
     case Known

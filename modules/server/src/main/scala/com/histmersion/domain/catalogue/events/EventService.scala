@@ -83,6 +83,8 @@ trait EventService:
   def delete(id: Event.Id): Boolean
 
 object EventService:
+  private given CanEqual[io.circe.Json, io.circe.Json] = CanEqual.derived
+
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 

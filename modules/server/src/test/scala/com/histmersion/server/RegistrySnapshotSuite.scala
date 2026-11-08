@@ -76,7 +76,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
     val reg = h.agents.workflows
     val workflows = reg.definitions.map { d =>
       val tools = d.roles.map(r => s"${r.wire}:${d.allowedTools(r).toList.map(_.value).sorted.mkString("+")}")
-      val outputs = d.outputs != OutputComparison.none
+      val outputs = d.outputs ne OutputComparison.none
       s"workflow\t${d.id.value}\tv${d.version}\t${d.target.wire}\t${tools.mkString(",")}\toutputs=$outputs"
     }
     val tools = reg.tools.map(t => s"tool\t${t.name.value}")

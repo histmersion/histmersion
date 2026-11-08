@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Who ingests by identifier: which fetchers it asks (`legalChain`: never one the config marks unauthorised), and
   * whether a work it found no file for is refused instead of stored from its metadata (`needsFile`).
   */
-enum IngestPath(val legalChain: IngestPath.LegalChain, val needsFile: IngestPath.NeedsFile):
+enum IngestPath(val legalChain: IngestPath.LegalChain, val needsFile: IngestPath.NeedsFile) derives CanEqual:
   /** `histmersion ingest <doi>`. */
   case Person extends IngestPath(IngestPath.LegalChain(false), IngestPath.NeedsFile(false))
 

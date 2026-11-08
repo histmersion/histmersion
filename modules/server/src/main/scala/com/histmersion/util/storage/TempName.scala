@@ -4,7 +4,7 @@ package util.storage
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How the temporary file of a [[Reservation]] beside its key is named. */
-enum TempName:
+enum TempName derives CanEqual:
   /** `<name>.tmp`: one writer at a time, and a reader of the directory knows to skip it. */
   case Fixed
 

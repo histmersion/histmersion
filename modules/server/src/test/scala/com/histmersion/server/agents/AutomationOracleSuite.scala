@@ -24,6 +24,8 @@ import com.histmersion.domain.automation.Pipeline
   * `oracle/automation/`.
   */
 class AutomationOracleSuite extends munit.FunSuite:
+  private given CanEqual[Path, Path] = CanEqual.derived
+
 
   private given Stores = Stores.disk
   private given Resources = Resources.classpath(getClass.getClassLoader)

@@ -19,6 +19,8 @@ final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legac
     else Right(GazetteerPaths.ManifestText(Files.readString(manifest)))
 
 object GazetteerPaths:
+  private given CanEqual[Path, Path] = CanEqual.derived
+
   type ConfiguredPath = ConfiguredPath.T
   object ConfiguredPath extends Newtype[String, Pure]
   type EnvName = EnvName.T

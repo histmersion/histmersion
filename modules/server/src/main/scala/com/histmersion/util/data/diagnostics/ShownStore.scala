@@ -5,7 +5,7 @@ import com.histmersion.util.storage.Location
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How About › Storage shows a store: its entry's key, label and group. About lists them in this order. */
-enum ShownStore(val location: Location, val key: ShownStore.Key, val label: ShownStore.Label, val group: ShownStore.Group):
+enum ShownStore(val location: Location, val key: ShownStore.Key, val label: ShownStore.Label, val group: ShownStore.Group) derives CanEqual:
   case DatabaseCluster
       extends ShownStore(
         Location.DatabaseCluster,

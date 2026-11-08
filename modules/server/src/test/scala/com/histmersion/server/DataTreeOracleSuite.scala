@@ -50,6 +50,8 @@ import com.histmersion.domain.library.Citekey
   * `HISTMERSION_UPDATE_ORACLE=1` rewrites it. Skipped without HISTMERSION_TEST_DB_URL.
   */
 class DataTreeOracleSuite extends DbSuite:
+  private given CanEqual[Path, Path] = CanEqual.derived
+
   private val testDb = TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")

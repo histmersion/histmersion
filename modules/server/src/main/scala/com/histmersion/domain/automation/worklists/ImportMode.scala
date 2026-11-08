@@ -4,7 +4,7 @@ package domain.automation.worklists
 /** What an import does with the list it imports into: empty it first (importing the same file twice is idempotent), or
   * add to it.
   */
-enum ImportMode:
+enum ImportMode derives CanEqual:
   case Replace, Append
 
 object ImportMode:
