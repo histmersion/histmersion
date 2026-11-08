@@ -504,7 +504,7 @@ filesystem	server:server/agents/ClaudeCodeClient.scala	Files.*	4
 filesystem	server:server/agents/ClaudeCodeClient.scala	java.nio.file	1
 filesystem	server:server/agents/CliProcess.scala	.toFile	1
 filesystem	server:server/agents/CliProcess.scala	Files.*	10
-filesystem	server:server/agents/CliProcess.scala	Path.of	3
+filesystem	server:server/agents/CliProcess.scala	Path.of	4
 filesystem	server:server/agents/CliProcess.scala	java.io.File	1
 filesystem	server:server/agents/CliProcess.scala	java.nio.file	2
 filesystem	server:server/agents/Codex.scala	.toFile	1
