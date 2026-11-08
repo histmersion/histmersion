@@ -11,7 +11,6 @@ import scala.`package`.List
 import com.histmersion.api.library.Citekey
 
 object AgentsApi:
-  export Agents.Action as ControlPart1Part2
   type Actions = ActionsValue
   export Agents.Action as ActionsValue
 

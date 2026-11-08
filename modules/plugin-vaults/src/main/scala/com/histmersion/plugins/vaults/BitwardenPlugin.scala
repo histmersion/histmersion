@@ -35,6 +35,4 @@ final class BitwardenPlugin extends Plugin:
             Vaults.timeout(c.timeoutSeconds.value)
           )
         )
-        .left
-        .map(e => Problem(e.value))
     yield ()

@@ -44,8 +44,8 @@ final class PipelineWorkflow(
       .flatMap(_.tools)
       .toSet
 
-  def run(run: RunCtx): Either[Halt, WorkflowDefinition.RunResultPart2] =
-    impl.run(run).map(summary => WorkflowDefinition.RunResultPart2(summary.value))
+  def run(run: RunCtx): Either[Halt, WorkflowDefinition.Summary] =
+    impl.run(run).map(summary => WorkflowDefinition.Summary(summary.value))
 
 object PipelineWorkflow:
   /** The step agents each pipeline's steps run as. */

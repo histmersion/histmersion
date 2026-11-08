@@ -15,7 +15,7 @@ trait GazetteerPlugin(id: String, name: String, source: DownloadedGazetteer) ext
   val info: Plugin.Info =
     Plugin.Info(Plugin.Info.Id(id), Plugin.Info.Version(GazetteerPlugin.Version), Plugin.Info.SpiVersion(Spi.Version))
   def register(c: GazetteerSettings, ctx: Plugin.Context): Either[Problem, Unit] =
-    ctx.gazetteerSources.add(Registry.AddId(name), source).left.map(e => Problem(e.value))
+    ctx.gazetteerSources.add(Registry.AddId(name), source)
 
 object GazetteerPlugin:
   val Version = "0.1.0"

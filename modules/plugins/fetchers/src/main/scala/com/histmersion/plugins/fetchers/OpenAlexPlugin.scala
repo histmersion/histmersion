@@ -11,5 +11,3 @@ final class OpenAlexPlugin extends FetcherPlugin("oa-openalex"):
   def register(c: HostAcquire, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.sourceFetchers
       .add(Registry.AddId("openalex"), OpenAccess(c.acquire, () => ctx.http, ctx.log).openalex)
-      .left
-      .map(e => Problem(e.value))

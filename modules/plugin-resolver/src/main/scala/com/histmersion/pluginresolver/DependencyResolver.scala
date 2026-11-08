@@ -78,7 +78,7 @@ object DependencyResolver:
       case refactorPattern6 :: t if (refactorPattern6.value == "--check") =>
         loop(t, acc.copy(check = ResolveRequest.Check(true)))
       case flag :: _ if (flag).value.startsWith("--") =>
-        Left(Resolver.Problem(s"unknown option $flag"))
+        Left(Resolver.Problem.unknownOption(flag))
       case jars => Right(acc.copy(jars = jars.map((refactorValue4 => Path.of(refactorValue4.value)))))
     val empty = Path.of("")
     loop(args, ResolveRequest(empty, empty, None, Nil, ResolveRequest.Check(false), Nil))
@@ -156,12 +156,7 @@ object DependencyResolver:
   private def serverModules(kit: Path): Either[Resolver.Problem, ServerModules] =
     val modules = kit.resolve("modules")
     val excludes = kit.resolve("excludes")
-    if !Files.isRegularFile(modules) then
-      Left(
-        Resolver.Problem(
-          s"no module list in the kit ($modules): this kit predates plugin dependencies"
-        )
-      )
+    if !Files.isRegularFile(modules) then Left(Resolver.Problem.noModuleList(modules))
     else
       def lines(p: Path) = if Files.isRegularFile(p) then Files.readAllLines(p, UTF_8).asScala.toList else Nil
       ServerModules

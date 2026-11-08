@@ -12,19 +12,6 @@ object PersonalApi:
   type Search = Search.T
   object Search extends Newtype[String, Pure]
 
-  type BookmarksPart1Part3 = Int
-  object BookmarksPart1Part3:
-    inline def apply(v: Int): Int = v
-  type NotesPart1Part4 = Int
-  object NotesPart1Part4:
-    inline def apply(v: Int): Int = v
-  type ReadingPart1Part3 = Int
-  object ReadingPart1Part3:
-    inline def apply(v: Int): Int = v
-  type UnreadPart1Part2 = Int
-  object UnreadPart1Part2:
-    inline def apply(v: Int): Int = v
-
   private def errors = Api.writeErrors
   private def kindQuery =
     query[Option[String]]("kind").description("only these: " + ItemKind.values.map(_.wire).mkString(", "))

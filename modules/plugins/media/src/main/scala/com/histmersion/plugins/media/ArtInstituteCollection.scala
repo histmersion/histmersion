@@ -20,7 +20,7 @@ final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstitu
   override val description = MediaCollection.Description(
     "The Art Institute of Chicago (CC0, is_public_domain; IIIF images)" + MetCollection.Museum
   )
-  val role = MediaItem.Role(MediaCollection.Object)
+  val role = MediaCollection.Object
 
   def search(
       place: MediaPlace,

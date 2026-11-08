@@ -31,7 +31,7 @@ abstract class KeyedCollection(
   override def refusalBackoffMs: List[MediaCollection.RefusalBackoffMs] =
     conf.refusalBackoffMs.map(ms => MediaCollection.RefusalBackoffMs(ms.value))
   override def latestYear: Option[Year] = conf.latestYear.map(y => Year(y.value))
-  val role = MediaItem.Role(MediaCollection.Object)
+  val role = MediaCollection.Object
 
   /** What `histmersion media providers` says of it: its description, and that it is not asked without a key. */
   protected def described(text: String): MediaCollection.Description =

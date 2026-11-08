@@ -33,12 +33,6 @@ object ListFilters:
   type TimeBound = TimeBound.T
   object TimeBound extends Newtype[String, Pure]
 
-  type KnownResultPart1 = Problem
-  val KnownResultPart1: Problem.type = Problem
-  type TimeBoundResultPart1 = Problem
-  val TimeBoundResultPart1: Problem.type = Problem
-  type RangeResultPart1 = Problem
-  val RangeResultPart1: Problem.type = Problem
   type FacetLineResult = FacetLine
   val FacetLineResult: FacetLine.type = FacetLine
 
@@ -104,7 +98,6 @@ object ListFilters:
         n.decidedBy.map(d => entry("decided-by", Some(d.value)))
 
   object ApprovalFilter:
-    export ListFilters.OptionLabel as OptionsResultPart2
 
     export Approval.State.Wire as State
     export Approval.Kind.Wire as Kind
@@ -159,7 +152,6 @@ object ListFilters:
         )
 
   object RunFilter:
-    export ListFilters.OptionLabel as OptionsResultPart2
 
     type Status = Status.T
     object Status extends Newtype[String, Pure]
@@ -210,7 +202,6 @@ object ListFilters:
       )
 
   object JobFilter:
-    export ListFilters.OptionLabel as OptionsResultPart2
 
     export JobState.Wire as Status
     type Kind = JobKinds.Wire

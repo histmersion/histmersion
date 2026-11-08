@@ -655,7 +655,7 @@ object PlaceService:
             val merged =
               period.map((lo, hi) =>
                 val (nlo, nhi) =
-                  (lo.map(y => HeldOverride.PeriodPart1(y.value)), hi.map(y => HeldOverride.PeriodPart2(y.value)))
+                  (lo.map(y => HeldOverride.Bound.Start(y.value)), hi.map(y => HeldOverride.Bound.End(y.value)))
                 base.period.fold((nlo, nhi))((plo, phi) => (nlo.orElse(plo), nhi.orElse(phi)))
               )
             Right(
@@ -803,7 +803,7 @@ object PlaceService:
     val RootKinds: Set[String] = Set("region", "polity", "continent")
 
     /** An override's sides as a closed period (an open side reads as the widest year). */
-    def periodOf(sides: (Option[HeldOverride.PeriodPart1], Option[HeldOverride.PeriodPart2])): Option[Period] =
+    def periodOf(sides: (Option[HeldOverride.Bound.Start], Option[HeldOverride.Bound.End])): Option[Period] =
       sides match
         case (None, None) => None
         case (lo, hi)     => Some(Period(Year(lo.fold(Long.MinValue)(_.value)), Year(hi.fold(Long.MaxValue)(_.value))))

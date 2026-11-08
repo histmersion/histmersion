@@ -45,7 +45,7 @@ object BuiltinAi:
   def plugins: List[Plugin] = entries.map(e =>
     HostProvided(
       e.plugin,
-      _.aiProviders.add(Registry.AddId(e.kind.wire.value), e).left.map(m => plugin.Problem(m.value))
+      _.aiProviders.add(Registry.AddId(e.kind.wire.value), e)
     )
   )
 

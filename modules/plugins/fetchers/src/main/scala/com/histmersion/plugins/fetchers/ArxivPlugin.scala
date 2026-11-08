@@ -11,5 +11,3 @@ final class ArxivPlugin extends FetcherPlugin("arxiv"):
   def register(c: HostAcquire, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.sourceFetchers
       .add(Registry.AddId("arxiv"), ArxivFetcher(c.acquire, () => ctx.http))
-      .left
-      .map(e => Problem(e.value))

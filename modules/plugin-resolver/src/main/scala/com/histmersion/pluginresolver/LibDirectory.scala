@@ -11,9 +11,7 @@ import scala.jdk.CollectionConverters.*
   * `repositories` the repositories they were resolved from.
   */
 object LibDirectory:
-  export Resolver.{
-    Sha256 as Sha256Result
-  }
+  export Resolver.Sha256 as Sha256Result
 
   val Classpath = "classpath"
   val Inputs = "inputs"

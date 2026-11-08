@@ -28,10 +28,10 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
       work: WorkRef,
       since: Option[Year],
       limit: CitationsClient.CitingLimit
-  ): Either[CitationsClient.Problem, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] =
-    val semantic = CitationsClient.CitingResultPart2Part1("semantic-scholar")
-    val openalex = CitationsClient.CitingResultPart2Part1("openalex")
-    val found: Either[String, (CitationsClient.CitingResultPart2Part1, List[FollowupRow])] = work.doi match
+  ): Either[CitationsClient.Problem, (CitationsClient.Backend, List[FollowupRow])] =
+    val semantic = CitationsClient.Backend("semantic-scholar")
+    val openalex = CitationsClient.Backend("openalex")
+    val found: Either[String, (CitationsClient.Backend, List[FollowupRow])] = work.doi match
       case Some(doi) =>
         s2(doi.value, since, limit.value) match
           case Right(rows) if rows.nonEmpty => Right((semantic, rows))

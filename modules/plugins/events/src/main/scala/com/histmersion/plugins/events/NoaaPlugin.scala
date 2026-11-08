@@ -11,5 +11,3 @@ final class NoaaPlugin extends EventsPlugin("events-noaa"):
   def register(c: NoaaConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.eventCatalogues
       .add(Registry.AddId("noaa"), NoaaCatalogue(c.events.noaa))
-      .left
-      .map(e => Problem(e.value))

@@ -23,7 +23,7 @@ trait WorkflowDefinition:
   def allowedTools(role: AgentRole): Set[ToolName]
 
   /** One run to its next resting state: a one-line summary for the run's log entry, or why it halted. */
-  def run(run: RunCtx): Either[Halt, WorkflowDefinition.RunResultPart2]
+  def run(run: RunCtx): Either[Halt, WorkflowDefinition.Summary]
 
   /** How its runs' outputs compare (`agent compare`); none by default. */
   def outputs: OutputComparison = OutputComparison.none
@@ -31,5 +31,5 @@ trait WorkflowDefinition:
 object WorkflowDefinition:
   type DescribeResult = DescribeResult.T
   object DescribeResult extends Newtype[String, Pure]
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends Newtype[String, Pure]
+  type Summary = Summary.T
+  object Summary extends Newtype[String, Pure]

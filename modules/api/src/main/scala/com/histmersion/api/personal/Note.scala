@@ -52,7 +52,6 @@ object Note:
   type Text = Text.T
 
   object Text extends Newtype[String, Pure]:
-    export Note.Problem as TidyResultPart1
 
     val MaxChars = 50000
 

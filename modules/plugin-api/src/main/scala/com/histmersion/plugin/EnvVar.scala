@@ -3,8 +3,8 @@ package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** An environment variable: the host's own ([[Plugin.Context.env]]) or one passed to a process
-  * ([[Processes.run]]).
+/** An environment variable, by name and value: one of the host's own ([[Plugin.Context.env]]) or one passed to a
+  * process ([[Processes.run]], [[Processes.start]]).
   */
 object EnvVar:
   type Name = Name.T

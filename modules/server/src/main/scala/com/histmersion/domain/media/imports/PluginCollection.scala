@@ -69,7 +69,14 @@ final class PluginCollection(
   ) =
     col.matchRule match
       case MediaMatchRule.PlaceIds(deeper) =>
-        MediaMatch.withIds(rec, place, resolveId, resolve, deeper.map(d => MediaRecord.GeographyPart1(d.value)), latest)
+        MediaMatch.withIds(
+          rec,
+          place,
+          resolveId,
+          resolve,
+          deeper.map(d => MediaRecord.Geography.Field(d.value)),
+          latest
+        )
       case _ => matches(rec, place, resolve)
 
   override def complete(fetch: Polite, rec: MediaRecord): Either[SearchedCollection.Problem, MediaRecord] =

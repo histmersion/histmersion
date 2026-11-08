@@ -1067,7 +1067,7 @@ unwrap	plugin-host:pluginhost/Politeness.scala	.value outside a boundary	5
 unwrap	plugin-host:pluginhost/ReservedNames.scala	.value outside a boundary	4
 unwrap	plugin-host:pluginhost/SpiValues.scala	.value outside a boundary	26
 unwrap	plugin-host:pluginhost/SttpTransport.scala	.value outside a boundary	6
-unwrap	plugin-host:pluginhost/SystemProcesses.scala	.value outside a boundary	16
+unwrap	plugin-host:pluginhost/SystemProcesses.scala	.value outside a boundary	15
 unwrap	plugin-host:pluginhost/UpstreamSettingsOf.scala	.value outside a boundary	25
 unwrap	plugin-resolver:pluginresolver/Conflict.scala	.value outside a boundary	4
 unwrap	plugin-resolver:pluginresolver/Coursier.scala	.value outside a boundary	14
@@ -1080,11 +1080,11 @@ unwrap	plugin-resolver:pluginresolver/Pom.scala	.value outside a boundary	2
 unwrap	plugin-resolver:pluginresolver/RepositoryUrl.scala	.value outside a boundary	1
 unwrap	plugin-resolver:pluginresolver/Resolution.scala	.value outside a boundary	1
 unwrap	plugin-resolver:pluginresolver/ServerModules.scala	.value outside a boundary	1
-unwrap	plugin-vaults:plugins/vaults/BitwardenPlugin.scala	.value outside a boundary	8
+unwrap	plugin-vaults:plugins/vaults/BitwardenPlugin.scala	.value outside a boundary	7
 unwrap	plugin-vaults:plugins/vaults/BitwardenVault.scala	.value outside a boundary	9
-unwrap	plugin-vaults:plugins/vaults/KeePassXcPlugin.scala	.value outside a boundary	20
+unwrap	plugin-vaults:plugins/vaults/KeePassXcPlugin.scala	.value outside a boundary	18
 unwrap	plugin-vaults:plugins/vaults/KeePassXcSession.scala	.value outside a boundary	23
-unwrap	plugin-vaults:plugins/vaults/KeePassXcVault.scala	.value outside a boundary	46
+unwrap	plugin-vaults:plugins/vaults/KeePassXcVault.scala	.value outside a boundary	42
 unwrap	plugin-vaults:plugins/vaults/OnePasswordPlugin.scala	.value outside a boundary	8
 unwrap	plugin-vaults:plugins/vaults/OnePasswordVault.scala	.value outside a boundary	5
 unwrap	plugin-vaults:plugins/vaults/Subprocess.scala	.value outside a boundary	7
@@ -1154,10 +1154,10 @@ unwrap	server:domain/automation/worklists/WorkListState.scala	.value outside a b
 unwrap	server:domain/catalogue/CatalogueJobs.scala	.value outside a boundary	1
 unwrap	server:domain/catalogue/events/BuiltinCatalogues.scala	.value outside a boundary	8
 unwrap	server:domain/catalogue/events/CorrectionService.scala	.value outside a boundary	15
-unwrap	server:domain/catalogue/events/EventImportService.scala	.value outside a boundary	58
+unwrap	server:domain/catalogue/events/EventImportService.scala	.value outside a boundary	57
 unwrap	server:domain/catalogue/events/EventImports.scala	.value outside a boundary	67
 unwrap	server:domain/catalogue/events/EventImportsControllers.scala	.value outside a boundary	20
-unwrap	server:domain/catalogue/events/EventService.scala	.value outside a boundary	166
+unwrap	server:domain/catalogue/events/EventService.scala	.value outside a boundary	164
 unwrap	server:domain/catalogue/events/EventsControllers.scala	.value outside a boundary	23
 unwrap	server:domain/catalogue/events/EventsData.scala	.value outside a boundary	3
 unwrap	server:domain/catalogue/events/EventsSettings.scala	.value outside a boundary	12
@@ -1196,7 +1196,7 @@ unwrap	server:domain/library/acquisition/AcquisitionControllers.scala	.value out
 unwrap	server:domain/library/acquisition/ArxivIndex.scala	.value outside a boundary	5
 unwrap	server:domain/library/acquisition/AssessmentService.scala	.value outside a boundary	7
 unwrap	server:domain/library/acquisition/CandidateSearch.scala	.value outside a boundary	42
-unwrap	server:domain/library/acquisition/CandidateService.scala	.value outside a boundary	30
+unwrap	server:domain/library/acquisition/CandidateService.scala	.value outside a boundary	26
 unwrap	server:domain/library/acquisition/CoreBudget.scala	.value outside a boundary	15
 unwrap	server:domain/library/acquisition/CoreIndex.scala	.value outside a boundary	6
 unwrap	server:domain/library/acquisition/CoreQuotaLend.scala	.value outside a boundary	6
@@ -1337,7 +1337,7 @@ unwrap	server:server/Supervisor.scala	.value outside a boundary	36
 unwrap	server:server/TimeZoneCheck.scala	.value outside a boundary	5
 unwrap	server:server/UiConfigViews.scala	.value outside a boundary	5
 unwrap	server:server/agents/AgentDoctor.scala	.value outside a boundary	79
-unwrap	server:server/agents/BuiltinAi.scala	.value outside a boundary	7
+unwrap	server:server/agents/BuiltinAi.scala	.value outside a boundary	6
 unwrap	server:server/agents/ClaudeCode.scala	.value outside a boundary	52
 unwrap	server:server/agents/ClaudeCodeClient.scala	.value outside a boundary	18
 unwrap	server:server/agents/CliOutcomes.scala	.value outside a boundary	7
@@ -1450,7 +1450,7 @@ unwrap	upstreams:upstreams/wikidata/WikidataStatement.scala	.value outside a bou
 unwrap	values:Latitude.scala	.value outside a boundary	1
 unwrap	values:Longitude.scala	.value outside a boundary	1
 unwrap	values:Period.scala	.value outside a boundary	2
-unwrap	values:domain/Licence.scala	.value outside a boundary	13
+unwrap	values:domain/Licence.scala	.value outside a boundary	12
 unwrap	values:domain/automation/AgentRole.scala	.value outside a boundary	1
 unwrap	values:domain/automation/Approval.scala	.value outside a boundary	8
 unwrap	values:domain/automation/Goal.scala	.value outside a boundary	4

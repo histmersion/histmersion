@@ -13,5 +13,3 @@ final class WikidataPlugin extends EventsPlugin("events-wikidata"):
   def register(c: WikidataConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.eventCatalogues
       .add(Registry.AddId("wikidata"), WikidataCatalogue(c.events.wikidata))
-      .left
-      .map(e => Problem(e.value))

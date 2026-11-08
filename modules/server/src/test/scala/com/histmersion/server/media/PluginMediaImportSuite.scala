@@ -80,12 +80,12 @@ class PluginMediaImportSuite extends DbSuite:
       Plugin.Info(Plugin.Info.Id("zq-plugin"), Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = Plugin.DefaultsResource("zq-none.conf")
     def register(c: ZqPluginConfig, ctx: Plugin.Context) =
-      ctx.mediaCollections.add(CollectionAdd, ZqCollection).left.map(e => Problem(e.value))
+      ctx.mediaCollections.add(CollectionAdd, ZqCollection)
 
   private object ZqCollection extends MediaCollection:
     val title = MediaCollection.Title("Zq portal objects")
     override val description = MediaCollection.Description("A test fixture's collection")
-    val role = spi.MediaItem.Role(MediaCollection.Object)
+    val role = MediaCollection.Object
     override val requestIntervalMs = MediaCollection.RequestIntervalMs(0)
     def search(place: MediaPlace, http: Plugin.Http) =
       // the plugin asks with its own User-Agent: the host's replaces it

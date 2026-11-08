@@ -206,7 +206,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
   /** A collection as a plugin of SPI 2's first release wrote it: a title, a role and a search. */
   private object Portal extends MediaCollection:
     val title = MediaCollection.Title("Portal objects")
-    val role = MediaItem.Role(MediaCollection.Object)
+    val role = MediaCollection.Object
     def search(place: MediaPlace, http: Plugin.Http) =
       if place.label == MediaPlace.Label("Nowhere") then Left(Problem("offline"))
       else
@@ -239,10 +239,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(MediaPlace(MediaPlace.Id("p"), MediaPlace.Label("Mycenae")).ids, Nil)
 
   test("a collection's new members by default: its role alone, places, no events, always asked, refusals final"):
-    assertEquals(
-      ((Portal.roles).map(refactorValue8 => (refactorValue8).value): Set[String]),
-      Set(MediaCollection.Object)
-    )
+    assertEquals(Portal.roles, Set(MediaCollection.Object))
     assertEquals(Portal.asks, Set(MediaTarget.Places))
     assertEquals(Portal.searchEvent(MediaEvent(MediaEvent.Id("e"), MediaEvent.Label("Fall of X")), Bodies), Right(Nil))
     assertEquals(Portal.check, Right(()))
@@ -301,7 +298,7 @@ class SpiAdditionsSuite extends munit.FunSuite:
     assertEquals(Portal.completeAll(items, Bodies), MediaCompleted(items.map(i => i.key -> i).toMap))
     val failing = new MediaCollection:
       val title = MediaCollection.Title("Failing")
-      val role = MediaItem.Role(MediaCollection.Map)
+      val role = MediaCollection.Map
       def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
       override def complete(item: MediaItem, http: Plugin.Http) =
         if item.key == MediaItem.Key("k1") then Left(Problem("gone")) else Right(item)

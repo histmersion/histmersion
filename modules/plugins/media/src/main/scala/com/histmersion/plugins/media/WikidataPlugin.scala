@@ -11,5 +11,3 @@ final class WikidataPlugin extends MediaPlugin("media-wikidata"):
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.mediaCollections
       .add(Registry.AddId("wikidata"), WikidataPictures(c.media, ctx.licences))
-      .left
-      .map(e => Problem(e.value))

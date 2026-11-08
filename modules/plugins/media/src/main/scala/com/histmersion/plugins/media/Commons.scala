@@ -156,7 +156,7 @@ object Commons:
       "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's " +
         "Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons"
     )
-    val role = MediaItem.Role(MediaCollection.Depiction)
+    val role = MediaCollection.Depiction
     override def matchRule = MediaMatchRule.Own
     override def asks = Set(MediaTarget.Events)
     override def requestIntervalMs = MediaCollection.RequestIntervalMs(media.requestIntervalMs.value)

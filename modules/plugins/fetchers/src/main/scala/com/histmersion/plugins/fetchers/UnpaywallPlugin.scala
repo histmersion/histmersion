@@ -12,5 +12,3 @@ final class UnpaywallPlugin extends FetcherPlugin("oa-unpaywall"):
   def register(c: UnpaywallConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.sourceFetchers
       .add(Registry.AddId("unpaywall"), OpenAccess(c.acquire, () => ctx.http, ctx.log).unpaywall(c.email))
-      .left
-      .map(e => Problem(e.value))

@@ -24,7 +24,7 @@ trait AiHttpPlugin(id: String, name: String) extends Plugin:
   def register(c: HostAi, ctx: Plugin.Context): Either[Problem, Unit] =
     settings(c.agents.providers)
       .toRight(Problem(s"no agents.providers.$name settings were supplied"))
-      .flatMap(s => ctx.aiProviders.add(Registry.AddId(name), provider(s)).left.map(e => Problem(e.value)))
+      .flatMap(s => ctx.aiProviders.add(Registry.AddId(name), provider(s)))
 
 object AiHttpPlugin:
   val Version = "0.1.0"

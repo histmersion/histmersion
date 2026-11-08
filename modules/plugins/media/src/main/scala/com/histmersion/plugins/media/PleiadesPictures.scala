@@ -18,7 +18,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
       "(matched by that id, no name matching); licence read from Commons; links to Flickr (needs a key), Commons " +
       "categories and other sites are counted, not taken"
   )
-  val role = MediaItem.Role(MediaCollection.Image)
+  val role = MediaCollection.Image
   override def matchRule = MediaMatchRule.Own
   override def placesCarrying = Some(MediaCollection.PlacesCarrying(PleiadesPictures.Scheme))
   override def perPlace = MediaCollection.PerPlace(conf.perPlace.value)

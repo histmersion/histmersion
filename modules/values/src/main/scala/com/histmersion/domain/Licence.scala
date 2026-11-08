@@ -140,11 +140,8 @@ object Licence:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
 
-    type ByWirePart1 = Wire
-    val ByWirePart1: Wire.type = Wire
-
     val allowable: List[Family] = values.toList.filterNot((refactorCallback => (refactorCallback.never)))
 
-    private val byWire: Map[ByWirePart1, Family] = values.map(f => f.wire -> f).toMap
+    private val byWire: Map[Wire, Family] = values.map(f => f.wire -> f).toMap
 
-    def fromWire(s: Wire): Option[Family] = byWire.get(ByWirePart1((s).value))
+    def fromWire(s: Wire): Option[Family] = byWire.get(s)

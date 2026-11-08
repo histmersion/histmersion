@@ -37,6 +37,4 @@ final class HelloPlugin extends Plugin:
             _root_.com.histmersion.plugin.Registry.AddId("hello"),
             HelloFetcher(HelloFetcher.Mirrors(config.mirrors.size))
           )
-          .left
-          .map(e => Problem(e.value))
       }

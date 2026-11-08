@@ -11,5 +11,3 @@ final class GvpPlugin extends EventsPlugin("events-gvp"):
   def register(c: GvpConfig, ctx: Plugin.Context): Either[Problem, Unit] =
     ctx.eventCatalogues
       .add(Registry.AddId("gvp"), GvpCatalogue(c.events))
-      .left
-      .map(e => Problem(e.value))

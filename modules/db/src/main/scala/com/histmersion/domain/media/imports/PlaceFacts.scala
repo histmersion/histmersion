@@ -12,7 +12,7 @@ final case class PlaceFacts(
     id: PlaceFacts.Id,
     label: PlaceFacts.Label,
     keys: Set[PlaceFacts.Keys],
-    period: Option[(PlaceFacts.PeriodPart1, PlaceFacts.PeriodPart2)],
+    period: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
     qid: Option[PlaceFacts.Qid],
     lat: Option[Latitude],
     lon: Option[Longitude]
@@ -25,9 +25,5 @@ object PlaceFacts:
   object Label extends Newtype[String, Pure]
   type Keys = Keys.T
   object Keys extends Newtype[String, Pure]
-  type PeriodPart1 = DeepTime.SignedYear
-  val PeriodPart1: DeepTime.SignedYear.type = DeepTime.SignedYear
-  type PeriodPart2 = DeepTime.SignedYear
-  val PeriodPart2: DeepTime.SignedYear.type = DeepTime.SignedYear
   type Qid = Target.Qid
   val Qid: Target.Qid.type = Target.Qid

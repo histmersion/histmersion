@@ -47,7 +47,7 @@ object WikidataSettings:
     MediaCollection.Plan,
     MediaCollection.LocatorMap,
     MediaCollection.RouteMap
-  ).map(MediaItem.Role(_))
+  )
 
   /** Pure: `P18:image,P242:locator-map` as (property, role), in order, one per property; an entry that is not a
     * property and a picture role is dropped.

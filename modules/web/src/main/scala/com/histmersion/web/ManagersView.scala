@@ -1474,7 +1474,7 @@ object ManagersView:
                         title := "start no new runs; its runs in flight go on",
                         onClick --> (_ =>
                           write(WriteLabel("pause"))(
-                            ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"))
+                            ApiClient.managerAction(m.id, ManagersApi.Action("pause"))
                           )
                         )
                       ),
@@ -1486,7 +1486,7 @@ object ManagersView:
                         title := "also pause its runs in flight",
                         onClick --> (_ =>
                           write(WriteLabel("pause with its runs"))(
-                            ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("pause"), runs = true)
+                            ApiClient.managerAction(m.id, ManagersApi.Action("pause"), runs = true)
                           )
                         )
                       )
@@ -1501,7 +1501,7 @@ object ManagersView:
                     "resume",
                     disabled <-- busy,
                     onClick --> (_ =>
-                      write(WriteLabel("resume"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("resume")))
+                      write(WriteLabel("resume"))(ApiClient.managerAction(m.id, ManagersApi.Action("resume")))
                     )
                   )
                 ),
@@ -1514,7 +1514,7 @@ object ManagersView:
                     title := "cancel its runs in flight and its open items",
                     onClick --> (_ =>
                       if dom.window.confirm(s"Stop ${m.id}: cancel its runs in flight and its open items?") then
-                        write(WriteLabel("stop"))(ApiClient.managerAction(m.id, ManagersApi.ActionPart1Part2("stop")))
+                        write(WriteLabel("stop"))(ApiClient.managerAction(m.id, ManagersApi.Action("stop")))
                     )
                   )
                 )

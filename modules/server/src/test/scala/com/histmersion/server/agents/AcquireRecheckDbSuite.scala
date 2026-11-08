@@ -409,7 +409,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     def updates(d: Doi) = Right(Nil)
   private object NoCitations extends CitationsClient:
     def citing(work: WorkRef, since: Option[Year], limit: CitationsClient.CitingLimit) = Right(
-      (CitationsClient.CitingResultPart2Part1("stub"), Nil)
+      (CitationsClient.Backend("stub"), Nil)
     )
   private object NoWiki extends WikiClient:
     def refs(articleUrl: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used here"))

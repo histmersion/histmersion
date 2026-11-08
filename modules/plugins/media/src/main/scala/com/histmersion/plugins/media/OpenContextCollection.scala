@@ -20,7 +20,7 @@ final class OpenContextCollection(conf: CollectionSettings, licences: LicenceRea
       "Pleiades/GeoNames/Wikidata id, else by its site's name in its context path, and its dates; records flagged " +
       "as related to human remains are not shown"
   )
-  val role = MediaItem.Role(MediaCollection.Object)
+  val role = MediaCollection.Object
   override def matchRule = MediaMatchRule.PlaceIds(Set(MediaMatchRule.PlaceIds.Deeper(OpenContext.Context.value)))
 
   def search(

@@ -134,23 +134,14 @@ object MediaCollection:
   type PlacesCarrying = PlacesCarrying.T
   object PlacesCarrying extends Newtype[String, Pure]
 
-  val Object = "object"
-  val Map = "map"
-  val Image = "image"
-  val LocatorMap = "locator-map"
-  val Plan = "plan"
-  val AerialView = "aerial-view"
-  val RouteMap = "route-map"
-  val Depiction = "depiction"
+  val Object: MediaItem.Role = MediaItem.Role("object")
+  val Map: MediaItem.Role = MediaItem.Role("map")
+  val Image: MediaItem.Role = MediaItem.Role("image")
+  val LocatorMap: MediaItem.Role = MediaItem.Role("locator-map")
+  val Plan: MediaItem.Role = MediaItem.Role("plan")
+  val AerialView: MediaItem.Role = MediaItem.Role("aerial-view")
+  val RouteMap: MediaItem.Role = MediaItem.Role("route-map")
+  val Depiction: MediaItem.Role = MediaItem.Role("depiction")
 
   /** The roles a collection's pictures may play: the ones the host stores. */
-  val Roles: Set[MediaItem.Role] = Set(
-    MediaItem.Role(Object),
-    MediaItem.Role(Map),
-    MediaItem.Role(Image),
-    MediaItem.Role(LocatorMap),
-    MediaItem.Role(Plan),
-    MediaItem.Role(AerialView),
-    MediaItem.Role(RouteMap),
-    MediaItem.Role(Depiction)
-  )
+  val Roles: Set[MediaItem.Role] = Set(Object, Map, Image, LocatorMap, Plan, AerialView, RouteMap, Depiction)

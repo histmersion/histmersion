@@ -14,8 +14,6 @@ import com.histmersion.api.automation.Goal
 object OpsApi:
 
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
-  export Queue.Export as QueueExportPart3
-  export com.histmersion.api.automation.Goal.Export as GoalsExportPart3
 
   import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
   import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}

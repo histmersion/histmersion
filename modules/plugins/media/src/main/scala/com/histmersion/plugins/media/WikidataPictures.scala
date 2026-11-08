@@ -19,7 +19,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
       "licensed on Wikimedia Commons; a job asks about every place on the map not asked yet (one per Wikidata item, " +
       "most-cited sites first), batch by batch, and resumes where it stopped"
   )
-  val role = MediaItem.Role(MediaCollection.Image)
+  val role = MediaCollection.Image
   override def roles = (media.wikidata.placeRoles ++ media.wikidata.eventRoles).map(_._2).toSet + role
   override def matchRule = MediaMatchRule.Own
   override def asks = Set(MediaTarget.Places, MediaTarget.Events)

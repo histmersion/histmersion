@@ -39,9 +39,6 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     val (lat, lon) = kind.at(d.item.asInstanceOf[A])
     LatLon(lat, lon)
 
-  private def dotSpan(span: (Years.Astronomical, Years.Astronomical)): (Dot.SpanPart1, Dot.SpanPart2) =
-    (Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))
-
   /** Show `items` for `span` (remembered while the layer is off). */
   def show(items: Iterable[A], span: (Years.Astronomical, Years.Astronomical)): Unit =
     last = Some((items, span))
@@ -59,17 +56,17 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       next.foreach { (k, a) =>
         live.get(k) match
           case None =>
-            val d = new Dot(Dot.Key(k.value), this, a, dotSpan(span), kind.member(a))
+            val d = new Dot(Dot.Key(k.value), this, a, span, kind.member(a))
             live(k) = d
             fresh += d
           case Some(d) =>
             val was = d.item.asInstanceOf[A]
-            if !(d.span == dotSpan(span) && was.equals(a)) then
+            if !(d.span == span && was.equals(a)) then
               val sameLook = PointMarker.signature(kind, was) == PointMarker.signature(kind, a)
               val member = kind.member(a)
               if member != d.member then reshaped = true
               d.item = a
-              d.span = dotSpan(span)
+              d.span = span
               d.member = member
               restyled = true
               if sameLook then set().drawnAlone(k).foreach(m => kind.recolour(m, a, span))
@@ -89,7 +86,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       PointMarker.html(
         kind,
         a,
-        kind.fill(a, (Years.Astronomical(d.span._1.value), Years.Astronomical(d.span._2.value)))
+        kind.fill(a, d.span)
       )
     )
     kind.title(a).foreach(t => el.setAttribute("title", t.value))
@@ -116,4 +113,4 @@ object PointLayer:
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
 
   private[web] def same[A](d: Dot, a: A, span: (Years.Astronomical, Years.Astronomical)): Boolean =
-    d.span == ((Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))) && a.equals(d.item)
+    d.span == span && a.equals(d.item)

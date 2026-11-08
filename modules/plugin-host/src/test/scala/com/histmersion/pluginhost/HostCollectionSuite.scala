@@ -38,7 +38,7 @@ class HostCollectionSuite extends munit.FunSuite:
     type Config = NoSettings
     val info = Plugin.Info(id, Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     def register(c: NoSettings, ctx: Plugin.Context) =
-      ctx.sourceCollections.add(name, Shelf).left.map(e => Problem(e.value))
+      ctx.sourceCollections.add(name, Shelf)
 
   private def build(p: Plugin, firstParty: Plugin.Info.Id => Boolean = _ => false) =
     PluginHost.build(

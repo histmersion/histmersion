@@ -8,11 +8,12 @@ import com.histmersion.api.library.Rename
 import io.github.iltotore.iron.constraint.any.Pure
 final case class RenamedReferences(
     columns: List[Rename.Count] = Nil,
-    texts: List[(RenamedReferences.TextsPart1, RenamedReferences.TextsPart2)] = Nil
+    texts: List[(RenamedReferences.Text.Owner, RenamedReferences.Text.Links)] = Nil
 )
 
 object RenamedReferences:
-  type TextsPart1 = TextsPart1.T
-  object TextsPart1 extends Newtype[String, Pure]
-  type TextsPart2 = TextsPart2.T
-  object TextsPart2 extends Newtype[Int, Pure]
+  object Text:
+    type Owner = Owner.T
+    object Owner extends Newtype[String, Pure]
+    type Links = Links.T
+    object Links extends Newtype[Int, Pure]

@@ -68,7 +68,7 @@ object AssessmentService:
         _.modify(_.assessments).using(
           _.updated(
             AcquisitionState.AssessmentsKey(assessment.citekey.value),
-            (assessment, AcquisitionState.AssessmentsValuePart2(at))
+            (assessment, CheckedAt(at))
           )
         )
       )

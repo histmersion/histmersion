@@ -116,7 +116,7 @@ class AcquireHandlerSuite extends DbSuite:
 
   private class FakeCitations(rows: List[FollowupRow]) extends CitationsClient:
     def citing(work: WorkRef, since: Option[com.histmersion.Year], limit: CitationsClient.CitingLimit) = Right(
-      (CitationsClient.CitingResultPart2Part1("semantic-scholar"), rows)
+      (CitationsClient.Backend("semantic-scholar"), rows)
     )
 
   private object NoPdf extends OaFetcher:

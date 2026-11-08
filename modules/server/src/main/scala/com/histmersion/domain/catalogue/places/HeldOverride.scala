@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class HeldOverride(
     placeId: Place.Id,
     kind: Option[HeldOverride.Kind],
-    period: Option[(Option[HeldOverride.PeriodPart1], Option[HeldOverride.PeriodPart2])],
+    period: Option[(Option[HeldOverride.Bound.Start], Option[HeldOverride.Bound.End])],
     reason: Option[HeldOverride.Reason],
     sourceKind: HeldOverride.SourceKind,
     sourcePeriod: Option[Period],
@@ -21,10 +21,11 @@ final case class HeldOverride(
 object HeldOverride:
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
-  type PeriodPart1 = PeriodPart1.T
-  object PeriodPart1 extends Newtype[Long, Pure]
-  type PeriodPart2 = PeriodPart2.T
-  object PeriodPart2 extends Newtype[Long, Pure]
+  object Bound:
+    type Start = Start.T
+    object Start extends Newtype[Long, Pure]
+    type End = End.T
+    object End extends Newtype[Long, Pure]
   type Reason = Reason.T
   object Reason extends Newtype[String, Pure]
   type SourceKind = SourceKind.T

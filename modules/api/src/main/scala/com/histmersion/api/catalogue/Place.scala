@@ -824,8 +824,6 @@ object Place:
     object PointText extends Newtype[String, Pure]
     type Problem = Problem.T
     object Problem extends Newtype[String, Pure]
-    type ParsePointResultPart1 = Problem
-    val ParsePointResultPart1: Problem.type = Problem
     type PointTextResult = PointText
     val PointTextResult: PointText.type = PointText
 
@@ -985,8 +983,6 @@ object Place:
     object Name extends Newtype[String, Pure]
     type NameResult = Name
     val NameResult: Name.type = Name
-    type NamesPart2 = Name
-    val NamesPart2: Name.type = Name
 
     type Property = Property.T
     object Property extends Newtype[String, Pure]
