@@ -104,21 +104,17 @@ object PlanQuota:
 
   object Reading:
     type Limit = Limit.T
-    object Limit extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object Limit extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object Kind extends Newtype[String, Pure]
     type UsedPct = UsedPct.T
     object UsedPct extends Newtype[Double, Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends Newtype[Long, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    object ResetsAt extends Newtype[Long, Pure]
     type Rejected = Rejected.T
     object Rejected extends Newtype[Boolean, Pure]
     type ObservedAt = ObservedAt.T
-    object ObservedAt extends Newtype[Long, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    object ObservedAt extends Newtype[Long, Pure]
     export ModelChains.ChainEntry.Model
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
@@ -136,8 +132,7 @@ object PlanQuota:
     export Reading.{Limit as OfLimit, Kind as OfKind}
 
     type ByKindKey = ByKindKey.T
-    object ByKindKey extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object ByKindKey extends Newtype[String, Pure]
     type ByKindValue = Floor
     val ByKindValue: Floor.type = Floor
 

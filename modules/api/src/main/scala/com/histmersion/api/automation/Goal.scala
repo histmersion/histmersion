@@ -51,13 +51,11 @@ object Goal:
 
   /** The stages of a research goal, as the store and the wire spell them. */
   type Slug = Slug.T
-  object Slug extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object Slug extends Newtype[String, Pure]
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type StatusValue = StatusValue.T
-  object StatusValue extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object StatusValue extends Newtype[String, Pure]
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]
   type Tags = Tags.T

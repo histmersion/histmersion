@@ -34,7 +34,6 @@ object CandidateSweep:
   object Again extends Newtype[Int, Pure]
   type SkippedKey = SkippedKey.T
   object SkippedKey extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     given KeyEncoder[T] = KeyEncoder.encodeKeyString.contramap(_.value)
     given KeyDecoder[T] = KeyDecoder.decodeKeyString.map(SkippedKey(_))
   type SkippedValue = SkippedValue.T

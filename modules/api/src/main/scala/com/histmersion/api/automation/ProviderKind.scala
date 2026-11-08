@@ -36,8 +36,7 @@ object ProviderKind:
   object Wire extends Newtype[String, Pure]
 
   type NamesKnown = NamesKnown.T
-  object NamesKnown extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object NamesKnown extends Newtype[String, Pure]
 
   val values: List[ProviderKind] = List(Anthropic, OpenAI, Local, ClaudeCode, Codex, Opencode)
 

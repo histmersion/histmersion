@@ -311,7 +311,7 @@ object Tree:
     else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take((n).value).toList
 
   private def clamp(depth: Depth): Depth = Depth((depth).value.max(1).min((MaxDepth).value))
-  private def order(a: Year, b: Year): (Year, Year) = if a.value <= b.value then (a, b) else (b, a)
+  private def order(a: Year, b: Year): (Year, Year) = if a <= b then (a, b) else (b, a)
 
   def parseBy(s: String): Option[List[String]] =
     val parts = (s).split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList

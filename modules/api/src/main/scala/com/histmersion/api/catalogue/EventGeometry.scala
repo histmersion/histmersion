@@ -8,8 +8,7 @@ object EventGeometry:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
   type Type = Type.T
-  object Type extends Newtype[String, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+  object Type extends Newtype[String, Pure]
 
   def point(lat: Latitude, lon: Longitude): Either[Problem, Geojson] =
     if (lat).value.isNaN || (lat).value < -90 || (lat).value > 90 then Left(Problem(s"lat $lat is not between -90 and 90"))

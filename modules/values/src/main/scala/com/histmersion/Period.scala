@@ -3,14 +3,14 @@ package com.histmersion
 import com.histmersion.Year
 import io.github.iltotore.iron.constraint.any.Pure
 final case class Period private (start: Year, end: Year):
-  def isPoint: Boolean = (start.value == end.value)
+  def isPoint: Boolean = (start == end)
 
 object Period:
   type Problem = Problem.T
   object Problem extends Newtype[String, Pure]
 
   def from(start: Year, end: Year): Either[Error, Period] =
-    Either.cond(start.value <= end.value, new Period(start, end), Error.EndsBeforeStart(start, end))
+    Either.cond(start <= end, new Period(start, end), Error.EndsBeforeStart(start, end))
 
   def point(year: Year): Period = new Period(year, year)
 

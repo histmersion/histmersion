@@ -242,8 +242,7 @@ object ModelChains:
 
   object Spend:
     type At = At.T
-    object At extends Newtype[Long, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    object At extends Newtype[Long, Pure]
     type Tokens = Tokens.T
     object Tokens extends Newtype[Long, Pure]
 
@@ -263,8 +262,7 @@ object ModelChains:
     type Usable = Usable.T
     object Usable extends Newtype[Boolean, Pure]
     type FreesAt = FreesAt.T
-    object FreesAt extends Newtype[Long, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    object FreesAt extends Newtype[Long, Pure]
 
   private def measureOf(s: Spend, m: Measure): BigDecimal = m match
     case Measure.Tokens => BigDecimal(s.tokens.value)

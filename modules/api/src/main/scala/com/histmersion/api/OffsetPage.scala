@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class OffsetPage(total: RowCount, offset: Offset, shown: RowCount):
   def next: Option[Offset] = (Option.when(shown.value > 0 && offset.value + shown.value < total.value)(offset.value + shown.value)).map(Offset.apply)
 
-  def isAll: Boolean = (offset.value == 0 && shown.value >= total.value)
+  def isAll: Boolean = (offset.value == 0 && shown >= total)
 
 object OffsetPage:
   type FullSetMax = FullSetMaxValue

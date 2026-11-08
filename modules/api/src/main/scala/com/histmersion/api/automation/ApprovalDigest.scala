@@ -135,12 +135,10 @@ object ApprovalDigest:
 
   object Open:
     type Id = Id.T
-    object Id extends Newtype[Long, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    object Id extends Newtype[Long, Pure]
     export Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
-    object Subject extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object Subject extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
 

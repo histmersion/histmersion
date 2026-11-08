@@ -1707,8 +1707,7 @@ object Api:
     type Current = Current.T
     object Current extends Newtype[String, Pure]
     type PathTemplate = PathTemplate.T
-    object PathTemplate extends Newtype[String, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    object PathTemplate extends Newtype[String, Pure]
     type Readme = Readme.T
     object Readme extends Newtype[String, Pure]
 
