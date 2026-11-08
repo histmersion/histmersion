@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library
 
 import com.histmersion.WireEnumValues
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum MatchOutcome:
   /** The same record here (by uid or ledger): imported as an update, if anything. */
@@ -22,7 +21,7 @@ enum MatchOutcome:
 
 object MatchOutcome:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def wireOf(o: MatchOutcome): Wire = o match
     case Same          => Wire("same")

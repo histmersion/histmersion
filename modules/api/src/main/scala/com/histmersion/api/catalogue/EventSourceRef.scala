@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventSourceRef(
@@ -20,7 +19,7 @@ final case class EventSourceRef(
 
 object EventSourceRef:
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Via = Via.T
-  object Via extends RefinedType[String, Pure]
+  object Via extends Newtype[String, Pure]
   export EventPassage.Quote

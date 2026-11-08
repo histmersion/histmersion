@@ -3,11 +3,10 @@ package api.jobs
 
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object JobActions:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   val all: List[Wire] = List(Wire("pause"), Wire("resume"), Wire("cancel"))
 

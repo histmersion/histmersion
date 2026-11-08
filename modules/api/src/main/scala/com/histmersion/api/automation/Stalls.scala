@@ -6,12 +6,11 @@ import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Stalls:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
 
 
   export StallReport.{Days as ReportDays, At as ReportAt}
@@ -32,11 +31,11 @@ object Stalls:
     export com.histmersion.api.research.ReviewGoal.Slug
     export Facts.{Title, Status, LastProgress, IdleDays}
     type Code = Code.T
-    object Code extends RefinedType[String, Pure]
+    object Code extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
 
 
   final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -44,7 +43,7 @@ object Stalls:
   object ReasonCount:
     export Stall.Code
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
 
 
   final case class StallReport(
@@ -58,11 +57,11 @@ object Stalls:
 
   object StallReport:
     type Days = Days.T
-    object Days extends RefinedType[Int, Pure]
+    object Days extends Newtype[Int, Pure]
     type At = At.T
-    object At extends RefinedType[String, Pure]
+    object At extends Newtype[String, Pure]
     type Goals = Goals.T
-    object Goals extends RefinedType[Int, Pure]
+    object Goals extends Newtype[Int, Pure]
 
 
   object Code:
@@ -84,7 +83,7 @@ object Stalls:
   object SchedWait:
     export Stall.{Code, Why}
     type Position = Position.T
-    object Position extends RefinedType[Int, Pure]
+    object Position extends Newtype[Int, Pure]
 
   final case class Facts(
       slug: Facts.Slug,
@@ -107,34 +106,34 @@ object Stalls:
   object Facts:
     export com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type LastProgress = LastProgress.T
-    object LastProgress extends RefinedType[String, Pure]
+    object LastProgress extends Newtype[String, Pure]
     type IdleDays = IdleDays.T
-    object IdleDays extends RefinedType[Int, Pure]
+    object IdleDays extends Newtype[Int, Pure]
     type ApprovalId = ApprovalId.T
-    object ApprovalId extends RefinedType[Long, Pure]:
+    object ApprovalId extends Newtype[Long, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     type ApprovalKind = ApprovalKind.T
-    object ApprovalKind extends RefinedType[String, Pure]
+    object ApprovalKind extends Newtype[String, Pure]
     type PersonHeld = PersonHeld.T
-    object PersonHeld extends RefinedType[Int, Pure]
+    object PersonHeld extends Newtype[Int, Pure]
     type Paused = Paused.T
-    object Paused extends RefinedType[String, Pure]
+    object Paused extends Newtype[String, Pure]
     type Draining = Draining.T
-    object Draining extends RefinedType[Boolean, Pure]
+    object Draining extends Newtype[Boolean, Pure]
     type LastStop = LastStop.T
-    object LastStop extends RefinedType[String, Pure]
+    object LastStop extends Newtype[String, Pure]
     type Sources = Sources.T
-    object Sources extends RefinedType[Int, Pure]
+    object Sources extends Newtype[Int, Pure]
     type NoCandidates = NoCandidates.T
-    object NoCandidates extends RefinedType[Boolean, Pure]
+    object NoCandidates extends Newtype[Boolean, Pure]
     type Open = Open.T
-    object Open extends RefinedType[Int, Pure]
+    object Open extends Newtype[Int, Pure]
     type Running = Running.T
-    object Running extends RefinedType[Int, Pure]
+    object Running extends Newtype[Int, Pure]
 
   def stalled(f: Facts, days: Stalls.ReportDays): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
 

@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Step:
@@ -13,7 +12,7 @@ object Step:
 
   object Status:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Status] = values.find(_.wire == s)

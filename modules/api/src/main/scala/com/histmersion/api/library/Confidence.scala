@@ -2,7 +2,6 @@ package com.histmersion
 package api.library
 
 import com.histmersion.api.{Ascii, WireEnumValues}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum Confidence:
@@ -13,7 +12,7 @@ enum Confidence:
 
 object Confidence:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def fromString(s: Wire): Option[Confidence] =
     values.find(_.toString.equalsIgnoreCase((s).value))

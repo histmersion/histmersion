@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Autopilot:
@@ -14,9 +13,9 @@ object Autopilot:
 
   object AutopilotSet:
     type On = On.T
-    object On extends RefinedType[Boolean, Pure]
+    object On extends Newtype[Boolean, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
 
 
   final case class ManagerBrief(id: ManagerBrief.Id, kind: ManagerBrief.Kind, state: ManagerBrief.State, note: Option[ManagerBrief.Note] = None)
@@ -25,12 +24,12 @@ object Autopilot:
 
   object ManagerBrief:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     export ItemStatus.{Wire as State}
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
 
 
   final case class GoalProgress(
@@ -53,22 +52,22 @@ object Autopilot:
     export com.histmersion.api.research.ReviewGoal.Slug
     export Goal.Title
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     export com.histmersion.api.research.ReviewGoal.{Slug as Parent}
     type Sources = Sources.T
-    object Sources extends RefinedType[Int, Pure]
+    object Sources extends Newtype[Int, Pure]
     type Articles = Articles.T
-    object Articles extends RefinedType[Int, Pure]
+    object Articles extends Newtype[Int, Pure]
     type OpenApprovals = OpenApprovals.T
-    object OpenApprovals extends RefinedType[Int, Pure]
+    object OpenApprovals extends Newtype[Int, Pure]
     type LastActivity = LastActivity.T
-    object LastActivity extends RefinedType[String, Pure]
+    object LastActivity extends Newtype[String, Pure]
     type DoneLast7 = DoneLast7.T
-    object DoneLast7 extends RefinedType[Int, Pure]
+    object DoneLast7 extends Newtype[Int, Pure]
     type Open = Open.T
-    object Open extends RefinedType[Int, Pure]
+    object Open extends Newtype[Int, Pure]
     type EtaDays = EtaDays.T
-    object EtaDays extends RefinedType[Int, Pure]
+    object EtaDays extends Newtype[Int, Pure]
 
 
   final case class ApprovalRule(kind: ApprovalRule.Kind, mode: ApprovalRule.Mode, cap: ApprovalRule.Cap = ApprovalRule.Cap(""))
@@ -79,7 +78,7 @@ object Autopilot:
     export Approval.Kind.{Wire as Kind}
     export Approval.Mode.{Wire as Mode}
     type Cap = Cap.T
-    object Cap extends RefinedType[String, Pure]
+    object Cap extends Newtype[String, Pure]
 
 
   final case class FocusGoal(
@@ -102,25 +101,25 @@ object Autopilot:
     export com.histmersion.api.research.ReviewGoal.Slug
     export Goal.Title
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
     type Stage = Stage.T
-    object Stage extends RefinedType[String, Pure]
+    object Stage extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type Pinned = Pinned.T
-    object Pinned extends RefinedType[Boolean, Pure]
+    object Pinned extends Newtype[Boolean, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
     type Doing = Doing.T
-    object Doing extends RefinedType[String, Pure]
+    object Doing extends Newtype[String, Pure]
     type Open = Open.T
-    object Open extends RefinedType[Int, Pure]
+    object Open extends Newtype[Int, Pure]
     type DoneLast7 = DoneLast7.T
-    object DoneLast7 extends RefinedType[Int, Pure]
+    object DoneLast7 extends Newtype[Int, Pure]
     type EtaDays = EtaDays.T
-    object EtaDays extends RefinedType[Int, Pure]
+    object EtaDays extends Newtype[Int, Pure]
 
 
   final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = FocusWaiting.Why(""), pinned: FocusWaiting.Pinned = FocusWaiting.Pinned(false))
@@ -130,11 +129,11 @@ object Autopilot:
   object FocusWaiting:
     export com.histmersion.api.research.ReviewGoal.Slug
     type Code = Code.T
-    object Code extends RefinedType[String, Pure]
+    object Code extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type Pinned = Pinned.T
-    object Pinned extends RefinedType[Boolean, Pure]
+    object Pinned extends Newtype[Boolean, Pure]
 
 
   final case class FocusInfo(
@@ -153,19 +152,19 @@ object Autopilot:
 
   object FocusInfo:
     type On = On.T
-    object On extends RefinedType[Boolean, Pure]
+    object On extends Newtype[Boolean, Pure]
     type Max = Max.T
-    object Max extends RefinedType[Int, Pure]
+    object Max extends Newtype[Int, Pure]
     type MaxFrom = MaxFrom.T
-    object MaxFrom extends RefinedType[String, Pure]
+    object MaxFrom extends Newtype[String, Pure]
     type Queued = Queued.T
-    object Queued extends RefinedType[Int, Pure]
+    object Queued extends Newtype[Int, Pure]
     type Held = Held.T
-    object Held extends RefinedType[Int, Pure]
+    object Held extends Newtype[Int, Pure]
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
     type Changes = Changes.T
-    object Changes extends RefinedType[String, Pure]
+    object Changes extends Newtype[String, Pure]
 
 
   final case class FocusSet(
@@ -178,11 +177,11 @@ object Autopilot:
   object FocusSet:
 
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
     type Value = Value.T
-    object Value extends RefinedType[Int, Pure]
+    object Value extends Newtype[Int, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
 
     val Actions = List("pin", "unpin", "priority", "max")
 
@@ -197,24 +196,24 @@ object Autopilot:
 
   object DrainInfo:
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
     type Drained = Drained.T
-    object Drained extends RefinedType[Boolean, Pure]
+    object Drained extends Newtype[Boolean, Pure]
     type DrainedAt = DrainedAt.T
-    object DrainedAt extends RefinedType[String, Pure]
+    object DrainedAt extends Newtype[String, Pure]
     type InFlight = InFlight.T
-    object InFlight extends RefinedType[Int, Pure]
+    object InFlight extends Newtype[Int, Pure]
 
 
   final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object DrainSet:
     type On = On.T
-    object On extends RefinedType[Boolean, Pure]
+    object On extends Newtype[Boolean, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
 
 
   /** The autopilot as the automation knows it: the switches, the approvals' rules, the caps, the goals' progress, the
@@ -245,35 +244,35 @@ object Autopilot:
   )
   object EngineStatus:
     type On = On.T
-    object On extends RefinedType[Boolean, Pure]
+    object On extends Newtype[Boolean, Pure]
     type Since = Since.T
-    object Since extends RefinedType[String, Pure]
+    object Since extends Newtype[String, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
     type AgentsEnabled = AgentsEnabled.T
-    object AgentsEnabled extends RefinedType[Boolean, Pure]
+    object AgentsEnabled extends Newtype[Boolean, Pure]
     type ManagersEnabled = ManagersEnabled.T
-    object ManagersEnabled extends RefinedType[Boolean, Pure]
+    object ManagersEnabled extends Newtype[Boolean, Pure]
     type CronsEnabled = CronsEnabled.T
-    object CronsEnabled extends RefinedType[Boolean, Pure]
+    object CronsEnabled extends Newtype[Boolean, Pure]
     type IngestedToday = IngestedToday.T
-    object IngestedToday extends RefinedType[Int, Pure]
+    object IngestedToday extends Newtype[Int, Pure]
     type IngestCap = IngestCap.T
-    object IngestCap extends RefinedType[Int, Pure]
+    object IngestCap extends Newtype[Int, Pure]
     type MaxConcurrentRuns = MaxConcurrentRuns.T
-    object MaxConcurrentRuns extends RefinedType[Int, Pure]
+    object MaxConcurrentRuns extends Newtype[Int, Pure]
     type LastBackup = LastBackup.T
-    object LastBackup extends RefinedType[String, Pure]
+    object LastBackup extends Newtype[String, Pure]
     type LastLint = LastLint.T
-    object LastLint extends RefinedType[String, Pure]
+    object LastLint extends Newtype[String, Pure]
     type Changes = Changes.T
-    object Changes extends RefinedType[String, Pure]
+    object Changes extends Newtype[String, Pure]
     type Backlog = Backlog.T
-    object Backlog extends RefinedType[Int, Pure]
+    object Backlog extends Newtype[Int, Pure]
     type BacklogDays = BacklogDays.T
-    object BacklogDays extends RefinedType[Int, Pure]
+    object BacklogDays extends Newtype[Int, Pure]
     type GoalPlansWait = GoalPlansWait.T
-    object GoalPlansWait extends RefinedType[String, Pure]
+    object GoalPlansWait extends Newtype[String, Pure]
 
     val CronsOff = "the managers' crons are off (agents.scheduler.enabled = false, HISTMERSION_AGENTS_SCHEDULER): " +
       "each watcher sweeps once and never again, and no seeding manager proposes again — new sources are not looked for"

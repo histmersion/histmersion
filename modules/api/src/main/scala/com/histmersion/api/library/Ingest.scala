@@ -5,26 +5,25 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Sha256
 import com.histmersion.api.catalogue.Year
 object Ingest:
   type Disposition = Disposition.T
-  object Disposition extends RefinedType[String, Pure]
+  object Disposition extends Newtype[String, Pure]
   type DropInPath = DropInPath.T
-  object DropInPath extends RefinedType[String, Pure]
+  object DropInPath extends Newtype[String, Pure]
   type Extension = Extension.T
-  object Extension extends RefinedType[String, Pure]
+  object Extension extends Newtype[String, Pure]
   type JobAge = JobAge.T
-  object JobAge extends RefinedType[String, Pure]
+  object JobAge extends Newtype[String, Pure]
   type JobStatus = JobStatus.T
-  object JobStatus extends RefinedType[String, Pure]
+  object JobStatus extends Newtype[String, Pure]
   type StepName = StepName.T
-  object StepName extends RefinedType[String, Pure]
+  object StepName extends Newtype[String, Pure]
   type StoredName = StoredName.T
-  object StoredName extends RefinedType[String, Pure]
+  object StoredName extends Newtype[String, Pure]
 
   val CodeConflict = "conflict"
 
@@ -52,7 +51,7 @@ object Ingest:
 
   object Accepted:
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
 
 
   final case class Params(
@@ -71,9 +70,9 @@ object Ingest:
   object Params:
     export com.histmersion.api.exchange.Bundle.Asset.{FileName as Filename}
     type Quality = Quality.T
-    object Quality extends RefinedType[Boolean, Pure]
+    object Quality extends Newtype[Boolean, Pure]
     type Force = Force.T
-    object Force extends RefinedType[Boolean, Pure]
+    object Force extends Newtype[Boolean, Pure]
     export Source.Provenance
     export Acquire.{ItemNumber as AcquireItem}
 
@@ -92,9 +91,9 @@ object Ingest:
 
   object Report:
     type Created = Created.T
-    object Created extends RefinedType[Boolean, Pure]
+    object Created extends Newtype[Boolean, Pure]
     type EdgesAdded = EdgesAdded.T
-    object EdgesAdded extends RefinedType[Int, Pure]
+    object EdgesAdded extends Newtype[Int, Pure]
     export Ingest.{DropInPath as DropIn}
 
 
@@ -109,12 +108,12 @@ object Ingest:
 
   object Request:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     export Source.Candidate.{ArxivId as Arxiv}
     type Refetch = Refetch.T
-    object Refetch extends RefinedType[Boolean, Pure]
+    object Refetch extends Newtype[Boolean, Pure]
     type LegalOnly = LegalOnly.T
-    object LegalOnly extends RefinedType[Boolean, Pure]
+    object LegalOnly extends Newtype[Boolean, Pure]
 
 
   final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -122,6 +121,6 @@ object Ingest:
   object Step:
     export Ingest.{StepName as Value}
     type Ok = Ok.T
-    object Ok extends RefinedType[Boolean, Pure]
+    object Ok extends Newtype[Boolean, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]

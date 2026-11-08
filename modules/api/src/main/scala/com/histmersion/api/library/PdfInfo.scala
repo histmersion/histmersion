@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.ByteCount
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class PdfInfo(source: PdfInfo.Source, url: Option[PdfInfo.Url], bytes: ByteCount, spoolPath: Option[PdfInfo.SpoolPath])
@@ -15,8 +14,8 @@ final case class PdfInfo(source: PdfInfo.Source, url: Option[PdfInfo.Url], bytes
 
 object PdfInfo:
   type Source = Source.T
-  object Source extends RefinedType[String, Pure]
+  object Source extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type SpoolPath = SpoolPath.T
-  object SpoolPath extends RefinedType[String, Pure]
+  object SpoolPath extends Newtype[String, Pure]

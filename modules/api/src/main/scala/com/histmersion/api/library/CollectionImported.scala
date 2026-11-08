@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An import: the record written (`source`), the item it is linked to, the entry it was linked to before
@@ -28,12 +27,12 @@ final case class CollectionImported(
 
 object CollectionImported:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type RelinkedFrom = RelinkedFrom.T
-  object RelinkedFrom extends RefinedType[String, Pure]
+  object RelinkedFrom extends Newtype[String, Pure]
   type File = File.T
-  object File extends RefinedType[String, Pure]
+  object File extends Newtype[String, Pure]
   type JobError = JobError.T
-  object JobError extends RefinedType[String, Pure]
+  object JobError extends Newtype[String, Pure]
   type JobErrorCode = JobErrorCode.T
-  object JobErrorCode extends RefinedType[String, Pure]
+  object JobErrorCode extends Newtype[String, Pure]

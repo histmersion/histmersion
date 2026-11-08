@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ConvertedDoc(
@@ -19,6 +18,6 @@ final case class ConvertedDoc(
 object ConvertedDoc:
   export com.histmersion.api.library.Source.{OcrMarkdown as Markdown}
   type Pages = Pages.T
-  object Pages extends RefinedType[Int, Pure]
+  object Pages extends Newtype[Int, Pure]
   type Filename = Filename.T
-  object Filename extends RefinedType[String, Pure]
+  object Filename extends Newtype[String, Pure]

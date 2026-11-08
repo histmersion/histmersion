@@ -7,7 +7,6 @@ import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventLinksRequest(recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false), confirm: List[EventLinksRequest.Confirm] = Nil, reject: List[EventLinksRequest.Reject] = Nil)
@@ -15,10 +14,10 @@ final case class EventLinksRequest(recompute: EventLinksRequest.Recompute = Even
 object EventLinksRequest:
 
   type Recompute = Recompute.T
-  object Recompute extends RefinedType[Boolean, Pure]
+  object Recompute extends Newtype[Boolean, Pure]
   type Confirm = Confirm.T
-  object Confirm extends RefinedType[String, Pure]
+  object Confirm extends Newtype[String, Pure]
   type Reject = Reject.T
-  object Reject extends RefinedType[String, Pure]
+  object Reject extends Newtype[String, Pure]
 
   given Codec.AsObject[EventLinksRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[EventLinksRequest])

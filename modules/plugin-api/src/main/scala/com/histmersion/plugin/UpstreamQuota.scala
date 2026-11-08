@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A metered upstream's budget, kept by the host for the whole server — across plugin generations, config reloads and
@@ -38,9 +37,9 @@ trait UpstreamQuota:
 object UpstreamQuota:
   /** No limit: every call may go, nothing is kept. What a host without a budget for the upstream lends. */
   type TakeResultPart1 = TakeResultPart1.T
-  object TakeResultPart1 extends RefinedType[String, Pure]
+  object TakeResultPart1 extends Newtype[String, Pure]
   type TakePurpose = TakePurpose.T
-  object TakePurpose extends RefinedType[String, Pure]
+  object TakePurpose extends Newtype[String, Pure]
   type ObserveStatus = Plugin.HttpResponse.Status
   val ObserveStatus: Plugin.HttpResponse.Status.type = Plugin.HttpResponse.Status
   type ObserveHeadersPart1 = Plugin.HttpResponse.HeadersKey
@@ -48,7 +47,7 @@ object UpstreamQuota:
   type ObserveHeadersPart2 = Plugin.HttpResponse.HeadersValue
   val ObserveHeadersPart2: Plugin.HttpResponse.HeadersValue.type = Plugin.HttpResponse.HeadersValue
   type WaitingUntilResult = WaitingUntilResult.T
-  object WaitingUntilResult extends RefinedType[String, Pure]
+  object WaitingUntilResult extends Newtype[String, Pure]
 
   val Unlimited: UpstreamQuota = new UpstreamQuota:
     def take(purpose: TakePurpose): Either[TakeResultPart1, Unit] = Right(())

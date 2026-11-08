@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FormatIssue(
@@ -22,14 +21,14 @@ final case class FormatIssue(
 
 object FormatIssue:
   type Line = Line.T
-  object Line extends RefinedType[Int, Pure]
+  object Line extends Newtype[Int, Pure]
   type Column = Column.T
-  object Column extends RefinedType[Int, Pure]
+  object Column extends Newtype[Int, Pure]
   type Excerpt = Excerpt.T
-  object Excerpt extends RefinedType[String, Pure]:
+  object Excerpt extends Newtype[String, Pure]:
     type Length = Length.T
-    object Length extends RefinedType[Int, Pure]
+    object Length extends Newtype[Int, Pure]
   type Message = Message.T
-  object Message extends RefinedType[String, Pure]
+  object Message extends Newtype[String, Pure]
   type Fix = Fix.T
-  object Fix extends RefinedType[String, Pure]
+  object Fix extends Newtype[String, Pure]

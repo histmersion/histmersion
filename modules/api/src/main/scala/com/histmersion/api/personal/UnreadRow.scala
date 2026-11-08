@@ -10,7 +10,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UnreadRow(
@@ -27,4 +26,4 @@ final case class UnreadRow(
 
 object UnreadRow:
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]

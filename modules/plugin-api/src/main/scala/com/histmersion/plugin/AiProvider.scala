@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** AI providers, the fifth part of the app that plugins extend: who serves a model the embedded agents call. A plugin
@@ -50,18 +49,18 @@ trait AiProvider:
 
 object AiProvider:
   type TitleResult = TitleResult.T
-  object TitleResult extends RefinedType[String, Pure]
+  object TitleResult extends Newtype[String, Pure]
   type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends RefinedType[String, Pure]
+  object DescriptionResult extends Newtype[String, Pure]
   type SpendsPersonalPlanResult = SpendsPersonalPlanResult.T
-  object SpendsPersonalPlanResult extends RefinedType[Boolean, Pure]
+  object SpendsPersonalPlanResult extends Newtype[Boolean, Pure]
   type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends RefinedType[String, Pure]
+  object CheckResultPart1 extends Newtype[String, Pure]
   type CheckModel = CheckModel.T
-  object CheckModel extends RefinedType[String, Pure]
+  object CheckModel extends Newtype[String, Pure]
   type ModelsResultPart1 = ModelsResultPart1.T
-  object ModelsResultPart1 extends RefinedType[String, Pure]
+  object ModelsResultPart1 extends Newtype[String, Pure]
   type ModelsResultPart2 = ModelsResultPart2.T
-  object ModelsResultPart2 extends RefinedType[String, Pure]
+  object ModelsResultPart2 extends Newtype[String, Pure]
   type DoctorOnline = DoctorOnline.T
-  object DoctorOnline extends RefinedType[Boolean, Pure]
+  object DoctorOnline extends Newtype[Boolean, Pure]

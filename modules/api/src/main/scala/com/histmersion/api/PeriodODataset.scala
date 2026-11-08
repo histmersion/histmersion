@@ -6,7 +6,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.catalogue.{PresetRegion, SkippedPeriod}
 import com.histmersion.api.catalogue.PeriodO
 import com.histmersion.api.catalogue.HistoricalPeriod
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class PeriodODataset(
     authorities: List[PeriodO.Authority],
@@ -29,13 +28,13 @@ final case class PeriodODataset(
 
 object PeriodODataset:
   type PeriodCount = PeriodCount.T
-  object PeriodCount extends RefinedType[Int, Pure]
+  object PeriodCount extends Newtype[Int, Pure]
 
   type ParentsKey = ParentsKey.T
-  object ParentsKey extends RefinedType[String, Pure]
+  object ParentsKey extends Newtype[String, Pure]
   type ParentsValue = ParentsValue.T
-  object ParentsValue extends RefinedType[String, Pure]
+  object ParentsValue extends Newtype[String, Pure]
   type PresetsKey = PresetsKey.T
-  object PresetsKey extends RefinedType[String, Pure]
+  object PresetsKey extends Newtype[String, Pure]
   type Version = Version.T
-  object Version extends RefinedType[Int, Pure]
+  object Version extends Newtype[Int, Pure]

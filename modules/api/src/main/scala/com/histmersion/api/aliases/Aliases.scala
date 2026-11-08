@@ -1,16 +1,15 @@
 package com.histmersion
 package api.aliases
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Aliases:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type RuleText = RuleText.T
-  object RuleText extends RefinedType[String, Pure]
+  object RuleText extends Newtype[String, Pure]
 
   type Rule = RuleValue
   type RuleValue = RuleText

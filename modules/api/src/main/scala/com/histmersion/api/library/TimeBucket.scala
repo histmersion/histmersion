@@ -5,15 +5,14 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class TimeBucket(start: TimeBucket.Start, end: TimeBucket.End, count: TimeBucket.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 object TimeBucket:
   type Start = Start.T
-  object Start extends RefinedType[Long, Pure]
+  object Start extends Newtype[Long, Pure]
   type End = End.T
-  object End extends RefinedType[Long, Pure]
+  object End extends Newtype[Long, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]

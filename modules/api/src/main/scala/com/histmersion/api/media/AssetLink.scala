@@ -8,7 +8,6 @@ import com.histmersion.api.OffsetPage
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
@@ -30,12 +29,12 @@ object AssetLink:
 
 
   type Id = Id.T
-  object Id extends RefinedType[Long, Pure]
+  object Id extends Newtype[Long, Pure]
   export AssetRelation.{Wire as Relation}
   type Xywh = Xywh.T
-  object Xywh extends RefinedType[String, Pure]
+  object Xywh extends Newtype[String, Pure]
   type Notes = Notes.T
-  object Notes extends RefinedType[String, Pure]
+  object Notes extends Newtype[String, Pure]
 
   final case class Deleted(
       id: Id,
@@ -45,7 +44,7 @@ object AssetLink:
 
   object Deleted:
     type Value = Value.T
-    object Value extends RefinedType[Boolean, Pure]
+    object Value extends Newtype[Boolean, Pure]
 
 
 

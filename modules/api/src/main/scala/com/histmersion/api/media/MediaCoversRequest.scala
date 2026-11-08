@@ -7,7 +7,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaCoversRequest(
@@ -23,10 +22,10 @@ final case class MediaCoversRequest(
 
 object MediaCoversRequest:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Covers = Covers.T
-  object Covers extends RefinedType[Boolean, Pure]
+  object Covers extends Newtype[Boolean, Pure]
   type Illustrations = Illustrations.T
-  object Illustrations extends RefinedType[Boolean, Pure]
+  object Illustrations extends Newtype[Boolean, Pure]
   type Isbn = Isbn.T
-  object Isbn extends RefinedType[String, Pure]
+  object Isbn extends Newtype[String, Pure]

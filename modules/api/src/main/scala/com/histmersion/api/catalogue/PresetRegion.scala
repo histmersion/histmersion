@@ -4,7 +4,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.{BBox, WireEnum}
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]):
@@ -29,9 +28,9 @@ enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, va
 
 object PresetRegion:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
 
   def fromWire(s: Wire): Option[PresetRegion] = values.find(_.wire == Wire((s).value.trim))

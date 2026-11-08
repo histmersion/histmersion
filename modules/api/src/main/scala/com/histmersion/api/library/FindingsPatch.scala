@@ -8,7 +8,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FindingsPatch(
@@ -20,6 +19,6 @@ object FindingsPatch:
 
 
   type Remove = Remove.T
-  object Remove extends RefinedType[String, Pure]
+  object Remove extends Newtype[String, Pure]
 
   given Codec.AsObject[FindingsPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[FindingsPatch])

@@ -2,7 +2,6 @@ package com.histmersion
 package api.library
 import scala.annotation.tailrec
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The AGPL (section 13) has a server offer everyone who uses it over a network the source of the very version that is
@@ -11,11 +10,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object CorrespondingSource:
   type Commit = Commit.T
-  object Commit extends RefinedType[String, Pure]
+  object Commit extends Newtype[String, Pure]
   type Repository = Repository.T
-  object Repository extends RefinedType[String, Pure]
+  object Repository extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
   def url(repository: Repository, commit: Option[Commit]): Url =
     val repo = (repository).value.trim.stripSuffix("/").stripSuffix(".git")

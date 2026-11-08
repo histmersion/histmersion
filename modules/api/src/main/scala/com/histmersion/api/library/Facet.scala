@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Facet(
@@ -18,26 +17,26 @@ final case class Facet(
       KindlingsSchema, com.histmersion.api.json.Schema
 object Facet:
   type FieldText = FieldText.T
-  object FieldText extends RefinedType[String, Pure]
+  object FieldText extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
 
 
   type Value = Value.T
-  object Value extends RefinedType[String, Pure]
+  object Value extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Contested = Contested.T
-  object Contested extends RefinedType[Boolean, Pure]
+  object Contested extends Newtype[Boolean, Pure]
 
   enum Field:
     case Tags, Authors, Places, Topics, Status, Provenance
 
   object Field:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def label(f: Field): Wire = f match
       case Tags       => Wire("tags");

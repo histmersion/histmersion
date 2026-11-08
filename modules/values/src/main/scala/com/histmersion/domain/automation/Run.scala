@@ -10,7 +10,7 @@ object Run:
   /** An agent run's id. A run is a background job, so this is that job's id; its own type says which jobs are runs. */
   type Id = Id.T
 
-  object Id extends RefinedType[String, Match["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]]
+  object Id extends Newtype[String, Match["[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"]]
 
   /** An agent run's state, stored in `jobs.status`. `Paused` is resumable (a budget breach, a server restart, a
     * person's pause); `WaitingApproval` holds no worker and goes back to the queue when a person decides the approval
@@ -29,7 +29,7 @@ object Run:
 
   object State:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

@@ -1,7 +1,6 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A wire vocabulary's spellings: every value, how one is written, and how one is read back. The api's own copy of the
@@ -14,4 +13,4 @@ trait WireEnumValues[E]:
 
 object WireEnumValues:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]

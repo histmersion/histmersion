@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class IssueText(base: Option[IssueText.Base], left: IssueText.Left, right: IssueText.Right, hunks: List[IssueHunk] = Nil)
@@ -14,8 +13,8 @@ final case class IssueText(base: Option[IssueText.Base], left: IssueText.Left, r
 
 object IssueText:
   type Base = Base.T
-  object Base extends RefinedType[String, Pure]
+  object Base extends Newtype[String, Pure]
   type Left = Left.T
-  object Left extends RefinedType[String, Pure]
+  object Left extends Newtype[String, Pure]
   type Right = Right.T
-  object Right extends RefinedType[String, Pure]
+  object Right extends Newtype[String, Pure]

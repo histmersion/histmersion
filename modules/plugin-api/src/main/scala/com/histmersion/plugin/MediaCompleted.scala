@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Items completed in one batch ([[MediaCollection.completeAll]]): each by its key (one that could not be completed is
@@ -13,4 +12,4 @@ object MediaCompleted:
   type ItemsKey = MediaItem.Key
   val ItemsKey: MediaItem.Key.type = MediaItem.Key
   type Failed = Failed.T
-  object Failed extends RefinedType[String, Pure]
+  object Failed extends Newtype[String, Pure]

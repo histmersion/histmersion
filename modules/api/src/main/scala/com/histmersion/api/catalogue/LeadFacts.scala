@@ -3,7 +3,6 @@ package api.catalogue
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class LeadFacts(
     eventId: Event.Id,
@@ -22,22 +21,22 @@ final case class LeadFacts(
 
 object LeadFacts:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Tier = Tier.T
-  object Tier extends RefinedType[String, Pure]
+  object Tier extends Newtype[String, Pure]
   type Vei = Vei.T
-  object Vei extends RefinedType[Int, Pure]
+  object Vei extends Newtype[Int, Pure]
   type Magnitude = Magnitude.T
-  object Magnitude extends RefinedType[Double, Pure]
+  object Magnitude extends Newtype[Double, Pure]
   type FindingsNear = FindingsNear.T
-  object FindingsNear extends RefinedType[Int, Pure]
+  object FindingsNear extends Newtype[Int, Pure]
   type Km = Km.T
-  object Km extends RefinedType[Double, Pure]
+  object Km extends Newtype[Double, Pure]
   type Years = Years.T
-  object Years extends RefinedType[Long, Pure]
+  object Years extends Newtype[Long, Pure]
   type Proposed = Proposed.T
-  object Proposed extends RefinedType[Int, Pure]
+  object Proposed extends Newtype[Int, Pure]
   type Attesting = Attesting.T
-  object Attesting extends RefinedType[Int, Pure]
+  object Attesting extends Newtype[Int, Pure]

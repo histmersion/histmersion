@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class InstanceInfo(id: UUID, label: Option[InstanceInfo.Label], createdAt: InstanceInfo.CreatedAt)
@@ -16,6 +15,6 @@ final case class InstanceInfo(id: UUID, label: Option[InstanceInfo.Label], creat
 
 object InstanceInfo:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type CreatedAt = CreatedAt.T
-  object CreatedAt extends RefinedType[String, Pure]
+  object CreatedAt extends Newtype[String, Pure]

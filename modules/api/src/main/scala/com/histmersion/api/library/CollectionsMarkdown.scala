@@ -1,15 +1,14 @@
 package com.histmersion
 package api.library
 import com.histmersion.api.Plural
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The collections' answers as Markdown, for the CLI and the MCP tools alike. */
 object CollectionsMarkdown:
   type Missing = Missing.T
-  object Missing extends RefinedType[Int, Pure]
+  object Missing extends Newtype[Int, Pure]
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
 
 
 

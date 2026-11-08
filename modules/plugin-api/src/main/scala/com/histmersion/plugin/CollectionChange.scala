@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One field a collection changes (or would change) in an item: its name in the collection, what it holds now and what
@@ -11,8 +10,8 @@ final case class CollectionChange(field: CollectionChange.Field, from: Collectio
 
 object CollectionChange:
   type Field = Field.T
-  object Field extends RefinedType[String, Pure]
+  object Field extends Newtype[String, Pure]
   type From = From.T
-  object From extends RefinedType[String, Pure]
+  object From extends Newtype[String, Pure]
   type To = To.T
-  object To extends RefinedType[String, Pure]
+  object To extends Newtype[String, Pure]

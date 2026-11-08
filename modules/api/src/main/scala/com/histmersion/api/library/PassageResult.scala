@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class PassageResult(
@@ -22,14 +21,14 @@ final case class PassageResult(
 
 object PassageResult:
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type Regex = Regex.T
-  object Regex extends RefinedType[Boolean, Pure]
+  object Regex extends Newtype[Boolean, Pure]
   type Matches = Matches.T
-  object Matches extends RefinedType[Int, Pure]
+  object Matches extends Newtype[Int, Pure]
   type Capped = Capped.T
-  object Capped extends RefinedType[Boolean, Pure]
+  object Capped extends Newtype[Boolean, Pure]
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
   type BodyChars = BodyChars.T
-  object BodyChars extends RefinedType[Int, Pure]
+  object BodyChars extends Newtype[Int, Pure]

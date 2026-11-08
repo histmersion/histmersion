@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type Doi = Doi.T
 
-object Doi extends RefinedType[String, Pure]
+object Doi extends Newtype[String, Pure]

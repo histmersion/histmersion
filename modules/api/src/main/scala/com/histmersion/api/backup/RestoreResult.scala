@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `pg_restore` exits 0 with "errors ignored on restore" when the dump came from a newer `pg_dump` than the server, so
@@ -24,11 +23,11 @@ final case class RestoreResult(
 object RestoreResult:
   export Backup.Result.File
   type SchemaVersion = SchemaVersion.T
-  object SchemaVersion extends RefinedType[String, Pure]
+  object SchemaVersion extends Newtype[String, Pure]
   type SourcesBefore = SourcesBefore.T
-  object SourcesBefore extends RefinedType[Int, Pure]
+  object SourcesBefore extends Newtype[Int, Pure]
   type SourcesAfter = SourcesAfter.T
-  object SourcesAfter extends RefinedType[Int, Pure]
+  object SourcesAfter extends Newtype[Int, Pure]
   export Backup.Result.DurationMs
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]

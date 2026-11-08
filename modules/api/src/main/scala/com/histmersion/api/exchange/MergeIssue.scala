@@ -10,7 +10,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Goal
 import io.circe.Json
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -37,11 +36,11 @@ object MergeIssue:
   /** What an issue is about. The wire name is part of the issue id, so it never changes. */
 
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Why = Why.T
-  object Why extends RefinedType[String, Pure]
+  object Why extends Newtype[String, Pure]
 
   enum Kind:
     /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years
@@ -92,7 +91,7 @@ object MergeIssue:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(k: Kind): Wire = k match
       case SameWork                => Wire("same-work")
@@ -135,7 +134,7 @@ object MergeIssue:
 
   object Severity:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     given WireEnumValues[Severity]:
       def all: Array[Severity] = values
@@ -160,7 +159,7 @@ object MergeIssue:
 
   object DecidedBy:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = values
@@ -170,7 +169,7 @@ object MergeIssue:
 
   object Detail:
     type ClipLength = ClipLength.T
-    object ClipLength extends RefinedType[Int, Pure]
+    object ClipLength extends Newtype[Int, Pure]
 
 
 

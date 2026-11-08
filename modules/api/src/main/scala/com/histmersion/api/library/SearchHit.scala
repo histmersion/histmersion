@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class SearchHit(
@@ -30,4 +29,4 @@ object SearchHit:
   export Source.{Topics, Regions, Summary}
   export Search.Snippet
   type MatchedHeading = MatchedHeading.T
-  object MatchedHeading extends RefinedType[String, Pure]
+  object MatchedHeading extends Newtype[String, Pure]

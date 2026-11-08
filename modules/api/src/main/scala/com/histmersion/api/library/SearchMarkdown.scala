@@ -6,7 +6,6 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.YearFmt
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object SearchMarkdown:
@@ -149,7 +148,7 @@ object SearchMarkdown:
   object CollapsedBucket:
     export TimeBucket.{Start, End, Count}
     type Merged = Merged.T
-    object Merged extends RefinedType[Int, Pure]
+    object Merged extends Newtype[Int, Pure]
 
   def collapseHistogram(buckets: List[TimeBucket]): List[CollapsedBucket] =
     if buckets.sizeIs <= 12 then buckets.map(b => CollapsedBucket(b.start, b.end, b.count, CollapsedBucket.Merged(1)))

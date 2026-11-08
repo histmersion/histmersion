@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Tokens of one call. `input` counts ALL prompt tokens, cached ones included; `cacheRead` and `cacheWrite` are parts
@@ -23,15 +22,15 @@ object AiUsage:
   val ApplyCacheWrite: CacheWrite.type = CacheWrite
 
   type Input = Input.T
-  object Input extends RefinedType[Long, Pure]
+  object Input extends Newtype[Long, Pure]
   type Output = Output.T
-  object Output extends RefinedType[Long, Pure]
+  object Output extends Newtype[Long, Pure]
   type CacheRead = CacheRead.T
-  object CacheRead extends RefinedType[Long, Pure]
+  object CacheRead extends Newtype[Long, Pure]
   type CacheWrite = CacheWrite.T
-  object CacheWrite extends RefinedType[Long, Pure]
+  object CacheWrite extends Newtype[Long, Pure]
   type Reasoning = Reasoning.T
-  object Reasoning extends RefinedType[Long, Pure]
+  object Reasoning extends Newtype[Long, Pure]
 
   def apply(input: ApplyInput, output: ApplyOutput, cacheRead: ApplyCacheRead, cacheWrite: ApplyCacheWrite): AiUsage =
     new AiUsage(input, output, cacheRead, cacheWrite, Reasoning((0).toLong))

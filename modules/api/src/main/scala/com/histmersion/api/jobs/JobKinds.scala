@@ -1,7 +1,6 @@
 package com.histmersion
 package api.jobs
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Every kind of background job the server runs, as their owners registered them, in the order the jobs window lists
@@ -33,8 +32,8 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
 
 object JobKinds:
   type Subject = Subject.T
-  object Subject extends RefinedType[String, Pure]
+  object Subject extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type SubjectResult = Subject
   val SubjectResult: Subject.type = Subject

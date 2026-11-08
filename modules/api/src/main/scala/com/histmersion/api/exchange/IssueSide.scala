@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class IssueSide(label: IssueSide.Label, uid: UUID, lines: List[IssueSide.Lines] = Nil)
@@ -16,6 +15,6 @@ final case class IssueSide(label: IssueSide.Label, uid: UUID, lines: List[IssueS
 
 object IssueSide:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Lines = Lines.T
-  object Lines extends RefinedType[String, Pure]
+  object Lines extends Newtype[String, Pure]

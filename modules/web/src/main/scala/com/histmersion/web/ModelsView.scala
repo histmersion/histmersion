@@ -300,7 +300,7 @@ object ModelsView:
             span(
               " ",
               button(typ := "button", cls := "link-btn", "edit", onClick --> (_ => editing.set(true))),
-              Option.when(c.source == SettingSource.Saved.wire)(
+              Option.when(c.source.value == SettingSource.Saved.wire.value)(
                 span(
                   " · ",
                   button(
@@ -355,7 +355,7 @@ object ModelsView:
           )
         ,
         child <-- Auth.writable.map(w =>
-          if w && a.source == SettingSource.Saved.wire then
+          if w && a.source.value == SettingSource.Saved.wire.value then
             span(
               " · ",
               button(

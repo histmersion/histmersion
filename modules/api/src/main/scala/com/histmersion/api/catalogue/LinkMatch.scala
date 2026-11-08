@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum LinkMatch:
   case Exact, Close
@@ -12,7 +11,7 @@ enum LinkMatch:
 
 object LinkMatch:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   /** LPF `links[].type`; anything else (`primaryTopicOf`, `subjectOf`, `seeAlso`) is no identity. */
 
   def ofLpf(t: Wire): Option[LinkMatch] = (t).value.trim.toLowerCase(java.util.Locale.ROOT) match

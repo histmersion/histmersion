@@ -7,13 +7,13 @@ import com.histmersion.api.given
 
 object Candidates:
   type AuthorId = AuthorId.T
-  object AuthorId extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AuthorId extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Index = Index.T
-  object Index extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Index extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Lookback = Lookback.T
-  object Lookback extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lookback extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Watermark = Watermark.T
-  object Watermark extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Watermark extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type Indexes = IndexesValue
@@ -26,7 +26,7 @@ object Candidates:
     case Author extends WatchKind(WatchKind.Wire("author"))
   object WatchKind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def parse(s: Wire): Option[WatchKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -38,7 +38,7 @@ object Candidates:
     case Dismissed extends State(State.Wire("dismissed"))
   object State:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -54,9 +54,9 @@ object Candidates:
 
   object Found:
     type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Key extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type By = By.T
-    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object By extends Newtype[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.modify(

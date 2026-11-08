@@ -3,7 +3,6 @@ package api
 
 import io.circe.{Codec, CursorOp, Decoder, DecodingFailure, Json}
 import sttp.tapir.{Schema, SchemaType}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A derived decoder ignores keys it does not know, so a misplaced or misspelt key decodes to "change nothing"; write
@@ -11,11 +10,11 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object StrictJson:
   type FieldName = FieldName.T
-  object FieldName extends RefinedType[String, Pure]
+  object FieldName extends Newtype[String, Pure]
   type FieldPath = FieldPath.T
-  object FieldPath extends RefinedType[String, Pure]
+  object FieldPath extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
 
 

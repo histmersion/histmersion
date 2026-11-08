@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Event catalogues, the third part of the app that plugins extend: a catalogue of events — eruptions, earthquakes,
@@ -64,18 +63,18 @@ trait EventCatalogue:
 
 object EventCatalogue:
   type TitleResult = TitleResult.T
-  object TitleResult extends RefinedType[String, Pure]
+  object TitleResult extends Newtype[String, Pure]
   type CitationResult = CitationResult.T
-  object CitationResult extends RefinedType[String, Pure]
+  object CitationResult extends Newtype[String, Pure]
   type HomeResult = HomeResult.T
-  object HomeResult extends RefinedType[String, Pure]
+  object HomeResult extends Newtype[String, Pure]
   type RequestIntervalMsResult = RequestIntervalMsResult.T
-  object RequestIntervalMsResult extends RefinedType[Int, Pure]
+  object RequestIntervalMsResult extends Newtype[Int, Pure]
   type PartsResult = PartsResult.T
-  object PartsResult extends RefinedType[String, Pure]
+  object PartsResult extends Newtype[String, Pure]
   type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends RefinedType[String, Pure]
+  object ReadResultPart1 extends Newtype[String, Pure]
   type ReadPart = ReadPart.T
-  object ReadPart extends RefinedType[String, Pure]
+  object ReadPart extends Newtype[String, Pure]
   type EveryPartEachImportResult = EveryPartEachImportResult.T
-  object EveryPartEachImportResult extends RefinedType[Boolean, Pure]
+  object EveryPartEachImportResult extends Newtype[Boolean, Pure]

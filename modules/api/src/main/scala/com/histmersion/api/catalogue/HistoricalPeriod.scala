@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Follows the PeriodO model. `region` is PeriodO's own statement of where the period applies; `preset` only names the
@@ -24,12 +23,12 @@ final case class HistoricalPeriod(
 
 object HistoricalPeriod:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Authority = Authority.T
-  object Authority extends RefinedType[String, Pure]
+  object Authority extends Newtype[String, Pure]
   type Region = Region.T
-  object Region extends RefinedType[String, Pure]
+  object Region extends Newtype[String, Pure]
   type ParentId = ParentId.T
-  object ParentId extends RefinedType[String, Pure]
+  object ParentId extends Newtype[String, Pure]

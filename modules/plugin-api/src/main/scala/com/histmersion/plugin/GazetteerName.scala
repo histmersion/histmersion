@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One name of a place: an alternate, a period's or a language's ("Hatti", "Anatolia", "Türkiye").
@@ -24,6 +23,6 @@ final case class GazetteerName(
 
 object GazetteerName:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type Lang = Lang.T
-  object Lang extends RefinedType[String, Pure]
+  object Lang extends Newtype[String, Pure]

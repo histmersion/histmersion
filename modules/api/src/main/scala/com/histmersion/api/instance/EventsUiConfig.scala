@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventsUiConfig(
@@ -18,10 +17,10 @@ final case class EventsUiConfig(
 
 object EventsUiConfig:
   type LocalFadeSeconds = LocalFadeSeconds.T
-  object LocalFadeSeconds extends RefinedType[Double, Pure]
+  object LocalFadeSeconds extends Newtype[Double, Pure]
   type RegionalFadeSeconds = RegionalFadeSeconds.T
-  object RegionalFadeSeconds extends RefinedType[Double, Pure]
+  object RegionalFadeSeconds extends Newtype[Double, Pure]
   type MapLimit = MapLimit.T
-  object MapLimit extends RefinedType[Int, Pure]
+  object MapLimit extends Newtype[Int, Pure]
   type OutlineToleranceDeg = OutlineToleranceDeg.T
-  object OutlineToleranceDeg extends RefinedType[Double, Pure]
+  object OutlineToleranceDeg extends Newtype[Double, Pure]

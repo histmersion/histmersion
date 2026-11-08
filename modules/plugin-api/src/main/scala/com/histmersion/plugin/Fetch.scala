@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One fetcher's answer for one work. */
@@ -22,11 +21,11 @@ object Fetch:
   /** What the host lends a fetcher for ONE fetch of one work. */
   object Miss:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   object Refused:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
   trait Context:
     /** A value computed at most once per fetch of this work and shared by every fetcher of the chain — an index record
@@ -46,8 +45,8 @@ object Fetch:
 
   object Context:
     type MemoKey = MemoKey.T
-    object MemoKey extends RefinedType[String, Pure]
+    object MemoKey extends Newtype[String, Pure]
     type RegisteredResult = RegisteredResult.T
-    object RegisteredResult extends RefinedType[Boolean, Pure]
+    object RegisteredResult extends Newtype[Boolean, Pure]
     type RegisteredPluginId = RegisteredPluginId.T
-    object RegisteredPluginId extends RefinedType[String, Pure]
+    object RegisteredPluginId extends Newtype[String, Pure]

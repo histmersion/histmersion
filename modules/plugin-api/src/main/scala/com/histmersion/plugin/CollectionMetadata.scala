@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What the host sends into a collection for one of its sources: a new item's metadata ([[SourceCollection.add]]), or
@@ -40,18 +39,18 @@ final case class CollectionMetadata(
 
 object CollectionMetadata:
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Doi = Doi.T
-  object Doi extends RefinedType[String, Pure]
+  object Doi extends Newtype[String, Pure]
   type Isbn = Isbn.T
-  object Isbn extends RefinedType[String, Pure]
+  object Isbn extends Newtype[String, Pure]
   type Publisher = Publisher.T
-  object Publisher extends RefinedType[String, Pure]
+  object Publisher extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]

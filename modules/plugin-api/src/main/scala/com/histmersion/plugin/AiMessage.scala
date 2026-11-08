@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One entry of the conversation so far, oldest first. */
@@ -18,14 +17,14 @@ enum AiMessage:
 object AiMessage:
   object User:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
   object Assistant:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
   object ToolResult:
     type CallId = CallId.T
-    object CallId extends RefinedType[String, Pure]
+    object CallId extends Newtype[String, Pure]
     type Tool = Tool.T
-    object Tool extends RefinedType[String, Pure]
+    object Tool extends Newtype[String, Pure]
     type Output = Output.T
-    object Output extends RefinedType[String, Pure]
+    object Output extends Newtype[String, Pure]

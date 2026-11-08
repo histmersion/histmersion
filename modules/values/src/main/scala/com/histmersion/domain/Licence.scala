@@ -12,11 +12,11 @@ final case class Licence(id: Licence.Id, family: Licence.Family)
 
 object Licence:
   type AllowList = AllowList.T
-  object AllowList extends RefinedType[String, Pure]
+  object AllowList extends Newtype[String, Pure]
   type Statement = Statement.T
-  object Statement extends RefinedType[String, Pure]
+  object Statement extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
 
   /** A licence nobody can read: never stored. */
 
@@ -104,7 +104,7 @@ object Licence:
     */
   type Id = Id.T
 
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
 
   /** What a licence allows, as an allowlist names it (`cc-by-sa`): a new version of an allowed licence needs no config
     * change. Two families are never stored, whatever a config says: an unreadable licence and all rights reserved.
@@ -135,7 +135,7 @@ object Licence:
 
     /** Every family an allowlist may name, in the order the settings document them. */
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     type ByWirePart1 = Wire
     val ByWirePart1: Wire.type = Wire

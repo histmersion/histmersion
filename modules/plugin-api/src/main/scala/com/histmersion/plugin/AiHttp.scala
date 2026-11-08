@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The host's client for model calls: HTTP/1.1, the host's User-Agent, a timeout per call, nothing it sends or receives
@@ -24,27 +23,27 @@ trait AiHttp:
 object AiHttp:
   /** A client that sends nothing (a test, `--self-check`). */
   type PostResultPart1 = PostResultPart1.T
-  object PostResultPart1 extends RefinedType[String, Pure]
+  object PostResultPart1 extends Newtype[String, Pure]
   type PostUrl = PostUrl.T
-  object PostUrl extends RefinedType[String, Pure]
+  object PostUrl extends Newtype[String, Pure]
   type PostHeadersPart1 = PostHeadersPart1.T
-  object PostHeadersPart1 extends RefinedType[String, Pure]
+  object PostHeadersPart1 extends Newtype[String, Pure]
   type PostHeadersPart2 = PostHeadersPart2.T
-  object PostHeadersPart2 extends RefinedType[String, Pure]
+  object PostHeadersPart2 extends Newtype[String, Pure]
   type PostBody = PostBody.T
-  object PostBody extends RefinedType[String, Pure]
+  object PostBody extends Newtype[String, Pure]
   type PostTimeoutSeconds = PostTimeoutSeconds.T
-  object PostTimeoutSeconds extends RefinedType[Int, Pure]
+  object PostTimeoutSeconds extends Newtype[Int, Pure]
   type GetResultPart1 = GetResultPart1.T
-  object GetResultPart1 extends RefinedType[String, Pure]
+  object GetResultPart1 extends Newtype[String, Pure]
   type GetUrl = GetUrl.T
-  object GetUrl extends RefinedType[String, Pure]
+  object GetUrl extends Newtype[String, Pure]
   type GetHeadersPart1 = GetHeadersPart1.T
-  object GetHeadersPart1 extends RefinedType[String, Pure]
+  object GetHeadersPart1 extends Newtype[String, Pure]
   type GetHeadersPart2 = GetHeadersPart2.T
-  object GetHeadersPart2 extends RefinedType[String, Pure]
+  object GetHeadersPart2 extends Newtype[String, Pure]
   type GetTimeoutSeconds = GetTimeoutSeconds.T
-  object GetTimeoutSeconds extends RefinedType[Int, Pure]
+  object GetTimeoutSeconds extends Newtype[Int, Pure]
 
   val Offline: AiHttp = new AiHttp:
     def post(url: PostUrl, headers: Map[PostHeadersPart1, PostHeadersPart2], body: PostBody, timeoutSeconds: PostTimeoutSeconds) = Left(PostResultPart1("offline"))
@@ -55,10 +54,10 @@ object AiHttp:
 
   object Response:
     type Status = Status.T
-    object Status extends RefinedType[Int, Pure]
+    object Status extends Newtype[Int, Pure]
     type Body = Body.T
-    object Body extends RefinedType[String, Pure]
+    object Body extends Newtype[String, Pure]
     type HeadersKey = HeadersKey.T
-    object HeadersKey extends RefinedType[String, Pure]
+    object HeadersKey extends Newtype[String, Pure]
     type HeadersValue = HeadersValue.T
-    object HeadersValue extends RefinedType[String, Pure]
+    object HeadersValue extends Newtype[String, Pure]

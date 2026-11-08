@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.research.Article
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Title
@@ -18,14 +17,14 @@ import com.histmersion.api.library.Source
 object Managers:
   object Usd:
     type Amount = Amount.T
-    object Amount extends RefinedType[Double, Pure]
+    object Amount extends Newtype[Double, Pure]
   object Scheduler:
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
 
   type Actions = ActionsValue
   type ActionsValue = ActionsValue.T
-  object ActionsValue extends RefinedType[String, Pure]
+  object ActionsValue extends Newtype[String, Pure]
 
   export Manager.Kind as Kind
   export Manager.State as State
@@ -44,7 +43,7 @@ object Managers:
 
   object ItemOrigin:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[ItemOrigin] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -126,9 +125,9 @@ object Managers:
 
   object Sweep:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type ItemKind = ItemKind.T
-    object ItemKind extends RefinedType[String, Pure]
+    object ItemKind extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Sweep] =
@@ -146,7 +145,7 @@ object Managers:
 
   object EnqueueKind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[EnqueueKind] = (s).value.trim.toLowerCase match
@@ -162,7 +161,7 @@ object Managers:
 
   object ArticleSpec:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
 
   final case class ManagerConfig(
@@ -220,56 +219,56 @@ object Managers:
     )
   object ManagerConfig:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
 
 
 
     type MaxRuns = MaxRuns.T
-    object MaxRuns extends RefinedType[Int, Pure]
+    object MaxRuns extends Newtype[Int, Pure]
     type MaxOpen = MaxOpen.T
-    object MaxOpen extends RefinedType[Int, Pure]
+    object MaxOpen extends Newtype[Int, Pure]
     type Rounds = Rounds.T
-    object Rounds extends RefinedType[Int, Pure]
+    object Rounds extends Newtype[Int, Pure]
     type MaxRunsPerArticle = MaxRunsPerArticle.T
-    object MaxRunsPerArticle extends RefinedType[Int, Pure]
+    object MaxRunsPerArticle extends Newtype[Int, Pure]
     type NoProgressRuns = NoProgressRuns.T
-    object NoProgressRuns extends RefinedType[Int, Pure]
+    object NoProgressRuns extends Newtype[Int, Pure]
     type ReopenLimit = ReopenLimit.T
-    object ReopenLimit extends RefinedType[Int, Pure]
+    object ReopenLimit extends Newtype[Int, Pure]
     type CooldownMinutes = CooldownMinutes.T
-    object CooldownMinutes extends RefinedType[Int, Pure]
+    object CooldownMinutes extends Newtype[Int, Pure]
     type LowWater = LowWater.T
-    object LowWater extends RefinedType[Int, Pure]
+    object LowWater extends Newtype[Int, Pure]
     type RefillBatch = RefillBatch.T
-    object RefillBatch extends RefinedType[Int, Pure]
+    object RefillBatch extends Newtype[Int, Pure]
     type MaxFailures = MaxFailures.T
-    object MaxFailures extends RefinedType[Int, Pure]
+    object MaxFailures extends Newtype[Int, Pure]
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends RefinedType[Double, Pure]
+    object BudgetUsd extends Newtype[Double, Pure]
     type IncludeTags = IncludeTags.T
-    object IncludeTags extends RefinedType[String, Pure]
+    object IncludeTags extends Newtype[String, Pure]
     type IncludeGoal = IncludeGoal.T
-    object IncludeGoal extends RefinedType[String, Pure]
+    object IncludeGoal extends Newtype[String, Pure]
     type StaleAfterDays = StaleAfterDays.T
-    object StaleAfterDays extends RefinedType[Int, Pure]
+    object StaleAfterDays extends Newtype[Int, Pure]
     type InferFilter = InferFilter.T
-    object InferFilter extends RefinedType[Boolean, Pure]
+    object InferFilter extends Newtype[Boolean, Pure]
     type MinSources = MinSources.T
-    object MinSources extends RefinedType[Int, Pure]
+    object MinSources extends Newtype[Int, Pure]
     type MaxArticles = MaxArticles.T
-    object MaxArticles extends RefinedType[Int, Pure]
+    object MaxArticles extends Newtype[Int, Pure]
     type AutoIngest = AutoIngest.T
-    object AutoIngest extends RefinedType[Boolean, Pure]
+    object AutoIngest extends Newtype[Boolean, Pure]
     type AutoIngestPerDay = AutoIngestPerDay.T
-    object AutoIngestPerDay extends RefinedType[Int, Pure]
+    object AutoIngestPerDay extends Newtype[Int, Pure]
     type DailyUsd = DailyUsd.T
-    object DailyUsd extends RefinedType[Double, Pure]
+    object DailyUsd extends Newtype[Double, Pure]
     type AutoApprove = AutoApprove.T
-    object AutoApprove extends RefinedType[Boolean, Pure]
+    object AutoApprove extends Newtype[Boolean, Pure]
     type ExtendMinNew = ExtendMinNew.T
-    object ExtendMinNew extends RefinedType[Int, Pure]
+    object ExtendMinNew extends Newtype[Int, Pure]
 
     def parse(kvs: List[Spec]): Either[Problem, ManagerConfig] =
       kvs.foldLeft[Either[Problem, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
@@ -349,27 +348,27 @@ object Managers:
     def open: ItemCounts.Open = ItemCounts.Open((pending).value + (held).value + (active).value)
   object ItemCounts:
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
     type Open = Open.T
-    object Open extends RefinedType[Int, Pure]
+    object Open extends Newtype[Int, Pure]
 
 
 
 
     type Pending = Pending.T
-    object Pending extends RefinedType[Int, Pure]
+    object Pending extends Newtype[Int, Pure]
     type Held = Held.T
-    object Held extends RefinedType[Int, Pure]
+    object Held extends Newtype[Int, Pure]
     type Active = Active.T
-    object Active extends RefinedType[Int, Pure]
+    object Active extends Newtype[Int, Pure]
     type Done = Done.T
-    object Done extends RefinedType[Int, Pure]
+    object Done extends Newtype[Int, Pure]
     type Stopped = Stopped.T
-    object Stopped extends RefinedType[Int, Pure]
+    object Stopped extends Newtype[Int, Pure]
     type Failed = Failed.T
-    object Failed extends RefinedType[Int, Pure]
+    object Failed extends Newtype[Int, Pure]
     type Cancelled = Cancelled.T
-    object Cancelled extends RefinedType[Int, Pure]
+    object Cancelled extends Newtype[Int, Pure]
 
     def of(rows: List[(com.histmersion.api.automation.ItemStatus.Wire, Count)]): ItemCounts =
       @tailrec def loop(
@@ -410,15 +409,15 @@ object Managers:
 
   object ManagerEvent:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type ItemId = ItemId.T
-    object ItemId extends RefinedType[Long, Pure]
+    object ItemId extends Newtype[Long, Pure]
     type At = At.T
-    object At extends RefinedType[String, Pure]
+    object At extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
 
 
   final case class ManagerInfo(
@@ -446,33 +445,33 @@ object Managers:
 
   object ManagerInfo:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Kind = Manager.Kind.Wire
     val Kind: Manager.Kind.Wire.type = Manager.Kind.Wire
     type State = Manager.State.Wire
     val State: Manager.State.Wire.type = Manager.State.Wire
     type PauseRuns = PauseRuns.T
-    object PauseRuns extends RefinedType[Boolean, Pure]
+    object PauseRuns extends Newtype[Boolean, Pure]
     type StatusNote = StatusNote.T
-    object StatusNote extends RefinedType[String, Pure]
+    object StatusNote extends Newtype[String, Pure]
     type Cron = Cron.T
-    object Cron extends RefinedType[String, Pure]
+    object Cron extends Newtype[String, Pure]
     type NextTickAt = NextTickAt.T
-    object NextTickAt extends RefinedType[String, Pure]
+    object NextTickAt extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
     type InFlight = InFlight.T
-    object InFlight extends RefinedType[Int, Pure]
+    object InFlight extends Newtype[Int, Pure]
     type SpentTodayUsd = SpentTodayUsd.T
-    object SpentTodayUsd extends RefinedType[Double, Pure]
+    object SpentTodayUsd extends Newtype[Double, Pure]
     type TokensToday = TokensToday.T
-    object TokensToday extends RefinedType[Long, Pure]
+    object TokensToday extends Newtype[Long, Pure]
     type Backlog = Backlog.T
-    object Backlog extends RefinedType[Int, Pure]
+    object Backlog extends Newtype[Int, Pure]
     type BacklogDays = BacklogDays.T
-    object BacklogDays extends RefinedType[Int, Pure]
+    object BacklogDays extends Newtype[Int, Pure]
 
 
   final case class Hold(
@@ -487,17 +486,17 @@ object Managers:
 
   object Hold:
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
-    object UntilSource extends RefinedType[String, Pure]
+    object UntilSource extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
     type Hint = Hint.T
-    object Hint extends RefinedType[Long, Pure]
+    object Hint extends Newtype[Long, Pure]
     type UntilApproval = UntilApproval.T
-    object UntilApproval extends RefinedType[Long, Pure]
+    object UntilApproval extends Newtype[Long, Pure]
     type Focus = Focus.T
-    object Focus extends RefinedType[String, Pure]
+    object Focus extends Newtype[String, Pure]
 
 
   final case class RunMark(
@@ -514,19 +513,19 @@ object Managers:
 
   object RunMark:
     type Before = Before.T
-    object Before extends RefinedType[Int, Pure]
+    object Before extends Newtype[Int, Pure]
     type After = After.T
-    object After extends RefinedType[Int, Pure]
+    object After extends Newtype[Int, Pure]
     type MaxReopened = MaxReopened.T
-    object MaxReopened extends RefinedType[Int, Pure]
+    object MaxReopened extends Newtype[Int, Pure]
     type Escalated = Escalated.T
-    object Escalated extends RefinedType[Int, Pure]
+    object Escalated extends Newtype[Int, Pure]
     type Churn = Churn.T
-    object Churn extends RefinedType[Boolean, Pure]
+    object Churn extends Newtype[Boolean, Pure]
     type PairsBefore = PairsBefore.T
-    object PairsBefore extends RefinedType[Int, Pure]
+    object PairsBefore extends Newtype[Int, Pure]
     type PairsAfter = PairsAfter.T
-    object PairsAfter extends RefinedType[Int, Pure]
+    object PairsAfter extends Newtype[Int, Pure]
 
 
   final case class ItemState(
@@ -542,13 +541,13 @@ object Managers:
 
   object ItemState:
     type Before = Before.T
-    object Before extends RefinedType[Int, Pure]
+    object Before extends Newtype[Int, Pure]
     type Reopened = Reopened.T
-    object Reopened extends RefinedType[Int, Pure]
+    object Reopened extends Newtype[Int, Pure]
     type PairsBefore = PairsBefore.T
-    object PairsBefore extends RefinedType[Int, Pure]
+    object PairsBefore extends Newtype[Int, Pure]
     type FilterHits = FilterHits.T
-    object FilterHits extends RefinedType[Int, Pure]
+    object FilterHits extends Newtype[Int, Pure]
 
 
   final case class OaWork(
@@ -566,11 +565,11 @@ object Managers:
 
   object OaWork:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type FoundBy = FoundBy.T
-    object FoundBy extends RefinedType[String, Pure]
+    object FoundBy extends Newtype[String, Pure]
     type AcquireText = AcquireText.T
-    object AcquireText extends RefinedType[String, Pure]
+    object AcquireText extends Newtype[String, Pure]
 
 
   final case class ManagerItem(
@@ -597,31 +596,31 @@ object Managers:
 
   object ManagerItem:
     type Ref = Ref.T
-    object Ref extends RefinedType[String, Pure]
+    object Ref extends Newtype[String, Pure]
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Status = com.histmersion.api.automation.ItemStatus.Wire
     val Status: com.histmersion.api.automation.ItemStatus.Wire.type = com.histmersion.api.automation.ItemStatus.Wire
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type Attempts = Attempts.T
-    object Attempts extends RefinedType[Int, Pure]
+    object Attempts extends Newtype[Int, Pure]
     type Failures = Failures.T
-    object Failures extends RefinedType[Int, Pure]
+    object Failures extends Newtype[Int, Pure]
     type NotBefore = NotBefore.T
-    object NotBefore extends RefinedType[String, Pure]
+    object NotBefore extends Newtype[String, Pure]
     type Outcome = Outcome.T
-    object Outcome extends RefinedType[String, Pure]
+    object Outcome extends Newtype[String, Pure]
     type Origin = ItemOrigin.Wire
     val Origin: ItemOrigin.Wire.type = ItemOrigin.Wire
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends RefinedType[String, Pure]
+    object UpdatedAt extends Newtype[String, Pure]
 
 
   final case class HintEffect(
@@ -639,19 +638,19 @@ object Managers:
   object HintEffect:
 
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
     type Targets = Targets.T
-    object Targets extends RefinedType[String, Pure]
+    object Targets extends Newtype[String, Pure]
     type Tag = Tag.T
-    object Tag extends RefinedType[String, Pure]
+    object Tag extends Newtype[String, Pure]
     type Topic = Topic.T
-    object Topic extends RefinedType[String, Pure]
+    object Topic extends Newtype[String, Pure]
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
-    object UntilSource extends RefinedType[String, Pure]
+    object UntilSource extends Newtype[String, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
 
     val Prioritise = "prioritise"
     val HoldAction = "hold"
@@ -674,13 +673,13 @@ object Managers:
 
   object HintProposal:
     type Hint = Hint.T
-    object Hint extends RefinedType[Long, Pure]
+    object Hint extends Newtype[Long, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
 
 
   final case class ManagerHint(
@@ -701,23 +700,23 @@ object Managers:
 
   object ManagerHint:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type ItemId = ItemId.T
-    object ItemId extends RefinedType[Long, Pure]
+    object ItemId extends Newtype[Long, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Author = Author.T
-    object Author extends RefinedType[String, Pure]
+    object Author extends Newtype[String, Pure]
     type Standing = Standing.T
-    object Standing extends RefinedType[Boolean, Pure]
+    object Standing extends Newtype[Boolean, Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
     type RetiredAt = RetiredAt.T
-    object RetiredAt extends RefinedType[String, Pure]
+    object RetiredAt extends Newtype[String, Pure]
     type Uses = Uses.T
-    object Uses extends RefinedType[Int, Pure]
+    object Uses extends Newtype[Int, Pure]
     type Proposal = Proposal.T
-    object Proposal extends RefinedType[Long, Pure]
+    object Proposal extends Newtype[Long, Pure]
 
 
   final case class ManagerDetail(
@@ -735,11 +734,11 @@ object Managers:
 
   object ItemPage:
     type Total = Total.T
-    object Total extends RefinedType[Int, Pure]
+    object Total extends Newtype[Int, Pure]
     type Offset = Offset.T
-    object Offset extends RefinedType[Int, Pure]
+    object Offset extends Newtype[Int, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
 
 
   final case class EventPage(events: List[ManagerEvent], before: Option[EventPage.Before] = None)
@@ -748,9 +747,9 @@ object Managers:
 
   object EventPage:
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Before = Before.T
-    object Before extends RefinedType[Long, Pure]
+    object Before extends Newtype[Long, Pure]
 
 
   final case class ManagerCreate(
@@ -765,9 +764,9 @@ object Managers:
   object ManagerCreate:
     export Manager.Kind.{Wire as Kind}
     type Paused = Paused.T
-    object Paused extends RefinedType[Boolean, Pure]
+    object Paused extends Newtype[Boolean, Pure]
     type Cron = Cron.T
-    object Cron extends RefinedType[String, Pure]
+    object Cron extends Newtype[String, Pure]
 
 
   final case class ManagerUpdate(config: Option[ManagerConfig] = None, cron: Option[ManagerUpdate.Cron] = None)
@@ -776,7 +775,7 @@ object Managers:
 
   object ManagerUpdate:
     type Cron = Cron.T
-    object Cron extends RefinedType[String, Pure]
+    object Cron extends Newtype[String, Pure]
 
 
   final case class EnqueueRequest(kind: EnqueueRequest.Kind, target: EnqueueRequest.Target, priority: Option[EnqueueRequest.Priority] = None)
@@ -786,9 +785,9 @@ object Managers:
   object EnqueueRequest:
     export EnqueueKind.{Wire as Kind}
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
 
 
   final case class EnqueueResult(managerId: ManagerInfo.Id, items: List[ManagerItem] = Nil, skipped: List[EnqueueResult.Skipped] = Nil)
@@ -797,7 +796,7 @@ object Managers:
 
   object EnqueueResult:
     type Skipped = Skipped.T
-    object Skipped extends RefinedType[String, Pure]
+    object Skipped extends Newtype[String, Pure]
 
 
   final case class ItemPatch(
@@ -811,15 +810,15 @@ object Managers:
   object ItemPatch:
 
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
     type Priority = Priority.T
-    object Priority extends RefinedType[Int, Pure]
+    object Priority extends Newtype[Int, Pure]
     type Until = Until.T
-    object Until extends RefinedType[String, Pure]
+    object Until extends Newtype[String, Pure]
     type UntilSource = UntilSource.T
-    object UntilSource extends RefinedType[String, Pure]
+    object UntilSource extends Newtype[String, Pure]
     type Reason = Reason.T
-    object Reason extends RefinedType[String, Pure]
+    object Reason extends Newtype[String, Pure]
 
     val Actions = List("hold", "release", "priority", "skip", "reopen")
 
@@ -836,17 +835,17 @@ object Managers:
 
   object HintAdd:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Item = Item.T
-    object Item extends RefinedType[String, Pure]
+    object Item extends Newtype[String, Pure]
     type Once = Once.T
-    object Once extends RefinedType[Boolean, Pure]
+    object Once extends Newtype[Boolean, Pure]
     type Author = Author.T
-    object Author extends RefinedType[String, Pure]
+    object Author extends Newtype[String, Pure]
     type Propose = Propose.T
-    object Propose extends RefinedType[Boolean, Pure]
+    object Propose extends Newtype[Boolean, Pure]
     type Suggest = Suggest.T
-    object Suggest extends RefinedType[Boolean, Pure]
+    object Suggest extends Newtype[Boolean, Pure]
 
 
   val Actions: List[Actions] = List(ActionsValue("pause"), ActionsValue("resume"), ActionsValue("stop"))

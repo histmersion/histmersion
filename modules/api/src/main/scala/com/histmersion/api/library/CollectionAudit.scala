@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An audit of every linked item: those that disagree with their records, and how many items were checked. */
@@ -23,7 +22,7 @@ object CollectionAudit:
     * write over it (`fix`, none when the item is missing).
     */
   type Checked = Checked.T
-  object Checked extends RefinedType[Int, Pure]
+  object Checked extends Newtype[Int, Pure]
 
   final case class Row(
       id: Row.Id,
@@ -38,12 +37,12 @@ object CollectionAudit:
 
   object Row:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Citekeys = Citekeys.T
-    object Citekeys extends RefinedType[String, Pure]
+    object Citekeys extends Newtype[String, Pure]
     type Codes = Codes.T
-    object Codes extends RefinedType[String, Pure]
+    object Codes extends Newtype[String, Pure]
     type Labels = Labels.T
-    object Labels extends RefinedType[String, Pure]
+    object Labels extends Newtype[String, Pure]
     type Fix = Fix.T
-    object Fix extends RefinedType[String, Pure]
+    object Fix extends Newtype[String, Pure]

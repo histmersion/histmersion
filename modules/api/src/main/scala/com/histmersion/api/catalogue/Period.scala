@@ -10,20 +10,19 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class Period(start: Year, end: Year):
   def isPoint: Boolean = (start == end)
 
 object Period:
   type End = End.T
-  object End extends RefinedType[Long, Pure]
+  object End extends Newtype[Long, Pure]
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type IsoYear = IsoYear.T
-  object IsoYear extends RefinedType[Long, Pure]
+  object IsoYear extends Newtype[Long, Pure]
   type Start = Start.T
-  object Start extends RefinedType[Long, Pure]
+  object Start extends Newtype[Long, Pure]
 
 
   final case class Detail(
@@ -46,15 +45,15 @@ object Period:
 
   object ImportResult:
     type Periods = Periods.T
-    object Periods extends RefinedType[Int, Pure]
+    object Periods extends Newtype[Int, Pure]
     type Roots = Roots.T
-    object Roots extends RefinedType[Int, Pure]
+    object Roots extends Newtype[Int, Pure]
     type Presets = Presets.T
-    object Presets extends RefinedType[Int, Pure]
+    object Presets extends Newtype[Int, Pure]
     type SkippedCount = SkippedCount.T
-    object SkippedCount extends RefinedType[Int, Pure]
+    object SkippedCount extends Newtype[Int, Pure]
     type Removed = Removed.T
-    object Removed extends RefinedType[Int, Pure]
+    object Removed extends Newtype[Int, Pure]
 
 
   final case class Input(start: Year, end: Year) derives KindlingsSchema, com.histmersion.api.json.Schema
@@ -76,7 +75,7 @@ object Period:
 
   object Skip:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(p: Skip): Wire = p match
       case NoSpan          => Wire("no_span")

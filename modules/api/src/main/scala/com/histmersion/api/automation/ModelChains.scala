@@ -7,15 +7,14 @@ import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object ModelChains:
   object Chain:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
 
   import Agents.{ModelRef, ProviderKind}
 
@@ -44,7 +43,7 @@ object ModelChains:
 
   object Measure:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Measure] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -64,13 +63,13 @@ object ModelChains:
 
   object Window:
     type MaxSecondsNumber = MaxSecondsNumber.T
-    object MaxSecondsNumber extends RefinedType[Long, Pure]
+    object MaxSecondsNumber extends Newtype[Long, Pure]
     type MaxSeconds = MaxSecondsValue
     type MaxSecondsValue = MaxSecondsNumber
     val MaxSecondsValue: MaxSecondsNumber.type = MaxSecondsNumber
 
     type Seconds = Seconds.T
-    object Seconds extends RefinedType[Long, Pure]
+    object Seconds extends Newtype[Long, Pure]
 
     private val Unit = Map('m' -> 60L, 'h' -> 3600L, 'd' -> 86400L, 'w' -> 604800L)
     private val Names = Map("hour" -> 3600L, "day" -> 86400L, "week" -> 604800L, "month" -> 30L * 86400L)
@@ -95,9 +94,9 @@ object ModelChains:
 
   object Limit:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
 
 
     def compact(a: BigDecimal): String =
@@ -165,11 +164,11 @@ object ModelChains:
 
   object Target:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def parse(s: Spec, known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[Problem, Target] =
       val t = (s).value.trim
@@ -187,16 +186,16 @@ object ModelChains:
 
   object Allowance:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type ReserveSpec = ReserveSpec.T
-    object ReserveSpec extends RefinedType[String, Pure]
+    object ReserveSpec extends Newtype[String, Pure]
     type Spec = Spec.T
-    object Spec extends RefinedType[String, Pure]
+    object Spec extends Newtype[String, Pure]
     type OfReservePct = ReservePct
     val OfReservePct: ReservePct.type = ReservePct
 
     type ReservePct = ReservePct.T
-    object ReservePct extends RefinedType[Int, Pure]
+    object ReservePct extends Newtype[Int, Pure]
 
     def of(target: Target, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
       if (reservePct).value < 0 || (reservePct).value > 99 then Left(Problem(s"a reserve is 0 to 99 %, not $reservePct"))
@@ -243,10 +242,10 @@ object ModelChains:
 
   object Spend:
     type At = At.T
-    object At extends RefinedType[Long, Pure]:
+    object At extends Newtype[Long, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     type Tokens = Tokens.T
-    object Tokens extends RefinedType[Long, Pure]
+    object Tokens extends Newtype[Long, Pure]
 
   final case class LimitState(
       limit: Limit,
@@ -260,11 +259,11 @@ object ModelChains:
 
   object LimitState:
     type Now = Now.T
-    object Now extends RefinedType[Long, Pure]
+    object Now extends Newtype[Long, Pure]
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     type FreesAt = FreesAt.T
-    object FreesAt extends RefinedType[Long, Pure]:
+    object FreesAt extends Newtype[Long, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
 
   private def measureOf(s: Spend, m: Measure): BigDecimal = m match
@@ -307,9 +306,9 @@ object ModelChains:
 
   object LimitSpec:
     type Amount = Amount.T
-    object Amount extends RefinedType[Double, Pure]
+    object Amount extends Newtype[Double, Pure]
     type Window = Window.T
-    object Window extends RefinedType[String, Pure]
+    object Window extends Newtype[String, Pure]
 
 
   final case class ChainSet(models: List[ChainSet.Models]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -324,7 +323,7 @@ object ModelChains:
 
   object AllowanceSet:
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     export Allowance.ReservePct
 
 
@@ -334,7 +333,7 @@ object ModelChains:
 
   object SettingSource:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
   final case class LimitStatus(
       limit: LimitStatus.Limit,
@@ -351,21 +350,21 @@ object ModelChains:
 
   object LimitStatus:
     type Limit = Limit.T
-    object Limit extends RefinedType[String, Pure]
+    object Limit extends Newtype[String, Pure]
     type Window = Window.T
-    object Window extends RefinedType[String, Pure]
+    object Window extends Newtype[String, Pure]
     type Amount = Amount.T
-    object Amount extends RefinedType[Double, Pure]
+    object Amount extends Newtype[Double, Pure]
     type Used = Used.T
-    object Used extends RefinedType[Double, Pure]
+    object Used extends Newtype[Double, Pure]
     type Remaining = Remaining.T
-    object Remaining extends RefinedType[Double, Pure]
+    object Remaining extends Newtype[Double, Pure]
     type Reserve = Reserve.T
-    object Reserve extends RefinedType[Double, Pure]
+    object Reserve extends Newtype[Double, Pure]
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     type FreesAt = FreesAt.T
-    object FreesAt extends RefinedType[String, Pure]
+    object FreesAt extends Newtype[String, Pure]
 
 
   final case class AllowanceStatus(
@@ -381,15 +380,15 @@ object ModelChains:
 
   object AllowanceStatus:
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     export Allowance.ReservePct
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     export LimitStatus.FreesAt
     type Note = Note.T
-    object Note extends RefinedType[String, Pure]
+    object Note extends Newtype[String, Pure]
 
 
   final case class ChainEntry(
@@ -405,18 +404,18 @@ object ModelChains:
 
   object ChainEntry:
     type Model = Model.T
-    object Model extends RefinedType[String, Pure]
+    object Model extends Newtype[String, Pure]
     type Ready = Ready.T
-    object Ready extends RefinedType[Boolean, Pure]
+    object Ready extends Newtype[Boolean, Pure]
     type Usable = Usable.T
-    object Usable extends RefinedType[Boolean, Pure]
+    object Usable extends Newtype[Boolean, Pure]
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     export LimitStatus.FreesAt
     type Billing = Billing.T
-    object Billing extends RefinedType[String, Pure]
+    object Billing extends Newtype[String, Pure]
     type Cooling = Cooling.T
-    object Cooling extends RefinedType[Boolean, Pure]
+    object Cooling extends Newtype[Boolean, Pure]
 
 
   final case class RoleChain(
@@ -430,10 +429,10 @@ object ModelChains:
 
   object RoleChain:
     type Role = Role.T
-    object Role extends RefinedType[String, Pure]
+    object Role extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
     type Active = Active.T
-    object Active extends RefinedType[String, Pure]
+    object Active extends Newtype[String, Pure]
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]

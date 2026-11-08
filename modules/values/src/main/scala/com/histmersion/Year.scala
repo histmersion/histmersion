@@ -7,4 +7,4 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type Year = Year.T
 
-object Year extends RefinedType[Int, Pure]
+object Year extends Newtype[Int, Pure]

@@ -8,7 +8,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaItem(
@@ -38,30 +37,30 @@ final case class MediaItem(
 
 object MediaItem:
   type Uid = Uid.T
-  object Uid extends RefinedType[String, Pure]
+  object Uid extends Newtype[String, Pure]
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type ProviderKey = ProviderKey.T
-  object ProviderKey extends RefinedType[String, Pure]
+  object ProviderKey extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Caption = Caption.T
-  object Caption extends RefinedType[String, Pure]
+  object Caption extends Newtype[String, Pure]
   type License = License.T
-  object License extends RefinedType[String, Pure]
+  object License extends Newtype[String, Pure]
   type LicenseUrl = LicenseUrl.T
-  object LicenseUrl extends RefinedType[String, Pure]
+  object LicenseUrl extends Newtype[String, Pure]
   type Author = Author.T
-  object Author extends RefinedType[String, Pure]
+  object Author extends Newtype[String, Pure]
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends RefinedType[String, Pure]
+  object SourceUrl extends Newtype[String, Pure]
   type OriginalUrl = OriginalUrl.T
-  object OriginalUrl extends RefinedType[String, Pure]
+  object OriginalUrl extends Newtype[String, Pure]
   type RetrievedAt = RetrievedAt.T
-  object RetrievedAt extends RefinedType[String, Pure]
+  object RetrievedAt extends Newtype[String, Pure]
   type ThumbUrl = ThumbUrl.T
-  object ThumbUrl extends RefinedType[String, Pure]
+  object ThumbUrl extends Newtype[String, Pure]
   type FileUrl = FileUrl.T
-  object FileUrl extends RefinedType[String, Pure]
+  object FileUrl extends Newtype[String, Pure]

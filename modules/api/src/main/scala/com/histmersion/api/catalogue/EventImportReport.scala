@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
 
@@ -32,7 +31,7 @@ final case class EventImportReport(
       KindlingsSchema, com.histmersion.api.json.Schema
 object EventImportReport:
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
 
   /** An events import job's report, in its detail. */
@@ -40,35 +39,35 @@ object EventImportReport:
   val MarkdownResult: Markdown.type = Markdown
 
   type Provider = Provider.T
-  object Provider extends RefinedType[String, Pure]
+  object Provider extends Newtype[String, Pure]
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type Records = Records.T
-  object Records extends RefinedType[Int, Pure]
+  object Records extends Newtype[Int, Pure]
   type Kept = Kept.T
-  object Kept extends RefinedType[Int, Pure]
+  object Kept extends Newtype[Int, Pure]
   type Created = Created.T
-  object Created extends RefinedType[Int, Pure]
+  object Created extends Newtype[Int, Pure]
   type Merged = Merged.T
-  object Merged extends RefinedType[Int, Pure]
+  object Merged extends Newtype[Int, Pure]
   type Matched = Matched.T
-  object Matched extends RefinedType[Int, Pure]
+  object Matched extends Newtype[Int, Pure]
   type Updated = Updated.T
-  object Updated extends RefinedType[Int, Pure]
+  object Updated extends Newtype[Int, Pure]
   type MatchedEvents = MatchedEvents.T
-  object MatchedEvents extends RefinedType[String, Pure]
+  object MatchedEvents extends Newtype[String, Pure]
   type Parts = Parts.T
-  object Parts extends RefinedType[Int, Pure]
+  object Parts extends Newtype[Int, Pure]
   type Pending = Pending.T
-  object Pending extends RefinedType[Int, Pure]
+  object Pending extends Newtype[Int, Pure]
   type Requests = Requests.T
-  object Requests extends RefinedType[Int, Pure]
+  object Requests extends Newtype[Int, Pure]
   type Failed = Failed.T
-  object Failed extends RefinedType[String, Pure]
+  object Failed extends Newtype[String, Pure]
   type Licence = Licence.T
-  object Licence extends RefinedType[String, Pure]
+  object Licence extends Newtype[String, Pure]
   type Citation = Citation.T
-  object Citation extends RefinedType[String, Pure]
+  object Citation extends Newtype[String, Pure]
 
   val Detail: JobDetail.Field[Option[EventImportReport]] =
     new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("eventImport"), None)

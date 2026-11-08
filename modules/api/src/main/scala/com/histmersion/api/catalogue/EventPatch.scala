@@ -8,7 +8,6 @@ import com.histmersion.api.{StrictJson, TimeSpan}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventPatch(
@@ -31,8 +30,8 @@ object EventPatch:
 
 
   type Geometry = Geometry.T
-  object Geometry extends RefinedType[String, Pure]
+  object Geometry extends Newtype[String, Pure]
   type Wikidata = Wikidata.T
-  object Wikidata extends RefinedType[String, Pure]
+  object Wikidata extends Newtype[String, Pure]
 
   given Codec.AsObject[EventPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPatch])

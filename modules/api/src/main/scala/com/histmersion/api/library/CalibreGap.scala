@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CalibreGap(
@@ -29,14 +28,14 @@ final case class CalibreGap(
 object CalibreGap:
   export com.histmersion.api.library.Title
   type Authors = Authors.T
-  object Authors extends RefinedType[String, Pure]
+  object Authors extends Newtype[String, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
   type Topics = Topics.T
-  object Topics extends RefinedType[String, Pure]
+  object Topics extends Newtype[String, Pure]
   type Provenance = Provenance.T
-  object Provenance extends RefinedType[String, Pure]
+  object Provenance extends Newtype[String, Pure]
   type Isbn = Isbn.T
-  object Isbn extends RefinedType[String, Pure]
+  object Isbn extends Newtype[String, Pure]
   type StoredOriginal = StoredOriginal.T
-  object StoredOriginal extends RefinedType[Boolean, Pure]
+  object StoredOriginal extends Newtype[Boolean, Pure]

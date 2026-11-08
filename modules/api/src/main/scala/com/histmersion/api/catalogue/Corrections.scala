@@ -3,15 +3,14 @@ package api.catalogue
 import io.circe.Json
 import io.circe.syntax.*
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Corrections:
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
   type StatusResult = StatusResult.T
-  object StatusResult extends RefinedType[String, Pure]
+  object StatusResult extends Newtype[String, Pure]
   type MarkdownResult = Markdown
   val MarkdownResult: Markdown.type = Markdown
 

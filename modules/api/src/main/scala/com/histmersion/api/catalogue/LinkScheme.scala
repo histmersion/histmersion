@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum LinkScheme:
   case Pleiades, Wikidata, Geonames, Tgn, Whg
@@ -10,6 +9,6 @@ enum LinkScheme:
 
 object LinkScheme:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def parse(s: Wire): Option[LinkScheme] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))

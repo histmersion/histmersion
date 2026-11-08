@@ -354,7 +354,7 @@ class BundleHttpSuite extends DbSuite with com.histmersion.db.Bounded:
         // the jobs list shows it, by what it is
         val jobs = decode[List[JobInfo]](String(get(s"$url/api/jobs").body, "UTF-8"))
         assert(
-          jobs.exists(j => j.id == cut && j.kind.value == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)),
+          jobs.exists(j => j.id.value == cut.value && j.kind.value == MergeApplyJob.JobKind && j.error.contains(JobState.Interrupted)),
           jobs.toString
         )
       }

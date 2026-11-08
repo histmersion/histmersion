@@ -3,7 +3,6 @@ package api.catalogue
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a
@@ -13,12 +12,12 @@ import io.github.iltotore.iron.constraint.any.Pure
 object SiteTypes:
   object Pleiades:
     type FeatureType = FeatureType.T
-    object FeatureType extends RefinedType[String, Pure]
+    object FeatureType extends Newtype[String, Pure]
   object Geonames:
     type Fcode = Fcode.T
-    object Fcode extends RefinedType[String, Pure]
+    object Fcode extends Newtype[String, Pure]
   type ReportSummary = ReportSummary.T
-  object ReportSummary extends RefinedType[String, Pure]
+  object ReportSummary extends Newtype[String, Pure]
 
   export SiteType.{Icon as IconResult, Id as IconId}
   export CatalogRecord.Wikidata.{Class as WikidataP31}
@@ -29,11 +28,11 @@ object SiteTypes:
 
   object SiteType:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Icon = Icon.T
-    object Icon extends RefinedType[String, Pure]
+    object Icon extends Newtype[String, Pure]
 
   val Settlement = "settlement"
   val Villa = "villa"
@@ -378,17 +377,17 @@ object SiteTypes:
     export SiteTypes.{ReportSummary as SummaryResult}
 
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type Pending = Pending.T
-    object Pending extends RefinedType[Int, Pure]
+    object Pending extends Newtype[Int, Pure]
     type Asked = Asked.T
-    object Asked extends RefinedType[Int, Pure]
+    object Asked extends Newtype[Int, Pure]
     type Untyped = Untyped.T
-    object Untyped extends RefinedType[Int, Pure]
+    object Untyped extends Newtype[Int, Pure]
     type Requests = Requests.T
-    object Requests extends RefinedType[Int, Pure]
+    object Requests extends Newtype[Int, Pure]
     type Failed = Failed.T
-    object Failed extends RefinedType[String, Pure]
+    object Failed extends Newtype[String, Pure]
 
     def summary(r: Report): ReportSummary =
       if (r.dryRun).value then ReportSummary(s"${r.pending} Wikidata site(s) on the map would be asked about")
@@ -409,8 +408,8 @@ object SiteTypes:
 
   object Request:
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Refresh = Refresh.T
-    object Refresh extends RefinedType[Boolean, Pure]
+    object Refresh extends Newtype[Boolean, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Add source `citekey`'s stored original to a collection as a new item — or with `replace`, swap the file of the item
@@ -19,4 +18,4 @@ final case class CollectionPushRequest(
 
 object CollectionPushRequest:
   type Replace = Replace.T
-  object Replace extends RefinedType[Boolean, Pure]
+  object Replace extends Newtype[Boolean, Pure]

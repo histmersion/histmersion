@@ -8,7 +8,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Event
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaImportRequest(
@@ -24,6 +23,6 @@ final case class MediaImportRequest(
 object MediaImportRequest:
   export RepairAcquire.RepairRequest.DryRun
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]

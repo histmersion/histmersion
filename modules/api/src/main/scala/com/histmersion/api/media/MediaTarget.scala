@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaTarget(
@@ -20,14 +19,14 @@ final case class MediaTarget(
 
 object MediaTarget:
   type TargetType = TargetType.T
-  object TargetType extends RefinedType[String, Pure]
+  object TargetType extends Newtype[String, Pure]
   type TargetId = TargetId.T
-  object TargetId extends RefinedType[String, Pure]
+  object TargetId extends Newtype[String, Pure]
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
   type Property = Property.T
-  object Property extends RefinedType[String, Pure]
+  object Property extends Newtype[String, Pure]
   type Item = Item.T
-  object Item extends RefinedType[String, Pure]
+  object Item extends Newtype[String, Pure]
   type Basis = Basis.T
-  object Basis extends RefinedType[String, Pure]
+  object Basis extends Newtype[String, Pure]

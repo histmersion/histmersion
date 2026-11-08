@@ -2,7 +2,6 @@ package com.histmersion
 package api.library
 
 import com.histmersion.api.{Ascii, WireEnumValues}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum MatchMethod:
@@ -23,7 +22,7 @@ enum MatchMethod:
 
 object MatchMethod:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   given WireEnumValues[MatchMethod]:
     def all: Array[MatchMethod] = values

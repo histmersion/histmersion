@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An update of every linked item: one row per item, in id order, and whether it was written (`applied`). */
@@ -20,7 +19,7 @@ object CollectionUpdateAll:
 
   /** Plan the rewrite of every linked item from its record; with `apply`, write it. */
   type Applied = Applied.T
-  object Applied extends RefinedType[Boolean, Pure]
+  object Applied extends Newtype[Boolean, Pure]
 
   final case class Request(
       apply: Request.Apply = Request.Apply(false)
@@ -29,4 +28,4 @@ object CollectionUpdateAll:
 
   object Request:
     type Apply = Apply.T
-    object Apply extends RefinedType[Boolean, Pure]
+    object Apply extends Newtype[Boolean, Pure]

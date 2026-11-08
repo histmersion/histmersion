@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** How the host ties an item to a place. The rules themselves are the host's; a collection only chooses which one fits
@@ -33,4 +32,4 @@ enum MediaMatchRule:
 object MediaMatchRule:
   object PlaceIds:
     type Deeper = Deeper.T
-    object Deeper extends RefinedType[String, Pure]
+    object Deeper extends Newtype[String, Pure]

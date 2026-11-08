@@ -7,7 +7,6 @@ import com.histmersion.api.aliases.UidRedirect
 import com.histmersion.api.research.LedgerRow
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeLedger(query: Option[MergeLedger.Query], entries: List[LedgerRow], redirects: List[UidRedirect] = Nil)
@@ -16,4 +15,4 @@ final case class MergeLedger(query: Option[MergeLedger.Query], entries: List[Led
 
 object MergeLedger:
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]

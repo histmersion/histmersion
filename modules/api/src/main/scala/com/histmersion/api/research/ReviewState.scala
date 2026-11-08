@@ -5,7 +5,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning):
@@ -18,9 +17,9 @@ enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning):
 
 object ReviewState:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Meaning = Meaning.T
-  object Meaning extends RefinedType[String, Pure]
+  object Meaning extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[ReviewState] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

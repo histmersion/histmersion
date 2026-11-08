@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ArticleEventLead(
@@ -21,18 +20,18 @@ final case class ArticleEventLead(
       KindlingsSchema, com.histmersion.api.json.Schema
 object ArticleEventLead:
   type Body = Body.T
-  object Body extends RefinedType[String, Pure]
+  object Body extends Newtype[String, Pure]
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
 
   export CatalogRecord.{Label, Kind}
   type Years = Years.T
-  object Years extends RefinedType[String, Pure]
+  object Years extends Newtype[String, Pure]
   type Size = Size.T
-  object Size extends RefinedType[String, Pure]
+  object Size extends Newtype[String, Pure]
   type FindingsNear = FindingsNear.T
-  object FindingsNear extends RefinedType[Int, Pure]
+  object FindingsNear extends Newtype[Int, Pure]
   export CatalogRecord.Provider
 
   def mentioned(body: Body, names: List[EventEntry.Names]): Boolean =

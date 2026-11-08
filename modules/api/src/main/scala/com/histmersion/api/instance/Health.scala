@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Health(
@@ -19,12 +18,12 @@ final case class Health(
 
 object Health:
   type Status = Status.T
-  object Status extends RefinedType[String, Pure]
+  object Status extends Newtype[String, Pure]
   type Db = Db.T
-  object Db extends RefinedType[String, Pure]
+  object Db extends Newtype[String, Pure]
   type SchemaVersion = SchemaVersion.T
-  object SchemaVersion extends RefinedType[String, Pure]
+  object SchemaVersion extends Newtype[String, Pure]
   type Converter = Converter.T
-  object Converter extends RefinedType[String, Pure]
+  object Converter extends Newtype[String, Pure]
   type Warnings = Warnings.T
-  object Warnings extends RefinedType[String, Pure]
+  object Warnings extends Newtype[String, Pure]

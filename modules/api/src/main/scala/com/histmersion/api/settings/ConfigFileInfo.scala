@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ConfigFileInfo(
@@ -21,11 +20,11 @@ object ConfigFileInfo:
 
 
   type Path = Path.T
-  object Path extends RefinedType[String, Pure]
+  object Path extends Newtype[String, Pure]
   type Loaded = Loaded.T
-  object Loaded extends RefinedType[Boolean, Pure]
+  object Loaded extends Newtype[Boolean, Pure]
   type UnknownKeys = UnknownKeys.T
-  object UnknownKeys extends RefinedType[String, Pure]
+  object UnknownKeys extends Newtype[String, Pure]
 
   def describe(c: ConfigFileInfo): String =
     c.path match

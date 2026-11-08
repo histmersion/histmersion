@@ -3,7 +3,6 @@ package api.media
 import com.histmersion.api.given
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class SourceCoverParams(
     citekey: Citekey,
@@ -14,4 +13,4 @@ final case class SourceCoverParams(
 
 object SourceCoverParams:
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]

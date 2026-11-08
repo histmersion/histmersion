@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum GeoTime:
   case Always
@@ -19,5 +18,5 @@ object GeoTime:
 
   object Within:
     type Latest = Latest.T
-    object Latest extends RefinedType[Boolean, Pure]
+    object Latest extends Newtype[Boolean, Pure]
 

@@ -2,7 +2,6 @@ package com.histmersion
 package domain.library
 
 import com.histmersion.WireEnumValues
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Edge:
@@ -16,7 +15,7 @@ object Edge:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     private val wireMap: Map[Wire, Kind] = values.map(e => wireOf(e) -> e).toMap
 

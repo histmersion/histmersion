@@ -1,7 +1,6 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Events follow CIDOC-CRM's four-point time-span: `notBefore`/`beginBy`/`endFrom`/`notAfter`, the outer span covering
@@ -10,11 +9,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 object EventScale:
   type GeometryType = GeometryType.T
-  object GeometryType extends RefinedType[String, Pure]
+  object GeometryType extends Newtype[String, Pure]
   type LocalKinds = LocalKinds.T
-  object LocalKinds extends RefinedType[String, Pure]
+  object LocalKinds extends Newtype[String, Pure]
   type RegionalKinds = RegionalKinds.T
-  object RegionalKinds extends RefinedType[String, Pure]
+  object RegionalKinds extends Newtype[String, Pure]
   export EventSummary.{Kind as OfKindKind, Kind as EffectiveKind}
 
   val Local = "local"

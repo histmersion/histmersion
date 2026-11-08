@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type Licence = Licence.T
 
-object Licence extends RefinedType[String, Pure]:
+object Licence extends Newtype[String, Pure]:
 
   /** A licence statement as the HOST reads it ([[LicenceReader]]).
     *
@@ -28,14 +28,14 @@ object Licence extends RefinedType[String, Pure]:
 
   object Read:
     type UnknownStatement = UnknownStatement.T
-    object UnknownStatement extends RefinedType[String, Pure]
+    object UnknownStatement extends Newtype[String, Pure]
 
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Family = Family.T
-    object Family extends RefinedType[String, Pure]
+    object Family extends Newtype[String, Pure]
     type NeedsAttribution = NeedsAttribution.T
-    object NeedsAttribution extends RefinedType[Boolean, Pure]
+    object NeedsAttribution extends Newtype[Boolean, Pure]
 
     val Cc0 = "cc0"
     val PublicDomain = "public-domain"

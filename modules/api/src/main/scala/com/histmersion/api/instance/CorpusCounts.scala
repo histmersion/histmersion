@@ -6,7 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CorpusCounts(
@@ -22,22 +21,22 @@ final case class CorpusCounts(
 
 object CorpusCounts:
   type Sources = Sources.T
-  object Sources extends RefinedType[Int, Pure]
+  object Sources extends Newtype[Int, Pure]
   type Findings = Findings.T
-  object Findings extends RefinedType[Int, Pure]
+  object Findings extends Newtype[Int, Pure]
   type Articles = Articles.T
-  object Articles extends RefinedType[Int, Pure]
+  object Articles extends Newtype[Int, Pure]
   type Events = Events.T
-  object Events extends RefinedType[Int, Pure]
+  object Events extends Newtype[Int, Pure]
   type Places = Places.T
-  object Places extends RefinedType[Int, Pure]
+  object Places extends Newtype[Int, Pure]
   type Periods = Periods.T
-  object Periods extends RefinedType[Int, Pure]:
+  object Periods extends Newtype[Int, Pure]:
     type Collection = Collection.T
-    object Collection extends RefinedType[String, Pure]
+    object Collection extends Newtype[String, Pure]
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
   type Presets = Presets.T
-  object Presets extends RefinedType[Int, Pure]
+  object Presets extends Newtype[Int, Pure]

@@ -8,7 +8,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** `minLon > maxLon`: the box crosses the antimeridian. */
@@ -24,7 +23,7 @@ final case class BBox(minLon: Longitude, minLat: Latitude, maxLon: Longitude, ma
 
 object BBox:
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
 
 

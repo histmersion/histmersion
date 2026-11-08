@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Citation, home: CatalogProviderInfo.Home)
@@ -16,4 +15,4 @@ object CatalogProviderInfo:
   export CatalogRecord.{Provider as Id}
   export EventCatalogueRef.{Title, Licence, Citation}
   type Home = Home.T
-  object Home extends RefinedType[String, Pure]
+  object Home extends Newtype[String, Pure]

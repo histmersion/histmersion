@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply = AssessRequest.Apply(false), forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false))
@@ -14,8 +13,8 @@ final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply 
 
 object AssessRequest:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Apply = Apply.T
-  object Apply extends RefinedType[Boolean, Pure]
+  object Apply extends Newtype[Boolean, Pure]
   type ForceStatus = ForceStatus.T
-  object ForceStatus extends RefinedType[Boolean, Pure]
+  object ForceStatus extends Newtype[Boolean, Pure]

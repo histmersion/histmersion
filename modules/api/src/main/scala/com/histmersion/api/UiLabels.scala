@@ -8,7 +8,6 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
 import com.histmersion.api.library.Source
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The label the UI shows for an identifier of any of the vocabularies — job types, wait codes, strategies, job kinds,
@@ -18,7 +17,7 @@ object UiLabels:
   type Key = Wording.Id
   val Key: Wording.Id.type = Wording.Id
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
 
   lazy val known: Map[Key, Text] =

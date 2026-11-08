@@ -1,7 +1,6 @@
 package com.histmersion
 package domain.automation
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 enum TargetKind(val wire: TargetKind.Wire):
   case Source extends TargetKind(TargetKind.Wire("source"))
@@ -11,7 +10,7 @@ enum TargetKind(val wire: TargetKind.Wire):
 
 object TargetKind:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
   def parse(s: Wire): Option[TargetKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

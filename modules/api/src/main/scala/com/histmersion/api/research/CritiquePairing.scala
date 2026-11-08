@@ -6,7 +6,6 @@ import com.histmersion.api.LatinFold
 import com.histmersion.api.library.Hit
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
@@ -16,16 +15,16 @@ import com.histmersion.api.text.WikiLinks
 object CritiquePairing:
   object Instruction:
     type Near = Near.T
-    object Near extends RefinedType[Int, Pure]
+    object Near extends Newtype[Int, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
 
 
   final case class Work(citekey: Citekey, names: List[Work.Names], year: Option[Year])
 
   object Work:
     type Names = Names.T
-    object Names extends RefinedType[String, Pure]
+    object Names extends Newtype[String, Pure]
 
   final case class Hit(
       unit: Hit.Unit,
@@ -49,15 +48,15 @@ object CritiquePairing:
   object Hit:
 
     type Unit = Unit.T
-    object Unit extends RefinedType[Int, Pure]
+    object Unit extends Newtype[Int, Pure]
     export Critiques.Block.{From, To}
     type Where = Where.T
-    object Where extends RefinedType[String, Pure]
+    object Where extends Newtype[String, Pure]
     type Edges = Edges.T
-    object Edges extends RefinedType[String, Pure]
+    object Edges extends Newtype[String, Pure]
     export Work.{Names as Named}
     type Mechanical = Mechanical.T
-    object Mechanical extends RefinedType[Boolean, Pure]
+    object Mechanical extends Newtype[Boolean, Pure]
 
   private def letters(s: String): String =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')

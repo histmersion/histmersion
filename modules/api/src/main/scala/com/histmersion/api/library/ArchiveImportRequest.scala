@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ArchiveImportRequest(
@@ -18,4 +17,4 @@ final case class ArchiveImportRequest(
 object ArchiveImportRequest:
   export com.histmersion.api.library.{ArchiveId as Id}
   type Format = Format.T
-  object Format extends RefinedType[String, Pure]
+  object Format extends Newtype[String, Pure]

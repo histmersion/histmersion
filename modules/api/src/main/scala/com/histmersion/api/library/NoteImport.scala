@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class NoteImport(
@@ -23,6 +22,6 @@ final case class NoteImport(
 object NoteImport:
   export Source.{Notes as Text, Notes as Body}
   type Mtime = Mtime.T
-  object Mtime extends RefinedType[Long, Pure]
+  object Mtime extends Newtype[Long, Pure]
   type Force = Force.T
-  object Force extends RefinedType[Boolean, Pure]
+  object Force extends Newtype[Boolean, Pure]

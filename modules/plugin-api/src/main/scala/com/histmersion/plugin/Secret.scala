@@ -2,7 +2,6 @@ package com.histmersion
 package plugin
 
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** A credential in a config: a REFERENCE to the value, parsed when the config is read and resolved by the host when the
@@ -55,24 +54,24 @@ object Secret:
   object Ref:
     object Value:
       type Literal = Literal.T
-      object Literal extends RefinedType[String, Pure]
+      object Literal extends Newtype[String, Pure]
 
     object Env:
       type Name = Name.T
-      object Name extends RefinedType[String, Pure]
+      object Name extends Newtype[String, Pure]
 
     object Vault:
       type Value = Value.T
-      object Value extends RefinedType[String, Pure]
+      object Value extends Newtype[String, Pure]
       type Ref = Ref.T
-      object Ref extends RefinedType[String, Pure]
+      object Ref extends Newtype[String, Pure]
 
     type ShownResult = ShownResult.T
-    object ShownResult extends RefinedType[String, Pure]
+    object ShownResult extends Newtype[String, Pure]
     type ParseResultPart1 = ParseResultPart1.T
-    object ParseResultPart1 extends RefinedType[String, Pure]
+    object ParseResultPart1 extends Newtype[String, Pure]
     type ParseText = ParseText.T
-    object ParseText extends RefinedType[String, Pure]
+    object ParseText extends Newtype[String, Pure]
 
     val ValueScheme = "value"
     val EnvScheme = "env"
@@ -123,13 +122,13 @@ object Secret:
 
   object Vault:
     type NameResult = NameResult.T
-    object NameResult extends RefinedType[String, Pure]
+    object NameResult extends Newtype[String, Pure]
     type ResolveResultPart1 = ResolveResultPart1.T
-    object ResolveResultPart1 extends RefinedType[String, Pure]
+    object ResolveResultPart1 extends Newtype[String, Pure]
     type ResolveResultPart2 = ResolveResultPart2.T
-    object ResolveResultPart2 extends RefinedType[String, Pure]
+    object ResolveResultPart2 extends Newtype[String, Pure]
     type ResolveRef = ResolveRef.T
-    object ResolveRef extends RefinedType[String, Pure]
+    object ResolveRef extends Newtype[String, Pure]
     type ResolveAllResultPart1 = ResolveRef
     val ResolveAllResultPart1: ResolveRef.type = ResolveRef
     type ResolveAllResultPart2Part1 = ResolveResultPart1

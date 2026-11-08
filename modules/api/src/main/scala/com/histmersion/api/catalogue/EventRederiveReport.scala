@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
 
@@ -25,27 +24,27 @@ final case class EventRederiveReport(
       KindlingsSchema, com.histmersion.api.json.Schema
 object EventRederiveReport:
   type Report = Report.T
-  object Report extends RefinedType[String, Pure]
+  object Report extends Newtype[String, Pure]
 
 
   /** An events re-dating job's report, in its detail. */
 
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type Providers = Providers.T
-  object Providers extends RefinedType[String, Pure]
+  object Providers extends Newtype[String, Pure]
   type Records = Records.T
-  object Records extends RefinedType[Int, Pure]
+  object Records extends Newtype[Int, Pure]
   type Changed = Changed.T
-  object Changed extends RefinedType[Int, Pure]
+  object Changed extends Newtype[Int, Pure]
   type FromRaw = FromRaw.T
-  object FromRaw extends RefinedType[Int, Pure]
+  object FromRaw extends Newtype[Int, Pure]
   type Updated = Updated.T
-  object Updated extends RefinedType[Int, Pure]
+  object Updated extends Newtype[Int, Pure]
   type OffMap = OffMap.T
-  object OffMap extends RefinedType[Int, Pure]
+  object OffMap extends Newtype[Int, Pure]
   type Examples = Examples.T
-  object Examples extends RefinedType[String, Pure]
+  object Examples extends Newtype[String, Pure]
 
   val Detail: JobDetail.Field[Option[EventRederiveReport]] =
     new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("eventRederive"), None)

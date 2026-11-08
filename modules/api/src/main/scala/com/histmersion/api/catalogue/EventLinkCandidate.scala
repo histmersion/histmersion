@@ -8,7 +8,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.Finding
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventLinkCandidate(
@@ -26,15 +25,15 @@ object EventLinkCandidate:
 
   /** Where a candidate link between an event and a source stands. */
   type Score = Score.T
-  object Score extends RefinedType[Double, Pure]
+  object Score extends Newtype[Double, Pure]
   type StatusValue = StatusValue.T
-  object StatusValue extends RefinedType[String, Pure]
+  object StatusValue extends Newtype[String, Pure]
   type Reasons = Reasons.T
-  object Reasons extends RefinedType[String, Pure]
+  object Reasons extends Newtype[String, Pure]
 
   object Status:
     type All = All.T
-    object All extends RefinedType[String, Pure]
+    object All extends Newtype[String, Pure]
 
     val Proposed = "proposed"
     val Confirmed = "confirmed"

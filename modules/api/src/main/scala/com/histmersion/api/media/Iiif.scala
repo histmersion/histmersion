@@ -4,7 +4,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.ArchiveFile
 import com.histmersion.api.Api
@@ -19,17 +18,17 @@ import com.histmersion.api.Api
   */
 object Iiif:
   type Format = Format.T
-  object Format extends RefinedType[String, Pure]
+  object Format extends Newtype[String, Pure]
   type ImageId = ImageId.T
-  object ImageId extends RefinedType[String, Pure]
+  object ImageId extends Newtype[String, Pure]
   type Quality = Quality.T
-  object Quality extends RefinedType[String, Pure]
+  object Quality extends Newtype[String, Pure]
   type RegionText = RegionText.T
-  object RegionText extends RefinedType[String, Pure]
+  object RegionText extends Newtype[String, Pure]
   type Rotation = Rotation.T
-  object Rotation extends RefinedType[String, Pure]
+  object Rotation extends Newtype[String, Pure]
   type SizeText = SizeText.T
-  object SizeText extends RefinedType[String, Pure]
+  object SizeText extends Newtype[String, Pure]
 
   export com.histmersion.api.library.ArchiveFile.Format.{Problem as ParseFormatResultPart1}
 
@@ -43,18 +42,18 @@ object Iiif:
 
   object Region:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     object Pixels:
       type X = X.T
-      object X extends RefinedType[Int, Pure]
+      object X extends Newtype[Int, Pure]
       type Y = Y.T
-      object Y extends RefinedType[Int, Pure]
+      object Y extends Newtype[Int, Pure]
       type W = W.T
-      object W extends RefinedType[Int, Pure]
+      object W extends Newtype[Int, Pure]
       type H = H.T
-      object H extends RefinedType[Int, Pure]
+      object H extends Newtype[Int, Pure]
 
     type ParseResultPart1 = Problem
     val ParseResultPart1: Problem.type = Problem
@@ -83,28 +82,28 @@ object Iiif:
 
   object Size:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     object Width:
       type W = W.T
-      object W extends RefinedType[Int, Pure]
+      object W extends Newtype[Int, Pure]
 
     object Height:
       type H = H.T
-      object H extends RefinedType[Int, Pure]
+      object H extends Newtype[Int, Pure]
 
     object Exact:
       type W = W.T
-      object W extends RefinedType[Int, Pure]
+      object W extends Newtype[Int, Pure]
       type H = H.T
-      object H extends RefinedType[Int, Pure]
+      object H extends Newtype[Int, Pure]
 
     object BestFit:
       type W = W.T
-      object W extends RefinedType[Int, Pure]
+      object W extends Newtype[Int, Pure]
       type H = H.T
-      object H extends RefinedType[Int, Pure]
+      object H extends Newtype[Int, Pure]
 
     type ParseResultPart1 = Problem
     val ParseResultPart1: Problem.type = Problem

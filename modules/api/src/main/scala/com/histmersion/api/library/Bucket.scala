@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Bucket(
@@ -31,20 +30,20 @@ object Bucket:
     * the same way). Ask for it with `Bucket.schema`; do not add a given `Schema[Bucket]` here.
     */
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Key = Key.T
-  object Key extends RefinedType[String, Pure]
+  object Key extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   export com.histmersion.api.catalogue.Place.{Id as PlaceId}
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Overlap = Overlap.T
-  object Overlap extends RefinedType[Int, Pure]
+  object Overlap extends Newtype[Int, Pure]
   type Contested = Contested.T
-  object Contested extends RefinedType[Boolean, Pure]
+  object Contested extends Newtype[Boolean, Pure]
   type AlsoUnder = AlsoUnder.T
-  object AlsoUnder extends RefinedType[String, Pure]
+  object AlsoUnder extends Newtype[String, Pure]
 
   def schema: Schema[Bucket] = summon[KindlingsSchema[Bucket]].schema
 

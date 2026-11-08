@@ -3,7 +3,6 @@ package api.research
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Citekey
@@ -11,19 +10,19 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 object Critiques:
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
   type Method = Method.T
-  object Method extends RefinedType[String, Pure]
+  object Method extends Newtype[String, Pure]
   type OpenLimit = OpenLimit.T
-  object OpenLimit extends RefinedType[Int, Pure]
+  object OpenLimit extends Newtype[Int, Pure]
   type Prompt = Prompt.T
-  object Prompt extends RefinedType[String, Pure]
+  object Prompt extends Newtype[String, Pure]
   type ReasonedLimit = ReasonedLimit.T
-  object ReasonedLimit extends RefinedType[Int, Pure]
+  object ReasonedLimit extends Newtype[Int, Pure]
   type Summary = Summary.T
-  object Summary extends RefinedType[String, Pure]
+  object Summary extends Newtype[String, Pure]
 
 
   val Kinds: List[Edge.Kind.Wire] = List(Edge.Kind.Challenges, Edge.Kind.Refutes, Edge.Kind.Updates, Edge.Kind.SupersededBy).map(Edge.Kind.wireOf)
@@ -38,9 +37,9 @@ object Critiques:
 
   object Block:
     type From = From.T
-    object From extends RefinedType[Int, Pure]
+    object From extends Newtype[Int, Pure]
     type To = To.T
-    object To extends RefinedType[Int, Pure]
+    object To extends Newtype[Int, Pure]
     export com.histmersion.api.text.WikiLinks.{Body as Text}
 
   def units(body: Article.Body): List[Block] =

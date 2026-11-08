@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FormatReport(
@@ -20,15 +19,15 @@ final case class FormatReport(
 
 object FormatReport:
   type ErrorCount = ErrorCount.T
-  object ErrorCount extends RefinedType[Int, Pure]
+  object ErrorCount extends Newtype[Int, Pure]
   type IssueCount = IssueCount.T
-  object IssueCount extends RefinedType[Int, Pure]
+  object IssueCount extends Newtype[Int, Pure]
   type WarningCount = WarningCount.T
-  object WarningCount extends RefinedType[Int, Pure]
+  object WarningCount extends Newtype[Int, Pure]
 
   type Subject = Subject.T
-  object Subject extends RefinedType[String, Pure]
+  object Subject extends Newtype[String, Pure]
   type Fixed = Fixed.T
-  object Fixed extends RefinedType[String, Pure]
+  object Fixed extends Newtype[String, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]

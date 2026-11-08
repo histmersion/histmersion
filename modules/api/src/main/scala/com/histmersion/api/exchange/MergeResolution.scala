@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeResolution(
@@ -17,8 +16,8 @@ final case class MergeResolution(
 
 object MergeResolution:
   type Issue = Issue.T
-  object Issue extends RefinedType[String, Pure]:
+  object Issue extends Newtype[String, Pure]:
     given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
   export MergeDecision.Kind.{Wire as Decision}
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]

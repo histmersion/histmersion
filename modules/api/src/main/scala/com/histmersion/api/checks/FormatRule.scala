@@ -5,7 +5,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description):
@@ -229,11 +228,11 @@ enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fix
 
 object FormatRule:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
   type Fixable = Fixable.T
-  object Fixable extends RefinedType[Boolean, Pure]
+  object Fixable extends Newtype[Boolean, Pure]
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
 
 
   given WireEnumValues[FormatRule]:

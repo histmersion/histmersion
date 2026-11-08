@@ -3,7 +3,6 @@ package api.library
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The library's source collections (the Calibre library, archive.org): what the server can run, and the operations
@@ -11,9 +10,9 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 object CollectionsApi:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
 
 
   private lazy val base = endpoint.in("api" / "collections").errorOut(jsonBody[Api.Error])

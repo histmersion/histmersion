@@ -1,7 +1,6 @@
 package com.histmersion
 package api.media
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class DataCredit(
     name: DataCredit.Name,
@@ -15,14 +14,14 @@ final case class DataCredit(
 
 object DataCredit:
   type Name = Name.T
-  object Name extends RefinedType[String, Pure]
+  object Name extends Newtype[String, Pure]
   type UsedFor = UsedFor.T
-  object UsedFor extends RefinedType[String, Pure]
+  object UsedFor extends Newtype[String, Pure]
   type Licence = Licence.T
-  object Licence extends RefinedType[String, Pure]
+  object Licence extends Newtype[String, Pure]
   type LicenceUrl = LicenceUrl.T
-  object LicenceUrl extends RefinedType[String, Pure]
+  object LicenceUrl extends Newtype[String, Pure]
   type Url = Url.T
-  object Url extends RefinedType[String, Pure]
+  object Url extends Newtype[String, Pure]
   type OnMap = OnMap.T
-  object OnMap extends RefinedType[Boolean, Pure]
+  object OnMap extends Newtype[Boolean, Pure]

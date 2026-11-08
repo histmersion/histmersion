@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CandidateList(
@@ -21,8 +20,8 @@ final case class CandidateList(
 object CandidateList:
   export com.histmersion.api.research.ReviewGoal.{Slug as Goal}
   type State = State.T
-  object State extends RefinedType[String, Pure]
+  object State extends Newtype[String, Pure]
   type Offset = Offset.T
-  object Offset extends RefinedType[Int, Pure]
+  object Offset extends Newtype[Int, Pure]
   type Next = Next.T
-  object Next extends RefinedType[Int, Pure]
+  object Next extends Newtype[Int, Pure]

@@ -11,18 +11,18 @@ object Goal:
   /** A goal's slug: the article slug's rule, but its own type, so a goal never passes for an article. */
   type Slug = Slug.T
 
-  object Slug extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
+  object Slug extends Newtype[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
     extension (s: Slug) def trimmed: Slug = assume(s.value.trim)
 
   /** A goal's stable identity across renames, merges and databases (`goals.uid`). */
   type Uid = Uid.T
 
-  object Uid extends RefinedType[java.util.UUID, Pure]
+  object Uid extends Newtype[java.util.UUID, Pure]
 
   /** The stages of a research goal, as the store and the wire spell them. */
   object Status:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Planned = "planned"
     val Seeding = "seeding"
@@ -42,7 +42,7 @@ object Goal:
 
     /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     val SearchQuery: LinkKind = Query

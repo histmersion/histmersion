@@ -8,7 +8,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
 
@@ -22,9 +21,9 @@ final case class EventList(
   def page: OffsetPage = OffsetPage(total, offset, RowCount(events.size))
 object EventList:
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Total = Total.T
-  object Total extends RefinedType[Int, Pure]
+  object Total extends Newtype[Int, Pure]
 
 
   def of(total: Total, rows: List[EventSummary], offset: UnreadPage.Offset): EventList =

@@ -4,12 +4,11 @@ import com.histmersion.api.Write
 import com.histmersion.api.given
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Api
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object LabelRenames:
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
 
   private val Shape = "^[a-z0-9][a-z0-9_.-]*$".r
 

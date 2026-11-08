@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UidRedirect(aliasUid: UUID, uid: UUID, kind: UidRedirect.Kind, mergeId: Option[UUID])
@@ -16,4 +15,4 @@ final case class UidRedirect(aliasUid: UUID, uid: UUID, kind: UidRedirect.Kind, 
 
 object UidRedirect:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]

@@ -5,7 +5,6 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Import item `id` of a collection into the library: under `citekey` (else the generated one), its `format` (else the
@@ -24,12 +23,12 @@ final case class CollectionImportRequest(
 
 object CollectionImportRequest:
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Format = Format.T
-  object Format extends RefinedType[String, Pure]
+  object Format extends Newtype[String, Pure]
   type Convert = Convert.T
-  object Convert extends RefinedType[Boolean, Pure]
+  object Convert extends Newtype[Boolean, Pure]
   type Cover = Cover.T
-  object Cover extends RefinedType[Boolean, Pure]
+  object Cover extends Newtype[Boolean, Pure]
   type AcquireItem = AcquireItem.T
-  object AcquireItem extends RefinedType[Int, Pure]
+  object AcquireItem extends Newtype[Int, Pure]

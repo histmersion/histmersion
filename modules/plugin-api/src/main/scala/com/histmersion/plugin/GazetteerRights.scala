@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a gazetteer dataset says about reuse, as its provider states it — never judged by the plugin.
@@ -19,6 +18,6 @@ final case class GazetteerRights(licence: Licence, credit: GazetteerRights.Credi
 
 object GazetteerRights:
   type Credit = Credit.T
-  object Credit extends RefinedType[String, Pure]
+  object Credit extends Newtype[String, Pure]
   type LicenceUrl = LicenceUrl.T
-  object LicenceUrl extends RefinedType[String, Pure]
+  object LicenceUrl extends Newtype[String, Pure]

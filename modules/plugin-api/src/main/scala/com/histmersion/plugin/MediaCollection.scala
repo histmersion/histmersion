@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Media collections, the second part of the app that plugins extend: an open-access collection of pictures — a
@@ -112,21 +111,21 @@ trait MediaCollection:
 
 object MediaCollection:
   type TitleResult = TitleResult.T
-  object TitleResult extends RefinedType[String, Pure]
+  object TitleResult extends Newtype[String, Pure]
   type DescriptionResult = DescriptionResult.T
-  object DescriptionResult extends RefinedType[String, Pure]
+  object DescriptionResult extends Newtype[String, Pure]
   type RoleResult = MediaItem.Role
   val RoleResult: MediaItem.Role.type = MediaItem.Role
   type PerPlaceResult = PerPlaceResult.T
-  object PerPlaceResult extends RefinedType[Int, Pure]
+  object PerPlaceResult extends Newtype[Int, Pure]
   type RequestIntervalMsResult = RequestIntervalMsResult.T
-  object RequestIntervalMsResult extends RefinedType[Int, Pure]
+  object RequestIntervalMsResult extends Newtype[Int, Pure]
   type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends RefinedType[String, Pure]
+  object SearchResultPart1 extends Newtype[String, Pure]
   type SearchResultPart2Part1 = SearchResultPart2Part1.T
-  object SearchResultPart2Part1 extends RefinedType[String, Pure]
+  object SearchResultPart2Part1 extends Newtype[String, Pure]
   type CompleteResultPart1 = CompleteResultPart1.T
-  object CompleteResultPart1 extends RefinedType[String, Pure]
+  object CompleteResultPart1 extends Newtype[String, Pure]
   type RolesResult = MediaItem.Role
   val RolesResult: MediaItem.Role.type = MediaItem.Role
   type SearchEventResultPart1 = SearchResultPart1
@@ -134,11 +133,11 @@ object MediaCollection:
   type SearchEventResultPart2Part1 = SearchResultPart2Part1
   val SearchEventResultPart2Part1: SearchResultPart2Part1.type = SearchResultPart2Part1
   type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends RefinedType[String, Pure]
+  object CheckResultPart1 extends Newtype[String, Pure]
   type RefusalBackoffMsResult = RefusalBackoffMsResult.T
-  object RefusalBackoffMsResult extends RefinedType[Long, Pure]
+  object RefusalBackoffMsResult extends Newtype[Long, Pure]
   type PlacesCarryingResult = PlacesCarryingResult.T
-  object PlacesCarryingResult extends RefinedType[String, Pure]
+  object PlacesCarryingResult extends Newtype[String, Pure]
   type Roles = MediaItem.Role
 
   val Object = "object"

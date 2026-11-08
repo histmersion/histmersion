@@ -6,21 +6,20 @@ import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object ApprovalDigest:
   type Line = Line.T
-  object Line extends RefinedType[String, Pure]
+  object Line extends Newtype[String, Pure]
 
 
   final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object SubjectCount:
     type Subject = Subject.T
-    object Subject extends RefinedType[String, Pure]
+    object Subject extends Newtype[String, Pure]
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
 
 
   final case class KindGroup(
@@ -36,12 +35,12 @@ object ApprovalDigest:
   object KindGroup:
     export Approval.Kind.{Wire as Kind}
     type Count = Count.T
-    object Count extends RefinedType[Int, Pure]
+    object Count extends Newtype[Int, Pure]
     type Oldest = Oldest.T
-    object Oldest extends RefinedType[String, Pure]
+    object Oldest extends Newtype[String, Pure]
     export Approval.DecidedBy.{Wire as DecidedBy}
     type Ids = Ids.T
-    object Ids extends RefinedType[Long, Pure]
+    object Ids extends Newtype[Long, Pure]
 
 
   final case class Digest(
@@ -56,15 +55,15 @@ object ApprovalDigest:
 
   object Digest:
     type At = At.T
-    object At extends RefinedType[String, Pure]
+    object At extends Newtype[String, Pure]
     type Total = Total.T
-    object Total extends RefinedType[Int, Pure]
+    object Total extends Newtype[Int, Pure]
     type HeldForPerson = HeldForPerson.T
-    object HeldForPerson extends RefinedType[Int, Pure]
+    object HeldForPerson extends Newtype[Int, Pure]
     type LastWritten = LastWritten.T
-    object LastWritten extends RefinedType[String, Pure]
+    object LastWritten extends Newtype[String, Pure]
     type GoalPlansWait = GoalPlansWait.T
-    object GoalPlansWait extends RefinedType[String, Pure]
+    object GoalPlansWait extends Newtype[String, Pure]
 
 
   final case class BulkDecide(
@@ -81,28 +80,28 @@ object ApprovalDigest:
 
   object BulkDecide:
     type Decision = Decision.T
-    object Decision extends RefinedType[String, Pure]
+    object Decision extends Newtype[String, Pure]
     export Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
-    object Subject extends RefinedType[String, Pure]
+    object Subject extends Newtype[String, Pure]
     type Ids = Ids.T
-    object Ids extends RefinedType[Long, Pure]
+    object Ids extends Newtype[Long, Pure]
     export Approval.Note
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
 
 
   final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object BulkFailed:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]
+    object Id extends Newtype[Long, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
 
 
   final case class BulkResult(
@@ -117,15 +116,15 @@ object ApprovalDigest:
 
   object BulkResult:
     type Decision = Decision.T
-    object Decision extends RefinedType[String, Pure]
+    object Decision extends Newtype[String, Pure]
     type DryRun = DryRun.T
-    object DryRun extends RefinedType[Boolean, Pure]
+    object DryRun extends Newtype[Boolean, Pure]
     type Matched = Matched.T
-    object Matched extends RefinedType[Int, Pure]
+    object Matched extends Newtype[Int, Pure]
     type Decided = Decided.T
-    object Decided extends RefinedType[Long, Pure]
+    object Decided extends Newtype[Long, Pure]
     type Left = Left.T
-    object Left extends RefinedType[Int, Pure]
+    object Left extends Newtype[Int, Pure]
 
 
   val Waits = "waits"
@@ -136,14 +135,14 @@ object ApprovalDigest:
 
   object Open:
     type Id = Id.T
-    object Id extends RefinedType[Long, Pure]:
+    object Id extends Newtype[Long, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     export Approval.Kind.{Wire as Kind}
     type Subject = Subject.T
-    object Subject extends RefinedType[String, Pure]:
+    object Subject extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends RefinedType[String, Pure]
+    object CreatedAt extends Newtype[String, Pure]
 
   def group(open: List[Open], checked: Approval.Kind.Wire => Boolean, waiting: Set[Approval.Kind.Wire] = Set.empty): List[KindGroup] =
     open

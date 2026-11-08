@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ArchiveSearchResult(query: ArchiveSearchResult.Query, count: ArchiveSearchResult.Count, items: List[ArchiveItem])
@@ -14,6 +13,6 @@ final case class ArchiveSearchResult(query: ArchiveSearchResult.Query, count: Ar
 
 object ArchiveSearchResult:
   type Query = Query.T
-  object Query extends RefinedType[String, Pure]
+  object Query extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]

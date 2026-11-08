@@ -3,7 +3,6 @@ package api.catalogue
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reader/writer for the Linked Places Format (LPF v1.1) and plain GeoJSON `FeatureCollection`s.
@@ -27,11 +26,11 @@ import io.github.iltotore.iron.constraint.any.Pure
 object Lpf:
   object Bound:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   type Document = Document.T
-  object Document extends RefinedType[String, Pure]
+  object Document extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
 
   /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2). ISO 8601 / astronomical year
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.

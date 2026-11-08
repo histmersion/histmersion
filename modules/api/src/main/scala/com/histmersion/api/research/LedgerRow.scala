@@ -7,7 +7,6 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class LedgerRow(
@@ -25,14 +24,14 @@ final case class LedgerRow(
 
 object LedgerRow:
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type ForeignRev = ForeignRev.T
-  object ForeignRev extends RefinedType[String, Pure]
+  object ForeignRev extends Newtype[String, Pure]
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type LocalRevAfter = LocalRevAfter.T
-  object LocalRevAfter extends RefinedType[String, Pure]
+  object LocalRevAfter extends Newtype[String, Pure]
   type Decision = Decision.T
-  object Decision extends RefinedType[String, Pure]
+  object Decision extends Newtype[String, Pure]
   type RecordedAt = RecordedAt.T
-  object RecordedAt extends RefinedType[String, Pure]
+  object RecordedAt extends Newtype[String, Pure]

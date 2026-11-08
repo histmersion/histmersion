@@ -1,18 +1,17 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 final case class MapArea(label: MapArea.Label, bbox: MapArea.Bbox, approxGb: MapArea.ApproxGb)
 
 object MapArea:
 
   type Label = Label.T
-  object Label extends RefinedType[String, Pure]
+  object Label extends Newtype[String, Pure]
   type Bbox = Bbox.T
-  object Bbox extends RefinedType[String, Pure]
+  object Bbox extends Newtype[String, Pure]
   type ApproxGb = ApproxGb.T
-  object ApproxGb extends RefinedType[Double, Pure]
+  object ApproxGb extends Newtype[Double, Pure]
 
   def parse(entry: String): Option[MapArea] =
     (entry).split('|').toList.map(_.trim) match

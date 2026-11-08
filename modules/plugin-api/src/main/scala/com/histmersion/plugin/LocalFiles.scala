@@ -2,7 +2,6 @@ package com.histmersion
 package plugin
 
 import java.nio.file.Path
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Local filesystem operations supplied by the host. Path construction alone performs no I/O.
@@ -23,28 +22,28 @@ trait LocalFiles:
 
 object LocalFiles:
   type ReadResult = ReadResult.T
-  object ReadResult extends RefinedType[Array[Byte], Pure]
+  object ReadResult extends Newtype[Array[Byte], Pure]
   type ReadPrefixResult = ReadPrefixResult.T
-  object ReadPrefixResult extends RefinedType[Array[Byte], Pure]
+  object ReadPrefixResult extends Newtype[Array[Byte], Pure]
   type StagedBytes = StagedBytes.T
-  object StagedBytes extends RefinedType[Array[Byte], Pure]
+  object StagedBytes extends Newtype[Array[Byte], Pure]
 
   type IsFileResult = IsFileResult.T
-  object IsFileResult extends RefinedType[Boolean, Pure]
+  object IsFileResult extends Newtype[Boolean, Pure]
   type IsDirectoryResult = IsDirectoryResult.T
-  object IsDirectoryResult extends RefinedType[Boolean, Pure]
+  object IsDirectoryResult extends Newtype[Boolean, Pure]
   type ExistsResult = ExistsResult.T
-  object ExistsResult extends RefinedType[Boolean, Pure]
+  object ExistsResult extends Newtype[Boolean, Pure]
   type IsExecutableResult = IsExecutableResult.T
-  object IsExecutableResult extends RefinedType[Boolean, Pure]
+  object IsExecutableResult extends Newtype[Boolean, Pure]
   type ReadPrefixLength = ReadPrefixLength.T
-  object ReadPrefixLength extends RefinedType[Int, Pure]
+  object ReadPrefixLength extends Newtype[Int, Pure]
   type StagedResultPart1 = StagedResultPart1.T
-  object StagedResultPart1 extends RefinedType[String, Pure]
+  object StagedResultPart1 extends Newtype[String, Pure]
   type StagedName = StagedName.T
-  object StagedName extends RefinedType[String, Pure]
+  object StagedName extends Newtype[String, Pure]
   type StagedUseResultPart1 = StagedUseResultPart1.T
-  object StagedUseResultPart1 extends RefinedType[String, Pure]
+  object StagedUseResultPart1 extends Newtype[String, Pure]
 
   object Unavailable extends LocalFiles:
     export LocalFiles.{ReadResult, ReadPrefixResult, StagedBytes, IsFileResult, IsDirectoryResult, ExistsResult, IsExecutableResult, ReadPrefixLength, StagedResultPart1, StagedName, StagedUseResultPart1}

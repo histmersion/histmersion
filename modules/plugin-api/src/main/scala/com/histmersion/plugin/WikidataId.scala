@@ -9,4 +9,4 @@ import io.github.iltotore.iron.constraint.any.Pure
   */
 type WikidataId = WikidataId.T
 
-object WikidataId extends RefinedType[String, Pure]
+object WikidataId extends Newtype[String, Pure]

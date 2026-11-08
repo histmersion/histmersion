@@ -1,5 +1,6 @@
 package com.histmersion.api.research
 
+import com.histmersion.Newtype
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.Period
@@ -41,54 +42,54 @@ final case class Article(
 
 object Article:
   type Export = Export.T
-  object Export extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Export extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FullText = FullText.T
-  object FullText extends _root_.io.github.iltotore.iron.RefinedType[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FullText extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Heading = Heading.T
-  object Heading extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Heading extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Lede = Lede.T
-  object Lede extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Lede extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Part = Part.T
-  object Part extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Part extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Period = Period.T
-  object Period extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Period extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Prose = Prose.T
-  object Prose extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Prose extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Section = Section.T
-  object Section extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Section extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VersionId = VersionId.T
-  object VersionId extends _root_.io.github.iltotore.iron.RefinedType[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object VersionId extends Newtype[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Slug extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   export Kind.{Wire as KindValue}
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SummaryText = SummaryText.T
-  object SummaryText extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SummaryText extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tags extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Regions extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object UpdatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   export com.histmersion.api.research.Coverage.Entry.{Reason as ReasonsValue}
 
   object Coverage:
     type DisagreementKind = DisagreementKind.T
-    object DisagreementKind extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DisagreementKind extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Export = Export.T
-    object Export extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Export extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Markdown = Markdown.T
-    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Method = Method.T
-    object Method extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Method extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NotUsed = NotUsed.T
-    object NotUsed extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotUsed extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Sections = Sections.T
-    object Sections extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Sections extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type DisagreementKinds = DisagreementKindsValue
     type DisagreementKindsValue = DisagreementKind
@@ -309,20 +310,20 @@ object Article:
 
   object Deleted:
     type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Value extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   object Edits:
     type Anchor = Anchor.T
-    object Anchor extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Anchor extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HeadLimit = HeadLimit.T
-    object HeadLimit extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object HeadLimit extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Markdown = Markdown.T
-    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NewText = NewText.T
-    object NewText extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NewText extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Offset extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
@@ -341,7 +342,7 @@ object Article:
 
     object Op:
       type Wire = Wire.T
-      object Wire extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
       def parse(s: Wire): Option[Op] = values.find(_.wire.value.equalsIgnoreCase(s.value.trim))
@@ -422,10 +423,10 @@ object Article:
     object EditResult:
 
       type Index = Index.T
-      object Index extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Index extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       export Edits.{Anchor, NewText as Text}
       type Problem = Problem.T
-      object Problem extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     final case class Applied(body: Body, results: scala.List[EditResult]):
@@ -434,9 +435,9 @@ object Article:
 
     object Applied:
       type Count = Count.T
-      object Count extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Count extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type ProblemsResult = ProblemsResult.T
-      object ProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object ProblemsResult extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def head(anchor: Anchor, max: HeadLimit = HeadLimit(48)): String =
       val one = (anchor).value.trim.replaceAll("\\s+", " ")
@@ -559,16 +560,16 @@ object Article:
 
     object ArticleCheck:
       type Problem = Problem.T
-      object Problem extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       type Problems = Problem
       val Problems: Problem.type = Problem
       type Fatal = Fatal.T
-      object Fatal extends _root_.io.github.iltotore.iron.RefinedType[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Fatal extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type WordsBefore = WordsBefore.T
-      object WordsBefore extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object WordsBefore extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type WordsAfter = WordsAfter.T
-      object WordsAfter extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object WordsAfter extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def markdown(c: ArticleCheck): Markdown =
@@ -622,13 +623,13 @@ object Article:
 
   object Filter:
     type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problem extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     export com.histmersion.api.library.Filter.{Q as Query, Topics, Tags, Status, Places, Authors}
     export com.histmersion.api.catalogue.{Year as From, Year as To}
     type ExtraQueries = ExtraQueries.T
-    object ExtraQueries extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExtraQueries extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[Filter] = KindlingsSchema
       .derived[Filter]
@@ -690,11 +691,11 @@ object Article:
   object Import:
     export Article.{Body as Text}
     type Mtime = Mtime.T
-    object Mtime extends _root_.io.github.iltotore.iron.RefinedType[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Mtime extends Newtype[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Force = Force.T
-    object Force extends _root_.io.github.iltotore.iron.RefinedType[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Force extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Strict = Strict.T
-    object Strict extends _root_.io.github.iltotore.iron.RefinedType[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strict extends Newtype[Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum Kind:
@@ -702,7 +703,7 @@ object Article:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FromStringS = Wire
     val FromStringS: Wire.type = Wire
 
@@ -723,19 +724,19 @@ object Article:
 
   object KindCount:
     type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Link(targetKind: Link.TargetKind, target: Link.Target)
 
   object Link:
     type TargetKind = TargetKind.T
-    object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object TargetKind extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     export com.histmersion.api.text.WikiLinks.Occurrence.Target
 
   object Links:
     type Markdown = Markdown.T
-    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type ResolveMarkdownResult = Markdown
     val ResolveMarkdownResult: Markdown.type = Markdown
@@ -782,7 +783,7 @@ object Article:
   /** The articles' lint rules: a thin or stand-in summary, filler phrases, uncited paragraphs, unpaired critiques. */
   object Lint:
     type FillerPhrasesText = FillerPhrasesText.T
-    object FillerPhrasesText extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FillerPhrasesText extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type FillerPhrases = FillerPhrasesValue
     type FillerPhrasesValue = FillerPhrasesText
@@ -887,7 +888,7 @@ object Article:
     def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(articles.size))
   object List:
     type Total = Total.T
-    object Total extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Total extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def of(total: Total, rows: scala.List[Summary], offset: com.histmersion.api.personal.UnreadPage.Offset, kinds: scala.List[KindCount] = Nil): List =
@@ -918,16 +919,16 @@ object Article:
 
 
     type Append = Append.T
-    object Append extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Append extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Section = Section.T
-    object Section extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Section extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     export Article.{Regions, UpdatedAt as IfUpdatedAt}
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
   object Plans:
     type Markdown = Markdown.T
-    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type FilterBlockResult = Markdown
     val FilterBlockResult: Markdown.type = Markdown
@@ -949,20 +950,20 @@ object Article:
 
     object FilterProposal:
       type Recall = Recall.T
-      object Recall extends _root_.io.github.iltotore.iron.RefinedType[Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Recall extends Newtype[Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       type Rationale = Rationale.T
-      object Rationale extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Rationale extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Total = Total.T
-      object Total extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Total extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Cited = Cited.T
-      object Cited extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Cited extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type CitedIn = CitedIn.T
-      object CitedIn extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object CitedIn extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Missed = Missed.T
-      object Missed extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Missed extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Sample = Sample.T
-      object Sample extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Sample extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     final case class ProposedArticle(
@@ -979,13 +980,13 @@ object Article:
 
     object ProposedArticle:
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Hits = Hits.T
-      object Hits extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Hits extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Overlap = Overlap.T
-      object Overlap extends _root_.io.github.iltotore.iron.RefinedType[Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Overlap extends Newtype[Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type OverlapWith = OverlapWith.T
-      object OverlapWith extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object OverlapWith extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     final case class ArticlePlan(
@@ -1001,9 +1002,9 @@ object Article:
 
       export ReviewGoal.{Slug as Goal}
       type Rationale = Rationale.T
-      object Rationale extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Rationale extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Dropped = Dropped.T
-      object Dropped extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Dropped extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def filterLine(f: Filter): String = f.line
@@ -1074,14 +1075,14 @@ object Article:
         KindlingsSchema, com.histmersion.api.json.Schema
   object ReviewView:
     type Markdown = Markdown.T
-    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Markdown extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     type MarkdownResult = Markdown
     val MarkdownResult: Markdown.type = Markdown
 
     type Outcome = Outcome.T
-    object Outcome extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Outcome extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     export Article.UpdatedAt
 
     def reviewerName(reviewer: ReviewFinding.Reviewer): String = named(reviewer.value)
@@ -1186,13 +1187,13 @@ object Article:
 
   object Version:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends Newtype[Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UpdatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends Newtype[String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WordCount = WordCount.T
-    object WordCount extends _root_.io.github.iltotore.iron.RefinedType[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object WordCount extends Newtype[Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class VersionFull(

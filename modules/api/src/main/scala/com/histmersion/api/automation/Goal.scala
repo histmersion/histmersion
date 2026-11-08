@@ -13,7 +13,6 @@ import io.circe.Codec
 import io.circe.{Codec, Decoder, Encoder}
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.RowCount
 import com.histmersion.api.Offset
@@ -38,39 +37,39 @@ final case class Goal(
 
 object Goal:
   type Export = Export.T
-  object Export extends RefinedType[String, Pure]
+  object Export extends Newtype[String, Pure]
   type LinkSectionKey = LinkSectionKey.T
-  object LinkSectionKey extends RefinedType[String, Pure]
+  object LinkSectionKey extends Newtype[String, Pure]
   type Ref = Ref.T
-  object Ref extends RefinedType[String, Pure]
+  object Ref extends Newtype[String, Pure]
   type Stage = Stage.T
-  object Stage extends RefinedType[String, Pure]
+  object Stage extends Newtype[String, Pure]
   type StageMeaning = StageMeaning.T
-  object StageMeaning extends RefinedType[String, Pure]
+  object StageMeaning extends Newtype[String, Pure]
   type Uid = Uid.T
-  object Uid extends RefinedType[String, Pure]
+  object Uid extends Newtype[String, Pure]
 
   /** The stages of a research goal, as the store and the wire spell them. */
   type Slug = Slug.T
-  object Slug extends RefinedType[String, Pure]:
+  object Slug extends Newtype[String, Pure]:
     given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
   type StatusValue = StatusValue.T
-  object StatusValue extends RefinedType[String, Pure]:
+  object StatusValue extends Newtype[String, Pure]:
     given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
   type Notes = Notes.T
-  object Notes extends RefinedType[String, Pure]
+  object Notes extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
-  object Regions extends RefinedType[String, Pure]
+  object Regions extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends RefinedType[String, Pure]
+  object UpdatedAt extends Newtype[String, Pure]
 
   object Status:
     type All = All.T
-    object All extends RefinedType[String, Pure]
+    object All extends Newtype[String, Pure]
 
     val Planned = "planned"
     val Seeding = "seeding"
@@ -90,7 +89,7 @@ object Goal:
 
     /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     val SearchQuery: LinkKind = Query
@@ -110,7 +109,7 @@ object Goal:
 
   object Deleted:
     type Value = Value.T
-    object Value extends RefinedType[Boolean, Pure]
+    object Value extends Newtype[Boolean, Pure]
 
 
 
@@ -145,7 +144,7 @@ object Goal:
 
 
     type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends RefinedType[Double, Pure]
+    object BudgetUsd extends Newtype[Double, Pure]
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
@@ -174,11 +173,11 @@ object Goal:
 
     object PlannedWork:
       type InCorpus = InCorpus.T
-      object InCorpus extends RefinedType[Boolean, Pure]
+      object InCorpus extends Newtype[Boolean, Pure]
       type IsOa = IsOa.T
-      object IsOa extends RefinedType[Boolean, Pure]
+      object IsOa extends Newtype[Boolean, Pure]
       type Why = Why.T
-      object Why extends RefinedType[String, Pure]
+      object Why extends Newtype[String, Pure]
 
 
     final case class Plan(
@@ -195,11 +194,11 @@ object Goal:
     object Plan:
 
       type Rationale = Rationale.T
-      object Rationale extends RefinedType[String, Pure]
+      object Rationale extends Newtype[String, Pure]
       type Queries = Queries.T
-      object Queries extends RefinedType[String, Pure]
+      object Queries extends Newtype[String, Pure]
       type Dropped = Dropped.T
-      object Dropped extends RefinedType[String, Pure]
+      object Dropped extends Newtype[String, Pure]
 
 
     export Goal.LinkKind as LinkKind
@@ -224,13 +223,13 @@ object Goal:
 
     object ArticleDraft:
       type Text = Text.T
-      object Text extends RefinedType[String, Pure]
+      object Text extends Newtype[String, Pure]
       type Section = Section.T
-      object Section extends RefinedType[String, Pure]
+      object Section extends Newtype[String, Pure]
       type Problems = Problems.T
-      object Problems extends RefinedType[String, Pure]
+      object Problems extends Newtype[String, Pure]
       type Filter = Filter.T
-      object Filter extends RefinedType[String, Pure]
+      object Filter extends Newtype[String, Pure]
 
 
     final case class GoalLink(
@@ -245,17 +244,17 @@ object Goal:
 
     object GoalLink:
       type QueueNumber = QueueNumber.T
-      object QueueNumber extends RefinedType[Int, Pure]
+      object QueueNumber extends Newtype[Int, Pure]
       type Ref = Ref.T
-      object Ref extends RefinedType[String, Pure]
+      object Ref extends Newtype[String, Pure]
       type Note = Note.T
-      object Note extends RefinedType[String, Pure]
+      object Note extends Newtype[String, Pure]
       type Title = Title.T
-      object Title extends RefinedType[String, Pure]
+      object Title extends Newtype[String, Pure]
       type CreatedAt = CreatedAt.T
-      object CreatedAt extends RefinedType[String, Pure]
+      object CreatedAt extends Newtype[String, Pure]
       type Queue = Queue.T
-      object Queue extends RefinedType[String, Pure]
+      object Queue extends Newtype[String, Pure]
 
 
     final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
@@ -263,9 +262,9 @@ object Goal:
 
 
       type Ref = Ref.T
-      object Ref extends RefinedType[String, Pure]
+      object Ref extends Newtype[String, Pure]
       type Note = Note.T
-      object Note extends RefinedType[String, Pure]
+      object Note extends Newtype[String, Pure]
 
       given Codec.AsObject[LinkAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[LinkAdd])
 
@@ -285,19 +284,19 @@ object Goal:
 
     object GoalSchedule:
       type Cron = Cron.T
-      object Cron extends RefinedType[String, Pure]
+      object Cron extends Newtype[String, Pure]
       type Enabled = Enabled.T
-      object Enabled extends RefinedType[Boolean, Pure]
+      object Enabled extends Newtype[Boolean, Pure]
       type BudgetUsd = BudgetUsd.T
-      object BudgetUsd extends RefinedType[Double, Pure]
+      object BudgetUsd extends Newtype[Double, Pure]
       type NextRunAt = NextRunAt.T
-      object NextRunAt extends RefinedType[String, Pure]
+      object NextRunAt extends Newtype[String, Pure]
       type LastRunAt = LastRunAt.T
-      object LastRunAt extends RefinedType[String, Pure]
+      object LastRunAt extends Newtype[String, Pure]
       type LastRun = LastRun.T
-      object LastRun extends RefinedType[String, Pure]
+      object LastRun extends Newtype[String, Pure]
       type LastNote = LastNote.T
-      object LastNote extends RefinedType[String, Pure]
+      object LastNote extends Newtype[String, Pure]
 
 
     final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = ScheduleSet.Enabled(true), budgetUsd: Option[ScheduleSet.BudgetUsd] = None)
@@ -306,11 +305,11 @@ object Goal:
 
 
       type Cron = Cron.T
-      object Cron extends RefinedType[String, Pure]
+      object Cron extends Newtype[String, Pure]
       type Enabled = Enabled.T
-      object Enabled extends RefinedType[Boolean, Pure]
+      object Enabled extends Newtype[Boolean, Pure]
       type BudgetUsd = BudgetUsd.T
-      object BudgetUsd extends RefinedType[Double, Pure]
+      object BudgetUsd extends Newtype[Double, Pure]
 
       given Codec.AsObject[ScheduleSet] = StrictJson.codec(KindlingsCodecAsObject.derived[ScheduleSet])
 
@@ -318,7 +317,7 @@ object Goal:
 
     object Removed:
       type Value = Value.T
-      object Value extends RefinedType[Boolean, Pure]
+      object Value extends Newtype[Boolean, Pure]
 
 
     final case class GoalView(
@@ -333,7 +332,7 @@ object Goal:
 
     object GoalView:
       type BudgetUsd = BudgetUsd.T
-      object BudgetUsd extends RefinedType[Double, Pure]
+      object BudgetUsd extends Newtype[Double, Pure]
 
 
   final case class Put(

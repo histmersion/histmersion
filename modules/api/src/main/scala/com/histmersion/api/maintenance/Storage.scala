@@ -12,14 +12,13 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 object Storage:
   type Depth = Depth.T
-  object Depth extends RefinedType[Int, Pure]
+  object Depth extends Newtype[Int, Pure]
   type Hint = Hint.T
-  object Hint extends RefinedType[String, Pure]
+  object Hint extends Newtype[String, Pure]
 
 
   val DefaultLowFreeBytes: ByteCount = ByteCount(10L * 1000 * 1000 * 1000)
@@ -114,7 +113,7 @@ object Storage:
 
   object Advice:
     type Keep = Keep.T
-    object Keep extends RefinedType[Int, Pure]
+    object Keep extends Newtype[Int, Pure]
 
 
     def shrink(key: Entry.Key, keep: Keep): Option[Hint] = key.value match
@@ -157,25 +156,25 @@ object Storage:
 
   object Entry:
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
     type Group = Group.T
-    object Group extends RefinedType[String, Pure]
+    object Group extends Newtype[String, Pure]
     type Path = Path.T
-    object Path extends RefinedType[String, Pure]
+    object Path extends Newtype[String, Pure]
     type Exists = Exists.T
-    object Exists extends RefinedType[Boolean, Pure]
+    object Exists extends Newtype[Boolean, Pure]
     type Partial = Partial.T
-    object Partial extends RefinedType[Boolean, Pure]
+    object Partial extends Newtype[Boolean, Pure]
     type Detail = Detail.T
-    object Detail extends RefinedType[String, Pure]
+    object Detail extends Newtype[String, Pure]
     type Shrink = Shrink.T
-    object Shrink extends RefinedType[String, Pure]
+    object Shrink extends Newtype[String, Pure]
     type Volume = Volume.T
-    object Volume extends RefinedType[String, Pure]
+    object Volume extends Newtype[String, Pure]
     type Host = Host.T
-    object Host extends RefinedType[String, Pure]
+    object Host extends Newtype[String, Pure]
 
   final case class Report(
       measuring: Report.Measuring = Report.Measuring(false),
@@ -200,22 +199,22 @@ object Storage:
 
   object Volume:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
 
   type FileCount = FileCount.T
-  object FileCount extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
+  object FileCount extends Newtype[Long, io.github.iltotore.iron.constraint.any.Pure]
 
   object Report:
     type Measuring = Measuring.T
-    object Measuring extends RefinedType[Boolean, Pure]
+    object Measuring extends Newtype[Boolean, Pure]
     type MeasuredAt = MeasuredAt.T
-    object MeasuredAt extends RefinedType[String, Pure]
+    object MeasuredAt extends Newtype[String, Pure]
     type Problems = Problems.T
-    object Problems extends RefinedType[String, Pure]
+    object Problems extends Newtype[String, Pure]
 
     type AgeSeconds = AgeSeconds.T
-    object AgeSeconds extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
+    object AgeSeconds extends Newtype[Long, io.github.iltotore.iron.constraint.any.Pure]
 
     type DurationMillis = DurationMillis.T
-    object DurationMillis extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
+    object DurationMillis extends Newtype[Long, io.github.iltotore.iron.constraint.any.Pure]
 

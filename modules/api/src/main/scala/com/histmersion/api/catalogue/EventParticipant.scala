@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventParticipant(
@@ -19,6 +18,6 @@ final case class EventParticipant(
 
 object EventParticipant:
   type Actor = Actor.T
-  object Actor extends RefinedType[String, Pure]
+  object Actor extends Newtype[String, Pure]
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]

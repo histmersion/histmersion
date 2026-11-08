@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventImportRequest(
@@ -24,18 +23,18 @@ final case class EventImportRequest(
 object EventImportRequest:
   export EventImportReport.Provider
   type DryRun = DryRun.T
-  object DryRun extends RefinedType[Boolean, Pure]
+  object DryRun extends Newtype[Boolean, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Bbox = Bbox.T
-  object Bbox extends RefinedType[String, Pure]
+  object Bbox extends Newtype[String, Pure]
   type From = From.T
-  object From extends RefinedType[Long, Pure]
+  object From extends Newtype[Long, Pure]
   type To = To.T
-  object To extends RefinedType[Long, Pure]
+  object To extends Newtype[Long, Pure]
   type MinVei = MinVei.T
-  object MinVei extends RefinedType[Int, Pure]
+  object MinVei extends Newtype[Int, Pure]
   type MinMagnitude = MinMagnitude.T
-  object MinMagnitude extends RefinedType[Double, Pure]
+  object MinMagnitude extends Newtype[Double, Pure]
   type Refresh = Refresh.T
-  object Refresh extends RefinedType[Boolean, Pure]
+  object Refresh extends Newtype[Boolean, Pure]

@@ -14,7 +14,6 @@ import com.histmersion.api.catalogue.{
   EventSummary,
   EventTier
 }
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** The catalogue's record of one event: the row with its geometry, the hierarchy, the evidence and the context its card
@@ -43,6 +42,6 @@ final case class EventEntry(
 
 object EventEntry:
   type Wikidata = Wikidata.T
-  object Wikidata extends RefinedType[String, Pure]
+  object Wikidata extends Newtype[String, Pure]
   type Names = Names.T
-  object Names extends RefinedType[String, Pure]
+  object Names extends Newtype[String, Pure]

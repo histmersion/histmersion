@@ -7,7 +7,6 @@ import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventDating(
@@ -21,6 +20,6 @@ final case class EventDating(
 
 object EventDating:
   type Method = Method.T
-  object Method extends RefinedType[String, Pure]
+  object Method extends Newtype[String, Pure]
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]

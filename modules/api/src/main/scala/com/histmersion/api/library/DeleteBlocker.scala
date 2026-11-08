@@ -10,7 +10,6 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.catalogue.{EventEdge, EventParticipant}
 import com.histmersion.api.research.Article
 import io.circe.{Decoder, Encoder}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class DeleteBlocker(kind: DeleteBlocker.Kind, id: DeleteBlocker.Id, title: Option[DeleteBlocker.Title] = None)
@@ -20,9 +19,9 @@ object DeleteBlocker:
 
 
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Title = Title.T
-  object Title extends RefinedType[String, Pure]
+  object Title extends Newtype[String, Pure]
 
   enum Kind(val wire: Kind.Wire, val label: Kind.Label):
     case Article extends Kind(Kind.Wire("article"), Kind.Label("cited by article"))
@@ -33,9 +32,9 @@ object DeleteBlocker:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
 
     given WireEnumValues[Kind]:

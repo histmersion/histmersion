@@ -56,7 +56,7 @@ object AgentSchedulerMarkdown:
          s.waiting.map(waiting).mkString("\n") +
            (if (s.waitingTotal).value > s.waiting.size then s"\n\n…and ${(s.waitingTotal).value - s.waiting.size} more" else ""))
     val strategies = "\n\n## Strategies\n\n" + s.strategies
-      .map(x => s"- `${x.name}`${if x.name == s.strategy then " (in effect)" else ""}: ${x.describe}")
+      .map(x => s"- `${x.name}`${if x.name.value == s.strategy.value then " (in effect)" else ""}: ${x.describe}")
       .mkString("\n")
     val changes = if s.changes.isEmpty then "" else "\n\n## Just now\n\n" + s.changes.map(c => s"- $c").mkString("\n")
     (head :: "" :: facts).mkString("\n") + changes + types + started + queue + strategies

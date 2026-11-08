@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One item of a [[SourceCollection.updateAll]]: its id, the keys of the sources linked to it, and its outcome. */
@@ -9,4 +8,4 @@ final case class CollectionUpdateEntry(id: CollectionId, keys: List[CollectionUp
 
 object CollectionUpdateEntry:
   type Keys = Keys.T
-  object Keys extends RefinedType[String, Pure]
+  object Keys extends Newtype[String, Pure]

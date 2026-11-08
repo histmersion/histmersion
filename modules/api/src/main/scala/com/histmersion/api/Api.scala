@@ -99,7 +99,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.AnyEndpoint
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
@@ -123,68 +122,68 @@ import com.histmersion.api.media.Iiif
 object Api:
   object Search:
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
   object Reindex:
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Scope = Scope.T
-    object Scope extends RefinedType[String, Pure]
+    object Scope extends Newtype[String, Pure]
   object PlacesGeo:
     type Json = Json.T
-    object Json extends RefinedType[String, Pure]
+    object Json extends Newtype[String, Pure]
   object Merge:
     type Entity = Entity.T
-    object Entity extends RefinedType[String, Pure]
+    object Entity extends Newtype[String, Pure]
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
   object Lookup:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
   object Jobs:
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Status = Status.T
-    object Status extends RefinedType[String, Pure]
+    object Status extends Newtype[String, Pure]
   object JobControl:
     type Action = Action.T
-    object Action extends RefinedType[String, Pure]
+    object Action extends Newtype[String, Pure]
   object HttpMethod:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   object Facets:
     type Field = Field.T
-    object Field extends RefinedType[String, Pure]
+    object Field extends Newtype[String, Pure]
     type Prefix = Prefix.T
-    object Prefix extends RefinedType[String, Pure]
+    object Prefix extends Newtype[String, Pure]
   object ExternalPlaces:
     type Format = Format.T
-    object Format extends RefinedType[String, Pure]
+    object Format extends Newtype[String, Pure]
     type Locator = Locator.T
-    object Locator extends RefinedType[String, Pure]
+    object Locator extends Newtype[String, Pure]
     type Source = Source.T
-    object Source extends RefinedType[String, Pure]
+    object Source extends Newtype[String, Pure]
   object Assets:
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Owner = Owner.T
-    object Owner extends RefinedType[String, Pure]
+    object Owner extends Newtype[String, Pure]
   object AgentState:
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
   type Apply = Apply.T
-  object Apply extends RefinedType[Boolean, Pure]
+  object Apply extends Newtype[Boolean, Pure]
   type ContentType = ContentType.T
-  object ContentType extends RefinedType[String, Pure]
+  object ContentType extends Newtype[String, Pure]
   type FileBytes = FileBytes.T
-  object FileBytes extends RefinedType[Array[Byte], Pure]
+  object FileBytes extends Newtype[Array[Byte], Pure]
   type FileName = FileName.T
-  object FileName extends RefinedType[String, Pure]
+  object FileName extends Newtype[String, Pure]
   type Overwrite = Overwrite.T
-  object Overwrite extends RefinedType[Boolean, Pure]
+  object Overwrite extends Newtype[Boolean, Pure]
 
   /** `region` is still sent by older links and clients; it is one more place name. */
 
@@ -199,7 +198,7 @@ object Api:
 
   object FindingsQuery:
     type Region = Region.T
-    object Region extends RefinedType[String, Pure]
+    object Region extends Newtype[String, Pure]
 
     def of(filter: Filter): FindingsQuery = FindingsQuery(filter, None)
 
@@ -286,16 +285,16 @@ object Api:
 
   object SourceViewQuery:
     type FullText = FullText.T
-    object FullText extends RefinedType[Boolean, Pure]
+    object FullText extends Newtype[Boolean, Pure]
     export Source.Section.{Wire as Section}
     type Heading = Heading.T
-    object Heading extends RefinedType[String, Pure]:
+    object Heading extends Newtype[String, Pure]:
       type Text = Text.T
-      object Text extends RefinedType[String, Pure]
+      object Text extends Newtype[String, Pure]
     type Offset = Offset.T
-    object Offset extends RefinedType[Int, Pure]
+    object Offset extends Newtype[Int, Pure]
     type Chars = Chars.T
-    object Chars extends RefinedType[Int, Pure]
+    object Chars extends Newtype[Int, Pure]
 
   lazy val sourceView: PublicEndpoint[SourceViewQuery, Error, Source.View, Any] =
     (endpoint.get
@@ -320,13 +319,13 @@ object Api:
 
   object PassagesQuery:
     type Q = Q.T
-    object Q extends RefinedType[String, Pure]
+    object Q extends Newtype[String, Pure]
     type Regex = Regex.T
-    object Regex extends RefinedType[Boolean, Pure]
+    object Regex extends Newtype[Boolean, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Context = Context.T
-    object Context extends RefinedType[Int, Pure]
+    object Context extends Newtype[Int, Pure]
 
   lazy val passages: PublicEndpoint[PassagesQuery, Error, PassageResult, Any] =
     endpoint.get
@@ -380,17 +379,17 @@ object Api:
     val TreeSamples: Samples.type = Samples
 
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
     type Unit = Unit.T
-    object Unit extends RefinedType[String, Pure]
+    object Unit extends Newtype[String, Pure]
     type Depth = Depth.T
-    object Depth extends RefinedType[Int, Pure]
+    object Depth extends Newtype[Int, Pure]
     type AsOf = AsOf.T
-    object AsOf extends RefinedType[Long, Pure]
+    object AsOf extends Newtype[Long, Pure]
     type Samples = Samples.T
-    object Samples extends RefinedType[Int, Pure]
+    object Samples extends Newtype[Int, Pure]
     type Size = Size.T
-    object Size extends RefinedType[Long, Pure]
+    object Size extends Newtype[Long, Pure]
 
     def time(filter: Filter, unit: Option[TimeUnit] = None): AggregateQuery =
       AggregateQuery(Some(By("time")), unit, filter)
@@ -643,7 +642,7 @@ object Api:
   object ArticleQuery:
     export Article.Kind.{Wire as Kind}
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
 
   lazy val articles: PublicEndpoint[ArticleQuery, Error, Article.List, Any] =
     base.get
@@ -939,11 +938,11 @@ object Api:
     export Place.Kind.{Wire as Kind}
     export AggregateQuery.AsOf
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type From = From.T
-    object From extends RefinedType[Long, Pure]
+    object From extends Newtype[Long, Pure]
     type To = To.T
-    object To extends RefinedType[Long, Pure]
+    object To extends Newtype[Long, Pure]
     export GeoPick.{Wire as Pick}
 
   lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, Error, PlacesGeo.Json, Any] =
@@ -1146,19 +1145,19 @@ object Api:
     def write(v: EventQuery): (Filter, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Boolean], Option[String]) = (v.filter, v.text.map(_.value), v.kind.map(_.value), v.historicity.map(_.value), v.placeId.map(_.value), v.tier.map(_.value), v.context.map(_.value), v.area.map(_.value))
 
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Historicity = com.histmersion.api.catalogue.Historicity.Wire
     val Historicity: com.histmersion.api.catalogue.Historicity.Wire.type = com.histmersion.api.catalogue.Historicity.Wire
     type PlaceId = Place.Id
     val PlaceId: Place.Id.type = Place.Id
     type Tier = Tier.T
-    object Tier extends RefinedType[String, Pure]
+    object Tier extends Newtype[String, Pure]
     type Context = Context.T
-    object Context extends RefinedType[Boolean, Pure]
+    object Context extends Newtype[Boolean, Pure]
     type Area = Area.T
-    object Area extends RefinedType[String, Pure]
+    object Area extends Newtype[String, Pure]
 
   lazy val events: PublicEndpoint[EventQuery, Error, EventList, Any] =
     base.get
@@ -1227,13 +1226,13 @@ object Api:
 
   object AttestationQuery:
     type TargetType = TargetType.T
-    object TargetType extends RefinedType[String, Pure]
+    object TargetType extends Newtype[String, Pure]
     type TargetId = TargetId.T
-    object TargetId extends RefinedType[String, Pure]
+    object TargetId extends Newtype[String, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Offset = Offset.T
-    object Offset extends RefinedType[Int, Pure]
+    object Offset extends Newtype[Int, Pure]
 
   lazy val attestations: PublicEndpoint[AttestationQuery, Error, Attestation.List, Any] =
     base.get
@@ -1282,9 +1281,9 @@ object Api:
   object GoalQuery:
     export Goal.{StatusValue as Status}
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Offset = Offset.T
-    object Offset extends RefinedType[Int, Pure]
+    object Offset extends Newtype[Int, Pure]
 
   lazy val goals: PublicEndpoint[GoalQuery, Error, Goal.List, Any] =
     base.get
@@ -1507,14 +1506,14 @@ object Api:
   object MediaGeoQuery:
     export MediaItem.Kind
     type From = From.T
-    object From extends RefinedType[Long, Pure]
+    object From extends Newtype[Long, Pure]
     type To = To.T
-    object To extends RefinedType[Long, Pure]
+    object To extends Newtype[Long, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     export MediaProvider.{Id as Provider}
     type License = License.T
-    object License extends RefinedType[String, Pure]
+    object License extends Newtype[String, Pure]
 
   lazy val mediaGeo: PublicEndpoint[MediaGeoQuery, Error, List[MediaGeoHit], Any] =
     base.get
@@ -1543,15 +1542,15 @@ object Api:
   object MediaQuery:
     export MediaProvider.{Id as Provider}
     type License = License.T
-    object License extends RefinedType[String, Pure]
+    object License extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.Place.{Id as Place}
     export com.histmersion.api.catalogue.Event.{Id as Event}
     type Q = Q.T
-    object Q extends RefinedType[String, Pure]
+    object Q extends Newtype[String, Pure]
     type Limit = Limit.T
-    object Limit extends RefinedType[Int, Pure]
+    object Limit extends Newtype[Int, Pure]
     type Offset = Offset.T
-    object Offset extends RefinedType[Int, Pure]
+    object Offset extends Newtype[Int, Pure]
 
   lazy val mediaList: PublicEndpoint[MediaQuery, Error, MediaList, Any] =
     base.get
@@ -1689,7 +1688,7 @@ object Api:
   final case class Error(message: Error.Message, code: Option[Error.Code] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
   object Error:
     type Problem = Problem.T
-    object Problem extends RefinedType[String, Pure]
+    object Problem extends Newtype[String, Pure]
 
 
     /** Tapir hands the matcher an `Any`, and under `-source:future` a constructor pattern on `Any` warns (it is not
@@ -1699,22 +1698,22 @@ object Api:
     type Message = Problem
     val Message: Problem.type = Problem
     type Code = Code.T
-    object Code extends RefinedType[String, Pure]
+    object Code extends Newtype[String, Pure]
 
     def hasCode(code: Code): PartialFunction[Any, Boolean] =
       case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => (true)
 
   object Index:
     type Current = Current.T
-    object Current extends RefinedType[String, Pure]
+    object Current extends Newtype[String, Pure]
     type PathTemplate = PathTemplate.T
-    object PathTemplate extends RefinedType[String, Pure]:
+    object PathTemplate extends Newtype[String, Pure]:
       given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type Readme = Readme.T
-    object Readme extends RefinedType[String, Pure]
+    object Readme extends Newtype[String, Pure]
 
     type MarkdownResult = MarkdownResult.T
-    object MarkdownResult extends RefinedType[String, Pure]
+    object MarkdownResult extends Newtype[String, Pure]
 
     val Begin = "<!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->"
     val End = "<!-- END API INDEX -->"

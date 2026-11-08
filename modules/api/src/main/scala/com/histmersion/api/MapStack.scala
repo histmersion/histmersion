@@ -1,7 +1,6 @@
 package com.histmersion
 package api
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object MapStack:
@@ -24,11 +23,11 @@ object MapStack:
 
   object Pane:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     type Point = Point.T
-    object Point extends RefinedType[Boolean, Pure]
+    object Point extends Newtype[Boolean, Pure]
     type Canvas = Canvas.T
-    object Canvas extends RefinedType[Boolean, Pure]
+    object Canvas extends Newtype[Boolean, Pure]
 
 
   val order: List[Pane] = Pane.values.toList

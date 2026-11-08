@@ -1,7 +1,6 @@
 package com.histmersion
 package plugin
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** One edge of the place hierarchy, with its own validity: a time-slice of a polity is part of the polity, a city part
@@ -30,10 +29,10 @@ final case class GazetteerRelation(
 object GazetteerRelation:
   /** The plain hierarchy edge: the child lies within the parent. */
   type ChildId = ChildId.T
-  object ChildId extends RefinedType[String, Pure]
+  object ChildId extends Newtype[String, Pure]
   type ParentId = ParentId.T
-  object ParentId extends RefinedType[String, Pure]
+  object ParentId extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
 
   val PartOf = "part_of"

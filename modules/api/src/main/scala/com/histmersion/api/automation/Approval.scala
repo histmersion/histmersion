@@ -2,15 +2,14 @@ package com.histmersion
 package api.automation
 
 import com.histmersion.api.WireEnumValues
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** An approval's vocabularies as the wire spells them (the api's own copies of the model's). */
 object Approval:
   type Note = Note.T
-  object Note extends RefinedType[String, Pure]
+  object Note extends Newtype[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends RefinedType[String, Pure]
+  object Outcome extends Newtype[String, Pure]
 
   /** A change an agent run proposed that a person may have to accept before code applies it: a source's status, a typed
     * disagreement edge between two sources, a goal's plan, or an article a run compiled. `blocking` = the run WAITS for
@@ -46,9 +45,9 @@ object Approval:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Blocking = Blocking.T
-    object Blocking extends RefinedType[Boolean, Pure]
+    object Blocking extends Newtype[Boolean, Pure]
 
 
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -67,7 +66,7 @@ object Approval:
 
   object Mode:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Mode] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -83,7 +82,7 @@ object Approval:
 
   object State:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -100,9 +99,9 @@ object Approval:
   object DecidedBy:
     /** The note every autopilot decision starts with (`AutopilotPolicy.note`). */
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Describe = Describe.T
-    object Describe extends RefinedType[String, Pure]
+    object Describe extends Newtype[String, Pure]
 
 
     val AutopilotNote = "autopilot:"

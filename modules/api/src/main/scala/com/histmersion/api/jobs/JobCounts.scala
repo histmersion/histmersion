@@ -6,7 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class JobCounts(
@@ -27,23 +26,23 @@ final case class JobCounts(
     case JobState.Cancelled => JobCounts.Count((cancelled).value)
 object JobCounts:
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
 
 
 
 
   type Queued = Queued.T
-  object Queued extends RefinedType[Int, Pure]
+  object Queued extends Newtype[Int, Pure]
   type Running = Running.T
-  object Running extends RefinedType[Int, Pure]
+  object Running extends Newtype[Int, Pure]
   type Done = Done.T
-  object Done extends RefinedType[Int, Pure]
+  object Done extends Newtype[Int, Pure]
   type Failed = Failed.T
-  object Failed extends RefinedType[Int, Pure]
+  object Failed extends Newtype[Int, Pure]
   type Paused = Paused.T
-  object Paused extends RefinedType[Int, Pure]
+  object Paused extends Newtype[Int, Pure]
   type Cancelled = Cancelled.T
-  object Cancelled extends RefinedType[Int, Pure]
+  object Cancelled extends Newtype[Int, Pure]
 
   def of(rows: List[(JobState.Wire, Count)]): JobCounts =
     @tailrec def loop(

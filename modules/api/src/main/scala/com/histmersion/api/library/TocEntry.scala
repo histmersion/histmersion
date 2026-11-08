@@ -5,23 +5,22 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 object TocEntry:
   type Markdown = Markdown.T
-  object Markdown extends RefinedType[String, Pure]
+  object Markdown extends Newtype[String, Pure]
 
 
   /** A source's table of contents as `get_source` shows it. */
 
   type Heading = Heading.T
-  object Heading extends RefinedType[String, Pure]
+  object Heading extends Newtype[String, Pure]
   type Ord = Ord.T
-  object Ord extends RefinedType[Int, Pure]
+  object Ord extends Newtype[Int, Pure]
   type Chars = Chars.T
-  object Chars extends RefinedType[Int, Pure]
+  object Chars extends Newtype[Int, Pure]
 
   def markdown(entries: List[TocEntry]): Markdown =
     if entries.isEmpty then Markdown("_(no headings in body)_")

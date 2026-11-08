@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.RepairAcquire
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaCoversReport(
@@ -24,13 +23,13 @@ object MediaCoversReport:
 
 
   type Sources = Sources.T
-  object Sources extends RefinedType[Int, Pure]
+  object Sources extends Newtype[Int, Pure]
   type Covers = Covers.T
-  object Covers extends RefinedType[Int, Pure]
+  object Covers extends Newtype[Int, Pure]
   type Illustrations = Illustrations.T
-  object Illustrations extends RefinedType[Int, Pure]
+  object Illustrations extends Newtype[Int, Pure]
   type Failed = Failed.T
-  object Failed extends RefinedType[String, Pure]
+  object Failed extends Newtype[String, Pure]
 
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(

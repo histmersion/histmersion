@@ -2,7 +2,6 @@ package com.histmersion
 package api
 
 import io.circe.Json
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
@@ -12,18 +11,18 @@ import com.histmersion.api.catalogue.Year
 object Years:
   object Iso:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   object Era:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   type Astronomical = Astronomical.T
-  object Astronomical extends RefinedType[Long, Pure]
+  object Astronomical extends Newtype[Long, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Shift = Shift.T
-  object Shift extends RefinedType[Long, Pure]
+  object Shift extends Newtype[Long, Pure]
   type Text = Text.T
-  object Text extends RefinedType[String, Pure]
+  object Text extends Newtype[String, Pure]
 
 
   export com.histmersion.api.catalogue.{Year as ShiftH}

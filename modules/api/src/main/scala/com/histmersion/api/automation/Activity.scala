@@ -5,21 +5,20 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 
 object Activity:
   type Actor = Actor.T
-  object Actor extends RefinedType[String, Pure]
+  object Actor extends Newtype[String, Pure]
   type Cursor = Cursor.T
-  object Cursor extends RefinedType[String, Pure]
+  object Cursor extends Newtype[String, Pure]
   type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
+  object Kind extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Subject = Subject.T
-  object Subject extends RefinedType[String, Pure]
+  object Subject extends Newtype[String, Pure]
 
 
   enum EntryKind(val wire: EntryKind.Wire):
@@ -37,7 +36,7 @@ object Activity:
 
   object EntryKind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[EntryKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
@@ -48,7 +47,7 @@ object Activity:
 
   object Writer:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
   enum Show(val wire: Show.Wire, val label: Show.Label):
     case Everything extends Show(Show.Wire("all"), Show.Label("Everything"))
@@ -60,9 +59,9 @@ object Activity:
 
   object Show:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Label = Label.T
-    object Label extends RefinedType[String, Pure]
+    object Label extends Newtype[String, Pure]
 
 
     def parse(s: Wire): Option[Show] =
@@ -94,46 +93,46 @@ object Activity:
 
   object Entry:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
     export EntryKind.{Wire as Kind}
     type At = At.T
-    object At extends RefinedType[String, Pure]
+    object At extends Newtype[String, Pure]
     type State = State.T
-    object State extends RefinedType[String, Pure]
+    object State extends Newtype[String, Pure]
     type What = What.T
-    object What extends RefinedType[String, Pure]
+    object What extends Newtype[String, Pure]
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
     type Error = Error.T
-    object Error extends RefinedType[String, Pure]
+    object Error extends Newtype[String, Pure]
     type EndedAt = EndedAt.T
-    object EndedAt extends RefinedType[String, Pure]
+    object EndedAt extends Newtype[String, Pure]
     export com.histmersion.api.SpatialHierarchyResult.Job.{Id as Job}
     type By = By.T
-    object By extends RefinedType[String, Pure]
+    object By extends Newtype[String, Pure]
     export com.histmersion.api.research.ReviewGoal.{Slug as Article}
     export Goal.Plans.GoalLink.{QueueNumber as QueueItem}
     type QueueList = QueueList.T
-    object QueueList extends RefinedType[String, Pure]
+    object QueueList extends Newtype[String, Pure]
     type Approval = Approval.T
-    object Approval extends RefinedType[Long, Pure]
+    object Approval extends Newtype[Long, Pure]
     type Target = Target.T
-    object Target extends RefinedType[String, Pure]
+    object Target extends Newtype[String, Pure]
     type TargetKind = TargetKind.T
-    object TargetKind extends RefinedType[String, Pure]
+    object TargetKind extends Newtype[String, Pure]
 
 
   final case class Counts(running: Counts.Running = Counts.Running(0), problemsWeek: Counts.ProblemsWeek = Counts.ProblemsWeek(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Counts:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
     type Running = Running.T
-    object Running extends RefinedType[Int, Pure]
+    object Running extends Newtype[Int, Pure]
     type ProblemsWeek = ProblemsWeek.T
-    object ProblemsWeek extends RefinedType[Int, Pure]
+    object ProblemsWeek extends Newtype[Int, Pure]
 
 
   final case class Page(entries: List[Entry], next: Option[Page.Next] = None, counts: Counts = Counts())

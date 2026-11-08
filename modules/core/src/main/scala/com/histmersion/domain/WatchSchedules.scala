@@ -86,7 +86,7 @@ object WatchSchedules:
   def view(m: ManagerInfo, items: List[ManagerItem]): List[GoalSchedule] =
     m.goal.toList.flatMap { g =>
       Sweep.of(m.config).map { s =>
-        val it = items.find(_.kind == s.itemKind)
+        val it = items.find(_.kind.value == s.itemKind.value)
         val state = Manager.State.parse(m.state).getOrElse(Manager.State.Paused)
         val note = state match
           case Manager.State.Active  => s"watcher ${m.id}" + it.flatMap(_.outcome).fold("")(o => s": $o")

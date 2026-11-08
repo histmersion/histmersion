@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CritiqueRef(src: Citekey, dst: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
@@ -16,9 +15,9 @@ final case class CritiqueRef(src: Citekey, dst: Citekey) derives KindlingsCodecA
 
 object CritiqueRef:
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
 
 

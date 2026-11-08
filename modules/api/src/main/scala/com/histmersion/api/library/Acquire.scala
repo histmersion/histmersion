@@ -8,7 +8,6 @@ import com.histmersion.api.jobs.JobInfo
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Queue
@@ -17,23 +16,23 @@ import com.histmersion.api.jobs.JobDetail
 object Acquire:
   object Intent:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
   type CitationContext = CitationContext.T
-  object CitationContext extends RefinedType[String, Pure]
+  object CitationContext extends Newtype[String, Pure]
   type CitationThreshold = CitationThreshold.T
-  object CitationThreshold extends RefinedType[Int, Pure]
+  object CitationThreshold extends Newtype[Int, Pure]
   type CitedByCount = CitedByCount.T
-  object CitedByCount extends RefinedType[Int, Pure]
+  object CitedByCount extends Newtype[Int, Pure]
   type ItemNumber = ItemNumber.T
-  object ItemNumber extends RefinedType[Int, Pure]
+  object ItemNumber extends Newtype[Int, Pure]
   type Outcome = Outcome.T
-  object Outcome extends RefinedType[String, Pure]
+  object Outcome extends Newtype[String, Pure]
   type Recommendation = Recommendation.T
-  object Recommendation extends RefinedType[String, Pure]
+  object Recommendation extends Newtype[String, Pure]
   type Refusal = Refusal.T
-  object Refusal extends RefinedType[String, Pure]
+  object Refusal extends Newtype[String, Pure]
   type YearGap = YearGap.T
-  object YearGap extends RefinedType[Int, Pure]
+  object YearGap extends Newtype[Int, Pure]
 
 
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
@@ -173,7 +172,7 @@ object Acquire:
 
   object EdgeKinds:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     val Confirms = "confirms"
     val Challenges = "challenges"
@@ -320,11 +319,11 @@ object Acquire:
 
     object AcquireCheck:
       type CheckedAt = CheckedAt.T
-      object CheckedAt extends RefinedType[String, Pure]
+      object CheckedAt extends Newtype[String, Pure]
       type Outcome = Outcome.T
-      object Outcome extends RefinedType[String, Pure]
+      object Outcome extends Newtype[String, Pure]
       type Checks = Checks.T
-      object Checks extends RefinedType[Int, Pure]
+      object Checks extends Newtype[Int, Pure]
 
 
     final case class RecheckRequest(
@@ -338,15 +337,15 @@ object Acquire:
 
     object RecheckRequest:
       type DryRun = DryRun.T
-      object DryRun extends RefinedType[Boolean, Pure]
+      object DryRun extends Newtype[Boolean, Pure]
       type Limit = Limit.T
-      object Limit extends RefinedType[Int, Pure]
+      object Limit extends Newtype[Int, Pure]
       type Id = Id.T
-      object Id extends RefinedType[Int, Pure]
+      object Id extends Newtype[Int, Pure]
       type By = By.T
-      object By extends RefinedType[String, Pure]
+      object By extends Newtype[String, Pure]
       type All = All.T
-      object All extends RefinedType[Boolean, Pure]
+      object All extends Newtype[Boolean, Pure]
 
 
     final case class RecheckRow(
@@ -360,11 +359,11 @@ object Acquire:
 
     object RecheckRow:
       type Item = Item.T
-      object Item extends RefinedType[Int, Pure]
+      object Item extends Newtype[Int, Pure]
       type Action = Action.T
-      object Action extends RefinedType[String, Pure]
+      object Action extends Newtype[String, Pure]
       type Detail = Detail.T
-      object Detail extends RefinedType[String, Pure]
+      object Detail extends Newtype[String, Pure]
 
 
     final case class RecheckResult(
@@ -385,25 +384,25 @@ object Acquire:
 
     object RecheckResult:
       type DryRun = DryRun.T
-      object DryRun extends RefinedType[Boolean, Pure]
+      object DryRun extends Newtype[Boolean, Pure]
       type Open = Open.T
-      object Open extends RefinedType[Int, Pure]
+      object Open extends Newtype[Int, Pure]
       type WithDoi = WithDoi.T
-      object WithDoi extends RefinedType[Int, Pure]
+      object WithDoi extends Newtype[Int, Pure]
       type Due = Due.T
-      object Due extends RefinedType[Int, Pure]
+      object Due extends Newtype[Int, Pure]
       type Allowance = Allowance.T
-      object Allowance extends RefinedType[Int, Pure]
+      object Allowance extends Newtype[Int, Pure]
       type Closed = Closed.T
-      object Closed extends RefinedType[Int, Pure]
+      object Closed extends Newtype[Int, Pure]
       type Fetched = Fetched.T
-      object Fetched extends RefinedType[Int, Pure]
+      object Fetched extends Newtype[Int, Pure]
       type NoCopy = NoCopy.T
-      object NoCopy extends RefinedType[Int, Pure]
+      object NoCopy extends Newtype[Int, Pure]
       type Failed = Failed.T
-      object Failed extends RefinedType[Int, Pure]
+      object Failed extends Newtype[Int, Pure]
       type Note = Note.T
-      object Note extends RefinedType[String, Pure]
+      object Note extends Newtype[String, Pure]
 
 
     final case class RecheckJob(
@@ -420,14 +419,14 @@ object Acquire:
       /** A re-check job's plan, in its detail. */
 
       type All = All.T
-      object All extends RefinedType[Boolean, Pure]
+      object All extends Newtype[Boolean, Pure]
       export Plural.{Count as UpTo}
       type Since = Since.T
-      object Since extends RefinedType[String, Pure]
+      object Since extends Newtype[String, Pure]
       type By = By.T
-      object By extends RefinedType[String, Pure]
+      object By extends Newtype[String, Pure]
       type Resumes = Resumes.T
-      object Resumes extends RefinedType[String, Pure]
+      object Resumes extends Newtype[String, Pure]
 
       val Detail: JobDetail.Field[Option[RecheckJob]] =
         new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("recheck"), None)
@@ -457,27 +456,27 @@ object Acquire:
 
     object RecheckStatus:
       type Enabled = Enabled.T
-      object Enabled extends RefinedType[Boolean, Pure]
+      object Enabled extends Newtype[Boolean, Pure]
       type WithDoi = WithDoi.T
-      object WithDoi extends RefinedType[Int, Pure]
+      object WithDoi extends Newtype[Int, Pure]
       type Due = Due.T
-      object Due extends RefinedType[Int, Pure]
+      object Due extends Newtype[Int, Pure]
       type TriedToday = TriedToday.T
-      object TriedToday extends RefinedType[Int, Pure]
+      object TriedToday extends Newtype[Int, Pure]
       type PerDay = PerDay.T
-      object PerDay extends RefinedType[Int, Pure]
+      object PerDay extends Newtype[Int, Pure]
       type FetchedToday = FetchedToday.T
-      object FetchedToday extends RefinedType[Int, Pure]
+      object FetchedToday extends Newtype[Int, Pure]
       type ClosedWeek = ClosedWeek.T
-      object ClosedWeek extends RefinedType[Int, Pure]
+      object ClosedWeek extends Newtype[Int, Pure]
       type FetchedWeek = FetchedWeek.T
-      object FetchedWeek extends RefinedType[Int, Pure]
+      object FetchedWeek extends Newtype[Int, Pure]
       type EveryDays = EveryDays.T
-      object EveryDays extends RefinedType[Int, Pure]
+      object EveryDays extends Newtype[Int, Pure]
       type NextPass = NextPass.T
-      object NextPass extends RefinedType[String, Pure]
+      object NextPass extends Newtype[String, Pure]
       type Note = Note.T
-      object Note extends RefinedType[String, Pure]
+      object Note extends Newtype[String, Pure]
       export com.histmersion.api.SpatialHierarchyResult.Job.{Id as Job}
 
 

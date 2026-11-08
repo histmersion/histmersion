@@ -10,7 +10,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
 import io.circe.Decoder
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Target(
@@ -32,11 +31,11 @@ object Target:
   given Decoder[com.histmersion.api.personal.ItemKey] = com.histmersion.api.personal.ItemKey.given_Decoder_ItemKey
 
   type Identity = Identity.T
-  object Identity extends RefinedType[String, Pure]
+  object Identity extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Where = Where.T
-  object Where extends RefinedType[String, Pure]
+  object Where extends Newtype[String, Pure]
 
 
   export com.histmersion.api.personal.ItemKey

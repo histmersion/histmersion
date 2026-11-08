@@ -3,7 +3,6 @@ package api.library
 import io.circe.{Codec as CirceCodec, Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 enum Sort:
@@ -11,7 +10,7 @@ enum Sort:
 
 object Sort:
   type Wire = Wire.T
-  object Wire extends RefinedType[String, Pure]
+  object Wire extends Newtype[String, Pure]
 
   def label(s: Sort): Wire = s match
     case Relevance   => Wire("relevance")

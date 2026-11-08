@@ -4,17 +4,16 @@ import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 
 object Tree:
   type Depth = Depth.T
-  object Depth extends RefinedType[Int, Pure]
+  object Depth extends Newtype[Int, Pure]
   type MaxSamplesCount = MaxSamplesCount.T
-  object MaxSamplesCount extends RefinedType[Int, Pure]
+  object MaxSamplesCount extends Newtype[Int, Pure]
   type SplitRatioAmount = SplitRatioAmount.T
-  object SplitRatioAmount extends RefinedType[Double, Pure]
+  object SplitRatioAmount extends Newtype[Double, Pure]
 
 
   type MaxDepth = MaxDepthValue
@@ -81,7 +80,7 @@ object Tree:
 
   object TreeRow:
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
 
   def coversAsOf(p: Option[Period], asOf: Option[Year]): Boolean = (p, asOf) match
     case (None, _)                     => (true)

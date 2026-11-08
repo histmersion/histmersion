@@ -10,7 +10,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
@@ -32,20 +31,20 @@ final case class Finding(
 
 object Finding:
   type Ordinal = Ordinal.T
-  object Ordinal extends RefinedType[Int, Pure]
+  object Ordinal extends Newtype[Int, Pure]
 
   type Id = Id.T
-  object Id extends RefinedType[String, Pure]
+  object Id extends Newtype[String, Pure]
   type Claim = Claim.T
-  object Claim extends RefinedType[String, Pure]
+  object Claim extends Newtype[String, Pure]
   type Region = Region.T
-  object Region extends RefinedType[String, Pure]
+  object Region extends Newtype[String, Pure]
   type PeriodName = PeriodName.T
-  object PeriodName extends RefinedType[String, Pure]
+  object PeriodName extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends RefinedType[String, Pure]
+  object Tags extends Newtype[String, Pure]
   type Significance = Significance.T
-  object Significance extends RefinedType[String, Pure]
+  object Significance extends Newtype[String, Pure]
 
   final case class Input(
       claim: Claim,
@@ -99,9 +98,9 @@ object Finding:
 
   object Match:
     type Why = Why.T
-    object Why extends RefinedType[String, Pure]
+    object Why extends Newtype[String, Pure]
     type Places = Places.T
-    object Places extends RefinedType[String, Pure]
+    object Places extends Newtype[String, Pure]
 
 
   final case class Row(

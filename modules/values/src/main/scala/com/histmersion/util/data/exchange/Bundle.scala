@@ -2,16 +2,15 @@ package com.histmersion
 package util.data.exchange
 
 import com.histmersion.{Period, WireEnumValues}
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Bundle:
   type RangeIsNull = RangeIsNull.T
-  object RangeIsNull extends RefinedType[Boolean, Pure]
+  object RangeIsNull extends Newtype[Boolean, Pure]
   type RangeLower = RangeLower.T
-  object RangeLower extends RefinedType[Long, Pure]
+  object RangeLower extends Newtype[Long, Pure]
   type RangeUpper = RangeUpper.T
-  object RangeUpper extends RefinedType[Long, Pure]
+  object RangeUpper extends Newtype[Long, Pure]
 
   /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
     * kebab-case (`article-version`), as the V031 trigger writes them.
@@ -34,11 +33,11 @@ object Bundle:
 
   object Kind:
     type EntryPath = EntryPath.T
-    object EntryPath extends RefinedType[String, Pure]
+    object EntryPath extends Newtype[String, Pure]
     type IssueLetter = IssueLetter.T
-    object IssueLetter extends RefinedType[String, Pure]
+    object IssueLetter extends Newtype[String, Pure]
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def wireOf(k: Kind): Wire = k match
       case Source         => Wire("source")

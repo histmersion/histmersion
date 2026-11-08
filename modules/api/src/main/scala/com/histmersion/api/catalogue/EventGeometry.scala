@@ -1,15 +1,14 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object EventGeometry:
   type Geojson = Geojson.T
-  object Geojson extends RefinedType[String, Pure]
+  object Geojson extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Type = Type.T
-  object Type extends RefinedType[String, Pure]:
+  object Type extends Newtype[String, Pure]:
     given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
 
   def point(lat: Latitude, lon: Longitude): Either[Problem, Geojson] =

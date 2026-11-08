@@ -143,7 +143,7 @@ object DataSection:
         div(
           children <-- media.signal.map(ms =>
             ms.map { m =>
-              val on = ui.plugins.plugins.find(_.id == m.plugin).forall(_.state == PluginState.Registered.wire)
+              val on = ui.plugins.plugins.find(_.id.value == m.plugin.value).forall(_.state.value == PluginState.Registered.wire.value)
               row(
                 m.title.value,
                 m.description.value,

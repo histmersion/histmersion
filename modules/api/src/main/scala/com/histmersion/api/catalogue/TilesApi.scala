@@ -6,7 +6,6 @@ import sttp.model.{HeaderNames, StatusCode}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.api.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object TilesApi:
@@ -36,27 +35,27 @@ object TilesApi:
     export TileLayer.{Wire as Layer}
     export com.histmersion.api.basemap.Basemap.{Zoom as Z}
     type X = X.T
-    object X extends RefinedType[Long, Pure]
+    object X extends Newtype[Long, Pure]
     type Y = Y.T
-    object Y extends RefinedType[Long, Pure]
+    object Y extends Newtype[Long, Pure]
     type Kind = Kind.T
-    object Kind extends RefinedType[String, Pure]
+    object Kind extends Newtype[String, Pure]
     type Tier = Tier.T
-    object Tier extends RefinedType[String, Pure]
+    object Tier extends Newtype[String, Pure]
     export com.histmersion.api.catalogue.Historicity.{Wire as Historicity}
     type Context = Context.T
-    object Context extends RefinedType[Boolean, Pure]
+    object Context extends Newtype[Boolean, Pure]
     export Api.Search.Text
     type SiteType = SiteType.T
-    object SiteType extends RefinedType[String, Pure]
+    object SiteType extends Newtype[String, Pure]
     type Provider = Provider.T
-    object Provider extends RefinedType[String, Pure]
+    object Provider extends Newtype[String, Pure]
     type License = License.T
-    object License extends RefinedType[String, Pure]
+    object License extends Newtype[String, Pure]
     type Undated = Undated.T
-    object Undated extends RefinedType[Boolean, Pure]
+    object Undated extends Newtype[Boolean, Pure]
     type IfNoneMatch = IfNoneMatch.T
-    object IfNoneMatch extends RefinedType[String, Pure]
+    object IfNoneMatch extends Newtype[String, Pure]
 
   final case class TileAnswer(
       bytes: Api.FileBytes,
@@ -69,9 +68,9 @@ object TilesApi:
   object TileAnswer:
     export Api.ContentType
     type Etag = Etag.T
-    object Etag extends RefinedType[String, Pure]
+    object Etag extends Newtype[String, Pure]
     type CacheControl = CacheControl.T
-    object CacheControl extends RefinedType[String, Pure]
+    object CacheControl extends Newtype[String, Pure]
 
   val ContentType = "application/vnd.mapbox-vector-tile"
 

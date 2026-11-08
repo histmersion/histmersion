@@ -14,24 +14,23 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 object Gazetteer:
   type DatasetField = DatasetField.T
-  object DatasetField extends RefinedType[String, Pure]
+  object DatasetField extends Newtype[String, Pure]
   type DatasetName = DatasetName.T
-  object DatasetName extends RefinedType[String, Pure]
+  object DatasetName extends Newtype[String, Pure]
   type OpenStartWindowYears = OpenStartWindowYears.T
-  object OpenStartWindowYears extends RefinedType[Int, Pure]
+  object OpenStartWindowYears extends Newtype[Int, Pure]
   type PlaceRef = PlaceRef.T
-  object PlaceRef extends RefinedType[String, Pure]
+  object PlaceRef extends Newtype[String, Pure]
   type PointAreaKinds = PointAreaKinds.T
-  object PointAreaKinds extends RefinedType[String, Pure]
+  object PointAreaKinds extends Newtype[String, Pure]
   type Problem = Problem.T
-  object Problem extends RefinedType[String, Pure]
+  object Problem extends Newtype[String, Pure]
   type Rank = Rank.T
-  object Rank extends RefinedType[Int, Pure]
+  object Rank extends Newtype[Int, Pure]
 
 
   type ImportedSources = ImportedSourcesValue
@@ -41,7 +40,7 @@ object Gazetteer:
   val DefaultOpenStartWindowYearsValue: OpenStartWindowYears.type = OpenStartWindowYears
   export SourceInfo.{Key as ValiditySourceKey}
   type ValidityWindowYears = ValidityWindowYears.T
-  object ValidityWindowYears extends RefinedType[Int, Pure]
+  object ValidityWindowYears extends Newtype[Int, Pure]
   type DefaultPointAreaKinds = DefaultPointAreaKindsValue
   type DefaultPointAreaKindsValue = PointAreaKinds
   val DefaultPointAreaKindsValue: PointAreaKinds.type = PointAreaKinds
@@ -349,23 +348,23 @@ object Gazetteer:
 
   object Extract:
     type Name = Name.T
-    object Name extends RefinedType[String, Pure]
+    object Name extends Newtype[String, Pure]
     export SourceInfo.File
     type Sha256 = Sha256.T
-    object Sha256 extends RefinedType[String, Pure]
+    object Sha256 extends Newtype[String, Pure]
     type Bytes = Bytes.T
-    object Bytes extends RefinedType[Long, Pure]
+    object Bytes extends Newtype[Long, Pure]
     type Features = Features.T
-    object Features extends RefinedType[Long, Pure]
+    object Features extends Newtype[Long, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
     export SourceInfo.{Title, Licence}
     type Attribution = Attribution.T
-    object Attribution extends RefinedType[String, Pure]
+    object Attribution extends Newtype[String, Pure]
     type Url = Url.T
-    object Url extends RefinedType[String, Pure]
+    object Url extends Newtype[String, Pure]
     type Built = Built.T
-    object Built extends RefinedType[String, Pure]
+    object Built extends Newtype[String, Pure]
 
   /** `Tgn`: the Getty Thesaurus of Geographic Names. */
   enum Kind:
@@ -375,7 +374,7 @@ object Gazetteer:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends RefinedType[String, Pure]
+    object Wire extends Newtype[String, Pure]
 
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
@@ -452,37 +451,37 @@ object Gazetteer:
 
     export SourceInfo.{Key as Source, ImportedVersion as Version}
     type Records = Records.T
-    object Records extends RefinedType[Long, Pure]
+    object Records extends Newtype[Long, Pure]
     type Created = Created.T
-    object Created extends RefinedType[Long, Pure]
+    object Created extends Newtype[Long, Pure]
     type Joined = Joined.T
-    object Joined extends RefinedType[Long, Pure]
+    object Joined extends Newtype[Long, Pure]
     type PlacesChanged = PlacesChanged.T
-    object PlacesChanged extends RefinedType[Long, Pure]
+    object PlacesChanged extends Newtype[Long, Pure]
     type NamesAdded = NamesAdded.T
-    object NamesAdded extends RefinedType[Long, Pure]
+    object NamesAdded extends Newtype[Long, Pure]
     type NamesRemoved = NamesRemoved.T
-    object NamesRemoved extends RefinedType[Long, Pure]
+    object NamesRemoved extends Newtype[Long, Pure]
     type NamesChanged = NamesChanged.T
-    object NamesChanged extends RefinedType[Long, Pure]
+    object NamesChanged extends Newtype[Long, Pure]
     type LinksAdded = LinksAdded.T
-    object LinksAdded extends RefinedType[Long, Pure]
+    object LinksAdded extends Newtype[Long, Pure]
     type LinksRemoved = LinksRemoved.T
-    object LinksRemoved extends RefinedType[Long, Pure]
+    object LinksRemoved extends Newtype[Long, Pure]
     type PlacesRemoved = PlacesRemoved.T
-    object PlacesRemoved extends RefinedType[Long, Pure]
+    object PlacesRemoved extends Newtype[Long, Pure]
     type Skipped = Skipped.T
-    object Skipped extends RefinedType[String, Pure]
+    object Skipped extends Newtype[String, Pure]
     type DescriptionsAdded = DescriptionsAdded.T
-    object DescriptionsAdded extends RefinedType[Long, Pure]
+    object DescriptionsAdded extends Newtype[Long, Pure]
     type DescriptionsRemoved = DescriptionsRemoved.T
-    object DescriptionsRemoved extends RefinedType[Long, Pure]
+    object DescriptionsRemoved extends Newtype[Long, Pure]
     type DescriptionsChanged = DescriptionsChanged.T
-    object DescriptionsChanged extends RefinedType[Long, Pure]
+    object DescriptionsChanged extends Newtype[Long, Pure]
     type LinksChanged = LinksChanged.T
-    object LinksChanged extends RefinedType[Long, Pure]
+    object LinksChanged extends Newtype[Long, Pure]
     type PointAreasSkipped = PointAreasSkipped.T
-    object PointAreasSkipped extends RefinedType[Long, Pure]
+    object PointAreasSkipped extends Newtype[Long, Pure]
 
   final case class Manifest(extracts: List[Extract])
       derives KindlingsCodecAsObject,
@@ -511,26 +510,26 @@ object Gazetteer:
 
   object SourceInfo:
     type Key = Key.T
-    object Key extends RefinedType[String, Pure]
+    object Key extends Newtype[String, Pure]
     type Title = Title.T
-    object Title extends RefinedType[String, Pure]
+    object Title extends Newtype[String, Pure]
     type File = File.T
-    object File extends RefinedType[String, Pure]
+    object File extends Newtype[String, Pure]
     type Present = Present.T
-    object Present extends RefinedType[Boolean, Pure]
+    object Present extends Newtype[Boolean, Pure]
     type PinnedVersion = PinnedVersion.T
-    object PinnedVersion extends RefinedType[String, Pure]
+    object PinnedVersion extends Newtype[String, Pure]
     type ImportedVersion = ImportedVersion.T
-    object ImportedVersion extends RefinedType[String, Pure]
+    object ImportedVersion extends Newtype[String, Pure]
     type ImportedAt = ImportedAt.T
-    object ImportedAt extends RefinedType[String, Pure]
+    object ImportedAt extends Newtype[String, Pure]
     type Places = Places.T
-    object Places extends RefinedType[Int, Pure]
+    object Places extends Newtype[Int, Pure]
     type Names = Names.T
-    object Names extends RefinedType[Int, Pure]
+    object Names extends Newtype[Int, Pure]
     type Links = Links.T
-    object Links extends RefinedType[Int, Pure]
+    object Links extends Newtype[Int, Pure]
     type Licence = Licence.T
-    object Licence extends RefinedType[String, Pure]
+    object Licence extends Newtype[String, Pure]
     type Citation = Citation.T
-    object Citation extends RefinedType[String, Pure]
+    object Citation extends Newtype[String, Pure]

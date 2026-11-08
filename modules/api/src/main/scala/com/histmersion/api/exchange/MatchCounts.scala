@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MatchCounts(
@@ -22,18 +21,18 @@ final case class MatchCounts(
 
 object MatchCounts:
   type Sources = Sources.T
-  object Sources extends RefinedType[Int, Pure]
+  object Sources extends Newtype[Int, Pure]
   type ByUid = ByUid.T
-  object ByUid extends RefinedType[Int, Pure]
+  object ByUid extends Newtype[Int, Pure]
   type ByLedger = ByLedger.T
-  object ByLedger extends RefinedType[Int, Pure]
+  object ByLedger extends Newtype[Int, Pure]
   type ByStrongKey = ByStrongKey.T
-  object ByStrongKey extends RefinedType[Int, Pure]
+  object ByStrongKey extends Newtype[Int, Pure]
   type ByScore = ByScore.T
-  object ByScore extends RefinedType[Int, Pure]
+  object ByScore extends Newtype[Int, Pure]
   type Undecided = Undecided.T
-  object Undecided extends RefinedType[Int, Pure]
+  object Undecided extends Newtype[Int, Pure]
   type Unmatched = Unmatched.T
-  object Unmatched extends RefinedType[Int, Pure]
+  object Unmatched extends Newtype[Int, Pure]
   type DeletedHere = DeletedHere.T
-  object DeletedHere extends RefinedType[Int, Pure]
+  object DeletedHere extends Newtype[Int, Pure]

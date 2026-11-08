@@ -1,11 +1,10 @@
 package com.histmersion
 package api.media
 
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 object MediaRole:
   type Role = Role.T
-  object Role extends RefinedType[String, Pure]
+  object Role extends Newtype[String, Pure]
 
   val Image = "image"
   val LocatorMap = "locator-map"

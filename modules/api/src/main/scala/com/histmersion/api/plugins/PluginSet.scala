@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** @param dependencies
@@ -24,21 +23,21 @@ final case class PluginSet(
       KindlingsSchema, com.histmersion.api.json.Schema
 object PluginSet:
   type Description = Description.T
-  object Description extends RefinedType[String, Pure]
+  object Description extends Newtype[String, Pure]
 
 
   type DescribeResult = Description
   val DescribeResult: Description.type = Description
 
   type Digest = Digest.T
-  object Digest extends RefinedType[String, Pure]
+  object Digest extends Newtype[String, Pure]
   export PluginDescription.SpiVersion
   type Mode = Mode.T
-  object Mode extends RefinedType[String, Pure]
+  object Mode extends Newtype[String, Pure]
   type Kit = Kit.T
-  object Kit extends RefinedType[String, Pure]
+  object Kit extends Newtype[String, Pure]
   type LinkedAt = LinkedAt.T
-  object LinkedAt extends RefinedType[String, Pure]
+  object LinkedAt extends Newtype[String, Pure]
 
   val Resource = "META-INF/histmersion/plugin-set.json"
 

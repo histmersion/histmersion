@@ -5,7 +5,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CritiquePair(
@@ -31,6 +30,6 @@ final case class CritiquePair(
 object CritiquePair:
 
   type Kinds = Kinds.T
-  object Kinds extends RefinedType[String, Pure]
+  object Kinds extends Newtype[String, Pure]
   export CritiqueReason.Reason
   export com.histmersion.api.automation.Activity.{Actor as ReasonBy}

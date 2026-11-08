@@ -6,7 +6,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FollowupRow(
@@ -25,13 +24,13 @@ final case class FollowupRow(
 
 object FollowupRow:
   type Arxiv = Arxiv.T
-  object Arxiv extends RefinedType[String, Pure]
+  object Arxiv extends Newtype[String, Pure]
   export Acquire.{CitedByCount as CitedBy}
   type IsInfluential = IsInfluential.T
-  object IsInfluential extends RefinedType[Boolean, Pure]
+  object IsInfluential extends Newtype[Boolean, Pure]
   type Intents = Intents.T
-  object Intents extends RefinedType[String, Pure]
+  object Intents extends Newtype[String, Pure]
   type Contexts = Contexts.T
-  object Contexts extends RefinedType[String, Pure]
+  object Contexts extends Newtype[String, Pure]
   type ProposedKind = ProposedKind.T
-  object ProposedKind extends RefinedType[String, Pure]
+  object ProposedKind extends Newtype[String, Pure]

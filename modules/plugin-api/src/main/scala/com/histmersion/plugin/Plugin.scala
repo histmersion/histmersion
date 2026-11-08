@@ -65,15 +65,15 @@ object Plugin:
     * an env override of a number fails with "Expected NUMBER but got STRING".
     */
   type DefaultsResourceResult = DefaultsResourceResult.T
-  object DefaultsResourceResult extends RefinedType[String, Pure]
+  object DefaultsResourceResult extends Newtype[String, Pure]
   type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends RefinedType[String, Pure]
+  object RegisterResultPart1 extends Newtype[String, Pure]
 
   object Config:
     type LenientName = LenientName.T
-    object LenientName extends RefinedType[String, Pure]
+    object LenientName extends Newtype[String, Pure]
     type LenientParseArg1 = LenientParseArg1.T
-    object LenientParseArg1 extends RefinedType[String, Pure]
+    object LenientParseArg1 extends Newtype[String, Pure]
 
     private def lenient[A](name: LenientName, strict: ConfigReader[A], parse: LenientParseArg1 => Option[A]): ConfigReader[A] =
       new ConfigReader[A]:
@@ -174,15 +174,15 @@ object Plugin:
 
   object Context:
     type EnvResult = EnvResult.T
-    object EnvResult extends RefinedType[String, Pure]
+    object EnvResult extends Newtype[String, Pure]
     type EnvName = EnvName.T
-    object EnvName extends RefinedType[String, Pure]
+    object EnvName extends Newtype[String, Pure]
     type SecretResultPart1 = SecretResultPart1.T
-    object SecretResultPart1 extends RefinedType[String, Pure]
+    object SecretResultPart1 extends Newtype[String, Pure]
     type SecretResultPart2 = SecretResultPart2.T
-    object SecretResultPart2 extends RefinedType[String, Pure]
+    object SecretResultPart2 extends Newtype[String, Pure]
     type QuotaUpstream = QuotaUpstream.T
-    object QuotaUpstream extends RefinedType[String, Pure]
+    object QuotaUpstream extends Newtype[String, Pure]
 
   /** The host's HTTP client, as a plugin sees it. Failures are `Left(message)`, never exceptions. */
   trait Http:
@@ -206,13 +206,13 @@ object Plugin:
     val GetResultPart2: HttpResponse.Body.type = HttpResponse.Body
 
     type GetResultPart1 = GetResultPart1.T
-    object GetResultPart1 extends RefinedType[String, Pure]
+    object GetResultPart1 extends Newtype[String, Pure]
     type GetUrl = GetUrl.T
-    object GetUrl extends RefinedType[String, Pure]
+    object GetUrl extends Newtype[String, Pure]
     type GetHeadersPart1 = GetHeadersPart1.T
-    object GetHeadersPart1 extends RefinedType[String, Pure]
+    object GetHeadersPart1 extends Newtype[String, Pure]
     type GetHeadersPart2 = GetHeadersPart2.T
-    object GetHeadersPart2 extends RefinedType[String, Pure]
+    object GetHeadersPart2 extends Newtype[String, Pure]
     type FetchResultPart1 = GetResultPart1
     val FetchResultPart1: GetResultPart1.type = GetResultPart1
     type FetchUrl = GetUrl
@@ -239,17 +239,17 @@ object Plugin:
     type HeaderResult = HeadersValue
     val HeaderResult: HeadersValue.type = HeadersValue
     type HeaderName = HeaderName.T
-    object HeaderName extends RefinedType[String, Pure]
+    object HeaderName extends Newtype[String, Pure]
 
     type Body = Body.T
-    object Body extends RefinedType[Array[Byte], Pure]
+    object Body extends Newtype[Array[Byte], Pure]
 
     type Status = Status.T
-    object Status extends RefinedType[Int, Pure]
+    object Status extends Newtype[Int, Pure]
     type HeadersKey = HeadersKey.T
-    object HeadersKey extends RefinedType[String, Pure]
+    object HeadersKey extends Newtype[String, Pure]
     type HeadersValue = HeadersValue.T
-    object HeadersValue extends RefinedType[String, Pure]
+    object HeadersValue extends Newtype[String, Pure]
 
   /** @param id
     *   the config key (`histmersion.plugins.<id>`) and the name in logs and reports; kebab-case, `[a-z0-9][a-z0-9-]*`
@@ -262,11 +262,11 @@ object Plugin:
 
   object Info:
     type Id = Id.T
-    object Id extends RefinedType[String, Pure]
+    object Id extends Newtype[String, Pure]
     type Version = Version.T
-    object Version extends RefinedType[String, Pure]
+    object Version extends Newtype[String, Pure]
     type SpiVersion = SpiVersion.T
-    object SpiVersion extends RefinedType[Int, Pure]
+    object SpiVersion extends Newtype[Int, Pure]
 
   /** The host's log, with the plugin's id on every line. */
   trait Log:
@@ -275,6 +275,6 @@ object Plugin:
 
   object Log:
     type InfoMessage = InfoMessage.T
-    object InfoMessage extends RefinedType[String, Pure]
+    object InfoMessage extends Newtype[String, Pure]
     type WarnMessage = WarnMessage.T
-    object WarnMessage extends RefinedType[String, Pure]
+    object WarnMessage extends Newtype[String, Pure]

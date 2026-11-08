@@ -3,7 +3,6 @@ package api
 
 import sttp.tapir.*
 import com.histmersion.api.automation.ListFilters
-import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Filter
@@ -14,19 +13,19 @@ import com.histmersion.api.catalogue.CatalogRecord
 object Paging:
   object OlderLine:
     type Text = Text.T
-    object Text extends RefinedType[String, Pure]
+    object Text extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends RefinedType[Int, Pure]
+  object Count extends Newtype[Int, Pure]
   type Cursor = Cursor.T
-  object Cursor extends RefinedType[String, Pure]
+  object Cursor extends Newtype[String, Pure]
   type GroupSize = GroupSize.T
-  object GroupSize extends RefinedType[Long, Pure]
+  object GroupSize extends Newtype[Long, Pure]
   type Limit = Limit.T
-  object Limit extends RefinedType[Int, Pure]
+  object Limit extends Newtype[Int, Pure]
   type Shown = Shown.T
-  object Shown extends RefinedType[Int, Pure]
+  object Shown extends Newtype[Int, Pure]
   type ShownCount = ShownCount.T
-  object ShownCount extends RefinedType[Int, Pure]
+  object ShownCount extends Newtype[Int, Pure]
 
 
   val TotalHeader = "X-Total-Count"
@@ -48,10 +47,10 @@ object Paging:
 
   object Page:
     type CountState = CountState.T
-    object CountState extends RefinedType[String, Pure]
+    object CountState extends Newtype[String, Pure]
 
     type Total = Total.T
-    object Total extends RefinedType[Int, Pure]
+    object Total extends Newtype[Int, Pure]
     export Paging.{Cursor as Next}
 
     val empty: Page = Page(Total(0), None, Nil)
