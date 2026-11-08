@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.api.personal.ItemKey
 import com.histmersion.web.{LibrarySection, Pages, Route}

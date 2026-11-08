@@ -1,16 +1,20 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** When something was written, as a person says it: "just now", "5 minutes ago", "3 days ago", or the date. Pure.
   */
 object Ago:
   type IsoDate = IsoDate.T
-  object IsoDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IsoDate extends RefinedType[String, Pure]
   type Millis = Millis.T
-  object Millis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Millis extends RefinedType[Double, Pure]
   type Phrase = Phrase.T
-  object Phrase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Phrase extends RefinedType[String, Pure]
 
-  def apply(thenMs: com.histmersion.web.marks.Ago.Millis, nowMs: com.histmersion.web.marks.Ago.Millis, isoDate: com.histmersion.web.marks.Ago.IsoDate): com.histmersion.web.marks.Ago.Phrase =
+  def apply(thenMs: Millis, nowMs: Millis, isoDate: IsoDate): Phrase =
     val s = math.max(0.0, (nowMs.value - thenMs.value) / 1000)
     def n(v: Double, one: String): Phrase =
       val k = math.floor(v).toInt
@@ -22,6 +26,6 @@ object Ago:
     else Phrase(isoDate.value.take(10))
 
   /** An ISO time's milliseconds, NaN for none. */
-  def ms(iso: com.histmersion.web.marks.Ago.IsoDate): com.histmersion.web.marks.Ago.Millis = Millis(scala.scalajs.js.Date.parse(iso.value))
+  def ms(iso: IsoDate): Millis = Millis(scala.scalajs.js.Date.parse(iso.value))
 
-  def of(iso: com.histmersion.web.marks.Ago.IsoDate): com.histmersion.web.marks.Ago.Phrase = apply(ms(iso), Millis(scala.scalajs.js.Date.now()), iso)
+  def of(iso: IsoDate): Phrase = apply(ms(iso), Millis(scala.scalajs.js.Date.now()), iso)

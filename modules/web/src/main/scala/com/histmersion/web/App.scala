@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +13,14 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.{Filter, GeoHit}
+import com.histmersion.web.settings.DownloadJobs
+import com.histmersion.web.marks.MyItems
+import com.histmersion.web.setup.SetupPage
+import com.histmersion.web.library.MyLibrary
+import com.histmersion.web.marks.SavedViews
+import com.histmersion.web.marks.NoteEditor
+import com.histmersion.web.ui.ContextMenu
+import com.histmersion.web.ui.Flash
 
 object App:
   /** Drops the answers to a superseded load ([[Latest]]). */
@@ -48,13 +57,13 @@ object App:
       MergeView.configure(ui)
       MapRegionsView.configure(ui)
 
-      com.histmersion.web.settings.DownloadJobs.configure(com.histmersion.web.settings.DownloadJobs.ConfigureMs(ui.jobPollMs.value))
+      DownloadJobs.configure(DownloadJobs.ConfigureMs(ui.jobPollMs.value))
 
       Router.init()
-      marks.MyItems.load()
+      MyItems.load()
       // a first run (no setup done, a settings file of nothing): the setup first, wherever the address points
-      if ui.setupDue.value && Router.now() != Route.Setup && !com.histmersion.web.setup.SetupPage.left then
-        Router.go(Route.Setup, push = com.histmersion.web.Router.Push(false))
+      if ui.setupDue.value && Router.now() != Route.Setup && !SetupPage.left then
+        Router.go(Route.Setup, push = Router.Push(false))
       val appEl = div(
         cls := "histmersion-app",
         cls("is-setup") <-- Router.route.map(_ == Route.Setup),
@@ -85,7 +94,7 @@ object App:
         // the filter panel is Explore's and Library's lists' (one filter state): it lies over the map, or
         // beside the lists; elsewhere it is hidden and out of the keyboard's way like Explore
         FilterBar
-          .init(ui, library.MyLibrary.panelTop, List(library.MyLibrary.panelFoot, marks.SavedViews.panelSection))
+          .init(ui, MyLibrary.panelTop, List(MyLibrary.panelFoot, SavedViews.panelSection))
           .amend(
             cls("is-away") <-- Router.route.map(r => !filtersShown(r)),
             inert <-- Router.route.map(r => !filtersShown(r))
@@ -93,9 +102,9 @@ object App:
         MobileChrome.scrim,
         Pages.element(ui),
         ArticleModal.element,
-        marks.NoteEditor.element,
-        com.histmersion.web.ui.ContextMenu.element,
-        com.histmersion.web.ui.Flash.element,
+        NoteEditor.element,
+        ContextMenu.element,
+        Flash.element,
         statusElement
       )
 
@@ -142,7 +151,7 @@ object App:
     span(idAttr := "status", child.text <-- statusVar.signal)
 
   private def loadTagline(): Unit =
-    ApiClient.sources(Filter(limit = com.histmersion.api.library.Filter.Limit(1))).foreach { r =>
+    ApiClient.sources(Filter(limit = Filter.Limit(1))).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
         el.textContent = s"${Plural.count(Plural.CountN(r.total.value), Plural.CountSingular("source"))} · search, then read"
       }
@@ -198,14 +207,14 @@ object App:
       }
       MapView.render(filtered, (a, b))
 
-  def quickRenderIfCached(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): Unit =
+  def quickRenderIfCached(from: Years.Astronomical, to: Years.Astronomical): Unit =
     quickRenderRange(from, to)
 
   /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew its frames'
     * windows: the findings, the legend's years, the tiled layers and the boundaries all of the whole span, as before it
     * played (with no findings held too: the layers still follow the span).
     */
-  def restoreSpan(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): Unit =
+  def restoreSpan(from: Years.Astronomical, to: Years.Astronomical): Unit =
     MapView.render(
       cachedFindings.filter(pt => pt.periodStart.forall(_.value <= to.value) && pt.periodEnd.forall(_.value >= from.value)),
       (from, to)
@@ -230,13 +239,13 @@ object App:
     val mine = latest.start()
 
     val f = UiState.toFilter()
-    val fNoBox = UiState.toFilter(except = Set(com.histmersion.web.UiState.ToFilterExcept("bbox")))
+    val fNoBox = UiState.toFilter(except = Set(UiState.ToFilterExcept("bbox")))
     val inView = UiState.inView.now()
     val a = UiState.from.now().getOrElse(config.time.defaultFrom.value)
     val b = UiState.to.now().getOrElse(config.time.defaultTo.value)
 
     statusVar.set("loading…")
-    ResultsList.busy(com.histmersion.web.ResultsList.Busy(true))
+    ResultsList.busy(ResultsList.Busy(true))
 
     // ALL AT ONCE: the map feed, the page of sources and (in view) the feed without the viewport.
     // The sources used to be asked for only once the findings had arrived — a whole round trip and

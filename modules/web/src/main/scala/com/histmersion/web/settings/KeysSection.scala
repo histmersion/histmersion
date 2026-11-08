@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
@@ -6,6 +7,9 @@ import com.histmersion.web.Auth
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.ErrorLine
 
 /** Settings › Keys and passwords: every key and password a setting refers to — only whether it is set and how it is
   * referred to, never its value. A plugin's is written as a REFERENCE (an environment variable, a password manager's
@@ -13,38 +17,38 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object KeysSection:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Reference = Reference.T
-  object Reference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reference extends RefinedType[String, Pure]
   type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object State extends RefinedType[String, Pure]
 
   /** The ways a reference is written: its scheme, the name shown, what the entry box asks for. */
   type ReferenceEntry = ReferenceEntry.T
-  object ReferenceEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReferenceEntry extends RefinedType[String, Pure]
 
   enum Form(val scheme: Form.Scheme, val label: Form.Label, val hint: Form.Hint):
-    case Env extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("env"), com.histmersion.web.settings.KeysSection.Form.Label("Environment variable"), com.histmersion.web.settings.KeysSection.Form.Hint("its name, e.g. HISTMERSION_CORE_KEY"))
-    case Keepassxc extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("keepassxc"), com.histmersion.web.settings.KeysSection.Form.Label("KeePassXC entry"), com.histmersion.web.settings.KeysSection.Form.Hint("Group/Entry#attribute"))
-    case OnePass extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("1password"), com.histmersion.web.settings.KeysSection.Form.Label("1Password item"), com.histmersion.web.settings.KeysSection.Form.Hint("op://Vault/Item/field"))
-    case Bitwarden extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("bitwarden"), com.histmersion.web.settings.KeysSection.Form.Label("Bitwarden item"), com.histmersion.web.settings.KeysSection.Form.Hint("the item's name or id[#field]"))
-    case Value extends Form(com.histmersion.web.settings.KeysSection.Form.Scheme("value"), com.histmersion.web.settings.KeysSection.Form.Label("The value itself, in the settings file"), com.histmersion.web.settings.KeysSection.Form.Hint("the key or password"))
+    case Env extends Form(Form.Scheme("env"), Form.Label("Environment variable"), Form.Hint("its name, e.g. HISTMERSION_CORE_KEY"))
+    case Keepassxc extends Form(Form.Scheme("keepassxc"), Form.Label("KeePassXC entry"), Form.Hint("Group/Entry#attribute"))
+    case OnePass extends Form(Form.Scheme("1password"), Form.Label("1Password item"), Form.Hint("op://Vault/Item/field"))
+    case Bitwarden extends Form(Form.Scheme("bitwarden"), Form.Label("Bitwarden item"), Form.Hint("the item's name or id[#field]"))
+    case Value extends Form(Form.Scheme("value"), Form.Label("The value itself, in the settings file"), Form.Hint("the key or password"))
 
   object Form:
     type Scheme = Scheme.T
-    object Scheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Scheme extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Hint = Hint.T
-    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Hint extends RefinedType[String, Pure]
 
 
-    def of(scheme: com.histmersion.web.settings.KeysSection.Form.Scheme): Form = values.find(_.scheme == scheme).getOrElse(Env)
+    def of(scheme: Scheme): Form = values.find(_.scheme == scheme).getOrElse(Env)
 
   /** The reference a form and its entry write, or why not. Pure. */
-  def reference(form: Form, entry: com.histmersion.web.settings.KeysSection.ReferenceEntry): Either[com.histmersion.web.settings.KeysSection.Problem, com.histmersion.web.settings.KeysSection.Reference] =
+  def reference(form: Form, entry: ReferenceEntry): Either[Problem, Reference] =
     val t = entry.value.trim
     if t.isEmpty then Left(Problem(s"Write ${form.hint}."))
     else if form == Form.Env && !t.matches("[A-Za-z_][A-Za-z0-9_]*") then
@@ -66,7 +70,7 @@ object KeysSection:
   /** A credential's name for a person: its plugin and what it is (`1Password: service account token`), or what it
     * opens. Pure.
     */
-  def name(relative: ConfigEdit.Field.LocalKey): com.histmersion.web.settings.KeysSection.Name =
+  def name(relative: ConfigEdit.Field.LocalKey): Name =
     relative.value.split('.').toList match
       case "plugins" :: id :: rest if rest.nonEmpty =>
         Name(
@@ -75,15 +79,15 @@ object KeysSection:
       case _ => Name(Named.getOrElse(relative.value, Wording.humanize(Wording.Id(relative.value.replace('.', ' ')))))
 
   /** How a credential is held, in words. Pure. */
-  def state(c: ConfigEdit.Credential): com.histmersion.web.settings.KeysSection.State = c.form.value match
-    case "unset" => com.histmersion.web.settings.KeysSection.State("Not set")
-    case "env"   => com.histmersion.web.settings.KeysSection.State("Set · from an environment variable")
+  def state(c: ConfigEdit.Credential): State = c.form.value match
+    case "unset" => State("Not set")
+    case "env"   => State("Set · from an environment variable")
     case "vault" =>
-      com.histmersion.web.settings.KeysSection.State(
+      State(
         s"Set · from ${c.shown.flatMap(_.value.split(':').headOption).map(v => Wording.plugin(Wording.PluginId(v))).getOrElse("a password manager")}"
       )
-    case "value" => com.histmersion.web.settings.KeysSection.State("Set · the value is written in the settings file")
-    case _       => com.histmersion.web.settings.KeysSection.State("Set")
+    case "value" => State("Set · the value is written in the settings file")
+    case _       => State("Set")
 
   def pane: HtmlElement =
     div(
@@ -102,7 +106,7 @@ object KeysSection:
       ),
       child <-- SettingsStore.current.map {
         case None            => p(cls := "muted", "Loading…")
-        case Some(Left(m))   => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m"))
+        case Some(Left(m))   => ErrorLine.text(ErrorLine.Problem(s"Could not read the settings: $m"))
         case Some(Right(pg)) =>
           val creds = pg.fields.filter(_.credential.isDefined)
           div(
@@ -223,5 +227,5 @@ object KeysSection:
           )
         )
       ),
-      child.maybe <-- problem.signal.map(_.map(m => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(m))))
+      child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(m))))
     )

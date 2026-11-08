@@ -1,4 +1,5 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import com.histmersion.api.MapStack
 import org.scalajs.dom

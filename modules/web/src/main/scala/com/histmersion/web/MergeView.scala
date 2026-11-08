@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.MergeIssue
@@ -34,6 +35,13 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Source
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Sha256
+import com.histmersion.api.library.Citekey
+import com.histmersion.web.ui.ThemeTokens
+import com.histmersion.web.map.MapStart
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload another collection's
   * bundle, read its plan — the matched sources, every issue grouped (open first, then decided, conditional, defaults,
@@ -48,15 +56,15 @@ import com.histmersion.api.library.Source
   */
 object MergeView:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldName extends RefinedType[String, Pure]
   type KindLabel = KindLabel.T
-  object KindLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KindLabel extends RefinedType[String, Pure]
   type MarkedText = MarkedText.T
-  object MarkedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MarkedText extends RefinedType[String, Pure]
   type ResultText = ResultText.T
-  object ResultText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ResultText extends RefinedType[String, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -64,15 +72,15 @@ object MergeView:
 
 
   enum Group(val title: Group.Title):
-    case Open extends Group(com.histmersion.web.MergeView.Group.Title("to decide"))
-    case Decided extends Group(com.histmersion.web.MergeView.Group.Title("decided"))
-    case Conditional extends Group(com.histmersion.web.MergeView.Group.Title("conditional — listed now, so no new question appears after a decision"))
-    case Defaults extends Group(com.histmersion.web.MergeView.Group.Title("defaults — applied unless changed"))
-    case Info extends Group(com.histmersion.web.MergeView.Group.Title("information"))
+    case Open extends Group(Group.Title("to decide"))
+    case Decided extends Group(Group.Title("decided"))
+    case Conditional extends Group(Group.Title("conditional — listed now, so no new question appears after a decision"))
+    case Defaults extends Group(Group.Title("defaults — applied unless changed"))
+    case Info extends Group(Group.Title("information"))
 
   object Group:
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
 
   def groupOf(i: MergeIssue): Group =
     if i.condition.isDefined then Group.Conditional
@@ -125,53 +133,53 @@ object MergeView:
     r.resolve.find(_.issue.value == issue.value).flatMap(x => MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption)
 
   /** What a decision kind means, in words. */
-  def describe(k: MergeDecision.Kind): com.histmersion.web.MergeView.Description = k match
-    case MergeDecision.Kind.KeepLeft       => com.histmersion.web.MergeView.Description("keep this collection's")
-    case MergeDecision.Kind.KeepRight      => com.histmersion.web.MergeView.Description("take the bundle's")
-    case MergeDecision.Kind.Both           => com.histmersion.web.MergeView.Description("keep both")
-    case MergeDecision.Kind.Concat         => com.histmersion.web.MergeView.Description("join both texts")
-    case MergeDecision.Kind.Hull           => com.histmersion.web.MergeView.Description("the span covering both")
-    case MergeDecision.Kind.Map            => com.histmersion.web.MergeView.Description("one source, under")
-    case MergeDecision.Kind.RenameRight    => com.histmersion.web.MergeView.Description("keep both, the bundle's under a new key")
-    case MergeDecision.Kind.RenameLeft     => com.histmersion.web.MergeView.Description("keep both, this collection's under a new key")
-    case MergeDecision.Kind.File           => com.histmersion.web.MergeView.Description("the merged text, as edited here")
-    case MergeDecision.Kind.Merge          => com.histmersion.web.MergeView.Description("make them one")
-    case MergeDecision.Kind.Drop           => com.histmersion.web.MergeView.Description("drop it")
-    case MergeDecision.Kind.KeepUnanchored => com.histmersion.web.MergeView.Description("keep it without a place in the text")
+  def describe(k: MergeDecision.Kind): Description = k match
+    case MergeDecision.Kind.KeepLeft       => Description("keep this collection's")
+    case MergeDecision.Kind.KeepRight      => Description("take the bundle's")
+    case MergeDecision.Kind.Both           => Description("keep both")
+    case MergeDecision.Kind.Concat         => Description("join both texts")
+    case MergeDecision.Kind.Hull           => Description("the span covering both")
+    case MergeDecision.Kind.Map            => Description("one source, under")
+    case MergeDecision.Kind.RenameRight    => Description("keep both, the bundle's under a new key")
+    case MergeDecision.Kind.RenameLeft     => Description("keep both, this collection's under a new key")
+    case MergeDecision.Kind.File           => Description("the merged text, as edited here")
+    case MergeDecision.Kind.Merge          => Description("make them one")
+    case MergeDecision.Kind.Drop           => Description("drop it")
+    case MergeDecision.Kind.KeepUnanchored => Description("keep it without a place in the text")
 
   /** An issue kind in words (`changed-both-sides` → `changed both sides`). */
-  def kindText(k: MergeIssue.Kind): com.histmersion.web.MergeView.KindLabel = com.histmersion.web.MergeView.KindLabel(MergeIssue.Kind.wireOf(k).value.replace('-', ' '))
+  def kindText(k: MergeIssue.Kind): KindLabel = KindLabel(MergeIssue.Kind.wireOf(k).value.replace('-', ' '))
 
   /** The row of a field table an issue is about (`status` for a status question, `citekey` for the same-work and
     * collision questions), if it is about one.
     */
-  def fieldOf(k: MergeIssue.Kind): Option[com.histmersion.web.MergeView.FieldName] = k match
-    case MergeIssue.Kind.StatusDiffers                               => Some(com.histmersion.web.MergeView.FieldName("status"))
-    case MergeIssue.Kind.TitleDiffers                                => Some(com.histmersion.web.MergeView.FieldName("title"))
-    case MergeIssue.Kind.AuthorsDiffers                              => Some(com.histmersion.web.MergeView.FieldName("authors"))
-    case MergeIssue.Kind.YearDiffers                                 => Some(com.histmersion.web.MergeView.FieldName("year"))
-    case MergeIssue.Kind.DoiDiffers                                  => Some(com.histmersion.web.MergeView.FieldName("DOI"))
-    case MergeIssue.Kind.SummaryDiffers                              => Some(com.histmersion.web.MergeView.FieldName("summary"))
-    case MergeIssue.Kind.NotesDiffers                                => Some(com.histmersion.web.MergeView.FieldName("notes"))
-    case MergeIssue.Kind.PeriodDiffers                               => Some(com.histmersion.web.MergeView.FieldName("period"))
-    case MergeIssue.Kind.BodyDiffers                                 => Some(com.histmersion.web.MergeView.FieldName("OCR body"))
-    case MergeIssue.Kind.SameWork | MergeIssue.Kind.CitekeyCollision => Some(com.histmersion.web.MergeView.FieldName("citekey"))
-    case MergeIssue.Kind.NamedPeriodDiffers                          => Some(com.histmersion.web.MergeView.FieldName("span"))
-    case MergeIssue.Kind.GoalPlanDiffers                             => Some(com.histmersion.web.MergeView.FieldName("plan"))
+  def fieldOf(k: MergeIssue.Kind): Option[FieldName] = k match
+    case MergeIssue.Kind.StatusDiffers                               => Some(FieldName("status"))
+    case MergeIssue.Kind.TitleDiffers                                => Some(FieldName("title"))
+    case MergeIssue.Kind.AuthorsDiffers                              => Some(FieldName("authors"))
+    case MergeIssue.Kind.YearDiffers                                 => Some(FieldName("year"))
+    case MergeIssue.Kind.DoiDiffers                                  => Some(FieldName("DOI"))
+    case MergeIssue.Kind.SummaryDiffers                              => Some(FieldName("summary"))
+    case MergeIssue.Kind.NotesDiffers                                => Some(FieldName("notes"))
+    case MergeIssue.Kind.PeriodDiffers                               => Some(FieldName("period"))
+    case MergeIssue.Kind.BodyDiffers                                 => Some(FieldName("OCR body"))
+    case MergeIssue.Kind.SameWork | MergeIssue.Kind.CitekeyCollision => Some(FieldName("citekey"))
+    case MergeIssue.Kind.NamedPeriodDiffers                          => Some(FieldName("span"))
+    case MergeIssue.Kind.GoalPlanDiffers                             => Some(FieldName("plan"))
     case _                                                           => None
 
   /** The result column of a field table: for the row the issue is about, what the merge writes as decided now (`Left` =
     * still to decide); for the other rows nothing — the merge's own rules fold them (the richer title, tags unioned…),
     * the server's business.
     */
-  def resultOf(i: MergeIssue, f: IssueField, d: Option[MergeDecision]): Option[Either[com.histmersion.web.MergeView.ResultText, com.histmersion.web.MergeView.ResultText]] =
+  def resultOf(i: MergeIssue, f: IssueField, d: Option[MergeDecision]): Option[Either[ResultText, ResultText]] =
     if !fieldOf(i.kind).map(_.value).contains(f.field.value) then None
     else
       Some(d.map(_.kind) match
         case Some(MergeDecision.Kind.KeepLeft)  => Right(ResultText(f.left.map(_.value).getOrElse("—")))
         case Some(MergeDecision.Kind.KeepRight) => Right(ResultText(f.right.map(_.value).getOrElse("—")))
         case Some(MergeDecision.Kind.Concat)    => Right(ResultText(List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString("\n\n")))
-        case Some(MergeDecision.Kind.Hull)      => Right(com.histmersion.web.MergeView.ResultText("the span covering both"))
+        case Some(MergeDecision.Kind.Hull)      => Right(ResultText("the span covering both"))
         case Some(MergeDecision.Kind.Map)       => Right(ResultText(d.flatMap(_.argument).map(_.value).getOrElse("—")))
         case Some(MergeDecision.Kind.Both) => Right(ResultText("two records: " + List(f.left.map(_.value), f.right.map(_.value)).flatten.mkString(" and ")))
         case Some(MergeDecision.Kind.RenameRight) =>
@@ -189,7 +197,7 @@ object MergeView:
   /** The text the article editor starts from: the agreed regions as they are, each conflict with git-style markers
     * around this collection's and the bundle's lines (and the common version's).
     */
-  def markedText(t: IssueText): com.histmersion.web.MergeView.MarkedText =
+  def markedText(t: IssueText): MarkedText =
     MarkedText(t.hunks
       .flatMap { h =>
         if !h.conflict.value then h.left.map(_.value)
@@ -215,25 +223,25 @@ object MergeView:
     p.open.isEmpty && p.problems.isEmpty && p.resolutionErrors.isEmpty && p.changes.value > 0
 
   /** A span as a bar on a common axis: left offset and width in per cent of `[lo, hi]`. */
-  def bar(s: IssueSpan, lo: com.histmersion.api.catalogue.Year, hi: com.histmersion.api.catalogue.Year): (Double, Double) =
+  def bar(s: IssueSpan, lo: Year, hi: Year): (Double, Double) =
     val w = math.max(1L, hi.value - lo.value).toDouble
     val a = s.start.getOrElse(lo).value
     val b = s.end.getOrElse(hi).value
     (100.0 * (a - lo.value) / w, math.max(1.0, 100.0 * (b - a) / w))
 
   /** The axis of two spans: their hull, open ends given a margin of a tenth. */
-  def axis(spans: List[IssueSpan]): Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] =
+  def axis(spans: List[IssueSpan]): Option[(Year, Year)] =
     val ends = spans.flatMap(s => s.start.toList ++ s.end.toList)
     Option.when(ends.nonEmpty) {
       val (lo, hi) = (ends.minBy(e => e.value: Long), ends.maxBy(e => e.value: Long))
       val m = math.max(10L, (hi.value - lo.value) / 10)
-      (com.histmersion.api.catalogue.Year(lo.value - m), com.histmersion.api.catalogue.Year(hi.value + m))
+      (Year(lo.value - m), Year(hi.value + m))
     }
 
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
 
   /** The window's state: one review at a time (the bundle named in the URL, `bundle=`). */
-  private val upload = Var(Option.empty[com.histmersion.api.exchange.Bundle.Upload])
+  private val upload = Var(Option.empty[Bundle.Upload])
   private val plan = Var(Option.empty[MergePlan])
   private val res = Var(MergeResolutions())
   private val selected = Var(Option.empty[MergeIssue.Id])
@@ -258,12 +266,12 @@ object MergeView:
   /** Where a map with nothing to show opens (`ui.map-start`); set from `/api/config` like `tiles`. */
   private var startView = MapStartConfig()
 
-  private def bundle: Option[com.histmersion.api.Sha256] = UiState.mergeBundle.now().map(com.histmersion.api.Sha256(_))
+  private def bundle: Option[Sha256] = UiState.mergeBundle.now().map(Sha256(_))
 
   private def fail(what: String)(e: Throwable): Unit = failure.set(Some(s"$what: ${e.getMessage}"))
 
   /** Open a bundle that is on the server: its draft, then its plan. */
-  private def load(sha: com.histmersion.api.Sha256): Unit =
+  private def load(sha: Sha256): Unit =
     failure.set(None)
     ApiClient.mergeSession(sha).onComplete(_.fold(fail("the review draft"), s => { res.set(s.resolutions); replan() }))
 
@@ -467,7 +475,7 @@ object MergeView:
         span(cls := "merge-counter", cls("done") := open == 0, s"$open of $total to decide"),
         span(
           cls := "muted",
-          s" · ${Plural.count(Plural.CountN(p.matches.sources.value.toLong), com.histmersion.api.Plural.CountSingular("source"))}: ${p.matches.byUid} the same record · ${p.matches.byLedger} by ledger · " +
+          s" · ${Plural.count(Plural.CountN(p.matches.sources.value.toLong), Plural.CountSingular("source"))}: ${p.matches.byUid} the same record · ${p.matches.byLedger} by ledger · " +
             s"${p.matches.byStrongKey} by DOI/file/ISBN · ${p.matches.byScore} by score · ${p.matches.unmatched} new" +
             s" · ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))} to write"
         ),
@@ -628,7 +636,7 @@ object MergeView:
       h5(who),
       s.fold(span(cls := "muted", "nothing")) { x =>
         div(
-          if who == "here" && entity == Bundle.Kind.Source then SourceLink(com.histmersion.api.library.Citekey(x.label.value)) else code(x.label.value),
+          if who == "here" && entity == Bundle.Kind.Source then SourceLink(Citekey(x.label.value)) else code(x.label.value),
           x.lines.map(l => div(cls := "muted", l.value))
         )
       }
@@ -666,7 +674,7 @@ object MergeView:
         if !h.conflict.value then
           htmlTag("details")(
             cls := "merge-agreed",
-            htmlTag("summary")(s"${Plural.count(Plural.CountN(h.left.size.toLong), com.histmersion.api.Plural.CountSingular("line"))} the same on both sides"),
+            htmlTag("summary")(s"${Plural.count(Plural.CountN(h.left.size.toLong), Plural.CountSingular("line"))} the same on both sides"),
             lines(h.left.map(_.value))
           )
         else
@@ -761,7 +769,7 @@ object MergeView:
                 fillOpacity = ShapeStyle.FillOpacity(0.15),
                 lineWidth = ShapeStyle.LineWidth(2.0),
                 lineOpacity = ShapeStyle.LineOpacity(0.9),
-                colour = Some(ShapeStyle.Colour(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name(s"--merge-$who")).value)),
+                colour = Some(ShapeStyle.Colour(ThemeTokens(ThemeTokens.Name(s"--merge-$who")).value)),
                 circleRadius = ShapeStyle.CircleRadius(7.0)
               )
             ).set(List(ShapeFeature(ShapeFeature.Id(who), geo)))
@@ -770,7 +778,7 @@ object MergeView:
           geoms.reduceOption(_.extend(_)) match
             case Some(b) => m.fitBounds(b, MapSurface.FitBoundsPadding(24), MapSurface.MaxZoom(9.0), animate = MapSurface.FitBoundsAnimate(false))
             case None    =>
-              val (at, zoom) = com.histmersion.web.map.MapStart.initial(startView, None)
+              val (at, zoom) = MapStart.initial(startView, None)
               m.setView(at, MapSurface.Zoom(math.max(1.0, zoom.value - 1)))
           map = Some(m)
           dom.window.setTimeout(() => map.foreach(_.resize()), 50)
@@ -909,7 +917,7 @@ object MergeView:
           div(
             cls := "form-row merge-confirm",
             span(
-              s"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(Plural.CountN(p.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))}, " +
+              s"Merge ${MergeMarkdown.who(p.from)} into this collection: ${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))}, " +
                 s"plan ${p.planHash}. A backup is taken first."
             ),
             button(
@@ -925,7 +933,7 @@ object MergeView:
           button(
             typ := "button",
             cls := "btn btn--primary merge-apply-btn",
-            s"apply the merge (${Plural.count(Plural.CountN(p.changes.value.toLong), com.histmersion.api.Plural.CountSingular("change"))})",
+            s"apply the merge (${Plural.count(Plural.CountN(p.changes.value.toLong), Plural.CountSingular("change"))})",
             disabled := running,
             onClick --> (_ => confirm.set(true))
           )
@@ -943,7 +951,7 @@ object MergeView:
         p_(s"Merged as ${r.mergeId.fold("")(_.toString.take(8))}" + r.backup.fold("")(b => s" (backup $b)") + "."),
         ul(
           li(
-            s"${Plural.count(Plural.CountN(t.sourcesMerged.value.toLong), com.histmersion.api.Plural.CountSingular("source"))} merged (${t.sourcesByScore} by score), ${t.sourcesRenamed} renamed, ${t.aliases} old citekeys"
+            s"${Plural.count(Plural.CountN(t.sourcesMerged.value.toLong), Plural.CountSingular("source"))} merged (${t.sourcesByScore} by score), ${t.sourcesRenamed} renamed, ${t.aliases} old citekeys"
           ),
           li(
             s"${t.findingsMerged} findings and ${t.assetsMerged} figures merged; ${t.attestationsReanchored} attestations re-anchored, ${t.attestationsDropped} dropped"
@@ -957,7 +965,7 @@ object MergeView:
           Option.when(r.reviews.nonEmpty)(li(s"queued for review: ${r.reviews.mkString(", ")}")),
           r.replanChanges.map(n =>
             li(if n.value == 0 then "planned again: nothing left to do"
-            else s"planned again: ${Plural.count(Plural.CountN(n.value.toLong), com.histmersion.api.Plural.CountSingular("change"))} left — report it")
+            else s"planned again: ${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("change"))} left — report it")
           )
         )
       )

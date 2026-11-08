@@ -1,23 +1,26 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The clustering of points on screen, pure: which points are drawn as one bubble at a zoom. */
 object Clustering:
   type GroupKey = GroupKey.T
-  object GroupKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GroupKey extends RefinedType[String, Pure]
   type GroupLabel = GroupLabel.T
-  object GroupLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GroupLabel extends RefinedType[String, Pure]
   type ZoomLevel = ZoomLevel.T
-  object ZoomLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ZoomLevel extends RefinedType[Int, Pure]
 
   type GroupRadius = GroupRadius.T
-  object GroupRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GroupRadius extends RefinedType[Double, Pure]
   type InViewMargin = InViewMargin.T
-  object InViewMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InViewMargin extends RefinedType[Double, Pure]
 
   /** World pixels of a point at zoom `z` on the 256-pixel grid (Web Mercator). Pure. */
   def world(lat: LatLon.Lat, lon: LatLon.Lon, z: Double): (Double, Double) =
@@ -30,7 +33,7 @@ object Clustering:
     * point is within `radius` px, else starts one. Answers each point's group number (0, 1, … in the order the groups
     * were started). Pure; one pass with a grid of `radius` cells.
     */
-  def group(xs: Array[Double], ys: Array[Double], radius: com.histmersion.web.map.Clustering.GroupRadius): Array[Int] =
+  def group(xs: Array[Double], ys: Array[Double], radius: GroupRadius): Array[Int] =
     val n = xs.length
     val out = new Array[Int](n)
     val rad = radius.value
@@ -84,7 +87,7 @@ object Clustering:
   /** The groups of `pts` at zoom `z`: each group's keys (in the points' order) and where its bubble stands — the mean
     * of its points. Pure.
     */
-  def groups(pts: Seq[(com.histmersion.web.map.Clustering.GroupKey, LatLon)], z: com.histmersion.web.map.Clustering.ZoomLevel, radius: com.histmersion.web.map.Clustering.GroupRadius): Vector[(Vector[com.histmersion.web.map.Clustering.GroupKey], LatLon)] =
+  def groups(pts: Seq[(GroupKey, LatLon)], z: ZoomLevel, radius: GroupRadius): Vector[(Vector[GroupKey], LatLon)] =
     val n = pts.length
     val arr = pts.toArray
     val xs = new Array[Double](n)
@@ -96,7 +99,7 @@ object Clustering:
       i += 1
     val g = group(xs, ys, radius)
     val count = if n == 0 then 0 else g.max + 1
-    val keys = Array.fill(count)(js.Array[com.histmersion.web.map.Clustering.GroupKey]())
+    val keys = Array.fill(count)(js.Array[GroupKey]())
     val lat = new Array[Double](count)
     val lon = new Array[Double](count)
     i = 0
@@ -109,7 +112,7 @@ object Clustering:
     Vector.tabulate(count)(k => (keys(k).toVector, LatLon(LatLon.Lat(lat(k) / keys(k).length), LatLon.Lon(lon(k) / keys(k).length))))
 
   /** Is `at` on `s`'s screen, or within `margin` px of it (the copy of the world nearest the view)? */
-  def inView(s: MapSurface, at: LatLon, margin: com.histmersion.web.map.Clustering.InViewMargin): Boolean =
+  def inView(s: MapSurface, at: LatLon, margin: InViewMargin): Boolean =
     val (w, h) = s.size
     val c = s.center.lon.value
     val m = margin.value
@@ -119,7 +122,7 @@ object Clustering:
   /** What a cluster layer draws of `groups` on `s`: the points drawn alone and the bubbles (their points), those in
     * view and a margin of a quarter of the view. Pure but for the projection.
     */
-  def drawn(groups: Vector[(Vector[com.histmersion.web.map.Clustering.GroupKey], LatLon)], s: MapSurface): (Set[com.histmersion.web.map.Clustering.GroupKey], Map[com.histmersion.web.map.Clustering.GroupLabel, Vector[com.histmersion.web.map.Clustering.GroupKey]]) =
+  def drawn(groups: Vector[(Vector[GroupKey], LatLon)], s: MapSurface): (Set[GroupKey], Map[GroupLabel, Vector[GroupKey]]) =
     val (w, h) = s.size
     val margin = InViewMargin(0.25 * math.max(w.value, h.value))
     val shown = groups.filter((_, at) => inView(s, at, margin))
@@ -135,4 +138,4 @@ object Clustering:
   /** The zoom a map at `zoom` clusters at: the nearest whole zoom (the bubbles regroup as the map passes the middle
     * between two). Pure.
     */
-  def level(zoom: MapSurface.Zoom): com.histmersion.web.map.Clustering.ZoomLevel = ZoomLevel(math.round(zoom.value).toInt)
+  def level(zoom: MapSurface.Zoom): ZoomLevel = ZoomLevel(math.round(zoom.value).toInt)

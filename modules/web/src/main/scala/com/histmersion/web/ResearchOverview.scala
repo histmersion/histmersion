@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Wording
 import com.histmersion.api.UiLabels
@@ -11,6 +12,12 @@ import scala.scalajs.js
 import com.histmersion.api.automation.{AgentMode, Autopilot, ListFilters, Managers, PlanQuota}
 import com.histmersion.api.instance.{UiConfig, UiNotices}
 import com.histmersion.api.views.AutopilotStatus
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.research.Article
+import com.histmersion.api.automation.AgentScheduler
+import com.histmersion.api.Paging
 
 /** Research › Overview: the agents' state as ONE three-way control with what they are doing and the AI plan's weekly
   * allowance; the oldest decisions waiting for the person, each with its reason and what to read first BEFORE the
@@ -19,25 +26,25 @@ import com.histmersion.api.views.AutopilotStatus
   */
 object ResearchOverview:
   type EpochMillis = EpochMillis.T
-  object EpochMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EpochMillis extends RefinedType[Double, Pure]
   type Percent = Percent.T
-  object Percent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Percent extends RefinedType[Int, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A goal's progress: its managers' work items done, of all of them (done and still open). */
 
   final case class Progress(done: Progress.Done, total: Progress.Total):
-    def pct: com.histmersion.web.ResearchOverview.Percent = if total.value <= 0 then com.histmersion.web.ResearchOverview.Percent(0) else com.histmersion.web.ResearchOverview.Percent((done.value * 100 / total.value).max(0).min(100))
+    def pct: Percent = if total.value <= 0 then Percent(0) else Percent((done.value * 100 / total.value).max(0).min(100))
 
   object Progress:
 
     type Done = Done.T
-    object Done extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Done extends RefinedType[Int, Pure]
     type Total = Total.T
-    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Total extends RefinedType[Int, Pure]
 
-  def progressOf(goal: com.histmersion.api.automation.Goal.Slug, managers: List[Managers.ManagerInfo]): Progress =
+  def progressOf(goal: Goal.Slug, managers: List[Managers.ManagerInfo]): Progress =
     val mine = managers.filter(_.goal.contains(goal))
     Progress(
       Progress.Done(mine.map(_.counts.done.value).sum),
@@ -51,7 +58,7 @@ object ResearchOverview:
       g: Autopilot.GoalProgress,
       focus: Option[Autopilot.FocusInfo],
       managers: List[Managers.ManagerInfo]
-  ): Option[com.histmersion.api.UiLabels.Text] =
+  ): Option[UiLabels.Text] =
     focus
       .flatMap(_.waiting.find(_.slug == g.slug))
       .map(w => Option(w.why).filter(_.value.nonEmpty).map(_.value).getOrElse(Wording.humanize(Wording.Id(w.code.value))))
@@ -73,7 +80,7 @@ object ResearchOverview:
   /** What to read before deciding, and where it is: the source a status or edge is about (and the work it points at),
     * the article draft, the goal's plan, the manager a hint is for.
     */
-  def evidence(a: ApprovalInfo): List[(com.histmersion.api.UiLabels.Text, com.histmersion.api.UiLabels.Text)] =
+  def evidence(a: ApprovalInfo): List[(UiLabels.Text, UiLabels.Text)] =
     val own = ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
         List(UiLabels.Text("See the evidence") -> UiLabels.Text(SourceLink.href(Preview.Target.Source.Citekey(a.citekey.value))))
@@ -82,29 +89,29 @@ object ResearchOverview:
           UiLabels.Text("Compare the two") -> UiLabels.Text(SourceLink.href(Preview.Target.Source.Citekey(t.value)))
         )
       case Some(ApprovalKind.ArticlePublish) | Some(ApprovalKind.ArticleFilter) =>
-        a.subject.map(s => UiLabels.Text("Read it first") -> UiLabels.Text(com.histmersion.web.ArticleLink.href(com.histmersion.api.research.Article.Slug(s.value)))).toList
+        a.subject.map(s => UiLabels.Text("Read it first") -> UiLabels.Text(ArticleLink.href(Article.Slug(s.value)))).toList
       case Some(ApprovalKind.GoalPlan) | Some(ApprovalKind.ArticlePlan) =>
-        a.subject.map(s => UiLabels.Text("Read the plan first") -> UiLabels.Text(Route.Goal(com.histmersion.api.automation.Goal.Slug(s.value)).path)).toList
+        a.subject.map(s => UiLabels.Text("Read the plan first") -> UiLabels.Text(Route.Goal(Goal.Slug(s.value)).path)).toList
       case Some(ApprovalKind.HintEffect) =>
         a.subject.map(id => UiLabels.Text("See the manager") -> UiLabels.Text(Route.Manager(Route.ManagerId(id.value)).path)).toList
       case None => Nil
     if own.nonEmpty then own else List(UiLabels.Text("Read the whole proposal") -> UiLabels.Text(Route.Research(ResearchSection.Decisions).path))
 
   /** `5 hours`, `2 days`: how long the oldest decision has waited. */
-  def waited(createdMs: com.histmersion.web.ResearchOverview.EpochMillis, nowMs: com.histmersion.web.ResearchOverview.EpochMillis): com.histmersion.api.UiLabels.Text =
+  def waited(createdMs: EpochMillis, nowMs: EpochMillis): UiLabels.Text =
     val h = math.max(0L, ((nowMs.value - createdMs.value) / 3600000).toLong)
-    if h < 1 then com.histmersion.api.UiLabels.Text("less than an hour")
-    else if h < 48 then (if h == 1 then com.histmersion.api.UiLabels.Text("1 hour") else UiLabels.Text(s"$h hours"))
+    if h < 1 then UiLabels.Text("less than an hour")
+    else if h < 48 then (if h == 1 then UiLabels.Text("1 hour") else UiLabels.Text(s"$h hours"))
     else UiLabels.Text(s"${h / 24} days")
 
   /** The weekly limit left, per plan pool that reports one: `Claude plan: 61% of this week's limit left`. */
-  def weekly(q: PlanQuota.QuotaInfo): List[com.histmersion.api.UiLabels.Text] =
+  def weekly(q: PlanQuota.QuotaInfo): List[UiLabels.Text] =
     q.plans.flatMap { p =>
       p.windows
         .find(w => w.kind.value.startsWith("seven_day") || w.limit.value.startsWith("seven_day"))
         .map(w =>
           UiLabels.Text(
-            s"${Option(p.title).filter(_.value.nonEmpty).map(_.value).getOrElse(Wording.pool(com.histmersion.api.automation.AgentScheduler.PoolUse.Pool(p.pool.value)))}: ${w.leftPct.value.round}% of this week's limit left"
+            s"${Option(p.title).filter(_.value.nonEmpty).map(_.value).getOrElse(Wording.pool(AgentScheduler.PoolUse.Pool(p.pool.value)))}: ${w.leftPct.value.round}% of this week's limit left"
           )
         )
     }
@@ -218,7 +225,7 @@ object ResearchOverview:
     val open = Var(Option.empty[List[ApprovalInfo]])
     def load(): Unit =
       ApiClient
-        .approvals(ListFilters.ApprovalFilter(), Some(com.histmersion.api.Paging.Limit(200)))
+        .approvals(ListFilters.ApprovalFilter(), Some(Paging.Limit(200)))
         .onComplete(r => open.set(Some(r.toOption.fold(Nil)(_._1))))
     sectionTag(
       cls := "card research-decisions",
@@ -271,14 +278,14 @@ object ResearchOverview:
           if top.isEmpty then p(cls := "muted row", "No research goals yet.")
           else
             div(top.map { g =>
-              val pr = progressOf(com.histmersion.api.automation.Goal.Slug(g.slug.value), ms)
+              val pr = progressOf(Goal.Slug(g.slug.value), ms)
               div(
                 cls := "row goal-progress",
                 dataAttr("goal") := g.slug.value,
                 div(
                   cls := "goal-progress-head",
-                  GoalsView.badge(com.histmersion.api.automation.Goal.StatusValue(g.status.value)),
-                  RouteLink(Route.Goal(com.histmersion.api.automation.Goal.Slug(g.slug.value)), cls := "goal-progress-title", g.title.value),
+                  GoalsView.badge(Goal.StatusValue(g.status.value)),
+                  RouteLink(Route.Goal(Goal.Slug(g.slug.value)), cls := "goal-progress-title", g.title.value),
                   span(
                     cls := "muted goal-steps",
                     if pr.total.value > 0 then s"${pr.done} of ${pr.total} steps" else "no steps yet"
@@ -310,7 +317,7 @@ object ResearchOverview:
         ActivityView.shortChips(ui),
         RouteLink(Route.Activity(ActivityTab.Everything), cls := "ch-link", "Full history")
       ),
-      ActivityView.short(com.histmersion.api.Paging.Limit(6))
+      ActivityView.short(Paging.Limit(6))
     )
 
   /** The page. */

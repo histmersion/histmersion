@@ -1,10 +1,12 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.backup.Backup
 import com.histmersion.web.{ApiClient, Auth}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.web.ErrorLine
 
 /** Settings › Backups: how many backups are kept, a backup now, and the backups there are. Restoring one replaces
   * everything in the database, so it is done from the command line (`histmersion restore`), never with a click.
@@ -35,9 +37,9 @@ object BackupsSection:
       cls := "settings-section",
       onMountCallback(_ => load()),
       SettingsForm(
-        com.histmersion.web.settings.SettingsForm.ApplyTitle("How many to keep"),
+        SettingsForm.ApplyTitle("How many to keep"),
         Some(SettingsForm.Intro("Each backup is a full copy of the database; the oldest are deleted after a new one.")),
-        List(SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("backups.keep"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Backups kept")), Some(com.histmersion.web.settings.SettingsForm.Item.Help("0 keeps every one."))))
+        List(SettingsForm.Item(SettingsForm.Item.Key("backups.keep"), Some(SettingsForm.Item.Name("Backups kept")), Some(SettingsForm.Item.Help("0 keeps every one."))))
       ),
       sectionTag(
         cls := "settings-card",
@@ -62,12 +64,12 @@ object BackupsSection:
             )
           ),
           child.maybe <-- said.signal.map(_.map {
-            case Left(why) => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(why.value))
+            case Left(why) => ErrorLine.text(ErrorLine.Problem(why.value))
             case Right(m)  => p(cls := "settings-saved-line", role := "status", m)
           }),
           child <-- list.signal.map {
             case None             => p(cls := "muted", "Loading…")
-            case Some(Left(m))    => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not list the backups: $m"))
+            case Some(Left(m))    => ErrorLine.text(ErrorLine.Problem(s"Could not list the backups: $m"))
             case Some(Right(Nil)) => p(cls := "muted", "No backup yet.")
             case Some(Right(bs))  =>
               table(

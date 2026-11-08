@@ -1,8 +1,10 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.Wording
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
+import com.histmersion.api.plugins.PluginStatus
 
 /** Settings › Where to look for sources: the open-access finders the acquisition asks, in order, for a paper's free
   * copy — each on or off — and the contact e-mail the scholarly indexes ask for.
@@ -10,7 +12,7 @@ import com.raquo.laminar.api.L.*
 object FindersSection:
 
   /** The finders among the plugins: those that register a source fetcher. Pure. */
-  def finders(ui: UiConfig): List[com.histmersion.api.plugins.PluginStatus] =
+  def finders(ui: UiConfig): List[PluginStatus] =
     ui.plugins.plugins.filter(p => p.provides.exists(_.value.startsWith("source-fetcher:")) || FinderIds(p.id.value))
 
   /** The built-in finders, also when they are off (an off plugin registers nothing). */
@@ -21,7 +23,7 @@ object FindersSection:
     div(
       cls := "settings-section",
       SettingsForm(
-        com.histmersion.web.settings.SettingsForm.ApplyTitle("Your contact e-mail"),
+        SettingsForm.ApplyTitle("Your contact e-mail"),
         Some(
           SettingsForm.Intro(
             "Crossref, OpenAlex and Unpaywall ask the people who use them for an e-mail address, so that they can " +
@@ -31,7 +33,7 @@ object FindersSection:
           )
         ),
         List(
-          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("acquire.contact-email"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("E-mail address")), Some(com.histmersion.web.settings.SettingsForm.Item.Help("Leave it empty to stay anonymous.")))
+          SettingsForm.Item(SettingsForm.Item.Key("acquire.contact-email"), Some(SettingsForm.Item.Name("E-mail address")), Some(SettingsForm.Item.Help("Leave it empty to stay anonymous.")))
         )
       ),
       SettingsForm(

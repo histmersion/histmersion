@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.{Bookmark, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind
@@ -8,13 +9,17 @@ import com.histmersion.web.map.TheMap
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Title
+import com.histmersion.web.ui.Flash
 
 /** "Save this view": Explore as it is now — the filters, the span, the layers and where the map is — kept as a bookmark
   * to come back to, under a name. Listed here (Explore's filter panel) and in My library › Bookmarks.
   */
 object SavedViews:
   type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Name extends RefinedType[String, Pure]
 
   /** The view on screen, as a bookmark's target. */
   def current(): Target =
@@ -30,27 +35,27 @@ object SavedViews:
     )
 
   /** A name to offer for the view: its span, and the words or the first filter. Pure. */
-  def suggestedName(words: Option[String], from: Option[Year], to: Option[Year]): com.histmersion.web.marks.SavedViews.Name =
+  def suggestedName(words: Option[String], from: Option[Year], to: Option[Year]): Name =
     val span = Fmt.periodStr(from, to)
     List(words.map(_.trim).filter(_.nonEmpty).map(w => s"“$w”"), Option(span.value).filter(_.nonEmpty)).flatten
       .mkString(", ") match
-      case "" => com.histmersion.web.marks.SavedViews.Name("My view")
-      case s  => com.histmersion.web.marks.SavedViews.Name(s)
+      case "" => Name("My view")
+      case s  => Name(s)
 
   val saved: Signal[List[Bookmark]] = MyItems.bookmarks.signal.map(_.filter(_.target.kind == ItemKind.View))
 
   private val onExplore: Signal[Boolean] = Router.route.map(_ == Route.Explore)
 
   /** Save the view on screen as `name`. */
-  def save(name: com.histmersion.web.marks.SavedViews.Name): Unit =
+  def save(name: Name): Unit =
     if Auth.writableNow then
       MyItems
         .add(
           current(),
-          Some(name.value.trim).filter(_.nonEmpty).map(com.histmersion.api.personal.Bookmark.Label(_)),
-          com.histmersion.api.library.Title(name.value.trim)
+          Some(name.value.trim).filter(_.nonEmpty).map(Bookmark.Label(_)),
+          Title(name.value.trim)
         )
-        .foreach(_ => com.histmersion.web.ui.Flash.say(com.histmersion.web.ui.Flash.Text(s"Saved the view “${name.value.trim}”.")))
+        .foreach(_ => Flash.say(Flash.Text(s"Saved the view “${name.value.trim}”.")))
     else WindowManager.open(WindowKey.ApiKey)
 
   /** The filter panel's "Saved views" part (Explore only). */

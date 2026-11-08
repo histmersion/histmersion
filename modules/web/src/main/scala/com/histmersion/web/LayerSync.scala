@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import scala.annotation.tailrec
 import com.raquo.laminar.api.L.*

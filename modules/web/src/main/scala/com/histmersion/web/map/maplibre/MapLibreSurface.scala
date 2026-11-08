@@ -1,4 +1,5 @@
-package com.histmersion.web.map.maplibre
+package com.histmersion
+package web.map.maplibre
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
@@ -7,6 +8,8 @@ import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.web.map.MapSurface
+import com.histmersion.web.map.BaseMapSpec
 
 /** A [[MapSurface]] over one MapLibre map. */
 final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pixelRatio: Option[MapEngine.PixelRatio], caps: Capabilities)
@@ -53,35 +56,35 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
 
   // ── the view ─────────────────────────────────────────────────────────────────────────────────
 
-  def zoom: com.histmersion.web.map.MapSurface.Zoom = MapSurface.Zoom(gl.getZoom() + ZoomShift)
-  def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom = MapSurface.MaxZoom(gl.getMaxZoom() + ZoomShift)
-  def setMaxZoom(z: com.histmersion.web.map.MapSurface.MaxZoom): Unit = { val _ = gl.setMaxZoom(z.value - ZoomShift) }
+  def zoom: MapSurface.Zoom = MapSurface.Zoom(gl.getZoom() + ZoomShift)
+  def maxZoom: MapSurface.MaxZoom = MapSurface.MaxZoom(gl.getMaxZoom() + ZoomShift)
+  def setMaxZoom(z: MapSurface.MaxZoom): Unit = { val _ = gl.setMaxZoom(z.value - ZoomShift) }
   def center: LatLon = { val c = gl.getCenter(); LatLon(c.lat, c.lng) }
   def bounds: GeoBounds =
     val b = gl.getBounds()
     GeoBounds(GeoBounds.South(b.getSouth()), GeoBounds.West(b.getWest()), GeoBounds.North(b.getNorth()), GeoBounds.East(b.getEast()))
-  private def sizeNow(): (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) =
+  private def sizeNow(): (MapSurface.Dimension, MapSurface.Dimension) =
     (MapSurface.Dimension(el.clientWidth.toDouble), MapSurface.Dimension(el.clientHeight.toDouble))
   // the container's size, read when it changes (a layout read per marker per frame forced a layout each)
-  private var sizeV: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = sizeNow()
+  private var sizeV: (MapSurface.Dimension, MapSurface.Dimension) = sizeNow()
   gl.on("resize", (_: GlEvent) => sizeV = sizeNow())
-  def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = sizeV
+  def size: (MapSurface.Dimension, MapSurface.Dimension) = sizeV
 
   // Every camera move the app asks for: animated only when the map animates now ([[MotionPref]]), and then
   // `essential` — MapLibre otherwise drops the ease itself when the system asks for reduced motion, and "always
   // animate" would not. A move that does not animate is a jump.
-  def setView(at: LatLon, z: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate): Unit =
+  def setView(at: LatLon, z: MapSurface.Zoom, animate: MapSurface.SetViewAnimate): Unit =
     val o = js.Dynamic.literal(center = js.Array(at.lon.value, at.lat.value), zoom = z.value - ZoomShift)
     if MapLibreSurface.eases(animate.value) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
     else { val _ = gl.jumpTo(o.asInstanceOf[js.Object]) }
 
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate): Unit =
+  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate): Unit =
     val _ = gl.fitBounds(
       js.Array(js.Array(b.west.value, b.south.value), js.Array(b.east.value, b.north.value)),
       MapLibreSurface.motion(animate.value, js.Dynamic.literal(padding = padding.value, maxZoom = maxZoom.value - ZoomShift))
     )
 
-  def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate): Unit =
+  def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate): Unit =
     val _ = gl.panBy(js.Array(dx.value, dy.value), MapLibreSurface.motion(animate.value, js.Dynamic.literal()))
 
   def project(p: LatLon): ScreenPt = { val q = gl.project(js.Array(p.lon.value, p.lat.value)); ScreenPt(q.x, q.y) }
@@ -109,7 +112,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
   // the names' language of the base map drawn now
   private var lang = "en"
 
-  def drawnNames: Seq[com.histmersion.web.map.MapSurface.LabelText] =
+  def drawnNames: Seq[MapSurface.LabelText] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
     else
@@ -131,7 +134,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
             f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(t => MapSurface.LabelText(t.toString))
           )
           .distinct
-  def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.LabelText, com.histmersion.web.map.MapSurface.LabelText, ScreenPt)] =
+  def baseMapLabels: Seq[(MapSurface.LabelText, MapSurface.LabelText, ScreenPt)] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
     else
@@ -165,7 +168,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
             for t <- text; a <- at yield (MapSurface.LabelText(f.layer.id.toString), MapSurface.LabelText(t), project(a))
           }
           .distinctBy((l, t, _) => (l, t))
-  def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.MapSurface.LayerId] =
+  def baseMapAreasAt(p: ScreenPt): Seq[MapSurface.LayerId] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
     else
@@ -182,14 +185,14 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
           .toSeq
           .map(f => MapSurface.LayerId(s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}"))
           .distinct
-  def baseMapLayer(id: com.histmersion.web.map.MapSurface.LayerId): Option[com.histmersion.web.map.MapSurface.LayerId] =
+  def baseMapLayer(id: MapSurface.LayerId): Option[MapSurface.LayerId] =
     gl.getLayer(id.value)
       .toOption
       .map(_ => MapSurface.LayerId(Option(gl.getLayoutProperty(id.value, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString)))
-  def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount =
-    if gl.getLayer(id.value).isEmpty then com.histmersion.web.map.MapSurface.DrawnCount(0)
+  def baseMapDrawn(id: MapSurface.LayerId): MapSurface.DrawnCount =
+    if gl.getLayer(id.value).isEmpty then MapSurface.DrawnCount(0)
     else
-      com.histmersion.web.map.MapSurface.DrawnCount(
+      MapSurface.DrawnCount(
         gl.queryRenderedFeatures(
           js.undefined.asInstanceOf[js.Array[Double]],
           js.Dynamic.literal(layers = js.Array(id.value)).asInstanceOf[js.Object]
@@ -257,8 +260,8 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
   dom.window.addEventListener("pageshow", (_: dom.Event) => leaving = false)
 
   // `var`: the credits of the style set last
-  private var creditsV: Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] = Nil
-  override def credits: Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] = creditsV
+  private var creditsV: Seq[BaseMapSpec.Raster.Attribution] = Nil
+  override def credits: Seq[BaseMapSpec.Raster.Attribution] = creditsV
 
   def setBaseMap(b: BaseMapSpec): Unit =
     generation += 1
@@ -306,10 +309,10 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
 
   private val shapeSets = mutable.LinkedHashMap.empty[String, GlShapes]
 
-  def shapes(id: com.histmersion.web.map.MapSurface.ShapesId, style: ShapeStyle): ShapeSet =
+  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet =
     shapeSets.getOrElseUpdate(id.value, GlShapes(gl, NoMap.Shapes.Id(id.value), style))
 
-  def shapeSet(id: com.histmersion.web.map.MapSurface.ShapeSetId): Option[ShapeSet] = shapeSets.get(id.value)
+  def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet] = shapeSets.get(id.value)
 
   def shapesAt(p: ScreenPt): Seq[ShapeHit] =
     val at = unproject(p)
@@ -321,7 +324,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
 
   private val pointSets = mutable.LinkedHashMap.empty[String, GlPointTiles]
 
-  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.MapSurface.PointTilesMaxZoom): PointTiles =
+  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles =
     pointSets.getOrElseUpdate(id.value, GlPointTiles(gl, id, layer, maxZoom))
 
   // ── popups ───────────────────────────────────────────────────────────────────────────────────
@@ -339,7 +342,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
       Option(e.querySelector(".maplibregl-popup-content")).collect { case h: dom.HTMLElement => h }.getOrElse(e)
     )
 
-  override def setLocked(locked: com.histmersion.web.map.MapSurface.Locked): Unit =
+  override def setLocked(locked: MapSurface.Locked): Unit =
     List(gl.dragPan, gl.scrollZoom, gl.boxZoom, gl.doubleClickZoom, gl.keyboard, gl.touchZoomRotate).foreach { h =>
       if locked.value then h.disable() else h.enable()
     }
@@ -348,7 +351,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapEngine.MaxZoom, pi
       gl.keyboard.disableRotation()
     el.classList.toggle("is-map-locked", locked.value)
 
-  def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls): Popup =
+  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls): Popup =
     closePopups()
     val p = GlPopup(
       js.Dynamic

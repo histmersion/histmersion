@@ -1,10 +1,14 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
+
+import com.histmersion.api.research.Article
+import com.histmersion.web.ui.Layout
 
 /** The start of an article's body as plain reading text: its first paragraph of prose (no heading, list, table or
   * quotation), its Markdown and links reduced to their words, cut at a word near `limit`. Pure.
   */
 object ArticleOpening:
-  def of(body: com.histmersion.api.research.Article.Body, limit: com.histmersion.web.ui.Layout.ReadingOpening): Option[String] =
+  def of(body: Article.Body, limit: Layout.ReadingOpening): Option[String] =
     val paragraphs = body.value.split("\n\\s*\n").toList.map(_.trim).filter(_.nonEmpty)
     paragraphs.find(prose).map(p => cut(plain(p), limit.value)).filter(_.nonEmpty)
 

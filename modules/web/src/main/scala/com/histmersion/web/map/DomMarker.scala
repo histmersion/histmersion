@@ -1,9 +1,12 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A DOM marker at (`lat`, `lon`): its element's top-left at the point, or — `box` given — the box centred on it.
   * `.hd-marker` is the stylesheet's hook for every marker (and the map's sign that a pointer event is the marker's,
@@ -74,13 +77,13 @@ final class DomMarker(
     el.style.setProperty("--ty", s"${y.value}px")
 
   /** Its stacking among the markers of its pane. */
-  def setZ(z: com.histmersion.web.map.DomMarker.ZIndex): Unit = el.style.setProperty("--z", z.toString)
+  def setZ(z: DomMarker.ZIndex): Unit = el.style.setProperty("--z", z.toString)
 
 object DomMarker:
   type BoxSize = BoxSize.T
-  object BoxSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BoxSize extends RefinedType[Int, Pure]
   type ZIndex = ZIndex.T
-  object ZIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ZIndex extends RefinedType[Int, Pure]
   /** A marker element of class `cls` holding `html`. */
   def element(cls: String, html: String): dom.HTMLElement =
     val el = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]

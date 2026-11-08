@@ -1,24 +1,28 @@
-package com.histmersion.web.setup
+package com.histmersion
+package web.setup
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The first-run setup's seven steps, in order. */
-enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = com.histmersion.web.setup.SetupStep.Optional(false)):
-  case Welcome extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Welcome"))
-  case Papers extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Finding open papers"))
-  case Maps extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Maps"))
-  case Background extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Background data"))
-  case Agents extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Research agents"), optional = com.histmersion.web.setup.SetupStep.Optional(true))
-  case Calibre extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Calibre library"), optional = com.histmersion.web.setup.SetupStep.Optional(true))
-  case Ready extends SetupStep(com.histmersion.web.setup.SetupStep.Label("Ready"))
+enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = SetupStep.Optional(false)):
+  case Welcome extends SetupStep(SetupStep.Label("Welcome"))
+  case Papers extends SetupStep(SetupStep.Label("Finding open papers"))
+  case Maps extends SetupStep(SetupStep.Label("Maps"))
+  case Background extends SetupStep(SetupStep.Label("Background data"))
+  case Agents extends SetupStep(SetupStep.Label("Research agents"), optional = SetupStep.Optional(true))
+  case Calibre extends SetupStep(SetupStep.Label("Calibre library"), optional = SetupStep.Optional(true))
+  case Ready extends SetupStep(SetupStep.Label("Ready"))
 
-  def number: com.histmersion.web.setup.SetupStep.Number = com.histmersion.web.setup.SetupStep.Number(ordinal + 1)
+  def number: SetupStep.Number = SetupStep.Number(ordinal + 1)
   def next: Option[SetupStep] = SetupStep.values.lift(ordinal + 1)
   def back: Option[SetupStep] = Option.when(ordinal > 0)(SetupStep.values(ordinal - 1))
 
 object SetupStep:
   type Number = Number.T
-  object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Number extends RefinedType[Int, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Optional = Optional.T
-  object Optional extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Optional extends RefinedType[Boolean, Pure]
 

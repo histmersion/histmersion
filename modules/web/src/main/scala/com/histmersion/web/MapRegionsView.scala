@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.ServiceState
 import com.raquo.laminar.api.L.*
@@ -9,6 +10,9 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.api.BBox
+import com.histmersion.api.catalogue.MapArea
+import com.histmersion.api.ByteCount
 
 /** The About window's "Map regions" panel: pick a named region or type a box, see what it would download zoom by zoom
   * (a dry run of the fetch job), download it and follow the job, and remove what was downloaded. Over the base map's
@@ -23,7 +27,7 @@ object MapRegionsView:
 
   private val status = Var(Option.empty[Basemap.Status])
   private val pick = Var(RegionChoice.Id("configured"))
-  private val box = Var(com.histmersion.api.BBox.Text(""))
+  private val box = Var(BBox.Text(""))
   private val content = Var(Content.Map)
   private val depth = Var(ZoomText(""))
   private val job = Var(Option.empty[JobInfo])
@@ -53,7 +57,7 @@ object MapRegionsView:
     status.now().flatMap(_.regions.find(_.name.value == id.value)).map(_.name)
 
   private def current(dryRun: Basemap.FetchQuery.DryRun): Either[Basemap.Problem, Basemap.FetchQuery] =
-    request(com.histmersion.api.catalogue.MapArea.Bbox(box.now().value), content.now(), namedOf(pick.now()), depth.now(), dryRun)
+    request(MapArea.Bbox(box.now().value), content.now(), namedOf(pick.now()), depth.now(), dryRun)
 
   private def choose(id: RegionChoice.Id): Unit =
     pick.set(id)
@@ -83,7 +87,7 @@ object MapRegionsView:
                 job.set(Some(j))
                 if !j.isTerminal then poll(id, dry)
                 else
-                  if j.succeeded then dry.foreach(q => checked.set(Some(q.copy(dryRun = com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(false)))))
+                  if j.succeeded then dry.foreach(q => checked.set(Some(q.copy(dryRun = Basemap.FetchQuery.DryRun(false)))))
                   load()
               }
             )
@@ -139,7 +143,7 @@ object MapRegionsView:
               placeholder := "minLon,minLat,maxLon,maxLat or world",
               controlled(
                 value <-- box.signal.map(_.value),
-                onInput.mapToValue --> { v => box.set(com.histmersion.api.BBox.Text(v)); pick.set(RegionChoice.Id(OwnBox)); checked.set(None) }
+                onInput.mapToValue --> { v => box.set(BBox.Text(v)); pick.set(RegionChoice.Id(OwnBox)); checked.set(None) }
               )
             )
           )
@@ -236,14 +240,14 @@ object MapRegionsView:
             span(s"${m.bbox.getOrElse("")}, zoom ≤ ${m.maxZoom.getOrElse(0)}"),
             span(
               cls := "about-detail muted",
-              s"${Backup.humanBytes(com.histmersion.api.ByteCount(s.layers.filter(_.present.value).map(_.bytes.value).sum))} in all"
+              s"${Backup.humanBytes(ByteCount(s.layers.filter(_.present.value).map(_.bytes.value).sum))} in all"
             ),
             button(
               typ := "button",
               cls := "btn btn--sm btn--danger map-region-remove-all",
               child.text <-- confirmAll.signal.map(c => if c then "remove everything — sure?" else "remove everything"),
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-              onClick --> (_ => if confirmAll.now() then remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("all"))) else confirmAll.set(true))
+              onClick --> (_ => if confirmAll.now() then remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("all"))) else confirmAll.set(true))
             )
           )
         )
@@ -259,7 +263,7 @@ object MapRegionsView:
               dataAttr("region") := f.name.value,
               "remove",
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
-              onClick --> (_ => remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(f.name))))
+              onClick --> (_ => remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(f.name))))
             )
           )
         )

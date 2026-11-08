@@ -1,14 +1,17 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A shape under the pointer: its set and its id. */
 final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id)
 
 object ShapeHit:
   type Set = Set.T
-  object Set extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Set extends RefinedType[String, Pure]
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]

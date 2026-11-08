@@ -1,10 +1,13 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.util.Try
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Which layout the page is in. At or below `ui.narrow-max-width-px` it is NARROW — the phone layout: the map first,
   * the sidebar a bottom sheet, windows full-screen. Wider, but at or below `ui.tablet-max-width-px`, it is TABLET — the
@@ -15,28 +18,28 @@ import scala.util.Try
   */
 object Viewport:
   type MediaQuery = MediaQuery.T
-  object MediaQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MediaQuery extends RefinedType[String, Pure]
 
   type ModeWidth = ModeWidth.T
-  object ModeWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ModeWidth extends RefinedType[Double, Pure]
   type ModeHeight = ModeHeight.T
-  object ModeHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ModeHeight extends RefinedType[Double, Pure]
 
   enum Mode(val wire: Mode.Wire):
-    case Narrow extends Mode(com.histmersion.web.Viewport.Mode.Wire("narrow"))
-    case Tablet extends Mode(com.histmersion.web.Viewport.Mode.Wire("narrow"))
-    case Wide extends Mode(com.histmersion.web.Viewport.Mode.Wire("wide"))
+    case Narrow extends Mode(Mode.Wire("narrow"))
+    case Tablet extends Mode(Mode.Wire("narrow"))
+    case Wide extends Mode(Mode.Wire("wide"))
 
   object Mode:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
   /** Pure: the mode a viewport of `width` × `height` (CSS px) is in. Narrow when it is thin, or when it is short and
     * driven by touch — a phone held sideways, which is wide but has no room; else a tablet up to `tabletMaxWidth`.
     */
   def mode(
-      width: com.histmersion.web.Viewport.ModeWidth,
-      height: com.histmersion.web.Viewport.ModeHeight,
+      width: ModeWidth,
+      height: ModeHeight,
       coarsePointer: Boolean,
       maxWidth: UiConfig.NarrowMaxWidthPx,
       maxHeight: UiConfig.NarrowMaxHeightPx,
@@ -47,11 +50,11 @@ object Viewport:
     else Mode.Wide
 
   /** The phone's rule as a media query, so the browser tells us when it flips. */
-  def query(maxWidth: UiConfig.NarrowMaxWidthPx, maxHeight: UiConfig.NarrowMaxHeightPx): com.histmersion.web.Viewport.MediaQuery =
+  def query(maxWidth: UiConfig.NarrowMaxWidthPx, maxHeight: UiConfig.NarrowMaxHeightPx): MediaQuery =
     MediaQuery(s"(max-width: ${maxWidth.value}px), (max-height: ${maxHeight.value}px) and (pointer: coarse)")
 
   /** The tablet's: every width up to its own limit (the phone's query is asked first). */
-  def tabletQuery(tabletMaxWidth: UiConfig.TabletMaxWidthPx): com.histmersion.web.Viewport.MediaQuery = MediaQuery(s"(max-width: ${tabletMaxWidth.value}px)")
+  def tabletQuery(tabletMaxWidth: UiConfig.TabletMaxWidthPx): MediaQuery = MediaQuery(s"(max-width: ${tabletMaxWidth.value}px)")
 
   private val current = Var(Mode.Wide)
 

@@ -1,8 +1,16 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.web.{LibrarySection, Router, StatusBadge}
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
+import com.histmersion.web.marks.ItemRef
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.research.Article
+import com.histmersion.web.marks.MyItems
+import com.histmersion.web.ui.ContextMenu
+import com.histmersion.web.marks.ItemMenu
 
 /** A page of a Library list as a table: a source's title and authors, year, status and period; an article's title and
   * kind, and period. Every title is a real link to the item's page: a plain click chooses the row (the reading pane
@@ -79,10 +87,10 @@ object LibraryTable:
   private def row(r: TableRow, sources: Boolean, chosen: Signal[Option[TableRow.Key]], choose: Choose): HtmlElement =
     val on = chosen.map(_.contains(r.key))
     val ref =
-      if sources then com.histmersion.web.marks.ItemRef.source(com.histmersion.api.library.Citekey(r.key.value), com.histmersion.api.library.Title(r.title))
-      else com.histmersion.web.marks.ItemRef.article(com.histmersion.api.research.Article.Slug(r.key.value), com.histmersion.api.library.Title(r.title))
-    val unread = com.histmersion.web.marks.MyItems.loaded.signal
-      .combineWith(com.histmersion.web.marks.MyItems.isRead(ref))
+      if sources then ItemRef.source(Citekey(r.key.value), Title(r.title))
+      else ItemRef.article(Article.Slug(r.key.value), Title(r.title))
+    val unread = MyItems.loaded.signal
+      .combineWith(MyItems.isRead(ref))
       .map((loaded, read) => loaded.value && !read)
     tr(
       cls := "lib-row",
@@ -93,8 +101,8 @@ object LibraryTable:
         val t = ev.target.asInstanceOf[dom.Element]
         if t.closest("a") == null && Router.plain(ev) then choose(r.key, Router.Push(true))
       },
-      com.histmersion.web.ui.ContextMenu
-        .on(com.histmersion.web.ui.ContextMenu.OnTitle(s"Actions: ${r.title}"), () => com.histmersion.web.marks.ItemMenu.entries(ref, r.byline)),
+      ContextMenu
+        .on(ContextMenu.OnTitle(s"Actions: ${r.title}"), () => ItemMenu.entries(ref, r.byline)),
       td(
         cls := "col-title",
         a(

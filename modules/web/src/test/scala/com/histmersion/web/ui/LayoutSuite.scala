@@ -1,4 +1,5 @@
-package com.histmersion.web.ui
+package com.histmersion
+package web.ui
 
 class LayoutSuite extends munit.FunSuite:
 

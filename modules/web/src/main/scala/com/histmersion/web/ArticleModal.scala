@@ -1,10 +1,13 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.research.Article
 
 object ArticleModal:
   val element: HtmlElement =
@@ -28,10 +31,10 @@ object ArticleModal:
       }
     )
 
-  def open(id: com.histmersion.api.library.Citekey, opts: Map[String, String] = Map.empty): Unit =
+  def open(id: Citekey, opts: Map[String, String] = Map.empty): Unit =
     WindowManager.open(WindowKey.Source(WindowKey.Source.Citekey(id.value)))
 
-  def openSlug(slug: com.histmersion.api.research.Article.Slug, opts: Map[String, String] = Map.empty): Unit =
+  def openSlug(slug: Article.Slug, opts: Map[String, String] = Map.empty): Unit =
     WindowManager.open(WindowKey.Article(WindowKey.Article.Slug(slug.value)))
 
   def close(): Unit = ()

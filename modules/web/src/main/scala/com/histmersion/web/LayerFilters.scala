@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.*

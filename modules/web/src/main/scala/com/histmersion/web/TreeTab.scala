@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -12,6 +13,10 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.{Bucket, Filter, TimeHistogram}
+import com.histmersion.api.UiLabels
+import com.histmersion.api.RowCount
+import com.histmersion.api.Paging
+import com.histmersion.api.catalogue.Year
 
 object TreeTab:
   private var config: Option[UiConfig] = None
@@ -24,7 +29,7 @@ object TreeTab:
   private var lastParams: Option[String] = None
 
   private val treeContent = Var[List[HtmlElement]](Nil)
-  private val countText = Var(com.histmersion.api.UiLabels.Text(""))
+  private val countText = Var(UiLabels.Text(""))
   private val loading = Var(false)
   private val failed = Var(false)
 
@@ -74,7 +79,7 @@ object TreeTab:
         if axis.isEmpty then ()
         else
           val mine = latest.start()
-          if countText.now().value.isEmpty then countText.set(com.histmersion.api.UiLabels.Text("loading…")) else loading.set(true)
+          if countText.now().value.isEmpty then countText.set(UiLabels.Text("loading…")) else loading.set(true)
           failed.set(false)
           doLoad(cfg, mine)
 
@@ -98,7 +103,7 @@ object TreeTab:
       .onComplete { r =>
         if latest.isCurrent(mine) then
           loading.set(false)
-          latest.answer(r, showTree, m => { failed.set(true); countText.set(com.histmersion.api.UiLabels.Text(s"Could not group the sources: $m")) })
+          latest.answer(r, showTree, m => { failed.set(true); countText.set(UiLabels.Text(s"Could not group the sources: $m")) })
       }
 
   private def showTree(data: TimeHistogram): Unit =
@@ -107,7 +112,7 @@ object TreeTab:
     countText.set(
       countLine(
         data,
-        com.histmersion.api.RowCount(roots.size),
+        RowCount(roots.size),
         Years.Astronomical(UiState.from.now().getOrElse(data.from.value)),
         Years.Astronomical(UiState.to.now().getOrElse(data.to.value))
       )
@@ -124,20 +129,20 @@ object TreeTab:
   /** The count line, in the sidebar's one form ([[ResultsPaging]]): every source is in the tree, so
     * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions).
     */
-  def countLine(data: TimeHistogram, roots: com.histmersion.api.RowCount, from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): com.histmersion.api.UiLabels.Text =
+  def countLine(data: TimeHistogram, roots: RowCount, from: Years.Astronomical, to: Years.Astronomical): UiLabels.Text =
     val groups =
-      if data.by.value == "region" then Plural.count(Plural.CountN(roots.value.toLong), com.histmersion.api.Plural.CountSingular("region")) else Plural.count(Plural.CountN(roots.value.toLong), com.histmersion.api.Plural.CountSingular("period"))
+      if data.by.value == "region" then Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("region")) else Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("period"))
     ResultsPaging.countLine(
-      com.histmersion.api.Paging.Shown(data.total.value),
-      com.histmersion.api.Paging.Page.Total(data.total.value),
-      com.histmersion.api.Plural.Noun.Singular("source"),
+      Paging.Shown(data.total.value),
+      Paging.Page.Total(data.total.value),
+      Plural.Noun.Singular("source"),
       extras = List(
-        com.histmersion.api.UiLabels.Text(groups.value),
-        ResultsPaging.span(Some(com.histmersion.api.catalogue.Year(from.value)), Some(com.histmersion.api.catalogue.Year(to.value)))
-      ) ++ data.asOf.map(a => com.histmersion.api.UiLabels.Text(s"as of ${Fmt.yr(a)}"))
+        UiLabels.Text(groups.value),
+        ResultsPaging.span(Some(Year(from.value)), Some(Year(to.value)))
+      ) ++ data.asOf.map(a => UiLabels.Text(s"as of ${Fmt.yr(a)}"))
     )
 
-  private def unitWord(n: Bucket.Count): com.histmersion.api.Plural.Phrase = if n.value == 1 then com.histmersion.api.Plural.Phrase("1 source") else com.histmersion.api.Plural.Phrase(s"${n.value} sources")
+  private def unitWord(n: Bucket.Count): Plural.Phrase = if n.value == 1 then Plural.Phrase("1 source") else Plural.Phrase(s"${n.value} sources")
 
   private def renderNode(b: Bucket, depth: Int, data: TimeHistogram): HtmlElement =
     val expanded = Var(false)
@@ -269,14 +274,14 @@ object TreeTab:
     if b.kind.value == "time" then
       val narrowed = f.modify(_.period).setTo(for a <- b.start; b2 <- b.end yield Period(a, b2))
       ApiClient.aggregate(
-        Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time"), narrowed, depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)), samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value)))
+        Api.AggregateQuery.tree(Api.AggregateQuery.By("time"), narrowed, depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)), samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value)))
       )
     else
       val narrowed = f.modify(_.places).setTo(b.placeId.toList.map(p => Filter.Places(p.value)))
       ApiClient.aggregate(
         Api.AggregateQuery
           .tree(
-            com.histmersion.api.Api.AggregateQuery.By("region"),
+            Api.AggregateQuery.By("region"),
             narrowed,
             depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)),
             asOf = data.asOf.map(a => Api.AggregateQuery.AsOf(a.value)),

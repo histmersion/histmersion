@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -10,6 +11,8 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The lists' notices ([[UiNotices]]), shown in Research's side navigation: each watched list's count (open approvals,
   * things to acquire, the open backlog) and whether it has something NEW since it was last opened — its button is bold
@@ -25,7 +28,7 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object Notices:
   type Spoken = Spoken.T
-  object Spoken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Spoken extends RefinedType[String, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 

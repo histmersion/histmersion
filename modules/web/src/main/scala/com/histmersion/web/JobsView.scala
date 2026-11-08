@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.raquo.laminar.api.L.*
@@ -10,6 +11,14 @@ import com.histmersion.api.automation.{ListFilters, Queue}
 import com.histmersion.api.catalogue.SkippedPeriod
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.library.Ingest
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.RegisteredJobKinds
+import com.histmersion.api.library.IngestJobKinds
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.library.Facet
+import com.histmersion.api.UiLabels
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.AgentJobKinds
 
 /** The background (OCR) jobs window: `GET /api/jobs`, filtered by state through [[UiState.jobStatus]] (on the server),
   * a page at a time ([[ListPaging]]: the heading says how many of how many, "Show older" loads the next page, the
@@ -77,11 +86,11 @@ object JobsView:
     jobs.groupMapReduce(_.state)(_ => 1)(_ + _)
 
   /** What kind of work a job is, for a person ([[Wording.jobKind]]); a kind it does not know, as words. */
-  def kindLabel(kind: String): String = Wording.jobKindOf(com.histmersion.api.jobs.JobKinds.Wire(kind))
+  def kindLabel(kind: String): String = Wording.jobKindOf(JobKinds.Wire(kind))
 
   /** What each kind of job does; a tooltip on its filter chip, after its identifier (for the command line). */
   def kindMeaning(kind: String): Option[String] =
-    com.histmersion.api.RegisteredJobKinds.all.parse(com.histmersion.api.jobs.JobKinds.Wire(kind)).map(_.meaning.value)
+    RegisteredJobKinds.all.parse(JobKinds.Wire(kind)).map(_.meaning.value)
 
   /** What each job state means for a person, and what comes next; a tooltip on its filter button. */
   def stateMeaning(s: JobState): String = s match
@@ -97,7 +106,7 @@ object JobsView:
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names what it imports.
     * `None` for a job that has a citekey, or no detail.
     */
-  def what(j: JobInfo): Option[com.histmersion.api.jobs.JobKinds.Subject] =
+  def what(j: JobInfo): Option[JobKinds.Subject] =
     if j.citekey.isDefined then None else JobDetail.subject(j)
 
   /** The period definitions an import left out (#771): how many, and which. */
@@ -114,7 +123,7 @@ object JobsView:
   /** Is the job's subject a stored source yet? An ingest creates the source only when its OCR finished; a re-OCR runs
     * on a source that already exists.
     */
-  def subjectStored(j: JobInfo): Boolean = j.succeeded || j.kind == com.histmersion.api.library.IngestJobKinds.Reocr.kind
+  def subjectStored(j: JobInfo): Boolean = j.succeeded || j.kind == IngestJobKinds.Reocr.kind
 
   /** `3 s ago`, `4 min ago`, `2 h ago`, `5 d ago` — `thenMs` and `nowMs` in epoch milliseconds. */
   def ago(thenMs: Double, nowMs: Double): String =
@@ -158,10 +167,10 @@ object JobsView:
   private def listing = list.listing
 
   /** The job this page just started — marked in the list until the window closes. */
-  private val started = Var(Option.empty[com.histmersion.api.SpatialHierarchyResult.Job.Id])
+  private val started = Var(Option.empty[SpatialHierarchyResult.Job.Id])
 
   /** A job this page started (an upload): show it, and poll quickly again. */
-  def track(jobId: com.histmersion.api.SpatialHierarchyResult.Job.Id): Unit =
+  def track(jobId: SpatialHierarchyResult.Job.Id): Unit =
     started.set(Some(jobId))
     list.refresh(changed = com.histmersion.web.Poll.DataChanged(true))
 
@@ -182,7 +191,7 @@ object JobsView:
         cls := "toolbar list-filters",
         ListFilterBar.chips(
           "kind",
-          listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("kind"))),
+          listing.signal.map(_.page.facet(Facet.Name("kind"))),
           UiState.jobKinds,
           kindLabel,
           kindMeaning,
@@ -196,14 +205,14 @@ object JobsView:
           ListFilterBar.clearButton(filterFields)
         )
       ),
-      list.errorLine(com.histmersion.api.UiLabels.Text("Could not list jobs")),
+      list.errorLine(UiLabels.Text("Could not list jobs")),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
         Option.when(isLoaded.value && l.rows.nonEmpty)(
           p(
             cls := "muted list-heading",
             ListPaging.heading(
               l,
-              com.histmersion.api.Plural.Noun.Singular("job"),
+              Plural.Noun.Singular("job"),
               filter.map(_.wire.value),
               _.status.value,
               filter.map(stateLabel).toList ++ currentFilter().normalized.kind.map(k => kindLabel(k.value))
@@ -282,7 +291,7 @@ object JobsView:
               " · for ",
               QueueItemLink(
                 Queue.Kind.Acquire,
-                com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber(i.value),
+                Goal.Plans.GoalLink.QueueNumber(i.value),
                 title := (if j.succeeded then s"acquisition item $i was ticked off by this job"
                           else s"acquisition item $i is ticked off when this job succeeds"),
                 s"acquisition item $i"
@@ -305,7 +314,7 @@ object JobsView:
         div(
           cls := "job-meta muted",
           // an agent run is a job: its row leads to the run; any other job, to its own page
-          if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind then
+          if j.kind == AgentJobKinds.Agent.kind then
             WinLink(WindowKey.Run(WindowKey.Run.Id(j.id.value)), title := s"agent run ${j.id}", s"run ${j.id.value.take(8)}")
           else RouteLink(Route.Job(Route.Job.Id(j.id.value)), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.value.take(8)}"),
           Option(j.createdAt).filter(_.value.nonEmpty).map(c => span(title := c.value, s" · started ${agoOf(c.value)}")),

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -14,14 +15,14 @@ class LabelPlacementSuite extends munit.FunSuite:
   private def ring(pts: (Double, Double)*): Vector[Pt] = pts.map((x, y) => Pt(x, y)).toVector
 
   test("projection: the equator and the prime meridian are the plane's centre, and it round-trips"):
-    val c = project(com.histmersion.api.Geo.Latitude(0), com.histmersion.api.Geo.Longitude(0))
+    val c = project(Latitude(0), Longitude(0))
     assertEqualsDouble(c.x, 128.0, 1e-9)
     assertEqualsDouble(c.y, 128.0, 1e-9)
     for (lat, lon) <- List((Latitude(35.1), Longitude(33.4)), (Latitude(-33.9), Longitude(151.2)), (Latitude(64.1), Longitude(-21.9))) do
       val (la, lo) = unproject(project(lat, lon))
       assertEqualsDouble(la.value, lat.value, 1e-9)
       assertEqualsDouble(lo.value, lon.value, 1e-9)
-    assert(project(com.histmersion.api.Geo.Latitude(60), com.histmersion.api.Geo.Longitude(0)).y < project(com.histmersion.api.Geo.Latitude(10), com.histmersion.api.Geo.Longitude(0)).y, "north is up: y grows southwards")
+    assert(project(Latitude(60), Longitude(0)).y < project(Latitude(10), Longitude(0)).y, "north is up: y grows southwards")
 
   test("area: a square, a square with a hole, and a degenerate ring"):
     val sq = ring((0, 0), (10, 0), (10, 10), (0, 10))
@@ -211,7 +212,7 @@ class LabelPlacementSuite extends munit.FunSuite:
       }
       shape(Seq(Seq(ring))).get
     }
-    val v = viewAt(project(com.histmersion.api.Geo.Latitude(40), com.histmersion.api.Geo.Longitude(25)), 1400, 900, math.pow(2, 5))
+    val v = viewAt(project(Latitude(40), Longitude(25)), 1400, 900, math.pow(2, 5))
     def pass() = shapes.flatMap(s => place(s, v, math.pow(2, 5), 50, 8))
     (0 until 5).foreach(_ => pass()) // warm the JIT
     val t0 = System.nanoTime()
@@ -253,10 +254,10 @@ class LabelPlacementSuite extends munit.FunSuite:
     val near = Box("near", 100 + 40 + 30 + PadPx + 4, 100, 60, 12, rank = 5)
     assertEquals(cull(Seq(big, near), shown = Set("big", "near")), Set("big", "near"), "shown: it stays")
     assertEquals(cull(Seq(big, near), shown = Set("big")), Set("big"), "hidden: it waits until clearly apart")
-    val clear = near.modify(_.cx).setTo((100 + 40 + 30 + PadPx + AppearPadPx + 1: _root_.scala.Double))
+    val clear = near.modify(_.cx).setTo((100 + 40 + 30 + PadPx + AppearPadPx + 1: Double))
     assertEquals(cull(Seq(big, clear), shown = Set("big")), Set("big", "clear".replace("clear", "near")))
     // two names drifting together then apart: shown, hidden at the touch, back only past the margin
-    val states = (0 to 40).map(i => 100 + 40 + 30 + PadPx + 20 - i).map(cx => near.modify(_.cx).setTo((cx.toDouble: _root_.scala.Double)))
+    val states = (0 to 40).map(i => 100 + 40 + 30 + PadPx + 20 - i).map(cx => near.modify(_.cx).setTo((cx.toDouble: Double)))
     var shown = Set("big", "near")
     val trace = (states ++ states.reverse).map { b =>
       shown = cull(Seq(big, b), shown = shown)
@@ -271,7 +272,7 @@ class LabelPlacementSuite extends munit.FunSuite:
     val far = Box("far", 400, 400, 60, 12, rank = 1)
     assertEquals(cull(Seq(small, big, far)), Set("big", "far"))
     // just past the padding: both stay
-    val beside = small.modify(_.cx).setTo((100 + 40 + 30 + PadPx + 1: _root_.scala.Double))
+    val beside = small.modify(_.cx).setTo((100 + 40 + 30 + PadPx + 1: Double))
     assertEquals(cull(Seq(big, beside)), Set("big", "small"))
 
   test("cull: the answer does not depend on input order, and ties go by key"):

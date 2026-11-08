@@ -1,4 +1,5 @@
-package com.histmersion.web.map.maplibre
+package com.histmersion
+package web.map.maplibre
 
 import org.scalajs.dom
 

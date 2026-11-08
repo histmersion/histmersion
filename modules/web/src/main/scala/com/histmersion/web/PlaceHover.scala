@@ -1,8 +1,13 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Years
 
 /** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the pointer the way
   * the app's links do, with the same card ([[Preview]]):
@@ -20,9 +25,9 @@ import org.scalajs.dom
 object PlaceHover:
   export Pages.PlaceId
   type PlaceKind = PlaceKind.T
-  object PlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlaceKind extends RefinedType[String, Pure]
   type PointerType = PointerType.T
-  object PointerType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PointerType extends RefinedType[String, Pure]
   export ShapeHit.{Set as ShapeSetName}
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
@@ -30,7 +35,7 @@ object PlaceHover:
 
   private var lastX: Preview.ScreenPixels = Preview.ScreenPixels(0)
   private var lastY: Preview.ScreenPixels = Preview.ScreenPixels(0)
-  private var lastPointer: com.histmersion.web.PlaceHover.PointerType = com.histmersion.web.PlaceHover.PointerType("mouse")
+  private var lastPointer: PointerType = PointerType("mouse")
   private var hovered: Option[Preview.Target] = None
   // `var`s: the map, once installed (installing twice must not double-bind), and the shape hovered
   private var surface: MapSurface = null
@@ -40,18 +45,18 @@ object PlaceHover:
     HoverIntent[Preview.Target](HoverIntent.DelayMs(Layout.hoverDelayMs.value), t => if hovered.contains(t) then Preview.showAt(t, lastX, lastY))
 
   /** A set of shapes whose shapes are places: `place(id)` is the place a shape stands for. */
-  final case class Places(place: PlaceId => Option[(PlaceId, com.histmersion.api.UiLabels.Text, PlaceKind)], asOf: () => Option[com.histmersion.api.Years.Astronomical])
+  final case class Places(place: PlaceId => Option[(PlaceId, UiLabels.Text, PlaceKind)], asOf: () => Option[Years.Astronomical])
 
   private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[ShapeHit.Set, Places]
 
   /** The shapes of set `set` answer as the places `place` names. */
-  def shapes(set: com.histmersion.web.PlaceHover.ShapeSetName, places: Places): Unit = shapeSets(set) = places
+  def shapes(set: PlaceHover.ShapeSetName, places: Places): Unit = shapeSets(set) = places
 
   /** Is this pointer type a finger? (`pen` hovers like a mouse.) */
-  private[web] def isTouch(pointerType: com.histmersion.web.PlaceHover.PointerType): Boolean = pointerType.value == "touch"
+  private[web] def isTouch(pointerType: PointerType): Boolean = pointerType.value == "touch"
 
   /** The place shape topmost under `p`, if any. */
-  private def placeAt(p: ScreenPt): Option[(ShapeHit, (com.histmersion.web.PlaceHover.PlaceId, com.histmersion.api.UiLabels.Text, com.histmersion.web.PlaceHover.PlaceKind), Places)] =
+  private def placeAt(p: ScreenPt): Option[(ShapeHit, (PlaceHover.PlaceId, UiLabels.Text, PlaceKind), Places)] =
     if surface == null then None
     else
       surface
@@ -101,7 +106,7 @@ object PlaceHover:
               // a click on the empty map lets every card go
               hovered = None
               Preview.hide()
-              Preview.unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
+              Preview.unpin(restoreFocus = Preview.RestoreFocus(false))
       }
       // a pinned card stays at its place while the map moves under it
       m.on(MapEventKind.Move)(_ => Preview.reposition())
@@ -146,7 +151,7 @@ object PlaceHover:
     else
       hovered = None
       Preview.hide()
-      Preview.unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
+      Preview.unpin(restoreFocus = Preview.RestoreFocus(false))
 
   private def at(e: dom.MouseEvent): Unit =
     lastX = Preview.ScreenPixels(e.clientX)
@@ -162,7 +167,7 @@ object PlaceHover:
   /** A place drawn as a MARKER (a point-only region's name, a chosen place's point): its card on hover, a click (or
     * Enter) chooses it. `asOf` is the year the card reads the hierarchy at.
     */
-  def bind(m: DomMarker, id: com.histmersion.web.PlaceHover.PlaceId, label: com.histmersion.api.UiLabels.Text, kind: com.histmersion.web.PlaceHover.PlaceKind, asOf: () => Option[com.histmersion.api.Years.Astronomical]): Unit =
+  def bind(m: DomMarker, id: PlaceHover.PlaceId, label: UiLabels.Text, kind: PlaceKind, asOf: () => Option[Years.Astronomical]): Unit =
     def target = Preview.Target.Place(id, asOf())
     def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
     m.handlers = new MarkerHandlers:
@@ -187,7 +192,7 @@ object PlaceHover:
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
     * it to the shape under it.
     */
-  def bindName(m: DomMarker, id: com.histmersion.web.PlaceHover.PlaceId, label: com.histmersion.api.UiLabels.Text, kind: com.histmersion.web.PlaceHover.PlaceKind, asOf: () => Option[com.histmersion.api.Years.Astronomical]): Unit =
+  def bindName(m: DomMarker, id: PlaceHover.PlaceId, label: UiLabels.Text, kind: PlaceKind, asOf: () => Option[Years.Astronomical]): Unit =
     def target = Preview.Target.Place(id, asOf())
     val el = Option(m.el.firstElementChild).getOrElse(m.el)
     m.handlers = new MarkerHandlers:
@@ -236,7 +241,7 @@ object PlaceHover:
   def bindPoint(
       m: DomMarker,
       target: () => Option[Preview.Target],
-      label: () => com.histmersion.api.UiLabels.Text,
+      label: () => UiLabels.Text,
       activate: Activation => Unit
   ): Unit =
     val el = m.el
@@ -250,7 +255,7 @@ object PlaceHover:
         intent.cancelPending()
         hovered = None
         Preview.hide()
-        activate(Activation(keyboard = com.histmersion.web.Activation.Keyboard(false), Some(el), latLonOf(e)))
+        activate(Activation(keyboard = Activation.Keyboard(false), Some(el), latLonOf(e)))
       override def focus(e: dom.FocusEvent): Unit = target().foreach(t => focusCard(el, t))
       override def blur(e: dom.FocusEvent): Unit = dropHover()
       override def key(e: dom.KeyboardEvent): Unit =
@@ -258,7 +263,7 @@ object PlaceHover:
           e.preventDefault()
           intent.cancelPending()
           Preview.hide()
-          activate(Activation(keyboard = com.histmersion.web.Activation.Keyboard(true), Some(el), None))
+          activate(Activation(keyboard = Activation.Keyboard(true), Some(el), None))
     m.onRemoved(() => if target().exists(t => hovered.contains(t)) then dropHover())
     button(el, label().value)
 
@@ -266,7 +271,7 @@ object PlaceHover:
     * the point clicked, or on the focused element with the focus moving in; activating the chosen place again lets it
     * go and closes the card.
     */
-  def activatePlace(id: com.histmersion.web.PlaceHover.PlaceId, label: com.histmersion.api.UiLabels.Text, kind: com.histmersion.web.PlaceHover.PlaceKind, asOf: () => Option[com.histmersion.api.Years.Astronomical], how: Activation): Unit =
+  def activatePlace(id: PlaceHover.PlaceId, label: UiLabels.Text, kind: PlaceKind, asOf: () => Option[Years.Astronomical], how: Activation): Unit =
     val t = Preview.Target.Place(id, asOf())
     val on = PlacesInput.toggleFromMap(id, label, kind)
     val anchor = (how.keyboard.value, how.element, how.latlng) match

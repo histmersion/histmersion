@@ -1,8 +1,11 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
 final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East):
@@ -21,13 +24,13 @@ object GeoBounds:
   /** The bounds of a GeoJSON geometry's coordinates (`None` for none). Pure over the parsed object. */
 
   type South = South.T
-  object South extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object South extends RefinedType[Double, Pure]
   type West = West.T
-  object West extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object West extends RefinedType[Double, Pure]
   type North = North.T
-  object North extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object North extends RefinedType[Double, Pure]
   type East = East.T
-  object East extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object East extends RefinedType[Double, Pure]
 
   def ofGeometry(g: js.Dynamic): Option[GeoBounds] =
     // `var`s: one pass over every coordinate of the geometry
@@ -50,4 +53,4 @@ object GeoBounds:
       if !js.isUndefined(g.geometries) then
         g.geometries.asInstanceOf[js.Array[js.Dynamic]].foreach(x => walk(x.coordinates))
       else walk(g.coordinates)
-    Option.when(s <= n)(GeoBounds(GeoBounds.South(s), GeoBounds.West(w), GeoBounds.North(n), GeoBounds.East(e)))
+    Option.when(s <= n)(GeoBounds(South(s), West(w), North(n), East(e)))

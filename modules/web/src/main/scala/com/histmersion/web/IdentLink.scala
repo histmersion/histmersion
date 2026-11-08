@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 
@@ -6,6 +7,10 @@ import scala.scalajs.js
 import com.histmersion.api.Api
 import com.histmersion.api.library.{Label, Source}
 import com.histmersion.api.research.Article
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.ui.Layout
+import com.histmersion.api.UiLabels
 
 /** A bare corpus identifier met in free text (`cline2014_year`, `achilles_origins`): shown readable at once, then —
   * when it names a stored source or article — upgraded to that link ("Cline 2014", the article's title). Lookups are
@@ -13,7 +18,7 @@ import com.histmersion.api.research.Article
   */
 object IdentLink:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
 
   enum Resolved:
     case Source(ref: com.histmersion.api.library.Source.Ref)
@@ -21,13 +26,13 @@ object IdentLink:
 
   private val cache =
     BoundedCache[String, scala.concurrent.Future[Option[Resolved]]](
-      BoundedCache.MaxEntries(com.histmersion.web.ui.Layout.identCacheSize.value)
+      BoundedCache.MaxEntries(Layout.identCacheSize.value)
     )
 
   /** The lookups' figures, for [[Diagnostics]]. */
   def cacheStats: BoundedCache.Stats = BoundedCache.stats(cache)
 
-  private def resolve(id: com.histmersion.web.IdentLink.Id): scala.concurrent.Future[Option[Resolved]] =
+  private def resolve(id: Id): scala.concurrent.Future[Option[Resolved]] =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     cache.getOrElseUpdate(
       id.value,
@@ -39,12 +44,12 @@ object IdentLink:
         .recover { case _ => None }
     )
 
-  def apply(id: com.histmersion.web.IdentLink.Id): HtmlElement =
+  def apply(id: Id): HtmlElement =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     span(
       cls := "ident",
       child <-- Signal.fromFuture(resolve(id)).map {
-        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey, r.doi, Some(com.histmersion.api.UiLabels.Text(r.shortCite.value)))
+        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey, r.doi, Some(UiLabels.Text(r.shortCite.value)))
         case Some(Some(Resolved.Article(sl, tit))) => ArticleLink(sl, tit.value)
         case _                                     => span(Label.display(Label.Text(id.value)).value)
       }

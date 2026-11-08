@@ -1,25 +1,28 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The reader's "Map motion" setting (#4718), kept per device: follow the system's reduced-motion setting (the
   * default), always animate, or never.
   */
 enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label):
-  case System extends MapMotion(com.histmersion.web.map.MapMotion.Wire("system"), com.histmersion.web.map.MapMotion.Label("Follow the system"))
-  case Always extends MapMotion(com.histmersion.web.map.MapMotion.Wire("always"), com.histmersion.web.map.MapMotion.Label("Always animate"))
-  case Never extends MapMotion(com.histmersion.web.map.MapMotion.Wire("never"), com.histmersion.web.map.MapMotion.Label("Never animate"))
+  case System extends MapMotion(MapMotion.Wire("system"), MapMotion.Label("Follow the system"))
+  case Always extends MapMotion(MapMotion.Wire("always"), MapMotion.Label("Always animate"))
+  case Never extends MapMotion(MapMotion.Wire("never"), MapMotion.Label("Never animate"))
 
 object MapMotion:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
 
-  def fromWire(s: com.histmersion.web.map.MapMotion.Wire): Option[MapMotion] = values.find(_.wire.value == s.value.trim.toLowerCase)
+  def fromWire(s: Wire): Option[MapMotion] = values.find(_.wire.value == s.value.trim.toLowerCase)
 
   /** Pure: does the map animate under choice `m` when the system asks for reduced motion (`systemReduced`)? */
   def animates(m: MapMotion, systemReduced: Boolean): Boolean = m match

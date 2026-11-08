@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,13 +7,15 @@ import com.histmersion.api.personal.*
 import com.histmersion.api.catalogue.Year
 import com.histmersion.web.LibrarySection
 import com.histmersion.api.ItemKind
+import com.histmersion.web.Pages
+import com.histmersion.api.library.Title
 
 class ShelfSuite extends munit.FunSuite:
 
   test("a shelf in the address, kept beside the chosen item"):
-    assertEquals(LibraryAddress.shelf(com.histmersion.web.Pages.UrlQuery("?shelf=notes&item=x")), Shelf.Notes)
-    assertEquals(LibraryAddress.shelf(com.histmersion.web.Pages.UrlQuery("?shelf=nonsense")), Shelf.Everything)
-    assertEquals(LibraryAddress.search(Some(com.histmersion.api.personal.ItemKey("a b")), Shelf.Unread), "?shelf=unread&item=a%20b")
+    assertEquals(LibraryAddress.shelf(Pages.UrlQuery("?shelf=notes&item=x")), Shelf.Notes)
+    assertEquals(LibraryAddress.shelf(Pages.UrlQuery("?shelf=nonsense")), Shelf.Everything)
+    assertEquals(LibraryAddress.search(Some(ItemKey("a b")), Shelf.Unread), "?shelf=unread&item=a%20b")
     assertEquals(
       LibraryAddress.href(LibrarySection.Articles, None, Shelf.Bookmarks),
       "/library/articles?shelf=bookmarks"
@@ -25,10 +28,10 @@ class ShelfSuite extends munit.FunSuite:
     val b =
       Bookmark(
         bid,
-        Target.item(ItemKind.Source, com.histmersion.api.personal.ItemKey("zz")),
-        com.histmersion.api.library.Title("Zz title"),
+        Target.item(ItemKind.Source, ItemKey("zz")),
+        Title("Zz title"),
         Some(Bookmark.Label("mine")),
-        com.histmersion.api.personal.Bookmark.CreatedAt("2026-10-30T12:00:00Z")
+        Bookmark.CreatedAt("2026-10-30T12:00:00Z")
       )
     val r = ShelfRow.of(b, _ => false, _ => "now")
     assertEquals((r.name, r.kind, r.line, r.unread), ("mine", "Source", "Zz title", true))
@@ -36,7 +39,7 @@ class ShelfSuite extends munit.FunSuite:
     val p = Bookmark(
       bid,
       Target(ItemKind.Period, from = Some(Year(-1200)), to = Some(Year(-1150))),
-      com.histmersion.api.library.Title("Period"),
+      Title("Period"),
       Some(Bookmark.Label("crisis"))
     )
     assertEquals(
@@ -45,7 +48,7 @@ class ShelfSuite extends munit.FunSuite:
     )
 
   test("recently opened: the opened ones, last first"):
-    val a = ReadMark(ItemKind.Source, ItemKey("a"), com.histmersion.api.personal.ReadMark.Title("A"), openedAt = Some(com.histmersion.api.personal.ReadMark.OpenedAt("2026-10-30T10:00:00Z")))
-    val b = ReadMark(ItemKind.Article, ItemKey("b"), com.histmersion.api.personal.ReadMark.Title("B"), openedAt = Some(com.histmersion.api.personal.ReadMark.OpenedAt("2026-10-30T11:00:00Z")))
-    val c = ReadMark(ItemKind.Source, ItemKey("c"), com.histmersion.api.personal.ReadMark.Title("C"), read = com.histmersion.api.personal.ReadMark.Read(true))
+    val a = ReadMark(ItemKind.Source, ItemKey("a"), ReadMark.Title("A"), openedAt = Some(ReadMark.OpenedAt("2026-10-30T10:00:00Z")))
+    val b = ReadMark(ItemKind.Article, ItemKey("b"), ReadMark.Title("B"), openedAt = Some(ReadMark.OpenedAt("2026-10-30T11:00:00Z")))
+    val c = ReadMark(ItemKind.Source, ItemKey("c"), ReadMark.Title("C"), read = ReadMark.Read(true))
     assertEquals(ShelfRow.recent(List(a, b, c)).map(_.title), List("B", "A"))

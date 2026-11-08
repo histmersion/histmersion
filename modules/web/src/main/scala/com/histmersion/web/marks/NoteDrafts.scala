@@ -1,19 +1,22 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.{Note, Target}
 import com.histmersion.web.Store
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A note not saved yet, kept by this browser until it is saved or cancelled — so a reload or a closed tab loses
   * nothing. Never sent anywhere.
   */
 object NoteDrafts:
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
 
   private val Prefix = "histmersion.noteDraft."
 
   /** Which draft a note being written is: the note's own id, else what it is being left on. Pure. */
-  def key(target: Target, noteId: Option[Note.Id]): com.histmersion.web.marks.NoteDrafts.Key =
+  def key(target: Target, noteId: Option[Note.Id]): Key =
     Key(
       noteId
         .map(id => s"note:${id.value}")
@@ -26,7 +29,7 @@ object NoteDrafts:
   // `var`: tests swap the browser's storage for a Store.Memory
   private[web] var store: Store = Store.Browser
 
-  def get(key: com.histmersion.web.marks.NoteDrafts.Key): Option[Note.Text] = store.get(Prefix + key.value).filter(_.nonEmpty).map(Note.Text(_))
-  def put(key: com.histmersion.web.marks.NoteDrafts.Key, text: Note.Text): Unit =
+  def get(key: Key): Option[Note.Text] = store.get(Prefix + key.value).filter(_.nonEmpty).map(Note.Text(_))
+  def put(key: Key, text: Note.Text): Unit =
     if text.value.trim.isEmpty then store.remove(Prefix + key.value) else store.put(Prefix + key.value, text.value)
-  def drop(key: com.histmersion.web.marks.NoteDrafts.Key): Unit = store.remove(Prefix + key.value)
+  def drop(key: Key): Unit = store.remove(Prefix + key.value)

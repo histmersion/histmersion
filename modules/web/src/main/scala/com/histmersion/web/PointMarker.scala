@@ -1,9 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.UiLabels
 
 /** The pure half: a point's marker markup. */
 object PointMarker:
@@ -20,4 +22,4 @@ object PointMarker:
     s"${k.classes(a)}|${k.attrs(a)}|${k.inner(a)}|${k.title(a).getOrElse("")}"
 
   /** Pure: a point's accessible name: what it is, then what activating it does. */
-  def ariaLabel[A](k: PointKind[A], a: A): com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text(s"${k.label(a).value} — ${k.action(a).value}")
+  def ariaLabel[A](k: PointKind[A], a: A): UiLabels.Text = UiLabels.Text(s"${k.label(a).value} — ${k.action(a).value}")

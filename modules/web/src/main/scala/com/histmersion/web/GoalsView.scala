@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
@@ -8,6 +9,11 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.{Agents, AgentsMarkdown, Goal, ListFilters, Managers, Queue}
 import com.histmersion.api.research.Articles
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Paging
+import com.histmersion.api.UiLabels
+import com.histmersion.api.research.Article
 
 /** The research goals (docs/research-embedded-agents.md §14): the goals window (the goals as a tree) and one window per
   * goal — its sub-goals and links (sources, articles, search queries, queue items), the plan waiting for approval with
@@ -18,27 +24,27 @@ import com.histmersion.api.research.Articles
   */
 object GoalsView:
   type CreatedNote = CreatedNote.T
-  object CreatedNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CreatedNote extends RefinedType[String, Pure]
   type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Depth extends RefinedType[Int, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type TagsText = TagsText.T
-  object TagsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TagsText extends RefinedType[String, Pure]
   type PerDay = PerDay.T
-  object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PerDay extends RefinedType[String, Pure]
   type Planned = Planned.T
-  object Planned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Planned extends RefinedType[Boolean, Pure]
   type Watch = Watch.T
-  object Watch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Watch extends RefinedType[Boolean, Pure]
 
   /** How many goals the tree lists, and how many of a goal's runs its window shows. */
 
-  export com.histmersion.web.GoalsView.NewArea.{Plan as NewAreaPlan, Seed as NewAreaSeed}
-  export com.histmersion.api.automation.Goal.{StatusValue as BadgeStatus}
+  export NewArea.{Plan as NewAreaPlan, Seed as NewAreaSeed}
+  export Goal.{StatusValue as BadgeStatus}
   type BadgeText = BadgeText.T
-  object BadgeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.automation.Goal.{Slug as PlanSectionSlug}
+  object BadgeText extends RefinedType[String, Pure]
+  export Goal.{Slug as PlanSectionSlug}
 
   val Limit = 500
   val RunLimit = 15
@@ -48,46 +54,46 @@ object GoalsView:
   /** Goals as a tree, depth first: each root (no parent, or a parent that is not listed) then its sub-goals, by slug,
     * with their depth. A cycle cannot loop: a goal is listed once.
     */
-  def tree(goals: List[Goal]): List[(Goal, com.histmersion.web.GoalsView.Depth)] =
+  def tree(goals: List[Goal]): List[(Goal, Depth)] =
     val slugs = goals.map(_.slug).toSet
     val byParent = goals.groupBy(g => g.parentSlug.filter(slugs))
-    def walk(parent: Option[com.histmersion.api.automation.Goal.Slug], depth: com.histmersion.web.GoalsView.Depth, seen: Set[com.histmersion.api.automation.Goal.Slug]): List[(Goal, com.histmersion.web.GoalsView.Depth)] =
+    def walk(parent: Option[Goal.Slug], depth: Depth, seen: Set[Goal.Slug]): List[(Goal, Depth)] =
       byParent.getOrElse(parent, Nil).sortBy(_.slug.value).filterNot(g => seen(g.slug)).flatMap { g =>
         (g, depth) :: walk(Some(g.slug), Depth(depth.value + 1), seen + g.slug)
       }
-    walk(None, com.histmersion.web.GoalsView.Depth(0), Set.empty)
+    walk(None, Depth(0), Set.empty)
 
   /** What each goal stage means, in the order a goal moves through them; the legend above the tree and the tooltip of
     * every status badge.
     */
-  val stages: List[(com.histmersion.api.automation.Goal.Stage, com.histmersion.api.automation.Goal.StageMeaning)] = Goal.Stages.all
+  val stages: List[(Goal.Stage, Goal.StageMeaning)] = Goal.Stages.all
 
-  def meaning(status: com.histmersion.api.automation.Goal.Stage): Option[com.histmersion.api.automation.Goal.StageMeaning] = Goal.Stages.meaning(status)
+  def meaning(status: Goal.Stage): Option[Goal.StageMeaning] = Goal.Stages.meaning(status)
 
   /** The open plan approval of a goal, if a plan run is waiting on one. */
-  def pendingPlan(as: List[ApprovalInfo], slug: com.histmersion.api.automation.Goal.Slug): Option[ApprovalInfo] =
+  def pendingPlan(as: List[ApprovalInfo], slug: Goal.Slug): Option[ApprovalInfo] =
     as.find(a =>
       a.approvalKind.contains(ApprovalKind.GoalPlan) && a.subject.contains(slug) &&
         a.state == ApprovalState.Open.wire
     )
 
   /** What the schedule editor starts from: the schedule's own cron, else a sensible default. */
-  def defaultCron(k: ScheduleKind): com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron = k match
-    case ScheduleKind.Currency    => com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly")
-    case ScheduleKind.Acquisition => com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@monthly")
+  def defaultCron(k: ScheduleKind): Goal.Plans.GoalSchedule.Cron = k match
+    case ScheduleKind.Currency    => Goal.Plans.GoalSchedule.Cron("@weekly")
+    case ScheduleKind.Acquisition => Goal.Plans.GoalSchedule.Cron("@monthly")
 
   /** The links of one kind. */
   def linksOf(ls: List[GoalLink], k: LinkKind): List[GoalLink] = ls.filter(_.kind == k)
 
   /** A link to add, from the editor's kind and text: `None` when the text is blank. */
-  def linkToAdd(kind: LinkKind, raw: com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref, note: com.histmersion.api.automation.Goal.Plans.LinkAdd.Note): Option[LinkAdd] =
+  def linkToAdd(kind: LinkKind, raw: Goal.Plans.LinkAdd.Ref, note: Goal.Plans.LinkAdd.Note): Option[LinkAdd] =
     Option(raw.value).map(_.trim).filter(_.nonEmpty).map(r =>
       LinkAdd(kind, LinkAdd.Ref(r), Option(note.value).map(_.trim).filter(_.nonEmpty).map(LinkAdd.Note(_)))
     )
 
   /** A slug from a title: lower case, runs of anything but letters and digits as one '-'. */
-  def slugify(title: com.histmersion.api.automation.Goal.Title): com.histmersion.api.automation.Goal.Slug =
-    com.histmersion.api.automation.Goal.Slug(
+  def slugify(title: Goal.Title): Goal.Slug =
+    Goal.Slug(
       title.value.trim.toLowerCase.replaceAll("[^a-z0-9]+", "-").stripPrefix("-").stripSuffix("-")
     )
 
@@ -97,7 +103,7 @@ object GoalsView:
     * open-access ingest and its daily cap).
     */
   final case class NewArea(
-      slug: com.histmersion.api.automation.Goal.Slug,
+      slug: Goal.Slug,
       put: Goal.Put,
       plan: NewArea.Plan,
       seed: NewArea.Seed,
@@ -106,26 +112,26 @@ object GoalsView:
 
   object NewArea:
     type Plan = Plan.T
-    object Plan extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Plan extends RefinedType[Boolean, Pure]
     type Seed = Seed.T
-    object Seed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Seed extends RefinedType[Boolean, Pure]
 
   /** The form → what to create. A blank slug comes from the title; tags are comma-separated. Watching: auto-ingest is
     * OFF unless ticked; its cap (blank = the server's default) a whole number.
     */
   def newArea(
-      title: com.histmersion.api.automation.Goal.Title,
-      slug: com.histmersion.api.automation.Goal.Slug,
-      notes: com.histmersion.api.automation.Goal.Notes,
-      tags: com.histmersion.web.GoalsView.TagsText,
-      plan: com.histmersion.web.GoalsView.NewAreaPlan,
-      seed: com.histmersion.web.GoalsView.NewAreaSeed,
-      watch: com.histmersion.web.GoalsView.Watch = com.histmersion.web.GoalsView.Watch(false),
-      autoIngest: com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest = com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(false),
-      perDay: com.histmersion.web.GoalsView.PerDay = com.histmersion.web.GoalsView.PerDay("")
-  ): Either[com.histmersion.web.GoalsView.Problem, NewArea] =
+      title: Goal.Title,
+      slug: Goal.Slug,
+      notes: Goal.Notes,
+      tags: TagsText,
+      plan: GoalsView.NewAreaPlan,
+      seed: GoalsView.NewAreaSeed,
+      watch: Watch = Watch(false),
+      autoIngest: Managers.ManagerConfig.AutoIngest = Managers.ManagerConfig.AutoIngest(false),
+      perDay: PerDay = PerDay("")
+  ): Either[Problem, NewArea] =
     val t = title.value.trim
-    val s = Option(slug.value.trim).filter(_.nonEmpty).map(com.histmersion.api.automation.Goal.Slug(_)).getOrElse(slugify(com.histmersion.api.automation.Goal.Title(t)))
+    val s = Option(slug.value.trim).filter(_.nonEmpty).map(Goal.Slug(_)).getOrElse(slugify(Goal.Title(t)))
     val cap = perDay.value.trim
     if t.isEmpty then Left(Problem("a research area needs a title"))
     else if watch.value && autoIngest.value && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
@@ -142,10 +148,10 @@ object GoalsView:
         NewArea(
           ok,
           Goal.Put(
-            com.histmersion.api.automation.Goal.Title(t),
-            com.histmersion.api.automation.Goal.StatusValue(com.histmersion.api.automation.Goal.Status.Planned),
-            Option(notes.value.trim).filter(_.nonEmpty).map(com.histmersion.api.automation.Goal.Notes(_)),
-            tags.value.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct.map(com.histmersion.api.automation.Goal.Tags(_))
+            Goal.Title(t),
+            Goal.StatusValue(Goal.Status.Planned),
+            Option(notes.value.trim).filter(_.nonEmpty).map(Goal.Notes(_)),
+            tags.value.split(",").toList.map(_.trim).filter(_.nonEmpty).distinct.map(Goal.Tags(_))
           ),
           plan,
           seed,
@@ -156,11 +162,11 @@ object GoalsView:
   /** What the form did, in one line. */
   def createdNote(
       a: NewArea,
-      planned: com.histmersion.web.GoalsView.Planned,
+      planned: Planned,
       seeded: Option[Managers.ManagerInfo.Id],
       watched: Option[Managers.ManagerInfo.Id] = None,
       active: Set[Managers.ManagerInfo.Id] = Set.empty
-  ): com.histmersion.web.GoalsView.CreatedNote =
+  ): CreatedNote =
     def made(id: Managers.ManagerInfo.Id, resume: String) =
       if active(id) then s"$id created active (the autopilot is on)" else s"$id created paused — resume it $resume"
     CreatedNote(s"research area ${a.slug} created" + (if planned.value then "; the planner is running (its plan waits for you)" else "") +
@@ -177,7 +183,7 @@ object GoalsView:
   private val failure = Var(Option.empty[String])
 
   private def refresh(): Unit =
-    ApiClient.goals(Some(com.histmersion.api.Paging.Limit(Limit))).onComplete { r =>
+    ApiClient.goals(Some(Paging.Limit(Limit))).onComplete { r =>
       r.fold(e => failure.set(Some(e.getMessage)), gs => { failure.set(None); goals.set(gs.goals); loaded.set(true) })
     }
 
@@ -211,10 +217,10 @@ object GoalsView:
     )
 
   /** A goal's status as a coloured badge, its meaning on hover. */
-  def badge(status: com.histmersion.web.GoalsView.BadgeStatus, text: com.histmersion.web.GoalsView.BadgeText = com.histmersion.web.GoalsView.BadgeText("")): HtmlElement =
+  def badge(status: GoalsView.BadgeStatus, text: BadgeText = BadgeText("")): HtmlElement =
     span(
       cls := s"job-state goal-status state-${status.value}",
-      meaning(com.histmersion.api.automation.Goal.Stage(status.value)).map(m => title := m.value),
+      meaning(Goal.Stage(status.value)).map(m => title := m.value),
       if text.value.nonEmpty then text.value else Wording.capitalize(status.value)
     )
 
@@ -247,9 +253,9 @@ object GoalsView:
       )
     def submit(): Unit =
       newArea(
-        com.histmersion.api.automation.Goal.Title(name.now()),
-        com.histmersion.api.automation.Goal.Slug(slug.now()),
-        com.histmersion.api.automation.Goal.Notes(notes.now()),
+        Goal.Title(name.now()),
+        Goal.Slug(slug.now()),
+        Goal.Notes(notes.now()),
         TagsText(tags.now()),
         NewAreaPlan(plan.now()),
         NewAreaSeed(seed.now()),
@@ -368,7 +374,7 @@ object GoalsView:
   // ── one goal ────────────────────────────────────────────────────────────────────────────────────
 
   /** One goal's window; its state is its own (several goals can be open at once). */
-  def goalPane(slug: com.histmersion.api.automation.Goal.Slug): HtmlElement =
+  def goalPane(slug: Goal.Slug): HtmlElement =
     val view = Var(Option.empty[GoalView])
     val runs = Var(List.empty[RunInfo])
     val approvals = Var(List.empty[ApprovalInfo])
@@ -381,7 +387,7 @@ object GoalsView:
         .goalView(slug)
         .onComplete(_.fold(e => failure.set(Some(e.getMessage)), v => { failure.set(None); view.set(Some(v)) }))
       if RunsView.enabled.now().value then
-        ApiClient.agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(com.histmersion.api.Paging.Limit(RunLimit))).foreach(r => runs.set(r._1))
+        ApiClient.agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(Paging.Limit(RunLimit))).foreach(r => runs.set(r._1))
       // the goal's own open plan, filtered on the server (it used to be looked for among the newest 100 open approvals)
       ApiClient
         .approvals(
@@ -421,7 +427,7 @@ object GoalsView:
       onMountCallback(_ => refresh()),
       ApprovalsView.changed.events --> (_ => refresh()),
       view.signal.changes.collect { case Some(v) if v.goal.title.value.trim.nonEmpty => v.goal.title } --> (t =>
-        WindowManager.retitle(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), com.histmersion.api.UiLabels.Text(s"Goal · ${t.value}"))
+        WindowManager.retitle(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), UiLabels.Text(s"Goal · ${t.value}"))
       ),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child.maybe <-- message.signal.map(_.map(m => p(cls := "form-ok", m))),
@@ -472,7 +478,7 @@ object GoalsView:
     )
 
   private def planSection(
-      slug: com.histmersion.web.GoalsView.PlanSectionSlug,
+      slug: GoalsView.PlanSectionSlug,
       approvals: Signal[List[ApprovalInfo]],
       busy: Signal[Boolean],
       plan: () => Unit
@@ -510,7 +516,7 @@ object GoalsView:
     )
 
   private def linksSection(
-      slug: com.histmersion.api.automation.Goal.Slug,
+      slug: Goal.Slug,
       links: List[GoalLink],
       busy: Signal[Boolean],
       write: String => (=> scala.concurrent.Future[Any]) => Unit
@@ -521,8 +527,8 @@ object GoalsView:
     def entry(l: GoalLink): HtmlElement =
       li(
         l.kind match
-          case LinkKind.Source    => SourceLink(Preview.Target.Source.Citekey(l.ref.value), label = l.title.map(t => com.histmersion.api.UiLabels.Text(s"${l.ref.value} — ${t.value}")))
-          case LinkKind.Article   => com.histmersion.web.ArticleLink(com.histmersion.api.research.Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value))
+          case LinkKind.Source    => SourceLink(Preview.Target.Source.Citekey(l.ref.value), label = l.title.map(t => UiLabels.Text(s"${l.ref.value} — ${t.value}")))
+          case LinkKind.Article   => ArticleLink(Article.Slug(l.ref.value), l.title.map(_.value).getOrElse(l.ref.value))
           case LinkKind.Query     => span(s"“${l.ref}”")
           case LinkKind.QueueItem =>
             val text = span(s"#${l.ref} ", span(cls := "muted", l.title.map(_.value).getOrElse("(gone)")))
@@ -598,7 +604,7 @@ object GoalsView:
     )
 
   private def schedulesSection(
-      slug: com.histmersion.api.automation.Goal.Slug,
+      slug: Goal.Slug,
       ss: List[GoalSchedule],
       busy: Signal[Boolean],
       write: String => (=> scala.concurrent.Future[Any]) => Unit
@@ -669,7 +675,7 @@ object GoalsView:
                       ScheduleSet(
                         ScheduleSet.Cron(cron.now()),
                         ScheduleSet.Enabled(on.now()),
-                        RunsView.budget(com.histmersion.api.UiLabels.Text(budget.now())).map(b => ScheduleSet.BudgetUsd(b.value))
+                        RunsView.budget(UiLabels.Text(budget.now())).map(b => ScheduleSet.BudgetUsd(b.value))
                       )
                     )
                   )

@@ -1,10 +1,18 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.{UiLabels, Wording}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Agents.{ApprovalInfo, Decision, RunInfo, RunState}
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.automation.Managers
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.SpatialHierarchyResult
 
 /** The pure halves of the list windows' filters (ListFilterBar, and the approvals, runs and jobs windows): the chips, a
   * typed or picked value, the query each window sends, the rows a filter shows before the server's page lands, and the
@@ -15,7 +23,7 @@ class ListFiltersViewSuite extends munit.FunSuite:
   override def beforeEach(context: BeforeEach): Unit =
     UiState.mirrorHash = false
     UiState.store = Store.Memory()
-    UiState.loadHash(com.histmersion.web.UiState.UrlHash(""))
+    UiState.loadHash(UiState.UrlHash(""))
 
   test("chips: the server's counts in its order, then a picked value it did not count, at 0"):
     val counts = List("goal-plan" -> 64, "article-publish" -> 30, "edge" -> 3)
@@ -57,26 +65,26 @@ class ListFiltersViewSuite extends munit.FunSuite:
       note: Option[ApprovalInfo.Note] = None,
       result: Option[ApprovalInfo.Result] = None
   ) =
-    ApprovalInfo(id, None, kind, com.histmersion.api.library.Citekey(""), state = state, note = note, result = result)
+    ApprovalInfo(id, None, kind, Citekey(""), state = state, note = note, result = result)
 
   test("approvals: the query from the window's fields; the rows a state or kind shows at once"):
     UiState.set(UiState.approvalKinds := List("goal-plan"), UiState.approvalBy := List("person"))()
     assertEquals(
       ApprovalsView.currentFilter(),
-      ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), decidedBy = List(com.histmersion.api.automation.Approval.DecidedBy.Wire("person")))
+      ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")), decidedBy = List(Approval.DecidedBy.Wire("person")))
     )
     val rows = List(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("edge")), appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("goal-plan"), ApprovalInfo.State("approved")))
-    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.id.value), List(1L))
+    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")))).map(_.id.value), List(1L))
     assertEquals(
-      ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("all")), kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.id.value),
+      ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(Approval.State.Wire("all")), kind = List(Approval.Kind.Wire("goal-plan")))).map(_.id.value),
       List(1L, 3L)
     )
-    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(com.histmersion.api.automation.Approval.State.Wire("approved")))).map(_.id.value), List(3L))
-    assertEquals(ApprovalsView.qualifier(ListFilters.ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")))).map(_.value), Some("open goal-plan"))
+    assertEquals(ApprovalsView.visible(rows, ListFilters.ApprovalFilter(state = Some(Approval.State.Wire("approved")))).map(_.id.value), List(3L))
+    assertEquals(ApprovalsView.qualifier(ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")))).map(_.value), Some("open goal-plan"))
 
   test("approvals: a bulk decision applies to the ticked rows still shown and open, and says what it will do"):
     val rows = List(appr(ApprovalInfo.Id(1), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(2), ApprovalInfo.Kind("goal-plan")), appr(ApprovalInfo.Id(3), ApprovalInfo.Kind("edge")), appr(ApprovalInfo.Id(4), ApprovalInfo.Kind("edge"), ApprovalInfo.State("approved")))
-    assertEquals(ApprovalsView.bulkTargets(Set(com.histmersion.api.automation.Agents.ApprovalInfo.Id(1), com.histmersion.api.automation.Agents.ApprovalInfo.Id(3), com.histmersion.api.automation.Agents.ApprovalInfo.Id(4), com.histmersion.api.automation.Agents.ApprovalInfo.Id(9)), rows).map(_.id.value), List(1L, 3L))
+    assertEquals(ApprovalsView.bulkTargets(Set(ApprovalInfo.Id(1), ApprovalInfo.Id(3), ApprovalInfo.Id(4), ApprovalInfo.Id(9)), rows).map(_.id.value), List(1L, 3L))
     val text = ApprovalsView.confirmText(Decision.Approve, rows.take(3))
     assert(text.startsWith("Approve 3 approvals (2 plan a goal, 1 link two sources)?"), text)
     assert(ApprovalsView.confirmText(Decision.Reject, rows.take(1)).startsWith("Reject 1 approval (1 plan a goal)?"))
@@ -97,62 +105,62 @@ class ListFiltersViewSuite extends munit.FunSuite:
       status: RunInfo.Status,
       pipeline: RunInfo.Pipeline,
       origin: Option[RunInfo.Origin] = None,
-      manager: Option[com.histmersion.api.automation.Managers.ManagerInfo.Id] = None
+      manager: Option[Managers.ManagerInfo.Id] = None
   ) =
-    RunInfo(id, pipeline, com.histmersion.api.automation.Agents.RunInfo.Target("t"), status, origin = origin, managerId = manager)
+    RunInfo(id, pipeline, RunInfo.Target("t"), status, origin = origin, managerId = manager)
 
   test("runs: the query from the fields; the rows the state, pipelines, origins and manager show at once"):
     val f = RunsView.filterOf(
       Some(RunState.Failed),
-      List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("review-article")),
+      List(ListFilters.RunFilter.Pipeline("review-article")),
       Nil,
-      Some(com.histmersion.api.automation.ListFilters.RunFilter.Manager("review")),
-      Some(com.histmersion.api.automation.ListFilters.RunFilter.Provider("codex")),
+      Some(ListFilters.RunFilter.Manager("review")),
+      Some(ListFilters.RunFilter.Provider("codex")),
       None,
-      Some(com.histmersion.api.automation.Goal.Slug("g")),
-      Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("2026-10-01")),
+      Some(Goal.Slug("g")),
+      Some(ListFilters.RunFilter.Since("2026-10-01")),
       None,
-      Some(com.histmersion.api.automation.ListFilters.RunFilter.Subject("tin"))
+      Some(ListFilters.RunFilter.Subject("tin"))
     )
     assertEquals(
       f,
       ListFilters.RunFilter(
-        List(com.histmersion.api.automation.ListFilters.RunFilter.Status("failed")),
-        List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("review-article")),
-        List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("review")),
-        Some(com.histmersion.api.automation.Goal.Slug("g")),
+        List(ListFilters.RunFilter.Status("failed")),
+        List(ListFilters.RunFilter.Pipeline("review-article")),
+        List(ListFilters.RunFilter.Manager("review")),
+        Some(Goal.Slug("g")),
         Nil,
-        List(com.histmersion.api.automation.ListFilters.RunFilter.Provider("codex")),
+        List(ListFilters.RunFilter.Provider("codex")),
         Nil,
-        Some(com.histmersion.api.automation.ListFilters.RunFilter.Since("2026-10-01")),
+        Some(ListFilters.RunFilter.Since("2026-10-01")),
         None,
-        Some(com.histmersion.api.automation.ListFilters.RunFilter.Subject("tin"))
+        Some(ListFilters.RunFilter.Subject("tin"))
       )
     )
     val rows = List(
-      run(RunInfo.Id("a"), RunInfo.Status("failed"), RunInfo.Pipeline("review-article"), Some(RunInfo.Origin("manager")), Some(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"))),
+      run(RunInfo.Id("a"), RunInfo.Status("failed"), RunInfo.Pipeline("review-article"), Some(RunInfo.Origin("manager")), Some(Managers.ManagerInfo.Id("review"))),
       run(RunInfo.Id("b"), RunInfo.Status("done"), RunInfo.Pipeline("review-article")),
       run(RunInfo.Id("c"), RunInfo.Status("failed"), RunInfo.Pipeline("enrich-source"))
     )
     assertEquals(
-      RunsView.visible(rows, ListFilters.RunFilter(pipeline = List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("review-article")))).map(_.id.value),
+      RunsView.visible(rows, ListFilters.RunFilter(pipeline = List(ListFilters.RunFilter.Pipeline("review-article")))).map(_.id.value),
       List("a", "b")
     )
     assertEquals(
-      RunsView.visible(rows, ListFilters.RunFilter(status = List(com.histmersion.api.automation.ListFilters.RunFilter.Status("failed")), manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("review")))).map(_.id.value),
+      RunsView.visible(rows, ListFilters.RunFilter(status = List(ListFilters.RunFilter.Status("failed")), manager = List(ListFilters.RunFilter.Manager("review")))).map(_.id.value),
       List("a")
     )
     // a run with no origin was a person's
-    assertEquals(RunsView.visible(rows, ListFilters.RunFilter(origin = List(com.histmersion.api.automation.Agents.Origin.Wire("person")))).map(_.id.value), List("b", "c"))
+    assertEquals(RunsView.visible(rows, ListFilters.RunFilter(origin = List(Agents.Origin.Wire("person")))).map(_.id.value), List("b", "c"))
 
   test("jobs: the query from the fields; the rows the states and kinds show at once"):
     assertEquals(
       JobsView.filterOf(Some(JobState.Failed), List("ingest"), None, Some("2026-10-01"), None),
-      ListFilters.JobFilter(List(com.histmersion.api.jobs.JobState.Wire("failed")), List(com.histmersion.api.jobs.JobKinds.Wire("ingest")), None, Some(com.histmersion.api.automation.ListFilters.JobFilter.Until("2026-10-01")), None)
+      ListFilters.JobFilter(List(JobState.Wire("failed")), List(JobKinds.Wire("ingest")), None, Some(ListFilters.JobFilter.Until("2026-10-01")), None)
     )
-    val rows = List(JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("1"), com.histmersion.api.jobs.JobKinds.Wire("ingest"), com.histmersion.api.jobs.JobInfo.Status("done")), JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("2"), com.histmersion.api.jobs.JobKinds.Wire("reocr"), com.histmersion.api.jobs.JobInfo.Status("failed")), JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("3"), com.histmersion.api.jobs.JobKinds.Wire("ingest"), com.histmersion.api.jobs.JobInfo.Status("failed")))
-    assertEquals(JobsView.visible(rows, ListFilters.JobFilter(kind = List(com.histmersion.api.jobs.JobKinds.Wire("ingest")))).map(_.id), List("1", "3").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
+    val rows = List(JobInfo(SpatialHierarchyResult.Job.Id("1"), JobKinds.Wire("ingest"), JobInfo.Status("done")), JobInfo(SpatialHierarchyResult.Job.Id("2"), JobKinds.Wire("reocr"), JobInfo.Status("failed")), JobInfo(SpatialHierarchyResult.Job.Id("3"), JobKinds.Wire("ingest"), JobInfo.Status("failed")))
+    assertEquals(JobsView.visible(rows, ListFilters.JobFilter(kind = List(JobKinds.Wire("ingest")))).map(_.id), List("1", "3").map(SpatialHierarchyResult.Job.Id.apply))
     assertEquals(
-      JobsView.visible(rows, ListFilters.JobFilter(status = List(com.histmersion.api.jobs.JobState.Wire("failed")), kind = List(com.histmersion.api.jobs.JobKinds.Wire("ingest")))).map(_.id),
-      List("3").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply)
+      JobsView.visible(rows, ListFilters.JobFilter(status = List(JobState.Wire("failed")), kind = List(JobKinds.Wire("ingest")))).map(_.id),
+      List("3").map(SpatialHierarchyResult.Job.Id.apply)
     )

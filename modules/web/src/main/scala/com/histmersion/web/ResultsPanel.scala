@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Wording
 import com.histmersion.web.ui.{Layout, SidebarTab}
@@ -7,6 +8,10 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.instance.UiConfig
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.UiLabels
+import com.histmersion.api.RowCount
 
 /** The results on Explore's right: "On the map" (what the map's view holds) or "Everywhere", the tabs — sources,
   * articles, events, places, pictures, each with its count —, the sort, and the rows, every one a real link (a plain
@@ -16,16 +21,16 @@ import com.histmersion.api.instance.UiConfig
   */
 object ResultsPanel:
   type KeepWidth = KeepWidth.T
-  object KeepWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeepWidth extends RefinedType[Boolean, Pure]
 
   /** The width, px: the one this browser kept, else the default. */
 
 
-  val width: Var[com.histmersion.web.ResultsWidth.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value)), viewport))
+  val width: Var[ResultsWidth.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value)), viewport))
 
-  private def viewport: com.histmersion.web.ResultsWidth.ViewportWidth = ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
+  private def viewport: ResultsWidth.ViewportWidth = ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
 
-  private def resizeTo(w: com.histmersion.web.ResultsWidth.Width, keep: com.histmersion.web.ResultsPanel.KeepWidth): Unit =
+  private def resizeTo(w: ResultsWidth.Width, keep: KeepWidth): Unit =
     width.set(ResultsWidth.clamp(w, viewport))
     if keep.value then ResultsWidth.keep(width.now())
 
@@ -44,19 +49,19 @@ object ResultsPanel:
 
   def setActiveTab(t: SidebarTab): Unit =
     selected.set(None)
-    UiState.set(UiState.tab := Some(t.key.value))(push = com.histmersion.web.UiState.SetPush(true))
+    UiState.set(UiState.tab := Some(t.key.value))(push = UiState.SetPush(true))
 
   private val sorts = List("relevance", "cited", "period", "year", "title")
 
   /** Pure: a tab's label with its count, when known. */
-  def tabLabel(label: com.histmersion.api.UiLabels.Text, count: Option[com.histmersion.api.RowCount]): com.histmersion.api.UiLabels.Text = count.fold(label)(n => com.histmersion.api.UiLabels.Text(s"$label $n"))
+  def tabLabel(label: UiLabels.Text, count: Option[RowCount]): UiLabels.Text = count.fold(label)(n => UiLabels.Text(s"$label $n"))
 
-  private def counts(t: SidebarTab): Signal[Option[com.histmersion.api.RowCount]] = t match
+  private def counts(t: SidebarTab): Signal[Option[RowCount]] = t match
     case SidebarTab.Sources  => ResultsList.total.signal
     case SidebarTab.Articles => ArticlesTab.total
     case SidebarTab.Events   => EventsTab.total
-    case SidebarTab.Places   => MapLists.places.signal.map(s => Some(com.histmersion.api.RowCount(s.total.value)))
-    case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(com.histmersion.api.RowCount(s.total.value)))
+    case SidebarTab.Places   => MapLists.places.signal.map(s => Some(RowCount(s.total.value)))
+    case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(RowCount(s.total.value)))
 
   private def scope: HtmlElement =
     div(
@@ -129,7 +134,7 @@ object ResultsPanel:
           val target = ev.target.asInstanceOf[dom.HTMLElement]
           target.setPointerCapture(ev.pointerId)
           val move = { (me: dom.PointerEvent) =>
-            resizeTo(ResultsWidth.Width(startW.value - (me.clientX - startX).toInt), keep = com.histmersion.web.ResultsPanel.KeepWidth(false))
+            resizeTo(ResultsWidth.Width(startW.value - (me.clientX - startX).toInt), keep = KeepWidth(false))
           }: js.Function1[dom.PointerEvent, Unit]
           val up = { (_: dom.PointerEvent) =>
             target.removeEventListener("pointermove", move)
@@ -167,10 +172,10 @@ object ResultsPanel:
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Sources), ResultsList.element),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Articles), ArticlesTab.pane),
         div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Events), EventsTab.pane),
-        div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Places), MapLists.pane(MapLists.places, com.histmersion.web.MapLists.PaneName("places"))),
+        div(cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Places), MapLists.pane(MapLists.places, MapLists.PaneName("places"))),
         div(
           cls("is-hidden") <-- activeTabSignal.map(_ != SidebarTab.Pictures),
-          MapLists.pane(MapLists.pictures, com.histmersion.web.MapLists.PaneName("pictures"))
+          MapLists.pane(MapLists.pictures, MapLists.PaneName("pictures"))
         )
       ),
       child.maybe <-- selected.signal.map(_.map(ResultDetail.element))

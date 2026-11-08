@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
@@ -8,6 +9,8 @@ import org.scalajs.dom
 
 import sttp.client4.*
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A request the server answered with an error status: the status and the server's own message. `unauthorized` is a
   * write refused by the API-key gate; `conflict` a stale `ifUpdatedAt`.
@@ -19,7 +22,7 @@ final case class ApiFailure(status: ApiFailure.Status, error: Api.Error) extends
 
 object ApiFailure:
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[Int, Pure]
 
   /** Pure: what a failed response means, from its status and whatever body could be decoded. */
   def of(status: Status, decoded: Option[Api.Error]): ApiFailure =

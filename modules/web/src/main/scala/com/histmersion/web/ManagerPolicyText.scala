@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.automation.Managers.*
 import com.raquo.laminar.api.L.*

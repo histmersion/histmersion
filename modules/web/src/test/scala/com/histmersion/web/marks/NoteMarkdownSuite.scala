@@ -1,8 +1,10 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.web.marks.NoteMarkdown.{Block, Inline}
+import com.histmersion.api.library.Citekey
 
 class NoteMarkdownSuite extends munit.FunSuite:
 
@@ -11,12 +13,12 @@ class NoteMarkdownSuite extends munit.FunSuite:
     assertEquals(
       NoteMarkdown.blocks(text),
       List(
-        Block.Heading(com.histmersion.web.marks.NoteMarkdown.Block.Heading.Level(1), List(Inline.Text("Bridge"))),
+        Block.Heading(Block.Heading.Level(1), List(Inline.Text("Bridge"))),
         Block.Para(List(Inline.Text("It stands near "), Inline.Strong("Tiryns"), Inline.Text("."))),
-        Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(false), List(List(Inline.Text("one")), List(Inline.Text("two")))),
+        Block.Items(Block.Items.Ordered(false), List(List(Inline.Text("one")), List(Inline.Text("two")))),
         Block.Quote(List(Inline.Text("a quote"))),
         Block.CodeBlock("x = 1"),
-        Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(true), List(List(Inline.Text("first"))))
+        Block.Items(Block.Items.Ordered(true), List(List(Inline.Text("first"))))
       )
     )
 
@@ -30,16 +32,16 @@ class NoteMarkdownSuite extends munit.FunSuite:
         Inline.Text(" "),
         Inline.Code("c"),
         Inline.Text(" "),
-        Inline.Cite(com.histmersion.api.library.Citekey("cline2014_year")),
+        Inline.Cite(Citekey("cline2014_year")),
         Inline.Text(" "),
-        Inline.Link("w", com.histmersion.web.marks.NoteMarkdown.Href("https://example.org")),
+        Inline.Link("w", NoteMarkdown.Href("https://example.org")),
         Inline.Text(" "),
         Inline.Text("[x](javascript:alert(1)"),
         Inline.Text(")")
       )
     )
-    assertEquals(NoteMarkdown.safeHref(com.histmersion.web.marks.NoteMarkdown.Href("/library?item=x")), Some("/library?item=x"))
-    assertEquals(NoteMarkdown.safeHref(com.histmersion.web.marks.NoteMarkdown.Href("//evil.example.org")), None)
+    assertEquals(NoteMarkdown.safeHref(NoteMarkdown.Href("/library?item=x")), Some("/library?item=x"))
+    assertEquals(NoteMarkdown.safeHref(NoteMarkdown.Href("//evil.example.org")), None)
 
   test("nothing written is nothing shown"):
-    assertEquals(NoteMarkdown.blocks(com.histmersion.web.marks.NoteMarkdown.Markdown("\n\n  \n")), Nil)
+    assertEquals(NoteMarkdown.blocks(NoteMarkdown.Markdown("\n\n  \n")), Nil)

@@ -1,7 +1,9 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.WebPaths
 import com.histmersion.api.automation.Queue
+import com.histmersion.api.automation.Goal
 
 /** The web UI's addresses: every page has a path that reads back as the same page, sits under one of the four places,
   * and is one the server serves the app for; the old toolbar's windows each have exactly one page now; old addresses
@@ -17,14 +19,14 @@ class RouteSuite extends munit.FunSuite:
       SettingsSection.values.map(Route.Settings(_)) ++
       List(Route.Setup) ++
       List(
-        Route.Goal(com.histmersion.web.Route.Goal.Slug("bronze-age")),
-        Route.Run(com.histmersion.web.Route.Run.Id("3f2a-77")),
-        Route.Manager(com.histmersion.web.Route.Manager.Id("watch:bronze-age")),
-        Route.Job(com.histmersion.web.Route.Job.Id("10ed4471")),
-        Route.Place(com.histmersion.web.Route.Place.Id("pleiades:579885")),
-        Route.Event(com.histmersion.web.Route.Event.Id("ev-1")),
-        Route.Source(com.histmersion.web.Route.Source.Citekey("cline2014_year")),
-        Route.Article(com.histmersion.web.Route.Article.Slug("sea-peoples"))
+        Route.Goal(Route.Goal.Slug("bronze-age")),
+        Route.Run(Route.Run.Id("3f2a-77")),
+        Route.Manager(Route.Manager.Id("watch:bronze-age")),
+        Route.Job(Route.Job.Id("10ed4471")),
+        Route.Place(Route.Place.Id("pleiades:579885")),
+        Route.Event(Route.Event.Id("ev-1")),
+        Route.Source(Route.Source.Citekey("cline2014_year")),
+        Route.Article(Route.Article.Slug("sea-peoples"))
       )
 
   test("every page's path reads back as that page"):
@@ -35,7 +37,7 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.Library(LibrarySection.Sources).path, "/library")
     assertEquals(Route.Research(ResearchSection.Overview).path, "/research")
     assertEquals(Route.Research(ResearchSection.Goals).path, "/research/goals")
-    assertEquals(Route.Goal(com.histmersion.web.Route.Goal.Slug("bronze-age")).path, "/research/goals/bronze-age")
+    assertEquals(Route.Goal(Route.Goal.Slug("bronze-age")).path, "/research/goals/bronze-age")
     assertEquals(Route.Activity(ActivityTab.Everything).path, "/research/activity")
     assertEquals(Route.Activity(ActivityTab.Running).path, "/research/activity/running")
     assertEquals(Route.Activity(ActivityTab.Jobs).path, "/research/activity/jobs")
@@ -52,9 +54,9 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.Settings(SettingsSection.Advanced).path, "/settings/advanced")
     assertEquals(Route.Setup.path, "/setup")
     assertEquals(Route.Setup.place, PlaceTab.Settings)
-    assertEquals(Route.Run(com.histmersion.web.Route.Run.Id("a b")).path, "/run/a%20b")
-    assertEquals(Route.parse("/run/a%20b"), Some(Route.Run(com.histmersion.web.Route.Run.Id("a b"))))
-    assertEquals(Route.Place(com.histmersion.web.Route.Place.Id("pleiades:579885")).path, "/place/pleiades%3A579885")
+    assertEquals(Route.Run(Route.Run.Id("a b")).path, "/run/a%20b")
+    assertEquals(Route.parse("/run/a%20b"), Some(Route.Run(Route.Run.Id("a b"))))
+    assertEquals(Route.Place(Route.Place.Id("pleiades:579885")).path, "/place/pleiades%3A579885")
 
   test("an address the web UI does not know is no page"):
     List(
@@ -79,11 +81,11 @@ class RouteSuite extends munit.FunSuite:
     }
 
   test("every page sits under one of the four places; its front page is the place's tab"):
-    assertEquals(Route.Run(com.histmersion.web.Route.Run.Id("x")).place, PlaceTab.Research)
-    assertEquals(Route.Job(com.histmersion.web.Route.Job.Id("x")).place, PlaceTab.Research)
-    assertEquals(Route.Goal(com.histmersion.web.Route.Goal.Slug("x")).place, PlaceTab.Research)
-    assertEquals(Route.Place(com.histmersion.web.Route.Place.Id("x")).place, PlaceTab.Explore)
-    assertEquals(Route.Source(com.histmersion.web.Route.Source.Citekey("x")).place, PlaceTab.Library)
+    assertEquals(Route.Run(Route.Run.Id("x")).place, PlaceTab.Research)
+    assertEquals(Route.Job(Route.Job.Id("x")).place, PlaceTab.Research)
+    assertEquals(Route.Goal(Route.Goal.Slug("x")).place, PlaceTab.Research)
+    assertEquals(Route.Place(Route.Place.Id("x")).place, PlaceTab.Explore)
+    assertEquals(Route.Source(Route.Source.Citekey("x")).place, PlaceTab.Library)
     assertEquals(Route.Settings(SettingsSection.Keys).place, PlaceTab.Settings)
     PlaceTab.values.foreach(p => assertEquals(Route.front(p).place, p))
 
@@ -123,20 +125,20 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.ofWindow(WindowKey.ApiKey), None)
     assertEquals(Route.hrefOf(WindowKey.ApiKey), "/settings/keys")
     // single items stay windows, and link to their own pages
-    List(WindowKey.Run(com.histmersion.web.WindowKey.Run.Id("x")), WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("g")), WindowKey.Manager(com.histmersion.web.WindowKey.Manager.Id("m")), WindowKey.Source(com.histmersion.web.WindowKey.Source.Citekey("s")), WindowKey.Article(com.histmersion.web.WindowKey.Article.Slug("a")))
+    List(WindowKey.Run(WindowKey.Run.Id("x")), WindowKey.Goal(WindowKey.Goal.Slug("g")), WindowKey.Manager(WindowKey.Manager.Id("m")), WindowKey.Source(WindowKey.Source.Citekey("s")), WindowKey.Article(WindowKey.Article.Slug("a")))
       .foreach(k => assertEquals(Route.ofWindow(k), None, k.toString))
 
   test("a link to a window points at its page; one with no page of its own, at the map with it open"):
-    assertEquals(Route.hrefOf(WindowKey.Run(com.histmersion.web.WindowKey.Run.Id("3f2a"))), "/run/3f2a")
-    assertEquals(Route.hrefOf(WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("bronze-age"))), "/research/goals/bronze-age")
+    assertEquals(Route.hrefOf(WindowKey.Run(WindowKey.Run.Id("3f2a"))), "/run/3f2a")
+    assertEquals(Route.hrefOf(WindowKey.Goal(WindowKey.Goal.Slug("bronze-age"))), "/research/goals/bronze-age")
     assertEquals(Route.hrefOf(WindowKey.Approvals), "/research/decisions")
     assertEquals(Route.hrefOf(WindowKey.Models), "/research/models")
-    assertEquals(Route.hrefOf(WindowKey.Graph(com.histmersion.web.WindowKey.Graph.Citekey("a2020_b"))), "/explore#open=graph%3Aa2020_b")
+    assertEquals(Route.hrefOf(WindowKey.Graph(WindowKey.Graph.Citekey("a2020_b"))), "/explore#open=graph%3Aa2020_b")
 
   test("a list item's page is its list's, scrolled to it"):
-    assertEquals(Route.queueItem(Queue.Kind.Tasks, com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber(12)), "/research/backlog?item=12")
-    assertEquals(Route.queueItem(Queue.Kind.Acquire, com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber(3)), "/research/acquire?item=3")
-    assertEquals(Route.queueItem(Queue.Kind.Log, com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber(9)), "/research/activity/worklog?item=9")
+    assertEquals(Route.queueItem(Queue.Kind.Tasks, Goal.Plans.GoalLink.QueueNumber(12)), "/research/backlog?item=12")
+    assertEquals(Route.queueItem(Queue.Kind.Acquire, Goal.Plans.GoalLink.QueueNumber(3)), "/research/acquire?item=3")
+    assertEquals(Route.queueItem(Queue.Kind.Log, Goal.Plans.GoalLink.QueueNumber(9)), "/research/activity/worklog?item=9")
 
   test("old addresses land on their new pages; windows of single items stay open over them"):
     assertEquals(Route.legacy("/", Nil), Some(Route.Landing(Route.Explore, Nil)))
@@ -156,12 +158,12 @@ class RouteSuite extends munit.FunSuite:
       Some(Route.Landing(Route.Research(ResearchSection.Goals), Nil))
     )
     assertEquals(
-      Route.legacy("/", List(WindowKey.Run(com.histmersion.web.WindowKey.Run.Id("r1")), WindowKey.Jobs, WindowKey.About)),
-      Some(Route.Landing(Route.Activity(ActivityTab.JobList), List(WindowKey.Run(com.histmersion.web.WindowKey.Run.Id("r1")))))
+      Route.legacy("/", List(WindowKey.Run(WindowKey.Run.Id("r1")), WindowKey.Jobs, WindowKey.About)),
+      Some(Route.Landing(Route.Activity(ActivityTab.JobList), List(WindowKey.Run(WindowKey.Run.Id("r1")))))
     )
     assertEquals(
-      Route.legacy("/", List(WindowKey.Source(com.histmersion.web.WindowKey.Source.Citekey("a2020_b")))),
-      Some(Route.Landing(Route.Explore, List(WindowKey.Source(com.histmersion.web.WindowKey.Source.Citekey("a2020_b")))))
+      Route.legacy("/", List(WindowKey.Source(WindowKey.Source.Citekey("a2020_b")))),
+      Some(Route.Landing(Route.Explore, List(WindowKey.Source(WindowKey.Source.Citekey("a2020_b")))))
     )
     // an old list address wins over a window named in its hash
     assertEquals(
@@ -170,11 +172,11 @@ class RouteSuite extends munit.FunSuite:
     )
     // on a new page, a toolbar window in the hash is that window's page
     assertEquals(
-      Route.legacy("/explore", List(WindowKey.Approvals, WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("g")))),
-      Some(Route.Landing(Route.Research(ResearchSection.Decisions), List(WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("g")))))
+      Route.legacy("/explore", List(WindowKey.Approvals, WindowKey.Goal(WindowKey.Goal.Slug("g")))),
+      Some(Route.Landing(Route.Research(ResearchSection.Decisions), List(WindowKey.Goal(WindowKey.Goal.Slug("g")))))
     )
     // a new address with nothing old in it is left alone
-    assertEquals(Route.legacy("/research/goals", List(WindowKey.Run(com.histmersion.web.WindowKey.Run.Id("r1")))), None)
+    assertEquals(Route.legacy("/research/goals", List(WindowKey.Run(WindowKey.Run.Id("r1")))), None)
     assertEquals(Route.legacy("/explore", Nil), None)
     // the key's prompt is a window still
     assertEquals(Route.legacy("/explore", List(WindowKey.ApiKey)), None)

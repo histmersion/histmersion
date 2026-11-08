@@ -1,4 +1,5 @@
-package com.histmersion.web.map.maplibre
+package com.histmersion
+package web.map.maplibre
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
@@ -7,6 +8,8 @@ import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.web.map.Capabilities
+import com.histmersion.web.map.MapEngine
 
 /** The map engine: MapLibre GL JS (docs/research-map-styles.md, option C). The ONLY code that knows the library; the
   * app speaks [[MapSurface]].
@@ -30,7 +33,7 @@ object MapLibreEngine extends MapEngine:
           .orElse(Option(dom.document.createElement("canvas").asInstanceOf[dom.HTMLCanvasElement].getContext("webgl")))
           .map(_.asInstanceOf[js.Dynamic])
         gl match
-          case None    => Capabilities(webgl = com.histmersion.web.map.Capabilities.Webgl(false), software = com.histmersion.web.map.Capabilities.Software(true), renderer = com.histmersion.web.map.Capabilities.Renderer(""), webgl2 = com.histmersion.web.map.Capabilities.Webgl2(false))
+          case None    => Capabilities(webgl = Capabilities.Webgl(false), software = Capabilities.Software(true), renderer = Capabilities.Renderer(""), webgl2 = Capabilities.Webgl2(false))
           case Some(g) =>
             // RENDERER names the GPU in Firefox (which warns that the debug extension is going away); Chromium
             // answers a generic name there and the GPU only through the extension
@@ -43,16 +46,16 @@ object MapLibreEngine extends MapEngine:
                 else plain
             // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
             Capabilities(
-              webgl = com.histmersion.web.map.Capabilities.Webgl(true),
+              webgl = Capabilities.Webgl(true),
               software = Capabilities.Software(Capabilities.isSoftware(renderer)),
               renderer = renderer,
               webgl2 = Capabilities.Webgl2(gl2.isDefined)
             )
       }
-      .getOrElse(Capabilities(webgl = com.histmersion.web.map.Capabilities.Webgl(false), software = com.histmersion.web.map.Capabilities.Software(true), renderer = com.histmersion.web.map.Capabilities.Renderer(""), webgl2 = com.histmersion.web.map.Capabilities.Webgl2(false)))
+      .getOrElse(Capabilities(webgl = Capabilities.Webgl(false), software = Capabilities.Software(true), renderer = Capabilities.Renderer(""), webgl2 = Capabilities.Webgl2(false)))
 
   /** MapLibre GL JS 6 draws every map — vector and raster — with WebGL 2 only. */
   override def unsupported(c: Capabilities): Option[MapEngine.Problem] = Capabilities.withoutWebgl2(c)
 
-  def create(el: dom.HTMLElement, maxZoom: com.histmersion.web.map.MapEngine.MaxZoom, pixelRatio: Option[com.histmersion.web.map.MapEngine.PixelRatio]): MapSurface =
+  def create(el: dom.HTMLElement, maxZoom: MapEngine.MaxZoom, pixelRatio: Option[MapEngine.PixelRatio]): MapSurface =
     MapLibreSurface(el, maxZoom, pixelRatio, probe())

@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.web.{LibrarySection, MergeView, Route, RouteLink, UploadView}
 import com.raquo.laminar.api.L.*

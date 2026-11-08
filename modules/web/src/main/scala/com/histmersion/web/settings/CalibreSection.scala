@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.raquo.laminar.api.L.*
 
@@ -10,7 +11,7 @@ object CalibreSection:
     div(
       cls := "settings-section",
       SettingsForm(
-        com.histmersion.web.settings.SettingsForm.ApplyTitle("Calibre library"),
+        SettingsForm.ApplyTitle("Calibre library"),
         Some(
           SettingsForm.Intro(
             "Calibre keeps the original of every book and paper. The command line (histmersion calibre …) reads and " +
@@ -18,18 +19,18 @@ object CalibreSection:
           )
         ),
         List(
-          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("cli.calibre.library-dir"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Library folder"))),
-          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("cli.calibre.calibredb"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("The calibredb command"))),
-          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("cli.calibre.originals-dir"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Folder of originals (optional)")))
+          SettingsForm.Item(SettingsForm.Item.Key("cli.calibre.library-dir"), Some(SettingsForm.Item.Name("Library folder"))),
+          SettingsForm.Item(SettingsForm.Item.Key("cli.calibre.calibredb"), Some(SettingsForm.Item.Name("The calibredb command"))),
+          SettingsForm.Item(SettingsForm.Item.Key("cli.calibre.originals-dir"), Some(SettingsForm.Item.Name("Folder of originals (optional)")))
         )
       ),
       SettingsForm(
-        com.histmersion.web.settings.SettingsForm.ApplyTitle("Files on the server"),
+        SettingsForm.ApplyTitle("Files on the server"),
         None,
         List(
-          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("converter.spool-dir"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Where an upload is kept for reading again"))),
-          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("backups.dir"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Backups folder"))),
-          SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("bundles.dir"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Exported collections folder")))
+          SettingsForm.Item(SettingsForm.Item.Key("converter.spool-dir"), Some(SettingsForm.Item.Name("Where an upload is kept for reading again"))),
+          SettingsForm.Item(SettingsForm.Item.Key("backups.dir"), Some(SettingsForm.Item.Name("Backups folder"))),
+          SettingsForm.Item(SettingsForm.Item.Key("bundles.dir"), Some(SettingsForm.Item.Name("Exported collections folder")))
         )
       )
     )

@@ -1,9 +1,13 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.Wcag
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Confidence
+import com.histmersion.api.Years
+import com.histmersion.api.Markdown
+import com.histmersion.api.UiLabels
 
 class FmtSuite extends munit.FunSuite:
 
@@ -112,29 +116,29 @@ class FmtSuite extends munit.FunSuite:
   // ── parseYear ─────────────────────────────────────────────────────────────────
 
   test("parseYear handles BCE") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300 BCE")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300 BC")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300bce")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Years.Text("3300 BCE")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Years.Text("3300 BC")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Years.Text("3300bce")).map(_.value), Some(-3300L))
   }
 
   test("parseYear handles CE") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("500 CE")).map(_.value), Some(500L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("500 AD")).map(_.value), Some(500L))
+    assertEquals(Fmt.parseYear(Years.Text("500 CE")).map(_.value), Some(500L))
+    assertEquals(Fmt.parseYear(Years.Text("500 AD")).map(_.value), Some(500L))
   }
 
   test("parseYear handles plain numbers") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("-3300")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("2026")).map(_.value), Some(2026L))
+    assertEquals(Fmt.parseYear(Years.Text("-3300")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Years.Text("2026")).map(_.value), Some(2026L))
   }
 
   test("parseYear handles circa") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("circa 3300 BCE")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("c. 1200 BCE")).map(_.value), Some(-1200L))
+    assertEquals(Fmt.parseYear(Years.Text("circa 3300 BCE")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Years.Text("c. 1200 BCE")).map(_.value), Some(-1200L))
   }
 
   test("parseYear rejects garbage") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("hello")), None)
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("")), None)
+    assertEquals(Fmt.parseYear(Years.Text("hello")), None)
+    assertEquals(Fmt.parseYear(Years.Text("")), None)
   }
 
   // ── esc ───────────────────────────────────────────────────────────────────────
@@ -150,11 +154,11 @@ class FmtSuite extends munit.FunSuite:
   // ── clip ──────────────────────────────────────────────────────────────────────
 
   test("clip returns short text unchanged") {
-    assertEquals(Fmt.clip("hello world", com.histmersion.api.Markdown.CharLimit(100)), "hello world")
+    assertEquals(Fmt.clip("hello world", Markdown.CharLimit(100)), "hello world")
   }
 
   test("clip truncates at word boundary") {
-    val result = Fmt.clip("one two three four five six seven eight", com.histmersion.api.Markdown.CharLimit(20))
+    val result = Fmt.clip("one two three four five six seven eight", Markdown.CharLimit(20))
     assert(result.endsWith("…"), s"should end with ellipsis: $result")
     assert(result.length <= 22, s"should be short: $result")
   }
@@ -162,21 +166,21 @@ class FmtSuite extends munit.FunSuite:
   // ── display ──────────────────────────────────────────────────────────────────
 
   test("display replaces underscores with spaces") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("bronze_age_collapse")).value, "bronze age collapse")
+    assertEquals(Fmt.display(UiLabels.Text("bronze_age_collapse")).value, "bronze age collapse")
   }
 
   test("display leaves human-readable strings unchanged") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("already nice")).value, "already nice")
+    assertEquals(Fmt.display(UiLabels.Text("already nice")).value, "already nice")
   }
 
   test("display handles empty string") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("")).value, "")
+    assertEquals(Fmt.display(UiLabels.Text("")).value, "")
   }
 
   test("display handles multiple underscores") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("a_b_c_d")).value, "a b c d")
+    assertEquals(Fmt.display(UiLabels.Text("a_b_c_d")).value, "a b c d")
   }
 
   test("displayTag delegates to display") {
-    assertEquals(Fmt.displayTag(com.histmersion.web.Fmt.DisplayTagS("some_tag")), Fmt.display(com.histmersion.api.UiLabels.Text("some_tag")))
+    assertEquals(Fmt.displayTag(Fmt.DisplayTagS("some_tag")), Fmt.display(UiLabels.Text("some_tag")))
   }

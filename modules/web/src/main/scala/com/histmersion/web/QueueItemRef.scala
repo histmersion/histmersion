@@ -1,6 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.automation.Queue
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Api
 
 /** What an acquisition item names, read best-effort from its text so that "Upload…" and "Link existing source…" start
   * from a filled-in form rather than a blank one. Everything it returns is a SUGGESTION the reader edits before
@@ -23,13 +28,13 @@ object QueueItemRef:
 
   object Ref:
     type Authors = Authors.T
-    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Authors extends RefinedType[String, Pure]
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Year = Year.T
-    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Year extends RefinedType[Int, Pure]
     type Doi = Doi.T
-    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Doi extends RefinedType[String, Pure]
 
   private val AuthorYear = """^(.+?)\s+((?:1[5-9]|20)\d\d)[a-z]?\.\s+['‘"“](.+?)['’"”][,.]\s*(.*)$""".r
   private val Paren = """\(([^()]*)\)""".r
@@ -137,26 +142,26 @@ object QueueItemRef:
     Some(s.trim.stripPrefix("*").stripSuffix("*").trim).filter(_.nonEmpty)
 
   /** The DOI that OPENS a slot (`10.…`, `doi 10.…`, `JSTOR 10.…`), else none. */
-  private def leadingDoi(slot: String): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
+  private def leadingDoi(slot: String): Option[Ref.Doi] =
     QueueView
-      .segments(com.histmersion.api.UiLabels.Text(slot.trim.replaceFirst(DoiLead, "")))
+      .segments(UiLabels.Text(slot.trim.replaceFirst(DoiLead, "")))
       .headOption
       .collect { case QueueView.Seg.Doi(d) => Ref.Doi(d.value) }
 
-  private def firstDoi(s: String): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
-    QueueView.segments(com.histmersion.api.UiLabels.Text(s)).collectFirst { case QueueView.Seg.Doi(d) => Ref.Doi(d.value) }
+  private def firstDoi(s: String): Option[Ref.Doi] =
+    QueueView.segments(UiLabels.Text(s)).collectFirst { case QueueView.Seg.Doi(d) => Ref.Doi(d.value) }
 
   /** A citekey in the corpus's `surnameYEAR_word` shape, through [[UploadView.suggestCitekey]] so it is always a valid
     * one.
     */
-  def citekey(r: Ref): Option[com.histmersion.web.Preview.Target.Source.Citekey] =
+  def citekey(r: Ref): Option[Preview.Target.Source.Citekey] =
     val surname = r.authors.headOption.flatMap(_.value.split("""\s+""").lastOption).map(_.replace(".", ""))
     val word = r.title.flatMap(t => words(t.value).find(w => w.length > 2 && !Stop(w.toLowerCase)))
     val raw = List(surname.map(_ + r.year.fold("")(_.toString)), word).flatten.mkString(" ")
     Option
       .when(raw.nonEmpty)(raw)
-      .flatMap(k => UploadView.suggestCitekey(com.histmersion.api.Api.FileName(k)))
-      .map(c => com.histmersion.web.Preview.Target.Source.Citekey(c.value))
+      .flatMap(k => UploadView.suggestCitekey(Api.FileName(k)))
+      .map(c => Preview.Target.Source.Citekey(c.value))
 
   /** The runs of letters in `s`. */
   private def words(s: String): List[String] =
@@ -179,9 +184,9 @@ object QueueItemRef:
   /** What to search the corpus for when linking an item to a source already there: its title, else its first author,
     * else the start of its text.
     */
-  def searchQuery(item: Queue.QueueItem): com.histmersion.api.Api.Search.Text =
+  def searchQuery(item: Queue.QueueItem): Api.Search.Text =
     val r = parse(item.text)
-    com.histmersion.api.Api.Search.Text(
+    Api.Search.Text(
       r.title
         .map(_.value.split("""[:.]""").head.trim)
         .filter(_.nonEmpty)

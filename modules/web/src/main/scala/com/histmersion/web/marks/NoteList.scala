@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.Note
 import com.raquo.laminar.api.L.*

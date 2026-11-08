@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.web.NewTabLink
 import com.histmersion.web.ui.ContextMenu
@@ -11,9 +12,9 @@ import com.raquo.laminar.api.L.*
 object RowActions:
 
 
-  def apply(ref: ItemRef, href: com.histmersion.web.marks.ItemRef.Href, byline: String = ""): Modifier[HtmlElement] =
+  def apply(ref: ItemRef, href: ItemRef.Href, byline: String = ""): Modifier[HtmlElement] =
     List(
       cls("has-actions") := true,
       ContextMenu.on(ContextMenu.OnTitle(s"Actions: ${ref.title}"), () => ItemMenu.entries(ref, byline)),
-      div(cls := "row-actions", ItemActions.bookmarkButton(ref, compact = com.histmersion.web.marks.ItemActions.BookmarkButtonCompact(true)), NewTabLink(NewTabLink.Href(href.value), NewTabLink.Label(ref.title.value)))
+      div(cls := "row-actions", ItemActions.bookmarkButton(ref, compact = ItemActions.BookmarkButtonCompact(true)), NewTabLink(NewTabLink.Href(href.value), NewTabLink.Label(ref.title.value)))
     )

@@ -1,7 +1,9 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{Paging, UiLabels, Wording}
 import com.raquo.laminar.api.L.*
+import com.histmersion.api.library.Facet
 
 /** The filter controls of the three list windows — approvals, agent runs, jobs (core `ListFilters`): a facet's values
   * as toggle chips with the server's counts (multi-select), a `<select>` for a facet with many values, a text box
@@ -60,7 +62,7 @@ object ListFilterBar:
     */
   def chips(
       label: String,
-      counts: Signal[List[(com.histmersion.api.library.Facet.Value, com.histmersion.api.library.Facet.Count)]],
+      counts: Signal[List[(Facet.Value, Facet.Count)]],
       field: Field[List[String]],
       show: String => String = v => UiLabels.label(UiLabels.Key(v)).value,
       hint: String => Option[String] = _ => None,
@@ -97,7 +99,7 @@ object ListFilterBar:
     */
   def picker(
       label: String,
-      counts: Signal[List[(com.histmersion.api.library.Facet.Value, com.histmersion.api.library.Facet.Count)]],
+      counts: Signal[List[(Facet.Value, Facet.Count)]],
       field: Field[Option[String]],
       show: String => String = v => UiLabels.label(UiLabels.Key(v)).value,
       hint: String => Option[String] = _ => None,

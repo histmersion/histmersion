@@ -1,10 +1,15 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.web.{marks, ApiClient, LibrarySection, Route, Router, UiState}
 import com.histmersion.api.ItemKind
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+import com.histmersion.api.RowCount
+import com.histmersion.web.marks.MyItems
+import com.histmersion.api.Paging
+import com.histmersion.api.Offset
 
 /** Library's part of the filter panel: "My library" above the filters, the shelves of the collection the lists read
   * from, and "Show these on the map" under them. Both show only beside Library's lists.
@@ -17,8 +22,8 @@ object MyLibrary:
 
   private val shown: Signal[Boolean] = Router.route.map(onList)
 
-  private val everything = Var(Option.empty[com.histmersion.api.RowCount])
-  private val unread = Var(Option.empty[com.histmersion.api.RowCount])
+  private val everything = Var(Option.empty[RowCount])
+  private val unread = Var(Option.empty[RowCount])
 
   /** The shelf the address names. */
   val shelf: Signal[Shelf] = Router.search.map(LibraryAddress.shelf).distinct
@@ -27,19 +32,19 @@ object MyLibrary:
     case Route.Library(s) if s.isList => s
     case _                            => LibrarySection.Sources
 
-  private def count(s: Shelf): Signal[Option[com.histmersion.api.RowCount]] = s match
+  private def count(s: Shelf): Signal[Option[RowCount]] = s match
     case Shelf.Everything => everything.signal
-    case Shelf.Bookmarks  => marks.MyItems.bookmarks.signal.map(bs => Some(com.histmersion.api.RowCount(bs.size)))
-    case Shelf.Notes      => marks.MyItems.notes.signal.map(ns => Some(com.histmersion.api.RowCount(ns.size)))
+    case Shelf.Bookmarks  => MyItems.bookmarks.signal.map(bs => Some(RowCount(bs.size)))
+    case Shelf.Notes      => MyItems.notes.signal.map(ns => Some(RowCount(ns.size)))
     case Shelf.Unread     => unread.signal
-    case Shelf.Recent     => marks.MyItems.marks.signal.map(ms => Some(com.histmersion.api.RowCount(ms.values.count(_.openedAt.isDefined))))
+    case Shelf.Recent     => MyItems.marks.signal.map(ms => Some(RowCount(ms.values.count(_.openedAt.isDefined))))
 
   private def refresh(): Unit =
     LibraryLists.everything().foreach(n => everything.set(Some(n)))
     ApiClient
-      .unread(ItemKind.Source.wire, com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0))
-      .zip(ApiClient.unread(ItemKind.Article.wire, com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0)))
-      .foreach((s, a) => unread.set(Some(com.histmersion.api.RowCount(s.total.value + a.total.value))))
+      .unread(ItemKind.Source.wire, Paging.Limit(1), Offset(0))
+      .zip(ApiClient.unread(ItemKind.Article.wire, Paging.Limit(1), Offset(0)))
+      .foreach((s, a) => unread.set(Some(RowCount(s.total.value + a.total.value))))
 
   /** "My library", for the top of the filter panel. */
   def panelTop: HtmlElement =
@@ -48,7 +53,7 @@ object MyLibrary:
       cls("is-hidden") <-- shown.map(!_),
       aria.label := "My library",
       shown.changes.filter(identity) --> (_ => refresh()),
-      marks.MyItems.marks.signal.map(_.values.count(_.read.value)).changes --> (_ => if onList(Router.now()) then refresh()),
+      MyItems.marks.signal.map(_.values.count(_.read.value)).changes --> (_ => if onList(Router.now()) then refresh()),
       onMountCallback(_ => if onList(Router.now()) then refresh()),
       h2(cls := "my-library-title", "My library"),
       Shelf.values.toList.map { s =>

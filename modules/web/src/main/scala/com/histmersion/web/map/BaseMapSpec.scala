@@ -1,9 +1,12 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.basemap.Basemap
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A base map, as the app describes it; the adapter makes its library's style of it. */
 enum BaseMapSpec:
@@ -22,33 +25,33 @@ enum BaseMapSpec:
       names: BaseMapSpec.Vector.Names,
       contours: BaseMapSpec.Vector.Contours,
       seaDepth: BaseMapSpec.Vector.SeaDepth,
-      reduced: BaseMapSpec.Vector.Reduced = com.histmersion.web.map.BaseMapSpec.Vector.Reduced(false)
+      reduced: BaseMapSpec.Vector.Reduced = BaseMapSpec.Vector.Reduced(false)
   )
 
   /** An online raster map: its tile URL template (`{s}` for its subdomains), its deepest zoom, its credits (HTML),
     * drawn inverted (`dark`: the light tiles as a dark map) at `opacity`.
     */
-  case Raster(template: BaseMapSpec.Raster.Template, maxZoom: BaseMapSpec.Raster.MaxZoom, attribution: BaseMapSpec.Raster.Attribution, dark: BaseMapSpec.Raster.Dark = com.histmersion.web.map.BaseMapSpec.Raster.Dark(false), opacity: BaseMapSpec.Raster.Opacity = com.histmersion.web.map.BaseMapSpec.Raster.Opacity(0.85))
+  case Raster(template: BaseMapSpec.Raster.Template, maxZoom: BaseMapSpec.Raster.MaxZoom, attribution: BaseMapSpec.Raster.Attribution, dark: BaseMapSpec.Raster.Dark = BaseMapSpec.Raster.Dark(false), opacity: BaseMapSpec.Raster.Opacity = BaseMapSpec.Raster.Opacity(0.85))
 
 object BaseMapSpec:
   object Vector:
     type Lang = Lang.T
-    object Lang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lang extends RefinedType[String, Pure]
     type Names = Names.T
-    object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Names extends RefinedType[Boolean, Pure]
     type Contours = Contours.T
-    object Contours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Contours extends RefinedType[Boolean, Pure]
     type SeaDepth = SeaDepth.T
-    object SeaDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SeaDepth extends RefinedType[Boolean, Pure]
     type Reduced = Reduced.T
-    object Reduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reduced extends RefinedType[Boolean, Pure]
   object Raster:
     export com.histmersion.api.basemap.BasemapApi.{TileTemplate as Template}
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxZoom extends RefinedType[Int, Pure]
     type Attribution = Attribution.T
-    object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Attribution extends RefinedType[String, Pure]
     type Dark = Dark.T
-    object Dark extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Dark extends RefinedType[Boolean, Pure]
     type Opacity = Opacity.T
-    object Opacity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Opacity extends RefinedType[Double, Pure]

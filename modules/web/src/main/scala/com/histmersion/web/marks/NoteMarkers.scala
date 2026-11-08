@@ -1,4 +1,5 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
 
 import com.histmersion.api.personal.{Note, PersonalMarkdown, Target}
 import com.histmersion.api.ItemKind
@@ -9,6 +10,8 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.collection.mutable
+import com.histmersion.api.checks.FormatIssue
+import com.histmersion.web.map.MapSurface
 
 /** The map's "My notes" layer: each note left at a place on the map, as a marker of the map's own kind — off until
   * switched on under Layers. A click or Enter on one shows the note there, to read, change or delete.
@@ -59,10 +62,10 @@ object NoteMarkers:
     el.setAttribute("tabindex", "0")
     el.setAttribute("role", "button")
     el.setAttribute("data-note", n.id.value)
-    val words = s"Your note: ${PersonalMarkdown.excerpt(n.text, com.histmersion.api.checks.FormatIssue.Excerpt.Length(80))}"
+    val words = s"Your note: ${PersonalMarkdown.excerpt(n.text, FormatIssue.Excerpt.Length(80))}"
     el.setAttribute("aria-label", s"$words — show it")
     el.setAttribute("title", words)
-    val m = new DomMarker(LatLon.Lat(n.target.lat.get.value), LatLon.Lon(n.target.lon.get.value), el, Some((com.histmersion.web.map.DomMarker.BoxSize(26), com.histmersion.web.map.DomMarker.BoxSize(26))))
+    val m = new DomMarker(LatLon.Lat(n.target.lat.get.value), LatLon.Lon(n.target.lon.get.value), el, Some((DomMarker.BoxSize(26), DomMarker.BoxSize(26))))
     m.handlers = new MarkerHandlers:
       override def click(e: dom.MouseEvent): Unit = { e.stopPropagation(); show(n) }
       override def key(e: dom.KeyboardEvent): Unit =
@@ -73,7 +76,7 @@ object NoteMarkers:
   def show(n: Note): Unit =
     for la <- n.target.lat; lo <- n.target.lon do
       shown.foreach(_.unmount())
-      val pop = TheMap.surface.popup(LatLon(LatLon.Lat(la.value), LatLon.Lon(lo.value)), com.histmersion.web.map.MapSurface.PopupHtml(""), com.histmersion.web.map.MapSurface.PopupCls("note-popup"))
+      val pop = TheMap.surface.popup(LatLon(LatLon.Lat(la.value), LatLon.Lon(lo.value)), MapSurface.PopupHtml(""), MapSurface.PopupCls("note-popup"))
       TheMap.surface.popupBody(pop).foreach { body =>
         val box = dom.document.createElement("div")
         body.appendChild(box)

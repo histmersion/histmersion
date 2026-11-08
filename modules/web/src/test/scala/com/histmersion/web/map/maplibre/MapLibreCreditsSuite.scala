@@ -1,10 +1,12 @@
-package com.histmersion.web.map.maplibre
+package com.histmersion
+package web.map.maplibre
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.web.BaseMaps
 
 import scala.scalajs.js
+import com.histmersion.web.map.BaseMapSpec
 
 class MapLibreCreditsSuite extends munit.FunSuite:
 
@@ -26,5 +28,5 @@ class MapLibreCreditsSuite extends munit.FunSuite:
     assertEquals(MapLibreStyles.credits(style("""{"version":8}""")), Nil)
 
   test("the credits line: each once, trimmed, middle dots between"):
-    assertEquals(BaseMaps.creditsHtml(Seq(com.histmersion.web.map.BaseMapSpec.Raster.Attribution(" © OSM "), com.histmersion.web.map.BaseMapSpec.Raster.Attribution("Mapterhorn"), com.histmersion.web.map.BaseMapSpec.Raster.Attribution("© OSM"), com.histmersion.web.map.BaseMapSpec.Raster.Attribution(""))), "© OSM · Mapterhorn")
+    assertEquals(BaseMaps.creditsHtml(Seq(BaseMapSpec.Raster.Attribution(" © OSM "), BaseMapSpec.Raster.Attribution("Mapterhorn"), BaseMapSpec.Raster.Attribution("© OSM"), BaseMapSpec.Raster.Attribution(""))), "© OSM · Mapterhorn")
     assertEquals(BaseMaps.creditsHtml(Nil), "")

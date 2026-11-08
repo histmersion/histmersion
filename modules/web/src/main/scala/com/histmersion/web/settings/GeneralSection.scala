@@ -1,4 +1,5 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.catalogue.{Latitude, Longitude}
@@ -103,7 +104,7 @@ object GeneralSection:
         h2(cls := "settings-card-title", "Where the map opens"),
         p(cls := "settings-card-intro", "For everyone who opens Histmersion from this server.")
       ),
-      div(cls := "settings-card-body", StartPlace.chooser(choice, com.histmersion.web.settings.StartPlace.ChooserName("general-start"), showLegend = false)),
+      div(cls := "settings-card-body", StartPlace.chooser(choice, StartPlace.ChooserName("general-start"), showLegend = false)),
       div(
         cls := "settings-save",
         child.maybe <-- Auth.writable.map(w =>

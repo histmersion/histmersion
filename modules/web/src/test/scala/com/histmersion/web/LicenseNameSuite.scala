@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 class LicenseNameSuite extends munit.FunSuite:
 

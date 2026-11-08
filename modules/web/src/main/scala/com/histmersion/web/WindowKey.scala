@@ -1,6 +1,12 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.automation.Queue
+import com.histmersion.api.personal.ItemKey
+import com.histmersion.api.UiLabels
+import com.histmersion.api.Wording
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling (`source:ck`, `jobs`, …) is
   * what the URL hash carries, so a reload or a shared link reopens the same windows; everything else in the UI works
@@ -67,60 +73,60 @@ enum WindowKey:
   /** One manager: its state, items in flight, items, hints, events and settings. */
   case Manager(id: WindowKey.Manager.Id)
 
-  def wire: com.histmersion.web.WindowKey.Wire = this match
-    case Source(ck)     => com.histmersion.web.WindowKey.Wire(s"source:${ck.value}")
-    case Article(slug)  => com.histmersion.web.WindowKey.Wire(s"article:${slug.value}")
-    case Graph(ck)      => com.histmersion.web.WindowKey.Wire(s"graph:${ck.value}")
-    case EditSource(ck) => com.histmersion.web.WindowKey.Wire(s"edit:${ck.value}")
-    case Jobs           => com.histmersion.web.WindowKey.Wire("jobs")
-    case Upload         => com.histmersion.web.WindowKey.Wire("upload")
-    case Acquire        => com.histmersion.web.WindowKey.Wire("acquire")
-    case Tasks          => com.histmersion.web.WindowKey.Wire("tasks")
-    case Log            => com.histmersion.web.WindowKey.Wire("log")
-    case ApiKey         => com.histmersion.web.WindowKey.Wire("key")
-    case About          => com.histmersion.web.WindowKey.Wire("about")
-    case Runs           => com.histmersion.web.WindowKey.Wire("runs")
-    case Run(id)        => com.histmersion.web.WindowKey.Wire(s"run:${id.value}")
-    case Models         => com.histmersion.web.WindowKey.Wire("models")
-    case Approvals      => com.histmersion.web.WindowKey.Wire("approvals")
-    case Goals          => com.histmersion.web.WindowKey.Wire("goals")
-    case Goal(slug)     => com.histmersion.web.WindowKey.Wire(s"goal:${slug.value}")
-    case Merge          => com.histmersion.web.WindowKey.Wire("merge")
-    case Managers       => com.histmersion.web.WindowKey.Wire("managers")
-    case Manager(id)    => com.histmersion.web.WindowKey.Wire(s"manager:${id.value}")
+  def wire: WindowKey.Wire = this match
+    case Source(ck)     => WindowKey.Wire(s"source:${ck.value}")
+    case Article(slug)  => WindowKey.Wire(s"article:${slug.value}")
+    case Graph(ck)      => WindowKey.Wire(s"graph:${ck.value}")
+    case EditSource(ck) => WindowKey.Wire(s"edit:${ck.value}")
+    case Jobs           => WindowKey.Wire("jobs")
+    case Upload         => WindowKey.Wire("upload")
+    case Acquire        => WindowKey.Wire("acquire")
+    case Tasks          => WindowKey.Wire("tasks")
+    case Log            => WindowKey.Wire("log")
+    case ApiKey         => WindowKey.Wire("key")
+    case About          => WindowKey.Wire("about")
+    case Runs           => WindowKey.Wire("runs")
+    case Run(id)        => WindowKey.Wire(s"run:${id.value}")
+    case Models         => WindowKey.Wire("models")
+    case Approvals      => WindowKey.Wire("approvals")
+    case Goals          => WindowKey.Wire("goals")
+    case Goal(slug)     => WindowKey.Wire(s"goal:${slug.value}")
+    case Merge          => WindowKey.Wire("merge")
+    case Managers       => WindowKey.Wire("managers")
+    case Manager(id)    => WindowKey.Wire(s"manager:${id.value}")
 
   /** The citekey or slug a window is about, if any. */
-  def subject: Option[com.histmersion.api.personal.ItemKey] = this match
-    case Source(ck)     => Some(com.histmersion.api.personal.ItemKey(ck.value))
-    case Article(slug)  => Some(com.histmersion.api.personal.ItemKey(slug.value))
-    case Graph(ck)      => Some(com.histmersion.api.personal.ItemKey(ck.value))
-    case EditSource(ck) => Some(com.histmersion.api.personal.ItemKey(ck.value))
+  def subject: Option[ItemKey] = this match
+    case Source(ck)     => Some(ItemKey(ck.value))
+    case Article(slug)  => Some(ItemKey(slug.value))
+    case Graph(ck)      => Some(ItemKey(ck.value))
+    case EditSource(ck) => Some(ItemKey(ck.value))
     case _              => None
 
   /** A title to show before the content has told us a better one (the item's own title: the window retitles itself once
     * it is loaded, `WindowManager.retitle`). Sentence case; never an identifier, which the title's tooltip carries.
     */
-  def initialTitle: com.histmersion.api.UiLabels.Text = this match
-    case Source(_)     => com.histmersion.api.UiLabels.Text("Source")
-    case Article(_)    => com.histmersion.api.UiLabels.Text("Article")
-    case Graph(_)      => com.histmersion.api.UiLabels.Text("Citation graph")
-    case EditSource(_) => com.histmersion.api.UiLabels.Text("Edit a source")
-    case Jobs          => com.histmersion.api.UiLabels.Text("Background jobs")
-    case Upload        => com.histmersion.api.UiLabels.Text("Upload for OCR")
-    case Acquire       => com.histmersion.api.UiLabels.Text("To acquire")
-    case Tasks         => com.histmersion.api.UiLabels.Text("Backlog")
-    case Log           => com.histmersion.api.UiLabels.Text("Worklog")
-    case ApiKey        => com.histmersion.api.UiLabels.Text("API key")
-    case About         => com.histmersion.api.UiLabels.Text("About Histmersion")
-    case Runs          => com.histmersion.api.UiLabels.Text("Agent runs")
-    case Run(_)        => com.histmersion.api.UiLabels.Text("Agent run")
-    case Models        => com.histmersion.api.UiLabels.Text("AI models and limits")
-    case Approvals     => com.histmersion.api.UiLabels.Text("Approvals")
-    case Goals         => com.histmersion.api.UiLabels.Text("Research goals")
-    case Goal(slug)    => com.histmersion.api.UiLabels.Text(s"Goal · ${com.histmersion.api.Wording.humanize(com.histmersion.api.Wording.Id(slug.value))}")
-    case Merge         => com.histmersion.api.UiLabels.Text("Merge another collection")
-    case Managers      => com.histmersion.api.UiLabels.Text("Agent managers")
-    case Manager(id)   => com.histmersion.api.UiLabels.Text(com.histmersion.api.Wording.manager(com.histmersion.api.Wording.Id(id.value)))
+  def initialTitle: UiLabels.Text = this match
+    case Source(_)     => UiLabels.Text("Source")
+    case Article(_)    => UiLabels.Text("Article")
+    case Graph(_)      => UiLabels.Text("Citation graph")
+    case EditSource(_) => UiLabels.Text("Edit a source")
+    case Jobs          => UiLabels.Text("Background jobs")
+    case Upload        => UiLabels.Text("Upload for OCR")
+    case Acquire       => UiLabels.Text("To acquire")
+    case Tasks         => UiLabels.Text("Backlog")
+    case Log           => UiLabels.Text("Worklog")
+    case ApiKey        => UiLabels.Text("API key")
+    case About         => UiLabels.Text("About Histmersion")
+    case Runs          => UiLabels.Text("Agent runs")
+    case Run(_)        => UiLabels.Text("Agent run")
+    case Models        => UiLabels.Text("AI models and limits")
+    case Approvals     => UiLabels.Text("Approvals")
+    case Goals         => UiLabels.Text("Research goals")
+    case Goal(slug)    => UiLabels.Text(s"Goal · ${Wording.humanize(Wording.Id(slug.value))}")
+    case Merge         => UiLabels.Text("Merge another collection")
+    case Managers      => UiLabels.Text("Agent managers")
+    case Manager(id)   => UiLabels.Text(Wording.manager(Wording.Id(id.value)))
 
   /** The page this window mirrors, for "open in a new tab": a source's or an article's standalone page, a run's, a
     * goal's or a manager's page of the web UI.
@@ -129,21 +135,21 @@ enum WindowKey:
 
 object WindowKey:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
   object Source:
     type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
 
   object Article:
     export com.histmersion.api.research.Article.Slug
 
   object Graph:
     type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
 
   object EditSource:
     type Citekey = com.histmersion.api.library.Citekey
-    val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+    val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
 
   object Run:
     export com.histmersion.api.automation.Agents.RunInfo.Id
@@ -170,7 +176,7 @@ object WindowKey:
   private val Keyed = "^(source|article|graph|edit|run|goal|manager):(.+)$".r
 
   /** Pure: a hash entry back into a key; anything unknown is `None` (dropped, not guessed). */
-  def parse(raw: com.histmersion.web.WindowKey.Wire): Option[WindowKey] =
+  def parse(raw: Wire): Option[WindowKey] =
     Option(raw).map(_.value.trim).getOrElse("") match
       case Keyed("source", id)  => Some(Source(Source.Citekey(id)))
       case Keyed("article", id) => Some(Article(Article.Slug(id)))

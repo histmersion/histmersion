@@ -1,9 +1,12 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.*
 import com.histmersion.web.ui.Layout
 import com.raquo.laminar.api.L.*
+import com.histmersion.api.personal.ItemKey
+import com.histmersion.api.RowCount
 
 /** Library: reading first. The filter panel on the left is Explore's own ([[FilterBar]], one filter state), with "My
   * library" above it; here the tabs (sources, articles, with their counts), the order, a page of the list as a table,
@@ -13,10 +16,10 @@ import com.raquo.laminar.api.L.*
   */
 object LibraryPage:
 
-  val chosen: Signal[Option[com.histmersion.api.personal.ItemKey]] = Router.search.map(LibraryAddress.item).distinct
+  val chosen: Signal[Option[ItemKey]] = Router.search.map(LibraryAddress.item).distinct
 
   /** Choose `key` in `section`'s list: a step in the history unless `push` is false. */
-  def choose(section: LibrarySection)(key: com.histmersion.api.personal.ItemKey, push: Router.Push): Unit =
+  def choose(section: LibrarySection)(key: ItemKey, push: Router.Push): Unit =
     Router.go(
       Route.Library(section),
       push = push,
@@ -82,7 +85,7 @@ object LibraryPage:
       )
     )
 
-  private def tab(s: LibrarySection, label: String, total: Signal[com.histmersion.api.RowCount], on: LibrarySection): HtmlElement =
+  private def tab(s: LibrarySection, label: String, total: Signal[RowCount], on: LibrarySection): HtmlElement =
     a(
       cls := "library-tab",
       cls("on") := s == on,

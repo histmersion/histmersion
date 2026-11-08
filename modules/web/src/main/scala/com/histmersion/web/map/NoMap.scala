@@ -1,14 +1,18 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.collection.mutable
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.basemap.BasemapApi
 
 object NoMap:
   type Html = Html.T
-  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Html extends RefinedType[String, Pure]
   type MessageText = MessageText.T
-  object MessageText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MessageText extends RefinedType[String, Pure]
 
   /** A shape set that draws nothing and reads back the ids it was given. */
   final class Shapes(val id: Shapes.Id) extends ShapeSet:
@@ -20,12 +24,12 @@ object NoMap:
 
   object Shapes:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
 
   /** Tiles that are never asked for: no map, no features. */
   object Tiles extends PointTiles:
 
-    def setTiles(template: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate]): Unit = ()
+    def setTiles(template: Option[BasemapApi.TileTemplate]): Unit = ()
     def features: Seq[TilePointFeature] = Nil
     def onChange(f: () => Unit): Subscription = new Subscription { def cancel(): Unit = () }
     def loaded: Boolean = true
@@ -33,7 +37,7 @@ object NoMap:
   private def esc(s: String) = s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
   /** Pure: the message in the map's place — why, then what to do; the rest of the app works without it. */
-  def message(why: com.histmersion.web.map.NoMapSurface.Why): (com.histmersion.web.map.NoMap.MessageText, com.histmersion.web.map.NoMap.MessageText) =
+  def message(why: NoMapSurface.Why): (MessageText, MessageText) =
     (
       MessageText(s"The map cannot be drawn here: $why."),
       MessageText("Every base map — the online ones and the local ones — is drawn with WebGL 2. Turn on hardware " +
@@ -41,6 +45,6 @@ object NoMap:
         "Firefox or Safari. The list, the timeline and the articles work without the map.")
     )
 
-  def html(why: com.histmersion.web.map.NoMapSurface.Why): com.histmersion.web.map.NoMap.Html =
+  def html(why: NoMapSurface.Why): Html =
     val (head, body) = message(why)
     Html(s"""<p class="map-unavailable-title">${esc(head.value)}</p><p>${esc(body.value)}</p>""")

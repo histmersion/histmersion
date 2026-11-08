@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
@@ -8,6 +9,11 @@ import com.histmersion.api.automation.ListFilters
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.ManagersMarkdown
 import com.histmersion.api.automation.{Agents, Approval, Goal}
+import com.histmersion.api.instance.UiNotices
+import com.histmersion.api.automation.ApprovalDigest
+import com.histmersion.api.library.Facet
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.research.Article
 
 /** The approvals window (docs/research-embedded-agents.md §5.2): changes agent runs PROPOSED — a source's status, a
   * disagreement edge — each with its evidence and the quote code verified, and approve / reject behind the write gate.
@@ -28,7 +34,7 @@ object ApprovalsView:
   /** What approving each kind does, and where it sits in a goal's life (goal-plan → article-plan → compile-article's
     * article-publish → review); a tooltip on the kind wherever it is shown.
     */
-  def kindMeaning(kind: com.histmersion.api.automation.Approval.Kind.Wire): Option[String] = ApprovalKind.parse(kind).map {
+  def kindMeaning(kind: Approval.Kind.Wire): Option[String] = ApprovalKind.parse(kind).map {
     case ApprovalKind.GoalPlan =>
       "A research goal's plan: its sub-goals, search queries and works to read. " +
         "Approving creates them; that unblocks proposing the goal's articles."
@@ -50,7 +56,7 @@ object ApprovalsView:
   }
 
   /** What each state the filter buttons offer means; a tooltip on the button. */
-  def stateMeaning(state: com.histmersion.api.automation.Approval.State.Wire): Option[String] =
+  def stateMeaning(state: Approval.State.Wire): Option[String] =
     if state.value == "all" then Some("Every approval, whatever its state.")
     else
       ApprovalState.parse(state).map {
@@ -62,7 +68,7 @@ object ApprovalsView:
       }
 
   /** Who decided an approval, in a sentence; a tooltip on the "decided by" chips. */
-  def decidedByMeaning(by: com.histmersion.api.automation.Approval.DecidedBy.Wire): Option[String] = ListFilters.DecidedBy.parse(by).map {
+  def decidedByMeaning(by: Approval.DecidedBy.Wire): Option[String] = ListFilters.DecidedBy.parse(by).map {
     case ListFilters.DecidedBy.Person =>
       "Decided by a person: every decision that is not the autopilot's or an automatic one."
     case ListFilters.DecidedBy.Autopilot =>
@@ -107,17 +113,17 @@ object ApprovalsView:
   val States: List[Approval.State.Wire] = ApprovalState.values.toList.map(_.wire) :+ Approval.State.Wire("all")
 
   /** The state a button stands for as the URL keeps it: the open ones are the default (`None`). */
-  def stateValue(button: com.histmersion.api.automation.Approval.State.Wire): Option[String] = Option.when(button != ApprovalState.Open.wire)(button.value)
+  def stateValue(button: Approval.State.Wire): Option[String] = Option.when(button != ApprovalState.Open.wire)(button.value)
 
   /** The state the list shows: the open ones unless another was picked. */
-  def shownState(field: Option[com.histmersion.api.automation.Approval.State.Wire]): Approval.State.Wire = field.getOrElse(ApprovalState.Open.wire)
+  def shownState(field: Option[Approval.State.Wire]): Approval.State.Wire = field.getOrElse(ApprovalState.Open.wire)
 
   /** The query the window sends, from its filter fields. Pure. */
   def filterOf(
-      state: Option[com.histmersion.api.automation.Approval.State.Wire],
-      kinds: List[com.histmersion.api.automation.Approval.Kind.Wire],
-      by: List[com.histmersion.api.automation.Approval.DecidedBy.Wire],
-      subject: Option[com.histmersion.api.automation.ListFilters.ApprovalFilter.Subject]
+      state: Option[Approval.State.Wire],
+      kinds: List[Approval.Kind.Wire],
+      by: List[Approval.DecidedBy.Wire],
+      subject: Option[ListFilters.ApprovalFilter.Subject]
   ): ListFilters.ApprovalFilter =
     ListFilters.ApprovalFilter(state = state, kind = kinds, subject = subject, decidedBy = by)
 
@@ -147,7 +153,7 @@ object ApprovalsView:
     as.filter(a => (state.value == "all" || a.state.value == state.value) && (n.kind.isEmpty || n.kind.exists(_.value == a.kind.value)))
 
   /** The heading's words before the noun: `open` (or the state picked) and the kinds picked. */
-  def qualifier(f: ListFilters.ApprovalFilter): Option[com.histmersion.api.automation.ListFilters.Qualifier] = f.qualifier
+  def qualifier(f: ListFilters.ApprovalFilter): Option[ListFilters.Qualifier] = f.qualifier
 
   /** The approvals a bulk decision would apply to: those selected that are still shown and open. */
   def bulkTargets(selected: Set[ApprovalInfo.Id], shown: List[ApprovalInfo]): List[ApprovalInfo] =
@@ -269,7 +275,7 @@ object ApprovalsView:
       r.failed.foreach(e => list.failure.set(Some(PolledList.Problem(e.getMessage))))
       refresh()
       // decided here or in a goal's window: the count drops, and the decision is not news to its maker
-      Notices.ownWrite(com.histmersion.api.instance.UiNotices.Board.Approvals)
+      Notices.ownWrite(UiNotices.Board.Approvals)
     }
 
   /** A bulk decision, after the person confirmed it: one request per approval, ONE AFTER ANOTHER, each through the very
@@ -294,7 +300,7 @@ object ApprovalsView:
         Option.when(errs.nonEmpty)(PolledList.Problem(s"${Plural.count(Plural.CountN(errs.size), Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}"))
       )
       refresh()
-      Notices.ownWrite(com.histmersion.api.instance.UiNotices.Board.Approvals)
+      Notices.ownWrite(UiNotices.Board.Approvals)
     }
 
   /** The listing with the rows the filter shows — at once, from the rows loaded; the server's page replaces them a
@@ -308,7 +314,7 @@ object ApprovalsView:
     if s.value == "all" then "All" else ApprovalState.parse(s).fold[String](Wording.humanize(Wording.Id(s.value)))(Wording.approvalState)
 
   /** An approval's kind as a person reads it ([[Wording.approvalKind]]). */
-  def kindLabel(kind: com.histmersion.api.automation.Approval.Kind.Wire): String = ApprovalKind.parse(kind).fold[String](Wording.humanize(Wording.Id(kind.value)))(Wording.approvalKind)
+  def kindLabel(kind: Approval.Kind.Wire): String = ApprovalKind.parse(kind).fold[String](Wording.humanize(Wording.Id(kind.value)))(Wording.approvalKind)
 
   private def stateButtons: HtmlElement =
     def count(l: ListPaging.Listing[ApprovalInfo], s: Approval.State.Wire) =
@@ -366,18 +372,18 @@ object ApprovalsView:
     )
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
-  def digestLine(g: com.histmersion.api.automation.ApprovalDigest.KindGroup): String =
+  def digestLine(g: ApprovalDigest.KindGroup): String =
     s"${kindLabel(Approval.Kind.Wire(g.kind.value))} ${Paging.grouped(Paging.GroupSize(g.count.value))}" + g.oldest.fold("")(o => s" (oldest $o)") +
       (g.decidedBy.value match
         case "checked" => " · the autopilot's checks decide them within the day's cap"
-        case com.histmersion.api.automation.ApprovalDigest.Waits => " · waiting: nobody needs to decide them now"
+        case ApprovalDigest.Waits => " · waiting: nobody needs to decide them now"
         case _                                                   => " · a person decides")
 
   /** The digest (#3762 proposal 3): everything waiting for a person, by kind — a click shows one kind in the list below
     * (its kind filter), where the bulk bar decides them all at once.
     */
   private def digestBar: HtmlElement =
-    val d = Var(Option.empty[com.histmersion.api.automation.ApprovalDigest.Digest])
+    val d = Var(Option.empty[ApprovalDigest.Digest])
     def load(): Unit = ApiClient.approvalDigest.onComplete(_.toOption.foreach(x => d.set(Some(x))))
     div(
       cls := "approvals-digest",
@@ -429,14 +435,14 @@ object ApprovalsView:
         cls := "toolbar list-filters",
         ListFilterBar.chips(
           "kind",
-          list.listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("kind"))),
+          list.listing.signal.map(_.page.facet(Facet.Name("kind"))),
           UiState.approvalKinds,
           hint = v => kindMeaning(Approval.Kind.Wire(v)),
           about = "Show only approvals of the kinds picked (any of them): what the change is."
         ),
         ListFilterBar.chips(
           "decided by",
-          list.listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("decidedBy"))),
+          list.listing.signal.map(_.page.facet(Facet.Name("decidedBy"))),
           UiState.approvalBy,
           hint = v => decidedByMeaning(Approval.DecidedBy.Wire(v)),
           about = "Show only approvals decided the ways picked (any of them)."
@@ -461,7 +467,7 @@ object ApprovalsView:
             cls := "muted list-heading",
             ListPaging.heading(
               l,
-              com.histmersion.api.Plural.Noun.Singular("approval"),
+              Plural.Noun.Singular("approval"),
               Option.when(st.value != "all")(st.value),
               a => a.state.value,
               Option.when(st.value != "all")(stateLabel(st)).toList ++ f.normalized.kind.map(kindLabel)
@@ -533,7 +539,7 @@ object ApprovalsView:
               span(
                 SourceLink(a.citekey),
                 s" ${a.edgeKind.map(_.value.replace('_', ' ')).getOrElse("?")} ",
-                a.target.fold(span("?"))(t => SourceLink(com.histmersion.api.library.Citekey(t.value)))
+                a.target.fold(span("?"))(t => SourceLink(Citekey(t.value)))
               )
             case Some(ApprovalKind.GoalPlan) =>
               span(
@@ -546,7 +552,7 @@ object ApprovalsView:
                 else "append a section to ",
                 a.subject.fold(span("?"))(s =>
                   if a.article.exists(_.mode == Goal.Plans.DraftMode.Create) then strong(s.value)
-                  else com.histmersion.web.ArticleLink(com.histmersion.api.research.Article.Slug(s.value), s.value)
+                  else ArticleLink(Article.Slug(s.value), s.value)
                 )
               )
             case Some(ApprovalKind.HintEffect) =>

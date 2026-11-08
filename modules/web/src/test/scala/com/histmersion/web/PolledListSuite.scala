@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,6 +10,9 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.library.Ingest
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.jobs.JobKinds
+import com.histmersion.api.automation.Agents
 
 /** [[PolledList]] (#1798 item 6) — the one controller of the jobs, runs and approvals windows — with a fake server
   * (promises completed by hand) and a fake clock: a poll keeps the pages loaded, a gone cursor restarts, a closed
@@ -19,8 +23,8 @@ class PolledListSuite extends munit.FunSuite:
 
   private given ExecutionContext = ExecutionContext.parasitic
 
-  private def job(id: com.histmersion.api.SpatialHierarchyResult.Job.Id, state: JobState = JobState.Done) = JobInfo(id, com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), state.wire)
-  private def jobId(id: String) = com.histmersion.api.SpatialHierarchyResult.Job.Id(id)
+  private def job(id: SpatialHierarchyResult.Job.Id, state: JobState = JobState.Done) = JobInfo(id, JobKinds.Wire(Ingest.KindIngest), state.wire)
+  private def jobId(id: String) = SpatialHierarchyResult.Job.Id(id)
   private def page(total: Paging.Page.Total, next: Option[Paging.Page.Next], counts: (Paging.Page.CountState, Paging.Count)*) = Paging.Page(total, next, counts.toList)
 
   /** A fake server: each request waits for the test to answer it; a fake clock holds the next poll. */
@@ -42,7 +46,7 @@ class PolledListSuite extends munit.FunSuite:
     f.list.open()
     assertEquals(f.asked.map(a => (a._1, a._2)).toList, List((None, None)))
     f.answer(0, List(job(jobId("b")), job(jobId("a"))), page(Paging.Page.Total(2), None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a").map(SpatialHierarchyResult.Job.Id.apply))
     assert(f.list.loaded.now().value)
     assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs))
 
@@ -59,11 +63,11 @@ class PolledListSuite extends munit.FunSuite:
     f.list.showOlder()
     assertEquals((f.asked(1)._1, f.asked(1)._2), (None, Some("b")))
     f.answer(1, List(job(jobId("a"))), page(Paging.Page.Total(4), None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a").map(SpatialHierarchyResult.Job.Id.apply))
     f.list.refresh()
     assertEquals(f.asked(2)._1, Some("a"), "the poll reaches the last row shown")
     f.answer(2, List(job(jobId("d")), job(jobId("c")), job(jobId("b")), job(jobId("a"))), page(Paging.Page.Total(4), None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a").map(SpatialHierarchyResult.Job.Id.apply))
 
   test("the last row shown is gone: the poll starts over from the newest page"):
     val f = Fixture(liveRows = true)
@@ -92,7 +96,7 @@ class PolledListSuite extends munit.FunSuite:
     f.list.restart()
     f.answer(2, List(job(jobId("new"))), page(Paging.Page.Total(1), None))
     f.answer(1, List(job(jobId("old"))), page(Paging.Page.Total(1), None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("new").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("new").map(SpatialHierarchyResult.Job.Id.apply))
 
   /** One polled item (the agent run's window), on the same fake server and clock. */
   final private class Single:
@@ -133,16 +137,16 @@ class PolledListSuite extends munit.FunSuite:
     f.asked(1).failure(RuntimeException("HTTP 404"))
     assertEquals(f.one.failure.now(), Some("HTTP 404"))
     assertEquals(f.timers.map(_._1).toList, List(Poll.MaxMs))
-    f.one.refresh(changed = com.histmersion.web.Poll.DataChanged(true)) // a control button was pressed
+    f.one.refresh(changed = Poll.DataChanged(true)) // a control button was pressed
     f.asked(2).success(job(jobId("r"), JobState.Running))
     assertEquals(f.one.failure.now(), None)
     assertEquals(f.timers.last._1, Poll.FirstMs)
 
   test("the shared schedule: quick on a change, slower while nothing changes, none when nothing is live"):
-    assertEquals(Poll.next(None, live = com.histmersion.web.Poll.LiveMode(false), changed = com.histmersion.web.Poll.DataChanged(true)), None)
-    assertEquals(Poll.next(Some(com.histmersion.web.Poll.Revision(1000)), live = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)), Some(1600))
-    assertEquals(Poll.next(Some(com.histmersion.web.Poll.Revision(14000)), live = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(false)), Some(Poll.MaxMs))
-    assertEquals(Poll.next(Some(com.histmersion.web.Poll.Revision(8000)), live = com.histmersion.web.Poll.LiveMode(true), changed = com.histmersion.web.Poll.DataChanged(true)), Some(Poll.FirstMs))
+    assertEquals(Poll.next(None, live = Poll.LiveMode(false), changed = Poll.DataChanged(true)), None)
+    assertEquals(Poll.next(Some(Poll.Revision(1000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)), Some(1600))
+    assertEquals(Poll.next(Some(Poll.Revision(14000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(false)), Some(Poll.MaxMs))
+    assertEquals(Poll.next(Some(Poll.Revision(8000)), live = Poll.LiveMode(true), changed = Poll.DataChanged(true)), Some(Poll.FirstMs))
 
   test("manager events: a poll's newest page keeps the older pages loaded below it"):
     val loaded = List(9L, 8L, 7L, 6L, 5L, 4L)
@@ -155,5 +159,5 @@ class PolledListSuite extends munit.FunSuite:
   test("runs: the state a person reads, not the wire word"):
     assertEquals(RunsView.stateLabel(RunState.WaitingApproval), "Waiting for a decision")
     assertEquals(RunsView.stateLabel(RunState.Running), "Running")
-    assertEquals(RunsView.statusLabel(com.histmersion.api.automation.Agents.RunInfo.Status("waiting")), "Waiting for a decision")
-    assertEquals(RunsView.statusLabel(com.histmersion.api.automation.Agents.RunInfo.Status("nonsense")), "Nonsense")
+    assertEquals(RunsView.statusLabel(Agents.RunInfo.Status("waiting")), "Waiting for a decision")
+    assertEquals(RunsView.statusLabel(Agents.RunInfo.Status("nonsense")), "Nonsense")

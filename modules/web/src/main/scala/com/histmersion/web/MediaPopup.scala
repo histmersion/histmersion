@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import scala.annotation.tailrec
 import com.raquo.laminar.api.L.*
@@ -9,6 +10,9 @@ import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.UiLabels
 
 /** The media layer's popup (#1446): a source's figure names its source; a provider's picture shows its local thumbnail
   * with the credit line and licence its licence requires — the licence's name, linked to its text. A click on the
@@ -17,11 +21,11 @@ import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
   */
 object MediaPopup:
   type Caption = Caption.T
-  object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Caption extends RefinedType[String, Pure]
   type Html = Html.T
-  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Html extends RefinedType[String, Pure]
   type PeriodText = PeriodText.T
-  object PeriodText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodText extends RefinedType[String, Pure]
   /** Pure: what the picture's full-size view shows. */
 
 
@@ -40,14 +44,14 @@ object MediaPopup:
       )
     )
 
-  def html(h: MediaGeoHit, period: com.histmersion.web.MediaPopup.PeriodText, caption: com.histmersion.web.MediaPopup.Caption): com.histmersion.web.MediaPopup.Html =
-    val kind = Fmt.display(com.histmersion.api.UiLabels.Text(h.kind.map(_.value).getOrElse("media")))
+  def html(h: MediaGeoHit, period: PeriodText, caption: Caption): Html =
+    val kind = Fmt.display(UiLabels.Text(h.kind.map(_.value).getOrElse("media")))
     def title(inner: String) =
       s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(Glyphs.Name(CardIcons.Media))}$inner</div>"""
     Html(h.citekey match
       case Some(ck) =>
         // the source as the app's one source link: its card on hover, its window on a click
-        title(s"""${SourceLink.html(ck, None, com.histmersion.api.UiLabels.Text(ck.value))} / ${Fmt.esc(h.assetName.value)}""") + s"$kind · $period$caption"
+        title(s"""${SourceLink.html(ck, None, UiLabels.Text(ck.value))} / ${Fmt.esc(h.assetName.value)}""") + s"$kind · $period$caption"
       case None =>
         val zoom = full(h).fold("")(i => s""" title="open full size"${Lightbox.attrs(i)}""")
         val img = h.thumbUrl.fold("")(u =>

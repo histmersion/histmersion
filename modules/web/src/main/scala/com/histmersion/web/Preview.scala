@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import hearth.kindlings.optics.syntax.*
 
@@ -18,6 +19,18 @@ import com.histmersion.api.library.{DiscoverResult, Label, Source}
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.research.Article
 import com.histmersion.api.views.{EventDetail, PlaceDetail}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.LpfDataset
+import com.histmersion.api.Years
+import com.histmersion.api.UiLabels
+import com.histmersion.api.catalogue.EventFindingRef
+import com.histmersion.api.Markdown
+import com.histmersion.api.catalogue.LeadFacts
+import com.histmersion.api.media.MediaItem
+import com.histmersion.api.Paging
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.media.ImageSize
 
 /** THE link preview. One delegated hover handler on the document answers for every element that carries `data-ck` (a
   * source) or `data-slug` (an article) — server-rendered anchors in a window or on a standalone page, and the web UI's
@@ -28,72 +41,72 @@ import com.histmersion.api.views.{EventDetail, PlaceDetail}
   */
 object Preview:
   type CacheKey = CacheKey.T
-  object CacheKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CacheKey extends RefinedType[String, Pure]
   type ElementSize = ElementSize.T
-  object ElementSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ElementSize extends RefinedType[Double, Pure]
   type KeyboardDriven = KeyboardDriven.T
-  object KeyboardDriven extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KeyboardDriven extends RefinedType[Boolean, Pure]
   type RestoreFocus = RestoreFocus.T
-  object RestoreFocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RestoreFocus extends RefinedType[Boolean, Pure]
   type ScreenPixels = ScreenPixels.T
-  object ScreenPixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ScreenPixels extends RefinedType[Double, Pure]
   type ViewportHeight = ViewportHeight.T
-  object ViewportHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ViewportHeight extends RefinedType[Double, Pure]
   type ViewportWidth = ViewportWidth.T
-  object ViewportWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ViewportWidth extends RefinedType[Double, Pure]
 
   /** What an element asks to preview. */
 
-  type PinUnderKeyboard = _root_.com.histmersion.web.Preview.KeyboardDriven
-  val PinUnderKeyboard: _root_.com.histmersion.web.Preview.KeyboardDriven.type = _root_.com.histmersion.web.Preview.KeyboardDriven
-  type ShowAtX = _root_.com.histmersion.web.Preview.ScreenPixels
-  val ShowAtX: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type ShowAtY = _root_.com.histmersion.web.Preview.ScreenPixels
-  val ShowAtY: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type MoveToX = _root_.com.histmersion.web.Preview.ScreenPixels
-  val MoveToX: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type MoveToY = _root_.com.histmersion.web.Preview.ScreenPixels
-  val MoveToY: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type PointFitH = _root_.com.histmersion.web.Preview.ElementSize
-  val PointFitH: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
-  type PointFitVh = _root_.com.histmersion.web.Preview.ViewportHeight
-  val PointFitVh: _root_.com.histmersion.web.Preview.ViewportHeight.type = _root_.com.histmersion.web.Preview.ViewportHeight
-  type UnderFitTop = _root_.com.histmersion.web.Preview.ScreenPixels
-  val UnderFitTop: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type UnderFitBottom = _root_.com.histmersion.web.Preview.ScreenPixels
-  val UnderFitBottom: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type UnderFitH = _root_.com.histmersion.web.Preview.ElementSize
-  val UnderFitH: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
-  type UnderFitVh = _root_.com.histmersion.web.Preview.ViewportHeight
-  val UnderFitVh: _root_.com.histmersion.web.Preview.ViewportHeight.type = _root_.com.histmersion.web.Preview.ViewportHeight
-  type PointPlacementX = _root_.com.histmersion.web.Preview.ScreenPixels
-  val PointPlacementX: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type PointPlacementY = _root_.com.histmersion.web.Preview.ScreenPixels
-  val PointPlacementY: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type PointPlacementW = _root_.com.histmersion.web.Preview.ElementSize
-  val PointPlacementW: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
-  type PointPlacementH = _root_.com.histmersion.web.Preview.ElementSize
-  val PointPlacementH: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
-  type PointPlacementVw = _root_.com.histmersion.web.Preview.ViewportWidth
-  val PointPlacementVw: _root_.com.histmersion.web.Preview.ViewportWidth.type = _root_.com.histmersion.web.Preview.ViewportWidth
-  type PointPlacementVh = _root_.com.histmersion.web.Preview.ViewportHeight
-  val PointPlacementVh: _root_.com.histmersion.web.Preview.ViewportHeight.type = _root_.com.histmersion.web.Preview.ViewportHeight
-  type UnderPlacementLeft = _root_.com.histmersion.web.Preview.ScreenPixels
-  val UnderPlacementLeft: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type UnderPlacementTop = _root_.com.histmersion.web.Preview.ScreenPixels
-  val UnderPlacementTop: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type UnderPlacementBottom = _root_.com.histmersion.web.Preview.ScreenPixels
-  val UnderPlacementBottom: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-  type UnderPlacementWidth = _root_.com.histmersion.web.Preview.ElementSize
-  val UnderPlacementWidth: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
-  type UnderPlacementW = _root_.com.histmersion.web.Preview.ElementSize
-  val UnderPlacementW: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
-  type UnderPlacementH = _root_.com.histmersion.web.Preview.ElementSize
-  val UnderPlacementH: _root_.com.histmersion.web.Preview.ElementSize.type = _root_.com.histmersion.web.Preview.ElementSize
-  type UnderPlacementVw = _root_.com.histmersion.web.Preview.ViewportWidth
-  val UnderPlacementVw: _root_.com.histmersion.web.Preview.ViewportWidth.type = _root_.com.histmersion.web.Preview.ViewportWidth
-  type UnderPlacementVh = _root_.com.histmersion.web.Preview.ViewportHeight
-  val UnderPlacementVh: _root_.com.histmersion.web.Preview.ViewportHeight.type = _root_.com.histmersion.web.Preview.ViewportHeight
+  type PinUnderKeyboard = KeyboardDriven
+  val PinUnderKeyboard: KeyboardDriven.type = KeyboardDriven
+  type ShowAtX = ScreenPixels
+  val ShowAtX: ScreenPixels.type = ScreenPixels
+  type ShowAtY = ScreenPixels
+  val ShowAtY: ScreenPixels.type = ScreenPixels
+  type MoveToX = ScreenPixels
+  val MoveToX: ScreenPixels.type = ScreenPixels
+  type MoveToY = ScreenPixels
+  val MoveToY: ScreenPixels.type = ScreenPixels
+  type PointFitH = ElementSize
+  val PointFitH: ElementSize.type = ElementSize
+  type PointFitVh = ViewportHeight
+  val PointFitVh: ViewportHeight.type = ViewportHeight
+  type UnderFitTop = ScreenPixels
+  val UnderFitTop: ScreenPixels.type = ScreenPixels
+  type UnderFitBottom = ScreenPixels
+  val UnderFitBottom: ScreenPixels.type = ScreenPixels
+  type UnderFitH = ElementSize
+  val UnderFitH: ElementSize.type = ElementSize
+  type UnderFitVh = ViewportHeight
+  val UnderFitVh: ViewportHeight.type = ViewportHeight
+  type PointPlacementX = ScreenPixels
+  val PointPlacementX: ScreenPixels.type = ScreenPixels
+  type PointPlacementY = ScreenPixels
+  val PointPlacementY: ScreenPixels.type = ScreenPixels
+  type PointPlacementW = ElementSize
+  val PointPlacementW: ElementSize.type = ElementSize
+  type PointPlacementH = ElementSize
+  val PointPlacementH: ElementSize.type = ElementSize
+  type PointPlacementVw = ViewportWidth
+  val PointPlacementVw: ViewportWidth.type = ViewportWidth
+  type PointPlacementVh = ViewportHeight
+  val PointPlacementVh: ViewportHeight.type = ViewportHeight
+  type UnderPlacementLeft = ScreenPixels
+  val UnderPlacementLeft: ScreenPixels.type = ScreenPixels
+  type UnderPlacementTop = ScreenPixels
+  val UnderPlacementTop: ScreenPixels.type = ScreenPixels
+  type UnderPlacementBottom = ScreenPixels
+  val UnderPlacementBottom: ScreenPixels.type = ScreenPixels
+  type UnderPlacementWidth = ElementSize
+  val UnderPlacementWidth: ElementSize.type = ElementSize
+  type UnderPlacementW = ElementSize
+  val UnderPlacementW: ElementSize.type = ElementSize
+  type UnderPlacementH = ElementSize
+  val UnderPlacementH: ElementSize.type = ElementSize
+  type UnderPlacementVw = ViewportWidth
+  val UnderPlacementVw: ViewportWidth.type = ViewportWidth
+  type UnderPlacementVh = ViewportHeight
+  val UnderPlacementVh: ViewportHeight.type = ViewportHeight
 
   enum Target:
     case Source(citekey: Target.Source.Citekey)
@@ -108,17 +121,17 @@ object Preview:
   object Target:
     object Source:
       type Citekey = com.histmersion.api.library.Citekey
-      val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+      val Citekey: com.histmersion.api.library.Citekey.type = com.histmersion.api.library.Citekey
     object Article:
       export com.histmersion.api.research.Article.Slug
     object Place:
-      export com.histmersion.web.Pages.{PlaceId as Id}
+      export Pages.{PlaceId as Id}
       export com.histmersion.api.Years.{Astronomical as AsOf}
     object Event:
-      export com.histmersion.web.Pages.{EventId as Id}
+      export Pages.{EventId as Id}
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
-  def targetOf(ck: Option[com.histmersion.web.Preview.Target.Source.Citekey], slug: Option[com.histmersion.web.Preview.Item.Slug]): Option[Target] =
+  def targetOf(ck: Option[Target.Source.Citekey], slug: Option[Item.Slug]): Option[Target] =
     ck.map(_.value.trim)
       .filter(_.nonEmpty)
       .map(c => Target.Source(Target.Source.Citekey(c)))
@@ -129,8 +142,8 @@ object Preview:
       title: Card.Title,
       byline: Card.Byline,
       identifier: Card.Identifier,
-      status: Option[com.histmersion.api.library.Source.Status],
-      chips: List[(Card.ChipKind, com.histmersion.web.Chip.Choice)],
+      status: Option[Source.Status],
+      chips: List[(Card.ChipKind, Chip.Choice)],
       where: Card.Where,
       summary: Option[Card.Summary],
       /** Short facts, one per line (a place's parents and its counts). */
@@ -142,44 +155,44 @@ object Preview:
       /** What the card is about before anything is read — an icon of [[Glyphs]] chosen by [[CardIcons]] (an event's
         * kind, a site's type, a region, a source's type…) — and an event's TIER (`attested` | `catalogue`, #1449).
         */
-      icon: Option[com.histmersion.web.Glyphs.Name] = None,
-      tier: Option[com.histmersion.api.catalogue.EventGeo.Tier] = None,
+      icon: Option[Glyphs.Name] = None,
+      tier: Option[EventGeo.Tier] = None,
       /** An event's sections (#1449): the sources attesting it, the articles citing them, the findings near it, the
         * sources that may discuss it (unconfirmed), its catalogues, its leads.
         */
-      sections: List[Preview.Section] = Nil
+      sections: List[Section] = Nil
   )
 
   object Card:
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Byline = Byline.T
-    object Byline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Byline extends RefinedType[String, Pure]
     type Identifier = Identifier.T
-    object Identifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Identifier extends RefinedType[String, Pure]
     type ChipKind = ChipKind.T
-    object ChipKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ChipKind extends RefinedType[String, Pure]
     type Where = Where.T
-    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Where extends RefinedType[String, Pure]
     type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Summary extends RefinedType[String, Pure]
     type Facts = Facts.T
-    object Facts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Facts extends RefinedType[String, Pure]
     type LinkLabel = LinkLabel.T
-    object LinkLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LinkLabel extends RefinedType[String, Pure]
     type LinkHref = LinkHref.T
-    object LinkHref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LinkHref extends RefinedType[String, Pure]
 
   /** One titled list on a card. */
-  final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = com.histmersion.web.Preview.Section.Kind(""))
+  final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = Section.Kind(""))
 
   object Section:
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
 
   /** One line: text, optionally a source (`citekey` → a source link with its own card), an article (`slug`), a page
     * elsewhere (`href`), a command to copy, a literature query to run.
@@ -195,22 +208,22 @@ object Preview:
 
   object Item:
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Citekey = com.histmersion.web.Preview.Target.Source.Citekey
-    val Citekey: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
-    type Slug = com.histmersion.api.research.Article.Slug
-    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
+    object Text extends RefinedType[String, Pure]
+    type Citekey = Target.Source.Citekey
+    val Citekey: Target.Source.Citekey.type = Target.Source.Citekey
+    type Slug = Article.Slug
+    val Slug: Article.Slug.type = Article.Slug
     type Href = Href.T
-    object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Href extends RefinedType[String, Pure]
     type Command = Command.T
-    object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Command extends RefinedType[String, Pure]
     type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Query extends RefinedType[String, Pure]
 
   private val SummaryChars = 300
 
-  def card(s: com.histmersion.api.library.Source.Detail): Card =
-    val ref = com.histmersion.api.library.Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
+  def card(s: Source.Detail): Card =
+    val ref = Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
     Card(
       title = Card.Title(s.title.value),
       byline = Card.Byline(
@@ -220,8 +233,8 @@ object Preview:
       ),
       identifier = Card.Identifier(ref.idLabel.value),
       status = Some(ref.status),
-      chips = s.topics.map(t => Card.ChipKind("topic") -> com.histmersion.web.Chip.Choice(t.value)) ++
-        s.tags.map(t => Card.ChipKind("tag") -> com.histmersion.web.Chip.Choice(t.value)),
+      chips = s.topics.map(t => Card.ChipKind("topic") -> Chip.Choice(t.value)) ++
+        s.tags.map(t => Card.ChipKind("tag") -> Chip.Choice(t.value)),
       where = Card.Where(
         List(s.regions.map(r => Label.display(Label.Text(r.value)).value).mkString(", "), YearFmt.period(s.periodStart, s.periodEnd))
           .filter(_.nonEmpty)
@@ -235,12 +248,12 @@ object Preview:
     )
 
   /** A source's card with its picture — a book's cover, else a paper's illustration (#1446). */
-  def card(sw: com.histmersion.api.library.Source.WithFindings): Card =
+  def card(sw: Source.WithFindings): Card =
     card(sw.source).modify(
       _.media).setTo(sw.illustration).modify(_.icon).setTo(Some(CardIcons.source(sw.source, hasCover = sw.illustration.exists(_.role.value == MediaRole.Cover)))
     )
 
-  def card(a: com.histmersion.api.research.Article.View): Card =
+  def card(a: Article.View): Card =
     Card(
       Card.Title(a.article.title.value),
       Card.Byline(Label.display(Label.Text(a.article.kind.value)).value),
@@ -257,16 +270,16 @@ object Preview:
   /** Where a place comes from, in words: the external source that brought it in, else the seed's own source line
     * ("Pleiades (pleiades.stoa.org), CC-BY").
     */
-  private[web] def datasetOf(p: com.histmersion.api.catalogue.Place.Summary): Option[com.histmersion.api.LpfDataset.Title] =
+  private[web] def datasetOf(p: Place.Summary): Option[LpfDataset.Title] =
     p.importSource
       .map { k =>
         if k.value.startsWith("lpf:") then s"LPF dataset ${k.value.drop(4)}"
-        else com.histmersion.api.catalogue.Place.Link.schemeTitle(com.histmersion.api.catalogue.Place.Link.Scheme(k.value)).value
+        else Place.Link.schemeTitle(Place.Link.Scheme(k.value)).value
       }
       .orElse(p.source.map(_.value))
       .map(_.trim)
       .filter(_.nonEmpty)
-      .map(com.histmersion.api.LpfDataset.Title(_))
+      .map(LpfDataset.Title(_))
 
   /** A place's card: what it is (name, kind, its period as the source states it — "end 1769 CE, start unknown" — its
     * description), whether a region has a boundary yet, where it comes from with a link to that page, the places it is
@@ -283,9 +296,9 @@ object Preview:
         Some(first.text.value + other.getOrElse(""))
     val links = d.links
       .flatMap(l =>
-        com.histmersion.api.catalogue.Place.Link
+        Place.Link
           .url(l.scheme, l.externalId)
-          .map(u => Card.LinkLabel(s"${com.histmersion.api.catalogue.Place.Link.schemeTitle(l.scheme)} ${l.externalId}") -> Card.LinkHref(u.value))
+          .map(u => Card.LinkLabel(s"${Place.Link.schemeTitle(l.scheme)} ${l.externalId}") -> Card.LinkHref(u.value))
       )
       .distinct
       .take(4)
@@ -300,10 +313,10 @@ object Preview:
       status = None,
       chips = Nil,
       where =
-        if d.parents.isEmpty then com.histmersion.web.Preview.Card.Where("")
+        if d.parents.isEmpty then Card.Where("")
         else Card.Where("part of " + d.parents.map(_.label.value).mkString(", ")),
       summary = description.map(Card.Summary(_)),
-      facts = (Option.when(d.datedByFindings)(com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote.value).toList ++
+      facts = (Option.when(d.datedByFindings)(Place.TimeBasis.FindingsNote.value).toList ++
         d.shapeNotes.map(_.value) ++
         datasetOf(p).map(s => s"source: $s").toList ++
         d.counts.toList.map(c =>
@@ -344,12 +357,12 @@ object Preview:
         .map(t => Card.Summary(if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t)),
       links = d.wikidata
         .flatMap(q =>
-          com.histmersion.api.catalogue.Place.Link
-            .url(com.histmersion.api.catalogue.Place.Link.UrlScheme("wikidata"), com.histmersion.api.catalogue.Place.Link.UrlExternalId(q.value))
+          Place.Link
+            .url(Place.Link.UrlScheme("wikidata"), Place.Link.UrlExternalId(q.value))
             .map(u => Card.LinkLabel(s"Wikidata $q") -> Card.LinkHref(u.value))
         )
         .toList,
-      facts = eventFacts(d, com.histmersion.api.Years.Text(years)).map(f => Card.Facts(f.value)),
+      facts = eventFacts(d, Years.Text(years)).map(f => Card.Facts(f.value)),
       media = d.media.headOption,
       icon = Some(Glyphs.Name(CardIcons.event(e.kind).value)),
       tier = Some(d.tier),
@@ -360,68 +373,68 @@ object Preview:
     * imprecise one is not on the map at a year), and the fields corrected by hand (kept over the catalogue's on a
     * re-import).
     */
-  def eventFacts(d: EventDetail, years: com.histmersion.api.Years.Text): List[com.histmersion.api.UiLabels.Text] =
+  def eventFacts(d: EventDetail, years: Years.Text): List[UiLabels.Text] =
     val e = d.event
     (Option.when(e.datingNote.isDefined)(s"window: $years").toList ++
       EventPrecision
         .label(e.precision)
         .map(l => if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l)
         .toList ++
-      d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}")).map(com.histmersion.api.UiLabels.Text(_))
+      d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}")).map(UiLabels.Text(_))
 
   /** Pure: an event card's sections (#1449), in the order a reader asks: who attests it, where it is written about,
     * what the corpus holds around it, what may discuss it, where the catalogue record is from, and what to do next.
     * Empty sections are left out.
     */
   def eventSections(d: EventDetail): List[Section] =
-    def km(x: com.histmersion.api.catalogue.EventFindingRef.Km) = s"${math.round(x.value)} km"
+    def km(x: EventFindingRef.Km) = s"${math.round(x.value)} km"
     List(
       Section(
-        com.histmersion.web.Preview.Section.Title("Attested by"),
+        Section.Title("Attested by"),
         d.sources.map(s =>
           Item(
             Item.Text(s.title.map(_.value).getOrElse(s.citekey.value) + s.quote.fold("")(q => s" — “$q”")),
             citekey = Some(Item.Citekey(s.citekey.value))
           )
         ),
-        kind = com.histmersion.web.Preview.Section.Kind("sources")
+        kind = Section.Kind("sources")
       ),
       Section(
-        com.histmersion.web.Preview.Section.Title("Articles citing those sources"),
+        Section.Title("Articles citing those sources"),
         d.articles.map(a => Item(Item.Text(a.title.value), slug = Some(Item.Slug(a.slug.value)))),
-        kind = com.histmersion.web.Preview.Section.Kind("articles")
+        kind = Section.Kind("articles")
       ),
       Section(
-        com.histmersion.web.Preview.Section.Title("Findings near it"),
+        Section.Title("Findings near it"),
         d.findings.map(f =>
           Item(
-            Item.Text(s"${km(f.km)}, ${if f.yearGap.value == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim.value, com.histmersion.api.Markdown.CharLimit(90))}"),
+            Item.Text(s"${km(f.km)}, ${if f.yearGap.value == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim.value, Markdown.CharLimit(90))}"),
             citekey = Some(Item.Citekey(f.citekey.value))
           )
         ),
-        kind = com.histmersion.web.Preview.Section.Kind("findings")
+        kind = Section.Kind("findings")
       ),
       Section(
-        com.histmersion.web.Preview.Section.Title("Possibly discussed in"),
+        Section.Title("Possibly discussed in"),
         d.candidates.map(c =>
           Item(
             Item.Text(c.title.map(_.value).getOrElse(c.citekey.value) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}")),
             citekey = Some(Item.Citekey(c.citekey.value))
           )
         ),
-        note = Some(com.histmersion.web.Preview.Section.Note("unconfirmed — proposed from findings near it and passages naming it")),
-        kind = com.histmersion.web.Preview.Section.Kind("candidates")
+        note = Some(Section.Note("unconfirmed — proposed from findings near it and passages naming it")),
+        kind = Section.Kind("candidates")
       ),
       Section(
-        com.histmersion.web.Preview.Section.Title("Catalogue"),
+        Section.Title("Catalogue"),
         d.catalogue.map(c =>
           Item(
             Item.Text(
               s"${c.title} ${c.providerId}" +
                 EventLeads
                   .size(
-                    c.vei.map(v => com.histmersion.api.catalogue.LeadFacts.Vei(v.value)),
-                    c.magnitude.map(m => com.histmersion.api.catalogue.LeadFacts.Magnitude(m.value))
+                    c.vei.map(v => LeadFacts.Vei(v.value)),
+                    c.magnitude.map(m => LeadFacts.Magnitude(m.value))
                   )
                   .fold("")(s => s" ($s)") +
                 s" · ${c.licence} · cite: ${c.citation}"
@@ -429,11 +442,11 @@ object Preview:
             href = Some(c.url.value).filter(_.nonEmpty).map(Item.Href(_))
           )
         ),
-        note = Option.when(d.tier.value == EventTier.Catalogue)(com.histmersion.web.Preview.Section.Note("known only from a catalogue: a research lead, not evidence")),
-        kind = com.histmersion.web.Preview.Section.Kind("catalogue")
+        note = Option.when(d.tier.value == EventTier.Catalogue)(Section.Note("known only from a catalogue: a research lead, not evidence")),
+        kind = Section.Kind("catalogue")
       ),
       Section(
-        com.histmersion.web.Preview.Section.Title("Leads"),
+        Section.Title("Leads"),
         d.leads.flatMap(l =>
           Item(Item.Text(l.text.value)) :: l.actions.map(a =>
             Item(
@@ -443,14 +456,14 @@ object Preview:
             )
           )
         ),
-        kind = com.histmersion.web.Preview.Section.Kind("leads")
+        kind = Section.Kind("leads")
       )
     ).filter(_.items.nonEmpty)
 
   /** Pure: the line under a card's picture — its credit and licence (the licence a link when it has a page), as the
     * licence asks for it to be shown.
     */
-  def creditLine(t: MediaThumb): (com.histmersion.api.media.MediaItem.Credit, Option[(com.histmersion.api.media.MediaItem.License, com.histmersion.web.Preview.Item.Href)]) =
+  def creditLine(t: MediaThumb): (MediaItem.Credit, Option[(MediaItem.License, Item.Href)]) =
     val lic = t.license.map(l =>
       l -> Item.Href(t.licenseUrl.map(_.value).orElse(LicenseName.url(l.value)).orElse(t.sourceUrl.map(_.value)).getOrElse(""))
     )
@@ -465,16 +478,16 @@ object Preview:
   private val eventCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
 
   /** The card caches' figures, for [[Diagnostics]]. */
-  def cacheStats: List[(com.histmersion.api.UiLabels.Text, BoundedCache.Stats)] =
+  def cacheStats: List[(UiLabels.Text, BoundedCache.Stats)] =
     List(
       "cards.source" -> sourceCache,
       "cards.article" -> articleCache,
       "cards.place" -> placeCache,
       "cards.event" -> eventCache
-    ).map((n, c) => com.histmersion.api.UiLabels.Text(n) -> BoundedCache.stats(c))
+    ).map((n, c) => UiLabels.Text(n) -> BoundedCache.stats(c))
 
   /** A failed fetch is forgotten, so the next hover tries again. */
-  private def cached(cache: BoundedCache[com.histmersion.web.Preview.CacheKey, Future[Card]], key: com.histmersion.web.Preview.CacheKey)(fetch: => Future[Card]): Future[Card] =
+  private def cached(cache: BoundedCache[CacheKey, Future[Card]], key: CacheKey)(fetch: => Future[Card]): Future[Card] =
     cache.getOrElseUpdate(
       key, {
         val f = fetch
@@ -486,7 +499,7 @@ object Preview:
     )
 
   /** Drop a source's cached card — it was just edited, and the next hover must show the edit. */
-  def forget(ck: com.histmersion.web.Preview.Target.Source.Citekey): Unit = { val _ = sourceCache.remove(CacheKey(ck.value)) }
+  def forget(ck: Target.Source.Citekey): Unit = { val _ = sourceCache.remove(CacheKey(ck.value)) }
 
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck) =>
@@ -501,8 +514,8 @@ object Preview:
       cached(placeCache, CacheKey(s"$id@${asOf.map(_.value.toString).getOrElse("")}"))(
         ApiClient
           .place(
-            com.histmersion.api.catalogue.Place.Id(id.value),
-            asOf.map(a => com.histmersion.api.Api.AggregateQuery.AsOf(a.value)),
+            Place.Id(id.value),
+            asOf.map(a => Api.AggregateQuery.AsOf(a.value)),
             counts = Place.Detail(true)
           )
           .map(card)
@@ -516,18 +529,18 @@ object Preview:
 
   /** The year a place chip's card reads the gazetteer at — the map's; set by whoever owns the map. */
   // `var`: the app's map sets it once it exists; a page without a map reads places as of now
-  var placeAsOf: () => Option[com.histmersion.api.Years.Astronomical] = () => None
+  var placeAsOf: () => Option[Years.Astronomical] = () => None
 
   /** Pure: what an element asks to preview, a place chip's id included (a source or an article first). */
-  def targetOf(ck: Option[com.histmersion.web.Preview.Target.Source.Citekey], slug: Option[com.histmersion.web.Preview.Item.Slug], place: Option[com.histmersion.web.Pages.PlaceId], asOf: => Option[Target.Place.AsOf]): Option[Target] =
+  def targetOf(ck: Option[Target.Source.Citekey], slug: Option[Item.Slug], place: Option[Pages.PlaceId], asOf: => Option[Target.Place.AsOf]): Option[Target] =
     targetOf(ck, slug).orElse(place.map(_.value.trim).filter(_.nonEmpty).map(p => Target.Place(Target.Place.Id(p), asOf)))
 
   /** Pure: the same, an event's id last. */
   def targetOf(
-      ck: Option[com.histmersion.web.Preview.Target.Source.Citekey],
-      slug: Option[com.histmersion.web.Preview.Item.Slug],
-      place: Option[com.histmersion.web.Pages.PlaceId],
-      event: Option[com.histmersion.web.Pages.EventId],
+      ck: Option[Target.Source.Citekey],
+      slug: Option[Item.Slug],
+      place: Option[Pages.PlaceId],
+      event: Option[Pages.EventId],
       asOf: => Option[Target.Place.AsOf]
   ): Option[Target] =
     targetOf(ck, slug, place, asOf).orElse(event.map(_.value.trim).filter(_.nonEmpty).map(e => Target.Event(Target.Event.Id(e))))
@@ -552,7 +565,7 @@ object Preview:
   /** A click on a place chip pins its card under it (its ✕ stops the click: removing is not reading). */
   private def onDocClick(e: dom.MouseEvent): Unit =
     placeAnchorOf(e.target) match
-      case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = com.histmersion.web.Preview.PinUnderKeyboard(false))
+      case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = PinUnderKeyboard(false))
       case _                               =>
         // a click anywhere else in the page, away from the pinned card and what pinned it, lets it go
         // (a click on the map is the map's to judge: it may land on another place, [[PlaceHover]])
@@ -561,11 +574,11 @@ object Preview:
             pinned.exists(p => p.box.contains(n) || p.owner.exists(_.contains(n))) ||
             n.isInstanceOf[dom.Element] && n.asInstanceOf[dom.Element].closest(".map-container") != null
           case _ => false
-        if !inside then unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
+        if !inside then unpin(restoreFocus = RestoreFocus(false))
 
-  private def pinUnder(el: dom.Element, keyboard: com.histmersion.web.Preview.PinUnderKeyboard): Unit =
+  private def pinUnder(el: dom.Element, keyboard: PinUnderKeyboard): Unit =
     targetOfElement(el).foreach { t =>
-      if isPinned(t) && !keyboard.value then unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
+      if isPinned(t) && !keyboard.value then unpin(restoreFocus = RestoreFocus(false))
       else
         pin(
           t,
@@ -613,7 +626,7 @@ object Preview:
           if PinRules.activates(PinRules.KeyName(e.key)) then
             chipItself(e.target).foreach { el =>
               e.preventDefault()
-              pinUnder(el, keyboard = com.histmersion.web.Preview.PinUnderKeyboard(true))
+              pinUnder(el, keyboard = PinUnderKeyboard(true))
             }
       )
       document.addEventListener(
@@ -684,7 +697,7 @@ object Preview:
   /** Float `t`'s card beside the viewport point (`x`, `y`) — the same card, the same cache. A second call for the
     * target already showing only moves it.
     */
-  def showAt(t: Target, x: com.histmersion.web.Preview.ShowAtX, y: com.histmersion.web.Preview.ShowAtY): Unit =
+  def showAt(t: Target, x: ShowAtX, y: ShowAtY): Unit =
     if showingAt(t) then moveTo(x, y)
     else if isPinned(t) then hide() // its card is already up, pinned: no second, moving copy
     else
@@ -714,7 +727,7 @@ object Preview:
   /** Beside the pointer, below and to the right; flipped to the other side when it would leave the viewport. The
     * position is data for `.cite-tooltip`.
     */
-  def moveTo(x: com.histmersion.web.Preview.MoveToX, y: com.histmersion.web.Preview.MoveToY): Unit =
+  def moveTo(x: MoveToX, y: MoveToY): Unit =
     lastPoint = Some((x, y))
     tip.filter(_ => atPoint.isDefined).foreach { (box, _) =>
       val maxW = math.min(360.0, window.innerWidth - 20)
@@ -725,7 +738,7 @@ object Preview:
 
   // `var`s: the pointer the floating card was last placed beside (a size change re-places it there),
   // and the observer that re-places the hover card when its content grows (a picture, a late section)
-  private var lastPoint: Option[(com.histmersion.web.Preview.ScreenPixels, com.histmersion.web.Preview.ScreenPixels)] = None
+  private var lastPoint: Option[(ScreenPixels, ScreenPixels)] = None
   private var tipObserver: Option[js.Dynamic] = None
 
   /** Re-run `f` whenever the card's content changes size — a picture arriving, a section filling in after the card was
@@ -748,14 +761,14 @@ object Preview:
       Some(o)
 
   /** The card's width, and the height its content wants — not the height a cap gave it last time. */
-  private def naturalSize(box: dom.HTMLElement): (com.histmersion.web.Preview.ElementSize, com.histmersion.web.Preview.ElementSize) =
+  private def naturalSize(box: dom.HTMLElement): (ElementSize, ElementSize) =
     val b = box.getBoundingClientRect()
     (ElementSize(b.width), ElementSize(box.scrollHeight.toDouble + (box.offsetHeight - box.clientHeight)))
 
   /** Put the card where `fit` says; a card taller than its room is capped there and scrolls (once pinned), and a capped
     * hover card fades out at the bottom to say there is more.
     */
-  private def apply(box: dom.HTMLElement, fit: Fit, natural: com.histmersion.web.Preview.ElementSize): Unit =
+  private def apply(box: dom.HTMLElement, fit: Fit, natural: ElementSize): Unit =
     box.style.setProperty("--tip-x", s"${fit.x}px")
     box.style.setProperty("--tip-y", s"${fit.y}px")
     box.style.setProperty("--tip-maxh", s"${fit.maxH}px")
@@ -765,12 +778,12 @@ object Preview:
   final case class Fit(x: Fit.X, y: Fit.Y, maxH: Fit.MaxH)
 
   object Fit:
-    type X = com.histmersion.web.Preview.ScreenPixels
-    val X: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-    type Y = com.histmersion.web.Preview.ScreenPixels
-    val Y: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
-    type MaxH = com.histmersion.web.Preview.ScreenPixels
-    val MaxH: _root_.com.histmersion.web.Preview.ScreenPixels.type = _root_.com.histmersion.web.Preview.ScreenPixels
+    type X = ScreenPixels
+    val X: ScreenPixels.type = ScreenPixels
+    type Y = ScreenPixels
+    val Y: ScreenPixels.type = ScreenPixels
+    type MaxH = ScreenPixels
+    val MaxH: ScreenPixels.type = ScreenPixels
 
   /** The margin a card keeps from every viewport edge, and the least room worth placing it in beside its anchor; with
     * less on both sides it uses the whole height and covers the anchor instead.
@@ -782,7 +795,7 @@ object Preview:
     * when it fits there, else on the roomier side, capped to that room so the content scrolls; with less than `MinRoom`
     * either side, the full viewport height.
     */
-  def verticalFit(top: com.histmersion.web.Preview.ScreenPixels, bottom: com.histmersion.web.Preview.ScreenPixels, gap: com.histmersion.web.Preview.ElementSize, h: com.histmersion.web.Preview.ElementSize, vh: com.histmersion.web.Preview.ViewportHeight): (com.histmersion.web.Preview.ScreenPixels, com.histmersion.web.Preview.ScreenPixels) =
+  def verticalFit(top: ScreenPixels, bottom: ScreenPixels, gap: ElementSize, h: ElementSize, vh: ViewportHeight): (ScreenPixels, ScreenPixels) =
     val t: Double = top.value
     val b: Double = bottom.value
     val g: Double = gap.value
@@ -800,7 +813,7 @@ object Preview:
     * would be crossed, shifted to stay ≥ 10 px inside the viewport, and capped in height when neither side has room for
     * all of it.
     */
-  def pointFit(x: com.histmersion.web.Preview.ScreenPixels, y: com.histmersion.web.Preview.ScreenPixels, w: com.histmersion.web.Preview.ElementSize, h: com.histmersion.web.Preview.PointFitH, vw: com.histmersion.web.Preview.ViewportWidth, vh: com.histmersion.web.Preview.PointFitVh): Fit =
+  def pointFit(x: ScreenPixels, y: ScreenPixels, w: ElementSize, h: PointFitH, vw: ViewportWidth, vh: PointFitVh): Fit =
     val gap = 14.0
     val xx: Double = x.value
     val ww: Double = w.value
@@ -814,14 +827,14 @@ object Preview:
     * room below, capped in height when neither side has room.
     */
   def underFit(
-      left: com.histmersion.web.Preview.ScreenPixels,
-      top: com.histmersion.web.Preview.UnderFitTop,
-      bottom: com.histmersion.web.Preview.UnderFitBottom,
-      width: com.histmersion.web.Preview.ElementSize,
-      w: com.histmersion.web.Preview.ElementSize,
-      h: com.histmersion.web.Preview.UnderFitH,
-      vw: com.histmersion.web.Preview.ViewportWidth,
-      vh: com.histmersion.web.Preview.UnderFitVh
+      left: ScreenPixels,
+      top: UnderFitTop,
+      bottom: UnderFitBottom,
+      width: ElementSize,
+      w: ElementSize,
+      h: UnderFitH,
+      vw: ViewportWidth,
+      vh: UnderFitVh
   ): Fit =
     val l: Double = left.value
     val wd: Double = width.value
@@ -832,21 +845,21 @@ object Preview:
     Fit(ScreenPixels(x), y, maxH)
 
   /** Pure: the corner [[pointFit]] picks (kept for callers that only need the position). */
-  def pointPlacement(x: com.histmersion.web.Preview.PointPlacementX, y: com.histmersion.web.Preview.PointPlacementY, w: com.histmersion.web.Preview.PointPlacementW, h: com.histmersion.web.Preview.PointPlacementH, vw: com.histmersion.web.Preview.PointPlacementVw, vh: com.histmersion.web.Preview.PointPlacementVh): (com.histmersion.web.Preview.ScreenPixels, com.histmersion.web.Preview.ScreenPixels) =
+  def pointPlacement(x: PointPlacementX, y: PointPlacementY, w: PointPlacementW, h: PointPlacementH, vw: PointPlacementVw, vh: PointPlacementVh): (ScreenPixels, ScreenPixels) =
     val f = pointFit(x, y, w, h, vw, vh)
     (f.x, f.y)
 
   /** Pure: the corner [[underFit]] picks. */
   def underPlacement(
-      left: com.histmersion.web.Preview.UnderPlacementLeft,
-      top: com.histmersion.web.Preview.UnderPlacementTop,
-      bottom: com.histmersion.web.Preview.UnderPlacementBottom,
-      width: com.histmersion.web.Preview.UnderPlacementWidth,
-      w: com.histmersion.web.Preview.UnderPlacementW,
-      h: com.histmersion.web.Preview.UnderPlacementH,
-      vw: com.histmersion.web.Preview.UnderPlacementVw,
-      vh: com.histmersion.web.Preview.UnderPlacementVh
-  ): (com.histmersion.web.Preview.ScreenPixels, com.histmersion.web.Preview.ScreenPixels) =
+      left: UnderPlacementLeft,
+      top: UnderPlacementTop,
+      bottom: UnderPlacementBottom,
+      width: UnderPlacementWidth,
+      w: UnderPlacementW,
+      h: UnderPlacementH,
+      vw: UnderPlacementVw,
+      vh: UnderPlacementVh
+  ): (ScreenPixels, ScreenPixels) =
     val f = underFit(left, top, bottom, width, w, h, vw, vh)
     (f.x, f.y)
 
@@ -862,9 +875,9 @@ object Preview:
 
   object Anchor:
     object At:
-      export com.histmersion.web.Preview.{ScreenPixels as X, ScreenPixels as Y}
+      export Preview.{ScreenPixels as X, ScreenPixels as Y}
     object Under:
-      export com.histmersion.web.Preview.{ScreenPixels as Left, ScreenPixels as Top, ScreenPixels as Bottom, ElementSize as Width}
+      export Preview.{ScreenPixels as Left, ScreenPixels as Top, ScreenPixels as Bottom, ElementSize as Width}
 
   /** The pinned card: what it shows, its element, where it is anchored (`None` while the anchor is out of view: the
     * card waits, hidden), what pinned it (a click there is not "outside"), and where the focus goes back to when it
@@ -880,7 +893,7 @@ object Preview:
   ):
     // `var`: the card's size, measured when its content arrives — a pan re-places it every frame
     // and must not force a layout each time
-    var size: (com.histmersion.web.Preview.ElementSize, com.histmersion.web.Preview.ElementSize) = (com.histmersion.web.Preview.ElementSize(0), com.histmersion.web.Preview.ElementSize(0))
+    var size: (ElementSize, ElementSize) = (ElementSize(0), ElementSize(0))
     // `var`: re-measures the card when its content changes size (see `observe`)
     var observer: Option[js.Dynamic] = None
 
@@ -901,8 +914,8 @@ object Preview:
   /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the focus moves into
     * the card (its ✕ first, then its links), and back to `owner` when it closes.
     */
-  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: com.histmersion.web.Preview.KeyboardDriven = com.histmersion.web.Preview.KeyboardDriven(false)): Unit =
-    unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
+  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: KeyboardDriven = KeyboardDriven(false)): Unit =
+    unpin(restoreFocus = RestoreFocus(false))
     hide()
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
     box.className = "cite-tooltip place-tip is-pinned"
@@ -933,12 +946,12 @@ object Preview:
         box.setAttribute("aria-label", c.title.value)
         measure(p)
         reposition()
-      case Failure(_) if pinned.contains(p) => unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
+      case Failure(_) if pinned.contains(p) => unpin(restoreFocus = RestoreFocus(false))
       case _                                => ()
     }
 
   /** Close the pinned card; from the keyboard, the focus returns to what pinned it. */
-  def unpin(restoreFocus: com.histmersion.web.Preview.RestoreFocus = com.histmersion.web.Preview.RestoreFocus(true)): Unit =
+  def unpin(restoreFocus: RestoreFocus = RestoreFocus(true)): Unit =
     pinned.foreach { p =>
       pinned = None
       p.observer.foreach { o =>
@@ -1053,15 +1066,15 @@ object Preview:
       // a discover action is its button alone; anything else says what it is
       Option.when(it.query.isEmpty)(
         it.slug
-          .map(slug => com.histmersion.web.ArticleLink(com.histmersion.api.research.Article.Slug(slug.value), it.text.value): HtmlElement)
+          .map(slug => ArticleLink(Article.Slug(slug.value), it.text.value): HtmlElement)
           .getOrElse(span(if it.citekey.isDefined then s" ${it.text}" else it.text.value))
       ),
       it.href.map(u => a(cls := "cite-tip-link", href := u.value, target := "_blank", rel := "noopener", " ↗")),
-      it.query.map(q => discoverButton(com.histmersion.api.Api.Search.Text(q.value))),
+      it.query.map(q => discoverButton(Api.Search.Text(q.value))),
       it.command.filter(_ => it.query.isEmpty).map(cmd => commandView(cmd))
     )
 
-  private def commandView(cmd: com.histmersion.web.Preview.Item.Command): HtmlElement =
+  private def commandView(cmd: Item.Command): HtmlElement =
     span(
       cls := "cite-tip-command",
       code(cmd.value),
@@ -1077,7 +1090,7 @@ object Preview:
   /** Ask the literature search (`/api/discover`, OpenAlex) for `q`, works not in the corpus yet, and list the first few
     * under the button.
     */
-  private def discoverButton(q: com.histmersion.api.Api.Search.Text): HtmlElement =
+  private def discoverButton(q: Api.Search.Text): HtmlElement =
     val found = Var[Option[Either[String, DiscoverResult]]](None)
     span(
       cls := "cite-tip-discover",
@@ -1087,7 +1100,7 @@ object Preview:
         "search the literature",
         onClick --> { _ =>
           found.set(Some(Left("searching…")))
-          ApiClient.discover(q, com.histmersion.api.Paging.Limit(5)).onComplete {
+          ApiClient.discover(q, Paging.Limit(5)).onComplete {
             case Success(r) => found.set(Some(Right(r)))
             case Failure(e) => found.set(Some(Left(s"no answer: ${e.getMessage}")))
           }
@@ -1159,9 +1172,9 @@ object Preview:
   /** Pure: the attributes that open a card's picture full size ([[Lightbox]]): the stored file, its credit, licence and
     * the provider's page.
     */
-  def fullAttrs(t: MediaThumb): List[(com.histmersion.api.UiLabels.Text, com.histmersion.api.UiLabels.Text)] =
+  def fullAttrs(t: MediaThumb): List[(UiLabels.Text, UiLabels.Text)] =
     val item = Lightbox.Item(
-      MediaThumb.filePath(com.histmersion.api.exchange.Bundle.Asset.Uid(t.uid.value)).value,
+      MediaThumb.filePath(Bundle.Asset.Uid(t.uid.value)).value,
       t.credit.value,
       None,
       Some(t.credit.value).filter(_.nonEmpty),
@@ -1178,10 +1191,10 @@ object Preview:
       "data-lb-license-url" -> item.licenseUrl,
       "data-lb-source-url" -> item.sourceUrl
     )
-    vals.collect { case (k, Some(v)) if v.nonEmpty => com.histmersion.api.UiLabels.Text(k) -> com.histmersion.api.UiLabels.Text(v) }
+    vals.collect { case (k, Some(v)) if v.nonEmpty => UiLabels.Text(k) -> UiLabels.Text(v) }
 
   /** Pure: the thumbnail's stored size (`--w`/`--h` for `.cite-tip-media`), when it is known. */
-  def sizeOf(t: MediaThumb): Option[(com.histmersion.api.media.ImageSize.Width, com.histmersion.api.media.ImageSize.Height)] = (t.width, t.height) match
+  def sizeOf(t: MediaThumb): Option[(ImageSize.Width, ImageSize.Height)] = (t.width, t.height) match
     case (Some(w), Some(h)) if w.value > 0 && h.value > 0 => Some((w, h))
     case _                                                => None
 

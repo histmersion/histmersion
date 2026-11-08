@@ -1,9 +1,12 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one `transform` write
   * per marker in view; one far outside the view is hidden, not moved).
@@ -68,7 +71,7 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
   /** Take `m` off the pane now (it no longer follows the map, answers the pointer or counts), but leave its element
     * drawn for `ms` more — a marker merging into a bubble flies into it first.
     */
-  def retire(m: DomMarker, ms: com.histmersion.web.map.MarkerPane.RetireMs): Unit =
+  def retire(m: DomMarker, ms: MarkerPane.RetireMs): Unit =
     if markers.contains(m) then
       markers.remove(m)
       m.el.classList.add("hd-cluster-ghost")
@@ -77,12 +80,12 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
 
   def has(m: DomMarker): Boolean = markers.contains(m)
 
-  def size: com.histmersion.web.map.MarkerPane.MarkerCount = com.histmersion.web.map.MarkerPane.MarkerCount(markers.size)
+  def size: MarkerPane.MarkerCount = MarkerPane.MarkerCount(markers.size)
 
   def reposition(v: View): Unit = markers.foreach(_.place(v))
 
 object MarkerPane:
   type MarkerCount = MarkerCount.T
-  object MarkerCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MarkerCount extends RefinedType[Int, Pure]
   type RetireMs = RetireMs.T
-  object RetireMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RetireMs extends RefinedType[Int, Pure]

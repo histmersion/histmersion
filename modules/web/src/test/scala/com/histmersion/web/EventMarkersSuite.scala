@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
@@ -21,6 +22,13 @@ import com.histmersion.api.catalogue.{
 import com.histmersion.api.views.EventDetail
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.web.map.LatLon
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.catalogue.LeadFacts
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its
   * kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key names every icon, the menus
@@ -31,9 +39,9 @@ class EventMarkersSuite extends munit.FunSuite:
   test("the registry has an icon for every event kind and every site type, each a currentColor SVG"):
     val missing = (EventTaxonomy.kinds.map(_.icon.value) ++ SiteTypes.all.map(_.icon.value)).filterNot(Glyphs.inner.contains)
     assertEquals(missing, Nil)
-    val svg = Glyphs.svg(com.histmersion.web.Glyphs.Name("swords")).value
+    val svg = Glyphs.svg(Glyphs.Name("swords")).value
     assert(svg.startsWith("""<svg class="glyph" viewBox="0 0 24 24"""") && svg.contains("<polyline"), svg)
-    assertEquals(Glyphs.svg(com.histmersion.web.Glyphs.Name("no-such-icon")).value, "")
+    assertEquals(Glyphs.svg(Glyphs.Name("no-such-icon")).value, "")
     assert(!Glyphs.inner.values.exists(v => v.contains("fill=\"#") || v.contains("stroke=\"#")), "no colour in an icon")
 
   // legibility at marker size: within a shape, no two things share a glyph — every event kind, every site
@@ -49,90 +57,90 @@ class EventMarkersSuite extends munit.FunSuite:
     )
 
   private val battle = EventGeo(
-    com.histmersion.api.catalogue.Event.Id("zz_b"),
-    com.histmersion.api.catalogue.EventGeo.Label("Zz <battle>"),
-    com.histmersion.api.catalogue.EventGeo.Kind("battle"),
-    com.histmersion.api.catalogue.EventGeo.Scale("local"),
-    com.histmersion.api.catalogue.EventGeo.Historicity("attested"),
-    TimeSpan(Some(com.histmersion.api.catalogue.Year(-1274)), None, None, Some(com.histmersion.api.catalogue.Year(-1274))),
-    com.histmersion.api.catalogue.Latitude(37.5),
-    com.histmersion.api.catalogue.Longitude(32),
-    com.histmersion.api.catalogue.EventGeo.Anchor("event"),
+    Event.Id("zz_b"),
+    EventGeo.Label("Zz <battle>"),
+    EventGeo.Kind("battle"),
+    EventGeo.Scale("local"),
+    EventGeo.Historicity("attested"),
+    TimeSpan(Some(Year(-1274)), None, None, Some(Year(-1274))),
+    Latitude(37.5),
+    Longitude(32),
+    EventGeo.Anchor("event"),
     tier = EventGeo.Tier(EventTier.Attested)
   )
   private val eruption = EventGeo(
-    com.histmersion.api.catalogue.Event.Id("zz_e"),
-    com.histmersion.api.catalogue.EventGeo.Label("Eruption of Zz"),
-    com.histmersion.api.catalogue.EventGeo.Kind("eruption"),
-    com.histmersion.api.catalogue.EventGeo.Scale("local"),
-    com.histmersion.api.catalogue.EventGeo.Historicity("attested"),
-    TimeSpan(Some(com.histmersion.api.catalogue.Year(-1630)), None, None, Some(com.histmersion.api.catalogue.Year(-1600))),
-    com.histmersion.api.catalogue.Latitude(37),
-    com.histmersion.api.catalogue.Longitude(33),
-    com.histmersion.api.catalogue.EventGeo.Anchor("event"),
+    Event.Id("zz_e"),
+    EventGeo.Label("Eruption of Zz"),
+    EventGeo.Kind("eruption"),
+    EventGeo.Scale("local"),
+    EventGeo.Historicity("attested"),
+    TimeSpan(Some(Year(-1630)), None, None, Some(Year(-1600))),
+    Latitude(37),
+    Longitude(33),
+    EventGeo.Anchor("event"),
     tier = EventGeo.Tier(EventTier.Catalogue),
-    size = Some(com.histmersion.api.catalogue.EventGeo.Size("VEI 6"))
+    size = Some(EventGeo.Size("VEI 6"))
   )
 
   test("an event marker: its kind's icon, its tier and group as classes, its card's attribute, the colour as --c"):
-    val h = EventMarker.html(battle, com.histmersion.web.EventMarker.Color("rgb(1,2,3)")).value
+    val h = EventMarker.html(battle, EventMarker.Color("rgb(1,2,3)")).value
     assert(h.contains("hd-ev--attested") && h.contains("hd-ev--human"), h)
     assert(h.contains("""data-id="zz_b"""") && h.contains("--c:rgb(1,2,3)"), h)
     assert(!h.contains("data-event"), "the hover is the point layer's, not the delegated link preview's")
-    assert(h.contains(Glyphs.badge(com.histmersion.web.Glyphs.BadgeName("swords")).value) && h.contains("hd-badge"), h)
+    assert(h.contains(Glyphs.badge(Glyphs.BadgeName("swords")).value) && h.contains("hd-badge"), h)
     assertEquals(EventMarker.describe(battle).value, "Zz <battle> · battle · 1274 BCE · attested")
-    val c = EventMarker.html(eruption, com.histmersion.web.EventMarker.Color("rgb(1,2,3)")).value
+    val c = EventMarker.html(eruption, EventMarker.Color("rgb(1,2,3)")).value
     assert(c.contains("hd-ev--catalogue") && c.contains("hd-ev--natural"), c)
     assert(
       EventMarker.describe(eruption).value.contains("VEI 6") && EventMarker.describe(eruption).value.contains("catalogue only")
     )
 
   test("an event's place on the ramp is the middle of its span within the span shown"):
-    assertEquals(EventMarker.rampAt(eruption, (com.histmersion.api.catalogue.Year(-1700L), com.histmersion.api.catalogue.Year(-1500L))).value, 0.425)
-    assertEquals(EventMarker.rampAt(battle, (com.histmersion.api.catalogue.Year(-1000L), com.histmersion.api.catalogue.Year(-500L))).value, 0.0, "clamped")
-    assertEquals(EventMarker.rampAt(battle, (com.histmersion.api.catalogue.Year(-1274L), com.histmersion.api.catalogue.Year(-1274L))).value, 0.5)
+    assertEquals(EventMarker.rampAt(eruption, (Year(-1700L), Year(-1500L))).value, 0.425)
+    assertEquals(EventMarker.rampAt(battle, (Year(-1000L), Year(-500L))).value, 0.0, "clamped")
+    assertEquals(EventMarker.rampAt(battle, (Year(-1274L), Year(-1274L))).value, 0.5)
 
   test("a site's marker is a circle badge: its type's icon and colour; the exclamation mark when untyped"):
-    val fort = SitePoint(Some(com.histmersion.web.SitePoint.Id("zz_f")), com.histmersion.web.SitePoint.Label("Zz fort"), SitePoint.Kind(Place.Kind.Site), Some(com.histmersion.web.SitePoint.SiteType("fortification")), None, com.histmersion.web.map.LatLon.Lat(37), com.histmersion.web.map.LatLon.Lon(32), None)
+    val fort = SitePoint(Some(SitePoint.Id("zz_f")), SitePoint.Label("Zz fort"), SitePoint.Kind(Place.Kind.Site), Some(SitePoint.SiteType("fortification")), None, LatLon.Lat(37), LatLon.Lon(32), None)
     val h = PointMarker.html(PointKinds.Sites, fort, "rgb(9,9,9)")
     assert(
       h.contains("""data-site-type="fortification"""") && h.contains("--c:rgb(9,9,9)") && h.contains(
-        Glyphs.badge(com.histmersion.web.Glyphs.BadgeName("castle")).value
+        Glyphs.badge(Glyphs.BadgeName("castle")).value
       ),
       h
     )
     assert(h.contains("hd-badge hd-badge--circle"), h)
     val plain = fort.modify(_.siteType).setTo(None).modify(_.label).setTo(SitePoint.Label("Zz plain"))
     val u = PointMarker.html(PointKinds.Sites, plain, "rgb(9,9,9)")
-    assert(u.contains(Glyphs.badge(com.histmersion.web.Glyphs.BadgeName("alert-mark")).value) && !u.contains("data-site-type"), u)
+    assert(u.contains(Glyphs.badge(Glyphs.BadgeName("alert-mark")).value) && !u.contains("data-site-type"), u)
     assertEquals(
       PointMarker.ariaLabel(PointKinds.Sites, plain).value,
       "Zz plain · site — show only this place and pin its card"
     )
 
   test("a badge's icon is drawn twice: a dark halo under the white ink; the same string for every marker"):
-    val b = Glyphs.badge(com.histmersion.web.Glyphs.BadgeName("castle")).value
+    val b = Glyphs.badge(Glyphs.BadgeName("castle")).value
     assert(b.contains("""<g class="glyph-halo">""") && b.contains("""<g class="glyph-ink">"""), b)
     assertEquals(b.split(Glyphs.inner("castle"), -1).length - 1, 2)
-    assert(Glyphs.badge(com.histmersion.web.Glyphs.BadgeName("castle")).value eq b, "cached")
-    assertEquals(Glyphs.badge(com.histmersion.web.Glyphs.BadgeName("no-such-icon")).value, "")
+    assert(Glyphs.badge(Glyphs.BadgeName("castle")).value eq b, "cached")
+    assertEquals(Glyphs.badge(Glyphs.BadgeName("no-such-icon")).value, "")
 
   test(
     "the key names every shape and source kind; every kind, both tiers and every site type — only for the layers on"
   ):
-    val k = MapKey.html(events = com.histmersion.web.MapKey.Events(true), sites = com.histmersion.web.MapKey.Sites(true)).value
+    val k = MapKey.html(events = MapKey.Events(true), sites = MapKey.Sites(true)).value
     EventTaxonomy.kinds.foreach(x => assert(k.contains(x.label.value), x.label))
     SiteTypes.all.foreach(x => assert(k.contains(Fmt.esc(x.label.value)), x.label))
     assert(k.contains("catalogue only (a lead)"))
-    assert(!MapKey.html(events = com.histmersion.web.MapKey.Events(false), sites = com.histmersion.web.MapKey.Sites(true)).value.contains("natural events"))
-    val bare = MapKey.html(events = com.histmersion.web.MapKey.Events(false), sites = com.histmersion.web.MapKey.Sites(false)).value
+    assert(!MapKey.html(events = MapKey.Events(false), sites = MapKey.Sites(true)).value.contains("natural events"))
+    val bare = MapKey.html(events = MapKey.Events(false), sites = MapKey.Sites(false)).value
     List("a finding (a source", "a site", "an event", "a picture", "a region or polity", "several nearby").foreach(w =>
       assert(bare.contains(w), w)
     )
     // the shapes are the toolbar's own layer icons
     (PointKinds.all.map(_.icon) :+ Icon.Region).foreach(i => assert(bare.contains(Icon.html(i).value), i.toString))
     assert(bare.contains("hd-cluster") && bare.contains("hd-badge--diamond"))
-    assert(bare.contains("source of unknown kind") && bare.contains(Glyphs.badge(com.histmersion.web.Glyphs.BadgeName("alert-mark")).value))
+    assert(bare.contains("source of unknown kind") && bare.contains(Glyphs.badge(Glyphs.BadgeName("alert-mark")).value))
     assert(!bare.contains("natural events") && !bare.contains("fortification"))
 
   test("the toolbar's layer icons are the descriptors' shapes"):
@@ -172,7 +180,7 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(IconSelect.step("End", 0, 3), Some(2))
     assertEquals(IconSelect.step("Home", 2, 3), Some(0))
     assertEquals(IconSelect.step("x", 0, 3), None)
-    val os = List("all", "battle", "burial", "cave").map(l => IconSelect.Opt(IconSelect.Opt.Value(l), IconSelect.Opt.Label(l), com.histmersion.web.Icon.Html("")))
+    val os = List("all", "battle", "burial", "cave").map(l => IconSelect.Opt(IconSelect.Opt.Value(l), IconSelect.Opt.Label(l), Icon.Html("")))
     assertEquals(IconSelect.typeAhead(os, 0, "b"), Some(1))
     assertEquals(IconSelect.typeAhead(os, 1, "b"), Some(2))
     assertEquals(IconSelect.typeAhead(os, 2, "b"), Some(1), "wraps")
@@ -180,15 +188,15 @@ class EventMarkersSuite extends munit.FunSuite:
     assertEquals(IconSelect.typeAhead(os, 0, "zz"), None)
 
   test("an open-ended event's card dates it at the end it states and says the other is not recorded (#1768)"):
-    val start = Preview.card(EventDetail(EventSummary(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventSummary.Label("E"), com.histmersion.api.catalogue.EventSummary.Kind("war"), TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200))), com.histmersion.api.catalogue.EventSummary.Historicity("attested"))))
+    val start = Preview.card(EventDetail(EventSummary(Event.Id("e"), EventSummary.Label("E"), EventSummary.Kind("war"), TimeSpan(notBefore = Some(Year(-1200))), EventSummary.Historicity("attested"))))
     assert(start.byline.value.contains("1200 BCE (end not recorded)"), start.byline)
     val both =
-      Preview.card(EventDetail(EventSummary(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventSummary.Label("E"), com.histmersion.api.catalogue.EventSummary.Kind("war"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-431)), None, None, Some(com.histmersion.api.catalogue.Year(-404))), com.histmersion.api.catalogue.EventSummary.Historicity("attested"))))
+      Preview.card(EventDetail(EventSummary(Event.Id("e"), EventSummary.Label("E"), EventSummary.Kind("war"), TimeSpan(Some(Year(-431)), None, None, Some(Year(-404))), EventSummary.Historicity("attested"))))
     assert(!both.byline.value.contains("not recorded"), both.byline)
     assertEquals(
       EventPlayback
         .playable(
-          List(EventGeo(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventGeo.Label("E"), com.histmersion.api.catalogue.EventGeo.Kind("war"), com.histmersion.api.catalogue.EventGeo.Scale("regional"), com.histmersion.api.catalogue.EventGeo.Historicity("attested"), TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200))), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.EventGeo.Anchor("event")))
+          List(EventGeo(Event.Id("e"), EventGeo.Label("E"), EventGeo.Kind("war"), EventGeo.Scale("regional"), EventGeo.Historicity("attested"), TimeSpan(notBefore = Some(Year(-1200))), Latitude(0), Longitude(0), EventGeo.Anchor("event")))
         )
         .map(_._2)
         .map((a, b) => (a.value, b.value)),
@@ -198,30 +206,30 @@ class EventMarkersSuite extends munit.FunSuite:
 
   test("an event card: attesting sources as source links, the catalogue as provenance, leads with their actions"):
     val d = EventDetail(
-      EventSummary(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventSummary.Label("E"), com.histmersion.api.catalogue.EventSummary.Kind("eruption"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1600)), None, None, Some(com.histmersion.api.catalogue.Year(-1600))), com.histmersion.api.catalogue.EventSummary.Historicity("attested")),
+      EventSummary(Event.Id("e"), EventSummary.Label("E"), EventSummary.Kind("eruption"), TimeSpan(Some(Year(-1600)), None, None, Some(Year(-1600))), EventSummary.Historicity("attested")),
       tier = EventGeo.Tier(EventTier.Catalogue),
       sources = Nil,
       catalogue = List(
         EventCatalogueRef(
-          com.histmersion.api.catalogue.EventCatalogueRef.Provider("gvp"),
-          com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("1"),
-          com.histmersion.api.catalogue.EventCatalogueRef.Url("https://volcano.si.edu/volcano.cfm?vn=1"),
-          com.histmersion.api.catalogue.EventCatalogueRef.Title("GVP"),
-          com.histmersion.api.catalogue.EventCatalogueRef.Licence("Smithsonian Terms of Use"),
-          com.histmersion.api.catalogue.EventCatalogueRef.Citation("cite GVP"),
-          vei = Some(com.histmersion.api.catalogue.EventCatalogueRef.Vei(6))
+          EventCatalogueRef.Provider("gvp"),
+          EventCatalogueRef.ProviderId("1"),
+          EventCatalogueRef.Url("https://volcano.si.edu/volcano.cfm?vn=1"),
+          EventCatalogueRef.Title("GVP"),
+          EventCatalogueRef.Licence("Smithsonian Terms of Use"),
+          EventCatalogueRef.Citation("cite GVP"),
+          vei = Some(EventCatalogueRef.Vei(6))
         )
       ),
-      candidates = List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.library.Citekey("x2020"), EventLinkCandidate.Score(0.9), title = Some(com.histmersion.api.library.Title("X")), reasons = List(EventLinkCandidate.Reasons("names it 1 time")))),
+      candidates = List(EventLinkCandidate(Event.Id("e"), Citekey("x2020"), EventLinkCandidate.Score(0.9), title = Some(Title("X")), reasons = List(EventLinkCandidate.Reasons("names it 1 time")))),
       leads = List(
         EventLead(
-          com.histmersion.api.catalogue.Event.Id("e"),
-          com.histmersion.api.catalogue.EventLead.Label("E"),
-          com.histmersion.api.catalogue.EventLead.Kind("eruption"),
-          com.histmersion.api.catalogue.EventLead.Tier("catalogue"),
-          com.histmersion.api.catalogue.EventLead.Years("1600 BCE"),
-          com.histmersion.api.catalogue.EventLead.Text("No source…"),
-          EventLeads.actions(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventLead.Label("E"), com.histmersion.api.catalogue.EventLead.Years("1600 BCE"), com.histmersion.api.catalogue.LeadFacts.Proposed(1))
+          Event.Id("e"),
+          EventLead.Label("E"),
+          EventLead.Kind("eruption"),
+          EventLead.Tier("catalogue"),
+          EventLead.Years("1600 BCE"),
+          EventLead.Text("No source…"),
+          EventLeads.actions(Event.Id("e"), EventLead.Label("E"), EventLead.Years("1600 BCE"), LeadFacts.Proposed(1))
         )
       )
     )
@@ -244,33 +252,33 @@ class EventMarkersSuite extends munit.FunSuite:
 
   // ── how precisely an event is dated (the data-source assessment's P0) ─────────────────────────
 
-  private val hekla = eruption.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("gvp_12724")).modify(_.label).setTo(EventGeo.Label("Eruption of Hekla")).modify(_.timeSpan).setTo(TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026)))).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Imprecise)).modify(_.dating).setTo(Some(EventGeo.Dating("250 CE ± 2500 (tephrochronology)"))
+  private val hekla = eruption.modify(_.id).setTo(Event.Id("gvp_12724")).modify(_.label).setTo(EventGeo.Label("Eruption of Hekla")).modify(_.timeSpan).setTo(TimeSpan(Some(Year(-2251)), None, None, Some(Year(2026)))).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Imprecise)).modify(_.dating).setTo(Some(EventGeo.Dating("250 CE ± 2500 (tephrochronology)"))
   )
-  private val approx = eruption.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("zz_a")).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Approximate))
+  private val approx = eruption.modify(_.id).setTo(Event.Id("zz_a")).modify(_.precision).setTo(EventGeo.Precision(EventPrecision.Approximate))
 
   test("an imprecisely dated event is not drawn at a year — neither as a marker nor in playback"):
     assert(!PointKinds.Events.keep(hekla))
     assert(PointKinds.Events.keep(eruption) && PointKinds.Events.keep(approx))
-    assertEquals(EventPlayback.playable(List(hekla, eruption, approx)).map(_._1.id), Vector("zz_e", "zz_a").map(com.histmersion.api.catalogue.Event.Id.apply))
+    assertEquals(EventPlayback.playable(List(hekla, eruption, approx)).map(_._1.id), Vector("zz_e", "zz_a").map(Event.Id.apply))
 
   test("an approximately dated event is drawn faded: its marker and its playback label carry the class"):
-    assert(EventMarker.html(approx, com.histmersion.web.EventMarker.Color("rgb(1,2,3)")).value.contains("hd-ev--approximate"))
-    assert(!EventMarker.html(eruption, com.histmersion.web.EventMarker.Color("rgb(1,2,3)")).value.contains("hd-ev--approximate"))
+    assert(EventMarker.html(approx, EventMarker.Color("rgb(1,2,3)")).value.contains("hd-ev--approximate"))
+    assert(!EventMarker.html(eruption, EventMarker.Color("rgb(1,2,3)")).value.contains("hd-ev--approximate"))
     assert(EventPlayback.html(approx, EventPlayback.Alpha(1.0)).value.contains("hd-event--approximate"))
     assert(EventMarker.describe(approx).value.contains("approximate date"))
 
   test("the card of an imprecisely dated event: its stated year, ± and method, the window, and why it is off the map"):
     val d = EventDetail(
       EventSummary(
-        com.histmersion.api.catalogue.Event.Id("gvp_12724"),
-        com.histmersion.api.catalogue.EventSummary.Label("Eruption of Hekla"),
-        com.histmersion.api.catalogue.EventSummary.Kind("eruption"),
+        Event.Id("gvp_12724"),
+        EventSummary.Label("Eruption of Hekla"),
+        EventSummary.Kind("eruption"),
         hekla.timeSpan,
-        com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
+        EventSummary.Historicity("attested"),
         precision = EventSummary.Precision(EventPrecision.Imprecise),
-        central = Some(com.histmersion.api.catalogue.EventSummary.Central(250)),
-        plusMinus = Some(com.histmersion.api.catalogue.EventSummary.PlusMinus(2500)),
-        datingMethod = Some(com.histmersion.api.catalogue.EventSummary.DatingMethod("Tephrochronology"))
+        central = Some(EventSummary.Central(250)),
+        plusMinus = Some(EventSummary.PlusMinus(2500)),
+        datingMethod = Some(EventSummary.DatingMethod("Tephrochronology"))
       ),
       tier = EventGeo.Tier(EventTier.Catalogue),
       corrections = List(

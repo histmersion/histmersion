@@ -1,8 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A clustered dot that is not a finding — a site, an event, a picture: what the bubble counts and colours, and the row
   * its list shows (its kind's icon, its name, a note, `mid` the middle of its dated span on the period ramp). A
@@ -14,17 +17,17 @@ final case class DotEntry(
     label: DotEntry.Label,
     icon: DotEntry.Icon,
     mid: Option[DotEntry.Mid],
-    note: DotEntry.Note = com.histmersion.web.DotEntry.Note("")
+    note: DotEntry.Note = DotEntry.Note("")
 )
 
 object DotEntry:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Icon = Icon.T
-  object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Icon extends RefinedType[String, Pure]
   type Mid = Mid.T
-  object Mid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mid extends RefinedType[Double, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]

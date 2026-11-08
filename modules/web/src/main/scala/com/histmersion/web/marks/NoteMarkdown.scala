@@ -1,4 +1,9 @@
-package com.histmersion.web.marks
+package com.histmersion
+package web.marks
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Citekey
 
 /** The little Markdown a note is written in, read for its preview: headings (`#`), paragraphs, lists (`-`, `*`, `1.`),
   * quotes (`>`), code blocks (```), and in a line `**strong**`, `*emphasis*`, `` `code` ``, `[text](https://…)` and
@@ -6,17 +11,17 @@ package com.histmersion.web.marks
   */
 object NoteMarkdown:
   type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Href extends RefinedType[String, Pure]
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
 
   enum Inline:
     case Text(s: String)
     case Strong(s: String)
     case Em(s: String)
     case Code(s: String)
-    case Link(text: String, href: NoteMarkdown.Href)
-    case Cite(citekey: com.histmersion.api.library.Citekey)
+    case Link(text: String, href: Href)
+    case Cite(citekey: Citekey)
 
   enum Block:
     case Heading(level: Block.Heading.Level, text: List[Inline])
@@ -28,10 +33,10 @@ object NoteMarkdown:
   object Block:
     object Heading:
       type Level = Level.T
-      object Level extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Level extends RefinedType[Int, Pure]
     object Items:
       type Ordered = Ordered.T
-      object Ordered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Ordered extends RefinedType[Boolean, Pure]
 
   private val Heading = """^(#{1,6})\s+(.*)$""".r
   private val Bullet = """^\s*[-*+]\s+(.*)$""".r
@@ -39,14 +44,14 @@ object NoteMarkdown:
   private val QuoteL = """^\s*>\s?(.*)$""".r
 
   /** Only addresses a person can follow safely: the web, mail, or a page of this server. */
-  def safeHref(h: com.histmersion.web.marks.NoteMarkdown.Href): Option[com.histmersion.web.marks.NoteMarkdown.Href] =
+  def safeHref(h: Href): Option[Href] =
     val t = h.value.trim
     Option.when(
       t.startsWith("https://") || t.startsWith("http://") || t.startsWith("mailto:") ||
         (t.startsWith("/") && !t.startsWith("//"))
     )(Href(t))
 
-  def blocks(text: com.histmersion.web.marks.NoteMarkdown.Markdown): List[Block] =
+  def blocks(text: Markdown): List[Block] =
     @annotation.tailrec
     def loop(lines: List[String], out: List[Block]): List[Block] = lines match
       case Nil                                   => out.reverse
@@ -57,10 +62,10 @@ object NoteMarkdown:
       case Heading(h, t) :: rest   => loop(rest, Block.Heading(Block.Heading.Level(h.length), inlinesOf(t.trim)) :: out)
       case (l @ Bullet(_)) :: rest =>
         val (more, after) = rest.span { case Bullet(_) => true; case _ => false }
-        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlinesOf(t) }) :: out)
+        loop(after, Block.Items(Block.Items.Ordered(false), (l :: more).collect { case Bullet(t) => inlinesOf(t) }) :: out)
       case (l @ Number(_)) :: rest =>
         val (more, after) = rest.span { case Number(_) => true; case _ => false }
-        loop(after, Block.Items(com.histmersion.web.marks.NoteMarkdown.Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlinesOf(t) }) :: out)
+        loop(after, Block.Items(Block.Items.Ordered(true), (l :: more).collect { case Number(t) => inlinesOf(t) }) :: out)
       case (l @ QuoteL(_)) :: rest =>
         val (more, after) = rest.span { case QuoteL(_) => true; case _ => false }
         loop(after, Block.Quote(inlinesOf((l :: more).collect { case QuoteL(t) => t }.mkString(" "))) :: out)
@@ -77,7 +82,7 @@ object NoteMarkdown:
   private val Token =
     """\[\[([a-z][a-z0-9_.-]{1,120})\]\]|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_""".r
 
-  def inlines(s: com.histmersion.web.marks.NoteMarkdown.Markdown): List[Inline] = inlinesOf(s.value)
+  def inlines(s: Markdown): List[Inline] = inlinesOf(s.value)
 
   private def inlinesOf(s: String): List[Inline] =
     val out = List.newBuilder[Inline]
@@ -85,7 +90,7 @@ object NoteMarkdown:
     var at = 0
     Token.findAllMatchIn(s).foreach { m =>
       if m.start > at then out += Inline.Text(s.substring(at, m.start))
-      out += (if m.group(1) != null then Inline.Cite(com.histmersion.api.library.Citekey(m.group(1)))
+      out += (if m.group(1) != null then Inline.Cite(Citekey(m.group(1)))
               else if m.group(2) != null then
                 safeHref(Href(m.group(3))).fold(Inline.Text(m.matched))(Inline.Link(m.group(2), _))
               else if m.group(4) != null then Inline.Code(m.group(4))

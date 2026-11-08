@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.VocabularyCodecs.given
@@ -6,6 +7,8 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** One piece of UI state, typed. The web UI's SINGLE source of truth: every component reads a field's `signal`/`now()`
   * and commits through [[UiState.set]] — nothing keeps its own copy.
@@ -17,7 +20,7 @@ final class Field[A](
     val persist: Persist,
     val role: Role,
     val label: Option[Field.Label] = None,
-    val chip: Field.Chip = com.histmersion.web.Field.Chip(true)
+    val chip: Field.Chip = Field.Chip(true)
 )(using val codec: FieldCodec[A]):
   private val v = Var(initial)
   // `var`: `from`/`to` default to the CONFIGURED span, known only once `/api/config` has answered
@@ -34,25 +37,25 @@ final class Field[A](
   def :=(a: A): UiState.Assign = UiState.Assign(() => v.set(a))
 
   private[web] def withDefault(a: A): Unit = { dflt = a; v.set(a) }
-  private[web] def encoded: List[com.histmersion.web.Field.Token] = codec.encode(now())
-  private[web] def load(vs: List[com.histmersion.web.Field.Token]): Unit = v.set(codec.decode(vs).getOrElse(dflt))
+  private[web] def encoded: List[Field.Token] = codec.encode(now())
+  private[web] def load(vs: List[Field.Token]): Unit = v.set(codec.decode(vs).getOrElse(dflt))
 
   /** Add hash values: merged into a list field, replacing a scalar one. */
-  private[web] def add(vs: List[com.histmersion.web.Field.Token]): Unit =
+  private[web] def add(vs: List[Field.Token]): Unit =
     if codec.multi then load((encoded ++ vs).distinct) else load(vs)
 
   /** Remove ONE chip value (a list keeps the others; a scalar goes back to its default). */
-  private[web] def remove(value: com.histmersion.web.Field.Token): Unit = load(encoded.filterNot(_ == value))
+  private[web] def remove(value: Field.Token): Unit = load(encoded.filterNot(_ == value))
 
 object Field:
   type Token = FieldCodec.Token
   val Token: FieldCodec.Token.type = FieldCodec.Token
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]
   type HashKey = HashKey.T
-  object HashKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HashKey extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Chip = Chip.T
-  object Chip extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Chip extends RefinedType[Boolean, Pure]
 

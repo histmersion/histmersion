@@ -1,50 +1,55 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Plural
 import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.library.GeoHit
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.map.GeoBounds
+import com.histmersion.api.catalogue.Period
 
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 object DotCluster:
   type BubbleHtml = BubbleHtml.T
-  object BubbleHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BubbleHtml extends RefinedType[String, Pure]
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type EndLabel = EndLabel.T
-  object EndLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EndLabel extends RefinedType[String, Pure]
   type ExtraClass = ExtraClass.T
-  object ExtraClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtraClass extends RefinedType[String, Pure]
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type KindCount = KindCount.T
-  object KindCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object KindCount extends RefinedType[Int, Pure]
   type Mid = Mid.T
-  object Mid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mid extends RefinedType[Double, Pure]
   type Size = Size.T
-  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Size extends RefinedType[Int, Pure]
   type SpokenText = SpokenText.T
-  object SpokenText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpokenText extends RefinedType[String, Pure]
   type StartLabel = StartLabel.T
-  object StartLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StartLabel extends RefinedType[String, Pure]
   type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Summary extends RefinedType[String, Pure]
   type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Total extends RefinedType[Int, Pure]
   type Undated = Undated.T
-  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Undated extends RefinedType[Int, Pure]
 
   /** A bubble's content: what its markers hold. */
 
   final case class Contents(members: List[Member]):
-    def total: com.histmersion.web.DotCluster.Total = Total(members.map(_.n.value).sum)
-    def counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount] = members.groupMapReduce[DotKind, Int](_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
+    def total: Total = Total(members.map(_.n.value).sum)
+    def counts: Map[DotKind, KindCount] = members.groupMapReduce[DotKind, Int](_.kind)(_.n.value)(_ + _).map((k, n) => k -> KindCount(n))
     def findings: List[GeoHit] = members.flatMap(_.findings)
     def entries: List[DotEntry] = members.flatMap(_.entry)
 
     /** The middle of every dated member's span: the bubble's colour is their range. */
-    def mids: List[com.histmersion.web.DotCluster.Mid] = members.flatMap(_.mids).map(m => Mid(m.value))
+    def mids: List[Mid] = members.flatMap(_.mids).map(m => Mid(m.value))
 
     /** The least certain member's certainty (only findings carry one other than [[Certainty.NoSay]]). */
     def certainty: Certainty = Certainty.worst(members.map(_.certainty))
@@ -53,26 +58,26 @@ object DotCluster:
     def counted: Boolean = members.exists(_.aggregate)
 
     /** The boxes of its cells. */
-    def cells: List[com.histmersion.web.map.GeoBounds] = members.flatMap(_.cell)
+    def cells: List[GeoBounds] = members.flatMap(_.cell)
 
     /** How many of what it holds have no known date. */
-    def undated: com.histmersion.web.DotCluster.Undated = Undated(members.map(_.undated.value).sum)
+    def undated: Undated = Undated(members.map(_.undated.value).sum)
 
 
   /** Pure: what a bubble holds, in words — "12 findings · 3 sites · 2 events", the kinds in a fixed order, those it has
     * none of left out.
     */
-  def summary(counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount]): com.histmersion.web.DotCluster.Summary =
+  def summary(counts: Map[DotKind, KindCount]): Summary =
     Summary(DotKind.values.toList
       .flatMap(k => counts.get(k).filter(_.value > 0).map(n => Plural.count(Plural.CountN(n.value), Plural.CountSingular(k.one.value), Plural.CountPlural(k.many.value))))
       .mkString(" · "))
 
   /** Pure: the same, then how many of them have no known date — "12 sites, 5 with no known date". */
-  def summary(counts: Map[DotKind, com.histmersion.web.DotCluster.KindCount], undated: com.histmersion.web.DotCluster.Undated): com.histmersion.web.DotCluster.Summary =
+  def summary(counts: Map[DotKind, KindCount], undated: Undated): Summary =
     val all = summary(counts)
     if undated.value <= 0 then all else Summary(s"$all, $undated with no known date")
 
-  def summary(c: Contents): com.histmersion.web.DotCluster.Summary = summary(c.counts, c.undated)
+  def summary(c: Contents): Summary = summary(c.counts, c.undated)
 
   /** Is it a bubble of more than one kind? */
   def mixed(c: Contents): Boolean = c.counts.count(_._2.value > 0) > 1
@@ -106,14 +111,14 @@ object DotCluster:
     * among other kinds carries a small square tab.
     */
   def bubbleHtml(
-      n: com.histmersion.web.DotCluster.Count,
-      d: com.histmersion.web.DotCluster.Size,
-      ends: (com.histmersion.web.DotCluster.StartLabel, com.histmersion.web.DotCluster.EndLabel),
-      id: com.histmersion.web.DotCluster.Id,
-      extraClass: com.histmersion.web.DotCluster.ExtraClass,
-      says: Option[com.histmersion.web.DotCluster.SpokenText],
+      n: Count,
+      d: Size,
+      ends: (StartLabel, EndLabel),
+      id: Id,
+      extraClass: ExtraClass,
+      says: Option[SpokenText],
       form: BubbleForm = BubbleForm.Round
-  ): com.histmersion.web.DotCluster.BubbleHtml =
+  ): BubbleHtml =
     val label = if n.value > 1 then n.value.toString else ""
     val words = says.fold("")(w => s""" role="img" title="${Fmt.esc(w.value)}" aria-label="${Fmt.esc(w.value)}"""")
     val s = d.value + 2 * Ring
@@ -143,7 +148,7 @@ object DotCluster:
       s"""--g0:${ends._1};--g1:${ends._2}"$words>$svg<span class="hd-dot-count">$label</span></span>""")
 
   /** Pure: the middle of a dated span, for the ramp. */
-  def mid(start: Option[com.histmersion.api.catalogue.Period.Start], end: Option[com.histmersion.api.catalogue.Period.End]): Option[com.histmersion.web.DotCluster.Mid] =
+  def mid(start: Option[Period.Start], end: Option[Period.End]): Option[Mid] =
     for a <- start; b <- end yield Mid((a.value + b.value).toDouble / 2)
 
   // ── the members, as the map's cluster layer holds them ──────────────────────────────────────

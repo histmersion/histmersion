@@ -1,8 +1,11 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.collection.mutable
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The map that could not be drawn: the browser has no WebGL 2 (or WebGL is off), or the engine failed to start.
   * Instead of a blank or a crashing page, the map's place says why and what to do ([[NoMap.message]]), and the app
@@ -38,16 +41,16 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
     .toMap
   private val sets = mutable.LinkedHashMap.empty[String, ShapeSet]
 
-  def zoom: com.histmersion.web.map.MapSurface.Zoom = MapSurface.Zoom(z)
-  def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom = maxZ
-  def setMaxZoom(v: com.histmersion.web.map.MapSurface.MaxZoom): Unit = maxZ = v
+  def zoom: MapSurface.Zoom = MapSurface.Zoom(z)
+  def maxZoom: MapSurface.MaxZoom = maxZ
+  def setMaxZoom(v: MapSurface.MaxZoom): Unit = maxZ = v
   def center: LatLon = at
-  def bounds: GeoBounds = GeoBounds(com.histmersion.web.map.GeoBounds.South(-85), com.histmersion.web.map.GeoBounds.West(-180), com.histmersion.web.map.GeoBounds.North(85), com.histmersion.web.map.GeoBounds.East(180))
-  def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = (MapSurface.Dimension(0.0), MapSurface.Dimension(0.0))
-  def setView(p: LatLon, zoom: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.MapSurface.SetViewAnimate = com.histmersion.web.map.MapSurface.SetViewAnimate(false)): Unit = { at = p; z = math.min(zoom.value, maxZ.value) }
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.MapSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.MapSurface.FitBoundsAnimate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(true)): Unit =
+  def bounds: GeoBounds = GeoBounds(GeoBounds.South(-85), GeoBounds.West(-180), GeoBounds.North(85), GeoBounds.East(180))
+  def size: (MapSurface.Dimension, MapSurface.Dimension) = (MapSurface.Dimension(0.0), MapSurface.Dimension(0.0))
+  def setView(p: LatLon, zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)): Unit = { at = p; z = math.min(zoom.value, maxZ.value) }
+  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)): Unit =
     at = LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2))
-  def panBy(dx: com.histmersion.web.map.MapSurface.PanByDx, dy: com.histmersion.web.map.MapSurface.PanByDy, animate: com.histmersion.web.map.MapSurface.PanByAnimate = com.histmersion.web.map.MapSurface.PanByAnimate(false)): Unit = ()
+  def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)): Unit = ()
   // far outside any view: a marker placed here is hidden, never moved ([[MarkerPane]])
   def project(p: LatLon): ScreenPt = ScreenPt(ScreenPt.X(-1e6), ScreenPt.Y(-1e6))
   def unproject(p: ScreenPt): LatLon = at
@@ -59,26 +62,26 @@ final class NoMapSurface(el: dom.HTMLElement, why: NoMapSurface.Why, caps: Capab
   def overlayRoot: dom.HTMLElement = overlay
   def corner(c: Corner): dom.HTMLElement = corners(c)
   def setBaseMap(b: BaseMapSpec): Unit = ()
-  def shapes(id: com.histmersion.web.map.MapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id.value, NoMap.Shapes(NoMap.Shapes.Id(id.value)))
-  def shapeSet(id: com.histmersion.web.map.MapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id.value)
+  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id.value, NoMap.Shapes(NoMap.Shapes.Id(id.value)))
+  def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id.value)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
-  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.MapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
-  def popup(at: LatLon, html: com.histmersion.web.map.MapSurface.PopupHtml, cls: com.histmersion.web.map.MapSurface.PopupCls = com.histmersion.web.map.MapSurface.PopupCls("")): Popup = new Popup:
+  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
+  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup = new Popup:
     def close(): Unit = ()
     def isOpen: Boolean = false
     def element: Option[dom.HTMLElement] = None
   def closePopups(): Unit = ()
-  def drawnNames: Seq[com.histmersion.web.map.MapSurface.LabelText] = Nil
-  def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.MapSurface.LayerId] = Nil
-  def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.LabelText, com.histmersion.web.map.MapSurface.LabelText, ScreenPt)] = Nil
-  def baseMapLayer(id: com.histmersion.web.map.MapSurface.LayerId): Option[com.histmersion.web.map.MapSurface.LayerId] = None
-  def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount = com.histmersion.web.map.MapSurface.DrawnCount(0)
+  def drawnNames: Seq[MapSurface.LabelText] = Nil
+  def baseMapAreasAt(p: ScreenPt): Seq[MapSurface.LayerId] = Nil
+  def baseMapLabels: Seq[(MapSurface.LabelText, MapSurface.LabelText, ScreenPt)] = Nil
+  def baseMapLayer(id: MapSurface.LayerId): Option[MapSurface.LayerId] = None
+  def baseMapDrawn(id: MapSurface.LayerId): MapSurface.DrawnCount = MapSurface.DrawnCount(0)
   def capabilities: Capabilities = caps
   def destroy(): Unit = { note.remove(); overlay.remove() }
 
   /** Why there is no map (what the message says first). */
-  def unavailable: com.histmersion.web.map.NoMapSurface.Why = why
+  def unavailable: NoMapSurface.Why = why
 
 object NoMapSurface:
   type Why = Why.T
-  object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Why extends RefinedType[String, Pure]

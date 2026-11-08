@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.web.LabelMotion.*
 import com.histmersion.web.LabelPlacement.{Pt, Rect}

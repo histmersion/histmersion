@@ -1,36 +1,39 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.Wording
 import com.histmersion.api.plugins.{PluginSet, PluginState, PluginStatus}
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Settings › Plugins: every plugin in this server — what it adds, whether it works — each turned on or off in the
   * settings file; and the plugins added to this install (`histmersion plugin add`).
   */
 object PluginsSection:
   type Capability = Capability.T
-  object Capability extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Capability extends RefinedType[String, Pure]
   type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object State extends RefinedType[String, Pure]
 
   /** What became of a plugin, in words. Pure. */
 
-  def state(p: PluginStatus): com.histmersion.web.settings.PluginsSection.State = PluginState.parse(PluginState.Wire(p.state.value)) match
-    case Some(PluginState.Registered) => com.histmersion.web.settings.PluginsSection.State("Working")
-    case Some(PluginState.Disabled)   => com.histmersion.web.settings.PluginsSection.State("Turned off")
+  def state(p: PluginStatus): State = PluginState.parse(PluginState.Wire(p.state.value)) match
+    case Some(PluginState.Registered) => State("Working")
+    case Some(PluginState.Disabled)   => State("Turned off")
     case Some(PluginState.Failed)     => State(s"Not working: ${p.error.getOrElse("no reason given")}")
     case Some(PluginState.Refused)    => State(s"Not loaded: ${p.error.getOrElse("no reason given")}")
     case None                         => State(Wording.humanize(Wording.Id(p.state.value)))
 
   /** What a plugin adds, in words (`source-fetcher:oa-core` → "Finds papers"). Pure. */
-  def provides(p: PluginStatus): List[com.histmersion.web.settings.PluginsSection.Capability] =
+  def provides(p: PluginStatus): List[Capability] =
     p.provides.map(_.value.takeWhile(_ != ':')).distinct.map {
-      case "source-fetcher"   => com.histmersion.web.settings.PluginsSection.Capability("Finds papers")
-      case "media-collection" => com.histmersion.web.settings.PluginsSection.Capability("Pictures")
-      case "event-catalogue"  => com.histmersion.web.settings.PluginsSection.Capability("Events")
-      case "ai-provider"      => com.histmersion.web.settings.PluginsSection.Capability("An AI provider")
-      case "secret-vault"     => com.histmersion.web.settings.PluginsSection.Capability("A password manager")
+      case "source-fetcher"   => Capability("Finds papers")
+      case "media-collection" => Capability("Pictures")
+      case "event-catalogue"  => Capability("Events")
+      case "ai-provider"      => Capability("An AI provider")
+      case "secret-vault"     => Capability("A password manager")
       case other              => Capability(Wording.humanize(Wording.Id(other)))
     }
 
@@ -39,7 +42,7 @@ object PluginsSection:
     div(
       cls := "settings-section",
       SettingsForm(
-        com.histmersion.web.settings.SettingsForm.ApplyTitle("Built-in plugins"),
+        SettingsForm.ApplyTitle("Built-in plugins"),
         Some(
           SettingsForm.Intro(
             "Turn a plugin on or off; the server applies it at once. A plugin that needs a key of your own (Europeana, " +

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.catalogue.TileProps as P
 import com.histmersion.web.map.*
@@ -6,6 +7,11 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.catalogue.TileLayer
+import com.histmersion.api.catalogue.MapTilesUiConfig
+import com.histmersion.api.Years
+import com.histmersion.api.basemap.BasemapApi
+import com.histmersion.api.Geo
+import com.histmersion.api.RowCount
 
 object TiledPoints:
   /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those shown
@@ -27,21 +33,21 @@ final class TiledPoints[A](
     val items: PointLayer[A],
     dot: DotKind,
     decode: TilePointFeature => Option[A],
-    maxZoom: () => com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom
+    maxZoom: () => MapTilesUiConfig.MaxZoom
 ):
   val cells: PointLayer[TileCellPoint] = PointLayer(CellKind(dot), () => MapView.dots, () => MapView.spanMid())
   // `var`s: the URL template and span asked for, whether the layer is on, the map's tiles once made, the
   // span the features shown were read for
   private var template: Option[ApiClient.Url] = None
-  private var span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) = (com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(1L))
+  private var span: (Years.Astronomical, Years.Astronomical) = (Years.Astronomical(0L), Years.Astronomical(1L))
   private var on = false
   private var tiles: Option[PointTiles] = None
   private var shown: (Seq[A], Seq[TileCellPoint]) = (Nil, Nil)
   // the tiles' URL and the zoom what is shown was read at
   private var readAt: Option[(Option[ApiClient.Url], Int)] = None
 
-  private def tileTemplate: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate] =
-    template.map(u => com.histmersion.api.basemap.BasemapApi.TileTemplate(u.value))
+  private def tileTemplate: Option[BasemapApi.TileTemplate] =
+    template.map(u => BasemapApi.TileTemplate(u.value))
 
   private def source: Option[PointTiles] =
     if tiles.isEmpty && TheMap.isUp then
@@ -70,16 +76,16 @@ final class TiledPoints[A](
       tiles.foreach(_.setTiles(None))
       items.detach()
       cells.detach()
-      changed.update(r => com.histmersion.web.Poll.Revision(r.value + 1))
+      changed.update(r => Poll.Revision(r.value + 1))
 
   /** The tiles of `url` (the span and options in it), drawn for `s`. */
-  def load(url: ApiClient.Url, s: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
+  def load(url: ApiClient.Url, s: (Years.Astronomical, Years.Astronomical)): Unit =
     template = Some(url)
     span = s
     if on then source.foreach(_.setTiles(tileTemplate))
 
   /** What is shown recoloured for `s` (the span moved; the tiles for it come later). */
-  def recolour(s: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
+  def recolour(s: (Years.Astronomical, Years.Astronomical)): Unit =
     span = s
     if on then
       items.show(shown._1, s)
@@ -99,46 +105,46 @@ final class TiledPoints[A](
         if !readAt.contains(at) then fresh
         else
           val s = TheMap.surface
-          val margin = com.histmersion.web.map.Clustering.InViewMargin(math.max(s.size._1.value, s.size._2.value))
-          def near(p: (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), margin)
+          val margin = Clustering.InViewMargin(math.max(s.size._1.value, s.size._2.value))
+          def near(p: (Geo.Latitude, Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), margin)
           (
             TiledPoints.merge(fresh._1, shown._1, a => items.kind.key(a).value, a => near(items.kind.at(a))),
             TiledPoints.merge(
               fresh._2,
               shown._2,
               (c: TileCellPoint) => c.key.value,
-              c => near((com.histmersion.api.Geo.Latitude(c.lat.value), com.histmersion.api.Geo.Longitude(c.lon.value)))
+              c => near((Geo.Latitude(c.lat.value), Geo.Longitude(c.lon.value)))
             )
           )
       readAt = Some(at)
       items.show(shown._1, span)
       cells.show(shown._2, span)
-      changed.update(r => com.histmersion.web.Poll.Revision(r.value + 1))
+      changed.update(r => Poll.Revision(r.value + 1))
     }
 
   /** Ticks whenever what is shown changes (a tile read, the layer switched off): the lists of what is on the map follow
     * it.
     */
-  val changed: com.raquo.laminar.api.L.Var[com.histmersion.web.Poll.Revision] = com.raquo.laminar.api.L.Var(com.histmersion.web.Poll.Revision(0))
+  val changed: com.raquo.laminar.api.L.Var[Poll.Revision] = com.raquo.laminar.api.L.Var(Poll.Revision(0))
 
   /** What is shown in the map's view now: the items drawn as themselves, and how many more its cells there count.
     * Nothing while the layer is off.
     */
-  def inViewNow(): (Seq[A], com.histmersion.api.RowCount) =
-    if !on || !TheMap.isUp then (Nil, com.histmersion.api.RowCount(0))
+  def inViewNow(): (Seq[A], RowCount) =
+    if !on || !TheMap.isUp then (Nil, RowCount(0))
     else
       val s = TheMap.surface
-      def seen(p: (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), com.histmersion.web.map.Clustering.InViewMargin(0))
+      def seen(p: (Geo.Latitude, Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), Clustering.InViewMargin(0))
       (
         shown._1.filter(a => seen(items.kind.at(a))),
-        com.histmersion.api.RowCount(
+        RowCount(
           shown._2
-            .filter(c => seen((com.histmersion.api.Geo.Latitude(c.lat.value), com.histmersion.api.Geo.Longitude(c.lon.value))))
+            .filter(c => seen((Geo.Latitude(c.lat.value), Geo.Longitude(c.lon.value))))
             .map(_.n.value)
             .sum
         )
       )
 
   /** How many items and cells are shown, and the items the cells count (diagnostics). */
-  def counts: (com.histmersion.api.RowCount, com.histmersion.api.RowCount, com.histmersion.api.RowCount) =
-    (com.histmersion.api.RowCount(shown._1.size), com.histmersion.api.RowCount(shown._2.size), com.histmersion.api.RowCount(shown._2.map(_.n.value).sum))
+  def counts: (RowCount, RowCount, RowCount) =
+    (RowCount(shown._1.size), RowCount(shown._2.size), RowCount(shown._2.map(_.n.value).sum))

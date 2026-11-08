@@ -1,10 +1,13 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.Try
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** THE answer to "should the map animate now?" (#4718). Every motion of the map reads it: the clusters' regroup on a
   * zoom ([[ClusterMotion]]), the names' easing (`MapLabels`), the camera's zoom and pan easing (`MapLibreSurface`:
@@ -15,11 +18,11 @@ import scala.util.Try
   */
 object MotionPref:
   type SystemReduced = SystemReduced.T
-  object SystemReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SystemReduced extends RefinedType[Boolean, Pure]
   type Animates = Animates.T
-  object Animates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Animates extends RefinedType[Boolean, Pure]
   type HeldBySystem = HeldBySystem.T
-  object HeldBySystem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HeldBySystem extends RefinedType[Boolean, Pure]
 
   val Query = "(prefers-reduced-motion: reduce)"
 
@@ -62,13 +65,13 @@ object MotionPref:
   def animate(): Boolean = MapMotion.animates(choice, systemReduced)
 
   /** Whether the map animates, as it changes. */
-  val animates: Signal[com.histmersion.web.map.MotionPref.Animates] = state.signal.map((m, r) => com.histmersion.web.map.MotionPref.Animates(MapMotion.animates(m, r.value)))
+  val animates: Signal[Animates] = state.signal.map((m, r) => Animates(MapMotion.animates(m, r.value)))
 
   /** Whether the menu says the map is still because the system asks for it. */
-  val heldBySystem: Signal[com.histmersion.web.map.MotionPref.HeldBySystem] = state.signal.map((m, r) => com.histmersion.web.map.MotionPref.HeldBySystem(MapMotion.heldBySystem(m, r.value)))
+  val heldBySystem: Signal[HeldBySystem] = state.signal.map((m, r) => HeldBySystem(MapMotion.heldBySystem(m, r.value)))
 
   /** For a test: the system's setting as if the browser had reported it. */
-  private[web] def systemChanged(reduced: com.histmersion.web.map.MotionPref.SystemReduced): Unit =
+  private[web] def systemChanged(reduced: SystemReduced): Unit =
     installed = true
     systemNow = reduced
     changed()

@@ -1,9 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.TimeBucket
+import com.histmersion.api.Years
 
 class TimelineCurveSuite extends munit.FunSuite:
   import TimelineCurve.*
@@ -15,18 +17,18 @@ class TimelineCurveSuite extends munit.FunSuite:
   private val top = ScreenPixels(4.0)
 
   test("a point per bucket at its middle year, the largest count at the top, none on the baseline") {
-    val pts = points(buckets(0, 5, 10), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(30L), ElementSize(300.0), base, top)
+    val pts = points(buckets(0, 5, 10), Years.Astronomical(0L), Years.Astronomical(30L), ElementSize(300.0), base, top)
     assertEquals(pts.map(_.x), Vector(45.0, 145.0, 245.0))
     assertEquals(pts.map(_.y), Vector(base, ScreenPixels((base.value + top.value) / 2), top))
   }
 
   test("no counts: no points (nothing to draw)") {
-    assertEquals(points(buckets(0, 0, 0), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(30L), ElementSize(300.0), base, top), Vector.empty)
-    assertEquals(points(Nil, com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(30L), ElementSize(300.0), base, top), Vector.empty)
+    assertEquals(points(buckets(0, 0, 0), Years.Astronomical(0L), Years.Astronomical(30L), ElementSize(300.0), base, top), Vector.empty)
+    assertEquals(points(Nil, Years.Astronomical(0L), Years.Astronomical(30L), ElementSize(300.0), base, top), Vector.empty)
   }
 
   test("the curve passes through every point and is smooth there (one tangent each side)") {
-    val pts = points(buckets(1, 4, 2, 9, 3, 3, 7, 0, 5), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(90L), ElementSize(450.0), base, top)
+    val pts = points(buckets(1, 4, 2, 9, 3, 3, 7, 0, 5), Years.Astronomical(0L), Years.Astronomical(90L), ElementSize(450.0), base, top)
     val segs = segments(pts)
     assertEquals(segs.length, pts.length - 1)
     segs.zip(pts.tail).foreach { (s, p) => assertEqualsDouble(s.x.value, p.x.value, 1e-9); assertEqualsDouble(s.y.value, p.y.value, 1e-9) }
@@ -41,7 +43,7 @@ class TimelineCurveSuite extends munit.FunSuite:
   test("monotone: no segment leaves the band of its two counts — no overshoot, never under the baseline") {
     // spiky data with plateaus and zeros, where an ordinary cubic spline overshoots
     val counts = Seq(0, 0, 12, 0, 1, 1, 1, 30, 29, 0, 0, 5, 40, 2, 0, 0, 0, 17, 17, 3)
-    val pts = points(buckets(counts*), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(counts.length * 10L), ElementSize(1000.0), base, top)
+    val pts = points(buckets(counts*), Years.Astronomical(0L), Years.Astronomical(counts.length * 10L), ElementSize(1000.0), base, top)
     val segs = segments(pts)
     pts.zip(pts.tail).zip(segs).foreach { case ((p0, p1), s) =>
       val lo = math.min(p0.y.value, p1.y.value) - 1e-9
@@ -56,33 +58,33 @@ class TimelineCurveSuite extends munit.FunSuite:
   }
 
   test("a flat run is drawn flat, and a peak is a level top") {
-    val pts = points(buckets(3, 3, 3, 9, 3), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(50L), ElementSize(250.0), base, top)
+    val pts = points(buckets(3, 3, 3, 9, 3), Years.Astronomical(0L), Years.Astronomical(50L), ElementSize(250.0), base, top)
     val t = tangents(pts.map(_.x), pts.map(_.y))
     assertEqualsDouble(t(1), 0.0, 1e-12) // inside the plateau
     assertEqualsDouble(t(3), 0.0, 1e-12) // the peak
   }
 
   test("the paths: an area closed on the baseline, a line through the points; one point is a sliver") {
-    val pts = points(buckets(2, 4), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(20L), ElementSize(200.0), base, top)
+    val pts = points(buckets(2, 4), Years.Astronomical(0L), Years.Astronomical(20L), ElementSize(200.0), base, top)
     val area = areaPath(pts, base)
     assert(area.startsWith("M 45 40 L 45 22 C "), area)
     assert(area.endsWith(" L 145 40 Z"), area)
     assert(linePath(pts).startsWith("M 45 22 C "))
-    assertEquals(areaPath(points(buckets(2), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(10L), ElementSize(100.0), base, top), base), "M 45 40 L 45 4 L 46 4 L 46 40 Z")
+    assertEquals(areaPath(points(buckets(2), Years.Astronomical(0L), Years.Astronomical(10L), ElementSize(100.0), base, top), base), "M 45 40 L 45 4 L 46 4 L 46 40 Z")
     assertEquals(areaPath(Vector.empty, base), "")
   }
 
   test("nearest: the point closest to a screen x, either side") {
-    val pts = points(buckets(1, 2, 3, 4), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(40L), ElementSize(400.0), base, top) // x = 45, 145, 245, 345
-    assertEquals(nearest(pts, com.histmersion.web.TimelineCurve.ScreenPixels(-10)).map(_.x), Some(45.0))
-    assertEquals(nearest(pts, com.histmersion.web.TimelineCurve.ScreenPixels(94)).map(_.x), Some(45.0))
-    assertEquals(nearest(pts, com.histmersion.web.TimelineCurve.ScreenPixels(96)).map(_.x), Some(145.0))
-    assertEquals(nearest(pts, com.histmersion.web.TimelineCurve.ScreenPixels(1000)).map(_.x), Some(345.0))
-    assertEquals(nearest(Vector.empty, com.histmersion.web.TimelineCurve.ScreenPixels(10)), None)
+    val pts = points(buckets(1, 2, 3, 4), Years.Astronomical(0L), Years.Astronomical(40L), ElementSize(400.0), base, top) // x = 45, 145, 245, 345
+    assertEquals(nearest(pts, ScreenPixels(-10)).map(_.x), Some(45.0))
+    assertEquals(nearest(pts, ScreenPixels(94)).map(_.x), Some(45.0))
+    assertEquals(nearest(pts, ScreenPixels(96)).map(_.x), Some(145.0))
+    assertEquals(nearest(pts, ScreenPixels(1000)).map(_.x), Some(345.0))
+    assertEquals(nearest(Vector.empty, ScreenPixels(10)), None)
   }
 
   test("the hover follows a curve moved on screen (a pan or zoom before its redraw)") {
-    val pts = points(buckets(1, 2, 3, 4), com.histmersion.api.Years.Astronomical(0L), com.histmersion.api.Years.Astronomical(40L), ElementSize(400.0), base, top)
+    val pts = points(buckets(1, 2, 3, 4), Years.Astronomical(0L), Years.Astronomical(40L), ElementSize(400.0), base, top)
     // drawn at 400 px, now shown at half the width, shifted 100 px right
     val Some((x, p)) = TimelineView.hoverAt(pts, 100 + 125, 100, 0.5): @unchecked
     assertEqualsDouble(p.x.value, 245.0, 1e-9)
@@ -92,14 +94,14 @@ class TimelineCurveSuite extends munit.FunSuite:
 
   test("the hover says the bucket's years and its exact count") {
     assertEquals(
-      TimelineView.hoverText(TimeBucket(com.histmersion.api.library.TimeBucket.Start(-1200L), com.histmersion.api.library.TimeBucket.End(-1151L), com.histmersion.api.library.TimeBucket.Count(12))),
+      TimelineView.hoverText(TimeBucket(TimeBucket.Start(-1200L), TimeBucket.End(-1151L), TimeBucket.Count(12))),
       s"${Fmt.yr(Year(-1200L))}–${Fmt.yr(Year(-1151L))}: 12 sources"
     )
-    assertEquals(TimelineView.hoverText(TimeBucket(com.histmersion.api.library.TimeBucket.Start(500L), com.histmersion.api.library.TimeBucket.End(500L), com.histmersion.api.library.TimeBucket.Count(1))), s"${Fmt.yr(Year(500L))}: 1 source")
+    assertEquals(TimelineView.hoverText(TimeBucket(TimeBucket.Start(500L), TimeBucket.End(500L), TimeBucket.Count(1))), s"${Fmt.yr(Year(500L))}: 1 source")
   }
 
   test("buckets are a few pixels wide: ~5 px each on a wide strip, never more than the limit") {
-    val size = TimelineView.bucketSizeFor(com.histmersion.api.Years.Shift(3000L), 1000.0)
+    val size = TimelineView.bucketSizeFor(Years.Shift(3000L), 1000.0)
     val n = math.ceil(3000.0 / size.value)
     assert(n >= 1000.0 / 6 && n <= 1000.0 / 4, s"$n buckets over 1000 px")
   }

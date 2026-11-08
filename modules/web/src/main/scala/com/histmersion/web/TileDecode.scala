@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.TileProps as P
@@ -8,6 +9,13 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventScale, EventTier}
 import com.histmersion.api.media.{MediaGeoHit, MediaItem, MediaThumb}
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.Event
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.exchange.Bundle
 
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:
@@ -15,8 +23,8 @@ object TileDecode:
     p.get(k).filter(v => v != null && !js.isUndefined(v)).map(_.toString)
   private def num(p: js.Dictionary[js.Any], k: String): Option[Double] =
     p.get(k).filter(v => js.typeOf(v) == "number").map(_.asInstanceOf[Double])
-  private def long(p: js.Dictionary[js.Any], k: String): Option[com.histmersion.api.catalogue.Year] =
-    num(p, k).map(d => com.histmersion.api.catalogue.Year(d.toLong))
+  private def long(p: js.Dictionary[js.Any], k: String): Option[Year] =
+    num(p, k).map(d => Year(d.toLong))
 
   /** Is it a cell of several items (it carries their count)? */
   def isCell(f: TilePointFeature): Boolean = num(f.props, P.Count).exists(_ > 1)
@@ -52,7 +60,7 @@ object TileDecode:
       SitePoint(
         Some(SitePoint.Id(id)),
         SitePoint.Label(str(p, P.Label).getOrElse("")),
-        SitePoint.Kind(str(p, P.Kind).getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)),
+        SitePoint.Kind(str(p, P.Kind).getOrElse(Place.Kind.Site)),
         str(p, P.SiteType).map(SitePoint.SiteType(_)),
         str(p, P.Basis).map(SitePoint.Basis(_)),
         f.at.lat,
@@ -66,16 +74,16 @@ object TileDecode:
     val p = f.props
     for id <- str(p, P.Id)
     yield EventGeo(
-      com.histmersion.api.catalogue.Event.Id(id),
+      Event.Id(id),
       EventGeo.Label(str(p, P.Label).getOrElse(id)),
       EventGeo.Kind(str(p, P.Kind).getOrElse("")),
       EventGeo.Scale(str(p, P.Scale).getOrElse(EventScale.Local)),
       EventGeo.Historicity(str(p, P.Historicity).getOrElse("")),
       TimeSpan(long(p, P.NotBefore), long(p, P.BeginBy), long(p, P.EndFrom), long(p, P.NotAfter)),
-      com.histmersion.api.catalogue.Latitude(f.at.lat.value),
-      com.histmersion.api.catalogue.Longitude(f.at.lon.value),
+      Latitude(f.at.lat.value),
+      Longitude(f.at.lon.value),
       EventGeo.Anchor(str(p, P.Anchor).getOrElse("event")),
-      (str(p, P.PlaceId)).map(com.histmersion.api.catalogue.Place.Id.apply),
+      (str(p, P.PlaceId)).map(Place.Id.apply),
       str(p, P.PlaceLabel).map(EventGeo.PlaceLabel(_)),
       str(p, P.ParentId).map(EventGeo.ParentId(_)),
       None,
@@ -89,11 +97,11 @@ object TileDecode:
     val p = f.props
     for uid <- str(p, P.Uid)
     yield MediaGeoHit(
-      str(p, P.Citekey).map(com.histmersion.api.library.Citekey(_)),
-      com.histmersion.api.exchange.Bundle.Asset.FileName(str(p, P.AssetName).getOrElse(uid)),
+      str(p, P.Citekey).map(Citekey(_)),
+      Bundle.Asset.FileName(str(p, P.AssetName).getOrElse(uid)),
       str(p, P.Kind).map(MediaItem.Kind(_)),
-      com.histmersion.api.catalogue.Latitude(f.at.lat.value),
-      com.histmersion.api.catalogue.Longitude(f.at.lon.value),
+      Latitude(f.at.lat.value),
+      Longitude(f.at.lon.value),
       long(p, P.PeriodStart),
       long(p, P.PeriodEnd),
       str(p, P.Caption).map(MediaItem.Caption(_)),
@@ -103,7 +111,7 @@ object TileDecode:
       str(p, P.Credit).map(MediaItem.Credit(_)),
       str(p, P.ThumbUrl).map(MediaItem.ThumbUrl(_)),
       fileUrl = Some(
-        MediaItem.FileUrl(MediaThumb.filePath(com.histmersion.api.exchange.Bundle.Asset.Uid(uid)).value)
+        MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(uid)).value)
       ),
       sourceUrl = str(p, P.SourceUrl).map(MediaItem.SourceUrl(_)),
       licenseUrl = str(p, P.LicenseUrl).map(MediaItem.LicenseUrl(_)),

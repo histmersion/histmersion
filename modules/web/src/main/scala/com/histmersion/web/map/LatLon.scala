@@ -1,8 +1,10 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import com.histmersion.api.Geo
 
 /** THE MAP, as the app sees it (docs/user-guide/contributing/architecture.md, "The map"): a thin layer shaped by what
   * the app needs, so that changing the map library changes one package (the adapter `map.maplibre`, the only one that
@@ -23,7 +25,7 @@ import scala.scalajs.js
 final case class LatLon(lat: LatLon.Lat, lon: LatLon.Lon)
 
 object LatLon:
-  type Lat = com.histmersion.api.Geo.Latitude
-  val Lat: _root_.com.histmersion.api.Geo.Latitude.type = _root_.com.histmersion.api.Geo.Latitude
-  type Lon = com.histmersion.api.Geo.Longitude
-  val Lon: _root_.com.histmersion.api.Geo.Longitude.type = _root_.com.histmersion.api.Geo.Longitude
+  type Lat = Geo.Latitude
+  val Lat: Geo.Latitude.type = Geo.Latitude
+  type Lon = Geo.Longitude
+  val Lon: Geo.Longitude.type = Geo.Longitude

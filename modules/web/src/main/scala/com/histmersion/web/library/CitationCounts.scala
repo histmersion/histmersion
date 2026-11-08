@@ -1,4 +1,5 @@
-package com.histmersion.web.library
+package com.histmersion
+package web.library
 
 import com.histmersion.api.library.{Edge, NeighborRow}
 import com.histmersion.api.research.Article

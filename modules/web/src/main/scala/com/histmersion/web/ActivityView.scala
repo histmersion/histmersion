@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Activity.{Entry, EntryKind}
@@ -10,6 +11,9 @@ import com.histmersion.api.{Api, Paging}
 import com.histmersion.api.automation.{Activity, ActivityMarkdown, Agents, Approval, Goal, Queue}
 import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.jobs.{JobActions, JobKinds}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.research.Article
 
 /** Research › Activity: ONE time-ordered list of agent runs, background jobs, worklog lines and the person's own
   * decisions ([[Activity]], merged and paged by the server), filtered by chips, each entry linked to what it touched.
@@ -17,9 +21,9 @@ import com.histmersion.api.jobs.{JobActions, JobKinds}
   */
 object ActivityView:
   type ParamName = ParamName.T
-  object ParamName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ParamName extends RefinedType[String, Pure]
   type ParamText = ParamText.T
-  object ParamText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ParamText extends RefinedType[String, Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -119,7 +123,7 @@ object ActivityView:
           )
         ),
       e.citekey.filterNot(_ => kind.contains(EntryKind.Decision)).map(ck => span(" · ", SourceLink(ck))),
-      e.article.map(slug => span(" · ", com.histmersion.web.ArticleLink(com.histmersion.api.research.Article.Slug(slug.value), slug.value))),
+      e.article.map(slug => span(" · ", ArticleLink(Article.Slug(slug.value), slug.value))),
       e.queueItem
         .filter(_ => kind.contains(EntryKind.Job))
         .map(id => span(" · for ", QueueItemLink(Queue.Kind.Acquire, id, s"“To acquire” item $id"))),

@@ -1,4 +1,5 @@
-package com.histmersion.web.map.maplibre
+package com.histmersion
+package web.map.maplibre
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
@@ -7,6 +8,8 @@ import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.api.basemap.BasemapApi
+import com.histmersion.api.catalogue.TileProps
 
 /** One [[PointTiles]] layer as a vector source of the server's tiles. MapLibre fetches, caches and decodes the tiles
   * (in its workers) only for a source a style layer reads: an invisible circle layer does. The features are read from
@@ -18,7 +21,7 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: MapSurface.LayerId, la
   private val tileLayer: String = layer.value
   private val zoomCap: Int = maxZoom.value
   // `var`s: the template asked for, and the listeners
-  private var template: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate] = None
+  private var template: Option[BasemapApi.TileTemplate] = None
   private val listeners = mutable.ListBuffer.empty[() => Unit]
   private var queued = false
   private val hitLayer = s"$sourceId-points"
@@ -62,7 +65,7 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: MapSurface.LayerId, la
         }
     }
 
-  def setTiles(t: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate]): Unit =
+  def setTiles(t: Option[BasemapApi.TileTemplate]): Unit =
     if t != template then
       template = t
       t match
@@ -95,8 +98,8 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: MapSurface.LayerId, la
         .flatMap { f =>
           val props = f.properties.asInstanceOf[js.Dictionary[js.Any]]
           val atZoom =
-            props.get(com.histmersion.api.catalogue.TileProps.Zoom).forall(v => v.asInstanceOf[Double].toInt == z)
-          val key = props.get(com.histmersion.api.catalogue.TileProps.Key).map(_.toString).getOrElse("")
+            props.get(TileProps.Zoom).forall(v => v.asInstanceOf[Double].toInt == z)
+          val key = props.get(TileProps.Key).map(_.toString).getOrElse("")
           if !atZoom || !seen.add(key) then None
           else ShapeHits.point(f.geometry).map(TilePointFeature(_, props))
         }

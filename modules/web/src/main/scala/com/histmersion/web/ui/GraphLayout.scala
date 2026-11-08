@@ -1,38 +1,42 @@
-package com.histmersion.web.ui
+package com.histmersion
+package web.ui
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The graph's force layout and label sizes (its colours are `--graph-*` tokens). */
 object GraphLayout:
   type Repulsion = Repulsion.T
-  object Repulsion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Repulsion extends RefinedType[Double, Pure]
   type SpringK = SpringK.T
-  object SpringK extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpringK extends RefinedType[Double, Pure]
   type RestLen = RestLen.T
-  object RestLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RestLen extends RefinedType[Double, Pure]
   type Damping = Damping.T
-  object Damping extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Damping extends RefinedType[Double, Pure]
   type Centering = Centering.T
-  object Centering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Centering extends RefinedType[Double, Pure]
   type MaxTicks = MaxTicks.T
-  object MaxTicks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxTicks extends RefinedType[Int, Pure]
   type RootRadius = RootRadius.T
-  object RootRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RootRadius extends RefinedType[Double, Pure]
   type Depth1Radius = Depth1Radius.T
-  object Depth1Radius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Depth1Radius extends RefinedType[Double, Pure]
   type LeafRadius = LeafRadius.T
-  object LeafRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LeafRadius extends RefinedType[Double, Pure]
   type LabelMaxLen = LabelMaxLen.T
-  object LabelMaxLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LabelMaxLen extends RefinedType[Int, Pure]
   type LabelTruncLen = LabelTruncLen.T
-  object LabelTruncLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LabelTruncLen extends RefinedType[Int, Pure]
 
-  val repulsion: com.histmersion.web.ui.GraphLayout.Repulsion = com.histmersion.web.ui.GraphLayout.Repulsion(3000.0)
-  val springK: com.histmersion.web.ui.GraphLayout.SpringK = com.histmersion.web.ui.GraphLayout.SpringK(0.008)
-  val restLen: com.histmersion.web.ui.GraphLayout.RestLen = com.histmersion.web.ui.GraphLayout.RestLen(120.0)
-  val damping: com.histmersion.web.ui.GraphLayout.Damping = com.histmersion.web.ui.GraphLayout.Damping(0.92)
-  val centering: com.histmersion.web.ui.GraphLayout.Centering = com.histmersion.web.ui.GraphLayout.Centering(0.01)
-  val maxTicks: com.histmersion.web.ui.GraphLayout.MaxTicks = com.histmersion.web.ui.GraphLayout.MaxTicks(300)
-  val rootRadius: com.histmersion.web.ui.GraphLayout.RootRadius = com.histmersion.web.ui.GraphLayout.RootRadius(8.0)
-  val depth1Radius: com.histmersion.web.ui.GraphLayout.Depth1Radius = com.histmersion.web.ui.GraphLayout.Depth1Radius(6.0)
-  val leafRadius: com.histmersion.web.ui.GraphLayout.LeafRadius = com.histmersion.web.ui.GraphLayout.LeafRadius(4.5)
-  val labelMaxLen: com.histmersion.web.ui.GraphLayout.LabelMaxLen = com.histmersion.web.ui.GraphLayout.LabelMaxLen(30)
-  val labelTruncLen: com.histmersion.web.ui.GraphLayout.LabelTruncLen = com.histmersion.web.ui.GraphLayout.LabelTruncLen(28)
+  val repulsion: Repulsion = Repulsion(3000.0)
+  val springK: SpringK = SpringK(0.008)
+  val restLen: RestLen = RestLen(120.0)
+  val damping: Damping = Damping(0.92)
+  val centering: Centering = Centering(0.01)
+  val maxTicks: MaxTicks = MaxTicks(300)
+  val rootRadius: RootRadius = RootRadius(8.0)
+  val depth1Radius: Depth1Radius = Depth1Radius(6.0)
+  val leafRadius: LeafRadius = LeafRadius(4.5)
+  val labelMaxLen: LabelMaxLen = LabelMaxLen(30)
+  val labelTruncLen: LabelTruncLen = LabelTruncLen(28)

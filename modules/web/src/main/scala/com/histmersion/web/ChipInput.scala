@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -9,6 +10,10 @@ import scala.scalajs.js
 
 import com.raquo.laminar.codecs.StringAsIsCodec
 import com.histmersion.api.library.{Facet, Label}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Api
+import com.histmersion.api.UiLabels
 
 /** Reusable autocomplete + chip component. Ported from chips.js (137 lines).
   *
@@ -18,9 +23,9 @@ import com.histmersion.api.library.{Facet, Label}
   */
 object ChipInput:
   type Entry = Entry.T
-  object Entry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Entry extends RefinedType[String, Pure]
   type HintLabel = HintLabel.T
-  object HintLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object HintLabel extends RefinedType[String, Pure]
 
 
 
@@ -31,41 +36,41 @@ object ChipInput:
       label: Config.Label,
       placeholder: Config.Placeholder,
       debounceMs: Config.DebounceMs,
-      getSuggestions: com.histmersion.api.Api.Facets.Prefix => Future[List[Facet]],
-      onChange: List[com.histmersion.web.Chip.Choice] => Unit,
+      getSuggestions: Api.Facets.Prefix => Future[List[Facet]],
+      onChange: List[Chip.Choice] => Unit,
       /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
-      onPreview: Option[com.histmersion.web.Chip.Choice] => Unit = _ => (),
+      onPreview: Option[Chip.Choice] => Unit = _ => (),
       /** How a value reads on its chip and in the suggestions. */
-      display: com.histmersion.web.Chip.Choice => Config.DisplayResult = v => Config.DisplayResult(com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(v.value)).value),
+      display: Chip.Choice => Config.DisplayResult = v => Config.DisplayResult(com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(v.value)).value),
       /** The classes of a value's mark, if it has one (a source status's `st-<status>`: the status code). */
-      mark: com.histmersion.web.Chip.Choice => Option[Config.MarkResult] = _ => None
+      mark: Chip.Choice => Option[Config.MarkResult] = _ => None
   )
 
   object Config:
     type DisplayResult = DisplayResult.T
-    object DisplayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DisplayResult extends RefinedType[String, Pure]
     type MarkResult = MarkResult.T
-    object MarkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MarkResult extends RefinedType[String, Pure]
 
     type Field = Field.T
-    object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Field extends RefinedType[String, Pure]
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Placeholder = Placeholder.T
-    object Placeholder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Placeholder extends RefinedType[String, Pure]
     type DebounceMs = DebounceMs.T
-    object DebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DebounceMs extends RefinedType[Int, Pure]
 
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.
     */
-  def apply(config: Config, values: StrictSignal[List[com.histmersion.web.Chip.Choice]]): HtmlElement = view(config, values, () => values.now())
+  def apply(config: Config, values: StrictSignal[List[Chip.Choice]]): HtmlElement = view(config, values, () => values.now())
 
   /** [[apply]] over a UiState field's values, which are plain text. */
   def ofStrings(config: Config, values: StrictSignal[List[String]]): HtmlElement =
-    view(config, values.map(_.map(com.histmersion.web.Chip.Choice(_))), () => values.now().map(com.histmersion.web.Chip.Choice(_)))
+    view(config, values.map(_.map(Chip.Choice(_))), () => values.now().map(Chip.Choice(_)))
 
-  private def view(config: Config, values: Signal[List[com.histmersion.web.Chip.Choice]], now: () => List[com.histmersion.web.Chip.Choice]): HtmlElement =
+  private def view(config: Config, values: Signal[List[Chip.Choice]], now: () => List[Chip.Choice]): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
 
@@ -77,9 +82,9 @@ object ChipInput:
     // the suggestions request a late answer must belong to
     val latest = Latest()
     var inputEl: dom.HTMLInputElement = null
-    var previewValue: Option[com.histmersion.web.Chip.Choice] = None
+    var previewValue: Option[Chip.Choice] = None
 
-    def preview(v: Option[com.histmersion.web.Chip.Choice]): Unit =
+    def preview(v: Option[Chip.Choice]): Unit =
       if previewValue != v then
         previewValue = v
         config.onPreview(v)
@@ -103,7 +108,7 @@ object ChipInput:
 
     def open(rows: List[Facet]): Unit =
       val currentValues = now()
-      val filtered = rows.filter(r => r.value.value != null && !currentValues.contains(com.histmersion.web.Chip.Choice(r.value.value)))
+      val filtered = rows.filter(r => r.value.value != null && !currentValues.contains(Chip.Choice(r.value.value)))
       if filtered.isEmpty then close()
       else
         active.set(-1)
@@ -117,7 +122,7 @@ object ChipInput:
         val prefix = inputEl.value.trim
         if prefix.isEmpty then close()
         else
-          latest.onCurrent(config.getSuggestions(com.histmersion.api.Api.Facets.Prefix(prefix))) { result =>
+          latest.onCurrent(config.getSuggestions(Api.Facets.Prefix(prefix))) { result =>
             if inputEl != null && dom.document.activeElement == inputEl then
               result.fold(_ => close(), rows => open(rows))
           }
@@ -126,7 +131,7 @@ object ChipInput:
       if timer != 0 then dom.window.clearTimeout(timer)
       timer = dom.window.setTimeout(() => suggest(), config.debounceMs.value.toDouble).toInt
 
-    def add(raw: com.histmersion.web.ChipInput.Entry): Unit =
+    def add(raw: Entry): Unit =
       val v = Option(raw.value).getOrElse("").trim
       if inputEl != null then inputEl.value = ""
       menuHidden.set(true)
@@ -135,7 +140,7 @@ object ChipInput:
       if inputEl != null then
         inputEl.setAttribute("aria-expanded", "false")
         inputEl.removeAttribute("aria-activedescendant")
-      if v.nonEmpty && !now().contains(com.histmersion.web.Chip.Choice(v)) then config.onChange(now() :+ com.histmersion.web.Chip.Choice(v))
+      if v.nonEmpty && !now().contains(Chip.Choice(v)) then config.onChange(now() :+ Chip.Choice(v))
       // commit first, then drop the preview: the filter stays identical, so nothing reloads twice
       endPreview()
 
@@ -150,13 +155,13 @@ object ChipInput:
         children <-- values.map { vs =>
           vs.zipWithIndex.map { (v, i) =>
             Chip(
-              com.histmersion.web.Chip.Text(config.display(v).value),
+              Chip.Text(config.display(v).value),
               remove = Some { () =>
                 removeAt(i)
                 if inputEl != null then inputEl.focus()
               },
-              extraCls = com.histmersion.web.Chip.ExtraClass(config.mark(v).fold("")(m => s"has-mark $m")),
-              tip = Option.when(config.display(v).value != v.value)(com.histmersion.web.Chip.Tip(v.value))
+              extraCls = Chip.ExtraClass(config.mark(v).fold("")(m => s"has-mark $m")),
+              tip = Option.when(config.display(v).value != v.value)(Chip.Tip(v.value))
             )
           }
         }
@@ -233,14 +238,14 @@ object ChipInput:
               idAttr := s"$id-o$i",
               cls("active") <-- active.signal.map(_ == i),
               htmlAttr("aria-selected", StringAsIsCodec) <-- active.signal.map(a => (a == i).toString),
-              config.mark(com.histmersion.web.Chip.Choice(it.value.value)).map(m => span(cls := s"status-mark $m", aria.hidden := true)),
-              span(cls := "v", config.display(com.histmersion.web.Chip.Choice(it.value.value)).value),
+              config.mark(Chip.Choice(it.value.value)).map(m => span(cls := s"status-mark $m", aria.hidden := true)),
+              span(cls := "v", config.display(Chip.Choice(it.value.value)).value),
               " ",
               span(cls := "c", s"(${it.count})"),
               onMouseDown.preventDefault --> { _ => add(Entry(it.value.value)) },
               onMouseEnter --> { _ =>
                 active.set(i)
-                preview(Some(com.histmersion.web.Chip.Choice(it.value.value)))
+                preview(Some(Chip.Choice(it.value.value)))
               }
             )
           }
@@ -260,6 +265,6 @@ object ChipInput:
   /** What a suggestion shows: the display form (`_` as a space), as a plain text node — Laminar escapes it, so it must
     * NOT be HTML-escaped first (that shows `&amp;` literally). The value itself is what gets committed.
     */
-  private[web] def hintLabel(value: com.histmersion.web.Chip.Choice): com.histmersion.web.ChipInput.HintLabel = HintLabel(Fmt.display(com.histmersion.api.UiLabels.Text(value.value)).value)
+  private[web] def hintLabel(value: Chip.Choice): HintLabel = HintLabel(Fmt.display(UiLabels.Text(value.value)).value)
 
 end ChipInput

@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.web.ui.ThemeTokens
 import com.raquo.laminar.api.L.*

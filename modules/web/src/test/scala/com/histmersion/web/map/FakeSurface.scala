@@ -1,4 +1,5 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import hearth.kindlings.optics.syntax.*
 
@@ -10,10 +11,10 @@ import scala.collection.mutable
   * kept as data, its base maps recorded. The test double of the map engine — the view-model's logic (clustering, what
   * is drawn, base-map decisions) runs on it without a browser.
   */
-final class FakeSurface(w: MapSurface.Dimension = MapSurface.Dimension(1000), h: MapSurface.Dimension = MapSurface.Dimension(600), caps: Capabilities = Capabilities(com.histmersion.web.map.Capabilities.Webgl(true), com.histmersion.web.map.Capabilities.Software(false), com.histmersion.web.map.Capabilities.Renderer("fake")))
+final class FakeSurface(w: MapSurface.Dimension = MapSurface.Dimension(1000), h: MapSurface.Dimension = MapSurface.Dimension(600), caps: Capabilities = Capabilities(Capabilities.Webgl(true), Capabilities.Software(false), Capabilities.Renderer("fake")))
     extends MapSurface:
   // `var`s: the view, as a map holds it
-  private var c = LatLon(com.histmersion.web.map.LatLon.Lat(37), com.histmersion.web.map.LatLon.Lon(30))
+  private var c = LatLon(LatLon.Lat(37), LatLon.Lon(30))
   private var z = MapSurface.Zoom(5.0)
   private var zmax = MapSurface.MaxZoom(18.0)
   val baseMaps: mutable.ListBuffer[BaseMapSpec] = mutable.ListBuffer.empty
@@ -27,7 +28,7 @@ final class FakeSurface(w: MapSurface.Dimension = MapSurface.Dimension(1000), h:
   def setMaxZoom(m: MapSurface.MaxZoom): Unit = zmax = m
   def center: LatLon = c
   def bounds: GeoBounds =
-    val nw = unproject(ScreenPt(com.histmersion.web.map.ScreenPt.X(0), com.histmersion.web.map.ScreenPt.Y(0)))
+    val nw = unproject(ScreenPt(ScreenPt.X(0), ScreenPt.Y(0)))
     val se = unproject(ScreenPt(ScreenPt.X(w.value), ScreenPt.Y(h.value)))
     GeoBounds(GeoBounds.South(se.lat.value), GeoBounds.West(nw.lon.value), GeoBounds.North(nw.lat.value), GeoBounds.East(se.lon.value))
   def size: (MapSurface.Dimension, MapSurface.Dimension) = (w, h)

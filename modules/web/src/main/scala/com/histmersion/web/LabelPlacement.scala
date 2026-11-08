@@ -1,6 +1,8 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import scala.collection.mutable
+import com.histmersion.api.Geo
 
 /** Where a region's or polity's NAME goes on the map, and which names are shown — all pure, so the placement is a unit
   * test and the map only applies the answer ([[MapLabels]]).
@@ -65,15 +67,15 @@ object LabelPlacement:
   private val MaxLat = 85.0511287798
 
   /** Pure: (lat, lon) → the zoom-0 Mercator plane. */
-  def project(lat: com.histmersion.api.Geo.Latitude, lon: com.histmersion.api.Geo.Longitude): Pt =
+  def project(lat: Geo.Latitude, lon: Geo.Longitude): Pt =
     val phi = math.toRadians(math.max(-MaxLat, math.min(MaxLat, lat.value)))
     Pt((lon.value + 180.0) / 360.0 * World, (1.0 - math.log(math.tan(phi) + 1.0 / math.cos(phi)) / math.Pi) / 2.0 * World)
 
   /** Pure: the inverse of [[project]] → (lat, lon). */
-  def unproject(p: Pt): (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude) =
+  def unproject(p: Pt): (Geo.Latitude, Geo.Longitude) =
     val lon = p.x / World * 360.0 - 180.0
     val n = math.Pi - 2.0 * math.Pi * p.y / World
-    (com.histmersion.api.Geo.Latitude(math.toDegrees(math.atan(math.sinh(n)))), com.histmersion.api.Geo.Longitude(lon))
+    (Geo.Latitude(math.toDegrees(math.atan(math.sinh(n)))), Geo.Longitude(lon))
 
   /** Pure: a ring's unsigned area (shoelace). */
   def ringArea(r: Vector[Pt]): Double =
@@ -125,8 +127,8 @@ object LabelPlacement:
     *   - `archipelago`: no part holds [[DominantShare]] of the land, so the hull stands for the shape.
     */
   final case class Shape(
-      lat: com.histmersion.api.Geo.Latitude,
-      lon: com.histmersion.api.Geo.Longitude,
+      lat: Geo.Latitude,
+      lon: Geo.Longitude,
       home: Pt,
       size0: Double,
       bbox0: Rect,
@@ -143,7 +145,7 @@ object LabelPlacement:
 
   /** Pure: the label home and size of a (multi)polygon given in (lat, lon) rings — `None` for an empty one.
     */
-  def shape(polys: Seq[Seq[Seq[(com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)]]]): Option[Shape] =
+  def shape(polys: Seq[Seq[Seq[(Geo.Latitude, Geo.Longitude)]]]): Option[Shape] =
     val projected = polys
       .map(_.map(_.map((la, lo) => project(la, lo)).toVector).toVector)
       .filter(_.nonEmpty)

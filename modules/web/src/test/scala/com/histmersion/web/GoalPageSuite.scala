@@ -1,4 +1,5 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
@@ -17,7 +18,7 @@ class GoalPageSuite extends munit.FunSuite:
       kind: ManagerItem.Kind = ManagerItem.Kind("compile-article"),
       target: ManagerItem.Target = ManagerItem.Target("sea-peoples")
   ) =
-    Managers.ManagerItem(id, com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:g"), kind, target, status, updatedAt = at, createdAt = ManagerItem.CreatedAt(at.value))
+    Managers.ManagerItem(id, Managers.ManagerInfo.Id("seed:g"), kind, target, status, updatedAt = at, createdAt = ManagerItem.CreatedAt(at.value))
 
   test("the plan: what runs now first, then what is to do, then what was done, newest first in each"):
     val is = List(
@@ -54,13 +55,13 @@ class GoalPageSuite extends munit.FunSuite:
 
   test("the schedule: the currency check's last and next run, else the watcher's next tick"):
     val v = GoalView(
-      Goal(com.histmersion.api.automation.Goal.Slug("g"), com.histmersion.api.automation.Goal.Title("G"), com.histmersion.api.automation.Goal.StatusValue("seeding")),
+      Goal(Goal.Slug("g"), Goal.Title("G"), Goal.StatusValue("seeding")),
       schedules = List(
         GoalSchedule(
-          com.histmersion.api.automation.Goal.Slug("g"),
+          Goal.Slug("g"),
           ScheduleKind.Currency,
-          com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"),
-          enabled = com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+          GoalSchedule.Cron("@weekly"),
+          enabled = GoalSchedule.Enabled(true),
           lastRunAt = Some(GoalSchedule.LastRunAt("2026-10-27T09:00:00")),
           nextRunAt = Some(GoalSchedule.NextRunAt("2026-11-03T09:00:00"))
         )
@@ -71,18 +72,18 @@ class GoalPageSuite extends munit.FunSuite:
       GoalPage.schedule(v, None, None, now).map(_.value),
       Some("checked for new publications 3 days ago · next check in 4 days")
     )
-    val watcher = Managers.ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:g"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"), goal = Some(com.histmersion.api.automation.Goal.Slug("g")), nextTickAt = Some(com.histmersion.api.automation.Managers.ManagerInfo.NextTickAt("2026-10-31T13:00:00")))
+    val watcher = Managers.ManagerInfo(Managers.ManagerInfo.Id("watch:g"), Managers.ManagerInfo.Kind("watch"), goal = Some(Goal.Slug("g")), nextTickAt = Some(Managers.ManagerInfo.NextTickAt("2026-10-31T13:00:00")))
     assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), Some(watcher), None, now).map(_.value), Some("next check tomorrow"))
     assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), None, None, now), None)
 
   test("a goal is paused when every agent working for it is; its lists and sources are filtered to it"):
     val ms = List(
-      Managers.ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:g"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("seed"), state = com.histmersion.api.automation.Managers.ManagerInfo.State("paused")),
-      Managers.ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:g"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"), state = com.histmersion.api.automation.Managers.ManagerInfo.State("paused"))
+      Managers.ManagerInfo(Managers.ManagerInfo.Id("seed:g"), Managers.ManagerInfo.Kind("seed"), state = Managers.ManagerInfo.State("paused")),
+      Managers.ManagerInfo(Managers.ManagerInfo.Id("watch:g"), Managers.ManagerInfo.Kind("watch"), state = Managers.ManagerInfo.State("paused"))
     )
     assert(GoalPage.paused(ms))
     assert(!GoalPage.paused(ms.updated(0, ms.head.copy(state = Managers.ManagerInfo.State("active")))))
     assert(!GoalPage.paused(Nil))
-    assertEquals(GoalPage.listOf(ResearchSection.Backlog, com.histmersion.api.automation.Goal.Slug("bronze age")).value, "/research/backlog?goal=bronze%20age")
-    assertEquals(GoalPage.libraryOf(com.histmersion.api.automation.Goal.Slug("g")).value, "/library#goal=g")
-    assertEquals(GoalPage.mapOf(com.histmersion.api.automation.Goal.Slug("g")).value, "/explore#goal=g")
+    assertEquals(GoalPage.listOf(ResearchSection.Backlog, Goal.Slug("bronze age")).value, "/research/backlog?goal=bronze%20age")
+    assertEquals(GoalPage.libraryOf(Goal.Slug("g")).value, "/library#goal=g")
+    assertEquals(GoalPage.mapOf(Goal.Slug("g")).value, "/explore#goal=g")

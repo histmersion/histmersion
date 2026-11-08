@@ -1,25 +1,28 @@
-package com.histmersion.web.map
+package com.histmersion
+package web.map
 
 import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Fanning a bubble's points out around it (the "spiderfy" of the marker-cluster plugins): a ring for a few, a spiral
   * for more, each point on a thin leg back to the spot. Pure but for the legs' markup.
   */
 object Spiderfy:
   type OffsetCoordinate = OffsetCoordinate.T
-  object OffsetCoordinate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OffsetCoordinate extends RefinedType[Double, Pure]
   type Svg = Svg.T
-  object Svg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Svg extends RefinedType[String, Pure]
   /** A fanned-out point's marker; the bubble it came out of; the legs' element. */
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type Separation = Separation.T
-  object Separation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Separation extends RefinedType[Double, Pure]
   type Side = Side.T
-  object Side extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Side extends RefinedType[Int, Pure]
 
   val Member = "hd-spider"
   val Fanned = "hd-spidered"
@@ -34,7 +37,7 @@ object Spiderfy:
   /** Pure: each point's offset from the spot (px, y down) for `n` points `separation` px apart: on a ring (the first a
     * little past twelve o'clock) or an outward spiral, never on the spot itself.
     */
-  def offsets(n: com.histmersion.web.map.Spiderfy.Count, separation: com.histmersion.web.map.Spiderfy.Separation): Vector[(com.histmersion.web.map.Spiderfy.OffsetCoordinate, com.histmersion.web.map.Spiderfy.OffsetCoordinate)] =
+  def offsets(n: Count, separation: Separation): Vector[(OffsetCoordinate, OffsetCoordinate)] =
     offsetsOf(n.value, separation.value).map((x, y) => (OffsetCoordinate(x), OffsetCoordinate(y)))
 
   private def offsetsOf(n: Int, separation: Double): Vector[(Double, Double)] =
@@ -59,7 +62,7 @@ object Spiderfy:
       }
 
   /** The legs: an SVG `side` px square, centred on the spot, a line to each offset. */
-  def legsSvg(offsets: Seq[(com.histmersion.web.map.Spiderfy.OffsetCoordinate, com.histmersion.web.map.Spiderfy.OffsetCoordinate)], side: com.histmersion.web.map.Spiderfy.Side): com.histmersion.web.map.Spiderfy.Svg =
+  def legsSvg(offsets: Seq[(OffsetCoordinate, OffsetCoordinate)], side: Side): Svg =
     val px = side.value
     val c = px / 2.0
     val lines = offsets.map((x, y) => s"""<line x1="$c" y1="$c" x2="${c + x.value}" y2="${c + y.value}"/>""").mkString

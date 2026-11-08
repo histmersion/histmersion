@@ -1,8 +1,12 @@
-package com.histmersion.web.settings
+package com.histmersion
+package web.settings
 
 import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.ErrorLine
 
 /** Settings › Advanced (all settings): every setting of the settings file, generated from the defaults
   * (reference.conf), grouped by its block with the words that document each — for what the other pages do not show. One
@@ -10,12 +14,12 @@ import com.raquo.laminar.api.L.*
   */
 object AdvancedSection:
   type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Query extends RefinedType[String, Pure]
   type SectionName = SectionName.T
-  object SectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SectionName extends RefinedType[String, Pure]
 
   /** Does a setting match what was typed in the filter (its key or its words)? Pure. */
-  def matches(f: ConfigEdit.Field, q: com.histmersion.web.settings.AdvancedSection.Query): Boolean =
+  def matches(f: ConfigEdit.Field, q: Query): Boolean =
     val t = q.value.trim.toLowerCase
     t.isEmpty || f.relative.value.toLowerCase.contains(t) || f.doc.value.toLowerCase.contains(t)
 
@@ -42,12 +46,12 @@ object AdvancedSection:
       ),
       child <-- SettingsStore.current.map {
         case None           => p(cls := "muted", "Loading…")
-        case Some(Left(m))  => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m"))
+        case Some(Left(m))  => ErrorLine.text(ErrorLine.Problem(s"Could not read the settings: $m"))
         case Some(Right(p)) =>
           div(
             cls := "advanced-file muted",
             p.file.fold("This server has no settings file.")(f => s"Settings file: $f"),
-            p.problems.map(x => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(x.value)))
+            p.problems.map(x => ErrorLine.text(ErrorLine.Problem(x.value)))
           )
       },
       div(cls := "advanced-save", SettingsForm.saveBar(draft)),
@@ -73,10 +77,10 @@ object AdvancedSection:
   )
 
   /** A block's name for a person. Pure. */
-  def sectionName(id: ConfigEdit.Section.Id): com.histmersion.web.settings.AdvancedSection.SectionName = SectionName(Names.getOrElse(id.value, Wording.humanize(Wording.Id(id.value))))
+  def sectionName(id: ConfigEdit.Section.Id): SectionName = SectionName(Names.getOrElse(id.value, Wording.humanize(Wording.Id(id.value))))
 
   /** One block, folded until opened (or while the filter finds something in it). */
-  private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[com.histmersion.web.settings.AdvancedSection.Query]): HtmlElement =
+  private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[Query]): HtmlElement =
     val open = Var(false)
     val shown = s.fields.filter(_.credential.isEmpty)
     detailsTag(

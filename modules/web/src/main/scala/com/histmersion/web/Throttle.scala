@@ -1,8 +1,11 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import org.scalajs.dom
 
 import scala.scalajs.js
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Runs `f` at most once per `intervalMs`: the first call runs at once, calls inside the window collapse into one
   * trailing run with the latest arguments. Unlike a debounce it keeps firing during a continuous drag, so live views
@@ -18,7 +21,7 @@ final class Throttle[A](
       Throttle.TimerId(dom.window.setTimeout(() => g(), ms.value)),
     cancel: Throttle.TimerId => Unit = id => dom.window.clearTimeout(id.value)
 ):
-  private var lastRun: com.histmersion.web.ResearchOverview.EpochMillis = ResearchOverview.EpochMillis(Double.NegativeInfinity)
+  private var lastRun: ResearchOverview.EpochMillis = ResearchOverview.EpochMillis(Double.NegativeInfinity)
   private var pending: Option[A] = None
   private var timer: Throttle.TimerId = Throttle.TimerId(0)
 
@@ -36,16 +39,16 @@ final class Throttle[A](
     if pending.isDefined then cancel(timer)
     pending = None
 
-  private def run(a: A, t: com.histmersion.web.ResearchOverview.EpochMillis): Unit =
+  private def run(a: A, t: ResearchOverview.EpochMillis): Unit =
     pending = None
     lastRun = t
     f(a)
 
 object Throttle:
   type IntervalMs = IntervalMs.T
-  object IntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IntervalMs extends RefinedType[Int, Pure]
   type DelayMs = DelayMs.T
-  object DelayMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DelayMs extends RefinedType[Double, Pure]
   type TimerId = TimerId.T
-  object TimerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TimerId extends RefinedType[Int, Pure]
 

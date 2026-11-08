@@ -1,10 +1,13 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.library.{Acquire, Filter}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source link, a chip, a
   * confidence mark, a layer switch, an icon — is built HERE, once, so the sidebar, the tabs, the map popup and the
@@ -181,10 +184,10 @@ enum Icon(val paths: List[String]):
 
 object Icon:
   type Html = Html.T
-  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Html extends RefinedType[String, Pure]
 
   /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
-  def html(i: Icon): com.histmersion.web.Icon.Html =
+  def html(i: Icon): Html =
     Html.assume(s"""<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${i.paths
         .map(d => s"""<path d="$d"/>""")
         .mkString}</svg>""")

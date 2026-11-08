@@ -1,31 +1,34 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import com.histmersion.api.library.Label
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The one chip: a readable label (never an underscore — [[Label.display]]), an optional prefix, and an optional remove
   * button. Editable chip inputs, the empty-state list, article cards and the link preview all draw theirs with it.
   */
 object Chip:
   type Choice = Choice.T
-  object Choice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Choice extends RefinedType[String, Pure]
   type ExtraClass = ExtraClass.T
-  object ExtraClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExtraClass extends RefinedType[String, Pure]
   type Prefix = Prefix.T
-  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Prefix extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]
   type Tip = Tip.T
-  object Tip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tip extends RefinedType[String, Pure]
 
   def apply(
-      text: com.histmersion.web.Chip.Text,
+      text: Text,
       remove: Option[() => Unit] = None,
-      prefix: Option[com.histmersion.web.Chip.Prefix] = None,
-      tip: Option[com.histmersion.web.Chip.Tip] = None,
-      extraCls: com.histmersion.web.Chip.ExtraClass = com.histmersion.web.Chip.ExtraClass(""),
+      prefix: Option[Prefix] = None,
+      tip: Option[Tip] = None,
+      extraCls: ExtraClass = ExtraClass(""),
       mods: Modifier[HtmlElement]*
   ): HtmlElement =
     span(
@@ -46,5 +49,5 @@ object Chip:
     )
 
   /** A chip for a stored VALUE: the label is its display form. */
-  def value(v: com.histmersion.web.Chip.Choice, remove: Option[() => Unit] = None, prefix: Option[com.histmersion.web.Chip.Prefix] = None): HtmlElement =
-    apply(Chip.Text(Label.display(Label.Text(v.value)).value), remove, prefix)
+  def value(v: Choice, remove: Option[() => Unit] = None, prefix: Option[Prefix] = None): HtmlElement =
+    apply(Text(Label.display(Label.Text(v.value)).value), remove, prefix)

@@ -1,8 +1,12 @@
-package com.histmersion.web.ui
+package com.histmersion
+package web.ui
 
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.web.Icon
 
 /** The ONE menu of actions on a thing — a row, the reading pane, the map, the timeline: opened by a right click, by the
   * keyboard's menu key or Shift+F10 on the thing, or by its "⋯" button. Every action in it is also somewhere a person
@@ -13,30 +17,30 @@ object ContextMenu:
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
 
-  export com.histmersion.web.ui.ContextMenu.Open.{Title as ShowTitle, Title as OnTitle, Title as ButtonTitle}
+  export Open.{Title as ShowTitle, Title as OnTitle, Title as ButtonTitle}
   type ButtonExtraCls = ButtonExtraCls.T
-  object ButtonExtraCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ButtonExtraCls extends RefinedType[String, Pure]
 
   final case class Entry(
       label: Entry.Label,
       run: () => Unit,
-      disabled: Entry.Disabled = com.histmersion.web.ui.ContextMenu.Entry.Disabled(false),
+      disabled: Entry.Disabled = Entry.Disabled(false),
       hint: Option[Entry.Hint] = None,
       pressed: Option[Entry.Pressed] = None
   )
 
   object Entry:
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
     type Disabled = Disabled.T
-    object Disabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Disabled extends RefinedType[Boolean, Pure]
     type Hint = Hint.T
-    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Hint extends RefinedType[String, Pure]
     type Pressed = Pressed.T
-    object Pressed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pressed extends RefinedType[Boolean, Pure]
 
   /** A line between groups of actions. */
-  val Separator: Entry = Entry(com.histmersion.web.ui.ContextMenu.Entry.Label(""), () => ())
+  val Separator: Entry = Entry(Entry.Label(""), () => ())
 
   final private case class Open(
       title: Open.Title,
@@ -48,7 +52,7 @@ object ContextMenu:
 
   object Open:
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
 
   private val open = Var(Option.empty[Open])
 
@@ -65,7 +69,7 @@ object ContextMenu:
     val py = if y + h + margin > vh then math.max(margin, y - h) else y
     (math.max(margin, math.min(px, vw - w - margin)), math.max(margin, math.min(py, vh - h - margin)))
 
-  def show(title: com.histmersion.web.ui.ContextMenu.ShowTitle, entries: List[Entry], x: Double, y: Double, back: Option[dom.HTMLElement]): Unit =
+  def show(title: ContextMenu.ShowTitle, entries: List[Entry], x: Double, y: Double, back: Option[dom.HTMLElement]): Unit =
     open.set(Some(Open(title, entries, x, y, back)))
 
   def close(returnFocus: Boolean = true): Unit =
@@ -74,7 +78,7 @@ object ContextMenu:
     if returnFocus then was.flatMap(_.back).filter(_.isConnected).foreach(_.focus())
 
   /** Under (or, near the bottom, over) an element: how the keyboard and the "⋯" button open it. */
-  def showUnder(el: dom.HTMLElement, title: com.histmersion.web.ui.ContextMenu.Open.Title, entries: List[Entry]): Unit =
+  def showUnder(el: dom.HTMLElement, title: Open.Title, entries: List[Entry]): Unit =
     val r = el.getBoundingClientRect()
     show(title, entries, r.left, r.bottom + 2, Some(el))
 
@@ -89,7 +93,7 @@ object ContextMenu:
     selected || Option(ev.target).collect { case e: dom.Element => e }.exists(_.closest(NativeHere) != null)
 
   /** A right click and the menu key on the element open its menu; `entries` is read when it opens. */
-  def on(title: com.histmersion.web.ui.ContextMenu.OnTitle, entries: () => List[Entry]): Modifier[HtmlElement] =
+  def on(title: ContextMenu.OnTitle, entries: () => List[Entry]): Modifier[HtmlElement] =
     List(
       onContextMenu --> { ev =>
         val es = if nativeWanted(ev) then Nil else entries()
@@ -110,7 +114,7 @@ object ContextMenu:
     )
 
   /** The visible way in: a "⋯" button that opens the same menu under itself. */
-  def button(title: com.histmersion.web.ui.ContextMenu.ButtonTitle, entries: () => List[Entry], extraCls: com.histmersion.web.ui.ContextMenu.ButtonExtraCls = com.histmersion.web.ui.ContextMenu.ButtonExtraCls("")): HtmlElement =
+  def button(title: ContextMenu.ButtonTitle, entries: () => List[Entry], extraCls: ButtonExtraCls = ButtonExtraCls("")): HtmlElement =
     L.button(
       typ := "button",
       cls := s"btn btn--icon btn--sm menu-btn $extraCls".trim,
@@ -118,7 +122,7 @@ object ContextMenu:
       L.title := title.value,
       aria.hasPopup := true,
       aria.expanded <-- open.signal.map(_.exists(_.title == title)),
-      com.histmersion.web.Icon(com.histmersion.web.Icon.More),
+      Icon(Icon.More),
       onClick --> { ev =>
         ev.stopPropagation()
         if open.now().exists(_.title == title) then close(returnFocus = false)

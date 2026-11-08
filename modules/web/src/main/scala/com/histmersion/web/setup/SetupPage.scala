@@ -1,4 +1,5 @@
-package com.histmersion.web.setup
+package com.histmersion
+package web.setup
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{Api, Wording}
@@ -17,6 +18,9 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.instance.{MapStartConfig, UiConfig}
 import com.histmersion.api.settings.ConfigEdit
 import com.histmersion.api.basemap.Basemap
+import com.histmersion.api.ByteCount
+import com.histmersion.web.ErrorLine
+import com.histmersion.api.BBox
 
 /** The first-run setup (`/setup`): seven steps with safe defaults — finding open papers, the maps, the background data,
   * research agents and Calibre (both optional) — then Ready. Nothing is written or downloaded until it is finished;
@@ -55,7 +59,7 @@ object SetupPage:
 
   /** The areas offered (`basemap.setup-areas`). */
   def areasOf(p: ConfigEdit.Page): List[MapArea] =
-    p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("basemap.setup-areas")).flatMap(_.effective).toList.flatMap { json =>
+    p.field(ConfigEdit.Field.Key("basemap.setup-areas")).flatMap(_.effective).toList.flatMap { json =>
       scala.util.Try(js.JSON.parse(json.value).asInstanceOf[js.Array[String]].toList).getOrElse(Nil).flatMap(MapArea.parse)
     }
 
@@ -64,7 +68,7 @@ object SetupPage:
     val page = Var(Option.empty[Either[SettingsStore.Problem, ConfigEdit.Page]])
     val before = Var(SetupChoices())
     val choices = Var(SetupChoices())
-    val free = Var(Option.empty[com.histmersion.api.ByteCount])
+    val free = Var(Option.empty[ByteCount])
     val problem = Var(Option.empty[String])
     val working = Var(false)
     val finished = Var(Option.empty[List[(String, Either[String, String])]])
@@ -80,7 +84,7 @@ object SetupPage:
           before.set(c); choices.set(c); start.set(c.start)
         }
       }
-      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption.map(com.histmersion.api.ByteCount(_))))
+      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption.map(ByteCount(_))))
 
     /** Write the choices (and the mark that the setup is done); then, unless skipping, start the downloads. */
     def finish(download: Boolean): Unit =
@@ -149,7 +153,7 @@ object SetupPage:
             RouteLink(
               Route.Settings(SettingsSection.General),
               "Leave the setup without saving",
-              onClick --> (_ => SetupPage.leave())
+              onClick --> (_ => leave())
             )
           )
         ),
@@ -161,7 +165,7 @@ object SetupPage:
           ),
           child <-- page.signal.combineWith(step.signal, finished.signal).map {
             case (None, _, _)              => p(cls := "muted", "Loading…")
-            case (Some(Left(m)), _, _)     => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(s"Could not read the settings: $m"))
+            case (Some(Left(m)), _, _)     => ErrorLine.text(ErrorLine.Problem(s"Could not read the settings: $m"))
             case (Some(Right(p)), s, done) =>
               div(
                 cls := "setup-body",
@@ -170,7 +174,7 @@ object SetupPage:
                 body(s, p, choices, start, free.signal, done, ui)
               )
           },
-          child.maybe <-- problem.signal.map(_.map(m => com.histmersion.web.ErrorLine.text(com.histmersion.web.ErrorLine.Problem(m)))),
+          child.maybe <-- problem.signal.map(_.map(m => ErrorLine.text(ErrorLine.Problem(m)))),
           div(
             cls := "setup-bar",
             button(
@@ -228,7 +232,7 @@ object SetupPage:
     )
 
   private def startDownload(d: SetupDownload): Future[String] = d match
-    case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(com.histmersion.api.BBox.Text(area.value)))).map(_ => "started")
+    case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(BBox.Text(area.value)))).map(_ => "started")
     case SetupDownload.Boundaries => ApiClient.initData(fetch = Api.Overwrite(true)).map(_ => "started")
     case SetupDownload.Events     =>
       ApiClient
@@ -240,7 +244,7 @@ object SetupPage:
         )
     case SetupDownload.Pictures   => ApiClient.importMedia(MediaItem.Provider("wikidata")).map(_ => "started")
     case SetupDownload.MorePlaces =>
-      Future.sequence(List("geonames", "wikidata").map(n => ApiClient.loadPlaces(com.histmersion.api.Api.ExternalPlaces.Source(n)))).map(_ => "started")
+      Future.sequence(List("geonames", "wikidata").map(n => ApiClient.loadPlaces(Api.ExternalPlaces.Source(n)))).map(_ => "started")
 
   private def check(
       text: String,
@@ -261,7 +265,7 @@ object SetupPage:
       page: ConfigEdit.Page,
       choices: Var[SetupChoices],
       start: Var[MapStartConfig],
-      free: Signal[Option[com.histmersion.api.ByteCount]],
+      free: Signal[Option[ByteCount]],
       done: Option[List[(String, Either[String, String])]],
       ui: UiConfig
   ): HtmlElement =
@@ -319,7 +323,7 @@ object SetupPage:
           )
         )
       case SetupStep.Maps =>
-        val areas = SetupPage.areasOf(page)
+        val areas = areasOf(page)
         div(
           cls := "setup-text",
           p(
@@ -357,7 +361,7 @@ object SetupPage:
             },
             p(cls := "muted", child.text <-- free.map(_.fold("")(b => s"Free on this disk: ${Backup.humanBytes(b)}")))
           ),
-          StartPlace.chooser(start, com.histmersion.web.settings.StartPlace.ChooserName("setup-start"))
+          StartPlace.chooser(start, StartPlace.ChooserName("setup-start"))
         )
       case SetupStep.Background =>
         div(

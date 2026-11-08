@@ -1,10 +1,12 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
+import com.histmersion.web.map.MapSurface
 
 /** `window.histmersionMap`: the map from the browser's console and the browser regressions (modules/web/test), in the
   * app's own terms — whatever library draws it. Read-mostly: the view can be set; nothing here writes data. Zooms are
@@ -55,7 +57,7 @@ object MapHandle:
             val _ = s.popup(
               ll(at),
               MapSurface.PopupHtml(s"""<div class="hd-popup-content zz-test-popup">${Fmt.esc(text)}</div>"""),
-              com.histmersion.web.map.MapSurface.PopupCls("")
+              MapSurface.PopupCls("")
             )
           }
       ): js.Function2[js.Array[Double], String, Unit],

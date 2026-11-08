@@ -1,7 +1,10 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.api.ConfidenceStyle
 import com.histmersion.api.library.Confidence
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** How sure the map's dots for some findings are (#1946): a STATED confidence, or [[Certainty.Unstated]] — a finding
   * that states none. An unstated one is drawn in its own neutral look (its period colour turned grey, a dashed edge, a
@@ -14,9 +17,9 @@ enum Certainty:
 
 object Certainty:
   type MarkerClass = MarkerClass.T
-  object MarkerClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MarkerClass extends RefinedType[String, Pure]
   type Rank = Rank.T
-  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Rank extends RefinedType[Int, Pure]
 
   /** What a dot that is not a finding (a site, an event, a picture) says about certainty: nothing — the full colour,
     * which never outweighs a finding's own.
@@ -30,7 +33,7 @@ object Certainty:
   /** Weakest first: `contested < low < medium < unstated < high`. An unstated finding never lets a group look high,
     * while a stated low or contested in the same group says more than "not stated" does.
     */
-  def rank(c: Certainty): com.histmersion.web.Certainty.Rank = c match
+  def rank(c: Certainty): Rank = c match
     case Stated(level) => Rank(2 * ConfidenceStyle.rank(level).value)
     case Unstated      => Rank(2 * ConfidenceStyle.rank(Confidence.High).value - 1)
 
@@ -55,9 +58,9 @@ object Certainty:
         case _ => rgb
 
   /** The marker class of an unstated dot (its dashed edge, `style.css`); none for a stated one. */
-  def markerClass(c: Certainty): com.histmersion.web.Certainty.MarkerClass = c match
-    case Unstated  => com.histmersion.web.Certainty.MarkerClass("hd-unstated")
-    case Stated(_) => com.histmersion.web.Certainty.MarkerClass("")
+  def markerClass(c: Certainty): MarkerClass = c match
+    case Unstated  => MarkerClass("hd-unstated")
+    case Stated(_) => MarkerClass("")
 
   /** The legend's word for an unstated confidence. */
   val UnstatedLabel = "not stated"

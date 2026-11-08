@@ -1,8 +1,10 @@
-package com.histmersion.web
+package com.histmersion
+package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.instance.UiNotices.{Board, Counter}
+import com.histmersion.api.instance.UiNotices
 
 /** The pure parts of the toolbar's notices: which window watches which board, which open windows are marked read and at
   * what, and what a button says.
@@ -15,7 +17,7 @@ class NoticesSuite extends munit.FunSuite:
   private val t2Seen = Counter.Seen("2026-10-11T09:00:00.000000Z")
 
   private def c(key: Board.Wire, latest: Option[Counter.Latest], seen: Option[Counter.Seen], count: Option[Counter.Count] = None) =
-    Counter(key, count, latest, seen, Counter.Fresh(com.histmersion.api.instance.UiNotices.fresh(latest, seen)))
+    Counter(key, count, latest, seen, Counter.Fresh(UiNotices.fresh(latest, seen)))
 
   test("each watched window is its own board; the others watch none"):
     assertEquals(Notices.boardOf(WindowKey.Goals), Some(Board.Goals))
@@ -23,7 +25,7 @@ class NoticesSuite extends munit.FunSuite:
     assertEquals(Notices.boardOf(WindowKey.Approvals), Some(Board.Approvals))
     assertEquals(Notices.boardOf(WindowKey.Acquire), Some(Board.Acquire))
     assertEquals(Notices.boardOf(WindowKey.Log), Some(Board.Log))
-    assertEquals(Notices.boardOf(WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("bronze-age"))), None, "one goal's window is not the goals list")
+    assertEquals(Notices.boardOf(WindowKey.Goal(WindowKey.Goal.Slug("bronze-age"))), None, "one goal's window is not the goals list")
     assertEquals(Notices.boardOf(WindowKey.Jobs), None)
     // every board is a page of Research's, which marks it read while it is shown
     val pages = List(
@@ -47,7 +49,7 @@ class NoticesSuite extends munit.FunSuite:
     assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Jobs), cs), List(Board.Tasks -> t2Latest))
     assertEquals(Notices.toMark(List(WindowKey.Log), cs), Nil, "nothing new: nothing to send")
     assertEquals(Notices.toMark(Nil, cs), Nil, "a closed window stays bold")
-    assertEquals(Notices.toMark(List(WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("x"))), cs), Nil)
+    assertEquals(Notices.toMark(List(WindowKey.Goal(WindowKey.Goal.Slug("x"))), cs), Nil)
     assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Tasks), cs), List(Board.Tasks -> t2Latest))
 
   test("once marked, a board is not new, and an older mark never moves it back"):
