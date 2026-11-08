@@ -34,6 +34,8 @@ import com.histmersion.util.plugins.PluginKit
   * succeeded.
   */
 object PluginHost:
+  private given CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
+
   type ClassName = ClassName.T
   object ClassName extends Newtype[String, Pure]
   type ConfigPath = ConfigPath.T

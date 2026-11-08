@@ -134,7 +134,7 @@ object FetchChain:
     type Why = Why.T
     object Why extends Newtype[String, Pure]
 
-    enum Kind(val label: Kind.Label):
+    enum Kind(val label: Kind.Label) derives CanEqual:
       case Miss extends Kind(Kind.Label("no copy"))
       case Refused extends Kind(Kind.Label("refused"))
 
