@@ -1,293 +1,261 @@
 path	kind	reason
-modules/db/src/main/scala/com/histmersion/api/library/SourceColumns.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentStateRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/agents/LeaseRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/agents/ModelSettingsRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/agents/PlanQuotaRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/autopilot/AutopilotRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/goals/FocusRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalLinkRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/managers/ManagerLight.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/managers/ManagerRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/worklists/QueueBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/worklists/QueueRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/automation/worklists/WorkListSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/events/CorrectionRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventImportRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/AttestationRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/AttestationSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/EventLinkRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/EvidenceBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/maptiles/TileRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/maptiles/UndatedSiteRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/periods/PeriodBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/periods/PeriodRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/FindingPlaceRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/GazetteerRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/Geocoder.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/LandRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceColumns.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceOverrideRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceReviewRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceVocabularyCodecs.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PointAreaRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/catalogue/places/SiteTypeRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/acquisition/AcquireCheckRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/acquisition/AssessmentRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/acquisition/CandidateRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/acquisition/UpstreamQuotaRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/citations/CitationRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/findings/FindingColumns.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/labels/LabelRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/search/AggregateRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/search/FilterSql.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/search/QueryAccess.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/search/QueryRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceColumns.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceDeleteRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/library/workflows/SourceApprovalRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/assets/AssetBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/assets/AssetRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/assets/MediaRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/covers/CoverRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/figures/FigureRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/imports/ImportRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/links/AssetLinkBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/links/AssetLinkRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/media/links/AssetLinkSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleBundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleCheckRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/articles/CoverageRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/articles/CritiqueRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/articles/review/ArticleReviewRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/domain/research/workflows/ReviewLedgerRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/diagnostics/StatsRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleExport.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleImport.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/exchange/MergePlans.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/exchange/MergeRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/exchange/MergeState.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/data/maintenance/VacuumRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/Codecs.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/Db.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/Jsonb.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/LikePattern.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/Migrate.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/NewtypeColumns.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/database/Vocab.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/db/src/main/scala/com/histmersion/util/jobs/JobSourceReferrer.scala	sql	SQL text, JDBC parameters or row codecs
-modules/server/src/main/scala/com/histmersion/domain/library/collections/CollectionLinksRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/server/src/main/scala/com/histmersion/domain/personal/bookmarks/BookmarkRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/server/src/main/scala/com/histmersion/domain/personal/notes/NoteRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/server/src/main/scala/com/histmersion/domain/personal/reading/ReadingRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/server/src/main/scala/com/histmersion/domain/personal/seen/SeenRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/server/src/main/scala/com/histmersion/server/instance/UiRepo.scala	sql	SQL text, JDBC parameters or row codecs
-modules/api/src/main/scala/com/histmersion/api/OpsApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/automation/AgentsApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/automation/ManagersApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/basemap/BasemapApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/catalogue/EventsApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/catalogue/TilesApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/instance/UiApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/library/AcquireApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/library/AcquisitionWorkApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/library/CollectionsApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/personal/PersonalApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/settings/ConfigEditApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/api/src/main/scala/com/histmersion/api/views/AutopilotApi.scala	http	Tapir endpoint definitions: request and response bodies
-modules/cli/src/main/scala/com/histmersion/cli/Client.scala	http	sends or receives HTTP requests, headers and bodies
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/HostAiHttp.scala	http	sends or receives HTTP requests, headers and bodies
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/JavaHttpTransport.scala	http	sends or receives HTTP requests, headers and bodies
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PolicyHttp.scala	http	sends or receives HTTP requests, headers and bodies
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SttpTransport.scala	http	sends or receives HTTP requests, headers and bodies
-modules/server/src/main/scala/com/histmersion/server/HttpDownload.scala	http	sends or receives HTTP requests, headers and bodies
-modules/server/src/main/scala/com/histmersion/server/agents/AgentDoctor.scala	http	sends or receives HTTP requests, headers and bodies
-modules/server/src/main/scala/com/histmersion/util/basemap/JavaRangeHttp.scala	http	sends or receives HTTP requests, headers and bodies
-modules/server/src/main/scala/com/histmersion/util/ocr/HttpConverterClient.scala	http	sends or receives HTTP requests, headers and bodies
-modules/upstreams/src/main/scala/com/histmersion/upstreams/core/CoreApi.scala	http	sends or receives HTTP requests, headers and bodies
-modules/upstreams/src/main/scala/com/histmersion/upstreams/http/UpstreamHttp.scala	http	sends or receives HTTP requests, headers and bodies
-modules/web/src/main/scala/com/histmersion/web/ApiClient.scala	http	sends or receives HTTP requests, headers and bodies
-modules/api/src/main/scala/com/histmersion/api/Csv.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/StrictJson.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/VocabularyCodecs.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/WireEnum.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/WireEnumValues.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/catalogue/Gazetteer.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/catalogue/Lpf.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/catalogue/PeriodO.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/json/NewtypeCodecs.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/api/src/main/scala/com/histmersion/api/json/Schema.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/core/src/main/scala/com/histmersion/domain/JsonRead.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/core/src/main/scala/com/histmersion/util/json/StoredIdCodecs.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/files/src/main/scala/com/histmersion/util/data/exchange/BundleFormat.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/files/src/main/scala/com/histmersion/util/data/mirror/Frontmatter.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/internal/Wire.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/AnthropicAnswer.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/AnthropicRequest.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/ChatAnswer.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/ChatRequest.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/SchemaJson.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/events/src/main/scala/com/histmersion/plugins/events/CatalogueJson.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/events/src/main/scala/com/histmersion/plugins/events/GvpCatalogue.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/events/src/main/scala/com/histmersion/plugins/events/JsonFields.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/events/src/main/scala/com/histmersion/plugins/events/NoaaCatalogue.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/events/src/main/scala/com/histmersion/plugins/events/WikidataCatalogue.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/gazetteers/src/main/scala/com/histmersion/plugins/gazetteers/Awmc.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/gazetteers/src/main/scala/com/histmersion/plugins/gazetteers/ChronOntology.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/gazetteers/src/main/scala/com/histmersion/plugins/gazetteers/Cliopatria.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/ArtInstituteCollection.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/ClevelandCollection.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/Commons.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/Europeana.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/JsonFields.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/LocCollection.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/MetCollection.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/OpenContext.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/PleiadesLinks.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/PoliteJson.scala	json	parses an upstream answer or builds its request (plugin)
-modules/plugins/media/src/main/scala/com/histmersion/plugins/media/Smithsonian.scala	json	parses an upstream answer or builds its request (plugin)
-modules/server/src/main/scala/com/histmersion/domain/automation/agents/StrictJsonSchema.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/upstreams/src/main/scala/com/histmersion/upstreams/landing/RepositoryLanding.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/upstreams/src/main/scala/com/histmersion/upstreams/parse/AcquireParse.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/upstreams/src/main/scala/com/histmersion/upstreams/wikidata/WikidataEntities.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/values/src/main/scala/com/histmersion/WireEnumValues.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/web/src/main/scala/com/histmersion/web/FieldCodec.scala	json	wire codec or external document format (JSON/YAML/CSV)
-modules/cli/src/main/scala/com/histmersion/cli/AcquireClient.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/ActivityCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/AddOptions.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/AgentCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/AgentStateCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/ArticleCli.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/ArticlePatches.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/AssetLinksCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/AttestationsCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/BasemapCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/BookmarksCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/BundleCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/CandidatesCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/ConfigCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/DeleteCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/EventsCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/FileFormat.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/FilterFlags.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/GoalsCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/IngestCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/LabelRenameCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/ListOpts.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/LocalInstall.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/ManagerCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/MediaCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/NewtypeArguments.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/NotesCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/Ops.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/Output.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/PeriodsCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/PlacesCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/PluginAuthoring.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/PluginCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/PluginOps.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/RenameCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/Runner.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/Settings.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/SettingsCmd.scala	cli-args	decline argument parsing
-modules/cli/src/main/scala/com/histmersion/cli/TargetFlags.scala	cli-args	decline argument parsing
-modules/console/src/main/scala/com/histmersion/util/console/Console.scala	cli-args	writes to stdout/stderr
-modules/web/src/main/scala/com/histmersion/web/FilterBar.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/Main.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/MapPrefs.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/Persist.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/Router.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/StandalonePage.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/Store.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/Theme.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/TimelineView.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/UiState.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/setup/SetupPage.scala	dom	local storage, history/location or the DOM mount
-modules/web/src/main/scala/com/histmersion/web/ui/Clipboard.scala	dom	local storage, history/location or the DOM mount
-modules/cli/src/main/scala/com/histmersion/cli/LocalSettingsFile.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/AppConfig.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/Config.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/ConfigLayers.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/ConfigReload.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/EnvOverrides.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/Environment.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/LoadedConfig.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/NewtypeReaders.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/UserPaths.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/edit/ConfigFileWriter.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/edit/ConfigSchema.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/edit/ConfigTextEdit.scala	config	reads, layers or writes HOCON configuration
-modules/config/src/main/scala/com/histmersion/config/edit/SettingValue.scala	config	reads, layers or writes HOCON configuration
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/FirstPartySettings.scala	config	reads, layers or writes HOCON configuration
-modules/server/src/main/scala/com/histmersion/util/settings/ConfigSource.scala	config	reads, layers or writes HOCON configuration
-modules/server/src/main/scala/com/histmersion/util/settings/SettingsService.scala	config	reads, layers or writes HOCON configuration
-modules/server/src/main/scala/com/histmersion/util/settings/StoredSettingsFile.scala	config	reads, layers or writes HOCON configuration
-modules/cli/src/main/scala/com/histmersion/cli/Calibre.scala	process	reads or writes files and directories
-modules/cli/src/main/scala/com/histmersion/cli/DirSize.scala	process	reads or writes files and directories
-modules/cli/src/main/scala/com/histmersion/cli/MediaCovers.scala	process	reads or writes files and directories
-modules/cli/src/main/scala/com/histmersion/cli/Notes.scala	process	reads or writes files and directories
-modules/cli/src/main/scala/com/histmersion/cli/Patches.scala	process	reads or writes files and directories
-modules/cli/src/main/scala/com/histmersion/cli/PluginTemplate.scala	process	reads or writes files and directories
-modules/cli/src/main/scala/com/histmersion/cli/PluginTemplateKinds.scala	process	reads or writes files and directories
-modules/cli/src/main/scala/com/histmersion/cli/Shell.scala	process	starts or controls an operating-system process
-modules/db/src/main/scala/com/histmersion/util/storage/ByteSource.scala	process	reads or writes files and directories
-modules/db/src/main/scala/com/histmersion/util/storage/ContentDirectory.scala	process	reads or writes files and directories
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/DiskLocalFiles.scala	process	reads or writes files and directories
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/OutboundTls.scala	process	starts or controls an operating-system process
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SystemProcesses.scala	process	starts or controls an operating-system process
-modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Coursier.scala	process	reads or writes files and directories
-modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/DependencyResolver.scala	process	reads or writes files and directories
-modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/LibDirectory.scala	process	reads or writes files and directories
-modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Pom.scala	process	reads or writes files and directories
-modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/PluginHarness.scala	process	reads or writes files and directories
-modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/Recordings.scala	process	reads or writes files and directories
-modules/plugins/calibre/src/main/scala/com/histmersion/plugins/calibre/Shell.scala	process	starts or controls an operating-system process
-modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentLease.scala	process	starts or controls an operating-system process
-modules/server/src/main/scala/com/histmersion/server/Bootstrap.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/server/GazetteerPaths.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/server/SeedNoteFiles.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/server/ServerToolFiles.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/server/Supervisor.scala	process	starts or controls an operating-system process
-modules/server/src/main/scala/com/histmersion/server/agents/ClaudeCodeClient.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/server/agents/CliProcess.scala	process	starts or controls an operating-system process
-modules/server/src/main/scala/com/histmersion/server/agents/Codex.scala	process	starts or controls an operating-system process
-modules/server/src/main/scala/com/histmersion/server/agents/CodexExecClient.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/server/agents/PlanPools.scala	process	starts or controls an operating-system process
-modules/server/src/main/scala/com/histmersion/server/plugins/RelinkPlugins.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/util/basemap/BasemapService.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/util/basemap/OnDemandTiles.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/util/process/Processes.scala	process	starts or controls an operating-system process
-modules/server/src/main/scala/com/histmersion/util/storage/DiskStore.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/util/storage/DiskTextFiles.scala	process	reads or writes files and directories
-modules/server/src/main/scala/com/histmersion/util/storage/Storage.scala	process	reads or writes files and directories
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/HostServices.scala	spi	converts between plugin-api values and host/domain values
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginAi.scala	spi	converts between plugin-api values and host/domain values
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginEvents.scala	spi	converts between plugin-api values and host/domain values
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginGazetteers.scala	spi	converts between plugin-api values and host/domain values
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginMedia.scala	spi	converts between plugin-api values and host/domain values
-modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SpiValues.scala	spi	converts between plugin-api values and host/domain values
-modules/server/src/main/scala/com/histmersion/domain/library/acquisition/HttpPlugin.scala	spi	converts between plugin-api values and host/domain values
-modules/server/src/main/scala/com/histmersion/server/agents/HostAiProvider.scala	spi	converts between plugin-api values and host/domain values
-modules/server/src/main/scala/com/histmersion/util/plugins/HostProvided.scala	spi	converts between plugin-api values and host/domain values
+modules/cli/src/main/scala/com/histmersion/cli/AcquireCmd.scala	cli-args	parses `histmersion acquire` arguments
+modules/cli/src/main/scala/com/histmersion/cli/ActivityCmd.scala	cli-args	parses `histmersion activity` arguments
+modules/cli/src/main/scala/com/histmersion/cli/AgentCmd.scala	cli-args	parses `histmersion agent` arguments
+modules/cli/src/main/scala/com/histmersion/cli/AgentStateCmd.scala	cli-args	parses `histmersion agent-state` arguments
+modules/cli/src/main/scala/com/histmersion/cli/ArticleCli.scala	cli-args	parses `histmersion article` arguments and reads the body and filter files they name
+modules/cli/src/main/scala/com/histmersion/cli/AssetLinksCmd.scala	cli-args	parses `histmersion asset-links` arguments
+modules/cli/src/main/scala/com/histmersion/cli/AttestationsCmd.scala	cli-args	parses `histmersion attestations` arguments
+modules/cli/src/main/scala/com/histmersion/cli/BasemapCmd.scala	cli-args	parses `histmersion basemap` arguments
+modules/cli/src/main/scala/com/histmersion/cli/BookmarksCmd.scala	cli-args	parses `histmersion bookmarks` arguments
+modules/cli/src/main/scala/com/histmersion/cli/BundleCmd.scala	cli-args	parses `histmersion bundle` arguments
+modules/cli/src/main/scala/com/histmersion/cli/CalibreCmd.scala	cli-args	parses `histmersion calibre` arguments
+modules/cli/src/main/scala/com/histmersion/cli/CandidatesCmd.scala	cli-args	parses `histmersion candidates` arguments
+modules/cli/src/main/scala/com/histmersion/cli/Cli.scala	cli-args	parses the top-level `histmersion` command line and dispatches to the command parsers
+modules/cli/src/main/scala/com/histmersion/cli/ConfigCmd.scala	cli-args	parses `histmersion config` arguments
+modules/cli/src/main/scala/com/histmersion/cli/DeleteCmd.scala	cli-args	parses `histmersion delete` arguments
+modules/cli/src/main/scala/com/histmersion/cli/EventsCmd.scala	cli-args	parses `histmersion events` arguments
+modules/cli/src/main/scala/com/histmersion/cli/FileFormat.scala	cli-args	splits a note file into frontmatter and body for `histmersion lint --file`
+modules/cli/src/main/scala/com/histmersion/cli/FilterFlags.scala	cli-args	parses the shared search filter flags (--tag, --place, --from, --to, --bbox)
+modules/cli/src/main/scala/com/histmersion/cli/GoalsCmd.scala	cli-args	parses `histmersion goals` arguments
+modules/cli/src/main/scala/com/histmersion/cli/IngestCmd.scala	cli-args	parses `histmersion ingest` arguments
+modules/cli/src/main/scala/com/histmersion/cli/LabelRenameCmd.scala	cli-args	parses `histmersion label-rename` arguments
+modules/cli/src/main/scala/com/histmersion/cli/ListOpts.scala	cli-args	parses the list options of `agent approvals`, `agent runs` and `jobs`
+modules/cli/src/main/scala/com/histmersion/cli/ManagerCmd.scala	cli-args	parses `histmersion manager` arguments
+modules/cli/src/main/scala/com/histmersion/cli/MediaCmd.scala	cli-args	parses `histmersion media` arguments
+modules/cli/src/main/scala/com/histmersion/cli/MergeCmd.scala	cli-args	parses `histmersion merge` arguments
+modules/cli/src/main/scala/com/histmersion/cli/NewtypeArguments.scala	cli-args	reads a command-line argument as a newtype from its base type
+modules/cli/src/main/scala/com/histmersion/cli/NotesCmd.scala	cli-args	parses `histmersion notes` arguments
+modules/cli/src/main/scala/com/histmersion/cli/Ops.scala	cli-args	parses `histmersion lint`, `queue`, `query` and `schema` arguments
+modules/cli/src/main/scala/com/histmersion/cli/Output.scala	cli-args	prints a command answer to the terminal as Markdown or as the server's JSON
+modules/cli/src/main/scala/com/histmersion/cli/PeriodsCmd.scala	cli-args	parses `histmersion periods` arguments
+modules/cli/src/main/scala/com/histmersion/cli/PlacesCmd.scala	cli-args	parses `histmersion places` arguments
+modules/cli/src/main/scala/com/histmersion/cli/PluginCmd.scala	cli-args	parses `histmersion plugin` arguments
+modules/cli/src/main/scala/com/histmersion/cli/RenameCmd.scala	cli-args	parses `histmersion rename` arguments
+modules/cli/src/main/scala/com/histmersion/cli/SettingsCmd.scala	cli-args	parses `histmersion settings` arguments
+modules/cli/src/main/scala/com/histmersion/cli/TargetFlags.scala	cli-args	parses the `<kind> [<id>]` target flags of bookmarks and notes
+modules/console/src/main/scala/com/histmersion/util/console/Console.scala	cli-args	writes to and reads from the terminal
+modules/cli/src/main/scala/com/histmersion/cli/LocalSettingsFile.scala	config	reads and replaces the settings file on this machine's disk
+modules/cli/src/main/scala/com/histmersion/cli/Settings.scala	config	reads the CLI's configuration layers: reference.conf, the user file and the environment
+modules/config/src/main/scala/com/histmersion/config/AppConfig.scala	config	reads the HOCON layers into the typed application config
+modules/config/src/main/scala/com/histmersion/config/Config.scala	config	reads each HOCON setting into its typed value, accepting numbers written as strings
+modules/config/src/main/scala/com/histmersion/config/ConfigLayers.scala	config	layers reference.conf, the user file and the environment as HOCON
+modules/config/src/main/scala/com/histmersion/config/EnvOverrides.scala	config	applies HISTMERSION_* environment variables as HOCON overrides
+modules/config/src/main/scala/com/histmersion/config/NewtypeReaders.scala	config	reads a setting as a newtype from its base type's reader
+modules/config/src/main/scala/com/histmersion/config/edit/ConfigFileWriter.scala	config	writes a changed setting into the user's config file text and moves it into place
+modules/config/src/main/scala/com/histmersion/config/edit/ConfigSchema.scala	config	reads reference.conf into the list of settings the config file may hold
+modules/config/src/main/scala/com/histmersion/config/edit/ConfigTextEdit.scala	config	edits the HOCON text of the config file, keeping comments and layout
+modules/config/src/main/scala/com/histmersion/config/edit/SettingValue.scala	config	turns a typed setting value into the HOCON value written to the file
+modules/server/src/main/scala/com/histmersion/util/settings/StoredSettingsFile.scala	config	reads and replaces the server's settings file in its store
+modules/web/src/main/scala/com/histmersion/web/FieldCodec.scala	dom	encodes a UI field to and from the URL hash and browser storage strings
+modules/web/src/main/scala/com/histmersion/web/Router.scala	dom	reads the address bar and history and keeps the page in step with them
+modules/web/src/main/scala/com/histmersion/web/Store.scala	dom	reads and writes the browser's localStorage
+modules/web/src/main/scala/com/histmersion/web/Theme.scala	dom	keeps the theme choice in localStorage and on the html element
+modules/web/src/main/scala/com/histmersion/web/ui/Clipboard.scala	dom	copies text through the browser clipboard
+modules/api/src/main/scala/com/histmersion/api/OpsApi.scala	http	declares the Tapir endpoints of the ops routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/automation/AgentsApi.scala	http	declares the Tapir endpoints of the agents routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/automation/ManagersApi.scala	http	declares the Tapir endpoints of the managers routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/basemap/BasemapApi.scala	http	declares the Tapir endpoints of the basemap routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/catalogue/EventsApi.scala	http	declares the Tapir endpoints of the events routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/catalogue/TilesApi.scala	http	declares the Tapir endpoints of the tiles routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/instance/UiApi.scala	http	declares the Tapir endpoints of the ui routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/library/AcquireApi.scala	http	declares the Tapir endpoints of the acquire routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/library/AcquisitionWorkApi.scala	http	declares the Tapir endpoints of the acquisition work routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/library/CollectionsApi.scala	http	declares the Tapir endpoints of the collections routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/personal/PersonalApi.scala	http	declares the Tapir endpoints of the personal routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/settings/ConfigEditApi.scala	http	declares the Tapir endpoints of the config edit routes with their request and response bodies
+modules/api/src/main/scala/com/histmersion/api/views/AutopilotApi.scala	http	declares the Tapir endpoints of the autopilot routes with their request and response bodies
+modules/cli/src/main/scala/com/histmersion/cli/AcquireClient.scala	http	calls the server's acquisition endpoints (discover, refs, assess, wikirefs) over HTTP
+modules/cli/src/main/scala/com/histmersion/cli/Client.scala	http	sends the CLI's HTTP requests to the server and decodes the answers
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/HostAiHttp.scala	http	sends plugin AI providers' HTTP requests through java.net.http
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/JavaHttpTransport.scala	http	sends HTTP requests with java.net.http
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PolicyHttp.scala	http	sends acquisition requests under the outbound policy: User-Agent, retries, Retry-After
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SttpTransport.scala	http	sends HTTP requests with sttp
+modules/server/src/main/scala/com/histmersion/domain/library/acquisition/SttpHttp.scala	http	offers the acquisition HTTP client as the plain get/bytes/once calls
+modules/server/src/main/scala/com/histmersion/server/HttpDownload.scala	http	downloads a file over HTTP, following redirects
+modules/server/src/main/scala/com/histmersion/util/basemap/JavaRangeHttp.scala	http	fetches byte ranges over java.net.http for basemap downloads
+modules/server/src/main/scala/com/histmersion/util/ocr/HttpConverterClient.scala	http	sends a PDF to the OCR converter and reads its answer
+modules/upstreams/src/main/scala/com/histmersion/upstreams/core/CoreApi.scala	http	calls CORE's works search and returns its JSON
+modules/upstreams/src/main/scala/com/histmersion/upstreams/http/UpstreamHttp.scala	http	reads a plugin HTTP answer as text or JSON
+modules/web/src/main/scala/com/histmersion/web/ApiClient.scala	http	sends the web UI's HTTP requests and decodes the answers
+modules/api/src/main/scala/com/histmersion/api/Csv.scala	json	reads CSV text (the Retraction Watch export) into rows
+modules/api/src/main/scala/com/histmersion/api/StrictJson.scala	json	decodes write inputs and refuses unknown JSON keys
+modules/api/src/main/scala/com/histmersion/api/VocabularyCodecs.scala	json	gives each vocabulary its JSON encoder, decoder and schema
+modules/api/src/main/scala/com/histmersion/api/WireEnum.scala	json	encodes and decodes an enum as its wire string
+modules/api/src/main/scala/com/histmersion/api/WireEnumValues.scala	json	lists an enum's wire spellings and how to read one back
+modules/api/src/main/scala/com/histmersion/api/catalogue/Gazetteer.scala	json	reads gazetteer download files into place records
+modules/api/src/main/scala/com/histmersion/api/catalogue/Lpf.scala	json	reads Linked Places Format JSON into place records
+modules/api/src/main/scala/com/histmersion/api/catalogue/PeriodO.scala	json	reads the PeriodO dataset JSON into period records
+modules/api/src/main/scala/com/histmersion/api/json/NewtypeCodecs.scala	json	gives every newtype its JSON encoder and decoder from its base type
+modules/api/src/main/scala/com/histmersion/api/json/Schema.scala	json	builds the Tapir schema that describes the JSON of a type
+modules/core/src/main/scala/com/histmersion/domain/JsonRead.scala	json	reads fields out of a stored JSON document for the collection APIs
+modules/core/src/main/scala/com/histmersion/util/json/StoredIdCodecs.scala	json	decodes the ids held in stored checkpoint and run JSON
+modules/files/src/main/scala/com/histmersion/util/data/exchange/BundleFormat.scala	json	writes and reads the canonical JSON of a `.hmx` bundle record
+modules/files/src/main/scala/com/histmersion/util/data/exchange/BundleReader.scala	json	reads a `.hmx` bundle stream, checking each entry against its manifest
+modules/files/src/main/scala/com/histmersion/util/data/exchange/BundleTar.scala	json	reads and writes the tar stream of a `.hmx` bundle
+modules/files/src/main/scala/com/histmersion/util/data/mirror/Frontmatter.scala	json	writes a mirror note's YAML frontmatter
+modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Pom.scala	json	reads a plugin POM's XML to find whose it is
+modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/internal/Wire.scala	json	writes and reads the recorded HTTP exchanges of a plugin test
+modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/AnthropicAnswer.scala	json	reads the Anthropic API's answer JSON
+modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/AnthropicRequest.scala	json	builds the Anthropic API's request JSON
+modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/ChatAnswer.scala	json	reads an OpenAI-style chat completion answer
+modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/ChatRequest.scala	json	builds an OpenAI-style chat completion request
+modules/plugins/ai-http/src/main/scala/com/histmersion/plugins/ai/SchemaJson.scala	json	repairs a JSON Schema into the form each AI provider accepts
+modules/plugins/events/src/main/scala/com/histmersion/plugins/events/CatalogueJson.scala	json	fetches one catalogue answer and reads it as JSON
+modules/plugins/events/src/main/scala/com/histmersion/plugins/events/GvpCatalogue.scala	json	reads the Global Volcanism Program answer into event records
+modules/plugins/events/src/main/scala/com/histmersion/plugins/events/JsonFields.scala	json	reads a catalogue JSON field as text or number whatever it was written as
+modules/plugins/events/src/main/scala/com/histmersion/plugins/events/NoaaCatalogue.scala	json	reads the NOAA catalogue answer into event records
+modules/plugins/events/src/main/scala/com/histmersion/plugins/events/WikidataCatalogue.scala	json	reads the Wikidata answer into event records
+modules/plugins/gazetteers/src/main/scala/com/histmersion/plugins/gazetteers/Awmc.scala	json	reads the AWMC download into place records
+modules/plugins/gazetteers/src/main/scala/com/histmersion/plugins/gazetteers/ChronOntology.scala	json	reads the ChronOntology answer into period records
+modules/plugins/gazetteers/src/main/scala/com/histmersion/plugins/gazetteers/Cliopatria.scala	json	reads the Cliopatria download into polity records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/ArtInstituteCollection.scala	json	reads the art institute collection collection's JSON answers into media records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/ClevelandCollection.scala	json	reads the cleveland collection collection's JSON answers into media records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/Commons.scala	json	reads the commons collection's JSON answers into media records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/Europeana.scala	json	reads the europeana collection's JSON answers into media records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/JsonFields.scala	json	reads a JSON field as text or a list of texts
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/LocCollection.scala	json	reads the loc collection collection's JSON answers into media records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/MetCollection.scala	json	reads the met collection collection's JSON answers into media records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/OpenContext.scala	json	reads the open context collection's JSON answers into media records
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/PleiadesLinks.scala	json	picks the Commons file links out of a Pleiades place record
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/PoliteJson.scala	json	fetches one URL and reads the answer as JSON
+modules/plugins/media/src/main/scala/com/histmersion/plugins/media/Smithsonian.scala	json	reads the smithsonian collection's JSON answers into media records
+modules/server/src/main/scala/com/histmersion/domain/automation/agents/StrictJsonSchema.scala	json	rewrites an answer JSON Schema into OpenAI's strict form
+modules/upstreams/src/main/scala/com/histmersion/upstreams/landing/RepositoryLanding.scala	json	reads a repository landing page into download links
+modules/upstreams/src/main/scala/com/histmersion/upstreams/parse/AcquireParse.scala	json	reads Crossref, OpenAlex, Unpaywall and arXiv answers into work records
+modules/upstreams/src/main/scala/com/histmersion/upstreams/wikidata/WikidataEntities.scala	json	reads Wikidata entity JSON
+modules/values/src/main/scala/com/histmersion/WireEnumValues.scala	json	lists an enum's wire spellings and how to read one back
+modules/cli/src/main/scala/com/histmersion/cli/DirSize.scala	process	walks a directory on disk to measure how much it holds
+modules/cli/src/main/scala/com/histmersion/cli/Runner.scala	process	runs the install's scripts and curl as child processes and captures their output
+modules/cli/src/main/scala/com/histmersion/cli/Shell.scala	process	runs a shell command and returns its output
+modules/db/src/main/scala/com/histmersion/util/storage/ByteSource.scala	process	opens bytes (a bundle, a stored file, an upload) as a stream with a length
+modules/db/src/main/scala/com/histmersion/util/storage/ContentDirectory.scala	process	stores and finds content files named by hash in a directory
+modules/files/src/main/scala/com/histmersion/util/storage/TextFiles.scala	process	reads text files
+modules/plugin-api/src/main/scala/com/histmersion/plugin/LocalFiles.scala	process	the local file operations the host lends to plugins
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/DiskLocalFiles.scala	process	gives plugins the local file operations on disk
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/OutboundTls.scala	process	builds the TLS trust store from the JDK, the OS keychain and a PEM file
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SystemProcesses.scala	process	runs external programs for plugins
+modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/Coursier.scala	process	resolves plugin dependencies to jars with coursier
+modules/plugin-resolver/src/main/scala/com/histmersion/pluginresolver/LibDirectory.scala	process	reads and writes the plugin lib directory and its list files
+modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/Recordings.scala	process	finds a test's recorded exchange files
+modules/plugin-vaults/src/main/scala/com/histmersion/plugins/vaults/Subprocess.scala	process	runs a vault's command-line tool with a time limit and captures its output
+modules/plugins/calibre/src/main/scala/com/histmersion/plugins/calibre/Shell.scala	process	runs a shell command and returns its output
+modules/server/src/main/scala/com/histmersion/server/SeedNoteFiles.scala	process	reads the Markdown notes and figures of a seed folder
+modules/server/src/main/scala/com/histmersion/server/ServerToolFiles.scala	process	reads the file named by the MCP ingest tool, inside the allowed directory
+modules/server/src/main/scala/com/histmersion/server/agents/ClaudeCode.scala	process	builds the claude CLI arguments and MCP config and reads its stream-json output
+modules/server/src/main/scala/com/histmersion/server/agents/CliProcess.scala	process	starts a provider CLI as a child process and streams its output
+modules/server/src/main/scala/com/histmersion/server/agents/Codex.scala	process	builds the codex CLI arguments and environment and reads its output lines
+modules/server/src/main/scala/com/histmersion/server/agents/Opencode.scala	process	builds the opencode CLI arguments and reads its output
+modules/server/src/main/scala/com/histmersion/util/process/Processes.scala	process	starts and controls operating-system processes
+modules/server/src/main/scala/com/histmersion/util/storage/Blob.scala	process	reads a stored file by stream, position or mapping
+modules/server/src/main/scala/com/histmersion/util/storage/DiskStore.scala	process	stores named files on disk
+modules/server/src/main/scala/com/histmersion/util/storage/DiskTextFiles.scala	process	reads text files from disk
+modules/server/src/main/scala/com/histmersion/util/storage/Storage.scala	process	gives each storage location its file store
+modules/server/src/main/scala/com/histmersion/util/storage/Store.scala	process	reads and writes one named place's files, atomically
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginAi.scala	spi	calls a plugin's AI provider, turning its failures into host errors
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginEvents.scala	spi	turns a plugin's catalogue records into the host's event records
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginGazetteers.scala	spi	turns a plugin's gazetteer places into the host's place inputs
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginMedia.scala	spi	turns a plugin's media items into the host's media records
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/SpiValues.scala	spi	converts values between the plugin API and the host model
+modules/server/src/main/scala/com/histmersion/domain/library/acquisition/HttpPlugin.scala	spi	offers the host's HTTP client as the plugin API's HTTP client
+modules/db/src/main/scala/com/histmersion/api/library/SourceColumns.scala	sql	reads and writes the source status column
+modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentRepo.scala	sql	reads and writes the agent tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentStateRepo.scala	sql	reads and writes the agent state tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/agents/LeaseRepo.scala	sql	reads and writes the lease tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/agents/ModelSettingsRepo.scala	sql	reads and writes the model settings tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/agents/PlanQuotaRepo.scala	sql	reads and writes the plan quota tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/autopilot/AutopilotRepo.scala	sql	reads and writes the autopilot tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/goals/FocusRepo.scala	sql	reads and writes the focus tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalBundleRepo.scala	sql	reads and writes the goal rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalLinkRepo.scala	sql	reads and writes the goal link tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalRepo.scala	sql	reads and writes the goal tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/goals/GoalSourceReferrer.scala	sql	counts and removes the goal rows that point at a deleted source
+modules/db/src/main/scala/com/histmersion/domain/automation/managers/ManagerRepo.scala	sql	reads and writes the manager tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/worklists/QueueBundleRepo.scala	sql	reads and writes the queue rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/automation/worklists/QueueRepo.scala	sql	reads and writes the queue tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/automation/worklists/WorkListSourceReferrer.scala	sql	counts and removes the work list rows that point at a deleted source
+modules/db/src/main/scala/com/histmersion/domain/catalogue/events/CorrectionRepo.scala	sql	reads and writes the correction tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventBundleRepo.scala	sql	reads and writes the event rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventImportRepo.scala	sql	reads and writes the event import tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala	sql	reads and writes the event tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventSourceReferrer.scala	sql	counts and removes the event rows that point at a deleted source
+modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/AttestationRepo.scala	sql	reads and writes the attestation tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/AttestationSourceReferrer.scala	sql	counts and removes the attestation rows that point at a deleted source
+modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/EventLinkRepo.scala	sql	reads and writes the event link tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/EvidenceBundleRepo.scala	sql	reads and writes the evidence rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadRepo.scala	sql	reads and writes the lead tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/maptiles/TileRepo.scala	sql	reads and writes the tile tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/maptiles/UndatedSiteRepo.scala	sql	reads and writes the undated site tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/periods/PeriodBundleRepo.scala	sql	reads and writes the period rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/catalogue/periods/PeriodRepo.scala	sql	reads and writes the period tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/FindingPlaceRepo.scala	sql	reads and writes the finding place tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/GazetteerRepo.scala	sql	reads and writes the gazetteer tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/Geocoder.scala	sql	looks up gazetteer places by name in the places tables
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/LandRepo.scala	sql	reads and writes the land tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceBundleRepo.scala	sql	reads and writes the place rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceColumns.scala	sql	reads and writes the place precision column
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceOverrideRepo.scala	sql	reads and writes the place override tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceRepo.scala	sql	reads and writes the place tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceReviewRepo.scala	sql	reads and writes the place review tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceSourceReferrer.scala	sql	counts and removes the place rows that point at a deleted source
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceVocabularyCodecs.scala	sql	reads and writes the place vocabularies as column strings
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PointAreaRepo.scala	sql	reads and writes the point area tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/catalogue/places/SiteTypeRepo.scala	sql	reads and writes the site type tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/acquisition/AcquireCheckRepo.scala	sql	reads and writes the acquire check tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/acquisition/AssessmentRepo.scala	sql	reads and writes the assessment tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/acquisition/CandidateRepo.scala	sql	reads and writes the candidate tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/acquisition/UpstreamQuotaRepo.scala	sql	reads and writes the upstream quota tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/citations/CitationRepo.scala	sql	reads and writes the citation tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/findings/FindingColumns.scala	sql	reads and writes the finding confidence column
+modules/db/src/main/scala/com/histmersion/domain/library/labels/LabelRepo.scala	sql	reads and writes the label tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/search/AggregateRepo.scala	sql	reads and writes the aggregate tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/search/FilterSql.scala	sql	turns a search filter into SQL fragments
+modules/db/src/main/scala/com/histmersion/domain/library/search/QueryAccess.scala	sql	opens the read-only query pool and provisions its role
+modules/db/src/main/scala/com/histmersion/domain/library/search/QueryRepo.scala	sql	reads and writes the query tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceBundleRepo.scala	sql	reads and writes the source rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceColumns.scala	sql	reads and writes the source status column
+modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceDeleteRepo.scala	sql	reads and writes the source delete tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala	sql	reads and writes the source tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/library/workflows/SourceApprovalRepo.scala	sql	reads and writes the source approval tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/media/assets/AssetBundleRepo.scala	sql	reads and writes the asset rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/media/assets/AssetRepo.scala	sql	reads and writes the asset tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/media/assets/MediaRepo.scala	sql	reads and writes the media tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/media/covers/CoverRepo.scala	sql	reads and writes the cover tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/media/figures/FigureRepo.scala	sql	reads and writes the figure tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/media/imports/ImportRepo.scala	sql	reads and writes the import tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/media/links/AssetLinkBundleRepo.scala	sql	reads and writes the asset link rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/media/links/AssetLinkRepo.scala	sql	reads and writes the asset link tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/media/links/AssetLinkSourceReferrer.scala	sql	counts and removes the asset link rows that point at a deleted source
+modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleBundleRepo.scala	sql	reads and writes the article rows for bundle export and import
+modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleCheckRepo.scala	sql	reads and writes the article check tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleRepo.scala	sql	reads and writes the article tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/research/articles/ArticleSourceReferrer.scala	sql	counts and removes the article rows that point at a deleted source
+modules/db/src/main/scala/com/histmersion/domain/research/articles/CoverageRepo.scala	sql	reads and writes the coverage tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/research/articles/CritiqueRepo.scala	sql	reads and writes the critique tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/research/articles/review/ArticleReviewRepo.scala	sql	reads and writes the article review tables and their row codecs
+modules/db/src/main/scala/com/histmersion/domain/research/workflows/ReviewLedgerRepo.scala	sql	reads and writes the review ledger tables and their row codecs
+modules/db/src/main/scala/com/histmersion/util/data/diagnostics/StatsRepo.scala	sql	counts rows and measures table sizes for the diagnostics
+modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleExport.scala	sql	reads the database rows of a bundle export
+modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleImport.scala	sql	writes a bundle's records into the database
+modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleRepo.scala	sql	reads and writes the bundle bookkeeping rows
+modules/db/src/main/scala/com/histmersion/util/data/exchange/MergePlans.scala	sql	reads the database state a merge plan is built from
+modules/db/src/main/scala/com/histmersion/util/data/exchange/MergeRepo.scala	sql	reads and writes the merge job rows
+modules/db/src/main/scala/com/histmersion/util/data/exchange/MergeState.scala	sql	reads this collection's records for a merge
+modules/db/src/main/scala/com/histmersion/util/data/maintenance/VacuumRepo.scala	sql	runs vacuum and reads table maintenance state
+modules/db/src/main/scala/com/histmersion/util/database/Codecs.scala	sql	reads and writes text[] columns
+modules/db/src/main/scala/com/histmersion/util/database/Db.scala	sql	opens the Postgres connection pools
+modules/db/src/main/scala/com/histmersion/util/database/Jsonb.scala	sql	reads and writes jsonb columns through the DTO's JSON codec
+modules/db/src/main/scala/com/histmersion/util/database/Keyset.scala	sql	builds the keyset-paging SQL for newest-first lists
+modules/db/src/main/scala/com/histmersion/util/database/LikePattern.scala	sql	escapes text into a LIKE pattern
+modules/db/src/main/scala/com/histmersion/util/database/Migrate.scala	sql	runs the Flyway migrations
+modules/db/src/main/scala/com/histmersion/util/database/NewtypeColumns.scala	sql	reads and writes a newtype column from its base type's codec
+modules/db/src/main/scala/com/histmersion/util/database/Sql.scala	sql	composes SQL fragments with bound parameters
+modules/db/src/main/scala/com/histmersion/util/database/Vocab.scala	sql	reads and writes vocabularies as their wire strings in columns
+modules/db/src/main/scala/com/histmersion/util/jobs/JobRepo.scala	sql	reads and writes the jobs table
+modules/db/src/main/scala/com/histmersion/util/jobs/JobSourceReferrer.scala	sql	counts and removes the job rows that point at a deleted source
+modules/server/src/main/scala/com/histmersion/domain/library/collections/CollectionLinksRepo.scala	sql	reads and writes the collection links tables and their row codecs
+modules/server/src/main/scala/com/histmersion/domain/personal/bookmarks/BookmarkRepo.scala	sql	reads and writes the bookmark tables and their row codecs
+modules/server/src/main/scala/com/histmersion/domain/personal/notes/NoteRepo.scala	sql	reads and writes the note tables and their row codecs
+modules/server/src/main/scala/com/histmersion/domain/personal/reading/ReadingRepo.scala	sql	reads and writes the reading tables and their row codecs
+modules/server/src/main/scala/com/histmersion/domain/personal/seen/SeenRepo.scala	sql	reads and writes the seen tables and their row codecs
+modules/server/src/main/scala/com/histmersion/server/instance/UiRepo.scala	sql	reads and writes the ui tables and their row codecs
