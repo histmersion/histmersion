@@ -5,7 +5,7 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** What kind of value a setting holds, as its default in reference.conf has it. */
-enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe):
+enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe) derives CanEqual:
   case Text extends SettingKind(SettingKind.Wire("text"), SettingKind.Describe("text"))
   case Number extends SettingKind(SettingKind.Wire("number"), SettingKind.Describe("a number"))
   case Flag extends SettingKind(SettingKind.Wire("flag"), SettingKind.Describe("true or false"))

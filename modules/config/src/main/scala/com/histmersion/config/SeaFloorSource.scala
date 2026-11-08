@@ -4,7 +4,7 @@ package config
 import io.github.iltotore.iron.constraint.any.Pure
 
 /** Where the sea floor's extract comes from (`basemap.bathymetry.source`). */
-enum SeaFloorSource(val wire: SeaFloorSource.Wire):
+enum SeaFloorSource(val wire: SeaFloorSource.Wire) derives CanEqual:
   /** NOAA's ETOPO1 (1 arc-minute, ~1.8 km) through Mapzen's terrain tiles: one GET a tile. */
   case Etopo1 extends SeaFloorSource(SeaFloorSource.Wire("etopo1"))
 

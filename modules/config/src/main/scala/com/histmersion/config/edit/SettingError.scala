@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 /** Why a change to the config file was refused, in words a person acts on. The file is never written when one of these
   * is the answer.
   */
-enum SettingError:
+enum SettingError derives CanEqual:
   case BadKey(why: SettingKey.Problem)
   case UnknownKey(key: SettingKey, closest: List[SettingKey])
   case NotAValue(key: SettingKey)

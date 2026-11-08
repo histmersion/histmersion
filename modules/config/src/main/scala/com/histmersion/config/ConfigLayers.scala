@@ -38,6 +38,8 @@ import io.github.iltotore.iron.constraint.any.Pure
   * reference.conf.
   */
 private[config] object ConfigLayers:
+  private given CanEqual[ConfigValueType, ConfigValueType] = CanEqual.derived
+
   type Problem = ConfigProblem
   val Problem: ConfigProblem.type = ConfigProblem
 
