@@ -51,7 +51,7 @@ object TileCoord:
 
   /** The tile `z`/`x`/`y`, when the grid has it and `z` is no deeper than `maxZoom`. */
   def of(z: Z, x: X, y: Y, maxZoom: Z): Either[Problem, TileCoord] =
-    if z.value < 0 || z.value > maxZoom.value then Left(Problem(s"zoom $z is outside 0..$maxZoom"))
+    if z.value < 0 || z > maxZoom then Left(Problem(s"zoom $z is outside 0..$maxZoom"))
     else if x.value < 0 || y.value < 0 || x.value >= (1L << z.value) || y.value >= (1L << z.value) then
       Left(Problem(s"tile $x/$y is outside the grid of zoom $z"))
     else Right(new TileCoord(z, x, y))

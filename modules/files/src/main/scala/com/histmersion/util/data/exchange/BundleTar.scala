@@ -33,7 +33,7 @@ object BundleTar:
   def header(name: Entry.Name, size: ByteCount): Either[Problem, Array[Byte]] =
     val nameBytes = name.value.getBytes(UTF_8)
     if nameBytes.length > MaxName then Left(Problem(s"$name: name longer than $MaxName bytes"))
-    else if size.value < 0 || size.value > MaxSize.value then Left(Problem(s"$name: size $size is outside 0..$MaxSize"))
+    else if size.value < 0 || size > MaxSize then Left(Problem(s"$name: size $size is outside 0..$MaxSize"))
     else
       val h = new Array[Byte](Block)
       def put(off: Int, s: String): Unit =

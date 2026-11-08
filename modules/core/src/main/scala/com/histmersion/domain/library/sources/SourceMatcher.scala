@@ -62,8 +62,7 @@ object SourceMatcher:
   object Side:
     /** A citekey a source is known by: its own, or an old one. */
     type Label = Label.T
-    object Label extends Newtype[String, Pure]:
-      given Ordering[Label] = Ordering.by(_.value)
+    object Label extends Newtype[String, Pure]
 
   /** The evidence about one pair. `parts` is the score's waterfall, in the order it was added up. */
   final case class Evidence(

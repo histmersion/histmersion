@@ -229,8 +229,7 @@ object AcquireRecheck:
 
   object Candidate:
     type Item = Item.T
-    object Item extends Newtype[Int, Pure]:
-      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
+    object Item extends Newtype[Int, Pure]
 
   /** The order items are tried in: the never-checked first, then the oldest check, then the item id. */
   def order(candidates: List[Candidate]): List[Candidate] =

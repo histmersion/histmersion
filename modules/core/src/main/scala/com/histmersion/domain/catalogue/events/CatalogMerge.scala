@@ -54,8 +54,8 @@ object CatalogMerge:
       case (Some((a0, a1)), Some((b0, b1))) =>
         val back = Years.Shift(-years.value)
         val forth = Years.Shift(years.value)
-        Years.shift(a0, back).value <= Years.shift(b1, forth).value &&
-        Years.shift(b0, back).value <= Years.shift(a1, forth).value
+        Years.shift(a0, back) <= Years.shift(b1, forth) &&
+        Years.shift(b0, back) <= Years.shift(a1, forth)
       case _ => false
 
   /** Pure: are two points within `km`? An unplaced one is near nothing. */
@@ -117,7 +117,7 @@ object CatalogMerge:
     * in the list. The answer keeps the order of `records`.
     */
   def place(records: List[CatalogRecord], stored: List[StoredEvent], tol: Tolerance): List[(CatalogRecord, Placement)] =
-    val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).groupMap(_._1)(_._2).view.mapValues(_.minBy(_.value)).toMap
+    val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).groupMap(_._1)(_._2).view.mapValues(_.min).toMap
     val byWd = stored.flatMap(e => e.wikidata.map(_ -> e)).groupMap(_._1)(_._2)
     def best[A](cands: List[A])(f: A => Fit): Option[A] = cands.minByOption(f)
     def ofStored(r: CatalogRecord)(e: StoredEvent): Fit =

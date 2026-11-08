@@ -17,8 +17,7 @@ object PlaceSeed:
 
   object Entry:
     type Name = Name.T
-    object Name extends Newtype[String, Pure]:
-      given Ordering[T] = Ordering.by[T, String](_.value)
+    object Name extends Newtype[String, Pure]
     type Directory = Directory.T
     object Directory extends Newtype[Boolean, Pure]
 

@@ -182,7 +182,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         )
       ),
       r.year.zip(l.year).filter((a, b) => a != b && !(math.abs(a.value - b.value) == 1 && sameDoi)).map { (a, b) =>
-        val earliest = if b.value <= a.value then km.KeepLeft else km.KeepRight
+        val earliest = if b <= a then km.KeepLeft else km.KeepRight
         mk(
           MergeIssue.Kind.YearDiffers,
           MergeIssue.Title(s"year differs: $b here, $a in the bundle"),
@@ -564,7 +564,7 @@ object SourcePlan:
       .setTo(
         l.citedByCount
           .zip(r.citedByCount)
-          .map((a, b) => if a.value >= b.value then a else b)
+          .map((a, b) => if a >= b then a else b)
           .orElse(l.citedByCount)
           .orElse(r.citedByCount)
       )
@@ -572,12 +572,12 @@ object SourcePlan:
       .setTo(
         l.influentialCitations
           .zip(r.influentialCitations)
-          .map((a, b) => if a.value >= b.value then a else b)
+          .map((a, b) => if a >= b then a else b)
           .orElse(l.influentialCitations)
           .orElse(r.influentialCitations)
       )
       .modify(_.addedDate)
-      .setTo(if r.addedDate.value < l.addedDate.value then r.addedDate else l.addedDate)
+      .setTo(if r.addedDate < l.addedDate then r.addedDate else l.addedDate)
       .modify(_.bodySha256)
       .setTo(if keepRightBody then r.bodySha256 else l.bodySha256.orElse(r.bodySha256))
       .modify(_.originalSha256)
@@ -586,7 +586,7 @@ object SourcePlan:
       .setTo(if keepRightBody then r.originalExt.orElse(l.originalExt) else l.originalExt.orElse(r.originalExt))
       .modify(_.isbns)
       .setTo(
-        Option(MergeFold.unionNames(l.isbns.getOrElse(Nil), r.isbns.getOrElse(Nil))(_.value).sortBy(_.value)).filter(_.nonEmpty)
+        Option(MergeFold.unionNames(l.isbns.getOrElse(Nil), r.isbns.getOrElse(Nil))(_.value).sorted).filter(_.nonEmpty)
       )
       .modify(_.rev)
       .setTo(Bundle.Source.Rev(""))

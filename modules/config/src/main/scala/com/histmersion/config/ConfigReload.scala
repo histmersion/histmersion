@@ -56,7 +56,7 @@ object ConfigReload:
   def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[ChangedKey] =
     val a = leaves(settings(before))
     val b = leaves(settings(after))
-    (a.keySet ++ b.keySet).filter(k => a.get(k) != b.get(k)).toList.sortBy(_.value)
+    (a.keySet ++ b.keySet).filter(k => a.get(k) != b.get(k)).toList.sorted
 
   /** `changed`, split into what a running server applies and what waits for a restart. */
   def split(changed: List[ChangedKey]): (List[ChangedKey], List[ChangedKey]) = changed.partition(k => !restartOnly(k))

@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom):
   /** Do they answer for the writes up to `current`, on a grid of `wantedPerSide` squares to `wantedMaxZoom`? */
   def answers(current: UndatedBuild.Version, wantedPerSide: UndatedBuild.PerSide, wantedMaxZoom: UndatedBuild.MaxZoom): Boolean =
-    version == current && perSide == wantedPerSide && maxZoom.value >= wantedMaxZoom.value
+    version == current && perSide == wantedPerSide && maxZoom >= wantedMaxZoom
 
 object UndatedBuild:
 

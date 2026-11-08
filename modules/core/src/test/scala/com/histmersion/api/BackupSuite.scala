@@ -34,7 +34,7 @@ class BackupSuite extends munit.FunSuite:
     val a = Backup.fileName(Instant.parse("2026-08-25T09:00:00Z"))
     val b = Backup.fileName(Instant.parse("2026-08-25T10:00:00Z"))
     val c = Backup.fileName(Instant.parse("2026-09-01T00:00:00Z"))
-    assertEquals(List(c, a, b).sortBy(_.value), List(a, b, c))
+    assertEquals(List(c, a, b).sorted, List(a, b, c))
 
   // #772: the listing sorted by NAME, so `keep-before-…` was "the newest backup" for ever
   test("backups list newest first by when they were taken, not by name"):

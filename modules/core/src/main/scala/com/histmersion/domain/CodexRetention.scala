@@ -59,7 +59,7 @@ object CodexRetention:
 
   /** Pure: the SQLite databases at the home's top level (`state_5.sqlite`), not their `-wal`/`-shm`. */
   def sqliteFiles(names: List[FileName]): List[FileName] =
-    names.filter(n => !n.value.contains('/') && n.value.endsWith(".sqlite")).sortBy(_.value)
+    names.filter(n => !n.value.contains('/') && n.value.endsWith(".sqlite")).sorted
 
   /** Pure: is a retention pass due — none yet, or the last one `everyHours` or more ago? `everyHours` ≤ 0 turns the
     * automatic pass off.

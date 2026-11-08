@@ -60,14 +60,14 @@ object MergeFold:
   /** The smallest range covering both; an open bound stays open. */
   def hull(a: Bundle.Range, b: Bundle.Range): Bundle.Range =
     Bundle.Range(
-      a.start.zip(b.start).map((x, y) => if x.value <= y.value then x else y),
-      a.end.zip(b.end).map((x, y) => if x.value >= y.value then x else y)
+      a.start.zip(b.start).map((x, y) => if x <= y then x else y),
+      a.end.zip(b.end).map((x, y) => if x >= y then x else y)
     )
 
   /** Two ranges share a year (an open bound reaches any year; no range is compatible with any). */
   def overlap(a: Option[Bundle.Range], b: Option[Bundle.Range]): Boolean =
     a.zip(b).forall { (x, y) =>
-      x.start.zip(y.end).forall((s, e) => s.value <= e.value) && y.start.zip(x.end).forall((s, e) => s.value <= e.value)
+      x.start.zip(y.end).forall((s, e) => s <= e) && y.start.zip(x.end).forall((s, e) => s <= e)
     }
 
   /** The narrower of two ranges (an open one is the widest); a missing one is no choice. */
@@ -144,8 +144,8 @@ object MergeFold:
       case (Some(a), Some(b)) if a == b => PlanOutcome.Ours
       case _                            =>
         (l.planApprovedAt, r.planApprovedAt) match
-          case (Some(a), Some(b)) if b.value > a.value => PlanOutcome.Theirs
-          case (Some(a), Some(b)) if a.value > b.value => PlanOutcome.Ours
+          case (Some(a), Some(b)) if b > a => PlanOutcome.Theirs
+          case (Some(a), Some(b)) if a > b => PlanOutcome.Ours
           case _                           => PlanOutcome.Differ
 
   /** `l`'s links and `r`'s that `l` lacks (one link per kind and target: the uid when it has one, else the label), in a

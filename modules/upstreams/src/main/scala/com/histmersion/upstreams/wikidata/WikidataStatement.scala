@@ -18,8 +18,7 @@ object WikidataStatement:
   type Preferred = Preferred.T
   object Preferred extends Newtype[Boolean, Pure]
   type Order = Order.T
-  object Order extends Newtype[Int, Pure]:
-    given scala.math.Ordering[T] = scala.math.Ordering.by[T, Int](_.value)
+  object Order extends Newtype[Int, Pure]
 
   def best(statements: List[WikidataStatement], per: BestPer): List[WikidataStatement] =
     val preferred = statements.filter((refactorCallback => (refactorCallback.preferred).value))

@@ -128,7 +128,7 @@ object BundleFormat:
       .filterNot(f => seen.contains(f.path))
       .map(f => s"${f.path}: listed in the manifest, missing from the bundle")
     val unexpected =
-      seen.keys.toList.sortBy(_.value).filterNot(listed.contains).map(p => s"$p: in the bundle, not in the manifest")
+      seen.keys.toList.sorted.filterNot(listed.contains).map(p => s"$p: in the bundle, not in the manifest")
     val differ = m.files.flatMap(f =>
       seen.get(f.path).toList.flatMap { s =>
         List(

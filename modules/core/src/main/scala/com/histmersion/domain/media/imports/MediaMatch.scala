@@ -63,7 +63,7 @@ object MediaMatch:
   def keyOf(v: MediaRecord.GeographyPart2): PlaceInfo.Keys = if uncertain(v) then PlaceInfo.Keys("") else PlaceInfo.Keys(Geocode.key(v.value).value)
 
   /** Pure: do two periods overlap? */
-  def overlaps(a: Period, b: Period): Boolean = a.start.value <= b.end.value && b.start.value <= a.end.value
+  def overlaps(a: Period, b: Period): Boolean = a.start <= b.end && b.start <= a.end
 
   /** Pure: a period as a person reads it (`1400–1200 BCE`, `200 BCE–100 CE`). */
   def years(p: Period): PeriodText =
@@ -118,11 +118,11 @@ object MediaMatch:
   def dated(basis: Basis, rec: MediaRecord, target: PlaceInfo, latest: Option[Year]): Either[Refusal, Basis] =
     (rec.period, target.period) match
       case (None, _)                                                => Left(Refusal("no dates on the record"))
-      case (Some(r), _) if latest.exists(y => r.end.value > y.value) => Left(Refusal(s"made after ${year(latest.get)}"))
+      case (Some(r), _) if latest.exists(y => r.end > y) => Left(Refusal(s"made after ${year(latest.get)}"))
       case (_, None)                                                => Left(Refusal("the place has no period to compare"))
       case (Some(r), Some(p))                                       =>
         val window = latest
-          .filter(y => y.value >= p.start.value && y.value < p.end.value)
+          .filter(y => y >= p.start && y < p.end)
           .flatMap(y => DeepTime.span(DeepTime.SignedYear(p.start.value.toLong), DeepTime.SignedYear(y.value.toLong)))
           .getOrElse(p)
         if overlaps(r, window) then Right(Basis(s"$basis; ${years(r)} within ${years(window)}"))
@@ -175,5 +175,5 @@ object MediaMatch:
   def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: Year): Either[Refusal, Basis] =
     rec.period match
       case None                                   => Left(Refusal("no date on the map"))
-      case Some(p) if p.end.value > maxYear.value => Left(Refusal(s"made after $maxYear"))
+      case Some(p) if p.end > maxYear => Left(Refusal(s"made after $maxYear"))
       case Some(p) => geography(rec, target, resolve, specific = GeographySpecific(false)).map(geo => Basis(s"$geo; map of ${years(p)}"))

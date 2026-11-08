@@ -1168,7 +1168,7 @@ object MergePlanner:
         case Standing.Dropped     => None
     }
     val liveIds = live.map(_.issue.id).toSet
-    chosen.keys.toList.sortBy(_.value).filterNot(liveIds).foreach { id =>
+    chosen.keys.toList.sorted.filterNot(liveIds).foreach { id =>
       val c = byId(id).issue.condition.get
       val now = if standingOf(c.issue, Set.empty) == Standing.Dropped then "does not apply"
       else s"is ${decisionOf(byId(c.issue).issue).fold("open")(_._1.wire.value)}"

@@ -412,7 +412,7 @@ object AcquireParse:
     * `.`) into the match, so each hit goes through [[Identifiers.doi]].
     */
   def wikiRefs(wikitext: Wikitext): (List[Doi], List[ArxivId]) =
-    val dois = DoiInText.findAllIn((wikitext).value).toList.flatMap(doiOf).distinct.sortBy(_.value)
+    val dois = DoiInText.findAllIn((wikitext).value).toList.flatMap(doiOf).distinct.sorted
     val arxiv = ArxivInText.findAllMatchIn((wikitext).value).map(_.group(1)).toList.distinct.sorted
     (dois, arxiv.map(ArxivId(_)))
 
