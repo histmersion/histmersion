@@ -1,6 +1,9 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import scala.annotation.tailrec
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The AGPL (section 13) has a server offer everyone who uses it over a network the source of the very version that is
   * running: the repository at the commit it was built from, or the repository itself when the commit is unknown. The
@@ -8,12 +11,12 @@ import com.histmersion.api.given
   */
 object CorrespondingSource:
   type Commit = Commit.T
-  object Commit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Commit extends RefinedType[String, Pure]
   type Repository = Repository.T
-  object Repository extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Repository extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
 
-  def url(repository: com.histmersion.api.library.CorrespondingSource.Repository, commit: Option[com.histmersion.api.library.CorrespondingSource.Commit]): com.histmersion.api.library.CorrespondingSource.Url =
+  def url(repository: Repository, commit: Option[Commit]): Url =
     val repo = (repository).value.trim.stripSuffix("/").stripSuffix(".git")
-    commit.map((_).value.trim).filter(_.nonEmpty).fold(_root_.com.histmersion.api.library.CorrespondingSource.Url(repo))(c => _root_.com.histmersion.api.library.CorrespondingSource.Url(s"$repo/tree/$c"))
+    commit.map((_).value.trim).filter(_.nonEmpty).fold(Url(repo))(c => Url(s"$repo/tree/$c"))

@@ -1,4 +1,8 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 type ArchiveId = ArchiveId.T
-object ArchiveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+object ArchiveId extends RefinedType[String, Pure]

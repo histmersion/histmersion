@@ -1,4 +1,5 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalSchedule, GoalView}
 import com.histmersion.api.YearFmt
 import com.histmersion.api.given
@@ -26,7 +27,7 @@ object GoalsExport:
     val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
     val counts = goals.groupBy(_.status).view.mapValues(_.size).toMap
-    val statuses = com.histmersion.api.automation.Goal.Status.all.map(a => Goal.StatusValue(a.value))
+    val statuses = Goal.Status.all.map(a => Goal.StatusValue(a.value))
     val order = statuses.filter(counts.contains) ++ counts.keys.toList
       .filterNot(statuses.contains)
       .sorted
@@ -70,7 +71,7 @@ object GoalsExport:
 
   private def linkSections(links: List[GoalLink], itemStatus: Map[Goal.Plans.GoalLink.QueueNumber, ItemStatus.Wire]): List[String] =
     def section(
-        kind: com.histmersion.api.automation.Goal.LinkKind,
+        kind: Goal.LinkKind,
         label: String,
         line: GoalLink => String,
         key: GoalLink => (Long, String)
@@ -82,25 +83,25 @@ object GoalsExport:
     val byId = (l: GoalLink) => (l.ref.value.toLongOption.getOrElse(Long.MaxValue), l.ref.value)
     List(
       section(
-        com.histmersion.api.automation.Goal.LinkKind.Article,
+        Goal.LinkKind.Article,
         ("Articles"),
         l => (s"[[${l.ref}]]${titled(l)}${noted(l)}"),
         byRef
       ),
       section(
-        com.histmersion.api.automation.Goal.LinkKind.Source,
+        Goal.LinkKind.Source,
         ("Sources"),
         l => (s"[[${l.ref}]]${titled(l)}${noted(l)}"),
         byRef
       ),
       section(
-        com.histmersion.api.automation.Goal.LinkKind.Query,
+        Goal.LinkKind.Query,
         ("Searches"),
         l => s"\"${oneLine(l.ref.value)}\"${noted(l)}",
         byRef
       ),
       section(
-        com.histmersion.api.automation.Goal.LinkKind.QueueItem,
+        Goal.LinkKind.QueueItem,
         ("Queue items"),
         l => queueLine(l, itemStatus),
         byId
@@ -110,7 +111,7 @@ object GoalsExport:
   private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t.value)}")
   private def noted(l: GoalLink): String = l.note.map(n => oneLine(n.value)).filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  private def queueLine(l: GoalLink, itemStatus: Map[com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber, com.histmersion.api.automation.ItemStatus.Wire]): String =
+  private def queueLine(l: GoalLink, itemStatus: Map[GoalLink.QueueNumber, ItemStatus.Wire]): String =
     l.ref.value.toIntOption.flatMap(i => itemStatus.get(GoalLink.QueueNumber(i))) match
       case Some(st) =>
         val box = if st == ItemStatus.Done.wire then "[x]" else "[ ]"
@@ -118,7 +119,7 @@ object GoalsExport:
       case None => (s"`#${l.ref}` (not found)${noted(l)}")
 
   private def scheduleLine(s: GoalSchedule): String =
-    val state = if ((s.enabled) == _root_.com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true)) then "on" else "off"
+    val state = if ((s.enabled) == GoalSchedule.Enabled(true)) then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b.value)} USD")
     (s"${s.kind.wire} · `${s.cron}` · $state$budget")
 

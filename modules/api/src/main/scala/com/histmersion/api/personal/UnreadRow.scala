@@ -1,4 +1,5 @@
-package com.histmersion.api.personal
+package com.histmersion
+package api.personal
 
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -6,19 +7,24 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UnreadRow(
     kind: ItemKind,
     id: ItemKey,
-    title: com.histmersion.api.library.Title,
-    authors: List[com.histmersion.api.library.AuthorName] = Nil,
-    year: Option[com.histmersion.api.catalogue.Year] = None,
+    title: Title,
+    authors: List[AuthorName] = Nil,
+    year: Option[Year] = None,
     status: Option[UnreadRow.Status] = None,
-    periodStart: Option[com.histmersion.api.catalogue.Year] = None,
-    periodEnd: Option[com.histmersion.api.catalogue.Year] = None
+    periodStart: Option[Year] = None,
+    periodEnd: Option[Year] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object UnreadRow:
   type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Status extends RefinedType[String, Pure]

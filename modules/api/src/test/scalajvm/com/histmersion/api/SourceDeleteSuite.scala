@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -15,9 +16,9 @@ class SourceDeleteSuite extends munit.FunSuite:
   private val Ck = Citekey("beckman2011_ahhiyawa")
 
   private val blocked = List(
-    DeleteBlocker(DeleteBlocker.Kind.Article, com.histmersion.api.library.DeleteBlocker.Id("ahhiyawa"), Some(com.histmersion.api.library.DeleteBlocker.Title("Ahhiyawa"))),
-    DeleteBlocker(DeleteBlocker.Kind.Article, com.histmersion.api.library.DeleteBlocker.Id("troy"), None),
-    DeleteBlocker(DeleteBlocker.Kind.Job, com.histmersion.api.library.DeleteBlocker.Id("j1"), Some(com.histmersion.api.library.DeleteBlocker.Title("ingest")))
+    DeleteBlocker(DeleteBlocker.Kind.Article, DeleteBlocker.Id("ahhiyawa"), Some(DeleteBlocker.Title("Ahhiyawa"))),
+    DeleteBlocker(DeleteBlocker.Kind.Article, DeleteBlocker.Id("troy"), None),
+    DeleteBlocker(DeleteBlocker.Kind.Job, DeleteBlocker.Id("j1"), Some(DeleteBlocker.Title("ingest")))
   )
 
   test("the refusal names every blocker and offers no override"):
@@ -28,12 +29,12 @@ class SourceDeleteSuite extends munit.FunSuite:
 
   private val done = Source.Deletion(
     Ck,
-    com.histmersion.api.library.Source.Deletion.Title("The Ahhiyawa Texts"),
-    applied = com.histmersion.api.library.Source.Deletion.Applied(true),
-    counts = List(DeleteCount(DeletePart.Findings, com.histmersion.api.library.DeleteCount.Rows(3)), DeleteCount(DeletePart.EdgesIn, com.histmersion.api.library.DeleteCount.Rows(2))),
-    files = List(com.histmersion.api.library.Source.Deletion.Files("/spool/abc.pdf")),
-    calibreId = Some(com.histmersion.api.library.Source.CalibreId("1693")),
-    logEntry = Some(com.histmersion.api.library.Source.Deletion.LogEntry(42))
+    Source.Deletion.Title("The Ahhiyawa Texts"),
+    applied = Source.Deletion.Applied(true),
+    counts = List(DeleteCount(DeletePart.Findings, DeleteCount.Rows(3)), DeleteCount(DeletePart.EdgesIn, DeleteCount.Rows(2))),
+    files = List(Source.Deletion.Files("/spool/abc.pdf")),
+    calibreId = Some(Source.CalibreId("1693")),
+    logEntry = Some(Source.Deletion.LogEntry(42))
   )
 
   test("the log line says what went, in words"):
@@ -41,15 +42,15 @@ class SourceDeleteSuite extends munit.FunSuite:
       Source.Delete.logText(done),
       s"deleted $Ck (The Ahhiyawa Texts): 3 findings, 2 edges in (parked), 1 stored original, Calibre entry 1693 kept"
     )
-    assertEquals(Source.Delete.logText(Source.Deletion(Ck, com.histmersion.api.library.Source.Deletion.Title("T"), applied = com.histmersion.api.library.Source.Deletion.Applied(true))), s"deleted $Ck (T)")
+    assertEquals(Source.Delete.logText(Source.Deletion(Ck, Source.Deletion.Title("T"), applied = Source.Deletion.Applied(true))), s"deleted $Ck (T)")
 
   test("markdown: dry run, refused, applied"):
-    val dry = Source.Delete.markdown(done.modify(_.applied).setTo(com.histmersion.api.library.Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None)).value
+    val dry = Source.Delete.markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None)).value
     assert(dry.contains("Would delete") && dry.contains("--apply") && dry.contains("findings: 3"), dry)
     assert(dry.contains("links entry 1693 (not checked against the library)"), dry)
-    val present = Source.Delete.markdown(done.modify(_.applied).setTo(com.histmersion.api.library.Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None), Some(CalibreEntryCheck.Present)).value
+    val present = Source.Delete.markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None), Some(CalibreEntryCheck.Present)).value
     assert(present.contains("entry 1693 is linked and is NOT touched"), present)
-    val refused = Source.Delete.markdown(done.modify(_.applied).setTo(com.histmersion.api.library.Source.Deletion.Applied(false)).modify(_.blockers).setTo(blocked)).value
+    val refused = Source.Delete.markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.blockers).setTo(blocked)).value
     assert(
       refused.contains("Cannot delete") && refused.contains("no override") && !refused.contains("--apply"),
       refused
@@ -59,13 +60,13 @@ class SourceDeleteSuite extends munit.FunSuite:
 
   test("the Calibre line says what the library holds, not only what the record links (#1776)"):
     assertEquals(
-      Source.Delete.calibreLine(Some(com.histmersion.api.library.Source.CalibreId("1885")), Some(CalibreEntryCheck.Missing)),
+      Source.Delete.calibreLine(Some(Source.CalibreId("1885")), Some(CalibreEntryCheck.Missing)),
       "Calibre: entry 1885 no longer exists in the library — nothing to remove there."
     )
     assert(
-      Source.Delete.calibreLine(Some(com.histmersion.api.library.Source.CalibreId("1885")), Some(CalibreEntryCheck.Present)).value.contains("is linked and is NOT touched")
+      Source.Delete.calibreLine(Some(Source.CalibreId("1885")), Some(CalibreEntryCheck.Present)).value.contains("is linked and is NOT touched")
     )
-    val un = Source.Delete.calibreLine(Some(com.histmersion.api.library.Source.CalibreId("1885")), Some(CalibreEntryCheck.Unchecked(com.histmersion.api.library.CalibreEntryCheck.Unchecked.Reason("no Calibre library at /x")))).value
+    val un = Source.Delete.calibreLine(Some(Source.CalibreId("1885")), Some(CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason("no Calibre library at /x")))).value
     assert(un.contains("could not be checked: no Calibre library at /x") && !un.contains("is linked and"), un)
     assertEquals(Source.Delete.calibreLine(None, Some(CalibreEntryCheck.Missing)), "Calibre: no linked entry.")
     val gone = Source.Delete.markdown(done, Some(CalibreEntryCheck.Missing)).value
@@ -78,6 +79,6 @@ class SourceDeleteSuite extends munit.FunSuite:
     assertEquals(decode[Source.Deletion](json), Right(d))
 
   test("the request is strict: an unknown key is refused"):
-    assertEquals(decode[Source.DeleteRequest]("""{"apply":true}"""), Right(Source.DeleteRequest(com.histmersion.api.library.Source.DeleteRequest.Apply(true))))
-    assertEquals(decode[Source.DeleteRequest]("{}"), Right(Source.DeleteRequest(com.histmersion.api.library.Source.DeleteRequest.Apply(false))))
+    assertEquals(decode[Source.DeleteRequest]("""{"apply":true}"""), Right(Source.DeleteRequest(Source.DeleteRequest.Apply(true))))
+    assertEquals(decode[Source.DeleteRequest]("{}"), Right(Source.DeleteRequest(Source.DeleteRequest.Apply(false))))
     assert(decode[Source.DeleteRequest]("""{"apply":true,"force":true}""").isLeft)

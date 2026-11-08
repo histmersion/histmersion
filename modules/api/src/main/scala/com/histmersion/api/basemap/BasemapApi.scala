@@ -1,4 +1,5 @@
-package com.histmersion.api.basemap
+package com.histmersion
+package api.basemap
 import sttp.tapir.*
 import sttp.tapir.json.circe.*
 import sttp.model.{Header, HeaderNames, StatusCode}
@@ -6,21 +7,23 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.given
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object BasemapApi:
   object Tile:
     type Bytes = Bytes.T
-    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Bytes extends RefinedType[Array[Byte], Pure]
     type ContentType = ContentType.T
-    object ContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ContentType extends RefinedType[String, Pure]
     type Encoding = Encoding.T
-    object Encoding extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Encoding extends RefinedType[String, Pure]
     type Etag = Etag.T
-    object Etag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Etag extends RefinedType[String, Pure]
     type Format = Format.T
-    object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Format extends RefinedType[String, Pure]
   type TileTemplate = TileTemplate.T
-  object TileTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TileTemplate extends RefinedType[String, Pure]
 
 
 
@@ -60,9 +63,9 @@ object BasemapApi:
       .out(jsonBody[Basemap.Removed])
 
   lazy val tile: PublicEndpoint[
-    (com.histmersion.api.basemap.Basemap.Layer.Wire, com.histmersion.api.basemap.Basemap.Zoom, com.histmersion.api.basemap.Basemap.Tile.Column, com.histmersion.api.basemap.Basemap.Tile.Row, Option[com.histmersion.api.basemap.Basemap.LayerInfo.Version], Option[com.histmersion.api.basemap.BasemapApi.Tile.Format]),
+    (Basemap.Layer.Wire, Basemap.Zoom, Basemap.Tile.Column, Basemap.Tile.Row, Option[Basemap.LayerInfo.Version], Option[Tile.Format]),
     Api.Error,
-    (com.histmersion.api.basemap.BasemapApi.Tile.Bytes, com.histmersion.api.basemap.BasemapApi.Tile.ContentType, Option[com.histmersion.api.basemap.BasemapApi.Tile.Etag], com.histmersion.api.basemap.BasemapApi.Tile.Encoding, StatusCode),
+    (Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode),
     Any
   ] =
     (endpoint.get
@@ -75,20 +78,20 @@ object BasemapApi:
       .out(header[String](HeaderNames.ContentType))
       .out(header[Option[String]](HeaderNames.ContentEncoding))
       .out(header[String](HeaderNames.CacheControl))
-      .out(statusCode)).mapIn[(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire, _root_.com.histmersion.api.basemap.Basemap.Zoom, _root_.com.histmersion.api.basemap.Basemap.Tile.Column, _root_.com.histmersion.api.basemap.Basemap.Tile.Row, _root_.scala.Option[_root_.com.histmersion.api.basemap.Basemap.LayerInfo.Version], _root_.scala.Option[_root_.com.histmersion.api.basemap.BasemapApi.Tile.Format])]((refactorDecoded3: (_root_.java.lang.String, _root_.scala.Int, _root_.scala.Long, _root_.scala.Long, _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String])) => (_root_.com.histmersion.api.basemap.Basemap.Layer.Wire((refactorDecoded3)._1), _root_.com.histmersion.api.basemap.Basemap.Zoom((refactorDecoded3)._2), _root_.com.histmersion.api.basemap.Basemap.Tile.Column((refactorDecoded3)._3), _root_.com.histmersion.api.basemap.Basemap.Tile.Row((refactorDecoded3)._4), ((refactorDecoded3)._5).map(refactorElement7 => _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Version(refactorElement7)), ((refactorDecoded3)._6).map(refactorElement8 => _root_.com.histmersion.api.basemap.BasemapApi.Tile.Format(refactorElement8))))((refactorEncoded3: (_root_.com.histmersion.api.basemap.Basemap.Layer.Wire, _root_.com.histmersion.api.basemap.Basemap.Zoom, _root_.com.histmersion.api.basemap.Basemap.Tile.Column, _root_.com.histmersion.api.basemap.Basemap.Tile.Row, _root_.scala.Option[_root_.com.histmersion.api.basemap.Basemap.LayerInfo.Version], _root_.scala.Option[_root_.com.histmersion.api.basemap.BasemapApi.Tile.Format])) => (((refactorEncoded3)._1).value, ((refactorEncoded3)._2).value, ((refactorEncoded3)._3).value, ((refactorEncoded3)._4).value, ((refactorEncoded3)._5).map(refactorElement9 => (refactorElement9).value), ((refactorEncoded3)._6).map(refactorElement10 => (refactorElement10).value))).mapOut[(_root_.com.histmersion.api.basemap.BasemapApi.Tile.Bytes, _root_.com.histmersion.api.basemap.BasemapApi.Tile.ContentType, _root_.scala.Option[_root_.com.histmersion.api.basemap.BasemapApi.Tile.Etag], _root_.com.histmersion.api.basemap.BasemapApi.Tile.Encoding, _root_.sttp.model.StatusCode)]((refactorDecoded4: (_root_.scala.Array[_root_.scala.Byte], _root_.java.lang.String, _root_.scala.Option[_root_.java.lang.String], _root_.java.lang.String, _root_.sttp.model.StatusCode)) => (_root_.com.histmersion.api.basemap.BasemapApi.Tile.Bytes((refactorDecoded4)._1), _root_.com.histmersion.api.basemap.BasemapApi.Tile.ContentType((refactorDecoded4)._2), ((refactorDecoded4)._3).map(refactorElement11 => _root_.com.histmersion.api.basemap.BasemapApi.Tile.Etag(refactorElement11)), _root_.com.histmersion.api.basemap.BasemapApi.Tile.Encoding((refactorDecoded4)._4), (refactorDecoded4)._5))((refactorEncoded4: (_root_.com.histmersion.api.basemap.BasemapApi.Tile.Bytes, _root_.com.histmersion.api.basemap.BasemapApi.Tile.ContentType, _root_.scala.Option[_root_.com.histmersion.api.basemap.BasemapApi.Tile.Etag], _root_.com.histmersion.api.basemap.BasemapApi.Tile.Encoding, _root_.sttp.model.StatusCode)) => (((refactorEncoded4)._1).value, ((refactorEncoded4)._2).value, ((refactorEncoded4)._3).map(refactorElement12 => (refactorElement12).value), ((refactorEncoded4)._4).value, (refactorEncoded4)._5))
+      .out(statusCode)).mapIn[(Basemap.Layer.Wire, Basemap.Zoom, Basemap.Tile.Column, Basemap.Tile.Row, Option[Basemap.LayerInfo.Version], Option[Tile.Format])]((refactorDecoded3: (String, Int, Long, Long, Option[String], Option[String])) => (Basemap.Layer.Wire((refactorDecoded3)._1), Basemap.Zoom((refactorDecoded3)._2), Basemap.Tile.Column((refactorDecoded3)._3), Basemap.Tile.Row((refactorDecoded3)._4), ((refactorDecoded3)._5).map(refactorElement7 => Basemap.LayerInfo.Version(refactorElement7)), ((refactorDecoded3)._6).map(refactorElement8 => Tile.Format(refactorElement8))))((refactorEncoded3: (Basemap.Layer.Wire, Basemap.Zoom, Basemap.Tile.Column, Basemap.Tile.Row, Option[Basemap.LayerInfo.Version], Option[Tile.Format])) => (((refactorEncoded3)._1).value, ((refactorEncoded3)._2).value, ((refactorEncoded3)._3).value, ((refactorEncoded3)._4).value, ((refactorEncoded3)._5).map(refactorElement9 => (refactorElement9).value), ((refactorEncoded3)._6).map(refactorElement10 => (refactorElement10).value))).mapOut[(Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode)]((refactorDecoded4: (Array[Byte], String, Option[String], String, StatusCode)) => (Tile.Bytes((refactorDecoded4)._1), Tile.ContentType((refactorDecoded4)._2), ((refactorDecoded4)._3).map(refactorElement11 => Tile.Etag(refactorElement11)), Tile.Encoding((refactorDecoded4)._4), (refactorDecoded4)._5))((refactorEncoded4: (Tile.Bytes, Tile.ContentType, Option[Tile.Etag], Tile.Encoding, StatusCode)) => (((refactorEncoded4)._1).value, ((refactorEncoded4)._2).value, ((refactorEncoded4)._3).map(refactorElement12 => (refactorElement12).value), ((refactorEncoded4)._4).value, (refactorEncoded4)._5))
 
   private def fetchErrors =
     oneOf[Api.Error](
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        (Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.Code(Backup.CodeMaintenance))).andThen(refactorResult => ((refactorResult) == (true)))
+        (Api.Error.hasCode(Api.Error.Code(Backup.CodeMaintenance))).andThen(refactorResult => ((refactorResult) == (true)))
       ),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])((Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.Code(Busy))).andThen(refactorResult2 => ((refactorResult2) == (true)))),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])((Api.Error.hasCode(Api.Error.Code(Busy))).andThen(refactorResult2 => ((refactorResult2) == (true)))),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 
   val Busy = "basemap_busy"
 
-  def tileTemplate(layer: Basemap.Layer, version: com.histmersion.api.basemap.Basemap.LayerInfo.Version): com.histmersion.api.basemap.BasemapApi.TileTemplate =
-    _root_.com.histmersion.api.basemap.BasemapApi.TileTemplate(s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version")
+  def tileTemplate(layer: Basemap.Layer, version: Basemap.LayerInfo.Version): TileTemplate =
+    TileTemplate(s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version")
 
   lazy val all: List[AnyEndpoint] = List(status, fetch, remove, tile)

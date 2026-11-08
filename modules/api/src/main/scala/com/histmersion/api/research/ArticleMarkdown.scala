@@ -1,4 +1,5 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 
 import com.histmersion.api.{Markdown, OffsetPage, Plural, YearFmt}
 import com.histmersion.api.checks.{FormatField, FormatMarkdown}
@@ -9,9 +10,9 @@ object ArticleMarkdown:
 
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
-  def article(v: Article.View, parts: List[com.histmersion.api.research.Article.Part] = Nil): String =
+  def article(v: Article.View, parts: List[Article.Part] = Nil): String =
     if parts.isEmpty then ((articleFull(v)))
-    else ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.Article.Part((refactorValue).value)))))
+    else ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => Article.Part((refactorValue).value)))))
 
   private def articleFull(v: Article.View): String =
     val a = v.article
@@ -25,13 +26,13 @@ object ArticleMarkdown:
           case -1 => s"$body\n\n$line"
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
     val footer = sourcesCited(v.sourcesCited)
-    val trimmed = if (footer).isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.Article.Body(head)).value
+    val trimmed = if (footer).isEmpty then head else stripSourcesSection(Article.Body(head)).value
     trimmed + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
   private def coverage(v: Article.View): String = (v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
 
   private[api] def metaLine(kind: String, regions: List[String], period: String, tags: List[String]): String =
-    val parts = List(Label.display(_root_.com.histmersion.api.library.Label.Text(kind.trim)).value, chipLinksList(regions, ("place")), period.trim, chipLinksList(tags, ("tag")))
+    val parts = List(Label.display(Label.Text(kind.trim)).value, chipLinksList(regions, ("place")), period.trim, chipLinksList(tags, ("tag")))
       .filter(_.nonEmpty)
     if parts.isEmpty then ("") else s"_${parts.mkString(" · ")}_"
 
@@ -41,18 +42,18 @@ object ArticleMarkdown:
       .map(v => s"[${Label.display(Label.Text(v)).value.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})")
       .mkString(", ")
 
-  def stripSourcesSection(body: com.histmersion.api.research.Article.Body): com.histmersion.api.research.Article.Body =
+  def stripSourcesSection(body: Article.Body): Article.Body =
     val heading = """^#{1,6}\s*(sources\b.*|references|bibliography|works cited)\s*$""".r
     val lines = (body).value.linesIterator.toList
     lines.lastIndexWhere(l => heading.matches(l.trim.toLowerCase)) match
-      case -1 => _root_.com.histmersion.api.research.Article.Body((body).value)
+      case -1 => Article.Body((body).value)
       case i  =>
         val rest = lines.drop(i + 1).map(_.trim).filter(_.nonEmpty)
         if rest.forall(l => l.startsWith("-") || l.startsWith("*") || l.startsWith("[[") || l.startsWith("1."))
-        then _root_.com.histmersion.api.research.Article.Body(lines.take(i).mkString("\n").stripTrailing)
-        else _root_.com.histmersion.api.research.Article.Body((body).value)
+        then Article.Body(lines.take(i).mkString("\n").stripTrailing)
+        else Article.Body((body).value)
 
-  private def articleParts(v: Article.View, show: List[com.histmersion.api.research.Article.Part]): String =
+  private def articleParts(v: Article.View, show: List[Article.Part]): String =
     val a = v.article
     val out = List.newBuilder[String]
 
@@ -127,7 +128,7 @@ object ArticleMarkdown:
     else
       val items = vs.map { v =>
         val sum = v.summary.map(s => s" — ${s.value.take(120)}").getOrElse("")
-        s"- **${v.id}** · ${v.updatedAt} · ${Plural.count(Plural.CountN(v.wordCount.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("word"))}$sum"
+        s"- **${v.id}** · ${v.updatedAt} · ${Plural.count(Plural.CountN(v.wordCount.value.toLong), Plural.CountSingular("word"))}$sum"
       }
       (s"### ${vs.size} version(s) of $slug\n\n${items.mkString("\n")}")
 

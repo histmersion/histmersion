@@ -1,14 +1,17 @@
-package com.histmersion.api.jobs
+package com.histmersion
+package api.jobs
 
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 object JobActions:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
-  val all: List[com.histmersion.api.jobs.JobActions.Wire] = List(_root_.com.histmersion.api.jobs.JobActions.Wire("pause"), _root_.com.histmersion.api.jobs.JobActions.Wire("resume"), _root_.com.histmersion.api.jobs.JobActions.Wire("cancel"))
+  val all: List[Wire] = List(Wire("pause"), Wire("resume"), Wire("cancel"))
 
   /** The kinds whose jobs a person may pause and cancel. */
-  val Stoppable: Set[com.histmersion.api.jobs.JobKinds.Wire] = RegisteredJobKinds.all.stoppableKinds
+  val Stoppable: Set[JobKinds.Wire] = RegisteredJobKinds.all.stoppableKinds
 
   val CodeConflict = "conflict"

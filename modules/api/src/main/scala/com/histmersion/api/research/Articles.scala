@@ -1,4 +1,5 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 
 import hearth.kindlings.optics.syntax.*
 
@@ -6,20 +7,23 @@ import com.histmersion.api.Write
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
 import com.histmersion.api.Api
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
 object Articles:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
 
-  def heading(body: com.histmersion.api.research.Article.Body): Option[com.histmersion.api.research.Article.Heading] =
+  def heading(body: Article.Body): Option[Article.Heading] =
     ((body).value.linesIterator
       .map(_.trim)
       .find(_.nonEmpty)
       .filter(_.startsWith("# "))
       .map(_.drop(2).trim)
-      .filter(_.nonEmpty)).map(refactorValue3 => _root_.com.histmersion.api.research.Article.Heading(refactorValue3))
+      .filter(_.nonEmpty)).map(refactorValue3 => Article.Heading(refactorValue3))
 
-  def lede(body: com.histmersion.api.research.Article.Body): Option[com.histmersion.api.research.Article.SummaryText] =
+  def lede(body: Article.Body): Option[Article.SummaryText] =
     val lines = (body).value.linesIterator.toList.dropWhile(_.trim.isEmpty)
     val rest0 = lines.headOption.filter(_.trim.startsWith("# ")).fold(lines)(_ => lines.tail)
     val rest = rest0.dropWhile(_.trim.isEmpty) match
@@ -34,51 +38,51 @@ object Articles:
         else s
       }
       .trim
-    (Option(plain).filter(s => s.nonEmpty && !s.startsWith("#") && !s.startsWith("!"))).map(refactorValue4 => _root_.com.histmersion.api.research.Article.SummaryText(refactorValue4))
+    (Option(plain).filter(s => s.nonEmpty && !s.startsWith("#") && !s.startsWith("!"))).map(refactorValue4 => Article.SummaryText(refactorValue4))
 
   private val LedeHeadings = Set("## summary", "## lede", "## abstract")
 
   private val StandIns =
     Set("placeholder", "todo", "tbd", "tba", "fixme", "xxx", "summary", "tk", "na", "n a", "none", "wip")
 
-  def summaryOf(raw: Option[com.histmersion.api.research.Article.SummaryText]): Either[com.histmersion.api.research.Articles.Problem, Option[com.histmersion.api.research.Article.SummaryText]] =
+  def summaryOf(raw: Option[Article.SummaryText]): Either[Problem, Option[Article.SummaryText]] =
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
         val norm = s.toLowerCase.replaceAll("[^a-z]+", " ").trim
         if StandIns.contains(norm) || norm.startsWith("lorem ipsum") then
           Left(
-            _root_.com.histmersion.api.research.Articles.Problem(s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
+            Problem(s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
               "and the article's opening paragraph (or its `## Summary` section) is used")
           )
-        else Right(Some(_root_.com.histmersion.api.research.Article.SummaryText(s)))
+        else Right(Some(Article.SummaryText(s)))
 
   val Kinds = List("concept", "myth", "culture", "region", "timeline", "report", "index")
 
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
-  def notFound(slug: com.histmersion.api.research.Article.Slug): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Problem(s"No article '$slug'"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeNotFound)))
+  def notFound(slug: Article.Slug): Api.Error = Api.Error(Api.Error.Problem(s"No article '$slug'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
-  def kindOf(raw: com.histmersion.api.research.Article.Kind.Wire): Either[com.histmersion.api.research.Articles.Problem, com.histmersion.api.research.Article.Kind.Wire] =
+  def kindOf(raw: Article.Kind.Wire): Either[Problem, Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase
-    if Kind.matches(k) then Right(_root_.com.histmersion.api.research.Article.Kind.Wire(k))
-    else Left(_root_.com.histmersion.api.research.Articles.Problem(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)"))
+    if Kind.matches(k) then Right(Article.Kind.Wire(k))
+    else Left(Problem(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)"))
 
-  def kindOfDir(dirName: String): com.histmersion.api.research.Article.Kind.Wire =
+  def kindOfDir(dirName: String): Article.Kind.Wire =
     val d = (dirName).trim.toLowerCase
-    if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then _root_.com.histmersion.api.research.Article.Kind.Wire(d.dropRight(1)) else _root_.com.histmersion.api.research.Article.Kind.Wire(d)
+    if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then Article.Kind.Wire(d.dropRight(1)) else Article.Kind.Wire(d)
 
-  def dirOfKind(kind: com.histmersion.api.research.Article.Kind.Wire): String = ((kind).value.trim.toLowerCase)
+  def dirOfKind(kind: Article.Kind.Wire): String = ((kind).value.trim.toLowerCase)
 
   private val SlugPattern = """^[a-z0-9][a-z0-9_.-]{0,120}$""".r
 
-  def slugOf(raw: com.histmersion.api.research.Article.Slug): Either[com.histmersion.api.research.Articles.Problem, com.histmersion.api.research.Article.Slug] =
+  def slugOf(raw: Article.Slug): Either[Problem, Article.Slug] =
     val s = (raw).value.trim.toLowerCase
-    if SlugPattern.matches(s) then Right(_root_.com.histmersion.api.research.Article.Slug(s))
-    else Left(_root_.com.histmersion.api.research.Articles.Problem(s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"))
+    if SlugPattern.matches(s) then Right(Article.Slug(s))
+    else Left(Problem(s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"))
 
   /** The article a put makes, or why it is refused. */
-  def applyPut(slug: com.histmersion.api.research.Article.Slug, p: Article.Put): Either[com.histmersion.api.research.Articles.Problem, Article] =
+  def applyPut(slug: Article.Slug, p: Article.Put): Either[Problem, Article] =
     for
       s <- slugOf(slug)
       k <- kindOf(p.kind)
@@ -100,7 +104,7 @@ object Articles:
       reasons = reasons
     )
 
-  def precondition(existing: Article, patch: Article.Patch): Either[com.histmersion.api.research.Articles.Problem, Unit] =
+  def precondition(existing: Article, patch: Article.Patch): Either[Problem, Unit] =
     patch.ifUpdatedAt match
       case None       => Right(())
       case Some(want) =>
@@ -108,11 +112,11 @@ object Articles:
         if want == actual then Right(())
         else
           Left(
-            _root_.com.histmersion.api.research.Articles.Problem(s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
+            Problem(s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
               s"updatedAt is '$actual'. Re-read the article and re-apply your patch.")
           )
 
-  def applyPatch(existing: Article, patch: Article.Patch): Either[com.histmersion.api.research.Articles.Problem, Article] =
+  def applyPatch(existing: Article, patch: Article.Patch): Either[Problem, Article] =
     for
       _ <- precondition(existing, patch)
       kind <- patch.kind.fold[Either[Problem, Article.KindValue]](Right(existing.kind))(kindOf)
@@ -129,7 +133,7 @@ object Articles:
       _.title).setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title)).modify(_.kind).setTo(kind).modify(_.body).setTo(body).modify(_.summary).setTo(summary.orElse(existing.summary)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(lp => Write.applyList(existing.tags.map(t => Write.ListItem(t.value)), lp).map(i => Article.Tags(i.value)))).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions).map(r => Article.Regions(r.value.trim)).filter(_.value.nonEmpty).distinct).modify(_.period).setTo(period).modify(_.filter).setTo(filter).modify(_.reasons).setTo(reasons
     )
 
-  private def bodyOf(current: com.histmersion.api.research.Article.Body, patch: Article.Patch): Either[com.histmersion.api.research.Articles.Problem, com.histmersion.api.research.Article.Body] =
+  private def bodyOf(current: Article.Body, patch: Article.Patch): Either[Problem, Article.Body] =
     val base = patch.body.map(Article.Coverage.stripGenerated).getOrElse(current)
     patch.append.map(a => Article.Coverage.stripGenerated(Article.Body(a.value)).value.trim).filter(_.nonEmpty) match
       case None    => Right(base)
@@ -138,14 +142,14 @@ object Articles:
           case None    => Right(Article.Body(if base.value.trim.isEmpty then a else s"${base.value.stripTrailing}\n\n$a"))
           case Some(s) => appendUnderSection(base, Article.Section(s), Article.Prose(a))
 
-  def appendUnderSection(body: com.histmersion.api.research.Article.Body, section: com.histmersion.api.research.Article.Section, text: com.histmersion.api.research.Article.Prose): Either[com.histmersion.api.research.Articles.Problem, com.histmersion.api.research.Article.Body] =
+  def appendUnderSection(body: Article.Body, section: Article.Section, text: Article.Prose): Either[Problem, Article.Body] =
     val sNorm = (section).value.replaceAll("^#+\\s*", "").trim.toLowerCase
     val lines = (body).value.split("\n", -1).toList
     val idx = lines.indexWhere { line =>
       val t = line.trim
       t.startsWith("#") && t.replaceAll("^#+\\s*", "").trim.toLowerCase == sNorm
     }
-    if idx < 0 then Left(_root_.com.histmersion.api.research.Articles.Problem(s"no heading matching '$section' in the article body"))
+    if idx < 0 then Left(Problem(s"no heading matching '$section' in the article body"))
     else
       val level = lines(idx).trim.takeWhile(_ == '#').length
       val rest = lines.drop(idx + 1)
@@ -158,11 +162,11 @@ object Articles:
       val after = lines.drop(insertAt)
       val result = (before.mkString("\n").stripTrailing + "\n\n" + (text).value.trim +
         (if after.isEmpty then "" else "\n\n" + after.mkString("\n")))
-      Right(_root_.com.histmersion.api.research.Article.Body(result))
+      Right(Article.Body(result))
 
-  private def periodOf(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year]): Either[com.histmersion.api.research.Articles.Problem, Option[Period]] =
+  private def periodOf(start: Option[Year], end: Option[Year]): Either[Problem, Option[Period]] =
     (start, end) match
       case (Some(a), Some(b)) if a.value <= b.value => Right(Some(Period(a, b)))
-      case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.research.Articles.Problem(s"period_start ($a) must not be after period_end ($b)"))
+      case (Some(a), Some(b))           => Left(Problem(s"period_start ($a) must not be after period_end ($b)"))
       case (None, None)                 => Right(None)
-      case _                            => Left(_root_.com.histmersion.api.research.Articles.Problem("give both periodStart and periodEnd, or neither"))
+      case _                            => Left(Problem("give both periodStart and periodEnd, or neither"))

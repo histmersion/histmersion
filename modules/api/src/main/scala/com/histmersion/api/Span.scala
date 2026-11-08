@@ -1,6 +1,9 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
-final case class Span(from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year]):
+import com.histmersion.api.catalogue.Year
+
+final case class Span(from: Option[Year], to: Option[Year]):
   def isEmpty: Boolean = (from.isEmpty && to.isEmpty)
 
 object Span:

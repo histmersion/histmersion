@@ -1,22 +1,25 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.{Ascii, WireEnumValues}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 enum Confidence:
   case High, Medium, Low, Contested
 
   /** The wire / storage spelling (`high`). */
-  def wire: com.histmersion.api.library.Confidence.Wire = _root_.com.histmersion.api.library.Confidence.Wire(Ascii.lower((toString)))
+  def wire: Confidence.Wire = Confidence.Wire(Ascii.lower((toString)))
 
 object Confidence:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
-  def fromString(s: com.histmersion.api.library.Confidence.Wire): Option[Confidence] =
+  def fromString(s: Wire): Option[Confidence] =
     values.find(_.toString.equalsIgnoreCase((s).value))
 
   given WireEnumValues[Confidence]:
-    def all: Array[Confidence] = Confidence.values
-    def wire(e: Confidence): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((_root_.com.histmersion.api.library.Confidence.Wire(e.toString.toLowerCase)).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Confidence] =
-      Confidence.values.find(_.toString.equalsIgnoreCase((s).value))
+    def all: Array[Confidence] = values
+    def wire(e: Confidence): WireEnumValues.Wire = WireEnumValues.Wire((Wire(e.toString.toLowerCase)).value)
+    def fromWire(s: WireEnumValues.Wire): Option[Confidence] =
+      values.find(_.toString.equalsIgnoreCase((s).value))

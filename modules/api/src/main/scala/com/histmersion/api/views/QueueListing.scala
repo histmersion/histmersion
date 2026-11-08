@@ -1,4 +1,5 @@
-package com.histmersion.api.views
+package com.histmersion
+package api.views
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -19,5 +20,5 @@ final case class QueueListing(
       KindlingsSchema, com.histmersion.api.json.Schema:
 
   /** The list in Markdown, each ACQUIRE item with its last check's reason; `None` for a list no kind names. */
-  def markdown: Option[com.histmersion.api.automation.Queue.MarkdownResult] =
+  def markdown: Option[Queue.MarkdownResult] =
     Queue.Kind.parse(list).map(k => Queue.markdown(k, items, checks.map(c => c.item -> c.reason).toMap))

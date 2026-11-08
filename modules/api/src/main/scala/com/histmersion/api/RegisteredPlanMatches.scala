@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.api.exchange.PlanMatchKind
 import com.histmersion.api.library.Source

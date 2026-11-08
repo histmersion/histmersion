@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -6,16 +7,18 @@ import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
-final case class EventLinksRequest(recompute: EventLinksRequest.Recompute = _root_.com.histmersion.api.catalogue.EventLinksRequest.Recompute(false), confirm: List[EventLinksRequest.Confirm] = Nil, reject: List[EventLinksRequest.Reject] = Nil)
+final case class EventLinksRequest(recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false), confirm: List[EventLinksRequest.Confirm] = Nil, reject: List[EventLinksRequest.Reject] = Nil)
     derives KindlingsSchema, com.histmersion.api.json.Schema
 object EventLinksRequest:
 
   type Recompute = Recompute.T
-  object Recompute extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Recompute extends RefinedType[Boolean, Pure]
   type Confirm = Confirm.T
-  object Confirm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Confirm extends RefinedType[String, Pure]
   type Reject = Reject.T
-  object Reject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reject extends RefinedType[String, Pure]
 
   given Codec.AsObject[EventLinksRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[EventLinksRequest])

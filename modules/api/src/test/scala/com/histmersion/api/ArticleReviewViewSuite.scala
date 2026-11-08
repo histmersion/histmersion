@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -9,6 +10,7 @@ import io.circe.syntax.*
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewGoal, ReviewRound, ReviewState}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
+import com.histmersion.api.automation.Activity
 
 /** The review view's words: reviewer names, a finding's fate, the Markdown every surface returns, and the wire shape of
   * the state.
@@ -16,19 +18,19 @@ import com.histmersion.api.research.Article
 class ArticleReviewViewSuite extends munit.FunSuite:
 
   private val rejected = ReviewFinding(
-    com.histmersion.api.research.ReviewFinding.Id("S2"),
-    com.histmersion.api.research.ReviewFinding.Reviewer("skeptic"),
-    com.histmersion.api.research.ReviewFinding.Severity("major"),
-    com.histmersion.api.research.ReviewFinding.Kind("omitted-critique"),
-    com.histmersion.api.research.ReviewFinding.Where("Debate"),
-    com.histmersion.api.research.ReviewFinding.Problem("no critique"),
-    com.histmersion.api.research.ReviewFinding.Fix(""),
-    com.histmersion.api.research.ReviewFinding.Quote(""),
-    com.histmersion.api.research.ReviewFinding.Outcome("rejected"),
-    note = com.histmersion.api.research.ReviewFinding.Note("the record does not bear on it"),
-    closedBy = Some(com.histmersion.api.automation.Activity.Actor("fixer")),
-    closedRound = Some(com.histmersion.api.research.ReviewRound.Round(2)),
-    closedRunNumber = Some(com.histmersion.api.research.ReviewRound.RunNumber(1))
+    ReviewFinding.Id("S2"),
+    ReviewFinding.Reviewer("skeptic"),
+    ReviewFinding.Severity("major"),
+    ReviewFinding.Kind("omitted-critique"),
+    ReviewFinding.Where("Debate"),
+    ReviewFinding.Problem("no critique"),
+    ReviewFinding.Fix(""),
+    ReviewFinding.Quote(""),
+    ReviewFinding.Outcome("rejected"),
+    note = ReviewFinding.Note("the record does not bear on it"),
+    closedBy = Some(Activity.Actor("fixer")),
+    closedRound = Some(ReviewRound.Round(2)),
+    closedRunNumber = Some(ReviewRound.RunNumber(1))
   )
 
   test("reviewers by the names a person reads"):
@@ -52,13 +54,13 @@ class ArticleReviewViewSuite extends munit.FunSuite:
 
   test("the Markdown: state, goals, approvals waiting, then the history by run and round"):
     val v = Article.ReviewView(
-      com.histmersion.api.research.Article.Slug("zz-art"),
-      ReviewBadge(ReviewState.Passed, com.histmersion.api.research.ReviewBadge.Label("passed"), com.histmersion.api.research.ReviewBadge.Detail("Reviewed: passed — no MAJOR finding is open.")),
-      outcome = Some(com.histmersion.api.research.Article.ReviewView.Outcome("converged after 1 run")),
-      updatedAt = Some(com.histmersion.api.research.Article.UpdatedAt("2026-10-02T09:00:00Z")),
-      rounds = List(ReviewRound(com.histmersion.api.research.ReviewRound.Run("r"), com.histmersion.api.research.ReviewRound.RunNumber(1), com.histmersion.api.research.ReviewRound.Round(1), None, List(rejected))),
-      goals = List(ReviewGoal(com.histmersion.api.research.ReviewGoal.Slug("g"), com.histmersion.api.research.ReviewGoal.Title("A goal"), com.histmersion.api.research.ReviewGoal.Status("reviewed"))),
-      approvals = List(ReviewApproval(com.histmersion.api.research.ReviewApproval.Id(7), com.histmersion.api.research.ReviewApproval.Kind("article-filter")))
+      Article.Slug("zz-art"),
+      ReviewBadge(ReviewState.Passed, ReviewBadge.Label("passed"), ReviewBadge.Detail("Reviewed: passed — no MAJOR finding is open.")),
+      outcome = Some(Article.ReviewView.Outcome("converged after 1 run")),
+      updatedAt = Some(Article.UpdatedAt("2026-10-02T09:00:00Z")),
+      rounds = List(ReviewRound(ReviewRound.Run("r"), ReviewRound.RunNumber(1), ReviewRound.Round(1), None, List(rejected))),
+      goals = List(ReviewGoal(ReviewGoal.Slug("g"), ReviewGoal.Title("A goal"), ReviewGoal.Status("reviewed"))),
+      approvals = List(ReviewApproval(ReviewApproval.Id(7), ReviewApproval.Kind("article-filter")))
     )
     val md = Article.ReviewView.markdown(v)
     assert(md.value.startsWith("## Review of [[zz-art]]\n\n**passed** — Reviewed: passed — no MAJOR finding is open."), md)
@@ -75,8 +77,8 @@ class ArticleReviewViewSuite extends munit.FunSuite:
     assert(Article.ReviewView.markdown(v.modify(_.rounds).setTo(Nil)).value.endsWith("No finding recorded."))
 
   test("the state crosses the wire as its word"):
-    val b = ReviewBadge(ReviewState.InReview, com.histmersion.api.research.ReviewBadge.Label("in review · round 2"), com.histmersion.api.research.ReviewBadge.Detail("In review."), round = Some(com.histmersion.api.research.ReviewRound.Round(2)))
+    val b = ReviewBadge(ReviewState.InReview, ReviewBadge.Label("in review · round 2"), ReviewBadge.Detail("In review."), round = Some(ReviewRound.Round(2)))
     assert(b.asJson.noSpaces.contains("\"state\":\"in-review\""), b.asJson.noSpaces)
     assertEquals(decode[ReviewBadge](b.asJson.noSpaces), Right(b))
-    assertEquals(ReviewState.parse(com.histmersion.api.research.ReviewState.Wire(" Majors-Open ")), Some(ReviewState.MajorsOpen))
-    assertEquals(Goal.Stages.all.map(_._1), com.histmersion.api.automation.Goal.Status.all)
+    assertEquals(ReviewState.parse(ReviewState.Wire(" Majors-Open ")), Some(ReviewState.MajorsOpen))
+    assertEquals(Goal.Stages.all.map(_._1), Goal.Status.all)

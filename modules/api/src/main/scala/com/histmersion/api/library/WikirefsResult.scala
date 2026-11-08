@@ -1,9 +1,12 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class WikirefsResult(
     article: WikirefsResult.Article,
@@ -17,13 +20,13 @@ final case class WikirefsResult(
 
 object WikirefsResult:
   type Article = Article.T
-  object Article extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Article extends RefinedType[String, Pure]
   type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Url extends RefinedType[String, Pure]
   type DoiCount = DoiCount.T
-  object DoiCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DoiCount extends RefinedType[Int, Pure]
   type Dois = Dois.T
-  object Dois extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.library.Source.Candidate.{ArxivId as Arxiv}
+  object Dois extends RefinedType[String, Pure]
+  export Source.Candidate.{ArxivId as Arxiv}
   type Known = Known.T
-  object Known extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Known extends RefinedType[String, Pure]

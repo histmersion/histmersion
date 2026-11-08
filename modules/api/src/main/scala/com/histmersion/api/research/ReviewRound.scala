@@ -1,9 +1,12 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReviewRound(
     run: ReviewRound.Run,
@@ -16,10 +19,10 @@ final case class ReviewRound(
 
 object ReviewRound:
   type Run = Run.T
-  object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Run extends RefinedType[String, Pure]
   type RunNumber = RunNumber.T
-  object RunNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RunNumber extends RefinedType[Int, Pure]
   type Round = Round.T
-  object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Round extends RefinedType[Int, Pure]
   type StartedAt = StartedAt.T
-  object StartedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StartedAt extends RefinedType[String, Pure]

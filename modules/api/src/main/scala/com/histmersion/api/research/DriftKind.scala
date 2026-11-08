@@ -1,26 +1,29 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 enum DriftKind(val wire: DriftKind.Wire):
-  case Unplaced extends DriftKind(_root_.com.histmersion.api.research.DriftKind.Wire("unplaced"))
+  case Unplaced extends DriftKind(DriftKind.Wire("unplaced"))
 
-  case ReasonForCited extends DriftKind(_root_.com.histmersion.api.research.DriftKind.Wire("reason-for-cited"))
+  case ReasonForCited extends DriftKind(DriftKind.Wire("reason-for-cited"))
 
-  case ReasonOutside extends DriftKind(_root_.com.histmersion.api.research.DriftKind.Wire("reason-outside-filter"))
+  case ReasonOutside extends DriftKind(DriftKind.Wire("reason-outside-filter"))
 
 object DriftKind:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
 
   given WireEnumValues[DriftKind]:
-    def all: Array[DriftKind] = DriftKind.values
-    def wire(e: DriftKind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[DriftKind] = DriftKind.values.find(_.wire == _root_.com.histmersion.api.research.DriftKind.Wire((s).value.trim.toLowerCase))
+    def all: Array[DriftKind] = values
+    def wire(e: DriftKind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
+    def fromWire(s: WireEnumValues.Wire): Option[DriftKind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
   given Encoder[DriftKind] = WireEnum.encoder
   given Decoder[DriftKind] = WireEnum.decoder
   given Schema[DriftKind] = WireEnum.schema

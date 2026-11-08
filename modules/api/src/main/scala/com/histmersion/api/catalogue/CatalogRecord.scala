@@ -1,10 +1,13 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class CatalogRecord(
     provider: CatalogRecord.Provider,
@@ -13,8 +16,8 @@ final case class CatalogRecord(
     label: CatalogRecord.Label,
     kind: CatalogRecord.Kind,
     timeSpan: TimeSpan,
-    lat: Option[com.histmersion.api.catalogue.Latitude],
-    lon: Option[com.histmersion.api.catalogue.Longitude],
+    lat: Option[Latitude],
+    lon: Option[Longitude],
     historicity: CatalogRecord.Historicity = CatalogRecord.Historicity(com.histmersion.api.catalogue.Historicity.Attested),
     vei: Option[CatalogRecord.Vei] = None,
     magnitude: Option[CatalogRecord.Magnitude] = None,
@@ -32,57 +35,57 @@ final case class CatalogRecord(
     raw: Option[CatalogRecord.Raw] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def key: (com.histmersion.api.catalogue.CatalogRecord.Provider, com.histmersion.api.catalogue.EventCatalogueRef.ProviderId) = (_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((provider).value), _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId((providerId).value))
+  def key: (CatalogRecord.Provider, EventCatalogueRef.ProviderId) = (CatalogRecord.Provider((provider).value), EventCatalogueRef.ProviderId((providerId).value))
 object CatalogRecord:
   object Wikidata:
     type Class = Class.T
-    object Class extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Class extends RefinedType[String, Pure]
     type ImportClass = ImportClass.T
-    object ImportClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ImportClass extends RefinedType[String, Pure]
     type P31Json = P31Json.T
-    object P31Json extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object P31Json extends RefinedType[String, Pure]
   type EventId = EventId.T
-  object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EventId extends RefinedType[String, Pure]
 
 
-  type EventIdProvider = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
-  val EventIdProvider: _root_.com.histmersion.api.catalogue.CatalogRecord.Provider.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
-  export com.histmersion.api.catalogue.EventCatalogueRef.{ProviderId as EventIdProviderId}
+  type EventIdProvider = Provider
+  val EventIdProvider: Provider.type = Provider
+  export EventCatalogueRef.{ProviderId as EventIdProviderId}
   type OwnerKeysPart2 = OwnerKeysPart2.T
-  object OwnerKeysPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+  object OwnerKeysPart2 extends RefinedType[String, Pure]:
+    given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
 
   type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.catalogue.EventCatalogueRef.{ProviderId, Url}
+  object Provider extends RefinedType[String, Pure]
+  export EventCatalogueRef.{ProviderId, Url}
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Historicity = Historicity.T
-  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.catalogue.EventCatalogueRef.{Vei, Magnitude, Deaths}
-  type Wikidata = com.histmersion.api.catalogue.EventEntry.Wikidata
-  export com.histmersion.api.catalogue.EventEntry.Names
+  object Historicity extends RefinedType[String, Pure]
+  export EventCatalogueRef.{Vei, Magnitude, Deaths}
+  type Wikidata = EventEntry.Wikidata
+  export EventEntry.Names
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
   type Group = Group.T
-  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object Group extends RefinedType[String, Pure]:
     type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Label extends RefinedType[String, Pure]
   type Central = Central.T
-  object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Central extends RefinedType[Long, Pure]
   type PlusMinus = PlusMinus.T
-  object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.catalogue.EventDating.{Method as DatingMethod}
+  object PlusMinus extends RefinedType[Long, Pure]
+  export EventDating.{Method as DatingMethod}
   type Raw = Raw.T
-  object Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Raw extends RefinedType[String, Pure]
 
-  def eventId(r: CatalogRecord): com.histmersion.api.catalogue.CatalogRecord.EventId = eventId(r.provider, r.providerId)
+  def eventId(r: CatalogRecord): EventId = eventId(r.provider, r.providerId)
 
-  def eventId(provider: com.histmersion.api.catalogue.CatalogRecord.EventIdProvider, providerId: com.histmersion.api.catalogue.CatalogRecord.EventIdProviderId): com.histmersion.api.catalogue.CatalogRecord.EventId =
-    _root_.com.histmersion.api.catalogue.CatalogRecord.EventId(((provider).value + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_"))
+  def eventId(provider: EventIdProvider, providerId: CatalogRecord.EventIdProviderId): EventId =
+    EventId(((provider).value + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_"))
 
-  def owner(eventId: com.histmersion.api.catalogue.CatalogRecord.EventId, catalogue: com.histmersion.api.catalogue.CatalogRecord.Provider, keys: Iterable[(com.histmersion.api.catalogue.CatalogRecord.Provider, com.histmersion.api.catalogue.EventCatalogueRef.ProviderId)]): Option[(com.histmersion.api.catalogue.CatalogRecord.Provider, com.histmersion.api.catalogue.EventCatalogueRef.ProviderId)] =
+  def owner(eventId: EventId, catalogue: Provider, keys: Iterable[(Provider, EventCatalogueRef.ProviderId)]): Option[(Provider, EventCatalogueRef.ProviderId)] =
     val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2.value)
-    (own.find(k => CatalogRecord.eventId(_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((k._1).value), _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId((k._2).value)) == eventId).orElse(own.headOption)).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((refactorTuple2._1).value), _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId((refactorTuple2._2).value)) })
+    (own.find(k => CatalogRecord.eventId(Provider((k._1).value), EventCatalogueRef.ProviderId((k._2).value)) == eventId).orElse(own.headOption)).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (Provider((refactorTuple2._1).value), EventCatalogueRef.ProviderId((refactorTuple2._2).value)) })

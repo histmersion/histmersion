@@ -1,7 +1,9 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article.Edits.*
+import com.histmersion.api.research.Article
 
 /** Edits anchored on an article's own text: the four operations, the anchor rules (exactly once, whitespace
   * normalised), the order they apply in, and skipped edits.
@@ -18,7 +20,7 @@ class ArticleEditsSuite extends munit.FunSuite:
       |Two dates are argued [[knapp2016_tin]].
       |""".stripMargin
 
-  private val Body = com.histmersion.api.research.Article.Body(BodyText)
+  private val Body = Article.Body(BodyText)
 
   private def e(op: Op, anchor: Anchor, text: Option[NewText] = None) = EditAnswer(op, anchor, text)
 
@@ -45,7 +47,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     val gone = applyAll(Body, List(e(Op.Delete, Anchor("The ship carried copper [[knapp2016_tin]].")))).body
     assertEquals(gone, BodyText.replace("The ship carried copper [[knapp2016_tin]].\n\n", ""))
     // a sentence deleted mid-paragraph leaves one space
-    assertEquals(applyAll(com.histmersion.api.research.Article.Body("A b. C d. E f."), List(e(Op.Delete, Anchor("C d.")))).body, "A b. E f.")
+    assertEquals(applyAll(Article.Body("A b. C d. E f."), List(e(Op.Delete, Anchor("C d.")))).body, "A b. E f.")
 
   // the Codex strict schema sends null (or "") for a field it has nothing for: a replace with no text
   // used to read as a DELETE of its anchor
@@ -65,7 +67,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     assert(applyAll(Body, decoded).problems.head.value.contains("a replace with no new text"))
 
   test("an anchor is matched with whitespace normalised, and nothing else"):
-    val wrapped = com.histmersion.api.research.Article.Body("Tin reached the Aegean\nby sea [[knapp2016_tin]].")
+    val wrapped = Article.Body("Tin reached the Aegean\nby sea [[knapp2016_tin]].")
     assertEquals(
       applyAll(wrapped, List(e(Op.Replace, Anchor("the Aegean   by sea"), Some(NewText("the Aegean by ship"))))).body,
       "Tin reached the Aegean by ship [[knapp2016_tin]]."
@@ -94,15 +96,15 @@ class ArticleEditsSuite extends munit.FunSuite:
 
   test("a refused edit is skipped with its reason; the rest apply"):
     val es = List(e(Op.InsertAfter, Anchor("by sea"), Some(NewText(" [[ghost2020_x]]"))), e(Op.Replace, Anchor("Two dates"), Some(NewText("Three dates"))))
-    val r = applyAll(Body, es, a => Option.when(a.text.exists(_.value.contains("ghost")))(com.histmersion.api.research.Article.Edits.EditResult.Problem("its text is refused: ghost")))
+    val r = applyAll(Body, es, a => Option.when(a.text.exists(_.value.contains("ghost")))(EditResult.Problem("its text is refused: ghost")))
     assertEquals(r.body, BodyText.replace("Two dates", "Three dates"))
     assertEquals(r.problems, List("edit 1 (insertAfter \"by sea\"): its text is refused: ghost"))
 
   test("a check request is edits or a body, not both and not neither"):
     assert(ArticleCheckRequest().draft.isLeft)
-    assert(ArticleCheckRequest(List(e(Op.Delete, Anchor("x"))), Some(com.histmersion.api.research.Article.Body("b"))).draft.isLeft)
-    assertEquals(ArticleCheckRequest(body = Some(com.histmersion.api.research.Article.Body("b"))).draft, Right(Draft.Body(com.histmersion.api.research.Article.Edits.Draft.Body.Text("b"))))
-    assertEquals(head(Anchor("a  long\nanchor " * 10), com.histmersion.api.research.Article.Edits.HeadLimit(20)), "a long anchor a long…")
+    assert(ArticleCheckRequest(List(e(Op.Delete, Anchor("x"))), Some(Article.Body("b"))).draft.isLeft)
+    assertEquals(ArticleCheckRequest(body = Some(Article.Body("b"))).draft, Right(Draft.Body(Draft.Body.Text("b"))))
+    assertEquals(head(Anchor("a  long\nanchor " * 10), HeadLimit(20)), "a long anchor a long…")
 
   test("the answer's JSON: op by its wire name, text optional"):
     val js = """[{"op":"insertAfter","anchor":"by sea","text":" x"},{"op":"delete","anchor":"y"}]"""

@@ -1,4 +1,5 @@
-package com.histmersion.api.settings
+package com.histmersion
+package api.settings
 
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -32,7 +33,7 @@ object ConfigEditMarkdown:
     val head = List(
       s"# Settings",
       "",
-      s"File: ${p.file.fold("none")(f => s"`$f`" + (if ((p.exists) == _root_.com.histmersion.api.settings.ConfigEdit.Page.Exists(true)) then "" else " (not there yet)"))}"
+      s"File: ${p.file.fold("none")(f => s"`$f`" + (if ((p.exists) == Page.Exists(true)) then "" else " (not there yet)"))}"
     )
     val problems = if p.problems.isEmpty then Nil else "" :: "**Problems:**" :: p.problems.map(x => s"- $x")
     val body = p.sections.flatMap { s =>
@@ -47,7 +48,7 @@ object ConfigEditMarkdown:
     def list(title: String, xs: List[String]) = if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
     val head =
       if w.changed.isEmpty then "# Settings unchanged — the file already says so"
-      else s"# Settings changed — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((w.changed.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("setting"))}"
+      else s"# Settings changed — ${Plural.count(Plural.CountN((w.changed.size).toLong), Plural.CountSingular("setting"))}"
     (List(head, "", s"File: `${w.file}`") ++ w.backup.map(b => s"Previous version kept as `$b`").toList ++
       list(("Changed"), w.changed.map(_.value.stripPrefix("histmersion."))) ++
       list(("Already so"), w.unchanged.map(_.value.stripPrefix("histmersion."))) ++
@@ -56,4 +57,4 @@ object ConfigEditMarkdown:
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
   def restart(r: Restart): String =
-    if ((r.accepted) == _root_.com.histmersion.api.settings.ConfigEdit.Restart.Accepted(true)) then (s"# Restarting\n\n${r.message}") else (s"# Not restarted\n\n${r.message}")
+    if ((r.accepted) == Restart.Accepted(true)) then (s"# Restarting\n\n${r.message}") else (s"# Not restarted\n\n${r.message}")

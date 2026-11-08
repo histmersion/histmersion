@@ -1,13 +1,16 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ArticleEventLead(
-    eventId: com.histmersion.api.catalogue.Event.Id,
+    eventId: Event.Id,
     label: ArticleEventLead.Label,
     kind: ArticleEventLead.Kind,
     years: ArticleEventLead.Years,
@@ -18,29 +21,29 @@ final case class ArticleEventLead(
       KindlingsSchema, com.histmersion.api.json.Schema
 object ArticleEventLead:
   type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Body extends RefinedType[String, Pure]
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
 
 
-  export com.histmersion.api.catalogue.CatalogRecord.{Label, Kind}
+  export CatalogRecord.{Label, Kind}
   type Years = Years.T
-  object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Years extends RefinedType[String, Pure]
   type Size = Size.T
-  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Size extends RefinedType[String, Pure]
   type FindingsNear = FindingsNear.T
-  object FindingsNear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.catalogue.CatalogRecord.Provider
+  object FindingsNear extends RefinedType[Int, Pure]
+  export CatalogRecord.Provider
 
-  def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.Body, names: List[com.histmersion.api.catalogue.EventEntry.Names]): Boolean =
+  def mentioned(body: Body, names: List[EventEntry.Names]): Boolean =
     val b = (body).value.toLowerCase(java.util.Locale.ROOT)
     (names.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains))
 
-  def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.Markdown =
-    if leads.isEmpty then _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown("")
+  def markdown(leads: List[ArticleEventLead]): Markdown =
+    if leads.isEmpty then Markdown("")
     else
-      _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown(("### Catalogue events in this article's period and region that it never names" :: "" ::
+      Markdown(("### Catalogue events in this article's period and region that it never names" :: "" ::
         leads.map { l =>
           s"- ${l.label} (`${l.eventId}`, ${l.kind}${l.size.fold("")(s => s", $s")}, ${l.years}) — " +
-            s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(l.findingsNear.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, not evidence)"
+            s"${Plural.count(Plural.CountN(l.findingsNear.value.toLong), Plural.Noun.Singular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, not evidence)"
         }).mkString("\n"))

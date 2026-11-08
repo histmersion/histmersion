@@ -1,9 +1,12 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Read-only is enforced in three layers, because no single one of them holds:
   *
@@ -17,24 +20,24 @@ import com.histmersion.api.json.NewtypeCodecs.given
   */
 object Query:
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type SchemaMarkdown = SchemaMarkdown.T
-  object SchemaMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SchemaMarkdown extends RefinedType[String, Pure]
   type Statement = Statement.T
-  object Statement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Statement extends RefinedType[String, Pure]
   type ToolDescription = ToolDescription.T
-  object ToolDescription extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ToolDescription extends RefinedType[String, Pure]
 
 
   type StatementsSql = String
-  export com.histmersion.api.library.Query.QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
+  export QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
 
   final case class QueryRequest(sql: QueryRequest.Sql) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object QueryRequest:
-    export com.histmersion.api.library.Query.{Statement as Sql}
+    export Query.{Statement as Sql}
 
 
   final case class QueryResult(
@@ -48,15 +51,15 @@ object Query:
 
   object QueryResult:
     type Columns = Columns.T
-    object Columns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Columns extends RefinedType[String, Pure]
     type Rows = Rows.T
-    object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rows extends RefinedType[String, Pure]
     type RowCount = RowCount.T
-    object RowCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RowCount extends RefinedType[Int, Pure]
     type Truncated = Truncated.T
-    object Truncated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Truncated extends RefinedType[Boolean, Pure]
     type ElapsedMs = ElapsedMs.T
-    object ElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ElapsedMs extends RefinedType[Long, Pure]
 
 
   final case class SchemaColumn(name: SchemaColumn.Name, dataType: SchemaColumn.DataType, nullable: SchemaColumn.Nullable)
@@ -65,11 +68,11 @@ object Query:
 
   object SchemaColumn:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type DataType = DataType.T
-    object DataType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DataType extends RefinedType[String, Pure]
     type Nullable = Nullable.T
-    object Nullable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Nullable extends RefinedType[Boolean, Pure]
 
 
   final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
@@ -78,9 +81,9 @@ object Query:
 
   object SchemaTable:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
 
 
   final case class SchemaTables(tables: List[SchemaTable]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -105,7 +108,7 @@ object Query:
   /** Honours everything that may hold a `;` in Postgres: `'…'` strings (with `''` escapes), `"…"` identifiers,
     * `$tag$…$tag$` dollar quoting, `--` line comments and block comments, which Postgres nests.
     */
-  def statements(sql: com.histmersion.api.library.Query.StatementsSql): List[com.histmersion.api.library.Query.Statement] =
+  def statements(sql: StatementsSql): List[Statement] =
     val out = List.newBuilder[String]
     val cur = StringBuilder()
     var i = 0
@@ -139,7 +142,7 @@ object Query:
       else if c == ';' then { out += cur.toString; cur.clear(); i += 1 }
       else { cur.append(c); i += 1 }
     out += cur.toString
-    (out.result().map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.library.Query.Statement(refactorValue))
+    (out.result().map(_.trim).filter(_.nonEmpty)).map(refactorValue => Statement(refactorValue))
 
   private def dollarTag(sql: String, i: Int): Option[String] =
     val close = (sql).indexOf('$', (i) + 1)
@@ -150,7 +153,7 @@ object Query:
       then Some(((sql).substring((i), close + 1)))
       else None
 
-  def leadingKeyword(statement: com.histmersion.api.library.Query.Statement): String =
+  def leadingKeyword(statement: Statement): String =
     def afterBlockComment(text: String): String =
       var at = 2
       var depth = 1
@@ -171,30 +174,30 @@ object Query:
       else go = false
     (s.takeWhile(c => c.isLetter).toUpperCase)
 
-  def check(sql: com.histmersion.api.library.Query.Statement): Either[com.histmersion.api.library.Query.Problem, com.histmersion.api.library.Query.Statement] =
+  def check(sql: Statement): Either[Problem, Statement] =
     val text = (sql).value.trim
-    if text.isEmpty then Left(_root_.com.histmersion.api.library.Query.Problem("empty statement"))
+    if text.isEmpty then Left(Problem("empty statement"))
     else
       statements(text) match
-        case Nil        => Left(_root_.com.histmersion.api.library.Query.Problem("empty statement"))
+        case Nil        => Left(Problem("empty statement"))
         case one :: Nil =>
           val kw = leadingKeyword(one)
           if Forbidden.contains((kw)) then
             Left(
-              _root_.com.histmersion.api.library.Query.Problem(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
+              Problem(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
                 "WITH that only reads); transaction and session control are refused")
             )
           else Right(one)
         case many =>
           Left(
-            _root_.com.histmersion.api.library.Query.Problem(s"${many.size} statements were given — `query` runs exactly ONE; " +
+            Problem(s"${many.size} statements were given — `query` runs exactly ONE; " +
               "drop the ';'-separated batch and ask again")
           )
 
-  private def cell(v: Option[com.histmersion.api.library.Query.MarkdownTableRows]): String =
+  private def cell(v: Option[Query.MarkdownTableRows]): String =
     v.map(_.value).getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
-  def markdownTable(columns: List[com.histmersion.api.library.Query.MarkdownTableColumns], rows: List[List[Option[com.histmersion.api.library.Query.MarkdownTableRows]]]): String =
+  def markdownTable(columns: List[Query.MarkdownTableColumns], rows: List[List[Option[Query.MarkdownTableRows]]]): String =
     if columns.isEmpty then ("_(no columns)_")
     else
       val header = columns.map((_).value.replace("|", "\\|")).mkString("| ", " | ", " |")
@@ -203,11 +206,11 @@ object Query:
       // No stripMargin: every row starts with '|', which stripMargin would eat.
       ((List(header, rule) ++ body).mkString("\n"))
 
-  def markdown(r: QueryResult): com.histmersion.api.library.Query.Markdown =
+  def markdown(r: QueryResult): Markdown =
     val head =
-      s"### ${r.rowCount} row(s)${if ((r.truncated) == _root_.com.histmersion.api.library.Query.QueryResult.Truncated(true)) then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
-    if r.rows.isEmpty then _root_.com.histmersion.api.library.Query.Markdown(s"$head\n\n_no rows_")
-    else _root_.com.histmersion.api.library.Query.Markdown(s"$head\n\n${markdownTable(r.columns, r.rows)}")
+      s"### ${r.rowCount} row(s)${if ((r.truncated) == QueryResult.Truncated(true)) then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
+    if r.rows.isEmpty then Markdown(s"$head\n\n_no rows_")
+    else Markdown(s"$head\n\n${markdownTable(r.columns, r.rows)}")
 
   private val Key = Set(
     "id",
@@ -237,16 +240,16 @@ object Query:
     "label"
   )
 
-  def schemaMarkdown(s: SchemaTables): com.histmersion.api.library.Query.SchemaMarkdown =
-    if s.tables.isEmpty then _root_.com.histmersion.api.library.Query.SchemaMarkdown("_(no tables)_")
+  def schemaMarkdown(s: SchemaTables): SchemaMarkdown =
+    if s.tables.isEmpty then SchemaMarkdown("_(no tables)_")
     else
       val rows = s.tables.map { t =>
         val cols = t.columns.map(c => s"${c.name} ${c.dataType}").mkString(", ")
         s"- **${t.name}** (${t.kind}) — $cols"
       }
-      _root_.com.histmersion.api.library.Query.SchemaMarkdown(s"### ${s.tables.size} table(s)\n\n${rows.mkString("\n")}")
+      SchemaMarkdown(s"### ${s.tables.size} table(s)\n\n${rows.mkString("\n")}")
 
-  def toolDescription(s: SchemaTables): com.histmersion.api.library.Query.ToolDescription =
+  def toolDescription(s: SchemaTables): ToolDescription =
     val tables =
       if s.tables.isEmpty then "(schema unavailable — call the schema endpoint)"
       else
@@ -257,7 +260,7 @@ object Query:
             s"${t.name}($cols)"
           }
           .mkString("; ")
-    _root_.com.histmersion.api.library.Query.ToolDescription("Run ONE read-only SQL statement against the Histmersion Postgres/PostGIS store and get columns + " +
+    ToolDescription("Run ONE read-only SQL statement against the Histmersion Postgres/PostGIS store and get columns + " +
       "rows back as a Markdown table. Use it for the questions `search`/`facets`/`histogram` cannot " +
       "express — cross-tabulations, counts by two dimensions, set differences. The statement runs " +
       "in a READ ONLY transaction with a statement timeout and a row cap, so INSERT/UPDATE/DELETE/" +

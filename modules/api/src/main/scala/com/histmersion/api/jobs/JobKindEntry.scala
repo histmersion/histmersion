@@ -1,4 +1,8 @@
-package com.histmersion.api.jobs
+package com.histmersion
+package api.jobs
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A kind of job as its owner registers it: its name and meaning for a person, whether a person may pause and cancel
   * its jobs, whether those go to the kind's own runner instead (an agent run's), and what one of its jobs is about,
@@ -8,34 +12,34 @@ final case class JobKindEntry(
     kind: JobInfo.Kind,
     name: JobKindName,
     meaning: JobKindMeaning,
-    stoppable: JobKindEntry.Stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable(false),
+    stoppable: JobKindEntry.Stoppable = JobKindEntry.Stoppable(false),
     subject: JobDetail => Option[JobKindEntry.SubjectResult] = _ => None,
-    ownControl: JobKindEntry.OwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl(false)
+    ownControl: JobKindEntry.OwnControl = JobKindEntry.OwnControl(false)
 )
 
 object JobKindEntry:
   /** An entry from its owner's words. */
-  type SubjectResult = com.histmersion.api.jobs.JobKinds.Subject
-  val SubjectResult: _root_.com.histmersion.api.jobs.JobKinds.Subject.type = _root_.com.histmersion.api.jobs.JobKinds.Subject
+  type SubjectResult = JobKinds.Subject
+  val SubjectResult: JobKinds.Subject.type = JobKinds.Subject
 
   export com.histmersion.api.jobs.{JobKindMeaning as OfMeaning}
-  type OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
-  val OfStoppable: _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable.type = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
-  type OfSubjectResult = com.histmersion.api.jobs.JobKinds.Subject
-  val OfSubjectResult: _root_.com.histmersion.api.jobs.JobKinds.Subject.type = _root_.com.histmersion.api.jobs.JobKinds.Subject
-  type OfOwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl
-  val OfOwnControl: _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl.type = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl
+  type OfStoppable = Stoppable
+  val OfStoppable: Stoppable.type = Stoppable
+  type OfSubjectResult = JobKinds.Subject
+  val OfSubjectResult: JobKinds.Subject.type = JobKinds.Subject
+  type OfOwnControl = OwnControl
+  val OfOwnControl: OwnControl.type = OwnControl
 
   type Stoppable = Stoppable.T
-  object Stoppable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Stoppable extends RefinedType[Boolean, Pure]
   type OwnControl = OwnControl.T
-  object OwnControl extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OwnControl extends RefinedType[Boolean, Pure]
 
   def of(
       kind: JobInfo.Kind,
-      name: com.histmersion.api.jobs.JobKinds.Wire,
-      meaning: com.histmersion.api.jobs.JobKindMeaning,
-      stoppable: com.histmersion.api.jobs.JobKindEntry.OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(false),
-      subject: JobDetail => Option[com.histmersion.api.jobs.JobKinds.Subject] = _ => None,
-      ownControl: com.histmersion.api.jobs.JobKindEntry.OfOwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OfOwnControl(false)
-  ): JobKindEntry = JobKindEntry(kind, JobKindName((name).value), JobKindMeaning((meaning).value), stoppable, { val refactorFunction2 = subject; (refactorValue3) => (refactorFunction2(refactorValue3)).map(refactorValue4 => _root_.com.histmersion.api.jobs.JobKinds.Subject((refactorValue4).value)) }, ownControl)
+      name: JobKinds.Wire,
+      meaning: JobKindMeaning,
+      stoppable: OfStoppable = OfStoppable(false),
+      subject: JobDetail => Option[JobKinds.Subject] = _ => None,
+      ownControl: OfOwnControl = OfOwnControl(false)
+  ): JobKindEntry = JobKindEntry(kind, JobKindName((name).value), JobKindMeaning((meaning).value), stoppable, { val refactorFunction2 = subject; (refactorValue3) => (refactorFunction2(refactorValue3)).map(refactorValue4 => JobKinds.Subject((refactorValue4).value)) }, ownControl)

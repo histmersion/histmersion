@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 /** Lower-casing that touches only `A`–`Z`, the same on the JVM and in the browser (no locale). */
 private[api] object Ascii:

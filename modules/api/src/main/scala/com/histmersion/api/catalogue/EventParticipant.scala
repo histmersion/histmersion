@@ -1,20 +1,24 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventParticipant(
-    eventId: com.histmersion.api.catalogue.Event.Id,
+    eventId: Event.Id,
     actor: EventParticipant.Actor,
-    role: EventParticipant.Role = _root_.com.histmersion.api.catalogue.EventParticipant.Role("participant"),
-    citekey: Option[com.histmersion.api.library.Citekey] = None
+    role: EventParticipant.Role = EventParticipant.Role("participant"),
+    citekey: Option[Citekey] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventParticipant:
   type Actor = Actor.T
-  object Actor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Actor extends RefinedType[String, Pure]
   type Role = Role.T
-  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Role extends RefinedType[String, Pure]

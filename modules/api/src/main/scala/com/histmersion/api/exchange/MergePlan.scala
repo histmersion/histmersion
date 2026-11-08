@@ -1,4 +1,5 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -6,6 +7,8 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergePlan(
     bundleId: UUID,
@@ -16,13 +19,13 @@ final case class MergePlan(
     asOf: Option[MergePlan.AsOf],
     planHash: MergePlan.PlanHash,
     matches: MatchCounts,
-    sources: com.histmersion.api.exchange.PlanMatches,
+    sources: PlanMatches,
     issues: List[MergeIssue],
     info: List[MergePlan.Info],
     problems: List[MergePlan.Problems],
     resolutionErrors: List[MergePlan.ResolutionErrors],
     resolved: MergePlan.Resolved,
-    changes: MergePlan.Changes = _root_.com.histmersion.api.exchange.MergePlan.Changes(0)
+    changes: MergePlan.Changes = MergePlan.Changes(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def open: List[MergeIssue] = issues.filter((refactorCallback => ((refactorCallback.open) == (true))))
@@ -32,23 +35,23 @@ object MergePlan:
 
 
   type FormatVersion = FormatVersion.T
-  object FormatVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FormatVersion extends RefinedType[Int, Pure]
   type SchemaVersion = SchemaVersion.T
-  object SchemaVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SchemaVersion extends RefinedType[String, Pure]
   type AsOf = AsOf.T
-  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AsOf extends RefinedType[String, Pure]
   type PlanHash = PlanHash.T
-  object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PlanHash extends RefinedType[String, Pure]
   type Info = Info.T
-  object Info extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Info extends RefinedType[String, Pure]
   type Problems = Problems.T
-  object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problems extends RefinedType[String, Pure]
   type ResolutionErrors = ResolutionErrors.T
-  object ResolutionErrors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ResolutionErrors extends RefinedType[String, Pure]
   type Resolved = Resolved.T
-  object Resolved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Resolved extends RefinedType[Int, Pure]
   type Changes = Changes.T
-  object Changes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Changes extends RefinedType[Int, Pure]
 
   final case class Request(bundle: Request.Bundle, resolutions: MergeResolutions = MergeResolutions())
       derives KindlingsCodecAsObject,

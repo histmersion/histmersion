@@ -1,10 +1,13 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseInfo.Until, expired: AgentLeaseInfo.Expired, thisServer: AgentLeaseInfo.ThisServer)
     derives KindlingsCodecAsObject,
@@ -15,10 +18,10 @@ final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseIn
 object AgentLeaseInfo:
 
   type Owner = Owner.T
-  object Owner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Owner extends RefinedType[String, Pure]
   type Until = Until.T
-  object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Until extends RefinedType[String, Pure]
   type Expired = Expired.T
-  object Expired extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Expired extends RefinedType[Boolean, Pure]
   type ThisServer = ThisServer.T
-  object ThisServer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ThisServer extends RefinedType[Boolean, Pure]

@@ -1,9 +1,12 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReviewFinding(
     id: ReviewFinding.Id,
@@ -15,41 +18,41 @@ final case class ReviewFinding(
     fix: ReviewFinding.Fix,
     quote: ReviewFinding.Quote,
     outcome: ReviewFinding.Outcome,
-    note: ReviewFinding.Note = _root_.com.histmersion.api.research.ReviewFinding.Note(""),
+    note: ReviewFinding.Note = ReviewFinding.Note(""),
     closedBy: Option[ReviewFinding.ClosedBy] = None,
     closedRound: Option[ReviewFinding.ClosedRound] = None,
     closedRunNumber: Option[ReviewFinding.ClosedRunNumber] = None,
-    reopened: ReviewFinding.Reopened = _root_.com.histmersion.api.research.ReviewFinding.Reopened(0),
-    deferred: ReviewFinding.Deferred = _root_.com.histmersion.api.research.ReviewFinding.Deferred(false)
+    reopened: ReviewFinding.Reopened = ReviewFinding.Reopened(0),
+    deferred: ReviewFinding.Deferred = ReviewFinding.Deferred(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ReviewFinding:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Reviewer = Reviewer.T
-  object Reviewer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object Reviewer extends RefinedType[String, Pure]:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
   type Severity = Severity.T
-  object Severity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Severity extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Where = Where.T
-  object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Where extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Fix = Fix.T
-  object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Fix extends RefinedType[String, Pure]
   type Quote = Quote.T
-  object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Quote extends RefinedType[String, Pure]
   type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Outcome extends RefinedType[String, Pure]
   type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Note extends RefinedType[String, Pure]
   export com.histmersion.api.automation.Activity.{Actor as ClosedBy}
-  export com.histmersion.api.research.ReviewRound.{Round as ClosedRound, RunNumber as ClosedRunNumber}
+  export ReviewRound.{Round as ClosedRound, RunNumber as ClosedRunNumber}
   type Reopened = Reopened.T
-  object Reopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reopened extends RefinedType[Int, Pure]
   type Deferred = Deferred.T
-  object Deferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Deferred extends RefinedType[Boolean, Pure]

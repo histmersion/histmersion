@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -7,6 +8,9 @@ import com.histmersion.testsupport.ComparedByValue.given
   */
 
 import com.histmersion.api.library.Acquire
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Title
 class LatinFoldSuite extends munit.FunSuite:
 
   test("Latin-1, Extended-A/B and Extended Additional letters fold to their base letter, case kept"):
@@ -37,29 +41,29 @@ class LatinFoldSuite extends munit.FunSuite:
     }
 
   test("citekeys keep accented letters instead of dropping them (#878)"):
-    assertEquals(Acquire.citekey(List(com.histmersion.api.library.AuthorName("Hans Gustav Güterbock")), Some(com.histmersion.api.catalogue.Year(1946)), Some(com.histmersion.api.library.Title("Kumarbi"))), "guterbock1946_kumarbi")
+    assertEquals(Acquire.citekey(List(AuthorName("Hans Gustav Güterbock")), Some(Year(1946)), Some(Title("Kumarbi"))), "guterbock1946_kumarbi")
     assertEquals(
-      Acquire.citekey(List(com.histmersion.api.library.AuthorName("López-Ruiz, Carolina")), Some(com.histmersion.api.catalogue.Year(2021)), Some(com.histmersion.api.library.Title("Phoenicians"))),
+      Acquire.citekey(List(AuthorName("López-Ruiz, Carolina")), Some(Year(2021)), Some(Title("Phoenicians"))),
       "lopezruiz2021_phoenicians"
     )
     // the topic word used to be `tter` — the tail of `Götter` after the dropped `ö`
-    assertEquals(Acquire.citekey(List(com.histmersion.api.library.AuthorName("Walter Burkert")), Some(com.histmersion.api.catalogue.Year(1977)), Some(com.histmersion.api.library.Title("Über die Götter"))), "burkert1977_uber")
+    assertEquals(Acquire.citekey(List(AuthorName("Walter Burkert")), Some(Year(1977)), Some(Title("Über die Götter"))), "burkert1977_uber")
     assertEquals(
-      Acquire.citekey(List(com.histmersion.api.library.AuthorName("Jaan Puhvel")), Some(com.histmersion.api.catalogue.Year(1987)), Some(com.histmersion.api.library.Title("Comparative Mythology"))),
+      Acquire.citekey(List(AuthorName("Jaan Puhvel")), Some(Year(1987)), Some(Title("Comparative Mythology"))),
       "puhvel1987_comparative"
     )
 
   test("the pre-#878 key is still derivable, so records created under it are found"):
     assertEquals(
-      Acquire.legacyCitekey(List(com.histmersion.api.library.AuthorName("Hans Gustav Güterbock")), Some(com.histmersion.api.catalogue.Year(1946)), Some(com.histmersion.api.library.Title("Kumarbi"))),
+      Acquire.legacyCitekey(List(AuthorName("Hans Gustav Güterbock")), Some(Year(1946)), Some(Title("Kumarbi"))),
       "gterbock1946_kumarbi"
     )
     assertEquals(
-      Acquire.citekeyCandidates(List(com.histmersion.api.library.AuthorName("Güterbock")), Some(com.histmersion.api.catalogue.Year(1946)), Some(com.histmersion.api.library.Title("Kumarbi"))),
+      Acquire.citekeyCandidates(List(AuthorName("Güterbock")), Some(Year(1946)), Some(Title("Kumarbi"))),
       List("guterbock1946_kumarbi", "gterbock1946_kumarbi")
     )
     // unaccented metadata has one key, not two
     assertEquals(
-      Acquire.citekeyCandidates(List(com.histmersion.api.library.AuthorName("Haak")), Some(com.histmersion.api.catalogue.Year(2015)), Some(com.histmersion.api.library.Title("Massive migration"))),
+      Acquire.citekeyCandidates(List(AuthorName("Haak")), Some(Year(2015)), Some(Title("Massive migration"))),
       List("haak2015_massive")
     )

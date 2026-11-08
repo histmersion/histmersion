@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.Write
 import com.histmersion.api.given
@@ -7,19 +8,21 @@ import com.histmersion.api.Api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Rename:
   type ShortForm = ShortForm.T
-  object ShortForm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ShortForm extends RefinedType[String, Pure]
 
 
-  def shortForms(ck: com.histmersion.api.library.Citekey): List[com.histmersion.api.library.Rename.ShortForm] =
-    ((ck).value.indices.filter(i => i > 0 && (ck).value.charAt(i) == '_').map((ck).value.take(_)).toList).map(refactorValue => _root_.com.histmersion.api.library.Rename.ShortForm(refactorValue))
+  def shortForms(ck: Citekey): List[ShortForm] =
+    ((ck).value.indices.filter(i => i > 0 && (ck).value.charAt(i) == '_').map((ck).value.take(_)).toList).map(refactorValue => ShortForm(refactorValue))
 
-  def findingId(id: com.histmersion.api.library.Finding.Id, oldCk: com.histmersion.api.library.Citekey, newCk: com.histmersion.api.library.Citekey): Option[com.histmersion.api.library.Finding.Id] =
-    Option.when((id).value.startsWith((oldCk).value + "#"))(_root_.com.histmersion.api.library.Finding.Id((newCk).value + (id).value.drop((oldCk).value.length)))
+  def findingId(id: Finding.Id, oldCk: Citekey, newCk: Citekey): Option[Finding.Id] =
+    Option.when((id).value.startsWith((oldCk).value + "#"))(Finding.Id((newCk).value + (id).value.drop((oldCk).value.length)))
 
-  def replaceToken(text: String, oldCk: com.histmersion.api.library.Citekey, newCk: com.histmersion.api.library.Citekey): String =
+  def replaceToken(text: String, oldCk: Citekey, newCk: Citekey): String =
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote((oldCk).value)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement((newCk).value))
 
@@ -27,9 +30,9 @@ object Rename:
 
   object Count:
     type Table = Table.T
-    object Table extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Table extends RefinedType[String, Pure]
     type Rows = Rows.T
-    object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rows extends RefinedType[Int, Pure]
 
 
   final case class Counts(
@@ -44,15 +47,15 @@ object Rename:
 
   object Counts:
     type Findings = Findings.T
-    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Findings extends RefinedType[Int, Pure]
     type Articles = Articles.T
-    object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Articles extends RefinedType[String, Pure]
     type Sources = Sources.T
-    object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Sources extends RefinedType[String, Pure]
     type Links = Links.T
-    object Links extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Links extends RefinedType[Int, Pure]
     type EdgesPromoted = EdgesPromoted.T
-    object EdgesPromoted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object EdgesPromoted extends RefinedType[Int, Pure]
 
 
-  final case class Request(newCitekey: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Request(newCitekey: Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

@@ -1,18 +1,21 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
-final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply = _root_.com.histmersion.api.library.AssessRequest.Apply(false), forceStatus: AssessRequest.ForceStatus = _root_.com.histmersion.api.library.AssessRequest.ForceStatus(false))
+final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply = AssessRequest.Apply(false), forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object AssessRequest:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Apply = Apply.T
-  object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Apply extends RefinedType[Boolean, Pure]
   type ForceStatus = ForceStatus.T
-  object ForceStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ForceStatus extends RefinedType[Boolean, Pure]

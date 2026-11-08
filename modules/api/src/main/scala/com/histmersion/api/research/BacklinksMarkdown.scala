@@ -1,4 +1,5 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 
 object BacklinksMarkdown:
 

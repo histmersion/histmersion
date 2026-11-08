@@ -1,4 +1,5 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -33,8 +34,8 @@ object ManagersMarkdown:
     def one(x: Double) = BigDecimal((x)).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
     if n >= 1000000 then (s"${one(((n) / 1e6))}M") else if n >= 1000 then (s"${one(((n) / 1e3))}k") else (n.toString)
 
-  def backlog(n: com.histmersion.api.automation.Managers.ManagerInfo.Backlog, days: Option[com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays]): String =
-    s"${Plural.count(Plural.CountN(n.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n.value == 0 then ""
+  def backlog(n: ManagerInfo.Backlog, days: Option[ManagerInfo.BacklogDays]): String =
+    s"${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n.value == 0 then ""
                                                                              else
                                                                                days.map(_.value) match
                                                                                  case Some(0) =>
@@ -46,7 +47,7 @@ object ManagersMarkdown:
 
   def line(m: ManagerInfo): String =
     val goal = m.goal.fold("")(g => s" · goal $g")
-    val runs = if ((m.pauseRuns) == _root_.com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns(true)) then " (its runs paused too)" else ""
+    val runs = if ((m.pauseRuns) == ManagerInfo.PauseRuns(true)) then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
       (if (m.backlog).value > 0 then s" · ${backlog(m.backlog, m.backlogDays)}" else "") +
       m.statusNote.filter(_.value.nonEmpty).fold("")(n => s" · $n") +
@@ -65,7 +66,7 @@ object ManagersMarkdown:
           .fold("")(a => s" until approval #$a is decided") + Option(h.reason).filter(_.value.nonEmpty).fold("")(r => s": $r")
     )
     val nb = i.notBefore.fold("")(t => s" · not before $t")
-    val kind = if i.kind == _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(ArticleReview) then "" else s" (${i.kind})"
+    val kind = if i.kind == ManagerItem.Kind(ArticleReview) then "" else s" (${i.kind})"
     s"#${i.id} ${i.target}$kind · ${i.status} · priority ${i.priority} · ${i.attempts} run(s)" +
       (if (i.failures).value > 0 then s", ${i.failures} failed" else "") + run + hold + nb +
       i.outcome.filter(_.value.nonEmpty).fold("")(o => s" · $o")
@@ -84,7 +85,7 @@ object ManagersMarkdown:
     if p.events.isEmpty then ("_No events._") else (p.events.map(e => s"- ${event(e)}").mkString("\n"))
 
   def effect(e: HintEffect): String =
-    if e.action == _root_.com.histmersion.api.automation.Managers.HintEffect.Action(HintEffect.Config) then (s"settings: ${e.config.fold("none")(configLine)}")
+    if e.action == HintEffect.Action(HintEffect.Config) then (s"settings: ${e.config.fold("none")(configLine)}")
     else
       e.action.value + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
@@ -126,7 +127,7 @@ object ManagersMarkdown:
     val proposed = h.proposal.fold("")(a =>
       s" · proposed: ${h.proposed.fold("an action")(effect)} (approval #$a waits for a person)"
     )
-    (s"#${h.id} (${if ((h.standing) == _root_.com.histmersion.api.automation.Managers.ManagerHint.Standing(true)) then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
+    (s"#${h.id} (${if ((h.standing) == ManagerHint.Standing(true)) then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if (h.uses).value > 0 then s" · reached ${h.uses} run(s)" else ""))
 
   def enqueued(r: EnqueueResult): String =
@@ -148,16 +149,16 @@ object ManagersMarkdown:
       cfg.models.filter(_.nonEmpty).map(ms => s"models ${ms.map(_.text).mkString("; ")}"),
       cfg.budgetUsd.map(u => s"budget $u USD/run"),
       cfg.staleAfterDays.filter((_).value > 0).map(n => s"stale after $n days"),
-      cfg.inferFilter.map(b => s"infer-filter ${if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter(true)) then "on" else "off"}"),
+      cfg.inferFilter.map(b => s"infer-filter ${if ((b) == ManagerConfig.InferFilter(true)) then "on" else "off"}"),
       cfg.minSources.map(n => s"min-sources $n"),
       cfg.maxArticles.map(n => s"max-articles $n"),
       cfg.sweeps.map(ws => s"sweeps ${if ws.isEmpty then "none" else ws.mkString(", ")}"),
       cfg.autoIngest.map(b =>
-        if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)) then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
+        if ((b) == ManagerConfig.AutoIngest(true)) then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
         else "auto-ingest off"
       ),
       cfg.dailyUsd.filter((_).value > 0).map(u => s"daily cap ${usd(u.value)} USD (metered spend; plan-billed runs count 0 USD)"),
-      cfg.autoApprove.map(b => if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove(true)) then "its approvals decided by code checks" else "its approvals always a person's"),
+      cfg.autoApprove.map(b => if ((b) == ManagerConfig.AutoApprove(true)) then "its approvals decided by code checks" else "its approvals always a person's"),
       cfg.extendMinNew.filter((_).value > 0).map(n => s"extend at $n new sources")
     ).flatten.mkString(" · ")
     val cron = m.cron.fold("")(c => s"\n- cron `$c` (UTC)" + m.nextTickAt.fold("")(t => s", next $t"))

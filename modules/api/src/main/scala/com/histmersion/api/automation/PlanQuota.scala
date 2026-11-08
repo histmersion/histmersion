@@ -1,92 +1,95 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Source
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A plan is spent by every client of the account, and the provider says how much is left only as a percentage of each
   * window plus its reset, so a plan is governed by floors rather than budgets.
   */
 object PlanQuota:
   type Now = Now.T
-  object Now extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Now extends RefinedType[Long, Pure]
   type PoolIdText = PoolIdText.T
-  object PoolIdText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PoolIdText extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowStateNow = _root_.com.histmersion.api.automation.PlanQuota.Now
-  val WindowStateNow: _root_.com.histmersion.api.automation.PlanQuota.Now.type = _root_.com.histmersion.api.automation.PlanQuota.Now
-  type VerdictNow = _root_.com.histmersion.api.automation.PlanQuota.Now
-  val VerdictNow: _root_.com.histmersion.api.automation.PlanQuota.Now.type = _root_.com.histmersion.api.automation.PlanQuota.Now
-  export com.histmersion.api.automation.ModelChains.ChainEntry.{Model as VerdictModel}
-  type RefreshNeedNow = _root_.com.histmersion.api.automation.PlanQuota.Now
-  val RefreshNeedNow: _root_.com.histmersion.api.automation.PlanQuota.Now.type = _root_.com.histmersion.api.automation.PlanQuota.Now
-  export com.histmersion.api.automation.ModelChains.ChainEntry.{Model as RefreshNeedModel}
-  export com.histmersion.api.automation.PlanQuota.RefreshInfo.{LastAttempt as RefreshDecisionLastAttempt}
-  export com.histmersion.api.automation.PlanQuota.Rules.{MinGap as RefreshDecisionMinGapMs}
-  type RefreshDecisionNow = _root_.com.histmersion.api.automation.PlanQuota.Now
-  val RefreshDecisionNow: _root_.com.histmersion.api.automation.PlanQuota.Now.type = _root_.com.histmersion.api.automation.PlanQuota.Now
+  object Problem extends RefinedType[String, Pure]
+  type WindowStateNow = Now
+  val WindowStateNow: Now.type = Now
+  type VerdictNow = Now
+  val VerdictNow: Now.type = Now
+  export ModelChains.ChainEntry.{Model as VerdictModel}
+  type RefreshNeedNow = Now
+  val RefreshNeedNow: Now.type = Now
+  export ModelChains.ChainEntry.{Model as RefreshNeedModel}
+  export RefreshInfo.{LastAttempt as RefreshDecisionLastAttempt}
+  export Rules.{MinGap as RefreshDecisionMinGapMs}
+  type RefreshDecisionNow = Now
+  val RefreshDecisionNow: Now.type = Now
 
   import Agents.{ModelRef, ProviderKind}
 
   enum PoolId(val wire: PoolId.Wire, val title: PoolId.Title):
-    case ClaudePlan extends PoolId(_root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire("claude-plan"), _root_.com.histmersion.api.automation.PlanQuota.PoolId.Title("Claude plan"))
-    case ChatgptPlan extends PoolId(_root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire("chatgpt-plan"), _root_.com.histmersion.api.automation.PlanQuota.PoolId.Title("ChatGPT plan"))
+    case ClaudePlan extends PoolId(PoolId.Wire("claude-plan"), PoolId.Title("Claude plan"))
+    case ChatgptPlan extends PoolId(PoolId.Wire("chatgpt-plan"), PoolId.Title("ChatGPT plan"))
 
   object PoolId:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
     type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Title extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.Wire): Option[PoolId] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: Wire): Option[PoolId] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
   final case class Logins(
-      claudeCodeApiKey: Logins.ClaudeCodeApiKey = _root_.com.histmersion.api.automation.PlanQuota.Logins.ClaudeCodeApiKey(false),
-      codexApiKey: Logins.CodexApiKey = _root_.com.histmersion.api.automation.PlanQuota.Logins.CodexApiKey(false),
-      opencodeChatgpt: Logins.OpencodeChatgpt = _root_.com.histmersion.api.automation.PlanQuota.Logins.OpencodeChatgpt(false)
+      claudeCodeApiKey: Logins.ClaudeCodeApiKey = Logins.ClaudeCodeApiKey(false),
+      codexApiKey: Logins.CodexApiKey = Logins.CodexApiKey(false),
+      opencodeChatgpt: Logins.OpencodeChatgpt = Logins.OpencodeChatgpt(false)
   )
 
   object Logins:
     type ClaudeCodeApiKey = ClaudeCodeApiKey.T
-    object ClaudeCodeApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ClaudeCodeApiKey extends RefinedType[Boolean, Pure]
     type CodexApiKey = CodexApiKey.T
-    object CodexApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CodexApiKey extends RefinedType[Boolean, Pure]
     type OpencodeChatgpt = OpencodeChatgpt.T
-    object OpencodeChatgpt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OpencodeChatgpt extends RefinedType[Boolean, Pure]
 
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
-    case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == _root_.com.histmersion.api.automation.PlanQuota.Logins.ClaudeCodeApiKey(true))                              => Some(PoolId.ClaudePlan)
-    case ProviderKind.Codex if !((logins.codexApiKey) == _root_.com.histmersion.api.automation.PlanQuota.Logins.CodexApiKey(true))                                        => Some(PoolId.ChatgptPlan)
-    case ProviderKind.Opencode if ((logins.opencodeChatgpt) == _root_.com.histmersion.api.automation.PlanQuota.Logins.OpencodeChatgpt(true)) && m.model.value.startsWith("openai/") => Some(PoolId.ChatgptPlan)
+    case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == Logins.ClaudeCodeApiKey(true))                              => Some(PoolId.ClaudePlan)
+    case ProviderKind.Codex if !((logins.codexApiKey) == Logins.CodexApiKey(true))                                        => Some(PoolId.ChatgptPlan)
+    case ProviderKind.Opencode if ((logins.opencodeChatgpt) == Logins.OpencodeChatgpt(true)) && m.model.value.startsWith("openai/") => Some(PoolId.ChatgptPlan)
     case _                                                                                => None
 
   def paid(m: ModelRef, logins: Logins): Boolean =
     (m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty)
 
   enum Source(val wire: Source.Wire):
-    case Run extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("run"))
+    case Run extends Source(Source.Wire("run"))
 
-    case Mod extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("mod"))
+    case Mod extends Source(Source.Wire("mod"))
 
-    case Interactive extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("interactive"))
+    case Interactive extends Source(Source.Wire("interactive"))
 
-    case AppServer extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("app-server"))
+    case AppServer extends Source(Source.Wire("app-server"))
 
-    case Limit extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("limit"))
+    case Limit extends Source(Source.Wire("limit"))
 
-    case Probe extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("probe"))
+    case Probe extends Source(Source.Wire("probe"))
 
   object Source:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.Source.Wire): Option[Source] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.Source.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   /** Codex names its windows by length (`300m`/`10080m`): its `primary` is not always the 5-hour window. */
   final case class Reading(
@@ -102,45 +105,45 @@ object PlanQuota:
 
   object Reading:
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+    object Limit extends RefinedType[String, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+    object Kind extends RefinedType[String, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
     type UsedPct = UsedPct.T
-    object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UsedPct extends RefinedType[Double, Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
+    object ResetsAt extends RefinedType[Long, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
     type Rejected = Rejected.T
-    object Rejected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rejected extends RefinedType[Boolean, Pure]
     type ObservedAt = ObservedAt.T
-    object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
-    export com.histmersion.api.automation.ModelChains.ChainEntry.Model
+    object ObservedAt extends RefinedType[Long, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, Long](_.value)
+    export ModelChains.ChainEntry.Model
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
-    def text: com.histmersion.api.automation.PlanQuota.Floors.Wire = _root_.com.histmersion.api.automation.PlanQuota.Floors.Wire(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
-    def of(limit: com.histmersion.api.automation.PlanQuota.Floors.OfLimit, kind: com.histmersion.api.automation.PlanQuota.Floors.OfKind, default: com.histmersion.api.automation.PlanQuota.Rules.DefaultFloor): com.histmersion.api.automation.PlanQuota.Floors.Floor =
-      byKind.get(_root_.com.histmersion.api.automation.PlanQuota.Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(_root_.com.histmersion.api.automation.PlanQuota.Floors.ByKindKey(kind.value))).getOrElse(default)
+    def text: Floors.Wire = Floors.Wire(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
+    def of(limit: Floors.OfLimit, kind: Floors.OfKind, default: Rules.DefaultFloor): Floors.Floor =
+      byKind.get(Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(Floors.ByKindKey(kind.value))).getOrElse(default)
 
   object Floors:
     type Floor = Floor.T
-    object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Floor extends RefinedType[Int, Pure]
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfResult = com.histmersion.api.automation.PlanQuota.Floors.Floor
-    val OfResult: _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor.type = _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor
-    export com.histmersion.api.automation.PlanQuota.Reading.{Limit as OfLimit, Kind as OfKind}
+    object Wire extends RefinedType[String, Pure]
+    type OfResult = Floor
+    val OfResult: Floor.type = Floor
+    export Reading.{Limit as OfLimit, Kind as OfKind}
 
     type ByKindKey = ByKindKey.T
-    object ByKindKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-    type ByKindValue = com.histmersion.api.automation.PlanQuota.Floors.Floor
-    val ByKindValue: _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor.type = _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor
+    object ByKindKey extends RefinedType[String, Pure]:
+      given scala.math.Ordering[T] = scala.math.Ordering.by[T, String](_.value)
+    type ByKindValue = Floor
+    val ByKindValue: Floor.type = Floor
 
     val Empty: Floors = Floors(Map.empty)
-    def parse(s: com.histmersion.api.automation.PlanQuota.Floors.Wire): Either[com.histmersion.api.automation.PlanQuota.Problem, Floors] =
+    def parse(s: Wire): Either[Problem, Floors] =
       val items = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty)
       val parsed = items.map { i =>
         i.indexOf('=') match
@@ -154,18 +157,18 @@ object PlanQuota:
       }
       parsed.collect { case Left(m) => m } match
         case Nil  => Right(Floors(parsed.collect { case Right((k, v)) => ByKindKey(k) -> Floor(v) }.toMap))
-        case errs => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem(errs.mkString("; ")))
+        case errs => Left(Problem(errs.mkString("; ")))
 
   final case class Rules(floors: Floors, defaultFloor: Rules.DefaultFloor, staleMs: Rules.StaleMs, marginPct: Rules.MarginPct)
 
   object Rules:
     type MinGap = MinGap.T
-    object MinGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.PlanQuota.Floors.{Floor as DefaultFloor}
+    object MinGap extends RefinedType[Long, Pure]
+    export Floors.{Floor as DefaultFloor}
     type StaleMs = StaleMs.T
-    object StaleMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object StaleMs extends RefinedType[Long, Pure]
     type MarginPct = MarginPct.T
-    object MarginPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MarginPct extends RefinedType[Int, Pure]
 
   final case class WindowState(
       reading: Reading,
@@ -177,34 +180,34 @@ object PlanQuota:
   )
 
   object WindowState:
-    export com.histmersion.api.automation.PlanQuota.Floors.Floor
-    export com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct
+    export Floors.Floor
+    export WindowStatus.LeftPct
     type Stale = Stale.T
-    object Stale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Stale extends RefinedType[Boolean, Pure]
     type Usable = Usable.T
-    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Usable extends RefinedType[Boolean, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
   enum Verdict:
-    case Usable(note: Option[Verdict.Usable.Note])
+    case Usable(note: Option[Usable.Note])
 
-    case Blocked(reason: Verdict.Blocked.Reason, until: Option[Verdict.Blocked.Until])
+    case Blocked(reason: Blocked.Reason, until: Option[Blocked.Until])
 
     def usable: Boolean = (this.isInstanceOf[Usable])
 
   object Verdict:
     object Usable:
       type Note = Note.T
-      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Note extends RefinedType[String, Pure]
 
     object Blocked:
       type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      export com.histmersion.api.automation.PlanQuota.Reading.{ResetsAt as Until}
+      object Reason extends RefinedType[String, Pure]
+      export Reading.{ResetsAt as Until}
 
 
-  def current(readings: List[Reading], now: com.histmersion.api.automation.PlanQuota.Now, model: Option[com.histmersion.api.automation.ModelChains.ChainEntry.Model] = None): List[Reading] =
+  def current(readings: List[Reading], now: Now, model: Option[ModelChains.ChainEntry.Model] = None): List[Reading] =
     readings
       .filter(r => r.resetsAt.forall(_.value > now.value))
       .filter(r => r.model.isEmpty || model.isEmpty || r.model == model)
@@ -214,131 +217,131 @@ object PlanQuota:
       .toList
       .sortBy(r => (r.limit, r.kind))
 
-  def windowState(r: Reading, rules: Rules, now: com.histmersion.api.automation.PlanQuota.WindowStateNow): WindowState =
+  def windowState(r: Reading, rules: Rules, now: WindowStateNow): WindowState =
     val floor = rules.floors.of(r.limit, r.kind, rules.defaultFloor)
     val left = (100.0 - (r.usedPct).value).max(0)
     val stale = now.value - r.observedAt.value > rules.staleMs.value
     val pct = (d: Double) =>
       java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
     val why =
-      if ((r.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) then Some(s"${r.kind}: the provider refuses it")
+      if ((r.rejected) == Reading.Rejected(true)) then Some(s"${r.kind}: the provider refuses it")
       else if !stale && left <= floor.value then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
       else if stale && left < floor.value + rules.marginPct.value then
         Some(
           s"${r.kind}: ${pct(left)}% left when last read, floor $floor% (+${rules.marginPct} while the reading is stale)"
         )
       else None
-    WindowState(r, floor, _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct(left), _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(stale), _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
+    WindowState(r, floor, WindowStatus.LeftPct(left), WindowState.Stale(stale), WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => WindowState.Why(refactorValue4)))
 
   def verdict(
       readings: List[Reading],
-      held: com.histmersion.api.automation.PlanQuota.PoolStatus.Held,
-      refusal: Option[(com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason, Option[com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Until])],
+      held: PoolStatus.Held,
+      refusal: Option[(Verdict.Blocked.Reason, Option[Verdict.Blocked.Until])],
       rules: Rules,
-      now: com.histmersion.api.automation.PlanQuota.VerdictNow,
-      model: Option[com.histmersion.api.automation.PlanQuota.VerdictModel] = None
+      now: VerdictNow,
+      model: Option[PlanQuota.VerdictModel] = None
   ): (Verdict, List[WindowState]) =
     val states = current(readings, now, model).map(windowState(_, rules, now))
-    val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(true))))
+    val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
-      if (held).value then Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
+      if (held).value then Verdict.Blocked(Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(_.value > now.value)) match
           case Some((why, until))             => Verdict.Blocked(why, until)
-          case None if blocking.nonEmpty      => Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason(blocking.flatMap(_.why).mkString("; ")), earliest)
-          case None if states.isEmpty         => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
-          case None if states.exists((refactorCallback => ((refactorCallback.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)))) => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("the last reading is stale")))
+          case None if blocking.nonEmpty      => Verdict.Blocked(Verdict.Blocked.Reason(blocking.flatMap(_.why).mkString("; ")), earliest)
+          case None if states.isEmpty         => Verdict.Usable(Some(Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
+          case None if states.exists((refactorCallback => ((refactorCallback.stale) == WindowState.Stale(true)))) => Verdict.Usable(Some(Verdict.Usable.Note("the last reading is stale")))
           case None                           => Verdict.Usable(None)
     (v, states)
 
   enum RefreshMode(val wire: RefreshMode.Wire):
-    case Auto extends RefreshMode(_root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire("auto"))
-    case Probe extends RefreshMode(_root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire("probe"))
-    case Off extends RefreshMode(_root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire("off"))
+    case Auto extends RefreshMode(RefreshMode.Wire("auto"))
+    case Probe extends RefreshMode(RefreshMode.Wire("probe"))
+    case Off extends RefreshMode(RefreshMode.Wire("off"))
 
   object RefreshMode:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.RefreshMode.Wire): Option[RefreshMode] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: Wire): Option[RefreshMode] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   enum Login:
-    case Present(detail: Login.Present.Detail)
-    case Missing(why: Login.Missing.Why)
-    case Unknown(why: Login.Unknown.Why)
+    case Present(detail: Present.Detail)
+    case Missing(why: Missing.Why)
+    case Unknown(why: Unknown.Why)
 
   object Login:
     object Present:
       type Detail = Detail.T
-      object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Detail extends RefinedType[String, Pure]
     object Missing:
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends RefinedType[String, Pure]
     object Unknown:
       type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      object Why extends RefinedType[String, Pure]
 
   enum RefreshNeed(val text: RefreshNeed.Text):
-    case StaleOnly extends RefreshNeed(_root_.com.histmersion.api.automation.PlanQuota.RefreshNeed.Text("the reading is stale"))
+    case StaleOnly extends RefreshNeed(RefreshNeed.Text("the reading is stale"))
 
-    case NoReading extends RefreshNeed(_root_.com.histmersion.api.automation.PlanQuota.RefreshNeed.Text("no reading yet"))
+    case NoReading extends RefreshNeed(RefreshNeed.Text("no reading yet"))
 
   object RefreshNeed:
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]
 
   enum RefreshTrigger(val wire: RefreshTrigger.Wire):
-    case Pick extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("pick"))
+    case Pick extends RefreshTrigger(RefreshTrigger.Wire("pick"))
 
-    case Paused extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("paused-run"))
+    case Paused extends RefreshTrigger(RefreshTrigger.Wire("paused-run"))
 
-    case Command extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("command"))
+    case Command extends RefreshTrigger(RefreshTrigger.Wire("command"))
 
-    case Schedule extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("schedule"))
+    case Schedule extends RefreshTrigger(RefreshTrigger.Wire("schedule"))
 
   object RefreshTrigger:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
   def refreshNeed(
       readings: List[Reading],
-      held: com.histmersion.api.automation.PlanQuota.PoolStatus.Held,
-      refusal: Option[(com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason, Option[com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Until])],
+      held: PoolStatus.Held,
+      refusal: Option[(Verdict.Blocked.Reason, Option[Verdict.Blocked.Until])],
       rules: Rules,
-      now: com.histmersion.api.automation.PlanQuota.RefreshNeedNow,
-      model: Option[com.histmersion.api.automation.PlanQuota.RefreshNeedModel] = None
+      now: RefreshNeedNow,
+      model: Option[PlanQuota.RefreshNeedModel] = None
   ): Option[RefreshNeed] =
-    if ((held) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Held(true)) || refusal.exists(_._2.forall(_.value > now.value)) then None
+    if ((held) == PoolStatus.Held(true)) || refusal.exists(_._2.forall(_.value > now.value)) then None
     else
       val states = current(readings, now, model).map(windowState(_, rules, now))
       if states.isEmpty then Some(RefreshNeed.NoReading)
       else
-        val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(true))))
-        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)) && !((s.reading.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) && s.leftPct.value > s.floor.value))(
+        val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
+        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == WindowState.Stale(true)) && !((s.reading.rejected) == Reading.Rejected(true)) && s.leftPct.value > s.floor.value))(
           RefreshNeed.StaleOnly
         )
 
-  def throttled(lastAttempt: Option[com.histmersion.api.automation.PlanQuota.RefreshInfo.LastAttempt], minGapMs: com.histmersion.api.automation.PlanQuota.Rules.MinGap, now: com.histmersion.api.automation.PlanQuota.Now): Boolean =
+  def throttled(lastAttempt: Option[RefreshInfo.LastAttempt], minGapMs: Rules.MinGap, now: Now): Boolean =
     lastAttempt.exists(t => now.value - t.value < minGapMs.value)
 
   def refreshDecision(
       need: Option[RefreshNeed],
       login: Login,
       enabled: Boolean,
-      lastAttempt: Option[com.histmersion.api.automation.PlanQuota.RefreshDecisionLastAttempt],
-      minGapMs: com.histmersion.api.automation.PlanQuota.RefreshDecisionMinGapMs,
-      now: com.histmersion.api.automation.PlanQuota.RefreshDecisionNow,
+      lastAttempt: Option[PlanQuota.RefreshDecisionLastAttempt],
+      minGapMs: PlanQuota.RefreshDecisionMinGapMs,
+      now: RefreshDecisionNow,
       force: Boolean = (false)
-  ): Either[com.histmersion.api.automation.PlanQuota.Problem, Option[RefreshNeed]] =
+  ): Either[Problem, Option[RefreshNeed]] =
     login match
-      case _ if !(enabled)                              => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("refresh is off for this pool"))
-      case Login.Missing(why)                         => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem(s"no login: $why"))
+      case _ if !(enabled)                              => Left(Problem("refresh is off for this pool"))
+      case Login.Missing(why)                         => Left(Problem(s"no login: $why"))
       case _ if (force)                                 => Right(need)
-      case _ if need.isEmpty                          => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("the reading decides by itself"))
+      case _ if need.isEmpty                          => Left(Problem("the reading decides by itself"))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
-        Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("a fresh reading was taken (or tried) less than stale-minutes ago"))
+        Left(Problem("a fresh reading was taken (or tried) less than stale-minutes ago"))
       case _ => Right(need)
 
   final case class WindowStatus(
@@ -358,27 +361,27 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object WindowStatus:
-    export com.histmersion.api.automation.PlanQuota.Reading.Limit
+    export Reading.Limit
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.PlanQuota.Reading.UsedPct
+    object Kind extends RefinedType[String, Pure]
+    export Reading.UsedPct
     type LeftPct = LeftPct.T
-    object LeftPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.PlanQuota.Floors.Floor
+    object LeftPct extends RefinedType[Double, Pure]
+    export Floors.Floor
     type Usable = Usable.T
-    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Usable extends RefinedType[Boolean, Pure]
     type Stale = Stale.T
-    object Stale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Stale extends RefinedType[Boolean, Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ResetsAt extends RefinedType[String, Pure]
     type ObservedAt = ObservedAt.T
-    object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ObservedAt extends RefinedType[String, Pure]
     type AgeSeconds = AgeSeconds.T
-    object AgeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AgeSeconds extends RefinedType[Long, Pure]
     type Source = Source.T
-    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Source extends RefinedType[String, Pure]
     type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Why extends RefinedType[String, Pure]
 
 
   final case class PoolStatus(
@@ -396,46 +399,46 @@ object PlanQuota:
       windows: List[WindowStatus],
       planType: Option[PoolStatus.PlanType] = None,
       note: Option[PoolStatus.Note] = None,
-      available: PoolStatus.Available = _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Available(true),
+      available: PoolStatus.Available = PoolStatus.Available(true),
       login: Option[PoolStatus.Login] = None,
       refresh: Option[PoolStatus.Refresh] = None,
-      refreshesToday: PoolStatus.RefreshesToday = _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.RefreshesToday(0),
+      refreshesToday: PoolStatus.RefreshesToday = PoolStatus.RefreshesToday(0),
       lastRefresh: Option[RefreshInfo] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolStatus:
-    export com.histmersion.api.automation.PlanQuota.PoolId.{Wire as Pool, Title}
+    export PoolId.{Wire as Pool, Title}
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Covers = Covers.T
-    object Covers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Covers extends RefinedType[String, Pure]
     type Floors = Floors.T
-    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Floors extends RefinedType[String, Pure]
     type FloorsSource = FloorsSource.T
-    object FloorsSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FloorsSource extends RefinedType[String, Pure]
     type Held = Held.T
-    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Held extends RefinedType[Boolean, Pure]
     type Usable = Usable.T
-    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Usable extends RefinedType[Boolean, Pure]
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
     type Until = Until.T
-    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Until extends RefinedType[String, Pure]
     type MaxCallsInFlight = MaxCallsInFlight.T
-    object MaxCallsInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxCallsInFlight extends RefinedType[Int, Pure]
     type PlanType = PlanType.T
-    object PlanType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlanType extends RefinedType[String, Pure]
     type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note extends RefinedType[String, Pure]
     type Available = Available.T
-    object Available extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Available extends RefinedType[Boolean, Pure]
     type Login = Login.T
-    object Login extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Login extends RefinedType[String, Pure]
     type Refresh = Refresh.T
-    object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Refresh extends RefinedType[String, Pure]
     type RefreshesToday = RefreshesToday.T
-    object RefreshesToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object RefreshesToday extends RefinedType[Int, Pure]
 
 
   final case class RefreshInfo(at: RefreshInfo.At, mode: RefreshInfo.Mode, trigger: RefreshInfo.Trigger, ok: RefreshInfo.Ok, detail: RefreshInfo.Detail)
@@ -444,21 +447,21 @@ object PlanQuota:
 
   object RefreshInfo:
     type LastAttempt = LastAttempt.T
-    object LastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LastAttempt extends RefinedType[Long, Pure]
     type At = At.T
-    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.PlanQuota.RefreshMode.{Wire as Mode}
-    export com.histmersion.api.automation.PlanQuota.RefreshTrigger.{Wire as Trigger}
+    object At extends RefinedType[String, Pure]
+    export RefreshMode.{Wire as Mode}
+    export RefreshTrigger.{Wire as Trigger}
     type Ok = Ok.T
-    object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ok extends RefinedType[Boolean, Pure]
     type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Detail extends RefinedType[String, Pure]
 
 
   final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object QuotaRefresh:
-    export com.histmersion.api.automation.PlanQuota.PoolId.{Wire as Pool}
+    export PoolId.{Wire as Pool}
 
 
   final case class PoolRefreshed(pool: PoolRefreshed.Pool, refreshed: PoolRefreshed.Refreshed, detail: PoolRefreshed.Detail, status: PoolStatus)
@@ -466,11 +469,11 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolRefreshed:
-    export com.histmersion.api.automation.PlanQuota.PoolId.{Wire as Pool}
+    export PoolId.{Wire as Pool}
     type Refreshed = Refreshed.T
-    object Refreshed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Refreshed extends RefinedType[Boolean, Pure]
     type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Detail extends RefinedType[String, Pure]
 
 
   final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[QuotaRefreshed.Lifted] = Nil)
@@ -479,7 +482,7 @@ object PlanQuota:
 
   object QuotaRefreshed:
     type Lifted = Lifted.T
-    object Lifted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Lifted extends RefinedType[String, Pure]
 
 
   final case class QuotaInfo(
@@ -493,9 +496,9 @@ object PlanQuota:
 
   object QuotaInfo:
     type Fallthrough = Fallthrough.T
-    object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Fallthrough extends RefinedType[String, Pure]
     type Now = Now.T
-    object Now extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Now extends RefinedType[String, Pure]
 
 
   final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Cooldown.Reason)
@@ -503,11 +506,11 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Cooldown:
-    export com.histmersion.api.automation.ModelChains.ChainEntry.Model
+    export ModelChains.ChainEntry.Model
     type Until = Until.T
-    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Until extends RefinedType[String, Pure]
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
 
 
   final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
@@ -516,16 +519,16 @@ object PlanQuota:
 
   object PoolSet:
     type Hold = Hold.T
-    object Hold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Hold extends RefinedType[Boolean, Pure]
     type Floors = Floors.T
-    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Floors extends RefinedType[String, Pure]
 
 
   final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object FallthroughSet:
     type Fallthrough = Fallthrough.T
-    object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Fallthrough extends RefinedType[Boolean, Pure]
 
 
   /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
@@ -534,10 +537,10 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ModWindow:
-    export com.histmersion.api.automation.PlanQuota.WindowStatus.Kind
-    export com.histmersion.api.automation.PlanQuota.Reading.{UsedPct as PercentUsed}
+    export WindowStatus.Kind
+    export Reading.{UsedPct as PercentUsed}
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ResetsAt extends RefinedType[String, Pure]
 
 
   final case class ModReport(source: ModReport.Source, rateLimits: List[ModWindow])
@@ -546,7 +549,7 @@ object PlanQuota:
 
   object ModReport:
     type Source = Source.T
-    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Source extends RefinedType[String, Pure]
 
 
   final case class GuardAnswer(allow: GuardAnswer.Allow, reason: Option[GuardAnswer.Reason] = None, resetsAt: Option[GuardAnswer.ResetsAt] = None)
@@ -555,8 +558,8 @@ object PlanQuota:
 
   object GuardAnswer:
     type Allow = Allow.T
-    object Allow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Allow extends RefinedType[Boolean, Pure]
     type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reason extends RefinedType[String, Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ResetsAt extends RefinedType[String, Pure]

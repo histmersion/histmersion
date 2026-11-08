@@ -1,15 +1,19 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.jobs.JobDetail
 
 final case class InitPlan(
-    gazetteer: InitPlan.Gazetteer = _root_.com.histmersion.api.exchange.InitPlan.Gazetteer(false),
-    periodPresets: InitPlan.PeriodPresets = _root_.com.histmersion.api.exchange.InitPlan.PeriodPresets(false),
+    gazetteer: InitPlan.Gazetteer = InitPlan.Gazetteer(false),
+    periodPresets: InitPlan.PeriodPresets = InitPlan.PeriodPresets(false),
     fetch: List[InitPlan.Fetch] = Nil,
-    check: InitPlan.Check = _root_.com.histmersion.api.exchange.InitPlan.Check(false)
+    check: InitPlan.Check = InitPlan.Check(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def isEmpty: Boolean = (!(gazetteer).value && !(periodPresets).value && fetch.isEmpty)
@@ -20,23 +24,23 @@ object InitPlan:
   /** What an init job imports, in its detail. */
 
   type Gazetteer = Gazetteer.T
-  object Gazetteer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Gazetteer extends RefinedType[Boolean, Pure]
   type PeriodPresets = PeriodPresets.T
-  object PeriodPresets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PeriodPresets extends RefinedType[Boolean, Pure]
   type Fetch = Fetch.T
-  object Fetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Fetch extends RefinedType[String, Pure]
   type Check = Check.T
-  object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Check extends RefinedType[Boolean, Pure]
 
-  val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[InitPlan]] =
-    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("init"), None)
+  val Detail: JobDetail.Field[Option[InitPlan]] =
+    new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("init"), None)
 
-  val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.Init.kind.value
+  val JobKind = ExchangeJobKinds.Init.kind.value
 
   def describe(p: InitPlan): String =
     val bundled = List(
-      Option.when(((p.gazetteer) == _root_.com.histmersion.api.exchange.InitPlan.Gazetteer(true)))("bundled gazetteer"),
-      Option.when(((p.periodPresets) == _root_.com.histmersion.api.exchange.InitPlan.PeriodPresets(true)))("bundled period presets")
+      Option.when(((p.gazetteer) == Gazetteer(true)))("bundled gazetteer"),
+      Option.when(((p.periodPresets) == PeriodPresets(true)))("bundled period presets")
     ).flatten
     val fetched =
       Option.when(p.fetch.nonEmpty)(s"${if (p.check).value then "dry run of" else "fetch"} ${p.fetch.mkString(", ")}")

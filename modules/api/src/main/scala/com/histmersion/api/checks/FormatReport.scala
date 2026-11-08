@@ -1,9 +1,12 @@
-package com.histmersion.api.checks
+package com.histmersion
+package api.checks
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FormatReport(
     subject: FormatReport.Subject,
@@ -12,20 +15,20 @@ final case class FormatReport(
     text: Option[FormatReport.Text] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def errors: com.histmersion.api.checks.FormatReport.ErrorCount = _root_.com.histmersion.api.checks.FormatReport.ErrorCount(issues.count(_.severity == FormatSeverity.Error))
-  def warnings: com.histmersion.api.checks.FormatReport.WarningCount = _root_.com.histmersion.api.checks.FormatReport.WarningCount(issues.count(_.severity == FormatSeverity.Warning))
+  def errors: FormatReport.ErrorCount = FormatReport.ErrorCount(issues.count(_.severity == FormatSeverity.Error))
+  def warnings: FormatReport.WarningCount = FormatReport.WarningCount(issues.count(_.severity == FormatSeverity.Warning))
 
 object FormatReport:
   type ErrorCount = ErrorCount.T
-  object ErrorCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ErrorCount extends RefinedType[Int, Pure]
   type IssueCount = IssueCount.T
-  object IssueCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IssueCount extends RefinedType[Int, Pure]
   type WarningCount = WarningCount.T
-  object WarningCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WarningCount extends RefinedType[Int, Pure]
 
   type Subject = Subject.T
-  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Subject extends RefinedType[String, Pure]
   type Fixed = Fixed.T
-  object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Fixed extends RefinedType[String, Pure]
   type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Text extends RefinedType[String, Pure]

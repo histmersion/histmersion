@@ -1,18 +1,21 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import io.circe.{Codec, CursorOp, Decoder, DecodingFailure, Json}
 import sttp.tapir.{Schema, SchemaType}
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A derived decoder ignores keys it does not know, so a misplaced or misspelt key decodes to "change nothing"; write
   * inputs refuse unknown keys instead.
   */
 object StrictJson:
   type FieldName = FieldName.T
-  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldName extends RefinedType[String, Pure]
   type FieldPath = FieldPath.T
-  object FieldPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FieldPath extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
 
 
@@ -32,12 +35,12 @@ object StrictJson:
             )
           )
         case Some(o) =>
-          problems((o.keys.toList).map(refactorValue => _root_.com.histmersion.api.StrictJson.FieldName(refactorValue)), s) match
+          problems((o.keys.toList).map(refactorValue => FieldName(refactorValue)), s) match
             case None      => d(c)
             case Some(msg) => Left(DecodingFailure(s"${at(c.history)}$msg", c.history))
     }
 
-  def problems(keys: List[com.histmersion.api.StrictJson.FieldName], s: Schema[?]): Option[com.histmersion.api.StrictJson.Problem] =
+  def problems(keys: List[FieldName], s: Schema[?]): Option[Problem] =
     val known = fieldNames(s)
     val unknown = keys.filterNot(known.contains).distinct
     Option.when(unknown.nonEmpty) {
@@ -48,25 +51,25 @@ object StrictJson:
             s"'$k' belongs under '$path' ($path.$k)"
         }
       )
-      val noun = s"unknown ${Plural.noun(_root_.com.histmersion.api.Plural.Count((unknown.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("key"))}"
-      _root_.com.histmersion.api.StrictJson.Problem(s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
+      val noun = s"unknown ${Plural.noun(Plural.Count((unknown.size).toLong), Plural.Noun.Singular("key"))}"
+      Problem(s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
         (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
         s"; expected only: ${known.mkString(", ")}")
     }
 
-  def fieldNames(s: Schema[?]): List[com.histmersion.api.StrictJson.FieldName] = s.schemaType match
-    case p: SchemaType.SProduct[?] => p.fields.map(f => _root_.com.histmersion.api.StrictJson.FieldName(f.name.encodedName))
+  def fieldNames(s: Schema[?]): List[FieldName] = s.schemaType match
+    case p: SchemaType.SProduct[?] => p.fields.map(f => FieldName(f.name.encodedName))
     case SchemaType.SOption(e)     => fieldNames(e)
     case _                         => Nil
 
-  private def nestedFields(s: Schema[?]): List[(com.histmersion.api.StrictJson.FieldPath, com.histmersion.api.StrictJson.FieldName)] =
-    def children(path: com.histmersion.api.StrictJson.FieldPath, sc: Schema[?]): List[(com.histmersion.api.StrictJson.FieldPath, Schema[?])] = sc.schemaType match
+  private def nestedFields(s: Schema[?]): List[(FieldPath, FieldName)] =
+    def children(path: FieldPath, sc: Schema[?]): List[(FieldPath, Schema[?])] = sc.schemaType match
       case p: SchemaType.SProduct[?] =>
-        p.fields.map(f => (_root_.com.histmersion.api.StrictJson.FieldPath((if (path).value.isEmpty then "" else s"$path.") + f.name.encodedName), f.schema))
+        p.fields.map(f => (FieldPath((if (path).value.isEmpty then "" else s"$path.") + f.name.encodedName), f.schema))
       case SchemaType.SOption(e) => children(path, e)
       case SchemaType.SArray(e)  => children(path, e)
       case _                     => Nil
-    val level1 = children(_root_.com.histmersion.api.StrictJson.FieldPath(""), s)
+    val level1 = children(FieldPath(""), s)
     val level2 = level1.flatMap((p, sc) => children(p, sc))
     (level1 ++ level2).flatMap((p, sc) => fieldNames(unwrap(sc)).map(p -> _))
 

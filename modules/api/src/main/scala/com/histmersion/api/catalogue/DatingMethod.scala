@@ -1,5 +1,6 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.given
 object DatingMethod:
 
-  val all: List[com.histmersion.api.catalogue.EventDating.Method] = List(_root_.com.histmersion.api.catalogue.EventDating.Method("dendrochronology"), _root_.com.histmersion.api.catalogue.EventDating.Method("radiocarbon"), _root_.com.histmersion.api.catalogue.EventDating.Method("stratigraphy"), _root_.com.histmersion.api.catalogue.EventDating.Method("textual"), _root_.com.histmersion.api.catalogue.EventDating.Method("astronomical"))
+  val all: List[EventDating.Method] = List(EventDating.Method("dendrochronology"), EventDating.Method("radiocarbon"), EventDating.Method("stratigraphy"), EventDating.Method("textual"), EventDating.Method("astronomical"))

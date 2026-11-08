@@ -1,20 +1,25 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Latitude
+import com.histmersion.api.catalogue.Longitude
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MapStartConfig(
     mode: MapStartMode.Wire = MapStartMode.Last.wire,
-    lat: com.histmersion.api.catalogue.Latitude = _root_.com.histmersion.api.catalogue.Latitude(37.0),
-    lon: com.histmersion.api.catalogue.Longitude = _root_.com.histmersion.api.catalogue.Longitude(30.0),
-    zoom: MapStartConfig.Zoom = _root_.com.histmersion.api.instance.MapStartConfig.Zoom(5.0),
-    label: MapStartConfig.Label = _root_.com.histmersion.api.instance.MapStartConfig.Label("")
+    lat: Latitude = Latitude(37.0),
+    lon: Longitude = Longitude(30.0),
+    zoom: MapStartConfig.Zoom = MapStartConfig.Zoom(5.0),
+    label: MapStartConfig.Label = MapStartConfig.Label("")
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
 
 object MapStartConfig:
   type Zoom = Zoom.T
-  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Zoom extends RefinedType[Double, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]

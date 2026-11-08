@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

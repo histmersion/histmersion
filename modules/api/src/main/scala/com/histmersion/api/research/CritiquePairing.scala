@@ -1,32 +1,39 @@
-package com.histmersion.api.research
+package com.histmersion
+package api.research
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import com.histmersion.api.LatinFold
 import com.histmersion.api.library.Hit
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.AuthorName
+import com.histmersion.api.text.WikiLinks
 
 object CritiquePairing:
   object Instruction:
     type Near = Near.T
-    object Near extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Near extends RefinedType[Int, Pure]
     type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Text extends RefinedType[String, Pure]
 
 
-  final case class Work(citekey: com.histmersion.api.library.Citekey, names: List[Work.Names], year: Option[com.histmersion.api.catalogue.Year])
+  final case class Work(citekey: Citekey, names: List[Work.Names], year: Option[Year])
 
   object Work:
     type Names = Names.T
-    object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Names extends RefinedType[String, Pure]
 
   final case class Hit(
       unit: Hit.Unit,
       from: Hit.From,
       to: Hit.To,
       where: Hit.Where,
-      cited: com.histmersion.api.library.Citekey,
-      missing: com.histmersion.api.library.Citekey,
+      cited: Citekey,
+      missing: Citekey,
       edges: List[Hit.Edges],
       named: Hit.Named,
       mechanical: Hit.Mechanical
@@ -42,21 +49,21 @@ object CritiquePairing:
   object Hit:
 
     type Unit = Unit.T
-    object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.research.Critiques.Block.{From, To}
+    object Unit extends RefinedType[Int, Pure]
+    export Critiques.Block.{From, To}
     type Where = Where.T
-    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Where extends RefinedType[String, Pure]
     type Edges = Edges.T
-    object Edges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.research.CritiquePairing.Work.{Names as Named}
+    object Edges extends RefinedType[String, Pure]
+    export Work.{Names as Named}
     type Mechanical = Mechanical.T
-    object Mechanical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Mechanical extends RefinedType[Boolean, Pure]
 
   private def letters(s: String): String =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
   private def ascii(s: String): String = ((s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z'))
 
-  def names(citekey: com.histmersion.api.library.Citekey, authors: List[com.histmersion.api.library.AuthorName]): List[Work.Names] =
+  def names(citekey: Citekey, authors: List[AuthorName]): List[Work.Names] =
     val lead = (citekey).value.takeWhile(_.isLetter).toLowerCase(java.util.Locale.ROOT)
     val words = authors
       .flatMap((_).value.split("[\\s,]+").toList)
@@ -82,7 +89,7 @@ object CritiquePairing:
   object Mention:
     export com.histmersion.api.text.WikiLinks.Occurrence.{Target as Key}
 
-  private def mention(text: String, name: Work.Names, year: Option[com.histmersion.api.catalogue.Year]): Option[Mention] =
+  private def mention(text: String, name: Work.Names, year: Option[Year]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r
     val ms = re.findAllMatchIn((text)).toList
     if ms.isEmpty then None
@@ -94,16 +101,16 @@ object CritiquePairing:
       else if near.forall(_.nonEmpty) then Some(Mention.Conflict)
       else Some(Mention.Weak)
 
-  private def targetsOf(u: Critiques.Block): List[com.histmersion.api.text.WikiLinks.Occurrence.Target] =
-    Article.Links.targets(com.histmersion.api.text.WikiLinks.Body(u.text.value))
+  private def targetsOf(u: Critiques.Block): List[WikiLinks.Occurrence.Target] =
+    Article.Links.targets(WikiLinks.Body(u.text.value))
 
   private def edgeLine(e: Coverage.Edge): Hit.Edges = Hit.Edges(s"[[${e.from}]] ${e.kind} [[${e.to}]]")
 
   def hits(
-      body: com.histmersion.api.research.Article.Body,
-      resolve: com.histmersion.api.research.CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey],
+      body: Article.Body,
+      resolve: Mention.Key => Option[Citekey],
       edges: List[Coverage.Edge],
-      work: com.histmersion.api.library.Citekey => Option[Work]
+      work: Citekey => Option[Work]
   ): List[Hit] =
     val es = edges.filter(e => Critiques.Kinds.contains(e.kind) && e.from != e.to)
     val blocks = Critiques.units(body)
@@ -147,8 +154,8 @@ object CritiquePairing:
       }
     }
 
-  def repair(body: com.histmersion.api.research.Article.Body, hs: List[Hit]): (com.histmersion.api.research.Article.Body, List[Hit]) =
-    val todo = hs.filter((refactorCallback => ((refactorCallback.mechanical) == _root_.com.histmersion.api.research.CritiquePairing.Hit.Mechanical(true)))).groupBy(h => (h.from, h.to))
+  def repair(body: Article.Body, hs: List[Hit]): (Article.Body, List[Hit]) =
+    val todo = hs.filter((refactorCallback => ((refactorCallback.mechanical) == Hit.Mechanical(true)))).groupBy(h => (h.from, h.to))
     if todo.isEmpty then (body, Nil)
     else
       val crlf = (body).value.contains("\r\n")
@@ -171,14 +178,14 @@ object CritiquePairing:
                 insert(tail, ls.updated(j, l.substring(0, at) + ins + l.substring(at)), acc ++ xs.distinctBy(_.missing))
       val (out, done) = insert(todo.toList.sortBy { case ((f, t), _) => ((f.value: Int), (t.value: Int)) }, lines, Nil)
       val text = out.mkString("\n")
-      (_root_.com.histmersion.api.research.Article.Body(if crlf then text.replace("\n", "\r\n") else text), done.sortBy(h => ((h.unit.value: Int), (h.missing.value: String))))
+      (Article.Body(if crlf then text.replace("\n", "\r\n") else text), done.sortBy(h => ((h.unit.value: Int), (h.missing.value: String))))
 
   def instruction(
-      body: com.histmersion.api.research.Article.Body,
+      body: Article.Body,
       p: CritiquePair,
-      resolve: com.histmersion.api.research.CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey],
-      near: Option[com.histmersion.api.research.CritiquePairing.Instruction.Near] = None
-  ): Option[com.histmersion.api.research.CritiquePairing.Instruction.Text] =
+      resolve: Mention.Key => Option[Citekey],
+      near: Option[Instruction.Near] = None
+  ): Option[Instruction.Text] =
     val crit = p.criticised.citekey
     val critic = p.critic.citekey
     val us = Critiques.units(body).zipWithIndex
@@ -190,13 +197,13 @@ object CritiquePairing:
         "not touch what that paragraph says, set the pair aside with a reason")
     }
 
-  def resolver(citekeys: Set[com.histmersion.api.library.Citekey], aliases: Map[com.histmersion.api.library.Citekey, com.histmersion.api.library.Citekey]): com.histmersion.api.research.CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey] =
+  def resolver(citekeys: Set[Citekey], aliases: Map[Citekey, Citekey]): Mention.Key => Option[Citekey] =
     val sorted = citekeys.toVector.sortBy(_.value)
     t =>
       val k = (t).value.trim.toLowerCase(java.util.Locale.ROOT)
-      if citekeys(_root_.com.histmersion.api.library.Citekey(k)) then Some(_root_.com.histmersion.api.library.Citekey(k))
+      if citekeys(Citekey(k)) then Some(Citekey(k))
       else
-        aliases.get(_root_.com.histmersion.api.library.Citekey(k)).filter(citekeys).orElse {
+        aliases.get(Citekey(k)).filter(citekeys).orElse {
           val pre = sorted.filter(_.value.startsWith(k + "_"))
           Option.when(pre.size == 1)(pre.head)
         }

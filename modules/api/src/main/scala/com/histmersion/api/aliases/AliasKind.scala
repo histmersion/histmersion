@@ -1,2 +1,3 @@
-package com.histmersion.api.aliases
+package com.histmersion
+package api.aliases
 final case class AliasKind(noun: RecordNoun, idWord: KeyWord)

@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.Plural
 import com.histmersion.api.jobs.JobInfo
@@ -9,7 +10,7 @@ object AcquireChecksMarkdown:
 
   def line(s: RecheckStatus): String =
     val job = s.job.fold("")(j => s" — $j")
-    if !((s.enabled) == _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(true)) then (s"acquire re-check: off (acquire.recheck.enabled = false)$job")
+    if !((s.enabled) == RecheckStatus.Enabled(true)) then (s"acquire re-check: off (acquire.recheck.enabled = false)$job")
     else
       s"acquire re-check: ${s.due} of ${Plural.count(Plural.CountN(s.withDoi.value.toLong), Plural.CountSingular("item"))} with a DOI due, " +
         s"${s.closedWeek} closed and ${s.fetchedWeek} found this week, ${s.triedToday} of ${s.perDay} tried today" +
@@ -24,9 +25,9 @@ object AcquireChecksMarkdown:
       s"— `histmersion jobs ${j.id}` follows it" + r.note.fold("")(n => s"\n- _${n}_")
 
   private def pass(r: RecheckResult): String =
-    val verb = if ((r.dryRun) == _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(true)) then "would " else ""
+    val verb = if ((r.dryRun) == RecheckResult.DryRun(true)) then "would " else ""
     val head =
-      s"# Acquisition list re-check${if ((r.dryRun) == _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(true)) then " (dry run: no fetcher asked, nothing stored)" else ""}\n\n" +
+      s"# Acquisition list re-check${if ((r.dryRun) == RecheckResult.DryRun(true)) then " (dry run: no fetcher asked, nothing stored)" else ""}\n\n" +
         s"- ${Plural.count(Plural.CountN(r.open.value.toLong), Plural.CountSingular("open item"))}, ${r.withDoi} with a DOI; ${r.due} due for a try, ${r.allowance} this pass may try\n" +
         (if r.dryRun.value then
            s"- ${verb}close ${Plural.count(Plural.CountN(r.rows.count(_.action.value == WouldClose).toLong), Plural.CountSingular("item"))} the corpus holds with its text\n" +

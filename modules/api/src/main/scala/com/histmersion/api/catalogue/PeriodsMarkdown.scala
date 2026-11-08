@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 
 import com.histmersion.api.{Plural, YearFmt}
 import com.histmersion.api.given
@@ -45,7 +46,7 @@ object PeriodsMarkdown:
       s" — ${Plural.count(Plural.CountN(r.presets.value.toLong), Plural.CountSingular("timeline preset"))} in the store" +
       (if r.removed.value > 0 then s"; removed ${Plural.count(Plural.CountN(r.removed.value.toLong), Plural.CountSingular("earlier seed period"))} the seed no longer has"
        else "")
-    if r.skippedCount == _root_.com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(0) then head
+    if r.skippedCount == Period.ImportResult.SkippedCount(0) then head
     else
       val more = (r.skippedCount).value - r.skipped.size
       s"$head\n\nskipped ${Plural.count(Plural.CountN(r.skippedCount.value.toLong), Plural.CountSingular("definition"))} (not imported):\n" +

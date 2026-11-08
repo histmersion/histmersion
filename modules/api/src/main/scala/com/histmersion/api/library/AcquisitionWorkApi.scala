@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.automation.ManagersApi
 import sttp.tapir.*
 import sttp.tapir.json.circe.*

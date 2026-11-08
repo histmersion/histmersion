@@ -1,23 +1,26 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 object Version:
   type Licence = Licence.T
-  object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Licence extends RefinedType[String, Pure]
 
-  val name: com.histmersion.api.instance.Version.Info.Name = _root_.com.histmersion.api.instance.Version.Info.Name("histmersion")
-  val version: com.histmersion.api.instance.Version.Info.Version = _root_.com.histmersion.api.instance.Version.Info.Version("0.1.0-SNAPSHOT")
+  val name: Info.Name = Info.Name("histmersion")
+  val version: Info.Version = Info.Version("0.1.0-SNAPSHOT")
 
   /** The SPDX id of the licence the program is distributed under. */
-  val licence: com.histmersion.api.instance.Version.Licence = _root_.com.histmersion.api.instance.Version.Licence("AGPL-3.0-or-later")
+  val licence: Licence = Licence("AGPL-3.0-or-later")
 
   final case class Info(name: Info.Name, version: Info.Version) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Info:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
     type Version = Version.T
-    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Version extends RefinedType[String, Pure]

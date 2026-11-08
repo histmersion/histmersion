@@ -1,4 +1,5 @@
-package com.histmersion.api.json
+package com.histmersion
+package api.json
 import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.RefinedType
 import sttp.tapir.Schema

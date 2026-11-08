@@ -1,4 +1,5 @@
-package com.histmersion.api.personal
+package com.histmersion
+package api.personal
 
 import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.*

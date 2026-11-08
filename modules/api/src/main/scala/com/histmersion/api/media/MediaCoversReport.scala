@@ -1,15 +1,19 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.RepairAcquire
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MediaCoversReport(
-    dryRun: com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun,
-    sources: MediaCoversReport.Sources = _root_.com.histmersion.api.media.MediaCoversReport.Sources(0),
-    covers: MediaCoversReport.Covers = _root_.com.histmersion.api.media.MediaCoversReport.Covers(0),
-    illustrations: MediaCoversReport.Illustrations = _root_.com.histmersion.api.media.MediaCoversReport.Illustrations(0),
+    dryRun: RepairAcquire.RepairRequest.DryRun,
+    sources: MediaCoversReport.Sources = MediaCoversReport.Sources(0),
+    covers: MediaCoversReport.Covers = MediaCoversReport.Covers(0),
+    illustrations: MediaCoversReport.Illustrations = MediaCoversReport.Illustrations(0),
     lines: List[MediaSourceLine] = Nil,
     skipped: List[MediaCount] = Nil,
     failed: List[MediaCoversReport.Failed] = Nil
@@ -20,25 +24,25 @@ object MediaCoversReport:
 
 
   type Sources = Sources.T
-  object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sources extends RefinedType[Int, Pure]
   type Covers = Covers.T
-  object Covers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Covers extends RefinedType[Int, Pure]
   type Illustrations = Illustrations.T
-  object Illustrations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Illustrations extends RefinedType[Int, Pure]
   type Failed = Failed.T
-  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Failed extends RefinedType[String, Pure]
 
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
-      _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(((a.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true)) && ((b.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true))),
-      _root_.com.histmersion.api.media.MediaCoversReport.Sources((a.sources).value + (b.sources).value),
-      _root_.com.histmersion.api.media.MediaCoversReport.Covers((a.covers).value + (b.covers).value),
-      _root_.com.histmersion.api.media.MediaCoversReport.Illustrations((a.illustrations).value + (b.illustrations).value),
+      RepairAcquire.RepairRequest.DryRun(((a.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) && ((b.dryRun) == RepairAcquire.RepairRequest.DryRun(true))),
+      Sources((a.sources).value + (b.sources).value),
+      Covers((a.covers).value + (b.covers).value),
+      Illustrations((a.illustrations).value + (b.illustrations).value),
       a.lines ++ b.lines,
       (a.skipped ++ b.skipped)
         .groupBy(_.key)
         .toList
-        .map((k, cs) => MediaCount(k, _root_.com.histmersion.api.media.MediaCount.N(cs.map(c => c.n.value: Int).sum)))
+        .map((k, cs) => MediaCount(k, MediaCount.N(cs.map(c => c.n.value: Int).sum)))
         .sortBy(c => (-(c.n).value, c.key)),
       a.failed ++ b.failed
     )

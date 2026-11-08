@@ -1,17 +1,20 @@
-package com.histmersion.api.personal
+package com.histmersion
+package api.personal
 
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
-final case class UnreadPage(rows: List[UnreadRow], total: UnreadPage.Total, offset: UnreadPage.Offset = _root_.com.histmersion.api.personal.UnreadPage.Offset(0))
+final case class UnreadPage(rows: List[UnreadRow], total: UnreadPage.Total, offset: UnreadPage.Offset = UnreadPage.Offset(0))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object UnreadPage:
   type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Total extends RefinedType[Int, Pure]
   type Offset = Offset.T
-  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Offset extends RefinedType[Int, Pure]

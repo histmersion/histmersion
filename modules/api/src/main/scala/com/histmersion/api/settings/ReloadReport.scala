@@ -1,9 +1,12 @@
-package com.histmersion.api.settings
+package com.histmersion
+package api.settings
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ReloadReport(
     published: ReloadReport.Published,
@@ -23,22 +26,22 @@ final case class ReloadReport(
 object ReloadReport:
 
   type Published = Published.T
-  object Published extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Published extends RefinedType[Boolean, Pure]
   type Generation = Generation.T
-  object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Generation extends RefinedType[Long, Pure]
   type Applied = Applied.T
-  object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Applied extends RefinedType[String, Pure]
   type RestartOnly = RestartOnly.T
-  object RestartOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RestartOnly extends RefinedType[String, Pure]
   type Rebuilt = Rebuilt.T
-  object Rebuilt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Rebuilt extends RefinedType[String, Pure]
   type Plugins = Plugins.T
-  object Plugins extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Plugins extends RefinedType[String, Pure]
   type Draining = Draining.T
-  object Draining extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Draining extends RefinedType[String, Pure]
   type Errors = Errors.T
-  object Errors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Errors extends RefinedType[String, Pure]
   type Warnings = Warnings.T
-  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Warnings extends RefinedType[String, Pure]
   type File = File.T
-  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object File extends RefinedType[String, Pure]

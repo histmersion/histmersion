@@ -1,9 +1,12 @@
-package com.histmersion.api.plugins
+package com.histmersion
+package api.plugins
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class PluginStatus(
     id: PluginStatus.Id,
@@ -19,12 +22,12 @@ final case class PluginStatus(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object PluginStatus:
-  export com.histmersion.api.plugins.PluginDescription.{Id, Version, SpiVersion}
+  export PluginDescription.{Id, Version, SpiVersion}
   type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Enabled extends RefinedType[Boolean, Pure]
   type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.plugins.PluginDescription.Provides
+  object State extends RefinedType[String, Pure]
+  export PluginDescription.Provides
   type Warnings = Warnings.T
-  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.plugins.PluginDescription.Error
+  object Warnings extends RefinedType[String, Pure]
+  export PluginDescription.Error

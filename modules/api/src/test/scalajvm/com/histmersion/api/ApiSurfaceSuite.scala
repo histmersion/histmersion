@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 import sttp.tapir.AnyEndpoint
@@ -68,7 +69,7 @@ class ApiSurfaceSuite extends munit.FunSuite:
     assert(md.value.startsWith("3 endpoints on 2 paths:"), md)
     assert(md.value.contains("| `GET` · `PUT` | `/api/sources/{citekey}` |"), md)
     assertEquals(
-      Api.Index.splice(Api.Index.Readme("a\n" + Api.Index.Begin + "\nold\n" + Api.Index.End + "\nb"), com.histmersion.api.Api.Index.MarkdownResult("new")),
+      Api.Index.splice(Api.Index.Readme("a\n" + Api.Index.Begin + "\nold\n" + Api.Index.End + "\nb"), Api.Index.MarkdownResult("new")),
       Right("a\n" + Api.Index.Begin + "\nnew\n" + Api.Index.End + "\nb")
     )
-    assert(Api.Index.splice(com.histmersion.api.Api.Index.Readme("no markers"), com.histmersion.api.Api.Index.MarkdownResult("x")).isLeft)
+    assert(Api.Index.splice(Api.Index.Readme("no markers"), Api.Index.MarkdownResult("x")).isLeft)

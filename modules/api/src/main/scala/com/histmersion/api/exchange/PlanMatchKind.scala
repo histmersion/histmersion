@@ -1,7 +1,10 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import io.circe.{Decoder, Encoder}
 import io.circe.syntax.*
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The kind of record a merge plan's matches are of, as its owner declares it: how one is written and read, which ones
   * the plan's Markdown lists, and how a line of it reads.
@@ -20,18 +23,18 @@ final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A =>
   def all(m: PlanMatches): List[A] = m.rows.flatMap(decoder.decodeJson(_).toOption)
 
   /** The matches the plan's Markdown lists (at most `limit`), one line each. */
-  def lines(m: PlanMatches, limit: com.histmersion.api.exchange.PlanMatchKind.LineLimit): List[com.histmersion.api.exchange.PlanMatchKind.MatchLine] =
-    m.rows.flatMap(decoder.decodeJson(_).toOption).filter({ val refactorFunction = listed; (refactorValue) => ((refactorFunction(refactorValue)) == _root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(true)) }).take((limit).value).map({ val refactorFunction3 = line; (refactorValue3) => _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine((refactorFunction3(refactorValue3)).value) })
+  def lines(m: PlanMatches, limit: PlanMatchKind.LineLimit): List[PlanMatchKind.MatchLine] =
+    m.rows.flatMap(decoder.decodeJson(_).toOption).filter({ val refactorFunction = listed; (refactorValue) => ((refactorFunction(refactorValue)) == PlanMatchKind.ListedResult(true)) }).take((limit).value).map({ val refactorFunction3 = line; (refactorValue3) => PlanMatchKind.MatchLine((refactorFunction3(refactorValue3)).value) })
 
 object PlanMatchKind:
   type LineLimit = LineLimit.T
-  object LineLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LineLimit extends RefinedType[Int, Pure]
   type MatchLine = MatchLine.T
-  object MatchLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MatchLine extends RefinedType[String, Pure]
   type ListedResult = ListedResult.T
-  object ListedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LineResult = com.histmersion.api.exchange.PlanMatchKind.MatchLine
-  val LineResult: _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine.type = _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine
+  object ListedResult extends RefinedType[Boolean, Pure]
+  type LineResult = MatchLine
+  val LineResult: MatchLine.type = MatchLine
 
-  type LinesResult = com.histmersion.api.exchange.PlanMatchKind.MatchLine
-  val LinesResult: _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine.type = _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine
+  type LinesResult = MatchLine
+  val LinesResult: MatchLine.type = MatchLine

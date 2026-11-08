@@ -1,6 +1,9 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.WireEnumValues
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 enum MatchOutcome:
   /** The same record here (by uid or ledger): imported as an update, if anything. */
@@ -20,15 +23,15 @@ enum MatchOutcome:
 
 object MatchOutcome:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
-  def wireOf(o: MatchOutcome): com.histmersion.api.library.MatchOutcome.Wire = o match
-    case Same          => _root_.com.histmersion.api.library.MatchOutcome.Wire("same")
-    case AutoMerge     => _root_.com.histmersion.api.library.MatchOutcome.Wire("auto-merge")
-    case NeedsDecision => _root_.com.histmersion.api.library.MatchOutcome.Wire("needs-decision")
-    case New           => _root_.com.histmersion.api.library.MatchOutcome.Wire("new")
-    case DeletedHere   => _root_.com.histmersion.api.library.MatchOutcome.Wire("deleted-here")
+  def wireOf(o: MatchOutcome): Wire = o match
+    case Same          => Wire("same")
+    case AutoMerge     => Wire("auto-merge")
+    case NeedsDecision => Wire("needs-decision")
+    case New           => Wire("new")
+    case DeletedHere   => Wire("deleted-here")
   given WireEnumValues[MatchOutcome]:
-    def all: Array[MatchOutcome] = MatchOutcome.values
-    def wire(e: MatchOutcome): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersion.api.library.MatchOutcome.Wire((s).value.trim))
+    def all: Array[MatchOutcome] = values
+    def wire(e: MatchOutcome): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+    def fromWire(s: WireEnumValues.Wire): Option[MatchOutcome] = values.find(o => wireOf(o) == Wire((s).value.trim))

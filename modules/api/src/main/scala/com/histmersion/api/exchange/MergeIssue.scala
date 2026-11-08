@@ -1,4 +1,5 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import com.histmersion.api.{Ascii, WireEnumValues}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -9,12 +10,15 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Goal
 import io.circe.Json
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
 
 final case class MergeIssue(
     id: MergeIssue.Id,
     kind: MergeIssue.Kind,
     severity: MergeIssue.Severity,
-    entity: com.histmersion.api.exchange.Bundle.Kind,
+    entity: Bundle.Kind,
     title: MergeIssue.Title,
     left: Option[IssueSide] = None,
     right: Option[IssueSide] = None,
@@ -33,11 +37,11 @@ object MergeIssue:
   /** What an issue is about. The wire name is part of the issue id, so it never changes. */
 
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Title extends RefinedType[String, Pure]
   type Why = Why.T
-  object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Why extends RefinedType[String, Pure]
 
   enum Kind:
     /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years
@@ -88,35 +92,35 @@ object MergeIssue:
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    def wireOf(k: Kind): com.histmersion.api.exchange.MergeIssue.Kind.Wire = k match
-      case SameWork                => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("same-work")
-      case CitekeyCollision        => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("citekey-collision")
-      case DoiDiffers              => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("doi-differs")
-      case YearDiffers             => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("year-differs")
-      case StatusDiffers           => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("status-differs")
-      case TitleDiffers            => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("title-differs")
-      case AuthorsDiffers          => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("authors-differs")
-      case SummaryDiffers          => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("summary-differs")
-      case NotesDiffers            => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("notes-differs")
-      case PeriodDiffers           => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("period-differs")
-      case BodyDiffers             => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("body-differs")
-      case ChangedBothSides        => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("changed-both-sides")
-      case DeletedThereChangedHere => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("deleted-there-changed-here")
-      case ArticleDiverged         => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("article-diverged")
-      case LabelTaken              => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("label-taken")
-      case AliasConflict           => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("alias-conflict")
-      case FindingNearDuplicate    => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("finding-near-duplicate")
-      case AttestationUnanchored   => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("attestation-unanchored")
-      case PlaceDiffers            => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("place-differs")
-      case NamedPeriodDiffers      => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("named-period-differs")
-      case GoalPlanDiffers         => _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire("goal-plan-differs")
+    def wireOf(k: Kind): Wire = k match
+      case SameWork                => Wire("same-work")
+      case CitekeyCollision        => Wire("citekey-collision")
+      case DoiDiffers              => Wire("doi-differs")
+      case YearDiffers             => Wire("year-differs")
+      case StatusDiffers           => Wire("status-differs")
+      case TitleDiffers            => Wire("title-differs")
+      case AuthorsDiffers          => Wire("authors-differs")
+      case SummaryDiffers          => Wire("summary-differs")
+      case NotesDiffers            => Wire("notes-differs")
+      case PeriodDiffers           => Wire("period-differs")
+      case BodyDiffers             => Wire("body-differs")
+      case ChangedBothSides        => Wire("changed-both-sides")
+      case DeletedThereChangedHere => Wire("deleted-there-changed-here")
+      case ArticleDiverged         => Wire("article-diverged")
+      case LabelTaken              => Wire("label-taken")
+      case AliasConflict           => Wire("alias-conflict")
+      case FindingNearDuplicate    => Wire("finding-near-duplicate")
+      case AttestationUnanchored   => Wire("attestation-unanchored")
+      case PlaceDiffers            => Wire("place-differs")
+      case NamedPeriodDiffers      => Wire("named-period-differs")
+      case GoalPlanDiffers         => Wire("goal-plan-differs")
 
     given WireEnumValues[Kind]:
-      def all: Array[Kind] = Kind.values
-      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.MergeIssue.Kind.Wire((s).value.trim))
+      def all: Array[Kind] = values
+      def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: WireEnumValues.Wire): Option[Kind] = values.find(k => wireOf(k) == Wire((s).value.trim))
 
   /** How much an issue holds the merge up. */
   enum Severity:
@@ -131,12 +135,12 @@ object MergeIssue:
 
   object Severity:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
     given WireEnumValues[Severity]:
-      def all: Array[Severity] = Severity.values
-      def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((Ascii.lower((e.toString))))
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+      def all: Array[Severity] = values
+      def wire(e: Severity): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
+      def fromWire(s: WireEnumValues.Wire): Option[Severity] = values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
   /** Who decided an issue. */
   enum DecidedBy:
@@ -156,17 +160,17 @@ object MergeIssue:
 
   object DecidedBy:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
     given WireEnumValues[DecidedBy]:
-      def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((Ascii.lower((e.toString))))
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+      def all: Array[DecidedBy] = values
+      def wire(e: DecidedBy): WireEnumValues.Wire = WireEnumValues.Wire((Ascii.lower((e.toString))))
+      def fromWire(s: WireEnumValues.Wire): Option[DecidedBy] = values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
 
   object Detail:
     type ClipLength = ClipLength.T
-    object ClipLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ClipLength extends RefinedType[Int, Pure]
 
 
 
@@ -189,18 +193,18 @@ object MergeIssue:
       case Some(Bundle.Range(None, None)) => ("always")
       case Some(b)                        => (s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}")
 
-    def preview(s: String, n: com.histmersion.api.exchange.MergeIssue.Detail.ClipLength = _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(80)): String =
+    def preview(s: String, n: ClipLength = ClipLength(80)): String =
       val one = (s).replaceAll("\\s+", " ").trim
       if one.length <= (n).value then (one) else (one.take((n).value - 1) + "…")
 
     def span(r: Bundle.Range): IssueSpan = IssueSpan(r.start, r.end)
 
     def eventSpan(e: Bundle.Event): Option[IssueSpan] =
-      val a = e.notBefore.map(y => com.histmersion.api.catalogue.Year(y.value)).orElse(e.beginBy.map(y => com.histmersion.api.catalogue.Year(y.value)))
-      val b = e.notAfter.map(y => com.histmersion.api.catalogue.Year(y.value)).orElse(e.endFrom.map(y => com.histmersion.api.catalogue.Year(y.value)))
+      val a = e.notBefore.map(y => Year(y.value)).orElse(e.beginBy.map(y => Year(y.value)))
+      val b = e.notAfter.map(y => Year(y.value)).orElse(e.endFrom.map(y => Year(y.value)))
       Option.when(a.isDefined || b.isDefined)(IssueSpan(a, b))
 
-    def clip(s: Option[String], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipLength = _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(600)): Option[String] =
+    def clip(s: Option[String], n: ClipLength = ClipLength(600)): Option[String] =
       s.map((_).trim).filter(_.nonEmpty).map(t => if t.length <= (n).value then (t) else (t.take((n).value - 1) + "…"))
 
     private def field(name: String, l: Option[String], r: Option[String]): IssueField =
@@ -261,11 +265,11 @@ object MergeIssue:
       )
 
     def planText(j: Json): String =
-      j.as[Goal.Plans.Plan].toOption.fold(preview((j.noSpaces), _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(300))) { p =>
+      j.as[Goal.Plans.Plan].toOption.fold(preview((j.noSpaces), ClipLength(300))) { p =>
         List(
-          Option(p.rationale.value).filter(_.nonEmpty).map(r => preview(r, _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(160))),
+          Option(p.rationale.value).filter(_.nonEmpty).map(r => preview(r, ClipLength(160))),
           Option.when(p.subGoals.nonEmpty)(s"sub-goals: ${p.subGoals.map(_.slug).mkString(", ")}"),
           Option.when(p.queries.nonEmpty)(s"queries: ${p.queries.mkString("; ")}"),
-          Option.when(p.works.nonEmpty)(s"${Plural.count(_root_.com.histmersion.api.Plural.Count((p.works.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("work"))}")
+          Option.when(p.works.nonEmpty)(s"${Plural.count(Plural.Count((p.works.size).toLong), Plural.Noun.Singular("work"))}")
         ).flatten.mkString(" · ")
       }

@@ -1,4 +1,5 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.{Paging, Plural}
 import com.histmersion.api.automation.ListFilters
@@ -8,6 +9,7 @@ import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.api.media.{AssetInfo, AssetsMarkdown}
 import com.histmersion.api.given
+import com.histmersion.api.RowCount
 object IngestMarkdown:
 
 
@@ -30,7 +32,7 @@ object IngestMarkdown:
       j.detail
         .filter(d => SkippedPeriod.SkippedCount.of(d).value > 0)
         .map(d =>
-          s"- **skipped:** ${Plural.count(_root_.com.histmersion.api.Plural.CountN(SkippedPeriod.SkippedCount.of(d).value.toLong), _root_.com.histmersion.api.Plural.CountSingular("period definition"))} (not imported)" +
+          s"- **skipped:** ${Plural.count(Plural.CountN(SkippedPeriod.SkippedCount.of(d).value.toLong), Plural.CountSingular("period definition"))} (not imported)" +
             (if SkippedPeriod.Skipped.of(d).isEmpty then ""
              else
                "\n" + PeriodsMarkdown
@@ -46,8 +48,8 @@ object IngestMarkdown:
   def jobs(
       js: Vector[JobInfo],
       page: Paging.Page = Paging.Page.empty,
-      status: Option[com.histmersion.api.library.Ingest.JobStatus] = None,
-      older: Option[com.histmersion.api.library.Ingest.JobAge] = None
+      status: Option[Ingest.JobStatus] = None,
+      older: Option[Ingest.JobAge] = None
   ): String =
     if js.isEmpty then (status.fold("_No jobs._")(s => s"_No $s jobs._"))
     else
@@ -55,12 +57,12 @@ object IngestMarkdown:
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |"
       )
-      val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetName("By kind"), page.facet(_root_.com.histmersion.api.library.Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), _root_.com.histmersion.api.RowCount(n.value))))
-      (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.ShownCount(js.size), page.total, _root_.com.histmersion.api.Plural.Noun.Singular("job"), qualifier = status.map(_.value))}", "") ++
+      val kinds = ListFilters.facetLine(ListFilters.FacetName("By kind"), page.facet(Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), RowCount(n.value))))
+      (List(s"### ${Paging.heading(Paging.ShownCount(js.size), page.total, Plural.Noun.Singular("job"), qualifier = status.map(_.value))}", "") ++
         Option.when(kinds.value.nonEmpty)(List(kinds.value, "")).toList.flatten ++
         List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o =>
           List("", o)
         ))
         .mkString("\n")
 
-  def assets(citekey: com.histmersion.api.library.Citekey, as: Vector[AssetInfo]): String = AssetsMarkdown.assets(citekey, as)
+  def assets(citekey: Citekey, as: Vector[AssetInfo]): String = AssetsMarkdown.assets(citekey, as)

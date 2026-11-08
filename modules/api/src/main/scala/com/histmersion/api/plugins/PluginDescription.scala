@@ -1,9 +1,12 @@
-package com.histmersion.api.plugins
+package com.histmersion
+package api.plugins
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class PluginDescription(
     id: PluginDescription.Id,
@@ -17,14 +20,14 @@ final case class PluginDescription(
 
 object PluginDescription:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Version = Version.T
-  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Version extends RefinedType[String, Pure]
   type SpiVersion = SpiVersion.T
-  object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SpiVersion extends RefinedType[Int, Pure]
   type Provides = Provides.T
-  object Provides extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Provides extends RefinedType[String, Pure]
   type Access = Access.T
-  object Access extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Access extends RefinedType[String, Pure]
   type Error = Error.T
-  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Error extends RefinedType[String, Pure]

@@ -1,17 +1,20 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import scala.annotation.tailrec
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** `licence` and `sourceUrl` are `None` from an older server. */
 final case class BuildStamp(
     version: BuildStamp.Version,
     gitCommit: Option[BuildStamp.GitCommit] = None,
     commitDate: Option[BuildStamp.CommitDate] = None,
-    dirty: BuildStamp.Dirty = _root_.com.histmersion.api.instance.BuildStamp.Dirty(false),
+    dirty: BuildStamp.Dirty = BuildStamp.Dirty(false),
     licence: Option[BuildStamp.Licence] = None,
     sourceUrl: Option[BuildStamp.SourceUrl] = None
 ) derives KindlingsCodecAsObject,
@@ -19,14 +22,14 @@ final case class BuildStamp(
 
 object BuildStamp:
   type Version = Version.T
-  object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Version extends RefinedType[String, Pure]
   type GitCommit = GitCommit.T
-  object GitCommit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GitCommit extends RefinedType[String, Pure]
   type CommitDate = CommitDate.T
-  object CommitDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CommitDate extends RefinedType[String, Pure]
   type Dirty = Dirty.T
-  object Dirty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Dirty extends RefinedType[Boolean, Pure]
   type Licence = Licence.T
-  object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Licence extends RefinedType[String, Pure]
   type SourceUrl = SourceUrl.T
-  object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SourceUrl extends RefinedType[String, Pure]

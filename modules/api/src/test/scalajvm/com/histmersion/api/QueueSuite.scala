@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -6,6 +7,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Queue.*
 import com.histmersion.api.automation.Queue
+import com.histmersion.api.library.Citekey
 
 /** The bookkeeping parser/renderer (plan §5.2 stream 2.8), tested against the REAL `meta/{ACQUIRE,TASKS,LOG}.md` from
   * the research workspace, copied verbatim into `src/test/resources/meta/`. Pure: no database, no server.
@@ -192,8 +194,8 @@ class QueueSuite extends munit.FunSuite:
 
   test("Kind.parse accepts exactly the three list names"):
     assertEquals(Kind.all, List("acquire", "tasks", "log"))
-    assertEquals(Kind.parse(com.histmersion.api.automation.Queue.Kind.Label(" Acquire ")).map(_.file), Some("ACQUIRE.md"))
-    assertEquals(Kind.parse(com.histmersion.api.automation.Queue.Kind.Label("notes")), None)
+    assertEquals(Kind.parse(Queue.Kind.Label(" Acquire ")).map(_.file), Some("ACQUIRE.md"))
+    assertEquals(Kind.parse(Queue.Kind.Label("notes")), None)
 
   // ── input validation (these used to reach the INSERT unchecked) ──────────────────────────────
 
@@ -237,16 +239,16 @@ class QueueSuite extends munit.FunSuite:
     QueueItem(id, list, QueueItem.Text(s"item ${id.value}"), Some(QueueItem.Topic("linear_b")), status, reason)
 
   test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted"):
-    assertEquals(Queue.fulfilledReason(None, com.histmersion.api.library.Citekey("lambert2013_babylonian")), "ingested as [[lambert2013_babylonian]]")
-    assertEquals(Queue.fulfilledReason(Some(QueueItem.Reason("  ")), com.histmersion.api.library.Citekey("a2020_b")), "ingested as [[a2020_b]]")
+    assertEquals(Queue.fulfilledReason(None, Citekey("lambert2013_babylonian")), "ingested as [[lambert2013_babylonian]]")
+    assertEquals(Queue.fulfilledReason(Some(QueueItem.Reason("  ")), Citekey("a2020_b")), "ingested as [[a2020_b]]")
     assertEquals(
-      Queue.fulfilledReason(Some(QueueItem.Reason("Nagy 2001 argues against it")), com.histmersion.api.library.Citekey("finkelberg2000_cypria")),
+      Queue.fulfilledReason(Some(QueueItem.Reason("Nagy 2001 argues against it")), Citekey("finkelberg2000_cypria")),
       "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]"
     )
     // recording the same source twice adds nothing
-    assertEquals(Queue.fulfilledReason(Some(QueueItem.Reason("ingested as [[a2020_b]]")), com.histmersion.api.library.Citekey("a2020_b")), "ingested as [[a2020_b]]")
+    assertEquals(Queue.fulfilledReason(Some(QueueItem.Reason("ingested as [[a2020_b]]")), Citekey("a2020_b")), "ingested as [[a2020_b]]")
     assertEquals(
-      Queue.fulfil(item(QueueItem.Id(567)), com.histmersion.api.library.Citekey("lambert2013_babylonian")),
+      Queue.fulfil(item(QueueItem.Id(567)), Citekey("lambert2013_babylonian")),
       QueuePatch(status = Some(QueueItem.Status(Done)), reason = Some(QueueItem.Reason("ingested as [[lambert2013_babylonian]]")))
     )
 

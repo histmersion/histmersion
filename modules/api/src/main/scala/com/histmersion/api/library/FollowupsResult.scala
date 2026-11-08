@@ -1,13 +1,16 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FollowupsResult(
     target: FollowupsResult.Target,
-    doi: Option[com.histmersion.api.library.Doi],
+    doi: Option[Doi],
     backend: FollowupsResult.Backend,
     count: FollowupsResult.Count,
     edgesAdded: FollowupsResult.EdgesAdded,
@@ -17,10 +20,10 @@ final case class FollowupsResult(
 
 object FollowupsResult:
   type Target = Target.T
-  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Target extends RefinedType[String, Pure]
   type Backend = Backend.T
-  object Backend extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Backend extends RefinedType[String, Pure]
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Int, Pure]
   type EdgesAdded = EdgesAdded.T
-  object EdgesAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EdgesAdded extends RefinedType[Int, Pure]

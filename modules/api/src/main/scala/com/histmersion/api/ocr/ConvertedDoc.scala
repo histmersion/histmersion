@@ -1,13 +1,16 @@
-package com.histmersion.api.ocr
+package com.histmersion
+package api.ocr
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ConvertedDoc(
     markdown: ConvertedDoc.Markdown,
-    pages: ConvertedDoc.Pages = _root_.com.histmersion.api.ocr.ConvertedDoc.Pages(0),
+    pages: ConvertedDoc.Pages = ConvertedDoc.Pages(0),
     images: List[ConvertedImage] = Nil,
     filename: Option[ConvertedDoc.Filename] = None
 ) derives KindlingsCodecAsObject,
@@ -16,6 +19,6 @@ final case class ConvertedDoc(
 object ConvertedDoc:
   export com.histmersion.api.library.Source.{OcrMarkdown as Markdown}
   type Pages = Pages.T
-  object Pages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Pages extends RefinedType[Int, Pure]
   type Filename = Filename.T
-  object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Filename extends RefinedType[String, Pure]

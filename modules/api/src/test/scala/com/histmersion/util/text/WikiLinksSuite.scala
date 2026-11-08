@@ -1,10 +1,12 @@
-package com.histmersion.util.text
+package com.histmersion
+package util.text
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 /** The `[[target]]` links of wiki text, whatever record holds it. */
 
 import com.histmersion.api.text.WikiLinks
+import com.histmersion.api.library.Citekey
 class WikiLinksSuite extends munit.FunSuite:
 
   test("targets: links with a label or an anchor, escaped ones too; not embeds or in-page anchors"):
@@ -14,13 +16,13 @@ class WikiLinksSuite extends munit.FunSuite:
     )
 
   test("links: a text links a key in any case"):
-    assert(WikiLinks.links(com.histmersion.api.text.WikiLinks.Body("see [[Beckman2011_ahhiyawa|B]]"), com.histmersion.api.library.Citekey("beckman2011_ahhiyawa")))
-    assert(!WikiLinks.links(com.histmersion.api.text.WikiLinks.Body("see beckman2011_ahhiyawa"), com.histmersion.api.library.Citekey("beckman2011_ahhiyawa")))
+    assert(WikiLinks.links(WikiLinks.Body("see [[Beckman2011_ahhiyawa|B]]"), Citekey("beckman2011_ahhiyawa")))
+    assert(!WikiLinks.links(WikiLinks.Body("see beckman2011_ahhiyawa"), Citekey("beckman2011_ahhiyawa")))
 
   test("retarget: the moved links only, labels and anchors kept, with how many moved"):
     val (out, n) = WikiLinks.retarget(
-      com.histmersion.api.text.WikiLinks.Body("[[old2000_x|O]] [[ old2000_x #p]] [[keep2001_y]]"),
-      t => Option.when(t.value == "old2000_x")(com.histmersion.api.text.WikiLinks.Occurrence.Target("new2000_x"))
+      WikiLinks.Body("[[old2000_x|O]] [[ old2000_x #p]] [[keep2001_y]]"),
+      t => Option.when(t.value == "old2000_x")(WikiLinks.Occurrence.Target("new2000_x"))
     )
     assertEquals(out, "[[new2000_x|O]] [[ new2000_x #p]] [[keep2001_y]]")
     assertEquals(n, 2)

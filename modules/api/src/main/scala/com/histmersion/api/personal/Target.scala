@@ -1,4 +1,5 @@
-package com.histmersion.api.personal
+package com.histmersion
+package api.personal
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.YearFmt
@@ -9,6 +10,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
 import io.circe.Decoder
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class Target(
     kind: ItemKind,
@@ -21,27 +24,27 @@ final case class Target(
     view: Option[ViewState] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def itemKey: Option[com.histmersion.api.personal.ItemKey] = Option.when(kind.isItem)(id).flatten
+  def itemKey: Option[ItemKey] = Option.when(kind.isItem)(id).flatten
 
-  def identity: Option[com.histmersion.api.personal.Target.Identity] = itemKey.map(k => _root_.com.histmersion.api.personal.Target.Identity(s"${kind.wire}:$k"))
+  def identity: Option[Target.Identity] = itemKey.map(k => Target.Identity(s"${kind.wire}:$k"))
 
 object Target:
   given Decoder[com.histmersion.api.personal.ItemKey] = com.histmersion.api.personal.ItemKey.given_Decoder_ItemKey
 
   type Identity = Identity.T
-  object Identity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Identity extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Where = Where.T
-  object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Where extends RefinedType[String, Pure]
 
 
   export com.histmersion.api.personal.ItemKey
   type CheckWhat = String
   object CheckWhat:
     inline def apply(v: String): String = v
-  type WhereResult = com.histmersion.api.personal.Target.Where
-  val WhereResult: _root_.com.histmersion.api.personal.Target.Where.type = _root_.com.histmersion.api.personal.Target.Where
+  type WhereResult = Where
+  val WhereResult: Where.type = Where
   type Round1Result = String
   object Round1Result:
     inline def apply(v: String): String = v
@@ -57,7 +60,7 @@ object Target:
 
   def item(kind: ItemKind, key: com.histmersion.api.personal.ItemKey): Target = Target(kind, Some(ItemKey((key).value.trim)))
 
-  def check(t: Target, allowed: Set[ItemKind], what: String): Either[com.histmersion.api.personal.Target.Problem, Target] =
+  def check(t: Target, allowed: Set[ItemKind], what: String): Either[Problem, Target] =
     val years = (t.from, t.to) match
       case (Some(a), Some(b)) if a.value > b.value =>
         Left(Problem(s"the period ends (${YearFmt(b)}) before it starts (${YearFmt(a)})"))
@@ -99,15 +102,15 @@ object Target:
             else Right(Target(ItemKind.Period, from = t.from, to = t.to))
       }
 
-  def where(t: Target): com.histmersion.api.personal.Target.Where =
+  def where(t: Target): Where =
     val span = YearFmt.period(t.from, t.to)
     val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, ("N"), ("S"))}, ${degrees(lo.value, ("E"), ("W"))}")
     t.kind match
-      case ItemKind.Point => _root_.com.histmersion.api.personal.Target.Where(List(at, span).filter(_.nonEmpty).mkString(" · "))
+      case ItemKind.Point => Where(List(at, span).filter(_.nonEmpty).mkString(" · "))
       case ItemKind.View  =>
-        _root_.com.histmersion.api.personal.Target.Where(List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · "))
-      case ItemKind.Period => _root_.com.histmersion.api.personal.Target.Where(span)
-      case _               => _root_.com.histmersion.api.personal.Target.Where("")
+        Where(List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · "))
+      case ItemKind.Period => Where(span)
+      case _               => Where("")
 
   private def round1(v: Double): String =
     (BigDecimal((v)).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)

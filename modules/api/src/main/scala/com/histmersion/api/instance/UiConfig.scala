@@ -1,4 +1,5 @@
-package com.histmersion.api.instance
+package com.histmersion
+package api.instance
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -6,6 +7,8 @@ import com.histmersion.api.catalogue.MapTilesUiConfig
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class UiConfig(
     tiles: UiConfig.Tiles,
@@ -24,59 +27,59 @@ final case class UiConfig(
     tabletMaxWidthPx: UiConfig.TabletMaxWidthPx,
     events: EventsUiConfig,
     mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
-    countersPollSeconds: UiConfig.CountersPollSeconds = _root_.com.histmersion.api.instance.UiConfig.CountersPollSeconds(30),
-    jobPollMs: UiConfig.JobPollMs = _root_.com.histmersion.api.instance.UiConfig.JobPollMs(1000),
-    writeKeyRequired: UiConfig.WriteKeyRequired = _root_.com.histmersion.api.instance.UiConfig.WriteKeyRequired(false),
-    agentsEnabled: UiConfig.AgentsEnabled = _root_.com.histmersion.api.instance.UiConfig.AgentsEnabled(false),
-    tilesTone: UiConfig.TilesTone = _root_.com.histmersion.api.instance.UiConfig.TilesTone("light"),
+    countersPollSeconds: UiConfig.CountersPollSeconds = UiConfig.CountersPollSeconds(30),
+    jobPollMs: UiConfig.JobPollMs = UiConfig.JobPollMs(1000),
+    writeKeyRequired: UiConfig.WriteKeyRequired = UiConfig.WriteKeyRequired(false),
+    agentsEnabled: UiConfig.AgentsEnabled = UiConfig.AgentsEnabled(false),
+    tilesTone: UiConfig.TilesTone = UiConfig.TilesTone("light"),
     plugins: PluginsReport = PluginsReport(),
-    docsUrl: UiConfig.DocsUrl = _root_.com.histmersion.api.instance.UiConfig.DocsUrl(""),
-    baseMapSource: UiConfig.BaseMapSource = _root_.com.histmersion.api.basemap.BaseMapSource.Wire("auto"),
-    mapLanguage: UiConfig.MapLanguage = _root_.com.histmersion.api.instance.UiConfig.MapLanguage("en"),
+    docsUrl: UiConfig.DocsUrl = UiConfig.DocsUrl(""),
+    baseMapSource: UiConfig.BaseMapSource = com.histmersion.api.basemap.BaseMapSource.Wire("auto"),
+    mapLanguage: UiConfig.MapLanguage = UiConfig.MapLanguage("en"),
     mapStart: MapStartConfig = MapStartConfig(),
-    setupDue: UiConfig.SetupDue = _root_.com.histmersion.api.instance.UiConfig.SetupDue(false)
+    setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object UiConfig:
   type Tiles = Tiles.T
-  object Tiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Tiles extends RefinedType[String, Pure]
   type TilesMaxZoom = TilesMaxZoom.T
-  object TilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TilesMaxZoom extends RefinedType[Int, Pure]
   type MarkerRadius = MarkerRadius.T
-  object MarkerRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MarkerRadius extends RefinedType[Int, Pure]
   type ViewportDebounceMs = ViewportDebounceMs.T
-  object ViewportDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ViewportDebounceMs extends RefinedType[Int, Pure]
   type PageSize = PageSize.T
-  object PageSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PageSize extends RefinedType[Int, Pure]
   type FacetSuggestions = FacetSuggestions.T
-  object FacetSuggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FacetSuggestions extends RefinedType[Int, Pure]
   type TreeDepth = TreeDepth.T
-  object TreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TreeDepth extends RefinedType[Int, Pure]
   type TreeSamples = TreeSamples.T
-  object TreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TreeSamples extends RefinedType[Int, Pure]
   type MaxBuckets = MaxBuckets.T
-  object MaxBuckets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MaxBuckets extends RefinedType[Int, Pure]
   type NarrowMaxWidthPx = NarrowMaxWidthPx.T
-  object NarrowMaxWidthPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NarrowMaxWidthPx extends RefinedType[Int, Pure]
   type NarrowMaxHeightPx = NarrowMaxHeightPx.T
-  object NarrowMaxHeightPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NarrowMaxHeightPx extends RefinedType[Int, Pure]
   type TabletMaxWidthPx = TabletMaxWidthPx.T
-  object TabletMaxWidthPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TabletMaxWidthPx extends RefinedType[Int, Pure]
   type CountersPollSeconds = CountersPollSeconds.T
-  object CountersPollSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CountersPollSeconds extends RefinedType[Int, Pure]
   type JobPollMs = JobPollMs.T
-  object JobPollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JobPollMs extends RefinedType[Int, Pure]
   type WriteKeyRequired = WriteKeyRequired.T
-  object WriteKeyRequired extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WriteKeyRequired extends RefinedType[Boolean, Pure]
   type AgentsEnabled = AgentsEnabled.T
-  object AgentsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object AgentsEnabled extends RefinedType[Boolean, Pure]
   type TilesTone = TilesTone.T
-  object TilesTone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object TilesTone extends RefinedType[String, Pure]
   type DocsUrl = DocsUrl.T
-  object DocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DocsUrl extends RefinedType[String, Pure]
   export com.histmersion.api.basemap.BaseMapSource.{Wire as BaseMapSource}
   type MapLanguage = MapLanguage.T
-  object MapLanguage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MapLanguage extends RefinedType[String, Pure]
   type SetupDue = SetupDue.T
-  object SetupDue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SetupDue extends RefinedType[Boolean, Pure]

@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -25,15 +26,15 @@ class CritiquePairingSuite extends munit.FunSuite:
 
   /** The live edges around those sources. */
   private val edges = List(
-    Coverage.Edge(com.histmersion.api.library.Citekey("bachvarova2016_hittite"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("burkert1992_orientalizing")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("bachvarova2016_hittite"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("latacz2004_troy")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("bachvarova2016_hittite"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("west1997_helicon")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("ballesteros2024_naming"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("lord1960_singer")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("fantuzzi2015_greek"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("west2011_making")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("kelly2021_gods"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("bachvarova2016_hittite")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("latacz2004_troy"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("kullmann1999_memory")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("latacz2004_troy"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("page1959_history")),
-    Coverage.Edge(com.histmersion.api.library.Citekey("kelly2021_gods"), com.histmersion.api.research.Coverage.Edge.Kind("references"), com.histmersion.api.library.Citekey("lord1960_singer"))
+    Coverage.Edge(Citekey("bachvarova2016_hittite"), Coverage.Edge.Kind("challenges"), Citekey("burkert1992_orientalizing")),
+    Coverage.Edge(Citekey("bachvarova2016_hittite"), Coverage.Edge.Kind("challenges"), Citekey("latacz2004_troy")),
+    Coverage.Edge(Citekey("bachvarova2016_hittite"), Coverage.Edge.Kind("challenges"), Citekey("west1997_helicon")),
+    Coverage.Edge(Citekey("ballesteros2024_naming"), Coverage.Edge.Kind("challenges"), Citekey("lord1960_singer")),
+    Coverage.Edge(Citekey("fantuzzi2015_greek"), Coverage.Edge.Kind("challenges"), Citekey("west2011_making")),
+    Coverage.Edge(Citekey("kelly2021_gods"), Coverage.Edge.Kind("challenges"), Citekey("bachvarova2016_hittite")),
+    Coverage.Edge(Citekey("latacz2004_troy"), Coverage.Edge.Kind("challenges"), Citekey("kullmann1999_memory")),
+    Coverage.Edge(Citekey("latacz2004_troy"), Coverage.Edge.Kind("challenges"), Citekey("page1959_history")),
+    Coverage.Edge(Citekey("kelly2021_gods"), Coverage.Edge.Kind("references"), Citekey("lord1960_singer"))
   ) // not a disagreement kind
 
   /** The live authors (as stored) and years. */
@@ -55,14 +56,14 @@ class CritiquePairingSuite extends munit.FunSuite:
   private val resolve: Article.Link.Target => Option[Citekey] = t => Some(Citekey(t.value)).filter(authors.contains)
 
   test("names: the authors' word that is the citekey's leading name, else the first author's last word"):
-    assertEquals(names(com.histmersion.api.library.Citekey("latacz2004_troy"), List(com.histmersion.api.library.AuthorName("Joachim Latacz"))), List("Latacz"))
-    assertEquals(names(com.histmersion.api.library.Citekey("drews1993_endbronze"), List(com.histmersion.api.library.AuthorName("Drews Robert"))), List("Drews"))
-    assertEquals(names(com.histmersion.api.library.Citekey("bjrn2024_twenty"), List(com.histmersion.api.library.AuthorName("Rasmus Bjørn"))), List("Bjørn"))
-    assertEquals(names(com.histmersion.api.library.Citekey("kelly2021_gods"), List(com.histmersion.api.library.AuthorName("Adrian Kelly"), com.histmersion.api.library.AuthorName("Christopher Metcalf"))), List("Kelly"))
-    assertEquals(names(com.histmersion.api.library.Citekey("smith1987_dying"), List(com.histmersion.api.library.AuthorName("Smith, Jonathan Z."))), List("Smith"))
-    assertEquals(names(com.histmersion.api.library.Citekey("iecor2025_dataset"), List(com.histmersion.api.library.AuthorName("Cormac Anderson"), com.histmersion.api.library.AuthorName("Matthew Scarborough"))), List("Anderson"))
-    assertEquals(names(com.histmersion.api.library.Citekey("x2000_y"), Nil), Nil)
-    assertEquals(names(com.histmersion.api.library.Citekey("li2000_y"), List(com.histmersion.api.library.AuthorName("Li"))), Nil, "a two-letter name matches too much prose")
+    assertEquals(names(Citekey("latacz2004_troy"), List(AuthorName("Joachim Latacz"))), List("Latacz"))
+    assertEquals(names(Citekey("drews1993_endbronze"), List(AuthorName("Drews Robert"))), List("Drews"))
+    assertEquals(names(Citekey("bjrn2024_twenty"), List(AuthorName("Rasmus Bjørn"))), List("Bjørn"))
+    assertEquals(names(Citekey("kelly2021_gods"), List(AuthorName("Adrian Kelly"), AuthorName("Christopher Metcalf"))), List("Kelly"))
+    assertEquals(names(Citekey("smith1987_dying"), List(AuthorName("Smith, Jonathan Z."))), List("Smith"))
+    assertEquals(names(Citekey("iecor2025_dataset"), List(AuthorName("Cormac Anderson"), AuthorName("Matthew Scarborough"))), List("Anderson"))
+    assertEquals(names(Citekey("x2000_y"), Nil), Nil)
+    assertEquals(names(Citekey("li2000_y"), List(AuthorName("Li"))), Nil, "a two-letter name matches too much prose")
 
   test("the live excerpt: two paragraphs name the work they answer without citing it; both are mechanical"):
     val hs = hits(excerpt, resolve, edges, work)
@@ -100,13 +101,13 @@ class CritiquePairingSuite extends munit.FunSuite:
 
   test("not mechanical: a name two partners share; a work already cited by that name; only another year beside it"):
     val es = List(
-      Coverage.Edge(com.histmersion.api.library.Citekey("a2000_x"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("west1997_helicon")),
-      Coverage.Edge(com.histmersion.api.library.Citekey("a2000_x"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("west2011_making"))
+      Coverage.Edge(Citekey("a2000_x"), Coverage.Edge.Kind("challenges"), Citekey("west1997_helicon")),
+      Coverage.Edge(Citekey("a2000_x"), Coverage.Edge.Kind("challenges"), Citekey("west2011_making"))
     )
     val w: Citekey => Option[Work] = Map(
-      Citekey("a2000_x") -> Work(com.histmersion.api.library.Citekey("a2000_x"), List(com.histmersion.api.research.CritiquePairing.Work.Names("Alpha")), Some(com.histmersion.api.catalogue.Year(2000))),
-      Citekey("west1997_helicon") -> Work(com.histmersion.api.library.Citekey("west1997_helicon"), List(com.histmersion.api.research.CritiquePairing.Work.Names("West")), Some(com.histmersion.api.catalogue.Year(1997))),
-      Citekey("west2011_making") -> Work(com.histmersion.api.library.Citekey("west2011_making"), List(com.histmersion.api.research.CritiquePairing.Work.Names("West")), Some(com.histmersion.api.catalogue.Year(2011)))
+      Citekey("a2000_x") -> Work(Citekey("a2000_x"), List(Work.Names("Alpha")), Some(Year(2000))),
+      Citekey("west1997_helicon") -> Work(Citekey("west1997_helicon"), List(Work.Names("West")), Some(Year(1997))),
+      Citekey("west2011_making") -> Work(Citekey("west2011_making"), List(Work.Names("West")), Some(Year(2011)))
     ).get
     val r: Article.Link.Target => Option[Citekey] = t => Some(Citekey(t.value))
     val cited = "\n\nWest wrote twice [[west1997_helicon]] [[west2011_making]]."
@@ -121,13 +122,13 @@ class CritiquePairingSuite extends munit.FunSuite:
     val dated = hits(Article.Body("Alpha answers West (2011) on the date [[a2000_x]]." + cited), r, es, w)
     assertEquals(dated.filter(_.mechanical.value).map(_.missing), List("west2011_making"))
     // …but code never brings in a source the article cites nowhere: that is a writer's call
-    val fresh = hits(com.histmersion.api.research.Article.Body("Alpha answers West (2011) on the date [[a2000_x]]."), r, es, w)
+    val fresh = hits(Article.Body("Alpha answers West (2011) on the date [[a2000_x]]."), r, es, w)
     assertEquals(fresh.map(h => (h.missing, h.mechanical)), List(("west2011_making", false)))
     assert(fresh.head.line.contains("the article cites it nowhere else"), fresh.head.line)
     // only another year beside every mention: another work of the author — no hit at all
     assertEquals(hits(Article.Body("Alpha answers West's 1988 article [[a2000_x]]."), r, es.take(1), w), Nil)
     // the critic named by its own name is no mention of the partner
-    val self = List(Coverage.Edge(com.histmersion.api.library.Citekey("west1997_helicon"), com.histmersion.api.research.Coverage.Edge.Kind("updates"), com.histmersion.api.library.Citekey("west2011_making")))
+    val self = List(Coverage.Edge(Citekey("west1997_helicon"), Coverage.Edge.Kind("updates"), Citekey("west2011_making")))
     assertEquals(
       hits(Article.Body("West revised his view [[west1997_helicon]]." + cited), r, self, w).filter(_.unit.value == 0).map(_.mechanical),
       List(false)
@@ -150,12 +151,12 @@ class CritiquePairingSuite extends munit.FunSuite:
       text
     )
     // a pair whose criticised work no paragraph cites: nothing to point at
-    val loose = CritiquePair(CritiqueSide(com.histmersion.api.library.Citekey("a2000_x")), List(com.histmersion.api.research.CritiquePair.Kinds("refutes")), CritiqueSide(com.histmersion.api.library.Citekey("b2001_y")), CritiqueState.Open)
+    val loose = CritiquePair(CritiqueSide(Citekey("a2000_x")), List(CritiquePair.Kinds("refutes")), CritiqueSide(Citekey("b2001_y")), CritiqueState.Open)
     assertEquals(instruction(excerpt, loose, resolve), None)
 
   test("resolver: the citekey, an old one renamed away, the unique short form — nothing else"):
     val r = resolver(
-      Set(com.histmersion.api.library.Citekey("knapp2016_seven"), com.histmersion.api.library.Citekey("knapp2021_migration"), com.histmersion.api.library.Citekey("west2011_making"), com.histmersion.api.library.Citekey("latacz2004_troy")),
+      Set(Citekey("knapp2016_seven"), Citekey("knapp2021_migration"), Citekey("west2011_making"), Citekey("latacz2004_troy")),
       Map(Citekey("latacz2023_troy") -> Citekey("latacz2004_troy"))
     )
     assertEquals(

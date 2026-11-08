@@ -1,10 +1,13 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import java.util.UUID
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MergeResolutions(
     resolve: List[MergeResolution] = Nil,
@@ -24,20 +27,20 @@ object MergeResolutions:
 
   object Text:
     type Flag = Flag.T
-    object Flag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Flag extends RefinedType[String, Pure]
     type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Problem extends RefinedType[String, Pure]
     type Template = Template.T
-    object Template extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Template extends RefinedType[String, Pure]
 
 
 
-    def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.Flag): Either[com.histmersion.api.exchange.MergeResolutions.Text.Problem, MergeResolution] =
+    def flag(s: Flag): Either[Problem, MergeResolution] =
       (s).value.indexOf('=') match
-        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(_root_.com.histmersion.api.exchange.MergeResolution.Issue((s).value.take(i).trim), _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)))
-        case _                              => Left(_root_.com.histmersion.api.exchange.MergeResolutions.Text.Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
+        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(MergeResolution.Issue((s).value.take(i).trim), MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)))
+        case _                              => Left(Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
 
-    def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.Template =
+    def template(p: MergePlan, current: MergeResolutions): Template =
       val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap
       def opts(i: MergeIssue): String =
         i.options
@@ -64,7 +67,7 @@ object MergeResolutions:
           case (None, None, _) =>
             s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})")
       val issues = p.issues.filter(_.severity != MergeIssue.Severity.Info)
-      _root_.com.histmersion.api.exchange.MergeResolutions.Text.Template(List(
+      Template(List(
         List(
           s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",
           "# left = this collection (here), right = the bundle. An id with no value is still open.",

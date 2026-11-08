@@ -1,10 +1,11 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given
 object UpstreamQuotaMarkdown:
 
-  export com.histmersion.api.library.UpstreamQuota.{Upstream as NameUpstream}
+  export UpstreamQuota.{Upstream as NameUpstream}
 
-  private def name(upstream: com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream): String = if upstream == _root_.com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream("core") then ("CORE") else upstream.value
+  private def name(upstream: UpstreamQuotaMarkdown.NameUpstream): String = if upstream == UpstreamQuotaMarkdown.NameUpstream("core") then ("CORE") else upstream.value
 
   def line(q: UpstreamQuota): String =
     val spent = (q.lookupTokens).value + q.searchTokens.value

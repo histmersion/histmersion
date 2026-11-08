@@ -1,19 +1,21 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
 
 final case class RefRow(
-    title: Option[com.histmersion.api.library.Title] = None,
-    authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
-    year: Option[com.histmersion.api.catalogue.Year] = None,
-    doi: Option[com.histmersion.api.library.Doi] = None,
+    title: Option[Title] = None,
+    authors: List[AuthorName] = (Nil).map(AuthorName.apply),
+    year: Option[Year] = None,
+    doi: Option[Doi] = None,
     raw: Option[RefRow.Raw] = None,
-    citekey: Option[com.histmersion.api.library.Citekey] = None
+    citekey: Option[Citekey] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object RefRow:
-  export com.histmersion.api.library.Refs.{ReferenceText as Raw}
+  export Refs.{ReferenceText as Raw}

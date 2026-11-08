@@ -1,21 +1,24 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Queue.*
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.library.Citekey
 
 /** A list item's goal and the run or job that wrote it and that ticked it off. */
 class QueueLinksSuite extends munit.FunSuite:
 
   private val open =
-    QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(7), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012"), None, QueueItem.Status(Open), goal = Some(com.histmersion.api.automation.Goal.Slug("collapse")), createdBy = Some(QueueItem.CreatedBy("run-1")))
+    QueueItem(QueueItem.Id(7), QueueItem.List("acquire"), QueueItem.Text("Drake 2012"), None, QueueItem.Status(Open), goal = Some(Goal.Slug("collapse")), createdBy = Some(QueueItem.CreatedBy("run-1")))
 
   test("ticking an item off records the run or job that did it; reopening forgets it"):
-    val done = applyPatch(open, fulfil(open, com.histmersion.api.library.Citekey("drake2012"), Some(com.histmersion.api.automation.Queue.QueueItem.ClosedBy("job-9"))))
+    val done = applyPatch(open, fulfil(open, Citekey("drake2012"), Some(QueueItem.ClosedBy("job-9"))))
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("job-9"), Some("run-1")))
     assert(done.reason.exists(_.value.contains("[[drake2012]]")))
     assertEquals(
-      applyPatch(done, QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text("Drake 2012, the book")))).closedBy,
+      applyPatch(done, QueuePatch(text = Some(QueueItem.Text("Drake 2012, the book")))).closedBy,
       Some("job-9"),
       "an edit keeps it"
     )
@@ -23,24 +26,24 @@ class QueueLinksSuite extends munit.FunSuite:
     assertEquals(applyPatch(open, QueuePatch(status = Some(QueueItem.Status(Done)))).closedBy, None, "ticked off by a person")
 
   test("a goal is set, kept, and cleared by a blank"):
-    assertEquals(applyPatch(open, QueuePatch(goal = Some(com.histmersion.api.automation.Goal.Slug("anatolia")))).goal, Some("anatolia"))
-    assertEquals(applyPatch(open, QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text("x")))).goal, Some("collapse"))
-    assertEquals(applyPatch(open, QueuePatch(goal = Some(com.histmersion.api.automation.Goal.Slug("  ")))).goal, None)
+    assertEquals(applyPatch(open, QueuePatch(goal = Some(Goal.Slug("anatolia")))).goal, Some("anatolia"))
+    assertEquals(applyPatch(open, QueuePatch(text = Some(QueueItem.Text("x")))).goal, Some("collapse"))
+    assertEquals(applyPatch(open, QueuePatch(goal = Some(Goal.Slug("  ")))).goal, None)
 
   test("an item's goals: its own first, then the goals that link it, each once, by item"):
     val got = itemGoals(
-      List(QueueItem.Id(7) -> GoalRef(com.histmersion.api.automation.Goal.Slug("collapse"), com.histmersion.api.automation.Goal.Title("Collapse"))),
+      List(QueueItem.Id(7) -> GoalRef(Goal.Slug("collapse"), Goal.Title("Collapse"))),
       List(
-        QueueItem.Id(9) -> GoalRef(com.histmersion.api.automation.Goal.Slug("anatolia"), com.histmersion.api.automation.Goal.Title("Anatolia")),
-        QueueItem.Id(7) -> GoalRef(com.histmersion.api.automation.Goal.Slug("anatolia"), com.histmersion.api.automation.Goal.Title("Anatolia")),
-        QueueItem.Id(7) -> GoalRef(com.histmersion.api.automation.Goal.Slug("collapse"), com.histmersion.api.automation.Goal.Title("Collapse"))
+        QueueItem.Id(9) -> GoalRef(Goal.Slug("anatolia"), Goal.Title("Anatolia")),
+        QueueItem.Id(7) -> GoalRef(Goal.Slug("anatolia"), Goal.Title("Anatolia")),
+        QueueItem.Id(7) -> GoalRef(Goal.Slug("collapse"), Goal.Title("Collapse"))
       )
     )
     assertEquals(
       got,
       List(
-        ItemGoals(com.histmersion.api.automation.Queue.QueueItem.Id(7), List(GoalRef(com.histmersion.api.automation.Goal.Slug("collapse"), com.histmersion.api.automation.Goal.Title("Collapse")), GoalRef(com.histmersion.api.automation.Goal.Slug("anatolia"), com.histmersion.api.automation.Goal.Title("Anatolia")))),
-        ItemGoals(com.histmersion.api.automation.Queue.QueueItem.Id(9), List(GoalRef(com.histmersion.api.automation.Goal.Slug("anatolia"), com.histmersion.api.automation.Goal.Title("Anatolia"))))
+        ItemGoals(QueueItem.Id(7), List(GoalRef(Goal.Slug("collapse"), Goal.Title("Collapse")), GoalRef(Goal.Slug("anatolia"), Goal.Title("Anatolia")))),
+        ItemGoals(QueueItem.Id(9), List(GoalRef(Goal.Slug("anatolia"), Goal.Title("Anatolia"))))
       )
     )
 

@@ -1,24 +1,30 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.SpatialHierarchyResult
+import com.histmersion.api.Sha256
+import com.histmersion.api.catalogue.Year
 object Ingest:
   type Disposition = Disposition.T
-  object Disposition extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Disposition extends RefinedType[String, Pure]
   type DropInPath = DropInPath.T
-  object DropInPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DropInPath extends RefinedType[String, Pure]
   type Extension = Extension.T
-  object Extension extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Extension extends RefinedType[String, Pure]
   type JobAge = JobAge.T
-  object JobAge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JobAge extends RefinedType[String, Pure]
   type JobStatus = JobStatus.T
-  object JobStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object JobStatus extends RefinedType[String, Pure]
   type StepName = StepName.T
-  object StepName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StepName extends RefinedType[String, Pure]
   type StoredName = StoredName.T
-  object StoredName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StoredName extends RefinedType[String, Pure]
 
   val CodeConflict = "conflict"
 
@@ -26,38 +32,38 @@ object Ingest:
 
   val MediaCacheControl = "public, max-age=86400"
 
-  val KindIngest = com.histmersion.api.library.IngestJobKinds.Ingest.kind.value
-  val KindReocr = com.histmersion.api.library.IngestJobKinds.Reocr.kind.value
+  val KindIngest = IngestJobKinds.Ingest.kind.value
+  val KindReocr = IngestJobKinds.Reocr.kind.value
 
-  def originalDisposition(citekey: com.histmersion.api.library.Citekey, storedName: com.histmersion.api.library.Ingest.StoredName): com.histmersion.api.library.Ingest.Disposition =
+  def originalDisposition(citekey: Citekey, storedName: StoredName): Disposition =
     val ext = (storedName).value.reverse.takeWhile(_ != '.').reverse
-    _root_.com.histmersion.api.library.Ingest.Disposition(s"""attachment; filename="$citekey.${if ext == (storedName).value then "bin" else ext}"""")
+    Disposition(s"""attachment; filename="$citekey.${if ext == (storedName).value then "bin" else ext}"""")
 
-  def dispositionExtension(disposition: com.histmersion.api.library.Ingest.Disposition): Option[com.histmersion.api.library.Ingest.Extension] =
+  def dispositionExtension(disposition: Disposition): Option[Extension] =
     ("""filename="?([^";]+)"?""".r
       .findFirstMatchIn((disposition).value)
       .map(_.group(1).trim)
       .map(_.reverse.takeWhile(_ != '.').reverse.toLowerCase)
-      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))).map(refactorValue => _root_.com.histmersion.api.library.Ingest.Extension(refactorValue))
+      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))).map(refactorValue => Extension(refactorValue))
 
-  final case class Accepted(jobId: com.histmersion.api.SpatialHierarchyResult.Job.Id, citekey: com.histmersion.api.library.Citekey, status: Accepted.Status, sha256: Option[com.histmersion.api.Sha256] = None)
+  final case class Accepted(jobId: SpatialHierarchyResult.Job.Id, citekey: Citekey, status: Accepted.Status, sha256: Option[Sha256] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Accepted:
     type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Status extends RefinedType[String, Pure]
 
 
   final case class Params(
-      citekey: com.histmersion.api.library.Citekey,
+      citekey: Citekey,
       filename: Option[Params.Filename] = None,
-      quality: Params.Quality = _root_.com.histmersion.api.library.Ingest.Params.Quality(false),
-      force: Params.Force = _root_.com.histmersion.api.library.Ingest.Params.Force(false),
-      title: Option[com.histmersion.api.library.Title] = None,
-      authors: List[com.histmersion.api.library.AuthorName] = Nil,
-      year: Option[com.histmersion.api.catalogue.Year] = None,
-      doi: Option[com.histmersion.api.library.Doi] = None,
+      quality: Params.Quality = Params.Quality(false),
+      force: Params.Force = Params.Force(false),
+      title: Option[Title] = None,
+      authors: List[AuthorName] = Nil,
+      year: Option[Year] = None,
+      doi: Option[Doi] = None,
       provenance: Option[Params.Provenance] = None,
       acquireItem: Option[Params.AcquireItem] = None
   )
@@ -65,16 +71,16 @@ object Ingest:
   object Params:
     export com.histmersion.api.exchange.Bundle.Asset.{FileName as Filename}
     type Quality = Quality.T
-    object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Quality extends RefinedType[Boolean, Pure]
     type Force = Force.T
-    object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.library.Source.Provenance
-    export com.histmersion.api.library.Acquire.{ItemNumber as AcquireItem}
+    object Force extends RefinedType[Boolean, Pure]
+    export Source.Provenance
+    export Acquire.{ItemNumber as AcquireItem}
 
   final case class Report(
-      citekey: com.histmersion.api.library.Citekey,
-      doi: Option[com.histmersion.api.library.Doi],
-      title: Option[com.histmersion.api.library.Title],
+      citekey: Citekey,
+      doi: Option[Doi],
+      title: Option[Title],
       created: Report.Created,
       pdf: Option[PdfInfo],
       edgesAdded: Report.EdgesAdded,
@@ -86,36 +92,36 @@ object Ingest:
 
   object Report:
     type Created = Created.T
-    object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Created extends RefinedType[Boolean, Pure]
     type EdgesAdded = EdgesAdded.T
-    object EdgesAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.library.Ingest.{DropInPath as DropIn}
+    object EdgesAdded extends RefinedType[Int, Pure]
+    export Ingest.{DropInPath as DropIn}
 
 
   final case class Request(
       id: Request.Id,
-      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      citekey: Option[Citekey] = None,
       arxiv: Option[Request.Arxiv] = None,
-      refetch: Request.Refetch = _root_.com.histmersion.api.library.Ingest.Request.Refetch(false),
-      legalOnly: Request.LegalOnly = _root_.com.histmersion.api.library.Ingest.Request.LegalOnly(false)
+      refetch: Request.Refetch = Request.Refetch(false),
+      legalOnly: Request.LegalOnly = Request.LegalOnly(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Request:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.library.Source.Candidate.{ArxivId as Arxiv}
+    object Id extends RefinedType[String, Pure]
+    export Source.Candidate.{ArxivId as Arxiv}
     type Refetch = Refetch.T
-    object Refetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Refetch extends RefinedType[Boolean, Pure]
     type LegalOnly = LegalOnly.T
-    object LegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object LegalOnly extends RefinedType[Boolean, Pure]
 
 
   final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Step:
-    export com.histmersion.api.library.Ingest.{StepName as Value}
+    export Ingest.{StepName as Value}
     type Ok = Ok.T
-    object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ok extends RefinedType[Boolean, Pure]
     type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Detail extends RefinedType[String, Pure]

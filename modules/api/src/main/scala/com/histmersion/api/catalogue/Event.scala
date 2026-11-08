@@ -1,7 +1,11 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Event:
   type Uid = Uid.T
-  object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Uid extends RefinedType[String, Pure]
   type Id = Id.T
   object Id extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.constraint.any.Pure]

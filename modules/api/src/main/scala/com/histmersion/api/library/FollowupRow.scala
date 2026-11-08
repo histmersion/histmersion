@@ -1,33 +1,37 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class FollowupRow(
-    title: Option[com.histmersion.api.library.Title] = None,
-    year: Option[com.histmersion.api.catalogue.Year] = None,
-    doi: Option[com.histmersion.api.library.Doi] = None,
+    title: Option[Title] = None,
+    year: Option[Year] = None,
+    doi: Option[Doi] = None,
     arxiv: Option[FollowupRow.Arxiv] = None,
     citedBy: Option[FollowupRow.CitedBy] = None,
-    isInfluential: FollowupRow.IsInfluential = _root_.com.histmersion.api.library.FollowupRow.IsInfluential(false),
+    isInfluential: FollowupRow.IsInfluential = FollowupRow.IsInfluential(false),
     intents: List[FollowupRow.Intents] = Nil,
     contexts: List[FollowupRow.Contexts] = Nil,
-    proposedKind: FollowupRow.ProposedKind = _root_.com.histmersion.api.library.FollowupRow.ProposedKind("cites"),
-    citekey: Option[com.histmersion.api.library.Citekey] = None
+    proposedKind: FollowupRow.ProposedKind = FollowupRow.ProposedKind("cites"),
+    citekey: Option[Citekey] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object FollowupRow:
   type Arxiv = Arxiv.T
-  object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.library.Acquire.{CitedByCount as CitedBy}
+  object Arxiv extends RefinedType[String, Pure]
+  export Acquire.{CitedByCount as CitedBy}
   type IsInfluential = IsInfluential.T
-  object IsInfluential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IsInfluential extends RefinedType[Boolean, Pure]
   type Intents = Intents.T
-  object Intents extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Intents extends RefinedType[String, Pure]
   type Contexts = Contexts.T
-  object Contexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Contexts extends RefinedType[String, Pure]
   type ProposedKind = ProposedKind.T
-  object ProposedKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ProposedKind extends RefinedType[String, Pure]

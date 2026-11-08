@@ -1,4 +1,5 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import com.histmersion.api.given
 object StallsMarkdown:
 

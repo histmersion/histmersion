@@ -1,4 +1,5 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -21,6 +22,8 @@ import com.histmersion.api.research.{
   CritiqueState
 }
 import com.histmersion.api.research.Article
+import com.histmersion.api.automation.Activity
+import com.histmersion.api.library.Filter
 class CritiquesSuite extends munit.FunSuite:
 
   /** `[[x]]` → its canonical citekey: two aliases, one article slug, the rest themselves. */
@@ -88,10 +91,10 @@ class CritiquesSuite extends munit.FunSuite:
     ) // touches no cited source
     val reasons = List(
       CritiqueReason(
-        com.histmersion.api.library.Citekey("frazer1922_golden"),
-        com.histmersion.api.library.Citekey("brown1999_rites"),
-        com.histmersion.api.research.CritiqueReason.Reason("The article cites it for the calendar only."),
-        Some(com.histmersion.api.automation.Activity.Actor("person"))
+        Citekey("frazer1922_golden"),
+        Citekey("brown1999_rites"),
+        CritiqueReason.Reason("The article cites it for the calendar only."),
+        Some(Activity.Actor("person"))
       )
     )
     val pairs = Critiques.build(body, resolve, edges, reasons, refs)
@@ -107,20 +110,20 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(pairs.head.reason, Some("The article cites it for the calendar only."))
     assertEquals(
       pairs.last.dst,
-      CritiqueSide(com.histmersion.api.library.Citekey("frazer1922_golden"), Some(com.histmersion.api.library.Title("The golden bough")), Some(com.histmersion.api.catalogue.Year(1922)), cited = com.histmersion.api.research.CritiqueSide.Cited(true), mentions = com.histmersion.api.research.CritiqueSide.Mentions(2))
+      CritiqueSide(Citekey("frazer1922_golden"), Some(Title("The golden bough")), Some(Year(1922)), cited = CritiqueSide.Cited(true), mentions = CritiqueSide.Mentions(2))
     )
     // a reason on an addressed pair: the text wins
     val both = Critiques.build(
       body,
       resolve,
       edges.take(1),
-      List(CritiqueReason(com.histmersion.api.library.Citekey("smith1987_dying"), com.histmersion.api.library.Citekey("frazer1922_golden"), com.histmersion.api.research.CritiqueReason.Reason("x"))),
+      List(CritiqueReason(Citekey("smith1987_dying"), Citekey("frazer1922_golden"), CritiqueReason.Reason("x"))),
       refs
     )
     assertEquals(both.map(_.state), List(CritiqueState.Addressed))
     // an empty stored reason is no reason
     assertEquals(
-      Critiques.build(body, resolve, edges.slice(1, 2), List(reasons.head.copy(reason = com.histmersion.api.research.CritiqueReason.Reason(" "))), refs).map(_.state),
+      Critiques.build(body, resolve, edges.slice(1, 2), List(reasons.head.copy(reason = CritiqueReason.Reason(" "))), refs).map(_.state),
       List(CritiqueState.Open)
     )
 
@@ -134,8 +137,8 @@ class CritiquesSuite extends munit.FunSuite:
     )
     assertEquals(pairs.map(p => (p.kinds, p.state)), List((List("refutes", "updates"), CritiqueState.Open)))
     assertEquals(
-      Critiques.find(pairs, CritiqueRef(com.histmersion.api.library.Citekey("a2000_x"), com.histmersion.api.library.Citekey("b2001_y"))).map(_.ref),
-      Some(CritiqueRef(com.histmersion.api.library.Citekey("b2001_y"), com.histmersion.api.library.Citekey("a2000_x")))
+      Critiques.find(pairs, CritiqueRef(Citekey("a2000_x"), Citekey("b2001_y"))).map(_.ref),
+      Some(CritiqueRef(Citekey("b2001_y"), Citekey("a2000_x")))
     )
 
   private def pair(
@@ -183,7 +186,7 @@ class CritiquesSuite extends munit.FunSuite:
       state = CritiqueState.Reasoned,
       reason = Some(CritiquePair.Reason("off the point"))
     )
-    val (text, shown) = Critiques.promptText(open :+ why, maxOpen = com.histmersion.api.research.Critiques.OpenLimit(2), maxReasoned = com.histmersion.api.research.Critiques.ReasonedLimit(10))
+    val (text, shown) = Critiques.promptText(open :+ why, maxOpen = Critiques.OpenLimit(2), maxReasoned = Critiques.ReasonedLimit(10))
     assertEquals(shown.map(_.src.citekey), List("c1", "c2"))
     assert(text.value.startsWith("6 pairs — 0 addressed, 1 reasoned, 5 open."), text)
     assert(text.value.contains("- c1>d: [[c1]] (not cited) challenges [[d]] (cited)"), text)
@@ -191,10 +194,10 @@ class CritiquesSuite extends munit.FunSuite:
     assert(text.value.contains("- r1>d: off the point"), text)
     // nothing open, nothing reasoned: nothing to say
     assertEquals(
-      Critiques.promptText(List(pair(Citekey("a"), CritiquePair.Kinds("refutes"), Citekey("b"), CritiqueSide.Cited(true), CritiqueSide.Cited(true), state = CritiqueState.Addressed)), com.histmersion.api.research.Critiques.OpenLimit(5), com.histmersion.api.research.Critiques.ReasonedLimit(5)),
+      Critiques.promptText(List(pair(Citekey("a"), CritiquePair.Kinds("refutes"), Citekey("b"), CritiqueSide.Cited(true), CritiqueSide.Cited(true), state = CritiqueState.Addressed)), Critiques.OpenLimit(5), Critiques.ReasonedLimit(5)),
       ("", Nil)
     )
-    assert(Critiques.promptText(List(why), com.histmersion.api.research.Critiques.OpenLimit(5), com.histmersion.api.research.Critiques.ReasonedLimit(5))._1.value.contains("No pair is open."))
+    assert(Critiques.promptText(List(why), Critiques.OpenLimit(5), Critiques.ReasonedLimit(5))._1.value.contains("No pair is open."))
 
   test("the Method note gains the counts only when there is a pair; coverage shows the open and the reasoned ones"):
     val ps = List(
@@ -205,11 +208,11 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(Critiques.methodPart(ps), Some("disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open"))
     assertEquals(Critiques.methodPart(Nil), None)
     val c = Coverage(
-      com.histmersion.api.research.Article.Slug("s"),
-      Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("t"))),
-      com.histmersion.api.research.Coverage.FilterLine("search {topics: [\"t\"]}"),
-      com.histmersion.api.research.Coverage.Total(1),
-      com.histmersion.api.research.Coverage.Checked(1),
+      Article.Slug("s"),
+      Article.Filter(topics = List(Filter.Topics("t"))),
+      Coverage.FilterLine("search {topics: [\"t\"]}"),
+      Coverage.Total(1),
+      Coverage.Checked(1),
       Nil,
       Nil,
       Nil,
@@ -236,25 +239,25 @@ class CritiquesSuite extends munit.FunSuite:
 
   test("wire forms: a pair and a reason as the CLI and the models write them"):
     assertEquals(
-      CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("[[Smith1987_dying]] > frazer1922_golden")),
-      Right(CritiqueRef(com.histmersion.api.library.Citekey("smith1987_dying"), com.histmersion.api.library.Citekey("frazer1922_golden")))
+      CritiqueRef.parse(CritiqueRef.Wire("[[Smith1987_dying]] > frazer1922_golden")),
+      Right(CritiqueRef(Citekey("smith1987_dying"), Citekey("frazer1922_golden")))
     )
-    assertEquals(CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a2000_x -> b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
-    assertEquals(CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a2000_x → b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
-    assert(CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a2000_x")).isLeft && CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a>a")).isLeft && CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire(">b")).isLeft)
+    assertEquals(CritiqueRef.parse(CritiqueRef.Wire("a2000_x -> b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
+    assertEquals(CritiqueRef.parse(CritiqueRef.Wire("a2000_x → b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
+    assert(CritiqueRef.parse(CritiqueRef.Wire("a2000_x")).isLeft && CritiqueRef.parse(CritiqueRef.Wire("a>a")).isLeft && CritiqueRef.parse(CritiqueRef.Wire(">b")).isLeft)
     assertEquals(
-      CritiqueReason.parse(com.histmersion.api.research.CritiqueReason.Reason("a2000_x>b2001_y=Not the point.  ")),
-      Right(CritiqueReason(com.histmersion.api.library.Citekey("a2000_x"), com.histmersion.api.library.Citekey("b2001_y"), com.histmersion.api.research.CritiqueReason.Reason("Not the point.")))
+      CritiqueReason.parse(CritiqueReason.Reason("a2000_x>b2001_y=Not the point.  ")),
+      Right(CritiqueReason(Citekey("a2000_x"), Citekey("b2001_y"), CritiqueReason.Reason("Not the point.")))
     )
-    assertEquals(CritiqueReason.parse(com.histmersion.api.research.CritiqueReason.Reason("a2000_x>b2001_y=")).map(_.reason), Right(""))
-    assert(CritiqueReason.parse(com.histmersion.api.research.CritiqueReason.Reason("a2000_x>b2001_y")).isLeft)
-    assert(CritiqueReason.tidy(CritiqueReason(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b"), com.histmersion.api.research.CritiqueReason.Reason("x" * 501))).isLeft)
+    assertEquals(CritiqueReason.parse(CritiqueReason.Reason("a2000_x>b2001_y=")).map(_.reason), Right(""))
+    assert(CritiqueReason.parse(CritiqueReason.Reason("a2000_x>b2001_y")).isLeft)
+    assert(CritiqueReason.tidy(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x" * 501))).isLeft)
     assertEquals(
-      CritiqueReason.tidy(CritiqueReason(com.histmersion.api.library.Citekey(" A "), com.histmersion.api.library.Citekey("b"), com.histmersion.api.research.CritiqueReason.Reason(" one\n line "))).map(r => (r.src, r.reason)),
+      CritiqueReason.tidy(CritiqueReason(Citekey(" A "), Citekey("b"), CritiqueReason.Reason(" one\n line "))).map(r => (r.src, r.reason)),
       Right(("a", "one line"))
     )
-    assert(Article.Patch(critiqueReasons = List(CritiqueReason(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b"), com.histmersion.api.research.CritiqueReason.Reason("x"))), ifUpdatedAt = Some(com.histmersion.api.research.Article.UpdatedAt("t"))).onlyCritiques)
-    assert(!Article.Patch(body = Some(com.histmersion.api.research.Article.Body("b")), critiqueReasons = List(CritiqueReason(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b"), com.histmersion.api.research.CritiqueReason.Reason("x")))).onlyCritiques)
+    assert(Article.Patch(critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x"))), ifUpdatedAt = Some(Article.UpdatedAt("t"))).onlyCritiques)
+    assert(!Article.Patch(body = Some(Article.Body("b")), critiqueReasons = List(CritiqueReason(Citekey("a"), Citekey("b"), CritiqueReason.Reason("x")))).onlyCritiques)
     assert(!Article.Patch().onlyCritiques)
 
   // ── §6.9: blocks with their lines, the criticised side, bearing pairs ─────────────────────────
@@ -272,8 +275,8 @@ class CritiquesSuite extends munit.FunSuite:
         (15, 15, "Last [[b]].")
       )
     )
-    assert(Critiques.together(body, CritiqueRef(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b")), selfResolve))
-    assert(!Critiques.together(body, CritiqueRef(com.histmersion.api.library.Citekey("b"), com.histmersion.api.library.Citekey("c")), selfResolve))
+    assert(Critiques.together(body, CritiqueRef(Citekey("a"), Citekey("b")), selfResolve))
+    assert(!Critiques.together(body, CritiqueRef(Citekey("b"), Citekey("c")), selfResolve))
 
   test(
     "criticised: the target of challenges/refutes/updates, the source of superseded_by; bearing = open on a cited work"
@@ -295,7 +298,7 @@ class CritiquesSuite extends munit.FunSuite:
       pair(Citekey("c2"), CritiquePair.Kinds("challenges"), Citekey("d2"), CritiqueSide.Cited(true), CritiqueSide.Cited(false))
     )
     assertEquals(Critiques.toRule(ps).map(_.ref.wire), List("a1>b1"))
-    val (text, shown) = Critiques.promptText(ps, maxOpen = com.histmersion.api.research.Critiques.OpenLimit(10), maxReasoned = com.histmersion.api.research.Critiques.ReasonedLimit(10))
+    val (text, shown) = Critiques.promptText(ps, maxOpen = Critiques.OpenLimit(10), maxReasoned = Critiques.ReasonedLimit(10))
     assertEquals(shown.map(_.ref.wire), List("a1>b1"))
     assert(
       text.value.contains(
@@ -303,5 +306,5 @@ class CritiquesSuite extends munit.FunSuite:
       ),
       text
     )
-    val (bg, none) = Critiques.promptText(ps.drop(2), com.histmersion.api.research.Critiques.OpenLimit(10), com.histmersion.api.research.Critiques.ReasonedLimit(10))
+    val (bg, none) = Critiques.promptText(ps.drop(2), Critiques.OpenLimit(10), Critiques.ReasonedLimit(10))
     assert(bg.value.contains("No open pair is on a work the article cites.") && none.isEmpty, bg)

@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -6,25 +7,26 @@ import io.circe.Codec
 import com.histmersion.api.{StrictJson, TimeSpan}
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
 
 final case class EventPut(
-    label: com.histmersion.api.catalogue.EventSummary.Label,
-    kind: com.histmersion.api.catalogue.EventSummary.Kind = _root_.com.histmersion.api.catalogue.EventSummary.Kind("event"),
+    label: EventSummary.Label,
+    kind: EventSummary.Kind = EventSummary.Kind("event"),
     timeSpan: TimeSpan = TimeSpan(),
-    historicity: com.histmersion.api.catalogue.EventSummary.Historicity = _root_.com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
+    historicity: EventSummary.Historicity = EventSummary.Historicity("attested"),
     geometry: Option[EventPut.Geometry] = None,
-    placeId: Option[com.histmersion.api.catalogue.Place.Id] = None,
-    parentId: Option[com.histmersion.api.catalogue.Event.Id] = None,
-    description: Option[com.histmersion.api.catalogue.EventSummary.Description] = None,
-    citekey: Option[com.histmersion.api.library.Citekey] = None,
+    placeId: Option[Place.Id] = None,
+    parentId: Option[Event.Id] = None,
+    description: Option[EventSummary.Description] = None,
+    citekey: Option[Citekey] = None,
     datings: List[EventDating] = Nil,
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
-    scale: Option[com.histmersion.api.catalogue.EventSummary.Scale] = None
+    scale: Option[EventSummary.Scale] = None
 ) derives KindlingsSchema, com.histmersion.api.json.Schema
 object EventPut:
 
 
-  export com.histmersion.api.catalogue.EventPatch.Geometry
+  export EventPatch.Geometry
 
   given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])

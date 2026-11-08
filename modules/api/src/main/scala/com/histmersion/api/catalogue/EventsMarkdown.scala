@@ -1,4 +1,5 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import com.histmersion.api.{OffsetPage, TimeSpan, YearFmt}
 import com.histmersion.api.Markdown.*
 
@@ -16,7 +17,7 @@ object EventsMarkdown:
     OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine).value
 
   private[api] def eventScale(e: EventSummary): String =
-    (s"${e.scale} (${if ((e.scaleStated) == _root_.com.histmersion.api.catalogue.EventSummary.ScaleStated(true)) then "stated" else "derived"})")
+    (s"${e.scale} (${if ((e.scaleStated) == EventSummary.ScaleStated(true)) then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
   def event(d: EventCard, pictures: List[String] = Nil): String =

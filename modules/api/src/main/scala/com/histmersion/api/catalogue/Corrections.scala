@@ -1,16 +1,19 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import io.circe.Json
 import io.circe.syntax.*
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Corrections:
   type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Markdown extends RefinedType[String, Pure]
 
   type StatusResult = StatusResult.T
-  object StatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownResult = com.histmersion.api.catalogue.Corrections.Markdown
-  val MarkdownResult: _root_.com.histmersion.api.catalogue.Corrections.Markdown.type = _root_.com.histmersion.api.catalogue.Corrections.Markdown
+  object StatusResult extends RefinedType[String, Pure]
+  type MarkdownResult = Markdown
+  val MarkdownResult: Markdown.type = Markdown
 
   enum Outcome:
     case Keep
@@ -24,13 +27,13 @@ object Corrections:
     else if upstreamNow == upstreamThen then Outcome.Keep
     else Outcome.Conflict
 
-  def status(o: Outcome): com.histmersion.api.catalogue.Corrections.StatusResult = o match
-    case Outcome.Keep     => _root_.com.histmersion.api.catalogue.Corrections.StatusResult(Correction.Status.Active)
-    case Outcome.Retire   => _root_.com.histmersion.api.catalogue.Corrections.StatusResult(Correction.Status.Agreed)
-    case Outcome.Conflict => _root_.com.histmersion.api.catalogue.Corrections.StatusResult(Correction.Status.Conflict)
+  def status(o: Outcome): StatusResult = o match
+    case Outcome.Keep     => StatusResult(Correction.Status.Active)
+    case Outcome.Retire   => StatusResult(Correction.Status.Agreed)
+    case Outcome.Conflict => StatusResult(Correction.Status.Conflict)
 
   def counts(os: Iterable[Outcome]): Correction.Counts =
-    Correction.Counts(_root_.com.histmersion.api.catalogue.Correction.Counts.Kept(os.count(_ == Outcome.Keep)), _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(os.count(_ == Outcome.Retire)), _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(os.count(_ == Outcome.Conflict)))
+    Correction.Counts(Correction.Counts.Kept(os.count(_ == Outcome.Keep)), Correction.Counts.Retired(os.count(_ == Outcome.Retire)), Correction.Counts.Conflicts(os.count(_ == Outcome.Conflict)))
 
   def show(json: String): String =
     io.circe.parser.parse(json).toOption match
@@ -51,9 +54,9 @@ object Corrections:
 
     def clip(s: String): String = if (s).length > 80 then ((s).take(79) + "…") else ((s))
 
-  def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.Markdown =
-    if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.Markdown("_No corrections by hand._")
+  def markdown(l: Correction.List): Markdown =
+    if l.corrections.isEmpty then Markdown("_No corrections by hand._")
     else
       val lines =
         l.corrections.map(c => s"- **${c.targetId}**${c.label.fold("")(t => s" ($t)")} · ${c.status} · ${describe(c)}")
-      _root_.com.histmersion.api.catalogue.Corrections.Markdown((s"### ${l.total} correction(s) by hand" :: "" :: lines).mkString("\n"))
+      Markdown((s"### ${l.total} correction(s) by hand" :: "" :: lines).mkString("\n"))

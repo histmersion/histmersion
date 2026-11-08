@@ -1,5 +1,8 @@
-package com.histmersion.api.plugins
+package com.histmersion
+package api.plugins
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 enum PluginState:
   case Registered
 
@@ -9,10 +12,10 @@ enum PluginState:
 
   case Refused
 
-  def wire: com.histmersion.api.plugins.PluginState.Wire = _root_.com.histmersion.api.plugins.PluginState.Wire(toString.toLowerCase(java.util.Locale.ROOT))
+  def wire: PluginState.Wire = PluginState.Wire(toString.toLowerCase(java.util.Locale.ROOT))
 
 object PluginState:
   type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Wire extends RefinedType[String, Pure]
 
-  def parse(s: com.histmersion.api.plugins.PluginState.Wire): Option[PluginState] = values.find(_.wire == _root_.com.histmersion.api.plugins.PluginState.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+  def parse(s: Wire): Option[PluginState] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))

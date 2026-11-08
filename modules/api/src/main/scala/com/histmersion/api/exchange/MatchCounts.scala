@@ -1,36 +1,39 @@
-package com.histmersion.api.exchange
+package com.histmersion
+package api.exchange
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MatchCounts(
-    sources: MatchCounts.Sources = _root_.com.histmersion.api.exchange.MatchCounts.Sources(0),
-    byUid: MatchCounts.ByUid = _root_.com.histmersion.api.exchange.MatchCounts.ByUid(0),
-    byLedger: MatchCounts.ByLedger = _root_.com.histmersion.api.exchange.MatchCounts.ByLedger(0),
-    byStrongKey: MatchCounts.ByStrongKey = _root_.com.histmersion.api.exchange.MatchCounts.ByStrongKey(0),
-    byScore: MatchCounts.ByScore = _root_.com.histmersion.api.exchange.MatchCounts.ByScore(0),
-    undecided: MatchCounts.Undecided = _root_.com.histmersion.api.exchange.MatchCounts.Undecided(0),
-    unmatched: MatchCounts.Unmatched = _root_.com.histmersion.api.exchange.MatchCounts.Unmatched(0),
-    deletedHere: MatchCounts.DeletedHere = _root_.com.histmersion.api.exchange.MatchCounts.DeletedHere(0)
+    sources: MatchCounts.Sources = MatchCounts.Sources(0),
+    byUid: MatchCounts.ByUid = MatchCounts.ByUid(0),
+    byLedger: MatchCounts.ByLedger = MatchCounts.ByLedger(0),
+    byStrongKey: MatchCounts.ByStrongKey = MatchCounts.ByStrongKey(0),
+    byScore: MatchCounts.ByScore = MatchCounts.ByScore(0),
+    undecided: MatchCounts.Undecided = MatchCounts.Undecided(0),
+    unmatched: MatchCounts.Unmatched = MatchCounts.Unmatched(0),
+    deletedHere: MatchCounts.DeletedHere = MatchCounts.DeletedHere(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object MatchCounts:
   type Sources = Sources.T
-  object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sources extends RefinedType[Int, Pure]
   type ByUid = ByUid.T
-  object ByUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ByUid extends RefinedType[Int, Pure]
   type ByLedger = ByLedger.T
-  object ByLedger extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ByLedger extends RefinedType[Int, Pure]
   type ByStrongKey = ByStrongKey.T
-  object ByStrongKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ByStrongKey extends RefinedType[Int, Pure]
   type ByScore = ByScore.T
-  object ByScore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ByScore extends RefinedType[Int, Pure]
   type Undecided = Undecided.T
-  object Undecided extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Undecided extends RefinedType[Int, Pure]
   type Unmatched = Unmatched.T
-  object Unmatched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Unmatched extends RefinedType[Int, Pure]
   type DeletedHere = DeletedHere.T
-  object DeletedHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DeletedHere extends RefinedType[Int, Pure]

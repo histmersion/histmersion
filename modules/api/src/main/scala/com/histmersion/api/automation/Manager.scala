@@ -1,4 +1,8 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Manager:
 
@@ -7,29 +11,29 @@ object Manager:
     * research area: an acquisition sweep and a currency check on its cron).
     */
   enum Kind(val wire: Kind.Wire):
-    case Review extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("review"))
-    case Seed extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("seed"))
-    case Watch extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("watch"))
-    case Enrich extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("enrich"))
+    case Review extends Kind(Kind.Wire("review"))
+    case Seed extends Kind(Kind.Wire("seed"))
+    case Watch extends Kind(Kind.Wire("watch"))
+    case Enrich extends Kind(Kind.Wire("enrich"))
 
   object Kind:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.api.automation.Manager.Kind.Wire): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.automation.Manager.Kind.Wire((s).value.trim.toLowerCase))
+    def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))
 
   /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
     * cancelled its in-flight runs and items.
     */
   enum State(val wire: State.Wire):
-    case Active extends State(_root_.com.histmersion.api.automation.Manager.State.Wire("active"))
-    case Paused extends State(_root_.com.histmersion.api.automation.Manager.State.Wire("paused"))
-    case Stopped extends State(_root_.com.histmersion.api.automation.Manager.State.Wire("stopped"))
+    case Active extends State(State.Wire("active"))
+    case Paused extends State(State.Wire("paused"))
+    case Stopped extends State(State.Wire("stopped"))
 
   object State:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
 
-    def parse(s: com.histmersion.api.automation.Manager.State.Wire): Option[State] = values.find(_.wire == _root_.com.histmersion.api.automation.Manager.State.Wire((s).value.trim.toLowerCase))
+    def parse(s: Wire): Option[State] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

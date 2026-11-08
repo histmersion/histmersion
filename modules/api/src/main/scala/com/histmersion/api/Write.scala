@@ -1,6 +1,10 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import hearth.kindlings.circederivation.Configuration
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.library.Citekey
 
 /** Honour Scala default values when decoding: without this Kindlings requires every non-Option field in the JSON, so
   * `{"tags":{"add":["sea-peoples"]}}` would be refused for a missing `remove`. The domain and config packages import it
@@ -10,9 +14,9 @@ given Configuration = Configuration.default.withDefaults
 
 object Write:
   type ListItem = ListItem.T
-  object ListItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ListItem extends RefinedType[String, Pure]
 
-  export com.histmersion.api.Api.Error.{Problem as InvalidMessage}
+  export Api.Error.{Problem as InvalidMessage}
 
   private[api] def blankToNone(v: Option[String]): Option[String] = (v.map((_).trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
 
@@ -21,11 +25,11 @@ object Write:
   val CodeInvalid = "invalid"
 
   /** A request the server refuses for a value it does not accept, with the reason. */
-  def invalid(message: com.histmersion.api.Write.InvalidMessage): Api.Error = Api.Error(message, Some(_root_.com.histmersion.api.Api.Error.Code(CodeInvalid)))
+  def invalid(message: Write.InvalidMessage): Api.Error = Api.Error(message, Some(Api.Error.Code(CodeInvalid)))
 
-  def notFound(citekey: com.histmersion.api.library.Citekey): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Problem(s"No source '$citekey'"), Some(_root_.com.histmersion.api.Api.Error.Code(CodeNotFound)))
+  def notFound(citekey: Citekey): Api.Error = Api.Error(Api.Error.Problem(s"No source '$citekey'"), Some(Api.Error.Code(CodeNotFound)))
 
-  def applyList(current: List[com.histmersion.api.Write.ListItem], p: ListPatch): List[com.histmersion.api.Write.ListItem] =
+  def applyList(current: List[ListItem], p: ListPatch): List[ListItem] =
     val base = p.replace.getOrElse(current)
     val removed = p.remove.toSet
     (base.filterNot(removed) ++ p.add.filterNot(removed)).distinct

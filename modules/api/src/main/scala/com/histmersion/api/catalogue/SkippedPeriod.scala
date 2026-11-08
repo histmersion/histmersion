@@ -1,24 +1,28 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.jobs.JobDetail
 
 final case class SkippedPeriod(id: SkippedPeriod.Id, label: SkippedPeriod.Label, reason: Period.Skip, detail: SkippedPeriod.Detail)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object SkippedPeriod:
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Detail = Detail.T
-  object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Detail extends RefinedType[String, Pure]
 
-  val Skipped: com.histmersion.api.jobs.JobDetail.Field[List[SkippedPeriod]] =
-    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("skippedPeriods"), Nil)
+  val Skipped: JobDetail.Field[List[SkippedPeriod]] =
+    new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("skippedPeriods"), Nil)
 
   /** How many period presets an init job skipped, in its detail. */
-  val SkippedCount: com.histmersion.api.jobs.JobDetail.Field[com.histmersion.api.catalogue.Period.ImportResult.SkippedCount] =
-    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("skippedPeriodCount"), _root_.com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(0))
+  val SkippedCount: JobDetail.Field[Period.ImportResult.SkippedCount] =
+    new com.histmersion.api.jobs.JobDetail.Field(JobDetail.Field.Name("skippedPeriodCount"), Period.ImportResult.SkippedCount(0))

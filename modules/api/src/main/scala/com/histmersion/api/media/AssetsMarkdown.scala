@@ -1,9 +1,11 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
 import com.histmersion.api.given
+import com.histmersion.api.library.Citekey
 object AssetsMarkdown:
 
 
-  def assets(citekey: com.histmersion.api.library.Citekey, as: Vector[AssetInfo]): String =
+  def assets(citekey: Citekey, as: Vector[AssetInfo]): String =
     if as.isEmpty then (s"_No assets stored for **$citekey**._")
     else
       val rows = as.map { a =>

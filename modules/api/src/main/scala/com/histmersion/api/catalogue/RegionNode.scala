@@ -1,4 +1,8 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
+
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** A place as the hierarchy shows it: its id, label, kind, period, and whether it is contested or withdrawn. */
 final case class RegionNode(
@@ -6,42 +10,42 @@ final case class RegionNode(
     label: RegionNode.Label,
     kind: RegionNode.Kind,
     period: Option[Period] = None,
-    contested: RegionNode.Contested = _root_.com.histmersion.api.catalogue.RegionNode.Contested(false),
+    contested: RegionNode.Contested = RegionNode.Contested(false),
     /** Pleiades marks superseded records `withdrawn`; they must never head a level. */
-    withdrawn: RegionNode.Withdrawn = _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(false)
+    withdrawn: RegionNode.Withdrawn = RegionNode.Withdrawn(false)
 )
 
 object RegionNode:
   type RootKindsText = RootKindsText.T
-  object RootKindsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RootKindsText extends RefinedType[String, Pure]
 
   type RootKinds = RootKindsValue
-  type RootKindsValue = com.histmersion.api.catalogue.RegionNode.RootKindsText
-  val RootKindsValue: _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText.type = _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText
+  type RootKindsValue = RootKindsText
+  val RootKindsValue: RootKindsText.type = RootKindsText
 
   type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Id extends RefinedType[String, Pure]
   type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Label extends RefinedType[String, Pure]
   type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kind extends RefinedType[String, Pure]
   type Contested = Contested.T
-  object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Contested extends RefinedType[Boolean, Pure]
   type Withdrawn = Withdrawn.T
-  object Withdrawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Withdrawn extends RefinedType[Boolean, Pure]
 
-  val RootKinds: Set[com.histmersion.api.catalogue.RegionNode.RootKinds] = Set(
-    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText(com.histmersion.api.catalogue.Place.Kind.Region),
-    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText(com.histmersion.api.catalogue.Place.Kind.Polity),
-    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText("continent")
+  val RootKinds: Set[RootKinds] = Set(
+    RootKindsText(Place.Kind.Region),
+    RootKindsText(Place.Kind.Polity),
+    RootKindsText("continent")
   )
 
   /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
     * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").
     */
-  def uncertainLabel(label: com.histmersion.api.catalogue.RegionNode.Label): Boolean =
+  def uncertainLabel(label: Label): Boolean =
     val l = (label).value.trim
     (l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
 
   def rootEligible(n: RegionNode): Boolean =
-    RootKinds.contains(_root_.com.histmersion.api.catalogue.RegionNode.RootKindsText((n.kind).value)) && !((n.withdrawn) == _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(true)) && !((uncertainLabel(_root_.com.histmersion.api.catalogue.RegionNode.Label((n.label).value))) == (true))
+    RootKinds.contains(RootKindsText((n.kind).value)) && !((n.withdrawn) == Withdrawn(true)) && !((uncertainLabel(Label((n.label).value))) == (true))

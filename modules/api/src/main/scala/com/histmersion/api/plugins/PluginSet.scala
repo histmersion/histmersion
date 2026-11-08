@@ -1,10 +1,13 @@
-package com.histmersion.api.plugins
+package com.histmersion
+package api.plugins
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** @param dependencies
   *   `None` in a record written before dependencies were recorded
@@ -13,7 +16,7 @@ final case class PluginSet(
     digest: PluginSet.Digest,
     spiVersion: PluginSet.SpiVersion,
     jars: List[PluginJar] = Nil,
-    mode: PluginSet.Mode = _root_.com.histmersion.api.plugins.PluginSet.Mode("native"),
+    mode: PluginSet.Mode = PluginSet.Mode("native"),
     kit: Option[PluginSet.Kit] = None,
     linkedAt: Option[PluginSet.LinkedAt] = None,
     dependencies: Option[List[PluginFile]] = None
@@ -21,30 +24,30 @@ final case class PluginSet(
       KindlingsSchema, com.histmersion.api.json.Schema
 object PluginSet:
   type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Description extends RefinedType[String, Pure]
 
 
-  type DescribeResult = com.histmersion.api.plugins.PluginSet.Description
-  val DescribeResult: _root_.com.histmersion.api.plugins.PluginSet.Description.type = _root_.com.histmersion.api.plugins.PluginSet.Description
+  type DescribeResult = Description
+  val DescribeResult: Description.type = Description
 
   type Digest = Digest.T
-  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  export com.histmersion.api.plugins.PluginDescription.SpiVersion
+  object Digest extends RefinedType[String, Pure]
+  export PluginDescription.SpiVersion
   type Mode = Mode.T
-  object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Mode extends RefinedType[String, Pure]
   type Kit = Kit.T
-  object Kit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Kit extends RefinedType[String, Pure]
   type LinkedAt = LinkedAt.T
-  object LinkedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkedAt extends RefinedType[String, Pure]
 
   val Resource = "META-INF/histmersion/plugin-set.json"
 
   /** SHA-256 of no bytes. */
   val EmptyDigest = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-  def describe(s: Option[PluginSet]): com.histmersion.api.plugins.PluginSet.Description = s match
+  def describe(s: Option[PluginSet]): Description = s match
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
-      _root_.com.histmersion.api.plugins.PluginSet.Description(s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest.value).take(12)}…)")
+      Description(s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest.value).take(12)}…)")
     case Some(set) =>
-      _root_.com.histmersion.api.plugins.PluginSet.Description(s"${(set.digest).value.take(12)}… · ${Plural.count(_root_.com.histmersion.api.Plural.CountN((set.jars.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("jar"))} (${set.mode}): " +
+      Description(s"${(set.digest).value.take(12)}… · ${Plural.count(Plural.CountN((set.jars.size).toLong), Plural.CountSingular("jar"))} (${set.mode}): " +
         set.jars.map(j => j.file).mkString(", "))

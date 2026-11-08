@@ -1,23 +1,29 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.RowCount
+import com.histmersion.api.Offset
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.personal.UnreadPage
 
 final case class SearchResult(
-    total: com.histmersion.api.RowCount,
+    total: RowCount,
     hits: List[Hit],
-    offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
-    next: Option[com.histmersion.api.Offset] = None
+    offset: Offset = Offset(0),
+    next: Option[Offset] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(hits.size))
+  def page: OffsetPage = OffsetPage(total, offset, RowCount(hits.size))
 object SearchResult:
   type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Total extends RefinedType[Int, Pure]
 
 
-  def of(total: com.histmersion.api.library.SearchResult.Total, hits: List[Hit], offset: com.histmersion.api.personal.UnreadPage.Offset): SearchResult =
-    SearchResult(com.histmersion.api.RowCount((total).value), hits, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(hits.size)).next)
+  def of(total: Total, hits: List[Hit], offset: UnreadPage.Offset): SearchResult =
+    SearchResult(RowCount((total).value), hits, Offset((offset).value), OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next)

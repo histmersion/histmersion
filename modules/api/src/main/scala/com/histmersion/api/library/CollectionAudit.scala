@@ -1,13 +1,16 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** An audit of every linked item: those that disagree with their records, and how many items were checked. */
 final case class CollectionAudit(
-    findings: List[com.histmersion.api.library.CollectionAudit.Row],
+    findings: List[CollectionAudit.Row],
     checked: CollectionAudit.Checked
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -20,7 +23,7 @@ object CollectionAudit:
     * write over it (`fix`, none when the item is missing).
     */
   type Checked = Checked.T
-  object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Checked extends RefinedType[Int, Pure]
 
   final case class Row(
       id: Row.Id,
@@ -35,12 +38,12 @@ object CollectionAudit:
 
   object Row:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends RefinedType[String, Pure]
     type Citekeys = Citekeys.T
-    object Citekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Citekeys extends RefinedType[String, Pure]
     type Codes = Codes.T
-    object Codes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Codes extends RefinedType[String, Pure]
     type Labels = Labels.T
-    object Labels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Labels extends RefinedType[String, Pure]
     type Fix = Fix.T
-    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Fix extends RefinedType[String, Pure]

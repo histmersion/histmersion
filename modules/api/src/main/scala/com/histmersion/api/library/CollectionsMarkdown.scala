@@ -1,12 +1,15 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import com.histmersion.api.Plural
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The collections' answers as Markdown, for the CLI and the MCP tools alike. */
 object CollectionsMarkdown:
   type Missing = Missing.T
-  object Missing extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Missing extends RefinedType[Int, Pure]
   type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Total extends RefinedType[Int, Pure]
 
 
 
@@ -17,9 +20,9 @@ object CollectionsMarkdown:
   def collection(c: CollectionInfo): String =
     (s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
       s"- can: ${c.capabilities.mkString(", ")}\n" +
-      s"- reachable: ${if ((c.reachable) == _root_.com.histmersion.api.library.CollectionInfo.Reachable(true)) then "yes" else s"no — ${c.problem.getOrElse("unknown")}"}")
+      s"- reachable: ${if ((c.reachable) == CollectionInfo.Reachable(true)) then "yes" else s"no — ${c.problem.getOrElse("unknown")}"}")
 
-  private def who(authors: List[com.histmersion.api.library.AuthorName]): String =
+  private def who(authors: List[AuthorName]): String =
     (authors.take(3).mkString(", ") + (if authors.sizeIs > 3 then " et al." else ""))
 
   /** A search as a table: one row per entry, with the formats of its files. */
@@ -35,7 +38,7 @@ object CollectionsMarkdown:
         ++ rows ++ List("", "_Import one with `histmersion calibre import <id> --citekey <k>`._")).mkString("\n"))
 
   /** The entries no source links, newest first, with the path of each file. */
-  def unlinked(entries: List[CollectionEntry], total: com.histmersion.api.library.CollectionsMarkdown.Total): String =
+  def unlinked(entries: List[CollectionEntry], total: Total): String =
     if entries.isEmpty then ("_Every Calibre entry is linked to a source._")
     else
       val lines = entries.map { b =>
@@ -46,7 +49,7 @@ object CollectionsMarkdown:
       }
       val shown = if (total).value > entries.size then s"${entries.size} of $total" else entries.size.toString
       (List(
-        s"### $shown Calibre ${Plural.noun(_root_.com.histmersion.api.Plural.Count(total.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("entry"), _root_.com.histmersion.api.Plural.Noun.Plural("entries"))} not linked to any source (newest first)",
+        s"### $shown Calibre ${Plural.noun(Plural.Count(total.value.toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} not linked to any source (newest first)",
         ""
       )
         ++ lines ++ List(
@@ -56,15 +59,15 @@ object CollectionsMarkdown:
         )).mkString("\n")
 
   /** The line for the records with no fetched file — never a gap. */
-  def uncountedLine(n: com.histmersion.api.library.CollectionsMarkdown.Missing): String =
-    s"$n ${Plural.noun(_root_.com.histmersion.api.Plural.Count(n.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
+  def uncountedLine(n: Missing): String =
+    s"$n ${Plural.noun(Plural.Count(n.value.toLong), Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
       "(`histmersion queue acquire`); `--json` lists them."
 
   /** The counted gaps as a table, then one line for the records with no fetched file. */
   def gaps(rows: List[CollectionGapRow]): String =
     def esc(s: String) = (s).replace("|", "\\|").replace("\n", " ").trim
-    val counted = rows.filter((refactorCallback => ((refactorCallback.counted) == _root_.com.histmersion.api.library.CollectionGapRow.Counted(true))))
-    val missing = rows.count(_.original == _root_.com.histmersion.api.library.CollectionGapRow.Original("none"))
+    val counted = rows.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted(true))))
+    val missing = rows.count(_.original == CollectionGapRow.Original("none"))
     val head =
       if counted.isEmpty then "_Every source with a fetched file is in Calibre._"
       else
@@ -84,15 +87,15 @@ object CollectionsMarkdown:
               "`<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server " +
               "stored (`stored`)._"
           )).mkString("\n")
-    if missing == 0 then (head) else (s"$head\n\n${uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.Missing(missing))}")
+    if missing == 0 then (head) else (s"$head\n\n${uncountedLine(Missing(missing))}")
 
   /** A sync: the gaps pushed (or that would be), each push, and the summary line. */
   def sync(s: CollectionSync): String =
-    val ready = s.gaps.gaps.filter((refactorCallback => ((refactorCallback.counted) == _root_.com.histmersion.api.library.CollectionGapRow.Counted(true))))
-    val missing = s.gaps.gaps.count(_.original == _root_.com.histmersion.api.library.CollectionGapRow.Original("none"))
-    val note = if missing == 0 then "" else " · " + uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.Missing(missing))
+    val ready = s.gaps.gaps.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted(true))))
+    val missing = s.gaps.gaps.count(_.original == CollectionGapRow.Original("none"))
+    val note = if missing == 0 then "" else " · " + uncountedLine(Missing(missing))
     val table = if ready.nonEmpty then (gaps(ready)) + "\n\n" else ""
-    if !((s.applied) == _root_.com.histmersion.api.library.CollectionSync.Applied(true)) then
+    if !((s.applied) == CollectionSync.Applied(true)) then
       (table + s"Dry run: ${ready.size} source(s) would be pushed$note" +
         (if ready.nonEmpty then " Re-run with --apply." else ""))
     else
@@ -106,9 +109,9 @@ object CollectionsMarkdown:
   def updateAll(rows: List[CollectionUpdateRow], applied: Boolean): String =
     def cell(s: String) = (s).replace("|", "\\|").replace("\n", " ").take(80)
     val changing = rows.collect {
-      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("would-change") => (r, "")
-      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("updated")      => (r, "written")
-      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("failed")       => (r, s"FAILED: ${r.reason.getOrElse("")}")
+      case r if r.state == CollectionUpdateRow.State("would-change") => (r, "")
+      case r if r.state == CollectionUpdateRow.State("updated")      => (r, "written")
+      case r if r.state == CollectionUpdateRow.State("failed")       => (r, s"FAILED: ${r.reason.getOrElse("")}")
     }
     val table = changing.flatMap { (r, note) =>
       r.changes.map(c =>
@@ -116,19 +119,19 @@ object CollectionsMarkdown:
       )
     }
     val left = rows.collect {
-      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("shared") =>
+      case r if r.state == CollectionUpdateRow.State("shared") =>
         s"- ${r.id}: linked from ${r.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
-      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("missing") =>
+      case r if r.state == CollectionUpdateRow.State("missing") =>
         s"- ${r.id}: no such Calibre entry (${r.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
-      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("refused") => s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.getOrElse("")}"
+      case r if r.state == CollectionUpdateRow.State("refused") => s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.getOrElse("")}"
     }
-    val upToDate = rows.count(_.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("up-to-date"))
+    val upToDate = rows.count(_.state == CollectionUpdateRow.State("up-to-date"))
     val head =
       if changing.isEmpty then s"_No linked Calibre entry needs updating ($upToDate up to date)._"
       else
         val verb = if (applied) then "updated" else "would change"
         (List(
-          s"### ${changing.size} Calibre ${Plural.noun(_root_.com.histmersion.api.Plural.Count((changing.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("entry"), _root_.com.histmersion.api.Plural.Noun.Plural("entries"))} $verb · $upToDate up to date",
+          s"### ${changing.size} Calibre ${Plural.noun(Plural.Count((changing.size).toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} $verb · $upToDate up to date",
           "",
           "| id | citekey | field | Calibre | record | |",
           "|---:|---|---|---|---|---|"
@@ -161,7 +164,7 @@ object CollectionsMarkdown:
     ((List(s"Imported Calibre id ${i.id} as `${i.citekey}` — ${i.title}") ++
       i.relinkedFrom.map(prev => s"Re-linked `${i.citekey}` from Calibre id $prev to ${i.id}") ++
       List(s"File (left in place, never modified): ${i.file}") ++
-      i.cover.map(c => if ((c.warning) == _root_.com.histmersion.api.library.CollectionCover.Warning(true)) then s"warning: cover not stored — ${c.line}" else c.line) ++
+      i.cover.map(c => if ((c.warning) == CollectionCover.Warning(true)) then s"warning: cover not stored — ${c.line}" else c.line) ++
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
       i.jobError.map(e => s"not converted: $e")).mkString("\n"))
 

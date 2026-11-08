@@ -1,7 +1,10 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import io.circe.{Json, JsonObject}
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** Reader/writer for the Linked Places Format (LPF v1.1) and plain GeoJSON `FeatureCollection`s.
   *
@@ -24,18 +27,18 @@ import com.histmersion.api.given
 object Lpf:
   object Bound:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
   type Document = Document.T
-  object Document extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Document extends RefinedType[String, Pure]
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
 
   /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2). ISO 8601 / astronomical year
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.
     */
 
-  def toIso(historicalYear: com.histmersion.api.catalogue.Year): Years.Astronomical = Years.toAstronomical(historicalYear)
-  def fromIso(isoYear: Years.Astronomical): com.histmersion.api.catalogue.Year = Years.fromAstronomical(isoYear)
+  def toIso(historicalYear: Year): Years.Astronomical = Years.toAstronomical(historicalYear)
+  def fromIso(isoYear: Years.Astronomical): Year = Years.fromAstronomical(isoYear)
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
@@ -63,7 +66,7 @@ object Lpf:
   /** Bare years (`"-1400"`, `"1400 BCE"`) are historical reckoning, the practical convention in WHG/Pleiades data; ISO
     * 8601 dates with month and day (`"-0500-01-01"`) are astronomical and converted via [[fromIso]].
     */
-  def parseYear(raw: String): Option[com.histmersion.api.catalogue.Year] =
+  def parseYear(raw: String): Option[Year] =
     val t = Circa.replaceFirstIn((raw).trim.toLowerCase, "")
     if t.isEmpty then None
     else
@@ -74,27 +77,27 @@ object Lpf:
         else 0
       Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
         val y = if n < 0 then n else if era < 0 then -n else n
-        if isIso then fromIso(Years.Astronomical(y)) else _root_.com.histmersion.api.catalogue.Year(y)
+        if isIso then fromIso(Years.Astronomical(y)) else Year(y)
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
-  private def yearOf(j: Json): Option[com.histmersion.api.catalogue.Year] =
+  private def yearOf(j: Json): Option[Year] =
     Years.fromJson(j, t => parseYear(t.value))
 
   /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
-  private def bound(j: Json, wide: com.histmersion.api.catalogue.Lpf.Bound.Wire, narrow: com.histmersion.api.catalogue.Lpf.Bound.Wire): Option[com.histmersion.api.catalogue.Year] =
+  private def bound(j: Json, wide: Bound.Wire, narrow: Bound.Wire): Option[Year] =
     j.asObject match
-      case None      => (yearOf(j)).map(refactorValue22 => _root_.com.histmersion.api.catalogue.Year((refactorValue22).value))
+      case None      => (yearOf(j)).map(refactorValue22 => Year((refactorValue22).value))
       case Some(obj) =>
         (obj("in")
           .flatMap(yearOf)
           .orElse(obj((wide).value).flatMap(yearOf))
-          .orElse(obj((narrow).value).flatMap(yearOf))).map(refactorValue => _root_.com.histmersion.api.catalogue.Year((refactorValue).value))
+          .orElse(obj((narrow).value).flatMap(yearOf))).map(refactorValue => Year((refactorValue).value))
 
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =
-      val s = o("start").flatMap(bound(_, _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("earliest"), _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("latest")))
-      val e = o("end").flatMap(bound(_, _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("latest"), _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("earliest")))
+      val s = o("start").flatMap(bound(_, Bound.Wire("earliest"), Bound.Wire("latest")))
+      val e = o("end").flatMap(bound(_, Bound.Wire("latest"), Bound.Wire("earliest")))
       (s, e) match
         case (Some(a), Some(b)) => Some(if a.value <= b.value then Span(s, e) else Span(e, s))
         case (None, None)       => None
@@ -140,7 +143,7 @@ object Lpf:
     s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
-    def fromPair(a: Option[com.histmersion.api.catalogue.Year], b: Option[com.histmersion.api.catalogue.Year]): Option[Span] = (a, b) match
+    def fromPair(a: Option[Year], b: Option[Year]): Option[Span] = (a, b) match
       case (Some(x), Some(y)) => Some(if x.value <= y.value then Span(a, b) else Span(b, a))
       case (None, None)       => None
       case _                  => Some(Span(a, b))
@@ -174,7 +177,7 @@ object Lpf:
   private def readNames(f: JsonObject, props: JsonObject, label: String): List[Place.Name] =
     val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
       n.asString
-        .map(s => Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(s.trim)))
+        .map(s => Place.Name(Place.Name.Value(s.trim)))
         .orElse(n.asObject.flatMap { o =>
           str(o, "toponym", "name", "title", "label").map { t =>
             val (period, open) =
@@ -224,7 +227,7 @@ object Lpf:
       .distinctBy(r => (r.parentId, r.kind))
       .sortBy(r => (r.parentId.value, r.kind.value))
 
-  def readFeature(j: Json, defaultKind: Place.KindValue, ordinal: Int): Either[com.histmersion.api.catalogue.Lpf.Problem, Place.Input] =
+  def readFeature(j: Json, defaultKind: Place.KindValue, ordinal: Int): Either[Problem, Place.Input] =
     j.asObject.toRight(Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
@@ -268,7 +271,7 @@ object Lpf:
         Right(
           Place.Input(
             Place(
-              id = com.histmersion.api.catalogue.Place.Id(id),
+              id = Place.Id(id),
               label = Place.Label(if label.nonEmpty then label else id),
               kind = kind,
               geometry = f("geometry").filterNot(_.isNull).map(g => Place.Geometry(g.noSpaces)),
@@ -286,7 +289,7 @@ object Lpf:
   def parse(
       json: String,
       defaultKind: Place.KindValue = Place.KindValue(Place.Kind.Region)
-  ): Either[com.histmersion.api.catalogue.Lpf.Problem, List[Place.Input]] =
+  ): Either[Problem, List[Place.Input]] =
     io.circe.parser.parse((json)).left.map(e => Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
@@ -297,8 +300,8 @@ object Lpf:
               .filter(o => o.contains("geometry") || o.contains("properties"))
               .map(o => List(Json.fromJsonObject(o)))
           )
-      val features: Either[com.histmersion.api.catalogue.Lpf.Problem, List[Json]] =
-        found.toRight(_root_.com.histmersion.api.catalogue.Lpf.Problem("not a FeatureCollection: no `features` array and not a feature"))
+      val features: Either[Problem, List[Json]] =
+        found.toRight(Problem("not a FeatureCollection: no `features` array and not a feature"))
       features.flatMap { fs =>
         val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, (i)))
         parsed.collectFirst { case Left(e) => e } match
@@ -347,8 +350,8 @@ object Lpf:
       .getOrElse(Json.Null)
     Json.fromFields(fields.result())
 
-  def render(items: List[Place.Input]): com.histmersion.api.catalogue.Lpf.Document =
-    _root_.com.histmersion.api.catalogue.Lpf.Document(Json
+  def render(items: List[Place.Input]): Document =
+    Document(Json
       .obj(
         "type" -> Json.fromString("FeatureCollection"),
         "@context" -> Json.fromString(Context),

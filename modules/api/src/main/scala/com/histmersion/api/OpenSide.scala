@@ -1,12 +1,14 @@
-package com.histmersion.api
+package com.histmersion
+package api
 
 import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.Year
 enum OpenSide:
   case Start, End
 
 object OpenSide:
 
-  def bounds(period: Option[Period], open: Option[OpenSide]): (Option[com.histmersion.api.catalogue.Year], Option[com.histmersion.api.catalogue.Year]) =
+  def bounds(period: Option[Period], open: Option[OpenSide]): (Option[Year], Option[Year]) =
     (period.map(_.start).filterNot(_ => open.contains(Start)), period.map(_.end).filterNot(_ => open.contains(End)))
 
   def split(s: Span): (Option[Period], Option[OpenSide]) = s match

@@ -1,12 +1,17 @@
-package com.histmersion.api.media
+package com.histmersion
+package api.media
 import com.histmersion.api.given
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.exchange.Bundle
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 final case class SourceCoverParams(
-    citekey: com.histmersion.api.library.Citekey,
-    provider: com.histmersion.api.media.MediaItem.Provider = _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Calibre),
+    citekey: Citekey,
+    provider: MediaItem.Provider = MediaItem.Provider(MediaProvider.Calibre),
     key: SourceCoverParams.Key,
-    mime: Option[com.histmersion.api.exchange.Bundle.Asset.MimeText] = None
+    mime: Option[Bundle.Asset.MimeText] = None
 )
 
 object SourceCoverParams:
   type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Key extends RefinedType[String, Pure]

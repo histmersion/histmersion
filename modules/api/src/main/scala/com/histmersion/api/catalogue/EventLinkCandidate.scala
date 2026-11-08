@@ -1,17 +1,23 @@
-package com.histmersion.api.catalogue
+package com.histmersion
+package api.catalogue
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Title
+import com.histmersion.api.library.Finding
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class EventLinkCandidate(
-    eventId: com.histmersion.api.catalogue.Event.Id,
-    citekey: com.histmersion.api.library.Citekey,
+    eventId: Event.Id,
+    citekey: Citekey,
     score: EventLinkCandidate.Score,
-    status: EventLinkCandidate.StatusValue = _root_.com.histmersion.api.catalogue.EventLinkCandidate.StatusValue(EventLinkCandidate.Status.Proposed),
-    title: Option[com.histmersion.api.library.Title] = None,
-    findings: List[com.histmersion.api.library.Finding.Id] = Nil,
+    status: EventLinkCandidate.StatusValue = EventLinkCandidate.StatusValue(EventLinkCandidate.Status.Proposed),
+    title: Option[Title] = None,
+    findings: List[Finding.Id] = Nil,
     passages: List[EventPassage] = Nil,
     reasons: List[EventLinkCandidate.Reasons] = Nil
 ) derives KindlingsCodecAsObject,
@@ -20,17 +26,17 @@ object EventLinkCandidate:
 
   /** Where a candidate link between an event and a source stands. */
   type Score = Score.T
-  object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Score extends RefinedType[Double, Pure]
   type StatusValue = StatusValue.T
-  object StatusValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusValue extends RefinedType[String, Pure]
   type Reasons = Reasons.T
-  object Reasons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Reasons extends RefinedType[String, Pure]
 
   object Status:
     type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object All extends RefinedType[String, Pure]
 
     val Proposed = "proposed"
     val Confirmed = "confirmed"
     val Rejected = "rejected"
-    val all: List[com.histmersion.api.catalogue.EventLinkCandidate.Status.All] = List(_root_.com.histmersion.api.catalogue.EventLinkCandidate.Status.All(Proposed), _root_.com.histmersion.api.catalogue.EventLinkCandidate.Status.All(Confirmed), _root_.com.histmersion.api.catalogue.EventLinkCandidate.Status.All(Rejected))
+    val all: List[All] = List(All(Proposed), All(Confirmed), All(Rejected))

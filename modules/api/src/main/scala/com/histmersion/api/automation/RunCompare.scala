@@ -1,15 +1,19 @@
-package com.histmersion.api.automation
+package com.histmersion
+package api.automation
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
 
 object RunCompare:
   import Agents.{ModelOverride, Usage}
 
   final case class RunSide(
-      id: com.histmersion.api.automation.Agents.RunInfo.Id,
+      id: Agents.RunInfo.Id,
       status: RunSide.Status,
       dryRun: RunSide.DryRun,
       model: Option[RunSide.Model],
@@ -24,19 +28,19 @@ object RunCompare:
 
   object RunSide:
     type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Status extends RefinedType[String, Pure]
     type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DryRun extends RefinedType[Boolean, Pure]
     type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Model extends RefinedType[String, Pure]
     type CostUsd = CostUsd.T
-    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CostUsd extends RefinedType[Double, Pure]
     type Seconds = Seconds.T
-    object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Seconds extends RefinedType[Long, Pure]
     type Attempts = Attempts.T
-    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Attempts extends RefinedType[Int, Pure]
     type Failures = Failures.T
-    object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Failures extends RefinedType[Int, Pure]
 
 
   final case class StepSide(
@@ -55,23 +59,23 @@ object RunCompare:
 
   object StepSide:
     type Models = Models.T
-    object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Models extends RefinedType[String, Pure]
     type Actual = Actual.T
-    object Actual extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Actual extends RefinedType[String, Pure]
     type Billing = Billing.T
-    object Billing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    export com.histmersion.api.automation.RunCompare.RunSide.{CostUsd, Seconds, Attempts, Failures}
+    object Billing extends RefinedType[String, Pure]
+    export RunSide.{CostUsd, Seconds, Attempts, Failures}
     type FirstCallTokens = FirstCallTokens.T
-    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FirstCallTokens extends RefinedType[Long, Pure]
     type Turns = Turns.T
-    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Turns extends RefinedType[Int, Pure]
 
 
   final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object StepRow:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends RefinedType[String, Pure]
 
 
   final case class EnrichSide(
@@ -81,8 +85,8 @@ object RunCompare:
       placesAsked: EnrichSide.PlacesAsked,
       placesResolved: EnrichSide.PlacesResolved,
       datedFindings: EnrichSide.DatedFindings,
-      periodStart: Option[com.histmersion.api.catalogue.Year],
-      periodEnd: Option[com.histmersion.api.catalogue.Year],
+      periodStart: Option[Year],
+      periodEnd: Option[Year],
       summaryChars: EnrichSide.SummaryChars,
       notesChars: EnrichSide.NotesChars,
       uniqueClaims: List[EnrichSide.UniqueClaims]
@@ -91,23 +95,23 @@ object RunCompare:
 
   object EnrichSide:
     type Findings = Findings.T
-    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Findings extends RefinedType[Int, Pure]
     type QuotesChecked = QuotesChecked.T
-    object QuotesChecked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object QuotesChecked extends RefinedType[Int, Pure]
     type QuotesPassed = QuotesPassed.T
-    object QuotesPassed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object QuotesPassed extends RefinedType[Int, Pure]
     type PlacesAsked = PlacesAsked.T
-    object PlacesAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlacesAsked extends RefinedType[Int, Pure]
     type PlacesResolved = PlacesResolved.T
-    object PlacesResolved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PlacesResolved extends RefinedType[Int, Pure]
     type DatedFindings = DatedFindings.T
-    object DatedFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object DatedFindings extends RefinedType[Int, Pure]
     type SummaryChars = SummaryChars.T
-    object SummaryChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SummaryChars extends RefinedType[Int, Pure]
     type NotesChars = NotesChars.T
-    object NotesChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotesChars extends RefinedType[Int, Pure]
     type UniqueClaims = UniqueClaims.T
-    object UniqueClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object UniqueClaims extends RefinedType[String, Pure]
 
 
   final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
@@ -116,22 +120,22 @@ object RunCompare:
 
   object ReviewerSide:
     type Reviewer = Reviewer.T
-    object Reviewer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reviewer extends RefinedType[String, Pure]
     type Verdict = Verdict.T
-    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Verdict extends RefinedType[String, Pure]
     type Majors = Majors.T
-    object Majors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Majors extends RefinedType[Int, Pure]
     type Minors = Minors.T
-    object Minors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Minors extends RefinedType[Int, Pure]
 
 
   final case class KindCount(kind: KindCount.Kind, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object KindCount:
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends RefinedType[String, Pure]
     type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends RefinedType[Int, Pure]
 
 
   final case class ReviewSide(
@@ -145,11 +149,11 @@ object RunCompare:
 
   object ReviewSide:
     type Verdict = Verdict.T
-    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Verdict extends RefinedType[String, Pure]
     type Rounds = Rounds.T
-    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rounds extends RefinedType[Int, Pure]
     type Majors = Majors.T
-    object Majors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Majors extends RefinedType[String, Pure]
 
 
   final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List[MajorOverlap.Pairs])
@@ -158,17 +162,17 @@ object RunCompare:
 
   object MajorOverlap:
     type A = A.T
-    object A extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object A extends RefinedType[String, Pure]
     type B = B.T
-    object B extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object B extends RefinedType[String, Pure]
     type AMajors = AMajors.T
-    object AMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AMajors extends RefinedType[Int, Pure]
     type BMajors = BMajors.T
-    object BMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object BMajors extends RefinedType[Int, Pure]
     type Shared = Shared.T
-    object Shared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Shared extends RefinedType[Int, Pure]
     type Pairs = Pairs.T
-    object Pairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pairs extends RefinedType[String, Pure]
 
 
   final case class Comparison(
@@ -185,8 +189,8 @@ object RunCompare:
 
   object Comparison:
     type Pipeline = Pipeline.T
-    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Pipeline extends RefinedType[String, Pure]
     type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Target extends RefinedType[String, Pure]
     type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Notes extends RefinedType[String, Pure]

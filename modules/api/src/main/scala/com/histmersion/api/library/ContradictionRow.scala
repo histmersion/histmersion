@@ -1,25 +1,29 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.api.catalogue.Year
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 final case class ContradictionRow(
-    citekey: com.histmersion.api.library.Citekey,
-    title: com.histmersion.api.library.Title,
-    year: Option[com.histmersion.api.catalogue.Year],
-    status: com.histmersion.api.library.Source.Status,
+    citekey: Citekey,
+    title: Title,
+    year: Option[Year],
+    status: Source.Status,
     direction: Option[ContradictionRow.Direction.Wire],
-    kind: Option[com.histmersion.api.library.Edge.Kind],
-    otherCitekey: Option[com.histmersion.api.library.Citekey],
-    otherTitle: Option[com.histmersion.api.library.Title],
-    otherYear: Option[com.histmersion.api.catalogue.Year] = None,
-    otherStatus: Option[com.histmersion.api.library.Source.Status] = None
+    kind: Option[Edge.Kind],
+    otherCitekey: Option[Citekey],
+    otherTitle: Option[Title],
+    otherYear: Option[Year] = None,
+    otherStatus: Option[Source.Status] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ContradictionRow:
   object Direction:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]

@@ -1,28 +1,32 @@
-package com.histmersion.api.library
+package com.histmersion
+package api.library
 
 import com.histmersion.api.given
 import com.histmersion.api.catalogue.Period
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.Year
 object Aggregate:
   type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Count extends RefinedType[Long, Pure]
   type Span = Span.T
-  object Span extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Span extends RefinedType[Long, Pure]
   type Width = Width.T
-  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Width extends RefinedType[Long, Pure]
 
-  def bucketSize(spanYears: com.histmersion.api.library.Aggregate.Span): com.histmersion.api.library.Aggregate.Width =
+  def bucketSize(spanYears: Span): Width =
     val span = math.abs((spanYears).value)
-    if span >= 20000 then _root_.com.histmersion.api.library.Aggregate.Width((5000).toLong)
-    else if span >= 5000 then _root_.com.histmersion.api.library.Aggregate.Width((1000).toLong)
-    else if span >= 1000 then _root_.com.histmersion.api.library.Aggregate.Width((100).toLong)
-    else _root_.com.histmersion.api.library.Aggregate.Width((10).toLong)
+    if span >= 20000 then Width((5000).toLong)
+    else if span >= 5000 then Width((1000).toLong)
+    else if span >= 1000 then Width((100).toLong)
+    else Width((10).toLong)
 
-  def finer(size: com.histmersion.api.library.Aggregate.Width): com.histmersion.api.library.Aggregate.Width = size match
-    case s if (s).value > 1000 => _root_.com.histmersion.api.library.Aggregate.Width((1000).toLong)
-    case s if (s).value > 100  => _root_.com.histmersion.api.library.Aggregate.Width((100).toLong)
-    case _             => _root_.com.histmersion.api.library.Aggregate.Width((10).toLong)
+  def finer(size: Width): Width = size match
+    case s if (s).value > 1000 => Width((1000).toLong)
+    case s if (s).value > 100  => Width((100).toLong)
+    case _             => Width((10).toLong)
 
-  def buckets(from: com.histmersion.api.catalogue.Year, to: com.histmersion.api.catalogue.Year, size: com.histmersion.api.library.Aggregate.Width): List[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] =
+  def buckets(from: Year, to: Year, size: Width): List[(Year, Year)] =
     require((size).value > 0, s"bucket size must be positive, got $size")
     val (lo, hi) = order(from, to)
     val first = Math.floorDiv(lo.value, size.value) * size.value
@@ -38,9 +42,9 @@ object Aggregate:
       else
         s = e + 1
         go = s <= hi.value
-    out.result().map((a, b) => (_root_.com.histmersion.api.catalogue.Year(a), _root_.com.histmersion.api.catalogue.Year(b)))
+    out.result().map((a, b) => (Year(a), Year(b)))
 
-  def bucketCount(from: com.histmersion.api.catalogue.Year, to: com.histmersion.api.catalogue.Year, size: com.histmersion.api.library.Aggregate.Width): BigInt =
+  def bucketCount(from: Year, to: Year, size: Width): BigInt =
     if size.value <= 0 then BigInt(0)
     else
       val (lo, hi) = order(from, to)
@@ -52,24 +56,24 @@ object Aggregate:
 
   object Counting:
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends RefinedType[String, Pure]
 
-    def parse(s: com.histmersion.api.library.Aggregate.Counting.Wire): Option[Counting] = (s).value.trim.toLowerCase match
+    def parse(s: Wire): Option[Counting] = (s).value.trim.toLowerCase match
       case "starts"       => Some(Starts)
       case "overlap" | "" => Some(Overlap)
       case _              => None
 
   val UnitStarts = "starts"
 
-  def histogram(rows: List[Period.Row], from: com.histmersion.api.catalogue.Year, to: com.histmersion.api.catalogue.Year): List[TimeBucket] =
+  def histogram(rows: List[Period.Row], from: Year, to: Year): List[TimeBucket] =
     val (lo, hi) = order(from, to)
-    histogram(rows, lo, hi, bucketSize(_root_.com.histmersion.api.library.Aggregate.Span(hi.value - lo.value)))
+    histogram(rows, lo, hi, bucketSize(Span(hi.value - lo.value)))
 
   def histogram(
       rows: List[Period.Row],
-      from: com.histmersion.api.catalogue.Year,
-      to: com.histmersion.api.catalogue.Year,
-      size: com.histmersion.api.library.Aggregate.Width,
+      from: Year,
+      to: Year,
+      size: Width,
       counting: Counting = Counting.Overlap
   ): List[TimeBucket] =
     val spans = rows.flatMap(span)
@@ -93,10 +97,10 @@ object Aggregate:
           TimeBucket(TimeBucket.Start(bStart.value), TimeBucket.End(bEnd.value), TimeBucket.Count(byBucket.getOrElse(bStart.value, 0)))
         }
 
-  def span(row: Period.Row): Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] = (row.periodStart, row.periodEnd) match
+  def span(row: Period.Row): Option[(Year, Year)] = (row.periodStart, row.periodEnd) match
     case (Some(a), Some(b)) => Some(order(a, b))
     case (Some(a), None)    => Some((a, a))
     case (None, Some(b))    => Some((b, b))
     case (None, None)       => None
 
-  private def order(a: com.histmersion.api.catalogue.Year, b: com.histmersion.api.catalogue.Year): (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year) = if a.value <= b.value then (a, b) else (b, a)
+  private def order(a: Year, b: Year): (Year, Year) = if a.value <= b.value then (a, b) else (b, a)
