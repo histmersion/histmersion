@@ -1,20 +1,23 @@
-package com.histmersion.pluginresolver
+package com.histmersion
+package pluginresolver
 
 import java.nio.file.Path
+import io.github.iltotore.iron.RefinedType
+import io.github.iltotore.iron.constraint.any.Pure
 
 /** The pure decisions of a resolution: which of a plugin's modules conflict with the server's, which go into the
   * plugins directory's `lib/`, and the files that record the outcome.
   */
 object Resolution:
   type ClasspathFile = ClasspathFile.T
-  object ClasspathFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ClasspathFile extends RefinedType[String, Pure]
   type InputsFile = InputsFile.T
-  object InputsFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InputsFile extends RefinedType[String, Pure]
   type ReportLine = ReportLine.T
-  object ReportLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ReportLine extends RefinedType[String, Pure]
 
   /** Orders two versions as Maven does: negative when the first is older. */
-  export com.histmersion.pluginresolver.Resolver.{FileName as ConflictsPlugin, FileName as NeededByResultPart2, FileName as NeededByPerPluginPart1, FileName as DependenciesNeededPart2, FileName as InputsFileFilesPart1, Sha256 as InputsFileFilesPart2}
+  export Resolver.{FileName as ConflictsPlugin, FileName as NeededByResultPart2, FileName as NeededByPerPluginPart1, FileName as DependenciesNeededPart2, FileName as InputsFileFilesPart1, Sha256 as InputsFileFilesPart2}
 
   type VersionOrder = (ModuleVersion, ModuleVersion) => Int
 
@@ -22,7 +25,7 @@ object Resolution:
     * server's is no conflict: resolved together, the server's is chosen, as Maven chooses the newest.
     */
   def conflicts(
-      plugin: com.histmersion.pluginresolver.Resolution.ConflictsPlugin,
+      plugin: Resolution.ConflictsPlugin,
       resolved: List[ModuleCoordinates],
       server: ServerModules,
       order: VersionOrder
@@ -38,7 +41,7 @@ object Resolution:
 
   /** The plugin jars each module is there for: a module is needed by every plugin whose own resolution has it.
     */
-  def neededBy(perPlugin: List[(com.histmersion.pluginresolver.Resolution.NeededByPerPluginPart1, List[ModuleCoordinates])]): Map[ModuleKey, List[com.histmersion.pluginresolver.Resolution.NeededByResultPart2]] =
+  def neededBy(perPlugin: List[(Resolution.NeededByPerPluginPart1, List[ModuleCoordinates])]): Map[ModuleKey, List[Resolution.NeededByResultPart2]] =
     perPlugin
       .flatMap((plugin, modules) => modules.map(_.key -> plugin))
       .groupMap(_._1)(_._2)
@@ -53,7 +56,7 @@ object Resolution:
       joint: List[(ModuleCoordinates, Option[Path])],
       plugins: Set[ModuleKey],
       server: ServerModules,
-      needed: Map[ModuleKey, List[com.histmersion.pluginresolver.Resolution.DependenciesNeededPart2]]
+      needed: Map[ModuleKey, List[Resolution.DependenciesNeededPart2]]
   ): List[Dependency] =
     joint
       .collect {
@@ -67,16 +70,16 @@ object Resolution:
     resolved.map(_.key).filter(k => !plugins.contains(k) && (server.provides(k))).distinct.sortBy(_.toString)
 
   /** `lib/classpath`: the dependency jars' file names, one per line, in class-path order. */
-  def classpathFile(deps: List[Dependency]): com.histmersion.pluginresolver.Resolution.ClasspathFile = _root_.com.histmersion.pluginresolver.Resolution.ClasspathFile(deps.map(_.libName).map((_).value + "\n").mkString)
+  def classpathFile(deps: List[Dependency]): ClasspathFile = ClasspathFile(deps.map(_.libName).map((_).value + "\n").mkString)
 
   /** `lib/inputs`: `<sha256>  <file name>` of every plugin jar and POM the resolution was made from, sorted by name —
     * what `histmersion-server-jvm` compares with the plugins directory to know whether `lib/` is still current.
     */
-  def inputsFile(files: List[(com.histmersion.pluginresolver.Resolution.InputsFileFilesPart1, com.histmersion.pluginresolver.Resolution.InputsFileFilesPart2)]): com.histmersion.pluginresolver.Resolution.InputsFile =
-    _root_.com.histmersion.pluginresolver.Resolution.InputsFile(files.sortBy(_._1).map((name, sha) => s"$sha  $name\n").mkString)
+  def inputsFile(files: List[(Resolution.InputsFileFilesPart1, Resolution.InputsFileFilesPart2)]): InputsFile =
+    InputsFile(files.sortBy(_._1).map((name, sha) => s"$sha  $name\n").mkString)
 
   /** The lines `plugin add` and the relink show. */
-  def report(deps: List[Dependency], provided: List[ModuleKey]): List[com.histmersion.pluginresolver.Resolution.ReportLine] =
+  def report(deps: List[Dependency], provided: List[ModuleKey]): List[ReportLine] =
     (deps.map(d =>
       s"dependency: ${d.coordinates}" + (if d.neededBy.isEmpty then "" else s" (for ${d.neededBy.mkString(", ")})")
     ) ++
@@ -85,4 +88,4 @@ object Resolution:
          List(
            s"provided by Histmersion: ${provided.size} module(s) (${provided.take(6).mkString(", ")}" +
              (if provided.size > 6 then ", …)" else ")")
-         ))).map(refactorValue3 => _root_.com.histmersion.pluginresolver.Resolution.ReportLine(refactorValue3))
+         ))).map(refactorValue3 => ReportLine(refactorValue3))

@@ -1,20 +1,22 @@
-package com.histmersion.pluginresolver
+package com.histmersion
+package pluginresolver
 
 import io.github.iltotore.iron.*
+import io.github.iltotore.iron.constraint.any.Pure
 
 object Resolver:
   type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Problem extends RefinedType[String, Pure]
   type Argument = Argument.T
-  object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Error = com.histmersion.pluginresolver.Resolver.Problem
-  val Error: _root_.com.histmersion.pluginresolver.Resolver.Problem.type = _root_.com.histmersion.pluginresolver.Resolver.Problem
+  object Argument extends RefinedType[String, Pure]
+  type Error = Problem
+  val Error: Problem.type = Problem
   type ExitCode = ExitCode.T
-  object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ExitCode extends RefinedType[Int, Pure]
   type FileName = FileName.T
-  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  object FileName extends RefinedType[String, Pure]:
     given Ordering[T] = Ordering.String.on(_.value)
   type Sha256 = Sha256.T
-  object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sha256 extends RefinedType[String, Pure]
   type ManifestLine = ManifestLine.T
-  object ManifestLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ManifestLine extends RefinedType[String, Pure]

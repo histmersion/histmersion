@@ -1,4 +1,5 @@
-package com.histmersion.pluginresolver
+package com.histmersion
+package pluginresolver
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -18,7 +19,7 @@ class PluginResolverSuite extends munit.FunSuite:
     def errorLine(value: => String): Unit = stderr(value)
     def errorLine(): Unit = stderr("")
     def errorFlush(): Unit = ()
-    def readLine(): _root_.com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException("input not used")
+    def readLine(): com.histmersion.util.console.Console.Line = throw new UnsupportedOperationException("input not used")
   }
 
   private val fixtures: Path =
@@ -48,7 +49,7 @@ class PluginResolverSuite extends munit.FunSuite:
   private def run(s: Setup, extra: String*): (Int, List[String], List[String]) =
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    val rc = DependencyResolver.parse((s.args(extra*).tail :+ s.plugins.resolve("hello-deps-0.1.0.jar").toString).map(refactorValue => _root_.com.histmersion.pluginresolver.Resolver.Argument(refactorValue))) match
+    val rc = DependencyResolver.parse((s.args(extra*).tail :+ s.plugins.resolve("hello-deps-0.1.0.jar").toString).map(refactorValue => Resolver.Argument(refactorValue))) match
       case Left(e)  => fail((e).value)
       case Right(r) => DependencyResolver.resolve(r.copy(cache = Some(s.cache)))(using consoleFor(out += _, err += _))
     ((rc).value, out.result(), err.result())
@@ -121,11 +122,11 @@ class PluginResolverSuite extends munit.FunSuite:
     val s = setup(Nil)
     assertEquals(run(s)._1, 0)
     val again = DependencyResolver
-      .parse(List(_root_.com.histmersion.pluginresolver.Resolver.Argument("--kit"), _root_.com.histmersion.pluginresolver.Resolver.Argument(s.kit.toString), _root_.com.histmersion.pluginresolver.Resolver.Argument("--lib"), _root_.com.histmersion.pluginresolver.Resolver.Argument(s.lib.toString), _root_.com.histmersion.pluginresolver.Resolver.Argument(s.plugins.resolve("hello-deps-0.1.0.jar").toString)))
+      .parse(List(Resolver.Argument("--kit"), Resolver.Argument(s.kit.toString), Resolver.Argument("--lib"), Resolver.Argument(s.lib.toString), Resolver.Argument(s.plugins.resolve("hello-deps-0.1.0.jar").toString)))
       .fold(e => fail((e).value), identity)
     assertEquals(((DependencyResolver.resolve(again.copy(cache = Some(s.cache)))(using consoleFor(_ => (), _ => ()))).value: Int), 0)
     assertEquals(lines(s.lib.resolve(LibDirectory.Repositories)), List(fixtures.toUri.toString))
-    val other = RepositoryUrl.fromArgument(_root_.com.histmersion.pluginresolver.Resolver.Argument(s.kit.resolve("other-repo").toString)).fold(e => fail((e).value), identity)
+    val other = RepositoryUrl.fromArgument(Resolver.Argument(s.kit.resolve("other-repo").toString)).fold(e => fail((e).value), identity)
     assertEquals(
       ((DependencyResolver.resolve(again.copy(cache = Some(s.cache), repositories = List(other)))(using consoleFor(_ => (), _ => ()))).value: Int),
       0
@@ -153,22 +154,22 @@ class PluginResolverSuite extends munit.FunSuite:
     )
 
   test("usage: the kit and lib are required, an unknown option is named"):
-    assert(DependencyResolver.parse(List(_root_.com.histmersion.pluginresolver.Resolver.Argument("x.jar"))).isLeft)
+    assert(DependencyResolver.parse(List(Resolver.Argument("x.jar"))).isLeft)
     assertEquals(
-      ((DependencyResolver.parse(List(_root_.com.histmersion.pluginresolver.Resolver.Argument("--kit"), _root_.com.histmersion.pluginresolver.Resolver.Argument("k"), _root_.com.histmersion.pluginresolver.Resolver.Argument("--lib"), _root_.com.histmersion.pluginresolver.Resolver.Argument("l"), _root_.com.histmersion.pluginresolver.Resolver.Argument("--nope"))).left.toOption).map(refactorValue2 => (refactorValue2).value): Option[String]),
+      ((DependencyResolver.parse(List(Resolver.Argument("--kit"), Resolver.Argument("k"), Resolver.Argument("--lib"), Resolver.Argument("l"), Resolver.Argument("--nope"))).left.toOption).map(refactorValue2 => (refactorValue2).value): Option[String]),
       Some("unknown option --nope")
     )
-    assertEquals(((DependencyResolver.run(List(_root_.com.histmersion.pluginresolver.Resolver.Argument("nothing")))(using consoleFor(_ => (), _ => ()))).value: Int), 1)
+    assertEquals(((DependencyResolver.run(List(Resolver.Argument("nothing")))(using consoleFor(_ => (), _ => ()))).value: Int), 1)
 
   test("resolver exit boundary supplies errors and preserves failure status") {
     val out = List.newBuilder[String]
     val err = List.newBuilder[String]
-    assertEquals(((DependencyResolver.exitCode(List(_root_.com.histmersion.pluginresolver.Resolver.Argument("nothing")))(using consoleFor(s => { out += s; () }, s => { err += s; () }))).value: Int), 1)
+    assertEquals(((DependencyResolver.exitCode(List(Resolver.Argument("nothing")))(using consoleFor(s => { out += s; () }, s => { err += s; () }))).value: Int), 1)
     assertEquals(out.result(), Nil)
     assert(err.result().head.startsWith("usage: pluginResolver"))
     val failures = List.newBuilder[String]
     var calls = 0
-    val status = DependencyResolver.exitCode(List(_root_.com.histmersion.pluginresolver.Resolver.Argument("nothing")))(using consoleFor(_ => (), s => {
+    val status = DependencyResolver.exitCode(List(Resolver.Argument("nothing")))(using consoleFor(_ => (), s => {
       calls += 1
       if calls == 1 then throw new IllegalArgumentException("sink failed")
       failures += s

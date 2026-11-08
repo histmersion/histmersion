@@ -1,4 +1,5 @@
-package com.histmersion.pluginresolver
+package com.histmersion
+package pluginresolver
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
@@ -11,11 +12,11 @@ final case class Dependency(coordinates: ModuleCoordinates, file: Path, neededBy
   /** The file name in the plugins directory's `lib/`: the group first, as two groups may publish artifacts of the same
     * name and version (`core_3-1.0.2.jar`).
     */
-  def libName: com.histmersion.pluginresolver.Dependency.LibNameResult = _root_.com.histmersion.pluginresolver.Dependency.LibNameResult(s"${coordinates.key.group.value}-${file.getFileName.toString}")
+  def libName: Dependency.LibNameResult = Dependency.LibNameResult(s"${coordinates.key.group.value}-${file.getFileName.toString}")
 
 object Dependency:
-  type LibNameResult = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val LibNameResult: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type LibNameResult = Resolver.FileName
+  val LibNameResult: Resolver.FileName.type = Resolver.FileName
 
-  type NeededBy = _root_.com.histmersion.pluginresolver.Resolver.FileName
-  val NeededBy: _root_.com.histmersion.pluginresolver.Resolver.FileName.type = _root_.com.histmersion.pluginresolver.Resolver.FileName
+  type NeededBy = Resolver.FileName
+  val NeededBy: Resolver.FileName.type = Resolver.FileName
